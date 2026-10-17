@@ -502,6 +502,7 @@ def _record_recommendations(
     notes: list[dict] | None = None,
     step_id: str | None = None,
     step_order: int | None = None,
+    user_message: str | None = None,
 ) -> dict[str, list[dict]]:
     """Persist the items the completed turn actually recommended.
 
@@ -510,6 +511,15 @@ def _record_recommendations(
     """
     if not username:
         return {"reading": [], "strategy": []}
+
+    if user_message:
+        _recommendation_service.couple_hypothesis_reply(
+            db,
+            session_id=session_id,
+            username=username,
+            reply=user_message,
+            step_id=step_id,
+        )
 
     # `payloads_for_slugs` rirende la voce dal solo slug e non sa piu' perche'
     # era entrata: la provenienza arriva dal turno, non dal catalogo.
@@ -792,6 +802,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         if response_id:
             log_entry.response_id = response_id
         db.commit()
+        user_message_to_couple = effective_message or request.message if not getattr(request, "use_phase_prompt", False) else None
         recommendations_for_response = _record_recommendations(
             db,
             session_id=session_id,
@@ -802,11 +813,14 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             notes=recommendation_blocks.extract_notes(
                 raw_recommendations, response_content,
                 advice_allowed=bool(prepared.component_options["certified_strategy_limit"] and prepared.component_flags.get("certified_strategies", True)),
+                hypothesis_allowed=prepared.hypothesis_allowed,
+                allowed_lenses=prepared.phase_codes,
             ),
             matched_on=recommendation_meta,
             turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
             step_id=request.phase or "",
             step_order=step.sort_order if step else None,
+            user_message=user_message_to_couple,
         )
         _watch_thread(prepared, request, db, session_id=session_id,
                       username=identity.get("username") if identity else "",
@@ -1183,6 +1197,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             if not request.preview:
                 recommendation_db = database.SessionLocal()
                 try:
+                    user_message_to_couple = effective_message or request.message if not getattr(request, "use_phase_prompt", False) else None
                     recommendations_for_response = _record_recommendations(
                         recommendation_db,
                         session_id=session_id,
@@ -1193,11 +1208,14 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                         notes=recommendation_blocks.extract_notes(
                             raw_recommendations, response_content,
                             advice_allowed=bool(prepared.component_options["certified_strategy_limit"] and prepared.component_flags.get("certified_strategies", True)),
+                            hypothesis_allowed=prepared.hypothesis_allowed,
+                            allowed_lenses=prepared.phase_codes,
                         ),
                         matched_on=recommendation_meta,
                         turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
                         step_id=request.phase or "",
                         step_order=step.sort_order if step else None,
+                        user_message=user_message_to_couple,
                     )
                 except Exception as exc:
                     logger.warning("Recommendation persistence failed for %s: %s", session_id, exc)

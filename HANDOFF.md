@@ -1,3 +1,32 @@
+# Handoff t3: blocco note per ipotesi, accoppiamento risposte e sezione ledger (fase 2)
+Data: 2026-10-17 | Branch: `feature/hypothesis-notes-ledger` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #370 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Implementata la Fase 2 dell'audit (docs/audits/audit-facilitatore-metacognitivo.md):
+- `backend/recommendation_blocks.py`:
+  - `notes_directive`: supporto a `hypothesis_allowed`, aggiunta di `hypothesis` ai kind ammessi con lente facoltativa e relativo esempio.
+  - `extract_notes`: estrazione deterministica di `kind: "hypothesis"`, validazione della presenza verbatim nel messaggio visibile, limite 8-600 caratteri, e validazione facoltativa del campo `lens` su `phase_codes`.
+- `backend/recommendation_service.py`:
+  - `RECOMMENDATION_STATUSES`: esteso con `answered`, `confirmed`, `corrected`, `rejected`.
+  - `set_state`: validazione di `HYPOTHESIS_STATUSES` e persistenza di `payload.outcome`.
+  - `couple_hypothesis_reply`: accoppiamento deterministico della risposta dello studente (`user_message`, max 240 caratteri) all'ipotesi aperta più recente con transizione a `answered`.
+  - `_carry_over` e `conversation_context`: preservazione di `reply`, `outcome` e `lens`, ed esclusione delle ipotesi aperte/risposte dal blocco di raccomandazioni generiche.
+- `backend/session_ledger.py`:
+  - Nuove funzioni `hypothesis_rows`, `hypotheses(db, ...)` e `reflection_thread(hypotheses, ...)`.
+  - Sezione `Readings you offered in this session, with what the student replied:` in `_compose` e direttiva metacognitiva in `_directives`: «Use the student's reply as their version; never restate a reading they corrected or rejected.»
+  - Blocco compatto in-step `[REFLECTION THREAD]` limitato a 500 caratteri sui turni interni allo step con ipotesi aperta o risposta.
+- `backend/prompt_contract.py`:
+  - `_facilitation_contract` esteso con `thread_state`: aggiunge le righe di vincolo minimo per `introduced`, `hypothesis_open` e `hypothesis_answered`.
+  - `turn_contract`: passaggio di `thread_state`.
+- `backend/chat_preparation.py`:
+  - Calcolo di `thread_state` e iniezione condizionale di `[REFLECTION THREAD]`.
+  - A flag `facilitation_contract_enabled` spento: retrocompatibilità totale byte per byte.
+- `backend/routes/chat.py`:
+  - `_record_recommendations`: invocazione di `couple_hypothesis_reply` su `user_message` pulito e passaggio di `hypothesis_allowed` ed `allowed_lenses` a `extract_notes` sia in chat standard che streaming.
+- Test dedicati: `backend/tests/test_hypothesis_ledger.py` (8/8 passati).
+- Regressione: `test_facilitation_contract.py` (7/7 passati), `test_self_questioning.py` (751/751 passati), `test_prompt_lab_engine.py` (39/39 passati).
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
 # Handoff t2: contratto di facilitazione metacognitiva governato da feature flag
 Data: 2026-10-17 | Branch: `feature/metacognitive-facilitation-contract` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
 Issue #368 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze

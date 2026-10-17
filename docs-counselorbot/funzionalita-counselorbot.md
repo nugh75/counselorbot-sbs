@@ -315,6 +315,16 @@ comportamenti e conseguenze nello studio), rimuove formule cerimoniose («Grazie
 condiviso», «Capisco»), ancora la profondità alla comprensione dell'esperienza (esperienza
 concreta, comprensione dell'agire, elementi per la sintesi) e propone letture solo come
 ipotesi aperte che lo studente è libero di confermare, correggere o rifiutare.
+Nel blocco privato `recommendations` il modello può dichiarare note di tipo `hypothesis`
+(con campo facoltativo `lens` vincolato ai fattori dello step corrente). Al turno successivo,
+la risposta dello studente viene accoppiata deterministicamente all'ipotesi aperta (`status`
+passa ad `answered` con salvataggio di `payload.reply`, limitato a 240 caratteri). Lo stato
+del filo (`thread_state`: `introduced`, `exploring`, `hypothesis_open`, `hypothesis_answered`)
+guida il contratto del turno; sui turni interni allo step con un'ipotesi aperta o risposta
+viene iniettato il blocco compatto `[REFLECTION THREAD]` (entro 500 caratteri). All'ingresso
+degli step successivi, il Session Ledger include la cronologia delle letture proposte con le
+relative risposte dello studente e la direttiva di considerare la versione dello studente
+come riferimento primario senza mai riproporre letture rifiutate o corrette.
 
 Il **QPCC di Pellerey–Orio** è rivolto a giovani e adulti in cerca di occupazione
 o in contesti professionali relazionali. Il questionario canonico ha 63 item,

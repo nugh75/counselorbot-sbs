@@ -40,6 +40,8 @@ MAX_BLOCK_CHARS = 1900
 # decadenza e' un fatto registrato, non una sparizione.
 QUESTION_MAX_AGE = 3
 MAX_LEDGER_QUESTIONS = 2
+MAX_REFLECTION_CHARS = 500
+MAX_HYPOTHESIS_CHARS = 240
 
 _MARKUP = re.compile(r"[*_`#]+")
 # Una verifica gia' fatta, nelle sei lingue: la stessa domanda a ogni step
@@ -81,6 +83,7 @@ def build(db, *, session_id: str, username: str, step_id: str | None = None,
         "answers": _answers(rows),
         "replayed_step": _replayed(rows, step_id),
         "questions": questions(db, session_id=session_id, username=username, step_id=step_id),
+        "hypotheses": hypotheses(db, session_id=session_id, username=username, step_id=step_id),
         "pending_actions": chosen,
         "proposed_action": _proposed_action(rows),
         "refused_actions": refused,
@@ -102,8 +105,8 @@ def render(ledger: dict) -> str:
     ledger = {**_empty(), **(ledger or {})}
     answers = list(ledger["answers"])
     if not any((answers, ledger["pending_actions"], ledger["refused_actions"],
-                any(ledger["questions"].values()), ledger["proposed_action"],
-                ledger["replayed_step"], ledger["guard_notes"])):
+                any(ledger["questions"].values()), ledger.get("hypotheses"),
+                ledger["proposed_action"], ledger["replayed_step"], ledger["guard_notes"])):
         return ""
     while True:
         text = _compose(dict(ledger, answers=answers))
@@ -124,6 +127,7 @@ def block(db, *, session_id: str, username: str, step_id: str | None = None,
 # --- helpers ---
 def _empty() -> dict:
     return {"answers": [], "questions": {"open": [], "answered_in_talk": [], "left_behind": []},
+            "hypotheses": [],
             "pending_actions": [], "proposed_action": "", "refused_actions": [],
             "verification_asked": False, "replayed_step": False, "guard_notes": []}
 
@@ -163,6 +167,12 @@ def _compose(ledger: dict) -> str:
             else f"- \"{item['text']}\""
             for item in asked["left_behind"]
         )
+    if ledger.get("hypotheses"):
+        lines.append("Readings you offered in this session, with what the student replied:")
+        for item in ledger["hypotheses"]:
+            prefix = f"({item['step']}) " if item.get("step") else ""
+            reply_suffix = f' → replied: "{item["reply"]}"' if item.get("reply") else ""
+            lines.append(f'- {prefix}"{item["text"]}"{reply_suffix}')
     if ledger["guard_notes"]:
         # A step entry already carries the ledger; a separate block would say the
         # same thing twice in the same envelope.
@@ -204,6 +214,10 @@ def _directives(ledger: dict) -> list[str]:
         directives.append(
             "Those questions belong to a step the conversation has left: pick one back up only "
             "if the student goes back to it, and never bring them up yourself."
+        )
+    if ledger.get("hypotheses"):
+        directives.append(
+            "Use the student's reply as their version; never restate a reading they corrected or rejected."
         )
     if ledger["replayed_step"]:
         directives.append(
@@ -393,3 +407,69 @@ def questions(db, *, session_id: str, username: str, step_id: str | None) -> dic
         elif status == "proposed":
             buckets["open"].append(item)
     return {key: value[-MAX_LEDGER_QUESTIONS:] for key, value in buckets.items()}
+
+
+def hypothesis_rows(db, *, session_id: str, username: str) -> list:
+    """Le righe di registro che sono ipotesi, dalla piu' vecchia."""
+    rows = db.query(models.RecommendationHistory).filter(
+        models.RecommendationHistory.recommendation_type == "advice",
+        models.RecommendationHistory.session_id == session_id,
+        models.RecommendationHistory.username == username,
+    ).order_by(models.RecommendationHistory.turn_index.asc().nulls_last(),
+               models.RecommendationHistory.created_at.asc()).all()
+    return [row for row in rows if (row.payload or {}).get("kind") == "hypothesis"]
+
+
+def hypotheses(db, *, session_id: str, username: str, step_id: str | None = None) -> list[dict]:
+    """Le letture/ipotesi offerte nella sessione con le risposte dello studente."""
+    if not session_id or not username:
+        return []
+    items = []
+    for row in hypothesis_rows(db, session_id=session_id, username=username):
+        payload = row.payload or {}
+        text = _clean(payload.get("name", ""), MAX_QUESTION_CHARS)
+        if not text:
+            continue
+        reply = _clean(payload.get("reply", ""), MAX_ANSWER_CHARS)
+        status = payload.get("status", "proposed")
+        outcome = payload.get("outcome")
+        step = (payload.get("step_id") or "").strip()
+        items.append({
+            "slug": row.slug,
+            "text": text,
+            "reply": reply,
+            "status": status,
+            "outcome": outcome,
+            "step": step,
+            "lens": payload.get("lens"),
+        })
+    return items
+
+
+def reflection_thread(
+    step_hypotheses: list[dict],
+    *,
+    step_id: str | None = None,
+    pending_reply: str | None = None,
+) -> str:
+    """Blocco in-step compatto (<= 500 caratteri) con le ipotesi dell'area corrente."""
+    if not step_hypotheses:
+        return ""
+    lines = [
+        "[REFLECTION THREAD]",
+        "Readings you offered in this area, with what the student replied:",
+    ]
+    for item in step_hypotheses:
+        text = _clean(item.get("text", ""), MAX_QUESTION_CHARS)
+        if not text:
+            continue
+        reply = item.get("reply") or (pending_reply if pending_reply else "")
+        reply = _clean(reply, MAX_ANSWER_CHARS) if reply else ""
+        if reply:
+            lines.append(f'- "{text}" → replied: "{reply}"')
+        else:
+            lines.append(f'- "{text}"')
+    rendered = "\n".join(lines)
+    if len(rendered) <= MAX_REFLECTION_CHARS:
+        return rendered
+    return rendered[:MAX_REFLECTION_CHARS].rstrip() + "…"
