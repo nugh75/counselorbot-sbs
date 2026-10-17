@@ -24,10 +24,10 @@ export function HeaderCounselor({ inline = false, onNavigate }: { inline?: boole
             openCounselor();
         }
         onNavigate?.();
-    }} className={`inline-flex min-h-11 max-w-full items-center gap-1.5 rounded-md px-3 text-sm font-medium text-indigo-700 hover:bg-indigo-50 ${inline ? 'w-full' : ''}`}
+    }} className={`inline-flex max-w-full items-center gap-1.5 rounded-md px-3 text-sm font-medium text-indigo-700 hover:bg-indigo-50 ${inline ? 'min-h-[44px] w-full' : 'min-h-11'}`}
         aria-label={t('setup.counselor')} title={t('setup.counselor')}>
         <User className="h-4 w-4 shrink-0" />
         {/* Nella barra da `lg` il nome cede spazio alle voci di navigazione. */}
-        <span className={`truncate ${inline ? 'max-w-32' : 'max-w-20 xl:max-w-32'}`}>{selected?.name ?? t('base.counselor.title')}</span>
+        <span className={`truncate ${inline ? '' : 'max-w-20 xl:max-w-32'}`}>{selected?.name ?? t('base.counselor.title')}</span>
     </Link>;
 }
