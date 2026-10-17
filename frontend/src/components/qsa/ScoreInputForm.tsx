@@ -121,9 +121,22 @@ interface ScoreInputFormProps {
     submitDisabled?: boolean;
     // Più form nella stessa pagina (taccuini di prova): id distinti.
     formId?: string;
+    cancelLabel?: string;
 }
 
-export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack, persistDraft = true, onDraftChange, submitLabel, submitAction = 'continue', submitDisabled = false, formId = 'score-form' }: ScoreInputFormProps) {
+export function ScoreInputForm({
+    questionnaire,
+    onSubmit,
+    initialScores,
+    onBack,
+    persistDraft = true,
+    onDraftChange,
+    submitLabel,
+    cancelLabel,
+    submitAction = 'continue',
+    submitDisabled = false,
+    formId = 'score-form',
+}: ScoreInputFormProps) {
     const { t, tf } = useI18n();
     // Venticinque numeri copiati da un PDF vivevano solo dentro react-hook-form:
     // si perdevano al ricaricamento e anche solo tornando indietro di un passo,
@@ -170,25 +183,36 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack,
 
     // Stessa "prima riga" di selezione usata da QuestionnaireSelector /
     // CounselorSelector / InputMethodSelector: BackButton (cerchio quieto) +
-    // ForwardButton nel percorso, Button con icona Save nel repertorio di prove.
-    // Entrambi inviano il form; il contesto sceglie l'azione. Nessun testo
-    // introduttivo: il FlowStepper in alto descrive già la fase.
-    // Il fuoco sul primo campo mancante lo porta shouldFocusError di
-    // react-hook-form, attivo di default: il submit sta in cima e i campi
-    // scorrono per venticinque righe.
-    return (
-        <div className="w-full space-y-5 animate-fade-in-up">
-            <div className="flex items-center gap-3">
-                {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
-                {submitAction === 'save' ? (
+    // ForwardButton nel percorso. Nel salvataggio del repertorio di prove
+    // (submitAction="save"), i comandi Salva e Annulla formano una coppia
+    // esplicita e uniforme, duplicata in testa e in coda per restare sempre
+    // raggiungibile anche dopo lo scorrimento dei fattori.
+    const actionButtons = (
+        <div className="flex flex-wrap items-center gap-3">
+            {submitAction === 'save' ? (
+                <>
                     <Button type="submit" form={formId} disabled={submitDisabled} className="min-h-[44px]">
                         <Save className="h-4 w-4 shrink-0" aria-hidden="true" />
                         {submitLabel || t('common.save')}
                     </Button>
-                ) : (
+                    {onBack && (
+                        <Button type="button" variant="secondary" disabled={submitDisabled} onClick={onBack} className="min-h-[44px]">
+                            {cancelLabel || t('common.cancel')}
+                        </Button>
+                    )}
+                </>
+            ) : (
+                <>
+                    {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
                     <ForwardButton type="submit" form={formId} disabled={submitDisabled} label={submitLabel || t('score.submit')} />
-                )}
-            </div>
+                </>
+            )}
+        </div>
+    );
+
+    return (
+        <div className="w-full space-y-5 animate-fade-in-up">
+            {actionButtons}
             {missingCount > 0 && (
                 <p role="alert" className="max-w-4xl mx-auto rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
                     {t('score.error.summary', { count: missingCount })}
@@ -211,6 +235,11 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack,
                         );
                     })}
                 </div>
+                {submitAction === 'save' && (
+                    <div className="pt-2">
+                        {actionButtons}
+                    </div>
+                )}
             </form>
         </div>
     );
