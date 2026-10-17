@@ -1,3 +1,18 @@
+# Handoff n12: menu mobile a gruppi (P5)
+Data: 2026-10-17 | Branch: `feat/navbar-mobile-groups` | Agente: `n12-opus-navbar-p5`, Claude Opus 5.5 high
+Compito Diario `4c7f91cd-4637-4950-803f-3e96d36762b3` | Issue #346 | PR #347 (bozza) | Milestone #21
+
+Sotto 1024 px pulsante «Menu» con etichetta e pannello disclosure sotto la barra
+(`HeaderMenu.tsx`, `#mobile-menu`): Vista attiva, Area, Supporto, Conversazione
+(Riprendi in `#mobile-resume`), Account/Preferenze (`AccountItems` condiviso col
+menu desktop). Righe Riprendi condivise (`ResumeList`). Contratto P0 mobile e
+nuovi casi browser in `navbar-visibility.test.mjs`. Esito e limiti in
+`docs/operations/navbar-visibility-tests.md` (sessione P5). Schermate della guida
+rigenerate fino a `teacher-catalog` in sei lingue; `capture-guide.mjs` reso
+compatibile con cataloghi collassati, home docente senza compilazioni e
+ottimizzatore immagini del dev. Nessun Docker, deploy o sudo; nessun server
+rimasto acceso.
+
 # Handoff n11: Questionario di gradimento in home
 Data: 2026-10-17 | Branch: `feat/home-feedback-cta` | Agente: `n11-opus-home-feedback`, Claude Opus 5.5 high
 Compito Diario `71dd68ba-7e18-4f91-a92a-17d007620546` | Issue #342 | Milestone #21

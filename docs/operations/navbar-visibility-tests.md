@@ -225,3 +225,27 @@ Arresto: Ctrl-C nel terminale dello script. Da SSH:
   overlap»: `goto('/', networkidle)` scade a 30 s anche a 768 px nel dev
   isolato; la stessa verifica (nomi lunghi, tedesco, admin) è coperta dai nuovi
   test P4 a 1024/1280/1440.
+
+## Esito della sessione P5 (17 ottobre 2026)
+
+- Sotto 1024 px il pannello «Menu» a gruppi descritto sopra; contratto P0 del
+  mobile aggiornato di proposito (gruppi, sotto-pannello Riprendi, «Esci» e
+  «Accedi» al posto di «Logout» e «Accesso admin», «Bussola» come in barra).
+- Verifiche: `npm test` 584/584 (Node 22), `tsc`, ESLint sui file toccati,
+  `i18n:check`, guidance check, `next build` riuscita; suite browser completa
+  su :3149 **120/120** (un caso a 320 px scaduto in idratazione al primo giro,
+  verde ai due rilanci). Test dipendenti sul menu mobile: recupero chat
+  (Riprova e cancellazione) e Bussola a 390 px verdi con attesa `load`;
+  `account-onboarding` 11/11 sui casi della barra dopo il riavvio del server.
+- Limiti noti, preesistenti: con `waitUntil: 'networkidle'` il dev scade perché
+  un'ottimizzazione `/_next/image` resta appesa; `voice-reader` a 1440 px cerca
+  ancora il menu a tre punti tolto da P4; il colore delle card scure in
+  `design-usability` e i 3 casi `/?view=questionnaires` dell'onboarding
+  falliscono come su `main`.
+- Schermate della guida: rigenerate su una build locale isolata (`next build`
+  + `next start` su 127.0.0.1:3149, API intercettate) perché il dev, con la
+  macchina sotto carico, scadeva a ogni compilazione. 26 schermate a pagina
+  intera per lingua mostrano la barra P4; `capture-guide.mjs` si ferma poi su
+  «Assegna» nel catalogo obiettivi (passo obsoleto, bug nel Diario): catalogo,
+  assegnazione, riscontro e schermate delle impostazioni di classe restano
+  quelle di prima, senza barra o con la barra precedente.
