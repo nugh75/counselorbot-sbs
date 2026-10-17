@@ -10,7 +10,7 @@ from backend import auth, database, models, personal_api
 from backend.ai_service import AIService, AIError
 from backend.chatgpt_connections import bind_identity
 from backend.routes import counselors, personal_api as routes
-from backend.tests.test_personal_api import db, identity  # pytest fixtures
+from backend.tests.test_personal_api import db, identity  # noqa: F401 - pytest fixtures
 
 
 class ListedModels(list):

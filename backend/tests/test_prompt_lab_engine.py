@@ -18,7 +18,7 @@ import json
 import os
 import tempfile
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime
 
 from pydantic import ValidationError
 

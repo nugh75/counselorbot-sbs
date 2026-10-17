@@ -4,7 +4,7 @@ import pytest
 from backend import models, schemas, database, chat_logic
 from backend.ai_service import AIService
 from backend.chat_preparation import prepare_chat_turn
-from backend.model_context import DEFAULT_CONTEXT_LEVELS, context_profile, fit_context
+from backend.model_context import DEFAULT_CONTEXT_LEVELS, fit_context
 from backend.prompt_audit import build_prompt_audit
 from backend.api_models import ChatRequest
 from backend.tests.test_admin_prompt_map import INSTRUMENTS, _client, _map, _entries

@@ -5421,7 +5421,6 @@ def test_normalize_history_purifies_roles_and_content():
 def test_build_context_envelope_canonical_blocks():
     """Fase 5: l'envelope assembla [PERSONA] [SECTION] [STUDENT] [PROFILE]
     [KNOWLEDGE] nel system e history verbatim + user nei messages."""
-    from backend.ai_service import AIService as _FakeAIWrapper
     from backend.api_models import ChatRequest
     from backend.chat_logic import build_context_envelope
     sid = "envelope-test"

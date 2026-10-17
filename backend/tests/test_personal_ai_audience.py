@@ -1,6 +1,5 @@
 """Separate switches for teachers and students, per feature (personal APIs, ChatGPT)."""
-from backend import chatgpt_connections as accounts, models, personal_ai_audience as audience, personal_api
-from backend.ai_service import AIService
+from backend import chatgpt_connections as accounts, models, personal_ai_audience as audience
 from backend.tests.test_personal_api import identity  # noqa: F401
 from backend.tests.test_unified_ai_sources import api_connection, chatgpt, client, db, route, signed, targets  # noqa: F401
 

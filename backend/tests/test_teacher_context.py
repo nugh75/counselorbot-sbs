@@ -12,7 +12,7 @@ Casi:
 import os
 
 import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 os.environ.setdefault("DATABASE_URL", "postgresql://counselorbot_user:counselorbot@postgres:5432/counselorbot")
@@ -22,7 +22,6 @@ from backend.routes import teacher_profile
 from backend.teacher_context import (
     class_context_for_student,
     teacher_groups_context,
-    teacher_notebook_context,
 )
 from backend.tests.artifact_database import artifact_session
 

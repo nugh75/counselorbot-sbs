@@ -9,7 +9,6 @@ Il docente sceglie dal popover Opzioni quale taccuino passa al contesto
 """
 import os
 
-import pytest
 
 os.environ.setdefault("DATABASE_URL", "postgresql://counselorbot_user:counselorbot@postgres:5432/counselorbot")
 
@@ -169,7 +168,7 @@ def test_frozen_session_persists_notebook_context():
     """Il freeze salva notebook_context e i valori ignoti diventano None."""
     with artifact_session() as db:
         from fastapi.testclient import TestClient
-        from backend import auth, schemas
+        from backend import auth
         from backend.routes import frozen_sessions
         identity = {"username": "t1", "groups": ["docenti"], "is_admin": False, "is_researcher": False, "authenticated": True}
         app = __import__("fastapi").FastAPI()

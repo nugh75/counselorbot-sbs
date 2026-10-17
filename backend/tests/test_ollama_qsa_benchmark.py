@@ -812,7 +812,7 @@ def print_report(results: list[ModelResults]):
     sep = "─" * 78
 
     print(f"\n{'=' * 78}")
-    print(f"  REPORT BENCHMARK QSA — OLLAMA")
+    print("  REPORT BENCHMARK QSA — OLLAMA")
     print(f"  Data: {datetime.now().strftime('%Y-%m-%d %H:%M')}  |  "
           f"Lingua: {LANGUAGE}  |  Soglia qualità: {MIN_WORDS} parole")
     print(f"{'=' * 78}\n")
@@ -857,7 +857,7 @@ def print_report(results: list[ModelResults]):
 
     # Classifica
     print(f"\n{'=' * 78}")
-    print(f"  CLASSIFICA MODELLI")
+    print("  CLASSIFICA MODELLI")
     print(f"{'=' * 78}")
     print(f"  {'Modello':<20} {'Affidab.':>9} {'Ø TTFT':>10} {'Ø Durata':>10} "
           f"{'Ø Tok/s':>8} {'Ø Qualità':>9} {'Voto':>10} {'Velocità':>10}")
@@ -879,13 +879,13 @@ def print_report(results: list[ModelResults]):
         print(f"  {mr.model:<20} {rel:>8.0f}% {_fmt_ms(ttft):>10} {_fmt_ms(dur):>10} "
               f"{tps:>8.1f} {q:>9.2f} {score:>10.3f} {speed:>10}")
     print(f"  {'─' * 76}")
-    print(f"  Legenda velocità: TTFT < 500ms = Veloce, < 2s = Medio, < 5s = Lento, >= 5s = Molto lento")
-    print(f"  Punteggio composito = qualità×0.4 + velocità×0.3 + affidabilità×0.3")
+    print("  Legenda velocità: TTFT < 500ms = Veloce, < 2s = Medio, < 5s = Lento, >= 5s = Molto lento")
+    print("  Punteggio composito = qualità×0.4 + velocità×0.3 + affidabilità×0.3")
     print()
 
     # Raccomandazioni
     print(f"{'=' * 78}")
-    print(f"  RACCOMANDAZIONI")
+    print("  RACCOMANDAZIONI")
     print(f"{'=' * 78}")
     if sorted_results:
         best_all = sorted_results[0]
@@ -913,7 +913,7 @@ def print_report(results: list[ModelResults]):
 
 def _markdown_report(results: list[ModelResults]) -> str:
     lines = []
-    lines.append(f"# Benchmark QSA CounselorBot — Ollama\n")
+    lines.append("# Benchmark QSA CounselorBot — Ollama\n")
     lines.append(f"**Data**: {datetime.now().strftime('%Y-%m-%d %H:%M')}  |  "
                  f"**Lingua**: {LANGUAGE}  |  "
                  f"**Soglia qualità**: {MIN_WORDS} parole  |  "
@@ -1003,7 +1003,7 @@ def _markdown_report(results: list[ModelResults]) -> str:
 
     lines.append("")
     lines.append("---")
-    lines.append(f"Generato automaticamente da `backend/tests/test_ollama_qsa_benchmark.py`")
+    lines.append("Generato automaticamente da `backend/tests/test_ollama_qsa_benchmark.py`")
     return "\n".join(lines)
 
 
@@ -1012,7 +1012,7 @@ def _markdown_report(results: list[ModelResults]) -> str:
 # ---------------------------------------------------------------------------
 
 async def main():
-    print(f"QSA Ollama Benchmark")
+    print("QSA Ollama Benchmark")
     print(f"   Ollama: {OLLAMA_URL}")
     print(f"   Utenti concorrenti: {CONCURRENT_USERS}")
     print(f"   Lingua: {LANGUAGE}")
@@ -1042,7 +1042,6 @@ async def main():
         for m in models:
             s = m["size_gb"]
             if s in seen_size:
-                old = seen_size[s]["name"]
                 # Tieni il nome con numero di parametri (es. qwen3.5:9b > qwen3.5:latest)
                 if re.search(r':\d+\.?\d*b', m["name"]):
                     seen_size[s] = m
@@ -1093,7 +1092,7 @@ async def main():
 
             # Warmup
             if WARMUP:
-                print(f"   Riscaldamento...", end=" ", flush=True)
+                print("   Riscaldamento...", end=" ", flush=True)
                 try:
                     r = await client.post(f"{OLLAMA_URL}/api/chat", json={
                         "model": model_name,
@@ -1166,7 +1165,7 @@ async def main():
 
     # Report
     print("=" * 78)
-    print(f"  REPORT FINALE")
+    print("  REPORT FINALE")
     print("=" * 78)
     print_report(all_results)
 

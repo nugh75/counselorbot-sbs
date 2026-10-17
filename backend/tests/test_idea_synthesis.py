@@ -14,7 +14,7 @@ import pytest
 
 from backend.ai_service import AIError
 from backend.idea_map import outline
-from backend.diagram_render import describe, parse_spec
+from backend.diagram_render import parse_spec
 import backend.idea_synthesis as synthesis_module
 from backend.idea_synthesis import synthesis_for
 

@@ -15,13 +15,12 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from backend import auth, database, models, schemas
+from backend import auth, database, models
 from backend.counselor_i18n import localized_tagline
 from backend.counselor_identity import (
     BASE_APPROACH_CATEGORIES,
     COUNSELOR_IDENTITY_DEFAULTS,
     infer_counselor_identity,
-    recommend_counselor,
     seed_and_backfill_counselor_identities,
 )
 from backend.routes import counselors as counselors_routes

@@ -68,7 +68,7 @@ def test_hiding_waits_for_a_concurrent_path_save(monkeypatch):
     assert os.environ["DATABASE_URL"] == "postgresql://c5_test@127.0.0.1:18650/counselorbot_test"
     schema = "tf154r_" + uuid.uuid4().hex
     engine, factory, make_app, group_id = committed_app(schema)
-    app, student_app = make_app(TEACHER), make_app(STUDENT)
+    app, _student_app = make_app(TEACHER), make_app(STUDENT)
     try:
         with TestClient(app) as client:
             topic = client.post(f"/groups/{group_id}/forum/topics", json={"title": "Race", "body": "Race"}).json()

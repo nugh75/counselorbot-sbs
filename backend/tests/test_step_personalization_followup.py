@@ -1,6 +1,4 @@
 """Tests for Issue #56: preserving step personalization in follow-up turns."""
-import json
-from types import SimpleNamespace
 import pytest
 
 from backend import models, schemas
@@ -9,10 +7,8 @@ from backend.api_models import ChatRequest
 from backend.chat_logic import (
     extract_clean_student_message,
     format_step_continuation_prompt,
-    prompt_component_config_key,
 )
 from backend.chat_preparation import prepare_chat_turn
-from backend.model_context import DEFAULT_CONTEXT_LEVELS, fit_context
 from backend.prompt_audit import build_prompt_audit
 from backend.prompt_variants import variant_key
 from backend.tests.test_smoke import _TestSession, _ensure_guided_steps

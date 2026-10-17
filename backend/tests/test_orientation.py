@@ -9,11 +9,13 @@ from sqlalchemy.orm import sessionmaker
 from backend import auth, database, models, orientation
 from backend.student_context import student_context
 from backend.tool_brief_seed import TOOL_BRIEFS, seed_tool_briefs
-from backend.ai_service import _requests_json_response
 from backend.orientation import _clean_analysis, _tools_named_in, analyze_turn, fallback_analysis
 from backend.routes import orientation as orientation_routes
 from backend.routes.orientation import _merged_recommendations
 from backend.tests.artifact_database import artifact_session
+
+# Fabbrica di sessioni del test in corso: la imposta isolated_postgres.
+_Session: sessionmaker | None = None
 
 
 @pytest.fixture(autouse=True)

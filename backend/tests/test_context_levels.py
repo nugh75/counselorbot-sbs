@@ -7,7 +7,7 @@ from backend.model_context import (
     DEFAULT_CONTEXT_LEVELS, ContextCapacityError, context_profile, estimate_tokens,
     fit_context, validate_routing_config,
 )
-from backend.tests.test_prompt_routing import ai
+from backend.tests.test_prompt_routing import ai  # noqa: F401 - shared fixtures
 
 
 def envelope():

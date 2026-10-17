@@ -8,7 +8,6 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from backend import auth, database, models
-from backend.api_models import ChatRequest
 from backend.dynamic_registry import set_session_factory
 from backend.routes import chat
 

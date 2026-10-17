@@ -29,7 +29,6 @@ from backend.idea_map import (
     missing_roles,
     names_prior_work,
     pace_directive,
-    reopen as reopen_branch,
     resolve_focus,
     strip_patch_for_display,
     wants_plan,

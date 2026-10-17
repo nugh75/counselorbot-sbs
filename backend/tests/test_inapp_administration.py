@@ -3,9 +3,8 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from fastapi.testclient import TestClient
 
-from backend import auth, content_version_service, database, models
+from backend import auth, content_version_service, models
 from backend.routes import survey
 from backend.tests.test_it_administration import api  # noqa: F401  (shared fixture)
 

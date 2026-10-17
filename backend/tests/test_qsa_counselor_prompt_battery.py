@@ -48,10 +48,9 @@ import os
 import re
 import statistics
 import sys
-import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -690,7 +689,7 @@ def build_report(token: str) -> tuple[str, dict[str, Any]]:
     steps, counselors = discover(token)
     steps, counselors = _filtered(steps, counselors)
     report: list[str] = []
-    report.append(f"# QSA Counselor Prompt & Performance Battery\n")
+    report.append("# QSA Counselor Prompt & Performance Battery\n")
     report.append(f"_Generato: {datetime.now(timezone.utc).isoformat(timespec='seconds')}_  ·  "
                   f"base: `{_base_url()}`  ·  lingua: `{LANG}`\n")
     report.append(f"Counselor sotto test: {', '.join(str(c['id']) for c in counselors)}  ·  "
