@@ -514,12 +514,16 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
             } else "area"
         elif request.phase == "questions":
             reflection_stage = "follow-up"
+    facilitation_contract_enabled = bool(
+        str(configs.get("facilitation_contract_enabled", "false")).lower() in {"1", "true", "yes", "on"}
+    )
     contract = turn_contract(
         language=request.language or "it", questionnaire_type=questionnaire_type,
         phase=request.phase, advice_allowed=bool(component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),
         synthesis=bool(is_synthesis), reflection_stage=reflection_stage,
         objective_stage=objective_focus_stage(request.phase),
         objective_entry=is_step_entry,
+        facilitation_contract_enabled=facilitation_contract_enabled,
     )
     system_prompt_final += "\n\n" + contract
     if questionnaire_type.upper() == 'QPCC':

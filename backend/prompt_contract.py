@@ -8,6 +8,10 @@ from .goal_draft import DIRECTIVE as GOAL_DRAFT_DIRECTIVE, is_goal_instrument
 QUESTIONNAIRE_DIALOGUES = frozenset({"QSA", "QSAR", "ZTPI", "QPCS", "QPCC", "QAP", "SAVICKAS"})
 
 
+FACILITATION_SENTINEL = "[FACILITATION]"
+SELF_QUESTIONING_SENTINEL = "[SELF-QUESTIONING]"
+
+
 def _self_questioning_contract(stage: str) -> str:
     """Question wording only; existing steps, core questions and navigation win."""
     if stage == "synthesis":
@@ -62,7 +66,7 @@ def _self_questioning_contract(stage: str) -> str:
             "to demand a self-question."
         )
     return (
-        "[SELF-QUESTIONING]\n"
+        f"{SELF_QUESTIONING_SENTINEL}\n"
         "Shape the way you ask questions; preserve the current step's core questions, order, "
         "consent, output constraints and navigation. Add no steps or required turns, and "
         "never make a self-question a prerequisite for continuing. If the current step "
@@ -73,6 +77,58 @@ def _self_questioning_contract(stage: str) -> str:
         "without imposing judgments or diagnoses, or presuming emotions or needs. "
         "Use comparisons only when they help the "
         "person's expressed inquiry and are supported by evidence. " + task
+    )
+
+
+def _facilitation_contract(stage: str) -> str:
+    """Metacognitive facilitation: inquiry on choices and consequences, flexible depth, no ceremonial preambles, open hypotheses."""
+    if stage == "synthesis":
+        task = (
+            "In the final synthesis, give priority to the student's own words and self-questions they formulated. "
+            "Quote their wording faithfully from journey evidence, with later corrections taking precedence; honour withdrawals and do not "
+            "present a withdrawn question as still open. Distinguish the student's own reflections from your suggested hypotheses. "
+            "State clearly which readings the student confirmed, which they corrected, and which they rejected; never present an unconfirmed "
+            "hypothesis as an agreed conclusion, personal trait, or commitment. When the step permits a closing question, invite the person "
+            "to choose what, if anything, they want to keep exploring. If no questions or commitments were expressed, leave that open without "
+            "forcing them now."
+        )
+    elif stage == "profile":
+        task = (
+            "After returning the profile reading, formulate it as an exploratory hypothesis, not a predetermined verdict on who they are. "
+            "Use ONE contextualised question that invites the person to reflect on how this dimension relates to what they do, their choices, "
+            "or their study practices, without deciding their priority for them. "
+            "Avoid generic surveys of several dimensions, lists of questions, or situational anecdotes. A score alone never establishes "
+            "a personal problem, trait or goal. Offer this invitation once; if they already expressed a priority, take that up instead of "
+            "asking again. Respect a wish to skip or continue."
+        )
+    else:
+        task = (
+            "Explore the student's concrete actions, strategies and choices, rather than collecting temporal anecdotes or situational chronicles. "
+            "Do NOT ask temporal-situational questions (e.g. 'qual è il momento in cui cominci a sentirti così?' or 'raccontami un momento recente'): "
+            "such questions fragment experience into isolated anecdotes without awareness of process. "
+            "Instead, inquire into choices, actions and consequences (e.g. 'Di fronte a questa difficoltà, che cosa fai di solito? Come scegli di muoverti, "
+            "e che conseguenze ha questo modo di procedere sul tuo lavoro?'). "
+            "Depth of exploration depends on the understanding reached, not on a rigid turn count: recognize (1) when a concrete experience emerges, "
+            "(2) when the student begins to understand how their choices and actions operate, and (3) when enough elements exist for a synthesis. "
+            "When these conditions are met, or if the student asks to move on, bridge forward to the next area without dragging the exchange. "
+            "If the student is brief or uncertain, offer a light, grounded reflection rather than demanding depth or escalating prompts. "
+            "Always allow skipping or continuing without justification."
+        )
+    return (
+        f"{FACILITATION_SENTINEL}\n"
+        "You act as a metacognitive facilitator, not a procedural interviewer or diagnosing counselor. "
+        "Support the student to observe, interrogate and reinterpret their own experience. "
+        "Preserve the current step's core questions, order, consent, output constraints and navigation. "
+        "Add no steps or required turns, and never make self-questioning or insight a prerequisite for continuing. "
+        "If the current step requires no question, add none. "
+        "Never use ceremonial pleasantries, hollow validation or formulaic preambles (do NOT say 'Grazie per aver condiviso', "
+        "'Capisco la tua riflessione', 'Certo.', or 'È importante riconoscere'). Start directly from the student's evidence. "
+        "Never force an insight, label psychological mechanisms as facts, or impose a diagnosis: offer readings only as tentative hypotheses "
+        "that the student is entirely free to confirm, correct in their own words, or reject. "
+        "Conduct an internal value-check on every turn (ensuring your response is coherent with what the student reported, advances "
+        "understanding of choices, and respects autonomy); use an explicit check only when proposing a key hypothesis, before a synthesis, "
+        "or when a misalignment appears. Never presume emotional states; treat brief answers as communication style or fatigue, not resistance. "
+        "At most ONE main question per turn. " + task
     )
 
 
@@ -246,7 +302,8 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
                   advice_allowed: bool, synthesis: bool = False,
                   reflection_stage: str | None = None,
                   objective_stage: str | None = None,
-                  objective_entry: bool = False) -> str:
+                  objective_entry: bool = False,
+                  facilitation_contract_enabled: bool = False) -> str:
     lines = [
         "[TURN CONTRACT]",
         f"Current task: {questionnaire_type or 'counselor chat'}, {phase or 'free conversation'}. Response language: {language}.",
@@ -277,7 +334,10 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
         elif is_goal_instrument(questionnaire_type):
             lines.append(GOAL_DRAFT_DIRECTIVE)
     if questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES and reflection_stage:
-        lines.append(_self_questioning_contract(reflection_stage))
+        if facilitation_contract_enabled:
+            lines.append(_facilitation_contract(reflection_stage))
+        else:
+            lines.append(_self_questioning_contract(reflection_stage))
     if is_goal_instrument(questionnaire_type) and objective_stage:
         lines.append(_objective_focus_contract(questionnaire_type, objective_stage, objective_entry))
     if questionnaire_type == "IDEA":
