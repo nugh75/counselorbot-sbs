@@ -1,7 +1,6 @@
 """Admin activation with persistent private keys and isolated PostgreSQL data."""
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 

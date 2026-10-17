@@ -3262,6 +3262,8 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
             files={"file": ("intro.md", b"# Intro\n\nContenuto indicizzato per il test.", "text/markdown")},
         )
         assert upload.status_code == 200, upload.text
+        # Il reindex parte in background (start_build): si guarda l'esito a build finito.
+        assert rag_index.get_index(slug).wait_for_build()
         assert upload.json()["stats"]["n_chunks"] >= 1
 
         listed = client.get(f"/admin/rag/docs?collection={slug}")
@@ -3283,6 +3285,7 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
             "in_scope": False,
         })
         assert scoped_out.status_code == 200, scoped_out.text
+        assert rag_index.get_index(slug).wait_for_build()
         assert scoped_out.json()["scope"]["in_scope"] is False
         assert scoped_out.json()["scope"]["forced"] is True
 
@@ -3300,6 +3303,7 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
             "in_scope": True,
         })
         assert scoped_in.status_code == 200, scoped_in.text
+        assert rag_index.get_index(slug).wait_for_build()
         assert scoped_in.json()["scope"]["in_scope"] is True
         assert scoped_in.json()["scope"]["forced"] is True
 
@@ -3325,6 +3329,7 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
 
         deleted_doc = client.delete(f"/admin/rag/docs?collection={slug}&source=intro.md")
         assert deleted_doc.status_code == 200, deleted_doc.text
+        assert rag_index.get_index(slug).wait_for_build()
 
         deleted_collection = client.delete(f"/admin/rag/collections/{slug}")
         assert deleted_collection.status_code == 200, deleted_collection.text
@@ -3359,8 +3364,8 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
 def test_site_chat_stream_grounded_mocked():
     # Patcha la retrieval per non toccare embeddings/rete: contesto fittizio.
     canned = [{"score": 0.9, "source": "fonti/qsa.md", "title": "Doc QSA", "text": "Contenuto di prova sul QSA."}]
-    original_search = site_chat_routes.site_rag_index.search
-    site_chat_routes.site_rag_index.search = lambda svc, q, k, *a, **kw: canned
+    original_search = site_chat_routes.get_index(None).search
+    site_chat_routes.get_index(None).search = lambda svc, q, k, *a, **kw: canned
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
     try:
         r = client.post("/site-chat/stream", json={
@@ -3392,7 +3397,7 @@ def test_site_chat_stream_grounded_mocked():
         assert fb.status_code == 200, fb.text
         assert fb.json()["recorded"] >= 1
     finally:
-        site_chat_routes.site_rag_index.search = original_search
+        site_chat_routes.get_index(None).search = original_search
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
@@ -3402,8 +3407,8 @@ def test_site_chat_single_instrument_filters_other_instrument_sources():
         {"score": 0.92, "source": "fonti/qsa.md", "title": "Questionario QSA", "text": "Il QSA rileva strategie di apprendimento."},
         {"score": 0.91, "source": "fonti/qpcs.md", "title": "Questionario QPCS", "text": "Il QPCS riguarda la progettualita professionale."},
     ]
-    original_search = site_chat_routes.site_rag_index.search
-    site_chat_routes.site_rag_index.search = lambda *a, **kw: canned
+    original_search = site_chat_routes.get_index(None).search
+    site_chat_routes.get_index(None).search = lambda *a, **kw: canned
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
     try:
         response = client.post("/site-chat/stream", json={
@@ -3415,7 +3420,7 @@ def test_site_chat_single_instrument_filters_other_instrument_sources():
         done = _done_sse_event(response)
         assert done["sources"] == ["fonti/qsa.md"]
     finally:
-        site_chat_routes.site_rag_index.search = original_search
+        site_chat_routes.get_index(None).search = original_search
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
@@ -3487,7 +3492,7 @@ def test_response_length_helpers_and_validation():
 
 def test_response_length_is_enforced_on_both_web_streams():
     original_stream = _FakeAIService.stream_response
-    original_search = site_chat_routes.site_rag_index.search
+    original_search = site_chat_routes.get_index(None).search
     long_answer = " ".join(f"parola{i}" for i in range(1, 121))
 
     def long_stream(self, *args, **kwargs):
@@ -3499,7 +3504,7 @@ def test_response_length_is_enforced_on_both_web_streams():
         yield {"type": "content", "text": long_answer}
 
     _FakeAIService.stream_response = long_stream
-    site_chat_routes.site_rag_index.search = lambda *a, **kw: [
+    site_chat_routes.get_index(None).search = lambda *a, **kw: [
         {"score": 0.9, "source": "fonti/qsa.md", "title": "Doc QSA", "text": "Contenuto di prova sul QSA."}
     ]
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
@@ -3535,7 +3540,7 @@ def test_response_length_is_enforced_on_both_web_streams():
         assert "no more than 80 words" in _FakeAIService.last_stream_args["system_prompt"]
     finally:
         _FakeAIService.stream_response = original_stream
-        site_chat_routes.site_rag_index.search = original_search
+        site_chat_routes.get_index(None).search = original_search
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
@@ -4076,7 +4081,7 @@ def test_an_open_access_pdf_is_not_fetched_from_an_address_of_the_internal_netwo
 def test_generic_acknowledgement_is_removed_from_visible_chat_openings():
     original_stream = _FakeAIService.stream_response
     original_response = _FakeAIService.get_response
-    original_search = site_chat_routes.site_rag_index.search
+    original_search = site_chat_routes.get_index(None).search
     original_retrieval = chat_preparation._retrieved_context
 
     def assent_stream(self, *args, **kwargs):
@@ -4088,7 +4093,7 @@ def test_generic_acknowledgement_is_removed_from_visible_chat_openings():
     _FakeAIService.stream_response = assent_stream
     _FakeAIService.get_response = assent_response
     chat_preparation._retrieved_context = lambda *a, **kw: ("", [], [], [], [], {})
-    site_chat_routes.site_rag_index.search = lambda *a, **kw: [
+    site_chat_routes.get_index(None).search = lambda *a, **kw: [
         {"score": 0.9, "source": "fonti/qsa.md", "title": "QSA", "text": "Materiale QSA."}
     ]
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
@@ -4116,7 +4121,7 @@ def test_generic_acknowledgement_is_removed_from_visible_chat_openings():
         _FakeAIService.stream_response = original_stream
         _FakeAIService.get_response = original_response
         chat_preparation._retrieved_context = original_retrieval
-        site_chat_routes.site_rag_index.search = original_search
+        site_chat_routes.get_index(None).search = original_search
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
@@ -5416,7 +5421,6 @@ def test_normalize_history_purifies_roles_and_content():
 def test_build_context_envelope_canonical_blocks():
     """Fase 5: l'envelope assembla [PERSONA] [SECTION] [STUDENT] [PROFILE]
     [KNOWLEDGE] nel system e history verbatim + user nei messages."""
-    from backend.ai_service import AIService as _FakeAIWrapper
     from backend.api_models import ChatRequest
     from backend.chat_logic import build_context_envelope
     sid = "envelope-test"
@@ -5479,7 +5483,8 @@ def test_build_context_envelope_component_flags_disable_parts():
     assert "META QSA" in system_final
     assert "KNOWLEDGE_BLOCK" not in system_final
     assert "SCORES" not in full_message
-    assert full_message == ""
+    # Nessun flag governa la domanda dello studente: spenti i componenti resta solo lei.
+    assert full_message == "domanda"
     assert history == []
     assert components["system_prompt"] == ""
     assert components["meta_system_prompt"] == "META QSA"

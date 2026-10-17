@@ -143,7 +143,7 @@ def test_activity_is_shared_with_calendar_and_does_not_complete_goal(setup):
 
 def test_sharing_is_voluntary_revocable_and_scoped(setup):
     db, c, who, group_id = setup
-    private = goal(c, motivation='Private motivation')
+    goal(c, motivation='Private motivation')
     shared = goal(c, shared_group_id=group_id, reflection='Summary shared by choice')
     teacher(who)
     result = c.get(f'/teacher/groups/{group_id}/goals').json()
@@ -258,7 +258,7 @@ def test_sharing_follows_the_branch_without_private_ancestors(setup):
     top = goal(c, title='Privato in alto')
     branch = goal(c, title='Ramo condiviso', parent_id=top['id'], shared_group_id=group_id)
     leaf = goal(c, title='Foglia', parent_id=branch['id'])
-    deep = goal(c, title='Profonda', parent_id=leaf['id'])
+    goal(c, title='Profonda', parent_id=leaf['id'])
     goal(c, title='Altro privato', parent_id=top['id'])
     teacher(who)
     rows = {r['title']: r for r in c.get(f'/teacher/groups/{group_id}/goals').json()}

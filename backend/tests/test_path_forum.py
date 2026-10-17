@@ -201,7 +201,7 @@ def test_pending_approval_hide_restore_and_delete(api):
     client, db, identity, group, _other = api
     settings(db, group, forum_premoderation=True)
     discussion = topic(client, group)
-    path = new_path(client, group, [forum_step(discussion)])
+    new_path(client, group, [forum_step(discussion)])
     as_user(identity, "alice")
     post = reply(client, discussion)
     assert post["status"] == "pending"
@@ -241,7 +241,7 @@ def test_pending_approval_hide_restore_and_delete(api):
 def test_a_second_qualifying_reply_keeps_the_step_done(api):
     client, db, identity, group, _other = api
     discussion = topic(client, group)
-    path = new_path(client, group, [forum_step(discussion)])
+    new_path(client, group, [forum_step(discussion)])
     as_user(identity, "alice")
     first = reply(client, discussion, "first")
     second = reply(client, discussion, "second")

@@ -1,6 +1,6 @@
 # CounselorBot: funzionalità e interfaccia attuali
 
-Aggiornato: 7 ottobre 2026. Questo è il riferimento operativo dell’Assistente
+Aggiornato: 17 ottobre 2026. Questo è il riferimento operativo dell’Assistente
 CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.

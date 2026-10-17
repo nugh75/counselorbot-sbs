@@ -4,7 +4,6 @@ load_dotenv()
 import asyncio
 import json
 import logging
-import os
 import re
 from contextlib import asynccontextmanager
 

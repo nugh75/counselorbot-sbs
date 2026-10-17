@@ -307,7 +307,6 @@ def build_prompt_audit(
     component_flags = prepared.component_flags
     component_options = prepared.component_options
     prompt_key = prepared.prompt_key
-    system_prompt = prepared.system_prompt
     model_scores_context = prepared.model_scores_context
     model_message = prepared.model_message
     message_scores_context = prepared.message_scores_context

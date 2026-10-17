@@ -5,6 +5,7 @@ import uuid
 from importlib import import_module
 import pytest
 from sqlalchemy import create_engine, event, text
+from sqlalchemy.engine import make_url
 from backend import models
 
 migration = import_module("backend.migrations.20261009_typed_administration_steps")
@@ -12,10 +13,7 @@ migration = import_module("backend.migrations.20261009_typed_administration_step
 
 @pytest.fixture
 def legacy():
-    assert (
-        os.environ["DATABASE_URL"]
-        == "postgresql://c5_test@127.0.0.1:18650/counselorbot_test"
-    )
+    assert make_url(os.environ["DATABASE_URL"]).database == "counselorbot_test"
     engine = create_engine(os.environ["DATABASE_URL"])
     schema = "tf150_" + uuid.uuid4().hex
 

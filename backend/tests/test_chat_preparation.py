@@ -19,7 +19,8 @@ from backend.tests.artifact_database import artifact_session
 
 
 def test_all_steps_and_languages_use_identical_runtime_and_audit_preparation():
-    for qtype in ("QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA"):
+    qtypes = ("QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA")
+    for qtype in qtypes:
         _ensure_guided_steps(qtype)
     db = _TestSession()
     try:
@@ -32,7 +33,9 @@ def test_all_steps_and_languages_use_identical_runtime_and_audit_preparation():
         class FixedAI:
             def __new__(cls, _db):
                 return ai
-        steps = db.query(models.GuidedStep).all()
+        # Solo gli strumenti seminati qui: altri test (es. Obiettivo) aggiungono
+        # passi propri e il conteggio dipenderebbe dall'ordine di esecuzione.
+        steps = db.query(models.GuidedStep).filter(models.GuidedStep.questionnaire_type.in_(qtypes)).all()
         # Existing installations may have additional admin-defined interview steps.
         # 65 = i percorsi di fabbrica, con la lettura del profilo aggiunta a
         # QPCS, QPCC e QAP.

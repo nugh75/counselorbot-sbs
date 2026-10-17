@@ -6,21 +6,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from backend import auth, database, models, schemas
+from backend import auth, database, models
 from backend.ai_service import AIService
-from backend.api_models import ChatRequest, MemoryEventRequest
+from backend.api_models import ChatRequest
 from backend.chat_logic import _ensure_questionnaire_guided_steps
 from backend.chat_preparation import prepare_chat_turn
 from backend.dynamic_registry import (
-    DynamicInstrumentSet,
-    HISTORIC_INSTRUMENT_CODES,
-    get_registered_instrument_codes,
     invalidate_instrument_cache,
-    is_registered_instrument,
 )
 from backend.prompt_map import build_prompt_map, ordered_instruments
 from backend.routes import admin, memory, survey
-from backend.schemas import FROZEN_SESSION_TYPES, FrozenSessionCreate, FrozenSessionMessage
+from backend.schemas import FrozenSessionCreate, FrozenSessionMessage
 
 
 @pytest.fixture

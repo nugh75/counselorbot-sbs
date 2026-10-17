@@ -8,16 +8,14 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 from backend import auth, database, models, results_deep_dive
 from backend.routes import class_paths, administration_plans
 
 
 def test_concurrent_starts_return_one_bound_session(monkeypatch):
-    assert (
-        os.environ["DATABASE_URL"]
-        == "postgresql://c5_test@127.0.0.1:18650/counselorbot_test"
-    )
+    assert make_url(os.environ["DATABASE_URL"]).database == "counselorbot_test"
     engine = create_engine(os.environ["DATABASE_URL"])
     schema = "tf152c_" + uuid.uuid4().hex
 

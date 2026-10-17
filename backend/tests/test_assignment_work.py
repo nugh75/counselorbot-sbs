@@ -7,7 +7,7 @@ import pytest
 
 from backend import models
 from backend.routes.assignments import AssignmentWrite
-from backend.tests.test_assignments import setup, body, as_student
+from backend.tests.test_assignments import setup, body, as_student  # noqa: F401 - shared fixtures
 from backend.visual_tools import load_workspace, save_workspace, SavePersonalWorkspace
 
 

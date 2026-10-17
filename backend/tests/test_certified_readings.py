@@ -12,7 +12,6 @@ os.environ.setdefault("COUNSELOR_TRANSLATE_DISABLED", "1")
 os.environ.setdefault("ADMIN_SYNC_DISABLED", "1")
 
 import uuid
-from types import SimpleNamespace
 from urllib.parse import urlsplit, urlunsplit
 
 import psycopg2

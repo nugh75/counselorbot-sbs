@@ -40,7 +40,8 @@ def generate(monkeypatch):
         monkeypatch.setattr(diagram, 'AIService', AI)
         request = diagram.FromMessageRequest(text='Un piano riduce l’incertezza e aiuta a iniziare.', counselor_id=1, spec_only=True)
         try:
-            response = asyncio.run(diagram.diagram_from_message(request, None, {}))
+            # La route lega il counselor alla sessione (db.info) prima di scegliere il modello.
+            response = asyncio.run(diagram.diagram_from_message(request, SimpleNamespace(info={}), {}))
         except HTTPException as error:
             response = error
         return response, calls

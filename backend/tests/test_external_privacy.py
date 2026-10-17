@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from backend import auth, database, models, pii_ner, personal_api
 from backend.ai_service import AIService, AIError
 from backend.routes import admin, external_privacy
-from backend.tests.test_personal_api import db, identity
+from backend.tests.test_personal_api import db, identity  # noqa: F401 - shared fixtures
 
 
 @pytest.fixture

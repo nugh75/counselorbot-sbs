@@ -281,7 +281,7 @@ def test_feedback_alone_and_pre_activation_submission_do_not_count(api):
     as_user(identity, "alice")
     submit(client, created)
     as_user(identity, "teacher")
-    path = new_path(client, group, [assignment_step(created)])
+    new_path(client, group, [assignment_step(created)])
     as_user(identity, "alice")
     # Submitted before the step existed: an unchanged resubmission is not new evidence.
     assert student_step(client)["state"] == "not_done"

@@ -12,7 +12,7 @@ from backend.ai_service import AIService
 from backend.api_models import ChatRequest
 from backend.chat_logic import _phase_factor_codes, competence_factor_names, _apply_competence_step_profile_directive
 from backend.chat_preparation import prepare_chat_turn
-from backend.qpcc import CODES, FACTORS, INVERTED, STEP_CODES, names, validate_scores, score_context
+from backend.qpcc import CODES, FACTORS, INVERTED, STEP_CODES, names, score_context
 from backend.qpcc_alignment import make_plan, apply_plan
 from backend.qsa_extractor import QUESTIONNAIRE_FACTORS, _scores_schema, _validate_scores
 from backend.questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS

@@ -1,6 +1,5 @@
 """Tests for class paths backend models, validation, and teacher endpoints."""
 import pytest
-from datetime import date
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -401,7 +400,7 @@ def test_student_paths_visibility_and_membership(class_paths_api):
     client.post(f"/teacher/paths/{p1['id']}/publish")
 
     # Create draft path in group 1
-    p1_draft = client.post(
+    client.post(
         f"/teacher/groups/{group_id}/paths",
         json={"title": "Class 1 Draft", "mode": "recommended"},
     ).json()
@@ -684,7 +683,6 @@ def test_strict_mode_and_resolution_precedence(class_paths_api):
     client.post(f"/teacher/paths/{path_id}/publish")
     s1_id = put_data["steps"][0]["id"]
     s2_id = put_data["steps"][1]["id"]
-    s3_id = put_data["steps"][2]["id"]
 
     identity.update(username="student_sara", groups=[])
     paths = client.get("/user/paths").json()

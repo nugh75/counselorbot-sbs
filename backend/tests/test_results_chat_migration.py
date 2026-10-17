@@ -5,6 +5,7 @@ import uuid
 from importlib import import_module
 import pytest
 from sqlalchemy import create_engine, event, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.exc import IntegrityError
 from backend import models
 
@@ -15,10 +16,7 @@ migration = import_module("backend.migrations.20261009_guided_results_chat_steps
 @pytest.fixture
 def upgraded_tf4():
     """A TF4 schema: typed steps without the deep-dive column, check or table."""
-    assert (
-        os.environ["DATABASE_URL"]
-        == "postgresql://c5_test@127.0.0.1:18650/counselorbot_test"
-    )
+    assert make_url(os.environ["DATABASE_URL"]).database == "counselorbot_test"
     engine = create_engine(os.environ["DATABASE_URL"])
     schema = "tf152_" + uuid.uuid4().hex
 

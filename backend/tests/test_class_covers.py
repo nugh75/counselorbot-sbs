@@ -8,7 +8,6 @@ Verifica:
 5. Erogazione immagine via GET /groups/{group_id}/image
 """
 import io
-import os
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -16,7 +15,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from backend import auth, database, models, schemas
+from backend import auth, database, models
 from backend.routes import groups as groups_routes
 
 

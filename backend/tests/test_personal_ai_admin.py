@@ -3,13 +3,12 @@ from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import Mock
 
 from cryptography.fernet import Fernet
-from fastapi.testclient import TestClient
 import pytest
 from sqlalchemy.orm import Session
 
 from backend import auth, models, personal_api
 from backend import chatgpt_connections as accounts
-from backend.ai_service import AIService, AIError
+from backend.ai_service import AIService
 from backend.tests.test_personal_api import db, client, identity, save  # noqa: F401
 from backend.tests.test_chatgpt_subscription import connect, signed  # noqa: F401
 

@@ -9,6 +9,7 @@ from threading import Barrier, Event
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
 from backend import auth, database, models, path_step_types
@@ -60,7 +61,7 @@ def drop(engine, schema):
 
 
 def test_concurrent_builder_retries_create_one_assignment():
-    assert os.environ["DATABASE_URL"] == "postgresql://c5_test@127.0.0.1:18650/counselorbot_test"
+    assert make_url(os.environ["DATABASE_URL"]).database == "counselorbot_test"
     schema = "tf153c_" + uuid.uuid4().hex
     engine, factory, app, ids = committed_app(schema)
     try:
@@ -84,7 +85,7 @@ def test_concurrent_builder_retries_create_one_assignment():
 
 
 def test_revocation_waits_for_a_concurrent_path_save(monkeypatch):
-    assert os.environ["DATABASE_URL"] == "postgresql://c5_test@127.0.0.1:18650/counselorbot_test"
+    assert make_url(os.environ["DATABASE_URL"]).database == "counselorbot_test"
     schema = "tf153r_" + uuid.uuid4().hex
     engine, factory, app, ids = committed_app(schema)
     try:

@@ -11,7 +11,7 @@ from backend.model_context import DEFAULT_CONTEXT_LEVELS, fit_context
 from backend.prompt_variants import level_config, variant_key, variant_text
 from backend.prompt_lab.snapshots import static_data
 from backend.prompt_audit import build_prompt_audit
-from backend.tests.test_context_levels_api import db, client
+from backend.tests.test_context_levels_api import db, client  # noqa: F401 - shared fixtures
 from backend.tests.test_admin_prompt_map import _entries, _map
 
 

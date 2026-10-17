@@ -8,7 +8,7 @@ the path revision; activation times and step identities survive reorder,
 archive and restore; unavailable steps carry an actionable reason.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import pytest
 from fastapi import FastAPI
