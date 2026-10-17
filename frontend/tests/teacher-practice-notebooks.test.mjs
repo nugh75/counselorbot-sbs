@@ -44,6 +44,10 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
             snapshots.set(body.session_id, body);
             return json(body);
         }
+        if (url.pathname === '/api/session/frozen') return json([...snapshots.values()].map(row => ({
+            session_id: row.session_id, questionnaire_type: row.questionnaire_type, label: row.label, current_phase: row.current_phase,
+            updated_at: '2026-10-06T09:00:00Z', practice_notebook_id: row.notebook_context === 'practice' ? row.practice_notebook_id : null,
+        })));
         if (url.pathname.startsWith('/api/session/frozen/')) return json(snapshots.get(url.pathname.split('/').at(-1)) ?? null);
         if (url.pathname === '/api/chat/stream') {
             const reply = `Risposta: ${body.message}`;
@@ -118,6 +122,7 @@ test('il docente crea, modifica, archivia, ripristina ed elimina i taccuini di p
     await page.getByRole('heading', { level: 1, name: 'Taccuini di prova' }).waitFor();
     await page.getByRole('heading', { name: 'Giulia, 3ª liceo' }).waitFor();
     assert.ok(await page.getByText('Ansia da verifica').isVisible());
+    await page.locator('[data-practice-notebook="1"] [data-practice-chats]').getByText('Nessuna chat aperta con questo studente.', { exact: false }).waitFor();
 
     await page.getByRole('button', { name: 'Nuovo taccuino di prova' }).click();
     await page.getByLabel('Nome dello studente immaginario').fill('  Marco, adulto in formazione ');
@@ -150,7 +155,7 @@ test('la home docente porta alla pagina e la pagina regge 390 px in inglese', as
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const { errors } = await prepare(page, { lang: 'en' });
     await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
-    assert.equal(await page.getByRole('link', { name: /Practice notebooks/ }).getAttribute('href'), '/docente/taccuini-prova');
+    assert.equal(await page.getByRole('link', { name: 'Practice students’ chats and results' }).getAttribute('href'), '/docente/taccuini-prova');
     await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
     await page.getByRole('heading', { level: 1, name: 'Practice notebooks' }).waitFor();
     await page.getByRole('button', { name: 'New practice notebook' }).waitFor();
@@ -464,7 +469,14 @@ test('dal profilo: nuova chat guidata, turni e ripresa usano il taccuino e i pun
     assert.equal(snapshot.experience, 'standard');
     // Un'altra scelta del browser non deve sovrascrivere il contesto congelato.
     await page.evaluate(() => { localStorage.setItem('cb-notebook-context', 'teacher'); localStorage.setItem('cb-practice-notebook-id', '2'); });
-    await page.goto(`${origin}/?frozen=${turn.session_id}`, { waitUntil: 'domcontentloaded' });
+    // La chat si ritrova sotto lo studente simulato, nell'area docente.
+    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    const chats = page.locator('[data-practice-notebook="1"] [data-practice-chats]');
+    await chats.getByRole('heading', { name: 'Chat guidate di prova' }).waitFor();
+    const reopen = chats.locator(`[data-practice-chat="${turn.session_id}"]`).getByRole('link', { name: 'Riapri la conversazione' });
+    assert.equal(await reopen.getAttribute('href'), `/?frozen=${turn.session_id}`);
+    await reopen.click();
+    await page.getByRole('log').getByText('Risposta: Provo questo profilo', { exact: true }).waitFor();
     await page.locator('#guided-composer').waitFor();
     await page.locator('#guided-composer').fill('Continuo la prova');
     await page.locator('#guided-composer').press('Enter');
