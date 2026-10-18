@@ -1,3 +1,35 @@
+# Handoff F5: rimozione tag <think> e fallback per risposte vuote o solo reasoning
+Data: 2026-10-18 | Branch: `fix/empty-response-think-leak` | Agente: `s4-fallback-think`, Gemini 3.8 Flash (High)
+Task: F5 (424969f9-efd2-4461-b2f8-f29d9801e259) | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Problema:
+1. I modelli di reasoning (es. DeepSeek-R1, QwQ) emettono catene di pensiero racchiuse tra tag `<think>...</think>`, `<thinking>...</thinking>` o `<sto_pensando>...</sto_pensando>`. Nello streaming chunk-by-chunk SSE e nelle risposte sincrone, tali tag rischiavano di trapelare all'utente o di essere salvati nella cronologia della sessione e nei log.
+2. In caso di risposta vuota da parte del provider, risposta di soli spazi, risposta ridotta a stringa vuota dopo la rimozione del blocco `<think>`, o errori di risposta vuota ("empty response"), la chat falliva con errore 500/502 o restituiva messaggi vuoti al client.
+
+Modifiche:
+- `backend/chat_logic.py`:
+  - Aggiunti pattern regex (`_THINK_TAG_ANY_RE`, `_THINK_OPEN_UNCLOSED_RE`, `_THINK_CLOSE_ORPHAN_RE`) e funzione `strip_thinking(text: str)` per ripulire completamente tag `<think>`, `<thinking>`, `<sto_pensando>`, blocchi non chiusi a fine testo e tag orfani di chiusura.
+  - Implementata `reflective_empty_fallback(step_label: str | None = None, language: str = "it")` con frasi gentili, riflessive e contestualizzate allo step guidato corrente, localizzate in italiano, inglese, spagnolo, francese, tedesco e svedese.
+  - Implementata `is_empty_response_error(exc: Exception) -> bool` per rilevare eccezioni di risposta vuota generate dai provider LLM.
+  - Aggiornato `_student_visible_response` per richiamare `strip_thinking(text)`.
+- `backend/ai_service.py`:
+  - `_response_with_fallback`: ripulisce con `split_thinking` i risultati sincroni dei vari provider ed esclude il reasoning.
+  - `call_model`: chiamata a `split_thinking` prima di restituire il testo.
+  - `_iter_chat_stream`: integrato `ThinkStreamSplitter` per filtrare ed escludere i tag `<think>` chunk-by-chunk durante lo streaming.
+- `backend/routes/chat.py`:
+  - Integrazione di `ThinkStreamSplitter` nello streaming SSE `/chat/stream`: i chunk di reasoning vengono soppressi in tempo reale e non raggiungono mai il client SSE.
+  - Aggiunto `strip_thinking` e controllo fallback su risposta vuota in `/chat/stream`, `/chat` (sync) e `/chat/message`.
+  - Gestione degli errori di risposta vuota (`is_empty_response_error`) con emissione del fallback contestualizzato anziché crash 500/502.
+- `backend/routes/site_chat.py`:
+  - Applicazione di `strip_thinking` e `reflective_empty_fallback` sulle risposte della chat del sito.
+- Test:
+  - `backend/tests/test_chat_think_fallback.py`: suite di 16 test che verificano:
+    (a) rimozione completa di `<think>`, `<thinking>` e `<sto_pensando>` (chunk SSE e risposte sincrone),
+    (b) fallback automatico quando il testo emesso contiene unicamente reasoning,
+    (c) fallback automatico quando il testo emesso è vuoto, solo whitespace o genera `EmptyModelResponseError`, con supporto multilingue e contestualizzazione allo step,
+    (d) conservazione intatta della risposta normale priva di reasoning.
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
 # Handoff: riepilogo e PDF al completamento delle chat guidate su questionari di prova (docente/admin)
 Data: 2026-10-18 | Branch: `fix/practice-questionnaire-summary` | Agente: `Antigravity`
 
