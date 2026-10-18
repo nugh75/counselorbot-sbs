@@ -437,3 +437,21 @@ Per SSH: `ssh -N -L 3147:127.0.0.1:3147 <utente>@<server>`, URL
 `http://localhost:3147`. Non è un ambiente operativo per salvare compilazioni.
 Audit, comandi test, limiti e piano di migrazione:
 [QPCC: audit e riallineamento](qpcc-factor-alignment.md).
+
+
+### Ricerca modelli e token nei preset
+
+`scripts/dev-model-search-tests.sh` avvia Next con hot reload su `127.0.0.1:3153`,
+con backend non raggiungibile (`127.0.0.1:9`), senza DB e senza leggere `.env`.
+Controllare prima la porta con `ss -ltn` (Linux) o
+`lsof -nP -iTCP:3153 -sTCP:LISTEN` (macOS). Le API sono intercettate dalla suite:
+
+```sh
+cd frontend
+MODEL_SEARCH_BASE_URL=http://127.0.0.1:3153 node --test tests/admin-model-search.test.mjs
+```
+
+Per usare una build già verificata: `BACKEND_ORIGIN=http://127.0.0.1:9 npm run start -- --hostname 127.0.0.1 --port 3153`.
+Stop del server con Ctrl-C. Per SSH: `ssh -N -L 3153:127.0.0.1:3153 <utente>@<server>`.
+URL `http://localhost:3153`; l'accesso admin simulato esiste solo nel browser dei test.
+Dettagli e risultati in `model-search-token-guidance.md`.

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown, Pencil, Award, XCircle, Search, Sparkles, X } from 'lucide-react';
+import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown, Pencil, Award, XCircle, Sparkles } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { Button } from '@/components/ui/Button';
@@ -20,6 +20,8 @@ import { ModelContextSettings } from '@/components/admin/ModelContextSettings';
 import { AI4EDUC_SECRETS_URL } from '@/lib/auth';
 import { SectionFilter, type SectionFilterGroup } from '@/components/admin/SectionFilter';
 import { PromptMap, writeInstrumentParam } from '@/components/admin/PromptMap';
+import { ModelSearchSelect } from '@/components/admin/ModelSearchSelect';
+import { validModelId } from '@/lib/model-search';
 import { systemAIText } from '@/lib/i18n-system-ai';
 import { formatProbeDetail, systemAIRoleLabel, type SystemAITestResponse } from '@/lib/system-ai-fallback';
 
@@ -198,115 +200,46 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
             'mistral:7b',
             'gpt-oss:20b',
         ]
+    }
 };
 
 // Suggerimento mostrato sopra l'elenco: spiega quali modelli sono adatti e perché.
-// Le etichette dei tag sono tradotte (admin.config.modelTag*); le descrizioni sono
-// testo di guida per l'operatore, come le etichette di COUNSELOR_METAPHOR_PRESETS.
+// Candidati mostrati solo se presenti nel catalogo live; etichette e consigli sono tradotti.
 interface ModelRecommendation {
     id: string;
     label: string;
     tag: 'recommended' | 'quality' | 'fast' | 'free' | 'reasoning';
-    description: string;
 }
 
 const RECOMMENDED_MODELS: Record<string, ModelRecommendation[]> = {
     openrouter: [
         {
-            id: 'google/gemini-2.0-flash-001',
-            label: 'Gemini 2.0 Flash',
+            id: 'google/gemini-3.8-flash',
+            label: 'Gemini 3.8 Flash',
             tag: 'recommended',
-            description: 'Veloce, economico ed equilibrato, eccellente per chat e sintesi.',
         },
         {
-            id: 'anthropic/claude-3.7-sonnet',
-            label: 'Claude 3.7 Sonnet',
+            id: 'anthropic/claude-sonnet-5.5',
+            label: 'Claude Sonnet 5.5',
             tag: 'quality',
-            description: 'Massima profondità nel counseling e supporto al reasoning riflessivo.',
         },
         {
-            id: 'deepseek/deepseek-chat',
-            label: 'DeepSeek V3',
+            id: 'deepseek/deepseek-v4.1-flash',
+            label: 'DeepSeek V4.1 Flash',
             tag: 'fast',
-            description: 'Ottimo rapporto qualità/costo, veloce nelle risposte guidate.',
         },
         {
-            id: 'qwen/qwen-2.5-72b-instruct',
-            label: 'Qwen 2.5 72B',
+            id: 'qwen/qwen3.8-27b',
+            label: 'Qwen 3.8 27B',
             tag: 'quality',
-            description: 'Molto accurato nel rispetto dei vincoli e nella lingua italiana.',
         },
         {
             id: 'meta-llama/llama-3.3-70b-instruct:free',
             label: 'Llama 3.3 70B (Free)',
             tag: 'free',
-            description: 'Gratuito su OpenRouter, ideale per test e verifiche a costo zero.',
         },
     ],
-    openai: [
-        {
-            id: 'gpt-4o',
-            label: 'GPT-4o',
-            tag: 'recommended',
-            description: 'Multimodale, veloce e completo per tutti i percorsi.',
-        },
-        {
-            id: 'gpt-4o-mini',
-            label: 'GPT-4o Mini',
-            tag: 'fast',
-            description: 'Economico e rapido per sessioni ad alto volume.',
-        },
-    ],
-    gemini: [
-        {
-            id: 'gemini-1.5-pro',
-            label: 'Gemini 1.5 Pro',
-            tag: 'quality',
-            description: 'Contesto molto ampio, ideale per sintesi complesse e portfolio.',
-        },
-        {
-            id: 'gemini-1.5-flash',
-            label: 'Gemini 1.5 Flash',
-            tag: 'recommended',
-            description: 'Rapido ed economico, consigliato per interazioni fluide.',
-        },
-    ],
-    anthropic: [
-        {
-            id: 'claude-3-5-sonnet-20240620',
-            label: 'Claude 3.5 Sonnet',
-            tag: 'recommended',
-            description: 'Altissima comprensione empatica e stile conversazionale naturale.',
-        },
-    ],
-    deepseek: [
-        {
-            id: 'deepseek-chat',
-            label: 'DeepSeek V3',
-            tag: 'recommended',
-            description: 'Veloce ed economico, eccellente per chat e dialogo.',
-        },
-        {
-            id: 'deepseek-reasoner',
-            label: 'DeepSeek R1',
-            tag: 'reasoning',
-            description: 'Capacità di ragionamento profondo con catena di pensiero esplicita.',
-        },
-    ],
-    ollama: [
-        {
-            id: 'qwen3:latest',
-            label: 'Qwen 3',
-            tag: 'recommended',
-            description: 'Modello locale moderno ed equilibrato con supporto al thinking.',
-        },
-        {
-            id: 'llama3.3',
-            label: 'Llama 3.3',
-            tag: 'quality',
-            description: 'Ottima robustezza generale e capacità di sintesi.',
-        },
-    ],
+
 };
 
 // Etichette e colori dei tag delle categorie di modello (Consigliato/Alta qualità/…).
@@ -324,18 +257,6 @@ const MODEL_TAG_STYLES: Record<ModelRecommendation['tag'], string> = {
     fast: 'bg-sky-100 text-sky-800',
     free: 'bg-amber-100 text-amber-800',
     reasoning: 'bg-violet-100 text-violet-800',
-};
-
-// I modelli con thinking esplicito consumano token di ragionamento: il backend
-// alloca il budget da solo, qui serve solo ad avvisare l'admin.
-const isReasoningModel = (modelName: string): boolean => {
-    const lower = (modelName || '').toLowerCase();
-    return lower.includes('reasoner')
-        || lower.includes('deepseek-r1')
-        || /(^|[/\-:.])r1([/\-:.]|$)/.test(lower)
-        || lower.includes('claude-3.7')
-        || lower.includes('qwen3')
-        || /(^|[/\-:.])o[134]([/\-:.]|$)/.test(lower);
 };
 
 // Modelli in fascia gratuita: ottimi per prove, soggetti ai limiti del provider.
@@ -1258,9 +1179,9 @@ export function ConfigForm() {
     // Modelli realmente serviti dal provider (live). Vuoto = usa il fallback statico.
     const [liveModels, setLiveModels] = useState<string[]>([]);
     const [modelsLoading, setModelsLoading] = useState(false);
+    const modelRequest = useRef<AbortController | null>(null);
 
     // Ricerca nell'elenco modelli (OpenRouter ne espone centinaia) e inserimento manuale dell'ID.
-    const [modelSearch, setModelSearch] = useState('');
     const [customModelMode, setCustomModelMode] = useState(false);
     const [customModelDraft, setCustomModelDraft] = useState('');
 
@@ -1326,24 +1247,19 @@ export function ConfigForm() {
     };
 
     const fetchModels = async (provider: string) => {
-        if (!provider) {
-            setLiveModels([]);
-            setModelsLoading(false);
-            return;
-        }
+        modelRequest.current?.abort();
+        const controller = new AbortController();
+        modelRequest.current = controller;
+        if (!provider) { setLiveModels([]); setModelsLoading(false); return; }
         setModelsLoading(true);
         try {
-            const res = await fetch(`/api/admin/models?provider=${encodeURIComponent(provider)}`, { headers: authHeaders() });
-            if (res.ok) {
-                const data = await res.json();
-                setLiveModels(Array.isArray(data?.models) ? data.models : []);
-            } else {
-                setLiveModels([]);
-            }
+            const res = await fetch(`/api/admin/models?provider=${encodeURIComponent(provider)}`, { headers: authHeaders(), signal: controller.signal });
+            const data = res.ok ? await res.json() : null;
+            if (!controller.signal.aborted) setLiveModels(Array.isArray(data?.models) ? data.models : []);
         } catch {
-            setLiveModels([]);
+            if (!controller.signal.aborted) setLiveModels([]);
         } finally {
-            setModelsLoading(false);
+            if (!controller.signal.aborted) setModelsLoading(false);
         }
     };
 
@@ -1368,7 +1284,8 @@ export function ConfigForm() {
     useEffect(() => { fetchConfigs(); }, []);
     useEffect(() => {
         if (!activeProvider || activeKeyMissing) { setLiveModels([]); return; }
-        fetchModels(activeProvider);
+        void fetchModels(activeProvider);
+        return () => modelRequest.current?.abort();
     }, [activeProvider, activeKeyMissing]);
 
     useEffect(() => {
@@ -1401,32 +1318,16 @@ export function ConfigForm() {
 
     // Etichette leggibili dei modelli consigliati: servono anche alla ricerca, così
     // si può filtrare per nome ("claude", "gemini") oltre che per ID.
-    const modelLabels = (() => {
-        const labels = new Map<string, string>();
-        for (const recommendations of Object.values(RECOMMENDED_MODELS)) {
-            for (const recommendation of recommendations) labels.set(recommendation.id, recommendation.label);
-        }
-        return labels;
-    })();
-
-    // Filtro dell'elenco (OpenRouter serve centinaia di modelli): case-insensitive su ID ed etichetta.
-    const normalizedModelSearch = modelSearch.trim().toLowerCase();
-    const filteredModelOptions = normalizedModelSearch
-        ? modelOptions.filter(model =>
-            model.toLowerCase().includes(normalizedModelSearch)
-            || (modelLabels.get(model)?.toLowerCase().includes(normalizedModelSearch) ?? false))
-        : modelOptions;
-
-    const providerRecommendations = activeProvider ? (RECOMMENDED_MODELS[activeProvider] || []) : [];
+    const modelLabels = Object.fromEntries(Object.values(RECOMMENDED_MODELS).flat().map(item => [item.id, item.label + ' · ' + item.id]));
+    const providerRecommendations = (RECOMMENDED_MODELS[activeProvider] || []).filter(item => liveModels.includes(item.id));
 
     // Inserimento manuale: un ID valido è non vuoto e senza spazi.
     const manualModelValue = customModelDraft.trim();
     const manualModelInvalid = /\s/.test(manualModelValue);
-    const canSaveManualModel = manualModelValue.length > 0 && !manualModelInvalid;
+    const canSaveManualModel = !!activeProvider && !activeKeyMissing && validModelId(manualModelValue);
 
     const toggleCustomModelMode = (enabled: boolean) => {
         setCustomModelMode(enabled);
-        setModelSearch('');
         // Entrando in modale manuale si parte dal modello attivo, per modificarlo.
         setCustomModelDraft(enabled ? activeModel : '');
     };
@@ -1508,12 +1409,13 @@ export function ConfigForm() {
     // --- Provider/Model ---
 
     const handleProviderChange = (provider: string) => {
+        modelRequest.current?.abort();
+        setLiveModels([]);
         setActiveProvider(provider);
         handleSaveConfig({ key: 'active_provider', value: provider, description: 'Provider AI attivo' });
         const firstModel = PROVIDERS[provider]?.models[0] || '';
         setActiveModel(firstModel);
         // Nuovo provider, nuovo elenco: ricerca e ID manuale ripartono da zero.
-        setModelSearch('');
         setCustomModelDraft('');
         setCustomModelMode(false);
         handleSaveConfig({ key: 'model_name', value: firstModel, description: 'Es. gpt-4o, claude-3-opus' });
@@ -2320,73 +2222,17 @@ export function ConfigForm() {
                                 </div>
                             ) : (
                                 <>
-                                    {/* Ricerca: con OpenRouter l'elenco è lunghissimo. */}
-                                    {activeProvider && !activeKeyMissing && (
-                                        <div className="relative">
-                                            <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-                                            <input
-                                                id="system_ai_model_search"
-                                                type="search"
-                                                value={modelSearch}
-                                                onChange={(e) => setModelSearch(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Escape') setModelSearch('');
-                                                }}
-                                                placeholder={t('admin.config.searchModelPlaceholder')}
-                                                className="w-full bg-white border border-slate-300 rounded-md p-2.5 pl-9 pr-9 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                            />
-                                            {modelSearch && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setModelSearch('')}
-                                                    title={t('admin.config.clearSearch')}
-                                                    aria-label={t('admin.config.clearSearch')}
-                                                    className="absolute right-2 top-2 rounded p-1 text-slate-400 hover:text-slate-700"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
-                                    <div className="relative">
-                                        <Cpu className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-                                        <select
-                                            id="system_ai_model"
-                                            value={!activeProvider ? '' : (activeKeyMissing ? '' : activeModel)}
-                                            onChange={(e) => handleModelChange(e.target.value)}
-                                            disabled={!activeProvider || activeKeyMissing}
-                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 pl-10 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-                                        >
-                                            {!activeProvider ? (
-                                                <option value="">{systemAIText(lang, 'modelEmpty')}</option>
-                                            ) : activeKeyMissing ? (
-                                                <option value="">{t('admin.config.modelNeedsKey')}</option>
-                                            ) : filteredModelOptions.length === 0 ? (
-                                                <option value="">{t('admin.config.noModelsFound', { query: modelSearch.trim() })}</option>
-                                            ) : (
-                                                filteredModelOptions.map((model) => (
-                                                    <option key={model} value={model}>{model}</option>
-                                                ))
-                                            )}
-                                        </select>
-                                    </div>
-                                    {activeProvider && !activeKeyMissing && (
-                                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-                                            <span>{t('admin.config.modelsFiltered', { n: filteredModelOptions.length, total: modelOptions.length })}</span>
-                                            {modelSearch && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setModelSearch('')}
-                                                    className="text-indigo-600 hover:text-indigo-700"
-                                                >
-                                                    {t('admin.config.clearSearch')}
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
-                                    {activeProvider && !activeKeyMissing && filteredModelOptions.length === 0 && (
-                                        <p className="text-xs text-amber-600">{t('admin.config.noModelsFound', { query: modelSearch.trim() })}</p>
-                                    )}
+                                    <ModelSearchSelect
+                                        key={activeProvider}
+                                        id="system_ai_model"
+                                        models={modelOptions}
+                                        value={activeKeyMissing ? '' : activeModel}
+                                        onChange={handleModelChange}
+                                        disabled={!activeProvider || activeKeyMissing}
+                                        loading={modelsLoading}
+                                        emptyLabel={!activeProvider ? systemAIText(lang, 'modelEmpty') : activeKeyMissing ? t('admin.config.modelNeedsKey') : undefined}
+                                        labels={modelLabels}
+                                    />
                                     {activeProvider && activeKeyMissing ? (
                                         <p className="text-xs text-amber-600">{t('admin.config.modelNeedsKeyHint')}</p>
                                     ) : (
@@ -2398,7 +2244,7 @@ export function ConfigForm() {
                             )}
 
                             {/* Avvisi sul modello attivo: reasoning e fascia gratuita. */}
-                            {activeModel && isReasoningModel(activeModel) && (
+                            {activeModel && (
                                 <p className="flex items-start gap-1.5 text-xs text-violet-700">
                                     <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                                     <span>{t('admin.config.reasoningHint')}</span>
@@ -2446,9 +2292,10 @@ export function ConfigForm() {
                                             <button
                                                 type="button"
                                                 aria-pressed={selected}
+                                                disabled={activeKeyMissing}
                                                 onClick={() => handleModelChange(recommendation.id)}
                                                 className={cn(
-                                                    'h-full w-full rounded-lg border p-3 text-left transition-colors',
+                                                    'h-full w-full rounded-lg border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60',
                                                     selected
                                                         ? 'border-indigo-400 bg-indigo-50'
                                                         : 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/40',
@@ -2456,13 +2303,13 @@ export function ConfigForm() {
                                             >
                                                 <span className="flex flex-wrap items-center gap-2">
                                                     <span className="text-sm font-semibold text-slate-900">{recommendation.label}</span>
-                                                    <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide', MODEL_TAG_STYLES[recommendation.tag])}>
+                                                    <span className={cn('rounded-full px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide', MODEL_TAG_STYLES[recommendation.tag])}>
                                                         {t(MODEL_TAG_KEYS[recommendation.tag])}
                                                     </span>
                                                     {selected && <CheckCircle2 className="w-4 h-4 text-indigo-600" />}
                                                 </span>
-                                                <span className="mt-1 block break-all font-mono text-[11px] text-slate-500">{recommendation.id}</span>
-                                                <span className="mt-1 block text-xs text-slate-600">{recommendation.description}</span>
+                                                <span className="mt-1 block break-all font-mono text-xs text-slate-500">{recommendation.id}</span>
+                                                <span className="mt-1 block text-xs text-slate-600">{t('admin.config.modelAdvice.' + recommendation.tag)}</span>
                                             </button>
                                         </li>
                                     );

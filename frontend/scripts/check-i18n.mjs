@@ -172,6 +172,8 @@ const allowedVisibleAttributes = new Set([
     'concentrazione distrazione', 'es. normativa-scuola', 'es. Normativa scolastica',
     'marco', 'deepseek-v4-flash', 'auto', 'qsa-planning-next-step', 'dweck-mindset',
     'focus-c6', 'QR', 'https://...', 'https://',
+    // Esempio di ID modello nel placeholder del thread guard: tecnico, uguale in ogni lingua.
+    'es. qwen3.8:latest, mistral-large-latest, gpt-4o',
 ]);
 const localeSpecificFiles = new Set([
     'components/administration/QuestionnaireRunner.tsx',
