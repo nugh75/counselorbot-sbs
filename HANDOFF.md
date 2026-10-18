@@ -1,3 +1,33 @@
+# Handoff: Ricerca dei modelli nei preset e consigli sui budget token
+Data: 2026-10-18 | Branch: `feature/model-search-suggestions`
+
+Completato il lavoro recuperato da `feature/model-search-suggestions`, basato su
+`main` a `e05b8a77`. Corretto l'errore di sintassi lasciato nel primo commit.
+
+- Selettore ricercabile condiviso fra modello di sistema e Preset; il filtro non
+  cambia la selezione, non salva e mantiene gli ID personalizzati.
+- Preset: ricerca in creazione/modifica, ricarica, ID manuale, cambio provider
+  con azzeramento della selezione e risposte tardive ignorate; errori di salvataggio visibili.
+- Aiuti nelle sei lingue per 2000/4000 token, valori automatici, budget reasoning
+  separato e limiti del provider. Il limite del preset è distinto da Lunghezza
+  nelle chat guidate; nessuna modifica automatica dei preset esistenti.
+- Candidati OpenRouter verificati sul catalogo ufficiale e proposti solo se live;
+  consigli di confronto tradotti, senza affermazioni di qualità non misurata.
+- Documentazione e comandi di verifica: `docs/operations/model-search-token-guidance.md`.
+
+Verifiche: 596 unitari frontend, 14 browser, 72 backend superati; i18n, TypeScript,
+build e lint dei file modificati superati (tre warning già presenti).
+Lint globale: sette errori e 62 warning identici alla base; PR #351 separata.
+I test backend usano rete interna e Postgres sintetico in RAM, senza dati reali.
+Font effettivi in cache per build offline; Docker con tag di verifica separato.
+
+A causa di letture bloccate sul volume esterno, la verifica è in
+`/tmp/counselorbot-model-search-complete`; i file finali sono riportati nel worktree
+originario dopo il confronto con la copia iniziale per preservare modifiche concorrenti. I file estranei del checkout
+principale (`.herdr-web-ui/`, `chatgpt-connect.py`) sono intatti. I worktree
+storici già integrati non vengono rimossi. Le PR #349 e #351 restano lavori
+separati di baseline; verificarne l'esito nella relativa PR.
+
 # Handoff: Token headroom, calibrazione streaming e prevenzione fallback nelle chat guidate
 Data: 2026-10-18 | Branch: `fix/guided-chat-token-headroom` | Agente: `s6-token-headroom`
 

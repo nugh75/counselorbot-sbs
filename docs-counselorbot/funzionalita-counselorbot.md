@@ -1603,6 +1603,43 @@ o chiavi segrete. La configurazione grezza dei target di ripiego in formato JSON
 (`ai_fallback_targets`), il timeout per tentativo (`ai_timeout_seconds`) e la gestione
 del contesto risiedono in un dettaglio avanzato espandibile separato.
 
+La scelta del provider e del modello ha ora un corredo di aiuti. Accanto alla tendina
+dei modelli serviti dal provider (elenco live, con ricarica manuale) c'è un **campo di
+ricerca** che filtra per ID o per nome, utile dove l'elenco è lunghissimo (OpenRouter
+espone centinaia di voci): il contatore mostra «N di M modelli», una ✕ cancella la
+ricerca e, se il filtro non trova nulla, compare «nessun modello corrispondente». Sotto
+la tendina il pannello **Modelli consigliati per CounselorBot** propone, per il provider
+corrente, candidati presenti nel catalogo live (`RECOMMENDED_MODELS`) con etichetta di categoria
+(consigliato, alta qualità, veloce, gratuito, reasoning), un consiglio di confronto tradotto nelle sei lingue e la
+selezione con un click; i candidati assenti dal catalogo non sono proposti. Il selettore ha due modalità: **Scegli dall'elenco** (tendina)
+e **Inserisci ID manuale**, per usare un modello che il provider non espone nell'elenco
+(l'ID deve essere non vuoto e senza spazi; Invio o Salva lo applicano). Sul modello
+attivo compaiono gli avvisi contestuali: se supporta il reasoning, CounselorBot alloca
+da sé il budget di pensiero preservando il margine per la risposta; se è in fascia
+gratuita, resta soggetto ai limiti del provider. Un richiamo finale ricorda **dove si
+regolano le grandezze delle risposte** — breve (1000 token), media (2000 token), lunga
+(4000 token) — cioè dal selettore «Lunghezza» nelle impostazioni della conversazione
+(prima di iniziare) o dai tre puntini del menu della chat; i passaggi di profilo usano
+sempre il profilo esteso.
+
+La stessa ricerca è disponibile nella scheda **Preset**, sia durante la creazione
+sia durante la modifica. Filtrare o cancellare la ricerca non cambia il modello
+selezionato e non salva nulla: anche un ID salvato assente dal catalogo resta
+selezionato. Al cambio di provider il modello e il filtro del preset si azzerano;
+le risposte di elenchi precedenti vengono ignorate. Restano disponibili ricarica e
+inserimento manuale, anche quando il catalogo non risponde.
+
+L'editor dei preset spiega anche i **budget token**: come punto di partenza 2000
+per dialogo, 4000 per sintesi o tabelle, oppure vuoto per i valori automatici.
+Un tetto inferiore a 2000 mostra un consiglio contestuale; valori negativi, zero
+o frazionari non si salvano. Il budget di ragionamento è distinto e lasciare il
+campo vuoto mantiene il valore della famiglia. Il backend aggiunge il margine
+per la risposta visibile; costi, tempi e limiti di output/contesto del provider
+restano da considerare. Il limite del preset è usato dal benchmark e dalle chiamate
+che lo adottano: **nelle chat guidate decide Lunghezza**, mentre il preset del
+counselor determina modello, disattivazione del pensiero e budget di ragionamento.
+Nessun preset salvato viene corretto o aumentato automaticamente da questi aiuti.
+
 Il **budget mensile** e i **ripieghi** convivono: quando la spesa registrata
 raggiunge il limite, i modelli a pagamento si fermano e l’invio passa al primo
 ripiego configurato disponibile fra i provider locali o gratuiti (per esempio

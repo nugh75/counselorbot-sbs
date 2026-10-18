@@ -1,8 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, RefreshCw, List } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { ModelSearchSelect } from '@/components/admin/ModelSearchSelect';
+import { Callout } from '@/components/ui/Callout';
+import { validModelId } from '@/lib/model-search';
 
 const PROVIDERS = [
     'openai', 'anthropic', 'gemini', 'mistral', 'openrouter', 'omniroute',
@@ -51,6 +54,8 @@ export function PresetsPanel() {
     const [liveModels, setLiveModels] = useState<string[]>([]);
     const [modelsLoading, setModelsLoading] = useState(false);
     const [manualModel, setManualModel] = useState(false);
+    const modelRequest = useRef<AbortController | null>(null);
+    const [saveError, setSaveError] = useState(false);
 
     const fetchPresets = useCallback(async () => {
         setLoading(true);
@@ -69,28 +74,33 @@ export function PresetsPanel() {
     useEffect(() => { void fetchPresets(); }, [fetchPresets]);
 
     const fetchModels = useCallback(async (provider: string) => {
+        modelRequest.current?.abort();
+        const controller = new AbortController();
+        modelRequest.current = controller;
         setModelsLoading(true);
         try {
-            const res = await fetch(`/api/admin/models?provider=${encodeURIComponent(provider)}`);
+            const res = await fetch(`/api/admin/models?provider=${encodeURIComponent(provider)}`, { signal: controller.signal });
+            if (controller.signal.aborted) return;
             if (res.ok) {
                 const data = await res.json();
-                setLiveModels(Array.isArray(data?.models) ? data.models : []);
+                if (!controller.signal.aborted) setLiveModels(Array.isArray(data?.models) ? data.models : []);
             } else {
                 setLiveModels([]);
             }
         } catch {
-            setLiveModels([]);
+            if (!controller.signal.aborted) setLiveModels([]);
         } finally {
-            setModelsLoading(false);
+            if (!controller.signal.aborted) setModelsLoading(false);
         }
     }, []);
 
     useEffect(() => {
         if (editingId === null) return;
         void fetchModels(form.provider);
+        return () => modelRequest.current?.abort();
     }, [editingId, form.provider, fetchModels]);
 
-    const startNew = () => { setForm(EMPTY_FORM); setManualModel(false); setEditingId('new'); };
+    const startNew = () => { setForm(EMPTY_FORM); setLiveModels([]); setSaveError(false); setManualModel(false); setEditingId('new'); };
     const startEdit = (p: Preset) => {
         setForm({
             name: p.name, provider: p.provider, model: p.model,
@@ -101,12 +111,15 @@ export function PresetsPanel() {
             notes: p.notes || '', is_active: p.is_active,
         });
         setManualModel(false);
+        setLiveModels([]);
+        setSaveError(false);
         setEditingId(p.id);
     };
     const cancel = () => { setEditingId(null); setForm(EMPTY_FORM); setManualModel(false); };
 
     const save = async () => {
-        if (!form.name.trim() || !form.model.trim()) return;
+        if (!form.name.trim() || !validModelId(form.model) || invalidTokens) return;
+        setSaveError(false);
         setSaving(true);
         try {
             const body = {
@@ -128,6 +141,7 @@ export function PresetsPanel() {
             await fetchPresets();
         } catch (e) {
             console.error('Failed to save preset', e);
+            setSaveError(true);
         } finally {
             setSaving(false);
         }
@@ -145,6 +159,7 @@ export function PresetsPanel() {
     };
 
     const inputCls = 'h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400';
+    const invalidTokens = [form.max_tokens, form.reasoning_budget].some(value => value.trim() !== '' && (!Number.isSafeInteger(Number(value)) || Number(value) <= 0));
 
     const renderForm = () => (
         <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
@@ -152,45 +167,40 @@ export function PresetsPanel() {
                 <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.presets.name')}
                     <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.presets.provider')}
-                    <select className={inputCls} value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })}>
+                <div className="flex flex-col text-xs font-medium text-slate-500">
+                    <label htmlFor="preset_provider">{t('admin.presets.provider')}</label>
+                    <select id="preset_provider" className={inputCls} value={form.provider} onChange={(e) => { setForm({ ...form, provider: e.target.value, model: '' }); setLiveModels([]); setManualModel(false); }}>
                         {PROVIDERS.map((p) => <option key={p} value={p}>{p}</option>)}
                     </select>
-                </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.presets.model')}
-                    {(() => {
-                        const options = form.model && !liveModels.includes(form.model)
-                            ? [form.model, ...liveModels]
-                            : liveModels;
-                        const useSelect = !manualModel && options.length > 0;
-                        return (
-                            <div className="flex gap-1">
-                                {useSelect ? (
-                                    <select className={inputCls} value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })}>
-                                        {!form.model && <option value="">{modelsLoading ? '…' : '—'}</option>}
-                                        {options.map((m) => <option key={m} value={m}>{m}</option>)}
-                                    </select>
-                                ) : (
-                                    <input className={inputCls} value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} placeholder="deepseek-v4-flash" />
-                                )}
-                                <button type="button" title={modelsLoading ? '…' : t('admin.presets.reloadModels')} onClick={() => void fetchModels(form.provider)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
-                                    <RefreshCw className={`h-4 w-4 ${modelsLoading ? 'animate-spin' : ''}`} />
-                                </button>
-                                <button type="button" title={manualModel ? t('admin.presets.useList') : t('admin.presets.useManual')} onClick={() => setManualModel((v) => !v)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
-                                    {manualModel ? <List className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
-                                </button>
-                            </div>
-                        );
-                    })()}
-                </label>
+                </div>
+                <div className="min-w-0 text-xs font-medium text-slate-500 sm:col-span-2 lg:col-span-2">
+                    <label htmlFor="preset_model">{t('admin.presets.model')}</label>
+                    <div className="flex items-start gap-1">
+                        <div className="min-w-0 flex-1">
+                            {manualModel ? (
+                                <input id="preset_model" className={inputCls} value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} placeholder={t('admin.config.customModelPlaceholder')} aria-invalid={!!form.model && !validModelId(form.model)} />
+                            ) : (
+                                <ModelSearchSelect key={`${editingId}:${form.provider}`} id="preset_model" models={liveModels} value={form.model} loading={modelsLoading} onChange={model => setForm({ ...form, model })} />
+                            )}
+                        </div>
+                        <button type="button" aria-label={t('admin.presets.reloadModels')} title={t('admin.presets.reloadModels')} onClick={() => void fetchModels(form.provider)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+                            <RefreshCw className={`h-4 w-4 ${modelsLoading ? 'animate-spin' : ''}`} />
+                        </button>
+                        <button type="button" aria-label={manualModel ? t('admin.presets.useList') : t('admin.presets.useManual')} title={manualModel ? t('admin.presets.useList') : t('admin.presets.useManual')} onClick={() => setManualModel((v) => !v)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+                            {manualModel ? <List className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+                        </button>
+                    </div>
+                    {!modelsLoading && liveModels.length === 0 && <p className="mt-1 text-xs font-normal">{t('admin.config.providerUnreachable')}</p>}
+                    {!!form.model && !validModelId(form.model) && <p role="alert" className="mt-1 text-xs text-red-700">{t('admin.config.customModelInvalid')}</p>}
+                </div>
                 <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.presets.temperature')}
                     <input className={inputCls} type="number" step="0.1" value={form.temperature} onChange={(e) => setForm({ ...form, temperature: e.target.value })} />
                 </label>
                 <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.presets.maxTokens')}
-                    <input className={inputCls} type="number" value={form.max_tokens} onChange={(e) => setForm({ ...form, max_tokens: e.target.value })} />
+                    <input className={inputCls} type="number" min="1" step="1" value={form.max_tokens} onChange={(e) => setForm({ ...form, max_tokens: e.target.value })} aria-describedby="preset_token_help" />
                 </label>
                 <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.presets.reasoningBudget')}
-                    <input className={inputCls} type="number" value={form.reasoning_budget} onChange={(e) => setForm({ ...form, reasoning_budget: e.target.value })} placeholder="auto" />
+                    <input className={inputCls} type="number" min="1" step="1" value={form.reasoning_budget} onChange={(e) => setForm({ ...form, reasoning_budget: e.target.value })} placeholder="auto" disabled={form.disable_thinking} aria-describedby="preset_token_help" />
                 </label>
                 <label className="flex flex-col text-xs font-medium text-slate-500 sm:col-span-2 lg:col-span-2">{t('admin.presets.notes')}
                     <input className={inputCls} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
@@ -204,8 +214,18 @@ export function PresetsPanel() {
                     {t('admin.presets.active')}
                 </label>
             </div>
+            <div id="preset_token_help" className="mt-3 space-y-2">
+                <Callout variant="info">
+                    <p>{t('admin.presets.tokenHelp')}</p>
+                    <p className="mt-2">{t('admin.presets.reasoningHelp')}</p>
+                    <p className="mt-2">{t('admin.config.lengthProfilesHint')}</p>
+                </Callout>
+                {Number(form.max_tokens) > 0 && Number(form.max_tokens) < 2000 && <Callout variant="warning">{t('admin.presets.lowTokenWarning')}</Callout>}
+                {invalidTokens && <p role="alert" className="text-sm text-red-700">{t('admin.presets.invalidTokens')}</p>}
+                {saveError && <p role="alert" className="text-sm text-red-700">{t('admin.config.saveError')}</p>}
+            </div>
             <div className="mt-3 flex gap-2">
-                <button type="button" disabled={saving} onClick={() => void save()} className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                <button type="button" disabled={saving || !form.name.trim() || !validModelId(form.model) || invalidTokens} onClick={() => void save()} className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
                     <Check className="h-4 w-4" />{t('admin.presets.save')}
                 </button>
                 <button type="button" onClick={cancel} className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 hover:bg-slate-50">
@@ -263,8 +283,8 @@ export function PresetsPanel() {
                                     <td className="px-3 py-2">{p.is_active ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-slate-500" />}</td>
                                     <td className="px-3 py-2">
                                         <div className="flex justify-end gap-1">
-                                            <button type="button" onClick={() => startEdit(p)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil className="h-4 w-4" /></button>
-                                            <button type="button" onClick={() => void remove(p.id)} className="rounded p-1.5 text-red-500 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
+                                            <button type="button" aria-label={`${t('admin.presets.edit')} ${p.name}`} onClick={() => startEdit(p)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil className="h-4 w-4" /></button>
+                                            <button type="button" aria-label={`${t('admin.presets.delete')} ${p.name}`} onClick={() => void remove(p.id)} className="rounded p-1.5 text-red-500 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
                                         </div>
                                     </td>
                                 </tr>
