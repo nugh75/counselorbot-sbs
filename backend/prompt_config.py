@@ -564,7 +564,7 @@ FACILITATION_CONTRACT_ENABLED_KEY = "facilitation_contract_enabled"
 SYSTEM_PROMPT_DEFAULTS: Dict[str, str] = {
     item["key"]: item["default"] for item in SYSTEM_PROMPT_DEFINITIONS
 }
-SYSTEM_PROMPT_DEFAULTS[FACILITATION_CONTRACT_ENABLED_KEY] = "false"
+SYSTEM_PROMPT_DEFAULTS[FACILITATION_CONTRACT_ENABLED_KEY] = "true"
 
 
 # --- Chatbot informativo sul sito competenzestrategiche.it (RAG) ---

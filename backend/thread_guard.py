@@ -35,8 +35,9 @@ MAX_CHECK_NOTES = 2
 MAX_NOTE_CHARS = 140
 MAX_BLOCK_CHARS = 400
 # Severest first: an invented recommendation reaches the student's booklet, a
-# lost thread only costs a turn, a misplaced question costs less still.
-SEVERITY = ("advice_grounded", "on_thread", "question_fit")
+# forced interpretation denies student autonomy, a lost thread only costs a turn,
+# a misplaced question costs less still.
+SEVERITY = ("advice_grounded", "interpretation_open", "on_thread", "question_fit")
 
 _FENCE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
 _OBJECT = re.compile(r"\{.*\}", re.DOTALL)
@@ -90,9 +91,12 @@ class Verdict(BaseModel):
     on_thread: Check
     question_fit: Check
     advice_grounded: Check
+    interpretation_open: Check = Check(ok=True)
     # Gli indici delle domande aperte a cui lo studente ha risposto parlando.
     # Assente nei verdetti dei modelli che non lo conoscono: lista vuota.
     answered: list[int] = []
+    # Gli esiti delle ipotesi interpretative identificate nel turno.
+    hypotheses: list[dict] = []
 
 
 def parse(raw: str | None) -> Verdict | None:
@@ -183,11 +187,14 @@ def turn_hash(user_text: str, bot_text: str) -> str:
 
 
 def store(db, *, session_id: str, username: str, turn: str, verdict: Verdict | None,
-          open_questions: list[dict] | None = None) -> list[str]:
+          open_questions: list[dict] | None = None,
+          open_hypotheses: list[dict] | None = None) -> list[str]:
     """Write the verdict and return the lines that will actually be injected."""
     lines = notes(verdict)
     _close_answered(db, session_id=session_id, username=username,
                     verdict=verdict, open_questions=open_questions or [])
+    _close_hypotheses(db, session_id=session_id, username=username,
+                      verdict=verdict, open_hypotheses=open_hypotheses or [])
     previous = _latest_row(db, session_id)
     if previous is not None:
         already = {_key(line) for line in _stored_notes(previous)}
@@ -273,12 +280,13 @@ def build_input(
     step_id: str | None, step_label: str, step_prompt: str = "", language: str = "it",
     advice_ids: list[str] | None = None, candidate_ids: list[str] | None = None,
     open_questions: list[dict] | None = None,
+    open_hypotheses: list[dict] | None = None,
 ) -> str:
     """What the judge sees. Deliberately small.
 
     A local model given the whole session answers about the session; given the
     turn, its mandate and what the session already holds, it answers about the
-    turn. The four sections are the four things a verdict needs and nothing else.
+    turn. The sections are the things a verdict needs and nothing else.
     """
     del step_prompt  # named by the signature for its callers, deliberately unused
     sections = [
@@ -289,6 +297,7 @@ def build_input(
         _ledger(db, session_id=session_id, username=username, step_id=step_id),
         _advice(advice_ids or [], candidate_ids or []),
         _open_questions_section(open_questions or []),
+        _open_hypotheses_section(open_hypotheses or []),
     ]
     return "\n\n".join(section for section in sections if section)[:MAX_INPUT_CHARS]
 
@@ -423,7 +432,9 @@ Reply with one JSON object and nothing else:
 {"on_thread": {"ok": true, "note": null},
  "question_fit": {"ok": true, "note": null},
  "advice_grounded": {"ok": true, "note": null},
- "answered": []}
+ "interpretation_open": {"ok": true, "note": null},
+ "answered": [],
+ "hypotheses": []}
 
 on_thread - false only if the counselor lost the thread: it neither took up what
 the student raised nor tied it back to the mandate.
@@ -431,9 +442,16 @@ question_fit - false only if the question the counselor asked belongs to another
 step or has no bearing on the mandate.
 advice_grounded - false only if the turn gave advice that follows from nothing the
 student said. A turn that gives no advice is ok: true.
+interpretation_open - false only if the counselor stated a psychological interpretation as an
+established fact, attributed emotions or intentions the student did not express, or repeated an
+interpretation the student had already rejected. An open hypothesis or reading offered for reflection is ok: true.
 answered - the numbers of the OPEN QUESTIONS the student answered in substance in this
 exchange, even without answering them as questions. Empty when the section is absent, when
 nobody answered, or whenever you are unsure: a question closed by mistake is lost.
+hypotheses - list of objects {"index": N, "outcome": "confirmed" | "corrected" | "rejected"} for the
+OPEN HYPOTHESES addressed in this exchange: confirmed (student explicitly agreed or validated the reading),
+corrected (student qualified or refined it in their own words), or rejected (student disagreed or pushed back).
+Empty when no hypothesis was addressed or whenever you are unsure: never guess.
 
 The mandate frames the conversation; it is not a checklist. Answering what the
 student explicitly asked for is never off mandate: a turn that does so is on_thread
@@ -483,9 +501,10 @@ def evaluate(
     if target is None:
         return []
     provider, model, _no_think = target
-    # Letta una volta: gli indici del verdetto valgono su questa lista, e fra
+    # Lette una volta: gli indici del verdetto valgono su queste liste, e fra
     # l'input e la chiusura c'e' di mezzo una chiamata a modello.
     asked = open_questions(db, session_id=session_id, username=username, step_id=step_id)
+    hypos = open_hypotheses(db, session_id=session_id, username=username, step_id=step_id)
     try:
         raw = call(
             provider=provider, model=model,
@@ -495,6 +514,7 @@ def evaluate(
                 step_label=step_label, step_prompt=step_prompt, language=language,
                 advice_ids=advice_ids, candidate_ids=candidate_ids,
                 open_questions=asked,
+                open_hypotheses=hypos,
             ),
             system_prompt=SYSTEM_PROMPT,
         )
@@ -506,7 +526,7 @@ def evaluate(
         logger.info("Thread guard returned no readable verdict (%s/%s)", provider, model)
         return []
     return store(db, session_id=session_id, username=username, turn=turn, verdict=verdict,
-                 open_questions=asked)
+                 open_questions=asked, open_hypotheses=hypos)
 
 
 def schedule(**kwargs) -> None:
@@ -605,3 +625,83 @@ def _close_answered(db, *, session_id: str, username: str, verdict: Verdict | No
             )
         except ValueError:  # una riga che non e' una domanda non si chiude
             logger.info("Thread guard could not close %s", slug)
+
+
+# --- le ipotesi che il giudice puo' classificare (confirmed / corrected / rejected) ---
+MAX_JUDGED_HYPOTHESES = 2
+
+
+def open_hypotheses(db, *, session_id: str, username: str, step_id: str | None) -> list[dict]:
+    """Le ipotesi aperte o in attesa di esito che il giudice puo' valutare."""
+    found = []
+    for row in session_ledger.hypothesis_rows(db, session_id=session_id, username=username):
+        payload = row.payload or {}
+        # Se chiusa direttamente dallo studente o già valutata definitivamente, non riproporre
+        if payload.get("closed_by") == "student":
+            continue
+        status = payload.get("status")
+        if status in ("confirmed", "corrected", "rejected", "stale"):
+            continue
+        offered_in = (payload.get("step_id") or "").strip()
+        if step_id and offered_in and offered_in != step_id:
+            continue
+        found.append({
+            "slug": row.slug,
+            "text": payload.get("name", ""),
+            "step_order": payload.get("step_order"),
+        })
+    return found[-MAX_JUDGED_HYPOTHESES:]
+
+
+def _open_hypotheses_section(items: list[dict]) -> str:
+    if not items:
+        return ""
+    lines = ["OPEN HYPOTHESES (interpretive readings offered by the counselor)"]
+    for index, item in enumerate(items, start=1):
+        step = f"(step {item['step_order']}) " if item.get("step_order") is not None else ""
+        lines.append(f'{index}. {step}"{_safe(item.get("text", ""))}"')
+    return "\n".join(lines)
+
+
+def _close_hypotheses(db, *, session_id: str, username: str, verdict: Verdict | None,
+                      open_hypotheses: list[dict]) -> None:
+    """Aggiorna l'esito delle ipotesi valutate dal guardiano nel turno."""
+    if verdict is None or not open_hypotheses or not verdict.hypotheses:
+        return
+    for item in verdict.hypotheses:
+        if not isinstance(item, dict):
+            continue
+        index = item.get("index")
+        outcome = (item.get("outcome") or "").strip().lower()
+        if not isinstance(index, int) or not 1 <= index <= len(open_hypotheses):
+            continue
+        if outcome not in ("confirmed", "corrected", "rejected"):
+            continue
+        slug = open_hypotheses[index - 1].get("slug")
+        if not slug:
+            continue
+        # Se lo studente ha chiuso o aggiornato direttamente l'ipotesi, il guardiano non sovrascrive mai
+        row = (
+            db.query(models.RecommendationHistory)
+            .filter(
+                models.RecommendationHistory.recommendation_type == "advice",
+                models.RecommendationHistory.session_id == session_id,
+                models.RecommendationHistory.username == username,
+                models.RecommendationHistory.slug == slug,
+            )
+            .first()
+        )
+        if not row:
+            continue
+        payload = row.payload or {}
+        if payload.get("closed_by") == "student":
+            logger.info("Thread guard skipping hypothesis %s closed by student", slug)
+            continue
+        try:
+            recommendation_service.set_state(
+                db, session_id=session_id, username=username, recommendation_type="advice",
+                slug=slug, status=outcome, closed_by="conversation",
+            )
+        except ValueError:
+            logger.info("Thread guard could not update hypothesis %s", slug)
+

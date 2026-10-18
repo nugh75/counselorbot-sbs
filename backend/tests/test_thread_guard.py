@@ -6,12 +6,13 @@ import pytest
 from backend import thread_guard
 
 
-def _raw(*, on_thread=True, question_fit=True, advice=True,
-         on_thread_note=None, question_note=None, advice_note=None) -> str:
+def _raw(*, on_thread=True, question_fit=True, advice=True, interpretation_open=True,
+         on_thread_note=None, question_note=None, advice_note=None, interpretation_note=None) -> str:
     return json.dumps({
         "on_thread": {"ok": on_thread, "note": on_thread_note},
         "question_fit": {"ok": question_fit, "note": question_note},
         "advice_grounded": {"ok": advice, "note": advice_note},
+        "interpretation_open": {"ok": interpretation_open, "note": interpretation_note},
     })
 
 
@@ -37,6 +38,18 @@ def test_only_the_two_most_severe_survive():
     ))
     lines = thread_guard.notes(verdict)
     assert lines == ["Advice ungrounded.", "Left the subject the student raised."]
+
+
+def test_interpretation_open_severity():
+    verdict = thread_guard.parse(_raw(
+        on_thread=False, on_thread_note="Left the subject.",
+        question_fit=False, question_note="Misplaced question.",
+        advice=False, advice_note="Advice ungrounded.",
+        interpretation_open=False, interpretation_note="Forced an interpretation on the student.",
+    ))
+    lines = thread_guard.notes(verdict)
+    # Most severe two: advice_grounded and interpretation_open
+    assert lines == ["Advice ungrounded.", "Forced an interpretation on the student."]
 
 
 def test_the_model_judges_named_questions_and_never_a_general_one():
@@ -585,3 +598,73 @@ def test_only_the_questions_of_this_step_are_offered_for_closing(db):
     asked = thread_guard.open_questions(db, session_id=SESSION, username=STUDENT,
                                         step_id='cognitive')
     assert [item['slug'] for item in asked] == ['q-here']
+
+
+# --- il giudice valuta l'esito delle ipotesi (confirmed / corrected / rejected) ---
+def _hypothesis_row(db, slug, text, *, step_id='cognitive', step_order=1, turn=1,
+                    status='proposed', closed_by=None):
+    recommendation_service.record(
+        db, session_id=SESSION, username=STUDENT, recommendation_type='advice',
+        payloads=[{'slug': slug, 'name': text, 'kind': 'hypothesis',
+                   'step_id': step_id, 'step_order': step_order}], turn_index=turn)
+    if status != 'proposed' or closed_by:
+        recommendation_service.set_state(
+            db, session_id=SESSION, username=STUDENT, recommendation_type='advice',
+            slug=slug, status=status, closed_by=closed_by,
+        )
+
+
+def _verdict_with_hypos(hypotheses=None):
+    payload = ('{"on_thread": {"ok": true, "note": null},'
+               ' "question_fit": {"ok": true, "note": null},'
+               ' "advice_grounded": {"ok": true, "note": null},'
+               ' "interpretation_open": {"ok": true, "note": null}')
+    if hypotheses is not None:
+        payload += f', "hypotheses": {hypotheses}'
+    return thread_guard.parse(payload + '}')
+
+
+def test_the_model_judges_interpretation_open_and_hypotheses():
+    assert '"interpretation_open": {"ok": true, "note": null}' in thread_guard.SYSTEM_PROMPT
+    assert '"hypotheses": []' in thread_guard.SYSTEM_PROMPT
+    assert thread_guard.Verdict.model_fields["interpretation_open"].default == thread_guard.Check(ok=True)
+    assert thread_guard.Verdict.model_fields["hypotheses"].default == []
+
+
+def test_the_judge_updates_hypothesis_outcome(db):
+    _hypothesis_row(db, 'h-1', 'Forse tendi a rimandare l inizio')
+    verdict = _verdict_with_hypos('[{"index": 1, "outcome": "confirmed"}]')
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn='t', verdict=verdict,
+                       open_hypotheses=[{'slug': 'h-1', 'text': 'Forse tendi a rimandare', 'step_order': 1}])
+    item = _advice(db)
+    assert item['status'] == 'confirmed'
+    assert item['outcome'] == 'confirmed'
+    assert item['closed_by'] == 'conversation'
+
+
+def test_the_judge_does_not_overwrite_student_closed_hypothesis(db):
+    _hypothesis_row(db, 'h-1', 'Forse tendi a rimandare l inizio', status='rejected', closed_by='student')
+    verdict = _verdict_with_hypos('[{"index": 1, "outcome": "confirmed"}]')
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn='t', verdict=verdict,
+                       open_hypotheses=[{'slug': 'h-1', 'text': 'Forse tendi a rimandare', 'step_order': 1}])
+    item = _advice(db)
+    # Lo studente l'aveva rifiutata: il guardiano NON deve sovrascrivere
+    assert item['status'] == 'rejected'
+    assert item['closed_by'] == 'student'
+
+
+def test_open_hypotheses_filtering(db):
+    _hypothesis_row(db, 'h-here', 'Ipotesi qui?', step_id='cognitive')
+    _hypothesis_row(db, 'h-elsewhere', 'Ipotesi altrove?', step_id='affective', step_order=2)
+    _hypothesis_row(db, 'h-student', 'Ipotesi studente?', step_id='cognitive', status='confirmed', closed_by='student')
+    hypos = thread_guard.open_hypotheses(db, session_id=SESSION, username=STUDENT, step_id='cognitive')
+    assert [item['slug'] for item in hypos] == ['h-here']
+
+
+def test_open_hypotheses_section_rendering():
+    rendered = thread_guard._open_hypotheses_section([
+        {'slug': 'h-1', 'text': 'Forse tendi a rimandare l inizio', 'step_order': 2},
+    ])
+    assert '1. (step 2) "Forse tendi a rimandare l inizio"' in rendered
+    assert thread_guard._open_hypotheses_section([]) == ''
+

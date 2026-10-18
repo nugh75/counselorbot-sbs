@@ -146,7 +146,7 @@ def test_synthesis_stage_distinguishes_confirmed_corrected_and_rejected_hypothes
 
 
 def test_prepare_chat_turn_respects_facilitation_contract_flag(runtime):
-    """Integration test: prepare_chat_turn reads facilitation_contract_enabled from configs."""
+    """Integration test: prepare_chat_turn reads facilitation_contract_enabled from configs with default true."""
     req = ChatRequest(
         message="Voglio capire meglio il mio metodo di studio",
         mode="qsa-cognitive",
@@ -156,19 +156,43 @@ def test_prepare_chat_turn_respects_facilitation_contract_flag(runtime):
         scores_context="C1: 5/9\nC2: 6/9",
     )
 
-    # 1. Flag disabled (default)
-    prep_off = prepare_chat_turn(
+    # 1. Default (now enabled as true)
+    prep_default = prepare_chat_turn(
         runtime.db, runtime.ai, req, "synthetic-session", {"username": "test-user"}
+    )
+    assert FACILITATION_SENTINEL in prep_default.components["turn_contract"]
+    assert SELF_QUESTIONING_SENTINEL not in prep_default.components["turn_contract"]
+    assert "metacognitive facilitator" in prep_default.components["turn_contract"].lower()
+    assert "choices, actions and consequences" in prep_default.components["turn_contract"].lower()
+
+    # 2. Flag explicitly disabled via config_overrides
+    prep_off = prepare_chat_turn(
+        runtime.db, runtime.ai, req, "synthetic-session", {"username": "test-user"},
+        config_overrides={"facilitation_contract_enabled": "false"},
     )
     assert SELF_QUESTIONING_SENTINEL in prep_off.components["turn_contract"]
     assert FACILITATION_SENTINEL not in prep_off.components["turn_contract"]
 
-    # 2. Flag enabled via config_overrides
-    prep_on = prepare_chat_turn(
-        runtime.db, runtime.ai, req, "synthetic-session", {"username": "test-user"},
-        config_overrides={"facilitation_contract_enabled": "true"},
-    )
-    assert FACILITATION_SENTINEL in prep_on.components["turn_contract"]
-    assert SELF_QUESTIONING_SENTINEL not in prep_on.components["turn_contract"]
-    assert "metacognitive facilitator" in prep_on.components["turn_contract"].lower()
-    assert "choices, actions and consequences" in prep_on.components["turn_contract"].lower()
+
+def test_journey_context_preserves_hypotheses_rule():
+    """journey_context includes the hypothesis preservation directive when preserve_hypotheses is True."""
+    from backend.journey_context import journey_context
+
+    captured_prompts = []
+
+    class DummyAI:
+        def get_response(self, message, system_prompt, *args, **kwargs):
+            captured_prompts.append(system_prompt)
+            return "Short note."
+
+    dummy_ai = DummyAI()
+    long_messages = [
+        {"role": "student", "text": "parole lunghe " * 100},
+        {"role": "counselor", "text": "risposte lunghe " * 100},
+    ] * 5
+
+    journey_context(long_messages, "it", ai=dummy_ai, max_chars=300, preserve_hypotheses=True)
+    assert captured_prompts, "Reduction prompt should have been called"
+    assert any("Preserve the counselor's readings and the student's response to each" in p for p in captured_prompts)
+    assert any("Never present a rejected reading as agreed." in p for p in captured_prompts)
+
