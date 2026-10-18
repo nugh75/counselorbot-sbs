@@ -57,7 +57,18 @@ export function HeaderMenu({ links, current, pathname, resumeEntries, authentica
     const renderLink = (link: HeaderLink) => {
         const Icon = icons[link.key];
         return (
-            <Link key={link.key} href={link.href} className={ROW} aria-current={link.key === current ? 'page' : undefined} onClick={closeToTrigger}>
+            <Link
+                key={link.key}
+                href={link.href}
+                className={ROW}
+                aria-current={link.key === current ? 'page' : undefined}
+                onClick={() => {
+                    closeToTrigger();
+                    if (link.key === 'instruments' && pathname === '/') {
+                        window.dispatchEvent(new CustomEvent('cb-navigate-home'));
+                    }
+                }}
+            >
                 <Icon className="h-4 w-4 shrink-0" />
                 <span className="truncate">{t(link.labelKey)}</span>
             </Link>

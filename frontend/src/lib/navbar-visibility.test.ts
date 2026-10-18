@@ -20,6 +20,7 @@ function navbarFlags({ identity, access }: Profile) {
     const nav = headerNavigation({ identity, access, accessLoading: false });
     const has = (key: string) => nav.links.some((link: { key: string }) => link.key === key);
     return {
+        instruments: has('instruments'),
         bussola: has('orientation'),
         assistant: has('assistant'),
         student: has('profile'),
@@ -39,6 +40,7 @@ for (const [key, profile] of Object.entries(PROFILES)) {
 
 test('a failed access read shows every tool: the server stays the guard', () => {
     const flags = navbarFlags({ ...PROFILES.S1, access: null });
+    assert.equal(flags.instruments, true);
     assert.equal(flags.bussola, true);
     assert.equal(flags.assistant, true);
     assert.deepEqual(flags.view, []);

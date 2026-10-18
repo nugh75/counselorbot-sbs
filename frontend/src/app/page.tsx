@@ -223,6 +223,21 @@ export default function Home() {
         return () => window.removeEventListener('popstate', onPopState);
     }, []);
 
+    useEffect(() => {
+        const onNavigateHome = () => {
+            setSelectedQuestionnaire(null);
+            setScores(null);
+            setScoreOrigin('new');
+            setPdfToken(undefined);
+            setSessionId('');
+            setExperience(null);
+            setStep('base');
+            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
+        };
+        window.addEventListener('cb-navigate-home', onNavigateHome);
+        return () => window.removeEventListener('cb-navigate-home', onNavigateHome);
+    }, []);
+
     // Sull'intro nessuno strumento è ancora in corso: il chip nell'header non
     // deve mostrarne uno rimasto da un percorso precedente. Il counselor invece
     // resta scelto: è la preferenza che evita di ripetere la fase ogni volta.

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Bot, Compass, GraduationCap, Settings, User, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, Compass, GraduationCap, LayoutGrid, Settings, User, type LucideIcon } from 'lucide-react';
 import { ClassViewSwitcher } from './ClassViewSwitcher';
 import { HeaderAccount, SignInLink } from './HeaderAccount';
 import { HeaderAreas } from './HeaderAreas';
@@ -21,6 +21,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { useResumeEntries } from '@/lib/use-resume-entries';
 
 const LINK_ICONS: Record<HeaderLinkKey, LucideIcon> = {
+    instruments: LayoutGrid,
     orientation: Compass,
     assistant: Bot,
     guide: BookOpen,
@@ -61,7 +62,17 @@ export function Header() {
             {nav.links.filter(link => link.group === 'support').map((link) => {
                 const Icon = LINK_ICONS[link.key];
                 return (
-                    <Link key={link.key} href={link.href} className="console-topbar-action shrink-0" aria-current={link.key === current ? 'page' : undefined}>
+                    <Link
+                        key={link.key}
+                        href={link.href}
+                        className="console-topbar-action shrink-0"
+                        aria-current={link.key === current ? 'page' : undefined}
+                        onClick={() => {
+                            if (link.key === 'instruments' && pathname === '/') {
+                                window.dispatchEvent(new CustomEvent('cb-navigate-home'));
+                            }
+                        }}
+                    >
                         <Icon className="h-4 w-4 shrink-0" />
                         <span className="whitespace-nowrap">{t(link.labelKey)}</span>
                     </Link>
