@@ -16,9 +16,27 @@ DEFAULT_MODEL = "qwen3.8:latest"
 
 def seed_thread_guard(db, models) -> bool:
     """True when this run wrote something."""
+    wrote = False
+    if not db.query(models.Config).filter(models.Config.key == ENABLED_KEY).first():
+        # Off until someone has read a few verdicts and found them worth injecting.
+        db.add(models.Config(key=ENABLED_KEY, value="false",
+                             description="Inject the thread guard's verdict into the next turn."))
+        wrote = True
+
     existing = db.query(models.Config).filter(models.Config.key == PRESET_KEY).first()
     if existing is not None and (existing.value or "").strip():
-        return False
+        if wrote:
+            db.commit()
+        return wrote
+
+    from .thread_guard import is_provider_active
+
+    # Se Ollama non e' attivo (come sull'installazione portatile), nessun preset rotto.
+    if not is_provider_active(db, "ollama"):
+        if wrote:
+            db.commit()
+        return wrote
+
     preset = (
         db.query(models.ModelPreset)
         .filter(models.ModelPreset.provider == "ollama",
@@ -40,9 +58,5 @@ def seed_thread_guard(db, models) -> bool:
                              description="Preset that judges each turn for the thread guard."))
     else:
         existing.value = str(preset.id)
-    if not db.query(models.Config).filter(models.Config.key == ENABLED_KEY).first():
-        # Off until someone has read a few verdicts and found them worth injecting.
-        db.add(models.Config(key=ENABLED_KEY, value="false",
-                             description="Inject the thread guard's verdict into the next turn."))
     db.commit()
     return True

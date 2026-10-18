@@ -24,6 +24,37 @@ Modifiche:
    - Verificato lo stato con `check-platform-guidance.py`.
    - NOTA OPERATIVA POST-DEPLOY: Cambiando i default di fabbrica nel codice, i valori già salvati nel database non si aggiornano automaticamente. Dopo il deploy in produzione/staging è necessario eseguire l'operazione amministrativa «Allinea prompt di fabbrica» dall'interfaccia amministrativa per aggiornare le istruzioni e gli step memorizzati nel DB.
 
+# Handoff s1: selezione provider/modello guardiano del filo e disaccoppiamento da Ollama (F1)
+Data: 2026-10-18 | Branch: `fix/thread-guard-provider-selection` | Agente: `s1-guard-provider`, Gemini 3.8 Flash (High)
+Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Problema:
+Finding BLOCCANTE-2 (bug diario 9e2cb842). Nel DB `thread_guard_enabled=false` e preset di fabbrica id=1 su Ollama qwen3.8 (`backend/thread_guard_seed.py`), ma sulle installazioni portatili o prive di Ollama locale, il guardiano non poteva girare o puntava a un preset rotto. L'amministratore non aveva modo da UI di scegliere provider e modello tra quelli effettivamente attivi con chiavi configurate o raggiungibili.
+
+Modifiche:
+- `backend/thread_guard.py`:
+  - `is_provider_active`: verifica che il provider abbia chiave configurata (openai, anthropic, google, mistral, deepseek, openrouter, groq) o sia un servizio locale raggiungibile (ollama).
+  - `active_providers`: restituisce l'elenco dei provider attivi.
+  - `get_guard_configuration`: recupera stato di abilitazione, provider, modello e se il provider è attualmente attivo.
+  - `save_guard_configuration`: convalida che il provider sia attivo prima di salvare, crea o riusa un `ModelPreset` con `disable_thinking=True` e aggiorna le configurazioni `thread_guard_enabled` e `thread_guard_preset_id`.
+  - Verifica fail-safe in `evaluate`: se il guardiano fallisce, gestisce l'errore registrandolo e restituendo `None` senza interrompere o rompere la chat.
+- `backend/thread_guard_seed.py`:
+  - `seed_thread_guard`: se Ollama non è attivo, non crea né associa un preset non funzionante (`thread_guard_preset_id=None` e `thread_guard_enabled=false`), evitando preset rotti all'avvio.
+- `backend/routes/thread_guard.py` e `backend/main.py`:
+  - Nuovo endpoint admin `GET /admin/thread-guard` e `PUT /admin/thread-guard` protetto da ruolo admin e header `browser_mutation`, con validazione HTTP 400 se si tenta di salvare un provider non attivo o inesistente.
+- `frontend/src/components/admin/ThreadGuardPanel.tsx`:
+  - Riscritto per interfacciarsi con `/api/admin/thread-guard` e `/api/admin/models`.
+  - Selettore con i soli provider attivi e caricamento dinamico dei modelli noti per quel provider, con supporto per inserire modelli personalizzati.
+  - Banner di avviso ben visibile quando la configurazione corrente punta a un provider non attivo o mancante, con disattivazione del toggle di abilitazione finché non viene selezionato un provider valido.
+- `frontend/src/lib/i18n-admin.ts`:
+  - Aggiunte e completate le chiavi di traduzione per il pannello del guardiano del filo in tutte le 6 lingue supportate (it, en, es, fr, de, sv).
+- Test:
+  - `backend/tests/test_thread_guard.py`: aggiunti test per `is_provider_active`, `seed_thread_guard` con provider assente/presente, salvataggio e validazione configurazione, rotte admin `GET`/`PUT /admin/thread-guard` e gestione errori fail-safe (68 test verdi).
+  - Build frontend: completata con successo al 100% (63 pagine statiche, zero errori di tipo o lint).
+- Documentazione:
+  - Aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e stato guidance di piattaforma (`make guidance-refresh` e `make guidance-check` verificati con successo).
+
+
 # Handoff F4: chiusura server-side a 4-5 scambi con marcatore AVANZA_STEP
 Data: 2026-10-18 | Branch: `fix/server-side-step-closure` | Agente: `s5-step-closure`, Gemini 3.8 Flash (High)
 Task: F4 (438856b7-1540-4fa1-92e8-1230d6dba178) | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
