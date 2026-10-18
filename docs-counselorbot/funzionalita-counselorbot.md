@@ -364,8 +364,8 @@ di QSAr e ZTPI. Gli hash dei testi di fabbrica precedenti restano censiti in `pr
 per consentire l'aggiornamento sicuro e trasparente tramite la funzione «Allinea prompt di fabbrica»
 senza alterare le personalizzazioni introdotte dagli amministratori.
 
-Nei percorsi a intervista qualitativa (QPCC, QAP, Savickas, Evento Significativo) e nell'analisi QPCS,
-il budget numerico rigido di turni («at most two follow-ups», «two or three questions in total») è
+Nei percorsi a intervista qualitativa (QPCC, QAP, Savickas, Evento Significativo, Obiettivi di apprendimento) e nelle analisi dimensionali (QPCS, QSA, QSAr, ZTPI), i testi dei prompt di step prescrivono tassativamente la formulazione di **esattamente una sola domanda aperta per turno su un singolo aspetto** (vietando elenchi puntati o domande multiple a raffica), rimandando altri aspetti ai turni successivi solo se necessari. Nel percorso QPCC di Pellerey–Orio, il contratto canonico in codice (`qpcc.directive()`) e i testi di step trattano i punteggi dichiarati esclusivamente come autopercezioni e ipotesi esplorative da verificare insieme alla persona, mai come diagnosi, etichette o fatti oggettivi; è vietato attribuire emozioni o stati affettivi (come ansia o insicurezza) non esplicitamente nominati dalla persona ed è obbligatorio accogliere immediatamente il rifiuto di una lettura o di una strategia abbandonandola senza riproporla.
+Il budget numerico rigido di turni («at most two follow-ups», «two or three questions in total») è
 stato sostituito da un criterio qualitativo di comprensione orientato all'agire con tetto di sicurezza
 a circa cinque scambi: il chatbot resta nell'area finché lo studente la sviluppa, esplorando cosa fa,
 come sceglie e quali conseguenze ne derivano, e chiude il passaggio quando emerge un modo concreto di

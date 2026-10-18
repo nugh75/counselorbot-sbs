@@ -1,5 +1,32 @@
+# Handoff Filone F2: Prescrizione domanda singola su un solo aspetto nei prompt di step e contratto QPCC ipotetico (finding BLOCCANTE-3 testi, NON BLOCCANTE-5)
+Data: 2026-10-18 | Branch: `fix/guided-steps-single-question` | Agente: `s2-single-question`, Gemini 3.8 Flash (High)
+Task: `52d3df40-36df-4502-9aad-3631926963c2` | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Problema:
+Nelle chat reali su questionari e strumenti a intervista (in particolare con modelli piccoli come Codestral e Ministral-8b), i counselor tendevano a porre raffiche di 2-5 domande contemporanee per turno, spesso in elenco puntato, disattendendo il principio di facilitazione metacognitiva (BLOCCANTE-3, bug 676c4d54-8a86-499d-8b22-1e92083cea02 e 80e1d321-b95a-4e44-88dc-f15be196e7ad). Inoltre in QPCC i punteggi venivano talvolta trattati con tono diagnostico o con attribuzione di emozioni non dichiarate, e strategie o letture rifiutate venivano riproposte.
+
+Modifiche:
+1. `backend/prompt_config.py` e `backend/prompts/*.md`:
+   - Rimosse tutte le formule a elenco di domande/aspetti multipli nei default di step di tutti gli strumenti a intervista e percorsi guidati: QPCC (`DEFAULT_QPCC_GUIDED_STEPS`), QAP (`DEFAULT_QAP_GUIDED_STEPS`), QPCS (`DEFAULT_QPCS_GUIDED_STEPS`), QSAr (`DEFAULT_QSAR_GUIDED_STEPS`), ZTPI (`DEFAULT_ZTPI_GUIDED_STEPS`), Savickas (`DEFAULT_SAVICKAS_GUIDED_STEPS`), Evento significativo (`evento_step_*.md`), Obiettivi di apprendimento studio e docenza (`obiettivo_step_*.md`, `default_system_prompt_obiettivo_interview.md`), QSA (`qsa_step_*.md`).
+   - Sostituite con formula tassativa e breve: esattamente una sola domanda aperta per turno su un singolo aspetto, mai elenchi di domande; altri aspetti nei turni successivi solo se necessari.
+   - Preservati il criterio qualitativo di comprensione, il tetto di sicurezza di circa 5 scambi e il marcatore tecnico `[[AVANZA_STEP]]`.
+2. `backend/qpcc.py` (`directive()`), `backend/prompts/prompt_qpcc_interview.md`, `backend/prompts/prompt_qpcc_summary.md` e `backend/tool_brief_seed.py`:
+   - I punteggi sono dichiarati come autopercezioni riportate dalla persona e ipotesi esplorative da verificare, mai come fatti oggettivi, diagnosi o etichette.
+   - Divieto esplicito di attribuire emozioni o stati affettivi (come ansia o insicurezza) non espressamente nominati dalla persona.
+   - Obbligo esplicito di accogliere immediatamente il rifiuto di una lettura o di una strategia abbandonandola senza riproporla.
+   - Regola perentoria di porre esattamente una sola domanda aperta per turno su un solo aspetto, mai elenchi di domande.
+3. Test:
+   - Aggiunto `backend/tests/test_single_question_prompts.py`: verifica la presenza della prescrizione di singola domanda aperta e assenza di elenchi di domande su tutti i percorsi guidati, le regole del contratto QPCC, la preservazione del tetto di 5 scambi e `[[AVANZA_STEP]]`.
+   - Aggiornato `backend/tests/test_qpcc_alignment.py` (asserzione su autopercezioni dichiarate nel contratto).
+   - Eseguiti con successo con pytest: `test_single_question_prompts.py` (5 test), `test_prompt_files.py` (6 test), `test_prompt_pair_drift.py` (6 test), `test_w4_content.py` (3 test) per un totale di 20/20 test passati.
+4. Documentazione e Passi manuali:
+   - Aggiornato `docs-counselorbot/funzionalita-counselorbot.md`.
+   - Verificato lo stato con `check-platform-guidance.py`.
+   - NOTA OPERATIVA POST-DEPLOY: Cambiando i default di fabbrica nel codice, i valori già salvati nel database non si aggiornano automaticamente. Dopo il deploy in produzione/staging è necessario eseguire l'operazione amministrativa «Allinea prompt di fabbrica» dall'interfaccia amministrativa per aggiornare le istruzioni e gli step memorizzati nel DB.
+
 # Handoff: riepilogo e PDF al completamento delle chat guidate su questionari di prova (docente/admin)
 Data: 2026-10-18 | Branch: `fix/practice-questionnaire-summary` | Agente: `Antigravity`
+
 
 Problema:
 Al termine di una chat guidata di un questionario svolto in modalità simulazione/palestra docente (taccuino di prova con `notebook_context="practice"`), il frontend montava `<SessionReport sessionId={sessionId} ... />` per richiedere riepilogo (`GET /api/user/questionnaire-result/{session_id}/summary`) e PDF (`GET /api/questionnaire-result/{session_id}/pdf`). Tali endpoint rispondevano con 404 poiché `_get_owned_questionnaire_result` interrogava unicamente la tabella degli studenti reali `questionnaire_results` (`models.QuestionnaireResult`) e non `teacher_practice_results` (`models.TeacherPracticeResult`). Inoltre, la mappatura degli ID degli step di sintesi conteneva disallineamenti per QPCC e QAP e mancava dei percorsi `EVENTO_*` e `OBIETTIVO_*`.
