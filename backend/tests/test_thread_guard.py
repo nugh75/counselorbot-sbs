@@ -153,7 +153,7 @@ def test_notes_of_nothing_render_nothing():
 
 
 # --- storage and staleness ---
-from backend import models, recommendation_service  # noqa: E402
+from backend import database, models, recommendation_service  # noqa: E402
 from backend.tests.artifact_database import artifact_session  # noqa: E402
 
 SESSION = "guard-fixture"
@@ -440,7 +440,30 @@ def _guard_preset(db):
         models.ModelPreset.id == int(row.value)).first() if row and row.value else None
 
 
-def test_the_seed_prefers_a_local_qwen_without_thinking(db):
+def test_the_seed_does_not_set_preset_when_ollama_is_inactive(db):
+    assert seed_thread_guard(db, models) is True
+    # Nessun preset rotto assegnato al guardiano se Ollama non e' attivo
+    assert _guard_preset(db) is None
+    assert db.query(models.Config).filter(
+        models.Config.key == thread_guard.ENABLED_KEY).first().value == "false"
+    # Una seconda esecuzione non modifica nulla
+    assert seed_thread_guard(db, models) is False
+
+
+def test_the_seed_creates_the_local_judge_when_ollama_is_active(db, monkeypatch):
+    monkeypatch.setattr(thread_guard, "is_provider_active", lambda _db, p: p == "ollama")
+    assert seed_thread_guard(db, models) is True
+    chosen = _guard_preset(db)
+    assert chosen is not None
+    assert chosen.provider == "ollama" and chosen.model.startswith("qwen3.8")
+    assert chosen.disable_thinking is True
+    # Rieseguito non cambia nulla
+    assert seed_thread_guard(db, models) is False
+    assert _guard_preset(db).id == chosen.id
+
+
+def test_the_seed_prefers_a_local_qwen_without_thinking(db, monkeypatch):
+    monkeypatch.setattr(thread_guard, "is_provider_active", lambda _db, p: p == "ollama")
     _preset(db, name="Qwen 3.8 Reasoning", disable_thinking=False)
     wanted = _preset(db, name="Qwen 3.8B - no reasoning", disable_thinking=True)
     _preset(db, name="Gemini", provider="gemini", model="gemini-3.8-flash")
@@ -448,13 +471,6 @@ def test_the_seed_prefers_a_local_qwen_without_thinking(db):
     assert _guard_preset(db).id == wanted.id
     assert db.query(models.Config).filter(
         models.Config.key == thread_guard.ENABLED_KEY).first().value == "false"
-
-
-def test_the_seed_creates_the_local_judge_when_there_is_none(db):
-    assert seed_thread_guard(db, models) is True
-    chosen = _guard_preset(db)
-    assert chosen.provider == "ollama" and chosen.model.startswith("qwen3.8")
-    assert chosen.disable_thinking is True
 
 
 def test_the_seed_never_overrules_the_admin(db):
@@ -468,12 +484,121 @@ def test_the_seed_never_overrules_the_admin(db):
         models.Config.key == thread_guard.ENABLED_KEY).first().value == "true"
 
 
-def test_the_seed_run_twice_changes_nothing(db):
-    assert seed_thread_guard(db, models) is True
-    first = _guard_preset(db).id
-    assert seed_thread_guard(db, models) is False
-    assert _guard_preset(db).id == first
-    assert db.query(models.ModelPreset).count() == 1
+def test_is_provider_active_checks(db, monkeypatch):
+    # Provider locale non in ascolto
+    assert thread_guard.is_provider_active(db, "ollama") is False
+
+    # Provider con chiave API mancante
+    assert thread_guard.is_provider_active(db, "openai") is False
+
+    # Provider con chiave API presente
+    from backend import api_secrets
+    monkeypatch.setattr(
+        api_secrets,
+        "resolve_api_secret",
+        lambda _db, provider: api_secrets.ResolvedAPISecret(provider, "test-key" if provider == "openrouter" else None, "environment"),
+    )
+    assert thread_guard.is_provider_active(db, "openrouter") is True
+    assert thread_guard.is_provider_active(db, "gemini") is False
+
+    active = thread_guard.active_providers(db)
+    active_ids = [p["id"] for p in active]
+    assert "openrouter" in active_ids
+    assert "gemini" not in active_ids
+
+
+def test_guard_configuration_save_and_validation(db, monkeypatch):
+    monkeypatch.setattr(thread_guard, "is_provider_active", lambda _db, p: p in ("openrouter", "mistral"))
+
+    # Tentativo di attivare con provider inattivo -> ValueError
+    with pytest.raises(ValueError, match="non e' attivo"):
+        thread_guard.save_guard_configuration(db, enabled=True, provider="ollama", model="qwen3.8:latest")
+
+    # Tentativo di attivare senza provider/modello -> ValueError
+    with pytest.raises(ValueError, match="senza aver selezionato"):
+        thread_guard.save_guard_configuration(db, enabled=True, provider="", model="")
+
+    # Salvataggio valido con provider attivo
+    saved = thread_guard.save_guard_configuration(db, enabled=True, provider="openrouter", model="google/gemini-2.0-flash")
+    assert saved["enabled"] is True
+    assert saved["provider"] == "openrouter"
+    assert saved["model"] == "google/gemini-2.0-flash"
+    assert saved["is_provider_active"] is True
+    assert saved["preset_id"] is not None
+
+    # Verifica persistenza
+    loaded = thread_guard.get_guard_configuration(db)
+    assert loaded["enabled"] is True
+    assert loaded["provider"] == "openrouter"
+    assert loaded["model"] == "google/gemini-2.0-flash"
+    assert loaded["preset_id"] == saved["preset_id"]
+
+    # Disattivazione
+    off = thread_guard.save_guard_configuration(db, enabled=False, provider="openrouter", model="google/gemini-2.0-flash")
+    assert off["enabled"] is False
+    assert thread_guard.enabled(db) is False
+
+
+def test_thread_guard_api_endpoints(db, monkeypatch):
+    from fastapi.testclient import TestClient
+    from backend.main import app
+    from backend import auth
+    from backend.routes.chatgpt import browser_mutation
+
+    # Mock admin user
+    admin_user = models.User(id=1, username="test_admin", is_admin=True)
+    app.dependency_overrides[auth.get_current_active_admin] = lambda: admin_user
+    app.dependency_overrides[database.get_db] = lambda: db
+    app.dependency_overrides[browser_mutation] = lambda: None
+
+    monkeypatch.setattr(thread_guard, "is_provider_active", lambda _db, p: p in ("openrouter", "mistral"))
+
+    client = TestClient(app)
+
+    # GET configurazione
+    res = client.get("/admin/thread-guard")
+    assert res.status_code == 200
+    data = res.json()
+    assert "enabled" in data
+    assert "active_providers" in data
+
+    # PUT con provider non attivo -> 400
+    res_bad = client.put("/admin/thread-guard", json={"enabled": True, "provider": "ollama", "model": "qwen"})
+    assert res_bad.status_code == 400
+    assert "non e' attivo" in res_bad.json()["detail"]
+
+    # PUT con provider attivo -> 200
+    res_ok = client.put("/admin/thread-guard", json={"enabled": True, "provider": "openrouter", "model": "test-model"})
+    assert res_ok.status_code == 200
+    assert res_ok.json()["enabled"] is True
+    assert res_ok.json()["provider"] == "openrouter"
+
+    app.dependency_overrides.clear()
+
+
+def test_thread_guard_failing_provider_does_not_raise(db, monkeypatch):
+    monkeypatch.setattr(thread_guard, "enabled", lambda _db: True)
+    monkeypatch.setattr(thread_guard, "preset", lambda _db: ("broken_provider", "broken_model", True))
+
+    def _broken_call(**_kwargs):
+        raise RuntimeError("Connection dropped to AI provider")
+
+    # evaluate deve catturare l'errore del provider e restituire [] senza sollevare eccezioni
+    notes = thread_guard.evaluate(
+        db,
+        call=_broken_call,
+        session_id=SESSION,
+        username=STUDENT,
+        questionnaire_type="QSA",
+        step_id="cognitive",
+        step_label="Cognitivo",
+        step_prompt="prompt",
+        language="it",
+        advice_ids=[],
+        candidate_ids=[],
+        turn="some_turn_hash",
+    )
+    assert notes == []
 
 
 # --- la domanda aperta resta al ledger, e solo a ingresso step ---------------

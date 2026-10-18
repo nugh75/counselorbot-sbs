@@ -339,6 +339,17 @@ rileva gli esiti delle ipotesi aperte (`hypotheses`: `confirmed`, `corrected`, `
 lo stato nel registro con chiusura da conversazione (`closed_by="conversation"`), garantendo che
 una presa di posizione esplicita e diretta dello studente (`closed_by="student"`) non venga mai sovrascritta.
 
+La configurazione e attivazione del guardiano del filo è gestita dall'amministratore in
+**Area amministrazione → Guardiano del filo** (`/admin?tab=threadGuard`). L'interfaccia consente
+di selezionare provider e modello scegliendo tra i provider effettivamente attivi (con chiave API
+configurata a livello globale o servizio locale raggiungibile). Se il provider configurato non è attivo
+o non è disponibile, la scheda segnala un avviso ben visibile e impedisce l'attivazione finché non
+viene associato un provider attivo valido. Al salvataggio (`PUT /admin/thread-guard`), il server
+convalida la disponibilità del provider e associa o crea automaticamente un preset modello dedicato
+con flag `disable_thinking=True` per preservare il formato JSON di analisi. In caso di errore o
+indisponibilità temporanea del provider durante una conversazione, il guardiano gestisce l'eccezione
+in modalità degradata (fail-safe) senza mai interrompere o bloccare l'esperienza di chat dello studente.
+
 All'interno della progressiva convergenza verso il facilitatore metacognitivo,
 la direttiva `[ANCHOR]` nei prompt di fabbrica dei fattori (QSA, QSAr, ZTPI, QPCS, QPCC, QAP)
 è stata rimossa poiché la regola della domanda riflessiva ed esperienziale viene assorbita
