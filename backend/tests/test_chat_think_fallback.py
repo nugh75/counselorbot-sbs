@@ -89,6 +89,34 @@ def test_reflective_empty_fallback_languages():
     assert "reflect" in reflective_empty_fallback(None, "en")
 
 
+def test_reflective_empty_fallback_step_entry():
+    """All'avvio di uno step (is_entry=True), il fallback deve introdurre il tema
+    e non chiedere a vuoto 'da dove preferisci riprendere la riflessione'."""
+    res_it = reflective_empty_fallback("2. Comunicazione in Pubblico", "it", is_entry=True)
+    assert "Siamo al passaggio su 2. Comunicazione in Pubblico" in res_it
+    assert "Possiamo iniziare" in res_it
+    assert "da dove preferisci riprendere" not in res_it
+
+    res_en = reflective_empty_fallback("2. Public Speaking", "en", is_entry=True)
+    assert "We are now focusing on 2. Public Speaking" in res_en
+    assert "where would you like to resume" not in res_en
+
+
+def test_reflective_empty_fallback_patto_step_zero():
+    """Al Passo 0 (Patto di Collaborazione), il fallback all'ingresso deve dare il benvenuto
+    e proporre di partire, senza presupporre una riflessione già avviata."""
+    res_it = reflective_empty_fallback("0. Patto di Collaborazione", "it", is_entry=True)
+    assert "Benvenuto/a" in res_it
+    assert "0. Patto di Collaborazione" in res_it
+    assert "possiamo partire?" in res_it
+    assert "da dove preferisci riprendere" not in res_it
+
+    res_en = reflective_empty_fallback("0. Collaboration Agreement", "en", is_entry=True)
+    assert "Welcome" in res_en
+    assert "0. Collaboration Agreement" in res_en
+    assert "ready to start?" in res_en
+
+
 def test_is_empty_response_error():
     assert is_empty_response_error(AIError("Il modello ha terminato senza contenuto"))
     assert is_empty_response_error(AIError("Il modello ha restituito una risposta vuota"))

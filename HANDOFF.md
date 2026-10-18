@@ -1,3 +1,33 @@
+# Handoff: Rimozione meta-disclaimer e cliché terapeutici e correzione fallback inizio step
+Data: 2026-10-18 | Branch: `fix/conversational-tone-and-step-fallback` | Agente: `timoniere`, Gemini 3.8 Flash (High)
+
+Obiettivo:
+- Eliminare il linguaggio "stucchevole e finto" generato dall'LLM nelle chat guidate (in particolare QPCC), dovuto alla ripetizione compulsiva di meta-disclaimer difensivi ("è un'ipotesi e non una verità", "senza giudizio", "non è un difetto", "non è una diagnosi", "non è un tratto fisso") trasudati letteralmente dalle istruzioni di sistema (prompt leakage).
+- Riconoscere che l'alleanza di lavoro e l'inquadramento non diagnostico appartengono allo Step 0 (Patto di Collaborazione) e non vanno reiterati ad ogni turno, sostituendoli con una curiosità fenomenologica naturale e con modalità epistemica espressa tramite grammatica conversazionale ordinaria.
+- Correggere il fallback di emergenza (`reflective_empty_fallback`) all'avvio di uno step o al Patto di Collaborazione, differenziando l'accoglienza e l'introduzione del tema rispetto alla prosecuzione della riflessione per evitare frasi decontestualizzate come "Prenditi un momento... da dove preferisci riprendere la riflessione?".
+
+Modifiche:
+1. `backend/prompt_contract.py`:
+   - Esteso il contratto di facilitazione metacognitiva (`_facilitation_contract`) con divieto esplicito (blacklist) di meta-disclaimer e cliché terapeutici ("È un'ipotesi, non una verità", "senza giudizio / senza giudicarti", "non è un difetto", "non è una diagnosi", "non è un tratto fisso", "la domanda non è se sei bravo o no").
+   - Esplicitato che il frame non diagnostico appartiene allo Step 0 e che le ipotesi vanno formulate con naturalezza dialogica ('sembra che', 'potrebbe essere', 'ti torna o la vivi diversamente?').
+   - Inserito divieto analogo in `_self_questioning_contract`.
+   - In `turn_contract`, sostituito il prescrittivo "Label interpretations as hypotheses" (che induceva l'LLM a etichettare le frasi) con l'istruzione di formulare ipotesi aperte senza etichette esplicite.
+2. `backend/qpcc.py`, `backend/prompts/prompt_qpcc_interview.md`, `backend/prompts/prompt_qpcc_summary.md`, `backend/tool_brief_seed.py`:
+   - Aggiunta la direttiva esplicita di non recitare i principi deontologici/contrattuali nel testo visibile allo studente.
+3. `backend/chat_logic.py` & `backend/routes/chat.py`:
+   - Introdotto il parametro `is_entry` in `reflective_empty_fallback()`. All'avvio di un passaggio (`is_entry=True`), il fallback introduce il tema senza chiedere anacronisticamente "da dove preferisci riprendere".
+   - Al Passo 0 (Patto di Collaborazione), il fallback fornisce un saluto iniziale e propone di avviare il percorso.
+4. `backend/tests/`:
+   - Aggiornato `test_facilitation_contract.py` con verifiche sulle nuove invarianti pedagogiche e anti-disclaimer.
+   - Aggiornato `test_chat_think_fallback.py` con test specifici per l'avvio dello step e per il Patto di Collaborazione.
+5. Documentazione e Guidance:
+   - Aggiornato `docs-counselorbot/funzionalita-counselorbot.md` e riallineati gli hash di `platform-guidance-state.json`.
+
+Test e Validazione:
+- Eseguita l'intera suite di test del backend: 787 test passati (100% green).
+- `make guidance-check` superato con successo.
+
+
 # Handoff: Aggiunta servizio Piper TTS 100% offline nella configurazione portatile
 Data: 2026-10-18 | Branch: `feature/piper-offline-tts` | Agente: `timoniere`, Gemini 3.8 Flash (High)
 

@@ -720,7 +720,7 @@ def strip_thinking(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", visible).strip()
 
 
-def reflective_empty_fallback(step_label: Optional[str] = None, language: Optional[str] = "it") -> str:
+def reflective_empty_fallback(step_label: Optional[str] = None, language: Optional[str] = "it", is_entry: bool = False) -> str:
     """Restituisce una risposta di fallback gentile, contestualizzata e riflessiva
     quando il modello restituisce una risposta vuota o solo reasoning."""
     lang = (language or "it").strip().lower()
@@ -729,6 +729,28 @@ def reflective_empty_fallback(step_label: Optional[str] = None, language: Option
 
     cleaned_step = (step_label or "").strip()
     if cleaned_step:
+        if is_entry:
+            if "patto" in cleaned_step.lower() or cleaned_step.startswith("0."):
+                intro_templates = {
+                    "it": f"Benvenuto/a. Siamo al passaggio iniziale su {cleaned_step}. In questo percorso leggeremo ed esploreremo insieme i risultati del tuo profilo: possiamo partire?",
+                    "en": f"Welcome. We are at the initial step on {cleaned_step}. In this session we will explore your profile results together: ready to start?",
+                    "es": f"Bienvenido/a. Nos encontramos en el paso inicial sobre {cleaned_step}. En este recorrido exploraremos juntos los resultados de tu perfil: ¿podemos comenzar?",
+                    "fr": f"Bienvenue. Nous en sommes à l'étape initiale sur {cleaned_step}. Dans ce parcours, nous explorerons ensemble les résultats de votre profil : pouvons-nous commencer ?",
+                    "de": f"Willkommen. Wir sind beim einleitenden Schritt zu {cleaned_step}. In diesem Prozess schauen wir uns deine Profilergebnisse gemeinsam an: Wollen wir beginnen?",
+                    "sv": f"Välkommen. Vi är vid det inledande steget om {cleaned_step}. I den här sessionen utforskar vi dina profilresultat tillsammans: kan vi börja?",
+                }
+                return intro_templates.get(lang, intro_templates["it"])
+
+            entry_templates = {
+                "it": f"Siamo al passaggio su {cleaned_step}. Possiamo iniziare osservando come vivi questo aspetto nella tua esperienza: c'è un punto o una situazione da cui vorresti partire?",
+                "en": f"We are now focusing on {cleaned_step}. We can begin by looking at how this aspect appears in your experience: is there a specific situation you would like to start from?",
+                "es": f"Nos encontramos en el paso sobre {cleaned_step}. Podemos empezar observando cómo experimentas este aspecto: ¿hay alguna situación desde la que te gustaría partir?",
+                "fr": f"Nous en sommes à l'étape sur {cleaned_step}. Nous pouvons commencer par observer comment vous vivez cet aspect : y a-t-il une situation par laquelle vous aimeriez commencer ?",
+                "de": f"Wir sind beim Schritt zu {cleaned_step}. Wir können uns ansehen, wie sich dieser Aspekt in deiner Erfahrung zeigt: Gibt es eine Situation, von der du ausgehen möchtest?",
+                "sv": f"Vi befinner oss vid steget om {cleaned_step}. Vi kan börja med att titta på hur detta visar sig i din erfarenhet: finns det en situation du vill utgå ifrån?",
+            }
+            return entry_templates.get(lang, entry_templates["it"])
+
         templates = {
             "it": f"Prenditi un momento: siamo al passaggio su {cleaned_step}. Su quale aspetto vorresti soffermarti o da dove preferisci riprendere la riflessione?",
             "en": f"Take a moment: we are currently focusing on {cleaned_step}. Which aspect would you like to reflect on or where would you like to resume?",

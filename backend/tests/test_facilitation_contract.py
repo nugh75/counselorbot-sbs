@@ -91,10 +91,14 @@ def test_facilitation_contract_pedagogical_invariants_across_stages():
         assert "metacognitive facilitator" in contract.lower()
         assert "interrogate and reinterpret their own experience" in contract.lower()
 
-        # No ceremonial pleasantries
+        # No ceremonial pleasantries, therapeutic clichés or meta-disclaimers
         assert "never use ceremonial pleasantries" in contract.lower()
         assert "grazie per aver condiviso" in contract.lower()
         assert "certo." in contract.lower()
+        assert "è un'ipotesi, non una verità" in contract.lower()
+        assert "senza giudizio" in contract.lower()
+        assert "non è una diagnosi" in contract.lower()
+        assert "step 0" in contract.lower()
 
         # Never force insight
         assert "never force an insight" in contract.lower()
