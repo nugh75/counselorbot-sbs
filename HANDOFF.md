@@ -1,3 +1,16 @@
+# Checkpoint baseline frontend — 18 ottobre 2026 (PR #351 ancora in bozza)
+
+Riallineato il branch a main. Lint: zero errori e 62 warning; 593 unit test,
+i18n e build di produzione passano. Corretto il catch tipizzato del guardiano
+e tradotto il placeholder. Aggiornate le fixture catalogo QSA e preferenze chat.
+La prima esecuzione browser estesa: 266 test, 249 passati, 15 falliti, 2 saltati.
+Dopo le correzioni: tre casi catalogo passati; preferenze chat 10/11, poi il caso
+OpenCode corretto e passato separatamente. Restano da diagnosticare accesso di
+classe, navbar con nomi lunghi/zoom, teacher-area-home e scelta del taccuino.
+La suite completa non è verde: la PR deve restare in bozza. Dettagli in
+`docs/operations/frontend-test-baseline.md`. Server temporaneo fermato.
+Nessun deploy o riavvio di produzione.
+
 # Handoff t2: baseline test frontend verde (IN PAUSA)
 Data: 2026-10-17 | Branch: `fix/frontend-test-baseline` | Agente: `t2-opus-tests-frontend`, Claude Opus 5.5 high
 Compito Diario `d08c88cd-7195-4be8-b4bb-346151081739` | Milestone #22 | PR in bozza

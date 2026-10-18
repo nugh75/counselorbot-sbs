@@ -378,11 +378,11 @@ for (const width of [390, 1440]) {
         const { page, context, prefs } = await fixture({ width, incompatible: true });
         try {
             await page.goto(`${origin}/?view=questionnaires`);
-            await page.getByRole('heading', { name: 'QSA', exact: true }).click();
-            await page.getByRole('button', { name: 'Continua', exact: true }).click();
+            const qsa = page.locator('article').filter({ has: page.locator('a[href="/strumenti/QSA"]') });
+            await qsa.getByRole('button', { name: 'Analizza i risultati', exact: true }).click();
             await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).waitFor();
             await page.getByRole('button', { name: 'Indietro', exact: true }).click();
-            await page.getByRole('button', { name: /^QSA\s/ }).waitFor();
+            await qsa.getByRole('button', { name: 'Analizza i risultati', exact: true }).waitFor();
             assert.equal(prefs.counselor_id, 1);
             assert.equal(await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).count(), 0);
         } finally { await context.close(); }
@@ -396,8 +396,9 @@ test('instrument details return to the actual catalog rather than the home scree
         await page.locator('a[href="/strumenti/QSA"]').click();
         await page.waitForURL(/\/strumenti\//);
         await page.getByRole('button', { name: 'Indietro', exact: true }).click();
-        await page.getByRole('heading', { name: 'QSA', exact: true }).waitFor();
-        assert.equal(await page.getByRole('button', { name: 'Continua', exact: true }).count(), 1);
+        const qsa = page.locator('article').filter({ has: page.locator('a[href="/strumenti/QSA"]') });
+        await qsa.getByRole('button', { name: 'Analizza i risultati', exact: true }).waitFor();
+        assert.equal(await qsa.getByRole('button', { name: 'Analizza i risultati', exact: true }).count(), 1);
     } finally { await context.close(); }
 });
 

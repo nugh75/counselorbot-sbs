@@ -55,9 +55,12 @@ for (const width of [390, 1440]) {
         try {
             await page.goto(`${origin}/?resume=1`);
             await page.getByRole('radio', { name: /Percorso essenziale/ }).check();
-            await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('bullets');
             await page.getByRole('button', { name: 'Inizia', exact: true }).click();
             await page.getByRole('log').getByText('Risposta 1: qsa-essential-focus', { exact: true }).waitFor();
+            // Resume bypasses the shared settings page; choose format in the conversation options.
+            await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
+            await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).click();
+            await page.keyboard.press('Escape');
             for (const [index, reply] of ['Organizzazione', 'Rimando il primo esercizio', 'Scelgo dieci minuti'].entries()) {
                 await page.locator('#guided-composer').fill(reply); await page.locator('#guided-composer').press('Enter');
                 await page.getByRole('log').getByText(`Risposta ${index + 2}: qsa-essential-${['experience','action','summary'][index]}`, { exact: true }).waitFor();
@@ -68,7 +71,9 @@ for (const width of [390, 1440]) {
                 }
             }
             assert.deepEqual(state.streams.map(x => x.phase), ['qsa-essential-focus', 'qsa-essential-experience', 'qsa-essential-action', 'qsa-essential-summary']);
-            assert.ok(state.streams.every(x => x.guided_path === 'essential' && x.response_format === 'bullets'));
+            assert.ok(state.streams.every(x => x.guided_path === 'essential'));
+            assert.equal(state.streams[0].response_format, 'standard');
+            assert.ok(state.streams.slice(1).every(x => x.response_format === 'bullets'));
             await page.getByText('Puoi concludere oppure approfondire scrivendo qui.').waitFor();
             await page.waitForTimeout(1700);
             assert.equal(state.snapshot.current_phase, 'qsa-essential-summary');
@@ -181,7 +186,7 @@ test('Assistant uses the selected format for subsequent replies', async () => {
         await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('bullets');
         const input = page.locator('main textarea').last();
         await input.fill('Come funziona il QSA?'); await input.press('Enter');
-        await page.getByText('Risposta 1: chat', { exact: true }).waitFor();
+        await page.getByRole('log').getByText('Risposta 1: chat', { exact: true }).waitFor();
         assert.equal(state.streams[0].response_format, 'bullets');
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }

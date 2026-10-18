@@ -136,10 +136,10 @@ export function ThreadGuardPanel() {
             setIsProviderActive(updated.is_provider_active);
             setActiveProviders(updated.active_providers || []);
             setStatus('saved');
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to save thread guard config', error);
             setStatus('error');
-            setErrorMessage(error?.message || t('admin.threadGuard.saveError'));
+            setErrorMessage(error instanceof Error ? error.message : t('admin.threadGuard.saveError'));
         } finally {
             setSaving(false);
         }
@@ -285,7 +285,7 @@ export function ThreadGuardPanel() {
                             type="text"
                             value={model}
                             onChange={(event) => setModel(event.target.value)}
-                            placeholder="es. qwen3.8:latest, mistral-large-latest, gpt-4o"
+                            placeholder={t('admin.threadGuard.model')}
                             className="mt-3 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                     )}

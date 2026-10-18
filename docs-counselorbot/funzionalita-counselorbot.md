@@ -341,7 +341,8 @@ una presa di posizione esplicita e diretta dello studente (`closed_by="student"`
 
 La configurazione e attivazione del guardiano del filo è gestita dall'amministratore in
 **Area amministrazione → Guardiano del filo** (`/admin?tab=threadGuard`). L'interfaccia consente
-di selezionare provider e modello scegliendo tra i provider effettivamente attivi (con chiave API
+di selezionare provider e modello; il campo per l’ID manuale usa un suggerimento
+tradotto nella lingua dell’interfaccia. La scelta avviene tra i provider effettivamente attivi (con chiave API
 configurata a livello globale o servizio locale raggiungibile). Se il provider configurato non è attivo
 o non è disponibile, la scheda segnala un avviso ben visibile e impedisce l'attivazione finché non
 viene associato un provider attivo valido. Al salvataggio (`PUT /admin/thread-guard`), protetto
