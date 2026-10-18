@@ -374,6 +374,14 @@ del tetto massimo di scambi. I testi di step e i prompt di sistema d'intervista 
 Evento e QPCS) e i relativi hash legacy in `prompt_factory_legacy.json` garantiscono piena continuità,
 prevenzione dei loop conversazionali e compatibilità con l'allineamento dei prompt di fabbrica.
 
+### Envelope snello, deduplicazione e divieto di elenchi puntati
+
+Nell'ambito dell'ottimizzazione dell'envelope e dell'aderenza dei modelli locali e compatti:
+- **SESSION NOTES in coda all'envelope**: le istruzioni private (`notes_directive`, schema `recommendations` e gestione delle note `hypothesis`) sono state collocate deterministicamente all'estremità finale del prompt di sistema assemblato in `backend/chat_preparation.py` (dopo il contratto di turno e le preferenze di risposta), propagandosi all'estremità di tutti i livelli di variante di contesto. Questo assicura la massima compliance dell'instruction-following dei modelli compatti e previene che il formato JSON delle note venga disatteso o esposto in prosa.
+- **Eliminazione duplicazioni e blocchi ridondanti**: introdotte sentinelle e controlli di deduplicazione in `build_context_envelope`, `turn_contract`, `apply_response_format` e `apply_directive` per impedire la concatenazione ripetuta di contratti (`turn_contract`, `_facilitation_contract`, `_self_questioning_contract`, `_objective_focus_contract`), blocchi strutturali (`ROLE_BLOCK`, `[STUDENT]`, `[GUIDED PATH]`, `[PROFILE]`, `[KNOWLEDGE]`) e direttive globali (`[ORIENTATION]`, `[LANGUAGE]`, `[REGISTER]`, `[THINKING]`).
+- **Disattivazione del RAG della guida del sito nelle chat guidate**: nelle chat guidate di questionari e percorsi (`is_guided_chat`), le interrogazioni al corpus generico della guida del sito (`rag_competenzestrategiche`, `rag_counselorbot`, `rag_questionari`) sono disattivate sia a livello di flag (`get_prompt_component_flags`) sia a livello di recupero vettoriale (`_retrieved_context`), risparmiando decine di token estranei alla riflessione personale dello studente e conservando esclusivamente le strategie e letture certificate quando attivate.
+- **Divieto perentorio di elenchi puntati e numerati**: a livello di contratto del turno e di facilitazione metacognitiva, è formalizzato il divieto assoluto di generare elenchi puntati, numerati o opzioni a lista («Never use bullet points, numbered lists or itemized options»), prescrivendo una conversazione fluida e naturale in prosa continua con al massimo una sola domanda aperta per turno.
+
 
 
 
