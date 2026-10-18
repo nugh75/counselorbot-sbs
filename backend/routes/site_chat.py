@@ -32,6 +32,8 @@ from ..chat_logic import (
     _limit_visible_words,
     _response_length_max_tokens,
     _strip_generic_acknowledgement,
+    reflective_empty_fallback,
+    strip_thinking,
 )
 from .. import pii
 from .. import control_markers
@@ -551,8 +553,11 @@ async def site_chat_stream(
                     break
 
             answer = _strip_generic_acknowledgement(
-                control_markers.strip_control_markers(_strip_fonte_tokens("".join(chunks)))
+                control_markers.strip_control_markers(_strip_fonte_tokens(strip_thinking("".join(chunks))))
             )
+            answer = strip_thinking(answer)
+            if not answer.strip():
+                answer = reflective_empty_fallback(None, request.language)
             if request.partial_response and not "".join(chunks[1:]).strip():
                 raise AIError("The provider returned no continuation.")
             answer, truncated = _limit_visible_words(answer, visible_length)
