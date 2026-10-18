@@ -1,6 +1,6 @@
 # CounselorBot: funzionalità e interfaccia attuali
 
-Aggiornato: 7 ottobre 2026. Questo è il riferimento operativo dell’Assistente
+Aggiornato: 18 ottobre 2026. Questo è il riferimento operativo dell’Assistente
 CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
@@ -529,6 +529,9 @@ dello snapshot anche se nel browser è stata scelta un’altra prova. Un link a 
 profilo assente, altrui, archiviato o di uno strumento diverso non avvia la chat.
 Anche la modifica di un profilo QPCC richiede i dieci fattori canonici con stanine
 intere 1–9: profili legacy, incompleti o misti vengono rifiutati senza salvare.
+Al termine della chat guidata con taccuino di prova, la schermata finale genera il riepilogo
+e consente il download del PDF del profilo simulato per il docente o l’amministratore
+proprietario (o amministratore di sistema), consultabile senza registrare compilazioni reali degli studenti.
 
 La generazione può essere interrotta; “Continua” riprende una risposta incompleta.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi

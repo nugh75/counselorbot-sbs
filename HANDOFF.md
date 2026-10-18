@@ -1,3 +1,22 @@
+# Handoff: riepilogo e PDF al completamento delle chat guidate su questionari di prova (docente/admin)
+Data: 2026-10-18 | Branch: `fix/practice-questionnaire-summary` | Agente: `Antigravity`
+
+Problema:
+Al termine di una chat guidata di un questionario svolto in modalità simulazione/palestra docente (taccuino di prova con `notebook_context="practice"`), il frontend montava `<SessionReport sessionId={sessionId} ... />` per richiedere riepilogo (`GET /api/user/questionnaire-result/{session_id}/summary`) e PDF (`GET /api/questionnaire-result/{session_id}/pdf`). Tali endpoint rispondevano con 404 poiché `_get_owned_questionnaire_result` interrogava unicamente la tabella degli studenti reali `questionnaire_results` (`models.QuestionnaireResult`) e non `teacher_practice_results` (`models.TeacherPracticeResult`). Inoltre, la mappatura degli ID degli step di sintesi conteneva disallineamenti per QPCC e QAP e mancava dei percorsi `EVENTO_*` e `OBIETTIVO_*`.
+
+Modifiche:
+- `backend/models.py`:
+  - Aggiunte property `@property def username` e `@property def submitted_at` al modello `TeacherPracticeResult` per garantire conformità di interfaccia duck-type con `QuestionnaireResult`.
+- `backend/routes/survey.py`:
+  - `_get_owned_questionnaire_result`: introdotto fallback su `TeacherPracticeResult` verificando ownership (`owner_username == current_user.username`) o privilegi admin, preservando la separazione tra dati di prova e record studenti reali.
+  - `_final_step_summary`: corretti gli ID step di sintesi per `"QPCC": "qpcc-sintesi"`, `"QAP": "qap-sintesi"`, e aggiunti i mapping per `"EVENTO_STUDIO": "evstudio-final"`, `"EVENTO_PROFESSIONALE": "evprof-final"`, `"OBIETTIVO_STUDIO": "obbstudio-final"`, `"OBIETTIVO_DOCENZA": "obbdocenza-final"`.
+  - Passaggio di provider e model coerenti estratti dai log di sessione per la generazione della sintesi LLM.
+  - `get_user_session_conversation`: abilitato il recupero della trascrizione anche per sessioni di prova.
+- Test:
+  - `backend/tests/test_pdf_summary.py`: aggiunto `test_practice_questionnaire_summary_and_pdf` che verifica anteprima di riepilogo, generazione PDF, recupero conversazione, permessi proprietario/admin e blocco 403 per utenti non autorizzati.
+  - Eseguita verifica end-to-end con la sessione reale docente del mattino (`1986b52c-81ad-4c4a-a2e8-114e11415abf`): riepilogo pronto e PDF generato (18.164 byte).
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
 # Handoff t7: estensione guardiano (interpretation_open, hypotheses), preservazione sintesi e rilascio facilitazione (fase 6)
 Data: 2026-10-18 | Branch: `feature/metacognitive-guard-synthesis` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
 Issue #378 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
