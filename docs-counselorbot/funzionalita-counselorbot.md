@@ -529,9 +529,7 @@ dello snapshot anche se nel browser è stata scelta un’altra prova. Un link a 
 profilo assente, altrui, archiviato o di uno strumento diverso non avvia la chat.
 Anche la modifica di un profilo QPCC richiede i dieci fattori canonici con stanine
 intere 1–9: profili legacy, incompleti o misti vengono rifiutati senza salvare.
-Al termine della chat guidata con taccuino di prova, la schermata finale genera il riepilogo
-e consente il download del PDF del profilo simulato per il docente o l’amministratore
-proprietario (o amministratore di sistema), consultabile senza registrare compilazioni reali degli studenti.
+Al termine della chat guidata (sia reale sia su taccuino di prova), la schermata finale di completamento è lineare e priva di scelte dispersive: mostra l’avvenuto completamento con il riepilogo testuale della sintesi emersa e offre due sole azioni chiare: il download diretto del report PDF completo (che scarica il documento e riporta alla pagina principale) e il pulsante per tornare direttamente alla pagina principale, azzerando le selezioni di sessione ed evitando schermate o bivi intermedi. Per le sessioni di prova, la schermata e il download del PDF restano riservati al docente proprietario o all’amministratore, senza registrare compilazioni reali degli studenti.
 
 La generazione può essere interrotta; “Continua” riprende una risposta incompleta.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
