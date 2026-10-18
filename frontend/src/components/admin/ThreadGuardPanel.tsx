@@ -115,7 +115,10 @@ export function ThreadGuardPanel() {
         try {
             const res = await fetch('/api/admin/thread-guard', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'CounselorBot',
+                },
                 body: JSON.stringify({
                     enabled,
                     provider: provider.trim() || null,

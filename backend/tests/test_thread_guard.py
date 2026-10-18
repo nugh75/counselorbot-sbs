@@ -573,6 +573,20 @@ def test_thread_guard_api_endpoints(db, monkeypatch):
     assert res_ok.json()["enabled"] is True
     assert res_ok.json()["provider"] == "openrouter"
 
+    # Test browser_mutation: senza header X-Requested-With -> 403 chatgpt.errors.signIn
+    del app.dependency_overrides[browser_mutation]
+    res_no_header = client.put("/admin/thread-guard", json={"enabled": True, "provider": "openrouter", "model": "test-model"})
+    assert res_no_header.status_code == 403
+    assert res_no_header.json()["detail"] == "chatgpt.errors.signIn"
+
+    # Con header X-Requested-With: CounselorBot -> 200
+    res_with_header = client.put(
+        "/admin/thread-guard",
+        json={"enabled": True, "provider": "openrouter", "model": "test-model"},
+        headers={"X-Requested-With": "CounselorBot"},
+    )
+    assert res_with_header.status_code == 200
+
     app.dependency_overrides.clear()
 
 

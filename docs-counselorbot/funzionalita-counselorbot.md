@@ -344,12 +344,12 @@ La configurazione e attivazione del guardiano del filo è gestita dall'amministr
 di selezionare provider e modello scegliendo tra i provider effettivamente attivi (con chiave API
 configurata a livello globale o servizio locale raggiungibile). Se il provider configurato non è attivo
 o non è disponibile, la scheda segnala un avviso ben visibile e impedisce l'attivazione finché non
-viene associato un provider attivo valido. Al salvataggio (`PUT /admin/thread-guard`), il server
-convalida la disponibilità del provider e associa o crea automaticamente un preset modello dedicato
+viene associato un provider attivo valido. Al salvataggio (`PUT /admin/thread-guard`), protetto
+dal meccanismo anti-CSRF della piattaforma (header obbligatorio `X-Requested-With: CounselorBot`),
+il server convalida la disponibilità del provider e associa o crea automaticamente un preset modello dedicato
 con flag `disable_thinking=True` per preservare il formato JSON di analisi. In caso di errore o
 indisponibilità temporanea del provider durante una conversazione, il guardiano gestisce l'eccezione
-in modalità degradata (fail-safe) senza mai interrompere o bloccare l'esperienza di chat dello studente.
-
+in modalità degradata (fail-safe) preservando i segnali di controllo attivi senza mai interrompere o bloccare l'esperienza di chat dello studente.
 All'interno della progressiva convergenza verso il facilitatore metacognitivo,
 la direttiva `[ANCHOR]` nei prompt di fabbrica dei fattori (QSA, QSAr, ZTPI, QPCS, QPCC, QAP)
 è stata rimossa poiché la regola della domanda riflessiva ed esperienziale viene assorbita

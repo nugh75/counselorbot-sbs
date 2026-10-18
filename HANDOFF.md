@@ -1,3 +1,25 @@
+# Handoff: Risoluzione errore chatgpt.errors.signIn in salvataggio Guardiano del filo e fix fallback chat
+Data: 2026-10-18 | Branch: `fix/thread-guard-csrf-header` | Agente: `timoniere`, Gemini 3.8 Flash (High)
+
+Problema:
+- Nell'area amministrazione (`/admin?tab=threadGuard`), il tentativo di salvare o abilitare la configurazione del Guardiano del filo falliva con errore `chatgpt.errors.signIn` (HTTP 403). La rotta di backend `PUT /admin/thread-guard` richiede la dipendenza anti-CSRF `browser_mutation` (header `X-Requested-With: CounselorBot`), ma `frontend/src/components/admin/ThreadGuardPanel.tsx` ometteva tale header nella richiesta fetch.
+- In `backend/routes/chat.py`, la variabile `control_signals` era inizializzata a `None`, provocando un `TypeError: argument of type 'NoneType' is not iterable` durante la gestione dell'eccezione e fallback dello streaming chat.
+
+Modifiche:
+1. `frontend/src/components/admin/ThreadGuardPanel.tsx`:
+   - Aggiunto l'header `'X-Requested-With': 'CounselorBot'` nella chiamata `fetch('/api/admin/thread-guard', ...)`.
+2. `backend/routes/chat.py`:
+   - Inizializzato `control_signals = []` e protetto il controllo `bool(control_signals and control_markers.ADVANCE_STEP in control_signals)` con payload streaming sicuro `control_signals or []`.
+3. `backend/tests/test_thread_guard.py`:
+   - Aggiunti test di regressione per verificare il rifiuto HTTP 403 `chatgpt.errors.signIn` in assenza di header e l'accettazione HTTP 200 con header presente.
+4. `docs-counselorbot/funzionalita-counselorbot.md`:
+   - Documentato il requisito anti-CSRF dell'endpoint admin del guardiano del filo e il comportamento del fallback dello stream chat.
+
+Test:
+- Backend: suite completa `backend/tests/test_thread_guard.py` (68/68 test passati) e `backend/tests/test_chat_think_fallback.py` (16/16 test passati) eseguiti nel container Docker.
+- Guidance: `make guidance-refresh` e `make guidance-check` passati con successo.
+
+
 # Handoff F3: Envelope snello, deduplicazione, esclusione RAG guida sito e divieto elenchi puntati
 Data: 2026-10-18 | Branch: `fix/guided-envelope-focus` | Agente: `s3-envelope-snello`, Gemini 3.8 Flash (High)
 Task ID: `f4e370b8-15b1-48c0-860b-540bf72046e6` | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
