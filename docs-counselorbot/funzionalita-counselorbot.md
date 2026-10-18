@@ -375,7 +375,7 @@ di QSAr e ZTPI. Gli hash dei testi di fabbrica precedenti restano censiti in `pr
 per consentire l'aggiornamento sicuro e trasparente tramite la funzione «Allinea prompt di fabbrica»
 senza alterare le personalizzazioni introdotte dagli amministratori.
 
-Nei percorsi a intervista qualitativa (QPCC, QAP, Savickas, Evento Significativo, Obiettivi di apprendimento) e nelle analisi dimensionali (QPCS, QSA, QSAr, ZTPI), i testi dei prompt di step prescrivono tassativamente la formulazione di **esattamente una sola domanda aperta per turno su un singolo aspetto** (vietando elenchi puntati o domande multiple a raffica), rimandando altri aspetti ai turni successivi solo se necessari. Nel percorso QPCC di Pellerey–Orio, il contratto canonico in codice (`qpcc.directive()`) e i testi di step trattano i punteggi dichiarati esclusivamente come autopercezioni e ipotesi esplorative da verificare insieme alla persona, mai come diagnosi, etichette o fatti oggettivi; è vietato attribuire emozioni o stati affettivi (come ansia o insicurezza) non esplicitamente nominati dalla persona ed è obbligatorio accogliere immediatamente il rifiuto di una lettura o di una strategia abbandonandola senza riproporla.
+Nei percorsi a intervista qualitativa (QPCC, QAP, Savickas, Evento Significativo, Obiettivi di apprendimento) e nelle analisi dimensionali (QPCS, QSA, QSAr, ZTPI), i testi dei prompt di step prescrivono tassativamente la formulazione di **esattamente una sola domanda aperta per turno su un singolo aspetto** (vietando elenchi puntati o domande multiple a raffica), rimandando altri aspetti ai turni successivi solo se necessari. Nel percorso QPCC di Pellerey–Orio, il contratto canonico in codice (`qpcc.directive()`) e i testi di step trattano i punteggi dichiarati esclusivamente come autopercezioni e ipotesi esplorative da verificare insieme alla persona, mai come diagnosi, etichette o fatti oggettivi; è vietato attribuire emozioni o stati affettivi (come ansia o insicurezza) non esplicitamente nominati dalla persona ed è obbligatorio accogliere immediatamente il rifiuto di una lettura o di una strategia abbandonandola senza riproporla. È altresì vietato sia nei turni di intervista sia nell'introduzione l'uso di cliché terapeutici e meta-disclaimer difensivi (come «senza giudizio / non con giudizio», «non misura quanto vali», «non ci sono risposte giuste o sbagliate», «autopercezioni non verdetti», «non ti farò 63 domande», «etichette fisse», «è un'ipotesi non una verità», «non è una diagnosi», «non è un difetto»).
 Il budget numerico rigido di turni («at most two follow-ups», «two or three questions in total») è
 stato sostituito da un criterio qualitativo di comprensione orientato all'agire con tetto di sicurezza
 a circa cinque scambi: il chatbot resta nell'area finché lo studente la sviluppa, esplorando cosa fa,
@@ -417,10 +417,15 @@ quattro dimensioni connesse e dieci scale, con punteggi stanine 1–9:
 - Motivazionale: **M1 Percezione di competenza**, **M2 Orientamento all’io**,
   **M3 Attribuzioni causali (locus of control interno)**.
 
-La chat legge questi dieci fattori, costruisce un patto con accettazione
+La chat legge questi dieci fattori, costruisce un patto di collaborazione con accettazione
 esplicita e li approfondisce con esempi professionali o di ricerca di lavoro.
-È un’autovalutazione senza risposte giuste o sbagliate, con durata indicativa
-20–30 minuti; non somministra gli item né assegna nuovi punteggi. A1–A3 alti
+Il patto iniziale (Step 0) e il prompt di benvenuto propongono l'accordo
+con tono sobrio, naturale e umano (2-3 brevi paragrafi), focalizzandosi sull'esplorazione
+concreta delle risorse e delle modalità di agire sul lavoro ed evitando spiegazioni teoriche
+o pedagogiche sui costrutti (niente elenchi di item, dimensioni, scale o citazioni accademiche
+nel testo visibile) e formule difensive o paternalistiche («non misura quanto vali», «senza giudizio»,
+«non ci sono risposte giuste o sbagliate», «autopercezioni non verdetti», «non ti farò le 63 domande»).
+La durata indicativa è di 20–30 minuti nel rispetto della riservatezza; non vengono somministrati item né assegnati nuovi punteggi. A1–A3 alti
 indicano maggiori difficoltà dichiarate; M2 viene discusso nel contesto, senza
 un giudizio automatico di forza/debolezza. I nomi e le etichette del profilo
 seguono la lingua scelta anche nei resoconti. Se nessun fattore rientra nella

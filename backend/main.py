@@ -44,6 +44,7 @@ from .prompt_config import (
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
     INTRO_ALLOWED_QUESTIONS,
     INTRO_ALLOWED_QUESTIONS_SENTINEL,
+    DEFAULT_SYSTEM_PROMPT_QPCC_INTRO,
     MODE_TO_SYSTEM_PROMPT_KEY,
     DEFAULT_SYSTEM_PROMPT_IDEA,
     LEGACY_DEFAULT_SYSTEM_PROMPT_IDEA,
@@ -1782,6 +1783,21 @@ def _migrate_counselor_personas_and_intros(db):
             and current_prompt != default_prompt
         ):
             step.prompt = default_prompt
+            changed = True
+
+    # QPCC natural intro migration: upgrade verbose legacy contract in welcome prompt and intro step
+    cfg_qpcc_welcome = db.query(models.Config).filter(models.Config.key == "prompt_qpcc_welcome").first()
+    if cfg_qpcc_welcome:
+        val = cfg_qpcc_welcome.value or ""
+        if "absence of right or wrong answers" in val or "63 self-assessment items" in val:
+            cfg_qpcc_welcome.value = DEFAULT_SYSTEM_PROMPT_QPCC_INTRO
+            changed = True
+
+    step_qpcc_intro = db.query(models.GuidedStep).filter(models.GuidedStep.id == "qpcc-intro").first()
+    if step_qpcc_intro:
+        val = step_qpcc_intro.prompt or ""
+        if "Explain self-assessment, no right or wrong answers" in val or "four interconnected dimensions and ten scales" in val:
+            step_qpcc_intro.prompt = next(s["prompt"] for s in DEFAULT_QPCC_GUIDED_STEPS if s["id"] == "qpcc-intro")
             changed = True
 
     if changed:
