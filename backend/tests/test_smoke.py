@@ -3470,7 +3470,7 @@ def _done_sse_event(response):
 def test_response_length_helpers_and_validation():
     directive = chat_logic._apply_response_length_directive("BASE", "short")
     assert "no more than 80 words" in directive
-    assert chat_logic._response_length_max_tokens("medium", 900) == 800
+    assert chat_logic._response_length_max_tokens("medium", 900) == 2000
     assert chat_logic._response_length_max_tokens(None, 900) == 900
 
     source = " ".join(f"parola{i}" for i in range(1, 101))
@@ -3516,7 +3516,7 @@ def test_response_length_is_enforced_on_both_web_streams():
         assert "response_id" not in chat_done
         assert len(chat_logic._VISIBLE_WORD_RE.findall(chat_done["response"])) == 80
         assert chat_done["response"].endswith("…")
-        assert _FakeAIService.last_stream_args["max_tokens"] == 256
+        assert _FakeAIService.last_stream_args["max_tokens"] == 1000
         assert "no more than 80 words" in _FakeAIService.last_stream_args["system_prompt"]
 
         site_response = client.post("/site-chat/stream", json={
@@ -3531,7 +3531,7 @@ def test_response_length_is_enforced_on_both_web_streams():
         assert "response_id" not in site_done
         assert len(chat_logic._VISIBLE_WORD_RE.findall(site_done["response"])) == 80
         assert site_done["response"].endswith("…")
-        assert _FakeAIService.last_stream_args["max_tokens"] == 256
+        assert _FakeAIService.last_stream_args["max_tokens"] == 1000
         assert "no more than 80 words" in _FakeAIService.last_stream_args["system_prompt"]
     finally:
         _FakeAIService.stream_response = original_stream

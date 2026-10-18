@@ -251,9 +251,9 @@ def _clamp_max_tokens(value: Optional[int], default: Optional[int] = None) -> Op
 
 
 RESPONSE_LENGTH_PROFILES = {
-    "short": {"max_words": 80, "max_tokens": 256},
-    "medium": {"max_words": 260, "max_tokens": 800},
-    "long": {"max_words": 600, "max_tokens": 2000},
+    "short": {"max_words": 80, "max_tokens": 1000},
+    "medium": {"max_words": 260, "max_tokens": 2000},
+    "long": {"max_words": 600, "max_tokens": 4000},
 }
 _VISIBLE_WORD_RE = re.compile(r"[^\W_]+(?:['’][^\W_]+)*", re.UNICODE)
 
@@ -299,9 +299,11 @@ def _limit_visible_words(text: str, response_length: Optional[str]) -> tuple[str
 
     cutoff = matches[max_words - 1].end()
     natural_floor = matches[max(int(max_words * 0.75) - 1, 0)].start()
+    grace_words = min(len(matches), int(max_words * 1.15))
+    grace_cutoff = matches[grace_words - 1].end()
     sentence_ends = [
         match.end()
-        for match in re.finditer(r"[.!?](?=\s|$)", text[:cutoff])
+        for match in re.finditer(r"[.!?](?=\s|$)", text[:grace_cutoff])
         if match.end() >= natural_floor
     ]
     if sentence_ends:

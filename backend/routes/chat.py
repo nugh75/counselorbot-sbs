@@ -107,6 +107,8 @@ from ..chat_logic import (
     reflective_empty_fallback,
     strip_markdown,
     strip_thinking,
+    RESPONSE_LENGTH_PROFILES,
+    _VISIBLE_WORD_RE,
     ThinkStreamSplitter,
 )
 
@@ -1102,8 +1104,19 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     # Stesso motivo per il blocco delle raccomandazioni: senza, il
                     # turno non sa che cosa e' stato davvero proposto.
                     # E per la bozza del libretto, che la sintesi dell'Evento scrive in coda.
-                    if truncated and questionnaire_type != IDEA_INSTRUMENT and not has_recommendation_candidates and draft_mod is None:
-                        break
+                    # Non interrompere a metà frase o durante la lettura del profilo:
+                    # attendi un terminatore di frase o un tetto massimo di sicurezza.
+                    is_profile_turn = (
+                        (questionnaire_type or "").upper() == "QPCC" and (request.phase or "") == "qpcc-profilo"
+                        or (request.phase or "").endswith("-profilo")
+                    )
+                    if truncated and not is_profile_turn and questionnaire_type != IDEA_INSTRUMENT and not has_recommendation_candidates and draft_mod is None:
+                        raw_tail = raw_response.rstrip()
+                        sentence_finished = raw_tail.endswith((".", "!", "?", "\n", "```"))
+                        max_w = RESPONSE_LENGTH_PROFILES.get(effective_response_length, {}).get("max_words", 600)
+                        hard_limit_reached = len(list(_VISIBLE_WORD_RE.finditer(raw_response))) >= int(max_w * 1.3)
+                        if sentence_finished or hard_limit_reached:
+                            break
 
             for sub in splitter.flush():
                 if sub.get("type") == "reasoning":
@@ -1235,7 +1248,11 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             if force_closure and control_markers.ADVANCE_STEP not in control_signals:
                 control_signals = list(control_signals) + [control_markers.ADVANCE_STEP]
 
-            if truncated and questionnaire_type != IDEA_INSTRUMENT:
+            is_profile_turn = (
+                (questionnaire_type or "").upper() == "QPCC" and (request.phase or "") == "qpcc-profilo"
+                or (request.phase or "").endswith("-profilo")
+            )
+            if truncated and not is_profile_turn and questionnaire_type != IDEA_INSTRUMENT:
                 yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals})}\n\n"
                 return
 
@@ -1298,8 +1315,24 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
             yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': recommended['strategy'], 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': recommendations_for_response, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals})}\n\n"
         except Exception as e:
-            visible_so_far = "".join(chunks[1:] if len(chunks) > 1 and request.partial_response else chunks).strip()
-            if is_empty_response_error(e) and not visible_so_far:
+            stream_chunks = chunks[1:] if request.partial_response else chunks
+            raw_this_stream = "".join(stream_chunks).strip()
+            visible_this_stream = strip_thinking(raw_this_stream).strip()
+            if visible_this_stream:
+                visible_this_stream = control_markers.strip_for_display(visible_this_stream).strip()
+                visible_this_stream = recommendation_blocks.strip_for_display(visible_this_stream).strip()
+                if draft_mod is not None:
+                    visible_this_stream = draft_mod.strip_for_display(visible_this_stream).strip()
+
+            all_raw = "".join(chunks).strip()
+            visible_all = strip_thinking(all_raw).strip()
+            if visible_all:
+                visible_all = control_markers.strip_for_display(visible_all).strip()
+                visible_all = recommendation_blocks.strip_for_display(visible_all).strip()
+                if draft_mod is not None:
+                    visible_all = draft_mod.strip_for_display(visible_all).strip()
+
+            if is_empty_response_error(e) and not visible_this_stream and not request.partial_response:
                 is_entry = not bool((request.message or "").strip())
                 response_content = reflective_empty_fallback(step_label, request.language, is_entry=is_entry)
                 yield f"data: {_json.dumps({'display': response_content, 'delta': response_content})}\n\n"
@@ -1328,6 +1361,13 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 )
                 response_id = _log_stream(response_content, usage_info, recommended)
                 yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': (recommended or {}).get('strategy', []), 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': {'reading': [], 'strategy': []}, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals or []})}\n\n"
+                return
+
+            err_str = str(e).lower()
+            if visible_all and ("token limit" in err_str or "output token limit" in err_str or "interrotta" in err_str):
+                logger.warning(f"Stream chat session {session_id} interrotto con testo visibile presente ({len(visible_all)} car.): {e}")
+                response_content = visible_all
+                yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals or []})}\n\n"
                 return
             logger.error(f"Errore stream chat session {session_id}: {e}")
             try:

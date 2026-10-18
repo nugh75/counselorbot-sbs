@@ -514,6 +514,13 @@ successiva (disattivato all'ultima fase); ripeti permette di ricaricare il passo
 corrente (tranne al congedo). Il menu a tre punti offre pannello, **formato** della
 risposta (conversazione, elenco, tabella), **lunghezza** (breve, media, lunga), voce,
 lingua e Congela sessione. Formato e lunghezza sono scelte indipendenti.
+I profili di lunghezza della risposta allocano un margine di token (headroom) adeguato
+anche per i modelli con ragionamento (thinking); nei passaggi di lettura del profilo
+(come nei questionari QPCC, QAP e QPCS) il sistema riserva un budget token esteso per
+consentire l'esposizione esaustiva di tutte le scale e fattori senza troncature.
+Durante lo streaming, la chiusura delle frasi rispetta la punteggiatura naturale ed
+eventuali interruzioni preservano il testo visibile già generato anziché sostituirlo
+con messaggi generici di fallback.
 Il percorso essenziale QSA prevede tre risposte e la sintesi; non va esteso a QSAr
 o agli altri questionari. I due percorsi sugli obiettivi hanno la propria versione
 essenziale, in tre fasi brevi che si chiudono quando il risultato è pronto o quando

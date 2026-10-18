@@ -1,3 +1,39 @@
+# Handoff: Token headroom, calibrazione streaming e prevenzione fallback nelle chat guidate
+Data: 2026-10-18 | Branch: `fix/guided-chat-token-headroom` | Agente: `s6-token-headroom`
+
+Obiettivo:
+- Risolvere il problema del troncamento delle chiamate e del fallback indebito (`reflective_empty_fallback`) nelle chat guidate (in particolare QPCC step 1 `qpcc-profilo` e step con 10 fattori o modelli con reasoning).
+- Evitare che il raggiungimento del tetto di token provochi la perdita completa del testo generato fino a quel momento sostituendolo con il messaggio generico di fallback.
+- Calibrare il taglio visivo delle parole durante lo streaming SSE per evitare interruzioni a metà frase.
+
+Modifiche principali:
+1. `backend/chat_logic.py` e `backend/chat_preparation.py`:
+   - Incrementato il budget `max_tokens` nei profili di lunghezza: short a 1000, medium a 2000, long a 4000 token.
+   - Per gli step di lettura del profilo (fasi che terminano con `-profilo` come `qpcc-profilo`, `qap-profilo`, `qpcs-profilo`), garantito un budget `max_tokens` di almeno 4000 ed elevata la lunghezza visiva a `long` per consentire l'esposizione completa di tutti i fattori senza troncature.
+   - Calibrato `_limit_visible_words` con finestra di tolleranza (+15% parole) per favorire la naturale conclusione della frase (segni di punteggiatura finale).
+2. `backend/reasoning_profiles.py`:
+   - In `resolve_plan`: calcolato il budget totale sommando il budget di ragionamento (thinking) al margine di risposta richiesto (headroom), evitando che le tracce di reasoning consumino l'intero budget lasciando la risposta a secco.
+3. `backend/routes/chat.py`:
+   - Nello stream SSE, evitata l'interruzione brutale (`break`) a metà frase o tabella: l'interruzione anticipata avviene solo su fine frase o su tetto massimo (1.3x), con esenzione esplicita per i turni di lettura profilo (`is_profile_turn`).
+   - Nel gestore di eccezioni dello stream (`except Exception as e`):
+     - Distinto il contenuto prodotto dal singolo stream (`visible_this_stream`) rispetto al cumulato (`visible_all`).
+     - Se c'è testo visibile generato prima di un errore di token limit o interruzione, preservato il testo utile (`response = visible_all`, `incomplete: True`) anziché cancellarlo e sostituirlo con `reflective_empty_fallback`.
+     - In caso di retry o continuazione (`request.partial_response`), evitato che la mancata produzione di nuovi token cancelli la risposta parziale già visualizzata.
+4. `backend/routes/site_chat.py`:
+   - Ripristinato l'import di `site_rag_index` da `..rag_index` per coerenza con i test di smoke.
+5. `backend/tests/`:
+   - Creato `backend/tests/test_guided_chat_headroom.py` con 6 test dedicati a profili, headroom, reasoning budget, grace sentence closure e salvaguardia del testo visibile.
+   - Aggiornato `backend/tests/test_smoke.py` per i nuovi massimali token.
+6. Documentazione:
+   - Aggiornato `docs-counselorbot/funzionalita-counselorbot.md` e riallineato lo stato in `docs/operations/platform-guidance-state.json`.
+
+Test e Validazione:
+- `docker exec counselorbot-portable-counselorbot-backend-1 pytest backend/tests/test_guided_chat_headroom.py backend/tests/test_lean_envelope_focus.py backend/tests/test_chat_think_fallback.py backend/tests/test_single_question_prompts.py backend/tests/test_chat_continuation.py -p no:warnings`: 62/62 test superati (100% green).
+- `docker exec counselorbot-portable-counselorbot-backend-1 pytest backend/tests/test_smoke.py -k "test_response_length"`: PASS.
+- `make guidance-refresh` e `make guidance-check`: PASS.
+- Container backend ricostruito e attivo in stato healthy.
+
+
 # Handoff: Generalizzazione regole universali per tutte le introduzioni e conversazioni (auto-interrogazione, chiarimenti su richiesta, divieto formule «non è... ma...» e disclaimer)
 Data: 2026-10-18 | Branch: `fix/qpcc-self-inquiry-agreement` | Agente: `timoniere`, Gemini 3.8 Flash (High)
 

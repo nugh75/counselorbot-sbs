@@ -227,6 +227,19 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         request = request.copy(update={'scores_context': score_context(request.scores_context, request.language)})
     effective_response_length = request.response_length
     max_tokens = _response_length_max_tokens(effective_response_length, request.max_tokens)
+    is_profile_step = (
+        (request.phase or "").endswith("-profilo")
+        or (getattr(step, "id", None) or "").endswith("-profilo")
+        or (questionnaire_type.upper() == "QPCC" and (request.phase or "") == "qpcc-profilo")
+    )
+    if is_profile_step:
+        # Lo step di lettura del profilo richiede di esporre tutte le scale (es. 10 fattori in QPCC),
+        # per cui serve un budget di token adeguato per reasoning + tutte le scale.
+        max_tokens = max(max_tokens or 0, 4000)
+        # Se la lunghezza richiesta è short o medium, per la lettura del profilo garantiamo
+        # almeno "long" in modo che le tabelle/scale complete non vengano tagliate a metà.
+        if effective_response_length in ("short", "medium"):
+            effective_response_length = "long"
     # Reserve the private map separately from the student's visible-length choice.
     if questionnaire_type == IDEA_INSTRUMENT:
         max_tokens = (max_tokens or 700) + 1200
