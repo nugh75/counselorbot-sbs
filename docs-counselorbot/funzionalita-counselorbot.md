@@ -915,7 +915,11 @@ sintesi PDF dei risultati, Tavolo e diagrammi, secondo le associazioni salvate. 
 locali, la voce, i benchmark e il terminale tecnico mantengono la configurazione
 di sistema. Sono ammessi i provider esterni supportati, senza URL arbitrari.
 Se la chiave personale dà errore non si passa automaticamente alle chiavi di
-sistema.
+sistema. Nei preset di modello, nei counselor e nei benchmark con provider OpenRouter,
+i modelli con ragionamento obbligatorio (come Gemini Flash o DeepSeek R1) gestiscono
+automaticamente il parametro di reasoning: se il preset o il passo richiede la
+disattivazione del pensiero ma l'endpoint lo impone, la piattaforma evita l'errore 400
+ed esegue la risposta garantendo la continuità della conversazione e del thread guard.
 
 Spegnendo la funzione, l’amministratore fa usare le API di sistema alle nuove
 richieste e nasconde i collegamenti dall’Area studente e dall’Area docenti. Le richieste già
