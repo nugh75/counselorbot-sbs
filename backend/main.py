@@ -113,6 +113,7 @@ from .routes import orientation_referrals as orientation_referrals_routes
 from .routes import class_paths as class_paths_routes
 from .routes import path_templates as path_templates_routes
 from .routes import class_meetings as class_meetings_routes
+from .routes import thread_guard as thread_guard_routes
 
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
@@ -2080,3 +2081,5 @@ app.include_router(prompt_experiments_routes.router)
 app.include_router(class_paths_routes.router)
 app.include_router(path_templates_routes.router)
 app.include_router(class_meetings_routes.router)
+app.include_router(thread_guard_routes.router)
+
