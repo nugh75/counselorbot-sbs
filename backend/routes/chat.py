@@ -41,6 +41,7 @@ from .. import recommendation_blocks
 from .. import event_booklet
 from .. import goal_draft
 from .. import control_markers
+from .. import step_closure
 from .. import thread_guard
 from .. import recommendation_service as _recommendation_service
 from ..certified_reading_service import certified_reading_memory
@@ -675,6 +676,14 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             _log_error(db, session_id, str(e), identity=identity, questionnaire_type=questionnaire_type,
                        mode=request.mode, phase=request.phase, conversation_id=conversation_id)
             raise HTTPException(status_code=502, detail=str(e))
+    prior_exchanges = step_closure.count_step_assistant_exchanges(db, session_id, request.phase)
+    step_eligible = step_closure.is_step_closure_eligible(db, step, request.phase, questionnaire_type)
+    force_closure = step_closure.should_force_step_closure(
+        prior_exchanges + 1, step_eligible, threshold=step_closure.get_step_safety_threshold(db),
+    )
+    if force_closure:
+        response_content = step_closure.ensure_step_closure(response_content, should_advance=True)
+
     # I blocchi privati escono subito: non devono raggiungere lo studente, il
     # transcript, il log o il PDF. Per primi i segnali di controllo, in ogni chat.
     response_content = strip_thinking(response_content)
@@ -740,7 +749,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     _update_markdown_memory_background(
         session_id, _memory_user_message, response_content,
         step_label, is_first_step, knowledge_context, request.phase or "", model_scores_context,
-        questionnaire_type, request.language or "", False,
+        questionnaire_type, request.language or "", bool(control_markers.ADVANCE_STEP in control_signals),
         transcript_user=_transcript_user,
     )
 
@@ -930,6 +939,12 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     )
     has_recommendation_candidates = bool(reading_candidates or strategy_candidates)
 
+    prior_exchanges = step_closure.count_step_assistant_exchanges(db, session_id, request.phase)
+    step_eligible = step_closure.is_step_closure_eligible(db, step, request.phase, questionnaire_type)
+    force_closure = step_closure.should_force_step_closure(
+        prior_exchanges + 1, step_eligible, threshold=step_closure.get_step_safety_threshold(db),
+    )
+
     provider = c_provider or ai_service.config.get('active_provider', 'unknown')
     model = c_model or ai_service.config.get('model_name', 'unknown')
 
@@ -1114,6 +1129,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             raw_response = strip_thinking("".join(chunks))
             if request.partial_response and not "".join(chunks[1:]).strip():
                 raise AIError("The provider returned no continuation.")
+            if force_closure:
+                raw_response = step_closure.ensure_step_closure(raw_response, should_advance=True)
             # I blocchi privati escono prima di ogni altra elaborazione: non devono
             # raggiungere lo studente, il transcript, il log o il PDF. Per primi i
             # segnali di controllo, in ogni chat.
@@ -1175,6 +1192,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                         max_tokens=max_tokens, provider=c_provider, model=c_model, history=history,
                     )
                     retry = strip_thinking(retry)
+                    if force_closure:
+                        retry = step_closure.ensure_step_closure(retry, should_advance=True)
                     retry, control_signals = control_markers.extract(retry)
                     if draft_mod is event_booklet:
                         retry, booklet_draft = event_booklet.extract(retry)
@@ -1211,6 +1230,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     response_content = reflective_empty_fallback(step_label, request.language)
                     yield f"data: {_json.dumps({'display': response_content, 'delta': response_content})}\n\n"
 
+            if force_closure and control_markers.ADVANCE_STEP not in control_signals:
+                control_signals = list(control_signals) + [control_markers.ADVANCE_STEP]
+
             if truncated and questionnaire_type != IDEA_INSTRUMENT:
                 yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals})}\n\n"
                 return
@@ -1238,7 +1260,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 model_scores_context,
                 questionnaire_type,
                 request.language or "",
-                False,
+                bool(control_markers.ADVANCE_STEP in control_signals),
                 transcript_user=_transcript_user,
             )
 
@@ -1298,7 +1320,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     model_scores_context,
                     questionnaire_type,
                     request.language or "",
-                    False,
+                    bool(control_markers.ADVANCE_STEP in control_signals) if "control_signals" in locals() else False,
                     transcript_user=_transcript_user,
                 )
                 response_id = _log_stream(response_content, usage_info, recommended)

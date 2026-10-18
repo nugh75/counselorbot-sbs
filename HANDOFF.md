@@ -1,6 +1,34 @@
+# Handoff F4: chiusura server-side a 4-5 scambi con marcatore AVANZA_STEP
+Data: 2026-10-18 | Branch: `fix/server-side-step-closure` | Agente: `s5-step-closure`, Gemini 3.8 Flash (High)
+Task: F4 (438856b7-1540-4fa1-92e8-1230d6dba178) | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Problema:
+Nelle chat guidate e negli strumenti a intervista (QPCC, QAP, QPCS, QSAr, ZTPI, Savickas, Evento, Obiettivo, ecc.), la permanenza nello step è governata da un criterio qualitativo con tetto di sicurezza a circa 5 scambi. Se il modello non emetteva spontaneamente il marcatore `[[AVANZA_STEP]]` o se lo studente continuava a interagire, la conversazione rischiava di rimanere bloccata indefinitamente nello stesso step senza proporre il passaggio successivo.
+
+Modifiche:
+- `backend/step_closure.py`:
+  - Implementato modulo per la gestione della chiusura di sicurezza server-side.
+  - Soglia predefinita configurabile: `DEFAULT_STEP_SAFETY_THRESHOLD = 5` (personalizzabile tramite DB `models.Config` con chiave `step_safety_threshold` o variabile d'ambiente `STEP_SAFETY_THRESHOLD`).
+  - `is_step_closure_eligible(db, step, phase, questionnaire_type)`: esclude chat libere, percorsi privi di step (es. IDEA), passi introduttivi (`WELCOME_PHASE_IDS`, `sort_order < 0`, step `mode="intro"`) e passi di sintesi finale/farewell (`SYNTHESIS_STEPS`, step `mode="summary"` o `mode="farewell"`, ultimo step attivo).
+  - `count_step_assistant_exchanges(db, session_id, phase)`: calcola con query ottimizzata su `models.Log` il numero di turni dell'assistente registrati per la sessione nello step corrente.
+  - `should_force_step_closure(current_exchange_count, is_eligible, threshold)`: valuta se lo step è idoneo e il conteggio di scambi raggiunge o supera la soglia di sicurezza.
+  - `ensure_step_closure(text, should_advance)`: appende `\n\n[[AVANZA_STEP]]` in coda al testo solo se necessario e mancante, senza mai duplicare marcatori già presenti.
+- `backend/routes/chat.py`:
+  - Integrata la verifica di idoneità e il calcolo degli scambi sia per l'endpoint sincrono `/chat` sia per lo streaming SSE `/chat/stream`.
+  - In `/chat`: se la soglia è raggiunta e il marcatore manca, viene aggiunto prima dell'estrazione tramite `control_markers.extract`; `session_memory` viene aggiornato in background con `completed_step=True`.
+  - In `/chat/stream`: calcolo della soglia prima dello streaming; alla conclusione del testo generato, `ensure_step_closure` applica il marcatore su `raw_response` (o risposta di fallback) prima dell'estrazione dei segnali di controllo, assicurando `ADVANCE_STEP` in `control_signals` e aggiornando `session_memory` con `completed_step=True` sia nei percorsi standard sia in fallback.
+- Test:
+  - `backend/tests/test_server_side_step_closure.py`: suite di 20 test completi (unitari e d'integrazione con FastAPI TestClient su `/chat` e `/chat/stream`) che verificano:
+    (a) turni iniziali (< 4 scambi) non iniettano forzatamente il marcatore se non presente,
+    (b) al raggiungimento della soglia (5 scambi) il marcatore viene aggiunto, i `control_signals` contengono `ADVANCE_STEP` e la `session_memory` segna il passo completato,
+    (c) se il modello emette spontaneamente il marcatore prima della soglia, non viene duplicato,
+    (d) nei passi di introduzione o nelle sintesi finali/farewell non viene forzato alcun marcatore indebito.
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
 # Handoff F5: rimozione tag <think> e fallback per risposte vuote o solo reasoning
 Data: 2026-10-18 | Branch: `fix/empty-response-think-leak` | Agente: `s4-fallback-think`, Gemini 3.8 Flash (High)
 Task: F5 (424969f9-efd2-4461-b2f8-f29d9801e259) | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
 
 Problema:
 1. I modelli di reasoning (es. DeepSeek-R1, QwQ) emettono catene di pensiero racchiuse tra tag `<think>...</think>`, `<thinking>...</thinking>` o `<sto_pensando>...</sto_pensando>`. Nello streaming chunk-by-chunk SSE e nelle risposte sincrone, tali tag rischiavano di trapelare all'utente o di essere salvati nella cronologia della sessione e nei log.
