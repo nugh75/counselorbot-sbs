@@ -1729,7 +1729,8 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Read ONLY the cognitive factors of my QSAr profile: C1r, C2r, C3r and C4r. "
             "For each, give the score and its interpretation as an open reading of study strategies, "
-            "without practical advice. Close by asking what I actually do in practice when studying new material."
+            "without practical advice. Close by asking exactly ONE open question on a single aspect: "
+            "what I actually do in practice when studying new material, never a list of questions."
         ),
         "system_prompt_mode": "qsar-factor",
         "color_theme": "blue",
@@ -1742,7 +1743,9 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Read ONLY the affective factors of my QSAr profile: A1r, A2r, A3r and A4r. "
             "For each, give the score and its interpretation as an open reading of study attitudes, "
-            "without practical advice. Close by asking what I actually do when facing difficult tasks or exam pressure."
+            "without practical advice. Close by asking exactly ONE open question on a single aspect: "
+            "what I actually do when facing a difficult task, never a list of questions. Do not "
+            "attribute unstated emotions."
         ),
         "system_prompt_mode": "qsar-factor",
         "color_theme": "purple",
@@ -1755,7 +1758,8 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Read together C1r (elaborative strategies) and C3r (graphic strategies and "
             "semantic organisers), offering ONE hypothesis on how the student understands and remembers. "
-            "Close by asking what they actually do when organizing complex material and what that produces."
+            "Close by asking exactly ONE open question on a single aspect: what they actually do when "
+            "organizing complex material, never a list of questions. Explore other aspects in later turns only if needed."
         ),
         "system_prompt_mode": "qsar-second-level",
         "color_theme": "indigo",
@@ -1768,7 +1772,8 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Read together C2r (self-regulated strategies) and C4r (lack of attention "
             "control) as ONE hypothesis on self-regulation, respecting the inverted direction of C4r. "
-            "Close by asking what they actually do when concentration wavers and how that choice works."
+            "Close by asking exactly ONE open question on a single aspect: what they actually do when "
+            "concentration wavers, never a list of questions. Explore other aspects in later turns only if needed."
         ),
         "system_prompt_mode": "qsar-second-level",
         "color_theme": "teal",
@@ -1781,7 +1786,8 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Read together A2r (volition) and A4r (perceived competence) "
             "as ONE hypothesis on effort and confidence. "
-            "Close by asking what they actually do when a task starts to feel demanding, and what that leads to."
+            "Close by asking exactly ONE open question on a single aspect: what they actually do when "
+            "a task starts to feel demanding, never a list of questions. Explore other aspects in later turns only if needed."
         ),
         "system_prompt_mode": "qsar-second-level",
         "color_theme": "pink",
@@ -1794,7 +1800,9 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Read A1r (anxiety and emotional control) as an open hypothesis about how emotional tension "
             "affects study, respecting its inverted direction and without practical advice. "
-            "Close by asking what they actually do when tension rises around deadlines or tests."
+            "Close by asking exactly ONE open question on a single aspect: what they actually do when "
+            "tension rises around deadlines or tests, never a list of questions; do not attribute unstated "
+            "feelings, and if they reject a reading, do not offer it again."
         ),
         "system_prompt_mode": "qsar-second-level",
         "color_theme": "rose",
@@ -1807,7 +1815,9 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Read A3r (causal attributions) as an open hypothesis on how the way successes and "
             "difficulties are explained affects studying. "
-            "Close by asking what they actually do and think when an outcome is not what they hoped, and what follows from that way of seeing it."
+            "Close by asking exactly ONE open question on a single aspect: what they actually do when "
+            "an outcome is not what they hoped, never a list of questions; explore other aspects in "
+            "later turns only if needed. If they reject a reading, do not offer it again."
         ),
         "system_prompt_mode": "qsar-second-level",
         "color_theme": "orange",
@@ -1854,9 +1864,10 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
             "Read the Past Negative factor of my time-perspective profile: "
             "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
             "and explain in simple words that it describes a habit of recalling past difficulties or negative experiences. "
-            "Offer it as a possible habit of attention, not a fixed trait, and do not add practical advice. "
-            "Close by asking how this shows in the way the student approaches new challenges or exams — "
-            "what they choose to do, and what that produces. Do not use acronyms with the student."
+            "Offer it as a possible habit of attention, not a fixed trait or diagnosis, and do not add practical advice. "
+            "Close by asking exactly ONE open question on a single aspect: what they choose to do when approaching a "
+            "new challenge, never a list of questions. Explore other aspects in later turns only if needed. "
+            "Do not attribute unstated emotions, and if they reject a reading, do not offer it again. Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "rose",
@@ -1871,8 +1882,9 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
             "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
             "and explain in simple words that it describes drawing on positive past experiences and roots. "
             "Offer it as an attention resource, not a trait, and do not add practical advice. "
-            "Close by asking what they actually do when preparing for demanding work — "
-            "whether they draw on past successes and what effect that has. Do not use acronyms with the student."
+            "Close by asking exactly ONE open question on a single aspect: whether they draw on past successes "
+            "when preparing for demanding work, never a list of questions. Explore other aspects in later turns "
+            "only if needed. Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "amber",
@@ -1887,8 +1899,8 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
             "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
             "and explain in simple words that 'hedonistic' means living in the present and seizing the moment (carpe diem). "
             "Offer it as a habit of attention, not a trait, and do not add practical advice. "
-            "Close by asking how this shows when balancing study with other activities — "
-            "what they choose when study requires immediate sacrifice and what that choice costs or saves them. "
+            "Close by asking exactly ONE open question on a single aspect: what they choose when study requires "
+            "immediate sacrifice, never a list of questions. Explore other aspects in later turns only if needed. "
             "Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
@@ -1904,9 +1916,9 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
             "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
             "and explain in simple words that 'fatalistic' means the feeling that what happens does not depend much on you. "
             "Offer it as a possible habit of attention, not a trait, and do not add practical advice. "
-            "Close by asking how this shows in the way the student prepares — "
-            "what they choose to do, or not do, when they feel the outcome is not up to them — "
-            "and what that choice costs or saves them. Do not use acronyms with the student."
+            "Close by asking exactly ONE open question on a single aspect: what they choose to do when they feel "
+            "an outcome is not up to them, never a list of questions. Explore other aspects in later turns only "
+            "if needed. If they reject a reading, do not offer it again. Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "red",
@@ -1921,9 +1933,9 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
             "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
             "and explain in simple words that it reflects planning, goal orientation, and working for future outcomes. "
             "Offer it as an orientation habit, not a trait, and do not add practical advice. "
-            "Close by asking how this translates into the way they structure their study — "
-            "what they choose to prioritize in the present and what that brings. "
-            "Do not use acronyms with the student."
+            "Close by asking exactly ONE open question on a single aspect: what they choose to prioritize in "
+            "the present when structuring study, never a list of questions. Explore other aspects in later turns "
+            "only if needed. Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "teal",
@@ -1990,6 +2002,8 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Ask this question: 'Who are three people you admired growing up "
             "(real or fictional) and what specific qualities do you admire in each of them?'. "
             "Wait for the answer before exploring what those qualities mean for them and their choices in practice. "
+            "In follow-up turns ask exactly ONE open question on a single aspect, never a list of questions; "
+            "explore other aspects in later turns only if needed. If they reject a reading, do not offer it again. "
             "Stay with this question while they develop it (about five exchanges at most); "
             "when a concrete meaning has emerged and they have answered one reading of it, "
             "give a mini-summary in their words and on the last line put only [[AVANZA_STEP]]."
@@ -2007,6 +2021,8 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Ask this question: 'Which magazines, websites, channels or content do you follow most willingly, "
             "and what attracts you about this content?'. "
             "Wait for the answer before exploring what interests, themes or environments this content opens up for them. "
+            "In follow-up turns ask exactly ONE open question on a single aspect, never a list of questions; "
+            "explore other aspects in later turns only if needed. If they reject a reading, do not offer it again. "
             "Stay with this question while they develop it (about five exchanges at most); "
             "when a concrete meaning has emerged and they have answered one reading of it, "
             "give a mini-summary in their words and on the last line put only [[AVANZA_STEP]]."
@@ -2024,6 +2040,8 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Ask this question: 'What is your favourite story from a book, film or series? "
             "Tell it to me briefly and say what strikes you most about it.'. "
             "Wait for the answer before exploring how the central character or plot relates to their own way of facing challenges. "
+            "In follow-up turns ask exactly ONE open question on a single aspect, never a list of questions; "
+            "explore other aspects in later turns only if needed. If they reject a reading, do not offer it again. "
             "Stay with this question while they develop it (about five exchanges at most); "
             "when a concrete meaning has emerged and they have answered one reading of it, "
             "give a mini-summary in their words and on the last line put only [[AVANZA_STEP]]."
@@ -2041,6 +2059,8 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Ask this question: 'What is your motto, or the phrase that guides you most often? "
             "How do you apply it in important choices?'. "
             "Wait for the answer before exploring how this motto actually guides what they do when making a difficult choice. "
+            "In follow-up turns ask exactly ONE open question on a single aspect, never a list of questions; "
+            "explore other aspects in later turns only if needed. If they reject a reading, do not offer it again. "
             "Stay with this question while they develop it (about five exchanges at most); "
             "when a concrete meaning has emerged and they have answered one reading of it, "
             "give a mini-summary in their words and on the last line put only [[AVANZA_STEP]]."
@@ -2058,6 +2078,8 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Ask this question: 'Tell me three early memories (ideally between ages 3 and 6) "
             "and give a short title to each memory.'. "
             "Wait for the answer before exploring what central motif or preoccupation recurs across these scenes. "
+            "In follow-up turns ask exactly ONE open question on a single aspect, never a list of questions; "
+            "explore other aspects in later turns only if needed. If they reject a reading, do not offer it again. "
             "Stay with this question while they develop it (about five exchanges at most); "
             "when a concrete meaning has emerged and they have answered one reading of it, "
             "give a mini-summary in their words and on the last line put only [[AVANZA_STEP]]."
@@ -2381,8 +2403,10 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
             "Explain the area in one or two simple sentences: how you recognise and handle "
             "anxiety, fear of making mistakes and tension when facing difficult or demanding "
             "tasks. Refer to the student's self-assessment result for this area as their own "
-            "self-perception, then open the reflection with ONE question about what they do "
-            "when tension rises in a demanding task — how they usually respond and what that response leads to."
+            "self-perception, not a diagnosis. Then open the reflection with exactly ONE open question "
+            "on a single aspect: what they actually do when tension rises in a demanding task, never a "
+            "list of questions. Explore other aspects in later turns only if needed. If they reject a "
+            "reading or strategy, do not offer it again."
         ),
         "system_prompt_mode": "qpcs-analysis",
         "color_theme": "blue",
@@ -2400,8 +2424,10 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
             "you express your ideas, make sure you are understood and that you have understood "
             "others, and how you feel when talking with new or important people. Refer to the "
             "student's self-assessment result for this area as self-perception, not a "
-            "judgement, then open the reflection with ONE question about what they do when "
-            "they need to share ideas or ask for clarification in study or group work, and what usually happens."
+            "judgement or diagnosis. Then open the reflection with exactly ONE open question on a "
+            "single aspect: what they actually do when they need to share ideas in study or group "
+            "work, never a list of questions. Explore other aspects in later turns only if needed. "
+            "If they reject a reading or strategy, do not offer it again."
         ),
         "system_prompt_mode": "qpcs-analysis",
         "color_theme": "indigo",
@@ -2418,8 +2444,10 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
             "the previous topic. Explain the area in one or two simple sentences: how you keep "
             "going and finish what you start, even when a task is boring or tiring, and how you "
             "stay focused. Refer to the student's self-assessment result for this area as "
-            "self-perception, not a judgement, then open the reflection with ONE question "
-            "about what they actually do when study becomes tedious or difficult, how they choose to proceed, and what that produces."
+            "self-perception, not a judgement or diagnosis. Then open the reflection with exactly "
+            "ONE open question on a single aspect: what they actually do when study becomes tedious "
+            "or difficult, never a list of questions. Explore other aspects in later turns only if "
+            "needed. If they reject a reading or strategy, do not offer it again."
         ),
         "system_prompt_mode": "qpcs-analysis",
         "color_theme": "amber",
@@ -2437,8 +2465,10 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
             "you study and learn - connecting new things to what you already know, spotting the "
             "important information and applying it to real life - and how you work together with "
             "others. Refer to the student's self-assessment result for this area as "
-            "self-perception, not a judgement, then open the reflection with ONE question "
-            "about what strategies they actually use when studying new material, and what results those ways of working give."
+            "self-perception, not a judgement or diagnosis. Then open the reflection with exactly "
+            "ONE open question on a single aspect: what strategies they actually use when studying "
+            "new material, never a list of questions. Explore other aspects in later turns only if "
+            "needed. If they reject a reading or strategy, do not offer it again."
         ),
         "system_prompt_mode": "qpcs-analysis",
         "color_theme": "teal",
@@ -2456,8 +2486,10 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
             "sentences: how capable you feel of succeeding in your activities and whether you have "
             "a sense of what matters to you and an idea of a life or career project. Refer to the "
             "student's self-assessment result for this area as self-perception, not a "
-            "judgement, then open the reflection with ONE question about how their confidence "
-            "shapes the choices they make about study or future plans, and where that leads."
+            "judgement or diagnosis. Then open the reflection with exactly ONE open question on a "
+            "single aspect: how their confidence shapes choices about study or future plans, never "
+            "a list of questions. Explore other aspects in later turns only if needed. If they "
+            "reject a reading or strategy, do not offer it again."
         ),
         "system_prompt_mode": "qpcs-analysis",
         "color_theme": "rose",
@@ -2496,11 +2528,12 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
             'V2 (Coping with personal challenges); C1 (Elaborative competences); C2 (Communicative '
             'competence); M1 (Perceived competence); M2 (Ego orientation); M3 (Causal attributions '
             '(internal locus of control)). For each give the exact stanine 1-9, a localised '
-            'interpretation and one or two sentences on what it measures. A1/A2/A3 measure '
-            'difficulties, high is more difficulty; M2 is ego orientation and requires contextual '
-            'reflection, not a good/bad ranking. Treat scores as self-assessment, never grades or '
-            'diagnoses. Distinguish all ten scales within A/V/C/M. No practical advice here; never '
-            'infer missing scores or convert old K profiles.',
+            'interpretation and one or two sentences on what it measures. Treat scores as declared '
+            'self-perceptions and tentative hypotheses, never grades or clinical diagnoses; high '
+            'A1/A2/A3 reflect more self-reported difficulty, not fixed traits or pathology. Do not '
+            'attribute unstated emotions. M2 is ego orientation and requires contextual reflection, '
+            'not a good/bad ranking. Distinguish all ten scales within A/V/C/M. No practical advice here; '
+            'never infer missing scores or convert old K profiles.',
   'system_prompt_mode': 'qpcc-factor',
   'color_theme': 'slate',
   'label_i18n': {'en': '1. Reading Your Profile',
@@ -2530,14 +2563,15 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
   'questionnaire_type': 'QPCC',
   'sort_order': 2,
   'label': '2. Ansia di parlare in pubblico',
-  'prompt': 'Explore A1 public speaking anxiety, part of the affective-emotional dimension. Ask '
-            'how the person experiences speaking before others in a job-seeking or professional '
-            'relational situation. Distinguish anxiety from C2 communicative competence; do not '
-            'infer that one determines the other. Stay with this area while the person is developing '
-            'it: ONE question per turn, aimed at what they do, how they choose and what it produces. '
-            'Close the area when a concrete way of acting has emerged and they have answered one '
-            'reading of it, when they ask to move on, or after about five exchanges at most. Then '
-            'give back what emerged in their words and put only [[AVANZA_STEP]] on the last line.',
+  'prompt': 'Explore A1 public speaking anxiety as a declared self-perception, not a diagnosis. Ask '
+            'exactly ONE open question on a single aspect of how the person acts when speaking before others '
+            'in a professional or job-seeking situation, never a list of questions. Do not attribute emotions '
+            'they have not named; if they reject a reading or strategy, do not offer it again. Distinguish '
+            'A1 from C2 communicative competence. Stay with this area: exactly ONE question per turn on what '
+            'they do, how they choose and what it produces; explore other aspects in later turns only if needed. '
+            'Close the area when a concrete way of acting has emerged and they have answered one reading of it, '
+            'when they ask to move on, or after about five exchanges at most. Then give back what emerged in '
+            'their words and put only [[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-interview',
   'color_theme': 'slate',
   'label_i18n': {'en': '2. Public speaking anxiety',
@@ -2549,14 +2583,15 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
   'questionnaire_type': 'QPCC',
   'sort_order': 3,
   'label': '3. Insicurezza e inadeguatezza',
-  'prompt': 'Explore the other affective-emotional scales separately: A2 sense of insecurity and '
-            'A3 sense of inadequacy. Ask how the person experiences uncertainty and feeling inadequate '
-            'in professional or job-seeking situations, distinguishing the two without diagnosis. '
-            'Stay with this area while the person is developing it: ONE question per turn, aimed at '
-            'what they do, how they choose and what it produces. Close the area when a concrete way '
-            'of acting has emerged and they have answered one reading of it, when they ask to move on, '
-            'or after about five exchanges at most. Then give back what emerged in their words and put '
-            'only [[AVANZA_STEP]] on the last line.',
+  'prompt': 'Explore the affective-emotional scales A2 (sense of insecurity) and A3 (sense of inadequacy) '
+            'as declared self-perceptions, not diagnoses. Pick ONE scale to start: ask exactly ONE open '
+            'question on how the person acts in that situation, never a list of questions; touch the other '
+            'scale in a later turn only if needed. Do not attribute emotions they have not named; if they '
+            'reject a reading or strategy, do not offer it again. Stay with this area: exactly ONE question '
+            'per turn on what they do, how they choose and what it produces. Close the area when a concrete '
+            'way of acting has emerged and they have answered one reading of it, when they ask to move on, '
+            'or after about five exchanges at most. Then give back what emerged in their words and put only '
+            '[[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-interview',
   'color_theme': 'slate',
   'label_i18n': {'en': '3. Insecurity and inadequacy',
@@ -2568,14 +2603,14 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
   'questionnaire_type': 'QPCC',
   'sort_order': 4,
   'label': '4. Dimensione volitiva',
-  'prompt': 'Explore the volitional dimension, distinguishing V1 self-regulation and perseverance '
-            'at work from V2 coping with personal challenges. Ask how the person organises work '
-            'commitments and responds to setbacks, exploring the two aspects separately. Stay with '
-            'this area while the person is developing it: ONE question per turn, aimed at what they '
-            'do, how they choose and what it produces. Close the area when a concrete way of acting '
-            'has emerged and they have answered one reading of it, when they ask to move on, or after '
-            'about five exchanges at most. Then give back what emerged in their words and put only '
-            '[[AVANZA_STEP]] on the last line.',
+  'prompt': 'Explore the volitional dimension (V1 self-regulation and perseverance at work, V2 coping with '
+            'personal challenges). Pick ONE aspect to start (organising commitments OR responding to setbacks): '
+            'ask exactly ONE open question on what they actually do, never a list of questions. Explore the other '
+            'aspect in a later turn only if needed. If they reject a reading or strategy, do not offer it again. '
+            'Stay with this area: exactly ONE question per turn on what they do, how they choose and what it produces. '
+            'Close the area when a concrete way of acting has emerged and they have answered one reading of it, '
+            'when they ask to move on, or after about five exchanges at most. Then give back what emerged in their '
+            'words and put only [[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-interview',
   'color_theme': 'slate',
   'label_i18n': {'en': '4. Volitional dimension',
@@ -2587,14 +2622,14 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
   'questionnaire_type': 'QPCC',
   'sort_order': 5,
   'label': '5. Dimensione cognitiva',
-  'prompt': 'Explore the cognitive dimension, distinguishing C1 elaborative competences from C2 '
-            'communicative competence. Ask how the person understands, connects and communicates '
-            'ideas in professional situations. C2 is not A1 anxiety. Stay with this area while the '
-            'person is developing it: ONE question per turn, aimed at what they do, how they choose '
-            'and what it produces. Close the area when a concrete way of acting has emerged and they '
-            'have answered one reading of it, when they ask to move on, or after about five exchanges '
-            'at most. Then give back what emerged in their words and put only [[AVANZA_STEP]] on the '
-            'last line.',
+  'prompt': 'Explore the cognitive dimension (C1 elaborative competences, C2 communicative competence). Pick '
+            'ONE aspect to start: ask exactly ONE open question on how the person acts (elaborating information '
+            'OR communicating ideas), never a list of questions. Explore the other aspect in a later turn only '
+            'if needed. C2 is not A1 anxiety. If they reject a reading or strategy, do not offer it again. Stay '
+            'with this area: exactly ONE question per turn on what they do, how they choose and what it produces. '
+            'Close the area when a concrete way of acting has emerged and they have answered one reading of it, '
+            'when they ask to move on, or after about five exchanges at most. Then give back what emerged in their '
+            'words and put only [[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-interview',
   'color_theme': 'slate',
   'label_i18n': {'en': '5. Cognitive dimension',
@@ -2606,13 +2641,13 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
   'questionnaire_type': 'QPCC',
   'sort_order': 6,
   'label': '6. Dimensione motivazionale',
-  'prompt': 'Explore the motivational dimension, distinguishing M1 perceived competence, M2 ego '
-            'orientation and M3 causal attributions (internal locus of control). Ask how the person '
-            'experiences competence, recognition and causes of success or setbacks. M2 is not '
-            'automatically a strength or difficulty. Stay with this area while the person is '
-            'developing it: ONE question per turn, aimed at what they do, how they choose and what it '
-            'produces. Close the area when a concrete way of acting has emerged and they have answered '
-            'one reading of it, when they ask to move on, or after about five exchanges at most. Then '
+  'prompt': 'Explore the motivational dimension (M1 perceived competence, M2 ego orientation, M3 causal '
+            'attributions). Pick ONE scale to start: ask exactly ONE open question on how the person acts '
+            'regarding that single aspect, never a list of questions. Explore other aspects in later turns only '
+            'if needed. M2 is not automatically a strength or difficulty. If they reject a reading or strategy, '
+            'do not offer it again. Stay with this area: exactly ONE question per turn on what they do, how they '
+            'choose and what it produces. Close the area when a concrete way of acting has emerged and they have '
+            'answered one reading of it, when they ask to move on, or after about five exchanges at most. Then '
             'give back what emerged in their words and put only [[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-interview',
   'color_theme': 'slate',
@@ -2627,12 +2662,13 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
   'label': "7. Sintesi e Piano d'Azione",
   'prompt': 'Integrate the four interconnected dimensions and all ten canonical QPCC scales '
             'explored (A1 A2 A3 V1 V2 C1 C2 M1 M2 M3). Build a qualitative portrait without '
-            'assigning scores or diagnoses. Distinguish M2 ego orientation from capability and '
-            'causal attributions. Summarise resources and difficulties grounded in the '
-            'conversation; distinguish counselor proposals from the person’s commitments and keep '
-            'only agreed timeframes. At most ONE new practical suggestion only when permitted and '
-            'supported by a certified candidate. End with one reflection question and '
-            '[[AVANZA_STEP]] on the last line.',
+            'assigning scores or clinical diagnoses; treat scores as declared self-perceptions. '
+            'Distinguish M2 ego orientation from capability and causal attributions. Summarise '
+            'resources and difficulties grounded in the conversation; distinguish counselor '
+            'proposals from the person’s commitments and keep only agreed timeframes. If the '
+            'person rejected any reading or strategy earlier, do not reintroduce it. At most '
+            'ONE new practical suggestion only when permitted and supported by a certified candidate. '
+            'End with one reflection question and [[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-summary',
   'color_theme': 'slate',
   'label_i18n': {'en': '7. Synthesis and Action Plan',
@@ -2682,12 +2718,14 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
   'questionnaire_type': 'QAP',
   'sort_order': 2,
   'label': '2. Orientamento al Futuro',
-  'prompt': 'Area 1/4 - Concern and future orientation (Concern). Explore how much the student thinks about '
-            "and prepares for their future, and how aware they are that today's choices influence tomorrow. "
-            'Open by asking how they look at the coming years and what choices or preparation they actually '
-            'make today. Stay with this area while the student develops it (about five exchanges at most); '
-            'close when a concrete way of choosing or preparing has emerged and they have answered one reading '
-            'of it, then give back what emerged in their words and on the last line only [[AVANZA_STEP]].',
+  'prompt': 'Area 1/4 - Concern and future orientation (Concern). Explore how the student prepares for their '
+            'future as a declared self-perception, not a diagnosis. Ask exactly ONE open question on a single '
+            'aspect: what choices or preparation they actually make today, never a list of questions. Explore '
+            'other aspects in later turns only if needed. If they reject a reading or strategy, do not offer '
+            'it again. Stay with this area while the student develops it: exactly ONE question per turn on what '
+            'they do, how they choose and what it produces (about five exchanges at most). Close when a '
+            'concrete way of choosing or preparing has emerged and they have answered one reading of it, then '
+            'give back what emerged in their words and on the last line only [[AVANZA_STEP]].',
   'system_prompt_mode': 'qap-interview',
   'color_theme': 'blue',
   'label_i18n': {'en': '2. Future Orientation',
@@ -2699,13 +2737,14 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
   'questionnaire_type': 'QAP',
   'sort_order': 3,
   'label': '3. Controllo e Autonomia',
-  'prompt': 'Area 2/4 - Control and autonomy (Control). Explore how much the student decides autonomously, '
-            'takes responsibility for their own actions and relies on themselves in important choices. '
-            'Open by asking what they do when an important decision is up to them, how they decide and '
-            'what follows from that way of choosing. Stay with this area while the student develops it '
-            '(about five exchanges at most); close when a concrete way of deciding has emerged and they '
-            'have answered one reading of it, then give back what emerged in their words and put only '
-            '[[AVANZA_STEP]] on the last line.',
+  'prompt': 'Area 2/4 - Control and autonomy (Control). Explore how the student decides autonomously as a '
+            'declared self-perception, not a diagnosis. Ask exactly ONE open question on a single aspect: '
+            'how they decide when an important choice is up to them, never a list of questions. Explore other '
+            'aspects in later turns only if needed. If they reject a reading or strategy, do not offer it again. '
+            'Stay with this area while the student develops it: exactly ONE question per turn on what they do, '
+            'how they choose and what it produces (about five exchanges at most). Close when a concrete way '
+            'of deciding has emerged and they have answered one reading of it, then give back what emerged '
+            'in their words and put only [[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qap-interview',
   'color_theme': 'indigo',
   'label_i18n': {'en': '3. Control and Autonomy',
@@ -2717,12 +2756,14 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
   'questionnaire_type': 'QAP',
   'sort_order': 4,
   'label': "4. Curiosità ed Esplorazione",
-  'prompt': 'Area 3/4 - Curiosity and exploration (Curiosity). Explore how much the student explores the '
-            'environment around them, looks for opportunities to grow and examines options before choosing. '
-            'Open by asking what they do to explore new options or possibilities, how they go looking and '
-            'what that search produces. Stay with this area while the student develops it (about five exchanges '
-            'at most); close when a concrete way of exploring has emerged and they have answered one reading '
-            'of it, then give back what emerged in their words and on the last line only [[AVANZA_STEP]].',
+  'prompt': 'Area 3/4 - Curiosity and exploration (Curiosity). Explore how the student seeks opportunities as '
+            'a declared self-perception, not a diagnosis. Ask exactly ONE open question on a single aspect: '
+            'what they actually do to explore new options, never a list of questions. Explore other aspects '
+            'in later turns only if needed. If they reject a reading or strategy, do not offer it again. Stay '
+            'with this area while the student develops it: exactly ONE question per turn on what they do, '
+            'how they choose and what it produces (about five exchanges at most). Close when a concrete way '
+            'of exploring has emerged and they have answered one reading of it, then give back what emerged '
+            'in their words and on the last line only [[AVANZA_STEP]].',
   'system_prompt_mode': 'qap-interview',
   'color_theme': 'amber',
   'label_i18n': {'en': '4. Curiosity and Exploration',
@@ -2734,12 +2775,14 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
   'questionnaire_type': 'QAP',
   'sort_order': 5,
   'label': '5. Fiducia e Problem Solving',
-  'prompt': 'Area 4/4 - Confidence (Confidence). Explore how capable the student feels of completing tasks, '
-            'overcoming obstacles and facing and solving problems. Open by asking what they do when they run '
-            'into a difficulty in a demanding task, how they respond and what that response leads to. '
-            'Stay with this area while the student develops it (about five exchanges at most); close when a '
-            'concrete way of tackling obstacles has emerged and they have answered one reading of it, then '
-            'give back what emerged in their words and on the last line only [[AVANZA_STEP]].',
+  'prompt': 'Area 4/4 - Confidence (Confidence). Explore confidence in tackling obstacles as a declared '
+            'self-perception, not a diagnosis. Ask exactly ONE open question on a single aspect: what they '
+            'actually do when they meet a difficulty in a demanding task, never a list of questions. Explore '
+            'other aspects in later turns only if needed. If they reject a reading or strategy, do not offer '
+            'it again. Stay with this area while the student develops it: exactly ONE question per turn on '
+            'what they do, how they choose and what it produces (about five exchanges at most). Close when '
+            'a concrete way of tackling obstacles has emerged and they have answered one reading of it, '
+            'then give back what emerged in their words and on the last line only [[AVANZA_STEP]].',
   'system_prompt_mode': 'qap-interview',
   'color_theme': 'teal',
   'label_i18n': {'en': '5. Confidence and Problem Solving',
