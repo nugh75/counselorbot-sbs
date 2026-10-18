@@ -652,6 +652,10 @@ _THINK_CLOSE_ORPHAN_RE = re.compile(
     r"\A(.*?)</\s*(?:think|thinking|sto_pensando)\s*>",
     re.IGNORECASE | re.DOTALL,
 )
+_THINK_TAG_ANY_RE = re.compile(
+    r"</?\s*(?:think|thinking|sto_pensando)\b[^>]*>",
+    re.IGNORECASE,
+)
 
 # Some models repeat their reasoning in Markdown after the native thinking
 # channel. Require a leading reasoning heading AND a separate answer heading:
@@ -704,6 +708,60 @@ def split_thinking(text: str) -> tuple[Optional[str], str]:
         reasoning_parts.append(markdown_reasoning)
     reasoning = "\n\n".join(part for part in reasoning_parts if part).strip() or None
     return reasoning, visible
+
+
+def strip_thinking(text: str) -> str:
+    """Rimuove qualsiasi tag <think>...</think>, <thinking>...</thinking>, <sto_pensando>...</sto_pensando>,
+    inclusi blocchi aperti non chiusi o tag orfani residui."""
+    if not text:
+        return ""
+    _, visible = split_thinking(text)
+    visible = _THINK_TAG_ANY_RE.sub("", visible)
+    return re.sub(r"\n{3,}", "\n\n", visible).strip()
+
+
+def reflective_empty_fallback(step_label: Optional[str] = None, language: Optional[str] = "it") -> str:
+    """Restituisce una risposta di fallback gentile, contestualizzata e riflessiva
+    quando il modello restituisce una risposta vuota o solo reasoning."""
+    lang = (language or "it").strip().lower()
+    if lang not in {"it", "en", "es", "fr", "de", "sv"}:
+        lang = "it"
+
+    cleaned_step = (step_label or "").strip()
+    if cleaned_step:
+        templates = {
+            "it": f"Prenditi un momento: siamo al passaggio su {cleaned_step}. Su quale aspetto vorresti soffermarti o da dove preferisci riprendere la riflessione?",
+            "en": f"Take a moment: we are currently focusing on {cleaned_step}. Which aspect would you like to reflect on or where would you like to resume?",
+            "es": f"Tómate un momento: nos encontramos en el paso sobre {cleaned_step}. ¿Sobre qué aspecto te gustaría reflexionar o por dónde prefieres retomar?",
+            "fr": f"Prenez un moment : nous en sommes à l'étape sur {cleaned_step}. Sur quel aspect aimeriez-vous réfléchir ou par où préférez-vous reprendre ?",
+            "de": f"Nimm dir einen Moment Zeit: Wir sind beim Schritt zu {cleaned_step}. Über welchen Aspekt möchtest du nachdenken oder wo möchtest du wieder ansetzen?",
+            "sv": f"Ta en stund: vi befinner oss vid steget om {cleaned_step}. Vilken aspekt skulle du vilja reflektera kring eller var vill du återuppta tanken?",
+        }
+        return templates.get(lang, templates["it"])
+
+    general_templates = {
+        "it": "Prenditi un momento per riflettere. Quando vuoi, dimmi pure su quale aspetto vorresti soffermarti o da dove preferisci riprendere.",
+        "en": "Take a moment to reflect. Whenever you're ready, tell me what you'd like to focus on or where you'd like to resume.",
+        "es": "Tómate un momento para reflexionar. Quando quieras, cuéntame en qué aspecto te gustaría centrarte o por dónde prefieres retomar.",
+        "fr": "Prenez un moment pour réfléchir. Quand vous le souhaitez, dites-moi sur quel point vous aimeriez vous concentrer ou par où reprendre.",
+        "de": "Nimm dir einen Moment Zeit zum Nachdenken. Sag mir gerne, worauf du dich konzentrieren möchtest oder wo wir wieder ansetzen sollen.",
+        "sv": "Ta en stund att reflektera. Berätta gärna när du vill vad du vill fokusera på eller var du vill återuppta samtalet.",
+    }
+    return general_templates.get(lang, general_templates["it"])
+
+
+def is_empty_response_error(exc: Exception) -> bool:
+    """Verifica se l'eccezione indica che il modello ha terminato senza contenuto o con risposta vuota."""
+    msg = str(exc).lower()
+    empty_phrases = (
+        "senza contenuto",
+        "risposta vuota",
+        "nessun modello configurato ha completato la risposta",
+        "no continuation",
+        "senza contenuto visibile",
+        "empty response",
+    )
+    return any(p in msg for p in empty_phrases)
 
 
 class ThinkStreamSplitter:
@@ -1729,7 +1787,7 @@ def _student_visible_response(
     sanitize_ztpi: bool,
     required_codes: Optional[set[str]] = None,
 ) -> str:
-    text = _strip_orphan_reasoning(text)
+    text = strip_thinking(text)
     text = _strip_generic_acknowledgement(text)
     if sanitize_ztpi:
         return _sanitize_ztpi_user_text(text, language)

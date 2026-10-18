@@ -373,6 +373,15 @@ agire e lo studente ha risposto a una lettura di esso, oppure su richiesta espli
 del tetto massimo di scambi. I testi di step e i prompt di sistema d'intervista (QPCC, QAP, Savickas,
 Evento e QPCS) e i relativi hash legacy in `prompt_factory_legacy.json` garantiscono piena continuità,
 prevenzione dei loop conversazionali e compatibilità con l'allineamento dei prompt di fabbrica.
+A livello applicativo, la chiusura dello step è garantita anche lato server (`backend/step_closure.py`
+integrato in `backend/routes/chat.py` per chiamate sincrone e streaming SSE): se il modello non emette
+spontaneamente il marcatore `[[AVANZA_STEP]]` entro il tetto di sicurezza configurato (predefinito a 5
+scambi dell'assistente nello step, escludendo i passi di introduzione e le sintesi finali/farewell),
+il backend appende automaticamente il marcatore in coda alla risposta prima dell'estrazione dei segnali
+di controllo e aggiorna la memoria di sessione (`completed_step=True`). Il frontend riceve quindi il
+segnale `AVANZA_STEP` nei `control_signals`, abilitando l'avanzamento allo step successivo senza dipendere
+unicamente dalla decisione probabilistica del modello LLM.
+
 
 ### Envelope snello, deduplicazione e divieto di elenchi puntati
 
@@ -540,6 +549,7 @@ intere 1–9: profili legacy, incompleti o misti vengono rifiutati senza salvare
 Al termine della chat guidata (sia reale sia su taccuino di prova), la schermata finale di completamento è lineare e priva di scelte dispersive: mostra l’avvenuto completamento con il riepilogo testuale della sintesi emersa e offre due sole azioni chiare: il download diretto del report PDF completo (che scarica il documento e riporta alla pagina principale) e il pulsante per tornare direttamente alla pagina principale, azzerando le selezioni di sessione ed evitando schermate o bivi intermedi. Per le sessioni di prova, la schermata e il download del PDF restano riservati al docente proprietario o all’amministratore, senza registrare compilazioni reali degli studenti.
 
 La generazione può essere interrotta; “Continua” riprende una risposta incompleta.
+Durante la generazione (sia in streaming SSE sia sincrona), i blocchi di ragionamento interno emessi da modelli di reasoning (tag `<think>...</think>`, `<thinking>` o `<sto_pensando>`, inclusi tag aperti o orfani) vengono filtrati ed eliminati in tempo reale, impedendo fughe di catena di pensiero verso l’utente e garantendo che la memoria di sessione e i log conservino solo la risposta visibile. Se una risposta risulta vuota, composta da soli spazi o svuotata dalla rimozione del reasoning (oppure in caso di errore vuoto del provider), il sistema evita errori 500/502 o messaggi vuoti e invia un fallback gentile e riflessivo, contestualizzato al passo corrente della chat guidata e nella lingua dell’utente (italiano, inglese, spagnolo, francese, tedesco, svedese), invitando a proseguire la riflessione.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
 e feedback quando disponibili. Il lettore nel menu di navigazione legge il testo visibile,
 con impostazioni di voce e motore; la correzione della pronuncia è visibile solo
