@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown, Pencil, Award, XCircle } from 'lucide-react';
+import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown, Pencil, Award, XCircle, Search, Sparkles, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/utils';
 import { PersonalAPIPolicy } from '@/components/admin/PersonalAPIPolicy';
 import { ChatGPTSettingsPanel } from '@/components/admin/ChatGPTSettingsPanel';
 import { personalAPIText } from '@/lib/i18n-personal-api';
@@ -197,7 +198,150 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
             'mistral:7b',
             'gpt-oss:20b',
         ]
-    }
+};
+
+// Suggerimento mostrato sopra l'elenco: spiega quali modelli sono adatti e perché.
+// Le etichette dei tag sono tradotte (admin.config.modelTag*); le descrizioni sono
+// testo di guida per l'operatore, come le etichette di COUNSELOR_METAPHOR_PRESETS.
+interface ModelRecommendation {
+    id: string;
+    label: string;
+    tag: 'recommended' | 'quality' | 'fast' | 'free' | 'reasoning';
+    description: string;
+}
+
+const RECOMMENDED_MODELS: Record<string, ModelRecommendation[]> = {
+    openrouter: [
+        {
+            id: 'google/gemini-2.0-flash-001',
+            label: 'Gemini 2.0 Flash',
+            tag: 'recommended',
+            description: 'Veloce, economico ed equilibrato, eccellente per chat e sintesi.',
+        },
+        {
+            id: 'anthropic/claude-3.7-sonnet',
+            label: 'Claude 3.7 Sonnet',
+            tag: 'quality',
+            description: 'Massima profondità nel counseling e supporto al reasoning riflessivo.',
+        },
+        {
+            id: 'deepseek/deepseek-chat',
+            label: 'DeepSeek V3',
+            tag: 'fast',
+            description: 'Ottimo rapporto qualità/costo, veloce nelle risposte guidate.',
+        },
+        {
+            id: 'qwen/qwen-2.5-72b-instruct',
+            label: 'Qwen 2.5 72B',
+            tag: 'quality',
+            description: 'Molto accurato nel rispetto dei vincoli e nella lingua italiana.',
+        },
+        {
+            id: 'meta-llama/llama-3.3-70b-instruct:free',
+            label: 'Llama 3.3 70B (Free)',
+            tag: 'free',
+            description: 'Gratuito su OpenRouter, ideale per test e verifiche a costo zero.',
+        },
+    ],
+    openai: [
+        {
+            id: 'gpt-4o',
+            label: 'GPT-4o',
+            tag: 'recommended',
+            description: 'Multimodale, veloce e completo per tutti i percorsi.',
+        },
+        {
+            id: 'gpt-4o-mini',
+            label: 'GPT-4o Mini',
+            tag: 'fast',
+            description: 'Economico e rapido per sessioni ad alto volume.',
+        },
+    ],
+    gemini: [
+        {
+            id: 'gemini-1.5-pro',
+            label: 'Gemini 1.5 Pro',
+            tag: 'quality',
+            description: 'Contesto molto ampio, ideale per sintesi complesse e portfolio.',
+        },
+        {
+            id: 'gemini-1.5-flash',
+            label: 'Gemini 1.5 Flash',
+            tag: 'recommended',
+            description: 'Rapido ed economico, consigliato per interazioni fluide.',
+        },
+    ],
+    anthropic: [
+        {
+            id: 'claude-3-5-sonnet-20240620',
+            label: 'Claude 3.5 Sonnet',
+            tag: 'recommended',
+            description: 'Altissima comprensione empatica e stile conversazionale naturale.',
+        },
+    ],
+    deepseek: [
+        {
+            id: 'deepseek-chat',
+            label: 'DeepSeek V3',
+            tag: 'recommended',
+            description: 'Veloce ed economico, eccellente per chat e dialogo.',
+        },
+        {
+            id: 'deepseek-reasoner',
+            label: 'DeepSeek R1',
+            tag: 'reasoning',
+            description: 'Capacità di ragionamento profondo con catena di pensiero esplicita.',
+        },
+    ],
+    ollama: [
+        {
+            id: 'qwen3:latest',
+            label: 'Qwen 3',
+            tag: 'recommended',
+            description: 'Modello locale moderno ed equilibrato con supporto al thinking.',
+        },
+        {
+            id: 'llama3.3',
+            label: 'Llama 3.3',
+            tag: 'quality',
+            description: 'Ottima robustezza generale e capacità di sintesi.',
+        },
+    ],
+};
+
+// Etichette e colori dei tag delle categorie di modello (Consigliato/Alta qualità/…).
+const MODEL_TAG_KEYS: Record<ModelRecommendation['tag'], string> = {
+    recommended: 'admin.config.modelTagRecommended',
+    quality: 'admin.config.modelTagQuality',
+    fast: 'admin.config.modelTagFast',
+    free: 'admin.config.modelTagFree',
+    reasoning: 'admin.config.modelTagReasoning',
+};
+
+const MODEL_TAG_STYLES: Record<ModelRecommendation['tag'], string> = {
+    recommended: 'bg-emerald-100 text-emerald-800',
+    quality: 'bg-indigo-100 text-indigo-800',
+    fast: 'bg-sky-100 text-sky-800',
+    free: 'bg-amber-100 text-amber-800',
+    reasoning: 'bg-violet-100 text-violet-800',
+};
+
+// I modelli con thinking esplicito consumano token di ragionamento: il backend
+// alloca il budget da solo, qui serve solo ad avvisare l'admin.
+const isReasoningModel = (modelName: string): boolean => {
+    const lower = (modelName || '').toLowerCase();
+    return lower.includes('reasoner')
+        || lower.includes('deepseek-r1')
+        || /(^|[/\-:.])r1([/\-:.]|$)/.test(lower)
+        || lower.includes('claude-3.7')
+        || lower.includes('qwen3')
+        || /(^|[/\-:.])o[134]([/\-:.]|$)/.test(lower);
+};
+
+// Modelli in fascia gratuita: ottimi per prove, soggetti ai limiti del provider.
+const isFreeModel = (modelName: string): boolean => {
+    const lower = (modelName || '').toLowerCase();
+    return lower.includes(':free') || lower === 'openrouter/free' || lower.endsWith('/free');
 };
 
 const DEFAULT_PLACEHOLDERS: Record<string, [string, string]> = {
@@ -1115,6 +1259,11 @@ export function ConfigForm() {
     const [liveModels, setLiveModels] = useState<string[]>([]);
     const [modelsLoading, setModelsLoading] = useState(false);
 
+    // Ricerca nell'elenco modelli (OpenRouter ne espone centinaia) e inserimento manuale dell'ID.
+    const [modelSearch, setModelSearch] = useState('');
+    const [customModelMode, setCustomModelMode] = useState(false);
+    const [customModelDraft, setCustomModelDraft] = useState('');
+
     // Dynamic guided steps
     const [guidedSteps, setGuidedSteps] = useState<GuidedStep[]>([]);
     const [stepModes, setStepModes] = useState<GuidedStepMode[]>([]);
@@ -1250,6 +1399,43 @@ export function ConfigForm() {
         return activeModel && !base.includes(activeModel) ? [activeModel, ...base] : base;
     })();
 
+    // Etichette leggibili dei modelli consigliati: servono anche alla ricerca, così
+    // si può filtrare per nome ("claude", "gemini") oltre che per ID.
+    const modelLabels = (() => {
+        const labels = new Map<string, string>();
+        for (const recommendations of Object.values(RECOMMENDED_MODELS)) {
+            for (const recommendation of recommendations) labels.set(recommendation.id, recommendation.label);
+        }
+        return labels;
+    })();
+
+    // Filtro dell'elenco (OpenRouter serve centinaia di modelli): case-insensitive su ID ed etichetta.
+    const normalizedModelSearch = modelSearch.trim().toLowerCase();
+    const filteredModelOptions = normalizedModelSearch
+        ? modelOptions.filter(model =>
+            model.toLowerCase().includes(normalizedModelSearch)
+            || (modelLabels.get(model)?.toLowerCase().includes(normalizedModelSearch) ?? false))
+        : modelOptions;
+
+    const providerRecommendations = activeProvider ? (RECOMMENDED_MODELS[activeProvider] || []) : [];
+
+    // Inserimento manuale: un ID valido è non vuoto e senza spazi.
+    const manualModelValue = customModelDraft.trim();
+    const manualModelInvalid = /\s/.test(manualModelValue);
+    const canSaveManualModel = manualModelValue.length > 0 && !manualModelInvalid;
+
+    const toggleCustomModelMode = (enabled: boolean) => {
+        setCustomModelMode(enabled);
+        setModelSearch('');
+        // Entrando in modale manuale si parte dal modello attivo, per modificarlo.
+        setCustomModelDraft(enabled ? activeModel : '');
+    };
+
+    const commitManualModel = () => {
+        if (!canSaveManualModel) return;
+        handleModelChange(manualModelValue);
+    };
+
     // --- Config helpers ---
 
     const handleSaveConfig = async (item: ConfigItem): Promise<boolean> => {
@@ -1326,6 +1512,10 @@ export function ConfigForm() {
         handleSaveConfig({ key: 'active_provider', value: provider, description: 'Provider AI attivo' });
         const firstModel = PROVIDERS[provider]?.models[0] || '';
         setActiveModel(firstModel);
+        // Nuovo provider, nuovo elenco: ricerca e ID manuale ripartono da zero.
+        setModelSearch('');
+        setCustomModelDraft('');
+        setCustomModelMode(false);
         handleSaveConfig({ key: 'model_name', value: firstModel, description: 'Es. gpt-4o, claude-3-opus' });
     };
 
@@ -2069,31 +2259,156 @@ export function ConfigForm() {
                                     </button>
                                 )}
                             </div>
-                            <div className="relative">
-                                <Cpu className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-                                <select
-                                    value={!activeProvider ? '' : (activeKeyMissing ? '' : activeModel)}
-                                    onChange={(e) => handleModelChange(e.target.value)}
-                                    disabled={!activeProvider || activeKeyMissing}
-                                    className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 pl-10 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-                                >
-                                    {!activeProvider ? (
-                                        <option value="">{systemAIText(lang, 'modelEmpty')}</option>
-                                    ) : activeKeyMissing ? (
-                                        <option value="">{t('admin.config.modelNeedsKey')}</option>
-                                    ) : (
-                                        modelOptions.map((model) => (
-                                            <option key={model} value={model}>{model}</option>
-                                        ))
-                                    )}
-                                </select>
-                            </div>
-                            {activeProvider && activeKeyMissing ? (
-                                <p className="text-xs text-amber-600">{t('admin.config.modelNeedsKeyHint')}</p>
+
+                            {/* Elenco del provider oppure ID digitato a mano (modelli non in elenco). */}
+                            {activeProvider && (
+                                <div className="flex rounded-md border border-slate-300 bg-slate-50 p-0.5 text-xs">
+                                    <button
+                                        type="button"
+                                        aria-pressed={!customModelMode}
+                                        onClick={() => toggleCustomModelMode(false)}
+                                        className={`flex-1 rounded px-2 py-1.5 font-medium transition-colors ${!customModelMode ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                                    >
+                                        {t('admin.config.useDropdownList')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        aria-pressed={customModelMode}
+                                        onClick={() => toggleCustomModelMode(true)}
+                                        className={`flex-1 rounded px-2 py-1.5 font-medium transition-colors ${customModelMode ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                                    >
+                                        {t('admin.config.customModelToggle')}
+                                    </button>
+                                </div>
+                            )}
+
+                            {customModelMode ? (
+                                <div className="space-y-2">
+                                    <div className="relative">
+                                        <Cpu className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                                        <input
+                                            id="system_ai_model_manual"
+                                            type="text"
+                                            value={customModelDraft}
+                                            onChange={(e) => setCustomModelDraft(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    commitManualModel();
+                                                }
+                                            }}
+                                            placeholder={t('admin.config.customModelPlaceholder')}
+                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 pl-10 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        />
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={commitManualModel}
+                                            disabled={!canSaveManualModel}
+                                            className="flex items-center gap-1.5"
+                                        >
+                                            <Save className="w-3.5 h-3.5" />
+                                            {t('common.save')}
+                                        </Button>
+                                        {manualModelInvalid && (
+                                            <p className="text-xs text-red-600">{t('admin.config.customModelInvalid')}</p>
+                                        )}
+                                    </div>
+                                </div>
                             ) : (
-                                activeProvider && liveModels.length === 0 && !modelsLoading && (
-                                    <p className="text-xs text-amber-600">{t('admin.config.providerUnreachable')}</p>
-                                )
+                                <>
+                                    {/* Ricerca: con OpenRouter l'elenco è lunghissimo. */}
+                                    {activeProvider && !activeKeyMissing && (
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                                            <input
+                                                id="system_ai_model_search"
+                                                type="search"
+                                                value={modelSearch}
+                                                onChange={(e) => setModelSearch(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Escape') setModelSearch('');
+                                                }}
+                                                placeholder={t('admin.config.searchModelPlaceholder')}
+                                                className="w-full bg-white border border-slate-300 rounded-md p-2.5 pl-9 pr-9 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            />
+                                            {modelSearch && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setModelSearch('')}
+                                                    title={t('admin.config.clearSearch')}
+                                                    aria-label={t('admin.config.clearSearch')}
+                                                    className="absolute right-2 top-2 rounded p-1 text-slate-400 hover:text-slate-700"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                    <div className="relative">
+                                        <Cpu className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                                        <select
+                                            id="system_ai_model"
+                                            value={!activeProvider ? '' : (activeKeyMissing ? '' : activeModel)}
+                                            onChange={(e) => handleModelChange(e.target.value)}
+                                            disabled={!activeProvider || activeKeyMissing}
+                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 pl-10 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                                        >
+                                            {!activeProvider ? (
+                                                <option value="">{systemAIText(lang, 'modelEmpty')}</option>
+                                            ) : activeKeyMissing ? (
+                                                <option value="">{t('admin.config.modelNeedsKey')}</option>
+                                            ) : filteredModelOptions.length === 0 ? (
+                                                <option value="">{t('admin.config.noModelsFound', { query: modelSearch.trim() })}</option>
+                                            ) : (
+                                                filteredModelOptions.map((model) => (
+                                                    <option key={model} value={model}>{model}</option>
+                                                ))
+                                            )}
+                                        </select>
+                                    </div>
+                                    {activeProvider && !activeKeyMissing && (
+                                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                                            <span>{t('admin.config.modelsFiltered', { n: filteredModelOptions.length, total: modelOptions.length })}</span>
+                                            {modelSearch && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setModelSearch('')}
+                                                    className="text-indigo-600 hover:text-indigo-700"
+                                                >
+                                                    {t('admin.config.clearSearch')}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                    {activeProvider && !activeKeyMissing && filteredModelOptions.length === 0 && (
+                                        <p className="text-xs text-amber-600">{t('admin.config.noModelsFound', { query: modelSearch.trim() })}</p>
+                                    )}
+                                    {activeProvider && activeKeyMissing ? (
+                                        <p className="text-xs text-amber-600">{t('admin.config.modelNeedsKeyHint')}</p>
+                                    ) : (
+                                        activeProvider && liveModels.length === 0 && !modelsLoading && (
+                                            <p className="text-xs text-amber-600">{t('admin.config.providerUnreachable')}</p>
+                                        )
+                                    )}
+                                </>
+                            )}
+
+                            {/* Avvisi sul modello attivo: reasoning e fascia gratuita. */}
+                            {activeModel && isReasoningModel(activeModel) && (
+                                <p className="flex items-start gap-1.5 text-xs text-violet-700">
+                                    <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                                    <span>{t('admin.config.reasoningHint')}</span>
+                                </p>
+                            )}
+                            {activeModel && isFreeModel(activeModel) && (
+                                <p className="flex items-start gap-1.5 text-xs text-amber-700">
+                                    <Award className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                                    <span>{t('admin.config.freeTierHint')}</span>
+                                </p>
                             )}
                         </div>
 
@@ -2115,6 +2430,51 @@ export function ConfigForm() {
                             </label>
                         </div>
                     </div>
+
+                    {/* Suggerimento: quali modelli sono adatti per CounselorBot e perché. */}
+                    {providerRecommendations.length > 0 && (
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                            <p className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                                <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
+                                {t('admin.config.recommendedModels')}
+                            </p>
+                            <ul className="grid gap-2 sm:grid-cols-2">
+                                {providerRecommendations.map((recommendation) => {
+                                    const selected = activeModel === recommendation.id;
+                                    return (
+                                        <li key={recommendation.id}>
+                                            <button
+                                                type="button"
+                                                aria-pressed={selected}
+                                                onClick={() => handleModelChange(recommendation.id)}
+                                                className={cn(
+                                                    'h-full w-full rounded-lg border p-3 text-left transition-colors',
+                                                    selected
+                                                        ? 'border-indigo-400 bg-indigo-50'
+                                                        : 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/40',
+                                                )}
+                                            >
+                                                <span className="flex flex-wrap items-center gap-2">
+                                                    <span className="text-sm font-semibold text-slate-900">{recommendation.label}</span>
+                                                    <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide', MODEL_TAG_STYLES[recommendation.tag])}>
+                                                        {t(MODEL_TAG_KEYS[recommendation.tag])}
+                                                    </span>
+                                                    {selected && <CheckCircle2 className="w-4 h-4 text-indigo-600" />}
+                                                </span>
+                                                <span className="mt-1 block break-all font-mono text-[11px] text-slate-500">{recommendation.id}</span>
+                                                <span className="mt-1 block text-xs text-slate-600">{recommendation.description}</span>
+                                            </button>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Risposta a "dove si regolano le grandezze delle risposte". */}
+                    <Callout variant="info" icon={Layers}>
+                        {t('admin.config.lengthProfilesHint')}
+                    </Callout>
 
                     {/* Pulsante Prova */}
                     <div className="flex flex-wrap items-center gap-3 pt-2">
