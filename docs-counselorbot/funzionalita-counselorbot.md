@@ -384,6 +384,15 @@ agire e lo studente ha risposto a una lettura di esso, oppure su richiesta espli
 del tetto massimo di scambi. I testi di step e i prompt di sistema d'intervista (QPCC, QAP, Savickas,
 Evento e QPCS) e i relativi hash legacy in `prompt_factory_legacy.json` garantiscono piena continuità,
 prevenzione dei loop conversazionali e compatibilità con l'allineamento dei prompt di fabbrica.
+A livello applicativo, la chiusura dello step è garantita anche lato server (`backend/step_closure.py`
+integrato in `backend/routes/chat.py` per chiamate sincrone e streaming SSE): se il modello non emette
+spontaneamente il marcatore `[[AVANZA_STEP]]` entro il tetto di sicurezza configurato (predefinito a 5
+scambi dell'assistente nello step, escludendo i passi di introduzione e le sintesi finali/farewell),
+il backend appende automaticamente il marcatore in coda alla risposta prima dell'estrazione dei segnali
+di controllo e aggiorna la memoria di sessione (`completed_step=True`). Il frontend riceve quindi il
+segnale `AVANZA_STEP` nei `control_signals`, abilitando l'avanzamento allo step successivo senza dipendere
+unicamente dalla decisione probabilistica del modello LLM.
+
 
 
 
