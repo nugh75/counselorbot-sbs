@@ -47,6 +47,8 @@ def _run_one_preset(ai: AIService, db, run_id: str, preset: dict, language: str)
     model = preset["model"]
     name = preset.get("name") or model
     max_tokens = preset.get("max_tokens") or 1200
+    ai.disable_thinking = bool(preset.get("disable_thinking"))
+    ai.reasoning_budget_override = preset.get("reasoning_budget")
     steps = _all_steps()
 
     qualities: list[float] = []

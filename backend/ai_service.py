@@ -8,7 +8,7 @@ from functools import partial
 import anthropic
 import httpx
 from mistralai.client import Mistral
-from openai import OpenAI
+from openai import OpenAI, OpenAIError, BadRequestError
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -163,6 +163,66 @@ def budget_fallback_targets(config: dict) -> list:
     """Ripieghi usabili a budget superato: locali/gratuiti con provider configurato."""
     return [(provider, model) for provider, model in configured_fallback_targets(config)
             if is_free_target(provider, model) and provider_available(config, provider)]
+
+
+# Modelli OpenRouter noti per imporre il reasoning (OpenRouter restituisce 400 se si invia reasoning.enabled=False).
+# Il set viene popolato dinamicamente se OpenRouter segnala che un modello richiede reasoning obbligatorio.
+_OPENROUTER_MANDATORY_REASONING_MODELS: set[str] = {
+    "google/gemini-3.8-flash",
+    "google/gemini-3.8-flash:batch",
+    "google/gemini-4-argon",
+    "google/gemini-4-argon:batch",
+    "openai/o1",
+    "openai/o1-preview",
+    "openai/o1-mini",
+    "openai/o3",
+    "openai/o3-mini",
+    "openai/gpt-6.1-sol-pro",
+    "openai/gpt-6.1-sol-pro:batch",
+    "openai/gpt-6.1-sol",
+    "openai/gpt-6.1-sol:batch",
+    "deepseek/deepseek-r1",
+    "deepseek/deepseek-r1:free",
+    "deepseek/deepseek-r1-distill-llama-70b",
+    "deepseek/deepseek-r1-distill-qwen-32b",
+    "deepseek/deepseek-r1-distill-qwen-14b",
+    "deepseek/deepseek-r1-distill-llama-8b",
+}
+
+
+def _is_openrouter_mandatory_reasoning_model(model: str | None) -> bool:
+    if not model:
+        return False
+    m = model.strip().lower()
+    if m in _OPENROUTER_MANDATORY_REASONING_MODELS:
+        return True
+    return any(m == known or m.startswith(f"{known}:") for known in _OPENROUTER_MANDATORY_REASONING_MODELS)
+
+
+def _mark_openrouter_mandatory_reasoning(model: str | None) -> None:
+    if model:
+        _OPENROUTER_MANDATORY_REASONING_MODELS.add(model.strip().lower())
+
+
+def _is_openrouter_reasoning_error(exc: Exception) -> bool:
+    """True se l'errore 400 di OpenRouter e' causato dal parametro reasoning
+    (es. reasoning obbligatorio che non puo' essere disattivato o parametro non supportato)."""
+    status = getattr(exc, "status_code", None)
+    if status is not None and status != 400:
+        return False
+    body = getattr(exc, "body", None)
+    msg = ""
+    if isinstance(body, dict):
+        msg = str(body.get("message") or "")
+    if not msg:
+        msg = str(exc)
+    msg_lower = msg.lower()
+    return "reasoning" in msg_lower and (
+        "mandatory" in msg_lower
+        or "cannot be disabled" in msg_lower
+        or "not support" in msg_lower
+        or "invalid" in msg_lower
+    )
 
 
 class AIService:
@@ -421,14 +481,18 @@ class AIService:
             return fallback_provider, fallback_model
         return provider, model
 
-    def _openrouter_reasoning(self) -> dict:
+    def _openrouter_reasoning(self, model: str | None = None) -> dict | None:
         """Parametro `reasoning` per OpenRouter dal piano corrente.
 
         Reasoning attivo -> abilitato con cap `max_tokens` (se noto), così il
         ragionamento non sfora nel budget riservato alla risposta. Spento ->
-        `enabled: False` (alcuni modelli ragionano comunque, ma nessun budget)."""
+        `enabled: False` (alcuni modelli ragionano comunque, ma nessun budget).
+        Se il modello e' noto per imporre il reasoning su OpenRouter, non invia
+        `enabled: False` per evitare HTTP 400 Bad Request."""
         plan = self._plan()
         if not plan.enabled:
+            if model and _is_openrouter_mandatory_reasoning_model(model):
+                return None
             return {"enabled": False}
         reasoning: dict = {"enabled": True}
         if plan.reasoning_budget:
@@ -889,8 +953,22 @@ class AIService:
             kwargs["max_tokens"] = max_tokens
         if self.temperature is not None:
             kwargs["temperature"] = self.temperature
-        kwargs["extra_body"] = {"reasoning": self._openrouter_reasoning()}
-        response = client.chat.completions.create(**kwargs)
+        reasoning_extra = self._openrouter_reasoning(model)
+        if reasoning_extra:
+            kwargs["extra_body"] = {"reasoning": reasoning_extra}
+        try:
+            response = client.chat.completions.create(**kwargs)
+        except Exception as exc:
+            if "extra_body" in kwargs and _is_openrouter_reasoning_error(exc):
+                _mark_openrouter_mandatory_reasoning(model)
+                logger.info(
+                    "OpenRouter model '%s' non accetta la disattivazione del reasoning (%s); riprovo senza extra_body",
+                    model, exc,
+                )
+                kwargs.pop("extra_body", None)
+                response = client.chat.completions.create(**kwargs)
+            else:
+                raise
         self.last_usage = self._usage_to_dict(getattr(response, "usage", None))
         if isinstance(getattr(response, "model", None), str):
             self.last_model = response.model
@@ -1170,6 +1248,8 @@ class AIService:
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
+        if self.temperature is not None:
+            kwargs["temperature"] = self.temperature
         if extra_body:
             kwargs["extra_body"] = extra_body
         if stream_options:
@@ -1241,17 +1321,38 @@ class AIService:
         client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key, timeout=self._int_config("ai_timeout_seconds", 120, 10, 600), max_retries=0)
         # Reasoning bounded: budget separato dai metadati, l'headroom della
         # risposta e' gia' incluso in max_tokens (vedi reasoning_profiles).
-        extra = {"reasoning": self._openrouter_reasoning()}
-        yield from self._iter_chat_stream(
-            client,
-            model,
-            system_prompt,
-            user_message,
-            extra_body=extra,
-            max_tokens=max_tokens,
-            stream_options={"include_usage": True},
-            history=history,
-        )
+        reasoning_extra = self._openrouter_reasoning(model)
+        extra = {"reasoning": reasoning_extra} if reasoning_extra else None
+        try:
+            yield from self._iter_chat_stream(
+                client,
+                model,
+                system_prompt,
+                user_message,
+                extra_body=extra,
+                max_tokens=max_tokens,
+                stream_options={"include_usage": True},
+                history=history,
+            )
+        except Exception as exc:
+            if extra and _is_openrouter_reasoning_error(exc):
+                _mark_openrouter_mandatory_reasoning(model)
+                logger.info(
+                    "OpenRouter model '%s' non accetta la disattivazione del reasoning (%s); riprovo stream senza extra_body",
+                    model, exc,
+                )
+                yield from self._iter_chat_stream(
+                    client,
+                    model,
+                    system_prompt,
+                    user_message,
+                    extra_body=None,
+                    max_tokens=max_tokens,
+                    stream_options={"include_usage": True},
+                    history=history,
+                )
+            else:
+                raise
 
     def _stream_ollama(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         base_url = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')

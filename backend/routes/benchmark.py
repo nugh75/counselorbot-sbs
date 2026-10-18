@@ -34,7 +34,14 @@ async def start_benchmark(
         raise HTTPException(status_code=404, detail="Nessun preset valido trovato")
 
     preset_dicts = [
-        {"provider": p.provider, "model": p.model, "name": p.name, "max_tokens": p.max_tokens}
+        {
+            "provider": p.provider,
+            "model": p.model,
+            "name": p.name,
+            "max_tokens": p.max_tokens,
+            "disable_thinking": bool(p.disable_thinking),
+            "reasoning_budget": p.reasoning_budget,
+        }
         for p in presets
     ]
     run_id = f"inapp-qsa-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
