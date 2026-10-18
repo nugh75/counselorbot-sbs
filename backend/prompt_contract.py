@@ -73,7 +73,9 @@ def _self_questioning_contract(stage: str) -> str:
         "requires no question, add none. For optional reflections, this contract governs "
         "question wording over generic retrospective or comparative closings. Use natural, "
         "accessible, respectful, non-directive language, without long preambles, "
-        "and at most ONE main question per turn. Support the person's own interpretation "
+        "and at most ONE main question per turn. "
+        "Never use bullet points or numbered lists: maintain a fluid conversational dialogue in continuous prose with a single open question. "
+        "Support the person's own interpretation "
         "without imposing judgments or diagnoses, or presuming emotions or needs. "
         "Use comparisons only when they help the "
         "person's expressed inquiry and are supported by evidence. " + task
@@ -138,6 +140,7 @@ def _facilitation_contract(stage: str, thread_state: str | None = None) -> str:
         "Conduct an internal value-check on every turn (ensuring your response is coherent with what the student reported, advances "
         "understanding of choices, and respects autonomy); use an explicit check only when proposing a key hypothesis, before a synthesis, "
         "or when a misalignment appears. Never presume emotional states; treat brief answers as communication style or fatigue, not resistance. "
+        "Never use bullet points or numbered lists: converse in fluid, natural prose with a single open question per turn. "
         "At most ONE main question per turn. " + task + suffix
     )
 
@@ -171,7 +174,8 @@ def _objective_focus_contract(questionnaire_type: str, stage: str, entry: bool =
     # chieste a ogni passaggio, obiettivo ripetuto a ogni turno, gergo).
     conduct = (
         "Use everyday words and ONE main question per turn; when a word may be unclear, add a "
-        "short example of possible answers. Build the objective only from what the person said: "
+        "short example of possible answers. Never use bullet points or numbered lists: write in fluid conversational prose. "
+        "Build the objective only from what the person said: "
         "a detail taken from the notebook"
         + (" or the class context" if teaching else "")
         + " goes in only if the person confirms it, and you say where it comes from. Keep every "
@@ -314,11 +318,13 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
                   objective_stage: str | None = None,
                   objective_entry: bool = False,
                   facilitation_contract_enabled: bool = False,
-                  thread_state: str | None = None) -> str:
+                  thread_state: str | None = None,
+                  existing_prompt: str = "") -> str:
     lines = [
         "[TURN CONTRACT]",
         f"Current task: {questionnaire_type or 'counselor chat'}, {phase or 'free conversation'}. Response language: {language}.",
         "Answer the current request directly. Ask at most ONE focused question, then wait. "
+        "Never use bullet points, numbered lists or itemized options: converse in fluid, natural prose with at most ONE open question per turn. "
         "State uncertainty when evidence is missing; distinguish what the student reported "
         "about themselves, your interpretations, and established facts. "
         "Label interpretations as hypotheses. Do not invent biographical events or obstacles, or claim "
@@ -346,11 +352,14 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
             lines.append(GOAL_DRAFT_DIRECTIVE)
     if questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES and reflection_stage:
         if facilitation_contract_enabled:
-            lines.append(_facilitation_contract(reflection_stage, thread_state=thread_state))
+            if FACILITATION_SENTINEL not in existing_prompt:
+                lines.append(_facilitation_contract(reflection_stage, thread_state=thread_state))
         else:
-            lines.append(_self_questioning_contract(reflection_stage))
+            if SELF_QUESTIONING_SENTINEL not in existing_prompt:
+                lines.append(_self_questioning_contract(reflection_stage))
     if is_goal_instrument(questionnaire_type) and objective_stage:
-        lines.append(_objective_focus_contract(questionnaire_type, objective_stage, objective_entry))
+        if OBJECTIVE_FOCUS_SENTINEL not in existing_prompt:
+            lines.append(_objective_focus_contract(questionnaire_type, objective_stage, objective_entry))
     if questionnaire_type == "IDEA":
         lines.append("IDEA follows the focused branch of its map. Use no [[AVANZA_STEP]] marker or fixed sequence. "
                      "Write visible text first, a recommendations block if required second, and the idea patch LAST. "

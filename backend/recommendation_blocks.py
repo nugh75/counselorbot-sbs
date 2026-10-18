@@ -87,7 +87,7 @@ def apply_directive(
     system_prompt: str, readings: Mapping[str, str], strategies: Mapping[str, str], *, idea: bool = False,
 ) -> str:
     directive = build_directive(readings, strategies, idea=idea)
-    if not directive:
+    if not directive or "[RECOMMENDATION LOG]" in system_prompt or directive.strip() in system_prompt:
         return system_prompt
     return f"{system_prompt.rstrip()}\n\n{directive}"
 
@@ -216,7 +216,7 @@ def _whitelist(values, allowed: Mapping[str, str]) -> list[str]:
     return selected
 
 
-def notes_directive(*, advice_allowed: bool, idea: bool = False, hypothesis_allowed: bool = False) -> str:
+def notes_directive(*, advice_allowed: bool, idea: bool = False, hypothesis_allowed: bool = False, example_lens: str = "A5") -> str:
     """Log concrete proposals, reflective questions and interpretive hypotheses without certifying them."""
     position = "before the final idea patch" if idea else "at the very end"
     kinds = "question, advice or hypothesis" if hypothesis_allowed else "question or advice"
@@ -229,7 +229,7 @@ def notes_directive(*, advice_allowed: bool, idea: bool = False, hypothesis_allo
         if hypothesis_allowed else ""
     )
     example_notes = (
-        '[{"kind": "hypothesis", "lens": "A5", "text": "exact visible reading"}]'
+        f'[{{"kind": "hypothesis", "lens": "{example_lens}", "text": "exact visible reading"}}]'
         if hypothesis_allowed else
         '[{"kind": "question", "text": "exact visible question?"}]'
     )

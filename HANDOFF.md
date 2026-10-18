@@ -1,3 +1,33 @@
+# Handoff F3: Envelope snello, deduplicazione, esclusione RAG guida sito e divieto elenchi puntati
+Data: 2026-10-18 | Branch: `fix/guided-envelope-focus` | Agente: `s3-envelope-snello`, Gemini 3.8 Flash (High)
+Task ID: `f4e370b8-15b1-48c0-860b-540bf72046e6` | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Obiettivo:
+Ottimizzazione dell'envelope del prompt di sistema per garantire massima aderenza ed efficienza con modelli locali e compatti nelle chat guidate di questionari e percorsi.
+
+Modifiche:
+1. Posizionamento di `[SESSION NOTES]` in coda all'envelope:
+   - In `backend/chat_preparation.py`, le istruzioni private (`notes_directive`, schema JSON `recommendations` e gestione delle note `hypothesis`) vengono collocate deterministicamente all'estremità finale del prompt di sistema assemblato (`system_prompt_final`), dopo il contratto del turno e le preferenze visibili. Tale posizionamento si propaga alla coda di tutte le varianti di contesto (`variants`), massimizzando la compliance dei modelli compatti ed eliminando fughe del formato note in prosa.
+   - Parametrizzato `example_lens="A1r"` per QSAr in `backend/recommendation_blocks.py` per prevenire falsi allarmi del prompt auditor su codici fattoriali estranei.
+2. Eliminazione duplicazioni contrattuali e direttive ridondanti:
+   - In `backend/prompt_contract.py`: `turn_contract` verifica la presenza dei contratti specializzati (`_facilitation_contract`, `_self_questioning_contract`, `_objective_focus_contract`) prima di concatenarli; aggiunte sentinelle a monte in `backend/chat_preparation.py`.
+   - In `backend/chat_logic.py`: introdotte sentinelle prima di iniettare blocchi strutturali in `build_context_envelope` (`ROLE_BLOCK`, `[STUDENT]`, `[GUIDED PATH]`, `[SIMULATION]`, `[PROFILE]`, `[CONTESTO CLASSE]`, `[READING]`, `[KNOWLEDGE]`) e deduplicazione delle direttive globali in `_apply_global_directives` (`[ORIENTATION]`, `[CONTEXT]`, `[LANGUAGE]`, `[REGISTER]`, `[THINKING]`, `[PLATFORM CAPABILITIES]`).
+   - In `backend/chat_preferences.py`: deduplicazione sentinella per `[VISIBLE RESPONSE FORMAT]`.
+   - In `backend/recommendation_blocks.py`: deduplicazione sentinella per `[RECOMMENDATION LOG]`.
+3. Disattivazione del RAG della guida del sito nelle chat guidate:
+   - In `backend/chat_logic.py`: introdotta la funzione `is_guided_chat(questionnaire_type, step_id)` che riconosce tutti i questionari guidati e i passi strutturati.
+   - In `get_prompt_component_flags`: forzati a `False` i flag `rag_competenzestrategiche`, `rag_counselorbot` e `rag_questionari` per le chat guidate.
+   - In `_retrieved_context`: soppressa l'interrogazione dei motori vettoriali della guida del sito (`site_rag_index`, `counselorbot_rag_index`, `questionari_rag_index`) quando `is_guided` è attivo, risparmiando token di contesto e preservando unicamente le strategie e letture certificate quando abilitate.
+4. Regola no-bullet a livello di envelope e contratti di turno:
+   - Rafforzato il divieto perentorio di utilizzare elenchi puntati o numerati in `turn_contract`, `_facilitation_contract`, `_self_questioning_contract` e `_objective_focus_contract`, imponendo una conversazione fluida in prosa naturale continua con al massimo una sola domanda aperta per turno.
+
+Test:
+- `backend/tests/test_lean_envelope_focus.py`: suite dedicata con 4 test su posizionamento note in coda all'envelope e varianti, deduplicazione dei blocchi sentinella, esclusione del RAG guida sito nelle chat guidate, e rispetto della regola no-bullet.
+- `backend/tests/test_chat_preparation.py`: 6 test passati con successo (inclusa la verifica di identità runtime/audit su tutti i 1.170 turni/combinazioni).
+- `backend/tests/test_hypothesis_ledger.py`: 8 test passati con successo.
+- `make guidance-check`: allineamento completo della documentazione.
+
+
 # Handoff Filone F2: Prescrizione domanda singola su un solo aspetto nei prompt di step e contratto QPCC ipotetico (finding BLOCCANTE-3 testi, NON BLOCCANTE-5)
 Data: 2026-10-18 | Branch: `fix/guided-steps-single-question` | Agente: `s2-single-question`, Gemini 3.8 Flash (High)
 Task: `52d3df40-36df-4502-9aad-3631926963c2` | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
@@ -23,6 +53,7 @@ Modifiche:
    - Aggiornato `docs-counselorbot/funzionalita-counselorbot.md`.
    - Verificato lo stato con `check-platform-guidance.py`.
    - NOTA OPERATIVA POST-DEPLOY: Cambiando i default di fabbrica nel codice, i valori già salvati nel database non si aggiornano automaticamente. Dopo il deploy in produzione/staging è necessario eseguire l'operazione amministrativa «Allinea prompt di fabbrica» dall'interfaccia amministrativa per aggiornare le istruzioni e gli step memorizzati nel DB.
+
 
 # Handoff s1: selezione provider/modello guardiano del filo e disaccoppiamento da Ollama (F1)
 Data: 2026-10-18 | Branch: `fix/thread-guard-provider-selection` | Agente: `s1-guard-provider`, Gemini 3.8 Flash (High)
@@ -114,6 +145,7 @@ Modifiche:
     (c) fallback automatico quando il testo emesso è vuoto, solo whitespace o genera `EmptyModelResponseError`, con supporto multilingue e contestualizzazione allo step,
     (d) conservazione intatta della risposta normale priva di reasoning.
 - Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
 
 # Handoff: riepilogo e PDF al completamento delle chat guidate su questionari di prova (docente/admin)
 Data: 2026-10-18 | Branch: `fix/practice-questionnaire-summary` | Agente: `Antigravity`
