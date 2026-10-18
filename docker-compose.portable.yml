@@ -22,6 +22,26 @@ services:
         aliases:
           - counselorbot-portable-postgres
 
+  piper:
+    build:
+      context: ./services/piper
+    image: counselorbot-piper:latest
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    cpus: 2
+    mem_limit: 2g
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/voices', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      default:
+        aliases:
+          - piper
+
   counselorbot-backend:
     build:
       context: .
@@ -50,6 +70,7 @@ services:
       CHATGPT_MACOS_HELPER_DIR: /app/chatgpt-macos
       CHATGPT_WINDOWS_HELPER_DIR: /app/chatgpt-windows
       PERSONAL_API_CREDENTIALS_DIR: /app/personal_api_credentials
+      PIPER_URL: http://piper:8000
     ports:
       - "127.0.0.1:${COUNSELORBOT_BACKEND_PORT:-8087}:8000"
     extra_hosts:
@@ -69,6 +90,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      piper:
+        condition: service_started
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/auth/me', timeout=5)"]
       interval: 20s

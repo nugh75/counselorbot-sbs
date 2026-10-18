@@ -7,6 +7,7 @@ from .. import personal_api
 import asyncio
 import base64
 import json
+import os
 import re
 import time
 from pathlib import Path
@@ -27,6 +28,7 @@ from .chat import _split_text_for_tts
 
 router = APIRouter(prefix="/tts")
 LANGUAGES = {"it", "en", "es", "fr", "de", "sv"}
+PIPER_URL = os.environ.get("PIPER_URL", "http://piper:8000").rstrip("/")
 _voice_cache: tuple[float, list[dict]] = (0, [])
 VOICE_PROFILES = json.loads((Path(__file__).resolve().parents[1] / "voice_profiles.json").read_text())
 
@@ -122,7 +124,7 @@ async def voices(engine: Literal["edge", "piper"] = "edge"):
     if engine == "piper":
         try:
             async with httpx.AsyncClient(timeout=10) as client:
-                response = await client.get("http://piper:8000/voices")
+                response = await client.get(f"{PIPER_URL}/voices")
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPError as exc:
@@ -147,7 +149,7 @@ async def voices(engine: Literal["edge", "piper"] = "edge"):
 async def synthesize(segment: dict, voice: str, engine: str = "edge") -> dict:
     if engine == "piper":
         async with httpx.AsyncClient(timeout=40) as client:
-            response = await client.post("http://piper:8000/synthesize",
+            response = await client.post(f"{PIPER_URL}/synthesize",
                                          json={"text": segment["text"], "voice": voice})
             response.raise_for_status()
             return {"type": "chunk", **segment, "words": [], "mime": "audio/wav",
