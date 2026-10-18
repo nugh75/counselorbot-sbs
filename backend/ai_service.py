@@ -721,6 +721,11 @@ class AIService:
                 if selected_provider == "ollama":
                     kwargs["json_mode"] = json_mode
                 result = entry['call'](msg, sys, selected_model, **kwargs)
+                if result:
+                    from .chat_logic import split_thinking
+                    extracted, result = split_thinking(result)
+                    if extracted:
+                        self.last_thinking = extracted
                 if not result or not result.strip():
                     raise AIError("Il modello ha restituito una risposta vuota")
                 attempt["status"] = "succeeded"
@@ -757,6 +762,9 @@ class AIService:
             provider, user_message, system_prompt, None)
         try:
             result = entry['call'](user_message, system_prompt, model, max_tokens=mt)
+            if result:
+                from .chat_logic import split_thinking
+                _extracted, result = split_thinking(result)
             return pii.restore(result, pii_mapping) if pii_mapping else result
         except AIError:
             raise
@@ -1168,6 +1176,8 @@ class AIService:
             kwargs["stream_options"] = stream_options
         stream = client.chat.completions.create(**kwargs)
         finish_reason = None
+        from .chat_logic import ThinkStreamSplitter
+        splitter = ThinkStreamSplitter()
         try:
             for chunk in stream:
                 if isinstance(getattr(chunk, "model", None), str):
@@ -1188,7 +1198,10 @@ class AIService:
                     yield {"type": "reasoning", "text": reasoning}
                 content = getattr(delta, "content", None)
                 if content:
-                    yield {"type": "content", "text": content}
+                    for item in splitter.feed(content):
+                        yield item
+            for item in splitter.flush():
+                yield item
         finally:
             close = getattr(stream, "close", None)
             if close:
