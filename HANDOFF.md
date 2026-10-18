@@ -1,3 +1,26 @@
+# Handoff: Aggiunta servizio Piper TTS 100% offline nella configurazione portatile
+Data: 2026-10-18 | Branch: `feature/piper-offline-tts` | Agente: `timoniere`, Gemini 3.8 Flash (High)
+
+Obiettivo:
+- Abilitare la sintesi vocale locale e offline (Piper TTS) nella configurazione Docker portatile (`docker-compose.portable.yml`), consentendo agli utenti di ascoltare testi e risposte anche in assenza di connessione Internet o in caso di indisponibilità dei servizi cloud (Edge TTS).
+
+Modifiche:
+1. `docker-compose.portable.yml`:
+   - Aggiunto il servizio `piper` isolato con immagine `counselorbot-piper:latest` (built da `./services/piper` con 12 voci ONNX incorporate per 6 lingue), filesystem read-only, tmpfs, limiti CPU/memoria e healthcheck dedicato su `/voices`.
+   - Assegnato alias `piper` sulla rete `default` e configurata la variabile d'ambiente `PIPER_URL: http://piper:8000` nel servizio `counselorbot-backend`, con dipendenza all'avvio.
+2. `backend/routes/voice_reader.py`:
+   - Reso configurabile l'endpoint di Piper tramite la variabile `PIPER_URL = os.environ.get("PIPER_URL", "http://piper:8000").rstrip("/")` per gli endpoint `/voices` e `/synthesize`.
+3. `docs-counselorbot/funzionalita-counselorbot.md`:
+   - Documentata la disponibilità del motore Piper 100% offline anche nell'installazione portatile.
+
+Test e Validazione:
+- Build dell'immagine Docker `counselorbot-piper`: completata con successo con verifica checksum dei modelli.
+- Suite di test interna Piper offline: `python test_server.py` eseguito con `--network none` (tutte le 12 voci verificate e conformi).
+- Test di sintesi end-to-end: verificata la generazione audio WAV offline da container backend verso container piper via `/tts/stream` (200 OK, 1 chunk audio sintetizzato, 0 errori).
+- Suite di test del backend: `backend/tests/test_voice_reader.py` (15/15 test passati).
+- Allineamento guidance: `make guidance-refresh` e `make guidance-check` superati con successo.
+
+
 # Handoff: Ripristino lettore audio e aggiornamento dipendenza edge-tts
 Data: 2026-10-18 | Branch: `fix/edge-tts-audio-player` | Agente: `timoniere`, Gemini 3.8 Flash (High)
 
