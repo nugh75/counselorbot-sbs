@@ -20,6 +20,7 @@ function navbarFlags({ identity, access }: Profile) {
     const nav = headerNavigation({ identity, access, accessLoading: false });
     const has = (key: string) => nav.links.some((link: { key: string }) => link.key === key);
     return {
+        instruments: has('instruments'),
         bussola: has('orientation'),
         assistant: has('assistant'),
         student: has('profile'),
@@ -28,7 +29,6 @@ function navbarFlags({ identity, access }: Profile) {
         services: nav.services,
         view: (nav.classView ? classViewOptions(access) : []).map((option: { kind: string; name?: string }) =>
             option.kind === 'class' ? classViewText('it', 'class', option.name) : classViewText('it', option.kind as 'all' | 'classes')),
-        auth: nav.auth,
     };
 }
 
@@ -40,33 +40,27 @@ for (const [key, profile] of Object.entries(PROFILES)) {
 
 test('a failed access read shows every tool: the server stays the guard', () => {
     const flags = navbarFlags({ ...PROFILES.S1, access: null });
+    assert.equal(flags.instruments, true);
     assert.equal(flags.bussola, true);
     assert.equal(flags.assistant, true);
     assert.deepEqual(flags.view, []);
 });
 
 test('the bar changes at 1024px; from there xl only widens the account name', () => {
-    assert.deepEqual(VIEWPORTS.map(band), ['compact', 'compact', 'compact', 'lg', 'lg', 'xl', 'xl']);
+    assert.deepEqual(VIEWPORTS.map(band), ['compact', 'compact', 'compact', 'compact', 'lg', 'lg', 'xl', 'xl']);
     assert.notDeepEqual(expectedNavbar('D', 1023), expectedNavbar('D', 1024));
     assert.deepEqual(expectedNavbar('D', 1279), expectedNavbar('D', 1280));
 });
 
-// Desktop names of the compact menu entries (P4): the same function under the
-// bar label. The selector trigger and the account trigger only open panels.
-const DESKTOP_TO_COMPACT: Record<string, string> = {
-    [LABELS.bussolaBar]: LABELS.bussola,
-    [LABELS.signIn]: LABELS.adminLogin,
-    [LABELS.signOut]: LABELS.logout,
-};
-
+// Parity (P5): the same entries under the same names in every band. The
+// selector, account and «Menu» triggers only open panels.
 test('every entry stays reachable in each band, privileged ones only for their roles', () => {
     for (const key of Object.keys(PROFILES) as (keyof typeof PROFILES)[]) {
         const triggers = [LABELS.area, LABELS.preferences, LABELS.account(PROFILES[key].identity.name), LABELS.menu];
         const reachable = VIEWPORTS.map(width => {
             const { bar, menu, areas, account } = expectedNavbar(key, width);
             return new Set([...bar, ...(menu ?? []), ...(areas ?? []), ...(account ?? [])]
-                .filter(name => !triggers.includes(name))
-                .map(name => DESKTOP_TO_COMPACT[name] ?? name));
+                .filter(name => !triggers.includes(name)));
         });
         for (const names of reachable) assert.deepEqual([...names].sort(), [...reachable[0]].sort(), key);
         const names = reachable[0];
@@ -96,5 +90,25 @@ test('one door to the student area: the account menu names the person only', () 
         const doors = [...bar, ...(areas ?? []), ...(account ?? [])].filter(name => name === LABELS.student);
         assert.equal(doors.length, key === 'A' ? 0 : 1, key);
         assert.equal(account?.at(-1), key === 'A' ? LABELS.languages.at(-1) : LABELS.signOut, `${key}: sign out last`);
+    }
+});
+
+// P5: language and sign out never come after the resume rows; the account
+// group of the «Menu» panel is the desktop account panel.
+test('the Menu panel ends with the account group, resume rows stay in their sub-panel', () => {
+    const rows = ['Sessione A', 'Sessione B', 'Sessione C'];
+    // The fixture infers `rows: never[]` from its default value.
+    const menu = (key: keyof typeof PROFILES, resumeOpen: boolean) =>
+        expectedNavbar(key, 390, { resume: { rows, error: false }, resumeOpen } as never).menu as string[];
+    for (const key of Object.keys(PROFILES) as (keyof typeof PROFILES)[]) {
+        const closed = menu(key, false);
+        const open = menu(key, true);
+        const account = expectedNavbar(key, 1440).account as string[];
+        const tail = key === 'A' ? [...account, LABELS.signIn] : account;
+        assert.deepEqual(closed.slice(-tail.length), tail, `${key}: account group last`);
+        assert.equal(closed.some(name => rows.includes(name)), false, `${key}: rows closed`);
+        assert.ok(closed.indexOf(LABELS.resume) < closed.indexOf(LABELS.languages[0]), key);
+        assert.equal(open.filter(name => rows.includes(name)).length, rows.length, `${key}: rows open`);
+        assert.ok(open.indexOf(rows.at(-1)!) < open.indexOf(LABELS.languages[0]), `${key}: rows before the account group`);
     }
 });

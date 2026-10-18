@@ -319,12 +319,12 @@ const labels = {
         'Ingen påverkan på riktiga klasser',
     ],
     practiceGymManageNotebooks: [
-        'Taccuini di prova',
-        'Practice notebooks',
-        'Cuadernos de práctica',
-        'Carnets d’entraînement',
-        'Übungs-Notizbücher',
-        'Övningsanteckningsböcker',
+        'Chat e risultati degli studenti di prova',
+        'Practice students’ chats and results',
+        'Chats y resultados de los estudiantes de práctica',
+        'Chats et résultats des étudiants d’entraînement',
+        'Chats und Ergebnisse der Übungs-Lernenden',
+        'Övningselevernas chattar och resultat',
     ],
     teacherProfileHeading: [
         'Profilo professionale del docente',

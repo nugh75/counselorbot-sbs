@@ -21,6 +21,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import re
 import threading
 
@@ -35,8 +36,9 @@ MAX_CHECK_NOTES = 2
 MAX_NOTE_CHARS = 140
 MAX_BLOCK_CHARS = 400
 # Severest first: an invented recommendation reaches the student's booklet, a
-# lost thread only costs a turn, a misplaced question costs less still.
-SEVERITY = ("advice_grounded", "on_thread", "question_fit")
+# forced interpretation denies student autonomy, a lost thread only costs a turn,
+# a misplaced question costs less still.
+SEVERITY = ("advice_grounded", "interpretation_open", "on_thread", "question_fit")
 
 _FENCE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
 _OBJECT = re.compile(r"\{.*\}", re.DOTALL)
@@ -90,9 +92,12 @@ class Verdict(BaseModel):
     on_thread: Check
     question_fit: Check
     advice_grounded: Check
+    interpretation_open: Check = Check(ok=True)
     # Gli indici delle domande aperte a cui lo studente ha risposto parlando.
     # Assente nei verdetti dei modelli che non lo conoscono: lista vuota.
     answered: list[int] = []
+    # Gli esiti delle ipotesi interpretative identificate nel turno.
+    hypotheses: list[dict] = []
 
 
 def parse(raw: str | None) -> Verdict | None:
@@ -183,11 +188,14 @@ def turn_hash(user_text: str, bot_text: str) -> str:
 
 
 def store(db, *, session_id: str, username: str, turn: str, verdict: Verdict | None,
-          open_questions: list[dict] | None = None) -> list[str]:
+          open_questions: list[dict] | None = None,
+          open_hypotheses: list[dict] | None = None) -> list[str]:
     """Write the verdict and return the lines that will actually be injected."""
     lines = notes(verdict)
     _close_answered(db, session_id=session_id, username=username,
                     verdict=verdict, open_questions=open_questions or [])
+    _close_hypotheses(db, session_id=session_id, username=username,
+                      verdict=verdict, open_hypotheses=open_hypotheses or [])
     previous = _latest_row(db, session_id)
     if previous is not None:
         already = {_key(line) for line in _stored_notes(previous)}
@@ -273,12 +281,13 @@ def build_input(
     step_id: str | None, step_label: str, step_prompt: str = "", language: str = "it",
     advice_ids: list[str] | None = None, candidate_ids: list[str] | None = None,
     open_questions: list[dict] | None = None,
+    open_hypotheses: list[dict] | None = None,
 ) -> str:
     """What the judge sees. Deliberately small.
 
     A local model given the whole session answers about the session; given the
     turn, its mandate and what the session already holds, it answers about the
-    turn. The four sections are the four things a verdict needs and nothing else.
+    turn. The sections are the things a verdict needs and nothing else.
     """
     del step_prompt  # named by the signature for its callers, deliberately unused
     sections = [
@@ -289,6 +298,7 @@ def build_input(
         _ledger(db, session_id=session_id, username=username, step_id=step_id),
         _advice(advice_ids or [], candidate_ids or []),
         _open_questions_section(open_questions or []),
+        _open_hypotheses_section(open_hypotheses or []),
     ]
     return "\n\n".join(section for section in sections if section)[:MAX_INPUT_CHARS]
 
@@ -423,7 +433,9 @@ Reply with one JSON object and nothing else:
 {"on_thread": {"ok": true, "note": null},
  "question_fit": {"ok": true, "note": null},
  "advice_grounded": {"ok": true, "note": null},
- "answered": []}
+ "interpretation_open": {"ok": true, "note": null},
+ "answered": [],
+ "hypotheses": []}
 
 on_thread - false only if the counselor lost the thread: it neither took up what
 the student raised nor tied it back to the mandate.
@@ -431,9 +443,16 @@ question_fit - false only if the question the counselor asked belongs to another
 step or has no bearing on the mandate.
 advice_grounded - false only if the turn gave advice that follows from nothing the
 student said. A turn that gives no advice is ok: true.
+interpretation_open - false only if the counselor stated a psychological interpretation as an
+established fact, attributed emotions or intentions the student did not express, or repeated an
+interpretation the student had already rejected. An open hypothesis or reading offered for reflection is ok: true.
 answered - the numbers of the OPEN QUESTIONS the student answered in substance in this
 exchange, even without answering them as questions. Empty when the section is absent, when
 nobody answered, or whenever you are unsure: a question closed by mistake is lost.
+hypotheses - list of objects {"index": N, "outcome": "confirmed" | "corrected" | "rejected"} for the
+OPEN HYPOTHESES addressed in this exchange: confirmed (student explicitly agreed or validated the reading),
+corrected (student qualified or refined it in their own words), or rejected (student disagreed or pushed back).
+Empty when no hypothesis was addressed or whenever you are unsure: never guess.
 
 The mandate frames the conversation; it is not a checklist. Answering what the
 student explicitly asked for is never off mandate: a turn that does so is on_thread
@@ -448,6 +467,142 @@ Judge only from what you are given, and when in doubt answer ok: true."""
 def enabled(db) -> bool:
     row = db.query(models.Config).filter(models.Config.key == ENABLED_KEY).first()
     return (row.value or "").strip().lower() in ("1", "true", "yes", "on") if row else False
+
+
+SUPPORTED_PROVIDERS: tuple[tuple[str, str, bool], ...] = (
+    ("openrouter", "OpenRouter", False),
+    ("gemini", "Google Gemini", False),
+    ("mistral", "Mistral AI", False),
+    ("openai", "OpenAI", False),
+    ("anthropic", "Anthropic", False),
+    ("deepseek", "DeepSeek", False),
+    ("groq", "Groq", False),
+    ("cerebras", "Cerebras", False),
+    ("together", "Together AI", False),
+    ("fireworks", "Fireworks AI", False),
+    ("deepinfra", "DeepInfra", False),
+    ("omniroute", "OmniRoute", False),
+    ("ollama", "Ollama (locale)", True),
+    ("llamacpp", "llama.cpp (locale)", True),
+)
+
+
+def _is_local_reachable(url: str, path: str = "") -> bool:
+    import httpx
+
+    target = url.rstrip("/") + path
+    try:
+        response = httpx.get(target, timeout=0.6)
+        return response.status_code < 500
+    except Exception:
+        return False
+
+
+def is_provider_active(db, provider: str | None) -> bool:
+    """True se il provider e' utilizzabile: locale e raggiungibile, oppure con chiave configurata."""
+    if not provider:
+        return False
+    provider = provider.strip().lower()
+    if provider == "ollama":
+        row = db.query(models.Config).filter(models.Config.key == "ollama_ip").first()
+        base = (row.value if row and row.value else None) or os.environ.get("OLLAMA_BASE_URL") or "http://localhost:11434"
+        return _is_local_reachable(base, "/api/tags")
+    if provider == "llamacpp":
+        row = db.query(models.Config).filter(models.Config.key == "llamacpp_url").first()
+        base = (row.value if row and row.value else None) or os.environ.get("LLAMACPP_BASE_URL") or "http://localhost:8080"
+        return _is_local_reachable(base, "/v1/models") or _is_local_reachable(base, "/health")
+    from .api_secrets import API_KEY_ENV_MAP, resolve_api_secret
+
+    if provider in API_KEY_ENV_MAP:
+        try:
+            resolved = resolve_api_secret(db, provider)
+            return bool(resolved.value)
+        except Exception:
+            return False
+    return False
+
+
+def active_providers(db) -> list[dict]:
+    """Elenco dei provider supportati che sono attivi (chiave presente o locale raggiungibile)."""
+    result = []
+    for pid, name, is_local in SUPPORTED_PROVIDERS:
+        if is_provider_active(db, pid):
+            result.append({"id": pid, "name": name, "is_local": is_local})
+    return result
+
+
+def get_guard_configuration(db) -> dict:
+    """Restituisce lo stato attuale della configurazione del guardiano e l'elenco dei provider attivi."""
+    is_on = enabled(db)
+    target = preset(db)
+    provider = target[0] if target else None
+    model = target[1] if target else None
+    p_row = db.query(models.Config).filter(models.Config.key == PRESET_KEY).first()
+    preset_id = int(p_row.value) if p_row and p_row.value and p_row.value.isdigit() else None
+
+    is_active = is_provider_active(db, provider) if provider else False
+    return {
+        "enabled": is_on,
+        "provider": provider,
+        "model": model,
+        "preset_id": preset_id,
+        "is_provider_active": is_active,
+        "active_providers": active_providers(db),
+    }
+
+
+def save_guard_configuration(db, *, enabled: bool, provider: str | None, model: str | None) -> dict:
+    """Imposta abilitazione e provider+modello del guardiano validando che il provider sia attivo."""
+    clean_provider = (provider or "").strip().lower() or None
+    clean_model = (model or "").strip() or None
+
+    if enabled:
+        if not clean_provider or not clean_model:
+            raise ValueError("Impossibile attivare il guardiano senza aver selezionato provider e modello.")
+        if not is_provider_active(db, clean_provider):
+            raise ValueError(f"Il provider '{clean_provider}' non e' attivo o non ha una chiave API configurata.")
+    elif clean_provider:
+        if not is_provider_active(db, clean_provider):
+            raise ValueError(f"Il provider '{clean_provider}' non e' attivo o non ha una chiave API configurata.")
+
+    if clean_provider and clean_model:
+        preset_row = (
+            db.query(models.ModelPreset)
+            .filter(
+                models.ModelPreset.provider == clean_provider,
+                models.ModelPreset.model == clean_model,
+                models.ModelPreset.disable_thinking.is_(True),
+            )
+            .first()
+        )
+        if not preset_row:
+            preset_row = models.ModelPreset(
+                name=f"Thread guard ({clean_provider}/{clean_model})",
+                provider=clean_provider,
+                model=clean_model,
+                disable_thinking=True,
+                is_active=True,
+                notes="Judges each finished counselor turn for the thread guard.",
+            )
+            db.add(preset_row)
+            db.flush()
+
+        p_conf = db.query(models.Config).filter(models.Config.key == PRESET_KEY).first()
+        if p_conf is None:
+            db.add(models.Config(key=PRESET_KEY, value=str(preset_row.id),
+                                 description="Preset that judges each turn for the thread guard."))
+        else:
+            p_conf.value = str(preset_row.id)
+
+    e_conf = db.query(models.Config).filter(models.Config.key == ENABLED_KEY).first()
+    if e_conf is None:
+        db.add(models.Config(key=ENABLED_KEY, value="true" if enabled else "false",
+                             description="Inject the thread guard's verdict into the next turn."))
+    else:
+        e_conf.value = "true" if enabled else "false"
+
+    db.commit()
+    return get_guard_configuration(db)
 
 
 def preset(db) -> tuple[str, str, bool] | None:
@@ -483,9 +638,10 @@ def evaluate(
     if target is None:
         return []
     provider, model, _no_think = target
-    # Letta una volta: gli indici del verdetto valgono su questa lista, e fra
+    # Lette una volta: gli indici del verdetto valgono su queste liste, e fra
     # l'input e la chiusura c'e' di mezzo una chiamata a modello.
     asked = open_questions(db, session_id=session_id, username=username, step_id=step_id)
+    hypos = open_hypotheses(db, session_id=session_id, username=username, step_id=step_id)
     try:
         raw = call(
             provider=provider, model=model,
@@ -495,6 +651,7 @@ def evaluate(
                 step_label=step_label, step_prompt=step_prompt, language=language,
                 advice_ids=advice_ids, candidate_ids=candidate_ids,
                 open_questions=asked,
+                open_hypotheses=hypos,
             ),
             system_prompt=SYSTEM_PROMPT,
         )
@@ -506,7 +663,7 @@ def evaluate(
         logger.info("Thread guard returned no readable verdict (%s/%s)", provider, model)
         return []
     return store(db, session_id=session_id, username=username, turn=turn, verdict=verdict,
-                 open_questions=asked)
+                 open_questions=asked, open_hypotheses=hypos)
 
 
 def schedule(**kwargs) -> None:
@@ -605,3 +762,83 @@ def _close_answered(db, *, session_id: str, username: str, verdict: Verdict | No
             )
         except ValueError:  # una riga che non e' una domanda non si chiude
             logger.info("Thread guard could not close %s", slug)
+
+
+# --- le ipotesi che il giudice puo' classificare (confirmed / corrected / rejected) ---
+MAX_JUDGED_HYPOTHESES = 2
+
+
+def open_hypotheses(db, *, session_id: str, username: str, step_id: str | None) -> list[dict]:
+    """Le ipotesi aperte o in attesa di esito che il giudice puo' valutare."""
+    found = []
+    for row in session_ledger.hypothesis_rows(db, session_id=session_id, username=username):
+        payload = row.payload or {}
+        # Se chiusa direttamente dallo studente o già valutata definitivamente, non riproporre
+        if payload.get("closed_by") == "student":
+            continue
+        status = payload.get("status")
+        if status in ("confirmed", "corrected", "rejected", "stale"):
+            continue
+        offered_in = (payload.get("step_id") or "").strip()
+        if step_id and offered_in and offered_in != step_id:
+            continue
+        found.append({
+            "slug": row.slug,
+            "text": payload.get("name", ""),
+            "step_order": payload.get("step_order"),
+        })
+    return found[-MAX_JUDGED_HYPOTHESES:]
+
+
+def _open_hypotheses_section(items: list[dict]) -> str:
+    if not items:
+        return ""
+    lines = ["OPEN HYPOTHESES (interpretive readings offered by the counselor)"]
+    for index, item in enumerate(items, start=1):
+        step = f"(step {item['step_order']}) " if item.get("step_order") is not None else ""
+        lines.append(f'{index}. {step}"{_safe(item.get("text", ""))}"')
+    return "\n".join(lines)
+
+
+def _close_hypotheses(db, *, session_id: str, username: str, verdict: Verdict | None,
+                      open_hypotheses: list[dict]) -> None:
+    """Aggiorna l'esito delle ipotesi valutate dal guardiano nel turno."""
+    if verdict is None or not open_hypotheses or not verdict.hypotheses:
+        return
+    for item in verdict.hypotheses:
+        if not isinstance(item, dict):
+            continue
+        index = item.get("index")
+        outcome = (item.get("outcome") or "").strip().lower()
+        if not isinstance(index, int) or not 1 <= index <= len(open_hypotheses):
+            continue
+        if outcome not in ("confirmed", "corrected", "rejected"):
+            continue
+        slug = open_hypotheses[index - 1].get("slug")
+        if not slug:
+            continue
+        # Se lo studente ha chiuso o aggiornato direttamente l'ipotesi, il guardiano non sovrascrive mai
+        row = (
+            db.query(models.RecommendationHistory)
+            .filter(
+                models.RecommendationHistory.recommendation_type == "advice",
+                models.RecommendationHistory.session_id == session_id,
+                models.RecommendationHistory.username == username,
+                models.RecommendationHistory.slug == slug,
+            )
+            .first()
+        )
+        if not row:
+            continue
+        payload = row.payload or {}
+        if payload.get("closed_by") == "student":
+            logger.info("Thread guard skipping hypothesis %s closed by student", slug)
+            continue
+        try:
+            recommendation_service.set_state(
+                db, session_id=session_id, username=username, recommendation_type="advice",
+                slug=slug, status=outcome, closed_by="conversation",
+            )
+        except ValueError:
+            logger.info("Thread guard could not update hypothesis %s", slug)
+

@@ -27,3 +27,7 @@ Il questionario si propone come strumento di riflessione e autovalutazione per f
 
 ## Rilevanza
 Utile a orientatori, counselor, formatori e psicologi scolastici che lavorano con adolescenti e adulti in contesti di bilancio di competenze, orientamento professionale e accompagnamento allo sviluppo personale.
+
+## Versioni linguistiche e piattaforma CounselorBot
+Il questionario originale è in lingua italiana (Pellerey & Orio 2001). Nel 2020 è stato tradotto e sperimentato in lingua ucraina con docenti VET nel quadro del progetto europeo Erasmus+ PAGOSTE (Margottini & Leproni, 2020, DOI: 10.13140/RG.2.2.26562.81600; cfr. Ottone, 2023). Nella piattaforma CounselorBot, il QPCC è integrato nel perimetro delle sei lingue di sistema (`it`, `en`, `es`, `fr`, `de`, `sv`, definite in `backend/content_versions.py: APP_LOCALES`) per l'importazione del profilo di dieci stanine canoniche e per il colloquio guidato di consulenza; la lingua ucraina non è servita dalla piattaforma. Per i dettagli tecnici e l'analisi di fattibilità: [`valutazione-lingua-ucraina-qpcc.md`](../../validazione/valutazione-lingua-ucraina-qpcc.md) e [`qpcc-factor-alignment.md`](../../operations/qpcc-factor-alignment.md).
+

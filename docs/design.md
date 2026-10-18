@@ -114,6 +114,12 @@ servono a separare oggetti pari-grado; non vanno bene come secondo vocabolario d
 stato. `green` in particolare è un doppione di `emerald`: nel nuovo codice si usa
 `emerald`.
 
+Una sezione non si riconosce da una tinta propria. La Palestra di prova
+(`PracticeGymSection`) è petrol come il resto dell'area docente, con la CTA
+d'ingresso in `ochre-600` e etichette `slate`; che sia una simulazione lo dicono
+il badge «Simulazione protetta» e l'icona scudo, non un verde. `emerald` resta
+solo per il «Salvato» del repertorio, cioè per il ruolo success.
+
 ### 2.5 Le variabili `--console-*`
 
 Palette condivisa con ai4educ-console, così la topbar e il fondo pagina sono gli
@@ -303,6 +309,14 @@ Palette scura: base `#0f172a`, superficie `#1e293b`, riempimento `#334155`.
 > nel blocco `.dark`. Una tinta nuova (o una famiglia fuori lista, o un hex
 > letterale) non ha remap e resterà chiara su fondo scuro. È il modo più comune
 > di rompere il tema scuro in questo progetto.
+
+Le tappe dei gradienti (`from-*`, `via-*`, `to-*`) non impostano
+`background-color` ma le variabili `--tw-gradient-from/via/to`: la loro voce nel
+remap ridefinisce quella variabile (`.dark .via-white { --tw-gradient-via: #1e293b; }`),
+con la tinta scura del pastello corrispondente e la stessa opacità. Lo stesso vale
+per le varianti `hover:`/`group-hover:`, che sono classi a sé. La guardia
+`frontend/src/lib/teacher-area-dark-theme.test.ts` controlla che ogni sfondo chiaro
+e ogni testo di tinta scura usati nell'area docente abbiano la loro voce.
 
 ---
 

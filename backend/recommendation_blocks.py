@@ -87,7 +87,7 @@ def apply_directive(
     system_prompt: str, readings: Mapping[str, str], strategies: Mapping[str, str], *, idea: bool = False,
 ) -> str:
     directive = build_directive(readings, strategies, idea=idea)
-    if not directive:
+    if not directive or "[RECOMMENDATION LOG]" in system_prompt or directive.strip() in system_prompt:
         return system_prompt
     return f"{system_prompt.rstrip()}\n\n{directive}"
 
@@ -216,16 +216,31 @@ def _whitelist(values, allowed: Mapping[str, str]) -> list[str]:
     return selected
 
 
-def notes_directive(*, advice_allowed: bool, idea: bool = False) -> str:
-    """Log concrete proposals and reflective questions without certifying them."""
+def notes_directive(*, advice_allowed: bool, idea: bool = False, hypothesis_allowed: bool = False, example_lens: str = "A5") -> str:
+    """Log concrete proposals, reflective questions and interpretive hypotheses without certifying them."""
     position = "before the final idea patch" if idea else "at the very end"
+    kinds = "question, advice or hypothesis" if hypothesis_allowed else "question or advice"
+    hyp_sentence = (
+        " and one interpretive reading offered as an open hypothesis (with optional lens: factor code)"
+        if hypothesis_allowed else ""
+    )
+    hyp_clause = (
+        "This turn allows interpretive hypothesis notes (kind: hypothesis) offered as open readings, with optional lens (factor code). "
+        if hypothesis_allowed else ""
+    )
+    example_notes = (
+        f'[{{"kind": "hypothesis", "lens": "{example_lens}", "text": "exact visible reading"}}]'
+        if hypothesis_allowed else
+        '[{"kind": "question", "text": "exact visible question?"}]'
+    )
     return (
         "\n\n[SESSION NOTES] In the same private ```recommendations JSON block "
-        "(create it if absent), add a notes array. Each entry has kind (question or advice) "
+        f"(create it if absent), add a notes array. Each entry has kind ({kinds}) "
         "and text: copy ONE complete sentence verbatim from your visible reply, including "
         "punctuation. At most one open reflective question addressed to the student and "
-        "one concrete general suggestion actually proposed in this turn. Do not log "
-        "rhetorical questions, examples, rejected proposals, books or certified strategies "
+        "one concrete general suggestion actually proposed in this turn"
+        + hyp_sentence
+        + ". Do not log rhetorical questions, examples, rejected proposals, books or certified strategies "
         "again as notes. These notes are not certified strategies and never authorize "
         "advice that the current step forbids. Do not invent additional content to fill "
         "the array. Previously logged notes remain available: do not propose the same "
@@ -233,13 +248,20 @@ def notes_directive(*, advice_allowed: bool, idea: bool = False) -> str:
         "Never close a question yourself: the student marks it closed or reopens it. "
         + ("General advice notes are allowed within this turn's existing advice limit. "
            if advice_allowed else "This turn allows question notes only, no advice notes. ")
-        + 'Example shape: {"reading": [], "strategy": [], "notes": '
-        '[{"kind": "question", "text": "exact visible question?"}]}. '
+        + hyp_clause
+        + f'Example shape: {{"reading": [], "strategy": [], "notes": {example_notes}}}. '
         + f"Use the exact fence label recommendations, never json. Write only one recommendations block {position}; never expose it in prose."
     )
 
 
-def extract_notes(raw: str, visible: str, *, advice_allowed: bool) -> list[dict]:
+def extract_notes(
+    raw: str,
+    visible: str,
+    *,
+    advice_allowed: bool,
+    hypothesis_allowed: bool = False,
+    allowed_lenses: Iterable[str] | None = None,
+) -> list[dict]:
     """Accept only declared sentences that actually survived in the visible reply."""
     _, payloads = _remove_blocks(raw)
     declared = _first_valid(payloads) or {}
@@ -249,13 +271,16 @@ def extract_notes(raw: str, visible: str, *, advice_allowed: bool) -> list[dict]
     normalize = lambda text: " ".join(re.findall(r"\w+", text.casefold()))
     visible_words = " " + normalize(visible) + " "
     result, kinds = [], set()
+    valid_lenses = set(allowed_lenses) if allowed_lenses else None
     for item in values:
         if not isinstance(item, dict):
             continue
         kind, text = item.get("kind"), item.get("text")
-        if kind not in ("question", "advice") or kind in kinds:
+        if kind not in ("question", "advice", "hypothesis") or kind in kinds:
             continue
         if kind == "advice" and not advice_allowed:
+            continue
+        if kind == "hypothesis" and not hypothesis_allowed:
             continue
         if not isinstance(text, str) or not 8 <= len(text.strip()) <= 600:
             continue
@@ -266,6 +291,13 @@ def extract_notes(raw: str, visible: str, *, advice_allowed: bool) -> list[dict]
         if kind == "question" and not text.endswith("?"):
             continue
         slug = "note-" + hashlib.sha256((kind + ":" + words).encode()).hexdigest()[:24]
-        result.append({"slug": slug, "name": text, "kind": kind})
+        note_entry: dict = {"slug": slug, "name": text, "kind": kind}
+        if kind == "hypothesis":
+            lens = item.get("lens")
+            if isinstance(lens, str):
+                lens = lens.strip()
+                if valid_lenses is None or lens in valid_lenses:
+                    note_entry["lens"] = lens
+        result.append(note_entry)
         kinds.add(kind)
     return result

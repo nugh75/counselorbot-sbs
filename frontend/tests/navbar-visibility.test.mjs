@@ -7,7 +7,7 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
-import { ENTRY_HREFS, FROZEN_ROWS, LABELS, LOCALIZED, PQBL_PROGRESS, PROFILES, VIEWPORTS, expectedNavbar } from './fixtures/navbar-contract.mjs';
+import { ENTRY_HREFS, FROZEN_ROWS, LABELS, LOCALIZED, PQBL_PROGRESS, PROFILES, VIEWPORTS, expectedMenuGroups, expectedNavbar } from './fixtures/navbar-contract.mjs';
 
 const origin = process.env.NAVBAR_BASE_URL || 'http://127.0.0.1:3149';
 const shots = process.env.NAVBAR_SCREENSHOTS || '';
@@ -28,11 +28,11 @@ function deferred() {
 
 // `auth`, `access` and `state.frozen` take 'ok', 'error' (HTTP 500), 'abort'
 // (network failure) or a deferred() that holds the answer until released.
-async function fixture({ profile = 'S', width = 1440, locale = 'it', dark = false, reducedMotion = 'no-preference', touch = false, auth = 'ok', access = 'ok', frozen = [], storage = {}, identity: identityOverride = {}, scale = 1 } = {}) {
+async function fixture({ profile = 'S', width = 1440, height = 900, locale = 'it', dark = false, reducedMotion = 'no-preference', touch = false, auth = 'ok', access = 'ok', frozen = [], storage = {}, identity: identityOverride = {}, scale = 1 } = {}) {
     const identity = { ...PROFILES[profile].identity, ...identityOverride };
     let accessPayload = PROFILES[profile].access;
     const state = { frozen };
-    const context = await browser.newContext({ viewport: { width, height: 900 }, deviceScaleFactor: scale, reducedMotion, hasTouch: touch });
+    const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: scale, reducedMotion, hasTouch: touch });
     await context.route(url => !['127.0.0.1', 'localhost'].includes(url.hostname), route => route.abort());
     const page = await context.newPage();
     page.setDefaultTimeout(SETTLE_MS);
@@ -79,6 +79,8 @@ const header = page => page.locator('header.console-header');
 const trigger = page => page.locator('button[aria-controls="mobile-menu"]');
 const mobileMenu = page => page.locator('#mobile-menu');
 const resumePanel = page => page.locator('#resume-panel');
+// «Menu» panel (P5): the Riprendi sub-panel inside the conversation group.
+const resumeToggle = page => mobileMenu(page).locator('button[aria-controls="mobile-resume"]');
 // Desktop bar from 1024px (P4): «Area» selector and account menu.
 const areaTrigger = page => page.locator('button[aria-controls="area-panel"]');
 const areaPanel = page => page.locator('#area-panel');
@@ -135,14 +137,19 @@ function assertDestinations(rows, profile) {
         assert.notEqual(href, '/questionario', `${name}: the satisfaction questionnaire lives on the home page`);
         // One door to /profilo (P4): the person's name is not a link.
         assert.notEqual(name, PROFILES[profile].identity.name, 'the account name is not a link');
-        if (name === LABELS.logout || name === LABELS.signOut) assert.match(href, /\/logout/);
-        if (name === LABELS.adminLogin) assert.match(decodeURIComponent(href), /\/admin/);
+        if (name === LABELS.signOut) assert.match(href, /\/logout/);
         if (name === LABELS.signIn) assert.match(decodeURIComponent(href), /\/login\?rd=http:\/\/127\.0\.0\.1:\d+\/guide$/);
     }
 }
 
 async function noHorizontalScroll(page) {
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'no horizontal scroll');
+}
+
+// Titles of the «Menu» panel groups, in order.
+function groupTitles(locator) {
+    return locator.evaluate(root => [...root.querySelectorAll('[role="group"][aria-labelledby]')]
+        .map(el => document.getElementById(el.getAttribute('aria-labelledby'))?.textContent.trim()));
 }
 
 async function shot(page, name) {
@@ -163,7 +170,9 @@ for (const profile of Object.keys(PROFILES)) {
                 if (expected.menu) {
                     await trigger(page).click();
                     await eventually(() => names(mobileMenu(page)), expected.menu, 'menu');
+                    assert.deepEqual(await groupTitles(mobileMenu(page)), expectedMenuGroups(profile), 'menu groups');
                     assertDestinations(await links(mobileMenu(page)), profile);
+                    await noHorizontalScroll(page);
                     await shot(page, `${profile}-${width}-menu`);
                 } else {
                     assert.equal(await trigger(page).isVisible(), false, 'no three-dot menu from 1024px');
@@ -279,21 +288,21 @@ for (const [locale, copy] of Object.entries(LOCALIZED)) {
                 if (width < 1024) {
                     await page.getByRole('button', { name: copy.menu, exact: true }).click();
                     visible = [...await names(header(page)), ...await names(mobileMenu(page))];
-                    wanted = [copy.bussola, copy.assistant, copy.guide, copy.student, copy.menu, copy.teacher, copy.admin, copy.logout];
-                    absent = [copy.adminLogin];
+                    wanted = [copy.bussola, copy.assistant, copy.guide, copy.student, copy.menu, copy.teacher, copy.admin, copy.signOut];
+                    absent = [copy.signIn, copy.area];
                 } else if (profile === 'A') {
                     await page.getByRole('button', { name: copy.preferences, exact: true }).click();
                     visible = [...await names(header(page)), ...await names(accountPanel(page))];
                     wanted = [copy.guide, copy.preferences, copy.signIn];
-                    absent = [copy.student, copy.teacher, copy.admin, copy.signOut, copy.logout, copy.adminLogin, copy.area];
+                    absent = [copy.student, copy.teacher, copy.admin, copy.signOut, copy.area];
                 } else {
                     await page.getByRole('button', { name: copy.area, exact: true }).click();
                     visible = [...await names(header(page)), ...await names(areaPanel(page))];
                     await page.keyboard.press('Escape');
                     await page.getByRole('button', { name: `${copy.account}${PROFILES.R.identity.name}`, exact: true }).click();
                     visible.push(...await names(accountPanel(page)));
-                    wanted = [copy.area, copy.bussolaBar, copy.assistant, copy.guide, copy.student, copy.teacher, copy.admin, copy.signOut];
-                    absent = [copy.signIn, copy.adminLogin, copy.menu];
+                    wanted = [copy.area, copy.bussola, copy.assistant, copy.guide, copy.student, copy.teacher, copy.admin, copy.signOut];
+                    absent = [copy.signIn, copy.menu];
                 }
                 assert.equal(await page.evaluate(() => document.documentElement.lang), locale);
                 assert.deepEqual(visible.filter(name => wanted.includes(name)), [...new Set(visible.filter(name => wanted.includes(name)))], 'no duplicate entry');
@@ -360,12 +369,16 @@ for (const width of [390, 1440]) {
             await eventually(() => names(header(page)), failed.bar, 'bar');
             const list = width < 1024 ? mobileMenu(page) : resumePanel(page);
             await (width < 1024 ? trigger(page) : header(page).getByRole('button', { name: LABELS.resume, exact: true })).click();
-            if (width < 1024) await eventually(() => names(list), failed.menu, 'menu');
+            if (width < 1024) {
+                await eventually(() => names(list), failed.menu, 'menu');
+                await resumeToggle(page).click();
+                await eventually(() => names(list), expectedNavbar('S', width, { resume: { rows: [], error: true }, resumeOpen: true }).menu, 'sub-panel');
+            }
             state.frozen = FROZEN_ROWS;
             await list.getByRole('button', { name: LABELS.retry, exact: true }).click();
             const rows = FROZEN_ROWS.map(row => row.label);
             await eventually(() => names(list), width < 1024
-                ? expectedNavbar('S', width, { resume: { rows } }).menu
+                ? expectedNavbar('S', width, { resume: { rows }, resumeOpen: true }).menu
                 : rows.flatMap(label => [label, `${LABELS.deleteSession}: ${label}`]), 'after retry');
         } finally { await context.close(); }
     });
@@ -383,6 +396,8 @@ for (const [profile, allowed] of [['S', ['QSA', 'SAVICKAS']], ['S1', ['QSA']]]) 
                 if (width < 1024) {
                     await trigger(page).click();
                     await eventually(() => names(mobileMenu(page)), expected.menu, 'menu');
+                    await resumeToggle(page).click();
+                    await eventually(() => names(mobileMenu(page)), expectedNavbar(profile, width, { resume: { rows }, resumeOpen: true }).menu, 'sub-panel');
                 } else {
                     await header(page).getByRole('button', { name: LABELS.resume, exact: true }).click();
                     await eventually(() => names(resumePanel(page)), rows.flatMap(label => [label, `${LABELS.deleteSession}: ${label}`]), 'popover');
@@ -404,7 +419,8 @@ test('pQBL progress is listed as resumable when the class allows it', async () =
     try {
         await page.goto(`${origin}/guide`);
         await trigger(page).click();
-        await eventually(() => names(mobileMenu(page)), expectedNavbar('S', 390, { resume: { rows: [pqblRow] } }).menu);
+        await resumeToggle(page).click();
+        await eventually(() => names(mobileMenu(page)), expectedNavbar('S', 390, { resume: { rows: [pqblRow] }, resumeOpen: true }).menu);
         assert.equal(await mobileMenu(page).getByRole('link', { name: pqblRow, exact: true }).getAttribute('href'), '/profilo/pqbl');
     } finally { await context.close(); }
 });
@@ -506,7 +522,7 @@ test('Tab reaches every visible menu control, then leaving the menu closes it', 
     } finally { await context.close(); }
 });
 
-test('a language choice is exposed and keeps or returns the focus', async () => {
+test('a language choice is exposed and keeps the focus in its panel', async () => {
     for (const width of [1440, 390]) {
         const { page, context } = await fixture({ profile: 'A', width });
         try {
@@ -523,23 +539,18 @@ test('a language choice is exposed and keeps or returns the focus', async () => 
             await english.focus();
             await page.keyboard.press('Enter');
             assert.equal(await page.evaluate(() => document.documentElement.lang), 'en');
-            if (width < 1024) {
-                assert.equal(await panel.count(), 0, `${width}: choice closes the menu`);
-                assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('aria-controls')), id, `${width}: focus back on the trigger`);
-                assert.equal(await header(page).getByRole('status').textContent(), 'Change language: English');
-            } else {
-                // Preferences change in place (P4): the panel stays, the focus
-                // stays on the chosen language, now pressed.
-                assert.equal(await panel.count(), 1, `${width}: panel stays open`);
-                assert.equal(await focusedName(page), 'English');
-                assert.deepEqual(await pressed(), ['English']);
-                assert.equal(await accountTrigger(page).textContent(), 'Preferences');
-            }
+            // Preferences change in place in both panels (P4, P5): the panel
+            // stays, the focus stays on the chosen language, now pressed.
+            assert.equal(await panel.count(), 1, `${width}: panel stays open`);
+            assert.equal(await focusedName(page), 'English');
+            assert.deepEqual(await pressed(), ['English']);
+            if (width < 1024) assert.deepEqual(await groupTitles(panel), ['Support', 'Preferences'], `${width}: group titles in English`);
+            else assert.equal(await accountTrigger(page).textContent(), 'Preferences');
         } finally { await context.close(); }
     }
 });
 
-test('the theme row returns focus to the menu trigger', async () => {
+test('the theme row changes in place and keeps the focus', async () => {
     const { page, context } = await fixture({ profile: 'A', width: 390 });
     try {
         await page.goto(`${origin}/guide`);
@@ -548,8 +559,8 @@ test('the theme row returns focus to the menu trigger', async () => {
         await mobileMenu(page).getByRole('button', { name: LABELS.darkRow, exact: true }).focus();
         await page.keyboard.press('Enter');
         assert.equal(await page.evaluate(() => document.documentElement.classList.contains('dark')), true);
-        assert.equal(await mobileMenu(page).count(), 0);
-        assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('aria-controls')), 'mobile-menu');
+        assert.equal(await mobileMenu(page).count(), 1);
+        assert.equal(await focusedName(page), LABELS.lightRow);
     } finally { await context.close(); }
 });
 
@@ -688,7 +699,7 @@ for (const locale of ['de', 'fr']) {
 }
 
 // Browser zoom 200% halves the CSS viewport: a 2048px window gives the 1024px
-// desktop bar, a 1440px window the compact bar (P5), both at DPR 2.
+// desktop bar, a 1440px window the «Menu» bar (P5), both at DPR 2.
 test('zoom 200%: the bar still fits, the menu or the account panel opens', async () => {
     for (const width of [1024, 720]) {
         const { page, context } = await fixture({ profile: 'R', width, scale: 2, frozen: FROZEN_ROWS });
@@ -705,4 +716,142 @@ test('zoom 200%: the bar still fits, the menu or the account panel opens', async
             await shot(page, `zoom200-${width}`);
         } finally { await context.close(); }
     }
+});
+
+// P5: «Menu» panel under the bar at phone and tablet sizes, portrait and
+// landscape, and with a short window. Every control is a 44px target, the panel
+// stays inside the viewport and scrolls, the page never scrolls sideways.
+const MANY_ROWS = Array.from({ length: 12 }, (_, i) => ({ session_id: `navbar-many-${i}`, questionnaire_type: 'QSA', label: `Sessione sintetica ${i + 1}`, updated_at: '2026-10-15T10:00:00Z' }));
+const MENU_SIZES = [[320, 568], [568, 320], [390, 844], [844, 390], [768, 1024], [390, 480]];
+
+function menuFit(page) {
+    return mobileMenu(page).evaluate(panel => {
+        const box = panel.getBoundingClientRect();
+        const controls = [...panel.querySelectorAll('a, button, select')].filter(el => el.checkVisibility());
+        return {
+            inside: box.left >= 0 && box.right <= innerWidth && box.top >= 0 && box.bottom <= innerHeight + 1,
+            underBar: Math.abs(box.top - document.querySelector('header.console-header').getBoundingClientRect().bottom) <= 9,
+            small: controls.map(el => [el.getAttribute('aria-label') || el.labels?.[0]?.textContent?.trim() || el.textContent.trim(), el.getBoundingClientRect()])
+                .filter(([, rect]) => Math.min(rect.width, rect.height) < 44).map(([name, rect]) => `${name}: ${Math.round(rect.width)}x${Math.round(rect.height)}`),
+            scrolls: panel.scrollHeight > panel.clientHeight ? getComputedStyle(panel).overflowY : 'fits',
+        };
+    });
+}
+
+for (const [width, height] of MENU_SIZES) {
+    test(`the Menu panel fits ${width}x${height} with many resumes`, async () => {
+        const { page, context, errors } = await fixture({ profile: 'R', width, height, frozen: MANY_ROWS, identity: { name: 'Maximiliane-Charlotte von Hohenzollern-Sigmaringen' } });
+        try {
+            await page.goto(`${origin}/guide`);
+            await trigger(page).click();
+            const rows = MANY_ROWS.map(row => row.label);
+            await eventually(() => names(mobileMenu(page)), expectedNavbar('R', width, { resume: { rows } }).menu, 'menu');
+            assert.deepEqual(await groupTitles(mobileMenu(page)), expectedMenuGroups('R'));
+            const fit = await menuFit(page);
+            assert.equal(fit.inside, true, 'panel inside the viewport');
+            assert.equal(fit.underBar, true, 'panel opens under the bar');
+            assert.deepEqual(fit.small, [], '44px targets');
+            assert.notEqual(fit.scrolls, 'visible', 'a long panel scrolls');
+            await noHorizontalScroll(page);
+            // Sign out is reachable by scrolling the panel, before and after the
+            // twelve resume rows are opened.
+            await resumeToggle(page).click();
+            await eventually(() => names(mobileMenu(page)), expectedNavbar('R', width, { resume: { rows }, resumeOpen: true }).menu, 'sub-panel');
+            const signOut = mobileMenu(page).getByRole('link', { name: LABELS.signOut, exact: true });
+            await signOut.scrollIntoViewIfNeeded();
+            assert.equal(await signOut.isVisible(), true);
+            assert.deepEqual((await menuFit(page)).small, [], '44px targets with the rows open');
+            await noHorizontalScroll(page);
+            await shot(page, `p5-${width}x${height}`);
+            assert.deepEqual(errors, []);
+        } finally { await context.close(); }
+    });
+}
+
+// Tab presses from the trigger to the first language and to Sign out: the same
+// with zero, one or twelve resumes, because the rows wait in their sub-panel.
+test('language and sign out do not come after the resume rows', async () => {
+    const steps = {};
+    for (const [label, frozen] of [['zero', []], ['one', FROZEN_ROWS.slice(0, 1)], ['many', MANY_ROWS]]) {
+        const { page, context } = await fixture({ profile: 'S', width: 390, frozen });
+        try {
+            await page.goto(`${origin}/guide`);
+            const expected = expectedNavbar('S', 390, { resume: { rows: frozen.map(row => row.label) } });
+            await eventually(() => names(header(page)), expected.bar, 'bar');
+            await trigger(page).focus();
+            await page.keyboard.press('Enter');
+            await eventually(() => names(mobileMenu(page)), expected.menu, label);
+            const reached = [];
+            for (let i = 0; i <= expected.menu.length; i++) {
+                await page.keyboard.press('Tab');
+                if (await focusedPanel(page) !== 'mobile-menu') break;
+                reached.push(await focusedName(page));
+            }
+            steps[label] = { language: reached.indexOf(LABELS.languages[0]), signOut: reached.indexOf(LABELS.signOut), resume: reached.includes(LABELS.resume) };
+        } finally { await context.close(); }
+    }
+    assert.deepEqual(steps.zero.resume, false);
+    assert.equal(steps.one.language, steps.many.language, 'language');
+    assert.equal(steps.one.signOut, steps.many.signOut, 'sign out');
+    assert.equal(steps.zero.signOut, steps.one.signOut - 1, 'only the Riprendi button is added');
+});
+
+test('a resume row is deleted from the sub-panel, the menu stays open', async () => {
+    const { page, context, writes, state } = await fixture({ profile: 'S', width: 390, frozen: FROZEN_ROWS });
+    try {
+        await page.goto(`${origin}/guide`);
+        await trigger(page).click();
+        await resumeToggle(page).click();
+        const [first, second] = FROZEN_ROWS;
+        const remove = mobileMenu(page).getByRole('button', { name: `${LABELS.deleteSession}: ${first.label}`, exact: true });
+        await remove.waitFor();
+        state.frozen = [second];
+        page.once('dialog', dialog => dialog.accept());
+        await remove.click();
+        await eventually(() => names(mobileMenu(page)), expectedNavbar('S', 390, { resume: { rows: [second.label] }, resumeOpen: true }).menu, 'after delete');
+        assert.deepEqual(writes.map(write => write.path), [`/api/session/frozen/${first.session_id}`]);
+        assert.equal(await resumeToggle(page).getAttribute('aria-expanded'), 'true');
+    } finally { await context.close(); }
+});
+
+// Navigation closes the panel: a link of the menu returns the focus to «Menu»
+// (the area page may then move it to its title), going back closes it too.
+test('navigating from the Menu panel closes it without losing the focus', async () => {
+    const { page, context } = await fixture({ profile: 'D', width: 390 });
+    await context.route('**/_next/image**', route => route.abort());
+    try {
+        await page.goto(`${origin}/guide`);
+        await trigger(page).click();
+        await mobileMenu(page).getByRole('link', { name: LABELS.student, exact: true }).click();
+        await page.waitForURL(`${origin}/profilo`);
+        assert.equal(await mobileMenu(page).count(), 0, 'link closes the menu');
+        assert.notEqual(await page.evaluate(() => document.activeElement?.tagName), 'BODY', 'focus kept');
+        await trigger(page).click();
+        await eventually(() => currentNames(mobileMenu(page)), [LABELS.student], 'current area');
+        await page.goBack();
+        await page.waitForURL(`${origin}/guide`);
+        await eventually(() => mobileMenu(page).count(), 0, 'back closes the menu');
+    } finally { await context.close(); }
+});
+
+// A page shown inside an activity window (?embedded=1 in an iframe) hides the
+// bar, so the «Menu» never doubles the host page's navbar.
+test('an embedded page shows no second navbar', async () => {
+    const { page, context } = await fixture({ profile: 'S', width: 390 });
+    try {
+        await page.goto(`${origin}/guide`);
+        await trigger(page).waitFor();
+        await page.evaluate(src => {
+            const frame = document.createElement('iframe');
+            frame.src = src;
+            frame.style.width = '360px';
+            frame.style.height = '600px';
+            document.body.prepend(frame);
+        }, `${origin}/guide?embedded=1`);
+        const frame = page.frameLocator('iframe');
+        await frame.locator('html[data-embedded]').waitFor({ state: 'attached' });
+        await frame.locator('header.console-header').waitFor({ state: 'attached' });
+        assert.equal(await frame.locator('header.console-header').isVisible(), false);
+        assert.equal(await trigger(page).isVisible(), true, 'the host keeps its own bar');
+    } finally { await context.close(); }
 });

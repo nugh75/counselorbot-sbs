@@ -31,10 +31,15 @@ logger = logging.getLogger(__name__)
 
 RECOMMENDATION_TYPES = ("reading", "strategy", "advice")
 # `proposed` = mostrata dal counselor; le altre le sceglie lo studente.
-RECOMMENDATION_STATUSES = ("proposed", "selected", "tried", "dismissed", "closed", "stale")
+RECOMMENDATION_STATUSES = (
+    "proposed", "selected", "tried", "dismissed", "closed", "stale",
+    "answered", "confirmed", "corrected", "rejected",
+)
 DEFAULT_STATUS = "proposed"
 # Una domanda ha una vita sua: aperta, chiusa (da qualcuno) o decaduta.
 QUESTION_STATUSES = ("proposed", "closed", "stale")
+# Un'ipotesi ha un ciclo: proposed -> answered (deterministico), o esito dello studente/guardiano.
+HYPOTHESIS_STATUSES = ("proposed", "answered", "confirmed", "corrected", "rejected", "stale")
 CLOSED_BY = ("student", "conversation")
 
 # Distingue "campo assente" da "campo messo a null": azzerare un giudizio e'
@@ -168,10 +173,13 @@ def set_state(
         return None
     payload = dict(row.payload or {})
     is_question = payload.get("kind") == "question"
+    is_hypothesis = payload.get("kind") == "hypothesis"
     if is_question and status is not None and status not in QUESTION_STATUSES:
         raise ValueError("Question status must be proposed, closed or stale")
-    if status in ("closed", "stale") and not is_question:
-        raise ValueError("Only a question can be closed or retired")
+    if is_hypothesis and status is not None and status not in HYPOTHESIS_STATUSES:
+        raise ValueError(f"Hypothesis status must be in {HYPOTHESIS_STATUSES}")
+    if status in ("closed", "stale") and not is_question and not is_hypothesis:
+        raise ValueError("Only a question or hypothesis can be closed or retired")
     if closed_by is not UNSET:
         if closed_by is not None and closed_by not in CLOSED_BY:
             raise ValueError(f"Chi ha chiuso non e' valido: {closed_by}")
@@ -180,8 +188,12 @@ def set_state(
         payload["revived"] = bool(revived)
     if status is not None:
         payload["status"] = status
-        # Una domanda che torna aperta non ha piu' nessuno che l'ha chiusa.
-        if status != "closed":
+        if is_hypothesis and status in ("confirmed", "corrected", "rejected"):
+            payload["outcome"] = status
+        # Una domanda che torna aperta non ha piu' nessuno che l'ha chiusa; per le ipotesi solo proposed/stale resettano.
+        if is_question and status != "closed":
+            payload["closed_by"] = None
+        elif is_hypothesis and status in ("proposed", "stale"):
             payload["closed_by"] = None
     if helpful is not UNSET:
         payload["helpful"] = helpful if isinstance(helpful, bool) else None
@@ -255,13 +267,13 @@ def conversation_context(db: Session, *, session_id: str, username: str, message
             explicitly_named = bool(name and name.casefold() in message.casefold())
             if kind == "advice" and item["slug"] not in recent_notes and not explicitly_named:
                 continue
-            # Una domanda ancora aperta viaggia nel ledger, che le da' la sua
+            # Una domanda o ipotesi ancora aperta viaggia nel ledger, che le da' la sua
             # regola ("riprendila una volta sola, riformulata"). Qui la si
             # leggerebbe insieme a "non richiederla", e il turno riceverebbe lo
             # stesso testo due volte con due istruzioni opposte. Restano quelle
             # chiuse, e quella che lo studente nomina: se ci torna lui, se ne parla.
-            if (kind == "advice" and item.get("kind") == "question"
-                    and item.get("status") == "proposed" and not explicitly_named):
+            if (kind == "advice" and item.get("kind") in ("question", "hypothesis")
+                    and item.get("status") in ("proposed", "answered") and not explicitly_named):
                 continue
             if kind == "advice" or item.get("status") in ("selected", "tried", "dismissed") or explicitly_named:
                 items.append({"type": kind, **{field: item.get(field) for field in (
@@ -279,6 +291,59 @@ def conversation_context(db: Session, *, session_id: str, username: str, message
             "requirement to ask it again. "
             "Discuss a reopened item when asked; these are not new recommendations and "
             "do not override the current step or advice limits.\n" + json.dumps(items, ensure_ascii=False))
+
+
+def couple_hypothesis_reply(
+    db: Session,
+    *,
+    session_id: str,
+    username: str,
+    reply: str,
+    step_id: str | None = None,
+) -> list[models.RecommendationHistory]:
+    """Accoppia deterministicamente la risposta dello studente all'ipotesi aperta piu' recente."""
+    if not session_id or not username or not reply or not reply.strip():
+        return []
+    cleaned_reply = " ".join(reply.strip().split())
+    if len(cleaned_reply) > 240:
+        cleaned_reply = cleaned_reply[:240].rstrip() + "…"
+
+    rows = (
+        db.query(models.RecommendationHistory)
+        .filter(
+            models.RecommendationHistory.session_id == session_id,
+            models.RecommendationHistory.username == username,
+            models.RecommendationHistory.recommendation_type == "advice",
+        )
+        .order_by(
+            models.RecommendationHistory.turn_index.desc().nulls_last(),
+            models.RecommendationHistory.created_at.desc(),
+        )
+        .all()
+    )
+    updated = []
+    for row in rows:
+        payload = dict(row.payload or {})
+        if payload.get("kind") != "hypothesis":
+            continue
+        row_step = (payload.get("step_id") or "").strip()
+        if step_id and row_step and row_step != step_id:
+            continue
+        if payload.get("status") == "proposed" or not payload.get("reply"):
+            payload["reply"] = cleaned_reply
+            if payload.get("status") == "proposed":
+                payload["status"] = "answered"
+            row.payload = payload
+            db.add(row)
+            updated.append(row)
+            break
+    if updated:
+        try:
+            db.commit()
+        except Exception as exc:
+            logger.warning("Failed to commit coupled hypothesis reply: %s", exc)
+            db.rollback()
+    return updated
 
 
 # --- helpers ---
@@ -301,6 +366,13 @@ def _state_fields(source: dict | None) -> dict:
 def _carry_over(payload: dict, previous: dict | None) -> dict:
     """Il catalogo si aggiorna, lo stato dello studente resta il suo."""
     payload.update(_state_fields(previous))
+    if previous:
+        if not payload.get("reply") and previous.get("reply"):
+            payload["reply"] = previous["reply"]
+        if not payload.get("outcome") and previous.get("outcome"):
+            payload["outcome"] = previous["outcome"]
+        if not payload.get("lens") and previous.get("lens"):
+            payload["lens"] = previous["lens"]
     # La provenienza dice perche' la voce era entrata: un turno che non la porta
     # non e' una smentita di quella gia' registrata.
     if not payload.get("matched_on") and (previous or {}).get("matched_on"):

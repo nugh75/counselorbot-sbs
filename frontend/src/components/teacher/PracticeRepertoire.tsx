@@ -135,7 +135,15 @@ export function PracticeRepertoire({ notebookId }: { notebookId: number }) {
                     <label className="block text-xs font-semibold text-slate-600">
                         {l('instrument')}
                         <select value={draft.type} disabled={busy || draft.id !== undefined}
-                            onChange={(event) => { setDirty(true); setDraft({ type: event.target.value as QuestionnaireType, generated: false, version: draft.version + 1 }); }}
+                            onChange={(event) => {
+                                const nextType = event.target.value as QuestionnaireType;
+                                if (dirty && !window.confirm(learningText(lang, 'leaveDraft'))) {
+                                    event.target.value = draft.type;
+                                    return;
+                                }
+                                setDraft({ type: nextType, generated: false, version: draft.version + 1 });
+                                setDirty(false);
+                            }}
                             className="mt-1 block min-h-11 w-full rounded-md border border-slate-300 bg-white px-2 text-sm">
                             {PRACTICE_RESULT_TYPES.map((id) => <option key={id} value={id}>{instrumentName(id)}</option>)}
                         </select>
@@ -148,7 +156,7 @@ export function PracticeRepertoire({ notebookId }: { notebookId: number }) {
                     <fieldset disabled={busy} className="min-w-0">
                     <ScoreInputForm key={`${draft.type}-${draft.version}`} questionnaire={QUESTIONNAIRES[draft.type]}
                         initialScores={draft.scores} persistDraft={false} formId={`practice-score-form-${notebookId}`}
-                        submitAction="save" submitLabel={l('save')} submitDisabled={busy} onDraftChange={() => { setDirty(true); setSaved(false); }}
+                        submitAction="save" submitLabel={l('save')} cancelLabel={l('cancel')} submitDisabled={busy} onDraftChange={() => { setDirty(true); setSaved(false); }}
                         onSubmit={(scores) => void save(scores)} onBack={cancel} />
                     </fieldset>
                 </div>

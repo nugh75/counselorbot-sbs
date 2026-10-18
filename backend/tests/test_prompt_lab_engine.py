@@ -185,7 +185,7 @@ def calibrated(user: str) -> str | None:
     """The two built-in calibration replies, judged correctly."""
     if "Your A6 score is 87" in user:
         return verdict(False, len(evaluation.CALIBRATION_GOALS))
-    if "Il fattore A6 guarda" in user:
+    if "Il fattore A6 descrive" in user or "Il fattore A6 guarda" in user:
         return verdict(True, len(evaluation.CALIBRATION_GOALS))
     return None
 
@@ -939,6 +939,31 @@ def test_one_retry_and_only_for_a_transient_failure():
     # The timeout was retried once and the trial produced a judgment.
     assert attempts["count"] >= 2
     assert recovered
+
+
+def test_calibration_good_aligns_with_metacognitive_facilitation():
+    """Calibration case must anchor A6 to competence perception and metacognitive questioning."""
+    case = evaluation._CALIBRATION_CASE
+    assert "percezione di competenza" in case["expected"].lower()
+    assert "senza inventare punteggi" in case["expected"].lower()
+
+    good_cases = [c for c in evaluation.CALIBRATION_CASES if c.get("id") == "calibration-good"]
+    assert len(good_cases) == 1
+    good = good_cases[0]
+    assert good["expect_pass"] is True
+    resp = good["response"]
+
+    # No ceremonial pleasantries
+    assert not resp.startswith(("Certo", "Grazie", "Capisco", "Certamente"))
+    # No situational / episodic trapping question ('qual è il momento in cui', 'momento recente')
+    assert "qual è il momento" not in resp.lower()
+    assert "momento recente" not in resp.lower()
+    assert "quanto l'ansia" not in resp.lower()
+
+    # Metacognitive inquiry on choices, behaviors and consequences
+    assert "percezione di competenza" in resp.lower()
+    assert "che cosa scegli di fare" in resp.lower()
+    assert "conseguenze" in resp.lower()
 
 
 # --- the client -------------------------------------------------------------

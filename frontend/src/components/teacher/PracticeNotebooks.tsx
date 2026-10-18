@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
+import { listFrozenSessions, type FrozenSessionSummary } from '@/lib/frozen-session';
 import { useI18n } from '@/lib/i18n-context';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { learningText } from '@/lib/i18n-assignment-work';
@@ -20,6 +21,7 @@ import {
     type PracticeNotebookData,
 } from '@/lib/practice-notebooks';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
+import { PracticeChats } from './PracticeChats';
 import { PracticeRepertoire } from './PracticeRepertoire';
 
 type Draft = { id: number | 'new'; title: string; values: PracticeNotebookData; groupIds: number[] };
@@ -63,6 +65,16 @@ export function PracticeNotebooks() {
             .catch(() => { if (!controller.signal.aborted) setGroupsFailed(true); });
         return () => controller.abort();
     }, []);
+    // Chat guidate di prova ancora aperte (autosalvate): il docente le ritrova
+    // sotto lo studente simulato e le riapre come dall'header.
+    const [chats, setChats] = useState<FrozenSessionSummary[] | null>(null);
+    const [chatsFailed, setChatsFailed] = useState(false);
+    useEffect(() => {
+        listFrozenSessions()
+            .then((rows) => setChats(rows.filter((row) => row.practice_notebook_id != null)))
+            .catch(() => setChatsFailed(true));
+    }, []);
+
     const groupName = (group: ClassGroup) => group.school ? `${group.name} — ${group.school}` : group.name;
 
     const run = async (action: () => Promise<unknown>) => {
@@ -87,7 +99,11 @@ export function PracticeNotebooks() {
         setDirty(false);
         setError('');
     };
-    const closeDraft = () => { setDraft(null); setDirty(false); };
+    const closeDraft = () => {
+        if (busy || (dirty && !window.confirm(learningText(lang, 'leaveDraft')))) return;
+        setDraft(null);
+        setDirty(false);
+    };
     const edit = (patch: Partial<Draft>) => {
         setDraft((current) => current && { ...current, ...patch });
         setDirty(true);
@@ -100,7 +116,7 @@ export function PracticeNotebooks() {
         const ok = await run(() => draft.id === 'new'
             ? practiceNotebookApi.create(draft.title, draft.values, groupIds ?? [])
             : practiceNotebookApi.update(draft.id, { title: draft.title, values: draft.values, groupIds }));
-        if (ok) closeDraft();
+        if (ok) { setDraft(null); setDirty(false); }
     };
 
     const active = (notebooks ?? []).filter((notebook) => !notebook.archived_at);
@@ -205,6 +221,7 @@ export function PracticeNotebooks() {
                                 <h2 className="text-base font-bold text-slate-800">{notebook.title}</h2>
                                 {summary(notebook)}
                                 {classSummary(notebook)}
+                                <PracticeChats notebookId={notebook.id} openChats={chats?.filter((chat) => chat.practice_notebook_id === notebook.id) ?? null} openChatsFailed={chatsFailed} />
                                 <PracticeRepertoire notebookId={notebook.id} />
                                 <div className="flex flex-wrap gap-2">
                                     <button type="button" disabled={busy} className={secondary}

@@ -55,6 +55,8 @@ def runtime():
         db.add_all(models.GuidedStep(**step) for step in ALL_STEPS)
         # Exercise existing admin text too: the contract must not depend on reseeding.
         db.add(models.Config(key="prompt_qpcs_analysis", value="Stored interview: mini-summary and [[AVANZA_STEP]]."))
+        # test_self_questioning exercises the legacy self-questioning contract baseline when the flag is off
+        db.add(models.Config(key="facilitation_contract_enabled", value="false"))
         db.flush()
         ai = AIService(db)
         ai.config.update(active_provider="ollama", model_name="test-local")

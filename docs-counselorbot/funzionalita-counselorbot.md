@@ -1,6 +1,6 @@
 # CounselorBot: funzionalità e interfaccia attuali
 
-Aggiornato: 17 ottobre 2026. Questo è il riferimento operativo dell’Assistente
+Aggiornato: 18 ottobre 2026. Questo è il riferimento operativo dell’Assistente
 CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
@@ -13,7 +13,7 @@ questionari**, **Percorsi guidati**, **Area studente e strumenti**. Il collegame
 un riquadro illustrato in evidenza, **Dicci com’è andata**, apre il **Questionario di
 gradimento** (`/questionario`), tradotto nelle sei lingue; chi non ha ancora
 effettuato l’accesso lo trova sotto il pulsante «Accedi a CounselorBot». Il
-questionario non è più nella barra di navigazione né nel menu a tre punti.
+questionario non è più nella barra di navigazione né nel pannello Menu.
 L’illustrazione del riquadro è decorativa: il titolo e la descrizione accanto ne
 portano il significato, anche per gli screen reader. Nel catalogo
 viene prima la Bussola, poi le analisi dei questionari, i percorsi guidati e l’Area
@@ -68,21 +68,33 @@ login riporta alla pagina da cui è partito (da `/admin` torna a `/admin`; `/log
 resta l’accesso amministrativo esplicito). Se lo spazio non basta (1024 px, nomi
 lunghi, tedesco o francese) si accorciano vista classe, nome del counselor e nome
 dell’account, mai le voci di navigazione.
-Sotto 1024 px il menu a tre punti raccoglie tutte le voci (ingressi, aree,
-lettore, riprese, preferenze, «Accesso admin» o «Logout»), come prima del
-riordino desktop.
+Sotto 1024 px (telefono e tablet in verticale) la barra mostra il marchio e il
+pulsante **Menu** con l’icona a tre righe. Il pannello si apre sotto la barra, a
+tutta larghezza sul telefono, e raccoglie le stesse funzioni del desktop in
+gruppi con un titolo: in alto la **Vista attiva** per chi ha classi, poi
+**Area** (Area studente, Area docente, Area amministrazione secondo il ruolo),
+**Supporto** (Bussola, Assistente, Guida), **Conversazione** (strumento scelto,
+counselor e **Riprendi un’attività**, che apre il proprio elenco con il numero
+delle attività, Riprova in caso di errore e la cancellazione di ogni riga) e
+infine **Account** con nome, servizi, preferenze, lingue con il loro nome ed
+**Esci** in fondo; chi non ha fatto l’accesso trova **Preferenze** e **Accedi**,
+che riporta alla pagina corrente. Le riprese restano chiuse finché non si apre
+il loro elenco, così lingua ed Esci non arrivano mai dopo tutte le sessioni. Il
+pannello scorre se lo schermo è basso, non sposta la pagina di lato e si chiude
+con Esc, scegliendo una voce o tornando indietro; il focus torna al pulsante
+Menu.
 Gli ingressi stanno in un’area di navigazione con nome («Navigazione
-principale» nella barra, «Navigazione del menu» nel menu a tre punti). La voce
+principale» nella barra, «Navigazione del menu» nel pannello Menu). La voce
 dell’area in cui ci si trova, anche in una sua sottopagina (per esempio
 `/profilo/pqbl` per l’Area studente), è segnata come pagina corrente con un fondo
 leggero e viene annunciata dagli screen reader; una chat aperta dalla home non
 segna nessuna voce.
-Il selettore Area, il menu dell’account, il menu a tre punti e l’elenco
+Il selettore Area, il menu dell’account, il pannello Menu e l’elenco
 **Riprendi un’attività** si aprono da tastiera con Invio o Spazio, si percorrono
 con Tab e si chiudono con Esc, che riporta il focus al pulsante, oppure uscendo
-con Tab. Nel menu dell’account la lingua scelta resta selezionata e annunciata
-come premuta; nel menu a tre punti la scelta chiude il menu e la nuova lingua
-viene annunciata. Nel tema scuro l’anello di focus usa un petrolio chiaro ben
+con Tab. Nel menu dell’account e nel pannello Menu tema, movimento e lingua
+cambiano sul posto: la lingua scelta resta selezionata e annunciata come
+premuta. Nel tema scuro l’anello di focus usa un petrolio chiaro ben
 leggibile; con lo schermo touch i comandi della barra e le lingue hanno bersagli
 da 44 px.
 
@@ -255,7 +267,7 @@ shown. The Guide remains available independently of these class toggles.
   screenshot pertinente; le schermate della piattaforma sono disponibili nelle
   sei lingue, mentre le due viste della chat sono dimostrazioni in italiano.
 - Interfaccia e conversazioni: italiano, inglese, spagnolo, francese, tedesco e
-  svedese. Sono disponibili tema chiaro/scuro, navigazione responsive e lettura vocale dal menu dell’account (da 1024 px) o dal menu a tre punti.
+  svedese. Sono disponibili tema chiaro/scuro, navigazione responsive e lettura vocale dal menu dell’account (da 1024 px) o dal pannello Menu.
 
 ## Analisi dei questionari
 
@@ -295,10 +307,103 @@ La strategia riguarda QSA, QSAr, ZTPI, QPCS, QPCC, QAP e l’intervista narrativ
 Savickas; viene applicata dal contratto del turno anche ai prompt già configurati,
 senza riscriverli nel database. Cambia il modo di porre le domande: numero e ordine
 dei passi, domande previste, consenso e avanzamento restano quelli di ciascun
-percorso. L’autointerrogazione non aggiunge turni obbligatori né condizioni per
-proseguire; usa le domande disponibili nel passo, senza superarne il limite, e
-non insiste se la difficoltà persiste. Il QPCS conserva le sue cinque aree. Nel percorso essenziale restano
-validi i limiti dei turni e della sintesi, che non richiede altre risposte.
+L'opzione di configurazione `facilitation_contract_enabled` (abilitata di default a `true`,
+con possibilità di disattivazione a `false` per retrocompatibilità con l'envelope storico)
+attiva il contratto di facilitazione metacognitiva (`[FACILITATION]`). Il facilitatore metacognitivo
+sostituisce l'aneddotica situazionale/temporale («qual è il momento in cui...») con l'indagine
+sull'agire (scelte, comportamenti e conseguenze nello studio), rimuove formule cerimoniose
+(«Grazie per aver condiviso», «Capisco»), ancora la profondità alla comprensione dell'esperienza
+(esperienza concreta, comprensione dell'agire, elementi per la sintesi) e propone letture solo come
+ipotesi aperte che lo studente è libero di confermare, correggere o rifiutare.
+Nel blocco privato `recommendations` il modello può dichiarare note di tipo `hypothesis`
+(con campo facoltativo `lens` vincolato ai fattori dello step corrente). Al turno successivo,
+la risposta dello studente viene accoppiata deterministicamente all'ipotesi aperta (`status`
+passa ad `answered` con salvataggio di `payload.reply`, limitato a 240 caratteri). Lo stato
+del filo (`thread_state`: `introduced`, `exploring`, `hypothesis_open`, `hypothesis_answered`)
+guida il contratto del turno; sui turni interni allo step con un'ipotesi aperta o risposta
+viene iniettato il blocco compatto `[REFLECTION THREAD]` (entro 500 caratteri). All'ingresso
+degli step successivi, il Session Ledger include la cronologia delle letture proposte con le
+relative risposte dello studente e la direttiva di considerare la versione dello studente
+come riferimento primario senza mai riproporre letture rifiutate o corrette.
+
+Nella sintesi di fine percorso (`journey_context`), la riduzione bounded dell'evidenza include
+la regola esplicita di preservazione delle ipotesi (`preserve_hypotheses=True` per tutti i dialoghi
+di questionario ed eventi significativi), garantendo che le letture del counselor e le risposte
+dello studente (confermate, corrette con le sue parole, o rifiutate) vengano conservate senza mai
+presentare una lettura rifiutata come concordata.
+
+Il guardiano del filo (`thread_guard`) è stato esteso con l'asse `interpretation_open` (severità
+subito successiva ad `advice_grounded`), che rileva se il counselor afferma interpretazioni come
+fatti oggettivi, attribuisce emozioni non espresse o ripropone letture rifiutate. Inoltre, il guardiano
+rileva gli esiti delle ipotesi aperte (`hypotheses`: `confirmed`, `corrected`, `rejected`) aggiornando
+lo stato nel registro con chiusura da conversazione (`closed_by="conversation"`), garantendo che
+una presa di posizione esplicita e diretta dello studente (`closed_by="student"`) non venga mai sovrascritta.
+
+La configurazione e attivazione del guardiano del filo è gestita dall'amministratore in
+**Area amministrazione → Guardiano del filo** (`/admin?tab=threadGuard`). L'interfaccia consente
+di selezionare provider e modello scegliendo tra i provider effettivamente attivi (con chiave API
+configurata a livello globale o servizio locale raggiungibile). Se il provider configurato non è attivo
+o non è disponibile, la scheda segnala un avviso ben visibile e impedisce l'attivazione finché non
+viene associato un provider attivo valido. Al salvataggio (`PUT /admin/thread-guard`), protetto
+dal meccanismo anti-CSRF della piattaforma (header obbligatorio `X-Requested-With: CounselorBot`),
+il server convalida la disponibilità del provider e associa o crea automaticamente un preset modello dedicato
+con flag `disable_thinking=True` per preservare il formato JSON di analisi. In caso di errore o
+indisponibilità temporanea del provider durante una conversazione, il guardiano gestisce l'eccezione
+in modalità degradata (fail-safe) preservando i segnali di controllo attivi senza mai interrompere o bloccare l'esperienza di chat dello studente.
+All'interno della progressiva convergenza verso il facilitatore metacognitivo,
+la direttiva `[ANCHOR]` nei prompt di fabbrica dei fattori (QSA, QSAr, ZTPI, QPCS, QPCC, QAP)
+è stata rimossa poiché la regola della domanda riflessiva ed esperienziale viene assorbita
+direttamente dal contratto di facilitazione, riducendo l'ingombro dell'envelope.
+La direttiva `[SECOND-LEVEL METHOD]` è stata snellita per concentrarsi esclusivamente
+sull'offerta di un'ipotesi interpretativa prima di qualunque consiglio pratico, eliminando
+il divieto di value-check e le regole rigide sulla domanda.
+La direttiva `[DEPTH ON REQUEST]` orienta l'approfondimento verso l'agire e le scelte dello studente
+anziché imporre un aneddoto scolastico preconfezionato dal modello;
+in sintesi, `[PERSPECTIVE]` offre il nesso con taccuino e portfolio come domanda aperta
+che lo studente può cogliere o lasciare.
+Infine, il contratto canonico in codice di QPCC (`qpcc.directive()`) adotta il criterio
+flessibile di permanenza nell'area ancorato alle scelte e all'agire dello studente con
+un tetto di sicurezza (circa 5 scambi) superando il vincolo numerico rigido dei turni fissi.
+
+I testi di fabbrica degli step di QSA, QSAr, ZTPI e QPCS sono stati riscritti in chiave
+di facilitazione metacognitiva: il profilo e i fattori vengono presentati come lenti e
+ipotesi aperte di funzionamento anziché come verdetti o etichette fisse; le domande
+di chiusura indagano le scelte strategiche, i comportamenti concreti nello studio e le
+loro conseguenze (eliminando la trappola aneddotica e la cronaca situazionale «a real, recent situation»);
+sono stati rimossi i commenti pratici e i consigli non richiesti nei singoli fattori interpretativi
+di QSAr e ZTPI. Gli hash dei testi di fabbrica precedenti restano censiti in `prompt_factory_legacy.json`
+per consentire l'aggiornamento sicuro e trasparente tramite la funzione «Allinea prompt di fabbrica»
+senza alterare le personalizzazioni introdotte dagli amministratori.
+
+Nei percorsi a intervista qualitativa (QPCC, QAP, Savickas, Evento Significativo, Obiettivi di apprendimento) e nelle analisi dimensionali (QPCS, QSA, QSAr, ZTPI), i testi dei prompt di step prescrivono tassativamente la formulazione di **esattamente una sola domanda aperta per turno su un singolo aspetto** (vietando elenchi puntati o domande multiple a raffica), rimandando altri aspetti ai turni successivi solo se necessari. In tutti i percorsi e nei contratti universali di piattaforma (`turn_contract` e `INTRO_ALLOWED_QUESTIONS`), le domande dell'assistente sono definite espressamente come **spunti aperti per facilitare l'auto-interrogazione della persona** sulla propria esperienza, scelte, strategie e risorse, mai come un interrogatorio asimmetrico o un questionario direttivo («io ti faccio domande mirate e tu rispondi»). Il chatbot **fornisce chiarimenti o spiegazioni su concetti, scale e meccanismi esclusivamente in due situazioni**: quando la persona li richiede espressamente o quando il modello rileva dall'intervento dell'utente che qualcosa detto in precedenza è stato frainteso o non compreso bene; al di fuori di questi due casi è vietato dispensare lezioni teoriche, dissertazioni o spiegazioni non richieste. È altresì vietato in tutte le introduzioni e turni di chat l'uso di formule retoriche di contrasto («non è... ma...», es. «non è un giudizio ma un'opportunità», «non misura quanto vali ma raccoglie...») e di cliché terapeutici o meta-disclaimer difensivi («senza giudizio / non con giudizio», «non misura quanto vali», «non ci sono risposte giuste o sbagliate», «autopercezioni non verdetti», «non ti farò domande del questionario», «non è un test o un voto», «etichette fisse», «è un'ipotesi non una verità», «non è una diagnosi», «non è un difetto»). Nel percorso QPCC di Pellerey–Orio, il contratto canonico in codice (`qpcc.directive()`) e i testi di step trattano i punteggi dichiarati esclusivamente come autopercezioni e ipotesi esplorative da verificare insieme alla persona, mai come diagnosi, etichette o fatti oggettivi; è vietato attribuire emozioni o stati affettivi (come ansia o insicurezza) non esplicitamente nominati dalla persona ed è obbligatorio accogliere immediatamente il rifiuto di una lettura o di una strategia abbandonandola senza riproporla.
+Il budget numerico rigido di turni («at most two follow-ups», «two or three questions in total») è
+stato sostituito da un criterio qualitativo di comprensione orientato all'agire con tetto di sicurezza
+a circa cinque scambi: il chatbot resta nell'area finché lo studente la sviluppa, esplorando cosa fa,
+come sceglie e quali conseguenze ne derivano, e chiude il passaggio quando emerge un modo concreto di
+agire e lo studente ha risposto a una lettura di esso, oppure su richiesta esplicita o al raggiungimento
+del tetto massimo di scambi. I testi di step e i prompt di sistema d'intervista (QPCC, QAP, Savickas,
+Evento e QPCS) e i relativi hash legacy in `prompt_factory_legacy.json` garantiscono piena continuità,
+prevenzione dei loop conversazionali e compatibilità con l'allineamento dei prompt di fabbrica.
+A livello applicativo, la chiusura dello step è garantita anche lato server (`backend/step_closure.py`
+integrato in `backend/routes/chat.py` per chiamate sincrone e streaming SSE): se il modello non emette
+spontaneamente il marcatore `[[AVANZA_STEP]]` entro il tetto di sicurezza configurato (predefinito a 5
+scambi dell'assistente nello step, escludendo i passi di introduzione e le sintesi finali/farewell),
+il backend appende automaticamente il marcatore in coda alla risposta prima dell'estrazione dei segnali
+di controllo e aggiorna la memoria di sessione (`completed_step=True`). Il frontend riceve quindi il
+segnale `AVANZA_STEP` nei `control_signals`, abilitando l'avanzamento allo step successivo senza dipendere
+unicamente dalla decisione probabilistica del modello LLM.
+
+
+### Envelope snello, deduplicazione e divieto di elenchi puntati
+
+Nell'ambito dell'ottimizzazione dell'envelope e dell'aderenza dei modelli locali e compatti:
+- **SESSION NOTES in coda all'envelope**: le istruzioni private (`notes_directive`, schema `recommendations` e gestione delle note `hypothesis`) sono state collocate deterministicamente all'estremità finale del prompt di sistema assemblato in `backend/chat_preparation.py` (dopo il contratto di turno e le preferenze di risposta), propagandosi all'estremità di tutti i livelli di variante di contesto. Questo assicura la massima compliance dell'instruction-following dei modelli compatti e previene che il formato JSON delle note venga disatteso o esposto in prosa.
+- **Eliminazione duplicazioni e blocchi ridondanti**: introdotte sentinelle e controlli di deduplicazione in `build_context_envelope`, `turn_contract`, `apply_response_format` e `apply_directive` per impedire la concatenazione ripetuta di contratti (`turn_contract`, `_facilitation_contract`, `_self_questioning_contract`, `_objective_focus_contract`), blocchi strutturali (`ROLE_BLOCK`, `[STUDENT]`, `[GUIDED PATH]`, `[PROFILE]`, `[KNOWLEDGE]`) e direttive globali (`[ORIENTATION]`, `[LANGUAGE]`, `[REGISTER]`, `[THINKING]`).
+- **Disattivazione del RAG della guida del sito nelle chat guidate**: nelle chat guidate di questionari e percorsi (`is_guided_chat`), le interrogazioni al corpus generico della guida del sito (`rag_competenzestrategiche`, `rag_counselorbot`, `rag_questionari`) sono disattivate sia a livello di flag (`get_prompt_component_flags`) sia a livello di recupero vettoriale (`_retrieved_context`), risparmiando decine di token estranei alla riflessione personale dello studente e conservando esclusivamente le strategie e letture certificate quando attivate.
+- **Divieto perentorio di elenchi puntati e numerati**: a livello di contratto del turno e di facilitazione metacognitiva, è formalizzato il divieto assoluto di generare elenchi puntati, numerati o opzioni a lista («Never use bullet points, numbered lists or itemized options»), prescrivendo una conversazione fluida e naturale in prosa continua con al massimo una sola domanda aperta per turno.
+
+
+
 
 Il **QPCC di Pellerey–Orio** è rivolto a giovani e adulti in cerca di occupazione
 o in contesti professionali relazionali. Il questionario canonico ha 63 item,
@@ -312,10 +417,19 @@ quattro dimensioni connesse e dieci scale, con punteggi stanine 1–9:
 - Motivazionale: **M1 Percezione di competenza**, **M2 Orientamento all’io**,
   **M3 Attribuzioni causali (locus of control interno)**.
 
-La chat legge questi dieci fattori, costruisce un patto con accettazione
+La chat legge questi dieci fattori, costruisce un patto di collaborazione con accettazione
 esplicita e li approfondisce con esempi professionali o di ricerca di lavoro.
-È un’autovalutazione senza risposte giuste o sbagliate, con durata indicativa
-20–30 minuti; non somministra gli item né assegna nuovi punteggi. A1–A3 alti
+Il patto iniziale (Step 0) e il prompt di benvenuto propongono l'accordo
+con tono sobrio, naturale e umano (2-3 brevi paragrafi), focalizzandosi sull'esplorazione
+concreta delle risorse e delle modalità di agire sul lavoro ed evitando spiegazioni teoriche
+o pedagogiche sui costrutti (niente elenchi di item, dimensioni, scale o citazioni accademiche
+nel testo visibile) e formule difensive o paternalistiche («non misura quanto vali», «senza giudizio»,
+«non ci sono risposte giuste o sbagliate», «autopercezioni non verdetti», «non ti farò le 63 domande»,
+«io ti faccio domande mirate, tu rispondi»). Le domande poste dal chatbot sono spunti aperti
+per aiutare la persona ad auto-interrogarsi sulla propria esperienza e sulle proprie risorse,
+mai un interrogatorio procedurale: il chatbot fornisce spiegazioni o approfondimenti su scale
+e costrutti solo se la persona li richiede esplicitamente.
+La durata indicativa è di 20–30 minuti nel rispetto della riservatezza; non vengono somministrati item né assegnati nuovi punteggi. A1–A3 alti
 indicano maggiori difficoltà dichiarate; M2 viene discusso nel contesto, senza
 un giudizio automatico di forza/debolezza. I nomi e le etichette del profilo
 seguono la lingua scelta anche nei resoconti. Se nessun fattore rientra nella
@@ -327,8 +441,12 @@ non si riutilizzano o convertono per iniziare/riprendere il nuovo percorso.
 Le nuove compilazioni richiedono un profilo completo con dieci stanine intere
 tra 1 e 9. Gli eventuali codici K in una
 vecchia bozza locale non entrano nel nuovo invio. Interfaccia, fattori e indicazioni
-sono disponibili in tutte le sei lingue. Audit e aggiornamento esplicito dei
+sono disponibili in tutte le sei lingue di piattaforma (`it, en, es, fr, de, sv`);
+la lingua ucraina citata in schede storiche di ricerca (Erasmus+ PAGOSTE 2020) non è
+servita da CounselorBot (valutazione di fattibilità in `docs/validazione/valutazione-lingua-ucraina-qpcc.md`).
+Audit e aggiornamento esplicito dei
 prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
+
 
 ## Percorsi guidati senza punteggi
 
@@ -389,10 +507,20 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
 
 ## Chat, voce e ripresa
 
-Nella chat guidata si scrive sotto la conversazione. La barra dei passi permette
-indietro, ripeti e avanti. Il menu a tre punti offre pannello, **formato** della
+Nella chat guidata si scrive sotto la conversazione. La barra dei passi mantiene
+i comandi indietro e avanti sempre visibili e raggiungibili: indietro è attivo se
+esiste un passo precedente (disattivato al primo passo), avanti passa alla fase
+successiva (disattivato all'ultima fase); ripeti permette di ricaricare il passo
+corrente (tranne al congedo). Il menu a tre punti offre pannello, **formato** della
 risposta (conversazione, elenco, tabella), **lunghezza** (breve, media, lunga), voce,
 lingua e Congela sessione. Formato e lunghezza sono scelte indipendenti.
+I profili di lunghezza della risposta allocano un margine di token (headroom) adeguato
+anche per i modelli con ragionamento (thinking); nei passaggi di lettura del profilo
+(come nei questionari QPCC, QAP e QPCS) il sistema riserva un budget token esteso per
+consentire l'esposizione esaustiva di tutte le scale e fattori senza troncature.
+Durante lo streaming, la chiusura delle frasi rispetta la punteggiatura naturale ed
+eventuali interruzioni preservano il testo visibile già generato anziché sostituirlo
+con messaggi generici di fallback.
 Il percorso essenziale QSA prevede tre risposte e la sintesi; non va esteso a QSAr
 o agli altri questionari. I due percorsi sugli obiettivi hanno la propria versione
 essenziale, in tre fasi brevi che si chiudono quando il risultato è pronto o quando
@@ -445,11 +573,13 @@ dello snapshot anche se nel browser è stata scelta un’altra prova. Un link a 
 profilo assente, altrui, archiviato o di uno strumento diverso non avvia la chat.
 Anche la modifica di un profilo QPCC richiede i dieci fattori canonici con stanine
 intere 1–9: profili legacy, incompleti o misti vengono rifiutati senza salvare.
+Al termine della chat guidata (sia reale sia su taccuino di prova), la schermata finale di completamento è lineare e priva di scelte dispersive: mostra l’avvenuto completamento con il riepilogo testuale della sintesi emersa e offre due sole azioni chiare: il download diretto del report PDF completo (che scarica il documento e riporta alla pagina principale) e il pulsante per tornare direttamente alla pagina principale, azzerando le selezioni di sessione ed evitando schermate o bivi intermedi. Per le sessioni di prova, la schermata e il download del PDF restano riservati al docente proprietario o all’amministratore, senza registrare compilazioni reali degli studenti.
 
 La generazione può essere interrotta; “Continua” riprende una risposta incompleta.
+Durante la generazione (sia in streaming SSE sia sincrona), i blocchi di ragionamento interno emessi da modelli di reasoning (tag `<think>...</think>`, `<thinking>` o `<sto_pensando>`, inclusi tag aperti o orfani) vengono filtrati ed eliminati in tempo reale, impedendo fughe di catena di pensiero verso l’utente e garantendo che la memoria di sessione e i log conservino solo la risposta visibile. Se una risposta risulta vuota, composta da soli spazi o svuotata dalla rimozione del reasoning (oppure in caso di errore vuoto del provider), il sistema evita errori 500/502 o messaggi vuoti e invia un fallback gentile e riflessivo, contestualizzato al passo corrente della chat guidata e nella lingua dell’utente (italiano, inglese, spagnolo, francese, tedesco, svedese), differenziato tra introduzione del tema all'ingresso dello step (o benvenuto nel Patto di Collaborazione) e prosecuzione della riflessione nei turni successivi. I contratti di dialogo escludono cliché terapeutici e meta-disclaimer ripetitivi (come "è un'ipotesi e non una verità", "senza giudizio", "non è un difetto"), affidando la natura non diagnostica al patto iniziale e la formulazione delle ipotesi alla modalità epistemica e alla curiosità fenomenologica naturale.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
 e feedback quando disponibili. Il lettore nel menu di navigazione legge il testo visibile,
-con impostazioni di voce e motore; la correzione della pronuncia è visibile solo
+con impostazioni di voce e motore (Edge TTS online oppure Piper locale 100% offline con dodici voci ONNX incorporate, attivo anche nella configurazione portatile); la correzione della pronuncia è visibile solo
 all’amministratore. La chat guidata e la Bussola accettano
 registrazione del microfono o file audio: la trascrizione è da controllare, salvo
 invio immediato scelto esplicitamente. In conversazione vocale si avvia e si ferma
@@ -792,7 +922,11 @@ sintesi PDF dei risultati, Tavolo e diagrammi, secondo le associazioni salvate. 
 locali, la voce, i benchmark e il terminale tecnico mantengono la configurazione
 di sistema. Sono ammessi i provider esterni supportati, senza URL arbitrari.
 Se la chiave personale dà errore non si passa automaticamente alle chiavi di
-sistema.
+sistema. Nei preset di modello, nei counselor e nei benchmark con provider OpenRouter,
+i modelli con ragionamento obbligatorio (come Gemini Flash o DeepSeek R1) gestiscono
+automaticamente il parametro di reasoning: se il preset o il passo richiede la
+disattivazione del pensiero ma l'endpoint lo impone, la piattaforma evita l'errore 400
+ed esegue la risposta garantendo la continuità della conversazione e del thread guard.
 
 Spegnendo la funzione, l’amministratore fa usare le API di sistema alle nuove
 richieste e nasconde i collegamenti dall’Area studente e dall’Area docenti. Le richieste già
@@ -823,7 +957,7 @@ e sulla sessione: nessun nuovo permesso o allargamento della visibilità.
 
 Nella header la voce verso l'area è «Area docente» con l'icona a berretto da
 laurea, uguale per docenti, ricercatori e amministrazione: nel selettore «Area» da
-1024 px, nel menu a tre punti sotto.
+1024 px, nel gruppo «Area» del pannello Menu sotto.
 
 La Guida interfaccia (`/guide`) ha una sezione «Piani operativi e incontri» sia per il
 docente (con lo screenshot dell’editor del piano operativo: passi, chat guidata e incontro di
@@ -833,7 +967,7 @@ lingue; gli screenshot si rigenerano con `GUIDE_SCREENS=class-paths` in
 
 `/docente` è una panoramica illustrata organizzata in tre pilastri distinti:
 1. **Didattica e Classi**: la hero di progettazione didattica attiva con AI (`DidacticDesignSection`, con badge e CTA per `OBIETTIVO_DOCENZA`, link al Catalogo obiettivi e ai Piani operativi), il cruscotto operativo «Le mie classi» (`MyClassesSection`, card attive con codice invito, partecipanti e accesso rapido all'Hub di classe) e il gruppo illustrato **Classe e assegnazioni** (`/docente/istituti`, `/docente/classi`, `/docente/compilazioni`, `/docente/piani-operativi`, `/docente/incontri`, `/docente/assegnazioni`).
-2. **Palestra di simulazione e prova**: sezione dedicata in evidenza con badge sandbox protetto coerente con la palette verde del brand (`PracticeGymSection` con accenti emerald/teal e pulsante CTA per `/docente/taccuini-prova`), dove creare e gestire studenti fittizi per testare questionari, prompt e dinamiche di colloquio prima delle sessioni reali, con la garanzia esplicita di nessun impatto sulle classi reali né sui dati reali degli studenti.
+2. **Palestra di simulazione e prova**: sezione dedicata in evidenza con badge sandbox protetto slate e scudo petrol, allineata alla palette petrol dell'area docente (`PracticeGymSection` con bordo e gradiente petrol, etichette slate e pulsante CTA in ocra per `/docente/taccuini-prova`), dove creare e gestire studenti fittizi per testare questionari, prompt e dinamiche di colloquio prima delle sessioni reali, con la garanzia esplicita di nessun impatto sulle classi reali né sui dati reali degli studenti. In tema scuro questa card, la hero di progettazione didattica, il riquadro vuoto di «Le mie classi» e l’hub delle risorse passano a superfici scure con testi, badge ed etichette leggibili (contrasto almeno 4,5:1); il tema chiaro resta invariato.
 3. **Profilo professionale e risorse**: lo spazio professionale del docente, chiaramente separato dalla palestra di prova, contenente il **Taccuino del docente** (`/docente/taccuino`, senza form nella home, per definire ruolo, pratica didattica e interessi di crescita), seguito dalla sezione accorpata **Libreria e risorse didattiche** (`TeacherResourcesSection`, con accesso all'hub unificato `/docente/risorse` e collegamenti diretti a `/docente/strategie` e `/docente/materiali`), dal gruppo **Somministrazioni e ricerca** (`/docente/orientamento`, `/docente/somministrazioni`) e dalle connessioni AI personali (`PersonalAIConnections`). Il Catalogo obiettivi (`/docente/catalogo-obiettivi`) trova il suo posizionamento naturale all'interno del flusso di progettazione didattica nel primo pilastro. Ogni voce apre una pagina dedicata con il ritorno all’Area docenti: `/docente/istituti` (primo elenco del gruppo **Classe e assegnazioni**: creare un istituto, unirsi a uno esistente, impostarne codice e
 assegnazioni**: creare un istituto, unirsi a uno esistente, impostarne codice e
 password per le somministrazioni e vederne le classi; visibile a docenti e
@@ -983,7 +1117,7 @@ new work and frozen-session resume are blocked for disabled tools.
 **Student view switcher (#146).** Class settings are a recommended view, not a
 hard block. A student with at least one active class gets an **Active view**
 selector in the top bar (inline from `lg`, where long class names are truncated
-and the open list shows them in full; in the three-dot menu on smaller screens): **All tools** shows every tool and counselor the platform offers to
+and the open list shows them in full; at the top of the «Menu» panel on smaller screens): **All tools** shows every tool and counselor the platform offers to
 students (global disables and teacher-only tools still apply); the class view is
 the default — with one class it is that class, with several **My classes** keeps
 the union above and each class can be chosen alone (only its settings count).
@@ -1309,10 +1443,22 @@ Opzioni) e trova i profili del suo repertorio accanto ai propri risultati salvat
 profili del repertorio non entrano mai nelle Compilazioni, nei confronti tra i profili
 del docente né nei dati di ricerca; in prova il confronto tra compilazioni usa il
 repertorio dello studente simulato e la Bussola conosce gli strumenti che ha già
-«compilato» (tipo e data, senza punteggi). Si creano, modificano, archiviano, ripristinano
-ed eliminano (con conferma) con salvataggio esplicito; gli archiviati non compaiono
-nelle Opzioni della chat. Sono visibili solo al docente che li ha creati e non
+«compilato» (tipo e data, senza punteggi). I profili si creano e modificano con
+salvataggio esplicito: i comandi Salva e Annulla sono presenti in testa e in coda
+all'editor nelle sei lingue ufficiali, con conferma prima di scartare modifiche non
+salvate sia per Annulla sia per l'uscita dalla pagina; gli elementi si archiviano,
+ripristinano ed eliminano (con conferma). Gli archiviati non compaiono nelle
+Opzioni della chat. Sono visibili solo al docente che li ha creati e non
 contengono né toccano dati di studenti reali: la pagina invita a non inserirne.
+
+I risultati di una chat guidata in prova si ritrovano nella scheda dello studente
+simulato (Issue #244): dalla home dell’Area docenti, «Entra nella Palestra di prova»
+o il collegamento «Chat e risultati degli studenti di prova» aprono
+`/docente/taccuini-prova`; nella scheda, **Chat guidate di prova** elenca le chat
+con quel taccuino, in corso e concluse (Issue #364): **Leggi la trascrizione** la
+mostra in qualsiasi momento, anche dopo «Concludi», e per quelle in corso **Riapri la
+conversazione** permette di proseguire. I punteggi inseriti in chat restano nei
+**Profili nei questionari** con l’indicazione «da una chat in prova».
 
 Il Taccuino del docente è un’autodescrizione del ruolo e della pratica abituale,
 con sei campi **facoltativi** su una sola colonna, come il taccuino dello studente (la nota in testa alla pagina ricorda le scelte Predefinito, Studente, Docente, Prova e Nessuno), nell’ordine: discipline abituali, esperienza di
@@ -1435,21 +1581,27 @@ tastiera (frecce, Invio, Esc). La sezione scelta resta nell’indirizzo
 (`/admin?section=qsa`): ricaricando la pagina o condividendo il link si riapre
 la stessa sezione; un valore non riconosciuto apre Generale.
 
-Nella sezione Generale, dopo modello attivo, ripieghi e funzioni, il blocco
-**API personali e ChatGPT** riunisce in quest’ordine **API personali**,
-**Collegamento ChatGPT** e **Protezione dei dati per i modelli esterni**. Per
-ciascuna delle due funzioni, **Chi può usarle** / **Chi può usarlo** ha due caselle
-indipendenti: **Docenti**, che usano le proprie chiavi o il proprio abbonamento
-nelle proprie chat, e **Studenti**, che li usano nelle chat delle loro classi se il
-docente della classe lo consente. Sotto le API personali una terza casella permette
-ai docenti di mettere a disposizione degli studenti delle loro classi una propria
-chiave API (mai degli altri docenti); l’abbonamento ChatGPT resta personale. Le
-installazioni esistenti partono con le caselle Docenti e Studenti attive. I messaggi
-«collegamento disattivato» e la Guida indicano questo blocco. La pagina **API e
-ChatGPT** del docente spiega, rivolgendosi a lui, che il suo abbonamento ChatGPT è
-personale e che per dare i modelli GPT alla classe serve una chiave API condivisa.
-Le **API Keys** della piattaforma sono dell’amministratore e restano fuori dal
-blocco, subito sotto.
+Nella sezione Generale, le sezioni operative principali presentano in primo piano
+**Funzioni**, l'**AI dello studente** (che riunisce in quest'ordine **API personali**,
+**Collegamento ChatGPT** e **Protezione dei dati per i modelli esterni**), il
+**Recupero documenti** e le **API Keys** con le connessioni locali della piattaforma.
+La configurazione dell'IA di sistema ha minor risalto ed è collocata dopo le sezioni
+principali come blocco compatto e collassabile denominato **«Riserva di sistema (quando
+l'utente non ha ChatGPT o una chiave personale)»**, con un promemoria visibile che
+esplicita la gerarchia di scelta del modello a tre livelli: 1) abbonamento ChatGPT
+dell'utente (se collegato), 2) connessione API personale o condivisa, 3) riserva di sistema
+per chi non possiede 1 o 2.
+
+Se provider e modello non sono impostati, il pannello dichiara espressamente lo stato reale
+(«Nessuna riserva di sistema configurata: gli utenti senza ChatGPT o chiave personale non
+possono chattare»). Il pulsante **«Prova»** (protetto da `browser_mutation` come le altre
+mutazioni amministrative) interroga con una richiesta minima il modello primario salvato
+e ciascun ripiego in ordine, mostrando latenza in millisecondi, modello effettivo ed
+eventuale codice d'errore leggibile (`auth`, `model_not_found`, `quota`, `network`,
+`timeout`, `rate_limit`, `invalid_request`, `not_configured`) senza esporre credenziali
+o chiavi segrete. La configurazione grezza dei target di ripiego in formato JSON
+(`ai_fallback_targets`), il timeout per tentativo (`ai_timeout_seconds`) e la gestione
+del contesto risiedono in un dettaglio avanzato espandibile separato.
 
 Il **budget mensile** e i **ripieghi** convivono: quando la spesa registrata
 raggiunge il limite, i modelli a pagamento si fermano e l’invio passa al primo
@@ -1567,7 +1719,10 @@ Prompt Lab conserva negli snapshot questi livelli e le assegnazioni e adatta
 ogni prova al modello scelto. Il risultato conserva il rapporto dei token del
 contesto effettivamente inviato. Un conteggio minore non dimostra una risposta
 migliore: la verifica automatica richiede lettura educativa dei risultati e
-non attiva configurazioni o prompt.
+non attiva configurazioni o prompt. I casi di calibrazione verificano che il
+giudice distingua risposte aderenti alla facilitazione metacognitiva (es. fattore
+A6 come percezione di competenza, senza convenevoli né aneddotica situazionale)
+da risposte arbitrarie o scorrette.
 
 1. **Comune a tutte le chat guidate**: la persona del counselor (sola lettura;
    «Modifica» apre un riquadro che salva con la stessa funzione del tab Counselor,

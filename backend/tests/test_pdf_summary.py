@@ -140,3 +140,57 @@ def test_essential_summary_is_reused_but_voluntary_followup_is_not_a_summary(mon
     db.commit()
     messages.append({'role': 'student', 'text': 'Modifico la durata.'})
     assert survey.canonical_summary(db, **args)[0] == 'Sintesi aggiornata con la modifica.'
+
+
+def test_practice_questionnaire_summary_and_pdf(monkeypatch, db):
+    notebook = models.TeacherPracticeNotebook(owner_username="teacher1", title="Simulato")
+    db.add(notebook)
+    db.commit()
+    practice_res = models.TeacherPracticeResult(
+        notebook_id=notebook.id,
+        owner_username="teacher1",
+        questionnaire_type="QPCC",
+        scores={"A1": 4, "C1": 7},
+        session_id="practice-qpcc-session",
+        source="chat",
+    )
+    db.add(practice_res)
+    db.commit()
+
+    db.add(models.GuidedStep(id='qpcc-sintesi', questionnaire_type='QPCC', sort_order=7, label='Sintesi', prompt='Summarize.', system_prompt_mode='qpcc-summary'))
+    db.add(models.Log(
+        action='chat_message',
+        session_id='practice-qpcc-session',
+        phase='qpcc-sintesi',
+        username='teacher1',
+        details={'language': 'it', 'bot_response': 'Sintesi QPCC di prova.', 'journey_coverage': 'complete'},
+    ))
+    db.commit()
+
+    # Proprietà esposte come QuestionnaireResult
+    assert practice_res.username == "teacher1"
+    assert practice_res.submitted_at is not None
+
+    # Owner can get summary and preview
+    preview = asyncio.run(survey.get_user_session_summary("practice-qpcc-session", lang="it", regenerate=False, current_user={"username": "teacher1"}, db=db))
+    assert preview["summary"] == "Sintesi QPCC di prova."
+    assert preview["status"] == "ready"
+
+    # Admin can also access
+    admin_preview = asyncio.run(survey.get_user_session_summary("practice-qpcc-session", lang="it", regenerate=False, current_user={"username": "admin", "is_admin": True}, db=db))
+    assert admin_preview["summary"] == "Sintesi QPCC di prova."
+
+    # Unrelated user cannot access
+    with pytest.raises(survey.HTTPException) as exc:
+        asyncio.run(survey.get_user_session_summary("practice-qpcc-session", lang="it", regenerate=False, current_user={"username": "other_teacher"}, db=db))
+    assert exc.value.status_code == 403
+
+    # Conversation endpoint
+    conv = asyncio.run(survey.get_user_session_conversation("practice-qpcc-session", current_user={"username": "teacher1"}, db=db))
+    assert any("Sintesi QPCC di prova." in m.get("text", "") for m in conv)
+
+    # PDF download works
+    pdf_resp = asyncio.run(survey.download_questionnaire_pdf("practice-qpcc-session", lang="it", mode="brief", current_user={"username": "teacher1"}, db=db))
+    assert pdf_resp.status_code == 200
+    assert pdf_resp.headers["X-Summary-Status"] == "ready"
+    assert len(pdf_resp.body) > 1000

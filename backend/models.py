@@ -813,6 +813,14 @@ class TeacherPracticeResult(Base):
     source = Column(String, nullable=False, default="manual")  # manual|generated|chat
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    @property
+    def username(self) -> str:
+        return self.owner_username
+
+    @property
+    def submitted_at(self):
+        return self.created_at
+
 
 class LearnerProfileRevision(Base):
     """Modello del discente auto-dichiarato con revisioni e bozza corrente.

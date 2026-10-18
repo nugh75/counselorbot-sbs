@@ -44,17 +44,14 @@ def _block(text: str, sentinel: str) -> str:
     return match.group(0).strip() if match else ""
 
 
-def test_anchor_directive_is_identical_in_every_factor_prompt():
-    # [ANCHOR] vive in un file per strumento (default_system_prompt_factor.md e
-    # le varianti qsar/ztpi): l'unico blocco condiviso ancora scritto piu' volte,
-    # e la chiusura di uno strumento non deve invecchiare da sola.
-    qsa = _block(DEFAULT_SYSTEM_PROMPT_FACTOR, "ANCHOR")
-    assert qsa, "QSA factor prompt senza [ANCHOR]"
-    for name, prompt in (("QSAr", DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR),
+def test_anchor_directive_is_removed_from_every_factor_prompt():
+    # [ANCHOR] e' stato rimosso dai default di fabbrica dei fattori: la regola
+    # della domanda di chiusura variata e agganciata all'esperienza passa nel
+    # contratto di facilitazione (fase 3 dell'audit).
+    for name, prompt in (("QSA", DEFAULT_SYSTEM_PROMPT_FACTOR),
+                         ("QSAr", DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR),
                          ("ZTPI", DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR)):
-        other = _block(prompt, "ANCHOR")
-        assert other, f"{name} factor prompt senza [ANCHOR]"
-        assert qsa == other, f"[ANCHOR] diverso fra QSA e {name}:\nQSA:  {qsa}\n{name}: {other}"
+        assert "[ANCHOR]" not in prompt, f"{name} factor prompt ha ancora [ANCHOR]"
 
 
 def test_shared_directives_reach_both_members_of_each_pair():
