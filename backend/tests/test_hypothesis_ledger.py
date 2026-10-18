@@ -203,18 +203,19 @@ def test_prepare_chat_turn_flag_off_envelope_byte_identical(runtime):
         scores_context="A2: 6/9, A5: 6/9, A6: 4/9",
         language="it",
     )
-    # Default preparation (flag off)
-    prep_default = prepare_chat_turn(
+    # Explicit flag off
+    prep_off = prepare_chat_turn(
         runtime.db, runtime.ai, req, "sess-base-1", {"username": "user1"},
         config_overrides={"facilitation_contract_enabled": "false"},
     )
-    # Without override (default is false)
-    prep_implicit = prepare_chat_turn(
+    assert "[FACILITATION]" not in prep_off.system_prompt_final
+    assert "[REFLECTION THREAD]" not in prep_off.system_prompt_final
+
+    # Without override, default is now true (released in Phase 6)
+    prep_default = prepare_chat_turn(
         runtime.db, runtime.ai, req, "sess-base-2", {"username": "user2"},
     )
-    assert prep_default.system_prompt_final == prep_implicit.system_prompt_final
-    assert "[FACILITATION]" not in prep_default.system_prompt_final
-    assert "[REFLECTION THREAD]" not in prep_default.system_prompt_final
+    assert "[FACILITATION]" in prep_default.system_prompt_final
 
 
 def test_prepare_chat_turn_flag_on_thread_state_and_reflection_thread(runtime):

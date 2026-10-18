@@ -426,7 +426,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     is_synthesis = request.phase in SYNTHESIS_STEPS or (step and step.system_prompt_mode.endswith("-summary"))
     is_synthesis = is_synthesis or (essential and is_essential_summary(request.phase))
     facilitation_contract_enabled = bool(
-        str(configs.get("facilitation_contract_enabled", "false")).lower() in {"1", "true", "yes", "on"}
+        str(configs.get("facilitation_contract_enabled", "true")).lower() in {"1", "true", "yes", "on"}
     )
     hypothesis_allowed = bool(
         facilitation_contract_enabled
@@ -480,6 +480,10 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
                 messages, request.language or "it", ai=ai_service if allow_generation else None,
                 provider=provider, model=model,
                 preserve_self_questions=questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES,
+                preserve_hypotheses=(
+                    questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES
+                    or is_event_instrument(questionnaire_type)
+                ),
             )
         components["journey_evidence"] = evidence
         components["journey_coverage"] = coverage

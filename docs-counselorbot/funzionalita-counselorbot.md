@@ -307,13 +307,13 @@ La strategia riguarda QSA, QSAr, ZTPI, QPCS, QPCC, QAP e l’intervista narrativ
 Savickas; viene applicata dal contratto del turno anche ai prompt già configurati,
 senza riscriverli nel database. Cambia il modo di porre le domande: numero e ordine
 dei passi, domande previste, consenso e avanzamento restano quelli di ciascun
-L'opzione di configurazione `facilitation_contract_enabled` (disattivata di default per
-preservare l'envelope e il comportamento canonico) abilita il contratto di facilitazione
-metacognitiva (`[FACILITATION]`). Il facilitatore metacognitivo sostituisce l'aneddotica
-situazionale/temporale («qual è il momento in cui...») con l'indagine sull'agire (scelte,
-comportamenti e conseguenze nello studio), rimuove formule cerimoniose («Grazie per aver
-condiviso», «Capisco»), ancora la profondità alla comprensione dell'esperienza (esperienza
-concreta, comprensione dell'agire, elementi per la sintesi) e propone letture solo come
+L'opzione di configurazione `facilitation_contract_enabled` (abilitata di default a `true`,
+con possibilità di disattivazione a `false` per retrocompatibilità con l'envelope storico)
+attiva il contratto di facilitazione metacognitiva (`[FACILITATION]`). Il facilitatore metacognitivo
+sostituisce l'aneddotica situazionale/temporale («qual è il momento in cui...») con l'indagine
+sull'agire (scelte, comportamenti e conseguenze nello studio), rimuove formule cerimoniose
+(«Grazie per aver condiviso», «Capisco»), ancora la profondità alla comprensione dell'esperienza
+(esperienza concreta, comprensione dell'agire, elementi per la sintesi) e propone letture solo come
 ipotesi aperte che lo studente è libero di confermare, correggere o rifiutare.
 Nel blocco privato `recommendations` il modello può dichiarare note di tipo `hypothesis`
 (con campo facoltativo `lens` vincolato ai fattori dello step corrente). Al turno successivo,
@@ -325,6 +325,19 @@ viene iniettato il blocco compatto `[REFLECTION THREAD]` (entro 500 caratteri). 
 degli step successivi, il Session Ledger include la cronologia delle letture proposte con le
 relative risposte dello studente e la direttiva di considerare la versione dello studente
 come riferimento primario senza mai riproporre letture rifiutate o corrette.
+
+Nella sintesi di fine percorso (`journey_context`), la riduzione bounded dell'evidenza include
+la regola esplicita di preservazione delle ipotesi (`preserve_hypotheses=True` per tutti i dialoghi
+di questionario ed eventi significativi), garantendo che le letture del counselor e le risposte
+dello studente (confermate, corrette con le sue parole, o rifiutate) vengano conservate senza mai
+presentare una lettura rifiutata come concordata.
+
+Il guardiano del filo (`thread_guard`) è stato esteso con l'asse `interpretation_open` (severità
+subito successiva ad `advice_grounded`), che rileva se il counselor afferma interpretazioni come
+fatti oggettivi, attribuisce emozioni non espresse o ripropone letture rifiutate. Inoltre, il guardiano
+rileva gli esiti delle ipotesi aperte (`hypotheses`: `confirmed`, `corrected`, `rejected`) aggiornando
+lo stato nel registro con chiusura da conversazione (`closed_by="conversation"`), garantendo che
+una presa di posizione esplicita e diretta dello studente (`closed_by="student"`) non venga mai sovrascritta.
 
 All'interno della progressiva convergenza verso il facilitatore metacognitivo,
 la direttiva `[ANCHOR]` nei prompt di fabbrica dei fattori (QSA, QSAr, ZTPI, QPCS, QPCC, QAP)

@@ -190,8 +190,10 @@ def set_state(
         payload["status"] = status
         if is_hypothesis and status in ("confirmed", "corrected", "rejected"):
             payload["outcome"] = status
-        # Una domanda che torna aperta non ha piu' nessuno che l'ha chiusa.
-        if status != "closed":
+        # Una domanda che torna aperta non ha piu' nessuno che l'ha chiusa; per le ipotesi solo proposed/stale resettano.
+        if is_question and status != "closed":
+            payload["closed_by"] = None
+        elif is_hypothesis and status in ("proposed", "stale"):
             payload["closed_by"] = None
     if helpful is not UNSET:
         payload["helpful"] = helpful if isinstance(helpful, bool) else None
