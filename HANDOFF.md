@@ -1,3 +1,31 @@
+# Handoff: Rimozione lezioni teoriche e formule difensive dall'introduzione e patto di collaborazione QPCC
+Data: 2026-10-18 | Branch: `fix/qpcc-natural-intro` | Agente: `timoniere`, Gemini 3.8 Flash (High)
+
+Obiettivo:
+- Eliminare il linguaggio prolisso, difensivo e stucchevole ("non misura quanto vali", "con curiosità, non con giudizio", "non ci sono risposte giuste o sbagliate", "non ti farò le 63 domande", "autopercezioni non verdetti", "mai come etichette fisse") anche dal messaggio di benvenuto e dal Patto di Collaborazione (Step 0) del percorso QPCC.
+- Rimuovere la lezione accademica/teorica sui costrutti psicometrici (citazione di Pellerey e Orio, 63 item, 4 dimensioni e 10 scale numerate da 1 a 9) rivolta all'utente all'apertura del colloquio, sostituendola con un'accoglienza sobria, naturale e umana in 2-3 paragrafi focalizzata sull'esplorazione pratica delle risorse lavorative e su un chiaro accordo di collaborazione.
+- Implementare una migrazione idempotente all'avvio del backend per aggiornare i testi di fabbrica memorizzati su database esistenti senza richiedere interventi manuali.
+
+Modifiche:
+1. `backend/prompt_config.py` & `backend/qpcc_factory_legacy.json`:
+   - `DEFAULT_SYSTEM_PROMPT_QPCC_INTRO`: rimosso l'aggancio all'intera `qpcc_directive()` che riversava il manuale psicometrico nel prompt di benvenuto. Riscritta l'istruzione per una breve accoglienza calorosa (2-3 frasi), stima dei tempi (20-30 minuti), riservatezza e richiesta di assenso esplicito, con divieto tassativo di lezioni teoriche, disclaimer o formule pedagogiche difensive.
+   - `DEFAULT_QPCC_GUIDED_STEPS` (`qpcc-intro`): eliminata la prescrizione di spiegare le 4 dimensioni e le 10 scale o l'assenza di risposte giuste/sbagliate. Sostituita con un patto chiaro in 2-3 brevi paragrafi orientato alle risorse e all'agire nel lavoro.
+2. `backend/qpcc.py`, `backend/prompt_contract.py`, `backend/prompts/prompt_qpcc_interview.md`, `backend/prompts/prompt_qpcc_summary.md`, `backend/tool_brief_seed.py`:
+   - Rimossa la frase-leakage "Expected duration 20-30 minutes; no right or wrong answers..." dal contratto canonico QPCC.
+   - Espansa la blacklist anti-disclaimer in `_facilitation_contract` e `_self_questioning_contract` includendo "non con giudizio", "non misura quanto vali", "non ci sono risposte giuste o sbagliate", "autopercezioni non verdetti", "non ti farò 63 domande", "etichette fisse".
+3. `backend/main.py`:
+   - Aggiunta migrazione automatica e idempotente all'avvio in `startup_event` che riallinea `prompt_qpcc_welcome` in `models.Config` e lo step `qpcc-intro` in `models.GuidedStep` qualora contengano ancora i testi o le istruzioni con i cliché obsoleti.
+4. `backend/tests/test_qpcc_alignment.py`:
+   - Aggiornate le asserzioni contrattuali e gestita l'esecuzione isolata sia in container Docker sia su host.
+5. `docs-counselorbot/funzionalita-counselorbot.md`:
+   - Documentato il nuovo approccio sobrio ed essenziale per lo Step 0 e aggiornato il checksum di guida di piattaforma (`platform-guidance-state.json`).
+
+Test e Validazione:
+- `backend/tests/test_qpcc_alignment.py`, `backend/tests/test_single_question_prompts.py`, `backend/tests/test_chat_preparation.py`: 39/39 passed (100% green).
+- `make guidance-check`: verifica superata con successo (`Funzionalità CounselorBot: documentazione allineata`).
+- Rebuild del container backend: completato con successo.
+
+
 # Handoff: Rimozione meta-disclaimer e cliché terapeutici e correzione fallback inizio step
 Data: 2026-10-18 | Branch: `fix/conversational-tone-and-step-fallback` | Agente: `timoniere`, Gemini 3.8 Flash (High)
 

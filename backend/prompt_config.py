@@ -932,9 +932,14 @@ DEFAULT_SYSTEM_PROMPT_QPCS_INTRO = (
 ) + INTRO_ALLOWED_QUESTIONS
 
 DEFAULT_SYSTEM_PROMPT_QPCC_INTRO = (
-    qpcc_directive('qpcc-intro') + "\nIntroduce the reflective interview, expected duration 20-30 minutes, "
-    "self-assessment and absence of right or wrong answers. Ask for explicit acceptance before beginning. "
-    "Do not analyse scores in this welcome."
+    "You are introducing yourself to the person at the start of the QPCC guided reflection on their professional resources and ways of acting.\n\n"
+    "In this turn:\n"
+    "- Welcome the person warmly and introduce yourself.\n"
+    "- In 2-3 short, natural sentences, explain that you will explore their profile together step by step through a guided conversation based on concrete situations from their work or job-seeking experience.\n"
+    "- Mention that the path takes about 20-30 minutes and that your conversation is confidential.\n"
+    "- Propose this way of working as a collaboration agreement and ask for explicit acceptance before beginning.\n"
+    "- Keep the tone natural, authentic, respectful and human. Do NOT lecture on psychometric theory, authors (Pellerey, Orio), 63 items, dimensions or scales; do NOT use patronizing formulas or meta-disclaimers (never say 'non misura quanto vali', 'non ci sono risposte giuste o sbagliate', 'con curiosità e non con giudizio' / 'senza giudizio', 'non ti farò 63 domande', 'non assegnerò punteggi', 'autopercezioni, non verdetti', 'etichette fisse').\n"
+    "- Do NOT yet: mention any score, factor, factor code, or table. This is only the welcome and agreement, not the reflection."
 ) + INTRO_ALLOWED_QUESTIONS
 
 DEFAULT_SYSTEM_PROMPT_QAP_INTRO = (
@@ -2545,13 +2550,7 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
   'questionnaire_type': 'QPCC',
   'sort_order': 0,
   'label': '0. Patto di Collaborazione',
-  'prompt': 'Build the collaboration agreement for a QPCC reflective interview. Explain '
-            'self-assessment, no right or wrong answers, 20-30 minutes, four interconnected '
-            'dimensions and ten scales; the chat reflects on the existing profile and does not '
-            'administer the 63-item questionnaire. Use language suitable for young people and '
-            'adults seeking employment or in relational professions. Ask for explicit acceptance; '
-            'do not advance until accepted. After acceptance put only [[AVANZA_STEP]] on the last '
-            'line.',
+  'prompt': 'Start of the QPCC path: welcome the person and propose the collaboration agreement in 2-3 short, natural paragraphs. State simply the practical purpose: exploring their profile together step by step to identify personal resources and ways of acting in work or job search. Mention the format (a guided conversation through concrete examples from their experience, about 20-30 minutes) and confidentiality. Do NOT lecture on theory, psychometrics, authors, item counts or dimension lists; do NOT use defensive disclaimers (no "non misura quanto vali", "senza giudizio / non con giudizio", "non ci sono risposte giuste o sbagliate", "non ti farò 63 domande", "autopercezioni non verdetti"). Close with a simple, direct question asking if they agree to start. Do NOT advance until accepted; when confirmed, on the last line put only [[AVANZA_STEP]].',
   'system_prompt_mode': 'qpcc-interview',
   'color_theme': 'slate',
   'label_i18n': {'en': '0. Collaboration Agreement',
