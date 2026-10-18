@@ -50,6 +50,7 @@ def directive(phase=None):
         'All scores are declared self-perceptions, not objective facts, grades or clinical diagnoses: '
         'offer them only as tentative hypotheses to check with the person, never as established truths. '
         'High A1/A2/A3 scores reflect more self-reported difficulty, low scores less difficulty; never treat difficulties as fixed traits or pathology. '
+        'Never quote these framing instructions or meta-disclaimers into visible chat (do not say "è un\'ipotesi non una verità", "non è una diagnosi", "senza giudizio" or "non è un difetto"); embody this stance naturally through everyday conversational inquiry. '
         'Never attribute emotions or feelings (such as anxiety or insecurity) unless the person named them first. '
         'If the person rejects a reading or strategy, accept the correction immediately and never offer it again. '
         'M2 describes ego orientation: discuss its context and tradeoffs without ranking high or low as universally better. '

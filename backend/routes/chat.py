@@ -729,7 +729,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         )
 
     if not response_content.strip() and not control_signals:
-        response_content = reflective_empty_fallback(step_label, request.language)
+        is_entry = not bool((request.message or "").strip())
+        response_content = reflective_empty_fallback(step_label, request.language, is_entry=is_entry)
 
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         step_label = _sanitize_ztpi_step_label(step_label, request.language)
@@ -1227,7 +1228,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     pass
 
                 if not response_content.strip() and not control_signals:
-                    response_content = reflective_empty_fallback(step_label, request.language)
+                    is_entry = not bool((request.message or "").strip())
+                    response_content = reflective_empty_fallback(step_label, request.language, is_entry=is_entry)
                     yield f"data: {_json.dumps({'display': response_content, 'delta': response_content})}\n\n"
 
             if force_closure and control_markers.ADVANCE_STEP not in control_signals:
@@ -1298,7 +1300,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         except Exception as e:
             visible_so_far = "".join(chunks[1:] if len(chunks) > 1 and request.partial_response else chunks).strip()
             if is_empty_response_error(e) and not visible_so_far:
-                response_content = reflective_empty_fallback(step_label, request.language)
+                is_entry = not bool((request.message or "").strip())
+                response_content = reflective_empty_fallback(step_label, request.language, is_entry=is_entry)
                 yield f"data: {_json.dumps({'display': response_content, 'delta': response_content})}\n\n"
                 if request.internal_message:
                     _transcript_user = ""
