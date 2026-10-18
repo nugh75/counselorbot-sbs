@@ -24,7 +24,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from backend import database, models
-from backend.certified_strategy_seed import DEFAULT_CERTIFIED_STRATEGIES
+from backend.certified_strategy_seed import DEFAULT_CERTIFIED_STRATEGIES, seed_certified_strategies
+from backend.tests.artifact_database import artifact_session
 from backend.certified_strategy_service import certified_strategy_memory
 from backend.chat_logic import (
     _default_certified_strategy_limit,
@@ -256,17 +257,25 @@ def test_certified_catalog_covers_every_seeded_instrument():
 
 
 def test_certified_catalog_uses_existing_factor_codes():
-    for spec in DEFAULT_CERTIFIED_STRATEGIES:
-        for questionnaire in spec["questionnaire_types"]:
-            catalog = INSTRUMENT_CATALOG_DEFAULTS.get(questionnaire)
-            if not catalog:
+    # Validate the published catalog after seeding: canonical QPCC deliberately
+    # quarantines legacy K strategies as drafts rather than converting scores.
+    with artifact_session() as db:
+        seed_certified_strategies(db, models)
+        for row in db.query(models.CertifiedStrategy).all():
+            if "QPCC" in row.questionnaire_types and any(code.startswith("K") for code in row.factor_codes):
+                assert row.status == "draft", row.slug
+            if row.status != "certified":
                 continue
-            known = {factor["code"].upper() for factor in catalog["factors"]}
-            for code in spec["factor_codes"]:
-                if code.upper().endswith("R") and code.upper()[:-1] in known:
+            for questionnaire in row.questionnaire_types:
+                catalog = INSTRUMENT_CATALOG_DEFAULTS.get(questionnaire)
+                if not catalog:
                     continue
-                if code.upper() not in known and questionnaire in ("QPCS", "QPCC", "QAP"):
-                    raise AssertionError(f"{spec['slug']}: codice {code} sconosciuto in {questionnaire}")
+                known = {factor["code"].upper() for factor in catalog["factors"]}
+                for code in row.factor_codes:
+                    if code.upper().endswith("R") and code.upper()[:-1] in known:
+                        continue
+                    if code.upper() not in known and questionnaire in ("QPCS", "QPCC", "QAP"):
+                        raise AssertionError(f"{row.slug}: codice {code} sconosciuto in {questionnaire}")
 
 
 def test_certified_catalog_slugs_are_unique():

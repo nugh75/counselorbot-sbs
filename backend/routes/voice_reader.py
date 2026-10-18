@@ -20,7 +20,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from .. import database
+from .. import database, models
 from ..api_models import TTSRequest
 from ..chat_logic import strip_markdown
 from ..diagram_blocks import strip_for_speech

@@ -59,3 +59,14 @@ Note:
 - Su macOS un bind mount del repository rende la suite circa due volte più
   lenta: meglio la copia dentro l'immagine.
 - Non usare `docker compose` dello stack portabile per i test.
+
+## Checkpoint del 18 ottobre 2026
+
+Dopo il merge di main, Ruff F passa e l'immagine isolata
+`counselorbot-baseline-completion:backend` è stata ricostruita. L'esecuzione di
+16 moduli ha prodotto **500 passati e 10 falliti**, senza dati di produzione.
+Due fixture sono state poi corrette ma richiedono riesecuzione: autorizzazione
+dell'admin sul proprio istituto e conservazione della password nell'URL della
+migrazione. Gli altri otto fallimenti riguardano prompt, budget di token e
+letture certificate; la suite completa resta da chiudere. La PR #349 rimane
+in bozza. Postgres sintetico e runner sono stati fermati.

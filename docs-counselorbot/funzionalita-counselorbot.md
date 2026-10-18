@@ -438,6 +438,8 @@ il profilo nel suo insieme. La sintesi resta qualitativa,
 distingue proposte e impegni della persona e conserva solo tempi concordati.
 Le vecchie analisi K1–K5 non sono profili canonici: restano nello storico ma
 non si riutilizzano o convertono per iniziare/riprendere il nuovo percorso.
+Le strategie di fabbrica ancora etichettate K1–K5 vengono create in bozza,
+escluse dalle proposte certificate fino alla revisione amministrativa.
 Le nuove compilazioni richiedono un profilo completo con dieci stanine intere
 tra 1 e 9. Gli eventuali codici K in una
 vecchia bozza locale non entrano nel nuovo invio. Interfaccia, fattori e indicazioni

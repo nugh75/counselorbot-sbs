@@ -20,8 +20,6 @@ from backend.chat_preparation import prepare_chat_turn, is_hypothesis_allowed
 from backend import recommendation_blocks, recommendation_service, session_ledger
 from backend.prompt_config import DEFAULT_GUIDED_STEPS
 from backend.prompt_contract import (
-    FACILITATION_SENTINEL,
-    turn_contract,
     _facilitation_contract,
     _THREAD_STATE_LINES,
 )

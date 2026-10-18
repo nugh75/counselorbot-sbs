@@ -1,3 +1,16 @@
+# Checkpoint baseline backend — 18 ottobre 2026 (PR #349 ancora in bozza)
+
+Riallineato il branch a main e salvate le correzioni di import, isolamento della
+sandbox, guardie del database di test e fixture del catalogo certificato QPCC.
+Ruff F passa. Immagine isolata ricostruita; nessun deploy.
+Esecuzione mirata di 16 moduli: 500 passati, 10 falliti. Dopo questa esecuzione
+corretti due casi (admin proprietario dell'istituto e URL SQLAlchemy con password),
+non ancora rieseguiti. Restano otto fallimenti da analizzare: sei aspettative
+obsolete su prompt/budget, una migrazione del prompt e il catalogo di letture
+certificate esplicite. Non indebolire quest'ultima asserzione senza diagnosi.
+La suite completa non è verde: la PR deve restare in bozza.
+Dettagli: docs/operations/backend-test-baseline.md. Ambienti temporanei fermati.
+
 # Handoff: Token headroom, calibrazione streaming e prevenzione fallback nelle chat guidate
 Data: 2026-10-18 | Branch: `fix/guided-chat-token-headroom` | Agente: `s6-token-headroom`
 

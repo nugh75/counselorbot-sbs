@@ -6,6 +6,7 @@ import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
 from backend import auth, database, models
@@ -16,7 +17,7 @@ from backend.routes import groups, institutions
 def api():
     # Never silently fall back to an operational database.
     url = os.environ['DATABASE_URL']
-    assert url == 'postgresql://c3_test@127.0.0.1:18648/counselorbot_test'
+    assert make_url(url).database == 'counselorbot_test', 'Refusing a non-test database'
     engine = create_engine(url)
     schema = 'tf1_' + uuid.uuid4().hex
     with engine.begin() as connection:
@@ -255,7 +256,7 @@ def test_legacy_migration_preserves_classes_and_memberships_and_is_idempotent(ap
         connection.execute(text('ALTER TABLE institutions DROP COLUMN created_by'))
         connection.execute(text('ALTER TABLE institutions DROP COLUMN revision'))
         connection.execute(text('UPDATE student_groups SET institution_id = 2147483647'))
-    legacy_engine = create_engine(str(engine.url), connect_args={'options': f'-csearch_path={schema}'})
+    legacy_engine = create_engine(engine.url, connect_args={'options': f'-csearch_path={schema}'})
     try:
         migrate = import_module('backend.migrations.20261009_teacher_institutes').migrate
         migrate(legacy_engine)

@@ -30,7 +30,6 @@ from backend.prompt_contract import (
     QUESTIONNAIRE_DIALOGUES,
     turn_contract,
     _facilitation_contract,
-    _self_questioning_contract,
 )
 from backend.tests.artifact_database import artifact_session
 

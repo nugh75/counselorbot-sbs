@@ -11,12 +11,12 @@ import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
 from backend import auth, database, models, scoring_service
 from backend.routes import administration_plans, groups, institutions, survey
 
-DB_URL = 'postgresql://c4_test@127.0.0.1:18649/counselorbot_test'
 SECRET = ' Synthetic-Pass 149 '  # Leading/trailing spaces must survive unchanged.
 ROLES = {'teacher': ['docenti'], 'admin': ['admins'], 'researcher': ['researchers'],
          'student': ['studenti'], 'anonymous': []}
@@ -26,7 +26,7 @@ ROLES = {'teacher': ['docenti'], 'admin': ['admins'], 'researcher': ['researcher
 def api(monkeypatch):
     # Never silently fall back to an operational database.
     url = os.environ['DATABASE_URL']
-    assert url == DB_URL
+    assert make_url(url).database == 'counselorbot_test', 'Refusing a non-test database'
     engine = create_engine(url)
     schema = 'tf2_' + uuid.uuid4().hex
     with engine.begin() as connection:
@@ -123,16 +123,20 @@ def test_teacher_saves_write_only_credentials_on_the_institute(api):
     assert not models.verify_password(SECRET.strip(), stored)
 
 
-def test_credential_replacement_needs_revision_membership_and_teacher_role(api):
+def test_credential_replacement_needs_revision_and_institute_membership(api):
     client, _ = api
     row = school(client)
     path = f"/teacher/institutions/{row['id']}/credentials"
     body = {'institution_code': 'SYN-149', 'password': SECRET, 'revision': row['revision']}
     assert client.put(path, json=body, headers={'x-test-user': 'outsider'}).status_code == 403
-    for role, status in (('researcher', 403), ('student', 403), ('admin', 403), ('anonymous', 401)):
+    for role, status in (('researcher', 403), ('student', 403), ('anonymous', 401)):
         assert client.put(path, json=body, headers={'x-test-role': role}).status_code == status
     assert client.get(f"/teacher/institutions/{row['id']}").json()['credentials_configured'] is False
-    configure(client, row)
+    # Admins may manage their own institutes, while membership still binds them.
+    assert client.put(path, json=body, headers={'x-test-role': 'admin', 'x-test-user': 'outsider'}).status_code == 403
+    own_admin = client.put(path, json=body, headers={'x-test-role': 'admin'})
+    assert own_admin.status_code == 200
+    configure(client, own_admin.json())
     stale = client.put(path, json={**body, 'password': 'Other-149'})
     assert stale.status_code == 409 and stale.json()['detail'] == 'institution_revision_conflict'
 

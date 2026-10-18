@@ -9,18 +9,15 @@ Verifies:
 from __future__ import annotations
 
 import json
-import re
-from typing import Generator
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from backend import auth, control_markers, database, models, step_closure
-from backend.ai_service import AIService
+from backend import auth, database, models, step_closure
 from backend.memory_service import session_memory
 from backend.routes import chat as chat_routes
 

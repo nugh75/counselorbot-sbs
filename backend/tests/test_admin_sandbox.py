@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 from backend import auth, database, models
 from backend.dynamic_registry import set_session_factory
 from backend.routes import chat
+from backend.ai_service import AIService
 
 
 @pytest.fixture
@@ -43,7 +44,9 @@ def db_session():
 
 
 @pytest.fixture
-def make_client(db_session):
+def make_client(db_session, monkeypatch):
+    # test_smoke installs its fake at import time; this fixture tests the real dispatcher.
+    monkeypatch.setattr(chat, "AIService", AIService)
     def _create(is_admin: bool = False, username: str = "utente.test"):
         app = FastAPI()
         app.include_router(chat.router)

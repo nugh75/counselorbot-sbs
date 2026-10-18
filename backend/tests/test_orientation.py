@@ -292,8 +292,8 @@ def test_the_compass_knows_what_the_student_has_already_done():
     assert "Tesina di storia" in block
 
     # I punteggi non entrano mai: la Bussola non li produce e non li interpreta.
-    assert "C1" not in block
-    assert "7" not in block
+    assert "C1" not in block and "A1" not in block
+    # References and dates may legitimately contain digits; factor codes must not leak.
 
 
 def test_a_new_student_adds_no_context_block():

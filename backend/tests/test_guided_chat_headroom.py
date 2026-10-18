@@ -13,12 +13,11 @@ Verifica che:
 import asyncio
 import json
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pytest
 
-from backend import chat_logic, chat_preparation, models
-from backend.ai_service import AIError, AIService
+from backend import chat_logic, chat_preparation
+from backend.ai_service import AIError
 from backend.api_models import ChatRequest
 from backend.reasoning_profiles import resolve_plan
 from backend.routes import chat

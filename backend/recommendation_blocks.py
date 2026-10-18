@@ -15,6 +15,7 @@ Regole non negoziabili:
     non significa consigliarlo.
 """
 from __future__ import annotations
+from collections.abc import Iterable
 
 import hashlib
 import json

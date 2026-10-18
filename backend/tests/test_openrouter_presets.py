@@ -17,9 +17,7 @@ from backend import models
 from backend.ai_service import (
     AIService,
     _is_openrouter_mandatory_reasoning_model,
-    _mark_openrouter_mandatory_reasoning,
     _is_openrouter_reasoning_error,
-    _OPENROUTER_MANDATORY_REASONING_MODELS,
 )
 from backend.reasoning_profiles import ReasoningPlan
 

@@ -20,7 +20,6 @@ os.environ.setdefault("ADMIN_SYNC_DISABLED", "1")
 from backend.ai_service import AIError
 from backend.api_models import ChatRequest
 from backend.chat_logic import (
-    ThinkStreamSplitter,
     is_empty_response_error,
     reflective_empty_fallback,
     strip_thinking,

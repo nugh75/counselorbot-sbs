@@ -8,7 +8,7 @@ from functools import partial
 import anthropic
 import httpx
 from mistralai.client import Mistral
-from openai import OpenAI, OpenAIError, BadRequestError
+from openai import OpenAI
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 

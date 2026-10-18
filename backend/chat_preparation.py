@@ -45,7 +45,6 @@ from .chat_logic import (
     previous_certified_strategy_ids,
     step_has_improvement_target,
     _is_strategy_questionnaire,
-    is_guided_chat,
     _phase_factor_codes,
     _resolve_system_prompt,
     _response_length_max_tokens,

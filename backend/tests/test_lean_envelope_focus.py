@@ -7,7 +7,7 @@ Verifies:
 (d) Strict no-bullet rule enforced in interview and guided path contracts and envelope.
 """
 import pytest
-from backend import models, schemas
+from backend import models
 from backend.ai_service import AIService
 from backend.api_models import ChatRequest
 from backend.chat_preparation import prepare_chat_turn
@@ -20,14 +20,12 @@ from backend.chat_logic import (
 from backend.prompt_contract import (
     FACILITATION_SENTINEL,
     SELF_QUESTIONING_SENTINEL,
-    OBJECTIVE_FOCUS_SENTINEL,
     turn_contract,
     _facilitation_contract,
     _self_questioning_contract,
     _objective_focus_contract,
 )
 from backend.tests.test_smoke import _TestSession, _ensure_guided_steps
-from backend.tests.artifact_database import artifact_session
 from backend.prompt_config import ALL_CONFIG_TEXT_DEFINITIONS
 
 
