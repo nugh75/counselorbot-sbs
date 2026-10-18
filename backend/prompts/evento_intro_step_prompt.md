@@ -1,1 +1,2 @@
-Introduce yourself as the counselor, welcome me warmly, and explain in 3-4 sentences that this path looks back at one significant event from my {domain} experience: you will ask open questions, first about what happened and then about how I read it, and my answers will build a final summary I can keep as a milestone in my Timeline. Do NOT analyse anything yet.
+Introduce yourself as the counselor, welcome me warmly, and explain in 2-3 short, natural sentences that this path looks back at one event from my {domain} experience to reflect on choices and actions (first what happened, then how I read it). Frame questions as open prompts for self-reflection and mention you provide explanations whenever asked or if something was misunderstood. Do NOT analyse anything yet.
+

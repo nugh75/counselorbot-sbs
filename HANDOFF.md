@@ -1,3 +1,34 @@
+# Handoff: Generalizzazione regole universali per tutte le introduzioni e conversazioni (auto-interrogazione, chiarimenti su richiesta, divieto formule «non è... ma...» e disclaimer)
+Data: 2026-10-18 | Branch: `fix/qpcc-self-inquiry-agreement` | Agente: `timoniere`, Gemini 3.8 Flash (High)
+
+Obiettivo:
+- Stabilire a livello di piattaforma la distinzione tra regole universali condivise e particolarità di ogni singola chat.
+- Regola maieutica: le domande poste dal chatbot sono spunti aperti per facilitare l'auto-interrogazione della persona sulla propria esperienza, scelte, strategie e risorse (mai un interrogatorio, quiz o questionario direttivo tipo «io ti faccio domande mirate e tu rispondi»).
+- Regola sulle spiegazioni: il chatbot fornisce chiarimenti o spiegazioni su scale, concetti o meccanismi solo in due casi: (1) quando la persona li richiede espressamente, o (2) quando rileva dall'intervento dell'utente che qualcosa detto prima è stato frainteso o non compreso bene. Al di fuori di questi casi, non fa dissertazioni o lezioni spontanee.
+- Eliminazione universale delle formule retoriche di contrasto («non è... ma...», es. «non è un giudizio ma...», «non misura quanto vali ma...», «non è un voto ma...») e di tutti i meta-disclaimer difensivi («senza giudizio», «non con giudizio», «non misura quanto vali», «non ci sono risposte giuste o sbagliate», «autopercezioni non verdetti», «non è un test o un voto», «non ti farò domande del questionario»).
+
+Modifiche:
+1. `backend/prompt_contract.py`:
+   - In `turn_contract()` (applicato a ogni turno di chat di tutti gli strumenti): introdotte le regole universali su auto-interrogazione, chiarimenti solo su richiesta o fraintendimento, divieto di formule "non è... ma..." e blacklist di disclaimer difensivi.
+   - In `_self_questioning_contract()` e `_facilitation_contract()`: allineati i contratti con le stesse invarianti pedagogiche.
+2. `backend/prompt_config.py` & template di flusso (`backend/prompts/`):
+   - In `INTRO_ALLOWED_QUESTIONS`: iniettato il blocco universale di regole per tutte le introduzioni (`*_intro`).
+   - `score_based_intro_flow.md` (QSA, QSAr, ZTPI, QPCS, QAP): rimosso «Reassure them that this is a support for reflection, not a test or a grade» e formule «non è... ma...»; introdotto il frame di auto-interrogazione e chiarimento su richiesta.
+   - `savickas_intro_flow.md` & `savickas_intro_step_prompt.md`: eliminata la formula asimmetrica «you ask open questions and use the student's answers» e la rassicurazione «no scoring, test or grade».
+   - `evento_intro_flow.md`, `evento_intro_step_prompt.md`, `evento_step_patto.md`: rimosso «not to judge it» e l'asimmetria; introdotto il frame di auto-interrogazione.
+   - `obiettivo_intro_flow.md`: rimosso «there is no scoring, test or grade».
+   - Step iniziali (`qpcs-intro`, `qap-intro`, `savickas-patto`, `qpcc-intro`): ripuliti da formule teoriche/pedagogiche e allineati al tono naturale.
+3. `backend/main.py`:
+   - Aggiornata la migrazione di startup per riallineare automaticamente tutti i record `models.Config` (`prompt_*_welcome`) e tutti gli step iniziali (`models.GuidedStep`) memorizzati nei database esistenti.
+4. `docs-counselorbot/funzionalita-counselorbot.md`:
+   - Documentata la formalizzazione delle regole universali di piattaforma e rieseguito `make guidance-refresh` e `make guidance-check`.
+
+Test e Validazione:
+- `docker exec counselorbot-portable-counselorbot-backend-1 pytest backend/tests/test_facilitation_contract.py backend/tests/test_single_question_prompts.py backend/tests/test_prompt_pair_drift.py backend/tests/test_qpcc_alignment.py backend/tests/test_chat_preparation.py`: 53/53 test passati (100% green).
+- `make guidance-check`: PASS (`Funzionalità CounselorBot: documentazione allineata`).
+- Container backend ricostruito e riavviato con successo.
+
+
 # Handoff: Rimozione lezioni teoriche e formule difensive dall'introduzione e patto di collaborazione QPCC
 Data: 2026-10-18 | Branch: `fix/qpcc-natural-intro` | Agente: `timoniere`, Gemini 3.8 Flash (High)
 
