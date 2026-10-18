@@ -563,7 +563,7 @@ La generazione può essere interrotta; “Continua” riprende una risposta inco
 Durante la generazione (sia in streaming SSE sia sincrona), i blocchi di ragionamento interno emessi da modelli di reasoning (tag `<think>...</think>`, `<thinking>` o `<sto_pensando>`, inclusi tag aperti o orfani) vengono filtrati ed eliminati in tempo reale, impedendo fughe di catena di pensiero verso l’utente e garantendo che la memoria di sessione e i log conservino solo la risposta visibile. Se una risposta risulta vuota, composta da soli spazi o svuotata dalla rimozione del reasoning (oppure in caso di errore vuoto del provider), il sistema evita errori 500/502 o messaggi vuoti e invia un fallback gentile e riflessivo, contestualizzato al passo corrente della chat guidata e nella lingua dell’utente (italiano, inglese, spagnolo, francese, tedesco, svedese), invitando a proseguire la riflessione.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
 e feedback quando disponibili. Il lettore nel menu di navigazione legge il testo visibile,
-con impostazioni di voce e motore; la correzione della pronuncia è visibile solo
+con impostazioni di voce e motore (Edge TTS aggiornato con supporto ai token di connessione Sec-MS-GEC o Piper locale); la correzione della pronuncia è visibile solo
 all’amministratore. La chat guidata e la Bussola accettano
 registrazione del microfono o file audio: la trascrizione è da controllare, salvo
 invio immediato scelto esplicitamente. In conversazione vocale si avvia e si ferma

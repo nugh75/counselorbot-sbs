@@ -1,3 +1,27 @@
+# Handoff: Ripristino lettore audio e aggiornamento dipendenza edge-tts
+Data: 2026-10-18 | Branch: `fix/edge-tts-audio-player` | Agente: `timoniere`, Gemini 3.8 Flash (High)
+
+Problema:
+- Il lettore audio vocale dell'applicazione (`VoiceReader`, endpoint `/api/tts/stream` e `/tts`) non funzionava e falliva sistematicamente con `chunk_error`. Microsoft ha introdotto nuovi token di autenticazione e validazione anti-abuso (`Sec-MS-GEC` e `Sec-MS-GEC-Version`) per le connessioni WebSocket ai server Edge Read Aloud, causando il rifiuto `WSServerHandshakeError: 403 Forbidden` su versioni di `edge-tts` precedenti a 7.3.0.
+- La funzione `reader_voice` in `backend/routes/voice_reader.py` assumeva la presenza di `db.query` (fallendo su test con sessioni mockate prive del metodo `query`).
+- La funzione `bind_identity` in `backend/chatgpt_connections.py` assumeva che `db` non fosse `None` e possedesse `info`, sollevando `AttributeError` nei test isolati privi di database reale.
+
+Modifiche:
+1. `backend/requirements.txt`:
+   - Aggiornato `edge-tts` a `edge-tts>=7.3.1` per supportare il nuovo handshake WebSocket e token `Sec-MS-GEC` di Microsoft Speech.
+2. `backend/routes/voice_reader.py`:
+   - Gestita la risoluzione del counselor in `reader_voice` sia con sessioni reali (`hasattr(db, 'query')`) sia con mock (`db.get(...)`).
+3. `backend/chatgpt_connections.py`:
+   - Aggiunto controllo di sicurezza in `bind_identity` per ignorare chiamate con `db is None` o privo dell'attributo `info`.
+4. `docs-counselorbot/funzionalita-counselorbot.md`:
+   - Documentato il supporto ai token `Sec-MS-GEC` nel motore Edge TTS del lettore vocale.
+
+Test:
+- Backend: `backend/tests/test_voice_reader.py` (15/15 test passati con successo).
+- Validazione end-to-end: sintesi audio reale verificata con successo (25.488 byte audio generati, stream SSE con 1 chunk e 0 errori).
+- Guidance: `make guidance-refresh` e `make guidance-check` passati con successo.
+
+
 # Handoff: Risoluzione errore chatgpt.errors.signIn in salvataggio Guardiano del filo e fix fallback chat
 Data: 2026-10-18 | Branch: `fix/thread-guard-csrf-header` | Agente: `timoniere`, Gemini 3.8 Flash (High)
 
