@@ -1,3 +1,32 @@
+# Handoff t7: estensione guardiano (interpretation_open, hypotheses), preservazione sintesi e rilascio facilitazione (fase 6)
+Data: 2026-10-18 | Branch: `feature/metacognitive-guard-synthesis` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #378 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Implementata la Fase 6 dell'audit (docs/audits/audit-facilitatore-metacognitivo.md), completando l'intero piano di transizione verso il facilitatore metacognitivo:
+- `backend/thread_guard.py`:
+  - Aggiunto l'asse `interpretation_open` in `Verdict` (default `Check(ok=True)`) per verificare che il counselor non affermi interpretazioni come fatti oggettivi, non attribuisca emozioni non nominate e non ripeta letture rifiutate.
+  - Aggiornato `SEVERITY = ("advice_grounded", "interpretation_open", "on_thread", "question_fit")`.
+  - Aggiunto il campo `hypotheses: list[dict] = []` in `Verdict` per raccogliere gli esiti delle ipotesi identificate nel turno (`[{"index": int, "outcome": "confirmed"|"corrected"|"rejected"}]`).
+  - Aggiornato `SYSTEM_PROMPT` con la spiegazione del nuovo asse e del formato/semantica di `hypotheses`.
+  - Implementate le funzioni `open_hypotheses`, `_open_hypotheses_section` e `_close_hypotheses`: aggiornano lo stato dell'ipotesi nel registro con `closed_by="conversation"`, rispettando la regola ferrea che una marcatura esplicita dello studente (`closed_by == "student"`) non viene mai sovrascritta.
+  - Integrato in `build_input`, `evaluate` e `store`.
+- `backend/recommendation_service.py`:
+  - `set_state`: corretto il reset di `closed_by` in modo che per le ipotesi solo il ritorno a `proposed` o `stale` azzeri chi l'ha chiusa, preservando `closed_by` quando lo stato diventa `confirmed`, `corrected` o `rejected`.
+- `backend/journey_context.py`:
+  - Aggiunto parametro `preserve_hypotheses: bool = False` e la regola esplicita nella riduzione del trascritto: «Preserve the counselor's readings and the student's response to each — confirmed, corrected in their own words, or rejected. Never present a rejected reading as agreed.»
+- `backend/chat_preparation.py`:
+  - Invocazione di `journey_context` in sintesi con `preserve_hypotheses=(questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES or is_event_instrument(questionnaire_type))`.
+- Rilascio di default della facilitazione metacognitiva:
+  - `backend/prompt_config.py`: `SYSTEM_PROMPT_DEFAULTS[FACILITATION_CONTRACT_ENABLED_KEY] = "true"`.
+  - `backend/chat_preparation.py`: fallback configurazione a `"true"`.
+- Test:
+  - `backend/tests/test_thread_guard.py`: 64 test verdi (parsing `interpretation_open`, severità, isolamento `hypotheses`, rispetto di `closed_by="student"`).
+  - `backend/tests/test_facilitation_contract.py`: 8 test verdi (default abilitato e fallback esplicito a false, direttiva di preservazione ipotesi in `journey_context`).
+  - `backend/tests/test_hypothesis_ledger.py`: 8 test verdi (default rilasciato e flag off).
+  - `backend/tests/test_recommendation_state.py` e `backend/tests/test_session_ledger.py`: 37 test verdi.
+  - `backend/tests/test_self_questioning.py`: 751 test verdi (retrocompatibilità contrattuale garantita con flag off).
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
 # Handoff t6: profondità d'intervista: budget → criterio di comprensione con tetto di sicurezza (fase 5)
 Data: 2026-10-18 | Branch: `feature/interview-depth-safety-cap` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
 Issue #376 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze

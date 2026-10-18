@@ -356,6 +356,15 @@ Ogni fase si chiude con un PR atomico (issue + milestone), test mirati verdi, e 
 
 **Deploy.** Le fasi 3-5 cambiano testi di fabbrica: dopo il merge l'agente di deploy esegue «Allinea prompt di fabbrica» (memoria di progetto). Nessun passo sudo previsto.
 
+**Stato di avanzamento:**
+- **Fase 0 (Strumenti di misura):** Completata (PR #367).
+- **Fase 1 (Contratto di facilitazione):** Completata (PR #369).
+- **Fase 2 (Ipotesi e reflection thread):** Completata (PR #371).
+- **Fase 3 (Rimozione [ANCHOR] e testi in codice):** Completata (PR #373).
+- **Fase 4 (Step di fabbrica QSA, QSAr, ZTPI, QPCS):** Completata (PR #375).
+- **Fase 5 (Profondità qualitativa e tetto di sicurezza):** Completata (PR #377).
+- **Fase 6 (Guardiano interpretation_open, ipotesi, sintesi, rilascio):** Completata (PR #378). Tutte le fasi del piano sono state interamente implementate.
+
 ---
 
 ## 6. Esempi prima/dopo
