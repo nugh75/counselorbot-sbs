@@ -10,6 +10,7 @@ giugno 2026 — VERIFICA sulle pagine ufficiali dei provider e aggiorna qui se
 cambiano (e' dato di riferimento, si modifica nel codice, non in admin).
 Chiave esterna = nome provider; chiave interna = id modello esatto.
 """
+from __future__ import annotations
 
 # provider -> { model_id: (input_per_M, output_per_M) }
 PRICES_PER_M = {
@@ -45,6 +46,15 @@ PRICES_PER_M = {
         "meta-llama/Llama-3.3-70B-Instruct": (0.23, 0.40),
         "Qwen/Qwen2.5-72B-Instruct": (0.13, 0.40),
         "mistralai/Mistral-Small-24B-Instruct-2501": (0.05, 0.08),
+    },
+    "openrouter": {
+        "mistralai/mistral-small-3.2-24b-instruct": (0.09, 0.25),
+        "mistralai/mistral-large-4-0": (0.68, 2.09),
+        "google/gemini-2.5-flash": (0.30, 2.50),
+        "google/gemini-2.5-flash-lite": (0.10, 0.40),
+        "google/gemini-3.8-flash": (0.825, 4.125),
+        "deepseek/deepseek-chat": (0.25, 0.90),
+        "openai/gpt-4o-mini": (0.15, 0.60),
     },
 }
 
