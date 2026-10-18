@@ -1049,7 +1049,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         draft_mod = _draft_module(questionnaire_type)
         booklet_draft = None
         goal_draft_value = None
-        control_signals = None
+        control_signals = []
         recommended = {"reading": [], "strategy": []}
         idea_revision_id = None
         splitter = ThinkStreamSplitter()
@@ -1320,11 +1320,11 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     model_scores_context,
                     questionnaire_type,
                     request.language or "",
-                    bool(control_markers.ADVANCE_STEP in control_signals) if "control_signals" in locals() else False,
+                    bool(control_signals and control_markers.ADVANCE_STEP in control_signals),
                     transcript_user=_transcript_user,
                 )
                 response_id = _log_stream(response_content, usage_info, recommended)
-                yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': (recommended or {}).get('strategy', []), 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': {'reading': [], 'strategy': []}, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals})}\n\n"
+                yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': (recommended or {}).get('strategy', []), 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': {'reading': [], 'strategy': []}, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals or []})}\n\n"
                 return
             logger.error(f"Errore stream chat session {session_id}: {e}")
             try:
