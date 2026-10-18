@@ -34,13 +34,14 @@ from ..idea_map import (
 )
 from ..memory_service import session_memory
 from ..reasoning_profiles import effort_overrides
-from ..chat_preparation import prepare_chat_turn
+from ..chat_preparation import practice_notebook_id_for_turn, prepare_chat_turn
 from ..class_path_completion import record_guided_chat_completion
 from ..strategy_memory import shared_response_memory
 from .. import recommendation_blocks
 from .. import event_booklet
 from .. import goal_draft
 from .. import control_markers
+from .. import step_closure
 from .. import thread_guard
 from .. import recommendation_service as _recommendation_service
 from ..certified_reading_service import certified_reading_memory
@@ -102,7 +103,13 @@ from ..chat_logic import (
     build_log_envelope,
     conversation_id_for,
     full_prompt_logging_enabled,
+    is_empty_response_error,
+    reflective_empty_fallback,
     strip_markdown,
+    strip_thinking,
+    RESPONSE_LENGTH_PROFILES,
+    _VISIBLE_WORD_RE,
+    ThinkStreamSplitter,
 )
 
 router = APIRouter()
@@ -502,6 +509,7 @@ def _record_recommendations(
     notes: list[dict] | None = None,
     step_id: str | None = None,
     step_order: int | None = None,
+    user_message: str | None = None,
 ) -> dict[str, list[dict]]:
     """Persist the items the completed turn actually recommended.
 
@@ -510,6 +518,15 @@ def _record_recommendations(
     """
     if not username:
         return {"reading": [], "strategy": []}
+
+    if user_message:
+        _recommendation_service.couple_hypothesis_reply(
+            db,
+            session_id=session_id,
+            username=username,
+            reply=user_message,
+            step_id=step_id,
+        )
 
     # `payloads_for_slugs` rirende la voce dal solo slug e non sa piu' perche'
     # era entrata: la provenienza arriva dal turno, non dal catalogo.
@@ -653,13 +670,25 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             history=history,
         )
     except AIError as e:
-        logger.error(f"Errore AI chat session {session_id}: {e}")
-        from ..chat_logic import log_error as _log_error
-        _log_error(db, session_id, str(e), identity=identity, questionnaire_type=questionnaire_type,
-                   mode=request.mode, phase=request.phase, conversation_id=conversation_id)
-        raise HTTPException(status_code=502, detail=str(e))
+        if is_empty_response_error(e):
+            response_content = ""
+        else:
+            logger.error(f"Errore AI chat session {session_id}: {e}")
+            from ..chat_logic import log_error as _log_error
+            _log_error(db, session_id, str(e), identity=identity, questionnaire_type=questionnaire_type,
+                       mode=request.mode, phase=request.phase, conversation_id=conversation_id)
+            raise HTTPException(status_code=502, detail=str(e))
+    prior_exchanges = step_closure.count_step_assistant_exchanges(db, session_id, request.phase)
+    step_eligible = step_closure.is_step_closure_eligible(db, step, request.phase, questionnaire_type)
+    force_closure = step_closure.should_force_step_closure(
+        prior_exchanges + 1, step_eligible, threshold=step_closure.get_step_safety_threshold(db),
+    )
+    if force_closure:
+        response_content = step_closure.ensure_step_closure(response_content, should_advance=True)
+
     # I blocchi privati escono subito: non devono raggiungere lo studente, il
     # transcript, il log o il PDF. Per primi i segnali di controllo, in ogni chat.
+    response_content = strip_thinking(response_content)
     response_content, control_signals = control_markers.extract(response_content)
     booklet_draft = None
     goal_draft_value = None
@@ -701,6 +730,10 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             recommended, response_content, readings=reading_candidates, strategies=strategy_candidates,
         )
 
+    if not response_content.strip() and not control_signals:
+        is_entry = not bool((request.message or "").strip())
+        response_content = reflective_empty_fallback(step_label, request.language, is_entry=is_entry)
+
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         step_label = _sanitize_ztpi_step_label(step_label, request.language)
 
@@ -719,7 +752,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     _update_markdown_memory_background(
         session_id, _memory_user_message, response_content,
         step_label, is_first_step, knowledge_context, request.phase or "", model_scores_context,
-        questionnaire_type, request.language or "", False,
+        questionnaire_type, request.language or "", bool(control_markers.ADVANCE_STEP in control_signals),
         transcript_user=_transcript_user,
     )
 
@@ -730,6 +763,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     _cost_usd = _usage_cost_usd(_usage, _provider, _model)
     _details = pii.redact_details({
         "conversation_id": conversation_id,
+        # Taccuino di prova riverificato: l'area docente ritrova la chat anche conclusa.
+        "practice_notebook_id": practice_notebook_id_for_turn(db, identity, request),
         "mode": request.mode,
         "phase": request.phase,
         "user_input": "" if request.internal_message else request.message,
@@ -790,6 +825,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         if response_id:
             log_entry.response_id = response_id
         db.commit()
+        user_message_to_couple = effective_message or request.message if not getattr(request, "use_phase_prompt", False) else None
         recommendations_for_response = _record_recommendations(
             db,
             session_id=session_id,
@@ -800,11 +836,14 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             notes=recommendation_blocks.extract_notes(
                 raw_recommendations, response_content,
                 advice_allowed=bool(prepared.component_options["certified_strategy_limit"] and prepared.component_flags.get("certified_strategies", True)),
+                hypothesis_allowed=prepared.hypothesis_allowed,
+                allowed_lenses=prepared.phase_codes,
             ),
             matched_on=recommendation_meta,
             turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
             step_id=request.phase or "",
             step_order=step.sort_order if step else None,
+            user_message=user_message_to_couple,
         )
         _watch_thread(prepared, request, db, session_id=session_id,
                       username=identity.get("username") if identity else "",
@@ -903,8 +942,17 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     )
     has_recommendation_candidates = bool(reading_candidates or strategy_candidates)
 
+    prior_exchanges = step_closure.count_step_assistant_exchanges(db, session_id, request.phase)
+    step_eligible = step_closure.is_step_closure_eligible(db, step, request.phase, questionnaire_type)
+    force_closure = step_closure.should_force_step_closure(
+        prior_exchanges + 1, step_eligible, threshold=step_closure.get_step_safety_threshold(db),
+    )
+
     provider = c_provider or ai_service.config.get('active_provider', 'unknown')
     model = c_model or ai_service.config.get('model_name', 'unknown')
+
+    # Risolto qui, con la sessione della richiesta: il log scrive dopo lo stream.
+    practice_notebook_id = practice_notebook_id_for_turn(db, identity, request)
 
     def _log_stream(
         response_content: str,
@@ -920,6 +968,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             cost_usd = _usage_cost_usd(usage, provider, model)
             _details = pii.redact_details({
                 "conversation_id": conversation_id,
+                "practice_notebook_id": practice_notebook_id,
                 "mode": request.mode,
                 "phase": request.phase,
                 "user_input": "" if request.internal_message else request.message,
@@ -1003,6 +1052,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         draft_mod = _draft_module(questionnaire_type)
         booklet_draft = None
         goal_draft_value = None
+        control_signals = []
+        recommended = {"reading": [], "strategy": []}
+        idea_revision_id = None
+        splitter = ThinkStreamSplitter()
         try:
             for item in ai_service.stream_response(
                 full_message, system_prompt_final, request.mode,
@@ -1021,35 +1074,77 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 if isinstance(item, dict) and item.get("type") == "reasoning":
                     yield f"data: {_json.dumps({'reasoning': text})}\n\n"
                     continue
-                chunks.append(text)
-                raw_response = "".join(chunks)
-                display_response = _student_visible_response(
-                    raw_response, questionnaire_type, request.language, sanitize
-                )
-                if questionnaire_type == IDEA_INSTRUMENT:
-                    display_response = strip_patch_for_display(display_response)
-                display_response = recommendation_blocks.strip_for_display(display_response)
-                if draft_mod is not None:
-                    display_response = draft_mod.strip_for_display(display_response)
-                display_response = control_markers.strip_for_display(display_response)
-                display_response, truncated = _limit_visible_words(display_response, effective_response_length)
-                event = {"display": display_response}
-                if effective_response_length is None:
-                    event["delta"] = display_response[len(previous_display):] if display_response.startswith(previous_display) else ""
-                previous_display = display_response
-                yield f"data: {_json.dumps(event)}\n\n"
-                # IDEA manda la patch tecnica in fondo: continuiamo a consumare
-                # lo stream anche quando il testo visibile ha gia' raggiunto il
-                # limite, altrimenti il diagramma non riceve mai l'aggiornamento.
-                # Stesso motivo per il blocco delle raccomandazioni: senza, il
-                # turno non sa che cosa e' stato davvero proposto.
-                # E per la bozza del libretto, che la sintesi dell'Evento scrive in coda.
-                if truncated and questionnaire_type != IDEA_INSTRUMENT and not has_recommendation_candidates and draft_mod is None:
-                    break
+                for sub in splitter.feed(text):
+                    if sub.get("type") == "reasoning":
+                        yield f"data: {_json.dumps({'reasoning': sub['text']})}\n\n"
+                        continue
+                    sub_text = sub.get("text", "")
+                    if not sub_text:
+                        continue
+                    chunks.append(sub_text)
+                    raw_response = "".join(chunks)
+                    display_response = _student_visible_response(
+                        raw_response, questionnaire_type, request.language, sanitize
+                    )
+                    if questionnaire_type == IDEA_INSTRUMENT:
+                        display_response = strip_patch_for_display(display_response)
+                    display_response = recommendation_blocks.strip_for_display(display_response)
+                    if draft_mod is not None:
+                        display_response = draft_mod.strip_for_display(display_response)
+                    display_response = control_markers.strip_for_display(display_response)
+                    display_response, truncated = _limit_visible_words(display_response, effective_response_length)
+                    event = {"display": display_response}
+                    if effective_response_length is None:
+                        event["delta"] = display_response[len(previous_display):] if display_response.startswith(previous_display) else ""
+                    previous_display = display_response
+                    yield f"data: {_json.dumps(event)}\n\n"
+                    # IDEA manda la patch tecnica in fondo: continuiamo a consumare
+                    # lo stream anche quando il testo visibile ha gia' raggiunto il
+                    # limite, altrimenti il diagramma non riceve mai l'aggiornamento.
+                    # Stesso motivo per il blocco delle raccomandazioni: senza, il
+                    # turno non sa che cosa e' stato davvero proposto.
+                    # E per la bozza del libretto, che la sintesi dell'Evento scrive in coda.
+                    # Non interrompere a metà frase o durante la lettura del profilo:
+                    # attendi un terminatore di frase o un tetto massimo di sicurezza.
+                    is_profile_turn = (
+                        (questionnaire_type or "").upper() == "QPCC" and (request.phase or "") == "qpcc-profilo"
+                        or (request.phase or "").endswith("-profilo")
+                    )
+                    if truncated and not is_profile_turn and questionnaire_type != IDEA_INSTRUMENT and not has_recommendation_candidates and draft_mod is None:
+                        raw_tail = raw_response.rstrip()
+                        sentence_finished = raw_tail.endswith((".", "!", "?", "\n", "```"))
+                        max_w = RESPONSE_LENGTH_PROFILES.get(effective_response_length, {}).get("max_words", 600)
+                        hard_limit_reached = len(list(_VISIBLE_WORD_RE.finditer(raw_response))) >= int(max_w * 1.3)
+                        if sentence_finished or hard_limit_reached:
+                            break
 
-            raw_response = "".join(chunks)
+            for sub in splitter.flush():
+                if sub.get("type") == "reasoning":
+                    yield f"data: {_json.dumps({'reasoning': sub['text']})}\n\n"
+                elif sub.get("type") == "content" and sub.get("text"):
+                    chunks.append(sub["text"])
+                    raw_response = "".join(chunks)
+                    display_response = _student_visible_response(
+                        raw_response, questionnaire_type, request.language, sanitize
+                    )
+                    if questionnaire_type == IDEA_INSTRUMENT:
+                        display_response = strip_patch_for_display(display_response)
+                    display_response = recommendation_blocks.strip_for_display(display_response)
+                    if draft_mod is not None:
+                        display_response = draft_mod.strip_for_display(display_response)
+                    display_response = control_markers.strip_for_display(display_response)
+                    display_response, truncated = _limit_visible_words(display_response, effective_response_length)
+                    event = {"display": display_response}
+                    if effective_response_length is None:
+                        event["delta"] = display_response[len(previous_display):] if display_response.startswith(previous_display) else ""
+                    previous_display = display_response
+                    yield f"data: {_json.dumps(event)}\n\n"
+
+            raw_response = strip_thinking("".join(chunks))
             if request.partial_response and not "".join(chunks[1:]).strip():
                 raise AIError("The provider returned no continuation.")
+            if force_closure:
+                raw_response = step_closure.ensure_step_closure(raw_response, should_advance=True)
             # I blocchi privati escono prima di ogni altra elaborazione: non devono
             # raggiungere lo studente, il transcript, il log o il PDF. Per primi i
             # segnali di controllo, in ogni chat.
@@ -1090,6 +1185,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     user_message=request.message or "",
                     lang=request.language or "it",
                 )
+            response_content = strip_thinking(response_content)
             response_content, truncated = _limit_visible_words(response_content, effective_response_length)
             if truncated:
                 recommended = recommendation_blocks.retain_visible(
@@ -1104,44 +1200,59 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 # non e' mai stato tentato, perche' per lui il turno era
                 # riuscito. Lo chiediamo una volta al percorso non-streaming,
                 # che percorre gli stessi target di riserva.
-                retry = ai_service.get_response(
-                    full_message, system_prompt_final, request.mode,
-                    max_tokens=max_tokens, provider=c_provider, model=c_model, history=history,
-                )
-                retry, control_signals = control_markers.extract(retry)
-                if draft_mod is event_booklet:
-                    retry, booklet_draft = event_booklet.extract(retry)
-                elif draft_mod is goal_draft:
-                    retry, goal_draft_value = goal_draft.extract(retry)
-                raw_recommendations = retry
-                retry, retry_recommended = recommendation_blocks.extract(
-                    retry, readings=reading_candidates, strategies=strategy_candidates,
-                )
-                retry, retry_revision_id = _apply_idea_patch(
-                    retry,
-                    questionnaire_type=questionnaire_type,
-                    username=identity.get("username"),
-                    session_id=session_id,
-                    step_id=request.phase,
-                    user_message=request.message or "",
-                    lang=request.language or "it",
-                )
-                retry = _student_visible_response(
-                    retry, questionnaire_type, request.language, sanitize,
-                    required_codes=_phase_factor_codes(db, request.phase)
-                    if _requires_complete_factor_output(request.mode) else None,
-                )
-                retry, _ = _limit_visible_words(retry, effective_response_length)
-                if not retry.strip() and not control_signals:
-                    raise AIError(
-                        "Il provider AI e il modello di riserva hanno risposto senza "
-                        "contenuto visibile. Riprova il turno."
+                try:
+                    retry = ai_service.get_response(
+                        full_message, system_prompt_final, request.mode,
+                        max_tokens=max_tokens, provider=c_provider, model=c_model, history=history,
                     )
-                response_content, recommended = retry, retry_recommended
-                idea_revision_id = retry_revision_id or idea_revision_id
-                yield f"data: {_json.dumps({'display': response_content})}\n\n"
+                    retry = strip_thinking(retry)
+                    if force_closure:
+                        retry = step_closure.ensure_step_closure(retry, should_advance=True)
+                    retry, control_signals = control_markers.extract(retry)
+                    if draft_mod is event_booklet:
+                        retry, booklet_draft = event_booklet.extract(retry)
+                    elif draft_mod is goal_draft:
+                        retry, goal_draft_value = goal_draft.extract(retry)
+                    raw_recommendations = retry
+                    retry, retry_recommended = recommendation_blocks.extract(
+                        retry, readings=reading_candidates, strategies=strategy_candidates,
+                    )
+                    retry, retry_revision_id = _apply_idea_patch(
+                        retry,
+                        questionnaire_type=questionnaire_type,
+                        username=identity.get("username"),
+                        session_id=session_id,
+                        step_id=request.phase,
+                        user_message=request.message or "",
+                        lang=request.language or "it",
+                    )
+                    retry = _student_visible_response(
+                        retry, questionnaire_type, request.language, sanitize,
+                        required_codes=_phase_factor_codes(db, request.phase)
+                        if _requires_complete_factor_output(request.mode) else None,
+                    )
+                    retry = strip_thinking(retry)
+                    retry, _ = _limit_visible_words(retry, effective_response_length)
+                    if retry.strip() or control_signals:
+                        response_content, recommended = retry, retry_recommended
+                        idea_revision_id = retry_revision_id or idea_revision_id
+                        yield f"data: {_json.dumps({'display': response_content})}\n\n"
+                except Exception:
+                    pass
 
-            if truncated and questionnaire_type != IDEA_INSTRUMENT:
+                if not response_content.strip() and not control_signals:
+                    is_entry = not bool((request.message or "").strip())
+                    response_content = reflective_empty_fallback(step_label, request.language, is_entry=is_entry)
+                    yield f"data: {_json.dumps({'display': response_content, 'delta': response_content})}\n\n"
+
+            if force_closure and control_markers.ADVANCE_STEP not in control_signals:
+                control_signals = list(control_signals) + [control_markers.ADVANCE_STEP]
+
+            is_profile_turn = (
+                (questionnaire_type or "").upper() == "QPCC" and (request.phase or "") == "qpcc-profilo"
+                or (request.phase or "").endswith("-profilo")
+            )
+            if truncated and not is_profile_turn and questionnaire_type != IDEA_INSTRUMENT:
                 yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals})}\n\n"
                 return
 
@@ -1168,7 +1279,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 model_scores_context,
                 questionnaire_type,
                 request.language or "",
-                False,
+                bool(control_markers.ADVANCE_STEP in control_signals),
                 transcript_user=_transcript_user,
             )
 
@@ -1177,6 +1288,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             if not request.preview:
                 recommendation_db = database.SessionLocal()
                 try:
+                    user_message_to_couple = effective_message or request.message if not getattr(request, "use_phase_prompt", False) else None
                     recommendations_for_response = _record_recommendations(
                         recommendation_db,
                         session_id=session_id,
@@ -1187,11 +1299,14 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                         notes=recommendation_blocks.extract_notes(
                             raw_recommendations, response_content,
                             advice_allowed=bool(prepared.component_options["certified_strategy_limit"] and prepared.component_flags.get("certified_strategies", True)),
+                            hypothesis_allowed=prepared.hypothesis_allowed,
+                            allowed_lenses=prepared.phase_codes,
                         ),
                         matched_on=recommendation_meta,
                         turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
                         step_id=request.phase or "",
                         step_order=step.sort_order if step else None,
+                        user_message=user_message_to_couple,
                     )
                 except Exception as exc:
                     logger.warning("Recommendation persistence failed for %s: %s", session_id, exc)
@@ -1200,6 +1315,60 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
             yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': recommended['strategy'], 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': recommendations_for_response, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals})}\n\n"
         except Exception as e:
+            stream_chunks = chunks[1:] if request.partial_response else chunks
+            raw_this_stream = "".join(stream_chunks).strip()
+            visible_this_stream = strip_thinking(raw_this_stream).strip()
+            if visible_this_stream:
+                visible_this_stream = control_markers.strip_for_display(visible_this_stream).strip()
+                visible_this_stream = recommendation_blocks.strip_for_display(visible_this_stream).strip()
+                if draft_mod is not None:
+                    visible_this_stream = draft_mod.strip_for_display(visible_this_stream).strip()
+
+            all_raw = "".join(chunks).strip()
+            visible_all = strip_thinking(all_raw).strip()
+            if visible_all:
+                visible_all = control_markers.strip_for_display(visible_all).strip()
+                visible_all = recommendation_blocks.strip_for_display(visible_all).strip()
+                if draft_mod is not None:
+                    visible_all = draft_mod.strip_for_display(visible_all).strip()
+
+            if is_empty_response_error(e) and not visible_this_stream and not request.partial_response:
+                is_entry = not bool((request.message or "").strip())
+                response_content = reflective_empty_fallback(step_label, request.language, is_entry=is_entry)
+                yield f"data: {_json.dumps({'display': response_content, 'delta': response_content})}\n\n"
+                if request.internal_message:
+                    _transcript_user = ""
+                elif request.memory_message is not None:
+                    _transcript_user = request.memory_message
+                elif step_label:
+                    _transcript_user = f"[Avvio analisi: {step_label}]"
+                else:
+                    _transcript_user = request.message
+                _memory_user_message = request.memory_message if request.memory_message is not None else ("" if request.internal_message else request.message)
+                _update_markdown_memory_background(
+                    session_id,
+                    _memory_user_message,
+                    response_content,
+                    step_label,
+                    is_first_step and not request.partial_response,
+                    knowledge_context,
+                    request.phase or "",
+                    model_scores_context,
+                    questionnaire_type,
+                    request.language or "",
+                    bool(control_signals and control_markers.ADVANCE_STEP in control_signals),
+                    transcript_user=_transcript_user,
+                )
+                response_id = _log_stream(response_content, usage_info, recommended)
+                yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': (recommended or {}).get('strategy', []), 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': {'reading': [], 'strategy': []}, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals or []})}\n\n"
+                return
+
+            err_str = str(e).lower()
+            if visible_all and ("token limit" in err_str or "output token limit" in err_str or "interrotta" in err_str):
+                logger.warning(f"Stream chat session {session_id} interrotto con testo visibile presente ({len(visible_all)} car.): {e}")
+                response_content = visible_all
+                yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals or []})}\n\n"
+                return
             logger.error(f"Errore stream chat session {session_id}: {e}")
             try:
                 from ..chat_logic import log_error as _log_error
@@ -1263,13 +1432,22 @@ async def chat_message(
 
     # 3. Get AI Response (con contesto conversazionale)
     history = session_memory.get_transcript(session_id)
-    response_content = ai_service.get_response(
-        message, system_prompt, mode,
-        conversation_summary=conversation_summary,
-        history=history,
-    )
+    try:
+        response_content = ai_service.get_response(
+            message, system_prompt, mode,
+            conversation_summary=conversation_summary,
+            history=history,
+        )
+    except AIError as e:
+        if is_empty_response_error(e):
+            response_content = ""
+        else:
+            raise
+    response_content = strip_thinking(response_content)
     if _should_sanitize_ztpi_text(mode, None):
         response_content = _sanitize_ztpi_user_text(response_content, language)
+    if not response_content.strip():
+        response_content = reflective_empty_fallback(None, language)
 
     # 4. Aggiorna memoria Markdown prima di restituire la risposta.
     _update_markdown_memory_background(

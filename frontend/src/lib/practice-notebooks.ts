@@ -76,6 +76,20 @@ export function practiceResultChatHref(result: PracticeResult): string {
     return `/?start=${encodeURIComponent(result.questionnaire_type)}&practice_notebook_id=${result.notebook_id}&practice_result_id=${result.id}`;
 }
 
+// Chat guidate in prova di un taccuino, aperte o concluse (dai log dei turni).
+export interface PracticeChat {
+    session_id: string;
+    questionnaire_type?: string | null;
+    started_at?: string | null;
+    updated_at?: string | null;
+    turns: number;
+}
+
+export interface PracticeChatMessage {
+    role: 'student' | 'counselor';
+    text: string;
+}
+
 export function parsePracticeResults(payload: unknown): PracticeResult[] {
     if (!Array.isArray(payload)) return [];
     return payload.filter((row): row is PracticeResult =>

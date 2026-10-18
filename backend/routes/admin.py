@@ -2,6 +2,7 @@
 import io
 import json
 import os
+import time
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
@@ -11,6 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy import cast, func, or_, text as sa_text
 from sqlalchemy.types import Text
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from .. import models, schemas, auth, database, pii, pii_ner
 from .. import content_version_service
@@ -18,6 +20,7 @@ from .. import prompt_revisions
 from ..dynamic_registry import invalidate_instrument_cache
 from ..content_versions import CATALOG_CONTENT_TYPES, CONTENT_TYPES, ContentVersionError
 from ..ai_service import AIService, configured_fallback_targets
+from .chatgpt import browser_mutation
 from ..api_secrets import (
     API_KEY_ENV_MAP,
     provider_from_config_key,
@@ -1358,6 +1361,182 @@ async def verify_api_key(
         raise HTTPException(status_code=400, detail="Chiave API non configurata")
     working = AIService(db).verify_api_key(provider)
     return {"provider": provider, "working": working}
+
+
+def classify_system_ai_error(exc: Exception) -> str:
+    """Classify provider test failure without leaking secrets or payload data."""
+    candidate_errors = [exc]
+    cause = getattr(exc, "__cause__", None)
+    if cause:
+        candidate_errors.append(cause)
+
+    for err in candidate_errors:
+        code = getattr(err, "code", None)
+        if isinstance(code, str) and code:
+            lowered_code = code.lower()
+            if "auth" in lowered_code:
+                return "auth"
+            if "quota" in lowered_code:
+                return "quota"
+            if "model" in lowered_code:
+                return "model_not_found"
+            if "timeout" in lowered_code:
+                return "timeout"
+            if "network" in lowered_code or "connection" in lowered_code:
+                return "network"
+            if "rate" in lowered_code:
+                return "rate_limit"
+
+        status = getattr(err, "status_code", None)
+        body = getattr(err, "body", None)
+        detail = body.get("error", body) if isinstance(body, dict) else {}
+        if not isinstance(detail, dict):
+            detail = {}
+        provider_code = str(detail.get("code", "")).lower()
+        err_msg = (str(detail.get("message", "")) + " " + str(err)).lower()
+
+        if (
+            status in (401, 403)
+            or "auth" in err_msg
+            or "unauthorized" in err_msg
+            or "forbidden" in err_msg
+            or "non configurata" in err_msg
+            or "api key" in provider_code
+        ):
+            return "auth"
+        if (
+            status == 404
+            or provider_code == "model_not_found"
+            or "does not exist" in err_msg
+            or "model_not_found" in err_msg
+            or "no endpoints" in err_msg
+            or "sconosciuto" in err_msg
+        ):
+            return "model_not_found"
+        if (
+            status == 402
+            or "insufficient_quota" in provider_code
+            or "quota" in err_msg
+            or "credit" in err_msg
+            or "balance" in err_msg
+            or "daily limit" in err_msg
+        ):
+            return "quota"
+        if status == 429 or "rate limit" in err_msg or "rate_limit" in provider_code:
+            return "rate_limit"
+        if (
+            status in (408, 504)
+            or "timeout" in err_msg
+            or "timed out" in err_msg
+            or isinstance(err, (TimeoutError,))
+        ):
+            return "timeout"
+        if (
+            status in (502, 503)
+            or "connection" in err_msg
+            or "connect" in err_msg
+            or "network" in err_msg
+            or isinstance(err, (ConnectionError,))
+        ):
+            return "network"
+        if status in (400, 422):
+            return "invalid_request"
+
+    type_name = type(cause or exc).__name__.lower()
+    if "timeout" in type_name:
+        return "timeout"
+    if "network" in type_name or "connect" in type_name:
+        return "network"
+    if "auth" in type_name:
+        return "auth"
+
+    return "unknown"
+
+
+def _probe_system_ai_target(ai_service: AIService, provider: str, model: str) -> dict:
+    if not provider or not model:
+        return {
+            "provider": provider or "",
+            "model": model or "",
+            "effective_model": None,
+            "ok": False,
+            "error_code": "not_configured",
+            "elapsed_ms": 0,
+        }
+    started = time.monotonic()
+    try:
+        ai_service.call_model(
+            provider=provider,
+            model=model,
+            user_message="Ping",
+            system_prompt="Test",
+            max_tokens=16,
+        )
+        elapsed_ms = max(1, int((time.monotonic() - started) * 1000))
+        effective = getattr(ai_service, "last_model", None) or model
+        return {
+            "provider": provider,
+            "model": model,
+            "effective_model": effective,
+            "ok": True,
+            "error_code": None,
+            "elapsed_ms": elapsed_ms,
+        }
+    except Exception as exc:
+        elapsed_ms = max(1, int((time.monotonic() - started) * 1000))
+        error_code = classify_system_ai_error(exc)
+        return {
+            "provider": provider,
+            "model": model,
+            "effective_model": None,
+            "ok": False,
+            "error_code": error_code,
+            "elapsed_ms": elapsed_ms,
+        }
+
+
+def _test_system_ai(db: Session) -> dict:
+    active_prov_row = db.query(models.Config).filter(models.Config.key == "active_provider").first()
+    active_mod_row = db.query(models.Config).filter(models.Config.key == "model_name").first()
+    fallback_row = db.query(models.Config).filter(models.Config.key == "ai_fallback_targets").first()
+
+    active_provider = (active_prov_row.value or "").strip() if active_prov_row else ""
+    model_name = (active_mod_row.value or "").strip() if active_mod_row else ""
+    fallback_raw = (fallback_row.value or "[]") if fallback_row else "[]"
+
+    ai_service = AIService(db)
+    ai_service.personal_target = None
+    ai_service.chatgpt_model = None
+    ai_service.personal_error = None
+
+    system_configured = bool(active_provider and model_name)
+    results = []
+
+    # 1. Primary
+    primary_probe = _probe_system_ai_target(ai_service, active_provider, model_name)
+    primary_probe["role"] = "primary"
+    results.append(primary_probe)
+
+    # 2. Fallbacks in order
+    targets = configured_fallback_targets({"ai_fallback_targets": fallback_raw})
+    for fb_prov, fb_mod in targets:
+        fb_probe = _probe_system_ai_target(ai_service, fb_prov, fb_mod)
+        fb_probe["role"] = "fallback"
+        results.append(fb_probe)
+
+    return {
+        "system_configured": system_configured,
+        "results": results,
+    }
+
+
+@router.post("/admin/system-ai/test", dependencies=[Depends(browser_mutation)])
+async def test_system_ai_configuration(
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    return await run_in_threadpool(_test_system_ai, db)
+
 
 
 # --- Admin Guided Steps CRUD ---

@@ -94,6 +94,12 @@ La somministrazione dei 25 item sostitutivi è sospesa: non rappresenta QPCC e
 non può produrre stanine canoniche. Mancano una chiave item→fattore autorizzata
 e norme validate. I profili K1–K5 storici non sono convertibili. Dettagli e test:
 [QPCC: audit e riallineamento](../operations/qpcc-factor-alignment.md).
+Lingue: lo strumento opera sulle sei lingue di piattaforma (`it, en, es, fr, de, sv`).
+La dicitura di disponibilità in lingua ucraina emersa nell'incontro con i tutor PEF
+deriva dallo studio pilota Erasmus+ PAGOSTE 2020 con formatori VET (Margottini &
+Leproni 2020) e non costituisce una lingua supportata da CounselorBot; la valutazione
+è documentata in [Valutazione lingua ucraina per il QPCC](valutazione-lingua-ucraina-qpcc.md).
+
 
 ---
 

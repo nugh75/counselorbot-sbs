@@ -339,6 +339,18 @@ def test_frozen_session_keeps_the_practice_choice():
         assert detail["practice_notebook_id"] == 7
 
 
+def test_frozen_list_names_the_practice_notebook_only_in_practice():
+    """L'area docente raggiunge le chat di prova dal taccuino: il riepilogo lo indica."""
+    with artifact_session() as db:
+        client = _app(db, TEACHER, frozen_sessions.router)
+        base = {"questionnaire_type": "QSA", "messages": [], "current_phase": "intro"}
+        client.post("/session/freeze", json={**base, "session_id": "p1", "notebook_context": "practice", "practice_notebook_id": 7})
+        client.post("/session/freeze", json={**base, "session_id": "own", "notebook_context": "teacher", "practice_notebook_id": 7})
+        rows = {row["session_id"]: row for row in client.get("/session/frozen").json()}
+        assert rows["p1"]["practice_notebook_id"] == 7
+        assert rows["own"]["practice_notebook_id"] is None
+
+
 # --- Classi dello studente simulato ----------------------------------------
 
 def _groups(db):
@@ -532,13 +544,13 @@ def test_profile_comparison_reads_the_simulated_repertoire_in_practice():
 
 
 def test_practice_turn_resolution_follows_role_and_ownership():
-    from backend.chat_preparation import _practice_notebook_id
+    from backend.chat_preparation import practice_notebook_id_for_turn
     with artifact_session() as db:
         practice = _seed_teacher(db)
         request = ChatRequest(message="x", questionnaire_type="QSA", notebook_context="practice", practice_notebook_id=practice.id)
-        assert _practice_notebook_id(db, TEACHER, request) == practice.id
-        assert _practice_notebook_id(db, {**STUDENT, "username": "t1"}, request) is None
-        assert _practice_notebook_id(db, TEACHER, ChatRequest(message="x", questionnaire_type="QSA")) is None
+        assert practice_notebook_id_for_turn(db, TEACHER, request) == practice.id
+        assert practice_notebook_id_for_turn(db, {**STUDENT, "username": "t1"}, request) is None
+        assert practice_notebook_id_for_turn(db, TEACHER, ChatRequest(message="x", questionnaire_type="QSA")) is None
 
 
 def test_bussola_lists_the_simulated_students_instruments(monkeypatch):
@@ -576,3 +588,66 @@ def test_simulation_notice_keeps_the_model_in_the_counsellor_role():
     from backend.practice_notebooks import simulation_notice
     assert "non scrivi mai le sue battute" in simulation_notice("it")
     assert "never write the student's lines" in simulation_notice("en")
+
+
+# --- Chat in prova: elenco e trascrizione anche dopo «Concludi» -------------
+
+def _chat_log(db, username, session_id, practice_notebook_id=None, text="Ciao"):
+    details = {"user_input": text, "bot_response": f"Risposta a {text}"}
+    if practice_notebook_id is not None:
+        details["practice_notebook_id"] = practice_notebook_id
+    db.add(models.Log(action="chat_message", username=username, session_id=session_id,
+                      questionnaire_type="QSA", details=details))
+
+
+def test_practice_chats_list_and_transcript_only_the_owners_turns():
+    with artifact_session() as db:
+        notebook = _seed_teacher(db)
+        other = models.TeacherPracticeNotebook(owner_username="t2", title="Altro", data={})
+        db.add(other)
+        db.commit()
+        _chat_log(db, "t1", "done", notebook.id, "Primo turno")
+        _chat_log(db, "t1", "done", notebook.id, "Secondo turno")
+        _chat_log(db, "s1", "done", None, "Turno di un altro utente")
+        _chat_log(db, "t1", "own", None)                       # chat del docente, non in prova
+        _chat_log(db, "t1", "elsewhere", other.id)              # id altrui: mai nel taccuino
+        _chat_log(db, "t1", "older", None, "Prima del log")     # arrivata con punteggi da chat
+        _chat_log(db, "s1", "student-session", None, "Dati reali")
+        for session_id in ("older", "student-session"):
+            db.add(models.TeacherPracticeResult(notebook_id=notebook.id, owner_username="t1", questionnaire_type="QSA",
+                                                scores={"C1": 5}, session_id=session_id, source="chat"))
+        db.commit()
+        client = _app(db, TEACHER, practice_notebooks.router)
+        chats = client.get(f"/teacher/practice-notebooks/{notebook.id}/chats").json()
+        assert {row["session_id"]: row["turns"] for row in chats} == {"done": 2, "older": 1}
+        transcript = client.get(f"/teacher/practice-notebooks/{notebook.id}/chats/done").json()
+        assert [m["text"] for m in transcript["messages"]] == [
+            "Primo turno", "Risposta a Primo turno", "Secondo turno", "Risposta a Secondo turno",
+        ]
+        for session_id in ("own", "elsewhere", "student-session", "missing"):
+            assert client.get(f"/teacher/practice-notebooks/{notebook.id}/chats/{session_id}").status_code == 404
+        intruder = _app(db, {**TEACHER, "username": "t2"}, practice_notebooks.router)
+        assert intruder.get(f"/teacher/practice-notebooks/{notebook.id}/chats").status_code == 404
+        assert intruder.get(f"/teacher/practice-notebooks/{notebook.id}/chats/done").status_code == 404
+        assert _app(db, STUDENT, practice_notebooks.router).get(f"/teacher/practice-notebooks/{notebook.id}/chats").status_code == 403
+
+
+def test_practice_turns_are_logged_with_the_resolved_notebook():
+    from unittest.mock import patch
+    from backend.routes import chat
+    from backend.tests.test_class_counselors import _client, _mock_stream
+    with artifact_session() as db:
+        db.add(models.Instrument(code="QSA", is_active=True, tool_category="assessment", target_audience="student"))
+        notebook = _seed_teacher(db)
+        with _client(db, TEACHER) as client, \
+                patch.object(chat.AIService, "get_response", return_value="ok"), \
+                patch.object(chat.AIService, "stream_response", side_effect=_mock_stream):
+            for route, session_id, notebook_id in (
+                ("/chat", "plain", notebook.id), ("/chat/stream", "stream", notebook.id), ("/chat", "foreign", 999999),
+            ):
+                body = {"message": "Ciao", "questionnaire_type": "QSA", "session_id": session_id,
+                        "notebook_context": "practice", "practice_notebook_id": notebook_id}
+                assert client.post(route, json=body).status_code == 200
+        logged = {row.session_id: (row.details or {}).get("practice_notebook_id")
+                  for row in db.query(models.Log).filter(models.Log.action == "chat_message")}
+        assert logged == {"plain": notebook.id, "stream": notebook.id, "foreign": None}

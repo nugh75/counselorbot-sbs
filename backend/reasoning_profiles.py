@@ -209,7 +209,5 @@ def resolve_plan(
     if budget_override and budget_override > 0:
         budget = int(budget_override)
 
-    total = budget + answer
-    if requested:
-        total = max(int(requested), total)
+    total = budget + max(answer, int(requested) if requested else 0)
     return ReasoningPlan(enabled=True, reasoning_budget=budget, max_tokens=total)

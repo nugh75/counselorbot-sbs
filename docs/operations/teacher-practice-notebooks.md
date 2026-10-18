@@ -26,6 +26,11 @@ simulato.
  │ [+ Nuovo taccuino di prova]                        │
  │ ┌ «Giulia, 3ª liceo» ───────────────────────────┐  │
  │ │ Classe: 3ª liceo · Difficoltà: ansia verifiche│  │
+ │ │ Chat guidate di prova                         │  │
+ │ │  QSA · in corso  [Trascrizione] [Riapri]      │  │
+ │ │  QSA · conclusa  [Trascrizione]               │  │
+ │ │ Profili nei questionari (repertorio)          │  │
+ │ │  QSA · da una chat  [Avvia chat guidata]      │  │
  │ │ [Modifica] [Archivia]                         │  │
  │ └───────────────────────────────────────────────┘  │
  │ ▸ Archiviati (n)   [Ripristina] [Elimina]          │
@@ -125,21 +130,72 @@ Limiti:
 - La trascrizione, i punteggi e la memoria sono quelli della sessione del
   docente (sono parte della simulazione). Le sessioni in prova non compaiono
   tra le Compilazioni: PDF e conversazione dall'Area personale non le elencano.
+- Le chat di prova svolte prima di #364 senza punteggi nuovi non hanno il
+  taccuino nei log: compaiono solo finché sono aperte.
 - Se in prova il docente sceglie un proprio risultato salvato, la chat usa quei
   punteggi con lo studente simulato e non li copia nel repertorio.
 - La Bussola non mostra la scelta prima di aprire una sessione: l'apertura usa
   la scelta già memorizzata nel browser (anche dalle chat guidate).
 
+## Dove ritrovare i risultati di una chat di prova
+
+Percorso del docente (issue #244):
+
+1. Area docenti (`/docente`) → sezione «Palestra di prova» → **Entra nella
+   Palestra di prova** oppure **Chat e risultati degli studenti di prova**:
+   entrambi aprono `/docente/taccuini-prova`.
+2. Nella scheda dello studente simulato, **Chat guidate di prova** elenca le
+   chat con quel taccuino, aperte e concluse (issue #364). **Leggi la
+   trascrizione** la mostra nella scheda, anche dopo «Concludi»; per le chat
+   ancora aperte **Riapri la conversazione** porta a `/?frozen=<session_id>`
+   per proseguire con punteggi e taccuino della sessione.
+3. Sotto, **Profili nei questionari** conserva i punteggi dello studente
+   simulato: quelli inseriti in una chat in prova portano «da una chat in
+   prova». Da ogni profilo **Avvia chat guidata** apre una chat nuova.
+
+Contratti:
+
+- Ogni turno della chat guidata registra nel log (`details.practice_notebook_id`)
+  il taccuino di prova risolto dal server (ruolo e proprietà riverificati),
+  `null` fuori dalla prova.
+- `GET /teacher/practice-notebooks/{id}/chats`: sessioni del docente con turni
+  in quel taccuino o con punteggi `source=chat` nel repertorio (sessione,
+  strumento, primo e ultimo turno, numero di turni), dalla più recente.
+- `GET /teacher/practice-notebooks/{id}/chats/{session_id}`: trascrizione dai
+  log, solo con i turni del docente proprietario. Taccuino altrui o sessione
+  estranea → 404; studente → 403.
+- `GET /session/frozen` riporta `practice_notebook_id` solo per le sessioni in
+  prova: la scheda marca «in corso» le chat ancora aperte e offre la ripresa.
+  Le stesse chat restano raggiungibili anche da «Riprendi» nell'header.
+
 ## Profili: salvataggio esplicito e avvio diretto
 
 Sotto ogni taccuino attivo il repertorio riusa l’editor dei punteggi corrente,
-con il primario petrol **Salva** e l’icona di salvataggio nelle sei lingue.
+con la coppia di comandi **Salva** (primario petrol con icona di salvataggio) e
+**Annulla** (secondario con etichetta nelle sei lingue ufficiali: IT Annulla,
+EN Cancel, ES Cancelar, FR Annuler, DE Abbrechen, SV Avbryt). I comandi sono
+duplicati sia in testa sia in coda al modulo dei punteggi (`ScoreInputForm` con
+`submitAction="save"`), restando sempre raggiungibili anche dopo aver scorso i 25
+fattori del QSA senza dover risalire la pagina.
+
 Il comando resta nella pagina e non apre questionari o chat; i flussi ordinari
 dei questionari conservano **Continua** e la freccia avanti. Generazione e modifica
-non persistono: il salvataggio esegue POST per un nuovo profilo, PUT per uno
-esistente, mostra «Salvato» e rilegge il repertorio. Un errore mantiene il form;
-durante la richiesta campi e comandi sono disabilitati. L’uscita con modifiche
-richiede conferma, come negli altri editor espliciti.
+non persistono in automatico:
+
+- **Salvataggio**: esegue POST per un nuovo profilo o PUT per uno esistente;
+  durante la richiesta campi e pulsanti sono disabilitati (`busy`). A salvataggio
+  avvenuto chiude l’editor, mostra «Salvato» e rilegge il repertorio. In caso di
+  errore mantiene il modulo e i punteggi compilati per consentire il retry.
+- **Annullamento**: il pulsante «Annulla» (in testa o in coda) chiude subito l'editor
+  se non ci sono state modifiche; se ci sono modifiche non salvate (`dirty`) o un
+  profilo appena generato, richiede conferma esplicita («Ci sono modifiche non
+  salvate. Uscire e scartarle?») prima di chiudere e scartare i dati. Se l'utente
+  rifiuta, la bozza resta aperta. Lo stesso comportamento con conferma è uniformato
+  anche all'editor del taccuino di prova (`PracticeNotebooks`) e al cambio di strumento
+  dal selettore con modifiche pendenti.
+- **Uscita senza salvataggio**: qualsiasi tentativo di navigazione (link interni,
+  ritorno indietro nel browser, chiusura della scheda o ricaricamento) viene intercettato
+  da `useDraftGuard` con la stessa richiesta di conferma a protezione della bozza.
 
 `PUT /teacher/practice-notebooks/{notebook_id}/results/{result_id}` accetta
 solo `scores`, con la stessa validazione 1–9 del POST. Ruoli e proprietà sono

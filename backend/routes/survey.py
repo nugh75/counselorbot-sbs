@@ -36,11 +36,18 @@ HISTORIC_SURVEY_TYPES = (
 INSTRUMENT_TYPES = DynamicInstrumentSet(HISTORIC_SURVEY_TYPES)
 
 
-def _get_owned_questionnaire_result(session_id: str, current_user: dict, db: Session) -> models.QuestionnaireResult:
+def _get_owned_questionnaire_result(session_id: str, current_user: dict, db: Session):
     result = db.query(models.QuestionnaireResult).filter(
         models.QuestionnaireResult.session_id == session_id
     ).first()
     if not result:
+        practice = db.query(models.TeacherPracticeResult).filter(
+            models.TeacherPracticeResult.session_id == session_id
+        ).first()
+        if practice:
+            if not current_user.get("is_admin") and practice.owner_username != current_user.get("username"):
+                raise HTTPException(status_code=403, detail="Azione non consentita")
+            return practice
         raise HTTPException(status_code=404, detail="Risultato non trovato")
     if not current_user.get("is_admin") and result.username != current_user.get("username"):
         raise HTTPException(status_code=403, detail="Azione non consentita")
@@ -602,14 +609,12 @@ def _pdf_language(lang: str) -> str:
     return code if code in _PDF_SUMMARY_LANG_NAME else "it"
 
 
-def _session_conversation_messages(db: Session, session_id: str) -> list[dict]:
+def _session_conversation_messages(db: Session, session_id: str, username: str | None = None) -> list[dict]:
     messages: list[dict] = []
-    log_rows = (
-        db.query(models.Log)
-        .filter(models.Log.action == "chat_message", models.Log.session_id == session_id)
-        .order_by(models.Log.timestamp.asc())
-        .all()
-    )
+    query = db.query(models.Log).filter(models.Log.action == "chat_message", models.Log.session_id == session_id)
+    if username is not None:
+        query = query.filter(models.Log.username == username)
+    log_rows = query.order_by(models.Log.timestamp.asc()).all()
     for row in log_rows:
         d = row.details or {}
         user_input = (d.get("user_input") or "").strip()
@@ -648,9 +653,13 @@ def _final_step_summary(
         "ZTPI": "ztpi-btp",
         "SAVICKAS": "savickas-final",
         "QPCS": "qpcs-sintesi",
-        "QPCC": "qpcc-factors",
-        "QAP": "qap-factors",
+        "QPCC": "qpcc-sintesi",
+        "QAP": "qap-sintesi",
         "IDEA": "idea-synthesis",
+        "EVENTO_STUDIO": "evstudio-final",
+        "EVENTO_PROFESSIONALE": "evprof-final",
+        "OBIETTIVO_STUDIO": "obbstudio-final",
+        "OBIETTIVO_DOCENZA": "obbdocenza-final",
     }
     preferred_id = summary_ids.get((result.questionnaire_type or "").upper())
     final_step = next((step for step in steps if step.id == preferred_id), None)
@@ -773,10 +782,10 @@ _SUMMARY_SYSTEM_PROMPT = (
 )
 
 
-def _ask_model(ai: AIService, user_prompt: str, session_id: str, *, max_tokens: int) -> str | None:
+def _ask_model(ai: AIService, user_prompt: str, session_id: str, *, max_tokens: int, provider: str = None, model: str = None) -> str | None:
     """Risposta del modello, o None quando non e' raggiungibile."""
     try:
-        answer = ai.get_response(user_prompt, _SUMMARY_SYSTEM_PROMPT, "generic", max_tokens=max_tokens)
+        answer = ai.get_response(user_prompt, _SUMMARY_SYSTEM_PROMPT, "generic", max_tokens=max_tokens, provider=provider, model=model)
     except Exception as exc:
         logger.warning("Summary generation failed for session %s: %s", session_id, exc)
         return None
@@ -870,12 +879,20 @@ def _generate_summary(
     chunks = _summary_chunks(messages, lang)
     if not chunks:
         return None
+    last_log = (
+        db.query(models.Log)
+        .filter(models.Log.session_id == result.session_id, models.Log.action == "chat_message")
+        .order_by(models.Log.id.desc())
+        .first()
+    )
+    provider = last_log.provider if last_log else None
+    model = last_log.model_name if last_log else None
     ai = AIService(db, username=result.username)
     from_notes = False
     while len(chunks) > 1:
         notes: list[str] = []
         for index, chunk in enumerate(chunks, start=1):
-            note = _ask_model(ai, _chunk_prompt(index, len(chunks), lang, chunk), result.session_id, max_tokens=700)
+            note = _ask_model(ai, _chunk_prompt(index, len(chunks), lang, chunk), result.session_id, max_tokens=700, provider=provider, model=model)
             if note is None:
                 return None
             notes.append(f"[Part {index}/{len(chunks)}]\n{note}")
@@ -900,6 +917,8 @@ def _generate_summary(
         ),
         result.session_id,
         max_tokens=900,
+        provider=provider,
+        model=model,
     )
 
 
@@ -974,15 +993,7 @@ async def get_user_session_conversation(
     db: Session = Depends(get_db),
 ):
     """Restituisce i messaggi della conversazione per una specifica sessione dell'utente."""
-    result = db.query(models.QuestionnaireResult).filter(
-        models.QuestionnaireResult.session_id == session_id
-    ).first()
-    if not result:
-        raise HTTPException(status_code=404, detail="Risultato non trovato")
-
-    if not current_user.get("is_admin") and result.username != current_user.get("username"):
-        raise HTTPException(status_code=403, detail="Non autorizzato a visualizzare questa sessione")
-
+    _get_owned_questionnaire_result(session_id, current_user, db)
     return _session_conversation_messages(db, session_id)
 
 

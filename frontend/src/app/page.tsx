@@ -223,6 +223,21 @@ export default function Home() {
         return () => window.removeEventListener('popstate', onPopState);
     }, []);
 
+    useEffect(() => {
+        const onNavigateHome = () => {
+            setSelectedQuestionnaire(null);
+            setScores(null);
+            setScoreOrigin('new');
+            setPdfToken(undefined);
+            setSessionId('');
+            setExperience(null);
+            setStep('base');
+            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
+        };
+        window.addEventListener('cb-navigate-home', onNavigateHome);
+        return () => window.removeEventListener('cb-navigate-home', onNavigateHome);
+    }, []);
+
     // Sull'intro nessuno strumento è ancora in corso: il chip nell'header non
     // deve mostrarne uno rimasto da un percorso precedente. Il counselor invece
     // resta scelto: è la preferenza che evita di ripetere la fase ogni volta.
@@ -1135,28 +1150,22 @@ export default function Home() {
                         </div>
                     )}
 
-                    {/* Step: Completed - Ask for another analysis */}
+                    {/* Step: Completed */}
                     {step === 'completed' && (
                         <div className="max-w-xl mx-auto">
                             <div className="glass-panel p-8 text-center space-y-6">
                                 <div>
                                     <h2 className="text-2xl font-bold text-slate-800">{t('completed.title')}</h2>
-                                    <p className="text-slate-500 mt-3">
+                                    <p className="text-slate-500 mt-2">
                                         {t('completed.body1')} <strong>{selectedQuestionnaire?.name}</strong>.
-                                        <br />
-                                        {t('completed.body2')}
                                     </p>
                                 </div>
 
-                                <SessionReport sessionId={sessionId} questionnaireType={selectedQuestionnaire?.id || 'QSA'} />
-                                <div className="grid grid-cols-1 gap-3 border-t border-slate-200 pt-4 sm:grid-cols-2">
-                                    <Button variant="secondary" size="lg" onClick={analyzeAnother}>
-                                        {t('completed.another')}
-                                    </Button>
-                                    <Button variant="secondary" size="lg" onClick={() => setStep('farewell')}>
-                                        {t('completed.end')}
-                                    </Button>
-                                </div>
+                                <SessionReport
+                                    sessionId={sessionId}
+                                    questionnaireType={selectedQuestionnaire?.id || 'QSA'}
+                                    onReturnHome={analyzeAnother}
+                                />
                             </div>
                         </div>
                     )}

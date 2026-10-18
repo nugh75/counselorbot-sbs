@@ -6,12 +6,13 @@ import pytest
 from backend import thread_guard
 
 
-def _raw(*, on_thread=True, question_fit=True, advice=True,
-         on_thread_note=None, question_note=None, advice_note=None) -> str:
+def _raw(*, on_thread=True, question_fit=True, advice=True, interpretation_open=True,
+         on_thread_note=None, question_note=None, advice_note=None, interpretation_note=None) -> str:
     return json.dumps({
         "on_thread": {"ok": on_thread, "note": on_thread_note},
         "question_fit": {"ok": question_fit, "note": question_note},
         "advice_grounded": {"ok": advice, "note": advice_note},
+        "interpretation_open": {"ok": interpretation_open, "note": interpretation_note},
     })
 
 
@@ -37,6 +38,18 @@ def test_only_the_two_most_severe_survive():
     ))
     lines = thread_guard.notes(verdict)
     assert lines == ["Advice ungrounded.", "Left the subject the student raised."]
+
+
+def test_interpretation_open_severity():
+    verdict = thread_guard.parse(_raw(
+        on_thread=False, on_thread_note="Left the subject.",
+        question_fit=False, question_note="Misplaced question.",
+        advice=False, advice_note="Advice ungrounded.",
+        interpretation_open=False, interpretation_note="Forced an interpretation on the student.",
+    ))
+    lines = thread_guard.notes(verdict)
+    # Most severe two: advice_grounded and interpretation_open
+    assert lines == ["Advice ungrounded.", "Forced an interpretation on the student."]
 
 
 def test_the_model_judges_named_questions_and_never_a_general_one():
@@ -140,7 +153,7 @@ def test_notes_of_nothing_render_nothing():
 
 
 # --- storage and staleness ---
-from backend import models, recommendation_service  # noqa: E402
+from backend import database, models, recommendation_service  # noqa: E402
 from backend.tests.artifact_database import artifact_session  # noqa: E402
 
 SESSION = "guard-fixture"
@@ -427,7 +440,30 @@ def _guard_preset(db):
         models.ModelPreset.id == int(row.value)).first() if row and row.value else None
 
 
-def test_the_seed_prefers_a_local_qwen_without_thinking(db):
+def test_the_seed_does_not_set_preset_when_ollama_is_inactive(db):
+    assert seed_thread_guard(db, models) is True
+    # Nessun preset rotto assegnato al guardiano se Ollama non e' attivo
+    assert _guard_preset(db) is None
+    assert db.query(models.Config).filter(
+        models.Config.key == thread_guard.ENABLED_KEY).first().value == "false"
+    # Una seconda esecuzione non modifica nulla
+    assert seed_thread_guard(db, models) is False
+
+
+def test_the_seed_creates_the_local_judge_when_ollama_is_active(db, monkeypatch):
+    monkeypatch.setattr(thread_guard, "is_provider_active", lambda _db, p: p == "ollama")
+    assert seed_thread_guard(db, models) is True
+    chosen = _guard_preset(db)
+    assert chosen is not None
+    assert chosen.provider == "ollama" and chosen.model.startswith("qwen3.8")
+    assert chosen.disable_thinking is True
+    # Rieseguito non cambia nulla
+    assert seed_thread_guard(db, models) is False
+    assert _guard_preset(db).id == chosen.id
+
+
+def test_the_seed_prefers_a_local_qwen_without_thinking(db, monkeypatch):
+    monkeypatch.setattr(thread_guard, "is_provider_active", lambda _db, p: p == "ollama")
     _preset(db, name="Qwen 3.8 Reasoning", disable_thinking=False)
     wanted = _preset(db, name="Qwen 3.8B - no reasoning", disable_thinking=True)
     _preset(db, name="Gemini", provider="gemini", model="gemini-3.8-flash")
@@ -435,13 +471,6 @@ def test_the_seed_prefers_a_local_qwen_without_thinking(db):
     assert _guard_preset(db).id == wanted.id
     assert db.query(models.Config).filter(
         models.Config.key == thread_guard.ENABLED_KEY).first().value == "false"
-
-
-def test_the_seed_creates_the_local_judge_when_there_is_none(db):
-    assert seed_thread_guard(db, models) is True
-    chosen = _guard_preset(db)
-    assert chosen.provider == "ollama" and chosen.model.startswith("qwen3.8")
-    assert chosen.disable_thinking is True
 
 
 def test_the_seed_never_overrules_the_admin(db):
@@ -455,12 +484,135 @@ def test_the_seed_never_overrules_the_admin(db):
         models.Config.key == thread_guard.ENABLED_KEY).first().value == "true"
 
 
-def test_the_seed_run_twice_changes_nothing(db):
-    assert seed_thread_guard(db, models) is True
-    first = _guard_preset(db).id
-    assert seed_thread_guard(db, models) is False
-    assert _guard_preset(db).id == first
-    assert db.query(models.ModelPreset).count() == 1
+def test_is_provider_active_checks(db, monkeypatch):
+    # Provider locale non in ascolto
+    assert thread_guard.is_provider_active(db, "ollama") is False
+
+    # Provider con chiave API mancante
+    assert thread_guard.is_provider_active(db, "openai") is False
+
+    # Provider con chiave API presente
+    from backend import api_secrets
+    monkeypatch.setattr(
+        api_secrets,
+        "resolve_api_secret",
+        lambda _db, provider: api_secrets.ResolvedAPISecret(provider, "test-key" if provider == "openrouter" else None, "environment"),
+    )
+    assert thread_guard.is_provider_active(db, "openrouter") is True
+    assert thread_guard.is_provider_active(db, "gemini") is False
+
+    active = thread_guard.active_providers(db)
+    active_ids = [p["id"] for p in active]
+    assert "openrouter" in active_ids
+    assert "gemini" not in active_ids
+
+
+def test_guard_configuration_save_and_validation(db, monkeypatch):
+    monkeypatch.setattr(thread_guard, "is_provider_active", lambda _db, p: p in ("openrouter", "mistral"))
+
+    # Tentativo di attivare con provider inattivo -> ValueError
+    with pytest.raises(ValueError, match="non e' attivo"):
+        thread_guard.save_guard_configuration(db, enabled=True, provider="ollama", model="qwen3.8:latest")
+
+    # Tentativo di attivare senza provider/modello -> ValueError
+    with pytest.raises(ValueError, match="senza aver selezionato"):
+        thread_guard.save_guard_configuration(db, enabled=True, provider="", model="")
+
+    # Salvataggio valido con provider attivo
+    saved = thread_guard.save_guard_configuration(db, enabled=True, provider="openrouter", model="google/gemini-2.0-flash")
+    assert saved["enabled"] is True
+    assert saved["provider"] == "openrouter"
+    assert saved["model"] == "google/gemini-2.0-flash"
+    assert saved["is_provider_active"] is True
+    assert saved["preset_id"] is not None
+
+    # Verifica persistenza
+    loaded = thread_guard.get_guard_configuration(db)
+    assert loaded["enabled"] is True
+    assert loaded["provider"] == "openrouter"
+    assert loaded["model"] == "google/gemini-2.0-flash"
+    assert loaded["preset_id"] == saved["preset_id"]
+
+    # Disattivazione
+    off = thread_guard.save_guard_configuration(db, enabled=False, provider="openrouter", model="google/gemini-2.0-flash")
+    assert off["enabled"] is False
+    assert thread_guard.enabled(db) is False
+
+
+def test_thread_guard_api_endpoints(db, monkeypatch):
+    from fastapi.testclient import TestClient
+    from backend.main import app
+    from backend import auth
+    from backend.routes.chatgpt import browser_mutation
+
+    # Mock admin user
+    admin_user = models.User(id=1, username="test_admin", is_admin=True)
+    app.dependency_overrides[auth.get_current_active_admin] = lambda: admin_user
+    app.dependency_overrides[database.get_db] = lambda: db
+    app.dependency_overrides[browser_mutation] = lambda: None
+
+    monkeypatch.setattr(thread_guard, "is_provider_active", lambda _db, p: p in ("openrouter", "mistral"))
+
+    client = TestClient(app)
+
+    # GET configurazione
+    res = client.get("/admin/thread-guard")
+    assert res.status_code == 200
+    data = res.json()
+    assert "enabled" in data
+    assert "active_providers" in data
+
+    # PUT con provider non attivo -> 400
+    res_bad = client.put("/admin/thread-guard", json={"enabled": True, "provider": "ollama", "model": "qwen"})
+    assert res_bad.status_code == 400
+    assert "non e' attivo" in res_bad.json()["detail"]
+
+    # PUT con provider attivo -> 200
+    res_ok = client.put("/admin/thread-guard", json={"enabled": True, "provider": "openrouter", "model": "test-model"})
+    assert res_ok.status_code == 200
+    assert res_ok.json()["enabled"] is True
+    assert res_ok.json()["provider"] == "openrouter"
+
+    # Test browser_mutation: senza header X-Requested-With -> 403 chatgpt.errors.signIn
+    del app.dependency_overrides[browser_mutation]
+    res_no_header = client.put("/admin/thread-guard", json={"enabled": True, "provider": "openrouter", "model": "test-model"})
+    assert res_no_header.status_code == 403
+    assert res_no_header.json()["detail"] == "chatgpt.errors.signIn"
+
+    # Con header X-Requested-With: CounselorBot -> 200
+    res_with_header = client.put(
+        "/admin/thread-guard",
+        json={"enabled": True, "provider": "openrouter", "model": "test-model"},
+        headers={"X-Requested-With": "CounselorBot"},
+    )
+    assert res_with_header.status_code == 200
+
+    app.dependency_overrides.clear()
+
+
+def test_thread_guard_failing_provider_does_not_raise(db, monkeypatch):
+    monkeypatch.setattr(thread_guard, "enabled", lambda _db: True)
+    monkeypatch.setattr(thread_guard, "preset", lambda _db: ("broken_provider", "broken_model", True))
+
+    def _broken_call(**_kwargs):
+        raise RuntimeError("Connection dropped to AI provider")
+
+    # evaluate deve catturare l'errore del provider e restituire [] senza sollevare eccezioni
+    notes = thread_guard.evaluate(
+        db,
+        call=_broken_call,
+        session_id=SESSION,
+        username=STUDENT,
+        questionnaire_type="QSA",
+        step_id="cognitive",
+        step_label="Cognitivo",
+        step_prompt="prompt",
+        language="it",
+        advice_ids=[],
+        candidate_ids=[],
+        turn="some_turn_hash",
+    )
+    assert notes == []
 
 
 # --- la domanda aperta resta al ledger, e solo a ingresso step ---------------
@@ -585,3 +737,73 @@ def test_only_the_questions_of_this_step_are_offered_for_closing(db):
     asked = thread_guard.open_questions(db, session_id=SESSION, username=STUDENT,
                                         step_id='cognitive')
     assert [item['slug'] for item in asked] == ['q-here']
+
+
+# --- il giudice valuta l'esito delle ipotesi (confirmed / corrected / rejected) ---
+def _hypothesis_row(db, slug, text, *, step_id='cognitive', step_order=1, turn=1,
+                    status='proposed', closed_by=None):
+    recommendation_service.record(
+        db, session_id=SESSION, username=STUDENT, recommendation_type='advice',
+        payloads=[{'slug': slug, 'name': text, 'kind': 'hypothesis',
+                   'step_id': step_id, 'step_order': step_order}], turn_index=turn)
+    if status != 'proposed' or closed_by:
+        recommendation_service.set_state(
+            db, session_id=SESSION, username=STUDENT, recommendation_type='advice',
+            slug=slug, status=status, closed_by=closed_by,
+        )
+
+
+def _verdict_with_hypos(hypotheses=None):
+    payload = ('{"on_thread": {"ok": true, "note": null},'
+               ' "question_fit": {"ok": true, "note": null},'
+               ' "advice_grounded": {"ok": true, "note": null},'
+               ' "interpretation_open": {"ok": true, "note": null}')
+    if hypotheses is not None:
+        payload += f', "hypotheses": {hypotheses}'
+    return thread_guard.parse(payload + '}')
+
+
+def test_the_model_judges_interpretation_open_and_hypotheses():
+    assert '"interpretation_open": {"ok": true, "note": null}' in thread_guard.SYSTEM_PROMPT
+    assert '"hypotheses": []' in thread_guard.SYSTEM_PROMPT
+    assert thread_guard.Verdict.model_fields["interpretation_open"].default == thread_guard.Check(ok=True)
+    assert thread_guard.Verdict.model_fields["hypotheses"].default == []
+
+
+def test_the_judge_updates_hypothesis_outcome(db):
+    _hypothesis_row(db, 'h-1', 'Forse tendi a rimandare l inizio')
+    verdict = _verdict_with_hypos('[{"index": 1, "outcome": "confirmed"}]')
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn='t', verdict=verdict,
+                       open_hypotheses=[{'slug': 'h-1', 'text': 'Forse tendi a rimandare', 'step_order': 1}])
+    item = _advice(db)
+    assert item['status'] == 'confirmed'
+    assert item['outcome'] == 'confirmed'
+    assert item['closed_by'] == 'conversation'
+
+
+def test_the_judge_does_not_overwrite_student_closed_hypothesis(db):
+    _hypothesis_row(db, 'h-1', 'Forse tendi a rimandare l inizio', status='rejected', closed_by='student')
+    verdict = _verdict_with_hypos('[{"index": 1, "outcome": "confirmed"}]')
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn='t', verdict=verdict,
+                       open_hypotheses=[{'slug': 'h-1', 'text': 'Forse tendi a rimandare', 'step_order': 1}])
+    item = _advice(db)
+    # Lo studente l'aveva rifiutata: il guardiano NON deve sovrascrivere
+    assert item['status'] == 'rejected'
+    assert item['closed_by'] == 'student'
+
+
+def test_open_hypotheses_filtering(db):
+    _hypothesis_row(db, 'h-here', 'Ipotesi qui?', step_id='cognitive')
+    _hypothesis_row(db, 'h-elsewhere', 'Ipotesi altrove?', step_id='affective', step_order=2)
+    _hypothesis_row(db, 'h-student', 'Ipotesi studente?', step_id='cognitive', status='confirmed', closed_by='student')
+    hypos = thread_guard.open_hypotheses(db, session_id=SESSION, username=STUDENT, step_id='cognitive')
+    assert [item['slug'] for item in hypos] == ['h-here']
+
+
+def test_open_hypotheses_section_rendering():
+    rendered = thread_guard._open_hypotheses_section([
+        {'slug': 'h-1', 'text': 'Forse tendi a rimandare l inizio', 'step_order': 2},
+    ])
+    assert '1. (step 2) "Forse tendi a rimandare l inizio"' in rendered
+    assert thread_guard._open_hypotheses_section([]) == ''
+

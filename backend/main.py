@@ -38,12 +38,17 @@ from .prompt_config import (
     DEFAULT_QPCS_GUIDED_STEPS,
     DEFAULT_QPCC_GUIDED_STEPS,
     DEFAULT_QAP_GUIDED_STEPS,
+    DEFAULT_EVENTO_STUDIO_GUIDED_STEPS,
+    DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS,
+    DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS,
+    DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS,
     META_ZTPI_TIME_PERSPECTIVE,
     META_SAVICKAS_CAREER_CONSTRUCTION,
     SYSTEM_PROMPT_DEFAULTS,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
     INTRO_ALLOWED_QUESTIONS,
     INTRO_ALLOWED_QUESTIONS_SENTINEL,
+    DEFAULT_SYSTEM_PROMPT_QPCC_INTRO,
     MODE_TO_SYSTEM_PROMPT_KEY,
     DEFAULT_SYSTEM_PROMPT_IDEA,
     LEGACY_DEFAULT_SYSTEM_PROMPT_IDEA,
@@ -113,6 +118,7 @@ from .routes import orientation_referrals as orientation_referrals_routes
 from .routes import class_paths as class_paths_routes
 from .routes import path_templates as path_templates_routes
 from .routes import class_meetings as class_meetings_routes
+from .routes import thread_guard as thread_guard_routes
 
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
@@ -1746,7 +1752,7 @@ def _migrate_counselor_personas_and_intros(db):
         has_stale_question_contract = any(
             marker in current for marker in _LEGACY_INTRO_QUESTION_CONTRACT_MARKERS
         )
-        if any(marker in current for marker in markers) or has_stale_question_contract:
+        if any(marker in current for marker in markers) or has_stale_question_contract or "UNIVERSAL RULES FOR ALL INTRODUCTIONS" not in current:
             current = intro_defaults_by_key.get(key, current)
         elif INTRO_ALLOWED_QUESTIONS_SENTINEL not in current:
             current = current.rstrip() + INTRO_ALLOWED_QUESTIONS
@@ -1754,8 +1760,8 @@ def _migrate_counselor_personas_and_intros(db):
             cfg.value = current
             changed = True
 
-    intro_step_defaults = {}
-    for steps in (
+    # Universal intro and agreement steps migration
+    all_guided_step_lists = (
         DEFAULT_GUIDED_STEPS,
         DEFAULT_QSAR_GUIDED_STEPS,
         DEFAULT_ZTPI_GUIDED_STEPS,
@@ -1763,24 +1769,31 @@ def _migrate_counselor_personas_and_intros(db):
         DEFAULT_QPCS_GUIDED_STEPS,
         DEFAULT_QPCC_GUIDED_STEPS,
         DEFAULT_QAP_GUIDED_STEPS,
-    ):
-        for step_def in steps:
-            if step_def.get("system_prompt_mode") == "intro":
-                intro_step_defaults[step_def["id"]] = step_def["prompt"]
+        DEFAULT_EVENTO_STUDIO_GUIDED_STEPS,
+        DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS,
+        DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS,
+        DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS,
+    )
+    for step_list in all_guided_step_lists:
+        for step_def in step_list:
+            if step_def.get("sort_order") in (0, -1) or step_def.get("system_prompt_mode") == "intro":
+                step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_def["id"]).first()
+                if step:
+                    val = step.prompt or ""
+                    if any(bad in val for bad in (
+                        "not a graded test", "not grades or judgements", "not to judge it",
+                        "no right or wrong answers", "four interconnected dimensions and ten scales",
+                        "Explain self-assessment", "you ask and give back, they interpret"
+                    )) or (step_def["id"] == "qpcc-intro" and "reflective prompts for self-inquiry" not in val):
+                        step.prompt = step_def["prompt"]
+                        changed = True
 
-    for step_id, default_prompt in intro_step_defaults.items():
-        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first()
-        if not step:
-            continue
-        current_prompt = step.prompt or ""
-        if (
-            any(
-                all(marker in current_prompt for marker in marker_set)
-                for marker_set in _LEGACY_GUIDED_STEP_INTRO_PROMPT_MARKER_SETS
-            )
-            and current_prompt != default_prompt
-        ):
-            step.prompt = default_prompt
+    # QPCC natural intro migration: upgrade verbose legacy contract in welcome prompt
+    cfg_qpcc_welcome = db.query(models.Config).filter(models.Config.key == "prompt_qpcc_welcome").first()
+    if cfg_qpcc_welcome:
+        val = cfg_qpcc_welcome.value or ""
+        if "absence of right or wrong answers" in val or "63 self-assessment items" in val or "self-interrogate" not in val:
+            cfg_qpcc_welcome.value = DEFAULT_SYSTEM_PROMPT_QPCC_INTRO
             changed = True
 
     if changed:
@@ -2080,3 +2093,5 @@ app.include_router(prompt_experiments_routes.router)
 app.include_router(class_paths_routes.router)
 app.include_router(path_templates_routes.router)
 app.include_router(class_meetings_routes.router)
+app.include_router(thread_guard_routes.router)
+

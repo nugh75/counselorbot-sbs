@@ -44,6 +44,10 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
             snapshots.set(body.session_id, body);
             return json(body);
         }
+        if (url.pathname === '/api/session/frozen') return json([...snapshots.values()].map(row => ({
+            session_id: row.session_id, questionnaire_type: row.questionnaire_type, label: row.label, current_phase: row.current_phase,
+            updated_at: '2026-10-06T09:00:00Z', practice_notebook_id: row.notebook_context === 'practice' ? row.practice_notebook_id : null,
+        })));
         if (url.pathname.startsWith('/api/session/frozen/')) return json(snapshots.get(url.pathname.split('/').at(-1)) ?? null);
         if (url.pathname === '/api/chat/stream') {
             const reply = `Risposta: ${body.message}`;
@@ -118,6 +122,7 @@ test('il docente crea, modifica, archivia, ripristina ed elimina i taccuini di p
     await page.getByRole('heading', { level: 1, name: 'Taccuini di prova' }).waitFor();
     await page.getByRole('heading', { name: 'Giulia, 3ª liceo' }).waitFor();
     assert.ok(await page.getByText('Ansia da verifica').isVisible());
+    await page.locator('[data-practice-notebook="1"] [data-practice-chats]').getByText('Nessuna chat con questo studente.', { exact: false }).waitFor();
 
     await page.getByRole('button', { name: 'Nuovo taccuino di prova' }).click();
     await page.getByLabel('Nome dello studente immaginario').fill('  Marco, adulto in formazione ');
@@ -150,7 +155,7 @@ test('la home docente porta alla pagina e la pagina regge 390 px in inglese', as
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const { errors } = await prepare(page, { lang: 'en' });
     await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
-    assert.equal(await page.getByRole('link', { name: /Practice notebooks/ }).getAttribute('href'), '/docente/taccuini-prova');
+    assert.equal(await page.getByRole('link', { name: 'Practice students’ chats and results' }).getAttribute('href'), '/docente/taccuini-prova');
     await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
     await page.getByRole('heading', { level: 1, name: 'Practice notebooks' }).waitFor();
     await page.getByRole('button', { name: 'New practice notebook' }).waitFor();
@@ -315,14 +320,15 @@ test('il repertorio: profilo generato e ritoccato, poi eliminato', async () => {
     const repertoire = page.locator('[data-practice-notebook="1"] [data-practice-repertoire]');
     await repertoire.getByText('Nessun profilo ancora.').waitFor();
     await repertoire.getByRole('button', { name: 'Aggiungi profilo' }).click();
-    const saveButton = repertoire.getByRole('button', { name: 'Salva', exact: true });
-    assert.equal(await saveButton.locator('svg.lucide-save').count(), 1);
-    assert.equal(await saveButton.locator('svg.lucide-arrow-right').count(), 0);
+    const saveButtons = repertoire.getByRole('button', { name: 'Salva', exact: true });
+    await saveButtons.first().waitFor();
+    assert.equal(await saveButtons.first().locator('svg.lucide-save').count(), 1);
+    assert.equal(await saveButtons.first().locator('svg.lucide-arrow-right').count(), 0);
     await repertoire.getByLabel('Strumento').selectOption('ZTPI');
     await repertoire.getByRole('button', { name: 'Genera un profilo plausibile' }).click();
     const first = repertoire.locator('input[type="text"], input[inputmode], input').first();
     await first.fill('9');
-    await repertoire.getByRole('button', { name: 'Salva', exact: true }).click();
+    await saveButtons.first().click();
     await repertoire.locator('[data-practice-result]').first().waitFor();
     await repertoire.getByRole('status').getByText('Salvato', { exact: true }).waitFor();
     assert.equal(new URL(page.url()).pathname, '/docente/taccuini-prova');
@@ -340,7 +346,7 @@ test('il repertorio: profilo generato e ritoccato, poi eliminato', async () => {
     assert.equal(await editor.locator('form input').first().inputValue(), '9');
     await editor.locator('form input').first().fill('4');
     assert.equal(store.results[0].scores.T1, 9);
-    await editor.getByRole('button', { name: 'Salva' }).click();
+    await editor.getByRole('button', { name: 'Salva' }).first().click();
     await editor.waitFor({ state: 'detached' });
     assert.equal(store.results[0].scores.T1, 4);
     await page.reload({ waitUntil: 'networkidle' });
@@ -464,7 +470,14 @@ test('dal profilo: nuova chat guidata, turni e ripresa usano il taccuino e i pun
     assert.equal(snapshot.experience, 'standard');
     // Un'altra scelta del browser non deve sovrascrivere il contesto congelato.
     await page.evaluate(() => { localStorage.setItem('cb-notebook-context', 'teacher'); localStorage.setItem('cb-practice-notebook-id', '2'); });
-    await page.goto(`${origin}/?frozen=${turn.session_id}`, { waitUntil: 'domcontentloaded' });
+    // La chat si ritrova sotto lo studente simulato, nell'area docente.
+    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    const chats = page.locator('[data-practice-notebook="1"] [data-practice-chats]');
+    await chats.getByRole('heading', { name: 'Chat guidate di prova' }).waitFor();
+    const reopen = chats.locator(`[data-practice-chat="${turn.session_id}"]`).getByRole('link', { name: 'Riapri la conversazione' });
+    assert.equal(await reopen.getAttribute('href'), `/?frozen=${turn.session_id}`);
+    await reopen.click();
+    await page.getByRole('log').getByText('Risposta: Provo questo profilo', { exact: true }).waitFor();
     await page.locator('#guided-composer').waitFor();
     await page.locator('#guided-composer').fill('Continuo la prova');
     await page.locator('#guided-composer').press('Enter');
@@ -479,10 +492,10 @@ test('dal profilo: nuova chat guidata, turni e ripresa usano il taccuino e i pun
     await page.close();
 });
 
-for (const [lang, save, saved, start] of [
-    ['it', 'Salva', 'Salvato', 'Avvia chat guidata'], ['en', 'Save', 'Saved', 'Start guided chat'],
-    ['es', 'Guardar', 'Guardado', 'Iniciar chat guiado'], ['fr', 'Enregistrer', 'Enregistré', 'Démarrer le chat guidé'],
-    ['de', 'Speichern', 'Gespeichert', 'Begleiteten Chat starten'], ['sv', 'Spara', 'Sparat', 'Starta vägledd chatt'],
+for (const [lang, save, cancel, saved, start] of [
+    ['it', 'Salva', 'Annulla', 'Salvato', 'Avvia chat guidata'], ['en', 'Save', 'Cancel', 'Saved', 'Start guided chat'],
+    ['es', 'Guardar', 'Cancelar', 'Guardado', 'Iniciar chat guiado'], ['fr', 'Enregistrer', 'Annuler', 'Enregistré', 'Démarrer le chat guidé'],
+    ['de', 'Speichern', 'Abbrechen', 'Gespeichert', 'Begleiteten Chat starten'], ['sv', 'Spara', 'Avbryt', 'Sparat', 'Starta vägledd chatt'],
 ]) {
     test(`profilo: salvataggio e avvio localizzati a 390 px (${lang})`, async () => {
         const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
@@ -493,12 +506,15 @@ for (const [lang, save, saved, start] of [
         await profile.getByRole('link', { name: start, exact: true }).waitFor();
         await profile.getByRole('button').first().click();
         const editor = page.locator('[data-practice-result-editor]');
-        const saveButton = editor.getByRole('button', { name: save, exact: true });
-        await saveButton.waitFor();
-        assert.equal(await saveButton.locator('svg.lucide-save').count(), 1);
-        assert.equal(await saveButton.locator('svg.lucide-arrow-right').count(), 0);
+        const saveButtons = editor.getByRole('button', { name: save, exact: true });
+        const cancelButtons = editor.getByRole('button', { name: cancel, exact: true });
+        await saveButtons.first().waitFor();
+        assert.equal(await saveButtons.count(), 2);
+        assert.equal(await cancelButtons.count(), 2);
+        assert.equal(await saveButtons.first().locator('svg.lucide-save').count(), 1);
+        assert.equal(await saveButtons.first().locator('svg.lucide-arrow-right').count(), 0);
         await editor.locator('form input').first().fill('7');
-        await saveButton.click();
+        await saveButtons.first().click();
         await editor.waitFor({ state: 'detached' });
         await page.locator('[data-practice-repertoire]').getByRole('status').getByText(saved, { exact: true }).waitFor();
         assert.equal(store.results[0].scores.AD1, 7);
@@ -510,7 +526,7 @@ for (const [lang, save, saved, start] of [
         const fields = editor.locator('form input');
         await fields.first().waitFor();
         for (let i = 0; i < await fields.count(); i++) await fields.nth(i).fill('5');
-        await editor.getByRole('button', { name: save, exact: true }).click();
+        await saveButtons.last().click();
         await editor.waitFor({ state: 'detached' });
         await repertoire.getByRole('status').getByText(saved, { exact: true }).waitFor();
         await page.reload({ waitUntil: 'networkidle' });
@@ -560,7 +576,7 @@ test('errore di salvataggio: bozza conservata, retry esplicito e nessun doppio s
     await page.locator('[data-practice-result="91"]').getByRole('button', { name: 'Modifica' }).click();
     const editor = page.locator('[data-practice-result-editor]');
     await editor.locator('input').first().fill('7');
-    const save = editor.getByRole('button', { name: 'Salva' });
+    const save = editor.getByRole('button', { name: 'Salva' }).first();
     await save.dblclick();
     await page.getByRole('alert').getByText('Operazione non riuscita. Riprova.').waitFor();
     assert.equal(attempts, 1);
@@ -592,3 +608,73 @@ for (const scenario of ['student', 'archived', 'missing', 'wrong-notebook', 'wro
         await page.close();
     });
 }
+
+test('flusso di annullamento e conferma modifiche non salvate in profilo e taccuino', async () => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
+    const { errors } = await prepare(page);
+    let dialogAction = 'accept';
+    let dialogMessage = '';
+    page.on('dialog', dialog => {
+        dialogMessage = dialog.message();
+        if (dialogAction === 'accept') dialog.accept();
+        else dialog.dismiss();
+    });
+
+    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    const repertoire = page.locator('[data-practice-notebook="1"] [data-practice-repertoire]');
+    await repertoire.getByRole('button', { name: 'Aggiungi profilo' }).click();
+    const editor = page.locator('[data-practice-result-editor]');
+    await editor.waitFor();
+
+    // 1. Annulla senza modifiche: chiude subito senza dialogo
+    dialogMessage = '';
+    await editor.getByRole('button', { name: 'Annulla' }).first().click();
+    await editor.waitFor({ state: 'detached' });
+    assert.equal(dialogMessage, '');
+
+    // 2. Annulla con modifiche: chiede conferma
+    await repertoire.getByRole('button', { name: 'Aggiungi profilo' }).click();
+    await editor.waitFor();
+    await editor.locator('input').first().fill('8');
+    dialogAction = 'dismiss';
+    await editor.getByRole('button', { name: 'Annulla' }).first().click();
+    // Resta aperto perché l'utente ha annullato il dialogo
+    assert.ok(dialogMessage.includes('modifiche non salvate'));
+    assert.ok(await editor.isVisible());
+
+    // Se l'utente accetta il dialogo, l'editor si chiude
+    dialogAction = 'accept';
+    await editor.getByRole('button', { name: 'Annulla' }).last().click();
+    await editor.waitFor({ state: 'detached' });
+
+    // 3. Cambio questionario con modifiche: chiede conferma
+    await repertoire.getByRole('button', { name: 'Aggiungi profilo' }).click();
+    await editor.waitFor();
+    await editor.locator('input').first().fill('8');
+    dialogAction = 'dismiss';
+    await editor.getByLabel('Strumento').selectOption('ZTPI');
+    assert.ok(dialogMessage.includes('modifiche non salvate'));
+    assert.equal(await editor.getByLabel('Strumento').inputValue(), 'QSA');
+
+    dialogAction = 'accept';
+    await editor.getByLabel('Strumento').selectOption('ZTPI');
+    assert.equal(await editor.getByLabel('Strumento').inputValue(), 'ZTPI');
+
+    // 4. Annulla nel taccuino con modifiche: chiede conferma
+    dialogAction = 'dismiss';
+    const notebookCard = page.locator('[data-practice-notebook="1"]');
+    await notebookCard.getByRole('button', { name: 'Modifica' }).click();
+    const nbEditor = page.locator('[data-practice-notebook-editor]');
+    await nbEditor.locator('#practice-notebook-title').fill('Titolo modificato');
+    dialogMessage = '';
+    await nbEditor.getByRole('button', { name: 'Annulla' }).click();
+    assert.ok(dialogMessage.includes('modifiche non salvate'));
+    assert.ok(await nbEditor.isVisible());
+
+    dialogAction = 'accept';
+    await nbEditor.getByRole('button', { name: 'Annulla' }).click();
+    await nbEditor.waitFor({ state: 'detached' });
+
+    assert.deepEqual(errors, []);
+    await page.close();
+});

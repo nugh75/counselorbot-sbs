@@ -941,6 +941,15 @@ class PracticeResultUpdate(BaseModel):
     _valid_scores = validator("scores", allow_reuse=True)(PracticeResultCreate._valid_scores.__func__)
 
 
+class PracticeChatSummary(BaseModel):
+    """Chat guidata in prova di un taccuino, aperta o conclusa (dai log dei turni)."""
+    session_id: str
+    questionnaire_type: Optional[str] = None
+    started_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    turns: int = 0
+
+
 class PracticeResultResponse(BaseModel):
     id: int
     notebook_id: int
@@ -1221,6 +1230,9 @@ class FrozenSessionSummary(BaseModel):
     current_phase: str = ""
     experience: Optional[str] = None
     updated_at: Optional[datetime] = None
+    # Taccuino di prova della sessione (solo in prova): l'area docente elenca
+    # le chat di ciascuno studente simulato.
+    practice_notebook_id: Optional[int] = None
 
 
 class FrozenSessionDetail(FrozenSessionSummary):
@@ -1234,7 +1246,6 @@ class FrozenSessionDetail(FrozenSessionSummary):
     conversation_id: Optional[str] = None
     reasoning_effort: Optional[str] = None
     notebook_context: Optional[str] = None
-    practice_notebook_id: Optional[int] = None
     group_ids: List[int] = Field(default_factory=list)
     pdf_token: Optional[str] = None
 

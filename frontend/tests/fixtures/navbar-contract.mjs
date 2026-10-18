@@ -51,45 +51,45 @@ export const PROFILES = {
     A: {
         identity: { authenticated: false, username: '', name: '', email: '', groups: [], is_admin: false, is_researcher: false },
         access: null,
-        expect: { bussola: false, assistant: false, student: false, teacher: false, admin: false, services: null, view: [] },
+        expect: { instruments: true, bussola: false, assistant: false, student: false, teacher: false, admin: false, services: null, view: [] },
     },
     S: {
         identity: person('studente.sintetico', 'Studente Sintetico', ['studenti']),
         access: unrestricted(),
-        expect: { bussola: true, assistant: true, student: true, teacher: false, admin: false, services: null, view: [] },
+        expect: { instruments: true, bussola: true, assistant: true, student: true, teacher: false, admin: false, services: null, view: [] },
     },
     // One class that turns the Assistant, Savickas and pQBL off.
     S1: {
         identity: person('studente.classe', 'Studente Classe', ['studenti']),
         access: restricted(ONE_CLASS, [...STUDENT_TOOLS.filter(key => key !== 'pqbl' && key !== 'SAVICKAS'), 'bussola']),
-        expect: { bussola: true, assistant: false, student: true, teacher: false, admin: false, services: null, view: ['Tutti gli strumenti', 'Classe Terza B'] },
+        expect: { instruments: true, bussola: true, assistant: false, student: true, teacher: false, admin: false, services: null, view: ['Tutti gli strumenti', 'Classe Terza B'] },
     },
     // Union of two classes that turns the Compass off.
     S2: {
         identity: person('studente.classi', 'Studente Due Classi', ['studenti']),
         access: restricted(TWO_CLASSES, [...STUDENT_TOOLS, 'assistant']),
-        expect: { bussola: false, assistant: true, student: true, teacher: false, admin: false, services: null, view: ['Tutti gli strumenti', 'Le mie classi', 'Classe Terza B', 'Classe Laboratorio'] },
+        expect: { instruments: true, bussola: false, assistant: true, student: true, teacher: false, admin: false, services: null, view: ['Tutti gli strumenti', 'Le mie classi', 'Classe Terza B', 'Classe Laboratorio'] },
     },
     // Same student in the full view: no class filter, the selector stays.
     Sall: {
         identity: person('studente.tutto', 'Studente Vista Completa', ['studenti']),
         access: unrestricted(TWO_CLASSES, 'all'),
-        expect: { bussola: true, assistant: true, student: true, teacher: false, admin: false, services: null, view: ['Tutti gli strumenti', 'Le mie classi', 'Classe Terza B', 'Classe Laboratorio'] },
+        expect: { instruments: true, bussola: true, assistant: true, student: true, teacher: false, admin: false, services: null, view: ['Tutti gli strumenti', 'Le mie classi', 'Classe Terza B', 'Classe Laboratorio'] },
     },
     D: {
         identity: person('docente.sintetico', 'Docente Sintetico', ['docenti']),
         access: unrestricted(),
-        expect: { bussola: true, assistant: true, student: true, teacher: true, admin: false, services: null, view: [] },
+        expect: { instruments: true, bussola: true, assistant: true, student: true, teacher: true, admin: false, services: null, view: [] },
     },
     R: {
         identity: person('ricerca.sintetica', 'Ricerca Sintetica', ['ricercatori'], { is_researcher: true }),
         access: unrestricted(),
-        expect: { bussola: true, assistant: true, student: true, teacher: true, admin: true, services: 'portal', view: [] },
+        expect: { instruments: true, bussola: true, assistant: true, student: true, teacher: true, admin: true, services: 'portal', view: [] },
     },
     M: {
         identity: person('admin.sintetico', 'Admin Sintetico', ['admins'], { is_admin: true }),
         access: unrestricted(),
-        expect: { bussola: true, assistant: true, student: true, teacher: true, admin: true, services: 'manager', view: [] },
+        expect: { instruments: true, bussola: true, assistant: true, student: true, teacher: true, admin: true, services: 'manager', view: [] },
     },
 };
 
@@ -100,6 +100,7 @@ export const LABELS = {
     counselor: 'Scegli il counselor',
     view: 'Vista attiva',
     // Same label in the bar and in the «Menu» panel (P5).
+    instruments: 'Attività e percorsi',
     bussola: 'Bussola',
     assistant: 'Assistente',
     guide: 'Guida',
@@ -132,15 +133,16 @@ export const LABELS = {
 
 // Role-dependent labels in the six languages, independent of the dictionaries.
 export const LOCALIZED = {
-    it: { menu: 'Menu', guide: 'Guida', student: 'Area studente', teacher: 'Area docente', admin: 'Area amministrazione', assistant: 'Assistente', bussola: 'Bussola', area: 'Area', account: 'Account: ', preferences: 'Preferenze', signIn: 'Accedi', signOut: 'Esci' },
-    en: { menu: 'Menu', guide: 'Guide', student: 'Student area', teacher: 'Teacher area', admin: 'Administration area', assistant: 'Assistant', bussola: 'Compass', area: 'Area', account: 'Account: ', preferences: 'Preferences', signIn: 'Sign in', signOut: 'Sign out' },
-    es: { menu: 'Menú', guide: 'Guía', student: 'Área del estudiante', teacher: 'Área docente', admin: 'Área de administración', assistant: 'Asistente', bussola: 'Brújula', area: 'Área', account: 'Cuenta: ', preferences: 'Preferencias', signIn: 'Iniciar sesión', signOut: 'Cerrar sesión' },
-    fr: { menu: 'Menu', guide: 'Guide', student: 'Espace élève', teacher: 'Espace enseignant', admin: 'Espace administration', assistant: 'Assistant', bussola: 'Boussole', area: 'Espace', account: 'Compte : ', preferences: 'Préférences', signIn: 'Se connecter', signOut: 'Se déconnecter' },
-    de: { menu: 'Menü', guide: 'Anleitung', student: 'Bereich für Lernende', teacher: 'Lehrkräftebereich', admin: 'Verwaltungsbereich', assistant: 'Assistent', bussola: 'Kompass', area: 'Bereich', account: 'Konto: ', preferences: 'Einstellungen', signIn: 'Anmelden', signOut: 'Abmelden' },
-    sv: { menu: 'Meny', guide: 'Guide', student: 'Elevområde', teacher: 'Lärarområde', admin: 'Administrationsområde', assistant: 'Assistent', bussola: 'Kompass', area: 'Område', account: 'Konto: ', preferences: 'Inställningar', signIn: 'Logga in', signOut: 'Logga ut' },
+    it: { instruments: 'Attività e percorsi', menu: 'Menu', guide: 'Guida', student: 'Area studente', teacher: 'Area docente', admin: 'Area amministrazione', assistant: 'Assistente', bussola: 'Bussola', area: 'Area', account: 'Account: ', preferences: 'Preferenze', signIn: 'Accedi', signOut: 'Esci' },
+    en: { instruments: 'Activities and paths', menu: 'Menu', guide: 'Guide', student: 'Student area', teacher: 'Teacher area', admin: 'Administration area', assistant: 'Assistant', bussola: 'Compass', area: 'Area', account: 'Account: ', preferences: 'Preferences', signIn: 'Sign in', signOut: 'Sign out' },
+    es: { instruments: 'Actividades y recorridos', menu: 'Menú', guide: 'Guía', student: 'Área del estudiante', teacher: 'Área docente', admin: 'Área de administración', assistant: 'Asistente', bussola: 'Brújula', area: 'Área', account: 'Cuenta: ', preferences: 'Preferencias', signIn: 'Iniciar sesión', signOut: 'Cerrar sesión' },
+    fr: { instruments: 'Activités et parcours', menu: 'Menu', guide: 'Guide', student: 'Espace élève', teacher: 'Espace enseignant', admin: 'Espace administration', assistant: 'Assistant', bussola: 'Boussole', area: 'Espace', account: 'Compte : ', preferences: 'Préférences', signIn: 'Se connecter', signOut: 'Se déconnecter' },
+    de: { instruments: 'Aktivitäten und Wege', menu: 'Menü', guide: 'Anleitung', student: 'Bereich für Lernende', teacher: 'Lehrkräftebereich', admin: 'Verwaltungsbereich', assistant: 'Assistent', bussola: 'Kompass', area: 'Bereich', account: 'Konto: ', preferences: 'Einstellungen', signIn: 'Anmelden', signOut: 'Abmelden' },
+    sv: { instruments: 'Aktiviteter och vägledningar', menu: 'Meny', guide: 'Guide', student: 'Elevområde', teacher: 'Lärarområde', admin: 'Administrationsområde', assistant: 'Assistent', bussola: 'Kompass', area: 'Område', account: 'Konto: ', preferences: 'Inställningar', signIn: 'Logga in', signOut: 'Logga ut' },
 };
 
 export const ENTRY_HREFS = {
+    instruments: '/?view=home',
     bussola: '/bussola',
     assistant: '/assistente',
     guide: '/guide',
@@ -190,6 +192,7 @@ export function expectedNavbar(profileKey, width, { resume = { rows: [], error: 
     }
 
     const tools = accessLoading ? [] : [
+        ...(expect.instruments ? [LABELS.instruments] : []),
         ...(expect.bussola ? [LABELS.bussola] : []),
         ...(expect.assistant ? [LABELS.assistant] : []),
     ];

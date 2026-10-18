@@ -37,6 +37,609 @@ Da fare (nessuna suite browser modificata è stata ancora eseguita fino in fondo
 - Documentare esito e comandi in `docs/operations/`, aggiornare i bug nel Diario.
 
 Nessun server, build o suite lasciati attivi; nessun Docker, deploy o sudo.
+# Handoff: Token headroom, calibrazione streaming e prevenzione fallback nelle chat guidate
+Data: 2026-10-18 | Branch: `fix/guided-chat-token-headroom` | Agente: `s6-token-headroom`
+
+Obiettivo:
+- Risolvere il problema del troncamento delle chiamate e del fallback indebito (`reflective_empty_fallback`) nelle chat guidate (in particolare QPCC step 1 `qpcc-profilo` e step con 10 fattori o modelli con reasoning).
+- Evitare che il raggiungimento del tetto di token provochi la perdita completa del testo generato fino a quel momento sostituendolo con il messaggio generico di fallback.
+- Calibrare il taglio visivo delle parole durante lo streaming SSE per evitare interruzioni a metà frase.
+
+Modifiche principali:
+1. `backend/chat_logic.py` e `backend/chat_preparation.py`:
+   - Incrementato il budget `max_tokens` nei profili di lunghezza: short a 1000, medium a 2000, long a 4000 token.
+   - Per gli step di lettura del profilo (fasi che terminano con `-profilo` come `qpcc-profilo`, `qap-profilo`, `qpcs-profilo`), garantito un budget `max_tokens` di almeno 4000 ed elevata la lunghezza visiva a `long` per consentire l'esposizione completa di tutti i fattori senza troncature.
+   - Calibrato `_limit_visible_words` con finestra di tolleranza (+15% parole) per favorire la naturale conclusione della frase (segni di punteggiatura finale).
+2. `backend/reasoning_profiles.py`:
+   - In `resolve_plan`: calcolato il budget totale sommando il budget di ragionamento (thinking) al margine di risposta richiesto (headroom), evitando che le tracce di reasoning consumino l'intero budget lasciando la risposta a secco.
+3. `backend/routes/chat.py`:
+   - Nello stream SSE, evitata l'interruzione brutale (`break`) a metà frase o tabella: l'interruzione anticipata avviene solo su fine frase o su tetto massimo (1.3x), con esenzione esplicita per i turni di lettura profilo (`is_profile_turn`).
+   - Nel gestore di eccezioni dello stream (`except Exception as e`):
+     - Distinto il contenuto prodotto dal singolo stream (`visible_this_stream`) rispetto al cumulato (`visible_all`).
+     - Se c'è testo visibile generato prima di un errore di token limit o interruzione, preservato il testo utile (`response = visible_all`, `incomplete: True`) anziché cancellarlo e sostituirlo con `reflective_empty_fallback`.
+     - In caso di retry o continuazione (`request.partial_response`), evitato che la mancata produzione di nuovi token cancelli la risposta parziale già visualizzata.
+4. `backend/routes/site_chat.py`:
+   - Ripristinato l'import di `site_rag_index` da `..rag_index` per coerenza con i test di smoke.
+5. `backend/tests/`:
+   - Creato `backend/tests/test_guided_chat_headroom.py` con 6 test dedicati a profili, headroom, reasoning budget, grace sentence closure e salvaguardia del testo visibile.
+   - Aggiornato `backend/tests/test_smoke.py` per i nuovi massimali token.
+6. Documentazione:
+   - Aggiornato `docs-counselorbot/funzionalita-counselorbot.md` e riallineato lo stato in `docs/operations/platform-guidance-state.json`.
+
+Test e Validazione:
+- `docker exec counselorbot-portable-counselorbot-backend-1 pytest backend/tests/test_guided_chat_headroom.py backend/tests/test_lean_envelope_focus.py backend/tests/test_chat_think_fallback.py backend/tests/test_single_question_prompts.py backend/tests/test_chat_continuation.py -p no:warnings`: 62/62 test superati (100% green).
+- `docker exec counselorbot-portable-counselorbot-backend-1 pytest backend/tests/test_smoke.py -k "test_response_length"`: PASS.
+- `make guidance-refresh` e `make guidance-check`: PASS.
+- Container backend ricostruito e attivo in stato healthy.
+
+
+# Handoff: Generalizzazione regole universali per tutte le introduzioni e conversazioni (auto-interrogazione, chiarimenti su richiesta, divieto formule «non è... ma...» e disclaimer)
+Data: 2026-10-18 | Branch: `fix/qpcc-self-inquiry-agreement` | Agente: `timoniere`, Gemini 3.8 Flash (High)
+
+Obiettivo:
+- Stabilire a livello di piattaforma la distinzione tra regole universali condivise e particolarità di ogni singola chat.
+- Regola maieutica: le domande poste dal chatbot sono spunti aperti per facilitare l'auto-interrogazione della persona sulla propria esperienza, scelte, strategie e risorse (mai un interrogatorio, quiz o questionario direttivo tipo «io ti faccio domande mirate e tu rispondi»).
+- Regola sulle spiegazioni: il chatbot fornisce chiarimenti o spiegazioni su scale, concetti o meccanismi solo in due casi: (1) quando la persona li richiede espressamente, o (2) quando rileva dall'intervento dell'utente che qualcosa detto prima è stato frainteso o non compreso bene. Al di fuori di questi casi, non fa dissertazioni o lezioni spontanee.
+- Eliminazione universale delle formule retoriche di contrasto («non è... ma...», es. «non è un giudizio ma...», «non misura quanto vali ma...», «non è un voto ma...») e di tutti i meta-disclaimer difensivi («senza giudizio», «non con giudizio», «non misura quanto vali», «non ci sono risposte giuste o sbagliate», «autopercezioni non verdetti», «non è un test o un voto», «non ti farò domande del questionario»).
+
+Modifiche:
+1. `backend/prompt_contract.py`:
+   - In `turn_contract()` (applicato a ogni turno di chat di tutti gli strumenti): introdotte le regole universali su auto-interrogazione, chiarimenti solo su richiesta o fraintendimento, divieto di formule "non è... ma..." e blacklist di disclaimer difensivi.
+   - In `_self_questioning_contract()` e `_facilitation_contract()`: allineati i contratti con le stesse invarianti pedagogiche.
+2. `backend/prompt_config.py` & template di flusso (`backend/prompts/`):
+   - In `INTRO_ALLOWED_QUESTIONS`: iniettato il blocco universale di regole per tutte le introduzioni (`*_intro`).
+   - `score_based_intro_flow.md` (QSA, QSAr, ZTPI, QPCS, QAP): rimosso «Reassure them that this is a support for reflection, not a test or a grade» e formule «non è... ma...»; introdotto il frame di auto-interrogazione e chiarimento su richiesta.
+   - `savickas_intro_flow.md` & `savickas_intro_step_prompt.md`: eliminata la formula asimmetrica «you ask open questions and use the student's answers» e la rassicurazione «no scoring, test or grade».
+   - `evento_intro_flow.md`, `evento_intro_step_prompt.md`, `evento_step_patto.md`: rimosso «not to judge it» e l'asimmetria; introdotto il frame di auto-interrogazione.
+   - `obiettivo_intro_flow.md`: rimosso «there is no scoring, test or grade».
+   - Step iniziali (`qpcs-intro`, `qap-intro`, `savickas-patto`, `qpcc-intro`): ripuliti da formule teoriche/pedagogiche e allineati al tono naturale.
+3. `backend/main.py`:
+   - Aggiornata la migrazione di startup per riallineare automaticamente tutti i record `models.Config` (`prompt_*_welcome`) e tutti gli step iniziali (`models.GuidedStep`) memorizzati nei database esistenti.
+4. `docs-counselorbot/funzionalita-counselorbot.md`:
+   - Documentata la formalizzazione delle regole universali di piattaforma e rieseguito `make guidance-refresh` e `make guidance-check`.
+
+Test e Validazione:
+- `docker exec counselorbot-portable-counselorbot-backend-1 pytest backend/tests/test_facilitation_contract.py backend/tests/test_single_question_prompts.py backend/tests/test_prompt_pair_drift.py backend/tests/test_qpcc_alignment.py backend/tests/test_chat_preparation.py`: 53/53 test passati (100% green).
+- `make guidance-check`: PASS (`Funzionalità CounselorBot: documentazione allineata`).
+- Container backend ricostruito e riavviato con successo.
+
+
+# Handoff: Rimozione lezioni teoriche e formule difensive dall'introduzione e patto di collaborazione QPCC
+Data: 2026-10-18 | Branch: `fix/qpcc-natural-intro` | Agente: `timoniere`, Gemini 3.8 Flash (High)
+
+Obiettivo:
+- Eliminare il linguaggio prolisso, difensivo e stucchevole ("non misura quanto vali", "con curiosità, non con giudizio", "non ci sono risposte giuste o sbagliate", "non ti farò le 63 domande", "autopercezioni non verdetti", "mai come etichette fisse") anche dal messaggio di benvenuto e dal Patto di Collaborazione (Step 0) del percorso QPCC.
+- Rimuovere la lezione accademica/teorica sui costrutti psicometrici (citazione di Pellerey e Orio, 63 item, 4 dimensioni e 10 scale numerate da 1 a 9) rivolta all'utente all'apertura del colloquio, sostituendola con un'accoglienza sobria, naturale e umana in 2-3 paragrafi focalizzata sull'esplorazione pratica delle risorse lavorative e su un chiaro accordo di collaborazione.
+- Implementare una migrazione idempotente all'avvio del backend per aggiornare i testi di fabbrica memorizzati su database esistenti senza richiedere interventi manuali.
+
+Modifiche:
+1. `backend/prompt_config.py` & `backend/qpcc_factory_legacy.json`:
+   - `DEFAULT_SYSTEM_PROMPT_QPCC_INTRO`: rimosso l'aggancio all'intera `qpcc_directive()` che riversava il manuale psicometrico nel prompt di benvenuto. Riscritta l'istruzione per una breve accoglienza calorosa (2-3 frasi), stima dei tempi (20-30 minuti), riservatezza e richiesta di assenso esplicito, con divieto tassativo di lezioni teoriche, disclaimer o formule pedagogiche difensive.
+   - `DEFAULT_QPCC_GUIDED_STEPS` (`qpcc-intro`): eliminata la prescrizione di spiegare le 4 dimensioni e le 10 scale o l'assenza di risposte giuste/sbagliate. Sostituita con un patto chiaro in 2-3 brevi paragrafi orientato alle risorse e all'agire nel lavoro.
+2. `backend/qpcc.py`, `backend/prompt_contract.py`, `backend/prompts/prompt_qpcc_interview.md`, `backend/prompts/prompt_qpcc_summary.md`, `backend/tool_brief_seed.py`:
+   - Rimossa la frase-leakage "Expected duration 20-30 minutes; no right or wrong answers..." dal contratto canonico QPCC.
+   - Espansa la blacklist anti-disclaimer in `_facilitation_contract` e `_self_questioning_contract` includendo "non con giudizio", "non misura quanto vali", "non ci sono risposte giuste o sbagliate", "autopercezioni non verdetti", "non ti farò 63 domande", "etichette fisse".
+3. `backend/main.py`:
+   - Aggiunta migrazione automatica e idempotente all'avvio in `startup_event` che riallinea `prompt_qpcc_welcome` in `models.Config` e lo step `qpcc-intro` in `models.GuidedStep` qualora contengano ancora i testi o le istruzioni con i cliché obsoleti.
+4. `backend/tests/test_qpcc_alignment.py`:
+   - Aggiornate le asserzioni contrattuali e gestita l'esecuzione isolata sia in container Docker sia su host.
+5. `docs-counselorbot/funzionalita-counselorbot.md`:
+   - Documentato il nuovo approccio sobrio ed essenziale per lo Step 0 e aggiornato il checksum di guida di piattaforma (`platform-guidance-state.json`).
+
+Test e Validazione:
+- `backend/tests/test_qpcc_alignment.py`, `backend/tests/test_single_question_prompts.py`, `backend/tests/test_chat_preparation.py`: 39/39 passed (100% green).
+- `make guidance-check`: verifica superata con successo (`Funzionalità CounselorBot: documentazione allineata`).
+- Rebuild del container backend: completato con successo.
+
+
+# Handoff: Rimozione meta-disclaimer e cliché terapeutici e correzione fallback inizio step
+Data: 2026-10-18 | Branch: `fix/conversational-tone-and-step-fallback` | Agente: `timoniere`, Gemini 3.8 Flash (High)
+
+Obiettivo:
+- Eliminare il linguaggio "stucchevole e finto" generato dall'LLM nelle chat guidate (in particolare QPCC), dovuto alla ripetizione compulsiva di meta-disclaimer difensivi ("è un'ipotesi e non una verità", "senza giudizio", "non è un difetto", "non è una diagnosi", "non è un tratto fisso") trasudati letteralmente dalle istruzioni di sistema (prompt leakage).
+- Riconoscere che l'alleanza di lavoro e l'inquadramento non diagnostico appartengono allo Step 0 (Patto di Collaborazione) e non vanno reiterati ad ogni turno, sostituendoli con una curiosità fenomenologica naturale e con modalità epistemica espressa tramite grammatica conversazionale ordinaria.
+- Correggere il fallback di emergenza (`reflective_empty_fallback`) all'avvio di uno step o al Patto di Collaborazione, differenziando l'accoglienza e l'introduzione del tema rispetto alla prosecuzione della riflessione per evitare frasi decontestualizzate come "Prenditi un momento... da dove preferisci riprendere la riflessione?".
+
+Modifiche:
+1. `backend/prompt_contract.py`:
+   - Esteso il contratto di facilitazione metacognitiva (`_facilitation_contract`) con divieto esplicito (blacklist) di meta-disclaimer e cliché terapeutici ("È un'ipotesi, non una verità", "senza giudizio / senza giudicarti", "non è un difetto", "non è una diagnosi", "non è un tratto fisso", "la domanda non è se sei bravo o no").
+   - Esplicitato che il frame non diagnostico appartiene allo Step 0 e che le ipotesi vanno formulate con naturalezza dialogica ('sembra che', 'potrebbe essere', 'ti torna o la vivi diversamente?').
+   - Inserito divieto analogo in `_self_questioning_contract`.
+   - In `turn_contract`, sostituito il prescrittivo "Label interpretations as hypotheses" (che induceva l'LLM a etichettare le frasi) con l'istruzione di formulare ipotesi aperte senza etichette esplicite.
+2. `backend/qpcc.py`, `backend/prompts/prompt_qpcc_interview.md`, `backend/prompts/prompt_qpcc_summary.md`, `backend/tool_brief_seed.py`:
+   - Aggiunta la direttiva esplicita di non recitare i principi deontologici/contrattuali nel testo visibile allo studente.
+3. `backend/chat_logic.py` & `backend/routes/chat.py`:
+   - Introdotto il parametro `is_entry` in `reflective_empty_fallback()`. All'avvio di un passaggio (`is_entry=True`), il fallback introduce il tema senza chiedere anacronisticamente "da dove preferisci riprendere".
+   - Al Passo 0 (Patto di Collaborazione), il fallback fornisce un saluto iniziale e propone di avviare il percorso.
+4. `backend/tests/`:
+   - Aggiornato `test_facilitation_contract.py` con verifiche sulle nuove invarianti pedagogiche e anti-disclaimer.
+   - Aggiornato `test_chat_think_fallback.py` con test specifici per l'avvio dello step e per il Patto di Collaborazione.
+5. Documentazione e Guidance:
+   - Aggiornato `docs-counselorbot/funzionalita-counselorbot.md` e riallineati gli hash di `platform-guidance-state.json`.
+
+Test e Validazione:
+- Eseguita l'intera suite di test del backend: 787 test passati (100% green).
+- `make guidance-check` superato con successo.
+
+
+# Handoff: Aggiunta servizio Piper TTS 100% offline nella configurazione portatile
+Data: 2026-10-18 | Branch: `feature/piper-offline-tts` | Agente: `timoniere`, Gemini 3.8 Flash (High)
+
+Obiettivo:
+- Abilitare la sintesi vocale locale e offline (Piper TTS) nella configurazione Docker portatile (`docker-compose.portable.yml`), consentendo agli utenti di ascoltare testi e risposte anche in assenza di connessione Internet o in caso di indisponibilità dei servizi cloud (Edge TTS).
+
+Modifiche:
+1. `docker-compose.portable.yml`:
+   - Aggiunto il servizio `piper` isolato con immagine `counselorbot-piper:latest` (built da `./services/piper` con 12 voci ONNX incorporate per 6 lingue), filesystem read-only, tmpfs, limiti CPU/memoria e healthcheck dedicato su `/voices`.
+   - Assegnato alias `piper` sulla rete `default` e configurata la variabile d'ambiente `PIPER_URL: http://piper:8000` nel servizio `counselorbot-backend`, con dipendenza all'avvio.
+2. `backend/routes/voice_reader.py`:
+   - Reso configurabile l'endpoint di Piper tramite la variabile `PIPER_URL = os.environ.get("PIPER_URL", "http://piper:8000").rstrip("/")` per gli endpoint `/voices` e `/synthesize`.
+3. `docs-counselorbot/funzionalita-counselorbot.md`:
+   - Documentata la disponibilità del motore Piper 100% offline anche nell'installazione portatile.
+
+Test e Validazione:
+- Build dell'immagine Docker `counselorbot-piper`: completata con successo con verifica checksum dei modelli.
+- Suite di test interna Piper offline: `python test_server.py` eseguito con `--network none` (tutte le 12 voci verificate e conformi).
+- Test di sintesi end-to-end: verificata la generazione audio WAV offline da container backend verso container piper via `/tts/stream` (200 OK, 1 chunk audio sintetizzato, 0 errori).
+- Suite di test del backend: `backend/tests/test_voice_reader.py` (15/15 test passati).
+- Allineamento guidance: `make guidance-refresh` e `make guidance-check` superati con successo.
+
+
+# Handoff: Ripristino lettore audio e aggiornamento dipendenza edge-tts
+Data: 2026-10-18 | Branch: `fix/edge-tts-audio-player` | Agente: `timoniere`, Gemini 3.8 Flash (High)
+
+Problema:
+- Il lettore audio vocale dell'applicazione (`VoiceReader`, endpoint `/api/tts/stream` e `/tts`) non funzionava e falliva sistematicamente con `chunk_error`. Microsoft ha introdotto nuovi token di autenticazione e validazione anti-abuso (`Sec-MS-GEC` e `Sec-MS-GEC-Version`) per le connessioni WebSocket ai server Edge Read Aloud, causando il rifiuto `WSServerHandshakeError: 403 Forbidden` su versioni di `edge-tts` precedenti a 7.3.0.
+- La funzione `reader_voice` in `backend/routes/voice_reader.py` assumeva la presenza di `db.query` (fallendo su test con sessioni mockate prive del metodo `query`).
+- La funzione `bind_identity` in `backend/chatgpt_connections.py` assumeva che `db` non fosse `None` e possedesse `info`, sollevando `AttributeError` nei test isolati privi di database reale.
+
+Modifiche:
+1. `backend/requirements.txt`:
+   - Aggiornato `edge-tts` a `edge-tts>=7.3.1` per supportare il nuovo handshake WebSocket e token `Sec-MS-GEC` di Microsoft Speech.
+2. `backend/routes/voice_reader.py`:
+   - Gestita la risoluzione del counselor in `reader_voice` sia con sessioni reali (`hasattr(db, 'query')`) sia con mock (`db.get(...)`).
+3. `backend/chatgpt_connections.py`:
+   - Aggiunto controllo di sicurezza in `bind_identity` per ignorare chiamate con `db is None` o privo dell'attributo `info`.
+4. `docs-counselorbot/funzionalita-counselorbot.md`:
+   - Documentato il supporto ai token `Sec-MS-GEC` nel motore Edge TTS del lettore vocale.
+
+Test:
+- Backend: `backend/tests/test_voice_reader.py` (15/15 test passati con successo).
+- Validazione end-to-end: sintesi audio reale verificata con successo (25.488 byte audio generati, stream SSE con 1 chunk e 0 errori).
+- Guidance: `make guidance-refresh` e `make guidance-check` passati con successo.
+
+
+# Handoff: Risoluzione errore chatgpt.errors.signIn in salvataggio Guardiano del filo e fix fallback chat
+Data: 2026-10-18 | Branch: `fix/thread-guard-csrf-header` | Agente: `timoniere`, Gemini 3.8 Flash (High)
+
+Problema:
+- Nell'area amministrazione (`/admin?tab=threadGuard`), il tentativo di salvare o abilitare la configurazione del Guardiano del filo falliva con errore `chatgpt.errors.signIn` (HTTP 403). La rotta di backend `PUT /admin/thread-guard` richiede la dipendenza anti-CSRF `browser_mutation` (header `X-Requested-With: CounselorBot`), ma `frontend/src/components/admin/ThreadGuardPanel.tsx` ometteva tale header nella richiesta fetch.
+- In `backend/routes/chat.py`, la variabile `control_signals` era inizializzata a `None`, provocando un `TypeError: argument of type 'NoneType' is not iterable` durante la gestione dell'eccezione e fallback dello streaming chat.
+
+Modifiche:
+1. `frontend/src/components/admin/ThreadGuardPanel.tsx`:
+   - Aggiunto l'header `'X-Requested-With': 'CounselorBot'` nella chiamata `fetch('/api/admin/thread-guard', ...)`.
+2. `backend/routes/chat.py`:
+   - Inizializzato `control_signals = []` e protetto il controllo `bool(control_signals and control_markers.ADVANCE_STEP in control_signals)` con payload streaming sicuro `control_signals or []`.
+3. `backend/tests/test_thread_guard.py`:
+   - Aggiunti test di regressione per verificare il rifiuto HTTP 403 `chatgpt.errors.signIn` in assenza di header e l'accettazione HTTP 200 con header presente.
+4. `docs-counselorbot/funzionalita-counselorbot.md`:
+   - Documentato il requisito anti-CSRF dell'endpoint admin del guardiano del filo e il comportamento del fallback dello stream chat.
+
+Test:
+- Backend: suite completa `backend/tests/test_thread_guard.py` (68/68 test passati) e `backend/tests/test_chat_think_fallback.py` (16/16 test passati) eseguiti nel container Docker.
+- Guidance: `make guidance-refresh` e `make guidance-check` passati con successo.
+
+
+# Handoff F3: Envelope snello, deduplicazione, esclusione RAG guida sito e divieto elenchi puntati
+Data: 2026-10-18 | Branch: `fix/guided-envelope-focus` | Agente: `s3-envelope-snello`, Gemini 3.8 Flash (High)
+Task ID: `f4e370b8-15b1-48c0-860b-540bf72046e6` | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Obiettivo:
+Ottimizzazione dell'envelope del prompt di sistema per garantire massima aderenza ed efficienza con modelli locali e compatti nelle chat guidate di questionari e percorsi.
+
+Modifiche:
+1. Posizionamento di `[SESSION NOTES]` in coda all'envelope:
+   - In `backend/chat_preparation.py`, le istruzioni private (`notes_directive`, schema JSON `recommendations` e gestione delle note `hypothesis`) vengono collocate deterministicamente all'estremità finale del prompt di sistema assemblato (`system_prompt_final`), dopo il contratto del turno e le preferenze visibili. Tale posizionamento si propaga alla coda di tutte le varianti di contesto (`variants`), massimizzando la compliance dei modelli compatti ed eliminando fughe del formato note in prosa.
+   - Parametrizzato `example_lens="A1r"` per QSAr in `backend/recommendation_blocks.py` per prevenire falsi allarmi del prompt auditor su codici fattoriali estranei.
+2. Eliminazione duplicazioni contrattuali e direttive ridondanti:
+   - In `backend/prompt_contract.py`: `turn_contract` verifica la presenza dei contratti specializzati (`_facilitation_contract`, `_self_questioning_contract`, `_objective_focus_contract`) prima di concatenarli; aggiunte sentinelle a monte in `backend/chat_preparation.py`.
+   - In `backend/chat_logic.py`: introdotte sentinelle prima di iniettare blocchi strutturali in `build_context_envelope` (`ROLE_BLOCK`, `[STUDENT]`, `[GUIDED PATH]`, `[SIMULATION]`, `[PROFILE]`, `[CONTESTO CLASSE]`, `[READING]`, `[KNOWLEDGE]`) e deduplicazione delle direttive globali in `_apply_global_directives` (`[ORIENTATION]`, `[CONTEXT]`, `[LANGUAGE]`, `[REGISTER]`, `[THINKING]`, `[PLATFORM CAPABILITIES]`).
+   - In `backend/chat_preferences.py`: deduplicazione sentinella per `[VISIBLE RESPONSE FORMAT]`.
+   - In `backend/recommendation_blocks.py`: deduplicazione sentinella per `[RECOMMENDATION LOG]`.
+3. Disattivazione del RAG della guida del sito nelle chat guidate:
+   - In `backend/chat_logic.py`: introdotta la funzione `is_guided_chat(questionnaire_type, step_id)` che riconosce tutti i questionari guidati e i passi strutturati.
+   - In `get_prompt_component_flags`: forzati a `False` i flag `rag_competenzestrategiche`, `rag_counselorbot` e `rag_questionari` per le chat guidate.
+   - In `_retrieved_context`: soppressa l'interrogazione dei motori vettoriali della guida del sito (`site_rag_index`, `counselorbot_rag_index`, `questionari_rag_index`) quando `is_guided` è attivo, risparmiando token di contesto e preservando unicamente le strategie e letture certificate quando abilitate.
+4. Regola no-bullet a livello di envelope e contratti di turno:
+   - Rafforzato il divieto perentorio di utilizzare elenchi puntati o numerati in `turn_contract`, `_facilitation_contract`, `_self_questioning_contract` e `_objective_focus_contract`, imponendo una conversazione fluida in prosa naturale continua con al massimo una sola domanda aperta per turno.
+
+Test:
+- `backend/tests/test_lean_envelope_focus.py`: suite dedicata con 4 test su posizionamento note in coda all'envelope e varianti, deduplicazione dei blocchi sentinella, esclusione del RAG guida sito nelle chat guidate, e rispetto della regola no-bullet.
+- `backend/tests/test_chat_preparation.py`: 6 test passati con successo (inclusa la verifica di identità runtime/audit su tutti i 1.170 turni/combinazioni).
+- `backend/tests/test_hypothesis_ledger.py`: 8 test passati con successo.
+- `make guidance-check`: allineamento completo della documentazione.
+
+
+# Handoff Filone F2: Prescrizione domanda singola su un solo aspetto nei prompt di step e contratto QPCC ipotetico (finding BLOCCANTE-3 testi, NON BLOCCANTE-5)
+Data: 2026-10-18 | Branch: `fix/guided-steps-single-question` | Agente: `s2-single-question`, Gemini 3.8 Flash (High)
+Task: `52d3df40-36df-4502-9aad-3631926963c2` | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Problema:
+Nelle chat reali su questionari e strumenti a intervista (in particolare con modelli piccoli come Codestral e Ministral-8b), i counselor tendevano a porre raffiche di 2-5 domande contemporanee per turno, spesso in elenco puntato, disattendendo il principio di facilitazione metacognitiva (BLOCCANTE-3, bug 676c4d54-8a86-499d-8b22-1e92083cea02 e 80e1d321-b95a-4e44-88dc-f15be196e7ad). Inoltre in QPCC i punteggi venivano talvolta trattati con tono diagnostico o con attribuzione di emozioni non dichiarate, e strategie o letture rifiutate venivano riproposte.
+
+Modifiche:
+1. `backend/prompt_config.py` e `backend/prompts/*.md`:
+   - Rimosse tutte le formule a elenco di domande/aspetti multipli nei default di step di tutti gli strumenti a intervista e percorsi guidati: QPCC (`DEFAULT_QPCC_GUIDED_STEPS`), QAP (`DEFAULT_QAP_GUIDED_STEPS`), QPCS (`DEFAULT_QPCS_GUIDED_STEPS`), QSAr (`DEFAULT_QSAR_GUIDED_STEPS`), ZTPI (`DEFAULT_ZTPI_GUIDED_STEPS`), Savickas (`DEFAULT_SAVICKAS_GUIDED_STEPS`), Evento significativo (`evento_step_*.md`), Obiettivi di apprendimento studio e docenza (`obiettivo_step_*.md`, `default_system_prompt_obiettivo_interview.md`), QSA (`qsa_step_*.md`).
+   - Sostituite con formula tassativa e breve: esattamente una sola domanda aperta per turno su un singolo aspetto, mai elenchi di domande; altri aspetti nei turni successivi solo se necessari.
+   - Preservati il criterio qualitativo di comprensione, il tetto di sicurezza di circa 5 scambi e il marcatore tecnico `[[AVANZA_STEP]]`.
+2. `backend/qpcc.py` (`directive()`), `backend/prompts/prompt_qpcc_interview.md`, `backend/prompts/prompt_qpcc_summary.md` e `backend/tool_brief_seed.py`:
+   - I punteggi sono dichiarati come autopercezioni riportate dalla persona e ipotesi esplorative da verificare, mai come fatti oggettivi, diagnosi o etichette.
+   - Divieto esplicito di attribuire emozioni o stati affettivi (come ansia o insicurezza) non espressamente nominati dalla persona.
+   - Obbligo esplicito di accogliere immediatamente il rifiuto di una lettura o di una strategia abbandonandola senza riproporla.
+   - Regola perentoria di porre esattamente una sola domanda aperta per turno su un solo aspetto, mai elenchi di domande.
+3. Test:
+   - Aggiunto `backend/tests/test_single_question_prompts.py`: verifica la presenza della prescrizione di singola domanda aperta e assenza di elenchi di domande su tutti i percorsi guidati, le regole del contratto QPCC, la preservazione del tetto di 5 scambi e `[[AVANZA_STEP]]`.
+   - Aggiornato `backend/tests/test_qpcc_alignment.py` (asserzione su autopercezioni dichiarate nel contratto).
+   - Eseguiti con successo con pytest: `test_single_question_prompts.py` (5 test), `test_prompt_files.py` (6 test), `test_prompt_pair_drift.py` (6 test), `test_w4_content.py` (3 test) per un totale di 20/20 test passati.
+4. Documentazione e Passi manuali:
+   - Aggiornato `docs-counselorbot/funzionalita-counselorbot.md`.
+   - Verificato lo stato con `check-platform-guidance.py`.
+   - NOTA OPERATIVA POST-DEPLOY: Cambiando i default di fabbrica nel codice, i valori già salvati nel database non si aggiornano automaticamente. Dopo il deploy in produzione/staging è necessario eseguire l'operazione amministrativa «Allinea prompt di fabbrica» dall'interfaccia amministrativa per aggiornare le istruzioni e gli step memorizzati nel DB.
+
+
+# Handoff s1: selezione provider/modello guardiano del filo e disaccoppiamento da Ollama (F1)
+Data: 2026-10-18 | Branch: `fix/thread-guard-provider-selection` | Agente: `s1-guard-provider`, Gemini 3.8 Flash (High)
+Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Problema:
+Finding BLOCCANTE-2 (bug diario 9e2cb842). Nel DB `thread_guard_enabled=false` e preset di fabbrica id=1 su Ollama qwen3.8 (`backend/thread_guard_seed.py`), ma sulle installazioni portatili o prive di Ollama locale, il guardiano non poteva girare o puntava a un preset rotto. L'amministratore non aveva modo da UI di scegliere provider e modello tra quelli effettivamente attivi con chiavi configurate o raggiungibili.
+
+Modifiche:
+- `backend/thread_guard.py`:
+  - `is_provider_active`: verifica che il provider abbia chiave configurata (openai, anthropic, google, mistral, deepseek, openrouter, groq) o sia un servizio locale raggiungibile (ollama).
+  - `active_providers`: restituisce l'elenco dei provider attivi.
+  - `get_guard_configuration`: recupera stato di abilitazione, provider, modello e se il provider è attualmente attivo.
+  - `save_guard_configuration`: convalida che il provider sia attivo prima di salvare, crea o riusa un `ModelPreset` con `disable_thinking=True` e aggiorna le configurazioni `thread_guard_enabled` e `thread_guard_preset_id`.
+  - Verifica fail-safe in `evaluate`: se il guardiano fallisce, gestisce l'errore registrandolo e restituendo `None` senza interrompere o rompere la chat.
+- `backend/thread_guard_seed.py`:
+  - `seed_thread_guard`: se Ollama non è attivo, non crea né associa un preset non funzionante (`thread_guard_preset_id=None` e `thread_guard_enabled=false`), evitando preset rotti all'avvio.
+- `backend/routes/thread_guard.py` e `backend/main.py`:
+  - Nuovo endpoint admin `GET /admin/thread-guard` e `PUT /admin/thread-guard` protetto da ruolo admin e header `browser_mutation`, con validazione HTTP 400 se si tenta di salvare un provider non attivo o inesistente.
+- `frontend/src/components/admin/ThreadGuardPanel.tsx`:
+  - Riscritto per interfacciarsi con `/api/admin/thread-guard` e `/api/admin/models`.
+  - Selettore con i soli provider attivi e caricamento dinamico dei modelli noti per quel provider, con supporto per inserire modelli personalizzati.
+  - Banner di avviso ben visibile quando la configurazione corrente punta a un provider non attivo o mancante, con disattivazione del toggle di abilitazione finché non viene selezionato un provider valido.
+- `frontend/src/lib/i18n-admin.ts`:
+  - Aggiunte e completate le chiavi di traduzione per il pannello del guardiano del filo in tutte le 6 lingue supportate (it, en, es, fr, de, sv).
+- Test:
+  - `backend/tests/test_thread_guard.py`: aggiunti test per `is_provider_active`, `seed_thread_guard` con provider assente/presente, salvataggio e validazione configurazione, rotte admin `GET`/`PUT /admin/thread-guard` e gestione errori fail-safe (68 test verdi).
+  - Build frontend: completata con successo al 100% (63 pagine statiche, zero errori di tipo o lint).
+- Documentazione:
+  - Aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e stato guidance di piattaforma (`make guidance-refresh` e `make guidance-check` verificati con successo).
+
+
+# Handoff F4: chiusura server-side a 4-5 scambi con marcatore AVANZA_STEP
+Data: 2026-10-18 | Branch: `fix/server-side-step-closure` | Agente: `s5-step-closure`, Gemini 3.8 Flash (High)
+Task: F4 (438856b7-1540-4fa1-92e8-1230d6dba178) | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Problema:
+Nelle chat guidate e negli strumenti a intervista (QPCC, QAP, QPCS, QSAr, ZTPI, Savickas, Evento, Obiettivo, ecc.), la permanenza nello step è governata da un criterio qualitativo con tetto di sicurezza a circa 5 scambi. Se il modello non emetteva spontaneamente il marcatore `[[AVANZA_STEP]]` o se lo studente continuava a interagire, la conversazione rischiava di rimanere bloccata indefinitamente nello stesso step senza proporre il passaggio successivo.
+
+Modifiche:
+- `backend/step_closure.py`:
+  - Implementato modulo per la gestione della chiusura di sicurezza server-side.
+  - Soglia predefinita configurabile: `DEFAULT_STEP_SAFETY_THRESHOLD = 5` (personalizzabile tramite DB `models.Config` con chiave `step_safety_threshold` o variabile d'ambiente `STEP_SAFETY_THRESHOLD`).
+  - `is_step_closure_eligible(db, step, phase, questionnaire_type)`: esclude chat libere, percorsi privi di step (es. IDEA), passi introduttivi (`WELCOME_PHASE_IDS`, `sort_order < 0`, step `mode="intro"`) e passi di sintesi finale/farewell (`SYNTHESIS_STEPS`, step `mode="summary"` o `mode="farewell"`, ultimo step attivo).
+  - `count_step_assistant_exchanges(db, session_id, phase)`: calcola con query ottimizzata su `models.Log` il numero di turni dell'assistente registrati per la sessione nello step corrente.
+  - `should_force_step_closure(current_exchange_count, is_eligible, threshold)`: valuta se lo step è idoneo e il conteggio di scambi raggiunge o supera la soglia di sicurezza.
+  - `ensure_step_closure(text, should_advance)`: appende `\n\n[[AVANZA_STEP]]` in coda al testo solo se necessario e mancante, senza mai duplicare marcatori già presenti.
+- `backend/routes/chat.py`:
+  - Integrata la verifica di idoneità e il calcolo degli scambi sia per l'endpoint sincrono `/chat` sia per lo streaming SSE `/chat/stream`.
+  - In `/chat`: se la soglia è raggiunta e il marcatore manca, viene aggiunto prima dell'estrazione tramite `control_markers.extract`; `session_memory` viene aggiornato in background con `completed_step=True`.
+  - In `/chat/stream`: calcolo della soglia prima dello streaming; alla conclusione del testo generato, `ensure_step_closure` applica il marcatore su `raw_response` (o risposta di fallback) prima dell'estrazione dei segnali di controllo, assicurando `ADVANCE_STEP` in `control_signals` e aggiornando `session_memory` con `completed_step=True` sia nei percorsi standard sia in fallback.
+- Test:
+  - `backend/tests/test_server_side_step_closure.py`: suite di 20 test completi (unitari e d'integrazione con FastAPI TestClient su `/chat` e `/chat/stream`) che verificano:
+    (a) turni iniziali (< 4 scambi) non iniettano forzatamente il marcatore se non presente,
+    (b) al raggiungimento della soglia (5 scambi) il marcatore viene aggiunto, i `control_signals` contengono `ADVANCE_STEP` e la `session_memory` segna il passo completato,
+    (c) se il modello emette spontaneamente il marcatore prima della soglia, non viene duplicato,
+    (d) nei passi di introduzione o nelle sintesi finali/farewell non viene forzato alcun marcatore indebito.
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
+# Handoff F5: rimozione tag <think> e fallback per risposte vuote o solo reasoning
+Data: 2026-10-18 | Branch: `fix/empty-response-think-leak` | Agente: `s4-fallback-think`, Gemini 3.8 Flash (High)
+Task: F5 (424969f9-efd2-4461-b2f8-f29d9801e259) | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+
+Problema:
+1. I modelli di reasoning (es. DeepSeek-R1, QwQ) emettono catene di pensiero racchiuse tra tag `<think>...</think>`, `<thinking>...</thinking>` o `<sto_pensando>...</sto_pensando>`. Nello streaming chunk-by-chunk SSE e nelle risposte sincrone, tali tag rischiavano di trapelare all'utente o di essere salvati nella cronologia della sessione e nei log.
+2. In caso di risposta vuota da parte del provider, risposta di soli spazi, risposta ridotta a stringa vuota dopo la rimozione del blocco `<think>`, o errori di risposta vuota ("empty response"), la chat falliva con errore 500/502 o restituiva messaggi vuoti al client.
+
+Modifiche:
+- `backend/chat_logic.py`:
+  - Aggiunti pattern regex (`_THINK_TAG_ANY_RE`, `_THINK_OPEN_UNCLOSED_RE`, `_THINK_CLOSE_ORPHAN_RE`) e funzione `strip_thinking(text: str)` per ripulire completamente tag `<think>`, `<thinking>`, `<sto_pensando>`, blocchi non chiusi a fine testo e tag orfani di chiusura.
+  - Implementata `reflective_empty_fallback(step_label: str | None = None, language: str = "it")` con frasi gentili, riflessive e contestualizzate allo step guidato corrente, localizzate in italiano, inglese, spagnolo, francese, tedesco e svedese.
+  - Implementata `is_empty_response_error(exc: Exception) -> bool` per rilevare eccezioni di risposta vuota generate dai provider LLM.
+  - Aggiornato `_student_visible_response` per richiamare `strip_thinking(text)`.
+- `backend/ai_service.py`:
+  - `_response_with_fallback`: ripulisce con `split_thinking` i risultati sincroni dei vari provider ed esclude il reasoning.
+  - `call_model`: chiamata a `split_thinking` prima di restituire il testo.
+  - `_iter_chat_stream`: integrato `ThinkStreamSplitter` per filtrare ed escludere i tag `<think>` chunk-by-chunk durante lo streaming.
+- `backend/routes/chat.py`:
+  - Integrazione di `ThinkStreamSplitter` nello streaming SSE `/chat/stream`: i chunk di reasoning vengono soppressi in tempo reale e non raggiungono mai il client SSE.
+  - Aggiunto `strip_thinking` e controllo fallback su risposta vuota in `/chat/stream`, `/chat` (sync) e `/chat/message`.
+  - Gestione degli errori di risposta vuota (`is_empty_response_error`) con emissione del fallback contestualizzato anziché crash 500/502.
+- `backend/routes/site_chat.py`:
+  - Applicazione di `strip_thinking` e `reflective_empty_fallback` sulle risposte della chat del sito.
+- Test:
+  - `backend/tests/test_chat_think_fallback.py`: suite di 16 test che verificano:
+    (a) rimozione completa di `<think>`, `<thinking>` e `<sto_pensando>` (chunk SSE e risposte sincrone),
+    (b) fallback automatico quando il testo emesso contiene unicamente reasoning,
+    (c) fallback automatico quando il testo emesso è vuoto, solo whitespace o genera `EmptyModelResponseError`, con supporto multilingue e contestualizzazione allo step,
+    (d) conservazione intatta della risposta normale priva di reasoning.
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
+
+# Handoff: riepilogo e PDF al completamento delle chat guidate su questionari di prova (docente/admin)
+Data: 2026-10-18 | Branch: `fix/practice-questionnaire-summary` | Agente: `Antigravity`
+
+
+Problema:
+Al termine di una chat guidata di un questionario svolto in modalità simulazione/palestra docente (taccuino di prova con `notebook_context="practice"`), il frontend montava `<SessionReport sessionId={sessionId} ... />` per richiedere riepilogo (`GET /api/user/questionnaire-result/{session_id}/summary`) e PDF (`GET /api/questionnaire-result/{session_id}/pdf`). Tali endpoint rispondevano con 404 poiché `_get_owned_questionnaire_result` interrogava unicamente la tabella degli studenti reali `questionnaire_results` (`models.QuestionnaireResult`) e non `teacher_practice_results` (`models.TeacherPracticeResult`). Inoltre, la mappatura degli ID degli step di sintesi conteneva disallineamenti per QPCC e QAP e mancava dei percorsi `EVENTO_*` e `OBIETTIVO_*`.
+
+Modifiche:
+- `backend/models.py`:
+  - Aggiunte property `@property def username` e `@property def submitted_at` al modello `TeacherPracticeResult` per garantire conformità di interfaccia duck-type con `QuestionnaireResult`.
+- `backend/routes/survey.py`:
+  - `_get_owned_questionnaire_result`: introdotto fallback su `TeacherPracticeResult` verificando ownership (`owner_username == current_user.username`) o privilegi admin, preservando la separazione tra dati di prova e record studenti reali.
+  - `_final_step_summary`: corretti gli ID step di sintesi per `"QPCC": "qpcc-sintesi"`, `"QAP": "qap-sintesi"`, e aggiunti i mapping per `"EVENTO_STUDIO": "evstudio-final"`, `"EVENTO_PROFESSIONALE": "evprof-final"`, `"OBIETTIVO_STUDIO": "obbstudio-final"`, `"OBIETTIVO_DOCENZA": "obbdocenza-final"`.
+  - Passaggio di provider e model coerenti estratti dai log di sessione per la generazione della sintesi LLM.
+  - `get_user_session_conversation`: abilitato il recupero della trascrizione anche per sessioni di prova.
+- `frontend/src/components/qsa/SessionReport.tsx` e `frontend/src/app/page.tsx`:
+  - Semplificazione lineare della schermata di completamento: rimosse scelte dispersive e ridondanti (domanda "Vuoi analizzare un altro questionario?", opzioni radio brief/full, pulsante di rigenerazione sintesi, iframe preview 75vh, pulsante "Termina" con reindirizzamento al questionario di gradimento `farewell`).
+  - Due sole azioni dirette: **Scarica il resoconto PDF** (scarica direttamente il documento completo e riporta alla pagina principale) e **Torna alla pagina principale** (per uscire immediatamente azzerando le selezioni).
+- Test:
+  - `backend/tests/test_pdf_summary.py`: aggiunto `test_practice_questionnaire_summary_and_pdf` che verifica anteprima di riepilogo, generazione PDF, recupero conversazione, permessi proprietario/admin e blocco 403 per utenti non autorizzati.
+  - Eseguita verifica end-to-end con la sessione reale docente del mattino (`1986b52c-81ad-4c4a-a2e8-114e11415abf`): riepilogo pronto e PDF generato (18.164 byte).
+  - Test suite frontend: 593/593 test superati (`npm test`).
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
+# Handoff t7: estensione guardiano (interpretation_open, hypotheses), preservazione sintesi e rilascio facilitazione (fase 6)
+Data: 2026-10-18 | Branch: `feature/metacognitive-guard-synthesis` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #378 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Implementata la Fase 6 dell'audit (docs/audits/audit-facilitatore-metacognitivo.md), completando l'intero piano di transizione verso il facilitatore metacognitivo:
+- `backend/thread_guard.py`:
+  - Aggiunto l'asse `interpretation_open` in `Verdict` (default `Check(ok=True)`) per verificare che il counselor non affermi interpretazioni come fatti oggettivi, non attribuisca emozioni non nominate e non ripeta letture rifiutate.
+  - Aggiornato `SEVERITY = ("advice_grounded", "interpretation_open", "on_thread", "question_fit")`.
+  - Aggiunto il campo `hypotheses: list[dict] = []` in `Verdict` per raccogliere gli esiti delle ipotesi identificate nel turno (`[{"index": int, "outcome": "confirmed"|"corrected"|"rejected"}]`).
+  - Aggiornato `SYSTEM_PROMPT` con la spiegazione del nuovo asse e del formato/semantica di `hypotheses`.
+  - Implementate le funzioni `open_hypotheses`, `_open_hypotheses_section` e `_close_hypotheses`: aggiornano lo stato dell'ipotesi nel registro con `closed_by="conversation"`, rispettando la regola ferrea che una marcatura esplicita dello studente (`closed_by == "student"`) non viene mai sovrascritta.
+  - Integrato in `build_input`, `evaluate` e `store`.
+- `backend/recommendation_service.py`:
+  - `set_state`: corretto il reset di `closed_by` in modo che per le ipotesi solo il ritorno a `proposed` o `stale` azzeri chi l'ha chiusa, preservando `closed_by` quando lo stato diventa `confirmed`, `corrected` o `rejected`.
+- `backend/journey_context.py`:
+  - Aggiunto parametro `preserve_hypotheses: bool = False` e la regola esplicita nella riduzione del trascritto: «Preserve the counselor's readings and the student's response to each — confirmed, corrected in their own words, or rejected. Never present a rejected reading as agreed.»
+- `backend/chat_preparation.py`:
+  - Invocazione di `journey_context` in sintesi con `preserve_hypotheses=(questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES or is_event_instrument(questionnaire_type))`.
+- Rilascio di default della facilitazione metacognitiva:
+  - `backend/prompt_config.py`: `SYSTEM_PROMPT_DEFAULTS[FACILITATION_CONTRACT_ENABLED_KEY] = "true"`.
+  - `backend/chat_preparation.py`: fallback configurazione a `"true"`.
+- Test:
+  - `backend/tests/test_thread_guard.py`: 64 test verdi (parsing `interpretation_open`, severità, isolamento `hypotheses`, rispetto di `closed_by="student"`).
+  - `backend/tests/test_facilitation_contract.py`: 8 test verdi (default abilitato e fallback esplicito a false, direttiva di preservazione ipotesi in `journey_context`).
+  - `backend/tests/test_hypothesis_ledger.py`: 8 test verdi (default rilasciato e flag off).
+  - `backend/tests/test_recommendation_state.py` e `backend/tests/test_session_ledger.py`: 37 test verdi.
+  - `backend/tests/test_self_questioning.py`: 751 test verdi (retrocompatibilità contrattuale garantita con flag off).
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
+# Handoff t6: profondità d'intervista: budget → criterio di comprensione con tetto di sicurezza (fase 5)
+Data: 2026-10-18 | Branch: `feature/interview-depth-safety-cap` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #376 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Implementata la Fase 5 dell'audit (docs/audits/audit-facilitatore-metacognitivo.md):
+- Transizione dal budget rigido di turni («at most two follow-ups», «two or three questions in total») a un criterio qualitativo di comprensione orientato all'agire con tetto di sicurezza flessibile a circa cinque scambi:
+  - `backend/prompts/prompt_qpcc_interview.md`: sostituito il budget di follow-up con permanenza nell'area ancorata a ciò che la persona fa, come sceglie e cosa produce, chiusura su risposta all'ipotesi o richiesta di avanzamento o tetto di circa 5 scambi.
+  - `backend/prompt_config.py` (`DEFAULT_QPCC_GUIDED_STEPS`): riscritti `qpcc-comunicazione`, `qpcc-controllo`, `qpcc-volizione`, `qpcc-elaborazione`, `qpcc-convinzioni` con il medesimo criterio qualitativo.
+  - `backend/prompts/prompt_qap_interview.md` e `DEFAULT_QAP_GUIDED_STEPS`: riscritti `qap-preoccupazione`, `qap-controllo`, `qap-curiosita`, `qap-fiducia` sostituendo la richiesta aneddotica con indagine sulle scelte e sulle modalità di azione e tetto di circa 5 scambi.
+  - `backend/prompts/default_system_prompt_savickas_interview.md` e `DEFAULT_SAVICKAS_GUIDED_STEPS`: preservate le 5 domande narrative fisse di Savickas; allineati i follow-up all'indagine sul significato per l'agire e scelte con tetto di circa 5 scambi.
+  - `backend/prompts/default_system_prompt_evento_interview.md`: rimosso il limite fisso a 2 follow-up in favore dell'indagine sui fatti e sulla rilettura con le parole della persona e tetto di circa 5 scambi.
+  - `backend/prompts/default_system_prompt_qpcs_analysis.md`: rimossi «ask at most two or three questions in total» e «once you have enough, be PROACTIVE...», sostituiti da una domanda riflessiva per turno sull'agire e permanenza fino alla risposta alla lettura come ipotesi.
+- Preservazione factory legacy (`backend/prompt_factory_legacy.json`):
+  - Registrati tutti gli hash preesistenti di Main per garantire la compatibilità con la funzione «Allinea prompt di fabbrica» senza toccare personalizzazioni admin.
+- Test:
+  - `backend/tests/test_prompt_factory_alignment.py`, `test_control_markers.py`, `test_self_questioning.py` (801/801 verdi).
+  - `backend/tests/test_chat_preparation.py`, `test_evento_significativo.py`, `test_prompt_pair_drift.py` (22/22 verdi).
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
+# Handoff t5: riscrittura step di fabbrica QSA, QSAr, ZTPI e QPCS come ipotesi e indagine sull'agire (fase 4)
+Data: 2026-10-17 | Branch: `feature/factory-step-prompts-refactor` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #374 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Implementata la Fase 4 dell'audit (docs/audits/audit-facilitatore-metacognitivo.md):
+- `backend/prompts/qsa_step_*.md`:
+  - `qsa_step_cognitive.md` e `qsa_step_affective.md`: fattori restituiti come lenti aperte sui processi e sulle abitudini di studio, non come etichette rigide. Domande centrate su cosa fa lo studente in pratica nello studio.
+  - `qsa_step_sl_elaboration.md`, `qsa_step_sl_selfcontrol.md`, `qsa_step_sl_motivation.md`, `qsa_step_sl_emotions.md`, `qsa_step_sl_attribution.md`, `qsa_step_sl_social.md`, `qsa_step_sl_synthesis.md`: interazioni tra fattori formulate come ipotesi aperte («as ONE hypothesis about how this student...») con indagine centrata su comportamenti, scelte e conseguenze («what they actually do, how they choose that, and what that way of acting produces»). Preservate le guardie di simmetria (A2/A5) e aggancio (A6).
+- `backend/prompt_config.py`:
+  - `DEFAULT_QSAR_GUIDED_STEPS`: rimozione di «short practical comment» su fattori cognitivi e affettivi; lenti di secondo livello presentate come ipotesi aperte e domande sull'agire e sulle scelte pratiche nello studio.
+  - `DEFAULT_ZTPI_GUIDED_STEPS`: rimozione di «a practical comment» nei singoli fattori (t1-t5); fattori inquadrati come abitudini di attenzione anziché tratti immutabili; domande focalizzate su scelte e conseguenze nella preparazione (incluso Presente Fatalistico come da §6.2 dell'audit).
+  - `DEFAULT_QPCS_GUIDED_STEPS`: rimozione di «connected to a real, recent situation» in tutte le aree (emozioni, comunicazione, volizione, apprendimento, fiducia) in favore di domande di indagine su come lo studente agisce, sceglie e risponde alle situazioni impegnative o di studio.
+- `backend/prompt_factory_legacy.json`:
+  - Verificata la presenza di tutti gli hash precedenti per garantire la piena compatibilità con la funzione «Allinea prompt di fabbrica» senza alterare le personalizzazioni admin.
+- Test:
+  - `backend/tests/test_chat_preparation.py` (6/6 passati, preservazione di tutte le definizioni di step).
+  - `backend/tests/test_prompt_factory_alignment.py` e `test_control_markers.py` (50/50 passati).
+  - Suite di regressione completa in Docker: 870/870 passati.
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
+# Handoff t4: rimozione [ANCHOR] e ritocco di testi e sentinelle in codice (fase 3)
+Data: 2026-10-17 | Branch: `feature/code-prompts-cleanup` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #372 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Implementata la Fase 3 dell'audit (docs/audits/audit-facilitatore-metacognitivo.md):
+- `backend/prompts/default_system_prompt_factor.md`, `default_system_prompt_qsar_factor.md`, `default_system_prompt_ztpi_factor.md`, `factor_table_rules.md`:
+  - Rimossa la direttiva `[ANCHOR]`, assorbita e governata direttamente dal contratto di facilitazione per evitare formule stereotipate e alleggerire l'envelope.
+- `backend/prompt_config.py`:
+  - Rimosso l'append di `[ANCHOR]` in `DEFAULT_SYSTEM_PROMPT_QPCC_FACTOR`.
+- `backend/prompts/default_second_level_method.md`:
+  - Snellite le istruzioni di secondo livello per preservare esclusivamente la parte (1), ossia l'offerta di un'ipotesi interpretativa prima di ogni consiglio pratico. Eliminati i divieti rigidi di value-check e le regole restrittive sulla formulazione delle domande (assorbite in `[FACILITATION]`).
+- `backend/prompts/default_qa_depth_directive.md`:
+  - Ritoccato il punto (2) di `[DEPTH ON REQUEST]` per connettere la spiegazione del meccanismo a scelte, abitudini e agire nello studio dello studente (o offrire una situazione concreta come esempio da riconoscere/correggere), evitando che il modello imponga un aneddoto scolastico prefissato.
+- `backend/chat_preparation.py`:
+  - Ritoccata la direttiva `[PERSPECTIVE]` in sintesi: il nesso tra il filo emerso nella sessione, il taccuino e il portfolio viene offerto come domanda aperta che lo studente è libero di cogliere o lasciare.
+- `backend/qpcc.py`:
+  - `qpcc.directive()`: sostituito il vecchio budget rigido a turni fissi («Ask ONE main open question and at most two concrete follow-ups») con il criterio flessibile di permanenza nell'area ancorato alle scelte e all'agire con tetto di sicurezza (circa cinque scambi).
+- Verifiche di contrazione envelope (`make prompt-dry`):
+  - QSA cognitive: 14795 → 14395 (-400 caratteri)
+  - QSA sl-motivation: 17314 → 16770 (-544 caratteri)
+  - QSAr cognitive: 13620 → 13220 (-400 caratteri)
+  - ZTPI t1: 15085 → 14685 (-400 caratteri)
+  - QPCS profilo: 13940 → 13540 (-400 caratteri)
+  - QAP profilo: 13907 → 13507 (-400 caratteri)
+- Test aggiornati: `backend/tests/test_prompt_files.py`, `backend/tests/test_prompt_pair_drift.py`, `backend/tests/test_qsa_factor_directive.py`.
+- Regressione completa superata in container Docker: 811/811 test verdi.
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
+# Handoff t3: blocco note per ipotesi, accoppiamento risposte e sezione ledger (fase 2)
+Data: 2026-10-17 | Branch: `feature/hypothesis-notes-ledger` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #370 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Implementata la Fase 2 dell'audit (docs/audits/audit-facilitatore-metacognitivo.md):
+- `backend/recommendation_blocks.py`:
+  - `notes_directive`: supporto a `hypothesis_allowed`, aggiunta di `hypothesis` ai kind ammessi con lente facoltativa e relativo esempio.
+  - `extract_notes`: estrazione deterministica di `kind: "hypothesis"`, validazione della presenza verbatim nel messaggio visibile, limite 8-600 caratteri, e validazione facoltativa del campo `lens` su `phase_codes`.
+- `backend/recommendation_service.py`:
+  - `RECOMMENDATION_STATUSES`: esteso con `answered`, `confirmed`, `corrected`, `rejected`.
+  - `set_state`: validazione di `HYPOTHESIS_STATUSES` e persistenza di `payload.outcome`.
+  - `couple_hypothesis_reply`: accoppiamento deterministico della risposta dello studente (`user_message`, max 240 caratteri) all'ipotesi aperta più recente con transizione a `answered`.
+  - `_carry_over` e `conversation_context`: preservazione di `reply`, `outcome` e `lens`, ed esclusione delle ipotesi aperte/risposte dal blocco di raccomandazioni generiche.
+- `backend/session_ledger.py`:
+  - Nuove funzioni `hypothesis_rows`, `hypotheses(db, ...)` e `reflection_thread(hypotheses, ...)`.
+  - Sezione `Readings you offered in this session, with what the student replied:` in `_compose` e direttiva metacognitiva in `_directives`: «Use the student's reply as their version; never restate a reading they corrected or rejected.»
+  - Blocco compatto in-step `[REFLECTION THREAD]` limitato a 500 caratteri sui turni interni allo step con ipotesi aperta o risposta.
+- `backend/prompt_contract.py`:
+  - `_facilitation_contract` esteso con `thread_state`: aggiunge le righe di vincolo minimo per `introduced`, `hypothesis_open` e `hypothesis_answered`.
+  - `turn_contract`: passaggio di `thread_state`.
+- `backend/chat_preparation.py`:
+  - Calcolo di `thread_state` e iniezione condizionale di `[REFLECTION THREAD]`.
+  - A flag `facilitation_contract_enabled` spento: retrocompatibilità totale byte per byte.
+- `backend/routes/chat.py`:
+  - `_record_recommendations`: invocazione di `couple_hypothesis_reply` su `user_message` pulito e passaggio di `hypothesis_allowed` ed `allowed_lenses` a `extract_notes` sia in chat standard che streaming.
+- Test dedicati: `backend/tests/test_hypothesis_ledger.py` (8/8 passati).
+- Regressione: `test_facilitation_contract.py` (7/7 passati), `test_self_questioning.py` (751/751 passati), `test_prompt_lab_engine.py` (39/39 passati).
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
+# Handoff t2: contratto di facilitazione metacognitiva governato da feature flag
+Data: 2026-10-17 | Branch: `feature/metacognitive-facilitation-contract` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #368 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Implementata la Fase 1 dell'audit (docs/audits/audit-facilitatore-metacognitivo.md):
+- Definito `_facilitation_contract(stage: str)` con sentinella `[FACILITATION]` in `backend/prompt_contract.py`.
+- Introdotto il parametro `facilitation_contract_enabled: bool = False` in `turn_contract()` e collegato alla lettura da `configs` in `backend/chat_preparation.py`.
+- Registrata la chiave `FACILITATION_CONTRACT_ENABLED_KEY = "facilitation_contract_enabled"` con default `"false"` in `backend/prompt_config.py`.
+- Invarianti pedagogiche incorporate:
+  1. Spostamento dall'aneddotica situazionale/cronachistica («qual è il momento in cui...») all'indagine metacognitiva su scelte, azioni e conseguenze («Di fronte a questa difficoltà, che cosa fai di solito? Come scegli di muoverti, e che conseguenze ha questo modo di procedere sul tuo lavoro?»).
+  2. Profondità flessibile basata su 3 condizioni di comprensione raggiunta (esperienza concreta emersa, comprensione del funzionamento dell'agire, elementi sufficienti per la sintesi), superando il vincolo rigido numerico.
+  3. Eliminazione dei convenevoli cerimoniosi («Grazie per aver condiviso», «Capisco la tua riflessione», «Certo.»).
+  4. Non forzare l'insight: interpretazioni offerte sempre come ipotesi aperte che lo studente è libero di confermare, correggere o rifiutare.
+  5. Value-check a due livelli: verifica interna continua, verifica esplicita solo nei momenti chiave (ipotesi rilevanti, prima di sintesi o disallineamenti).
+  6. Neutralità emotiva: risposte concise trattate come stile comunicativo o stanchezza, non resistenza.
+- Retrocompatibilità verificata: a flag spento (default `false`) l'output è identico byte per byte a `_self_questioning_contract` (`test_self_questioning.py`: 751/751 superati).
+- Test dedicati: `backend/tests/test_facilitation_contract.py` (7/7 superati).
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
+# Handoff t1: allineamento calibrazione Prompt Lab a percezione di competenza (A6) e facilitazione metacognitiva
+Data: 2026-10-17 | Branch: `fix/prompt-lab-metacognitive-calibration` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #366 | Milestone #1 | PR #367
+
+Allineato il caso di calibrazione di Prompt Lab (`calibration-good`) e il test di base del fattore A6 al costrutto effettivo e al paradigma di facilitazione metacognitiva:
+- A6 descrive la percezione di competenza e fiducia nelle proprie capacità nello studio (non l'ansia).
+- Eliminato il convenevole cerimonioso iniziale (`Certo.`).
+- Sostituita la formulazione aneddotica/situazionale (`qual è il momento in cui cominci a sentirti così`, `momento recente`) con una domanda di processo metacognitivo focalizzata su scelte strategiche, comportamenti e conseguenze sul lavoro di studio (`che cosa scegli di fare di solito, e che conseguenze ha questo modo di procedere sul tuo lavoro?`).
+- `backend/chat_preferences.py`: aggiunto `from __future__ import annotations`.
+- `backend/prompt_lab/evaluation.py`: aggiornati `_CALIBRATION_CASE` e `CALIBRATION_CASES[calibration-good]`.
+- `backend/tests/test_prompt_lab_engine.py`: aggiornato `calibrated()` e aggiunto `test_calibration_good_aligns_with_metacognitive_facilitation` (39/39 passati).
+- Documentazione: aggiornato `docs-counselorbot/funzionalita-counselorbot.md` e riallineato `docs/operations/platform-guidance-state.json` (`make guidance-refresh` e `make guidance-check`).
+
+# Handoff a4: comandi avanti e indietro sempre visibili nella chat guidata
+Data: 2026-10-17 | Branch: `fix/guided-chat-nav-buttons` | Agente: `a4-agy-guided-nav`, Gemini 3.8 Flash (High)
+Issue #248 | Milestone #12 (Incontro tutor PEF del 12 ottobre 2026)
+
+Nella chat guidata (`frontend/src/components/qsa/GuidedChatInterface.tsx`) i pulsanti
+«Indietro» (`ChevronLeft`) e «Avanti» (`ChevronRight`/`CheckCircle2`) avevano visibilità
+condizionale: «Indietro» spariva al primo passo (`index === 0`), alla conclusione e
+in modalità essenziale; «Avanti» spariva all'ultimo passo, in modalità essenziale e nei
+percorsi a intervista (`SAVICKAS`, `QPCC`, `QAP`, `EVENTO_*`, `OBIETTIVO_*`) fino
+all'invio di 3 messaggi o al marker `[[AVANZA_STEP]]`.
+
+Risoluzione:
+- Comandi avanti e indietro resi sempre visibili nel DOM nella barra inferiore di navigazione.
+- «Indietro»: abilitato se `phases.indexOf(currentPhase) > 0` e non in caricamento; disabilitato al primo passo.
+- «Avanti»: abilitato se `hasNextPhase` (`phases.indexOf(currentPhase) < phases.length - 1`) e non in caricamento; disabilitato all'ultimo passo.
+- Indicatore traguardo: mostra costantemente `Passo X/Y: Fase corrente → Fase successiva` quando esiste una fase successiva.
+- Barra di navigazione mantenuta sempre visibile (`phases.length > 0`).
+- Logica del percorso (`frontend/src/lib/interview-path.ts`): regole di transizione, prompt e quick replies rimaste intatte senza alterazioni.
+- Test dedicato: `frontend/src/lib/guided-chat-nav.test.ts` verifica rendering continuo, stati disabilitati e integrità di `interview-path`.
+- Documentazione operativa: aggiornata in `docs-counselorbot/funzionalita-counselorbot.md` (§ Chat, voce e ripresa) con `make guidance-refresh`.
+
+Verifiche: `npm test` 593/593 superati; `make guidance-check` superato; zero regressioni.
+Nessun Docker, deploy o sudo.
+
+# Handoff a3: valutazione lingua ucraina per il QPCC (#243)
+Data: 2026-10-17 | Branch: `docs/qpcc-ukrainian-evaluation` | Agente: `a3-agy-qpcc-ukrainian`, Gemini 3.8 Flash
+Issue #243 | Milestone #12 'Incontro tutor PEF del 12 ottobre 2026'
+
+Valutazione tecnica, redazionale e psicometrica sul supporto della lingua ucraina per il QPCC a seguito del quesito posto dai tutor del PEF nell'incontro del 12 ottobre 2026.
+
+Esito della valutazione: supporto escluso per l'attuale perimetro operativo e di ricerca di CounselorBot, coerentemente con `APP_LOCALES` (`backend/content_versions.py: APP_LOCALES = ("it", "en", "es", "fr", "de", "sv")`). La menzione dell'ucraino nella scheda storica presentata ai tutor deriva dalla sperimentazione pilota del progetto europeo Erasmus+ PAGOSTE 2020 condotta con formatori VET (Margottini & Leproni, 2020; Ottone, 2023).
+
+Documentazione e allineamenti prodotti:
+- Documento di valutazione completo e studio di fattibilità con stima dello sforzo (10–12 settimane/persona in caso di apertura futura): `docs/validazione/valutazione-lingua-ucraina-qpcc.md`.
+- Scheda bibliografica del QPCC aggiornata per chiarire le versioni linguistiche e le sei lingue servite da CounselorBot: `docs/questionari/strumenti/schede-bibliografiche/QPCC_it.md`.
+- Aggiornamento della documentazione di validazione: `docs/validazione/dettagli-validazione-questionari.md`.
+- Aggiornamento della documentazione operativa: `docs/operations/qpcc-factor-alignment.md`.
+- Aggiornamento guida funzionalità: `docs-counselorbot/funzionalita-counselorbot.md` (e allineamento hash con `make guidance-refresh`).
+- Aggiornamento diario di progetto: `docs/progetto/diario.md` (sezioni IT ed EN).
+
+Verifiche eseguite: `make guidance-check` superato; test di coerenza di `APP_LOCALES` (`backend/content_versions.py`) e test di parità e schema QPCC (`test_qpcc_alignment.py`) passati. Nessun servizio dev avviato, nessun container/deploy/sudo necessario.
+
+# Handoff g1: palette della Palestra di prova
+Data: 2026-10-17 | Branch: `fix/practice-gym-palette` | Agente: `g1-opus-gym-palette`, Claude Opus 5.5 high
+Compito Diario `2b1b88a5-d95b-412e-b134-a23cf4193319` | Issue #354 | Milestone #24
+
+La card «Palestra di prova» della home `/docente` (`PracticeGymSection.tsx`) era
+verde/teal (`emerald-*`, `teal-*`). Ora: bordo e gradiente petrol
+(`indigo-200/90`, `from-indigo-50/50 via-white to-white`), badge «Simulazione
+protetta» slate con scudo petrol, etichette slate, CTA d'ingresso
+`ochre-600`/`ochre-700`, link «Taccuini di prova» `indigo-700`. Tolte da
+`globals.css` le tre voci del remap rimaste orfane (`border-emerald-200/90`,
+`from-emerald-50/70`, `to-teal-50/40`); guardia `teacher-area-dark-theme.test.ts`
+aggiornata alle nuove tappe. Restano in verde solo i «Salvato» (ruolo success);
+il teal di chat guidata e Bussola è di IDEA/Bussola, fuori perimetro. Contrasti
+misurati: chiaro 4,65 (CTA ocra)–16,3:1, scuro 4,65–14,0:1. Regola in
+`docs/design.md` §2.4. Schermate `teacher-area` della guida rigenerate nelle sei
+lingue (una sola esecuzione `GUIDE_SCREENS=teacher-area`).
+
+Verifiche: `npm test` 586/586 (Node 22), ESLint sui file toccati, `tsc --noEmit`.
+Dev solo frontend su :3134 con fixture (`next dev --webpack`), fermato. Suite
+browser non eseguite. Nessun Docker, deploy o sudo.
+
+# Handoff d1: tema scuro area docente
+Data: 2026-10-17 | Branch: `fix/teacher-area-dark-theme` | Agente: `d1-opus-teacher-dark`, Claude Opus 5.5 high
+Compito Diario `915b2b9a-ac41-46e9-a801-ec21ce052f4f` | Issue #352 | Milestone #23
+
+Nella home `/docente` le card «Progetta obiettivo per la classe» e «Palestra di
+prova: studenti fittizi» (e il vuoto di «Le mie classi», l'hub risorse) restavano
+chiare in tema scuro: tappe di gradiente, `bg-white/80|90`, testi
+`emerald-800/900`, `indigo-950`, `red-900`, `amber-600` e varianti
+`hover:`/`group-hover:` senza voce nel remap. Aggiunte le voci in fondo a
+`globals.css` (le tappe ridefiniscono `--tw-gradient-*`), regola in
+`docs/design.md` §6, guardia `src/lib/teacher-area-dark-theme.test.ts` (rossa su
+main, verde ora). Tema chiaro identico al pixel; testi in scuro 5,3–13,9:1.
+Pagine di destinazione (`/docente/taccuini-prova`, `/docente/catalogo-obiettivi`)
+già leggibili. Verifiche: `npm test` 586/586, ESLint, `tsc --noEmit`. Dev
+fixture solo frontend su :3134 con `next dev --webpack` (Turbopack rifiuta il
+symlink `node_modules` del worktree), fermato. Nessun Docker, deploy o sudo.
 
 # Handoff n12: menu mobile a gruppi (P5)
 Data: 2026-10-17 | Branch: `feat/navbar-mobile-groups` | Agente: `n12-opus-navbar-p5`, Claude Opus 5.5 high

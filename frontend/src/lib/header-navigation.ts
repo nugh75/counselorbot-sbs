@@ -17,7 +17,7 @@ import { classViewOptions } from './class-view.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { isToolAllowed, type UserAccess } from './user-access.ts';
 
-export type HeaderLinkKey = 'orientation' | 'assistant' | 'guide' | 'profile' | 'teacher-panel' | 'admin';
+export type HeaderLinkKey = 'instruments' | 'orientation' | 'assistant' | 'guide' | 'profile' | 'teacher-panel' | 'admin';
 
 // `support`: tools and help open to everyone allowed. `area`: the workspaces a
 // person can enter (Studente / Docente / Amministrazione), the entries of the
@@ -67,6 +67,10 @@ const tool = (key: string): Visible => ({ access, accessLoading }) => !accessLoa
 
 // Order is the reading order of both the bar and the menu.
 export const HEADER_LINKS: readonly (HeaderLink & { visible: Visible })[] = [
+    {
+        key: 'instruments', href: '/?view=home', labelKey: 'base.instruments.title', group: 'support',
+        visible: () => true,
+    },
     {
         key: 'orientation', href: '/bussola', labelKey: 'nav.orientation', group: 'support',
         visible: (input) => authenticated(input) && tool('bussola')(input),
