@@ -12,9 +12,13 @@ Modifiche:
   - `_final_step_summary`: corretti gli ID step di sintesi per `"QPCC": "qpcc-sintesi"`, `"QAP": "qap-sintesi"`, e aggiunti i mapping per `"EVENTO_STUDIO": "evstudio-final"`, `"EVENTO_PROFESSIONALE": "evprof-final"`, `"OBIETTIVO_STUDIO": "obbstudio-final"`, `"OBIETTIVO_DOCENZA": "obbdocenza-final"`.
   - Passaggio di provider e model coerenti estratti dai log di sessione per la generazione della sintesi LLM.
   - `get_user_session_conversation`: abilitato il recupero della trascrizione anche per sessioni di prova.
+- `frontend/src/components/qsa/SessionReport.tsx` e `frontend/src/app/page.tsx`:
+  - Semplificazione lineare della schermata di completamento: rimosse scelte dispersive e ridondanti (domanda "Vuoi analizzare un altro questionario?", opzioni radio brief/full, pulsante di rigenerazione sintesi, iframe preview 75vh, pulsante "Termina" con reindirizzamento al questionario di gradimento `farewell`).
+  - Due sole azioni dirette: **Scarica il resoconto PDF** (scarica direttamente il documento completo e riporta alla pagina principale) e **Torna alla pagina principale** (per uscire immediatamente azzerando le selezioni).
 - Test:
   - `backend/tests/test_pdf_summary.py`: aggiunto `test_practice_questionnaire_summary_and_pdf` che verifica anteprima di riepilogo, generazione PDF, recupero conversazione, permessi proprietario/admin e blocco 403 per utenti non autorizzati.
   - Eseguita verifica end-to-end con la sessione reale docente del mattino (`1986b52c-81ad-4c4a-a2e8-114e11415abf`): riepilogo pronto e PDF generato (18.164 byte).
+  - Test suite frontend: 593/593 test superati (`npm test`).
 - Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
 
 # Handoff t7: estensione guardiano (interpretation_open, hypotheses), preservazione sintesi e rilascio facilitazione (fase 6)
