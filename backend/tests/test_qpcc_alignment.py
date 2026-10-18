@@ -91,7 +91,7 @@ def test_guided_runtime_scope_labels_direction_and_final_contract(lang):
             request = ChatRequest(questionnaire_type='QPCC', phase=phase, use_phase_prompt=True, language=lang, scores_context=text)
             turn = prepare_chat_turn(db,ai,request,'fixture',{},include_retrieval=False,include_history=False,create_anonymous_code=False)
             assert '[CANONICAL QPCC CONTRACT]' in turn.system_prompt_final
-            assert 'A1/A2/A3 measure difficulties' in turn.system_prompt_final
+            assert 'A1/A2/A3 reflect self-reported perceived difficulties' in turn.system_prompt_final
             assert 'M2 describes ego orientation' in turn.system_prompt_final
             assert 'WRONG' not in turn.model_scores_context
             for code in codes:
