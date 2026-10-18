@@ -560,19 +560,21 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
 
     from .prompt_contract import platform_context
     parts = [system_prompt]
-    if conversation_quality_directive:
+    if conversation_quality_directive and "[ORIENTATION]" not in system_prompt and conversation_quality_directive.strip() not in system_prompt:
         parts.append("\n\n" + conversation_quality_directive)
-    if context_directive:
+    if context_directive and "[CONTEXT]" not in system_prompt and context_directive.strip() not in system_prompt:
         parts.append("\n\n" + context_directive)
-    if lang_directive:
+    if lang_directive and "[LANGUAGE]" not in system_prompt and lang_directive.strip() not in system_prompt:
         parts.append("\n\n" + lang_directive)
-    if register_directive:
+    if register_directive and "[REGISTER]" not in system_prompt and register_directive.strip() not in system_prompt:
         parts.append("\n\n" + register_directive)
-    if thinking_directive:
+    if thinking_directive and "[THINKING]" not in system_prompt and thinking_directive.strip() not in system_prompt:
         parts.append("\n\n" + thinking_directive)
-    if affirmative_directive:
+    if affirmative_directive and affirmative_directive.strip() not in system_prompt:
         parts.append("\n\n" + affirmative_directive)
-    parts.append("\n\n" + platform_context(db, full=platform_full))
+    plat_ctx = platform_context(db, full=platform_full)
+    if plat_ctx and "[PLATFORM CAPABILITIES]" not in system_prompt:
+        parts.append("\n\n" + plat_ctx)
     return "".join(parts)
 
 
@@ -981,6 +983,12 @@ def _is_strategy_questionnaire(questionnaire_type: Optional[str]) -> bool:
     return (questionnaire_type or "").upper() in {"QSA", "QSAR"}
 
 
+def is_guided_chat(questionnaire_type: Optional[str] = None, step_id: Optional[str] = None) -> bool:
+    """True for structured questionnaire chats and guided paths."""
+    q = (questionnaire_type or "").strip().upper()
+    return bool(step_id or (q and q not in {"", "FREE", "GENERIC"}))
+
+
 def _is_intro_step_mode(system_prompt_mode: Optional[str]) -> bool:
     """True for guided welcome/intro steps.
 
@@ -1365,7 +1373,7 @@ def _requires_complete_factor_output(mode: Optional[str]) -> bool:
 
 
 def _apply_current_step_factor_scope_directive(system_prompt: str, questionnaire_type: str, allowed_codes: set[str]) -> str:
-    if not _is_strategy_questionnaire(questionnaire_type) or not allowed_codes:
+    if not _is_strategy_questionnaire(questionnaire_type) or not allowed_codes or "[CURRENT STEP FACTORS]" in system_prompt:
         return system_prompt
     allowed = ", ".join(sorted(allowed_codes))
     return (
@@ -1604,6 +1612,8 @@ def _apply_current_step_score_profile_directive(
     include_advice: bool,
     factor_names: dict[str, str] | None = None,
 ) -> str:
+    if "[CURRENT STEP PROFILE]" in system_prompt:
+        return system_prompt
     if (questionnaire_type or "").upper() == "ZTPI":
         return _apply_ztpi_step_profile_directive(system_prompt, language, scores_context, allowed_codes)
     if _is_competence_questionnaire(questionnaire_type):
@@ -1680,7 +1690,7 @@ def _apply_certified_advice_directive(system_prompt: str, questionnaire_type: st
     il vincolo e' limitato al QSA: QSAr non ha ancora un catalogo certificato
     equivalente e non va degradato implicitamente.
     """
-    if not _is_qsa(questionnaire_type):
+    if not _is_qsa(questionnaire_type) or "[CERTIFIED ADVICE]" in system_prompt:
         return system_prompt
     # La heading localizzata vive nella coda score-profile, gated a include_advice;
     # non ripeterla qui.
@@ -2281,9 +2291,11 @@ def _retrieved_context(
                 "source": str(item.get("source") or "").strip(),
             })
 
-    # RAG: Guide Competenzestrategiche.it
+    is_guided = is_guided_chat(questionnaire_type, request.phase)
+
+    # RAG: Guide Competenzestrategiche.it (disattivato nelle chat guidate)
     graph_context = ""
-    if knowledge_enabled and bool(component_flags.get("rag_competenzestrategiche", True)):
+    if knowledge_enabled and not is_guided and bool(component_flags.get("rag_competenzestrategiche", True)):
         try:
             if query:
                 rag_results = _filter_rag_results_by_instrument(
@@ -2304,9 +2316,9 @@ def _retrieved_context(
             logger.warning(f"RAG competenzestrategiche non disponibile: {e}")
             graph_context = ""
 
-    # RAG: Documenti CounselorBot (docs-counselorbot)
+    # RAG: Documenti CounselorBot (docs-counselorbot, disattivato nelle chat guidate)
     counselorbot_context = ""
-    if knowledge_enabled and bool(component_flags.get("rag_counselorbot", False)):
+    if knowledge_enabled and not is_guided and bool(component_flags.get("rag_counselorbot", False)):
         try:
             if query:
                 cb_results = _filter_rag_results_by_instrument(
@@ -2327,9 +2339,9 @@ def _retrieved_context(
             logger.warning(f"RAG counselorbot non disponibile: {e}")
             counselorbot_context = ""
 
-    # RAG: Materiali Questionari e strumenti
+    # RAG: Materiali Questionari e strumenti (disattivato nelle chat guidate)
     questionari_context = ""
-    if knowledge_enabled and bool(component_flags.get("rag_questionari", False)):
+    if knowledge_enabled and not is_guided and bool(component_flags.get("rag_questionari", False)):
         try:
             if query:
                 q_results = _filter_rag_results_by_instrument(
@@ -2500,6 +2512,10 @@ def prompt_meta_config_key(questionnaire_type: str, step_id: str | None = None) 
 def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None, *, advice_requested=False) -> dict:
     flags = dict(PROMPT_COMPONENT_DEFAULTS)
     flags["allowed_strategies"] = None
+    if is_guided_chat(questionnaire_type, step_id):
+        flags["rag_competenzestrategiche"] = False
+        flags["rag_counselorbot"] = False
+        flags["rag_questionari"] = False
     try:
         step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first() if step_id else None
         if step and (_is_intro_step_mode(step.system_prompt_mode) or step.id in WELCOME_PHASE_IDS):
@@ -2508,7 +2524,7 @@ def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None,
                 "affective_factors": False,
                 "other_scores": False,
                 "knowledge": False,
-                "rag_counselorbot": True,
+                "rag_counselorbot": False,
                 "rag_competenzestrategiche": False,
                 "rag_questionari": False,
                 "approved_strategies": False,
@@ -2863,7 +2879,8 @@ def build_context_envelope(
         components["meta_system_prompt"] = meta_system_prompt
         components["instruction_prefix"] = "\n\n".join(parts_system).replace("{{counselor_name}}", counselor_name or "the counsellor")
     # Right after the editable instruction prefix (which must stay the start of the prompt).
-    parts_system.append(ROLE_BLOCK)
+    if not any(ROLE_BLOCK in p for p in parts_system):
+        parts_system.append(ROLE_BLOCK)
 
     # Slot [SECTION] delle skill: predisposto, nessuna skill lo usa nel pilota.
     for block in (skills_blocks or {}).get("section", []):
@@ -2909,7 +2926,8 @@ def build_context_envelope(
     if components is not None:
         components["metadata"] = student_block if _component_enabled(component_flags, "metadata") else ""
     if student_block and _component_enabled(component_flags, "metadata"):
-        parts_system.append("[STUDENT]\n" + student_block)
+        if not any("[STUDENT]" in p for p in parts_system):
+            parts_system.append("[STUDENT]\n" + student_block)
 
     current_step = (
         db.query(models.GuidedStep).filter(models.GuidedStep.id == (step_id or request.phase)).first()
@@ -2925,7 +2943,8 @@ def build_context_envelope(
     if components is not None:
         components["guided_path"] = guided_path if _component_enabled(component_flags, "metadata") else ""
     if guided_path and _component_enabled(component_flags, "metadata"):
-        parts_system.append("[GUIDED PATH]\n" + guided_path)
+        if not any("[GUIDED PATH]" in p for p in parts_system):
+            parts_system.append("[GUIDED PATH]\n" + guided_path)
 
     # --- [PROFILE] modello discente (auto-dichiarato) + PUNTEGGI (riferimento) ---
     username_for_context = identity.get("username", "") if identity else ""
@@ -3035,17 +3054,17 @@ def build_context_envelope(
         components["other_scores"] = "" if _is_strategy_questionnaire(questionnaire_type) else message_scores_context
     # Avviso di simulazione: blocco a se', prima del profilo, fuori dalle
     # riduzioni dei livelli di contesto che accorciano [PROFILE].
-    if simulation_block:
+    if simulation_block and not any("[SIMULATION]" in p for p in parts_system):
         parts_system.append("[SIMULATION]\n" + simulation_block)
-    if profile_block:
+    if profile_block and not any("[PROFILE]" in p for p in parts_system):
         parts_system.append("[PROFILE]\n" + profile_block)
-    if class_context:
+    if class_context and not any("[CONTESTO CLASSE]" in p for p in parts_system):
         parts_system.append("[CONTESTO CLASSE]\n" + class_context)
 
     reading_context = _reading_context(db, username_for_context, questionnaire_type, session_id) if _component_enabled(component_flags, "student_booklet") and not is_docenza_chat and not is_practice_notebook else ""
     if components is not None:
         components["student_booklet"] = reading_context
-    if reading_context:
+    if reading_context and not any("[READING]" in p for p in parts_system):
         parts_system.append("[READING]\n" + reading_context)
 
     # --- [IDEA REFERENCE] documento privato scelto per questa sessione ---
@@ -3057,7 +3076,7 @@ def build_context_envelope(
         )
         if components is not None:
             components["idea_reference"] = idea_reference_block
-        if idea_reference_block:
+        if idea_reference_block and not any("[IDEA REFERENCE]" in p for p in parts_system):
             parts_system.append("[IDEA REFERENCE]\n" + idea_reference_block)
 
     # --- [IDEA SOURCES] le fonti che la persona ha tenuto per questo ramo ---
@@ -3071,7 +3090,7 @@ def build_context_envelope(
         )
         if components is not None:
             components["idea_sources"] = idea_sources_block
-        if idea_sources_block:
+        if idea_sources_block and not any("[IDEA SOURCES]" in p for p in parts_system):
             parts_system.append("[IDEA SOURCES]\n" + idea_sources_block)
 
     # --- [IDEA MAP] la mappa che la sessione sta costruendo ---
@@ -3086,11 +3105,11 @@ def build_context_envelope(
         )
         if components is not None:
             components["idea_map"] = idea_map_block
-        if idea_map_block:
+        if idea_map_block and not any("[IDEA MAP]" in p for p in parts_system):
             parts_system.append("[IDEA MAP]\n" + idea_map_block)
 
     # --- [KNOWLEDGE] grafo + strategie + certificate + votate (da _retrieved_context) ---
-    if knowledge_context:
+    if knowledge_context and not any("[KNOWLEDGE]" in p for p in parts_system):
         parts_system.append("[KNOWLEDGE]\n" + knowledge_context)
 
     # Una richiesta esplicita di letture o un dato puntuale puo' usare il
@@ -3104,12 +3123,13 @@ def build_context_envelope(
             for block in (skills_blocks or {}).get("knowledge", [])
             if block.lstrip().startswith(("[CERTIFIED_READINGS]", "[WEB_SOURCES]"))
         ]
-        if source_blocks:
+        if source_blocks and not any("[KNOWLEDGE]" in p for p in parts_system):
             parts_system.append("[KNOWLEDGE]\n" + "\n\n".join(source_blocks))
 
     # Slot di coda delle skill: direttive che devono chiudere il system prompt.
     for block in (skills_blocks or {}).get("directive_tail", []):
-        parts_system.append(block)
+        if block and not any(block.strip() in p for p in parts_system):
+            parts_system.append(block)
 
     system_prompt_final = "\n\n".join(parts_system)
     if components is not None:
