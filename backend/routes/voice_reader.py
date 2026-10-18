@@ -101,7 +101,7 @@ def spoken_segments(text: str, language: str, rules: list[PronunciationRule] | N
 
 def reader_voice(request: ReaderRequest, db: Session) -> str:
     if request.counselor_id and not request.voice_override:
-        counselor = personal_api.visible_counselor(db, request.counselor_id)
+        counselor = personal_api.visible_counselor(db, request.counselor_id) if hasattr(db, 'query') else (db.get(models.Counselor, request.counselor_id) if hasattr(db, 'get') else None)
         if counselor and counselor.voice_mapping:
             assigned = counselor.voice_mapping.get(request.language)
             if request.engine == "edge":

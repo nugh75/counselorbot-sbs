@@ -97,6 +97,8 @@ def require_ready(db=None):
 
 def bind_identity(db, identity, language="it"):
     """Propagate only the already-authenticated identity to nested AI calls."""
+    if db is None or not hasattr(db, "info"):
+        return
     owner = identity.get("username") if identity and identity.get("authenticated") else None
     # Preview/demo identities cannot spend any person's subscription.
     from .auth import VIEW_AS_DEMO_ACCOUNTS
