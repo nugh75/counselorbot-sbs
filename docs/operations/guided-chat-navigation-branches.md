@@ -105,15 +105,16 @@ React Strict Mode: risolta mantenendo lo scope di sessione tra i due effetti.
 Un primo caricamento browser dopo la ricompilazione ha superato i 15 secondi
 previsti dalla fixture; ripetuto a compilazione completata, supera la prova.
 
-Build backend Docker isolata eseguita prima degli ultimi ritocchi. Il tentativo
-frontend Docker ha esaurito lo spazio del disco di sistema ed è stato interrotto;
-Docker Desktop è diventato indisponibile. Gli artefatti temporanei di validazione
-sono stati spostati sul volume di sviluppo conservando i collegamenti originali;
-nessuna pulizia di immagini, volumi o dati. Build frontend locale isolata completata
-con i font reali già nella cache; controllo finale sulla stessa applicazione.
-Lo standalone della build finale è stato avviato su loopback :3158 e restituisce HTTP 200.
-Il rebuild Docker finale di entrambe le immagini resta da ripetere. Nessun
-riavvio di Docker Desktop o servizio produttivo è stato eseguito per forzarlo.
+Build backend e frontend Docker completate il 20 ottobre 2026 dopo il ripristino
+di Docker Desktop, precedute dalla pulizia della cache delle vecchie build e delle
+immagini inutilizzate (circa 35 GB recuperati, immagini in uso e tag di ripristino
+conservati). Il compose portabile ha ricreato `counselorbot-backend` e
+`counselorbot-frontend`: entrambi sono healthy, il frontend su loopback :3108
+risponde 200, `/auth/me` del backend risponde 200 e l'ingresso pubblico risponde
+302 verso l'autenticazione. Il codice distribuito contiene il nuovo modulo
+`backend/guided_explorations.py` e le stringhe della navigazione nei bundle
+frontend. I volumi non sono stati toccati e le immagini
+`rollback-before-dcedc209` restano disponibili per il ripristino.
 
 Comandi principali ripetibili:
 
@@ -136,6 +137,12 @@ di `artifact_session`, nel solo database `counselorbot_test`.
 
 Runner e limiti di accesso restano in `scripts/dev-guided-choice-tests.sh` e
 `docs/operations/live-dev-environment.md` (:3157, backend disabilitato fuori dalle
-fixture). Nessun deploy o sudo. Il frontend di test viene fermato a fine sessione;
-lo stato del container Postgres temporaneo non è verificabile finché Docker
-Desktop non torna disponibile.
+fixture). Questi runner non eseguono deploy e non richiedono `sudo`. Il container
+Postgres di validazione è stato riavviato e `counselorbot_test` ricreato per la
+verifica finale: `test_guided_explorations.py`, `test_control_markers.py` e
+`test_chat_preparation.py` danno 58 test superati, 1 saltato e il solo
+`test_live_audit_fallback_receives_original_history` fallito, già riprodotto sulla
+base. La suite backend completa su un unico database condiviso non è un confronto
+valido: i file che richiedono il Postgres dedicato su 127.0.0.1:18650 e le fixture
+che presuppongono stato pulito danno i fallimenti ambientali già noti, quindi la
+verifica del rilascio usa la batteria mirata.
