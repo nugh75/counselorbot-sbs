@@ -2,7 +2,7 @@
 
 Verifies:
 (a) Initial turns (< 4 exchanges) do not inject the marker if not present.
-(b) Reaching the safety threshold (4-5 exchanges in step) injects [[AVANZA_STEP]] if missing.
+(b) Reaching the threshold offers a direction choice without injecting an advance marker.
 (c) If the model emits [[AVANZA_STEP]] before the threshold, it is not duplicated.
 (d) Final synthesis, farewell, or intro steps do not get an undue marker.
 """
@@ -15,9 +15,7 @@ from typing import Generator
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.orm import sessionmaker
 
 from backend import auth, control_markers, database, models, step_closure
 from backend.ai_service import AIService
@@ -128,15 +126,16 @@ def test_should_force_step_closure_ineligible_never_forces():
     assert not step_closure.should_force_step_closure(10, is_eligible=False, threshold=5)
 
 
-# --- Integration Tests with SQLite, /chat and /chat/stream ---
+# --- Integration tests on isolated Postgres, /chat and /chat/stream ---
 
 @pytest.fixture
 def test_db(monkeypatch):
-    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
-    database.Base.metadata.create_all(engine)
-    session_factory = sessionmaker(bind=engine)
-    monkeypatch.setattr(database, "SessionLocal", session_factory)
-    with session_factory() as db:
+    from backend.tests.artifact_database import artifact_session
+    with artifact_session() as db:
+        # Streaming log writes open their own Session; keep that Session in the
+        # same synthetic schema rather than leaking into the test DB's public one.
+        monkeypatch.setattr(database, "SessionLocal", sessionmaker(
+            bind=db.get_bind(), join_transaction_mode="create_savepoint"))
         # Seed test guided steps
         steps = [
             models.GuidedStep(id="test-intro", questionnaire_type="TEST_Q", sort_order=-1, label="0. Intro", prompt="Intro", system_prompt_mode="intro"),
@@ -145,9 +144,8 @@ def test_db(monkeypatch):
             models.GuidedStep(id="test-final", questionnaire_type="TEST_Q", sort_order=3, label="3. Final Summary", prompt="Final prompt", system_prompt_mode="summary"),
         ]
         db.add_all(steps)
-        db.commit()
+        db.flush()
         yield db
-    engine.dispose()
 
 
 @pytest.fixture
@@ -230,15 +228,26 @@ def test_initial_turns_do_not_force_marker(monkeypatch, test_db, client_app, str
 
 
 @pytest.mark.parametrize("stream", [False, True])
-def test_threshold_reached_injects_marker_if_missing(monkeypatch, test_db, client_app, stream):
-    """(b) Al raggiungimento della soglia (4-5 scambi nello step) il marcatore [[AVANZA_STEP]] viene aggiunto se mancante."""
+def test_threshold_reminds_the_model_but_never_overrides_the_choice(monkeypatch, test_db, client_app, stream):
+    """A chosen exploration stays open beyond the threshold in both transports."""
     session_id = f"test-threshold-{stream}"
     session_memory.clear(session_id)
 
-    monkeypatch.setattr(chat_routes, "AIService", _MockAIService)
+    prompts = []
+
+    class CaptureAI(_MockAIService):
+        def get_response(self, message, system, *args, **kwargs):
+            prompts.append(system)
+            return super().get_response(message, system, *args, **kwargs)
+
+        def stream_response(self, message, system, *args, **kwargs):
+            prompts.append(system)
+            yield from super().stream_response(message, system, *args, **kwargs)
+
+    monkeypatch.setattr(chat_routes, "AIService", CaptureAI)
 
     # Execute 5 turns with threshold = 5
-    for turn in range(1, 6):
+    for turn in range(1, 7):
         payload = {
             "session_id": session_id,
             "message": f"Messaggio utente turno {turn}",
@@ -261,16 +270,12 @@ def test_threshold_reached_injects_marker_if_missing(monkeypatch, test_db, clien
             control_signals = data.get("control_signals", [])
             response_text = data.get("response", "")
 
-        if turn < 5:
-            assert control_signals == [], f"Turno {turn} prima della soglia non deve avere AVANZA_STEP"
-        else:
-            # Turn 5 reached threshold: marker was added, control signal is present!
-            assert "AVANZA_STEP" in control_signals, "Al raggiungimento della soglia (5 scambi) AVANZA_STEP deve essere presente"
-            # Note: control markers are stripped from visible response so user never reads them
-            assert "[[AVANZA_STEP]]" not in response_text
-            # session_memory must have recorded the step as completed
-            progress = session_memory.get_progress(session_id)
-            assert "test-step1" in progress.get("completed_phases", [])
+        assert ('[STEP DIRECTION CHOICE]' in prompts[-1]) == (turn % 5 == 0)
+        assert '[GUIDED CHOICE]' in prompts[-1]
+        assert control_signals == [], f"Turn {turn}: the counter must never decide for the person"
+        assert "[[AVANZA_STEP]]" not in response_text
+        progress = session_memory.get_progress(session_id)
+        assert "test-step1" not in progress.get("completed_phases", [])
 
     session_memory.clear(session_id)
 

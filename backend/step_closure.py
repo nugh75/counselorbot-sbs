@@ -1,10 +1,8 @@
-"""Server-side step closure for guided chat and interview instruments.
+"""Remind the counselor to offer a direction choice after several exchanges.
 
-In guided paths (QPCC, QAP, QPCS, QSAr, ZTPI, Savickas, Evento, Obiettivo, etc.),
-permanence in a step is governed by qualitative criteria with a safety ceiling
-at around 5 exchanges. If the model does not emit [[AVANZA_STEP]] or the student
-keeps interacting, this guard appends [[AVANZA_STEP]] at the safety threshold
-so the frontend can advance without getting stuck indefinitely.
+The threshold is an orientation reminder, never consent to advance. Legacy
+marker helpers remain available, but chat routes must not use them to override
+a person's pending choice or chosen exploration (#410 supersedes forced closure).
 """
 from __future__ import annotations
 
@@ -21,6 +19,24 @@ from .prompt_config import WELCOME_PHASE_IDS
 from .qsa_essential import is_essential_summary
 
 DEFAULT_STEP_SAFETY_THRESHOLD = 5
+
+
+def step_choice_context(db, step, phase, questionnaire_type, session_id) -> str:
+    if not is_step_closure_eligible(db, step, phase, questionnaire_type):
+        return ""
+    exchanges = count_step_assistant_exchanges(db, session_id, phase)
+    threshold = max(1, get_step_safety_threshold(db))
+    # A repeated reminder on every later turn would itself turn the dialogue
+    # into a menu. Revisit direction periodically, leaving chosen depth room.
+    if (exchanges + 1) % threshold:
+        return ""
+    return (
+        "[STEP DIRECTION CHOICE]\nSeveral exchanges have occurred in this step. "
+        "Briefly return what has emerged and offer ONE choice to keep exploring or resume "
+        "the path, unless the person has just made that choice: then honour it. "
+        "The exchange count never supplies consent or requires closure. "
+        "Emit no advance marker while awaiting the choice or exploring the chosen topic."
+    )
 
 
 def get_step_safety_threshold(db: Session | None = None) -> int:

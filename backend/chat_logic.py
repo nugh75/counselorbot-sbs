@@ -960,7 +960,7 @@ def _phase_factor_codes(db, phase: Optional[str]) -> set[str]:
 # Descrizioni del percorso essenziale per strumento: sostituiscono il contesto
 # di navigazione quando la richiesta arriva con guided_path="essential".
 _ESSENTIAL_PATH_DESCRIPTIONS = {
-    "QSA": "Essential QSA path: choose a focus, give one example, agree or adapt one action, receive a summary. Exactly three student replies; further discussion is optional.",
+    "QSA": "Essential QSA path: choose a focus, give one example, agree or adapt one action, receive a summary. Three short stages, not a fixed number of replies; depth is optional and requires a choice.",
     "OBIETTIVO_STUDIO": "Essential learning-objective path in three short stages: focus on ONE precise thing with an early editable draft, complete only what the objective still lacks (observable verb, content, plausible proof), agree the first steps with one if-then plan and a proof; then the objective restated in its complete well-written form (who + observable verb + what + condition + criterion). A stage closes when its result is agreed or the person chooses to move on, not after a fixed number of replies; further discussion is optional.",
     "OBIETTIVO_DOCENZA": "Essential didactic-objective path in three short stages: focus on ONE precise result for the class with an early editable draft, complete only what the objective still lacks (audience, observable verb, content, plausible proof), align one or two activities and the assessment; then the objective in its complete ABCD form (audience + observable verb + what + lesson condition + criterion tied to the assessment). A stage closes when its result is agreed or the teacher chooses to move on, not after a fixed number of replies; further discussion is optional.",
 }
@@ -1028,8 +1028,11 @@ def _guided_path_context(db, questionnaire_type: str, current_step_id: str | Non
 
     lines.append(
         "If the student asks to continue, go to the next step, move forward, or says they are ready "
-        "for the next step, do not say that you do not know the path. Reply with exactly [[AVANZA_STEP]] "
-        "so the interface advances. Do not explain the marker."
+        "for the next step, reply with exactly [[AVANZA_STEP]] so the interface can advance "
+        "without asking again. The next step opening supplies the visible orientation. "
+        "Do not explain the marker. "
+        "Emit no advance marker while awaiting a depth choice or continuing the chosen exploration. "
+        "Opening agreement and final-step rules still apply."
     )
     lines.append(
         "If the student asks what comes next, answer briefly with the next step label. "
@@ -3016,7 +3019,8 @@ def build_context_envelope(
         if (step_id or request.phase) else None
     )
     if getattr(request, "guided_path", "complete") == "essential" and questionnaire_type in _ESSENTIAL_PATH_DESCRIPTIONS:
-        guided_path = _ESSENTIAL_PATH_DESCRIPTIONS[questionnaire_type]
+        from .qsa_essential import navigation_context
+        guided_path = _ESSENTIAL_PATH_DESCRIPTIONS[questionnaire_type] + "\n" + navigation_context(request.phase)
     else:
         guided_path = _guided_path_context(
             db, questionnaire_type, step_id or request.phase, language,

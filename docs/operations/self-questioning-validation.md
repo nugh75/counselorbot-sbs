@@ -33,7 +33,7 @@ di domande del passo. Non aggiunge turni obbligatori né condizioni per avanzare
 | QPCC | Profilo e cinque approfondimenti sulle quattro dimensioni e dieci scale canoniche, senza confondere ansia, insicurezza, inadeguatezza e competenze. Restano i limiti dei follow-up. |
 | QAP | Profilo e quattro risorse, senza trasformarle nelle cinque aree QPCS né imporre scelte professionali. |
 | Savickas | Restano le cinque domande narrative previste. Il sostegno può operare nei follow-up disponibili, senza sostituire la domanda principale. Nessuna lettura di punteggi o profilo aggiunta. |
-| QSA essenziale | I compiti specifici dei tre turni prevalgono; la sintesi non aggiunge domande. L'autointerrogazione non diventa un ulteriore turno. |
+| QSA essenziale | I compiti specifici delle tre fasi prevalgono; la sintesi non aggiunge domande. L'autointerrogazione non diventa un ulteriore turno. |
 
 Presentazioni e patti sono esclusi. IDEA, Eventi, Obiettivi, OpenCode e chat
 libera non ricevono questa strategia. La fase volontaria `questions` dei sette

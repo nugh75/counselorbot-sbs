@@ -49,7 +49,7 @@ def test_preparation_resolves_virtual_steps_and_keeps_format_separate_from_lengt
         result = prepare_chat_turn(db, AIService(db), request, 'essential-test', {'username': 'tester'},
                                    include_retrieval=False, include_history=False)
         assert '[QSA ESSENTIAL PATH - CURRENT TURN]' in result.system_prompt_final
-        assert 'Exactly three student replies' in result.system_prompt_final
+        assert 'Three short stages, not a fixed number of replies' in result.system_prompt_final
         assert 'compact Markdown tables' in result.system_prompt_final
         assert result.effective_response_length == 'short'
         assert result.questionnaire_type == 'QSA'

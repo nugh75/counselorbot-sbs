@@ -10,6 +10,7 @@ QUESTIONNAIRE_DIALOGUES = frozenset({"QSA", "QSAR", "ZTPI", "QPCS", "QPCC", "QAP
 
 FACILITATION_SENTINEL = "[FACILITATION]"
 SELF_QUESTIONING_SENTINEL = "[SELF-QUESTIONING]"
+GUIDED_CHOICE_SENTINEL = "[GUIDED CHOICE]"
 
 
 def _self_questioning_contract(stage: str) -> str:
@@ -191,8 +192,10 @@ def _objective_focus_contract(questionnaire_type: str, stage: str, entry: bool =
         + " goes in only if the person confirms it, and you say where it comes from. Keep every "
         "detail already agreed unless the person removes it, and add no feature, constraint or "
         "condition they did not state. Repeat the whole objective only when it changes. When the "
-        "current step is complete, the step marker moves the application on by itself: never ask "
-        "the person whether to go on or to confirm moving on."
+        "current step is complete and any depth choice is resolved, the step marker moves the "
+        "application on by itself: never ask for a redundant technical confirmation. "
+        "An optional deeper exploration is a real choice: offer staying with the topic or "
+        "continuing before opening it, and emit no step marker while awaiting that choice."
     )
     if entry and stage != "synthesis":
         conduct += (" This is the first reply of the step: begin with ONE short sentence that says "
@@ -329,6 +332,7 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
                   objective_entry: bool = False,
                   facilitation_contract_enabled: bool = False,
                   thread_state: str | None = None,
+                  guided_choice: bool = False,
                   existing_prompt: str = "") -> str:
     lines = [
         "[TURN CONTRACT]",
@@ -394,4 +398,7 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
                      'Never use nodes/edges or from/to as patch keys. Keep the patch complete and closed.')
     else:
         lines.append("Private blocks follow the visible reply; never describe their syntax to the student.")
+    if guided_choice:
+        from .prompt_config import GUIDED_CHOICE_DIRECTIVE
+        lines.append(GUIDED_CHOICE_DIRECTIVE)
     return "\n".join(lines)

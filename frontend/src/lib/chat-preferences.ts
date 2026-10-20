@@ -14,7 +14,7 @@ const labels = {
         "complete": "Percorso completo",
         "completeHelp": "Esplora le diverse dimensioni.",
         "essential": "Percorso essenziale",
-        "essentialHelp": "3 brevi risposte, poi una sintesi. Approfondimenti facoltativi.",
+        "essentialHelp": "3 fasi brevi (focus, esempio, azione), poi una sintesi. Puoi scegliere di approfondire o proseguire.",
         "start": "Inizia",
         "focus": "Scegliere il focus",
         "experience": "Un esempio concreto",
@@ -38,7 +38,7 @@ const labels = {
         "complete": "Complete path",
         "completeHelp": "Explore the different dimensions.",
         "essential": "Essential path",
-        "essentialHelp": "3 short replies, then a summary. Further discussion is optional.",
+        "essentialHelp": "3 short stages (focus, example, action), then a summary. You can choose to explore further or continue.",
         "start": "Start",
         "focus": "Choose a focus",
         "experience": "A concrete example",
@@ -62,7 +62,7 @@ const labels = {
         "complete": "Recorrido completo",
         "completeHelp": "Explora las distintas dimensiones.",
         "essential": "Recorrido esencial",
-        "essentialHelp": "3 respuestas breves y una síntesis. Profundizar es opcional.",
+        "essentialHelp": "3 fases breves (foco, ejemplo, acción) y una síntesis. Puedes elegir profundizar o continuar.",
         "start": "Empezar",
         "focus": "Elegir un tema",
         "experience": "Un ejemplo concreto",
@@ -86,7 +86,7 @@ const labels = {
         "complete": "Parcours complet",
         "completeHelp": "Explorez les différentes dimensions.",
         "essential": "Parcours essentiel",
-        "essentialHelp": "3 réponses brèves, puis une synthèse. Approfondissement facultatif.",
+        "essentialHelp": "3 étapes brèves (focus, exemple, action), puis une synthèse. Vous pouvez choisir d’approfondir ou de continuer.",
         "start": "Commencer",
         "focus": "Choisir un sujet",
         "experience": "Un exemple concret",
@@ -110,7 +110,7 @@ const labels = {
         "complete": "Vollständiger Weg",
         "completeHelp": "Erkunde die verschiedenen Dimensionen.",
         "essential": "Kompakter Weg",
-        "essentialHelp": "3 kurze Antworten, dann eine Zusammenfassung. Vertiefung ist freiwillig.",
+        "essentialHelp": "3 kurze Phasen (Fokus, Beispiel, Handlung), dann eine Zusammenfassung. Du kannst vertiefen oder weitergehen.",
         "start": "Beginnen",
         "focus": "Schwerpunkt wählen",
         "experience": "Ein konkretes Beispiel",
@@ -134,7 +134,7 @@ const labels = {
         "complete": "Fullständig väg",
         "completeHelp": "Utforska de olika dimensionerna.",
         "essential": "Kort väg",
-        "essentialHelp": "3 korta svar, sedan en sammanfattning. Fördjupning är valfri.",
+        "essentialHelp": "3 korta faser (fokus, exempel, handling), sedan en sammanfattning. Du kan välja att fördjupa eller gå vidare.",
         "start": "Börja",
         "focus": "Välj fokus",
         "experience": "Ett konkret exempel",
@@ -154,10 +154,7 @@ export function chatPreferenceLabel(lang: Lang, key: keyof typeof labels.it): st
     return (labels[lang] || labels.en)[key];
 }
 
-// Percorsi con versione essenziale: il QSA è stato il primo e avanza dopo ogni
-// risposta completata; i due percorsi Obiettivo riusano le fasi virtuali fuori
-// dalla tabella degli step, ma una fase si chiude sul marcatore di avanzamento
-// (o quando la persona sceglie di proseguire), non dopo un numero fisso di risposte.
+// Tre fasi brevi e sintesi; si avanza sul segnale dopo una scelta risolta.
 export const ESSENTIAL_INSTRUMENTS = ['QSA', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA'] as const;
 export type EssentialInstrument = (typeof ESSENTIAL_INSTRUMENTS)[number];
 
@@ -185,14 +182,12 @@ export function essentialPhasesFor(type: string): readonly string[] {
     throw new Error(`Unsupported essential instrument: ${type}`);
 }
 
-// Obiettivo: fasi chiuse dal marcatore. QSA: tre risposte, una per fase.
+// Ogni percorso essenziale chiude la fase sul marcatore.
 export function essentialAdvancesOnSignal(type: string): boolean {
-    return type === 'OBIETTIVO_STUDIO' || type === 'OBIETTIVO_DOCENZA';
+    return isEssentialInstrument(type);
 }
 
-// Fase a cui risponde il turno della persona: nel QSA la successiva (la
-// risposta apre la fase dopo), negli Obiettivo quella in corso, finché il
-// modello non la chiude.
+// Chiarimenti e approfondimenti restano nella fase corrente fino alla chiusura.
 export function essentialReplyPhase(type: string, phase: string): string {
     return essentialAdvancesOnSignal(type) ? phase : nextEssentialPhase(phase);
 }

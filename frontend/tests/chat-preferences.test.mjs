@@ -50,38 +50,59 @@ async function fixture(width, instrument = 'QSA', experience = 'standard') {
     return { context, page, state };
 }
 for (const width of [390, 1440]) {
-    test(`QSA essential reaches summary after three replies and resumes at ${width}px`, async () => {
+    test(`QSA essential respects depth choices, resumes and reaches summary at ${width}px`, async () => {
         const { context, page, state } = await fixture(width);
+        state.script = body => {
+            if (body.use_phase_prompt) return { text: `Apertura: ${body.phase}` };
+            if (body.phase === 'qsa-essential-followup') return { text: 'Riprendiamo volontariamente il tema scelto.' };
+            const message = body.memory_message;
+            if (message === 'Vorrei approfondire') return { text: 'Siamo nella scelta del focus; dopo raccoglieremo un esempio. Vuoi approfondire o proseguire?' };
+            if (message === 'Sì, approfondiamo') return { text: 'Restiamo sul focus scelto: esploriamo come scegli di iniziare.' };
+            return { text: `Passiamo oltre: ${body.phase}`, signals: ['AVANZA_STEP'] };
+        };
+        const send = async text => {
+            await page.locator('#guided-composer').fill(text);
+            await page.locator('#guided-composer').press('Enter');
+        };
         try {
             await page.goto(`${origin}/?resume=1`);
             await page.getByRole('radio', { name: /Percorso essenziale/ }).check();
-            await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('bullets');
             await page.getByRole('button', { name: 'Inizia', exact: true }).click();
-            await page.getByRole('log').getByText('Risposta 1: qsa-essential-focus', { exact: true }).waitFor();
-            for (const [index, reply] of ['Organizzazione', 'Rimando il primo esercizio', 'Scelgo dieci minuti'].entries()) {
-                await page.locator('#guided-composer').fill(reply); await page.locator('#guided-composer').press('Enter');
-                await page.getByRole('log').getByText(`Risposta ${index + 2}: qsa-essential-${['experience','action','summary'][index]}`, { exact: true }).waitFor();
-                if (index === 1) {
-                    await page.waitForTimeout(1700);
-                    await page.goto(`${origin}/?resume=1`); await page.locator('#guided-composer').waitFor();
-                    assert.equal(state.streams.length, 3, 'local resume restores the action step without reopening it');
-                }
+            await page.getByRole('log').getByText('Apertura: qsa-essential-focus', { exact: true }).waitFor();
+            await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
+            await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).click();
+            await page.keyboard.press('Escape');
+            await send('Vorrei approfondire');
+            await page.getByRole('log').getByText('Siamo nella scelta del focus; dopo raccoglieremo un esempio. Vuoi approfondire o proseguire?', { exact: true }).waitFor();
+            await send('Sì, approfondiamo');
+            await page.getByRole('log').getByText('Restiamo sul focus scelto: esploriamo come scegli di iniziare.', { exact: true }).waitFor();
+            assert.ok(state.streams.every(x => x.phase === 'qsa-essential-focus'), 'depth must not consume a stage');
+            await page.waitForTimeout(1700);
+            assert.equal(state.snapshot.current_phase, 'qsa-essential-focus');
+            await page.goto(`${origin}/?resume=1`);
+            await page.locator('#guided-composer').waitFor();
+            assert.equal(state.streams.length, 3, 'resume preserves the pending exploration');
+            for (const next of ['experience', 'action', 'summary']) {
+                await send('Prosegui');
+                await page.getByRole('log').getByText(`Apertura: qsa-essential-${next}`, { exact: true }).waitFor();
             }
-            assert.deepEqual(state.streams.map(x => x.phase), ['qsa-essential-focus', 'qsa-essential-experience', 'qsa-essential-action', 'qsa-essential-summary']);
-            assert.ok(state.streams.every(x => x.guided_path === 'essential' && x.response_format === 'bullets'));
+            assert.deepEqual(state.streams.filter(x => x.use_phase_prompt).map(x => x.phase), [
+                'qsa-essential-focus', 'qsa-essential-experience', 'qsa-essential-action', 'qsa-essential-summary',
+            ]);
+            assert.ok(state.streams.every(x => x.guided_path === 'essential') && state.streams.slice(1).every(x => x.response_format === 'bullets'));
             await page.getByText('Puoi concludere oppure approfondire scrivendo qui.').waitFor();
             await page.waitForTimeout(1700);
             assert.equal(state.snapshot.current_phase, 'qsa-essential-summary');
-            assert.equal(state.snapshot.conversation_id, 'prefs-conversation');
-            await page.goto(`${origin}/?frozen=prefs`); await page.locator('#guided-composer').waitFor();
-            assert.equal(state.streams.length, 4, 'resume does not generate another opening');
+            const count = state.streams.length;
+            await page.goto(`${origin}/?frozen=prefs`);
+            await page.locator('#guided-composer').waitFor();
+            assert.equal(state.streams.length, count, 'frozen resume generates no duplicate turn');
             await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
-            assert.equal(await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).getAttribute('aria-checked'), 'true');
-            await page.getByRole('radio', { name: 'Formato: Tabella', exact: true }).click(); await page.keyboard.press('Escape');
-            await page.locator('#guided-composer').fill('Approfondiamo'); await page.locator('#guided-composer').press('Enter');
-            await page.getByRole('table').waitFor();
+            await page.getByRole('radio', { name: 'Formato: Discorsivo', exact: true }).click();
+            await page.keyboard.press('Escape');
+            await send('Approfondiamo');
+            await page.getByRole('log').getByText('Riprendiamo volontariamente il tema scelto.', { exact: true }).waitFor();
             assert.equal(state.streams.at(-1).phase, 'qsa-essential-followup');
-            assert.equal(state.streams.at(-1).response_format, 'table');
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             assert.deepEqual(state.errors, []);
         } finally { await context.close(); }
@@ -121,19 +142,24 @@ test('OpenCode sends the chosen format', async () => {
 
 test('a failed essential turn keeps its phase and a retry can continue', async () => {
     const { context, page, state } = await fixture(390);
+    state.script = body => ({ text: `Risposta: ${body.phase}`, signals: body.use_phase_prompt ? [] : ['AVANZA_STEP'] });
     try {
         await page.goto(`${origin}/?resume=1`);
         await page.getByRole('radio', { name: /Percorso essenziale/ }).check();
         await page.getByRole('button', { name: 'Inizia', exact: true }).click();
-        await page.getByRole('log').getByText('Risposta 1: qsa-essential-focus', { exact: true }).waitFor();
+        await page.getByRole('log').getByText('Risposta: qsa-essential-focus', { exact: true }).waitFor();
         state.fail = true;
-        await page.locator('#guided-composer').fill('Organizzazione'); await page.locator('#guided-composer').press('Enter');
+        await page.locator('#guided-composer').fill('Organizzazione');
+        await page.locator('#guided-composer').press('Enter');
         await page.waitForTimeout(1700);
         assert.equal(state.snapshot.current_phase, 'qsa-essential-focus');
         state.fail = false;
-        await page.locator('#guided-composer').fill('Confermo organizzazione'); await page.locator('#guided-composer').press('Enter');
-        await page.getByRole('log').getByText('Risposta 3: qsa-essential-experience', { exact: true }).waitFor();
-        assert.deepEqual(state.streams.map(x => x.phase), ['qsa-essential-focus','qsa-essential-experience','qsa-essential-experience']);
+        await page.locator('#guided-composer').fill('Confermo organizzazione');
+        await page.locator('#guided-composer').press('Enter');
+        await page.getByRole('log').getByText('Risposta: qsa-essential-experience', { exact: true }).waitFor();
+        assert.deepEqual(state.streams.map(x => x.phase), [
+            'qsa-essential-focus', 'qsa-essential-focus', 'qsa-essential-focus', 'qsa-essential-experience',
+        ]);
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }
 });
@@ -185,6 +211,7 @@ test('Assistant uses the selected format for subsequent replies', async () => {
 
 test('Obiettivo essential keeps a stage open until the marker closes it, never on an interrupted stream', async () => {
     const { context, page, state } = await fixture(390, 'OBIETTIVO_STUDIO');
+    state.guidedSteps = GOAL_STEPS;
     const phases = { focus: 'obbstudio-essential-focus', define: 'obbstudio-essential-smart', plan: 'obbstudio-essential-plan', summary: 'obbstudio-essential-summary' };
     // Synthetic replies: the fixture decides where the model would put the marker.
     let interrupted = false;

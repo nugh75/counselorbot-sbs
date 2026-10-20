@@ -1347,7 +1347,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 dropLast();
             }
             if (essential && essentialAdvancesOnSignal(questionnaireType)) {
-                // Obiettivo: la fase resta aperta finche' il modello non la
+                // La fase resta aperta finche' il modello non la
                 // chiude col marcatore su una risposta completata; la fase
                 // successiva si apre poi con il suo turno.
                 if (essentialSignalAdvances(questionnaireType, currentPhase, { completed: true, marker: shouldAdvance, entry: false })) {
@@ -1525,7 +1525,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             {(['complete', 'essential'] as const).map(path => <label key={path} className="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 p-3">
                 <input type="radio" name="qsa-path" value={path} checked={guidedPath === path} onChange={() => setGuidedPath(path)} className="mt-1" />
                 <span><span className="block font-medium">{chatPreferenceLabel(activeLocale, path)}</span>
-                    <span className="text-sm text-slate-600">{chatPreferenceLabel(activeLocale, path === 'essential' ? (essentialAdvancesOnSignal(questionnaireType) ? 'essentialHelpGoal' : 'essentialHelp') : 'completeHelp')}</span></span>
+                    <span className="text-sm text-slate-600">{chatPreferenceLabel(activeLocale, path === 'essential' ? (questionnaireType === 'QSA' ? 'essentialHelp' : 'essentialHelpGoal') : 'completeHelp')}</span></span>
             </label>)}
             {/* Il formato è scelto nella pagina Impostazioni del flusso: qui
                 resta solo il bivio del percorso, per non chiederlo due volte. */}

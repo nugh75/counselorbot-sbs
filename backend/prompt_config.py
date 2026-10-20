@@ -25,6 +25,9 @@ def _text(name: str) -> str:
 
 DEFAULT_SYSTEM_PROMPT_GENERIC = _text("default_system_prompt_generic")
 
+# Runtime contract shared by every guided path, independent of editable DB rows.
+GUIDED_CHOICE_DIRECTIVE = _text("guided_choice_directive")
+
 DEFAULT_SYSTEM_PROMPT_FACTOR = _text("default_system_prompt_factor")
 
 # Direttiva di profondità per i follow-up in-step: i prompt QA storici sono nati

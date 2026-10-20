@@ -455,3 +455,22 @@ Per usare una build già verificata: `BACKEND_ORIGIN=http://127.0.0.1:9 npm run 
 Stop del server con Ctrl-C. Per SSH: `ssh -N -L 3153:127.0.0.1:3153 <utente>@<server>`.
 URL `http://localhost:3153`; l'accesso admin simulato esiste solo nel browser dei test.
 Dettagli e risultati in `model-search-token-guidance.md`.
+# Scelta e approfondimento nelle chat guidate (#410)
+
+Controllare che `3157` sia libera con `ss -ltn` su Linux o
+`lsof -nP -iTCP:3157 -sTCP:LISTEN` su macOS. Avviare
+`bash scripts/dev-guided-choice-tests.sh`: Next con hot reload su
+`127.0.0.1:3157`, backend indirizzato a un loopback inutilizzato. Nessun database
+o provider; le API e gli studenti sono fixture intercettate dal browser di test.
+
+Eseguire `cd frontend && CHAT_PREFS_BASE_URL=http://127.0.0.1:3157 node --test --test-name-pattern='QSA essential|failed essential|Obiettivo essential|Obiettivo complete' tests/chat-preferences.test.mjs`.
+Questi cinque casi includono scelta di approfondire, ritorno al percorso, ripresa locale e
+congelata, errore/riprova e stream interrotto, a 390 e 1440 px. Le risposte sono
+simulate e non certificano la qualità di un LLM. Nessun nuovo controllo visuale:
+le immagini della guida restano rappresentative; la spiegazione testuale è
+aggiornata nelle sei lingue. Audit e piano: `guided-chat-choice.md`.
+
+Da SSH: `ssh -N -L 3157:127.0.0.1:3157 <utente>@<server>`, poi
+`http://localhost:3157`. Fuori dalle fixture non c'è un backend utilizzabile.
+Fermare con Ctrl+C nel terminale del runner. Nessun container produttivo avviato
+o riavviato, nessun dato persistente, deploy o sudo richiesto.

@@ -597,6 +597,11 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
             } else "area"
         elif request.phase == "questions":
             reflection_stage = "follow-up"
+    guided_choice = bool(
+        step or essential or questionnaire_type == IDEA_INSTRUMENT
+        or (request.phase and db.query(models.GuidedStep).filter_by(
+            questionnaire_type=questionnaire_type).first())
+    )
     contract = turn_contract(
         language=request.language or "it", questionnaire_type=questionnaire_type,
         phase=request.phase, advice_allowed=bool(component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),
@@ -605,6 +610,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         objective_entry=is_step_entry,
         facilitation_contract_enabled=facilitation_contract_enabled,
         thread_state=thread_state,
+        guided_choice=guided_choice,
         existing_prompt=system_prompt_final,
     )
     if contract and "[TURN CONTRACT]" not in system_prompt_final and contract.strip() not in system_prompt_final:
@@ -615,6 +621,12 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         if qpcc_dir and qpcc_dir.strip() not in system_prompt_final:
             system_prompt_final += '\n\n' + qpcc_dir
     components["turn_contract"] = contract
+    if guided_choice:
+        from .step_closure import step_choice_context
+        choice_reminder = step_choice_context(db, step, request.phase, questionnaire_type, session_id)
+        if choice_reminder:
+            system_prompt_final += "\n\n" + choice_reminder
+        components["step_choice"] = choice_reminder
     if essential and include_history and not history and not is_synthesis:
         evidence, coverage = journey_context(
             session_evidence(db, session_id, (identity or {}).get("username", ""), request.conversation_id),
