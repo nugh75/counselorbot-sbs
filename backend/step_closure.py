@@ -151,6 +151,7 @@ def count_step_assistant_exchanges(
                 models.Log.session_id == session_id,
                 models.Log.action == "chat_message",
                 models.Log.phase == phase,
+                models.Log.details["exploration"].as_string().is_(None),
             )
             .count()
         )

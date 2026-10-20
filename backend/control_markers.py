@@ -13,7 +13,7 @@ inserirlo in `CONTROL_MARKERS` qui e in `frontend/src/lib/control-markers.ts`
 """
 import re
 
-CONTROL_MARKERS: tuple[str, ...] = ("AVANZA_STEP",)
+CONTROL_MARKERS: tuple[str, ...] = ("AVANZA_STEP", "APRI_APPROFONDIMENTO", "TORNA_AL_PERCORSO")
 
 ADVANCE_STEP = "AVANZA_STEP"
 ADVANCE_MARKER = f"[[{ADVANCE_STEP}]]"

@@ -534,10 +534,28 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
 Nella chat guidata si scrive sotto la conversazione. La barra dei passi mantiene
 i comandi indietro e avanti sempre visibili e raggiungibili: indietro è attivo se
 esiste un passo precedente (disattivato al primo passo), avanti passa alla fase
-successiva (disattivato all'ultima fase); ripeti permette di ricaricare il passo
+successiva (disattivato all'ultima fase e prima del patto iniziale, quando previsto); ripeti permette di ricaricare il passo
 corrente (tranne al congedo). Il menu a tre punti offre pannello, **formato** della
 risposta (conversazione, elenco, tabella), **lunghezza** (breve, media, lunga), voce,
 lingua e Congela sessione. Formato e lunghezza sono scelte indipendenti.
+Nel pannello **Percorso** tutti i passi, anche futuri, sono selezionabili dopo
+l’accettazione del patto iniziale, quando previsto. Sul telefono si apre dalle
+opzioni. Tornare a un punto visitato conserva il dialogo e la bozza senza
+rigenerare l’apertura; solo **Ripeti** la rigenera. Saltare un passo non lo
+segna completato. I comandi di cambio passo attendono la fine della risposta.
+
+Dopo la scelta di approfondire, il counselor può aprire un **ramo dedicato**:
+un’intestazione mostra titolo e passo di provenienza. **Torna al percorso**
+ripristina il punto lasciato e la sua bozza, senza avanzare. Si può aprire anche
+manualmente da Opzioni con **Approfondisci un tema**. I rami restano riapribili
+dal percorso (in IDEA, dall’elenco degli approfondimenti); hanno dialogo e
+bozza propri e non annidano altri rami. Il ramo non completa passi né genera
+la sintesi finale o bozze Obiettivo/Libretto. La sessione salvata conserva
+rami, punto di ritorno e bozze anche cambiando dispositivo. L’apertura e il
+rientro suggeriti dal counselor si applicano solo a una risposta completata;
+un’interruzione conserva lo stato corrente. L’apertura automatica dipende dal
+segnale del modello; il comando manuale resta disponibile.
+
 I profili di lunghezza della risposta allocano un margine di token (headroom) adeguato
 anche per i modelli con ragionamento (thinking); nei passaggi di lettura del profilo
 (come nei questionari QPCC, QAP e QPCS) il sistema riserva un budget token esteso per

@@ -10,8 +10,10 @@ import { CONTROL_MARKERS, extractControlSignals, stripControlMarkersForDisplay, 
 import type { RecommendationCatalog } from '@/lib/recommendations';
 import type { EventBookletDraft } from '@/lib/event-booklet';
 import type { GoalDraft } from '@/lib/goal-draft';
+import type { ExplorationEvent } from '@/lib/guided-navigation';
 
 export interface ChatStreamResult {
+    exploration?: ExplorationEvent | null;
     response: string;
     session_id?: string;
     conversation_id?: string;
@@ -80,6 +82,7 @@ export async function streamChat(
     let recommendations: RecommendationCatalog | undefined;
     let eventBooklet: EventBookletDraft | null | undefined;
     let goalDraftValue: GoalDraft | null | undefined;
+    let exploration: ExplorationEvent | null | undefined;
     let serverSignals: string[] = [];
     // Ogni testo che esce di qui passa dal filtro comune dei segnali.
     const emit = () => onDelta(stripControlMarkersForDisplay(full));
@@ -99,7 +102,7 @@ export async function streamChat(
                 const json = line.slice(5).trim();
                 if (!json) continue;
 
-                let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; incomplete?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; idea_revision_id?: number; sources?: string[]; recommendations?: RecommendationCatalog; event_booklet?: EventBookletDraft | null; goal_draft?: GoalDraft | null; control_signals?: string[]; error?: string; error_code?: string };
+                let evt: { exploration?: ExplorationEvent | null; delta?: string; display?: string; reasoning?: string; done?: boolean; incomplete?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; idea_revision_id?: number; sources?: string[]; recommendations?: RecommendationCatalog; event_booklet?: EventBookletDraft | null; goal_draft?: GoalDraft | null; control_signals?: string[]; error?: string; error_code?: string };
                 try {
                     evt = JSON.parse(json);
                 } catch {
@@ -139,6 +142,7 @@ export async function streamChat(
                     recommendations = evt.recommendations;
                     eventBooklet = evt.event_booklet;
                     goalDraftValue = evt.goal_draft;
+                    exploration = evt.exploration;
                 }
             }
             if (completed) break;
@@ -157,5 +161,5 @@ export async function streamChat(
     const { visible, signals } = extractControlSignals(full);
     const known = serverSignals.filter((name): name is ControlSignal => (CONTROL_MARKERS as readonly string[]).includes(name));
     const controlSignals = [...new Set<ControlSignal>([...known, ...signals])];
-    return { control_signals: controlSignals, response: visible, session_id: sessionId, conversation_id: conversationId, strategy_ids: strategyIds, response_id: responseId, idea_revision_id: ideaRevisionId, sources, recommendations, event_booklet: eventBooklet, goal_draft: goalDraftValue };
+    return { exploration, control_signals: controlSignals, response: visible, session_id: sessionId, conversation_id: conversationId, strategy_ids: strategyIds, response_id: responseId, idea_revision_id: ideaRevisionId, sources, recommendations, event_booklet: eventBooklet, goal_draft: goalDraftValue };
 }

@@ -59,6 +59,7 @@ class SessionMemory:
             # Il transcript verbatim vive a parte (lo legge get_transcript);
             # non entra nel riepilogo iniettato/classico.
             text = self._strip_section(text, "Transcript")
+            text = self._strip_section(text, "Approfondimenti")
             return self._cut_at_line(text, MAX_MEMORY_CHARS)
 
     def get_scores(self, session_id: str, *, touch: bool = True) -> str:
@@ -274,6 +275,39 @@ class SessionMemory:
                 data["scores"] = scores_context.strip()
             self._write(session_id, self._render(data))
 
+    def restore_guided_snapshot(self, session_id: str, snapshot: dict) -> None:
+        """Rehydrate owned frozen history after TTL; never replace live memory."""
+        with self._lock:
+            if self._read(session_id):
+                return
+            data = self._empty()
+            rows = [r for r in snapshot.get("messages", []) if r.get("role") in ("user", "assistant") and r.get("content")]
+            root = [{"role": r["role"], "content": r["content"]} for r in rows if not r.get("explorationId")]
+            data["transcript"] = self._trim_transcript(root)
+            branches = {}
+            for index, row in enumerate(rows):
+                branch_id = row.get("explorationId")
+                if not branch_id:
+                    continue
+                branch = branches.setdefault(branch_id, {"parent": self._trim_transcript([
+                    {"role": r["role"], "content": r["content"]} for r in rows[:index] if not r.get("explorationId")]), "turns": []})
+                branch["turns"].append({"role": row["role"], "content": row["content"]})
+            data["explorations"] = {key: {**value, "turns": self._trim_transcript(value["turns"])} for key, value in branches.items()}
+            data["current_phase"] = snapshot.get("current_phase", "")
+            data["completed_phases"] = (snapshot.get("guided_navigation") or {}).get("completed", [])
+            self._write(session_id, self._render(data))
+
+    def get_exploration_transcript(self, session_id: str, exploration_id: str, *, touch: bool = True) -> List[Dict[str, str]]:
+        with self._lock:
+            data = self._parse(self._read(session_id))
+            if touch:
+                self._touch(session_id)
+            branch = data["explorations"].get(exploration_id)
+            if branch:
+                return [*branch["parent"], *branch["turns"]]
+            from .guided_explorations import branch_history
+            return branch_history(data["transcript"])
+
     def record_interaction(
         self,
         session_id: str,
@@ -287,10 +321,27 @@ class SessionMemory:
         questionnaire_type: str = "",
         language: str = "",
         completed_step: bool = False,
+        exploration_id: str | None = None,
     ) -> None:
         """Aggiorna memoria con stato, ultimo tema e pochi fatti estratti dall'utente."""
         with self._lock:
             data = self._parse(self._read(session_id))
+
+            if exploration_id:
+                # Keep the parent's checkpoint even when a long branch exceeds
+                # the normal twelve-turn history window.
+                from .guided_explorations import branch_history
+                branches = dict(data["explorations"])
+                branch = branches.get(exploration_id, {"parent": branch_history(data["transcript"]), "turns": []})
+                turns = list(branch["turns"])
+                for role, content in (("user", transcript_user), ("assistant", bot_response)):
+                    text = self._clean_transcript_text(content or "")
+                    if text:
+                        turns.append({"role": role, "content": text})
+                branches[exploration_id] = {"parent": branch["parent"], "turns": self._trim_transcript(turns)}
+                data["explorations"] = dict(list(branches.items())[-100:])
+                self._write(session_id, self._render(data))
+                return
 
             if questionnaire_type:
                 data["questionnaire"] = questionnaire_type
@@ -360,6 +411,7 @@ class SessionMemory:
             "last_suggestion": "",
             "notebook_suggestion": {},
             "transcript": [],
+            "explorations": {},
         }
 
     def _parse(self, text: str) -> Dict[str, object]:
@@ -395,13 +447,21 @@ class SessionMemory:
                     }
             except (TypeError, ValueError):
                 pass
+        branch_raw = self._section(text, "Approfondimenti").strip().removeprefix("```json").removesuffix("```").strip()
+        try:
+            branches = json.loads(branch_raw) if branch_raw else {}
+            data["explorations"] = branches if isinstance(branches, dict) else {}
+        except (ValueError, TypeError):
+            pass
         data["transcript"] = self._parse_transcript(text)
         return data
 
     def _render(self, data: Dict[str, object]) -> str:
         classic = self._render_classic(data)
         transcript = self._render_transcript(data.get("transcript") or [])
-        return f"{classic}\n{transcript}" if transcript else classic
+        branches = data.get("explorations") or {}
+        branch_text = "\n## Approfondimenti\n```json\n" + json.dumps(branches, ensure_ascii=False) + "\n```\n" if branches else ""
+        return (f"{classic}\n{transcript}" if transcript else classic) + branch_text
 
     def _render_classic(self, data: Dict[str, object]) -> str:
         rendered = self._render_full(data)
@@ -486,7 +546,8 @@ class SessionMemory:
         if not items:
             return ""
         payload = [
-            {"role": str(t.get("role") or "user"), "content": str(t.get("content"))}
+            {"role": str(t.get("role") or "user"), "content": str(t.get("content")),
+             **({"exploration_id": str(t["exploration_id"])} if t.get("exploration_id") else {})}
             for t in items
         ]
         return "## Transcript\n```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```\n"
@@ -510,6 +571,7 @@ class SessionMemory:
                 turns.append({
                     "role": str(item.get("role") or "user"),
                     "content": str(item.get("content")),
+                    **({"exploration_id": str(item["exploration_id"])} if item.get("exploration_id") else {}),
                 })
         return turns
 

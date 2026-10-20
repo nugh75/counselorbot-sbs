@@ -1,3 +1,36 @@
+# Handoff: navigazione libera e rami facoltativi nelle chat guidate
+Data: 2026-10-20 | Branch: `feature/guided-chat-navigation-branches` | Seguito di #410 / PR #414
+
+PR #414 verificata MERGED, main aggiornato a `5e14001a`, vecchio branch locale
+rimosso prima di creare questo. Audit e piano prima del codice in
+`docs/operations/guided-chat-navigation-branches.md`.
+
+Tutti i passi selezionabili dopo il patto iniziale, visite/completamenti reali,
+ritorno senza rigenerazione e bozze preservate. Approfondimenti in rami con
+intestazione, origine, ritorno e riapertura; apertura manuale o segnale del
+counselor su risposta completata. Memoria e checkpoint separati; niente
+avanzamento, sintesi, bozze finali o modifiche alla mappa IDEA nel ramo.
+Snapshot JSON compatibili con le sessioni precedenti; ripristino dopo TTL dal
+solo snapshot del proprietario. Nessuna migrazione DB o dei prompt salvati.
+
+Verifiche e comandi nel documento dell’audit: 708 backend, poi 228 mirati
+parzialmente sovrapposti; cinque test puri finali, 600 unitari frontend, sette
+nuovi browser e sei regressioni, immagini della guida aggiornate, TypeScript,
+lint/i18n/guidance. Modelli simulati. Restano da rieseguire su Postgres l’ultimo
+test SQL del contatore e il caso di strumento dichiarato diverso dall’origine.
+
+Build backend Docker isolata iniziale riuscita. Disco di sistema esaurito durante
+la build frontend, poi Docker Desktop indisponibile. Spostati solo artefatti
+sintetici da /tmp a /Volumes/sviluppo/tmp/counselorbot-validation-artifacts,
+con symlink ai vecchi percorsi; nessuna eliminazione di immagini, volumi o dati.
+Build frontend locale isolata riuscita. Rebuild Docker finale di entrambe le
+immagini da ripetere quando il daemon sarà disponibile; nessun riavvio globale
+eseguito. Nessun deploy o sudo. Frontend di test fermato a fine sessione;
+stato del Postgres temporaneo non verificabile col daemon indisponibile.
+
+Modifiche estranee `.timoniere.json`, `.herdr-web-ui/`, `chatgpt-connect.py`
+conservate fuori dai commit. Commit/push e nuova PR sul progetto CounselorBot.
+
 # Handoff: orientamento e scelta degli approfondimenti in tutte le chat guidate
 Data: 2026-10-20 | Branch: `feature/guided-chat-choice` | Issue: #410
 

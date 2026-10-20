@@ -4,7 +4,7 @@
 // guidata per i testi ripresi: una chat nuova li eredita senza fare nulla.
 // Per aggiungere un segnale: inserirlo qui e nel registro del backend.
 
-export const CONTROL_MARKERS = ['AVANZA_STEP'] as const;
+export const CONTROL_MARKERS = ['AVANZA_STEP', 'APRI_APPROFONDIMENTO', 'TORNA_AL_PERCORSO'] as const;
 export type ControlSignal = (typeof CONTROL_MARKERS)[number];
 
 export const ADVANCE_STEP: ControlSignal = 'AVANZA_STEP';
