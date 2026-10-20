@@ -20,7 +20,7 @@ from . import database, prompt_config
 from .anonymous_codes import code_for_identity
 from .i18n_fields import localized
 from .ai_service import AIService
-from .reasoning_profiles import supports_reasoning
+from .reasoning_profiles import is_mandatory_reasoning, supports_reasoning
 from .memory_service import session_memory
 from .strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
 from .certified_strategy_service import certified_strategy_memory
@@ -543,6 +543,15 @@ def _apply_reasoning_directive(
     return re.sub(r"\n{3,}", "\n\n", f"{prompt.rstrip()}\n\n{directive}")
 
 
+
+def _reasoning_suppressed_for(ai_service) -> bool:
+    """True se gli eventi di reasoning vanno nascosti, anche su mock semplici."""
+    value = getattr(ai_service, "reasoning_suppressed", None)
+    if isinstance(value, bool):
+        return value
+    return bool(getattr(ai_service, "disable_thinking", False))
+
+
 def _effective_model_name(ai_service, model: Optional[str] = None) -> Optional[str]:
     """Modello che risponderà davvero, considerando fonte personale e ChatGPT."""
     chatgpt_model = getattr(ai_service, "chatgpt_model", None)
@@ -554,21 +563,32 @@ def _effective_model_name(ai_service, model: Optional[str] = None) -> Optional[s
     return model or (getattr(ai_service, "config", {}) or {}).get("model_name")
 
 
-def _reasoning_disabled_for(ai_service, model: Optional[str] = None) -> bool:
+def _reasoning_disabled_for(ai_service, model: Optional[str] = None,
+                            provider: Optional[str] = None) -> bool:
     """True se il turno non deve produrre ragionamento visibile o privato.
 
     Oltre alla scelta esplicita «Nessuno» (o al preset), vale per i modelli che
     la piattaforma sa essere non-reasoning: chiedere loro un blocco `<think>`
     non avrebbe senso e alimenterebbe il pannello con un canale non richiesto.
+    Un modello che impone reasoning non può essere spento: la direttiva «no
+    reasoning» non viene applicata e il trasporto usa il livello minimo.
     """
-    if getattr(ai_service, "disable_thinking", False):
-        return True
     model_name = _effective_model_name(ai_service, model)
+    effective_provider = provider
+    if not effective_provider:
+        personal = getattr(ai_service, "personal_target", None)
+        effective_provider = personal[0] if personal else None
+    if not effective_provider:
+        effective_provider = (getattr(ai_service, "config", {}) or {}).get("active_provider")
+    if getattr(ai_service, "disable_thinking", False):
+        if isinstance(model_name, str) and model_name.strip() and is_mandatory_reasoning(model_name, effective_provider):
+            return False
+        return True
     if not isinstance(model_name, str) or not model_name.strip():
         # Configurazioni incomplete o mock: non forzare la direttiva «no
         # reasoning» su un modello che non sappiamo classificare.
         return False
-    return not supports_reasoning(model_name)
+    return not supports_reasoning(model_name, effective_provider)
 
 
 def _apply_global_directives(system_prompt: str, language: Optional[str], db=None,

@@ -32,6 +32,7 @@ from ..chat_logic import (
     _apply_reasoning_directive,
     _apply_response_length_directive,
     _reasoning_disabled_for,
+    _reasoning_suppressed_for,
     _limit_visible_words,
     _response_length_max_tokens,
     _strip_generic_acknowledgement,
@@ -470,9 +471,16 @@ async def site_chat_stream(
                     "usage": usage,
                     "response_length": request.response_length,
                     "effective_response_length": request.response_length,
-                    "reasoning_disabled": bool(getattr(ai_service, "disable_thinking", False)),
+                    "reasoning_disabled": (
+                        _reasoning_suppressed_for(ai_service)
+                        if reasoning_plan is None
+                        else not bool(getattr(reasoning_plan, "enabled", False))
+                    ),
                     "reasoning_plan": {
                         "enabled": bool(getattr(reasoning_plan, "enabled", False)),
+                        "effort": getattr(reasoning_plan, "effort", None),
+                        "requested_effort": getattr(reasoning_plan, "requested_effort", None),
+                        "effort_honored": getattr(reasoning_plan, "effort_honored", True),
                         "reasoning_budget": getattr(reasoning_plan, "reasoning_budget", None),
                     },
                     "reasoning_present": bool(getattr(ai_service, "last_thinking", None)),
@@ -556,7 +564,7 @@ async def site_chat_stream(
                 if not text:
                     continue
                 if isinstance(item, dict) and item.get("type") == "reasoning":
-                    if not getattr(ai_service, "disable_thinking", False):
+                    if not _reasoning_suppressed_for(ai_service):
                         yield f"data: {_json.dumps({'reasoning': text})}\n\n"
                     continue
                 chunks.append(text)

@@ -792,9 +792,10 @@ def _run_seed_and_migrations():
             except Exception as e:
                 logger.debug(f"logs index skipped/failed ({idx_clause}): {e}")
 
-        # Raw SQL migration: override del budget di reasoning per-preset (idempotente).
+        # Raw SQL migration: override del budget/effort di reasoning per-preset (idempotente).
         for clause in [
             "ADD COLUMN reasoning_budget INTEGER",
+            "ADD COLUMN reasoning_effort VARCHAR",
         ]:
             try:
                 with database.engine.connect() as conn:

@@ -85,6 +85,7 @@ from ..prompt_config import (
 )
 from ..chat_logic import (
     _annotate_qsa_factor_codes,
+    _reasoning_suppressed_for,
     _apply_global_directives,
     _ensure_questionnaire_guided_steps,
     _ensure_required_qsa_factor_codes,
@@ -145,21 +146,23 @@ def _usage_cost_usd(usage: dict | None, provider: str | None = None, model: str 
 
 
 def _resolve_counselor(db, counselor_id):
-    """(provider, model, persona, name, disable_thinking, reasoning_budget) dal counselor + preset.
+    """(provider, model, persona, name, disable_thinking, reasoning_budget, reasoning_effort) dal counselor + preset.
 
     provider/model None -> usa la config globale; persona None -> nessun prefisso
     al system prompt; name None -> placeholder {{counselor_name}} usa il fallback;
     disable_thinking None -> usa la config globale; reasoning_budget None -> usa il
-    default della famiglia del modello.
+    default della famiglia del modello; reasoning_effort None -> default del
+    modello/catalogo.
     """
     if not counselor_id:
-        return None, None, None, None, None, None
+        return None, None, None, None, None, None, None
     counselor = personal_api.require_visible_counselor(db, counselor_id)
     if not counselor:
-        return None, None, None, None, None, None
+        return None, None, None, None, None, None, None
     provider = model = None
     disable_thinking = None
     reasoning_budget = None
+    reasoning_effort = None
     if counselor.preset_id:
         preset = (
             db.query(models.ModelPreset)
@@ -170,7 +173,8 @@ def _resolve_counselor(db, counselor_id):
             provider, model = preset.provider, preset.model
             disable_thinking = bool(preset.disable_thinking)
             reasoning_budget = preset.reasoning_budget
-    return provider, model, counselor.persona, counselor.name, disable_thinking, reasoning_budget
+            reasoning_effort = getattr(preset, "reasoning_effort", None)
+    return provider, model, counselor.persona, counselor.name, disable_thinking, reasoning_budget, reasoning_effort
 
 
 def _watch_thread(prepared, request, db, *, session_id, username, effective_message,
@@ -204,12 +208,15 @@ def _apply_counselor_overrides(
     ai_service: AIService,
     disable_thinking: bool | None,
     reasoning_budget: int | None = None,
+    reasoning_effort: str | None = None,
 ) -> None:
     if disable_thinking is not None:
         ai_service.disable_thinking = bool(disable_thinking)
         ai_service.config["disable_thinking"] = "true" if disable_thinking else "false"
     if reasoning_budget is not None:
         ai_service.reasoning_budget_override = reasoning_budget
+    if reasoning_effort is not None:
+        ai_service.preset_reasoning_effort = reasoning_effort
 
 
 # Passi in cui la risposta e' presentazione o patto, non analisi: il testo e'
@@ -615,8 +622,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     # 1. Retrieve Configuration and System Prompt based on Mode
     personal_api.bind_counselor(db, request.counselor_id)
     ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
-    c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
-    _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
+    c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget, c_reasoning_effort = _resolve_counselor(db, request.counselor_id)
+    _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget, c_reasoning_effort)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
     # Same instrument and prompt prepare_chat_turn uses: the step wins over the
@@ -769,6 +776,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     _model = getattr(ai_service, "last_model", None) or c_model or ai_service.config.get('model_name', 'unknown')
     _usage = getattr(ai_service, "last_usage", None)
     _cost_usd = _usage_cost_usd(_usage, _provider, _model)
+    plan_getter = getattr(ai_service, "_plan", None)
+    reasoning_plan = plan_getter() if callable(plan_getter) else None
     _details = pii.redact_details({
         "conversation_id": conversation_id,
         # Taccuino di prova riverificato: l'area docente ritrova la chat anche conclusa.
@@ -799,6 +808,20 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "language": request.language or "it",
         "usage": _usage,
         "cost_usd": _cost_usd,
+        "reasoning_effort": request.reasoning_effort,
+        "reasoning_disabled": (
+            _reasoning_suppressed_for(ai_service)
+            if reasoning_plan is None
+            else not bool(getattr(reasoning_plan, "enabled", False))
+        ),
+        "reasoning_plan": {
+            "enabled": bool(getattr(reasoning_plan, "enabled", False)),
+            "effort": getattr(reasoning_plan, "effort", None),
+            "requested_effort": getattr(reasoning_plan, "requested_effort", None),
+            "effort_honored": getattr(reasoning_plan, "effort_honored", True),
+            "reasoning_budget": getattr(reasoning_plan, "reasoning_budget", None),
+        },
+        "reasoning_present": bool(getattr(ai_service, "last_thinking", None)),
     }, "user_input", "effective_user_input", "bot_response")
     if full_prompt_logging_enabled(db):
         _details["envelope"] = pii.redact_envelope(
@@ -902,8 +925,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     # Preparazione (usa la db della richiesta, ancora aperta qui)
     personal_api.bind_counselor(db, request.counselor_id)
     ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
-    c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
-    _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
+    c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget, c_reasoning_effort = _resolve_counselor(db, request.counselor_id)
+    _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget, c_reasoning_effort)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
     # Same instrument and prompt prepare_chat_turn uses: the step wins over the
@@ -1007,9 +1030,16 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 "requested_response_length": request.response_length,
                 "effective_response_length": effective_response_length,
                 "reasoning_effort": request.reasoning_effort,
-                "reasoning_disabled": bool(getattr(ai_service, "disable_thinking", False)),
+                "reasoning_disabled": (
+                    _reasoning_suppressed_for(ai_service)
+                    if reasoning_plan is None
+                    else not bool(getattr(reasoning_plan, "enabled", False))
+                ),
                 "reasoning_plan": {
                     "enabled": bool(getattr(reasoning_plan, "enabled", False)),
+                    "effort": getattr(reasoning_plan, "effort", None),
+                    "requested_effort": getattr(reasoning_plan, "requested_effort", None),
+                    "effort_honored": getattr(reasoning_plan, "effort_honored", True),
                     "reasoning_budget": getattr(reasoning_plan, "reasoning_budget", None),
                 },
                 "reasoning_present": bool(getattr(ai_service, "last_thinking", None)),
@@ -1092,12 +1122,12 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     continue
                 # Reasoning / thinking: streammato a parte, NON entra nella risposta finale.
                 if isinstance(item, dict) and item.get("type") == "reasoning":
-                    if not getattr(ai_service, "disable_thinking", False):
+                    if not _reasoning_suppressed_for(ai_service):
                         yield f"data: {_json.dumps({'reasoning': text})}\n\n"
                     continue
                 for sub in splitter.feed(text):
                     if sub.get("type") == "reasoning":
-                        if not getattr(ai_service, "disable_thinking", False):
+                        if not _reasoning_suppressed_for(ai_service):
                             yield f"data: {_json.dumps({'reasoning': sub['text']})}\n\n"
                         continue
                     sub_text = sub.get("text", "")
@@ -1142,7 +1172,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
             for sub in splitter.flush():
                 if sub.get("type") == "reasoning":
-                    if not getattr(ai_service, "disable_thinking", False):
+                    if not _reasoning_suppressed_for(ai_service):
                         yield f"data: {_json.dumps({'reasoning': sub['text']})}\n\n"
                 elif sub.get("type") == "content" and sub.get("text"):
                     chunks.append(sub["text"])
