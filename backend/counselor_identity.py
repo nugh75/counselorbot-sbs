@@ -18,7 +18,7 @@ from sqlalchemy import cast as sa_cast, String
 from . import models, schemas
 from .counselor_i18n import localized_description, localized_tagline
 from .counselor_scope import restricted_instruments, suits
-from .reasoning_profiles import supports_reasoning
+from .reasoning_profiles import is_mandatory_reasoning, supports_reasoning
 
 logger = logging.getLogger(__name__)
 
@@ -510,6 +510,7 @@ def _build_public_counselor(
     pub.is_personal = bool(r.owner_username)
     pub.suitable = suits(r, questionnaire_type, restricted)
     pub.reasoning_capable = supports_reasoning(pub.model)
+    pub.reasoning_mandatory = is_mandatory_reasoning(pub.model, provider)
     return pub
 
 

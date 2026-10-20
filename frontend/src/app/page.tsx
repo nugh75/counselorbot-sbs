@@ -124,6 +124,9 @@ export default function Home() {
     // Il selettore del ragionamento non farebbe nulla sui modelli noti come
     // non-reasoning: si chiede al server se quello del counselor ragiona.
     const [reasoningCapable, setReasoningCapable] = useState(true);
+    // Il modello non permette di spegnere il reasoning: la UI lo dice e non
+    // finge che «Nessuno» funzioni.
+    const [reasoningMandatory, setReasoningMandatory] = useState(false);
     // Apertura della chat in corso: tiene fermo il comando finché le due
     // scritture non sono andate.
     const [starting, setStarting] = useState(false);
@@ -800,6 +803,11 @@ export default function Home() {
             if (cancelled) return;
             const chosen = rows.find((row) => row.id === counselorId);
             setReasoningCapable(chosen?.reasoning_capable !== false);
+            const mandatory = chosen?.reasoning_mandatory === true;
+            setReasoningMandatory(mandatory);
+            if (mandatory) {
+                setReasoningEffort((current) => current === 'off' ? 'standard' : current);
+            }
         });
         return () => { cancelled = true; };
     }, [step, lang, sessionCounselorId]);
@@ -1047,6 +1055,7 @@ export default function Home() {
                     {step === 'chat-settings' && scores && selectedQuestionnaire && (
                         <ChatSettingsCard
                             reasoningCapable={reasoningCapable}
+                            reasoningMandatory={reasoningMandatory}
                             starting={starting}
                             responseFormat={responseFormat}
                             onResponseFormatChange={setResponseFormat}
@@ -1098,7 +1107,8 @@ export default function Home() {
                                             <ResponseLengthSelector value={responseLength} onChange={handleResponseLengthChange} />
                                             {reasoningCapable && <>
                                                 <p className="mt-2 text-xs font-semibold text-slate-500">{t('reasoning.label')}</p>
-                                                <ReasoningSelector value={reasoningEffort} onChange={handleReasoningChange} />
+                                                <ReasoningSelector value={reasoningEffort} onChange={handleReasoningChange} mandatory={reasoningMandatory} />
+                                                {reasoningMandatory && <p className="max-w-xs rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-center text-xs text-amber-900">{t('reasoning.mandatory')}</p>}
                                             </>}
                                         </div>
                                     </div>
@@ -1119,6 +1129,7 @@ export default function Home() {
                                     initialReasoningEffort={reasoningEffort}
                                     initialResponseFormat={responseFormat}
                                     reasoningCapable={reasoningCapable}
+                                    reasoningMandatory={reasoningMandatory}
                                     onFrozen={() => {
                                         setPausedChat({ sessionId, questionnaireId: selectedQuestionnaire.id });
                                         setResume(null);

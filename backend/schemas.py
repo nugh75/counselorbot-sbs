@@ -1314,6 +1314,7 @@ class ModelPresetResponse(ModelPresetBase):
     id: int
     created_at: datetime
     provider_configured: bool = False  # True se il provider ha una chiave attiva
+    reasoning_mandatory: bool = False   # Il modello non accetta reasoning disattivato
 
     class Config:
         from_attributes = True
@@ -1428,6 +1429,9 @@ class CounselorPublic(BaseModel):
     # Il modello puo' ragionare: falso solo per le famiglie note come
     # non-reasoning. Serve a nascondere il selettore dove non farebbe nulla.
     reasoning_capable: bool = True
+    # Il modello non permette di spegnere il reasoning (es. o-series su
+    # OpenRouter): la UI lo dichiara e non offre «Nessuno» come se funzionasse.
+    reasoning_mandatory: bool = False
 
     class Config:
         from_attributes = True

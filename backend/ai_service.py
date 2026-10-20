@@ -20,7 +20,16 @@ from . import pii
 from . import pii_ner
 from .api_secrets import API_KEY_ENV_MAP, config_key, resolve_api_secrets
 from .model_context import context_profile, fit_context
-from .reasoning_profiles import DISABLED_PLAN, ReasoningPlan, resolve_plan
+from .reasoning_profiles import (
+    DEEP_REASONING_BUDGET,
+    DISABLED_PLAN,
+    OPENROUTER_MANDATORY_REASONING_MODELS,
+    ReasoningPlan,
+    is_reasoning_model,
+    is_openrouter_mandatory_reasoning,
+    mark_openrouter_mandatory_reasoning,
+    resolve_plan,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -165,43 +174,11 @@ def budget_fallback_targets(config: dict) -> list:
             if is_free_target(provider, model) and provider_available(config, provider)]
 
 
-# Modelli OpenRouter noti per imporre il reasoning (OpenRouter restituisce 400 se si invia reasoning.enabled=False).
-# Il set viene popolato dinamicamente se OpenRouter segnala che un modello richiede reasoning obbligatorio.
-_OPENROUTER_MANDATORY_REASONING_MODELS: set[str] = {
-    "google/gemini-3.8-flash",
-    "google/gemini-3.8-flash:batch",
-    "google/gemini-4-argon",
-    "google/gemini-4-argon:batch",
-    "openai/o1",
-    "openai/o1-preview",
-    "openai/o1-mini",
-    "openai/o3",
-    "openai/o3-mini",
-    "openai/gpt-6.1-sol-pro",
-    "openai/gpt-6.1-sol-pro:batch",
-    "openai/gpt-6.1-sol",
-    "openai/gpt-6.1-sol:batch",
-    "deepseek/deepseek-r1",
-    "deepseek/deepseek-r1:free",
-    "deepseek/deepseek-r1-distill-llama-70b",
-    "deepseek/deepseek-r1-distill-qwen-32b",
-    "deepseek/deepseek-r1-distill-qwen-14b",
-    "deepseek/deepseek-r1-distill-llama-8b",
-}
-
-
-def _is_openrouter_mandatory_reasoning_model(model: str | None) -> bool:
-    if not model:
-        return False
-    m = model.strip().lower()
-    if m in _OPENROUTER_MANDATORY_REASONING_MODELS:
-        return True
-    return any(m == known or m.startswith(f"{known}:") for known in _OPENROUTER_MANDATORY_REASONING_MODELS)
-
-
-def _mark_openrouter_mandatory_reasoning(model: str | None) -> None:
-    if model:
-        _OPENROUTER_MANDATORY_REASONING_MODELS.add(model.strip().lower())
+# Alias conservati per i test e per il resto del modulo: la fonte vive in
+# `reasoning_profiles`, così anche l'API pubblica può dichiarare il vincolo.
+_OPENROUTER_MANDATORY_REASONING_MODELS = OPENROUTER_MANDATORY_REASONING_MODELS
+_is_openrouter_mandatory_reasoning_model = is_openrouter_mandatory_reasoning
+_mark_openrouter_mandatory_reasoning = mark_openrouter_mandatory_reasoning
 
 
 def _is_openrouter_reasoning_error(exc: Exception) -> bool:
@@ -231,6 +208,10 @@ class AIService:
         self.config = self._load_config()
         # #202: livello di ragionamento della fonte personale; prevale sul preset.
         self.personal_reasoning = None
+        # Scelta esplicita dello studente per il turno corrente. Vince sul
+        # default della fonte personale e sul preset, così «Nessuno» e
+        # «Esteso» non vengono silenziosamente ignorati.
+        self._reasoning_effort_override = None
         self.shared_owner = None  # teacher whose counselor and API key answer this student
         self.personal_target = None
         self.personal_error = None
@@ -391,6 +372,10 @@ class AIService:
     # il livello scelto per la fonte personale (#202) ha la precedenza.
     @property
     def disable_thinking(self):
+        if self._reasoning_effort_override == 'off':
+            return True
+        if self._reasoning_effort_override == 'deep':
+            return False
         if self.personal_reasoning:
             return self.personal_reasoning == 'none'
         return self._disable_thinking
@@ -400,7 +385,19 @@ class AIService:
         self._disable_thinking = value
 
     @property
+    def reasoning_effort_override(self):
+        return self._reasoning_effort_override
+
+    @reasoning_effort_override.setter
+    def reasoning_effort_override(self, value):
+        self._reasoning_effort_override = value if value in ('off', 'deep') else None
+
+    @property
     def reasoning_budget_override(self):
+        if self._reasoning_effort_override == 'off':
+            return 0
+        if self._reasoning_effort_override == 'deep':
+            return self._reasoning_budget_override or DEEP_REASONING_BUDGET
         if self.personal_reasoning:
             return PERSONAL_REASONING_BUDGETS.get(self.personal_reasoning)
         return self._reasoning_budget_override
@@ -408,6 +405,30 @@ class AIService:
     @reasoning_budget_override.setter
     def reasoning_budget_override(self, value):
         self._reasoning_budget_override = value
+
+    def _openai_reasoning_effort(self, model: str | None) -> str | None:
+        """Parametro OpenAI per approssimare «Nessuno»/«Esteso».
+
+        OpenAI non espone uno spegnimento totale su o-series/GPT-5: `minimal`
+        è il livello più basso. Lo inviamo solo quando la scelta è esplicita,
+        per non cambiare il default dei modelli non interessati.
+        """
+        if not is_reasoning_model(model):
+            return None
+        # Vale anche per la fonte personale impostata su «Nessuno»: OpenAI non
+        # espone uno spegnimento totale, quindi `minimal` è il livello più basso.
+        if self.disable_thinking:
+            return 'minimal'
+        if self._reasoning_effort_override == 'deep':
+            return 'high'
+        return None
+
+    def _chatgpt_effort(self) -> str | None:
+        if self._reasoning_effort_override == 'off':
+            return 'minimal'
+        if self._reasoning_effort_override == 'deep':
+            return 'high'
+        return self.personal_reasoning
 
     def _resolve_reasoning(self, model, requested_max_tokens, fallback_max_tokens) -> ReasoningPlan:
         """Risolve e memorizza il piano di reasoning per (modello, flag, budget).
@@ -788,7 +809,7 @@ class AIService:
                 if result:
                     from .chat_logic import split_thinking
                     extracted, result = split_thinking(result)
-                    if extracted:
+                    if extracted and not self.disable_thinking:
                         self.last_thinking = extracted
                 if not result or not result.strip():
                     raise AIError("Il modello ha restituito una risposta vuota")
@@ -927,6 +948,9 @@ class AIService:
             kwargs["max_tokens"] = max_tokens
         if self.temperature is not None:
             kwargs["temperature"] = self.temperature
+        reasoning_effort = self._openai_reasoning_effort(model)
+        if reasoning_effort:
+            kwargs["reasoning_effort"] = reasoning_effort
         response = client.chat.completions.create(**kwargs)
         return response.choices[0].message.content
 
@@ -1132,7 +1156,7 @@ class AIService:
         from .chat_logic import split_thinking
         extracted, content = split_thinking(message.get("content", "") or "")
         thinking = "\n\n".join(part for part in (message.get("thinking"), extracted) if part)
-        self.last_thinking = (thinking or "").strip() or None
+        self.last_thinking = None if self.disable_thinking else ((thinking or "").strip() or None)
         return content
 
     def _call_llamacpp(self, user_message, system_prompt, model, max_tokens: int = 8000, history=None):
@@ -1235,7 +1259,7 @@ class AIService:
                 logger.warning("AI stream %s/%s failed before output (%s)", selected_provider, selected_model, type(exc).__name__)
         raise AIError(f"Nessun modello configurato ha completato la risposta ({type(last_error).__name__}).") from last_error
 
-    def _iter_chat_stream(self, client, model, system_prompt, user_message, extra_body=None, max_tokens: int = None, stream_options=None, history=None):
+    def _iter_chat_stream(self, client, model, system_prompt, user_message, extra_body=None, max_tokens: int = None, stream_options=None, history=None, reasoning_effort=None):
         """Itera lo stream di un client OpenAI-compatibile producendo i delta di testo."""
         nak = self._normalize_history(history)
         messages = [{"role": "system", "content": system_prompt}]
@@ -1254,8 +1278,11 @@ class AIService:
             kwargs["extra_body"] = extra_body
         if stream_options:
             kwargs["stream_options"] = stream_options
+        if reasoning_effort:
+            kwargs["reasoning_effort"] = reasoning_effort
         stream = client.chat.completions.create(**kwargs)
         finish_reason = None
+        reasoning_acc: list[str] = []
         from .chat_logic import ThinkStreamSplitter
         splitter = ThinkStreamSplitter()
         try:
@@ -1274,18 +1301,29 @@ class AIService:
                     continue
                 # Reasoning / thinking: OpenRouter usa `reasoning`, altri `reasoning_content`.
                 reasoning = getattr(delta, "reasoning", None) or getattr(delta, "reasoning_content", None)
-                if reasoning:
-                    yield {"type": "reasoning", "text": reasoning}
+                if isinstance(reasoning, str) and reasoning:
+                    reasoning_acc.append(reasoning)
+                    if not self.disable_thinking:
+                        yield {"type": "reasoning", "text": reasoning}
                 content = getattr(delta, "content", None)
                 if content:
                     for item in splitter.feed(content):
+                        if item.get("type") == "reasoning":
+                            reasoning_acc.append(item.get("text", ""))
+                            if self.disable_thinking:
+                                continue
                         yield item
             for item in splitter.flush():
+                if item.get("type") == "reasoning":
+                    reasoning_acc.append(item.get("text", ""))
+                    if self.disable_thinking:
+                        continue
                 yield item
         finally:
             close = getattr(stream, "close", None)
             if close:
                 close()
+        self.last_thinking = "".join(reasoning_acc).strip() or None
         if finish_reason == "length":
             raise AIError("The model reached its output token limit before completing the response.")
 
@@ -1295,7 +1333,7 @@ class AIService:
         from .chatgpt_i18n import error_message
         try:
             for item in stream(self.db, model, user_message, system_prompt, self._normalize_history(history),
-                               timeout=self._int_config("ai_timeout_seconds", 120, 10, 600), effort=self.personal_reasoning):
+                               timeout=self._int_config("ai_timeout_seconds", 120, 10, 600), effort=self._chatgpt_effort()):
                 if isinstance(item, dict) and item.get("type") == "usage":
                     self.last_usage = item["usage"]
                 yield item
@@ -1312,7 +1350,10 @@ class AIService:
         if not api_key:
             raise AIError("OpenAI API Key non configurata")
         client = OpenAI(api_key=api_key, timeout=self._int_config("ai_timeout_seconds", 120, 10, 600), max_retries=0)
-        yield from self._iter_chat_stream(client, model, system_prompt, user_message, max_tokens=max_tokens, history=history)
+        yield from self._iter_chat_stream(
+            client, model, system_prompt, user_message, max_tokens=max_tokens, history=history,
+            reasoning_effort=self._openai_reasoning_effort(model),
+        )
 
     def _stream_openrouter(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         api_key = self._get_api_key('api_key_openrouter')
@@ -1395,7 +1436,8 @@ class AIService:
                     thinking = msg.get("thinking")
                     if thinking:
                         reasoning_acc.append(thinking)
-                        yield {"type": "reasoning", "text": thinking}
+                        if not self.disable_thinking:
+                            yield {"type": "reasoning", "text": thinking}
                     content = msg.get("content")
                     if content:
                         # Fallback tag: i modelli che inlineano <think> vengono separati
@@ -1403,10 +1445,14 @@ class AIService:
                         for item in splitter.feed(content):
                             if item["type"] == "reasoning":
                                 reasoning_acc.append(item["text"])
+                                if self.disable_thinking:
+                                    continue
                             yield item
                 for item in splitter.flush():
                     if item["type"] == "reasoning":
                         reasoning_acc.append(item["text"])
+                        if self.disable_thinking:
+                            continue
                     yield item
         self.last_thinking = "".join(reasoning_acc).strip() or None
         if done_reason == "length":

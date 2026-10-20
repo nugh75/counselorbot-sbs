@@ -19,6 +19,7 @@ import { ChatGPTUsageBadge } from '@/components/profile/ChatGPTUsageBadge';
 
 interface ChatSettingsCardProps {
     reasoningCapable: boolean;
+    reasoningMandatory?: boolean;
     starting?: boolean;
     responseFormat: ResponseFormat;
     onResponseFormatChange: (value: ResponseFormat) => void;
@@ -39,6 +40,7 @@ interface ChatSettingsCardProps {
 
 export function ChatSettingsCard({
     reasoningCapable,
+    reasoningMandatory = false,
     starting = false,
     responseFormat,
     onResponseFormatChange,
@@ -111,7 +113,12 @@ export function ChatSettingsCard({
                 {reasoningCapable ? (
                     <div className="space-y-1">
                         <p className="text-xs font-semibold text-slate-500">{t('reasoning.label')}</p>
-                        <ReasoningSelector value={reasoningEffort} onChange={onReasoningChange} />
+                        <ReasoningSelector value={reasoningEffort} onChange={onReasoningChange} mandatory={reasoningMandatory} />
+                        {reasoningMandatory && (
+                            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                {t('reasoning.mandatory')}
+                            </p>
+                        )}
                     </div>
                 ) : (
                     // Il Ragionamento non sparisce: la riga resta, spiegata, così
