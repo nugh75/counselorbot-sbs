@@ -990,9 +990,6 @@ async def chat_opencode(
                         "Do not expose internal reasoning or narrate tool calls. "
                         "Return only the final student-facing answer in the required language."
                     )
-                    if ai_service.disable_thinking:
-                        from ..chat_logic import DEFAULT_NO_REASONING_DIRECTIVE
-                        system_prompt = f"{system_prompt}\n\n{DEFAULT_NO_REASONING_DIRECTIVE}"
                     if request.response_length:
                         system_prompt = _apply_response_length_directive(system_prompt, request.response_length)
                     system_prompt = apply_response_format(system_prompt, request.response_format)

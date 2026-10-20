@@ -59,7 +59,6 @@ from ..prompt_config import (
 )
 from ..rag_index import (
     get_index,
-    site_rag_index,
     build_context,
     get_document_preview,
     collection_exists,
