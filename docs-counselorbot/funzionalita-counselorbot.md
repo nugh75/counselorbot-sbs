@@ -290,6 +290,30 @@ la riflessione sui fattori; un punteggio alto non è sempre un punto di forza, p
 alcuni fattori sono invertiti. Non si fanno diagnosi. La scheda di ciascuno strumento
 (`/strumenti/<codice>`) ne spiega finalità, svolgimento e dati necessari.
 
+In tutte le chat guidate, comprese le conversazioni narrative, gli Obiettivi,
+IDEA, gli strumenti personalizzati e le varianti essenziali, ogni risposta del
+counselor include una breve cornice: dove si è, lo scopo attuale e cosa segue nel
+percorso reale. Prima di aprire un approfondimento, anche richiesto dalla persona,
+il counselor inquadra un tema e offre la scelta di soffermarsi o proseguire.
+L'assenso a una proposta precisa è già una scelta; una domanda puntuale riceve
+un chiarimento senza una conferma aggiuntiva. L'approfondimento esplora un aspetto
+significativo alla volta, collegato allo scopo del passo. Dopo alcuni scambi il
+counselor fa il punto e offre di continuare o riprendere il percorso. Una risposta
+breve non vale come consenso. Chi prosegue lascia il tema senza giustificarsi e
+senza vederselo riproporre subito. La scelta occupa l'unica domanda principale
+del turno; patti iniziali e sintesi senza domande mantengono i loro vincoli.
+
+La soglia configurata degli scambi ora richiama periodicamente questa scelta
+nel prompt, lasciando spazio all’approfondimento tra un richiamo e il successivo:
+non aggiunge un avanzamento forzato alla risposta. Negli Obiettivi si distingue
+la scelta di approfondire dalla conferma tecnica del cambio di passo. Quando il
+passaggio esplicitamente richiesto usa un turno con il solo segnale interno,
+l’apertura del passo successivo fornisce la cornice visibile. Il contratto comune si applica
+anche ai prompt personalizzati senza riscriverli nel database e resta presente
+nei livelli Totale/Ristretto/Minimo. In IDEA l'orientamento riguarda il ramo della
+mappa e il seguito concordato, senza inventare una sequenza fissa. Audit, piano,
+attivazione e limiti delle verifiche: `docs/operations/guided-chat-choice.md`.
+
 Nelle chat guidate dei questionari, anche con Iride, dopo la lettura del profilo
 una domanda contestualizzata aiuta la persona a scegliere cosa comprendere meglio.
 Durante gli approfondimenti il counselor accompagna gradualmente dall’esperienza
@@ -521,8 +545,10 @@ consentire l'esposizione esaustiva di tutte le scale e fattori senza troncature.
 Durante lo streaming, la chiusura delle frasi rispetta la punteggiatura naturale ed
 eventuali interruzioni preservano il testo visibile già generato anziché sostituirlo
 con messaggi generici di fallback.
-Il percorso essenziale QSA prevede tre risposte e la sintesi; non va esteso a QSAr
-o agli altri questionari. I due percorsi sugli obiettivi hanno la propria versione
+Il percorso essenziale QSA prevede tre fasi brevi (focus, esempio, azione) e la
+sintesi: chiarimenti e approfondimenti scelti restano nella fase corrente, che
+si chiude sul segnale del counselor quando la scelta è risolta. Non va esteso a
+QSAr o agli altri questionari. I due percorsi sugli obiettivi hanno la propria versione
 essenziale, in tre fasi brevi che si chiudono quando il risultato è pronto o quando
 la persona sceglie di proseguire. L’esperienza OpenCode è un’alternativa quando disponibile.
 

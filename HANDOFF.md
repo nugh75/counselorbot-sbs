@@ -1,3 +1,51 @@
+# Handoff: orientamento e scelta degli approfondimenti in tutte le chat guidate
+Data: 2026-10-20 | Branch: `feature/guided-chat-choice` | Issue: #410
+
+Audit e piano scritti prima dell'implementazione in
+`docs/operations/guided-chat-choice.md`. Contratto comune nei prompt runtime di
+95 passi di fabbrica (12 strumenti), percorsi personalizzati, varianti essenziali
+e IDEA: cornice breve a ogni risposta, scelta prima dell'approfondimento,
+ritorno al percorso e rispetto della decisione di proseguire. Patti iniziali,
+sintesi senza domande, punteggi e blocchi privati conservati.
+
+La soglia degli scambi richiama periodicamente la scelta nel prompt invece di
+aggiungere un avanzamento forzato. Il QSA essenziale ora mantiene la fase nei
+chiarimenti e approfondimenti, fino al segnale su risposta completata. La
+richiesta esplicita di avanzare conserva il turno solo marcatore quando serve
+all'interfaccia: l'apertura del passo successivo offre la cornice visibile.
+
+Nessuna scrittura o lettura di prompt, dati o conversazioni di produzione.
+Il contratto comune si attiva col codice dopo il rilascio; i testi di fabbrica
+QA/Obiettivo restano aggiornabili esplicitamente con hash e revisioni da
+«Allinea prompt di fabbrica». Prompt personalizzati conservati. Registrate in
+un commit fix separato le impronte mancanti dei default Obiettivo già nella base.
+
+Verifiche: 688 backend finali superati; matrice di 576 casi nelle sei lingue e
+nei tre livelli di contesto, apertura e prosecuzione. Nella batteria ampia,
+1562 test passati e tre fallimenti poi corretti e ricontrollati; un controllo
+marcatori richiede il mount dei sorgenti frontend. 596 unitari frontend e cinque
+browser pertinenti superati; i18n (3408 chiavi), TypeScript, lint dei file
+modificati e guidance superati. Build Docker isolate backend/frontend, avvio
+frontend e HTTP 200. Limiti e comandi ripetibili nel documento dell'audit.
+
+Resta anche un test legacy del fallback di audit (`ContextCapacityError` con
+16384 token di contesto e 14000 di output), riprodotto identico sul backend di
+base senza la nuova direttiva. Gli altri sei controlli della parità e dei
+marcatori frontend/backend passano.
+
+Restano quattro test browser legacy del formato Tabella, che il selettore della
+base non offre più (QSAr, OpenCode, Bussola e Assistente). Le verifiche usano
+risposte simulate; nessun LLM live o provider a pagamento. Non è un'attestazione
+della naturalezza di un modello. Guida aggiornata nelle sei lingue; le immagini
+esistenti restano pertinenti perché non sono stati aggiunti comandi.
+
+Runner frontend-only: `scripts/dev-guided-choice-tests.sh`, loopback :3157;
+nessun backend utilizzabile fuori dalle fixture. Avvio/stop/tunnel documentati in
+`docs/operations/live-dev-environment.md`. Nessun deploy, riavvio produttivo o
+sudo. A fine sessione vengono fermati runner e container temporanei di verifica.
+Modifiche estranee iniziali `.timoniere.json`, `.herdr-web-ui/` e
+`chatgpt-connect.py` conservate e non incluse nei commit.
+
 # Handoff: Ricerca dei modelli nei preset e consigli sui budget token
 Data: 2026-10-18 | Branch: `feature/model-search-suggestions`
 
