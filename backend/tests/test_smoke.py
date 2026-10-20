@@ -739,10 +739,12 @@ def test_model_presets_crud():
     # create
     r = client.post("/admin/presets", json={
         "name": "DeepSeek Flash test", "provider": "deepseek", "model": "deepseek-v4-flash",
+        "reasoning_effort": "high",
     })
     assert r.status_code == 200, r.text
     pid = r.json()["id"]
     assert r.json()["provider"] == "deepseek"
+    assert r.json()["reasoning_effort"] == "high"
     # list contiene il preset + flag provider_configured presente
     r = client.get("/admin/presets")
     assert r.status_code == 200, r.text
@@ -750,9 +752,10 @@ def test_model_presets_crud():
     assert any(p["id"] == pid for p in rows)
     assert all("provider_configured" in p for p in rows)
     # update
-    r = client.put(f"/admin/presets/{pid}", json={"is_active": False, "max_tokens": 800})
+    r = client.put(f"/admin/presets/{pid}", json={"is_active": False, "max_tokens": 800, "reasoning_effort": "low"})
     assert r.status_code == 200, r.text
     assert r.json()["is_active"] is False and r.json()["max_tokens"] == 800
+    assert r.json()["reasoning_effort"] == "low"
     # provider locale sempre configurato
     r = client.post("/admin/presets", json={"name": "Local", "provider": "ollama", "model": "qwen3.5:9b"})
     assert r.json()["provider_configured"] is True, r.text
@@ -1382,8 +1385,8 @@ def test_resolve_counselor_helper():
     from backend.database import SessionLocal
     db = SessionLocal()
     try:
-        assert _resolve_counselor(db, None) == (None, None, None, None, None, None)
-        assert _resolve_counselor(db, 999999) == (None, None, None, None, None, None)
+        assert _resolve_counselor(db, None) == (None, None, None, None, None, None, None)
+        assert _resolve_counselor(db, 999999) == (None, None, None, None, None, None, None)
 
         preset = models.ModelPreset(
             name="No reasoning test",
@@ -1391,6 +1394,7 @@ def test_resolve_counselor_helper():
             model="deepseek/deepseek-r1",
             disable_thinking=True,
             reasoning_budget=4096,
+            reasoning_effort="high",
         )
         db.add(preset)
         db.flush()
@@ -1411,6 +1415,7 @@ def test_resolve_counselor_helper():
             "No reasoning test",
             True,
             4096,
+            "high",
         )
     finally:
         db.close()

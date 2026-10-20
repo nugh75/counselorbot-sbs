@@ -17,6 +17,7 @@ from backend.reasoning_profiles import (
     supports_reasoning,
     resolve_plan,
 )
+from backend import openrouter_capabilities
 
 
 def test_local_models_are_known_reasoners():
@@ -121,3 +122,97 @@ if __name__ == "__main__":
             print(f"FAIL {test.__name__}: {exc}")
     print(f"\n{len(tests) - failed}/{len(tests)} passed")
     raise SystemExit(1 if failed else 0)
+
+
+def test_openrouter_catalog_parses_effort_capabilities():
+    payload = {"data": [{
+        "id": "vendor/model-a",
+        "context_length": 100000,
+        "top_provider": {"max_completion_tokens": 8000},
+        "supported_parameters": ["reasoning", "reasoning_effort", "max_tokens"],
+        "reasoning": {
+            "mandatory": True,
+            "supported_efforts": ["high", "medium", "low"],
+            "default_effort": "medium",
+        },
+    }]}
+    parsed = openrouter_capabilities.parse_catalog(payload)
+    capability = parsed["vendor/model-a"]
+    assert capability.mandatory is True
+    assert capability.supported_efforts == ("high", "medium", "low")
+    assert capability.default_effort == "medium"
+    assert capability.supports_reasoning is True
+    assert capability.max_completion_tokens == 8000
+
+
+def test_openrouter_mandatory_off_uses_lowest_effort_and_is_not_honored():
+    plan = resolve_plan(
+        "google/gemini-4-argon", disable_thinking=True,
+        requested_max_tokens=1000, requested_effort="off", provider="openrouter",
+    )
+    assert plan.enabled is True
+    assert plan.effort == "low"
+    assert plan.effort_honored is False
+
+
+def test_openrouter_preset_effort_is_clamped_to_catalog_values():
+    plan = resolve_plan(
+        "anthropic/claude-haiku-5.5", disable_thinking=False,
+        requested_max_tokens=1000, requested_effort="minimal", provider="openrouter",
+    )
+    assert plan.effort == "low"
+    assert plan.effort_honored is False
+
+    best = resolve_plan(
+        "anthropic/claude-haiku-5.5", disable_thinking=False,
+        requested_max_tokens=1000, requested_effort="max", provider="openrouter",
+    )
+    assert best.effort == "max"
+    assert best.effort_honored is True
+
+
+def test_openrouter_off_on_an_optional_model_stays_off():
+    plan = resolve_plan(
+        "anthropic/claude-haiku-5.5", disable_thinking=True,
+        requested_max_tokens=1000, requested_effort="off", provider="openrouter",
+    )
+    assert plan.enabled is False
+    assert plan.effort == "none"
+
+
+def test_preset_schema_accepts_only_supported_effort_values():
+    from pydantic import ValidationError
+    from backend.schemas import ModelPresetCreate
+    assert ModelPresetCreate(name="n", provider="openrouter", model="m", reasoning_effort="high").reasoning_effort == "high"
+    try:
+        ModelPresetCreate(name="n", provider="openrouter", model="m", reasoning_effort="super")
+    except ValidationError:
+        pass
+    else:
+        raise AssertionError("un effort sconosciuto deve essere rifiutato")
+
+
+def test_openrouter_catalog_can_enable_reasoning_for_a_family_known_as_plain():
+    assert supports_reasoning("mistralai/mistral-large-4-0", "openrouter") is True
+    assert supports_reasoning("mistral-large-4-0", "mistral") is False
+
+
+def test_openrouter_live_cache_overrides_the_fallback_table():
+    capability = openrouter_capabilities.OpenRouterCapability(
+        model="vendor/model-b", mandatory=False,
+        supported_efforts=("low", "high"), default_effort="low",
+        supports_reasoning=True, supports_max_tokens=True,
+        context_length=64000, max_completion_tokens=4096,
+        supported_parameters=("reasoning", "reasoning_effort"),
+    )
+    openrouter_capabilities.set_catalog({"vendor/model-b": capability})
+    try:
+        loaded = openrouter_capabilities.capability_for("vendor/model-b:free")
+        assert loaded is not None and loaded.default_effort == "low"
+        plan = resolve_plan(
+            "vendor/model-b:free", disable_thinking=False,
+            requested_max_tokens=1000, provider="openrouter",
+        )
+        assert plan.effort == "low"
+    finally:
+        openrouter_capabilities.clear_cache()

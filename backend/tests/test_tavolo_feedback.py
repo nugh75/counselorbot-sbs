@@ -96,11 +96,11 @@ def test_local_and_cloud_models_follow_the_same_configuration_check(table_api, m
     client, _, _ = table_api
     monkeypatch.setattr(tavolo, '_diagram_fallback', lambda db: None)
     for provider in ('ollama', 'openai'):
-        monkeypatch.setattr(tavolo, '_resolve_counselor', lambda db, id: (provider, 'model', None, 'Counselor', False, None))
+        monkeypatch.setattr(tavolo, '_resolve_counselor', lambda db, id: (provider, 'model', None, 'Counselor', False, None, None))
         result = client.get('/tavolo/capabilities?counselor_id=29')
         assert result.status_code == 200
         assert result.json() == {'available': True, 'fallback_origin': None}
-    monkeypatch.setattr(tavolo, '_resolve_counselor', lambda db, id: (None,) * 6)
+    monkeypatch.setattr(tavolo, '_resolve_counselor', lambda db, id: (None,) * 7)
     assert client.get('/tavolo/capabilities?counselor_id=29').json()['available'] is False
 
 
@@ -109,7 +109,7 @@ def test_a_counselor_without_preset_uses_the_global_model_and_reports_cloud_back
     with Session() as db:
         db.add_all([models.Config(key='active_provider', value='ollama'), models.Config(key='model_name', value='local-model')])
         db.commit()
-    monkeypatch.setattr(tavolo, '_resolve_counselor', lambda db, id: (None, None, 'persona', 'Omar', False, None))
+    monkeypatch.setattr(tavolo, '_resolve_counselor', lambda db, id: (None, None, 'persona', 'Omar', False, None, None))
     monkeypatch.setattr(tavolo, '_diagram_fallback', lambda db: ('openai', 'cloud-model', False, None))
     assert client.get('/tavolo/capabilities?counselor_id=29').json() == {'available': True, 'fallback_origin': 'external'}
     with Session() as db:
@@ -133,7 +133,7 @@ def test_help_reads_current_content_and_history_without_modifying_the_map(table_
             calls.append(kwargs)
             return json.dumps({'reply': 'Choose the next step and explain its link.'})
     monkeypatch.setattr(tavolo, 'AIService', FakeAI)
-    monkeypatch.setattr(tavolo, '_resolve_counselor', lambda db, id: ('ollama', f'counselor-{id}', None, 'Omar', False, None))
+    monkeypatch.setattr(tavolo, '_resolve_counselor', lambda db, id: ('ollama', f'counselor-{id}', None, 'Omar', False, None, None))
     monkeypatch.setattr(tavolo, '_diagram_fallback', lambda db: None)
     before = client.get(path).json()
     reply = client.post(path + '/help', json={
