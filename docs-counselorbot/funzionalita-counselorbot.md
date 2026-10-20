@@ -537,7 +537,11 @@ esiste un passo precedente (disattivato al primo passo), avanti passa alla fase
 successiva (disattivato all'ultima fase e prima del patto iniziale, quando previsto); ripeti permette di ricaricare il passo
 corrente (tranne al congedo). Il menu a tre punti offre pannello, **formato** della
 risposta (conversazione, elenco, tabella), **lunghezza** (breve, media, lunga), voce,
-lingua e Congela sessione. Formato e lunghezza sono scelte indipendenti.
+lingua e Congela sessione. Formato e lunghezza sono scelte indipendenti. Con
+**Ragionamento → Nessuno** la chat sostituisce l’invito al pensiero con una
+direttiva esplicita di non produrre ragionamento e non mostra eventuali blocchi
+residui; se il modello impone il ragionamento, l’opzione è disattivata e un
+avviso spiega che sarà usato il livello più basso disponibile.
 Nel pannello **Percorso** tutti i passi, anche futuri, sono selezionabili dopo
 l’accettazione del patto iniziale, quando previsto. Sul telefono si apre dalle
 opzioni. Tornare a un punto visitato conserva il dialogo e la bozza senza
@@ -556,8 +560,10 @@ rientro suggeriti dal counselor si applicano solo a una risposta completata;
 un’interruzione conserva lo stato corrente. L’apertura automatica dipende dal
 segnale del modello; il comando manuale resta disponibile.
 
-I profili di lunghezza della risposta allocano un margine di token (headroom) adeguato
-anche per i modelli con ragionamento (thinking); nei passaggi di lettura del profilo
+I profili di lunghezza della risposta sono intervalli con minimo, obiettivo e
+tetto massimo: il tetto resta un limite hard applicato anche durante lo streaming,
+mentre l’obiettivo guida la stesura. Allocano inoltre un margine di token (headroom)
+adeguato anche per i modelli con ragionamento (thinking); nei passaggi di lettura del profilo
 (come nei questionari QPCC, QAP e QPCS) il sistema riserva un budget token esteso per
 consentire l'esposizione esaustiva di tutte le scale e fattori senza troncature.
 Durante lo streaming, la chiusura delle frasi rispetta la punteggiatura naturale ed
@@ -917,7 +923,9 @@ rispondere: **Predefinito del modello**, Nessuno, Basso, Medio o Alto per le API
 per ChatGPT i livelli che il modello dichiara (Basso, Medio e Alto se il catalogo
 non li indica). Il livello prevale su quello del preset del counselor e vale solo
 per le fonti personali; se ChatGPT rifiuta il livello, risponde con il proprio
-predefinito invece di fallire. La lista counselor mostra il modello
+predefinito invece di fallire. Se il modello impone il ragionamento, la scheda
+lo segnala, «Nessuno» non è selezionabile e la chat usa il livello più basso
+disponibile. La lista counselor mostra il modello
 assegnato nell’account. Le scelte non cambiano i counselor dell’istituzione.
 **Usa le mie API o il mio ChatGPT** e **Salva associazioni e utilizzo** attivano
 le scelte; la disattivazione torna ai modelli dell’istituto, conservando tutte
@@ -971,6 +979,9 @@ i modelli con ragionamento obbligatorio (come Gemini Flash o DeepSeek R1) gestis
 automaticamente il parametro di reasoning: se il preset o il passo richiede la
 disattivazione del pensiero ma l'endpoint lo impone, la piattaforma evita l'errore 400
 ed esegue la risposta garantendo la continuità della conversazione e del thread guard.
+Il vincolo è esposto anche nell’interfaccia: la scheda del preset e l’elenco dei
+counselor mostrano un’etichetta «Reasoning obbligatorio» e la chat disabilita
+«Nessuno» con un avviso, così la scelta non sembra ignorata.
 
 Spegnendo la funzione, l’amministratore fa usare le API di sistema alle nuove
 richieste e nasconde i collegamenti dall’Area studente e dall’Area docenti. Le richieste già
