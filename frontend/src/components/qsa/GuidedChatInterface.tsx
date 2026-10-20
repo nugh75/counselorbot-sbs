@@ -15,6 +15,8 @@ import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/
 import { QUESTIONNAIRES, getQuestionnaire } from '@/lib/questionnaires';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { ChatProviderError } from '@/lib/chat-stream';
+import { canSelectPhase, emptyCheckpoint, emptyNavigation, explorationPayload, type ExplorationEvent, type GuidedCheckpoint } from '@/lib/guided-navigation';
+import { navigationCopy } from '@/lib/guided-navigation-copy';
 import { chatErrorText } from '@/lib/i18n-personal-api';
 import { apiFetch } from '@/lib/auth';
 import ReactMarkdown from 'react-markdown';
@@ -111,6 +113,8 @@ interface GuidedChatInterfaceProps {
 }
 
 interface ChatMessage {
+    explorationId?: string;
+    phaseId?: string;
     role: string;
     content: string;
     reasoning?: string;
@@ -515,6 +519,15 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     };
     const [currentPhase, setCurrentPhase] = useState<string>('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [navigation, setNavigation] = useState(emptyNavigation);
+    const [explorationTitle, setExplorationTitle] = useState('');
+    const [showExplorationForm, setShowExplorationForm] = useState(false);
+    const activeExploration = navigation.explorations.find(row => row.id === navigation.active_exploration_id);
+    const navCopy = navigationCopy(activeLocale);
+    const agreementPhase = phases.find(phase => isAgreementStep(questionnaireType, phase));
+    const agreementLocked = !!agreementPhase && !navigation.agreement_accepted;
+    const canNavigate = (phase: string) => canSelectPhase(phases, phase, agreementPhase, navigation.agreement_accepted);
+
 
     const ideaFocus = isIdea ? ideaMove?.focus ?? null : null;
 
@@ -550,9 +563,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             message: message.role === 'assistant' ? { ...message, content: stripControlMarkersForDisplay(message.content) } : message,
             index,
         }))
+        .filter(({ message }) => (message.explorationId ?? null) === (activeExploration?.id ?? null))
         .filter(({ message, index }) => message.content.trim() || !messages[index].content.trim() || message.reasoning);
     const visibleMessages = (() => {
-        if (!isIdea || !ideaFocus || ideaSegments.length === 0) {
+        if (activeExploration || !isIdea || !ideaFocus || ideaSegments.length === 0) {
             return displayedMessages;
         }
         const opening = ideaSegments[0];
@@ -568,6 +582,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [responseLength, setResponseLength] = useState<ResponseLength>(initialResponseLength ?? 'medium');
     const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(initialReasoningEffort ?? 'standard');
     const [input, setInput] = useState('');
+    const inputRef = useRef(input);
+    inputRef.current = input;
     const [audioBusy, setAudioBusy] = useState(false);
     const [voiceMode, setVoiceMode] = useState(false);
     const [voiceOptionsContainer, setVoiceOptionsContainer] = useState<HTMLDivElement | null>(null);
@@ -603,6 +619,15 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const stickToBottom = useRef(true);
     const ideaReferenceInputRef = useRef<HTMLInputElement>(null);
     const processedPhases = useRef<Set<string>>(new Set());
+    const turnCheckpointRef = useRef<GuidedCheckpoint | null>(null);
+    const navigationScopeRef = useRef('');
+    useEffect(() => {
+        const scope = `${questionnaireType}:${sessionId}`;
+        if (navigationScopeRef.current === scope) return;
+        navigationScopeRef.current = scope;
+        processedPhases.current.clear();
+        setNavigation(emptyNavigation());
+    }, [sessionId, questionnaireType]);
     const loadedSessionScopeRef = useRef('');
     // Autosalvataggio: snapshot in attesa di essere scritto, firma dell'ultimo
     // scritto, e il percorso concluso (che non va più congelato).
@@ -787,6 +812,18 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     const restoredMessages = frozenSnapshot.messages as ChatMessage[];
                     setCurrentPhase(frozenPhase);
                     setMessages(restoredMessages);
+                    const restoredNav = frozenSnapshot.guided_navigation;
+                    if (restoredNav) {
+                        const validBranches = restoredNav.explorations.filter(row => phaseOrder.includes(row.origin_phase));
+                        setNavigation({ ...restoredNav, explorations: validBranches,
+                            active_exploration_id: validBranches.some(row => row.id === restoredNav.active_exploration_id) ? restoredNav.active_exploration_id : null });
+                        restoredNav.visited.forEach(phase => processedPhases.current.add(phase));
+                        const checkpoint = validBranches.find(row => row.id === restoredNav.active_exploration_id)?.checkpoint ?? restoredNav.checkpoints[frozenPhase];
+                        if (checkpoint) restoreCheckpoint(checkpoint);
+                    } else {
+                        // Existing sessions past the agreement have already crossed it.
+                        setNavigation({ ...emptyNavigation(), agreement_accepted: !phaseOrder.some(phase => isAgreementStep(questionnaireType, phase)) || !isAgreementStep(questionnaireType, frozenPhase) });
+                    }
                     setResponseFormat(frozenSnapshot.response_format ?? "standard");
                     setConversationId(frozenSnapshot.conversation_id ?? undefined);
                     // Negli Obiettivi le etichette sono cambiate: il separatore salvato
@@ -831,6 +868,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                 const restoredQuestionsLabel = data.label_guided_questions || t('guided.questionsLabel');
                                 const restoredConclusionLabel = data.label_guided_conclusion || t('guided.conclusionLabel');
                                 setCurrentPhase(restoredPhase);
+                                setNavigation(prev => ({ ...prev, agreement_accepted: !isAgreementStep(questionnaireType, restoredPhase) }));
                                 setMessages([
                                     {
                                         role: 'system',
@@ -935,7 +973,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // e quel passo diventa il contesto del turno seguente. Nessun avanzamento,
     // nessun ordine: si torna indietro quando serve.
     useEffect(() => {
-        if (!isIdea || !sessionId) return;
+        if (!isIdea || !sessionId || activeExploration) return;
         let cancelled = false;
         void fetchIdeaNextStep(sessionId, activeLocale, ideaVariant, ideaBudget).then((move) => {
             if (cancelled || !move) return;
@@ -944,11 +982,12 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             setCurrentPhase(move.step_id);
         });
         return () => { cancelled = true; };
-    }, [isIdea, sessionId, activeLocale, ideaVariant, ideaBudget, ideaMapVersion]);
+    }, [isIdea, sessionId, activeLocale, ideaVariant, ideaBudget, ideaMapVersion, activeExploration]);
 
     // Phase change handler
     useEffect(() => {
-        if (!currentPhase || initialLoading || !pathStarted) return;
+        if (!currentPhase || initialLoading || !pathStarted || activeExploration) return;
+        setNavigation(prev => ({ ...prev, visited: [...new Set([...prev.visited, ...processedPhases.current, currentPhase])] }));
         // Genera l'intro dello step solo alla PRIMA visita: tornando a uno step già
         // visitato (pulsante "Step precedente") si cambia solo il contesto attivo,
         // senza rigenerare messaggi o duplicare il banner.
@@ -986,7 +1025,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         }
         // The phase guard above intentionally makes this effect run once per phase.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentPhase, initialLoading]);
+    }, [currentPhase, initialLoading, pathStarted, activeExploration?.id]);
 
     const generateReflectionQuestions = async () => {
         const controller = beginRequest();
@@ -1053,7 +1092,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         const controller = beginRequest();
         setIsLoading(true);
         if (messages.length > 0) {
-            setMessages(prev => [...prev, { role: 'system', content: `--- ${step.label} ---` }]);
+            setMessages(prev => [...prev, { role: 'system', content: `--- ${step.label} ---`, phaseId: step.id }]);
         }
 
         try {
@@ -1089,6 +1128,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     mode: step.system_prompt_mode,
                     phase: step.id,
                     use_phase_prompt: true,
+                    supports_explorations: true,
                     scores_context: scoresContext,
                     session_id: sessionId,
                     conversation_id: conversationId,
@@ -1128,7 +1168,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             };
             const dropLast = () => setMessages(prev => prev.slice(0, -1));
 
-            setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: '', phaseId: step.id }]);
             try {
                 const result = await streamChat(buildPayload(false), (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
                 responseText = result.response || '';
@@ -1256,20 +1296,22 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         e.preventDefault();
         const userMessage = (overrideText ?? input).trim();
         const responsePhase = essential ? essentialReplyPhase(questionnaireType, currentPhase) : currentPhase;
-        if (!userMessage || isLoading || currentPhase === FIXED_CONCLUSION_ID || (audioBusy && !audioReady)) return;
+        if (!userMessage || isLoading || (currentPhase === FIXED_CONCLUSION_ID && !activeExploration) || (audioBusy && !audioReady)) return;
 
-        setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+        turnCheckpointRef.current = captureCheckpoint();
+        setMessages(prev => [...prev, { role: 'user', content: userMessage, phaseId: currentPhase, explorationId: activeExploration?.id }]);
         setInput('');
-        setUserMessagesInPhase(prev => prev + 1);
+        if (!activeExploration) setUserMessagesInPhase(prev => prev + 1);
 
         // Patto dei percorsi a intervista: l'accettazione localizzata avanza
         // senza chiamare l'AI.
-        if (acceptsAgreement(questionnaireType, currentPhase, activeLocale, userMessage)) {
+        if (!activeExploration && acceptsAgreement(questionnaireType, currentPhase, activeLocale, userMessage)) {
+            setNavigation(prev => ({ ...prev, agreement_accepted: true }));
             setMessages(prev => [...prev, {
                 role: 'assistant',
                 content: t('guided.pattoAck'),
             }]);
-            await advancePhase(userMessage);
+            await advancePhase(userMessage, true);
             return t('guided.pattoAck');
         }
 
@@ -1279,10 +1321,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
         try {
             const currentStep = isAnalysisStep(currentPhase) ? getStepDef(currentPhase) : undefined;
-            const effectiveMessage = stepInstructionsMessage(questionnaireType, currentStep?.prompt, activeLocale, userMessage);
+            const effectiveMessage = activeExploration ? userMessage : stepInstructionsMessage(questionnaireType, currentStep?.prompt, activeLocale, userMessage);
 
             // Placeholder dell'assistente, riempito in streaming
-            setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: '', phaseId: currentPhase, explorationId: activeExploration?.id }]);
             const updateLast = (content: string) => {
                 setMessages(prev => {
                     const copy = [...prev];
@@ -1302,8 +1344,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             const chatPayload: Record<string, unknown> = {
                 message: effectiveMessage,
                 memory_message: userMessage,
-                mode: resolveInteractiveMode(),
-                phase: essential ? (questionnaireType === 'QSA' && isEssentialSummaryPhase(currentPhase) ? "qsa-essential-followup" : responsePhase) : isAnalysisStep(currentPhase) ? currentPhase : undefined,
+                mode: activeExploration ? "generic" : resolveInteractiveMode(),
+                supports_explorations: !agreementLocked,
+                exploration: explorationPayload(activeExploration),
+                phase: activeExploration ? activeExploration.origin_phase : essential ? (questionnaireType === 'QSA' && isEssentialSummaryPhase(currentPhase) ? "qsa-essential-followup" : responsePhase) : currentPhase,
                 session_id: sessionId,
                 conversation_id: conversationId,
                 questionnaire_type: questionnaireType,
@@ -1335,8 +1379,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             if (result.event_booklet) setEventBookletDraft(result.event_booklet);
             if (result.goal_draft) setGoalDraftValue(result.goal_draft);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
-            refreshIdeaWorkspace(result.idea_revision_id);
-            if (isIdea) setIdeaDrew(result.idea_revision_id != null);
+            if (!activeExploration && !result.exploration) {
+                refreshIdeaWorkspace(result.idea_revision_id);
+                if (isIdea) setIdeaDrew(result.idea_revision_id != null);
+            }
 
             // Il segnale di avanzamento arriva fuori dal testo (filtro comune).
             const cleanText = (response || '').trim();
@@ -1345,6 +1391,16 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 updateLast(cleanText);
             } else {
                 dropLast();
+            }
+            if (result.exploration) {
+                applyExplorationEvent(result.exploration);
+                return cleanText || undefined;
+            }
+            if (activeExploration) return cleanText || undefined;
+            if (agreementLocked && shouldAdvance && isAgreementStep(questionnaireType, currentPhase)) {
+                setNavigation(prev => ({ ...prev, agreement_accepted: true }));
+                await advancePhase(userMessage, true);
+                return cleanText || undefined;
             }
             if (essential && essentialAdvancesOnSignal(questionnaireType)) {
                 // La fase resta aperta finche' il modello non la
@@ -1379,7 +1435,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             return cleanText || undefined;
         } catch (error) {
             if (controller.signal.aborted) return;
-            setMessages(prev => [...prev, { role: 'assistant', content: (error instanceof ChatProviderError ? chatErrorText(activeLocale as Lang, error.code) : null) ?? t('guided.connError') }]);
+            setMessages(prev => [...prev, { role: 'assistant', phaseId: currentPhase, explorationId: activeExploration?.id, content: (error instanceof ChatProviderError ? chatErrorText(activeLocale as Lang, error.code) : null) ?? t('guided.connError') }]);
         } finally {
             if (requestRef.current === controller) {
                 requestRef.current = null;
@@ -1388,33 +1444,101 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         }
     };
 
-    const advancePhase = async (userMessage = '') => {
-        setShowAdvanceSuggestion(false);
-        await recordMemoryEvent(currentPhase, true, userMessage);
-        const currentIndex = phases.indexOf(currentPhase);
-        if (currentIndex < phases.length - 1) {
-            setCurrentPhase(phases[currentIndex + 1]);
+    const captureCheckpoint = (): GuidedCheckpoint => ({ draft: inputRef.current, scroll_top: messagesRef.current?.scrollTop ?? 0, user_messages: userMessagesInPhase, advance_suggestion: showAdvanceSuggestion });
+
+    const restoreCheckpoint = (checkpoint: GuidedCheckpoint) => {
+        setInput(checkpoint.draft);
+        setUserMessagesInPhase(checkpoint.user_messages);
+        setShowAdvanceSuggestion(checkpoint.advance_suggestion);
+        stickToBottom.current = false;
+        window.requestAnimationFrame(() => {
+            if (messagesRef.current) messagesRef.current.scrollTop = checkpoint.scroll_top;
+        });
+    };
+
+    const saveCurrentCheckpoint = () => {
+        const checkpoint = captureCheckpoint();
+        setNavigation(prev => activeExploration
+            ? { ...prev, explorations: prev.explorations.map(row => row.id === activeExploration.id ? { ...row, checkpoint } : row) }
+            : { ...prev, checkpoints: { ...prev.checkpoints, [currentPhase]: checkpoint } });
+    };
+
+    const selectPhase = (target: string, accepted = navigation.agreement_accepted) => {
+        if (isLoading || (!activeExploration && target === currentPhase) || !canSelectPhase(phases, target, agreementPhase, accepted)) return;
+        saveCurrentCheckpoint();
+        setNavigation(prev => ({ ...prev, active_exploration_id: null }));
+        setShowExplorationForm(false);
+        const checkpoint = navigation.checkpoints[target];
+        if (checkpoint) restoreCheckpoint(checkpoint);
+        else { setInput(''); setShowAdvanceSuggestion(false); setUserMessagesInPhase(0); stickToBottom.current = true; }
+        setCurrentPhase(target);
+    };
+
+    const openExploration = (id?: string) => {
+        if (isLoading || agreementLocked || activeExploration) return;
+        const existing = navigation.explorations.find(row => row.id === id);
+        saveCurrentCheckpoint();
+        const branch = existing ?? { id: crypto.randomUUID(), title: explorationTitle.trim(), origin_phase: currentPhase, origin_label: getPhaseLabel(currentPhase), checkpoint: emptyCheckpoint() };
+        if (!branch.title) return;
+        setNavigation(prev => ({ ...prev, active_exploration_id: branch.id, explorations: existing ? prev.explorations : [...prev.explorations, branch] }));
+        setCurrentPhase(branch.origin_phase);
+        restoreCheckpoint(branch.checkpoint);
+        setExplorationTitle('');
+        setShowExplorationForm(false);
+    };
+
+    const returnToPath = () => {
+        if (isLoading || !activeExploration) return;
+        saveCurrentCheckpoint();
+        setNavigation(prev => ({ ...prev, active_exploration_id: null }));
+        setCurrentPhase(activeExploration.origin_phase);
+        restoreCheckpoint(navigation.checkpoints[activeExploration.origin_phase] ?? emptyCheckpoint());
+    };
+
+    const applyExplorationEvent = (event: ExplorationEvent) => {
+        // QSA's voluntary summary follow-up uses a virtual reply phase;
+        // its visible checkpoint remains the summary.
+        const originPhase = event.origin_phase === 'qsa-essential-followup' && currentPhase === 'qsa-essential-summary' ? currentPhase : event.origin_phase;
+        if (originPhase !== currentPhase) return;
+        if (event.action === 'open' && !activeExploration && !agreementLocked) {
+            // The consent and first reply belong to the new branch. Apply on
+            // the completed frame only, including after interrupted continuations.
+            const checkpoint = { ...(turnCheckpointRef.current ?? captureCheckpoint()), draft: '', user_messages: userMessagesInPhase };
+            setNavigation(prev => ({ ...prev, active_exploration_id: event.id,
+                checkpoints: { ...prev.checkpoints, [currentPhase]: checkpoint },
+                explorations: [...prev.explorations, { ...explorationPayload(event)!, origin_phase: originPhase, title: getPhaseLabel(currentPhase), origin_label: getPhaseLabel(currentPhase), checkpoint: emptyCheckpoint() }] }));
+            setMessages(prev => prev.map((message, index) => index >= prev.length - 2 ? { ...message, explorationId: event.id } : message));
+            stickToBottom.current = true;
+        } else if (event.action === 'return' && activeExploration) {
+            // Response handler runs while busy: finish the completed transition directly.
+            setNavigation(prev => ({ ...prev, active_exploration_id: null,
+                explorations: prev.explorations.map(row => row.id === activeExploration.id ? { ...row, checkpoint: captureCheckpoint() } : row) }));
+            restoreCheckpoint(navigation.checkpoints[activeExploration.origin_phase] ?? emptyCheckpoint());
         }
     };
 
-    // Torna allo step immediatamente precedente e lo RIAPRE (rigenera spiegazione
-    // + risultato + domanda), così la conversazione si riallinea a quell'area.
-    // Rimuovendo target e step corrente da processedPhases se ne consente la
-    // rigenerazione (anche tornando poi avanti).
-    const goToPreviousStep = () => {
-        if (isLoading) return;
-        const currentIndex = phases.indexOf(currentPhase);
-        if (currentIndex > 0) {
-            const target = phases[currentIndex - 1];
-            setShowAdvanceSuggestion(false);
-            processedPhases.current.delete(target);
-            processedPhases.current.delete(currentPhase);
+    const advancePhase = async (userMessage = '', accepted = navigation.agreement_accepted) => {
+        if (activeExploration || (agreementLocked && !accepted)) return;
+        setShowAdvanceSuggestion(false);
+        setNavigation(prev => ({ ...prev, completed: [...new Set([...prev.completed, currentPhase])] }));
+        await recordMemoryEvent(currentPhase, true, userMessage);
+        const target = phases[phases.indexOf(currentPhase) + 1];
+        if (target) {
+            // AI completion is still inside its request; avoid the manual busy guard.
+            saveCurrentCheckpoint();
+            setInput('');
+            stickToBottom.current = true;
             setCurrentPhase(target);
         }
     };
 
+    const goToPreviousStep = () => {
+        const target = phases[phases.indexOf(currentPhase) - 1];
+        if (target) selectPhase(target);
+    };
+
     const repeatCurrentStep = () => {
-        if (isLoading || currentPhase === FIXED_CONCLUSION_ID) return;
+        if (isLoading || activeExploration || currentPhase === FIXED_CONCLUSION_ID) return;
         if (currentPhase === FIXED_QUESTIONS_ID) {
             void generateReflectionQuestions();
             return;
@@ -1429,6 +1553,11 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         session_id: sessionId,
         questionnaire_type: questionnaireType,
         messages,
+        guided_navigation: { ...navigation,
+            visited: [...new Set([...navigation.visited, ...processedPhases.current])],
+            checkpoints: activeExploration ? navigation.checkpoints : { ...navigation.checkpoints, [currentPhase]: captureCheckpoint() },
+            explorations: navigation.explorations.map(row => row.id === activeExploration?.id ? { ...row, checkpoint: captureCheckpoint() } : row),
+        },
         current_phase: currentPhase,
         scores,
         counselor_id: counselorId,
@@ -1468,7 +1597,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             const snapshot = buildSnapshot();
             await freezeSession(snapshot);
             pendingSnapshotRef.current = null;
-            savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext: notebookSignature, groupIds: docenzaGroupIds });
+            savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext: notebookSignature, groupIds: docenzaGroupIds, navigation: { ...navigation, input } });
             toast.success(t('frozen.frozen'));
             onFrozen?.();
         } catch {
@@ -1494,7 +1623,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             isLoading,
             completed: completedRef.current,
         })) return;
-        const signature = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext: notebookSignature, groupIds: docenzaGroupIds });
+        const signature = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext: notebookSignature, groupIds: docenzaGroupIds, navigation: { ...navigation, input } });
         if (signature === savedSignatureRef.current) return;
         pendingSnapshotRef.current = { snapshot: buildSnapshot(), signature };
         const timer = window.setTimeout(() => { void flushAutoFreeze(); }, AUTO_FREEZE_DELAY_MS);
@@ -1502,7 +1631,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         // buildSnapshot legge lo stato corrente a ogni render: le dipendenze qui
         // sono quello che rende lo snapshot diverso dal precedente.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, notebookSignature, docenzaGroupIds, isLoading, sessionId, preview]);
+    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, notebookSignature, docenzaGroupIds, navigation, input, isLoading, sessionId, preview]);
 
     // Uscita dallo strumento con un turno ancora in attesa: `pagehide` copre tab
     // chiusa, ricarica e link che lasciano la pagina (il logo dell'header è un
@@ -1554,11 +1683,11 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // bozza e scelta di salvataggio; altrove il congedo.
     const hasNextPhase = phases.indexOf(currentPhase) < phases.length - 1;
     const goalFinal = !essential && isGoalInstrument(questionnaireType) && phases.length > 0 && !hasNextPhase;
-    const quickReplies: QuickReply[] = interviewQuickReplies(questionnaireType, currentPhase, {
+    const quickReplies: QuickReply[] = (activeExploration ? [] : interviewQuickReplies(questionnaireType, currentPhase, {
         analysisStep: isAnalysisStep(currentPhase),
         suggestion: showAdvanceSuggestion,
         userMessages: userMessagesInPhase,
-    }).filter((reply) => reply.action !== 'advance' || hasNextPhase)
+    })).filter((reply) => reply.action !== 'advance' || hasNextPhase)
         .map(({ key, ...reply }) => ({ ...reply, label: t(key) }));
     // Annuncio per screen reader. Il trascritto è un role="log": va bene per
     // navigarlo, ma da solo non dice nulla mentre la risposta arriva. Un
@@ -1596,19 +1725,19 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const messageActionClass = 'chat-action-item flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
     const renderStepNavigation = () => (
         <div className="flex shrink-0 items-center gap-1">
-            {(essentialSummary || goalFinal) && <Button type="button" variant="secondary" disabled={isLoading} onClick={handleComplete}>{chatPreferenceLabel(activeLocale, "finish")}</Button>}
+            {!activeExploration && (essentialSummary || goalFinal) && <Button type="button" variant="secondary" disabled={isLoading} onClick={handleComplete}>{chatPreferenceLabel(activeLocale, "finish")}</Button>}
             <Tooltip content={t('guided.prevStep')} side="top">
-                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.prevStep')} disabled={isLoading || !canGoPrevious} onClick={goToPreviousStep}>
+                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.prevStep')} disabled={isLoading || !canGoPrevious || !!activeExploration} onClick={goToPreviousStep}>
                     <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                 </Button>
             </Tooltip>
             {showRepeatStep && <Tooltip content={t('guided.repeatStep')} side="top">
-                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.repeatStep')} disabled={isLoading} onClick={repeatCurrentStep}>
+                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.repeatStep')} disabled={isLoading || !!activeExploration} onClick={repeatCurrentStep}>
                     <RotateCcw className="h-5 w-5" aria-hidden="true" />
                 </Button>
             </Tooltip>}
             <Tooltip content={nextStepLabel} side="top">
-                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={nextStepLabel} disabled={isLoading || !hasNextPhase} onClick={() => void advancePhase()}>
+                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={nextStepLabel} disabled={isLoading || !hasNextPhase || agreementLocked || !!activeExploration} onClick={() => void advancePhase()}>
                     {currentPhase === FIXED_QUESTIONS_ID ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : <ChevronRight className="h-5 w-5" aria-hidden="true" />}
                 </Button>
             </Tooltip>
@@ -1643,6 +1772,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'options')}>
             {close => <div className="divide-y divide-slate-200">
                 <div className="space-y-1 pb-2">
+                <button type="button" className={messageActionClass} disabled={isLoading || !!activeExploration || agreementLocked || !currentPhase || currentPhase === FIXED_CONCLUSION_ID} onClick={() => { close(); setShowExplorationForm(true); }}>
+                    <GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" />{navCopy.open}
+                </button>
                 <button type="button" className={`${messageActionClass} hidden lg:flex`} onClick={() => { close(); openPanel(); }}>
                     <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{chatLayoutLabel(activeLocale, 'panel')}
                     {recommendations.reading.length + recommendations.strategy.length > 0 && <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>}
@@ -1710,7 +1842,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             sidebar={(closePanel, mobilePanel) => <>
                 {/* Idea: mappa e rami accanto alla conversazione. Il percorso e
                     i consigli qui sotto non esistono in questo strumento. */}
-                {isIdea && (
+                {isIdea && !activeExploration && (
                     <IdeaPanel
                         sessionId={sessionId}
                         version={ideaMapVersion}
@@ -1734,23 +1866,32 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         </div>
 
                     <div className="space-y-2">
+                        {agreementLocked && <p className="text-xs text-slate-600">{navCopy.agreement}</p>}
                         {sidebarPhases.map((phaseId) => {
-                            const isActive = currentPhase === phaseId;
+                            const isActive = !activeExploration && currentPhase === phaseId;
                             const phaseIndex = phases.indexOf(phaseId);
-                            const isDone = phases.indexOf(currentPhase) > phaseIndex;
-
+                            const isDone = navigation.completed.includes(phaseId);
+                            const visited = navigation.visited.includes(phaseId);
                             return (
-                                <div key={phaseId} aria-current={isActive ? "step" : undefined} className={cn(
-                                    "flex items-center gap-2 p-2 rounded-lg text-xs transition-colors",
-                                    isActive ? "bg-slate-100 text-slate-800 font-semibold" : "text-slate-500"
-                                )}>
-                                    <div className={cn(
-                                        "w-4 h-4 rounded-full flex items-center justify-center text-[8px] border",
-                                        isActive || isDone ? "border-slate-600 bg-slate-600 text-white" : "border-slate-300 bg-white"
-                                    )}>
-                                        {isDone ? <CheckCircle2 className="w-2.5 h-2.5" /> : phaseIndex + 1}
-                                    </div>
-                                    <span className="truncate">{getPhaseLabel(phaseId)}</span>
+                                <div key={phaseId}>
+                                    <button type="button" data-path-phase={phaseId} aria-current={isActive ? 'step' : undefined}
+                                        disabled={isLoading || !canNavigate(phaseId)}
+                                        onClick={() => { selectPhase(phaseId); closePanel(); }}
+                                        className={cn('flex min-h-[44px] w-full items-center gap-2 rounded-lg p-2 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-indigo-600 disabled:opacity-50', isActive ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50')}>
+                                        <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px]', isActive || visited ? 'border-slate-600 bg-slate-600 text-white' : 'border-slate-300 bg-white')}>
+                                            {isDone ? <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> : phaseIndex + 1}
+                                        </span>
+                                        <span className="min-w-0 flex-1">{getPhaseLabel(phaseId)}</span>
+                                        {(isDone || visited) && <span className="sr-only">{isDone ? navCopy.completed : navCopy.visited}</span>}
+                                    </button>
+                                    {navigation.explorations.filter(row => row.origin_phase === phaseId).map(branch => (
+                                        <button type="button" key={branch.id} disabled={isLoading || !!activeExploration}
+                                            aria-label={`${navCopy.resume}: ${branch.title}`} aria-current={activeExploration?.id === branch.id ? 'true' : undefined}
+                                            onClick={() => { openExploration(branch.id); closePanel(); }}
+                                            className="ml-4 flex min-h-[44px] w-[calc(100%-1rem)] items-center gap-2 rounded-lg px-2 text-left text-xs text-indigo-700 hover:bg-indigo-50 disabled:opacity-50">
+                                            <GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" /><span className="break-words">{branch.title}</span>
+                                        </button>
+                                    ))}
                                 </div>
                             );
                         })}
@@ -1808,6 +1949,25 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             {openPanel => <>
                 <p className="sr-only" aria-live="polite">{liveAnnouncement}</p>
 
+                {isIdea && !activeExploration && navigation.explorations.length > 0 && <div className="flex flex-wrap gap-2 border-b border-slate-200 px-3 py-2">
+                    {navigation.explorations.map(branch => <Button key={branch.id} type="button" variant="secondary" disabled={isLoading} aria-label={`${navCopy.resume}: ${branch.title}`} onClick={() => openExploration(branch.id)}><GitBranch className="mr-2 h-4 w-4" aria-hidden="true" />{branch.title}</Button>)}
+                </div>}
+                {activeExploration && <section aria-label={navCopy.branch} className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-200 bg-indigo-50 px-3 py-2">
+                    <div className="min-w-0 text-sm text-indigo-900">
+                        <p className="flex items-center gap-2 font-semibold"><GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" />{navCopy.branch}: {activeExploration.title}</p>
+                        <p className="text-xs">{navCopy.from}: {getPhaseLabel(activeExploration.origin_phase)}</p>
+                    </div>
+                    <Button type="button" variant="secondary" disabled={isLoading} onClick={returnToPath}>{navCopy.back}</Button>
+                </section>}
+                {showExplorationForm && <section aria-label={navCopy.open} className="space-y-2 border-b border-slate-200 bg-slate-50 p-3">
+                    <label htmlFor="guided-exploration-title" className="block text-sm font-medium text-slate-700">{navCopy.title}</label>
+                    <input id="guided-exploration-title" value={explorationTitle} maxLength={200} autoFocus onChange={event => setExplorationTitle(event.target.value)} className="min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm" />
+                    <div className="flex flex-wrap gap-2">
+                        <Button type="button" disabled={!explorationTitle.trim() || isLoading} onClick={() => openExploration()}>{navCopy.start}</Button>
+                        <Button type="button" variant="secondary" onClick={() => setShowExplorationForm(false)}>{navCopy.cancel}</Button>
+                    </div>
+                </section>}
+
                 {/* Messages */}
                 <div
                     ref={messagesRef}
@@ -1816,7 +1976,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     aria-labelledby="guided-chat-title"
                     className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-2 sm:p-4 space-y-4 lg:space-y-6"
                 >
-                    {isIdea && (
+                    {isIdea && !activeExploration && (
                         <div className="space-y-3">
                             {messages.length <= 1 && (
                                 <fieldset className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
@@ -1845,7 +2005,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             )}
                         </div>
                     )}
-                    {isIdea && ideaFocus && (
+                    {isIdea && !activeExploration && ideaFocus && (
                         <IdeaBranchIntro
                             sessionId={sessionId}
                             version={ideaMapVersion}
@@ -1854,13 +2014,13 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             empty={visibleMessages.length === 0}
                         />
                     )}
-                    {hiddenMessages > 0 && (
+                    {isIdea && !activeExploration && hiddenMessages > 0 && (
                         <p className="mx-auto rounded-full bg-slate-50 px-3 py-1 text-2xs font-medium uppercase tracking-widest text-slate-500">
                             {t('idea.branches.onlyThis')}
                         </p>
                     )}
                     {visibleMessages.map(({ message: msg, index: idx }) => (
-                        <div key={idx} className={cn(
+                        <div key={idx} data-message-phase={msg.phaseId} className={cn(
                             "flex min-w-0 animate-fade-in-up",
                             msg.role === 'user' ? 'justify-end' : msg.role === 'system' ? 'justify-center' : 'justify-start'
                         )}>
@@ -1957,13 +2117,13 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
                 <ChatContinuation locale={activeLocale} {...continuation} />
                 {/* Input Area */}
-                {currentPhase === FIXED_CONCLUSION_ID && !voiceMode && isEventInstrument(questionnaireType) && (
+                {currentPhase === FIXED_CONCLUSION_ID && !activeExploration && !voiceMode && isEventInstrument(questionnaireType) && (
                     <EventMilestoneCard sessionId={sessionId} draft={eventBookletDraft} />
                 )}
-                {(currentPhase === FIXED_CONCLUSION_ID || essentialSummary || goalFinal) && !voiceMode && isGoalInstrument(questionnaireType) && (
+                {(currentPhase === FIXED_CONCLUSION_ID || essentialSummary || goalFinal) && !activeExploration && !voiceMode && isGoalInstrument(questionnaireType) && (
                     <GoalDraftCard questionnaireType={questionnaireType} sessionId={sessionId} draft={goalDraftValue} onChange={setGoalDraftValue} />
                 )}
-                {currentPhase === FIXED_CONCLUSION_ID && !voiceMode ? (
+                {currentPhase === FIXED_CONCLUSION_ID && !activeExploration && !voiceMode ? (
                     <div className="flex items-center justify-center gap-2 border-t border-slate-100 bg-slate-50 p-3 sm:p-4">
                         {renderConversationOptions(openPanel)}
                         <button
@@ -1975,8 +2135,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     </div>
                 ) : (
                     <form onSubmit={handleSend} className="border-t border-slate-100 bg-white">
-                        {(essentialSummary || goalFinal) && <p className="px-3 pt-2 text-sm text-slate-600">{chatPreferenceLabel(activeLocale, "followup")}</p>}
-                        {isIdea && sessionId && (
+                        {!activeExploration && (essentialSummary || goalFinal) && <p className="px-3 pt-2 text-sm text-slate-600">{chatPreferenceLabel(activeLocale, "followup")}</p>}
+                        {isIdea && !activeExploration && sessionId && (
                             <IdeaBranchBar
                                 sessionId={sessionId}
                                 version={ideaMapVersion}

@@ -6,6 +6,7 @@ Writing session memory and recording model output remain endpoint responsibiliti
 import re
 from dataclasses import dataclass
 from types import SimpleNamespace
+from .guided_explorations import directive as exploration_directive
 from .prompt_variants import level_config, variant_levels, variant_text
 from .chat_preferences import apply_response_format
 from .qsa_essential import validate_path, directive as essential_directive, is_essential_summary
@@ -209,6 +210,15 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
                       component_overrides=None, retrieval_context=None,
                       provider=None, model=None, journey_override=None, allow_generation=False, config_overrides=None, step_mode_override=None):
     essential = validate_path(request.questionnaire_type, getattr(request, "guided_path", "complete"), request.phase)
+    active_exploration = getattr(request, "exploration", None)
+    if active_exploration:
+        # Retain the origin in branch data; do not execute its task or synthesis.
+        origin_step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
+        request = request.model_copy(update={
+            "mode": "generic", "phase": None, "use_phase_prompt": False, "guided_path": "complete",
+            "questionnaire_type": origin_step.questionnaire_type if origin_step else request.questionnaire_type,
+        })
+        essential = False
     # Apertura di una fase essenziale: nessuna risposta della persona da valutare.
     essential_entry = bool(essential and request.use_phase_prompt)
     if essential and request.use_phase_prompt:
@@ -598,7 +608,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         elif request.phase == "questions":
             reflection_stage = "follow-up"
     guided_choice = bool(
-        step or essential or questionnaire_type == IDEA_INSTRUMENT
+        active_exploration or step or essential or questionnaire_type == IDEA_INSTRUMENT
         or (request.phase and db.query(models.GuidedStep).filter_by(
             questionnaire_type=questionnaire_type).first())
     )
@@ -638,6 +648,10 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         ess_dir = essential_directive(request.phase, entry=essential_entry)
         if ess_dir and ess_dir.strip() not in system_prompt_final:
             system_prompt_final += ess_dir
+    if guided_choice:
+        branch_directive = exploration_directive(request)
+        system_prompt_final += branch_directive
+        components["exploration"] = branch_directive
     system_prompt_final = apply_response_format(system_prompt_final, getattr(request, "response_format", "standard"))
     if notes_tail and "[SESSION NOTES]" not in system_prompt_final and notes_tail.strip() not in system_prompt_final:
         system_prompt_final += notes_tail

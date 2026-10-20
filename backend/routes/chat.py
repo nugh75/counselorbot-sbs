@@ -41,6 +41,7 @@ from .. import recommendation_blocks
 from .. import event_booklet
 from .. import goal_draft
 from .. import control_markers
+from ..guided_explorations import transition as exploration_transition, restore_owned_snapshot
 from .. import thread_guard
 from .. import recommendation_service as _recommendation_service
 from ..certified_reading_service import certified_reading_memory
@@ -181,7 +182,7 @@ def _watch_thread(prepared, request, db, *, session_id, username, effective_mess
     flag is read here, on a session that is already open, so a turn on an
     installation that has the guard off does not start a thread to learn it.
     """
-    if not thread_guard.enabled(db):
+    if request.exploration or not thread_guard.enabled(db):
         return
     step = getattr(prepared, "step", None)
     recommended = recommended or {}
@@ -466,7 +467,7 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
 
 def _apply_idea_patch(response_content: str, *, questionnaire_type: str, username: str | None,
                       session_id: str, step_id: str | None,
-                      user_message: str = "", lang: str = "it") -> tuple[str, int | None]:
+                      user_message: str = "", lang: str = "it", allow_write: bool = True) -> tuple[str, int | None]:
     """Toglie la patch della mappa dal testo e la fonde nella mappa di sessione.
 
     Il blocco non deve arrivare allo studente ne' finire nella memoria della
@@ -475,7 +476,7 @@ def _apply_idea_patch(response_content: str, *, questionnaire_type: str, usernam
     if questionnaire_type != IDEA_INSTRUMENT or not username:
         return response_content, None
     cleaned, patch = extract_patch(response_content)
-    if patch is None:
+    if patch is None or not allow_write:
         return cleaned, None
     map_db = database.SessionLocal()
     try:
@@ -622,9 +623,10 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     if request.use_phase_prompt and step:
         first_step = db.query(models.GuidedStep).filter(models.GuidedStep.questionnaire_type == step.questionnaire_type).order_by(models.GuidedStep.sort_order).first()
         is_first_step = bool(first_step and first_step.id == step.id)
-        if is_first_step:
+        if is_first_step and not request.supports_explorations:
             session_memory.clear(session_id)
     try:
+        restore_owned_snapshot(db, session_memory, session_id, identity, request)
         prepared = prepare_chat_turn(
             db, ai_service, request, session_id, identity,
             c_persona=c_persona, counselor_name=c_name, provider=c_provider, model=c_model,
@@ -714,6 +716,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         step_id=request.phase,
         user_message=request.message or "",
         lang=request.language or "it",
+        allow_write=not bool(request.exploration) and "APRI_APPROFONDIMENTO" not in control_signals,
     )
     response_content = _strip_generic_acknowledgement(response_content)
     response_content, truncated = _limit_visible_words(response_content, effective_response_length)
@@ -728,6 +731,12 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
 
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         step_label = _sanitize_ztpi_step_label(step_label, request.language)
+
+    exploration_event, control_signals = exploration_transition(
+        request, control_signals if not truncated else [], title=localized(step, "label", request.language) if step else "", has_content=bool(response_content.strip()),
+    )
+    if request.exploration:
+        booklet_draft = goal_draft_value = None
 
     # Transcript verbatim role-tagged per la sessione (Fase 2).
     if request.internal_message:
@@ -746,6 +755,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         step_label, is_first_step, knowledge_context, request.phase or "", model_scores_context,
         questionnaire_type, request.language or "", bool(control_markers.ADVANCE_STEP in control_signals),
         transcript_user=_transcript_user,
+        exploration_id=request.exploration.id if request.exploration else None,
     )
 
     # 6. Log Interaction
@@ -759,6 +769,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "practice_notebook_id": practice_notebook_id_for_turn(db, identity, request),
         "mode": request.mode,
         "phase": request.phase,
+        "exploration": request.exploration.model_dump() if request.exploration else None,
         "user_input": "" if request.internal_message else request.message,
         "effective_user_input": effective_message,
         "bot_response": response_content,
@@ -804,9 +815,10 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             details=_details,
         )
         db.add(log_entry)
-        record_guided_chat_completion(db, session_id=session_id,
-                                      username=identity.get("username") if identity else None,
-                                      phase=request.phase)
+        if not request.exploration:
+            record_guided_chat_completion(db, session_id=session_id,
+                                          username=identity.get("username") if identity else None,
+                                          phase=request.phase)
         response_id = shared_response_memory.create_candidate(
             db,
             response_content,
@@ -857,6 +869,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "event_booklet": booklet_draft,
         "goal_draft": goal_draft_value,
         "control_signals": control_signals,
+        "exploration": exploration_event,
     }
 
 
@@ -897,9 +910,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     if request.use_phase_prompt and step:
         first_step = db.query(models.GuidedStep).filter(models.GuidedStep.questionnaire_type == step.questionnaire_type).order_by(models.GuidedStep.sort_order).first()
         is_first_step = bool(first_step and first_step.id == step.id)
-        if is_first_step and not request.partial_response:
+        if is_first_step and not request.partial_response and not request.supports_explorations:
             session_memory.clear(session_id)
     try:
+        restore_owned_snapshot(db, session_memory, session_id, identity, request)
         prepared = prepare_chat_turn(
             db, ai_service, request, session_id, identity,
             c_persona=c_persona, counselor_name=c_name, provider=c_provider, model=c_model,
@@ -958,6 +972,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 "practice_notebook_id": practice_notebook_id,
                 "mode": request.mode,
                 "phase": request.phase,
+                "exploration": request.exploration.model_dump() if request.exploration else None,
                 "user_input": "" if request.internal_message else request.message,
                 "effective_user_input": effective_message,
                 "bot_response": response_content,
@@ -1006,9 +1021,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 details=_details,
             )
             log_db.add(log_entry)
-            record_guided_chat_completion(log_db, session_id=session_id,
-                                          username=identity.get("username") if identity else None,
-                                          phase=request.phase)
+            if not request.exploration:
+                record_guided_chat_completion(log_db, session_id=session_id,
+                                              username=identity.get("username") if identity else None,
+                                              phase=request.phase)
             response_id = shared_response_memory.create_candidate(
                 log_db,
                 response_content,
@@ -1151,6 +1167,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     step_id=request.phase,
                     user_message=request.message or "",
                     lang=request.language or "it",
+                    allow_write=not bool(request.exploration) and "APRI_APPROFONDIMENTO" not in control_signals,
                 )
                 response_content = _student_visible_response(
                     response_content, questionnaire_type, request.language, sanitize
@@ -1169,6 +1186,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     step_id=request.phase,
                     user_message=request.message or "",
                     lang=request.language or "it",
+                    allow_write=not bool(request.exploration) and "APRI_APPROFONDIMENTO" not in control_signals,
                 )
             response_content = strip_thinking(response_content)
             response_content, truncated = _limit_visible_words(response_content, effective_response_length)
@@ -1208,6 +1226,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                         step_id=request.phase,
                         user_message=request.message or "",
                         lang=request.language or "it",
+                        allow_write=not bool(request.exploration) and "APRI_APPROFONDIMENTO" not in control_signals,
                     )
                     retry = _student_visible_response(
                         retry, questionnaire_type, request.language, sanitize,
@@ -1236,6 +1255,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals})}\n\n"
                 return
 
+            exploration_event, control_signals = exploration_transition(request, control_signals, title=localized(step, "label", request.language) if step else "", has_content=bool(response_content.strip()))
+            if request.exploration:
+                booklet_draft = goal_draft_value = None
+
             # Transcript verbatim role-tagged per la sessione (Fase 2).
             if request.internal_message:
                 _transcript_user = ""
@@ -1261,6 +1284,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 request.language or "",
                 bool(control_markers.ADVANCE_STEP in control_signals),
                 transcript_user=_transcript_user,
+                exploration_id=request.exploration.id if request.exploration else None,
             )
 
             response_id = _log_stream(response_content, usage_info, recommended)
@@ -1293,7 +1317,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 finally:
                     recommendation_db.close()
 
-            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': recommended['strategy'], 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': recommendations_for_response, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals})}\n\n"
+            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': recommended['strategy'], 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': recommendations_for_response, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals, 'exploration': exploration_event})}\n\n"
         except Exception as e:
             stream_chunks = chunks[1:] if request.partial_response else chunks
             raw_this_stream = "".join(stream_chunks).strip()
@@ -1338,6 +1362,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     request.language or "",
                     bool(control_signals and control_markers.ADVANCE_STEP in control_signals),
                     transcript_user=_transcript_user,
+                    exploration_id=request.exploration.id if request.exploration else None,
                 )
                 response_id = _log_stream(response_content, usage_info, recommended)
                 yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': (recommended or {}).get('strategy', []), 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': {'reading': [], 'strategy': []}, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals or []})}\n\n"

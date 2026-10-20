@@ -1,8 +1,9 @@
 """Modelli Pydantic delle richieste API (estratti da main.py per evitare
 import circolari tra i router e la logica di chat)."""
 from typing import Literal, Optional
-from pydantic import Field
+from pydantic import Field, model_validator
 
+from .guided_explorations import Exploration
 from . import schemas
 from .chat_preferences import ResponseFormat
 from .schemas import (
@@ -32,6 +33,15 @@ class ChatRequest(schemas.BaseModel):
     internal_message: bool = False  # Istruzione tecnica: non mostrarla come input studente nei log/PDF
     counselor_id: Optional[int] = None  # se valorizzato: persona + provider/model dal counselor
     guided_path: Literal["complete", "essential"] = "complete"
+    supports_explorations: bool = False
+    exploration: Optional[Exploration] = None
+
+    @model_validator(mode="after")
+    def _exploration_origin(self):
+        if self.exploration and (not self.supports_explorations or self.exploration.origin_phase != self.phase or self.use_phase_prompt):
+            raise ValueError("An exploration requires its origin phase and a capable continuation client")
+        return self
+
     idea_variant: Optional[str] = None  # Idea: student-path|student-open|research|concept
     idea_budget: Optional[int] = None   # scambi previsti per la sessione; 0/None = senza limite
     # Chat docenza: classi scelte dal docente (una o piu') per questa

@@ -1,4 +1,5 @@
 from .chat_preferences import ResponseFormat
+from .guided_explorations import Exploration
 from .dynamic_registry import DynamicInstrumentSet, HISTORIC_INSTRUMENT_CODES
 from pydantic import BaseModel, Field, StrictBool, StrictInt, model_validator, validator
 from typing import Annotated, Optional, List, Dict, Any, Union, Literal
@@ -144,6 +145,8 @@ class PromptAuditRequest(BaseModel):
     response_length: Optional[Literal["short", "medium", "long"]] = None
     response_format: ResponseFormat = "standard"
     guided_path: Literal["complete", "essential"] = "complete"
+    supports_explorations: bool = False
+    exploration: Optional[Exploration] = None
     conversation_id: Optional[str] = None
     idea_variant: Optional[str] = None
     idea_budget: Optional[int] = None
@@ -1143,7 +1146,33 @@ FROZEN_SESSION_MAX_CONTENT_CHARS = 20000
 FROZEN_SESSION_PDF_TOKEN_RE = re.compile(r"^[a-f0-9]{32}$")
 
 
+class GuidedCheckpoint(BaseModel):
+    draft: str = Field(default="", max_length=20000)
+    scroll_top: float = Field(default=0, ge=0)
+    user_messages: int = Field(default=0, ge=0)
+    advance_suggestion: bool = False
+
+
+class FrozenExploration(BaseModel):
+    origin_label: Optional[str] = Field(default=None, max_length=200)
+    id: str = Field(min_length=1, max_length=100, pattern=r"^[a-zA-Z0-9_-]+$")
+    title: str = Field(min_length=1, max_length=200)
+    origin_phase: str = Field(min_length=1, max_length=200)
+    checkpoint: GuidedCheckpoint = Field(default_factory=GuidedCheckpoint)
+
+
+class GuidedNavigation(BaseModel):
+    visited: List[str] = Field(default_factory=list, max_length=200)
+    completed: List[str] = Field(default_factory=list, max_length=200)
+    agreement_accepted: bool = False
+    active_exploration_id: Optional[str] = Field(default=None, max_length=100)
+    explorations: List[FrozenExploration] = Field(default_factory=list, max_length=100)
+    checkpoints: Dict[str, GuidedCheckpoint] = Field(default_factory=dict, max_length=200)
+
+
 class FrozenSessionMessage(BaseModel):
+    explorationId: Optional[str] = Field(default=None, max_length=100)
+    phaseId: Optional[str] = Field(default=None, max_length=200)
     role: str
     content: str
     reasoning: Optional[str] = None
@@ -1164,6 +1193,7 @@ class FrozenSessionMessage(BaseModel):
 
 
 class FrozenSessionCreate(BaseModel):
+    guided_navigation: Optional[GuidedNavigation] = None
     session_id: str
     questionnaire_type: str
     messages: List[FrozenSessionMessage] = Field(default_factory=list)
@@ -1236,6 +1266,7 @@ class FrozenSessionSummary(BaseModel):
 
 
 class FrozenSessionDetail(FrozenSessionSummary):
+    guided_navigation: Optional[GuidedNavigation] = None
     messages: List[FrozenSessionMessage] = Field(default_factory=list)
     scores: Dict[str, float] = Field(default_factory=dict)
     counselor_id: Optional[int] = None

@@ -34,6 +34,7 @@ export function autoFreezeSignature(input: {
     guidedPath?: string;
     notebookContext?: string;
     groupIds?: number[];
+    navigation?: unknown;
 }): string {
     const last = input.messages[input.messages.length - 1];
     return [
@@ -45,6 +46,7 @@ export function autoFreezeSignature(input: {
         input.notebookContext ?? "default",
         (input.groupIds ?? []).join(','),
         last ? last.content.length : 0,
+        JSON.stringify(input.navigation ?? null),
     ].join('|');
 }
 

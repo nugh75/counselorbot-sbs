@@ -3,17 +3,17 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { advanceButtons, advanceLabelKey, interviewQuickReplies, isAgreementStep } from './interview-path.ts';
+import { advanceButtons, advanceLabelKey, isAgreementStep } from './interview-path.ts';
 
 const source = readFileSync(new URL('../components/qsa/GuidedChatInterface.tsx', import.meta.url), 'utf8');
 
 test('GuidedChatInterface always renders the previous and next step buttons without hiding them conditionally', () => {
     // Indietro is always rendered and guarded only by disabled state
-    assert.match(source, /<Button[^>]*aria-label=\{t\('guided\.prevStep'\)\}[^>]*disabled=\{isLoading \|\| !canGoPrevious\}/);
+    assert.match(source, /<Button[^>]*aria-label=\{t\('guided\.prevStep'\)\}[^>]*disabled=\{isLoading \|\| !canGoPrevious \|\| !!activeExploration\}/);
     assert.doesNotMatch(source, /\{showPreviousStep &&/);
 
     // Avanti is always rendered and guarded only by disabled state
-    assert.match(source, /<Button[^>]*aria-label=\{nextStepLabel\}[^>]*disabled=\{isLoading \|\| !hasNextPhase\}/);
+    assert.match(source, /<Button[^>]*aria-label=\{nextStepLabel\}[^>]*disabled=\{isLoading \|\| !hasNextPhase \|\| agreementLocked \|\| !!activeExploration\}/);
     assert.doesNotMatch(source, /\{\(showStandardAdvance \|\| showInterviewAdvance\) &&/);
 
     // Step navigation bar is rendered as long as phases exist

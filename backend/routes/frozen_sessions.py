@@ -39,6 +39,7 @@ def _detail(row: models.FrozenSession) -> schemas.FrozenSessionDetail:
     return schemas.FrozenSessionDetail(
         **_summary(row).model_dump(exclude={"practice_notebook_id"}),
         messages=data.get("messages") or [],
+        guided_navigation=data.get("guided_navigation"),
         scores=data.get("scores") or {},
         counselor_id=data.get("counselor_id"),
         locale=data.get("locale"),

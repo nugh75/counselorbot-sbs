@@ -2,11 +2,14 @@
 // lo riprende da qualsiasi dispositivo (lo stato vive sul server, non in
 // localStorage come il punto di ripresa di `lib/resume.ts`).
 
+import type { GuidedNavigation } from './guided-navigation';
 import type { ResponseFormat, GuidedPath } from './chat-preferences';
 
 import { apiFetch } from '@/lib/auth';
 
 export interface FrozenSessionMessage {
+    explorationId?: string;
+    phaseId?: string;
     role: string;
     content: string;
     reasoning?: string;
@@ -28,6 +31,7 @@ export interface FrozenSessionSummary {
 }
 
 export interface FrozenSessionDetail extends FrozenSessionSummary {
+    guided_navigation?: GuidedNavigation | null;
     messages: FrozenSessionMessage[];
     scores: Record<string, number>;
     counselor_id?: number | null;
@@ -44,6 +48,7 @@ export interface FrozenSessionDetail extends FrozenSessionSummary {
 }
 
 export interface FrozenSessionSnapshot {
+    guided_navigation?: GuidedNavigation;
     session_id: string;
     questionnaire_type: string;
     messages: FrozenSessionMessage[];

@@ -2143,7 +2143,7 @@ def _update_markdown_memory_background(
     step_label: str, is_first_step: bool, previous_summary: str = "",
     phase: str = "", scores_context: str = "", questionnaire_type: str = "",
     language: str = "", completed_step: bool = False,
-    transcript_user: str | None = None,
+    transcript_user: str | None = None, exploration_id: str | None = None,
 ):
     """Compat legacy: aggiorna la memoria Markdown senza chiamare il modello."""
     try:
@@ -2158,6 +2158,7 @@ def _update_markdown_memory_background(
             questionnaire_type=questionnaire_type,
             language=language,
             completed_step=completed_step,
+            exploration_id=exploration_id,
         )
         logger.info(f"Session {session_id}: memoria Markdown aggiornata")
     except Exception as e:
@@ -3229,6 +3230,12 @@ def build_context_envelope(
 
     # --- MESSAGES: history verbatim + user corrente (scores scope-ati + msg) ---
     history = session_memory.get_transcript(session_id, touch=create_anonymous_code) if include_history and include_session_memory and _component_enabled(component_flags, "history") else []
+    from .guided_explorations import branch_history
+    exploration_id = getattr(getattr(request, "exploration", None), "id", None)
+    if exploration_id and include_history and include_session_memory and _component_enabled(component_flags, "history"):
+        history = session_memory.get_exploration_transcript(session_id, exploration_id, touch=create_anonymous_code)
+    else:
+        history = branch_history(history)
     clean_user_message = extract_clean_student_message(effective_message, getattr(request, "memory_message", None))
     if getattr(request, "use_phase_prompt", False):
         # QPCS è un dialogo riflessivo: all'ingresso di uno step il prompt di fase
