@@ -28,6 +28,7 @@ from .chat_logic import (
     apply_advice_retrieval_policy,
     is_advice_follow_up,
     _apply_global_directives,
+    _reasoning_disabled_for,
     _apply_advice_distribution_directive,
     _apply_follow_up_advice_directive,
     _apply_response_length_directive,
@@ -237,6 +238,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         request = request.copy(update={'scores_context': score_context(request.scores_context, request.language)})
     effective_response_length = request.response_length
     max_tokens = _response_length_max_tokens(effective_response_length, request.max_tokens)
+    reasoning_disabled = _reasoning_disabled_for(ai_service, model)
     is_profile_step = (
         (request.phase or "").endswith("-profilo")
         or (getattr(step, "id", None) or "").endswith("-profilo")
@@ -271,7 +273,6 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         or (step.sort_order or 0) == 0
         or skills_intents.asks_about_platform(request.message or "")
     )
-    base_prompt = system_prompt
     configs = {**ai_service.config, **(config_overrides or {})}
     level_configs = {level: level_config(configs, level) for level in variant_levels(configs) if level != "totale"}
     level_systems = {}
@@ -290,10 +291,17 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         return function(normal, *args, **kwargs)
 
     system_prompt = transform(_apply_global_directives, system_prompt, request.language, db,
-                                             platform_full=platform_full, config_overrides=config_overrides)
-    global_directives = system_prompt[len(base_prompt):].strip()
+                                             platform_full=platform_full, config_overrides=config_overrides,
+                                             reasoning_disabled=reasoning_disabled)
+    # Non usare il suffisso di `system_prompt`: la sostituzione della direttiva
+    # di reasoning può rimuovere un blocco già presente nel prompt di base.
+    global_directives = _apply_global_directives(
+        "", request.language, db, platform_full=platform_full,
+        config_overrides=config_overrides, reasoning_disabled=reasoning_disabled,
+    ).strip()
     level_directives = {level: _apply_global_directives("", request.language, db,
-        platform_full=platform_full, config_overrides=config).strip() for level, config in level_configs.items()}
+        platform_full=platform_full, config_overrides=config,
+        reasoning_disabled=reasoning_disabled).strip() for level, config in level_configs.items()}
     system_prompt = transform(_apply_response_length_directive, system_prompt, effective_response_length)
     system_prompt = transform(_apply_idea_variant_directive, system_prompt, ai_service, request)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)

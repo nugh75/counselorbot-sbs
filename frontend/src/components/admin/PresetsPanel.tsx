@@ -25,6 +25,7 @@ interface Preset {
     notes: string | null;
     is_active: boolean;
     provider_configured: boolean;
+    reasoning_mandatory: boolean;
 }
 
 type FormState = {
@@ -49,6 +50,7 @@ export function PresetsPanel() {
     const [presets, setPresets] = useState<Preset[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<number | 'new' | null>(null);
+    const editingPreset = typeof editingId === 'number' ? presets.find((p) => p.id === editingId) : undefined;
     const [form, setForm] = useState<FormState>(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
     const [liveModels, setLiveModels] = useState<string[]>([]);
@@ -206,7 +208,7 @@ export function PresetsPanel() {
                     <input className={inputCls} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
                 </label>
                 <label className="flex items-center gap-2 text-sm text-slate-600 mt-5">
-                    <input type="checkbox" checked={form.disable_thinking} onChange={(e) => setForm({ ...form, disable_thinking: e.target.checked })} />
+                    <input type="checkbox" checked={form.disable_thinking} onChange={(e) => setForm({ ...form, disable_thinking: e.target.checked })} disabled={editingPreset?.reasoning_mandatory} />
                     {t('admin.presets.disableThinking')}
                 </label>
                 <label className="flex items-center gap-2 text-sm text-slate-600 mt-5">
@@ -220,6 +222,7 @@ export function PresetsPanel() {
                     <p className="mt-2">{t('admin.presets.reasoningHelp')}</p>
                     <p className="mt-2">{t('admin.config.lengthProfilesHint')}</p>
                 </Callout>
+                {editingPreset?.reasoning_mandatory && <Callout variant="warning">{t('admin.presets.mandatoryReasoning')}</Callout>}
                 {Number(form.max_tokens) > 0 && Number(form.max_tokens) < 2000 && <Callout variant="warning">{t('admin.presets.lowTokenWarning')}</Callout>}
                 {invalidTokens && <p role="alert" className="text-sm text-red-700">{t('admin.presets.invalidTokens')}</p>}
                 {saveError && <p role="alert" className="text-sm text-red-700">{t('admin.config.saveError')}</p>}
@@ -279,7 +282,10 @@ export function PresetsPanel() {
                                             <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-2xs font-medium text-amber-700">{t('admin.presets.notConfigured')}</span>
                                         )}
                                     </td>
-                                    <td className="px-3 py-2 font-mono text-xs text-slate-700">{p.model}</td>
+                                    <td className="px-3 py-2 font-mono text-xs text-slate-700">
+                                        <span>{p.model}</span>
+                                        {p.reasoning_mandatory && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-amber-800" title={t('admin.presets.mandatoryReasoning')}>{t('admin.presets.mandatoryShort')}</span>}
+                                    </td>
                                     <td className="px-3 py-2">{p.is_active ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-slate-500" />}</td>
                                     <td className="px-3 py-2">
                                         <div className="flex justify-end gap-1">

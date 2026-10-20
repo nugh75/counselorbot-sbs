@@ -16,7 +16,7 @@ from .. import models, schemas, auth, database, prompt_revisions, personal_api, 
 from ..counselor_i18n import localized_description, localized_tagline, translate_counselor_async, translate_counselor_sync
 from ..counselor_identity import get_all_approach_categories, recommend_counselor
 from ..counselor_scope import restricted_instruments, suits
-from ..reasoning_profiles import supports_reasoning
+from ..reasoning_profiles import is_mandatory_reasoning, supports_reasoning
 from sqlalchemy import cast as sa_cast, String
 
 router = APIRouter()
@@ -130,9 +130,11 @@ async def list_public_counselors(
         selected_connection = personal_api.active_settings(db, username, r.id)
         if selected_connection:
             pub.model, pub.model_origin = selected_connection.model_name, "external"
+            provider = selected_connection.provider
         pub.is_personal = bool(r.owner_username)
         pub.suitable = suits(r, questionnaire_type, restricted)
         pub.reasoning_capable = supports_reasoning(pub.model)
+        pub.reasoning_mandatory = is_mandatory_reasoning(pub.model, provider)
         out.append(pub)
     # Gli adatti in cima: chi sceglie legge prima cio' che puo' usare.
     out.sort(key=lambda item: not item.suitable)

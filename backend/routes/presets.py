@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database
 from ..ai_service import AIService
+from ..reasoning_profiles import is_mandatory_reasoning
 
 router = APIRouter()
 get_db = database.get_db
@@ -29,6 +30,7 @@ def _provider_configured(config: dict, provider: str) -> bool:
 def _serialize(preset: models.ModelPreset, config: dict) -> schemas.ModelPresetResponse:
     data = schemas.ModelPresetResponse.model_validate(preset)
     data.provider_configured = _provider_configured(config, preset.provider)
+    data.reasoning_mandatory = is_mandatory_reasoning(preset.model, preset.provider)
     return data
 
 

@@ -27,8 +27,11 @@ from ..chat_continuation import continuation_message
 from ..prompt_contract import persona_context
 from ..ai_service import AIService, AIError
 from ..chat_logic import (
+    DEFAULT_NO_REASONING_DIRECTIVE,
     _apply_language_directive,
+    _apply_reasoning_directive,
     _apply_response_length_directive,
+    _reasoning_disabled_for,
     _limit_visible_words,
     _response_length_max_tokens,
     _strip_generic_acknowledgement,
@@ -56,7 +59,6 @@ from ..prompt_config import (
 )
 from ..rag_index import (
     get_index,
-    site_rag_index,
     build_context,
     get_document_preview,
     collection_exists,
@@ -379,6 +381,11 @@ async def site_chat_stream(
     c_persona, c_name = _resolve_counselor(db, request.counselor_id)
     if c_persona:
         system_prompt = f"{persona_context(c_persona, c_name)}\n\n{system_prompt}"
+    if _reasoning_disabled_for(ai_service):
+        system_prompt = _apply_reasoning_directive(
+            system_prompt, disabled=True,
+            no_reasoning_directive=DEFAULT_NO_REASONING_DIRECTIVE,
+        )
     system_prompt = _apply_response_length_directive(system_prompt, request.response_length)
     system_prompt = apply_response_format(system_prompt, request.response_format)
     max_tokens = _response_length_max_tokens(request.response_length, request.max_tokens)
@@ -433,6 +440,8 @@ async def site_chat_stream(
         candidato per il 'mi piace'. Ritorna response_id (per l'evento done)."""
         actual_provider = getattr(ai_service, "last_provider", None) or provider
         actual_model = getattr(ai_service, "last_model", None) or model
+        plan_getter = getattr(ai_service, "_plan", None)
+        reasoning_plan = plan_getter() if callable(plan_getter) else None
         log_db = database.SessionLocal()
         response_id = None
         try:
@@ -460,6 +469,13 @@ async def site_chat_stream(
                     "n_results": len(results) if results else 0,
                     "usage": usage,
                     "response_length": request.response_length,
+                    "effective_response_length": request.response_length,
+                    "reasoning_disabled": bool(getattr(ai_service, "disable_thinking", False)),
+                    "reasoning_plan": {
+                        "enabled": bool(getattr(reasoning_plan, "enabled", False)),
+                        "reasoning_budget": getattr(reasoning_plan, "reasoning_budget", None),
+                    },
+                    "reasoning_present": bool(getattr(ai_service, "last_thinking", None)),
                     "cost_usd": cost_usd,
                     "credential_source": "personal" if getattr(ai_service, "personal_target", None) else "system",
                     "shared_owner": getattr(ai_service, "shared_owner", None),
@@ -540,7 +556,8 @@ async def site_chat_stream(
                 if not text:
                     continue
                 if isinstance(item, dict) and item.get("type") == "reasoning":
-                    yield f"data: {_json.dumps({'reasoning': text})}\n\n"
+                    if not getattr(ai_service, "disable_thinking", False):
+                        yield f"data: {_json.dumps({'reasoning': text})}\n\n"
                     continue
                 chunks.append(text)
                 display_response, truncated = _limit_visible_words(

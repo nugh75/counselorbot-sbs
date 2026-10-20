@@ -29,6 +29,8 @@ export interface PublicCounselor {
     // Il modello puo' ragionare: falso solo per le famiglie note come
     // non-reasoning.
     reasoning_capable?: boolean;
+    // Il modello non permette di spegnere il reasoning.
+    reasoning_mandatory?: boolean;
 }
 
 export interface CounselorRecommendationRequest {

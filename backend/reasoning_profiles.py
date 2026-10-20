@@ -113,6 +113,63 @@ _PATTERNS: list[tuple[re.Pattern, ReasoningProfile]] = [
 ]
 
 
+# Modelli OpenRouter noti per imporre il reasoning (OpenRouter restituisce 400
+# se si invia reasoning.enabled=False). Il set viene popolato dinamicamente se
+# OpenRouter segnala che un modello richiede reasoning obbligatorio.
+OPENROUTER_MANDATORY_REASONING_MODELS: set[str] = {
+    "google/gemini-3.8-flash",
+    "google/gemini-3.8-flash:batch",
+    "google/gemini-4-argon",
+    "google/gemini-4-argon:batch",
+    "openai/o1",
+    "openai/o1-preview",
+    "openai/o1-mini",
+    "openai/o3",
+    "openai/o3-mini",
+    "openai/gpt-6.1-sol-pro",
+    "openai/gpt-6.1-sol-pro:batch",
+    "openai/gpt-6.1-sol",
+    "openai/gpt-6.1-sol:batch",
+    "deepseek/deepseek-r1",
+    "deepseek/deepseek-r1:free",
+    "deepseek/deepseek-r1-distill-llama-70b",
+    "deepseek/deepseek-r1-distill-qwen-32b",
+    "deepseek/deepseek-r1-distill-qwen-14b",
+    "deepseek/deepseek-r1-distill-llama-8b",
+}
+
+
+def is_openrouter_mandatory_reasoning(model: Optional[str]) -> bool:
+    """True per i modelli OpenRouter che non accettano reasoning disattivato."""
+    if not isinstance(model, str) or not model.strip():
+        return False
+    m = model.strip().lower()
+    if m in OPENROUTER_MANDATORY_REASONING_MODELS:
+        return True
+    return any(m.startswith(f"{known}:") for known in OPENROUTER_MANDATORY_REASONING_MODELS)
+
+
+def mark_openrouter_mandatory_reasoning(model: Optional[str]) -> None:
+    """Registra un modello che OpenRouter ha appena segnalato come obbligatorio."""
+    if isinstance(model, str) and model.strip():
+        OPENROUTER_MANDATORY_REASONING_MODELS.add(model.strip().lower())
+
+
+def is_mandatory_reasoning(model: Optional[str], provider: Optional[str] = None) -> bool:
+    """True quando il modello non permette di spegnere il ragionamento.
+
+    La capacità è per modello *e* provider: lo stesso id può essere
+    obbligatorio su OpenRouter e regolabile altrove. Il profilo di famiglia
+    resta la fonte per i modelli che dichiarano ``can_disable=False``.
+    """
+    profile = classify(model)
+    if profile is not None and not profile.can_disable:
+        return True
+    if (provider or "").strip().lower() == "openrouter":
+        return is_openrouter_mandatory_reasoning(model)
+    return False
+
+
 # --- Scelta dello studente sullo spazio di ragionamento -------------------
 # Tre etichette, come la lunghezza della risposta. "standard" non impone nulla:
 # vale il default della famiglia (o il budget del preset del counselor), cosi'
@@ -141,7 +198,9 @@ def classify(model: Optional[str]) -> Optional[ReasoningProfile]:
     (`resolve_plan`) tratta lo sconosciuto in modo prudente concedendo headroom
     quando il thinking e' attivo, per non incorrere in risposte vuote.
     """
-    name = (model or "").strip().lower()
+    if not isinstance(model, str):
+        return None
+    name = model.strip().lower()
     if not name:
         return None
     for pattern, profile in _PATTERNS:

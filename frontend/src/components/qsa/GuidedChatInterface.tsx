@@ -108,6 +108,8 @@ interface GuidedChatInterfaceProps {
     // Falso solo quando il modello del counselor e' noto come non-reasoning:
     // il selettore non avrebbe effetto e non va mostrato.
     reasoningCapable?: boolean;
+    // Il modello non permette di spegnere il reasoning (es. o-series su OpenRouter).
+    reasoningMandatory?: boolean;
     // Modalità sandbox / collaudo admin (sessione effimera, nessun log salvato)
     preview?: boolean;
 }
@@ -453,7 +455,7 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
 // suo per non portarsela dietro negli altri strumenti.
 const IDEA_PANEL_BOUNDS = { min: 360, max: 720, initial: 480 };
 
-export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength, initialReasoningEffort, initialResponseFormat, reasoningCapable = true, preview = false }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength, initialReasoningEffort, initialResponseFormat, reasoningCapable = true, reasoningMandatory = false, preview = false }: GuidedChatInterfaceProps) {
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const { streamChat, ...continuation } = useChatContinuation();
@@ -581,6 +583,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const hiddenMessages = messages.length - visibleMessages.length;
     const [responseLength, setResponseLength] = useState<ResponseLength>(initialResponseLength ?? 'medium');
     const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(initialReasoningEffort ?? 'standard');
+    useEffect(() => {
+        if (reasoningMandatory && reasoningEffort === 'off') setReasoningEffort('standard');
+    }, [reasoningMandatory, reasoningEffort]);
     const [input, setInput] = useState('');
     const inputRef = useRef(input);
     inputRef.current = input;
@@ -1039,6 +1044,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             });
         };
         const updateReasoning = (reasoning: string) => {
+            // Un <think> che sfugge al provider non deve riaprire il pannello
+            // quando lo studente ha scelto «Nessuno».
+            if (effortForPhase(FIXED_QUESTIONS_ID) === 'off') return;
             setMessages(prev => {
                 const copy = [...prev];
                 copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', reasoning };
@@ -1160,6 +1168,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 });
             };
             const updateReasoning = (reasoning: string) => {
+                if (effortForPhase(step.id) === 'off') return;
                 setMessages(prev => {
                     const copy = [...prev];
                     copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', reasoning };
@@ -1333,6 +1342,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 });
             };
             const updateReasoning = (reasoning: string) => {
+                if (effortForPhase(currentPhase) === 'off') return;
                 setMessages(prev => {
                     const copy = [...prev];
                     copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', reasoning };
@@ -1812,10 +1822,13 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             <NotebookContextSelector value={notebookContext} onChange={changeNotebookContext} disabled={isLoading} />
                         </div>}
                         {isTeacherUser && notebookContext === 'practice' && <PracticeNotebookPicker value={practiceNotebookId} onChange={changePracticeNotebookId} disabled={isLoading} />}
-                        {reasoningCapable && <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
-                            <Brain className="h-4 w-4 shrink-0" aria-hidden="true" />
-                            <span className="min-w-0 flex-1">{t('reasoning.shortLabel')}</span>
-                            <ReasoningSelector value={reasoningEffort} onChange={setReasoningEffort} disabled={isLoading} />
+                        {reasoningCapable && <div className="space-y-1 px-2 pb-1 text-sm text-slate-600">
+                            <div className="flex min-h-[44px] items-center gap-2">
+                                <Brain className="h-4 w-4 shrink-0" aria-hidden="true" />
+                                <span className="min-w-0 flex-1">{t('reasoning.shortLabel')}</span>
+                                <ReasoningSelector value={reasoningEffort} onChange={setReasoningEffort} disabled={isLoading} mandatory={reasoningMandatory} />
+                            </div>
+                            {reasoningMandatory && <p className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-900">{t('reasoning.mandatory')}</p>}
                         </div>}
                     </div>
                     <div className="space-y-1 py-2">
@@ -2031,7 +2044,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                     <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'} className="px-3 py-2 sm:px-3 sm:py-2 lg:px-5 lg:py-3.5">
                                         {msg.role === 'assistant' ? (
                                             <div className="space-y-2">
-                                                {msg.reasoning && (
+                                                {msg.reasoning && effortForPhase(msg.phaseId || currentPhase) !== 'off' && (
                                                     <div className="rounded-md bg-slate-50 border border-slate-200 px-3 py-2">
                                                         <button
                                                             type="button"

@@ -17,9 +17,11 @@ interface ReasoningSelectorProps {
     value: ReasoningEffort;
     onChange: (value: ReasoningEffort) => void;
     disabled?: boolean;
+    // Il modello ragiona sempre: «Nessuno» resta visibile ma non selezionabile.
+    mandatory?: boolean;
 }
 
-export function ReasoningSelector({ value, onChange, disabled = false }: ReasoningSelectorProps) {
+export function ReasoningSelector({ value, onChange, disabled = false, mandatory = false }: ReasoningSelectorProps) {
     const { t } = useI18n();
 
     return (
@@ -30,7 +32,10 @@ export function ReasoningSelector({ value, onChange, disabled = false }: Reasoni
         >
             {OPTIONS.map(({ value: option, Icon }) => {
                 const optionLabel = t(`reasoning.${option}`);
-                const tooltipLabel = `${t('reasoning.label')}: ${optionLabel}`;
+                const optionDisabled = disabled || (mandatory && option === 'off');
+                const tooltipLabel = mandatory && option === 'off'
+                    ? t('reasoning.mandatoryOption')
+                    : `${t('reasoning.label')}: ${optionLabel}`;
                 const active = option === value;
                 return (
                     <Tooltip key={option} content={tooltipLabel} side="top">
@@ -39,7 +44,8 @@ export function ReasoningSelector({ value, onChange, disabled = false }: Reasoni
                             role="radio"
                             aria-checked={active}
                             aria-label={tooltipLabel}
-                            disabled={disabled}
+                            aria-disabled={optionDisabled}
+                            disabled={optionDisabled}
                             onClick={() => onChange(option)}
                             className={`flex h-7 w-7 items-center justify-center rounded transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                                 active

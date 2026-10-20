@@ -228,6 +228,9 @@ def _step_forbids_reasoning(step) -> bool:
 def _apply_step_reasoning(ai_service: AIService, step) -> None:
     if not _step_forbids_reasoning(step):
         return
+    # Presentazione/patto: il passo vince anche su una scelta «Esteso» dello
+    # studente, perché non c'è nulla da analizzare.
+    ai_service.reasoning_effort_override = "off"
     ai_service.disable_thinking = True
     ai_service.config["disable_thinking"] = "true"
 
@@ -241,6 +244,9 @@ def _apply_reasoning_effort(ai_service: AIService, effort: str | None) -> None:
     disable, budget = effort_overrides(effort)
     if disable is None:
         return
+    # Registra la scelta esplicita: deve vincere sul default della fonte
+    # personale (che altrimenti riattiverebbe il reasoning via property).
+    ai_service.reasoning_effort_override = effort
     ai_service.disable_thinking = disable
     ai_service.config["disable_thinking"] = "true" if disable else "false"
     ai_service.reasoning_budget_override = budget
@@ -964,6 +970,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             return None
         provider = getattr(ai_service, "last_provider", None) or c_provider or ai_service.config.get("active_provider", "unknown")
         model = getattr(ai_service, "last_model", None) or c_model or ai_service.config.get("model_name", "unknown")
+        plan_getter = getattr(ai_service, "_plan", None)
+        reasoning_plan = plan_getter() if callable(plan_getter) else None
         log_db = database.SessionLocal()
         try:
             cost_usd = _usage_cost_usd(usage, provider, model)
@@ -996,6 +1004,15 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 "language": request.language or "it",
                 "streamed": True,
                 "response_length": request.response_length,
+                "requested_response_length": request.response_length,
+                "effective_response_length": effective_response_length,
+                "reasoning_effort": request.reasoning_effort,
+                "reasoning_disabled": bool(getattr(ai_service, "disable_thinking", False)),
+                "reasoning_plan": {
+                    "enabled": bool(getattr(reasoning_plan, "enabled", False)),
+                    "reasoning_budget": getattr(reasoning_plan, "reasoning_budget", None),
+                },
+                "reasoning_present": bool(getattr(ai_service, "last_thinking", None)),
                 "response_format": request.response_format,
                 "guided_path": request.guided_path,
                 "usage": usage,
@@ -1075,11 +1092,13 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     continue
                 # Reasoning / thinking: streammato a parte, NON entra nella risposta finale.
                 if isinstance(item, dict) and item.get("type") == "reasoning":
-                    yield f"data: {_json.dumps({'reasoning': text})}\n\n"
+                    if not getattr(ai_service, "disable_thinking", False):
+                        yield f"data: {_json.dumps({'reasoning': text})}\n\n"
                     continue
                 for sub in splitter.feed(text):
                     if sub.get("type") == "reasoning":
-                        yield f"data: {_json.dumps({'reasoning': sub['text']})}\n\n"
+                        if not getattr(ai_service, "disable_thinking", False):
+                            yield f"data: {_json.dumps({'reasoning': sub['text']})}\n\n"
                         continue
                     sub_text = sub.get("text", "")
                     if not sub_text:
@@ -1123,7 +1142,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
             for sub in splitter.flush():
                 if sub.get("type") == "reasoning":
-                    yield f"data: {_json.dumps({'reasoning': sub['text']})}\n\n"
+                    if not getattr(ai_service, "disable_thinking", False):
+                        yield f"data: {_json.dumps({'reasoning': sub['text']})}\n\n"
                 elif sub.get("type") == "content" and sub.get("text"):
                     chunks.append(sub["text"])
                     raw_response = "".join(chunks)

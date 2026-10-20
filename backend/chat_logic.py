@@ -20,6 +20,7 @@ from . import database, prompt_config
 from .anonymous_codes import code_for_identity
 from .i18n_fields import localized
 from .ai_service import AIService
+from .reasoning_profiles import supports_reasoning
 from .memory_service import session_memory
 from .strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
 from .certified_strategy_service import certified_strategy_memory
@@ -251,9 +252,12 @@ def _clamp_max_tokens(value: Optional[int], default: Optional[int] = None) -> Op
 
 
 RESPONSE_LENGTH_PROFILES = {
-    "short": {"max_words": 80, "max_tokens": 1000},
-    "medium": {"max_words": 260, "max_tokens": 2000},
-    "long": {"max_words": 600, "max_tokens": 4000},
+    # La lunghezza e' un intervallo, non solo un tetto: senza un minimo il
+    # modello tende a fermarsi alla prima frase utile. `target_words` guida la
+    # stesura, `max_words` resta il limite hard applicato anche in streaming.
+    "short": {"min_words": 35, "target_words": 65, "max_words": 80, "max_tokens": 1000},
+    "medium": {"min_words": 110, "target_words": 190, "max_words": 260, "max_tokens": 2000},
+    "long": {"min_words": 260, "target_words": 430, "max_words": 600, "max_tokens": 4000},
 }
 _VISIBLE_WORD_RE = re.compile(r"[^\W_]+(?:['’][^\W_]+)*", re.UNICODE)
 
@@ -269,11 +273,20 @@ def _apply_response_length_directive(system_prompt: str, response_length: Option
     profile = RESPONSE_LENGTH_PROFILES.get(response_length or "")
     if not profile:
         return system_prompt
+    emphasis = {
+        "short": "Compress to the essential: the direct answer, one or two supporting details, "
+                 "and no preamble or repetition.",
+        "medium": "Develop the answer with the essential context, one concrete example or "
+                  "connection, and a clear close.",
+        "long": "Develop the answer in depth with concrete details, examples and connections "
+                "drawn from the conversation. Add substance, not filler or repetition.",
+    }.get(response_length, "Prioritize the direct answer and essential context.")
     return (
         f"{system_prompt}\n\n[RESPONSE LENGTH - BINDING] Write a complete, self-contained visible answer "
-        f"of no more than {profile['max_words']} words. Prioritize the direct answer and essential context, "
-        "conclude naturally within the limit, and do not mention this instruction. The limit applies only "
-        "to the student-facing answer, not to private reasoning."
+        f"of about {profile['target_words']} words, within {profile['min_words']}-{profile['max_words']} words. "
+        f"{emphasis} Conclude naturally and do not mention this instruction. The range applies only "
+        "to the student-facing answer, not to private reasoning. If a task contract requires a "
+        "verbatim text or a fixed structured block, honor that contract over the range."
     )
 
 
@@ -476,15 +489,101 @@ _QSA_INVERTED_CODES = ("C3", "C6", "A1", "A4", "A5", "A7")
 _QSAR_INVERTED_CODES = ("C4r", "A1r")
 
 
+DEFAULT_THINKING_DIRECTIVE = (
+    "[THINKING] If you reason before answering, put ALL of your reasoning inside "
+    "ONE single block at the very beginning, wrapped exactly in <think> and "
+    "</think> tags, and keep it concise (a few short lines). After </think>, write "
+    "the student-facing answer directly: it must NOT contain your plan, your "
+    "checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor "
+    "any meta-commentary about what you are doing. Never start the visible answer "
+    "with a preparatory checklist such as 'Devo analizzare', 'Identificare il filo "
+    "rosso', 'Strutturare i contenuti' or 'Proporre azioni concrete'. Never expose "
+    "reasoning outside the <think> block."
+)
+
+DEFAULT_NO_REASONING_DIRECTIVE = (
+    "[NO REASONING] Do not produce a reasoning block, analysis, plan, checklist or "
+    "meta-commentary. Do not output <think>, <thinking> or <sto_pensando> tags. "
+    "Do not begin with phrases such as 'Devo analizzare', 'Identifico', 'Ho i "
+    "punteggi' or 'Strutturo'. Start directly with the student-facing answer and "
+    "decide silently. If the task requires a private structured block, emit only "
+    "the exact block requested by the task, outside the visible answer."
+)
+
+_DIRECTIVE_BLOCK_RE = re.compile(
+    r"\[{marker}\].*?(?=\n\s*\n\[[A-Z][A-Z0-9 _-]*\]|\Z)",
+    re.DOTALL,
+)
+
+
+def _remove_directive_block(system_prompt: str, marker: str) -> str:
+    pattern = re.compile(_DIRECTIVE_BLOCK_RE.pattern.format(marker=re.escape(marker)), re.DOTALL)
+    return pattern.sub("", system_prompt).rstrip()
+
+
+def _apply_reasoning_directive(
+    system_prompt: str,
+    *,
+    disabled: bool,
+    thinking_directive: str = "",
+    no_reasoning_directive: str = "",
+) -> str:
+    """Sostituisce la direttiva di reasoning invece di aggiungerla sempre.
+
+    Con ``disabled=True`` il prompt non deve contenere nessun invito a produrre
+    un blocco di pensiero: un ``[THINKING]`` residuo nel prompt di step o nella
+    configurazione vanificherebbe il selettore «Nessuno». Con ``disabled=False``
+    si ripristina la direttiva canonica (o quella personalizzata dal DB).
+    """
+    prompt = _remove_directive_block(system_prompt, "THINKING")
+    prompt = _remove_directive_block(prompt, "NO REASONING")
+    directive = (no_reasoning_directive if disabled else thinking_directive).strip()
+    if not directive:
+        return re.sub(r"\n{3,}", "\n\n", prompt)
+    return re.sub(r"\n{3,}", "\n\n", f"{prompt.rstrip()}\n\n{directive}")
+
+
+def _effective_model_name(ai_service, model: Optional[str] = None) -> Optional[str]:
+    """Modello che risponderà davvero, considerando fonte personale e ChatGPT."""
+    chatgpt_model = getattr(ai_service, "chatgpt_model", None)
+    if chatgpt_model:
+        return chatgpt_model
+    personal_target = getattr(ai_service, "personal_target", None)
+    if personal_target:
+        return personal_target[1]
+    return model or (getattr(ai_service, "config", {}) or {}).get("model_name")
+
+
+def _reasoning_disabled_for(ai_service, model: Optional[str] = None) -> bool:
+    """True se il turno non deve produrre ragionamento visibile o privato.
+
+    Oltre alla scelta esplicita «Nessuno» (o al preset), vale per i modelli che
+    la piattaforma sa essere non-reasoning: chiedere loro un blocco `<think>`
+    non avrebbe senso e alimenterebbe il pannello con un canale non richiesto.
+    """
+    if getattr(ai_service, "disable_thinking", False):
+        return True
+    model_name = _effective_model_name(ai_service, model)
+    if not isinstance(model_name, str) or not model_name.strip():
+        # Configurazioni incomplete o mock: non forzare la direttiva «no
+        # reasoning» su un modello che non sappiamo classificare.
+        return False
+    return not supports_reasoning(model_name)
+
+
 def _apply_global_directives(system_prompt: str, language: Optional[str], db=None,
-                            platform_full: bool = True, config_overrides=None) -> str:
+                            platform_full: bool = True, config_overrides=None,
+                            reasoning_disabled: Optional[bool] = None) -> str:
     """Applica in un unico blocco le tre direttive globali: lingua, registro e
     thinking. Legge i testi dalle config del DB se presenti; altrimenti usa i
     default hardcoded."""
     if db is None:
         db_local = database.SessionLocal()
         try:
-            return _apply_global_directives(system_prompt, language, db_local, platform_full)
+            return _apply_global_directives(
+                system_prompt, language, db_local, platform_full=platform_full,
+                config_overrides=config_overrides, reasoning_disabled=reasoning_disabled,
+            )
         finally:
             db_local.close()
 
@@ -534,17 +633,7 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
         )
 
     if not thinking_directive:
-        thinking_directive = (
-            "[THINKING] If you reason before answering, put ALL of your reasoning inside "
-            "ONE single block at the very beginning, wrapped exactly in <think> and "
-            "</think> tags, and keep it concise (a few short lines). After </think>, write "
-            "the student-facing answer directly: it must NOT contain your plan, your "
-            "checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor "
-            "any meta-commentary about what you are doing. Never start the visible answer "
-            "with a preparatory checklist such as 'Devo analizzare', 'Identificare il filo "
-            "rosso', 'Strutturare i contenuti' or 'Proporre azioni concrete'. Never expose "
-            "reasoning outside the <think> block."
-        )
+        thinking_directive = DEFAULT_THINKING_DIRECTIVE
 
     if not context_directive:
         context_directive = prompt_config.DEFAULT_CONTEXT_DIRECTIVE
@@ -570,14 +659,17 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
         parts.append("\n\n" + lang_directive)
     if register_directive and "[REGISTER]" not in system_prompt and register_directive.strip() not in system_prompt:
         parts.append("\n\n" + register_directive)
-    if thinking_directive and "[THINKING]" not in system_prompt and thinking_directive.strip() not in system_prompt:
-        parts.append("\n\n" + thinking_directive)
     if affirmative_directive and affirmative_directive.strip() not in system_prompt:
         parts.append("\n\n" + affirmative_directive)
     plat_ctx = platform_context(db, full=platform_full)
     if plat_ctx and "[PLATFORM CAPABILITIES]" not in system_prompt:
         parts.append("\n\n" + plat_ctx)
-    return "".join(parts)
+    return _apply_reasoning_directive(
+        "".join(parts),
+        disabled=bool(reasoning_disabled),
+        thinking_directive=thinking_directive,
+        no_reasoning_directive=DEFAULT_NO_REASONING_DIRECTIVE,
+    )
 
 
 def _apply_language_directive(system_prompt: str, language: Optional[str], db=None) -> str:
@@ -622,18 +714,7 @@ def _apply_thinking_directive(system_prompt: str, language: Optional[str] = None
     dedicato; per i modelli che lo inlineano, i tag `<think>` consentono comunque a
     `split_thinking`/`ThinkStreamSplitter` di estrarlo e ripulire il testo visibile.
     Vale per qualunque modello, indipendentemente dal supporto nativo."""
-    return (
-        f"{system_prompt}\n\n"
-        "[THINKING] If you reason before answering, put ALL of your reasoning inside "
-        "ONE single block at the very beginning, wrapped exactly in <think> and "
-        "</think> tags, and keep it concise (a few short lines). After </think>, write "
-        "the student-facing answer directly: it must NOT contain your plan, your "
-        "checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor "
-        "any meta-commentary about what you are doing. Never start the visible answer "
-        "with a preparatory checklist such as 'Devo analizzare', 'Identificare il filo "
-        "rosso', 'Strutturare i contenuti' or 'Proporre azioni concrete'. Never expose "
-        "reasoning outside the <think> block."
-    )
+    return f"{system_prompt}\n\n{DEFAULT_THINKING_DIRECTIVE}"
 
 
 # --- Separazione del ragionamento dal testo visibile (canale «sto pensando») ---
