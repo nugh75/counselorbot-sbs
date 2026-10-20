@@ -8,10 +8,13 @@ import { chatPreferenceLabel, essentialAdvancesOnSignal, essentialPhasesFor, ess
 const LANGS = ['it', 'en', 'es', 'fr', 'de', 'sv'] as const;
 const completed = { completed: true, marker: true, entry: false };
 
-test('QSA essential keeps one reply per phase', () => {
-    assert.equal(essentialAdvancesOnSignal('QSA'), false);
-    assert.equal(essentialReplyPhase('QSA', 'qsa-essential-focus'), 'qsa-essential-experience');
-    assert.equal(essentialSignalAdvances('QSA', 'qsa-essential-focus', completed), false);
+test('QSA essential keeps clarifications in the current phase until a completed choice', () => {
+    assert.equal(essentialAdvancesOnSignal('QSA'), true);
+    assert.equal(essentialSignalAdvances('QSA', 'qsa-essential-focus', { ...completed, marker: false }), false);
+    assert.equal(essentialSignalAdvances('QSA', 'qsa-essential-focus', { ...completed, completed: false }), false);
+    assert.equal(essentialSignalAdvances('QSA', 'qsa-essential-focus', { ...completed, entry: true }), false);
+    assert.equal(essentialReplyPhase('QSA', 'qsa-essential-focus'), 'qsa-essential-focus');
+    assert.equal(essentialSignalAdvances('QSA', 'qsa-essential-focus', completed), true);
 });
 
 for (const type of ['OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA']) {
@@ -60,6 +63,6 @@ test('the guided chat advances Obiettivo stages only through the shared helpers'
     assert.match(source, /essentialReplyPhase\(questionnaireType, currentPhase\)/);
     assert.match(source, /essentialSignalAdvances\(questionnaireType, currentPhase, \{ completed: true, marker: shouldAdvance, entry: false \}\)/);
     assert.match(source, /essentialSignalAdvances\(questionnaireType, step\.id, \{ completed: true, marker: shouldAdvance, entry: true \}\)/);
-    assert.match(source, /essentialAdvancesOnSignal\(questionnaireType\) \? 'essentialHelpGoal' : 'essentialHelp'/);
+    assert.match(source, /questionnaireType === 'QSA' \? 'essentialHelp' : 'essentialHelpGoal'/);
     assert.doesNotMatch(source, /nextEssentialPhase\(currentPhase\)/);
 });

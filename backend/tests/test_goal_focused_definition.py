@@ -264,14 +264,15 @@ def test_essential_stages_close_on_evidence_not_on_a_count(phases):
     assert all(advances_on_signal(phase) for phase in phases)
 
 
-def test_qsa_essential_keeps_its_three_fixed_replies():
+def test_qsa_essential_keeps_three_stages_without_consuming_clarifications():
     for phase in QSA_PHASES:
-        assert not advances_on_signal(phase)
-        assert directive(phase, entry=True) == directive(phase)
-        assert "moves to the next step after each completed reply" in directive(phase)
-    assert "Exactly three student replies" in _ESSENTIAL_PATH_DESCRIPTIONS["QSA"]
+        assert advances_on_signal(phase)
+        assert "moves to the next step after each completed reply" not in directive(phase)
+        assert "never close while awaiting a depth choice" in directive(phase)
+    assert "Do not emit [[AVANZA_STEP]] in this opening" in directive(QSA_PHASES[0], entry=True)
+    assert "Answer clarifications without advancing" in directive(QSA_PHASES[0])
+    assert "Exactly three" not in _ESSENTIAL_PATH_DESCRIPTIONS["QSA"]
     for qtype in ("OBIETTIVO_STUDIO", "OBIETTIVO_DOCENZA"):
-        assert "Exactly three" not in _ESSENTIAL_PATH_DESCRIPTIONS[qtype]
         assert "not after a fixed number of replies" in _ESSENTIAL_PATH_DESCRIPTIONS[qtype]
 
 

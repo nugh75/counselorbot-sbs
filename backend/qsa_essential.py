@@ -1,11 +1,9 @@
 """Percorsi essenziali: fasi virtuali fuori dalla tabella `guided_steps`.
 
-Il percorso essenziale QSA è nato per primo e avanza dopo ogni risposta (tre
-turni della persona). I due percorsi Obiettivo riusano le fasi virtuali ma non
-il conteggio: ogni fase si chiude sul marcatore [[AVANZA_STEP]] quando il suo
-risultato c'è, o quando la persona sceglie di proseguire. Il registro tiene le
-fasi e le istruzioni per strumento; `validate_path` resta il portone: una
-combinazione strumento/fase non valida è un 422, mai un percorso improvvisato.
+Tre fasi brevi e sintesi per QSA e Obiettivi. Ogni fase avanza sul segnale
+[[AVANZA_STEP]], quando il risultato è raggiunto e la scelta di approfondimento
+è risolta, oppure la persona sceglie di proseguire. I chiarimenti non consumano
+un passaggio. validate_path impedisce combinazioni strumento/fase inventate.
 """
 from fastapi import HTTPException
 
@@ -50,10 +48,19 @@ def is_essential_summary(phase: str | None) -> bool:
 
 
 _QSA_TASKS = {
-    QSA_PHASES[0]: "Briefly read the available QSA profile, identify one resource and suggest at most two possible priorities with a reason. Ask the person to choose one or name another. Respect each factor's direction; never assume every high or low score is a difficulty. If scores do not justify priorities, offer a neutral choice without inventing results.",
-    QSA_PHASES[1]: "Acknowledge the priority the person has just chosen (including a different priority). Do not repeat the score analysis. End with exactly ONE short interrogative sentence asking for a concrete situation related to the chosen priority. Do not add example questions, alternative questions, or a list of things to report. Stop the visible answer immediately after that question.",
-    QSA_PHASES[2]: "Use the person's example to propose ONE small feasible action connected to the chosen priority. Give a brief tentative rationale, without inferring habits, motivation or causal mechanisms that the person has not reported. End with ONE short question asking whether to keep or adapt the action; no parenthetical list of alternatives or further requests. Do not prescribe a goal or claim the action is already adopted.",
-    QSA_PHASES[3]: "Conclude now: summarize the chosen priority, an evidenced resource, the concrete situation and the action as confirmed or modified by the person. Distinguish a proposal from an agreed action. State that only the selected topic was explored, not the full profile. Do not ask another question. Further discussion is optional and initiated by the person.",
+    QSA_PHASES[0]: (
+        "Briefly read the available QSA profile, identify one resource and suggest at most two possible priorities with a reason. Ask the person to choose one or name another. Respect each factor's direction; never assume every high or low score is a difficulty. If scores do not justify priorities, offer a neutral choice without inventing results.",
+        "Work with the priority the person names, including a different priority. Answer clarifications without advancing. Close only when one focus is chosen and any depth choice is resolved, or the person chooses to continue: acknowledge the focus, briefly name the concrete-example step next and put only [[AVANZA_STEP]] on the last line. Otherwise stay with the focus and ask ONE relevant question.",
+    ),
+    QSA_PHASES[1]: (
+        "Acknowledge the chosen priority without repeating the score analysis. Ask ONE short question about a concrete situation related to it.",
+        "Work with the person's concrete situation, without collecting micro-details. Answer clarifications and honour chosen depth. When the example is sufficient and any depth choice is resolved, or the person chooses to continue, briefly return what emerged, name the first-action step next and put only [[AVANZA_STEP]] on the last line. Otherwise ask ONE relevant question.",
+    ),
+    QSA_PHASES[2]: (
+        "Use the person's example to propose ONE small feasible action connected to the priority, only when permitted and supported by a supplied certified candidate. Give a brief tentative rationale, without inventing habits, motivation or causes. Ask whether to keep or adapt the action. If no candidate fits, leave the action open without inventing it.",
+        "Integrate the person's acceptance, adaptation or rejection of the action. Do not treat a proposed action as adopted. Once the choice is clear and any depth choice is resolved, or they choose to continue, return their choice, name the summary next and put only [[AVANZA_STEP]] on the last line. Otherwise stay on this one action with ONE question.",
+    ),
+    QSA_PHASES[3]: "Conclude now: summarize the chosen priority, an evidenced resource, the concrete situation and the action as confirmed or modified by the person. Distinguish a proposal from an agreed action; honour rejection and points left open. State that only the selected topic was explored, not the full profile. Do not ask another question and do not emit [[AVANZA_STEP]]. Further discussion is optional and initiated by the person.",
 }
 
 # Obiettivo: tre fasi brevi e una sintesi. Una fase non dura una risposta fissa:
@@ -150,12 +157,9 @@ _OBBDOCENZA_TASKS = {
     OBBDOCENZA_PHASES[3]: "Conclude now: restate the didactic objective ONE last time in its complete, well-written form (Mager, ABCD): audience (which students of the named class, in the teacher's words) + one observable verb at the agreed Bloom level, never a bare mental state + what + lesson condition ('using the lab tool', 'in 45 minutes', 'working in pairs') + criterion tied to the assessment they planned ('correctly solving 8 of the 10 exercises', 'matching the rubric at level 3'); never invent a figure or a date. Then give back the aligned activities and assessment and the proof with its date if one was chosen, in the teacher's words. Other outcomes appear only as kept aside, if the teacher named them; points left open stay open. Distinguish proposals from commitments. Say that the objective can be saved among their own goals, published in their goal catalog for the groups they manage, or assigned to a group or a participant: all three are explicit choices. Do not ask another question and do not emit [[AVANZA_STEP]].",
 }
 
-_OBIETTIVO_PATHS = (OBBSTUDIO_PHASES, OBBDOCENZA_PHASES)
-
-
 def advances_on_signal(phase: str | None) -> bool:
-    """Le fasi Obiettivo avanzano sul marcatore; il QSA essenziale dopo ogni risposta."""
-    return any(phase in phases for phases in _OBIETTIVO_PATHS)
+    """Ogni percorso essenziale lascia aperta la fase fino al segnale di chiusura."""
+    return any(phase in phases for phases in _ESSENTIAL_PATHS.values())
 
 
 def directive(phase: str, entry: bool = False) -> str:
@@ -167,27 +171,19 @@ def directive(phase: str, entry: bool = False) -> str:
     if advances_on_signal(phase):
         if isinstance(task, tuple):
             task = task[0] if entry else task[1]
-        path_name = "learning objective" if phase in OBBSTUDIO_PHASES else "didactic objective"
+            if entry and phase in QSA_PHASES:
+                task += _NO_MARKER
+        path_name = "QSA" if phase in QSA_PHASES else ("learning objective" if phase in OBBSTUDIO_PHASES else "didactic objective")
         return (
-            "\n\n[ESSENTIAL PATH - CURRENT TURN]\n"
+            ("\n\n[QSA ESSENTIAL PATH - CURRENT TURN]\n" if phase in QSA_PHASES else "\n\n[ESSENTIAL PATH - CURRENT TURN]\n") +
             f"This is the essential {path_name} conversation, not the complete guided path: three short stages "
             "and a summary. A stage lasts as many replies as it needs and no more: the application moves on only "
             "when you close the current stage with [[AVANZA_STEP]] on the last line, or when the person chooses to. "
+            "Follow [GUIDED CHOICE]: never close while awaiting a depth choice or exploring the chosen topic. "
             "Never explain the marker. Do not add an introduction, agreement turn, questionnaire or reflection "
             "battery. Never answer on behalf of the person. Current-turn instructions override generic requests to "
             "cover every aspect or ask further questions. " + task
         )
-    path_name = "QSA"
-    return (
-        "\n\n[QSA ESSENTIAL PATH - CURRENT TURN]\n" +
-        f"This is the essential {path_name} conversation, not the complete guided path. "
-        "The application controls progression: the application moves to the next step after each completed reply. "
-        "Do not add an introduction, agreement turn, questionnaire, reflection battery or mandatory follow-up. "
-        "Do not emit [[AVANZA_STEP]]. Never answer on behalf of the person. "
-        "Current-turn instructions override generic requests to cover every aspect or ask further questions. " + task
-    )
-
-
 def _phase_task(phase: str):
     for phases, tasks in (
         (QSA_PHASES, _QSA_TASKS),
@@ -197,3 +193,18 @@ def _phase_task(phase: str):
         if phase in phases:
             return tasks[phase]
     return None
+
+
+def navigation_context(phase: str) -> str:
+    """Position of virtual stages; never describe the complete path here."""
+    labels = {
+        "QSA": ("Choose a focus", "A concrete example", "A first action", "Summary"),
+        "OBIETTIVO_STUDIO": ("Focus and first draft", "Complete the objective", "Plan and proof", "Summary"),
+        "OBIETTIVO_DOCENZA": ("Focus and first draft", "Complete the objective", "Activities and assessment", "Summary"),
+    }
+    for qtype, phases in _ESSENTIAL_PATHS.items():
+        if phase in phases:
+            index = phases.index(phase)
+            next_label = labels[qtype][index + 1] if index + 1 < len(phases) else "End of the path; optional follow-up only"
+            return f"Current guided step: {labels[qtype][index]}. Next guided step: {next_label}. Translate these meanings into the response language."
+    return "The essential path is complete; this is a voluntary follow-up, with no required next step."

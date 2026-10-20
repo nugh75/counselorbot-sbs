@@ -154,7 +154,8 @@ def test_contract_carries_the_conduct_rules_seen_failing_in_production(qtype, pr
     reply = contract(qtype, f"{prefix}-piano", "design", False)
     for text in (opening, reply):
         assert OBJECTIVE_FOCUS_SENTINEL in text
-        assert "never ask the person whether to go on" in text
+        assert "never ask for a redundant technical confirmation" in text
+        assert "emit no step marker while awaiting that choice" in text
         assert "Repeat the whole objective only when it changes" in text
         assert "add no feature, constraint or condition they did not state" in text
         assert "you say where it comes from" in text
