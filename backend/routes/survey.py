@@ -1023,6 +1023,11 @@ async def download_questionnaire_pdf(
 ):
     """Scarica il PDF con i risultati del questionario per una sessione."""
     result = _get_owned_questionnaire_result(session_id, current_user, db)
+    return questionnaire_pdf_response(db, result, lang=lang, mode=mode)
+
+
+def questionnaire_pdf_response(db: Session, result: models.QuestionnaireResult, *, lang: str, mode: str = "full"):
+    """Same student document, after the caller has authorized this exact result."""
 
     # ponytail: usa solo user_input (la vera interazione studente).
     # effective_user_input contiene il prompt di sistema inglese dei guided
