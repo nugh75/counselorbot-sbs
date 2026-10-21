@@ -1,7 +1,7 @@
 # Compilazioni di classe nella dashboard docente
 
-La sezione «Compilazioni degli studenti» è in `/docente`, sotto i taccuini e
-prima dei collegamenti per classe/cataloghi/ricerca. La scelta parte vuota:
+La pagina «Compilazioni degli studenti» è in `/docente/compilazioni`, raggiunta
+dall'Area docenti. La scelta parte vuota:
 nessuna lettura dei risultati prima della scelta di una classe.
 
 ## Contratto e accesso
@@ -10,11 +10,16 @@ nessuna lettura dei risultati prima della scelta di una classe.
   resta la visibilità già prevista dal backend.
 - GET `/api/admin/groups/{id}/students`: risultati salvati dei membri correnti,
   anche non collegati a un piano; nessuna deduzione sulle compilazioni mancanti.
-- GET `/api/admin/groups/{id}/students/{username}/conversation/{session_id}`:
-  soltanto su apertura di «Conversazione», con componenti URL codificati.
+- GET `/api/admin/groups/{id}/students/{username}/results/{result_id}`:
+  soltanto su «Apri compilazione», con contesto, lettura e conversazione;
+  suffisso `/pdf` per il download. Il vecchio endpoint del solo transcript
+  `/conversation/{session_id}` resta compatibile.
 - `StudentResultItem` è condiviso con `PlanStudentsPanel`, usato in Classi e
-  Piani di somministrazione. Mostra gli stessi punteggi e messaggi; dashboard
-  senza note, taccuini dei partecipanti, form, esportazioni o nuove API.
+  Piani di somministrazione. Da #406 «Apri compilazione» include profilo dei
+  risultati, sintesi, lettura salvata dallo studente, PDF completo e transcript.
+  Dettaglio e download usano endpoint dedicati al risultato con gli stessi
+  controlli della classe o del piano. Contratto e audit in
+  [teacher-result-detail.md](teacher-result-detail.md).
 - Gate docente/ricercatore/admin esistente, poi controlli server su classe
   propria/condivisa, membro e risultato della sessione. 401/403 nascondono i dati;
   404 e altri errori offrono Riprova con testo locale, senza dettagli server.
