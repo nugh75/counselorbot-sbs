@@ -2211,8 +2211,10 @@ with the institute code and password supplied separately by their teacher; the
 password cannot be retrieved from CounselorBot.
 
 A `questionnaire_administration` step is distinct from a legacy `tool` step.
-The launch response opens the exact questionnaire chosen in the administration
-(for example `/QSAr/`, never the site home) and shows the external site's own
+One canonical table in `backend/questionnaire_sources.py` — mirrored by
+`frontend/src/lib/questionnaire-sources.ts` — feeds both the Compass prompt and
+the launch response. The launch response opens the exact questionnaire chosen in
+the administration (for example `/QSAr/`, never the site home) and shows the external site's own
 labels, **Codice istituto/ente** and **Password di accesso**, with the password
 supplied separately by the teacher. Opening the external link does not complete
 it. Students enter all questionnaire factor scores, locally verify institute
