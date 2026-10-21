@@ -25,6 +25,11 @@ from .practice_notebooks import practice_instruments_context, practice_notebook_
 from .prompt_contract import persona_context
 from .prompt_config import DEFAULT_COUNSELORBOT_CHAT_CONTEXT
 from .platform_guidance import platform_guidance_context
+from .questionnaire_sources import (
+    STRATEGIC_COMPETENCES_CODE,
+    STRATEGIC_COMPETENCES_PASSWORD,
+    STRATEGIC_COMPETENCES_URLS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -620,30 +625,18 @@ def _clean_analysis(payload: dict, fallback: OrientationAnalysis, allowed_tool_i
 # Dove si compila un questionario. Il prompt gia' spiegava la regola (in
 # italiano sul sito, nelle altre lingue in app) ma non aveva nessun indirizzo, e
 # la regola finale vieta al modello di inventare link: risultato, la Bussola
-# raccomandava lo strumento senza mai dire dove prenderlo. Gli URL stanno qui e
-# vanno copiati alla lettera; sono gli stessi di
-# frontend/src/lib/questionnaire-sources.ts.
-_STRATEGIC_COMPETENCES_URLS = {
-    "QSA": "https://www.competenzestrategiche.it/QSA/",
-    "QSAr": "https://www.competenzestrategiche.it/QSAr/",
-    "QPCS": "https://www.competenzestrategiche.it/QPCS/",
-    "QPCC": "https://www.competenzestrategiche.it/QPCC/",
-    "ZTPI": "https://www.competenzestrategiche.it/ZTPI/",
-    "QAP": "https://www.competenzestrategiche.it/QAP/",
-}
-_STRATEGIC_COMPETENCES_CODE = "1087"
-_STRATEGIC_COMPETENCES_PASSWORD = "counselor"
-
-
+# raccomandava lo strumento senza mai dire dove prenderlo. Gli URL stanno in
+# backend/questionnaire_sources.py e vanno copiati alla lettera; sono gli stessi
+# di frontend/src/lib/questionnaire-sources.ts.
 def _questionnaire_sources(language: str) -> str:
     """Blocco 'dove si compila', dipendente dalla lingua della sessione."""
     if normalize_language(language) == "it":
-        rows = "\n".join(f"- {code}: {url}" for code, url in _STRATEGIC_COMPETENCES_URLS.items())
+        rows = "\n".join(f"- {code}: {url}" for code, url in STRATEGIC_COMPETENCES_URLS.items())
         return (
             "\nWHERE THE QUESTIONNAIRE IS TAKEN. When you recommend one of the six questionnaires, "
             "also give its address from the list below, copied character for character, together with "
-            f"the site credentials (code {_STRATEGIC_COMPETENCES_CODE}, password "
-            f"{_STRATEGIC_COMPETENCES_PASSWORD}). Write no address that is not on this list.\n"
+            f"the site credentials (code {STRATEGIC_COMPETENCES_CODE}, password "
+            f"{STRATEGIC_COMPETENCES_PASSWORD}). Write no address that is not on this list.\n"
             f"{rows}\n"
         )
     return (

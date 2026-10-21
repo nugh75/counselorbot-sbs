@@ -6,7 +6,15 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from backend import auth, database, models
 from backend.routes import class_paths, administration_plans
+from backend.questionnaire_sources import external_questionnaire_href
 from backend.tests.artifact_database import artifact_session
+
+
+def test_external_link_is_the_questionnaire_chosen_in_the_administration():
+    assert external_questionnaire_href("QSA") == "https://www.competenzestrategiche.it/QSA/"
+    assert external_questionnaire_href("QSAr") == "https://www.competenzestrategiche.it/QSAr/"
+    assert external_questionnaire_href("QAP") == "https://www.competenzestrategiche.it/QAP/"
+    assert external_questionnaire_href("SAVICKAS") == "https://www.competenzestrategiche.it/"
 
 
 @pytest.fixture
@@ -133,7 +141,7 @@ def test_typed_step_launch_keeps_progress_undone(api):
     assert response.status_code == 200, response.text
     launch = response.json()
     assert launch["administration_plan_id"] == plan["id"]
-    assert launch["external_href"] == "https://www.competenzestrategiche.it/"
+    assert launch["external_href"] == "https://www.competenzestrategiche.it/QSA/"
     assert launch["institution"]["institution_code"] == "SYN-150"
     assert "password" not in str(launch)
     assert client.get("/user/paths").json()[0]["done"] == 0

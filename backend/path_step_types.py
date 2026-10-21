@@ -15,9 +15,9 @@ from . import models, administration_context, forum_completion, scoring_service
 from .class_access import class_enables
 from .class_path_completion import GUIDED_CHAT_COMPLETED, has_automatic_evidence
 from .class_meetings import attendance, meeting_summary, meeting_target
+from .questionnaire_sources import external_questionnaire_href
 
 ADMINISTRATION_QUESTIONNAIRES = frozenset({"QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP"})
-EXTERNAL_IT_HREF = "https://www.competenzestrategiche.it/"
 
 
 def delivery_unavailable(db: Session, plan) -> str | None:
