@@ -14,11 +14,33 @@ test("launch preserves exact target and never carries a password", () => {
     administration_plan_id: 3,
     instrument_code: "QSA",
     locale: "it",
-    external_href: "https://www.competenzestrategiche.it/",
+    external_href: "https://www.competenzestrategiche.it/QSA/",
     institution: { id: 4, name: "Synthetic", institution_code: "SYN" },
   });
   assert.equal(launch.administration_plan_id, 3);
   assert.equal(launch.institution.name, "Synthetic");
+  assert.equal(launch.external_href, "https://www.competenzestrategiche.it/QSA/");
+  const qsar = parseAdministrationLaunch({
+    path_id: 1,
+    step_id: 2,
+    administration_plan_id: 3,
+    instrument_code: "QSAr",
+    locale: "it",
+    external_href: "https://www.competenzestrategiche.it/QSAr/",
+    institution: { id: 4, name: "Synthetic", institution_code: "SYN" },
+  });
+  assert.equal(qsar.external_href, "https://www.competenzestrategiche.it/QSAr/");
+  assert.throws(() =>
+    parseAdministrationLaunch({
+      path_id: 1,
+      step_id: 2,
+      administration_plan_id: 3,
+      instrument_code: "QSAr",
+      locale: "it",
+      external_href: "https://www.competenzestrategiche.it/QSA/",
+      institution: { id: 4, name: "Synthetic", institution_code: "SYN" },
+    }),
+  );
 });
 
 test("409, 422, 5xx and network errors leave scores and stable retry identifiers recoverable", async () => {
@@ -133,7 +155,7 @@ test("in-app launch keeps the exact plan locale and has no external link", () =>
   assert.equal(launch.locale, "en");
   assert.equal(launch.external_href, null);
   assert.equal(parseAdministrationLaunch({ ...inAppLaunch, delivery_mode: undefined, locale: "it",
-    external_href: "https://www.competenzestrategiche.it/" }).delivery_mode, "external_it");
+    external_href: "https://www.competenzestrategiche.it/QSA/" }).delivery_mode, "external_it");
   for (const forged of [
     { ...inAppLaunch, locale: "it" },
     { ...inAppLaunch, external_href: "https://example.invalid/" },

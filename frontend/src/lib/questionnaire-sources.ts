@@ -12,8 +12,9 @@
 // compilare: chi non c'e' non ha sorgente, in nessuna lingua. Se si aggiunge un
 // questionario con punteggi va aggiunto qui — e nella lista di CONTEXT.md,
 // "Adding an instrument". Il modulo non importa nulla di proposito, cosi' resta
-// eseguibile da `node --test` (vedi questionnaire-sources.test.ts) e lo stesso
-// elenco vive anche in backend/orientation.py, per il prompt della Bussola.
+// eseguibile da `node --test` (vedi questionnaire-sources.test.ts); lo stesso
+// elenco vive in backend/questionnaire_sources.py, per il prompt della Bussola
+// e per il link restituito dalle tappe dei piani operativi.
 
 export const STRATEGIC_COMPETENCES_URLS: Record<string, string> = {
     QSA: 'https://www.competenzestrategiche.it/QSA/',

@@ -46,7 +46,9 @@ export function AdministrationStepFlow({
   const [error, setError] = useState(false);
   const [localeUnavailable, setLocaleUnavailable] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [institutionCode, setInstitutionCode] = useState("");
   const [password, setPassword] = useState("");
+  const [verifyError, setVerifyError] = useState<string | null>(null);
   const [grant, setGrant] = useState<string | null>(null);
   const [scores, setScores] = useState<Record<string, number> | null>(null);
   // In-app: answers and the saved runner result survive reloads; the result is never retyped.
@@ -148,6 +150,7 @@ export function AdministrationStepFlow({
           } catch {}
           setLaunch(target);
           setQuestionnaire(config);
+          setInstitutionCode(target.institution.institution_code ?? "");
           setError(false);
           setLocaleUnavailable(false);
         }
@@ -161,9 +164,18 @@ export function AdministrationStepFlow({
     // Ownership is captured at entry and checked before every write and acknowledgement.
   }, [pathId, stepId, lang, reload]);
   const verify = async () => {
-    if (!launch || busy || !(await accountMatches())) return;
+    if (
+      !launch ||
+      busy ||
+      !institutionCode.trim() ||
+      !password ||
+      !(await accountMatches())
+    )
+      return;
     setBusy(true);
     setError(false);
+    setVerifyError(null);
+    const transientCode = institutionCode.trim();
     const transientPassword = password;
     setPassword("");
     try {
@@ -173,12 +185,19 @@ export function AdministrationStepFlow({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            institution_code: launch.institution.institution_code,
+            institution_code: transientCode,
             password: transientPassword,
           }),
         },
       );
-      if (!response.ok) throw new Error("verification");
+      if (!response.ok) {
+        setVerifyError(
+          response.status === 429
+            ? l("verifyThrottled")
+            : l("verifyFailed"),
+        );
+        return;
+      }
       const verified = parseVerificationGrant(await response.json());
       if (await accountMatches()) setGrant(verified.grant);
     } catch {
@@ -239,6 +258,51 @@ export function AdministrationStepFlow({
       setBusy(false);
     }
   };
+  // Le stesse credenziali che il sito chiede per compilare: codice e password.
+  // La verifica resta locale e serve solo ad accettare i punteggi.
+  const verificationFields = () => (
+    <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block text-sm">
+          {l("code")}
+          <input
+            value={institutionCode}
+            autoComplete="off"
+            onChange={(event) => {
+              setInstitutionCode(event.target.value);
+              if (verifyError) setVerifyError(null);
+            }}
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="block text-sm">
+          {l("password")}
+          <input
+            type="password"
+            autoComplete="off"
+            value={password}
+            onChange={(event) => {
+              setPassword(event.target.value);
+              if (verifyError) setVerifyError(null);
+            }}
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          />
+        </label>
+      </div>
+      <Button
+        disabled={busy || !institutionCode.trim() || !password}
+        onClick={() => void verify()}
+      >
+        {l("verify")}
+      </Button>
+      <p className="text-xs text-slate-500">{l("verifyNotice")}</p>
+      {verifyError && (
+        <p role="alert" className="text-sm font-medium text-red-700">
+          {verifyError}
+        </p>
+      )}
+    </div>
+  );
   if (ack && questionnaire)
     return (
       <GuidedChatInterface
@@ -273,27 +337,20 @@ export function AdministrationStepFlow({
       ) : launch.delivery_mode === "in_app" ? (
         <>
           <Card className="space-y-3 p-4">
-            <p>
-              {launch.instrument_code} · {launch.locale.toUpperCase()} ·{" "}
-              {launch.institution.name} · {launch.institution.institution_code}
+            <p className="text-sm text-slate-600">
+              {questionnaire.name} · {launch.locale.toUpperCase()} ·{" "}
+              {launch.institution.name}
             </p>
             <p>{l("inAppHint")}</p>
             <p className="text-sm text-slate-600">{l("rule")}</p>
-            {!grant && (
+            {grant ? (
+              <p role="status" className="text-sm text-green-700">
+                {l("verified")}
+              </p>
+            ) : (
               <>
-                <label className="block">
-                  {l("password")}
-                  <input
-                    type="password"
-                    autoComplete="off"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    className="ml-2 rounded border border-slate-300 p-2"
-                  />
-                </label>
-                <Button disabled={busy || !password} onClick={() => void verify()}>
-                  {l("verify")}
-                </Button>
+                <p>{l("verifyHint")}</p>
+                {verificationFields()}
               </>
             )}
           </Card>
@@ -316,7 +373,7 @@ export function AdministrationStepFlow({
               >
                 {l("enterSaved")}
               </Button>
-              {!grant && <p className="text-sm text-slate-600">{l("verify")}</p>}
+              {!grant && <p className="text-sm text-slate-600">{l("verifyHint")}</p>}
             </Card>
           )}
           {!getSelectedCounselorId() && (
@@ -327,34 +384,54 @@ export function AdministrationStepFlow({
         </>
       ) : (
         <>
-          <Card className="space-y-3 p-4">
-            <p>
-              {launch.instrument_code} · {launch.institution.name} ·{" "}
-              {launch.institution.institution_code}
-            </p>
+          <Card className="space-y-4 p-4">
+            <div className="space-y-1">
+              <p className="text-sm text-slate-600">
+                {questionnaire.name} · {launch.institution.name}
+              </p>
+              <h2 className="font-semibold">{l("compileTitle")}</h2>
+            </div>
+            <p>{l("loginHint")}</p>
+            <dl className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {l("code")}
+                </dt>
+                <dd className="mt-1 font-mono text-lg text-slate-900">
+                  {launch.institution.institution_code}
+                </dd>
+              </div>
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {l("password")}
+                </dt>
+                <dd className="mt-1 text-sm text-slate-700">
+                  {l("passwordFromTeacher")}
+                </dd>
+              </div>
+            </dl>
             <a
               href={launch.external_href ?? undefined}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold text-indigo-700 underline"
+              className="inline-flex min-h-11 items-center justify-center rounded-md border border-indigo-200 bg-white px-4 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
             >
               {l("external")}
             </a>
-            <p>{l("loginHint")}</p>
             <p className="text-sm text-slate-600">{l("rule")}</p>
-            <label className="block">
-              {l("password")}
-              <input
-                type="password"
-                autoComplete="off"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="ml-2 rounded border border-slate-300 p-2"
-              />
-            </label>
-            <Button disabled={busy || !password} onClick={() => void verify()}>
-              {l("verify")}
-            </Button>
+          </Card>
+          <Card className="space-y-3 p-4">
+            <h2 className="font-semibold">{l("scoresTitle")}</h2>
+            {grant ? (
+              <p role="status" className="text-sm text-green-700">
+                {l("verifiedScores")}
+              </p>
+            ) : (
+              <>
+                <p>{l("verifyHint")}</p>
+                {verificationFields()}
+              </>
+            )}
           </Card>
           <ScoreInputForm
             questionnaire={questionnaire}
@@ -362,8 +439,9 @@ export function AdministrationStepFlow({
             initialScores={scores || undefined}
             onDraftChange={remember}
             submitLabel={l("enter")}
-          submitDisabled={busy || !grant || !getSelectedCounselorId()}
-          onSubmit={(values) => {remember(values);void enter({ scores: values });}}
+            submitDisabled={busy || !grant || !getSelectedCounselorId()}
+            actionsPosition="bottom"
+            onSubmit={(values) => {remember(values);void enter({ scores: values });}}
           />
           {!getSelectedCounselorId() && (
             <Link href={`/counselor?next=${encodeURIComponent(`/profilo/piani-operativi/${pathId}/${stepId}`)}`}>

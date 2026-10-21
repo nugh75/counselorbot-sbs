@@ -59,11 +59,15 @@ export function parseAdministrationLaunch(
     delivery_mode?: string;
   };
   const delivery = row?.delivery_mode ?? "external_it";
+  // Italian plans open the exact questionnaire chosen in the administration,
+  // never the site home: the server returns the matching per-instrument page.
   const deliveryValid =
     !!row &&
     (delivery === "external_it"
       ? row.locale === "it" &&
-        row.external_href === "https://www.competenzestrategiche.it/"
+        typeof row.instrument_code === "string" &&
+        row.external_href ===
+          `https://www.competenzestrategiche.it/${row.instrument_code}/`
       : delivery === "in_app" &&
         typeof row.locale === "string" &&
         row.locale !== "it" &&

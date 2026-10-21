@@ -20,9 +20,12 @@ revision. Class context is resolved server-side. A co-teacher can edit the class
 administration without receiving unrelated research dataset access. Italian plans
 use `external_it`; this does not claim that an external submission was verified.
 
-`POST /user/paths/{path}/steps/{step}/launch` returns the institute code, external
-URL and factor definitions, never a password. Opening it creates no evidence.
-The student separately receives the external password from the teacher.
+`POST /user/paths/{path}/steps/{step}/launch` returns the institute code, the
+questionnaire-specific external URL (`/QSAr/` for QSAr, not the site home) and
+factor definitions, never a password. Opening it creates no evidence. The
+student separately receives the external password from the teacher. The page
+shows the same code and access-password labels the external site asks for, and
+the local verification is a separate, explicit step before scores can be saved.
 `POST /user/paths/{path}/steps/{step}/guided-entry` verifies current membership,
 strict order, target availability, the exact plan's institute grant, all factor
 scores (integer stanines 1–9) and any selected result's ownership/context. A manual

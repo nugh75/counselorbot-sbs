@@ -2233,9 +2233,15 @@ with the institute code and password supplied separately by their teacher; the
 password cannot be retrieved from CounselorBot.
 
 A `questionnaire_administration` step is distinct from a legacy `tool` step.
-Opening the external link does not complete it. Students enter all questionnaire
-factor scores, locally verify institute credentials, and explicitly use the scores
-in guided chat. The server commits the result, guided entry and exact step evidence
+One canonical table in `backend/questionnaire_sources.py` — mirrored by
+`frontend/src/lib/questionnaire-sources.ts` — feeds both the Compass prompt and
+the launch response. The launch response opens the exact questionnaire chosen in
+the administration (for example `/QSAr/`, never the site home) and shows the external site's own
+labels, **Codice istituto/ente** and **Password di accesso**, with the password
+supplied separately by the teacher. Opening the external link does not complete
+it. Students enter all questionnaire factor scores, locally verify institute
+credentials in a separate and explicitly local step, and explicitly use the
+scores in guided chat. The server commits the result, guided entry and exact step evidence
 atomically and returns their acknowledgement before the chat opens. Manual Italian
 scores have source `in-app`, capture method `manual_scores`, and source system
 `competenzestrategiche.it`; this does not verify external submission. Failed saves

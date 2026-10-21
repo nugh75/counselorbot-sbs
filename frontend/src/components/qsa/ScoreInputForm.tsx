@@ -122,6 +122,9 @@ interface ScoreInputFormProps {
     // Più form nella stessa pagina (taccuini di prova): id distinti.
     formId?: string;
     cancelLabel?: string;
+    // Nella pagina di somministrazione l'azione sta dopo i fattori: prima si
+    // inseriscono i punteggi, poi si continua.
+    actionsPosition?: 'both' | 'bottom';
 }
 
 export function ScoreInputForm({
@@ -136,6 +139,7 @@ export function ScoreInputForm({
     submitAction = 'continue',
     submitDisabled = false,
     formId = 'score-form',
+    actionsPosition = 'both',
 }: ScoreInputFormProps) {
     const { t, tf } = useI18n();
     // Venticinque numeri copiati da un PDF vivevano solo dentro react-hook-form:
@@ -212,7 +216,7 @@ export function ScoreInputForm({
 
     return (
         <div className="w-full space-y-5 animate-fade-in-up">
-            {actionButtons}
+            {actionsPosition === 'both' && actionButtons}
             {missingCount > 0 && (
                 <p role="alert" className="max-w-4xl mx-auto rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
                     {t('score.error.summary', { count: missingCount })}
