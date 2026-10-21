@@ -626,6 +626,17 @@ intere 1–9: profili legacy, incompleti o misti vengono rifiutati senza salvare
 Al termine della chat guidata (sia reale sia su taccuino di prova), la schermata finale di completamento è lineare e priva di scelte dispersive: mostra l’avvenuto completamento con il riepilogo testuale della sintesi emersa e offre due sole azioni chiare: il download diretto del report PDF completo (che scarica il documento e riporta alla pagina principale) e il pulsante per tornare direttamente alla pagina principale, azzerando le selezioni di sessione ed evitando schermate o bivi intermedi. Per le sessioni di prova, la schermata e il download del PDF restano riservati al docente proprietario o all’amministratore, senza registrare compilazioni reali degli studenti.
 
 La generazione può essere interrotta; “Continua” riprende una risposta incompleta.
+In caso di interruzione del trasporto o di risposta segnalata come incompleta,
+la chat tenta prima di proseguire automaticamente; dopo tre tentativi offre
+“Continua”. Se durante la ripresa il modello ricomincia dall'inizio con
+un'apertura riconoscibile, la nuova risposta sostituisce quella parziale:
+il testo non viene accodato due volte, anche se il modello cambia poi alcune
+frasi. Nel frattempo resta visibile il testo ricevuto. Una semplice eco senza
+avanzamento rimane recuperabile e non viene salvata come risposta completata.
+Il comportamento è condiviso da chat guidate, Bussola, Assistente e OpenCode,
+anche alla riapertura della cronologia OpenCode. Lo storico già salvato non
+viene riscritto. Casi verificati e limiti della guardia sono descritti in
+`docs/operations/chat-continuation-duplicates.md` (#425).
 Durante la generazione (sia in streaming SSE sia sincrona), i blocchi di ragionamento interno emessi da modelli di reasoning (tag `<think>...</think>`, `<thinking>` o `<sto_pensando>`, inclusi tag aperti o orfani) vengono filtrati ed eliminati in tempo reale, impedendo fughe di catena di pensiero verso l’utente e garantendo che la memoria di sessione e i log conservino solo la risposta visibile. Se una risposta risulta vuota, composta da soli spazi o svuotata dalla rimozione del reasoning (oppure in caso di errore vuoto del provider), il sistema evita errori 500/502 o messaggi vuoti e invia un fallback gentile e riflessivo, contestualizzato al passo corrente della chat guidata e nella lingua dell’utente (italiano, inglese, spagnolo, francese, tedesco, svedese), differenziato tra introduzione del tema all'ingresso dello step (o benvenuto nel Patto di Collaborazione) e prosecuzione della riflessione nei turni successivi. I contratti di dialogo escludono cliché terapeutici e meta-disclaimer ripetitivi (come "è un'ipotesi e non una verità", "senza giudizio", "non è un difetto"), affidando la natura non diagnostica al patto iniziale e la formulazione delle ipotesi alla modalità epistemica e alla curiosità fenomenologica naturale.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
 e feedback quando disponibili. Il lettore nel menu di navigazione legge il testo visibile,
