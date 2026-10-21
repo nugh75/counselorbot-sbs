@@ -122,7 +122,7 @@ def conversation_id_for(session_id: Optional[str], requested: Optional[str] = No
 def log_error(db, session_id: str, error: str, *, identity: Optional[dict] = None,
               action: str = "chat_error", questionnaire_type: Optional[str] = None,
               mode: Optional[str] = None, phase: Optional[str] = None,
-              conversation_id: Optional[str] = None) -> None:
+              conversation_id: Optional[str] = None, generation_details: Optional[dict] = None) -> None:
     """Scrive un record di log per un errore di chat. Best-effort: non propaga
     eccezioni (un fallimento di logging non deve peggiorare l'errore originale)."""
     try:
@@ -138,7 +138,7 @@ def log_error(db, session_id: str, error: str, *, identity: Optional[dict] = Non
             questionnaire_type=questionnaire_type,
             mode=mode,
             phase=phase,
-            details={"error": str(error)[:1000], "conversation_id": resolved_conversation_id},
+            details={**(generation_details or {}), "error": str(error)[:1000], "conversation_id": resolved_conversation_id},
         ))
         db.commit()
     except Exception as e:  # pragma: no cover - difensivo

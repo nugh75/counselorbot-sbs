@@ -98,6 +98,11 @@ def context_profile(config: dict, provider: str, model: str) -> dict:
     window = profile.get("context_tokens")
     if window is None and provider == "ollama":
         window = int(config.get("ollama_num_ctx") or 16384)
+    if provider == "openrouter":
+        from .openrouter_capabilities import capability_for
+        capability = capability_for(model)
+        if capability is not None and capability.context_length:
+            window = min(int(window), capability.context_length) if window else capability.context_length
     result = {
         "context_tokens": int(window) if window else None,
         "input_tokens": int(profile["input_tokens"]) if profile.get("input_tokens") else None,
@@ -109,6 +114,17 @@ def context_profile(config: dict, provider: str, model: str) -> dict:
             raise ContextCapacityError("Il livello assegnato al modello non esiste più: aggiorna l'assegnazione.")
         result.update(level=profile["level"], limits=dict(levels[profile["level"]]))
     return result
+
+
+def validate_output_capacity(plan) -> None:
+    """Reject incompatible output before dispatch, preserving essential input."""
+    if "output_capacity_exceeded" in plan.warnings:
+        raise ContextCapacityError(
+            f"Il piano richiede {plan.required_output_tokens} token di output "
+            f"(risposta {plan.response_headroom_tokens}, riserva {plan.reasoning_budget}); "
+            f"l'endpoint ne consente {plan.max_completion_tokens}. "
+            "Scegli un modello con più output o riduci l'effort; il profilo e gli artefatti restano completi."
+        )
 
 
 _SECTION = re.compile(r"(?m)^\[[A-Z][A-Z _-]*\]")
@@ -274,6 +290,9 @@ def fit_context(system: str, message: str, history: list, profile: dict, output_
                 history.pop(0)
                 report["history_messages_dropped"] += 1
     report["input_tokens"] = size()
+    report["output_tokens"] = output_tokens
+    report["total_tokens"] = size() + (output_tokens or 1024) + 256
+    report["safety_tokens"] = 256
     report["input_budget"] = budget
     report["blocks"] = token_breakdown(system, message, history, fragments)
     if budget is not None and size() > budget:
