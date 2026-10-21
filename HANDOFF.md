@@ -19,8 +19,9 @@ Verifiche: 605 test unitari frontend, i18n a 3417 chiavi, TypeScript, ESLint,
 build Next riuscita; backend 32 test di `test_it_administration.py`, 55 di
 `test_class_paths.py` + concorrenza e 2 di migrazione superati. In
 `test_orientation.py` resta un fallimento preesistente e non collegato (brief
-QPCC senza l'intestazione «WHAT IT LOOKS AT»). PostgreSQL sintetico :18650
-arrestato; nessun processo dev, deploy o sudo.
+QPCC senza l'intestazione «WHAT IT LOOKS AT»). Immagini Docker backend e
+frontend costruite con tag isolati `fix-432` e poi rimosse; PostgreSQL sintetico
+:18650 arrestato; nessun processo dev, deploy o sudo.
 
 Dato aggiornato sul deployment portable: la classe «Tutor coordinatori» usa
 l'istituto «Roma tre» (id 1), che ora ha codice esterno `1087` e password
