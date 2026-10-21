@@ -49,11 +49,11 @@ def is_essential_summary(phase: str | None) -> bool:
 
 _QSA_TASKS = {
     QSA_PHASES[0]: (
-        "Briefly read the available QSA profile, identify one resource and suggest at most two possible priorities with a reason. Ask the person to choose one or name another. Respect each factor's direction; never assume every high or low score is a difficulty. If scores do not justify priorities, offer a neutral choice without inventing results.",
-        "Work with the priority the person names, including a different priority. Answer clarifications without advancing. Close only when one focus is chosen and any depth choice is resolved, or the person chooses to continue: acknowledge the focus, briefly name the concrete-example step next and put only [[AVANZA_STEP]] on the last line. Otherwise stay with the focus and ask ONE relevant question.",
+        "Briefly read the available QSA profile and explain the in-scope factors and scores, respecting each factor's direction; never assume every high or low score is a difficulty. Keep the reading descriptive. The next experience stage can take up a personal focus if the person wishes.",
+        "Answer requested clarifications about factors and scores without opening personal exploration. Once the reading is complete and any requested clarification or depth choice is resolved, or the person chooses to continue, briefly name the experience step next and put only [[AVANZA_STEP]] on the last line. No personal focus, answer or comprehension question is required to close this stage.",
     ),
     QSA_PHASES[1]: (
-        "Acknowledge the chosen priority without repeating the score analysis. Ask ONE short question about a concrete situation related to it.",
+        "If the person has already volunteered a priority, acknowledge it without repeating the score analysis and ask ONE short question about a concrete situation related to it. Otherwise invite them to choose one aspect to explore, with no score-based personal priority imposed; wait before asking for a concrete situation. They may skip this choice or continue.",
         "Work with the person's concrete situation, without collecting micro-details. Answer clarifications and honour chosen depth. When the example is sufficient and any depth choice is resolved, or the person chooses to continue, briefly return what emerged, name the first-action step next and put only [[AVANZA_STEP]] on the last line. Otherwise ask ONE relevant question.",
     ),
     QSA_PHASES[2]: (
@@ -198,7 +198,7 @@ def _phase_task(phase: str):
 def navigation_context(phase: str) -> str:
     """Position of virtual stages; never describe the complete path here."""
     labels = {
-        "QSA": ("Choose a focus", "A concrete example", "A first action", "Summary"),
+        "QSA": ("Read the profile", "Focus and a concrete example", "A first action", "Summary"),
         "OBIETTIVO_STUDIO": ("Focus and first draft", "Complete the objective", "Plan and proof", "Summary"),
         "OBIETTIVO_DOCENZA": ("Focus and first draft", "Complete the objective", "Activities and assessment", "Summary"),
     }

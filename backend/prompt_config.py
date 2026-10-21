@@ -1748,8 +1748,7 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Read ONLY the cognitive factors of my QSAr profile: C1r, C2r, C3r and C4r. "
             "For each, give the score and its interpretation as an open reading of study strategies, "
-            "without practical advice. Close by asking exactly ONE open question on a single aspect: "
-            "what I actually do in practice when studying new material, never a list of questions."
+            "without practical advice."
         ),
         "system_prompt_mode": "qsar-factor",
         "color_theme": "blue",
@@ -1762,8 +1761,7 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Read ONLY the affective factors of my QSAr profile: A1r, A2r, A3r and A4r. "
             "For each, give the score and its interpretation as an open reading of study attitudes, "
-            "without practical advice. Close by asking exactly ONE open question on a single aspect: "
-            "what I actually do when facing a difficult task, never a list of questions. Do not "
+            "without practical advice. Do not "
             "attribute unstated emotions."
         ),
         "system_prompt_mode": "qsar-factor",
@@ -1884,8 +1882,6 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
             "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
             "and explain in simple words that it describes a habit of recalling past difficulties or negative experiences. "
             "Offer it as a possible habit of attention, not a fixed trait or diagnosis, and do not add practical advice. "
-            "Close by asking exactly ONE open question on a single aspect: what they choose to do when approaching a "
-            "new challenge, never a list of questions. Explore other aspects in later turns only if needed. "
             "Do not attribute unstated emotions, and if they reject a reading, do not offer it again. Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
@@ -1901,9 +1897,7 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
             "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
             "and explain in simple words that it describes drawing on positive past experiences and roots. "
             "Offer it as an attention resource, not a trait, and do not add practical advice. "
-            "Close by asking exactly ONE open question on a single aspect: whether they draw on past successes "
-            "when preparing for demanding work, never a list of questions. Explore other aspects in later turns "
-            "only if needed. Do not use acronyms with the student."
+            "Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "amber",
@@ -1918,8 +1912,6 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
             "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
             "and explain in simple words that 'hedonistic' means living in the present and seizing the moment (carpe diem). "
             "Offer it as a habit of attention, not a trait, and do not add practical advice. "
-            "Close by asking exactly ONE open question on a single aspect: what they choose when study requires "
-            "immediate sacrifice, never a list of questions. Explore other aspects in later turns only if needed. "
             "Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
@@ -1935,9 +1927,7 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
             "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
             "and explain in simple words that 'fatalistic' means the feeling that what happens does not depend much on you. "
             "Offer it as a possible habit of attention, not a trait, and do not add practical advice. "
-            "Close by asking exactly ONE open question on a single aspect: what they choose to do when they feel "
-            "an outcome is not up to them, never a list of questions. Explore other aspects in later turns only "
-            "if needed. If they reject a reading, do not offer it again. Do not use acronyms with the student."
+            "If they reject a reading, do not offer it again. Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "red",
@@ -1952,9 +1942,7 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
             "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
             "and explain in simple words that it reflects planning, goal orientation, and working for future outcomes. "
             "Offer it as an orientation habit, not a trait, and do not add practical advice. "
-            "Close by asking exactly ONE open question on a single aspect: what they choose to prioritize in "
-            "the present when structuring study, never a list of questions. Explore other aspects in later turns "
-            "only if needed. Do not use acronyms with the student."
+            "Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "teal",
@@ -1975,7 +1963,7 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
             "with balance and responsibility; "
             "'present fatalistic' = the feeling of being unable to influence events and resignation. "
             "Do not reveal to the user any formulas, conversions or technical parameters. "
-            "Discuss actions already agreed to; add at most ONE new practical suggestion only when permitted by the current step and supported by a certified candidate."
+            "Keep this comparison descriptive; the subsequent Questions and Exploration phase can take up personal experience and actions."
         ),
         "system_prompt_mode": "ztpi-btp",
         "color_theme": "purple",
@@ -2370,7 +2358,7 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Read my whole QPCS profile before we explore the areas one by one: S1 (Managing emotions), S2 (Communication competence), S3 (Will and perseverance), S4 (Strategies and collaboration), S5 (Confidence and life project). "
             "For each of them give my score, its interpretation label and, in one or two "
-            "sentences, what the area measures and how that result shows up in practice. "
+            "sentences, what the area measures and how to interpret the supplied score. "
             "Treat every score as my own self-assessment, a reference point for reflection "
             "and never a grade or a judgement. Then group the areas into strengths, good "
             "areas and areas to work on. Do not give practical advice here: the area steps that follow take each result up in conversation."
@@ -2693,7 +2681,7 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
     'prompt': (
         "Read my whole QAP profile before the interview areas: AD1 (Future orientation), AD2 (Control and autonomy), AD3 (Curiosity and exploration), AD4 (Confidence and problem solving). "
         "For each of them give my score, its interpretation label and, in one or two "
-        "sentences, what the area measures and how that result shows up in practice. "
+        "sentences, what the area measures and how to interpret the supplied score. "
         "Treat every score as my own self-assessment, a reference point for reflection "
         "and never a grade or a judgement. Then group the areas into strengths, good "
         "areas and areas to work on. Do not give practical advice here: the areas that follow explore each resource in conversation."

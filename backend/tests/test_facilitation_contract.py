@@ -85,7 +85,7 @@ def test_flag_on_activates_facilitation_sentinel():
 
 def test_facilitation_contract_pedagogical_invariants_across_stages():
     """All stages must enforce the core metacognitive facilitation principles."""
-    for stage in ("area", "profile", "synthesis", "follow-up"):
+    for stage in ("area", "synthesis", "follow-up"):
         contract = _facilitation_contract(stage)
         assert FACILITATION_SENTINEL in contract
         assert "metacognitive facilitator" in contract.lower()
@@ -133,12 +133,12 @@ def test_area_stage_focuses_on_choices_actions_and_consequences_not_anecdotes():
     assert "(3) when enough elements exist for a synthesis" in contract.lower()
 
 
-def test_profile_stage_treats_reading_as_open_hypothesis():
-    """Profile stage presents readings as hypotheses and explores study practices."""
-    contract = _facilitation_contract("profile")
-    assert "exploratory hypothesis" in contract.lower()
-    assert "not a predetermined verdict" in contract.lower()
-    assert "choices, or their study practices" in contract.lower()
+def test_profile_stage_supports_understanding_without_personal_inquiry():
+    for contract in (_facilitation_contract("profile"), _self_questioning_contract("profile")):
+        assert "Ask a clarification question ONLY when useful" in contract
+        assert "no mandatory closing question" in contract
+        assert "Do not ask whether they recognise themselves" in contract
+        assert "Use ONE contextualised question" not in contract
 
 
 def test_synthesis_stage_distinguishes_confirmed_corrected_and_rejected_hypotheses():
@@ -166,8 +166,8 @@ def test_prepare_chat_turn_respects_facilitation_contract_flag(runtime):
     )
     assert FACILITATION_SENTINEL in prep_default.components["turn_contract"]
     assert SELF_QUESTIONING_SENTINEL not in prep_default.components["turn_contract"]
-    assert "metacognitive facilitator" in prep_default.components["turn_contract"].lower()
-    assert "choices, actions and consequences" in prep_default.components["turn_contract"].lower()
+    assert "[QUESTIONNAIRE DESCRIPTION]" in prep_default.components["turn_contract"]
+    assert "no mandatory closing question" in prep_default.components["turn_contract"]
 
     # 2. Flag explicitly disabled via config_overrides
     prep_off = prepare_chat_turn(

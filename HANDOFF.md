@@ -1,3 +1,111 @@
+# Handoff costruttore: confine descrittivo dei questionari (#431)
+Data: 2026-10-21 | Branch: `fix/questionnaire-descriptive-phase` | Base: `5f0f3195e5eff6cbe5ed42de6fb924f228dab1f7`
+
+Gate obbligatorio: Diario `prAutopilot=true`. La PR deve restare **DRAFT** fino
+alla revisione DeepSeek in sola lettura, avviata e monitorata dal Timoniere.
+Il costruttore non esegue `gh pr ready`, non avvia il revisore e non autorizza
+merge o deploy. La chiusura del proprio task indica solo la consegna del lavoro.
+
+Audit scritto prima del codice e specifica #431 letta via `gh issue view`.
+Matrice, decisioni ZTPI/QSA essenziale, allineamento salvati e riproducibilità:
+`docs/operations/questionnaire-description-boundary.md`.
+
+Il contratto comune riconosce fase e modalità nei sei strumenti a ogni turno,
+anche dopo la scelta di profondità e nelle varianti Totale/Ristretto/Minimo.
+Non serve una risposta personale per proseguire. Nel QSA essenziale la prima
+fase è la lettura; focus ed esempio sono nel secondo passo già esistente.
+ZTPI resta descrittivo fino al confronto equilibrato incluso; il personale
+è nella fase fissa Domande e Approfondimenti. Savickas/Eventi/IDEA/Obiettivi,
+scale, punteggi, inversioni e M2 QPCC conservano i propri contratti.
+
+I prompt e suggerimenti DB non sono riscritti. La chat pubblica proietta
+suggerimenti di comprensione nelle sei lingue durante la descrizione, conservando
+le righe nell’editor admin (anche quelle già compatibili). Le aree successive
+mostrano ancora i suggerimenti salvati e gli incipit personali. Il seed evita
+nuovi incipit esperienziali nelle letture. Impronte dei default precedenti
+registrate per l’allineamento esplicito già esistente, con anteprima/hash e
+protezione revisioni admin; non applicato ad alcuna installazione operativa.
+
+## Stato finale della consegna
+
+Base: `5f0f3195e5eff6cbe5ed42de6fb924f228dab1f7`. Branch
+`fix/questionnaire-descriptive-phase`; commit atomici `b0192040` (feat),
+`ccfd923f` (test), `f8f4c178` (docs), `8db181e0` (aspettative legacy),
+`263121d9` (screenshot). PR **#433** aperta **DRAFT** sul progetto CounselorBot:
+<https://github.com/nugh75/counselorbot-sbs/pull/433>. Nessun `gh pr ready`,
+merge o deploy. Task Diario `9e4587c0-c861-4772-85d2-22528f8c7633`: in questa
+sessione non è disponibile alcuna CLI/MCP Diario, quindi la notifica non è
+stata eseguita; il task resta aperto per il proprietario/revisore.
+
+### Passati realmente
+
+- 156 casi nuovi di ingresso/chiarimenti (13 passi descrittivi × 6 lingue × 2
+  contratti, tre turni e tre contesti per caso), prima dell'aggiunta del QSA
+  essenziale alla matrice. Log `/tmp/cb431-focused.log`.
+- 46 ulteriori casi mirati in `/tmp/cb431-focused-rest.log`.
+- 14 test mirati trasporti/ripresa/custom/factory in
+  `/tmp/cb431-transport.log`, 50.38 s: 6 sync/stream, 6 riprese da disco,
+  testo admin/varianti e allineamento protetto. Provider interrotto apposta
+  dopo l'envelope; nessuna generazione live.
+- 605 unitari frontend (`/tmp/cb431-node-tests.log`), 10 test delle preferenze
+  (`/tmp/cb431-preferences-unit.log`); i18n 3417 chiavi / 6 lingue, TypeScript
+  ed ESLint mirati (`/tmp/cb431-i18n.log`, `/tmp/cb431-types.log`,
+  `/tmp/cb431-eslint.log`).
+- Ruff F: otto rilievi già nella base, nessuno nuovo; `json` inutilizzato in
+  `test_qsa_factory_alignment.py` è preesistente. `git diff --check` e
+  `check-platform-guidance.py --check` puliti.
+- Batteria ampia PostgreSQL (`cb431-final-tests-pg`,
+  `/tmp/cb431-final-backend-pg.log`): **1842 passati, 6 falliti in 31:20**.
+  Tutti e sei classificati e risolti:
+  - due aspettative di dicitura in `test_self_questioning.py`: il caso
+    `ztpi-t1` ora verifica il contratto descrittivo (niente domanda personale
+    obbligatoria) e l'essenziale usa il confronto senza distinzione di
+    maiuscole;
+  - `test_goal_focused_definition.py`: aggiornata alla nuova frase sui
+    chiarimenti della prima fase QSA;
+  - due casi `test_qsa_factory_alignment.py`: richiedevano il `.docx` della
+    guida, assente nell'immagine ma presente nel checkout; rieseguiti montando
+    il documento in sola lettura;
+  - `test_qsa_factor_directive.py`: asseriva `MECHANISM`/`example`/`micro-step`,
+    già sostituiti nella base da `one relevant mechanism from [KNOWLEDGE]`.
+    Aggiornato alle invarianti attuali.
+- Dopo le correzioni: **27 test mirati** (`/tmp/cb431-targeted2.log`) e
+  **263 test** su `questionnaire_description` + `self_questioning`
+  (`/tmp/cb431-targeted3.log`), tutti passati. Non è stata rilanciata l'intera
+  batteria da 31 minuti: la copertura dei sei casi è mirata e registrata.
+- Browser: **9/9** test di `frontend/tests/guided-navigation.test.mjs` sul
+  frontend compilato in container su 127.0.0.1:3162
+  (`/tmp/cb431-browser-full.log`), inclusi i due casi descrittivi a 390 e
+  1440 px. I timeout precedenti su :3161 erano avvio a freddo (prima
+  navigazione >15 s), non regressioni applicative.
+- Screenshot `frontend/public/guide/questionnaire-description-{390,1440}.png`
+  generati dalla suite, ispezionati (domanda di comprensione, nessun invito
+  personale) e committati.
+- Build Docker isolate: backend `counselorbot-backend:issue431` ricostruito
+  dal checkout corrente (`/tmp/cb431-backend-rebuild3.log`); frontend
+  `counselorbot-frontend:issue431` compilato alle 19:51, dopo l'ultima modifica
+  ai sorgenti (`/tmp/cb431-frontend-build.log`).
+
+### Limiti e note
+
+- Due test di `qsa_factory_alignment` richiedono
+  `docs/Guida_Costruzione_Prompt_QSA_CounselorBot.docx`: nell'immagine non
+  c'è, quindi vanno eseguiti montando il documento. Il test di uguaglianza
+  testuale con la guida era già obsoleto nella base per 9 passi su 10; ora
+  verifica copertura dei dieci passi, veto della sintesi e confine descrittivo,
+  con i quattro default già riscritti dopo la guida documentati nel test.
+- Il primo run ampio interrotto aveva una motivazione SQLite errata: il file
+  smoke dichiara PostgreSQL dedicato. Nessun difetto del modulo lean è stato
+  dimostrato; nessuna issue creata e nessuna baseline #348/#350 modificata.
+- La migrazione/allineamento dei testi salvati non è applicata ad alcuna
+  installazione operativa: resta esplicita, con anteprima/hash e protezione
+  delle revisioni admin.
+- Nessuna riproduzione LLM live, nessuna chiamata a pagamento, nessun accesso
+  ai prompt o ai dati di produzione.
+- Processi e container di verifica fermati a fine sessione: dev frontend
+  :3161, frontend QA :3162 e PostgreSQL `cb431-postgres`; nessun volume di
+  produzione toccato.
+
 # Handoff: link diretto al questionario nelle tappe dei piani operativi
 Data: 2026-10-21 | Branch: `fix/path-administration-questionnaire-link` | Base: `5f0f3195`
 

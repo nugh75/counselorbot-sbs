@@ -41,7 +41,7 @@ def score_context(text, language='it'):
 def directive(phase=None):
     factors = '; '.join(f"{f['code']} {f['labels']['en']}" for f in FACTORS)
     scope = STEP_CODES.get(phase, CODES)
-    return (
+    canonical = (
         '[CANONICAL QPCC CONTRACT]\nQPCC (Pellerey-Orio): 63 self-assessment items, four interconnected dimensions '
         'A affective-emotional, V volitional, C cognitive, M motivational; ten scales: '+factors+'. '
         'The questionnaire is for young people and adults seeking employment or working in relational professional contexts. '
@@ -56,6 +56,11 @@ def directive(phase=None):
         'Other scales describe perceived resources. K1-K5 are not QPCC factors and must never be inferred or reused. '
         'This canonical schema takes priority over any older five-area description in stored instructions or conversation history. '
         'Current step factors: '+', '.join(scope)+'. Distinguish each factor by its code and meaning even when discussing one dimension. '
+    )
+    from .questionnaire_description import is_description_phase
+    if is_description_phase('QPCC', phase):
+        return canonical + 'Read these scales and their supplied stanines; follow [QUESTIONNAIRE DESCRIPTION] for questions and depth.'
+    return canonical + (
         'Stay with this area while the student is developing it: exactly ONE open question per turn on a single aspect, never a list of questions. '
         'Questions are thoughtful, open prompts to help the person self-reflect and self-interrogate, never an interrogation or quiz. '
         'Explain concepts, scales or profile mechanisms only if and when the person explicitly asks for an explanation. '

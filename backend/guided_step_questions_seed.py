@@ -5,6 +5,8 @@ non viene sovrascritto. Lo step speciale ``questions`` rappresenta la fase
 fissa "Domande e Approfondimenti" dei percorsi non-Savickas.
 """
 
+from .questionnaire_description import is_description_phase, DESCRIPTION_STEPS, COMPREHENSION_SUGGESTIONS
+
 FIXED_QUESTIONS_STEP_ID = "questions"
 
 DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
@@ -457,6 +459,13 @@ for _questionnaire_type, _prefix in (("OBIETTIVO_STUDIO", "obbstudio"), ("OBIETT
         f"{_prefix}-{_suffix}": list(_questions) for _suffix, _questions in _OBIETTIVO_STEP_QUESTIONS.items()
     }
 
+# Fresh Italian defaults agree with the phase-safe public projection.
+for _instrument, _steps in DEFAULT_GUIDED_STEP_QUESTIONS.items():
+    for _step_id in _steps:
+        if _step_id in DESCRIPTION_STEPS.get(_instrument.upper(), ()):
+            _steps[_step_id] = list(COMPREHENSION_SUGGESTIONS['it'])
+
+
 def seed_guided_step_questions(db, models) -> None:
     """Inserisce le domande di default mancanti per questionario/step/lingua."""
 
@@ -500,6 +509,8 @@ def seed_guided_step_questions(db, models) -> None:
 
             # 2. Seed Traduzioni
             lang_dict = translations.get(questionnaire_type, {}).get(step_id, {})
+            if step_id in DESCRIPTION_STEPS.get(questionnaire_type.upper(), ()):
+                lang_dict = {lang: texts for lang, texts in COMPREHENSION_SUGGESTIONS.items() if lang != 'it'}
             for lang, trans_questions in lang_dict.items():
                 existing_trans = (
                     db.query(models.GuidedStepQuestion.id)
@@ -548,6 +559,8 @@ def seed_response_openings(db, models) -> int:
     inserted = 0
     for step in db.query(models.GuidedStep).all():
         if step.questionnaire_type not in ("QSA", "QSAr", "QPCC", "QAP", "QPCS", "ZTPI"):
+            continue
+        if is_description_phase(step.questionnaire_type, step.id, step.system_prompt_mode):
             continue
         if step.sort_order == 0 or "summary" in step.system_prompt_mode or "sintesi" in step.id or "synthesis" in step.id:
             continue
