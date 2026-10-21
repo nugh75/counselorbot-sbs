@@ -9,6 +9,8 @@ import { ArrowDown, ArrowUp, ArrowLeft, Archive, ArchiveRestore, CheckCircle2, C
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import type { ClassSettings, ClassTool } from '@/lib/class-settings';
 import { parseClassPath, parseClassPaths, pathStepTools, type ClassPath, type ClassPathStep } from '@/lib/class-paths';
+import { resolveStepPresentation } from '@/lib/class-path-presentation';
+import { StepPresentationFields } from './StepPresentationFields';
 import { resultsChatText } from '@/lib/i18n-results-chats';
 import { deepDiveSources, pathStepKey, resultsSourcePayload } from '@/lib/results-deep-dive';
 import { assignmentSaveError, assignmentStepInput, parsePathAssignments, selectablePathAssignments } from '@/lib/path-assignments';
@@ -263,6 +265,11 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         });
         setSteps(nextSteps);
         if (notice === 'saved') setNotice(null);
+    };
+
+    const handleUpdateStep = (index: number, patch: Partial<Pick<ClassPathStep, 'title' | 'instructions' | 'due_date'>>) => {
+        setSteps(current => current.map((row, rowIndex) => rowIndex === index ? {...row, ...patch} : row));
+        if (notice === 'saved' || notice === 'published') setNotice(null);
     };
 
     const handleRemoveStep = (index: number) => {
@@ -672,6 +679,11 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             : step.step_type === 'guided_chat'
                                             ? `${k('guidedChat')} · ${toolLabel(step.tool_key, classSettings.tools, lang)}`
                                             : toolLabel(step.tool_key, classSettings.tools, lang);
+                            // The title and the date are overrides: show the object's own values until the teacher asks for one.
+                            const presentation = resolveStepPresentation(lang, step, {
+                                toolName: key => toolLabel(key, classSettings.tools, lang),
+                                ...(step.step_type === 'pending' ? {fallbackTitle: name} : {}),
+                            });
                             // #177: a follow-up names the chat it follows, saved or just added.
                             const followed = step.step_type === 'meeting' ? steps.find(row =>
                                 (step.follows_step_id != null && row.id === step.follows_step_id)
@@ -690,7 +702,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 <div
                                     key={step.id ? `step-${step.id}` : `new-step-${index}`}
                                     data-testid="path-step-card"
-                                    className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 md:flex-row md:items-center"
+                                    className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 md:flex-row md:items-start"
                                 >
                                     <div className="flex items-center gap-3 md:w-48">
                                         <span className="font-mono text-sm font-bold text-slate-500">{`#${step.position}`}</span>
@@ -727,44 +739,10 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                     <div className="min-w-0 flex-1 space-y-2">
                                         <ForumDiscussionLinks links={discussions.forbidden || discussions.failed ? [] : discussions.data?.links || []}
                                             kind="path_step" targetId={step.id ?? 0} />
-                                        <input
-                                            type="text"
-                                            value={step.title || ''}
-                                            onChange={e => {
-                                                const next = [...steps];
-                                                next[index].title = e.target.value;
-                                                setSteps(next);
-                                                if (notice === 'saved' || notice === 'published') setNotice(null);
-                                            }}
-                                            placeholder={l('stepTitlePlaceholder')}
-                                            className="block w-full rounded border border-slate-300 px-2.5 py-1.5 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
-                                        />
-                                        <input
-                                            type="text"
-                                            value={step.instructions || ''}
-                                            onChange={e => {
-                                                const next = [...steps];
-                                                next[index].instructions = e.target.value;
-                                                setSteps(next);
-                                                if (notice === 'saved' || notice === 'published') setNotice(null);
-                                            }}
-                                            placeholder={l('stepInstructionsPlaceholder')}
-                                            className="block w-full rounded border border-slate-300 px-2.5 py-1.5 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
-                                        />
-                                    </div>
-
-                                    <div className="flex items-center gap-2 md:w-36">
-                                        <input
-                                            type="date"
-                                            value={step.due_date || ''}
-                                            onChange={e => {
-                                                const next = [...steps];
-                                                next[index].due_date = e.target.value || null;
-                                                setSteps(next);
-                                                if (notice === 'saved' || notice === 'published') setNotice(null);
-                                            }}
-                                            aria-label={`${name} ${l('dueHeader')}`}
-                                            className="block w-full rounded border border-slate-300 px-2 py-1 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
+                                        <StepPresentationFields
+                                            presentation={presentation}
+                                            step={step}
+                                            update={patch => handleUpdateStep(index, patch)}
                                         />
                                     </div>
 

@@ -5,7 +5,6 @@
 // `due_date` are overrides, not required data: empty means "use the object".
 // One resolver keeps the teacher editor, the student views and the deadline
 // logic on the same values.
-import type { Lang } from './i18n';
 // @ts-expect-error -- Node's TypeScript runner requires the extension.
 import { administrationStepText } from './i18n-administration-steps.ts';
 // @ts-expect-error -- Node's TypeScript runner requires the extension.

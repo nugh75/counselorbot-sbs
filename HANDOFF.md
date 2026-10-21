@@ -1,3 +1,15 @@
+# OC3 — checkpoint presentazione passi (S0–S1)
+Data: 2026-10-21 | Branch: `feat/class-path-step-presentation`
+
+Ripresa del task Diario `96488cb8-46aa-423d-9435-fb497a1af048`.
+S0 resolver + summary scheduled_at già in `807fe006`; S1 collega editor,
+override cancellabili, note esplicite (1000), titoli (200), sei lingue.
+Incontri: nessuna nuova data manuale, override storici conservati.
+Verificati 12 test resolver; verifica browser e controlli completi ancora aperti.
+Da completare S2 viste/filtri, S3 pubblicazione forum, S4 template, S5 documentazione.
+Prima della PR integrare main con merge ordinario; PR solo draft.
+Nessun merge/deploy/cleanup; nessun processo dev avviato.
+
 # Handoff: link diretto al questionario nelle tappe dei piani operativi
 Data: 2026-10-21 | Branch: `fix/path-administration-questionnaire-link` | Base: `5f0f3195`
 
