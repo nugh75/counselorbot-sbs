@@ -210,11 +210,15 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
                       include_history=True, create_anonymous_code=False,
                       component_overrides=None, retrieval_context=None,
                       provider=None, model=None, journey_override=None, allow_generation=False, config_overrides=None, step_mode_override=None):
+    from .questionnaire_description import is_description_phase
+    description_phase = request.phase
+    description_mode = None
     essential = validate_path(request.questionnaire_type, getattr(request, "guided_path", "complete"), request.phase)
     active_exploration = getattr(request, "exploration", None)
     if active_exploration:
         # Retain the origin in branch data; do not execute its task or synthesis.
         origin_step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
+        description_mode = origin_step.system_prompt_mode if origin_step else None
         request = request.model_copy(update={
             "mode": "generic", "phase": None, "use_phase_prompt": False, "guided_path": "complete",
             "questionnaire_type": origin_step.questionnaire_type if origin_step else request.questionnaire_type,
@@ -456,13 +460,16 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     system_prompt = transform(recommendation_blocks.apply_directive,
         system_prompt, reading_candidates, strategy_candidates, idea=questionnaire_type == IDEA_INSTRUMENT,
     )
+    descriptive = is_description_phase(
+        questionnaire_type, description_phase, description_mode if active_exploration else (step.system_prompt_mode if step else None),
+    )
     is_synthesis = request.phase in SYNTHESIS_STEPS or (step and step.system_prompt_mode.endswith("-summary"))
     is_synthesis = is_synthesis or (essential and is_essential_summary(request.phase))
     facilitation_contract_enabled = bool(
         str(configs.get("facilitation_contract_enabled", "true")).lower() in {"1", "true", "yes", "on"}
     )
     hypothesis_allowed = bool(
-        facilitation_contract_enabled
+        facilitation_contract_enabled and not descriptive
         and is_hypothesis_allowed(
             questionnaire_type=questionnaire_type,
             phase=request.phase,
@@ -471,7 +478,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     )
     example_lens = "A1r" if (questionnaire_type or "").upper() == "QSAR" else "A5"
     notes_tail = recommendation_blocks.notes_directive(
-        advice_allowed=bool(component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),
+        advice_allowed=bool(not descriptive and component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),
         idea=questionnaire_type == IDEA_INSTRUMENT,
         hypothesis_allowed=hypothesis_allowed,
         example_lens=example_lens,
@@ -603,16 +610,16 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     # remain owned by the existing guided path, including its essential variant.
     reflection_stage = None
     if questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES:
-        if is_synthesis:
+        if descriptive:
+            reflection_stage = "profile"
+        elif is_synthesis:
             reflection_stage = "synthesis"
         elif essential:
             reflection_stage = "area"
         elif (step and request.phase not in WELCOME_PHASE_IDS
               and request.phase != "savickas-patto"
               and not _is_intro_step_mode(step.system_prompt_mode)):
-            reflection_stage = "profile" if is_step_entry and step.system_prompt_mode in {
-                "factor", "qsar-factor", "qpcs-factor", "qpcc-factor", "qap-factor",
-            } else "area"
+            reflection_stage = "area"
         elif request.phase == "questions":
             reflection_stage = "follow-up"
     guided_choice = bool(
@@ -622,7 +629,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     )
     contract = turn_contract(
         language=request.language or "it", questionnaire_type=questionnaire_type,
-        phase=request.phase, advice_allowed=bool(component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),
+        phase=request.phase, advice_allowed=bool(not descriptive and component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),
         synthesis=bool(is_synthesis), reflection_stage=reflection_stage,
         objective_stage=objective_focus_stage(request.phase),
         objective_entry=is_step_entry,
@@ -631,11 +638,11 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         guided_choice=guided_choice,
         existing_prompt=system_prompt_final,
     )
-    if contract and "[TURN CONTRACT]" not in system_prompt_final and contract.strip() not in system_prompt_final:
+    if not descriptive and contract and "[TURN CONTRACT]" not in system_prompt_final and contract.strip() not in system_prompt_final:
         system_prompt_final += "\n\n" + contract
     if questionnaire_type.upper() == 'QPCC':
         from .qpcc import directive
-        qpcc_dir = directive(request.phase)
+        qpcc_dir = directive(description_phase if descriptive else request.phase)
         if qpcc_dir and qpcc_dir.strip() not in system_prompt_final:
             system_prompt_final += '\n\n' + qpcc_dir
     components["turn_contract"] = contract
@@ -663,6 +670,9 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     system_prompt_final = apply_response_format(system_prompt_final, getattr(request, "response_format", "standard"))
     if notes_tail and "[SESSION NOTES]" not in system_prompt_final and notes_tail.strip() not in system_prompt_final:
         system_prompt_final += notes_tail
+    if descriptive:
+        # Last phase instruction also governs DB depth texts and essential directives.
+        system_prompt_final += "\n\n" + contract
     from .prompt_contract import persona_context
     def rendered(text):
         return (text or "").replace("{{counselor_name}}", c_name or "the counsellor")

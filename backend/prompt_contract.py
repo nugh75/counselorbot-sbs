@@ -1,6 +1,8 @@
 """Small, explicit turn rules shared by app and exported counselor prompts."""
 from __future__ import annotations
 
+from .questionnaire_description import CONTRACT as DESCRIPTION_CONTRACT
+
 from .event_booklet import DIRECTIVE as EVENT_BOOKLET_DIRECTIVE, is_event_instrument
 from .goal_draft import DIRECTIVE as GOAL_DRAFT_DIRECTIVE, is_goal_instrument
 
@@ -15,6 +17,8 @@ GUIDED_CHOICE_SENTINEL = "[GUIDED CHOICE]"
 
 def _self_questioning_contract(stage: str) -> str:
     """Question wording only; existing steps, core questions and navigation win."""
+    if stage == "profile":
+        return SELF_QUESTIONING_SENTINEL + "\n" + DESCRIPTION_CONTRACT
     if stage == "synthesis":
         task = (
             "In the final synthesis, give priority to the self-questions the person actually "
@@ -27,16 +31,6 @@ def _self_questioning_contract(stage: str) -> str:
             "now. If the evidence does not contain the exact wording, acknowledge that limit "
             "instead of inventing a quotation. A plan, decision, change or commitment is optional; include only what the "
             "person actually chose."
-        )
-    elif stage == "profile":
-        task = (
-            "After returning the current profile reading, use one contextualised question "
-            "that lets the person choose what they would like to understand better. Anchor "
-            "the invitation to what you just read without deciding their priority. Avoid a "
-            "generic survey of several dimensions or a list of questions. A score alone "
-            "never establishes a personal experience, problem or goal. Offer this invitation "
-            "once; if they already expressed a question or preference, take that up instead "
-            "of asking again. Respect a wish to skip or continue."
         )
     else:
         task = (
@@ -96,6 +90,8 @@ _THREAD_STATE_LINES = {
 
 def _facilitation_contract(stage: str, thread_state: str | None = None) -> str:
     """Metacognitive facilitation: inquiry on choices and consequences, flexible depth, no ceremonial preambles, open hypotheses."""
+    if stage == "profile":
+        return FACILITATION_SENTINEL + "\n" + DESCRIPTION_CONTRACT
     if stage == "synthesis":
         task = (
             "In the final synthesis, give priority to the student's own words and self-questions they formulated. "
@@ -105,15 +101,6 @@ def _facilitation_contract(stage: str, thread_state: str | None = None) -> str:
             "hypothesis as an agreed conclusion, personal trait, or commitment. When the step permits a closing question, invite the person "
             "to choose what, if anything, they want to keep exploring. If no questions or commitments were expressed, leave that open without "
             "forcing them now."
-        )
-    elif stage == "profile":
-        task = (
-            "After returning the profile reading, formulate it as an exploratory hypothesis, not a predetermined verdict on who they are. "
-            "Use ONE contextualised question that invites the person to reflect on how this dimension relates to what they do, their choices, "
-            "or their study practices, without deciding their priority for them. "
-            "Avoid generic surveys of several dimensions, lists of questions, or situational anecdotes. A score alone never establishes "
-            "a personal problem, trait or goal. Offer this invitation once; if they already expressed a priority, take that up instead of "
-            "asking again. Respect a wish to skip or continue."
         )
     else:
         task = (
@@ -334,14 +321,17 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
                   thread_state: str | None = None,
                   guided_choice: bool = False,
                   existing_prompt: str = "") -> str:
+    descriptive = reflection_stage == "profile"
     lines = [
         "[TURN CONTRACT]",
         f"Current task: {questionnaire_type or 'counselor chat'}, {phase or 'free conversation'}. Response language: {language}.",
-        "Answer the current request directly. Ask at most ONE focused question, then wait. "
+        "Answer the current request directly. Ask at most ONE focused question, then wait. " +
+        ("Questions in this phase serve optional understanding of factors, scales and scores. " if descriptive else
         "Questions across the interaction are open reflective prompts to help the person self-reflect and self-interrogate "
-        "on their experience, choices and resources—never an interrogation, procedural interview, or quiz ('io ti faccio domande mirate e tu rispondi'). "
+        "on their experience, choices and resources—never an interrogation, procedural interview, or quiz ('io ti faccio domande mirate e tu rispondi'). ") +
         "Provide explanations or clarifications in two situations only: (1) when the person explicitly asks for an explanation or clarification, or "
-        "(2) when you understand from their message that they misunderstood something you said. In all other situations, never volunteer unsolicited theoretical lectures, dissertations or unrequested explanations. "
+        "(2) when you understand from their message that they misunderstood something you said. "
+        "In all other situations, never volunteer unsolicited theoretical lectures, dissertations or unrequested explanations. "
         "Never use bullet points, numbered lists or itemized options: converse in fluid, natural prose with at most ONE open question per turn. "
         "Never use rhetorical 'non è... ma...' formulas (e.g. 'non è un giudizio ma un\\'opportunità', 'non misura quanto vali ma...', 'non è un voto ma...'). "
         "Never recite defensive or moralizing disclaimers (never say 'senza giudizio', 'non con giudizio', 'non misura quanto vali', 'non ci sono risposte giuste o sbagliate', 'autopercezioni non verdetti', 'non ti farò domande del questionario', 'non è un test o un voto', 'etichette fisse', 'è un\'ipotesi non una verità', 'non è una diagnosi', 'non è un difetto', 'la domanda non è se sei bravo o no'). "
@@ -401,4 +391,6 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
     if guided_choice:
         from .prompt_config import GUIDED_CHOICE_DIRECTIVE
         lines.append(GUIDED_CHOICE_DIRECTIVE)
+    if descriptive and not any(DESCRIPTION_CONTRACT in line for line in lines):
+        lines.append(DESCRIPTION_CONTRACT)
     return "\n".join(lines)
