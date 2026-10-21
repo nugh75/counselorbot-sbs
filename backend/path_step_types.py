@@ -364,6 +364,8 @@ def step_descriptor(db, path, step):
             "locale": plan.locale,
             "institution_name": institute.name,
             "delivery_mode": plan.delivery_mode,
+            # The plan's own date, so a path step can derive its deadline.
+            "scheduled_at": plan.scheduled_at.isoformat() if plan.scheduled_at else None,
             **({"results_step_id": source.id} if deep_dive else {}),
         },
     }

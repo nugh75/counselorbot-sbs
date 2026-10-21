@@ -112,7 +112,7 @@ export interface ClassPathStep {
     /** #177: the guided chat step this meeting follows up. */
     follows_step_id?: number | null;
     active_from?: string | null;
-    target_summary?: {id?: number; title?: string; code?: string; instrument_code: string; locale?: string; institution_name?: string; source?: 'personal'} | null;
+    target_summary?: {id?: number; title?: string; code?: string; instrument_code: string; locale?: string; institution_name?: string; scheduled_at?: string | null; source?: 'personal'} | null;
     /** Server reason code when the step cannot be used now (TF8). */
     availability_reason?: string | null;
     completion_kind?: string | null;
@@ -219,7 +219,7 @@ export interface StudentClassPathStep {
     /** #177: the guided chat step this meeting follows up. */
     follows_step_id?: number | null;
     active_from?: string | null;
-    target_summary?: {id?: number; title?: string; code?: string; instrument_code: string; locale?: string; institution_name?: string; source?: 'personal'} | null;
+    target_summary?: {id?: number; title?: string; code?: string; instrument_code: string; locale?: string; institution_name?: string; scheduled_at?: string | null; source?: 'personal'} | null;
     /** Server reason code when the step cannot be used now (TF8). */
     availability_reason?: string | null;
     completion_kind?: string | null;
