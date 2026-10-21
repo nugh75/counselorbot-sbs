@@ -543,7 +543,7 @@ for (const [lang, save, cancel, saved, start] of [
     });
 }
 
-test('il modulo ordinario dei punteggi conserva Continua e la freccia avanti', async () => {
+test('il modulo ordinario dei punteggi offre Continua in testa e in coda', async () => {
     const page = await browser.newPage();
     const state = await guidedChat(page);
     await page.goto(`${origin}/?start=QAP`, { waitUntil: 'domcontentloaded' });
@@ -551,9 +551,14 @@ test('il modulo ordinario dei punteggi conserva Continua e la freccia avanti', a
     await page.getByRole('button', { name: 'Continua', exact: true }).click();
     await page.locator('#score-form input').first().waitFor();
     const submit = page.locator('button[form="score-form"]');
-    assert.equal(await submit.innerText(), 'Continua');
-    assert.equal(await submit.locator('svg.lucide-arrow-right').count(), 1);
-    assert.equal(await submit.locator('svg.lucide-save').count(), 0);
+    assert.equal(await submit.count(), 2);
+    for (const button of [submit.first(), submit.last()]) {
+        assert.equal(await button.innerText(), 'Continua');
+        assert.equal(await button.locator('svg.lucide-arrow-right').count(), 1);
+        assert.equal(await button.locator('svg.lucide-save').count(), 0);
+    }
+    await submit.last().scrollIntoViewIfNeeded();
+    assert.equal(await submit.last().isVisible(), true);
     assert.deepEqual(state.writes, []);
     assert.deepEqual(state.errors, []);
     await page.close();

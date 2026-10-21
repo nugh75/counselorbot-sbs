@@ -83,7 +83,11 @@ async function firstUseAndReopen({ locale = 'it', width = 1440, ...options } = {
         assert.equal(writes.filter(w => w.path === '/api/user/learner-profile').length, 0);
         await page.screenshot({ path: `/tmp/first-use-notebook-${locale}-${width}.png`, fullPage: true });
         await field.fill('Studio sintetico primo uso');
-        await page.getByRole('button', { name: copy.save, exact: true }).click();
+        const saveButtons = page.getByRole('button', { name: copy.save, exact: true });
+        assert.equal(await saveButtons.count(), 2);
+        await saveButtons.last().scrollIntoViewIfNeeded();
+        assert.equal(await saveButtons.last().isVisible(), true);
+        await saveButtons.last().click();
         await page.waitForURL(`${origin}/bussola`);
         assert.deepEqual(prefs, ready());
         assert.equal(writes.filter(w => w.path === '/api/user/learner-profile').length, 1);
@@ -149,7 +153,7 @@ for (const width of [390, 1440]) {
             assert.equal(writes.length, 0, 'selection is a draft until confirmation');
             await page.getByRole('button', { name: 'Continua', exact: true }).click();
             await page.getByLabel('Parlaci del luogo dove studi / lavori').fill('Studio all’università');
-            await page.getByRole('button', { name: 'Salva versione', exact: true }).click();
+            await page.getByRole('button', { name: 'Salva versione', exact: true }).last().click();
             await page.getByRole('heading', { name: 'Da dove vuoi cominciare?', exact: true }).waitFor();
             assert.deepEqual(prefs, ready());
             await page.getByRole('button', { name: 'Esplora attività e percorsi', exact: true }).click();
