@@ -1,3 +1,24 @@
+# Handoff: testo duplicato nelle chat (#425)
+Data: 2026-10-21 | Correzione unita: PR #428 | Documentazione: `docs/chat-continuation-guidance-425`
+
+Tre casi reali QSA/OpenRouter con Mistral Large 4 identificati nei log:
+durante la continuazione il modello ricominciava e il server accodava il
+testo al prefisso precedente. `merge_continuation` riconosce una lunga
+apertura identica, mantiene una sola risposta in stream, memoria e log e
+protegge anche Assistente e ripristino OpenCode. Eco senza progresso
+recuperabile. Dettagli e limiti in `docs/operations/chat-continuation-duplicates.md`.
+
+99 test backend, 15 del lettore SSE, replay in sola lettura dei tre casi e
+due prove sintetiche live OpenRouter superati. Ollama non disponibile.
+Build backend con tag isolato `counselorbot-chat-repeat-test:425` riuscita;
+container di test terminato, nessun processo dev avviato, nessun deploy o sudo.
+
+PR #428 verificata MERGED; checkout principale aggiornato a `e3507dad`
+senza toccare le modifiche locali preesistenti. Ramo locale della fix eliminato.
+Questa PR successiva completa il catalogo funzionale e il manifest richiesti
+dal controllo CI Platform guidance. Guida dei controlli di chat esaminata
+nelle sei lingue: comandi e schermate esistenti restano coerenti.
+
 # Handoff: analisi questionari nei piani operativi
 Data: 2026-10-21 | Branch: `fix/operational-plan-questionnaire-chats` | Issue: #249
 
