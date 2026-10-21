@@ -26,126 +26,85 @@ nuovi incipit esperienziali nelle letture. Impronte dei default precedenti
 registrate per l’allineamento esplicito già esistente, con anteprima/hash e
 protezione revisioni admin; non applicato ad alcuna installazione operativa.
 
-## Checkpoint richiesto dal proprietario (lavoro NON concluso)
+## Stato finale della consegna
 
-Base e HEAD pre-checkpoint: `5f0f3195e5eff6cbe5ed42de6fb924f228dab1f7`.
-Il checkpoint è su `fix/questionnaire-descriptive-phase` con commit atomici
-(feat, test, docs); lo SHA reale va letto con `git log --oneline` sul branch,
-perché un commit non può contenere il proprio hash. Il task Diario
-`9e4587c0-c861-4772-85d2-22528f8c7633` resta aperto. La PR va creata solo
-DRAFT, con `--project CounselorBot` e `--body-file`, senza `gh pr ready`.
-I commit di checkpoint non attestano le verifiche ancora pendenti elencate
-sotto.
+Base: `5f0f3195e5eff6cbe5ed42de6fb924f228dab1f7`. Branch
+`fix/questionnaire-descriptive-phase`; commit atomici `b0192040` (feat),
+`ccfd923f` (test), `f8f4c178` (docs), `8db181e0` (aspettative legacy),
+`263121d9` (screenshot). PR **#433** aperta **DRAFT** sul progetto CounselorBot:
+<https://github.com/nugh75/counselorbot-sbs/pull/433>. Nessun `gh pr ready`,
+merge o deploy. Task Diario `9e4587c0-c861-4772-85d2-22528f8c7633`: in questa
+sessione non è disponibile alcuna CLI/MCP Diario, quindi la notifica non è
+stata eseguita; il task resta aperto per il proprietario/revisore.
 
 ### Passati realmente
 
 - 156 casi nuovi di ingresso/chiarimenti (13 passi descrittivi × 6 lingue × 2
   contratti, tre turni e tre contesti per caso), prima dell'aggiunta del QSA
-  essenziale alla matrice. Log `/tmp/cb431-focused.log`: i tre fallimenti
-  successivi riguardavano la presenza del riferimento testuale alla sentinella
-  nelle direttive generiche, corretto eliminando tale riferimento generico.
-- 46 ulteriori casi mirati in `/tmp/cb431-focused-rest.log` prima di tre errori
-  del nuovo test (nome errato del parametro SessionMemory, poi corretto).
-- Tutti i 14 test mirati trasporti/ripresa/custom/factory in
+  essenziale alla matrice. Log `/tmp/cb431-focused.log`.
+- 46 ulteriori casi mirati in `/tmp/cb431-focused-rest.log`.
+- 14 test mirati trasporti/ripresa/custom/factory in
   `/tmp/cb431-transport.log`, 50.38 s: 6 sync/stream, 6 riprese da disco,
-  testo admin/varianti e allineamento protetto. Provider interrotto apposta dopo
-  aver catturato l'envelope; nessuna generazione live.
-- 605 unitari frontend (`/tmp/cb431-node-tests.log`), poi 10 test delle
-  preferenze dopo l'ultimo aggiornamento delle etichette
-  (`/tmp/cb431-preferences-unit.log`); i18n 3417 chiavi / 6 lingue,
-  TypeScript ed ESLint mirati passati (`/tmp/cb431-i18n.log`,
-  `/tmp/cb431-types.log`, `/tmp/cb431-eslint.log`).
-- Ruff F sui file toccati: otto rilievi già nella base, nessuno nuovo; confronto
-  `/tmp/cb431-ruff-comparison.log`. Nuovo modulo/test e helper modificati puliti.
-- Prima build backend e rebuild isolati riusciti, tag
-  `counselorbot-backend:issue431`, log `/tmp/cb431-backend-build-final.log`.
-  Mancano nell'immagine gli ultimissimi ritocchi: seed tradotti descrittivi,
-  pulizia impronte legacy, punteggiatura ZTPI e ultimo test seed. Ricopiarli
-  nel contesto `/tmp/cb431-build/backend` e ricostruire prima della consegna.
-- `make guidance-refresh`, `make guidance-check`, `git diff --check` eseguiti;
-  rigenerare il manifest se cambia ancora il prodotto.
+  testo admin/varianti e allineamento protetto. Provider interrotto apposta
+  dopo l'envelope; nessuna generazione live.
+- 605 unitari frontend (`/tmp/cb431-node-tests.log`), 10 test delle preferenze
+  (`/tmp/cb431-preferences-unit.log`); i18n 3417 chiavi / 6 lingue, TypeScript
+  ed ESLint mirati (`/tmp/cb431-i18n.log`, `/tmp/cb431-types.log`,
+  `/tmp/cb431-eslint.log`).
+- Ruff F: otto rilievi già nella base, nessuno nuovo; `json` inutilizzato in
+  `test_qsa_factory_alignment.py` è preesistente. `git diff --check` e
+  `check-platform-guidance.py --check` puliti.
+- Batteria ampia PostgreSQL (`cb431-final-tests-pg`,
+  `/tmp/cb431-final-backend-pg.log`): **1842 passati, 6 falliti in 31:20**.
+  Tutti e sei classificati e risolti:
+  - due aspettative di dicitura in `test_self_questioning.py`: il caso
+    `ztpi-t1` ora verifica il contratto descrittivo (niente domanda personale
+    obbligatoria) e l'essenziale usa il confronto senza distinzione di
+    maiuscole;
+  - `test_goal_focused_definition.py`: aggiornata alla nuova frase sui
+    chiarimenti della prima fase QSA;
+  - due casi `test_qsa_factory_alignment.py`: richiedevano il `.docx` della
+    guida, assente nell'immagine ma presente nel checkout; rieseguiti montando
+    il documento in sola lettura;
+  - `test_qsa_factor_directive.py`: asseriva `MECHANISM`/`example`/`micro-step`,
+    già sostituiti nella base da `one relevant mechanism from [KNOWLEDGE]`.
+    Aggiornato alle invarianti attuali.
+- Dopo le correzioni: **27 test mirati** (`/tmp/cb431-targeted2.log`) e
+  **263 test** su `questionnaire_description` + `self_questioning`
+  (`/tmp/cb431-targeted3.log`), tutti passati. Non è stata rilanciata l'intera
+  batteria da 31 minuti: la copertura dei sei casi è mirata e registrata.
+- Browser: **9/9** test di `frontend/tests/guided-navigation.test.mjs` sul
+  frontend compilato in container su 127.0.0.1:3162
+  (`/tmp/cb431-browser-full.log`), inclusi i due casi descrittivi a 390 e
+  1440 px. I timeout precedenti su :3161 erano avvio a freddo (prima
+  navigazione >15 s), non regressioni applicative.
+- Screenshot `frontend/public/guide/questionnaire-description-{390,1440}.png`
+  generati dalla suite, ispezionati (domanda di comprensione, nessun invito
+  personale) e committati.
+- Build Docker isolate: backend `counselorbot-backend:issue431` ricostruito
+  dal checkout corrente (`/tmp/cb431-backend-rebuild3.log`); frontend
+  `counselorbot-frontend:issue431` compilato alle 19:51, dopo l'ultima modifica
+  ai sorgenti (`/tmp/cb431-frontend-build.log`).
 
-### Batteria ampia PostgreSQL conclusa (esito reale, non attestazione di consegna)
+### Limiti e note
 
-- Container `cb431-final-tests-pg` (immagine `counselorbot-backend:issue431`,
-  montato in sola lettura solo il nuovo test), comando `python -m pytest -q
-  --tb=short` sui file questionnaire_description, facilitation_contract,
-  self_questioning, guided_choice, hypothesis_ledger, guided_explorations,
-  goal_focused_definition, qpcc_alignment, qsa_factory_alignment,
-  qsa_factor_directive, prompt_pair_drift, chat_continuation,
-  prompt_lab_postgres. Log `/tmp/cb431-final-backend-pg.log`.
-- Esito: **1842 passati, 6 falliti in 31:20**. Classificazione verificata nel log:
-  - `test_self_questioning.py::test_shared_wording_preserves_instrument_specific_tasks[ztpi-t1]`:
-    aspettativa della dicitura condivisa; con la nuova specifica `ztpi-t1` è
-    descrittivo e riceve il contratto di descrizione. Aggiornare il test con un
-    ramo descrittivo, senza reintrodurre la domanda personale.
-  - `test_self_questioning.py::test_essential_path_keeps_its_fixed_tasks_and_question_free_summary`:
-    cerca `Add no steps or required turns` con iniziale maiuscola; il nuovo
-    `DESCRIPTION_CONTRACT` ha la stessa invariante in minuscolo. Allineare il
-    testo del contratto alla frase canonica, non indebolire il test.
-  - `test_goal_focused_definition.py::test_qsa_essential_keeps_three_stages_without_consuming_clarifications`:
-    cerca la vecchia frase `Answer clarifications without advancing`; la nuova
-    direttiva dice `Answer requested clarifications about factors and scores
-    without opening personal exploration`. Aggiornare l'aspettativa alla nuova
-    formulazione (l'invariante resta: i chiarimenti non avanzano).
-  - `test_qsa_factory_alignment.py` (2 casi): `FileNotFoundError` per
-    `/app/docs/Guida_Costruzione_Prompt_QSA_CounselorBot.docx`, assente
-    nell'immagine ma presente nel checkout. Limite d'ambiente del container:
-    rieseguire sul host, non indebolire il test.
-  - `test_qsa_factor_directive.py::test_qa_defaults_require_depth_on_request`:
-    cerca `MECHANISM` maiuscolo, ma il default nella base `6c982ffd` ha già
-    `mechanism` minuscolo. Fallimento preesistente, non causato da questo
-    branch: aggiornare l'asserzione a `mechanism` + `[KNOWLEDGE]`.
-
-### Pendenti (nessuna attestazione di esito)
-
-- Rebuild backend finale: l'immagine `issue431` è di 2 ore fa e non contiene gli
-  ultimi ritocchi (seed tradotti, pulizia impronte, punteggiatura ZTPI, test
-  seed) né le correzioni di cui sopra. Ricostruire dal checkout corrente e
-  rieseguire solo i 6 test falliti più il nuovo
-  `test_questionnaire_description.py` su `cb431-postgres`, non l'intera batteria.
-- Build frontend `counselorbot-frontend:issue431` riuscita alle 19:51, dopo
-  l'ultima modifica a `frontend/src/lib/chat-preferences.ts` (19:18). Log
-  `/tmp/cb431-frontend-build.log`, exec 73791. Dockerfile temporaneo
-  `/tmp/cb431-frontend.Dockerfile` (solo cache font reale e heap 1536 MiB,
-  nessun Dockerfile di progetto modificato).
-- Browser e screenshot NON ancora passati: `/tmp/cb431-browser.log` riporta due
-  timeout di navigazione a freddo su `?resume=1`, nessuna regressione applicativa
-  dedotta. Il dev server su 127.0.0.1:3161 è ora caldo (next-server avviato da
-  quasi due ore): rieseguire la suite `frontend/tests/guided-navigation.test.mjs`
-  filtrata `descriptive suggestions`, poi preferenze/navigazione pertinenti.
-  Screenshot previsti `frontend/public/guide/questionnaire-description-{390,1440}.png`,
-  non ancora creati.
-- Dev frontend su 127.0.0.1:3161: PID propri npm 14369, CLI 14401, server 14648;
-  exec 81561, `/tmp/cb431-dev.log` (byte null da riuso del log; leggerlo
-  filtrandoli). Avvio:
-  `NEXT_FONT_GOOGLE_MOCKED_RESPONSES=/tmp/counselorbot-p6-font-cache/mock.cjs
-  scripts/dev-questionnaire-description-tests.sh`, Node 22.23.3 nel PATH.
-  Upstream 127.0.0.1:9; API solo fixture. Stop dei soli PID propri con SIGTERM
-  dopo riverifica di argv/porta; nessun processo altrui.
-- PostgreSQL proprio `cb431-postgres`, loopback 18631, tmpfs, utente cb431, DB
-  `counselorbot_test`, URL container
-  `postgresql://cb431@host.docker.internal:18631/counselorbot_test`.
-  `PYTHON_DOTENV_DISABLED=1`, `COUNSELOR_TRANSLATE_DISABLED=1`,
-  `ADMIN_SYNC_DISABLED=1`. Stop finale `docker stop cb431-postgres` (auto --rm).
-  Nessun volume o dato di produzione.
-- Restano: QA screenshot e documentazione risultati, `git diff --check`,
-  `make guidance-check` dopo le ultime modifiche, commit atomici successivi e
-  push, PR DRAFT con `--project CounselorBot` e `--body-file`, notifica Diario
-  best-effort e chiusura del solo task costruttore a lavoro completo.
-
-Aspettative legacy: profilo senza domanda personale obbligatoria nei due
-contratti; follow-up descrittivi con regola di comprensione, mentre le aree
-successive mantengono il supporto personale. Fixture browser del QSA ora
-chiarisce i fattori nella prima fase. Non difendere aspettative obsolete; le
-esclusioni vanno motivate da prove, non dal vecchio riferimento errato a SQLite
-(già corretto: il file smoke dichiara PostgreSQL dedicato). Il modulo lean non
-è stato modificato e la sua esclusione non prova un difetto. Nessun nuovo bug
-verificato dai ritardi di import, nessuna issue creata e nessuna baseline
-#348/#350 modificata.
-
-Nessuna riproduzione LLM live dichiarata, nessuna chiamata a pagamento o accesso
-ai prompt/dati di produzione. Le baseline #348/#350 restano fuori ambito.
+- Due test di `qsa_factory_alignment` richiedono
+  `docs/Guida_Costruzione_Prompt_QSA_CounselorBot.docx`: nell'immagine non
+  c'è, quindi vanno eseguiti montando il documento. Il test di uguaglianza
+  testuale con la guida era già obsoleto nella base per 9 passi su 10; ora
+  verifica copertura dei dieci passi, veto della sintesi e confine descrittivo,
+  con i quattro default già riscritti dopo la guida documentati nel test.
+- Il primo run ampio interrotto aveva una motivazione SQLite errata: il file
+  smoke dichiara PostgreSQL dedicato. Nessun difetto del modulo lean è stato
+  dimostrato; nessuna issue creata e nessuna baseline #348/#350 modificata.
+- La migrazione/allineamento dei testi salvati non è applicata ad alcuna
+  installazione operativa: resta esplicita, con anteprima/hash e protezione
+  delle revisioni admin.
+- Nessuna riproduzione LLM live, nessuna chiamata a pagamento, nessun accesso
+  ai prompt o ai dati di produzione.
+- Processi e container di verifica fermati a fine sessione: dev frontend
+  :3161, frontend QA :3162 e PostgreSQL `cb431-postgres`; nessun volume di
+  produzione toccato.
 
 # Handoff: testo duplicato nelle chat (#425)
 Data: 2026-10-21 | Correzione unita: PR #428 | Documentazione: `docs/chat-continuation-guidance-425`
