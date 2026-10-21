@@ -280,21 +280,21 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
     const hasSummary = topStrengths.length > 0 || topGrowth.length > 0;
 
     const renderChips = (items: Ranked[], tone: 'strength' | 'growth') => (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex min-w-0 max-w-full flex-wrap gap-1.5">
             {items.map((it) => (
                 <span
                     key={it.code}
                     className={cn(
-                        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs',
+                        'inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs',
                         tone === 'strength'
                             ? 'border-green-200 bg-green-50 text-green-800'
                             : 'border-amber-200 bg-amber-50 text-amber-800',
                     )}
                     title={it.name}
                 >
-                    <span className="font-mono font-bold">{it.code}</span>
-                    <span className="max-w-[8.5rem] truncate font-medium">{it.name}</span>
-                    <span className="rounded-full bg-white/70 px-1.5 font-bold">{it.score}</span>
+                    <span className="shrink-0 font-mono font-bold">{it.code}</span>
+                    <span className="min-w-0 max-w-[8.5rem] truncate font-medium">{it.name}</span>
+                    <span className="shrink-0 rounded-full bg-white/70 px-1.5 font-bold">{it.score}</span>
                 </span>
             ))}
         </div>
@@ -308,7 +308,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
             {hasSummary && (
                 <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 space-y-3 animate-fade-in-up">
                     <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3">
-                        <div className="space-y-1.5">
+                        <div className="min-w-0 space-y-1.5">
                             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-green-700">
                                 {t('profile.summary.strengths')}
                             </div>
@@ -316,7 +316,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                                 ? renderChips(topStrengths, 'strength')
                                 : <p className="text-xs text-slate-500">{t(questionnaire.id === 'QPCC' ? 'profile.QPCC.noStrengths' : 'profile.summary.balanced')}</p>}
                         </div>
-                        <div className="space-y-1.5">
+                        <div className="min-w-0 space-y-1.5">
                             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700">
                                 {t('profile.summary.growth')}
                             </div>
