@@ -431,6 +431,7 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
     for row in question_rows:
         questions_by_step.setdefault(row.step_id, []).append(row.text)
 
+    from ..questionnaire_description import public_suggestions
     result["guided_steps"] = [
         {
             "id": s.id,
@@ -442,7 +443,7 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
             ),
             "system_prompt_mode": s.system_prompt_mode,
             "color_theme": s.color_theme,
-            "suggested_questions": questions_by_step.get(s.id, []),
+            "suggested_questions": public_suggestions(s, lang, questions_by_step.get(s.id, [])),
         }
         for s in steps
     ]

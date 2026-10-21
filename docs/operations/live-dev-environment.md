@@ -6,6 +6,23 @@ modifiche dal browser del Mac, **senza toccare i container di produzione**
 
 ## Comandi
 
+### Descrizione questionari (#431)
+
+Verificare che `3161` sia libera con `lsof -nP -iTCP:3161 -sTCP:LISTEN`, poi
+`scripts/dev-questionnaire-description-tests.sh`: Next dev con hot reload su
+`127.0.0.1:3161`, upstream inutilizzabile `127.0.0.1:9`. Le suite browser
+intercettano le API con soli dati sintetici e bloccano le richieste esterne:
+nessun backend applicativo, DB, SSO o modello collegato.
+
+Da `frontend/`: `CHAT_PREFS_BASE_URL=http://127.0.0.1:3161 node --test
+tests/guided-navigation.test.mjs tests/chat-preferences.test.mjs`. Preriscaldare
+la home prima della suite. Arresto: Ctrl-C nel terminale di avvio. Da SSH:
+`ssh -N -L 3161:127.0.0.1:3161 <utente>@<server>`, URL `http://localhost:3161`.
+Test backend separati: PostgreSQL effimero `cb431-postgres`, solo
+`counselorbot_test`, porta loopback `18631`, storage tmpfs; stop del solo
+container con `docker stop cb431-postgres`. Piano e limiti:
+[questionnaire-description-boundary.md](questionnaire-description-boundary.md).
+
 ### Avvisi primo uso Taccuino/counselor (S2)
 
 Controllare che `3147` sia libera (`ss -ltn` su Linux oppure

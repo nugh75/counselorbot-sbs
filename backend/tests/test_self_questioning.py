@@ -21,6 +21,7 @@ from backend.prompt_config import (
 )
 from backend.prompt_contract import QUESTIONNAIRE_DIALOGUES, turn_contract
 from backend.prompt_variants import variant_key
+from backend.questionnaire_description import SENTINEL as DESCRIPTION_SENTINEL
 from backend.tests.artifact_database import artifact_session
 
 
@@ -126,16 +127,24 @@ def test_adaptive_support_also_reaches_in_step_follow_ups(runtime, step, message
     prepared = prepare(runtime, step["id"], message=message, entry=False)
     assert message in prepared.full_message
     contract = prepared.components["turn_contract"]
+    if step["system_prompt_mode"] in {"factor", "qsar-factor", "ztpi-factor", "qpcs-factor", "qpcc-factor", "qap-factor"}:
+        # Descriptive follow-ups keep their scope even when the message volunteers
+        # personal material; the subsequent area tests retain adaptive self-inquiry.
+        assert "[QUESTIONNAIRE DESCRIPTION]" in contract
+        assert "Do not turn spontaneous personal material into an interview here" in contract
+        assert "without answering any personal or comprehension question" in contract
+        assert "Ask a clarification question ONLY when useful" in contract
+        return
     assert rule in contract
     assert "Do not request self-questioning on every turn" in contract
     assert "without presuming discoveries, difficulties or a wish to change" in contract
     assert "Vary its wording and focus across topics without fixed templates" in contract
 
 
-def test_profile_invites_a_contextual_choice_without_changing_the_agreement(runtime):
+def test_profile_allows_optional_understanding_without_changing_the_agreement(runtime):
     profile = prepare(runtime, "qpcs-profilo").components["turn_contract"]
-    assert "person choose what they would like to understand better" in profile
-    assert "without deciding their priority" in profile
+    assert "Ask a clarification question ONLY when useful" in profile
+    assert "no mandatory closing question" in profile
     agreement = prepare(runtime, "qpcs-intro")
     assert "Do NOT ask them to type a confirmation" in agreement.system_prompt_final
     assert "[SELF-QUESTIONING]" not in agreement.system_prompt_final
@@ -219,8 +228,19 @@ def test_shared_wording_preserves_instrument_specific_tasks(runtime, step):
     prepared = prepare(runtime, step["id"])
     assert step["prompt"] in prepared.system_prompt_final
     contract = prepared.components["turn_contract"]
-    assert "preserve the current step's core questions, order, consent" in contract
-    assert "step's question budget" in contract
+    if step["id"] == "ztpi-t1":
+        # Since the descriptive-phase boundary, ZTPI's first reading keeps the
+        # step instructions but replaces personal questioning with the reading
+        # contract; it must not regain a mandatory personal question.
+        assert DESCRIPTION_SENTINEL in contract
+        assert "phase boundary takes priority" in contract
+        assert "no mandatory closing question" in contract
+        assert "Personal exploration and practical actions" in contract
+        assert "preserve the current step's core questions" not in contract
+        assert "use one contextualised question that lets the person choose" not in contract
+    else:
+        assert "preserve the current step's core questions, order, consent" in contract
+        assert "step's question budget" in contract
     # These tools have factor readings or narrative topics, not QPCS's five areas.
     assert "five areas" not in contract and "current profile reading" not in contract
 
@@ -340,7 +360,7 @@ def test_essential_path_keeps_its_fixed_tasks_and_question_free_summary(runtime)
                                      include_retrieval=False, include_history=False)
         assert "[SELF-QUESTIONING]" in prepared.system_prompt_final
         assert directive(phase) in prepared.system_prompt_final
-        assert "Add no steps or required turns" in prepared.components["turn_contract"]
+        assert "add no steps or required turns" in prepared.components["turn_contract"].lower()
         if phase == QSA_PHASES[-1]:
             assert "Do not ask another question" in prepared.system_prompt_final
             assert "When the step permits a closing question" in prepared.components["turn_contract"]

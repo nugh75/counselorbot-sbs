@@ -61,6 +61,43 @@ const STEPS = [
 ].map(([id, label, system_prompt_mode], sort_order) => ({ id, label, sort_order, system_prompt_mode }));
 const branch = { id: 'auto-branch', title: 'Organizzazione', origin_phase: 'obbstudio-partenza' };
 const send = async (page, text) => { await page.locator('#guided-composer').fill(text); await page.locator('#guided-composer').press('Enter'); };
+
+for (const width of [390, 1440]) {
+    test(`descriptive suggestions allow clarification and continuing without a personal answer at ${width}px`, async () => {
+        const { context, page, state } = await fixture(width);
+        const clarification = 'Che cosa misura questo fattore?';
+        state.guidedSteps = [
+            { id: 'cognitive', label: 'Fattori cognitivi', sort_order: 1, system_prompt_mode: 'factor',
+              suggested_questions: [clarification, 'Come si interpreta questo punteggio?', 'Qual è la differenza tra queste scale?'] },
+            { id: 'affective', label: 'Fattori affettivi', sort_order: 2, system_prompt_mode: 'factor',
+              suggested_questions: [clarification] },
+            { id: 'sl-elaboration', label: 'Elaborazione', sort_order: 3, system_prompt_mode: 'second-level',
+              suggested_questions: ['Mi riconosco soprattutto in…'] },
+        ];
+        state.script = body => ({ text: body.use_phase_prompt ? `Lettura ${body.phase}` : 'Il fattore descrive le strategie per collegare le informazioni.' });
+        try {
+            await page.goto(`${origin}/?resume=1`);
+            await page.getByRole('button', { name: 'Inizia', exact: true }).click();
+            await page.getByRole('log').getByText('Lettura cognitive', { exact: true }).waitFor();
+            await page.locator('details').filter({ hasText: clarification }).locator('summary').click();
+            await page.getByRole('button', { name: clarification, exact: true }).click();
+            assert.equal(await page.locator('#guided-composer').inputValue(), clarification);
+            await page.locator('#guided-composer').press('Enter');
+            await page.getByRole('log').getByText('Il fattore descrive le strategie per collegare le informazioni.', { exact: true }).waitFor();
+            assert.equal(await page.getByRole('button', { name: 'Mi riconosco soprattutto in…', exact: true }).count(), 0);
+            await page.screenshot({ path: `public/guide/questionnaire-description-${width}.png` });
+            // Navigation works after a clarification without a personal answer.
+            await path(page, width);
+            await page.locator('[data-path-phase="sl-elaboration"]').click();
+            await page.getByRole('log').getByText('Lettura sl-elaboration', { exact: true }).waitFor();
+            await page.locator('details').filter({ hasText: 'Mi riconosco soprattutto in…' }).locator('summary').click();
+            await page.getByRole('button', { name: 'Mi riconosco soprattutto in…', exact: true }).waitFor();
+            assert.deepEqual(state.streams.map(item => item.phase), ['cognitive', 'cognitive', 'sl-elaboration']);
+            assert.deepEqual(state.errors, []);
+        } finally { await context.close(); }
+    });
+}
+
 async function path(page, width) {
     if (width < 1024) {
         await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
