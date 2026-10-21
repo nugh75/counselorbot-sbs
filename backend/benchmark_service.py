@@ -15,7 +15,7 @@ import time
 from datetime import datetime, timezone
 
 from . import database, models, pii, model_pricing
-from .ai_service import AIService, AIError
+from .ai_service import AIService, AIError, generation_details
 from .tests.test_ollama_qsa_benchmark import (
     QSA_PROFILE,
     QSA_STEPS,
@@ -97,6 +97,7 @@ def _run_one_preset(ai: AIService, db, run_id: str, preset: dict, language: str)
             mode=step.get("mode"),
             cost_usd=cost,
             details=pii.redact_details({
+                **generation_details(ai),
                 "benchmark_run_id": run_id,
                 "preset_name": name,
                 "step_id": step.get("id"),

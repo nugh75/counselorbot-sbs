@@ -26,7 +26,7 @@ for (const width of [1440, 390]) {
     if (path === '/api/admin/guided-steps') data = instruments.map(([,code]) => ({ id: code === 'QSA' ? 'preview-fixture' : `fixture-${code}`, questionnaire_type: code, label: 'Fixture step', sort_order: 0, prompt: 'SAVED_STEP', system_prompt_mode: 'generic', color_theme: 'blue', component_defaults: code === 'QSA' ? { cognitive_factors: false, affective_factors: false, knowledge: true, certified_strategy_limit: 0 } : null }));
     if (path.endsWith('/dry-run')) {
      if (fail) return route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
-     data = { envelope: { system_prompt_final: body.config_overrides?.prompt_generic || 'SAVED_SYSTEM', full_message: body.message, history: [{ role: 'user', content: 'PREVIOUS_USER' }, { role: 'assistant', content: 'PREVIOUS_ASSISTANT' }] }, components: { step_prompt: body.message, history: [], cognitive_factors: 'EXCLUDED_SCORES' }, component_flags: { cognitive_factors: false }, resolved: { provider: unknownModel ? 'unknown' : 'fixture', model: unknownModel ? 'unknown' : 'fixture-model', context_budget: {} }, warnings: [{ code: 'retrieval_not_replayed', message: 'TECHNICAL_RETRIEVAL_DETAIL' }, { code: 'unknown_context_capacity', message: 'TECHNICAL_CAPACITY_DETAIL' }] };
+     data = { envelope: { system_prompt_final: body.config_overrides?.prompt_generic || 'SAVED_SYSTEM', full_message: body.message, history: [{ role: 'user', content: 'PREVIOUS_USER' }, { role: 'assistant', content: 'PREVIOUS_ASSISTANT' }] }, components: { step_prompt: body.message, history: [], cognitive_factors: 'EXCLUDED_SCORES' }, component_flags: { cognitive_factors: false }, resolved: { provider: unknownModel ? 'unknown' : 'fixture', model: unknownModel ? 'unknown' : 'fixture-model', context_budget: {}, reasoning_plan: { requested_response_tokens: 4000, reasoning_reserve_tokens: 28768, total_output_tokens: 32768, reasoning_reserve_is_local: true, reasoning_control: 'effort' } }, warnings: [{ code: 'retrieval_not_replayed', message: 'TECHNICAL_RETRIEVAL_DETAIL' }, { code: 'unknown_context_capacity', message: 'TECHNICAL_CAPACITY_DETAIL' }] };
     }
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
    });
@@ -39,6 +39,11 @@ for (const width of [1440, 390]) {
    await page.getByRole('button', { name: 'Anteprima della richiesta', exact: true }).click();
    const panel = page.getByRole('region', { name: 'Anteprima della richiesta' });
    await panel.getByText('fixture-model', { exact: false }).waitFor();
+   const outputReport = panel.locator('[data-output-token-report]');
+   await outputReport.locator('summary').click();
+   await outputReport.getByText('Risposta richiesta: 4000 · Riserva: 28768 · Tetto totale: 32768 token.', { exact: true }).waitFor();
+   await outputReport.getByText('Con gli effort adattivi è una riserva locale', { exact: false }).waitFor();
+   await outputReport.locator('summary').click();
    await page.locator('textarea').filter({ hasText: 'SAVED_STEP' }).fill('UNSAVED_STEP');
    await panel.getByRole('button', { name: 'Messaggi completi' }).click();
    await panel.getByText('UNSAVED_STEP', { exact: true }).waitFor();

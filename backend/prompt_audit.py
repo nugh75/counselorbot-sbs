@@ -1,6 +1,8 @@
 """Read-only prompt envelope audit for guided CounselorBot chats."""
 from __future__ import annotations
 
+from .reasoning_profiles import plan_details
+
 import logging
 import re
 import time
@@ -332,7 +334,7 @@ def build_prompt_audit(
     model = c_model or ai_service.config.get("model_name", "unknown")
     if getattr(ai_service, "chatgpt_model", None):
         provider, model = "openai_chatgpt", ai_service.chatgpt_model
-    from .model_context import ContextCapacityError, context_profile, fit_context
+    from .model_context import ContextCapacityError, context_profile, fit_context, validate_output_capacity
     from .reasoning_profiles import resolve_plan
     plan = resolve_plan(model, disable_thinking=ai_service.disable_thinking,
                         requested_max_tokens=max_tokens, fallback_max_tokens=700,
@@ -340,7 +342,13 @@ def build_prompt_audit(
                         requested_effort=getattr(ai_service, "requested_reasoning_effort", None),
                         provider=provider)
     context_report = {}
+    warnings.extend({"code": code, "message": (
+        "The reasoning reserve only sizes total output; effort does not enforce a numeric reasoning cap."
+        if code == "adaptive_reasoning_reserve_not_guaranteed" else
+        "The required output exceeds the endpoint limit; generation is blocked without reducing essential content."
+    )} for code in plan.warnings)
     try:
+        validate_output_capacity(plan)
         system_prompt_final, full_message, history, context_report = fit_context(
             system_prompt_final, full_message, history,
             context_profile(ai_service.config, provider, model), plan.max_tokens,
@@ -402,13 +410,7 @@ def build_prompt_audit(
             "questionnaire_type": questionnaire_type,
             "language": request.language,
             "max_tokens": max_tokens,
-            "reasoning_plan": {
-                "enabled": plan.enabled,
-                "effort": plan.effort,
-                "requested_effort": plan.requested_effort,
-                "effort_honored": plan.effort_honored,
-                "reasoning_budget": plan.reasoning_budget,
-            },
+            "reasoning_plan": plan_details(plan),
             "response_length": request.response_length,
             "response_format": request.response_format,
             "guided_path": request.guided_path,
@@ -703,6 +705,10 @@ def run_prompt_audit_live(
     provider = getattr(ai_service, "last_provider", None) or result["resolved"].get("provider")
     model = getattr(ai_service, "last_model", None) or result["resolved"].get("model")
     result["resolved"].update(provider=provider, model=model, model_attempts=getattr(ai_service, "last_attempts", []))
+    plan_getter = getattr(ai_service, "_plan", None)
+    if callable(plan_getter):
+        result["resolved"]["reasoning_plan"] = plan_details(plan_getter())
+    result["resolved"]["completion"] = getattr(ai_service, "last_completion", None)
     if getattr(ai_service, "last_envelope", None):
         result["envelope"] = ai_service.last_envelope
         result["resolved"]["context_budget"] = ai_service.last_context_report

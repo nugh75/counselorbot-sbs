@@ -1704,6 +1704,24 @@ che lo adottano: **nelle chat guidate decide Lunghezza**, mentre il preset del
 counselor determina modello, disattivazione del pensiero e budget di ragionamento.
 Nessun preset salvato viene corretto o aumentato automaticamente da questi aiuti.
 
+Per i **reasoner adattivi OpenRouter**, la riserva locale cresce anche con l’effort
+e con lo spazio richiesto dalla risposta. Il totale contiene risposta e ragionamento
+una sola volta. Gemini 4 Argon usa almeno 32768 token totali: questo spazio non
+obbliga a scrivere una risposta più lunga e non viene fatturato se non è usato.
+Il campo numerico non limita il pensiero quando il provider riceve un effort.
+Nell’anteprima della richiesta il blocco **Budget di output** mostra risposta
+richiesta, riserva locale e tetto totale, con i limiti del catalogo e gli avvisi.
+Se il piano supera l’output dell’endpoint o il contesto disponibile, la chiamata
+si ferma senza tagliare istruzioni, punteggi o artefatti essenziali; serve un modello
+compatibile oppure un effort minore. La lettura del profilo conserva almeno 4000
+token di risposta. I log distinguono risposta completa, limite raggiunto, output
+vuoto, solo ragionamento e ragionamento che esaurisce il totale, conservando anche
+i tentativi prima di un ripiego. Anche il benchmark dei preset registra il piano
+effettivo e i contatori di output di ogni prova. La diagnostica riparte per ogni
+tentativo, così i valori di un modello precedente non passano al successivo.
+Uno stream parziale mantiene il testo già mostrato
+e non passa a un altro modello dopo l’inizio della risposta visibile.
+
 Il **budget mensile** e i **ripieghi** convivono: quando la spesa registrata
 raggiunge il limite, i modelli a pagamento si fermano e l’invio passa al primo
 ripiego configurato disponibile fra i provider locali o gratuiti (per esempio

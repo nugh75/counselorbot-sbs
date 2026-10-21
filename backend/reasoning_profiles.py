@@ -8,9 +8,10 @@ Con un `max_tokens` piccolo la risposta visibile torna VUOTA e la chat mostra
 Soluzione: un registro che classifica il modello (per famiglia, cross-provider)
 e calcola un piano (`ReasoningPlan`) con:
   - se il reasoning va attivato,
-  - un budget di ragionamento BOUNDED (cap, dove il provider lo supporta),
-  - un `max_tokens` totale = budget ragionamento + headroom riservato alla
-    risposta, così la risposta ha sempre spazio dopo il ragionamento.
+  - una riserva di ragionamento (cap solo dove il provider lo supporta),
+  - un `max_tokens` totale = riserva + headroom della risposta, adattato
+    all'effort e ai limiti noti. La riserva locale dei reasoner adattivi non
+    garantisce la ripartizione effettiva dei token del provider.
 
 Modulo puro (niente rete, niente DB): testabile in isolamento. La traduzione
 del piano nei parametri specifici del provider (gemini thinking_budget,
@@ -20,7 +21,7 @@ openrouter reasoning.max_tokens, anthropic budget_tokens, ollama think) vive in
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Optional
 
 from .openrouter_capabilities import capability_for as _openrouter_capability
@@ -49,6 +50,64 @@ class ReasoningPlan:
     effort: Optional[str] = None       # effort applicato al provider (None = default provider)
     requested_effort: Optional[str] = None
     effort_honored: bool = True        # False se il modello impone un effort diverso
+    requested_response_tokens: Optional[int] = None
+    response_headroom_tokens: Optional[int] = None
+    required_output_tokens: Optional[int] = None
+    max_completion_tokens: Optional[int] = None
+    context_tokens: Optional[int] = None
+    reasoning_control: str = "legacy"
+    warnings: tuple[str, ...] = ()
+
+
+def plan_details(plan) -> dict:
+    """One serializable budget contract for preview and generation logs."""
+    if not isinstance(plan, ReasoningPlan):
+        return {}
+    return {
+        **asdict(plan),
+        "reasoning_reserve_tokens": plan.reasoning_budget,
+        "total_output_tokens": plan.max_tokens,
+        "reasoning_reserve_is_local": plan.reasoning_control == "effort",
+    }
+
+
+def _output_plan(plan: ReasoningPlan, requested, answer, model, capability) -> ReasoningPlan:
+    """Size output once; effort reserves are heuristics, never upstream caps.
+
+    OpenRouter documents approximate reasoning shares for effort. Retain the
+    family/preset reserve when larger. Gemini 4 Argon's documented 32K minimum
+    is a *total*, so neither reserve nor answer is added to it a second time.
+    """
+    reserve = plan.reasoning_budget or 0
+    total = plan.max_tokens
+    control = "disabled" if not plan.enabled else "legacy"
+    if plan.enabled and capability is not None:
+        if capability.supported_efforts and plan.effort:
+            control = "effort"
+            # Integer ratios avoid rounding 0.95 into an extra token.
+            ratios = {"minimal": (1, 9), "low": (1, 4), "medium": (1, 1),
+                      "high": (4, 1), "xhigh": (19, 1), "max": (19, 1)}
+            numerator, denominator = ratios.get(plan.effort, (1, 1))
+            reserve = max(reserve, (answer * numerator + denominator - 1) // denominator)
+            total = answer + reserve
+            if re.fullmatch(r"google/gemini-4-argon(?::[^/]+)?", (model or "").strip().lower()):
+                total = max(total, 32768)
+                reserve = total - answer
+        elif capability.supports_max_tokens:
+            control = "token_budget"
+    cap = capability.max_completion_tokens if capability is not None else None
+    warnings = []
+    if control == "effort":
+        warnings.append("adaptive_reasoning_reserve_not_guaranteed")
+    if cap is not None and total is not None and total > cap:
+        warnings.append("output_capacity_exceeded")
+    return replace(
+        plan, reasoning_budget=reserve, max_tokens=min(total, cap) if total is not None and cap is not None else total,
+        requested_response_tokens=requested, response_headroom_tokens=answer,
+        required_output_tokens=total, max_completion_tokens=cap,
+        context_tokens=capability.context_length if capability is not None else None,
+        reasoning_control=control, warnings=tuple(warnings),
+    )
 
 
 # Headroom prudente per un modello reasoning SCONOSCIUTO (non in tabella) quando
@@ -329,14 +388,14 @@ def resolve_plan(
         total = requested
         if requested and profile is not None and profile.no_think_floor:
             total = max(int(requested), profile.no_think_floor)
-        return ReasoningPlan(
+        return _output_plan(ReasoningPlan(
             enabled=False,
             reasoning_budget=0,
             max_tokens=total,
             effort=effort,
             requested_effort=requested_effort,
             effort_honored=honored,
-        )
+        ), requested, total or 0, model, capability)
 
     # Modello noto e non-reasoning: nessun gonfiaggio, nessun budget. Il
     # catalogo OpenRouter, quando presente, può smentire la tabella di famiglia.
@@ -357,14 +416,14 @@ def resolve_plan(
             )
             answer = profile.answer_headroom if profile is not None else DEFAULT_ANSWER_HEADROOM
             total = budget + max(answer, int(requested) if requested else 0)
-            return ReasoningPlan(
+            return _output_plan(ReasoningPlan(
                 enabled=True,
                 reasoning_budget=budget,
                 max_tokens=total,
                 effort=effort,
                 requested_effort=requested_effort,
                 effort_honored=False,
-            )
+            ), requested, max(answer, int(requested) if requested else 0), model, capability)
         return disabled_plan()
 
     # Effort richiesto: la scelta esplicita "deep" vale high; "standard" lascia
@@ -406,11 +465,11 @@ def resolve_plan(
         budget = int(budget_override)
 
     total = budget + max(answer, int(requested) if requested else 0)
-    return ReasoningPlan(
+    return _output_plan(ReasoningPlan(
         enabled=True,
         reasoning_budget=budget,
         max_tokens=total,
         effort=effort,
         requested_effort=requested_effort,
         effort_honored=honored,
-    )
+    ), requested, max(answer, int(requested) if requested else 0), model, capability)

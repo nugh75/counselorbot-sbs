@@ -58,13 +58,55 @@ Anthropic/Gemini traduce l'effort in un budget di thinking. Lo stesso piano è
 usato da chat sincrona, streaming, Prompt Lab, benchmark, Bussola e guardia del
 thread.
 
-Il backend calcola il totale con `reasoning_profiles.resolve_plan`: quando il
-ragionamento è attivo, somma budget di pensiero e il maggiore tra margine della
-famiglia e budget di risposta richiesto. Con gli effort adattivi il budget resta
-una riserva locale per il contesto, non un limite presentato come effettivo. Per esempio Qwen3: 5000 + 2000 = 7000,
-oppure 5000 + 4000 = 9000. Restano applicabili i limiti di output e contesto del
-provider. Un tetto troppo piccolo può esaurirsi durante il pensiero: vedi la
-[documentazione OpenRouter sui token di ragionamento](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens).
+## Totale per i modelli adattivi (#403)
+
+`reasoning_profiles.resolve_plan` calcola una sola volta il totale: risposta
+richiesta (o margine della famiglia, se maggiore) + riserva di ragionamento.
+Qwen3 e i vecchi preset mantengono, per esempio, 5000 + 2000 = 7000 oppure
+5000 + 4000 = 9000. Gli altri provider mantengono i budget precedenti.
+
+Per gli effort OpenRouter la riserva è **locale**, senza un cap numerico upstream.
+La stima usa come riferimento le quote approssimative documentate da
+[OpenRouter](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens):
+10/20/50/80/95% del totale per minimal/low/medium/high/xhigh-max. Il totale
+conserva il maggiore fra questa stima e la riserva della famiglia/preset, poi
+aggiunge la risposta una sola volta. Non garantisce che un modello adattivo si
+fermi alla riserva. Per esempio, una risposta da 4000 token con effort high
+richiede almeno 16000 di riserva e 20000 totali; xhigh/max richiedono 80000 totali.
+Non viene inviato `reasoning.max_tokens` insieme all’effort.
+
+Per Gemini 4 Argon si applica anche un minimo di **32768 token totali**, confermato
+il 21 ottobre 2026 nella [guida Google](https://ai.google.dev/gemini-api/docs/latest-model).
+È un minimo del totale, non un altro addendo: con 4000 token di risposta, la
+riserva locale è 28768 e il totale resta 32768. È un limite massimo concesso alla
+generazione, non una quantità di token da produrre o fatturata in anticipo.
+
+Il catalogo fornisce `max_completion_tokens` e la finestra di contesto. Il totale
+non supera il limite dell’endpoint: se il piano richiesto non entra, la generazione
+viene bloccata e l’anteprima lo segnala, senza ridurre la lettura del profilo o gli
+artefatti. Per il contesto vale il minore tra finestra configurata e catalogo;
+`fit_context` confronta input stimato + totale output + i 256 token di sicurezza
+preesistenti, senza aggiungere nuovamente il reasoning. Restano le riduzioni
+esplicite dei livelli di contesto e la rimozione di storia vecchia/teoria facoltativa;
+istruzioni essenziali, messaggio corrente e contratti strutturati non sono tagliati
+per far entrare il nuovo totale. Ogni ripiego riparte dall’envelope originale.
+
+Editor e anteprima spiegano questa distinzione nelle sei lingue. Il blocco
+**Budget di output** mostra risposta richiesta, riserva e tetto totale; i dettagli
+riportano anche margine effettivo, totale richiesto, limiti del catalogo,
+`reasoning_control` (`effort`, `token_budget`, `legacy`, `disabled`) e avvisi.
+I log di chat/sito e le prove live conservano lo stesso piano; gli errori e gli
+stream parziali conservano le diagnostiche senza salvare altro testo privato.
+
+`completion.status` distingue `complete`, `length`, `empty`, `reasoning_only`,
+`reasoning_exhausted` e `interrupted`. `finish_reason` e, quando disponibili,
+`completion_tokens`, `reasoning_tokens` e `visible_output_tokens` descrivono il
+risultato. Il conteggio visibile deriva da completion meno reasoning; la presenza
+di testo è verificata separatamente, anche per reasoning inline o escluso dal
+provider. `model_attempts` conserva la diagnostica dei tentativi precedenti.
+Il sync non accetta un risultato terminato con `length` come risposta completa;
+lo streaming conserva il testo già emesso e non cambia modello dopo il primo
+testo visibile. Solo prima del testo può intervenire un ripiego configurato.
 
 ## Verifiche riproducibili
 
@@ -115,3 +157,38 @@ a pagamento e non garantiscono che ogni provider completi sempre una risposta.
 - I test unitari TypeScript con `node --test --experimental-strip-types` non
   partono con il Node 20 disponibile in locale: build, type check e test browser
   restano le verifiche eseguibili in questo ambiente.
+
+## Verifica budget adattivi (#403, 21 ottobre 2026)
+
+- 159 test backend mirati superati con Python 3.11: nuovi casi adattivi (37),
+  profili, contratto off, fallback, headroom, routing, contesto e continuazione.
+- 41 test su Postgres isolato superati: include le due nuove prove di anteprima
+  QPCC con limiti output/contesto incompatibili e conservazione dell’envelope.
+- Suite trasporti/preset/API personali/Tavolo/ChatGPT/traduzioni: 63 test e
+  17 subtest superati; il file OpenRouter (15 test) è stato rieseguito tutto e
+  superato dopo l’inizializzazione finale della diagnostica per istanza.
+- 600 unitari frontend superati; 17 browser su build locale (preset e anteprima,
+  sei lingue, 390/1440 px) superati. TypeScript, i18n (3417 chiavi / sei lingue),
+  ESLint dei due file UI modificati e build Webpack superati.
+- Ruff F sui file backend modificati conserva otto errori preesistenti (sette
+  variabili inutilizzate e un import inutilizzato nel test API),
+  confrontati con la base #418; la baseline globale resta nella PR #349.
+- `compileall`, `git diff --check` e `make guidance-check` superati.
+
+La compilazione sul volume esterno e i download dei font non hanno completato
+la verifica nei tempi utili. La build finale usa una copia locale identica dei
+sorgenti, Node 22.23.3 e i file dei tre font reali già scaricati, tramite il supporto
+Next `NEXT_FONT_GOOGLE_MOCKED_RESPONSES`; nessun cambio ai font o ai Dockerfile
+tracciati. Le immagini di validazione sono `counselorbot-403-backend:validation`
+e `counselorbot-403-frontend:validation`. La prima è ricostruita dal Dockerfile
+backend e confrontata byte per byte con i dieci file backend modificati. La seconda
+contiene la build standalone verificata e conserva le stesse dipendenze Linux
+Next 16.3.8 dell’immagine frontend già disponibile; HTTP `/admin` e anteprima sono
+verificati su loopback :3154 (HTTP 200 e 2/2 test browser). Nessun servizio di produzione è ricostruito o riavviato.
+
+Postgres usa una rete Docker interna dedicata e tmpfs, senza dati reali. Le fixture
+browser intercettano tutte le API; non è una valutazione LLM a pagamento. Il runner
+riutilizza :3153 e `scripts/dev-model-search-tests.sh`; tunnel, stop e limiti sono in
+`live-dev-environment.md`. I processi e i container di prova vengono fermati a fine
+sessione. La PR è inizialmente basata sulla #418; dopo il suo merge va retargettata
+su `main`, senza riscrivere la storia del branch.

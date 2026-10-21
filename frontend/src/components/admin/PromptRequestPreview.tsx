@@ -35,7 +35,10 @@ type Preview = {
     component_flags?: Record<string, boolean>;
     component_origins?: Record<string, string>;
     knowledge?: { context?: string };
-    resolved?: { provider?: string; model?: string; context_budget?: Record<string, unknown> };
+    resolved?: { provider?: string; model?: string; context_budget?: Record<string, unknown>; reasoning_plan?: {
+        requested_response_tokens?: number | null; reasoning_reserve_tokens?: number | null;
+        total_output_tokens?: number | null; reasoning_reserve_is_local?: boolean;
+    } };
     warnings?: { code: string; message: string }[];
     transport?: { endpoint: string; authentication: string; body: Record<string, unknown>; unsupported_parameters: string[] } | null;
 };
@@ -173,6 +176,16 @@ export function PromptRequestPreview({ step, configs, results, language = 'it', 
             {blocks.filter(([key, value]) => `${key} ${typeof value === 'string' ? value : JSON.stringify(value)}`.toLowerCase().includes(search.toLowerCase())).map(([key, value]) => <details key={key} open={view === 'messages' || !!search} className={`rounded border bg-white p-3 ${view === 'components' ? blockClassName?.(key, data?.component_origins?.[key]) || '' : ''}`}><summary className="cursor-pointer break-words text-xs font-semibold">{componentLabels?.[key] || key}{view === 'components' && <span className="ml-2 font-normal text-slate-500">{data?.component_flags?.[key] === false ? e[6] : key === 'knowledge' && data?.warnings?.some(w => w.code === 'retrieval_not_replayed') ? e[8] : hasContent(value) ? e[5] : e[7]}</span>}</summary>{view === 'components' && data?.component_origins?.[key] && <p className="mt-1 break-words font-mono text-[11px] text-slate-500">{data.component_origins[key]}</p>}<pre className="mt-2 whitespace-pre-wrap break-words text-xs">{value ? typeof value === 'string' ? value : JSON.stringify(value, null, 2) : l[13]}</pre></details>)}
         </div>
         {data?.transport && <details className="text-xs"><summary>{t('chatgpt.preview.title')}</summary><p className="mt-2">{t('chatgpt.preview.help')}</p><pre className="mt-2 whitespace-pre-wrap break-words">{JSON.stringify(data.transport, null, 2)}</pre></details>}
+        {data?.resolved?.reasoning_plan && <details data-output-token-report className="space-y-2 text-xs">
+            <summary>{t('admin.presets.outputPlanTitle')}</summary>
+            <p>{t('admin.presets.outputPlanNumbers', {
+                response: String(data.resolved.reasoning_plan.requested_response_tokens ?? '?'),
+                reserve: String(data.resolved.reasoning_plan.reasoning_reserve_tokens ?? '?'),
+                total: String(data.resolved.reasoning_plan.total_output_tokens ?? '?'),
+            })}</p>
+            {data.resolved.reasoning_plan.reasoning_reserve_is_local && <p>{t('admin.presets.reasoningHelp')}</p>}
+            <pre className="whitespace-pre-wrap break-words">{JSON.stringify(data.resolved.reasoning_plan, null, 2)}</pre>
+        </details>}
         {data?.resolved?.context_budget && <details className="text-xs"><summary>{l[20]}</summary><pre className="whitespace-pre-wrap">{JSON.stringify(data.resolved.context_budget, null, 2)}</pre></details>}
         {typeof data?.resolved?.context_budget?.input_tokens === 'number' && <div data-context-token-report className="space-y-2 text-xs text-slate-600">
             <p>{t('admin.context.budget', { count: data.resolved.context_budget.input_tokens, budget: String(data.resolved.context_budget.input_budget ?? '?') })}</p>

@@ -1,6 +1,7 @@
 """Endpoint di chat e QSA: /chat, /chat/stream, /chat/message,
 /qsa/guided-ui-texts, /qsa/audit, /qsa/upload, /tts."""
 from .. import personal_api
+from ..reasoning_profiles import plan_details
 import functools
 import io
 import logging
@@ -19,7 +20,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .. import auth, class_access, database, models, model_pricing
 from ..anonymous_codes import code_for_identity
-from ..ai_service import AIService, AIError
+from ..ai_service import AIService, AIError, generation_details
 from ..chat_continuation import continuation_message
 from .. import pii
 from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
@@ -690,7 +691,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             logger.error(f"Errore AI chat session {session_id}: {e}")
             from ..chat_logic import log_error as _log_error
             _log_error(db, session_id, str(e), identity=identity, questionnaire_type=questionnaire_type,
-                       mode=request.mode, phase=request.phase, conversation_id=conversation_id)
+                       mode=request.mode, phase=request.phase, conversation_id=conversation_id,
+                       generation_details=generation_details(ai_service))
             raise HTTPException(status_code=502, detail=str(e))
 
     # I blocchi privati escono subito: non devono raggiungere lo studente, il
@@ -814,14 +816,9 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             if reasoning_plan is None
             else not bool(getattr(reasoning_plan, "enabled", False))
         ),
-        "reasoning_plan": {
-            "enabled": bool(getattr(reasoning_plan, "enabled", False)),
-            "effort": getattr(reasoning_plan, "effort", None),
-            "requested_effort": getattr(reasoning_plan, "requested_effort", None),
-            "effort_honored": getattr(reasoning_plan, "effort_honored", True),
-            "reasoning_budget": getattr(reasoning_plan, "reasoning_budget", None),
-        },
+        "reasoning_plan": plan_details(reasoning_plan),
         "reasoning_present": bool(getattr(ai_service, "last_thinking", None)),
+        "completion": getattr(ai_service, "last_completion", None),
     }, "user_input", "effective_user_input", "bot_response")
     if full_prompt_logging_enabled(db):
         _details["envelope"] = pii.redact_envelope(
@@ -1035,14 +1032,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     if reasoning_plan is None
                     else not bool(getattr(reasoning_plan, "enabled", False))
                 ),
-                "reasoning_plan": {
-                    "enabled": bool(getattr(reasoning_plan, "enabled", False)),
-                    "effort": getattr(reasoning_plan, "effort", None),
-                    "requested_effort": getattr(reasoning_plan, "requested_effort", None),
-                    "effort_honored": getattr(reasoning_plan, "effort_honored", True),
-                    "reasoning_budget": getattr(reasoning_plan, "reasoning_budget", None),
-                },
+                "reasoning_plan": plan_details(reasoning_plan),
                 "reasoning_present": bool(getattr(ai_service, "last_thinking", None)),
+                "completion": getattr(ai_service, "last_completion", None),
                 "response_format": request.response_format,
                 "guided_path": request.guided_path,
                 "usage": usage,
@@ -1418,6 +1410,18 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': (recommended or {}).get('strategy', []), 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': {'reading': [], 'strategy': []}, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals or []})}\n\n"
                 return
 
+            try:
+                from ..chat_logic import log_error as _log_error
+                _err_db = database.SessionLocal()
+                try:
+                    _log_error(_err_db, session_id, str(e), identity=identity,
+                               questionnaire_type=questionnaire_type, mode=request.mode, phase=request.phase,
+                               conversation_id=conversation_id, generation_details=generation_details(ai_service))
+                finally:
+                    _err_db.close()
+            except Exception:
+                pass
+
             err_str = str(e).lower()
             if visible_all and ("token limit" in err_str or "output token limit" in err_str or "interrotta" in err_str):
                 logger.warning(f"Stream chat session {session_id} interrotto con testo visibile presente ({len(visible_all)} car.): {e}")
@@ -1425,17 +1429,6 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals or []})}\n\n"
                 return
             logger.error(f"Errore stream chat session {session_id}: {e}")
-            try:
-                from ..chat_logic import log_error as _log_error
-                _err_db = database.SessionLocal()
-                try:
-                    _log_error(_err_db, session_id, str(e), identity=identity,
-                               questionnaire_type=questionnaire_type, mode=request.mode, phase=request.phase,
-                               conversation_id=conversation_id)
-                finally:
-                    _err_db.close()
-            except Exception:
-                pass
             yield f"data: {_json.dumps({'error': str(e), **({'error_code': e.code} if isinstance(e, AIError) and e.code else {})})}\n\n"
 
     return StreamingResponse(

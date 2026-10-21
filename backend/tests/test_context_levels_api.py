@@ -81,3 +81,30 @@ def test_preview_selected_preset_uses_its_manual_context_assignment(db):
     result = build_prompt_audit(db, payload)
     assert result['resolved']['model'] == 'fixture-small'
     assert result['resolved']['context_budget']['level'] == 'minimo'
+
+
+@pytest.mark.parametrize('limit', ['output', 'context'])
+def test_adaptive_preview_explains_budget_and_preserves_profile_on_capacity_error(db, monkeypatch, limit):
+    from dataclasses import replace
+    from backend import openrouter_capabilities as catalog
+    model = 'google/gemini-4-argon'
+    preset = models.ModelPreset(name='adaptive-fixture', provider='openrouter', model=model,
+                                reasoning_effort='medium', is_active=True, disable_thinking=False)
+    db.add(preset); db.flush()
+    step = db.query(models.GuidedStep).filter_by(id='qpcc-profilo').one()
+    payload = schemas.PromptAuditRequest(questionnaire_type='QPCC', phase=step.id, mode=step.system_prompt_mode,
+                use_phase_prompt=True, message='test', include_knowledge=False,
+                response_length='short', model_preset_id=preset.id)
+    original = build_prompt_audit(db, payload)
+    plan = original['resolved']['reasoning_plan']
+    assert plan['requested_response_tokens'] >= 4000
+    assert plan['total_output_tokens'] == 32768
+    assert plan['reasoning_reserve_tokens'] + plan['response_headroom_tokens'] == 32768
+    assert plan['reasoning_reserve_is_local'] is True
+    capability = catalog.capability_for(model)
+    constrained = replace(capability, **({'max_completion_tokens': 16000} if limit == 'output' else {'context_length': 32768}))
+    monkeypatch.setattr(catalog, '_CACHE', {model: constrained})
+    blocked = build_prompt_audit(db, payload)
+    assert blocked['envelope'] == original['envelope']
+    assert 'context_capacity_exceeded' in {warning['code'] for warning in blocked['warnings']}
+    assert blocked['resolved']['reasoning_plan']['requested_response_tokens'] >= 4000
