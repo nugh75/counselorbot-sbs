@@ -21,7 +21,7 @@ from starlette.concurrency import run_in_threadpool
 from .. import auth, class_access, database, models, model_pricing
 from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService, AIError, generation_details
-from ..chat_continuation import continuation_message
+from ..chat_continuation import continuation_message, merge_continuation
 from .. import pii
 from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
 from ..diagram_blocks import strip_for_speech
@@ -1026,6 +1026,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 "response_length": request.response_length,
                 "requested_response_length": request.response_length,
                 "effective_response_length": effective_response_length,
+                "continuation_prefix_chars": len(request.partial_response),
                 "reasoning_effort": request.reasoning_effort,
                 "reasoning_disabled": (
                     _reasoning_suppressed_for(ai_service)
@@ -1126,7 +1127,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     if not sub_text:
                         continue
                     chunks.append(sub_text)
-                    raw_response = "".join(chunks)
+                    raw_response = merge_continuation(chunks[0], "".join(chunks[1:]))
                     display_response = _student_visible_response(
                         raw_response, questionnaire_type, request.language, sanitize
                     )
@@ -1168,7 +1169,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                         yield f"data: {_json.dumps({'reasoning': sub['text']})}\n\n"
                 elif sub.get("type") == "content" and sub.get("text"):
                     chunks.append(sub["text"])
-                    raw_response = "".join(chunks)
+                    raw_response = merge_continuation(chunks[0], "".join(chunks[1:]))
                     display_response = _student_visible_response(
                         raw_response, questionnaire_type, request.language, sanitize
                     )
@@ -1185,8 +1186,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     previous_display = display_response
                     yield f"data: {_json.dumps(event)}\n\n"
 
-            raw_response = strip_thinking("".join(chunks))
-            if request.partial_response and not "".join(chunks[1:]).strip():
+            raw_response = strip_thinking(merge_continuation(chunks[0], "".join(chunks[1:]), final=True))
+            if request.partial_response and raw_response.strip() == strip_thinking(request.partial_response).strip():
                 raise AIError("The provider returned no continuation.")
             # I blocchi privati escono prima di ogni altra elaborazione: non devono
             # raggiungere lo studente, il transcript, il log o il PDF. Per primi i
@@ -1370,7 +1371,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 if draft_mod is not None:
                     visible_this_stream = draft_mod.strip_for_display(visible_this_stream).strip()
 
-            all_raw = "".join(chunks).strip()
+            all_raw = merge_continuation(chunks[0], "".join(chunks[1:])).strip()
             visible_all = strip_thinking(all_raw).strip()
             if visible_all:
                 visible_all = control_markers.strip_for_display(visible_all).strip()

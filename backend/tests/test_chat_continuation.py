@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from fastapi import BackgroundTasks, HTTPException
 
 from backend.api_models import ChatRequest, SiteChatRequest, OpencodeChatRequest
-from backend.chat_continuation import continuation_message
+from backend.chat_continuation import continuation_message, merge_continuation
 from backend.routes import chat, site_chat
 from backend.ai_service import AIService, AIError
 
@@ -115,13 +115,53 @@ def test_continuation_quotes_the_partial_and_preserves_the_original_question():
     assert json.loads(prompt.splitlines()[-1]) == 'Text\n"quoted"'
 
 
-@pytest.mark.parametrize("partial,suffix", [
-    ("Studia e", " verifica."), ("Studia e", ""),
-    ("", "parola " * 120), ("Studia e", " parola" * 120),
+OPENING = "Questa risposta di prova descrive un metodo per organizzare lo studio e verificare i progressi. "
+PARTIAL = OPENING + "Il primo passo consiste nel"
+REWRITTEN = OPENING + "Per iniziare, scegli un argomento e prova a spiegarlo."
+
+
+@pytest.mark.parametrize("partial,generated,expected", [
+    (PARTIAL, " completare un esempio.", PARTIAL + " completare un esempio."),
+    (PARTIAL, PARTIAL + " completare un esempio.", PARTIAL + " completare un esempio."),
+    (PARTIAL, REWRITTEN, REWRITTEN),
+    (PARTIAL, OPENING + "Prova.", OPENING + "Prova."),
+    (PARTIAL, PARTIAL[:90], PARTIAL),
+    (PARTIAL, "", PARTIAL),
+    ("", REWRITTEN, REWRITTEN),
+    ("Sì, ", "sì, riproviamo.", "Sì, sì, riproviamo."),
+    ("ha ", "ha ha!", "ha ha ha!"),
+    (PARTIAL, OPENING[:79] + "Diverso.", PARTIAL + OPENING[:79] + "Diverso."),
 ])
-def test_guided_continuation_streams_and_persists_one_complete_answer(monkeypatch, partial, suffix):
+def test_merge_continuation_at_every_stream_boundary(partial, generated, expected):
+    assert merge_continuation(partial, generated, final=True) == expected
+    for end in range(len(generated) + 1):
+        visible = merge_continuation(partial, generated[:end])
+        assert visible == partial or (partial + generated).startswith(visible) or expected.startswith(visible)
+        if partial and expected == generated:
+            assert partial + OPENING not in visible
+
+
+@pytest.mark.parametrize("chunk_size", [1, 17, 4096])
+@pytest.mark.parametrize("partial,suffix,expected,interrupted", [
+    ("Studia e", " verifica.", "Studia e verifica.", False), ("Studia e", "", None, False),
+    ("", "parola " * 120, None, False), ("Studia e", " parola" * 120, "Studia e" + " parola" * 120, False),
+    (PARTIAL, PARTIAL + " completare un esempio.", PARTIAL + " completare un esempio.", False),
+    (PARTIAL, REWRITTEN, REWRITTEN, False),
+    (PARTIAL, PARTIAL, None, False),
+    (PARTIAL, PARTIAL[:90], None, False),
+    (PARTIAL, REWRITTEN[:90], None, True),
+    (PARTIAL, REWRITTEN, None, True),
+    (PARTIAL, REWRITTEN + '[[AVANZA_STEP]]', REWRITTEN, False),
+], ids=['suffix', 'empty', 'word-limit', 'long-suffix', 'restart', 'rewrite', 'echo', 'short-echo', 'interrupted-echo', 'interrupted-rewrite', 'control-signal'])
+def test_guided_continuation_streams_and_persists_one_complete_answer(monkeypatch, partial, suffix, expected, interrupted, chunk_size):
+    def provider_output():
+        for i in range(0, len(suffix), chunk_size):
+            yield suffix[i:i + chunk_size]
+        if interrupted:
+            raise AIError('Interrupted test stream')
+
     ai = SimpleNamespace(config={}, last_provider=None, last_model=None,
-                         stream_response=MagicMock(return_value=iter([suffix])))
+                         stream_response=MagicMock(return_value=provider_output()))
     prepared = SimpleNamespace(
         prompt_key="test", phase_prompt_key=None, effective_message="Come studio?",
         step_label=None, questionnaire_type="QSA", effective_response_length="short",
@@ -137,6 +177,8 @@ def test_guided_continuation_streams_and_persists_one_complete_answer(monkeypatc
     monkeypatch.setattr(chat, "session_memory", MagicMock())
     monkeypatch.setattr(chat, "_apply_idea_patch", lambda text, **kw: (text, None))
     monkeypatch.setattr(chat, "_record_recommendations", MagicMock(return_value={}))
+    candidate = MagicMock(return_value='final-response')
+    monkeypatch.setattr(chat.shared_response_memory, 'create_candidate', candidate)
     monkeypatch.setattr(chat.database, "SessionLocal", MagicMock())
     persist = MagicMock()
     monkeypatch.setattr(chat, "_update_markdown_memory_background", persist)
@@ -155,21 +197,40 @@ def test_guided_continuation_streams_and_persists_one_complete_answer(monkeypatc
         assert "response_id" not in output[-1]
         persist.assert_not_called()
         chat._record_recommendations.assert_not_called()
-    elif suffix:
+    elif expected is not None:
         assert output[-1]["done"] is True
-        assert output[-1]["response"] == partial + suffix
+        assert output[-1]["response"] == expected
         assert not output[-1].get("incomplete")
         assert persist.call_count == 1
-        assert persist.call_args.args[1:3] == ("Come studio?", partial + suffix)
+        assert persist.call_args.args[1:3] == ("Come studio?", expected)
         assert json.loads(ai.stream_response.call_args.args[0].splitlines()[-1]) == partial
+        for event in output:
+            if "display" in event:
+                assert event['display'] == partial or expected.startswith(event['display'])
+        logged = chat.database.SessionLocal.return_value.add.call_args.args[0]
+        assert logged.details['bot_response'] == expected
+        assert logged.details['continuation_prefix_chars'] == len(partial)
+        candidate.assert_called_once()
+        assert candidate.call_args.args[1] == expected
+        if '[[AVANZA_STEP]]' in suffix:
+            assert output[-1]['control_signals'] == ['AVANZA_STEP']
     else:
         assert "error" in output[-1]
         persist.assert_not_called()
+        candidate.assert_not_called()
+        assert not any(event.get('done') for event in output)
+        for event in output:
+            if 'display' in event:
+                assert event['display'] == partial or REWRITTEN.startswith(event['display'])
 
 
-@pytest.mark.parametrize("partial,suffix", [("Studia e", " verifica."), ("", "parola " * 120)])
-def test_site_continuation_uses_original_question_for_retrieval_and_saves_complete_answer(monkeypatch, partial, suffix):
-    ai = SimpleNamespace(config={}, stream_response=MagicMock(return_value=iter([suffix])))
+@pytest.mark.parametrize("partial,suffix,expected", [
+    ("Studia e", " verifica.", "Studia e verifica."), ("", "parola " * 120, None),
+    (PARTIAL, PARTIAL + " completare un esempio.", PARTIAL + " completare un esempio."),
+    (PARTIAL, REWRITTEN, REWRITTEN), (PARTIAL, PARTIAL, None),
+])
+def test_site_continuation_uses_original_question_for_retrieval_and_saves_complete_answer(monkeypatch, partial, suffix, expected):
+    ai = SimpleNamespace(config={}, stream_response=MagicMock(return_value=iter(suffix)))
     index = SimpleNamespace(search=MagicMock(return_value=[{"source": "test"}]))
     monkeypatch.setattr(site_chat, "AIService", lambda db, username=None: ai)
     monkeypatch.setattr(site_chat, "get_index", lambda collection: index)
@@ -198,9 +259,16 @@ def test_site_continuation_uses_original_question_for_retrieval_and_saves_comple
         assert output[-1]["response"].endswith("…")
         memory.record_interaction.assert_not_called()
         return
-    assert output[-1]["response"] == "Studia e verifica."
+    if expected is None:
+        assert 'error' in output[-1]
+        memory.record_interaction.assert_not_called()
+        return
+    assert output[-1]["response"] == expected
     assert memory.record_interaction.call_count == 1
-    assert memory.record_interaction.call_args.kwargs["bot_response"] == "Studia e verifica."
+    assert memory.record_interaction.call_args.kwargs["bot_response"] == expected
+    for event in output:
+        if 'display' in event:
+            assert event['display'] == partial or expected.startswith(event['display'])
 
 
 @pytest.mark.parametrize("reason", ["stop", "length"])
@@ -237,20 +305,24 @@ def _assert_provider_finish(items, reason):
     assert "".join(i.get("text", "") for i in output if i["type"] == "content") == "C6: attenzione."
 
 
-def test_opencode_restore_hides_internal_continuation_turn_and_joins_answer(tmp_path, monkeypatch):
+@pytest.mark.parametrize('partial,suffix,expected', [
+    ('Studia e', ' verifica.', 'Studia e verifica.'),
+    (PARTIAL, REWRITTEN, REWRITTEN),
+])
+def test_opencode_restore_hides_internal_continuation_turn_and_joins_answer(tmp_path, monkeypatch, partial, suffix, expected):
     from backend.routes import opencode
 
     workspace = tmp_path / "test"
     workspace.mkdir()
     (workspace / ".opencode-session").write_text("ses_test123")
     monkeypatch.setattr(opencode, "OPENCODE_WS_ROOT", str(tmp_path))
-    turns = [("user", "Come studio?"), ("assistant", "Studia e"),
-             ("user", continuation_message("Come studio?", "Studia e")), ("assistant", " verifica.")]
+    turns = [("user", "Come studio?"), ("assistant", partial),
+             ("user", continuation_message("Come studio?", partial)), ("assistant", suffix)]
 
     async def api(config, method, path, **kwargs):
         return [{"info": {"role": role}, "parts": [{"type": "text", "text": text}]} for role, text in turns] if path.endswith("/message?directory=%2Fwork") else {}
 
     monkeypatch.setattr(opencode, "_api_json", api)
     _, history, needs_seed = asyncio.run(opencode._ensure_opencode_session("test", {}))
-    assert history == [{"role": "user", "content": "Come studio?"}, {"role": "assistant", "content": "Studia e verifica."}]
+    assert history == [{"role": "user", "content": "Come studio?"}, {"role": "assistant", "content": expected}]
     assert not needs_seed

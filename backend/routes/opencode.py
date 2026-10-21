@@ -36,7 +36,7 @@ from .. import auth, class_access, control_markers, database, models, pii
 from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService
 from ..api_models import ChatRequest, OpencodeChatRequest, OpencodeWorkspaceRequest
-from ..chat_continuation import continuation_message, continuation_prefix
+from ..chat_continuation import continuation_message, continuation_prefix, merge_continuation
 from ..chat_logic import (
     _apply_language_directive,
     _apply_qsa_factor_directive,
@@ -674,7 +674,7 @@ async def _ensure_opencode_session(
                 continue
             if continuing and role == "assistant":
                 suffix = "".join(str(part.get("text") or "") for part in (item.get("parts") or []) if part.get("type") == "text")
-                history[-1]["content"] += suffix
+                history[-1]["content"] = merge_continuation(history[-1]["content"], suffix, final=True)
                 continuing = False
                 has_assistant = True
                 continue
@@ -1030,7 +1030,7 @@ async def chat_opencode(
                                 full_text += delta
                                 if text_part_count > 1:
                                     display_text, _ = _limit_visible_words(
-                                        control_markers.strip_for_display(request.partial_response + full_text),
+                                        control_markers.strip_for_display(merge_continuation(request.partial_response, full_text)),
                                         request.response_length,
                                     )
                                     yield f"data: {json.dumps({'display': display_text})}\n\n"
@@ -1059,7 +1059,9 @@ async def chat_opencode(
 
                             if request.partial_response and not full_text.strip():
                                 raise RuntimeError("The provider returned no continuation.")
-                            full_text = control_markers.strip_control_markers(request.partial_response + full_text)
+                            full_text = control_markers.strip_control_markers(merge_continuation(request.partial_response, full_text, final=True))
+                            if request.partial_response and full_text.strip() == request.partial_response.strip():
+                                raise RuntimeError("The provider returned no continuation.")
                             full_text, _ = _limit_visible_words(full_text, request.response_length)
                             # Persist response as candidate for student feedback
                             response_id = None

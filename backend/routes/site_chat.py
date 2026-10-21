@@ -24,7 +24,7 @@ from ..chat_preferences import apply_response_format
 from ..class_access import require_tool
 from ..platform_guidance import GUIDE_DIRECTIVE, GUIDE_FILENAME, read_platform_guide
 from .. import auth, database, models, model_pricing
-from ..chat_continuation import continuation_message
+from ..chat_continuation import continuation_message, merge_continuation
 from ..prompt_contract import persona_context
 from ..ai_service import AIService, AIError, generation_details
 from ..chat_logic import (
@@ -552,6 +552,7 @@ async def site_chat_stream(
         visible_length = None if request.partial_response else request.response_length
         chunks: list[str] = [request.partial_response]
         usage_info = None
+        previous_display = request.partial_response
         try:
             for item in ai_service.stream_response(full_message, system_prompt, "site-chat", max_tokens=max_tokens):
                 if isinstance(item, dict) and item.get("type") == "usage":
@@ -565,23 +566,25 @@ async def site_chat_stream(
                         yield f"data: {_json.dumps({'reasoning': text})}\n\n"
                     continue
                 chunks.append(text)
+                raw_answer = merge_continuation(chunks[0], "".join(chunks[1:]))
                 display_response, truncated = _limit_visible_words(
-                    control_markers.strip_for_display(_strip_fonte_tokens("".join(chunks))), visible_length
+                    control_markers.strip_for_display(_strip_fonte_tokens(raw_answer)), visible_length
                 )
                 event = {"display": display_response}
                 if request.response_length is None:
-                    event["delta"] = text
+                    event["delta"] = display_response[len(previous_display):] if display_response.startswith(previous_display) else ""
+                previous_display = display_response
                 yield f"data: {_json.dumps(event)}\n\n"
                 if truncated:
                     break
 
+            raw_answer = merge_continuation(chunks[0], "".join(chunks[1:]), final=True)
             answer = _strip_generic_acknowledgement(
-                control_markers.strip_control_markers(_strip_fonte_tokens(strip_thinking("".join(chunks))))
-            )
+                control_markers.strip_control_markers(_strip_fonte_tokens(strip_thinking(raw_answer))))
             answer = strip_thinking(answer)
             if not answer.strip():
                 answer = reflective_empty_fallback(None, request.language)
-            if request.partial_response and not "".join(chunks[1:]).strip():
+            if request.partial_response and (not "".join(chunks[1:]).strip() or answer.strip() == request.partial_response.strip()):
                 raise AIError("The provider returned no continuation.")
             answer, truncated = _limit_visible_words(answer, visible_length)
             if truncated:

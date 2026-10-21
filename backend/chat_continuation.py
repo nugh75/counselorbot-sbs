@@ -2,6 +2,24 @@
 import json
 
 _PARTIAL_MARKER = "\nPARTIAL_ANSWER_JSON:\n"
+_RESTART_ANCHOR_CHARS = 80
+
+
+def merge_continuation(partial: str, generated: str, *, final: bool = False) -> str:
+    """Join a suffix, or replace the prefix when the model restarts its answer.
+
+    A long identical opening identifies a restart even when later wording changes.
+    Hold a possible echo until it catches up, so it never flashes twice on screen.
+    Short matches are ambiguous (e.g. repeated words) and remain untouched.
+    """
+    if len(partial) < _RESTART_ANCHOR_CHARS:
+        return partial + generated
+    if partial.startswith(generated):
+        return partial
+    if generated.startswith(partial[:_RESTART_ANCHOR_CHARS]):
+        return generated if final or len(generated) >= len(partial) else partial
+    return partial + generated
+
 
 def continuation_message(message: str, partial: str) -> str:
     if not partial:
