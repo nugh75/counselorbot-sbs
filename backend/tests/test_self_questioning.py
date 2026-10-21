@@ -126,16 +126,24 @@ def test_adaptive_support_also_reaches_in_step_follow_ups(runtime, step, message
     prepared = prepare(runtime, step["id"], message=message, entry=False)
     assert message in prepared.full_message
     contract = prepared.components["turn_contract"]
+    if step["system_prompt_mode"] in {"factor", "qsar-factor", "ztpi-factor", "qpcs-factor", "qpcc-factor", "qap-factor"}:
+        # Descriptive follow-ups keep their scope even when the message volunteers
+        # personal material; the subsequent area tests retain adaptive self-inquiry.
+        assert "[QUESTIONNAIRE DESCRIPTION]" in contract
+        assert "Do not turn spontaneous personal material into an interview here" in contract
+        assert "without answering any personal or comprehension question" in contract
+        assert "Ask a clarification question ONLY when useful" in contract
+        return
     assert rule in contract
     assert "Do not request self-questioning on every turn" in contract
     assert "without presuming discoveries, difficulties or a wish to change" in contract
     assert "Vary its wording and focus across topics without fixed templates" in contract
 
 
-def test_profile_invites_a_contextual_choice_without_changing_the_agreement(runtime):
+def test_profile_allows_optional_understanding_without_changing_the_agreement(runtime):
     profile = prepare(runtime, "qpcs-profilo").components["turn_contract"]
-    assert "person choose what they would like to understand better" in profile
-    assert "without deciding their priority" in profile
+    assert "Ask a clarification question ONLY when useful" in profile
+    assert "no mandatory closing question" in profile
     agreement = prepare(runtime, "qpcs-intro")
     assert "Do NOT ask them to type a confirmation" in agreement.system_prompt_final
     assert "[SELF-QUESTIONING]" not in agreement.system_prompt_final

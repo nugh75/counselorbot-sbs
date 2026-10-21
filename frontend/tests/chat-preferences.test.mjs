@@ -56,8 +56,8 @@ for (const width of [390, 1440]) {
             if (body.use_phase_prompt) return { text: `Apertura: ${body.phase}` };
             if (body.phase === 'qsa-essential-followup') return { text: 'Riprendiamo volontariamente il tema scelto.' };
             const message = body.memory_message;
-            if (message === 'Vorrei approfondire') return { text: 'Siamo nella scelta del focus; dopo raccoglieremo un esempio. Vuoi approfondire o proseguire?' };
-            if (message === 'Sì, approfondiamo') return { text: 'Restiamo sul focus scelto: esploriamo come scegli di iniziare.' };
+            if (message === 'Vorrei approfondire') return { text: 'Stiamo leggendo i fattori; dopo potrai scegliere un focus e un esempio. Vuoi chiarire il significato o proseguire?' };
+            if (message === 'Sì, approfondiamo') return { text: 'Chiariamo il significato dei fattori e dei punteggi.' };
             return { text: `Passiamo oltre: ${body.phase}`, signals: ['AVANZA_STEP'] };
         };
         const send = async text => {
@@ -73,9 +73,9 @@ for (const width of [390, 1440]) {
             await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).click();
             await page.keyboard.press('Escape');
             await send('Vorrei approfondire');
-            await page.getByRole('log').getByText('Siamo nella scelta del focus; dopo raccoglieremo un esempio. Vuoi approfondire o proseguire?', { exact: true }).waitFor();
+            await page.getByRole('log').getByText('Stiamo leggendo i fattori; dopo potrai scegliere un focus e un esempio. Vuoi chiarire il significato o proseguire?', { exact: true }).waitFor();
             await send('Sì, approfondiamo');
-            await page.getByRole('log').getByText('Restiamo sul focus scelto: esploriamo come scegli di iniziare.', { exact: true }).waitFor();
+            await page.getByRole('log').getByText('Chiariamo il significato dei fattori e dei punteggi.', { exact: true }).waitFor();
             assert.ok(state.streams.every(x => x.phase === 'qsa-essential-focus'), 'depth must not consume a stage');
             await page.waitForTimeout(1700);
             assert.equal(state.snapshot.current_phase, 'qsa-essential-focus');
