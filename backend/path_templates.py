@@ -223,7 +223,17 @@ def template_changes(db: Session, path: models.ClassPath, template: models.PathT
     started = started_steps(db, path, [step for step in steps if step.step_type in ("tool", "guided_chat")])
     enabled = get_class_enabled_tool_keys(db, path.group_id)
 
+    def presentation(step):
+        return {"title": step.title, "instructions": step.instructions} if step else None
+
+    def customized(step):
+        return step is not None and any(
+            getattr(step, key) != (step.template_snapshot or {}).get(key)
+            for key in ("title", "instructions"))
+
     def status(step):
+        if customized(step):
+            return "customized"
         if step is not None and step.step_type not in ("tool", "guided_chat", "pending"):
             return "created"
         return "started" if step is not None and step.id in started else "apply"
@@ -240,13 +250,15 @@ def template_changes(db: Session, path: models.ClassPath, template: models.PathT
         changes.append({"change": "changed" if step else "added", "template_step_id": row.id,
                         "step_id": step.id if step else None, "step_type": row.step_type,
                         "tool_key": row.config.get("tool_key"), "title": row.title, "status": state,
-                        "snapshot": snapshot})
+                        "snapshot": snapshot, "current_presentation": presentation(step),
+                        "template_presentation": presentation(row)})
     # A copied step whose template step was deleted (the link was emptied).
     for step in steps:
         if step.template_step_id is None and step.template_snapshot is not None:
             changes.append({"change": "removed", "template_step_id": None, "step_id": step.id,
                             "step_type": step.template_snapshot["step_type"], "tool_key": step.tool_key,
-                            "title": step.title, "status": status(step), "snapshot": None})
+                            "title": step.title, "status": status(step), "snapshot": None,
+                            "current_presentation": presentation(step), "template_presentation": None})
     return changes
 
 

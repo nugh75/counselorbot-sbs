@@ -70,7 +70,7 @@ def full_steps(goal):
         {"step_type": "questionnaire_administration", "instrument_code": "QSA", "locale": "it", "plan_title": "Start"},
         {"step_type": "guided_results_chat", "results_position": 2},
         {"step_type": "assignment", "goal_id": goal.id, "assignment_instructions": "Write your plan"},
-        {"step_type": "forum", "topic_title": "How did it go?", "topic_body": "Share one thing"},
+        {"step_type": "forum", "title": "Class reflection", "topic_title": "How did it go?", "topic_body": "Share one thing"},
     ]
 
 
@@ -307,7 +307,7 @@ def test_update_from_template_rewrites_an_untouched_draft(api):
     assert updated["template_revision"] == template["revision"] and updated["status"] == "draft"
     assert [(s["step_type"], s["tool_key"], s["title"]) for s in updated["steps"]] == [
         ("tool", "tavolo", "Warm up again"), ("pending", None, None), ("tool", "timeline", "New"),
-        ("pending", None, None), ("pending", None, None)]
+        ("pending", None, None), ("pending", None, "Class reflection")]
     assert updated["steps"][3]["pending_config"] == {"kind": "guided_results_chat",
                                                      "results_step_id": updated["steps"][1]["id"]}
     assert updated["steps"][4]["pending_config"]["body"] == "Share two things"
@@ -416,3 +416,43 @@ def test_new_analysis_can_link_pending_questionnaire_and_detect_existing_pending
         'revision': path['revision'], 'title': path['title'], 'steps': pending_steps + [
             {'step_type': 'guided_results_chat', 'results_step_id': path['steps'][1]['id']}]})
     assert response.status_code == 422 and response.json()['detail'] == 'duplicate_results_chat'
+
+
+@pytest.mark.parametrize("field,custom", [("instructions", "Personal note\nsecond line"), ("title", "Personal title"),
+                                         ("instructions", None), ("title", None)])
+def test_template_update_keeps_customized_presentation_and_reports_both_texts(api, field, custom):
+    client, db, _identity, data = api
+    template = create(client, data["goal"], steps=[{"step_type": "tool", "tool_key": "timeline",
+                                                  "title": "Original", "instructions": "Original note"}])
+    path = apply(client, template, data["group"]).json()[0]
+    step = db.get(models.ClassPathStep, path["steps"][0]["id"])
+    setattr(step, field, custom)
+    step.due_date = __import__('datetime').date(2026, 10, 31)
+    db.commit()
+    template = edit(client, template, [kept(template, 0, title="New title", instructions="New template note")])
+    preview = client.get(f"/teacher/paths/{path['id']}/template-update").json()["changes"]
+    assert len(preview) == 1 and preview[0]["status"] == "customized"
+    assert preview[0]["current_presentation"][field] == custom
+    assert preview[0]["template_presentation"] == {"title": "New title", "instructions": "New template note"}
+    result = update(client, path["id"], template)
+    assert result.status_code == 200, result.text
+    assert result.json()["skipped"][0]["status"] == "customized"
+    saved = result.json()["path"]["steps"][0]
+    assert saved[field] == custom and saved["due_date"] == "2026-10-31"
+    # A removed template step must not delete a class-specific note either.
+    template = edit(client, template, [])
+    result = update(client, path["id"], template)
+    assert result.status_code == 200 and len(result.json()["path"]["steps"]) == 1
+
+
+def test_save_as_template_copies_only_explicit_presentation_not_derived_names(api):
+    client, _db, _identity, data = api
+    template = create(client, data["goal"], steps=[
+        {"step_type": "tool", "tool_key": "timeline", "instructions": "Class note"},
+        {"step_type": "questionnaire_administration", "instrument_code": "QSA", "locale": "it", "plan_title": "Real plan"}])
+    path = apply(client, template, data["group"]).json()[0]
+    saved = client.post(f"/teacher/paths/{path['id']}/save-as-template")
+    assert saved.status_code == 201, saved.text
+    steps = saved.json()["steps"]
+    assert [step["title"] for step in steps] == [None, None]
+    assert steps[0]["instructions"] == "Class note" and steps[1]["plan_title"] == "Real plan"

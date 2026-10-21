@@ -76,7 +76,11 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     const [title, setTitle] = useState(path.title);
     const [description, setDescription] = useState(path.description || '');
     const [mode, setMode] = useState<'recommended' | 'strict'>(path.mode);
-    const [steps, setSteps] = useState<ClassPathStep[]>(path.steps);
+    const [steps, setStepsState] = useState<ClassPathStep[]>(path.steps);
+    const setSteps = (action: ClassPathStep[] | ((current: ClassPathStep[]) => ClassPathStep[])) => {
+        setStepsState(current => (typeof action === 'function' ? action(current) : action).map(step =>
+            step.id || step.client_key ? step : {...step, client_key: crypto.randomUUID()}));
+    };
     const [administrations, setAdministrations] = useState<{id:number;title:string;code:string;locale:string;instrument_code:string;delivery_mode?:string}[]>([]);
     // Italian runs on the external site; other languages only where the app serves that instrument locale.
     const [servedLocales, setServedLocales] = useState<Record<string,string[]>>({});
@@ -700,7 +704,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             const action = pending ? null : unavailableAction(step.availability_reason || (unavailable ? 'tool_disabled_for_class' : null));
                             return (
                                 <div
-                                    key={step.id ? `step-${step.id}` : `new-step-${index}`}
+                                    key={step.id ? `step-${step.id}` : `new-step-${step.client_key}`}
                                     data-testid="path-step-card"
                                     className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 md:flex-row md:items-start"
                                 >

@@ -3,6 +3,7 @@
 import { useId, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { classPathText, type PathTextKey } from '@/lib/i18n-class-paths';
+import { Button } from '@/components/ui/Button';
 import type { StepPresentation } from '@/lib/class-path-presentation';
 
 const link = 'text-xs font-semibold text-indigo-700 hover:underline';
@@ -18,7 +19,8 @@ function formatDate(lang: string, iso: string) {
  * only when the teacher asks for one; the note stays empty unless it adds
  * something the object's own page does not already say.
  */
-export function StepPresentationFields({ presentation, step, update }: {
+export function StepPresentationFields({ presentation, step, update, showDate = true }: {
+    showDate?: boolean;
     presentation: StepPresentation;
     step: {step_type?: string | null; title?: string | null; instructions?: string | null; due_date?: string | null};
     update: (patch: {title?: string | null; instructions?: string | null; due_date?: string | null}) => void;
@@ -39,7 +41,7 @@ export function StepPresentationFields({ presentation, step, update }: {
         : null;
 
     return <div className="space-y-2">
-        {editingTitle || presentation.titleSource === 'override' ? <div>
+        {step.step_type === 'forum' || editingTitle || presentation.titleSource === 'override' ? <div>
             <label htmlFor={titleId} className="text-xs font-medium text-slate-700">{l('stepTitleLabel')}</label>
             <input id={titleId} type="text" value={step.title ?? ''} maxLength={200}
                 placeholder={presentation.derivedTitle}
@@ -48,11 +50,11 @@ export function StepPresentationFields({ presentation, step, update }: {
                 className={field} />
             <div id={`${titleId}-help`} className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
                 <span>{l('studentSees')} <strong className="font-medium text-slate-700">{presentation.title}</strong></span>
-                <button type="button" className={link} onClick={() => { update({title: null}); setEditingTitle(false); }}>{l('useDefaultTitle')}</button>
+                {step.step_type !== 'forum' && <Button type="button" variant="ghost" size="sm" className={link} onClick={() => { update({title: null}); setEditingTitle(false); }}>{l('useDefaultTitle')}</Button>}
             </div>
         </div> : <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
             <span><span className="font-medium text-slate-700">{l('stepTitleLabel')}:</span> {presentation.derivedTitle}</span>
-            <button type="button" className={link} onClick={() => setEditingTitle(true)}>{l('personalizeTitle')}</button>
+            <Button type="button" variant="ghost" size="sm" className={link} onClick={() => setEditingTitle(true)}>{l('personalizeTitle')}</Button>
         </div>}
         {step.step_type === 'forum' && <p className="text-xs text-slate-500">{l('forumTitleRequired')}</p>}
 
@@ -66,29 +68,29 @@ export function StepPresentationFields({ presentation, step, update }: {
                 <span className="min-w-0 flex-1">{l('noteHelp')}</span>
                 <span>{`${noteLength}/1000`}</span>
             </div>
-            {step.instructions ? <button type="button" className={link} onClick={() => { update({instructions: null}); setNoteOpen(false); }}>{l('removeNote')}</button> : null}
+            {step.instructions ? <Button type="button" variant="ghost" size="sm" className={link} onClick={() => { update({instructions: null}); setNoteOpen(false); }}>{l('removeNote')}</Button> : null}
         </div> : <div>
-            <button type="button" className={link} onClick={() => setNoteOpen(true)}>{l('addNote')}</button>
+            <Button type="button" variant="ghost" size="sm" className={link} onClick={() => setNoteOpen(true)}>{l('addNote')}</Button>
         </div>}
 
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
+        {showDate && <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
             <span className="font-medium text-slate-700"><label htmlFor={dateId}>{l('dueDateLabel')}:</label></span>
             {(dateOpen && step.step_type !== 'meeting') || step.due_date ? <>
                 <input id={dateId} type="date" value={step.due_date ?? ''}
                     onChange={event => update({due_date: event.target.value || null})}
                     aria-label={l('dueDateLabel')}
                     className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none" />
-                <button type="button" className={link} onClick={() => {
+                <Button type="button" variant="ghost" size="sm" className={link} onClick={() => {
                     update({due_date: null});
                     setDateOpen(false);
-                }}>{presentation.dueDateSource ? l('useObjectDate') : l('removeDate')}</button>
+                }}>{presentation.dueDateSource ? l('useObjectDate') : l('removeDate')}</Button>
                 {presentation.dueDate && <span className="text-slate-500">{`${presentation.dueDate} · ${source}`}</span>}
             </> : <>
                 <span>{presentation.dueDate ? `${formatDate(lang, presentation.dueDate)} · ${source}` : l('noDate')}</span>
-                {step.step_type !== 'meeting' && <button type="button" className={link} onClick={() => setDateOpen(true)}>
+                {step.step_type !== 'meeting' && <Button type="button" variant="ghost" size="sm" className={link} onClick={() => setDateOpen(true)}>
                     {presentation.dueDateSource ? l('differentDate') : l('addDate')}
-                </button>}
+                </Button>}
             </>}
-        </div>
+        </div>}
     </div>;
 }

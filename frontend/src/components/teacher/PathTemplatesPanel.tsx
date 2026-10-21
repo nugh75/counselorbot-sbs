@@ -25,6 +25,9 @@ import { stepKindText } from '@/lib/i18n-step-kinds';
 import { STANDALONE_GUIDED_CHATS, TEMPLATE_STEP_KINDS, type StepKind } from '@/lib/path-step-kinds';
 import type { StudentGroup } from './class-group-types';
 
+import { resolveStepPresentation } from '@/lib/class-path-presentation';
+import { StepPresentationFields } from './StepPresentationFields';
+
 const input = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white p-2 text-sm';
 export const TYPE_LABEL: Record<TemplateStepType, PathTemplateTextKey> = {
     tool: 'typeTool', questionnaire_administration: 'typeQuestionnaire', guided_results_chat: 'typeResults',
@@ -226,7 +229,7 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
 
         <ol className="space-y-3">
             {steps.length === 0 && <li className="text-sm text-slate-500">{l('noSteps')}</li>}
-            {steps.map((step, index) => <li key={step.id ?? `new-${index}`} data-testid="template-step"
+            {steps.map((step, index) => <li key={step.id ?? step.client_key} data-testid="template-step"
                 className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-semibold text-slate-800">{`#${index + 1} · ${isChat(step) ? stepKindText(lang, 'chatStandalone') : l(TYPE_LABEL[step.step_type])}`}</p>
@@ -241,8 +244,11 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
                 </div>
                 <StepFields step={step} index={index} goals={goals} questionnaires={questionnairePositions.filter(row => row.position <= index)}
                     update={patch => update(index, patch)} />
-                <label className="block text-sm text-slate-700">{l('stepTitle')}
-                    <input className={input} value={step.title ?? ''} maxLength={200} onChange={event => update(index, {title: event.target.value})} /></label>
+                <StepPresentationFields step={step} showDate={false} update={patch => update(index, patch)}
+                    presentation={resolveStepPresentation(lang, {...step,
+                        target_summary: {title: step.plan_title, instrument_code: step.instrument_code},
+                        assignment_summary: {title: goals.find(goal => goal.id === step.goal_id)?.title ?? step.goal_title ?? undefined},
+                    }, {toolName: key => toolName(key, lang)})} />
             </li>)}
         </ol>
 
@@ -253,7 +259,7 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
                     {kind && <div className="flex flex-wrap gap-2">
                         {(kind === 'guided_chat' ? [['guided_results_chat', 'chatOnResults'], ['tool', 'chatStandalone']] as const
                             : [[KIND_TYPE[kind], kind] as const]).map(([type, label]) => <Button key={label} variant="secondary" onClick={() => {
-                            const step = newTemplateStep(type);
+                            const step = {...newTemplateStep(type), client_key: crypto.randomUUID()};
                             setSteps(current => [...current, label === 'chatStandalone' ? {...step, tool_key: STANDALONE_GUIDED_CHATS[0]} : step]);
                             setAdding(false);
                             setKind(null);
