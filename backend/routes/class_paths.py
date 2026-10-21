@@ -995,11 +995,11 @@ async def launch_step(path_id: int, step_id: int, current_user=Depends(auth.get_
         # Opening the discussion is not evidence: only a published reply there is.
         return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id,
                 "topic_id":step.topic_id, "group_id":path.group_id, "start_href":descriptor["start_href"]}
-    from ..path_step_types import EXTERNAL_IT_HREF
+    from ..questionnaire_sources import external_questionnaire_href
     plan, institution = administration_target(db, path.group_id, step.administration_plan_id)
     return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id, "administration_plan_id":plan.id,
             "instrument_code":plan.instrument_code, "locale":plan.locale, "delivery_mode":plan.delivery_mode,
-            "external_href":EXTERNAL_IT_HREF if plan.delivery_mode == "external_it" else None,
+            "external_href":external_questionnaire_href(plan.instrument_code) if plan.delivery_mode == "external_it" else None,
             "score_factors":[{"code":factor.code, "label_i18n":factor.label_i18n or {}, "label_it":factor.label_it,
                               "label_en":factor.label_en} for factor in db.query(models.Factor).filter_by(
                                   instrument_code=plan.instrument_code).order_by(models.Factor.sort_order, models.Factor.id)],
