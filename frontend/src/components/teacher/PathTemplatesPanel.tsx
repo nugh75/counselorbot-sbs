@@ -17,6 +17,7 @@ import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
+import { resultsChatText } from '@/lib/i18n-results-chats';
 import { StepKindPicker } from './StepKindPicker';
 import { ActivityToolsPicker } from './ActivityTools';
 import { ACTIVITY_TOOLS } from '@/lib/activity-tools';
@@ -256,7 +257,7 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
                             setSteps(current => [...current, label === 'chatStandalone' ? {...step, tool_key: STANDALONE_GUIDED_CHATS[0]} : step]);
                             setAdding(false);
                             setKind(null);
-                        }}><Plus className="h-4 w-4" aria-hidden />{kind === 'guided_chat' ? stepKindText(lang, label) : l('addStep')}</Button>)}
+                        }}><Plus className="h-4 w-4" aria-hidden />{kind === 'guided_chat' ? label === 'chatOnResults' ? resultsChatText(lang, 'analyzeQuestionnaire') : stepKindText(lang, label) : l('addStep')}</Button>)}
                     </div>}
                     <Button variant="ghost" onClick={() => { setAdding(false); setKind(null); }}>{stepKindText(lang, 'close')}</Button>
                 </div>
@@ -303,11 +304,28 @@ function StepFields({ step, index, goals, questionnaires, update }: {
                     <input className={input} value={step.plan_title ?? ''} maxLength={200} onChange={event => update({plan_title: event.target.value})} /></label>
             </div>;
         case 'guided_results_chat':
-            return <label className="block text-sm text-slate-700">{l('resultsOf')}
-                <select className={input} value={step.results_position ?? ''} onChange={event => update({results_position: Number(event.target.value) || undefined})}>
-                    <option value="">{l('choose')}</option>
-                    {questionnaires.map(row => <option key={row.position} value={row.position}>{`#${row.position} · ${row.step.instrument_code}`}</option>)}
-                </select></label>;
+            return <div className="space-y-2">
+                <label className="block text-sm text-slate-700">{resultsChatText(lang, 'origin')}
+                    <select className={input} value={step.tool_key ? 'personal' : 'plan'}
+                        onChange={event => update({tool_key: event.target.value === 'personal' ? 'QSA' : '', results_position: undefined})}>
+                        <option value="plan">{resultsChatText(lang, 'sourcePlan')}</option>
+                        <option value="personal">{resultsChatText(lang, 'sourcePersonal')}</option>
+                    </select></label>
+                {step.tool_key ? <>
+                    <label className="block text-sm text-slate-700">{resultsChatText(lang, 'analyzeQuestionnaire')}
+                        <select className={input} value={step.tool_key} onChange={event => update({tool_key: event.target.value})}>
+                            {TEMPLATE_QUESTIONNAIRES.map(code => <option key={code}>{code}</option>)}
+                        </select></label>
+                    <p className="text-sm text-slate-600">{resultsChatText(lang, 'personalResultsHelp')}</p>
+                </> : <>
+                    <label className="block text-sm text-slate-700">{l('resultsOf')}
+                        <select className={input} value={step.results_position ?? ''} onChange={event => update({results_position: Number(event.target.value) || undefined})}>
+                            <option value="">{l('choose')}</option>
+                            {questionnaires.map(row => <option key={row.position} value={row.position}>{`#${row.position} · ${row.step.instrument_code}`}</option>)}
+                        </select></label>
+                    <p className="text-sm text-slate-600">{resultsChatText(lang, questionnaires.length ? 'planResultsHelp' : 'noQuestionnaireSteps')}</p>
+                </>}
+            </div>;
         case 'assignment': {
             const options = goals.some(goal => goal.id === step.goal_id) || !step.goal_id ? goals
                 : [{id: step.goal_id, title: step.goal_title || `#${step.goal_id}`}, ...goals];

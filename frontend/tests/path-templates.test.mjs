@@ -42,6 +42,7 @@ function fakeServer() {
         const path = url.pathname;
         if (path === '/api/auth/me') return json({ authenticated: true, is_admin: false, username: 'teacher.test', name: 'Docente',
             email: 'teacher@example.invalid', groups: ['docenti'] });
+        if (path === '/api/user/account-preferences') return json({ counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true });
         if (path === '/api/user/account') return json({ setup_complete: true, notebook_completed: true });
         if (path === '/api/orientation/status') return json({ required: false, completed: true });
         if (path === '/api/admin/groups') return json(groups);
@@ -116,7 +117,7 @@ async function prepare(page) {
     const tools = await editor.getByRole('combobox', { name: /^Strumento/ }).locator('option').allTextContents();
     assert.ok(tools.includes('Tavolo') && !tools.some(name => /Savickas|QSA/i.test(name)), tools.join(', '));
     await editor.getByRole('combobox', { name: /^Strumento/ }).selectOption('tavolo');
-    await addStep('Fa una chat guidata', 'Sui risultati di un questionario del piano operativo');
+    await addStep('Fa una chat guidata', 'Analizza un questionario');
     // A results chat without an earlier questionnaire cannot be saved.
     assert.equal(await editor.getByRole('button', { name: 'Salva modello' }).isDisabled(), true);
     await addStep('Compila un questionario');

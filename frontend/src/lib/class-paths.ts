@@ -15,6 +15,7 @@ export interface PendingStepConfig {
     locale?: string;
     plan_title?: string;
     results_step_id?: number;
+    tool_key?: string;
     goal_id?: number;
     instructions?: string;
     title?: string;
@@ -94,6 +95,8 @@ export interface ClassPathStep {
     /** Editor only: links an unsaved follow-up meeting to its unsaved chat (#177). */
     client_key?: string;
     follows_key?: string;
+    /** Editor only: stable link to a newly added questionnaire. */
+    results_key?: string;
     path_id?: number;
     position: number;
     tool_key: string;
@@ -109,7 +112,7 @@ export interface ClassPathStep {
     /** #177: the guided chat step this meeting follows up. */
     follows_step_id?: number | null;
     active_from?: string | null;
-    target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
+    target_summary?: {id?: number; title?: string; code?: string; instrument_code: string; locale?: string; institution_name?: string; source?: 'personal'} | null;
     /** Server reason code when the step cannot be used now (TF8). */
     availability_reason?: string | null;
     completion_kind?: string | null;
@@ -216,7 +219,7 @@ export interface StudentClassPathStep {
     /** #177: the guided chat step this meeting follows up. */
     follows_step_id?: number | null;
     active_from?: string | null;
-    target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
+    target_summary?: {id?: number; title?: string; code?: string; instrument_code: string; locale?: string; institution_name?: string; source?: 'personal'} | null;
     /** Server reason code when the step cannot be used now (TF8). */
     availability_reason?: string | null;
     completion_kind?: string | null;

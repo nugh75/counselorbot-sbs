@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 // prettier-ignore
 // @ts-expect-error -- Node's TypeScript runner requires the extension.
-import { deepDiveSources, parseResultsDeepDive, ResultsDeepDiveError, startResultsDeepDive } from "./results-deep-dive.ts";
+import { deepDiveSources, pathStepKey, resultsSourcePayload, loadResultsDeepDiveOptions, parseResultsDeepDive, ResultsDeepDiveError, startResultsDeepDive } from "./results-deep-dive.ts";
 // prettier-ignore
 // @ts-expect-error -- Node's TypeScript runner requires the extension.
 import { administrationStepText, typedStepTargetLabel } from "./i18n-administration-steps.ts";
@@ -73,15 +73,15 @@ test("a session for another step or without a result is rejected", () => {
   }
 });
 
-test("builder offers only saved, not yet linked administration steps", () => {
+test("builder offers saved and new questionnaires, excluding linked sources", () => {
   const steps = [
     { id: 1, step_type: "tool" },
     { id: 2, step_type: "questionnaire_administration" },
-    { step_type: "questionnaire_administration" },
+    { step_type: "questionnaire_administration", client_key: "new-qsa" },
     { id: 4, step_type: "questionnaire_administration" },
     { step_type: "guided_results_chat", results_step_id: 4 },
   ];
-  assert.deepEqual(deepDiveSources(steps).map((step) => step.id), [2]);
+  assert.deepEqual(deepDiveSources(steps).map(pathStepKey), ['id:2', 'new-qsa']);
 });
 
 test("deep-dive copy states the completion rule in every language", () => {
@@ -104,4 +104,42 @@ test("student and teacher progress name a deep dive by kind and bound administra
     "QSA · AP-SYN",
   );
   assert.equal(typedStepTargetLabel("en", { step_type: "tool", target_summary: null }), null);
+});
+
+test('pending questionnaires are selectable and pending analyses reserve their source', () => {
+  const source = {id: 10, step_type: 'pending', pending_config: {kind: 'questionnaire_administration'}};
+  assert.deepEqual(deepDiveSources([source]), [source]);
+  assert.deepEqual(deepDiveSources([source, {id: 11, step_type: 'pending',
+    pending_config: {kind: 'guided_results_chat', results_step_id: 10}}]), []);
+  assert.deepEqual(deepDiveSources([{id: 12, step_type: 'pending', pending_config: {kind: 'forum'}}]), []);
+});
+
+test('unsaved questionnaire links survive reordering and are resolved only at save', () => {
+  const source = {step_type: 'questionnaire_administration', client_key: 'draft-qsa'};
+  const chat = {step_type: 'guided_results_chat', results_key: 'draft-qsa'};
+  assert.deepEqual(resultsSourcePayload(chat, [source, chat]), {results_from: 0});
+  assert.deepEqual(resultsSourcePayload(chat, [{step_type: 'tool'}, source, chat]), {results_from: 1});
+  assert.deepEqual(deepDiveSources([source, chat]), []);
+  assert.deepEqual(resultsSourcePayload({results_step_id: 8}, []), {results_step_id: 8});
+});
+
+test('personal analysis sends only the explicitly selected result and accepts a null plan source', async () => {
+  const personal = {...session, results_step_id: null};
+  const started = await startResultsDeepDive(async (_url, init) => {
+    assert.deepEqual(JSON.parse(String(init?.body)), {result_id: 7});
+    return Response.json(personal);
+  }, 1, 3, 7);
+  assert.equal(started.results_step_id, null);
+});
+
+test('options preserve exact resumed session and reject non-local source links', async () => {
+  const body = {personal: true, ready: true, source_href: '/?start=QSA',
+    results: [{id: 7, submitted_at: '2026-10-21', locale: ''}], session: {...session, results_step_id: null}};
+  const options = await loadResultsDeepDiveOptions(async () => Response.json(body), 1, 3);
+  assert.equal(options.session?.session_id, session.session_id);
+  for (const source_href of ['//example.invalid', 'https://example.invalid']) {
+    await assert.rejects(loadResultsDeepDiveOptions(async () => Response.json({...body, source_href}), 1, 3));
+  }
+  await assert.rejects(loadResultsDeepDiveOptions(async () => Response.json({...body,
+    session: {...session, step_id: 100}}), 1, 3));
 });

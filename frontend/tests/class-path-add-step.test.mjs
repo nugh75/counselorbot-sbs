@@ -40,6 +40,7 @@ async function prepare(page) {
         const p = url.pathname;
         if (p === '/api/auth/me') return json({ authenticated: true, is_admin: false, username: 'teacher.test', name: 'Docente',
             email: 'teacher@example.invalid', groups: ['docenti'] });
+        if (p === '/api/user/account-preferences') return json({ counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true });
         if (p === '/api/user/account') return json({ setup_complete: true, notebook_completed: true });
         if (p === '/api/orientation/status') return json({ required: false, completed: true });
         if (p === '/api/admin/groups') return json([group]);

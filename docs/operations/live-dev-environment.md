@@ -474,3 +474,25 @@ Da SSH: `ssh -N -L 3157:127.0.0.1:3157 <utente>@<server>`, poi
 `http://localhost:3157`. Fuori dalle fixture non c'è un backend utilizzabile.
 Fermare con Ctrl+C nel terminale del runner. Nessun container produttivo avviato
 o riavviato, nessun dato persistente, deploy o sudo richiesto.
+
+
+## Fixture delle analisi questionario nei piani (#249)
+
+`scripts/dev-plan-questionnaire-tests.sh` avvia Next con hot reload su
+`127.0.0.1:3159`, dopo aver verificato che la porta sia libera. Le suite browser
+intercettano tutte le API e bloccano il traffico esterno; il backend del dev punta
+alla porta chiusa 9. Nessun dato o provider di produzione viene utilizzato.
+
+```sh
+./scripts/dev-plan-questionnaire-tests.sh
+node --test frontend/tests/plan-questionnaire-chats.test.mjs
+```
+
+URL `http://localhost:3159`. Da SSH:
+`ssh -N -L 3159:127.0.0.1:3159 <utente>@<server>`.
+Arresto: Ctrl-C nel terminale che ha avviato lo script. La pagina senza fixture
+non dispone di autenticazione o backend: serve alle prove automatiche, non a un
+uso con dati reali. PostgreSQL sintetico separato: container temporaneo
+`counselorbot-249-postgres`, porta loopback 18650, utente `c5_test`, database
+`counselorbot_test`, dati in tmpfs. I test API usano il network del container e
+le fixture con transazione/schema isolati. Non avviare i test sul database reale.

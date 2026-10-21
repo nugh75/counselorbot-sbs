@@ -2010,7 +2010,22 @@ class AdministrationPathStepInput(PathStepFields):
 
 class GuidedResultsChatStepInput(PathStepFields):
     step_type: Literal["guided_results_chat"]
-    results_step_id: int = Field(gt=0)
+    results_step_id: Optional[int] = Field(default=None, gt=0)
+    # A preceding questionnaire in this save, including a newly added step.
+    results_from: Optional[int] = Field(default=None, ge=0)
+    # Without a plan questionnaire: the student explicitly chooses their result.
+    tool_key: Optional[Literal["QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP"]] = None
+
+    @model_validator(mode="after")
+    def one_results_source(self):
+        if sum(value is not None for value in (self.results_step_id, self.results_from, self.tool_key)) != 1:
+            raise ValueError("Choose exactly one results source")
+        return self
+
+
+class ResultsChatStartInput(BaseModel):
+    model_config = {"extra": "forbid"}
+    result_id: int = Field(gt=0)
 
 
 class AssignmentPathStepInput(PathStepFields):

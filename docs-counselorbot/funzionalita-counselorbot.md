@@ -1042,6 +1042,24 @@ seguito) sia per lo studente (con lo screenshot della pagina Piani operativi), n
 lingue; gli screenshot si rigenerano con `GUIDE_SCREENS=class-paths` in
 `frontend/scripts/capture-guide.mjs`.
 
+Per **analizzare un questionario nel piano operativo**, il docente può collegare
+un passo questionario precedente (anche appena aggiunto o ancora «Da preparare»
+da un modello) oppure scegliere una **compilazione personale** per uno dei sei
+questionari QSA, QSAr, ZTPI, QPCS, QPCC, QAP. Nel piano della classe questionario e
+analisi si salvano insieme: il salvataggio intermedio non è più necessario. Il
+piano e il modello si preparano prima delle compilazioni e il piano si pubblica
+senza risultati; la sola analisi personale non richiede una somministrazione né
+un istituto. Ogni studente sceglie esplicitamente una propria compilazione valida
+all’avvio dell’analisi personale; non vengono scelti automaticamente il risultato
+più recente né risultati di altre persone. Se il risultato manca, lo studente vede
+un’azione per aprire il questionario collegato o aggiungere una compilazione.
+La sessione resta legata allo stesso risultato alla ripresa, con il suo snapshot
+quando disponibile; un’altra chat già conclusa non completa questo passo.
+Il completamento richiede l’ultimo turno della sessione collegata. Le analisi
+esistenti conservano il riferimento alla somministrazione e i progressi; nessuna
+nuova importazione di file esterni è introdotta. Procedura e validazione in
+`docs/operations/operational-plan-questionnaire-chats.md`.
+
 `/docente` è una panoramica illustrata organizzata in tre pilastri distinti:
 1. **Didattica e Classi**: la hero di progettazione didattica attiva con AI (`DidacticDesignSection`, con badge e CTA per `OBIETTIVO_DOCENZA`, link al Catalogo obiettivi e ai Piani operativi), il cruscotto operativo «Le mie classi» (`MyClassesSection`, card attive con codice invito, partecipanti e accesso rapido all'Hub di classe) e il gruppo illustrato **Classe e assegnazioni** (`/docente/istituti`, `/docente/classi`, `/docente/compilazioni`, `/docente/piani-operativi`, `/docente/incontri`, `/docente/assegnazioni`).
 2. **Palestra di simulazione e prova**: sezione dedicata in evidenza con badge sandbox protetto slate e scudo petrol, allineata alla palette petrol dell'area docente (`PracticeGymSection` con bordo e gradiente petrol, etichette slate e pulsante CTA in ocra per `/docente/taccuini-prova`), dove creare e gestire studenti fittizi per testare questionari, prompt e dinamiche di colloquio prima delle sessioni reali, con la garanzia esplicita di nessun impatto sulle classi reali né sui dati reali degli studenti. In tema scuro questa card, la hero di progettazione didattica, il riquadro vuoto di «Le mie classi» e l’hub delle risorse passano a superfici scure con testi, badge ed etichette leggibili (contrasto almeno 4,5:1); il tema chiaro resta invariato.
@@ -1057,7 +1075,7 @@ immagine, `percorsi-classe.png`: si sceglie la classe e si preparano, pubblicano
 con lo stesso editor della scheda Piani operativi della classe; nell’editor (della classe e dei
 modelli) un solo **+ Aggiungi passo** chiede «Cosa fa lo studente in questo passo?» e
 mostra solo il modulo del tipo scelto: compila un questionario (sempre tramite
-somministrazione), fa una chat guidata (sui risultati di un questionario del piano operativo, oppure un
+somministrazione), fa una chat guidata (sui risultati di un questionario del piano operativo, su una compilazione personale scelta dallo studente all’avvio, oppure un
 percorso guidato per riflettere su un’esperienza o una scelta: Savickas, Evento di
 studio, Evento professionale, Obiettivo di studio, Idea; quelli integrati senza voce nel
 catalogo sono sempre disponibili, anche per gli studenti delle classi, e il passo si

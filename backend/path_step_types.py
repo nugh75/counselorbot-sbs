@@ -135,6 +135,11 @@ def is_guided_chat_key(db, key):
     return bool(instrument and instrument.target_audience == "student" and instrument.tool_category != "assessment")
 
 
+def is_tool_available_for_results(db, group_id, key):
+    from .routes.class_paths import is_tool_available_for_class
+    return key in ADMINISTRATION_QUESTIONNAIRES and is_tool_available_for_class(db, group_id, key)
+
+
 def validate_step_input(db, path, value):
     from .routes.class_paths import get_class_enabled_tool_keys
 
@@ -146,6 +151,9 @@ def validate_step_input(db, path, value):
         # A guided chat step names a chat, never a questionnaire or a personal tool.
         if value.step_type == "guided_chat" and not is_guided_chat_key(db, value.tool_key):
             raise HTTPException(422, "guided_chat_invalid")
+    elif value.step_type == "guided_results_chat" and value.tool_key:
+        if not is_tool_available_for_results(db, path.group_id, value.tool_key):
+            raise HTTPException(422, "tool_unavailable")
     elif value.step_type == "questionnaire_administration":
         administration_target(db, path.group_id, value.administration_plan_id)
     elif value.step_type == "assignment":
@@ -165,7 +173,7 @@ def validate_step_input(db, path, value):
 
 
 def validate_composition(db, path, steps):
-    """A deep dive follows its saved administration step of this path, once;
+    """An analysis uses a preceding questionnaire of this path, at most once;
     an assignment or a discussion is a target of at most one step of the path."""
     positions = {value.id: index for index, value in enumerate(steps) if value.id}
     assignments = [value.assignment_id for value in steps if value.step_type == "assignment"]
@@ -185,39 +193,34 @@ def validate_composition(db, path, steps):
     linked = set()
     for index, value in enumerate(steps):
         if value.step_type == "pending":
-            _validate_pending_reference(db, steps, positions, index, value)
+            config = db.get(models.ClassPathStep, value.id).pending_config or {}
+            if config.get("kind") != "guided_results_chat" or config.get("tool_key"):
+                continue
+            source_id, source_index = config.get("results_step_id"), None
+        elif value.step_type == "guided_results_chat" and not value.tool_key:
+            source_id, source_index = value.results_step_id, value.results_from
+        else:
             continue
-        if value.step_type != "guided_results_chat":
-            continue
-        if value.results_step_id in linked:
-            raise HTTPException(422, "duplicate_results_chat")
-        linked.add(value.results_step_id)
-        stored = (
-            db.query(models.ClassPathStep)
-            .filter_by(id=value.results_step_id, path_id=path.id)
-            .first()
-        )
-        if not stored or stored.step_type != "questionnaire_administration":
-            raise HTTPException(422, "results_step_invalid")
-        if value.results_step_id not in positions:
-            raise HTTPException(409, "results_step_referenced")
-        position = positions[value.results_step_id]
-        if steps[position].step_type != "questionnaire_administration":
-            raise HTTPException(422, "results_step_invalid")
-        if position > index:
+        if source_index is None:
+            stored = db.query(models.ClassPathStep).filter_by(id=source_id, path_id=path.id).first()
+            if stored is None:
+                raise HTTPException(422, "results_step_invalid")
+            if source_id not in positions:
+                raise HTTPException(409, "results_step_referenced")
+            source_index = positions[source_id]
+        if source_index >= index:
             raise HTTPException(422, "results_step_order")
-
-
-def _validate_pending_reference(db, steps, positions, index, value):
-    """A pending deep dive keeps its earlier questionnaire step, pending or created."""
-    config = db.get(models.ClassPathStep, value.id).pending_config or {}
-    if config.get("kind") != "guided_results_chat":
-        return
-    source = config.get("results_step_id")
-    if source not in positions:
-        raise HTTPException(409, "results_step_referenced")
-    if steps[positions[source]].step_type not in {"pending", "questionnaire_administration"} or positions[source] > index:
-        raise HTTPException(422, "results_step_order")
+        source = steps[source_index]
+        if source.step_type == "pending":
+            stored = db.get(models.ClassPathStep, source.id)
+            questionnaire = (stored.pending_config or {}).get("kind") == "questionnaire_administration"
+        else:
+            questionnaire = source.step_type == "questionnaire_administration"
+        if not questionnaire:
+            raise HTTPException(422, "results_step_invalid")
+        if source_index in linked:
+            raise HTTPException(422, "duplicate_results_chat")
+        linked.add(source_index)
 
 
 def publication_problems(db, path, steps):
@@ -238,6 +241,8 @@ def publication_problems(db, path, steps):
 def target_identity(value):
     if value.step_type == "pending":
         return value.step_type, value.id
+    if value.step_type == "guided_results_chat":
+        return value.step_type, value.results_step_id, value.tool_key or None
     target = {
         "tool": "tool_key",
         "guided_chat": "tool_key",
@@ -258,7 +263,7 @@ def apply_step_target(step, value):
         return
     step.pending_config = None
     step.step_type = value.step_type
-    step.tool_key = value.tool_key if value.step_type in ("tool", "guided_chat") else None
+    step.tool_key = value.tool_key if value.step_type in ("tool", "guided_chat", "guided_results_chat") else None
     step.administration_plan_id = (
         value.administration_plan_id
         if value.step_type == "questionnaire_administration"
@@ -274,7 +279,7 @@ def apply_step_target(step, value):
 
 def results_step(db, step):
     """The deep dive's administration step while it is still active in its path."""
-    source = db.get(models.ClassPathStep, step.results_step_id)
+    source = db.get(models.ClassPathStep, step.results_step_id) if step.results_step_id else None
     if (
         source
         and source.path_id == step.path_id
@@ -300,6 +305,16 @@ def step_descriptor(db, path, step):
             "auto_detect": is_auto_detect_tool(db, step.tool_key),
             "target_summary": None,
             "start_href": get_tool_start_href(step.tool_key),
+            "instrument_code": step.tool_key,
+        }
+    if step.step_type == "guided_results_chat" and step.tool_key:
+        available = is_tool_available_for_results(db, path.group_id, step.tool_key)
+        return {
+            "available": available,
+            "availability_reason": None if available else "tool_unavailable",
+            "auto_detect": True,
+            "target_summary": {"instrument_code": step.tool_key, "source": "personal"},
+            "start_href": f"/profilo/piani-operativi/{path.id}/{step.id}/approfondimento",
             "instrument_code": step.tool_key,
         }
     if step.step_type == "assignment":
@@ -491,17 +506,19 @@ def completion_evidence(db, path, step, username):
 def deep_dive_evidence(db, step, username):
     """Final guided-turn marker of a session bound to a still-qualifying result."""
     source = results_step(db, step)
-    if step.active_from is None or source is None:
+    if step.active_from is None or (source is None and not step.tool_key):
         return None
-    qualifying = {row["result_id"] for row in administration_evidence(db, source, username)}
+    qualifying = {row["result_id"] for row in administration_evidence(db, source, username)} if source else None
     for binding in (
         db.query(models.ClassPathDeepDiveSession)
         .filter_by(step_id=step.id, username=username)
         .order_by(models.ClassPathDeepDiveSession.id)
     ):
-        if binding.result_id not in qualifying or binding.started_at < step.active_from:
+        if binding.started_at < step.active_from or (qualifying is not None and binding.result_id not in qualifying):
             continue
         result = db.get(models.QuestionnaireResult, binding.result_id)
+        if step.tool_key and not personal_result_qualifies(db, step, username, result):
+            continue
         final_turn = (
             db.query(models.Log.timestamp)
             .filter(
@@ -572,6 +589,11 @@ def administration_evidence(db, step, username):
                     "at": confirmation.confirmed_at,
                     "result_id": result.id,
                 }
+
+
+def personal_result_qualifies(db, step, username, result):
+    return bool(result and result.username == username and result.questionnaire_type == step.tool_key
+                and valid_scores(db, step.tool_key, result.scores))
 
 
 def valid_scores(db, instrument_code, scores):

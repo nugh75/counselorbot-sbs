@@ -16,7 +16,7 @@ from ..path_step_types import (step_descriptor, completion_evidence, validate_st
                                apply_step_target, administration_target, forum_student_state,
                                publication_problems)
 from ..class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, builtin_guided_paths, tool_catalog
-from .groups import _is_admin, _username, _visible_group_query
+from .groups import _username, _visible_group_query
 
 router = APIRouter()
 get_db = database.get_db
@@ -403,6 +403,12 @@ async def update_class_path(
     # Update or insert steps in the provided order
     placed = []
     for position, step_input in enumerate(payload.steps, start=1):
+        if step_input.step_type == "guided_results_chat" and step_input.results_from is not None:
+            # Composition was validated before writes. Earlier new steps now get IDs
+            # inside this same transaction, never through an intermediate client save.
+            db.flush()
+            step_input = step_input.model_copy(update={"results_step_id": placed[step_input.results_from].id,
+                                                       "results_from": None})
         step_title = (step_input.title or "").strip() or None
         step_instructions = (step_input.instructions or "").strip() or None
         if step_input.id is not None and step_input.id in existing_by_id:
@@ -437,7 +443,7 @@ async def update_class_path(
                 path_id=path.id,
                 position=position,
                 step_type=step_input.step_type,
-                tool_key=step_input.tool_key if step_input.step_type in ("tool", "guided_chat") else None,
+                tool_key=step_input.tool_key if step_input.step_type in ("tool", "guided_chat", "guided_results_chat") else None,
                 administration_plan_id=step_input.administration_plan_id if step_input.step_type == "questionnaire_administration" else None,
                 results_step_id=step_input.results_step_id if step_input.step_type == "guided_results_chat" else None,
                 assignment_id=step_input.assignment_id if step_input.step_type == "assignment" else None,
@@ -1014,8 +1020,15 @@ async def score_step(path_id: int, step_id: int, payload: schemas.Administration
     return score_in_app_step(db, current_user, path_id, step_id, payload)
 
 
+@router.get("/user/paths/{path_id}/steps/{step_id}/deep-dive")
+async def get_deep_dive_options(path_id: int, step_id: int,
+                               current_user=Depends(auth.get_current_user), db: Session=Depends(get_db)):
+    from ..results_deep_dive import deep_dive_options
+    return deep_dive_options(db, current_user, path_id, step_id)
+
+
 @router.post("/user/paths/{path_id}/steps/{step_id}/deep-dive")
-async def start_deep_dive(path_id: int, step_id: int,
+async def start_deep_dive(path_id: int, step_id: int, payload: Optional[schemas.ResultsChatStartInput] = None,
                           current_user=Depends(auth.get_current_user), db: Session=Depends(get_db)):
     from ..results_deep_dive import start_results_deep_dive
-    return start_results_deep_dive(db, current_user, path_id, step_id)
+    return start_results_deep_dive(db, current_user, path_id, step_id, payload.result_id if payload else None)
