@@ -22,10 +22,10 @@ build Next riuscita; backend 32 test di `test_it_administration.py`, 55 di
 QPCC senza l'intestazione «WHAT IT LOOKS AT»). PostgreSQL sintetico :18650
 arrestato; nessun processo dev, deploy o sudo.
 
-Dato ancora da impostare a mano: nella classe dei tutor orientatori l'istituto
-deve avere credenziali esterne `1087` / `counselor` da `/docente/istituti/{id}`;
-senza questo aggiornamento la verifica locale continua a confrontare il codice
-precedente.
+Dato aggiornato sul deployment portable: la classe «Tutor coordinatori» usa
+l'istituto «Roma tre» (id 1), che ora ha codice esterno `1087` e password
+`counselor`; la revisione è passata a 3 e i grant di verifica precedenti sono
+invalidati. Nessun'altra azione manuale richiesta.
 
 # Handoff: testo duplicato nelle chat (#425)
 Data: 2026-10-21 | Correzione unita: PR #428 | Documentazione: `docs/chat-continuation-guidance-425`
