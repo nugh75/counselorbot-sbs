@@ -5,6 +5,28 @@ CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
 
+## Lettura dei questionari e approfondimento
+
+Nelle chat guidate di QSA, QSAr, ZTPI, QPCS, QPCC e QAP, la descrizione dei
+fattori, delle scale e dei punteggi precede il dialogo sull’esperienza personale.
+Il counselor può rispondere a chiarimenti sul significato dei risultati e porre
+una domanda di comprensione solo quando utile e facoltativa: nessuna domanda
+obbligatoria, quiz o invito sistematico a riconoscersi, raccontare episodi,
+analizzare abitudini o scegliere priorità personali. Si può proseguire dalla
+lettura senza una risposta personale. Il vincolo resta nei chiarimenti ripetuti,
+alla ripresa, nelle continuazioni e negli approfondimenti aperti dalla lettura.
+
+I suggerimenti visibili nei passi descrittivi riguardano il significato dei
+fattori e punteggi, nelle sei lingue. I suggerimenti salvati, anche personalizzati,
+restano disponibili nell’editor amministrativo; durante la descrizione la chat
+mostra una selezione comune di chiarimenti al loro posto. I passi esperienziali
+successivi conservano i loro suggerimenti e il dialogo personale. ZTPI mantiene
+descrittivo anche il confronto con il profilo equilibrato: il dialogo personale
+è disponibile nei successivi **Domande e Approfondimenti**. Nel QSA essenziale
+le tre fasi restano le stesse: lettura del profilo, focus ed esempio, azione;
+la scelta personale del focus avviene nell’esperienza e può essere saltata.
+Savickas, Eventi, IDEA e Obiettivi conservano le proprie domande narrative.
+
 ## Presentazione, attività e navigazione
 
 La presentazione (`/`) offre quattro ingressi illustrati: **Bussola**, **Analisi
