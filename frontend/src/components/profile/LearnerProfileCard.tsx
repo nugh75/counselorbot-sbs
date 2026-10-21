@@ -366,25 +366,31 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                     </label>
                 ))}
             </div>
-            {/* Nel percorso i comandi stanno in cima, fuori dalla Card: qui in fondo
-                resta solo il caso della pagina personale, dove il taccuino non e'
-                un passo di una sequenza. */}
-            {!inFlow && (
-                <div className="flex items-center gap-3 pt-1">
+            {/* Nel percorso i comandi restano anche in cima, fuori dalla Card,
+                per la "prima riga" uniforme alle altre fasi; il Salva in coda
+                evita di risalire tutto il modulo dopo la compilazione. */}
+            <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-3">
+                {inFlow ? (
+                    <ForwardButton
+                        onClick={() => void save(saveSource)}
+                        disabled={saving}
+                        label={t('lp.save')}
+                    />
+                ) : (
                     <Button
                         onClick={() => void save(saveSource)}
                         disabled={saving}
                     >
                         {t('lp.save')}
                     </Button>
-                    {variant === 'edit' && editing && (
-                        <Button variant="ghost" onClick={() => void save(saveSource)} aria-label={t('common.close')}>
-                            <X className="w-4 h-4" />
-                        </Button>
-                    )}
-                    {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
-                </div>
-            )}
+                )}
+                {variant === 'edit' && editing && (
+                    <Button variant="ghost" onClick={() => void save(saveSource)} aria-label={t('common.close')}>
+                        <X className="w-4 h-4" />
+                    </Button>
+                )}
+                {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
+            </div>
             {validationError && <p className="text-sm text-red-600">{validationError}</p>}
         </div>
     );

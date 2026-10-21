@@ -183,10 +183,10 @@ export function ScoreInputForm({
 
     // Stessa "prima riga" di selezione usata da QuestionnaireSelector /
     // CounselorSelector / InputMethodSelector: BackButton (cerchio quieto) +
-    // ForwardButton nel percorso. Nel salvataggio del repertorio di prove
-    // (submitAction="save"), i comandi Salva e Annulla formano una coppia
-    // esplicita e uniforme, duplicata in testa e in coda per restare sempre
-    // raggiungibile anche dopo lo scorrimento dei fattori.
+    // ForwardButton nel percorso. Nei moduli lunghi i comandi sono duplicati
+    // in testa e in coda per restare raggiungibili anche dopo lo scorrimento
+    // dei fattori; nel salvataggio del repertorio di prove (submitAction="save")
+    // la coppia esplicita è Salva + Annulla.
     const actionButtons = (
         <div className="flex flex-wrap items-center gap-3">
             {submitAction === 'save' ? (
@@ -235,11 +235,9 @@ export function ScoreInputForm({
                         );
                     })}
                 </div>
-                {submitAction === 'save' && (
-                    <div className="pt-2">
-                        {actionButtons}
-                    </div>
-                )}
+                <div className="border-t border-slate-200 pt-4">
+                    {actionButtons}
+                </div>
             </form>
         </div>
     );
