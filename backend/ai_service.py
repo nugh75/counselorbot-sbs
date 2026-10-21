@@ -19,17 +19,20 @@ from . import vision_service
 from . import pii
 from . import pii_ner
 from .api_secrets import API_KEY_ENV_MAP, config_key, resolve_api_secrets
-from .model_context import context_profile, fit_context
+from .model_context import ContextCapacityError, context_profile, fit_context, validate_output_capacity
 from .reasoning_profiles import (
     DEEP_REASONING_BUDGET,
     DISABLED_PLAN,
     OPENROUTER_MANDATORY_REASONING_MODELS,
+    REASONING_EFFORT_VALUES,
     ReasoningPlan,
     is_reasoning_model,
     is_openrouter_mandatory_reasoning,
     mark_openrouter_mandatory_reasoning,
+    plan_details,
     resolve_plan,
 )
+from .openrouter_capabilities import capability_for as openrouter_capability
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +59,19 @@ class AIError(Exception):
     def __init__(self, message, *, code=None):
         super().__init__(message)
         self.code = code
+
+
+def generation_details(service) -> dict:
+    """Text-free diagnostics, including failed attempts and partial streams."""
+    getter = getattr(service, "_plan", None)
+    return {
+        "provider": getattr(service, "last_provider", None),
+        "model": getattr(service, "last_model", None),
+        "reasoning_plan": plan_details(getter()) if callable(getter) else {},
+        "context_budget": getattr(service, "last_context_report", None),
+        "model_attempts": getattr(service, "last_attempts", []),
+        "completion": getattr(service, "last_completion", None),
+    }
 
 
 # Prompt usato per aggiornare il riassunto rotante della sessione
@@ -212,6 +228,9 @@ class AIService:
         # default della fonte personale e sul preset, così «Nessuno» e
         # «Esteso» non vengono silenziosamente ignorati.
         self._reasoning_effort_override = None
+        # Effort scelto dal preset del counselor. La scelta esplicita dello
+        # studente e la fonte personale hanno precedenza (vedi proprietà sotto).
+        self._preset_reasoning_effort = None
         self.shared_owner = None  # teacher whose counselor and API key answer this student
         self.personal_target = None
         self.personal_error = None
@@ -268,6 +287,7 @@ class AIService:
         # Piano di reasoning della chiamata corrente: risolto per (provider, model)
         # prima del dispatch. Default neutro (spento) per chiamate dirette/riassunti.
         self._reasoning_plan = DISABLED_PLAN
+        self.last_completion = None
         # Budget mensile: se >0 e la spesa del mese corrente lo supera, i modelli
         # a pagamento vengono disattivati e si usa solo Ollama locale (fallback).
         try:
@@ -340,10 +360,45 @@ class AIService:
         if hasattr(usage, "dict"):
             return usage.dict()
         data = {}
-        for key in ("prompt_tokens", "completion_tokens", "total_tokens", "cost", "cost_usd", "total_cost"):
+        for key in ("prompt_tokens", "completion_tokens", "completion_tokens_details", "total_tokens", "cost", "cost_usd", "total_cost"):
             if hasattr(usage, key):
                 data[key] = getattr(usage, key)
         return data or None
+
+    def _record_completion(self, finish_reason, visible: bool, reasoning: bool, *, interrupted=False):
+        """Classify output without storing any extra text or guessing token use."""
+        usage = self.last_usage if isinstance(self.last_usage, dict) else {}
+        details = usage.get("completion_tokens_details") or {}
+        if not isinstance(details, dict):
+            details = {"reasoning_tokens": getattr(details, "reasoning_tokens", None)}
+        completion_tokens = usage.get("completion_tokens")
+        reasoning_tokens = details.get("reasoning_tokens")
+        completion_tokens = completion_tokens if type(completion_tokens) is int else None
+        reasoning_tokens = reasoning_tokens if type(reasoning_tokens) is int else None
+        visible_tokens = (max(0, completion_tokens - reasoning_tokens)
+                          if completion_tokens is not None and reasoning_tokens is not None else None)
+        finish_reason = finish_reason if isinstance(finish_reason, str) else None
+        has_reasoning = reasoning or bool(reasoning_tokens)
+        if finish_reason == "length":
+            exhausted = not visible and has_reasoning and (visible_tokens is None or visible_tokens <= 1)
+            status = "reasoning_exhausted" if exhausted else "length"
+        elif interrupted:
+            status = "interrupted"
+        elif not visible:
+            status = "reasoning_only" if has_reasoning else "empty"
+        else:
+            status = "complete"
+        self.last_completion = {
+            "status": status, "finish_reason": finish_reason,
+            "visible_content": visible, "reasoning_present": has_reasoning,
+            "completion_tokens": completion_tokens, "reasoning_tokens": reasoning_tokens,
+            "visible_output_tokens": visible_tokens,
+        }
+
+    def _attempt_report(self, attempt):
+        attempt["reasoning_plan"] = plan_details(self._plan())
+        attempt["context_budget"] = getattr(self, "last_context_report", None)
+        attempt["completion"] = getattr(self, "last_completion", None)
 
     def _provider(self, name: str) -> dict:
         """Unknown providers fail explicitly; they must never select a paid service."""
@@ -393,6 +448,31 @@ class AIService:
         self._reasoning_effort_override = value if value in ('off', 'deep') else None
 
     @property
+    def preset_reasoning_effort(self):
+        return self._preset_reasoning_effort
+
+    @preset_reasoning_effort.setter
+    def preset_reasoning_effort(self, value):
+        text = value.strip().lower() if isinstance(value, str) else None
+        self._preset_reasoning_effort = text if text in REASONING_EFFORT_VALUES else None
+
+    @property
+    def requested_reasoning_effort(self) -> str | None:
+        return self._requested_reasoning_effort()
+
+    def _requested_reasoning_effort(self) -> str | None:
+        """Effort richiesto, in ordine di precedenza.
+
+        Scelta esplicita dello studente (off/deep) > fonte personale > preset.
+        "standard" non è un override: lascia decidere preset e catalogo.
+        """
+        if self._reasoning_effort_override in ('off', 'deep'):
+            return self._reasoning_effort_override
+        if self.personal_reasoning:
+            return self.personal_reasoning
+        return self._preset_reasoning_effort
+
+    @property
     def reasoning_budget_override(self):
         if self._reasoning_effort_override == 'off':
             return 0
@@ -415,22 +495,41 @@ class AIService:
         """
         if not is_reasoning_model(model):
             return None
-        # Vale anche per la fonte personale impostata su «Nessuno»: OpenAI non
-        # espone uno spegnimento totale, quindi `minimal` è il livello più basso.
-        if self.disable_thinking:
+        effort = self._plan().effort
+        if effort:
+            if effort == 'none':
+                return 'minimal'
+            # OpenAI non accetta xhigh/max su tutte le famiglie: high è il
+            # livello più alto portabile.
+            return effort if effort in ('minimal', 'low', 'medium', 'high') else 'high'
+        # Piano non ancora risolto (chiamate dirette): mantieni il contratto
+        # storico basato sulla sola scelta esplicita.
+        if self._reasoning_effort_override == 'off':
             return 'minimal'
         if self._reasoning_effort_override == 'deep':
+            return 'high'
+        if self.personal_reasoning == 'none':
+            return 'minimal'
+        if self.personal_reasoning in ('minimal', 'low', 'medium', 'high'):
+            return self.personal_reasoning
+        if self.personal_reasoning in ('xhigh', 'max'):
             return 'high'
         return None
 
     def _chatgpt_effort(self) -> str | None:
+        effort = self._plan().effort
+        if effort:
+            if effort == 'none':
+                return 'minimal'
+            return effort if effort in ('minimal', 'low', 'medium', 'high') else 'high'
         if self._reasoning_effort_override == 'off':
             return 'minimal'
         if self._reasoning_effort_override == 'deep':
             return 'high'
         return self.personal_reasoning
 
-    def _resolve_reasoning(self, model, requested_max_tokens, fallback_max_tokens) -> ReasoningPlan:
+    def _resolve_reasoning(self, model, requested_max_tokens, fallback_max_tokens,
+                           provider: str | None = None) -> ReasoningPlan:
         """Risolve e memorizza il piano di reasoning per (modello, flag, budget).
 
         Restituisce il piano; `plan.max_tokens` e' il budget di output gia'
@@ -441,6 +540,8 @@ class AIService:
             requested_max_tokens=requested_max_tokens,
             fallback_max_tokens=fallback_max_tokens,
             budget_override=self.reasoning_budget_override,
+            requested_effort=self._requested_reasoning_effort(),
+            provider=provider,
         )
         self._reasoning_plan = plan
         return plan
@@ -448,6 +549,19 @@ class AIService:
     def _plan(self) -> ReasoningPlan:
         """Piano di reasoning corrente (default neutro se non risolto)."""
         return getattr(self, "_reasoning_plan", None) or DISABLED_PLAN
+
+    @property
+    def reasoning_enabled(self) -> bool:
+        """True se il piano effettivo consente al modello di ragionare."""
+        plan = getattr(self, "_reasoning_plan", None)
+        if plan is not None:
+            return bool(plan.enabled)
+        return not bool(self.disable_thinking)
+
+    @property
+    def reasoning_suppressed(self) -> bool:
+        """True se gli eventi di reasoning vanno nascosti all'utente."""
+        return not self.reasoning_enabled
 
     def _budget_is_locked(self) -> bool:
         """True se il budget mensile e' impostato (>0) e la spesa del mese
@@ -502,21 +616,40 @@ class AIService:
             return fallback_provider, fallback_model
         return provider, model
 
+    def _openrouter_parameter_supported(self, model: str | None, parameter: str) -> bool:
+        """True se il catalogo non smentisce un parametro (prudenza se manca)."""
+        capability = openrouter_capability(model)
+        if capability is None or not capability.supported_parameters:
+            return True
+        return parameter in capability.supported_parameters
+
     def _openrouter_reasoning(self, model: str | None = None) -> dict | None:
         """Parametro `reasoning` per OpenRouter dal piano corrente.
 
-        Reasoning attivo -> abilitato con cap `max_tokens` (se noto), così il
-        ragionamento non sfora nel budget riservato alla risposta. Spento ->
-        `enabled: False` (alcuni modelli ragionano comunque, ma nessun budget).
-        Se il modello e' noto per imporre il reasoning su OpenRouter, non invia
-        `enabled: False` per evitare HTTP 400 Bad Request."""
+        Se il catalogo dichiara gli effort, invia `effort` (e non un budget
+        numerico che il provider adattivo potrebbe ignorare). Altrimenti usa il
+        contratto storico `enabled`/`max_tokens`. Per un modello che impone il
+        reasoning non invia mai una disattivazione: al massimo il livello minimo
+        già risolto in `plan.effort`.
+        """
         plan = self._plan()
+        capability = openrouter_capability(model)
+        mandatory = bool(capability and capability.mandatory) or bool(
+            model and _is_openrouter_mandatory_reasoning_model(model)
+        )
+        if plan.effort:
+            if plan.effort == "none":
+                if mandatory:
+                    return None
+                return {"enabled": False}
+            if capability is not None and capability.supported_efforts:
+                return {"effort": plan.effort}
         if not plan.enabled:
-            if model and _is_openrouter_mandatory_reasoning_model(model):
+            if mandatory:
                 return None
             return {"enabled": False}
         reasoning: dict = {"enabled": True}
-        if plan.reasoning_budget:
+        if plan.reasoning_budget and (capability is None or capability.supports_max_tokens):
             reasoning["max_tokens"] = int(plan.reasoning_budget)
         return reasoning
 
@@ -544,7 +677,7 @@ class AIService:
 
     def _apply_no_think(self, system_prompt: str) -> str:
         """Aggiunge la direttiva /no_think al system prompt (convenzione qwen3/llama.cpp/ollama)."""
-        if self.disable_thinking and "/no_think" not in system_prompt:
+        if self.disable_thinking and not self.reasoning_enabled and "/no_think" not in system_prompt:
             return f"{system_prompt}\n\n/no_think"
         return system_prompt
 
@@ -777,9 +910,18 @@ class AIService:
         return targets[:4]
 
     def _attempt_input(self, provider, model, message, system, history, max_tokens, streaming):
+        self.last_usage = None
+        self.last_thinking = None
+        self.last_completion = None
+        self.last_context_report = None
+        self.last_envelope = None
+        self._reasoning_plan = DISABLED_PLAN
+        self.last_provider, self.last_model = provider, model
         entry = self._provider(provider)
         plan = self._resolve_reasoning(model, requested_max_tokens=max_tokens,
-                                       fallback_max_tokens=entry['stream_max' if streaming else 'call_max'])
+                                       fallback_max_tokens=entry['stream_max' if streaming else 'call_max'],
+                                       provider=provider)
+        validate_output_capacity(plan)
         profile = context_profile(self.config, provider, model)
         system, message, history, self.last_context_report = fit_context(
             system, message, self._normalize_history(history), profile, plan.max_tokens,
@@ -809,21 +951,27 @@ class AIService:
                 if result:
                     from .chat_logic import split_thinking
                     extracted, result = split_thinking(result)
-                    if extracted and not self.disable_thinking:
+                    if extracted and self.reasoning_enabled:
                         self.last_thinking = extracted
+                if self.last_completion is None:
+                    self._record_completion(None, bool(result and result.strip()), bool(self.last_thinking))
                 if not result or not result.strip():
                     raise AIError("Il modello ha restituito una risposta vuota")
                 attempt["status"] = "succeeded"
+                self._attempt_report(attempt)
                 return pii.restore(result, mapping) if mapping else result
             except Exception as exc:
                 last_error = exc
                 # Log classifications only; upstream errors can contain request data.
                 attempt["error_type"] = type(exc).__name__
+                self._attempt_report(attempt)
                 logger.warning("AI attempt %s/%s failed (%s)", selected_provider, selected_model, type(exc).__name__)
         if self.chatgpt_model and isinstance(last_error, AIError):
             raise last_error
         if self.personal_target:
             raise self._personal_failure(last_error) from None
+        if isinstance(last_error, ContextCapacityError):
+            raise AIError(str(last_error)) from last_error
         raise AIError(f"Nessun modello configurato ha completato la risposta ({type(last_error).__name__}).") from last_error
 
     def call_model(self, provider: str, model: str, user_message: str, system_prompt: str, max_tokens: int = None):
@@ -838,25 +986,36 @@ class AIService:
         elif self.personal_target:
             provider, model = self.personal_target
         self.last_provider, self.last_model = provider, model
-        entry = self._provider(provider)
-        plan = self._resolve_reasoning(model, requested_max_tokens=max_tokens,
-                                       fallback_max_tokens=entry['call_max'])
-        mt = plan.max_tokens
-        self.last_usage = None
-        user_message, system_prompt, _history, pii_mapping = self._anonymize_external(
-            provider, user_message, system_prompt, None)
+        attempt = {"provider": provider, "model": model, "status": "failed"}
+        self.last_attempts = [attempt]
         try:
+            entry, mt, user_message, system_prompt, _history, pii_mapping = self._attempt_input(
+                provider, model, user_message, system_prompt, None, max_tokens, False)
             result = entry['call'](user_message, system_prompt, model, max_tokens=mt)
             if result:
                 from .chat_logic import split_thinking
                 _extracted, result = split_thinking(result)
+                if _extracted and self.reasoning_enabled:
+                    self.last_thinking = _extracted
+            if self.last_completion is None:
+                self._record_completion(None, bool(result and result.strip()), bool(self.last_thinking))
+            if not result or not result.strip():
+                raise AIError("Il modello ha restituito una risposta vuota")
+            attempt["status"] = "succeeded"
+            self._attempt_report(attempt)
             return pii.restore(result, pii_mapping) if pii_mapping else result
-        except AIError:
+        except AIError as exc:
+            attempt["error_type"] = type(exc).__name__
+            self._attempt_report(attempt)
             raise
         except Exception as e:
+            attempt["error_type"] = type(e).__name__
+            self._attempt_report(attempt)
             logger.error("Errore call_model (%s/%s): %s", provider, model, type(e).__name__)
             if self.personal_target:
                 raise self._personal_failure(e) from None
+            if isinstance(e, ContextCapacityError):
+                raise AIError(str(e)) from e
             raise AIError(f"Errore AI ({provider}/{model}): {type(e).__name__}") from e
 
     def call_vision(self, prompt: str, image_base64: str, *, provider: str | None = None,
@@ -975,7 +1134,7 @@ class AIService:
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
-        if self.temperature is not None:
+        if self.temperature is not None and self._openrouter_parameter_supported(model, "temperature"):
             kwargs["temperature"] = self.temperature
         reasoning_extra = self._openrouter_reasoning(model)
         if reasoning_extra:
@@ -996,7 +1155,21 @@ class AIService:
         self.last_usage = self._usage_to_dict(getattr(response, "usage", None))
         if isinstance(getattr(response, "model", None), str):
             self.last_model = response.model
-        return response.choices[0].message.content
+        choice = response.choices[0]
+        content = choice.message.content
+        reasoning = getattr(choice.message, "reasoning", None) or getattr(choice.message, "reasoning_content", None)
+        from .chat_logic import split_thinking
+        inline_reasoning, visible_content = split_thinking(content or "")
+        if not isinstance(reasoning, str):
+            reasoning = inline_reasoning
+        elif inline_reasoning:
+            reasoning += inline_reasoning
+        self.last_thinking = reasoning if isinstance(reasoning, str) and self.reasoning_enabled else None
+        self._record_completion(getattr(choice, "finish_reason", None), bool(visible_content.strip()),
+                                isinstance(reasoning, str) and bool(reasoning))
+        if self.last_completion["finish_reason"] == "length":
+            raise AIError("The model reached its output token limit before completing the response.")
+        return content
 
     def _openai_compatible_client(self, provider: str, timeout=None):
         """Client OpenAI puntato a un provider OpenAI-compatibile (base_url + chiave)."""
@@ -1138,7 +1311,7 @@ class AIService:
         # Estrazione JSON (parser QSA): mai reasoning, altrimenti il `think` puo'
         # rompere/rallentare l'output strutturato. Forza think off a prescindere.
         is_json = json_mode if json_mode is not None else _requests_json_response(system_prompt, user_message)
-        if self.disable_thinking or is_json:
+        if self.reasoning_suppressed or is_json:
             payload["think"] = False
         else:
             payload["think"] = self._plan().enabled
@@ -1213,6 +1386,7 @@ class AIService:
         last_error = None
         for selected_provider, selected_model in self._targets(provider, model):
             content_seen = False
+            reasoning_seen = False
             attempt = {"provider": selected_provider, "model": selected_model, "status": "failed"}
             self.last_attempts.append(attempt)
             try:
@@ -1228,12 +1402,15 @@ class AIService:
                         continue
                     item = item if isinstance(item, dict) else {"type": "content", "text": item}
                     if item.get("text"):
-                        content_seen = content_seen or item.get("type") == "content"
+                        content_seen = content_seen or (item.get("type") == "content" and bool(item["text"].strip()))
+                        reasoning_seen = reasoning_seen or item.get("type") == "reasoning"
                         if restorer and item.get("type") == "content":
                             item = {**item, "text": restorer.feed(item["text"])}
                         elif mapping:
                             item = {**item, "text": pii.restore(item["text"], mapping)}
                     yield item
+                if self.last_completion is None:
+                    self._record_completion(None, content_seen, reasoning_seen or bool(self.last_thinking))
                 if not content_seen:
                     raise AIError("Il modello ha terminato senza contenuto")
                 if restorer:
@@ -1241,10 +1418,12 @@ class AIService:
                     if tail:
                         yield {"type": "content", "text": tail}
                 attempt["status"] = "succeeded"
+                self._attempt_report(attempt)
                 return
             except Exception as exc:
                 last_error = exc
                 attempt["error_type"] = type(exc).__name__
+                self._attempt_report(attempt)
                 if self.personal_target:
                     raise self._personal_failure(exc) from None
                 if self.chatgpt_model and isinstance(exc, AIError):
@@ -1257,9 +1436,11 @@ class AIService:
                 if content_seen:
                     raise AIError("La risposta e stata interrotta dal modello; riprova il turno.") from exc
                 logger.warning("AI stream %s/%s failed before output (%s)", selected_provider, selected_model, type(exc).__name__)
+        if isinstance(last_error, ContextCapacityError):
+            raise AIError(str(last_error)) from last_error
         raise AIError(f"Nessun modello configurato ha completato la risposta ({type(last_error).__name__}).") from last_error
 
-    def _iter_chat_stream(self, client, model, system_prompt, user_message, extra_body=None, max_tokens: int = None, stream_options=None, history=None, reasoning_effort=None):
+    def _iter_chat_stream(self, client, model, system_prompt, user_message, extra_body=None, max_tokens: int = None, stream_options=None, history=None, reasoning_effort=None, include_temperature=True):
         """Itera lo stream di un client OpenAI-compatibile producendo i delta di testo."""
         nak = self._normalize_history(history)
         messages = [{"role": "system", "content": system_prompt}]
@@ -1272,7 +1453,7 @@ class AIService:
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
-        if self.temperature is not None:
+        if self.temperature is not None and include_temperature:
             kwargs["temperature"] = self.temperature
         if extra_body:
             kwargs["extra_body"] = extra_body
@@ -1283,6 +1464,8 @@ class AIService:
         stream = client.chat.completions.create(**kwargs)
         finish_reason = None
         reasoning_acc: list[str] = []
+        visible = False
+        stream_ended = False
         from .chat_logic import ThinkStreamSplitter
         splitter = ThinkStreamSplitter()
         try:
@@ -1303,27 +1486,33 @@ class AIService:
                 reasoning = getattr(delta, "reasoning", None) or getattr(delta, "reasoning_content", None)
                 if isinstance(reasoning, str) and reasoning:
                     reasoning_acc.append(reasoning)
-                    if not self.disable_thinking:
+                    if not self.reasoning_suppressed:
                         yield {"type": "reasoning", "text": reasoning}
                 content = getattr(delta, "content", None)
                 if content:
                     for item in splitter.feed(content):
                         if item.get("type") == "reasoning":
                             reasoning_acc.append(item.get("text", ""))
-                            if self.disable_thinking:
+                            if self.reasoning_suppressed:
                                 continue
+                        elif item.get("type") == "content" and item.get("text", "").strip():
+                            visible = True
                         yield item
             for item in splitter.flush():
                 if item.get("type") == "reasoning":
                     reasoning_acc.append(item.get("text", ""))
-                    if self.disable_thinking:
+                    if self.reasoning_suppressed:
                         continue
+                elif item.get("type") == "content" and item.get("text", "").strip():
+                    visible = True
                 yield item
+            stream_ended = True
         finally:
+            self.last_thinking = "".join(reasoning_acc).strip() or None
+            self._record_completion(finish_reason, visible, bool(reasoning_acc), interrupted=not stream_ended)
             close = getattr(stream, "close", None)
             if close:
                 close()
-        self.last_thinking = "".join(reasoning_acc).strip() or None
         if finish_reason == "length":
             raise AIError("The model reached its output token limit before completing the response.")
 
@@ -1374,6 +1563,7 @@ class AIService:
                 max_tokens=max_tokens,
                 stream_options={"include_usage": True},
                 history=history,
+                include_temperature=self._openrouter_parameter_supported(model, "temperature"),
             )
         except Exception as exc:
             if extra and _is_openrouter_reasoning_error(exc):
@@ -1391,6 +1581,7 @@ class AIService:
                     max_tokens=max_tokens,
                     stream_options={"include_usage": True},
                     history=history,
+                    include_temperature=self._openrouter_parameter_supported(model, "temperature"),
                 )
             else:
                 raise
@@ -1416,7 +1607,7 @@ class AIService:
             payload["think"] = False
             payload["format"] = "json"
         else:
-            payload["think"] = (not self.disable_thinking) and self._plan().enabled
+            payload["think"] = self.reasoning_enabled
         from .chat_logic import ThinkStreamSplitter
         splitter = ThinkStreamSplitter()
         reasoning_acc: list[str] = []
@@ -1436,7 +1627,7 @@ class AIService:
                     thinking = msg.get("thinking")
                     if thinking:
                         reasoning_acc.append(thinking)
-                        if not self.disable_thinking:
+                        if not self.reasoning_suppressed:
                             yield {"type": "reasoning", "text": thinking}
                     content = msg.get("content")
                     if content:
@@ -1445,13 +1636,13 @@ class AIService:
                         for item in splitter.feed(content):
                             if item["type"] == "reasoning":
                                 reasoning_acc.append(item["text"])
-                                if self.disable_thinking:
+                                if self.reasoning_suppressed:
                                     continue
                             yield item
                 for item in splitter.flush():
                     if item["type"] == "reasoning":
                         reasoning_acc.append(item["text"])
-                        if self.disable_thinking:
+                        if self.reasoning_suppressed:
                             continue
                     yield item
         self.last_thinking = "".join(reasoning_acc).strip() or None

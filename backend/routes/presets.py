@@ -60,6 +60,7 @@ async def create_preset(
         max_tokens=payload.max_tokens,
         disable_thinking=payload.disable_thinking,
         reasoning_budget=payload.reasoning_budget,
+        reasoning_effort=payload.reasoning_effort,
         notes=payload.notes,
         is_active=payload.is_active,
     )

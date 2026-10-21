@@ -199,7 +199,7 @@ def test_private_persona_and_assigned_model_are_used_and_provider_error_does_not
     assert route(client, None, [{'counselor_id': c, 'connection_id': key}]).status_code == 200
     bind_identity(db, identity())
     personal_api.bind_counselor(db, c)
-    _, _, persona, name, _, _ = _resolve_counselor(db, c)
+    _, _, persona, name, _, _, _ = _resolve_counselor(db, c)
     service = AIService(db)
     def answer(message, system, model, **kwargs):
         assert persona in system and name == 'My counselor'

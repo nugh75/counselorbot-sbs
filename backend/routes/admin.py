@@ -16,6 +16,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .. import models, schemas, auth, database, pii, pii_ner
 from .. import content_version_service
+from .. import openrouter_capabilities
 from .. import prompt_revisions
 from ..dynamic_registry import invalidate_instrument_cache
 from ..content_versions import CATALOG_CONTENT_TYPES, CONTENT_TYPES, ContentVersionError
@@ -1276,11 +1277,26 @@ async def restore_prompt_revision(
 
 
 @router.get("/admin/models")
-async def list_provider_models(provider: str = None, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
-    """Modelli realmente serviti dal provider (live). Vuoto se non interrogabile/irraggiungibile."""
+async def list_provider_models(provider: str = None, refresh: bool = False, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    """Modelli realmente serviti dal provider (live) e, per OpenRouter, le capacità reasoning del catalogo."""
     svc = AIService(db)
-    return {"provider": provider or svc.config.get('active_provider', 'openai'),
-            "models": svc.list_models(provider)}
+    resolved = provider or svc.config.get('active_provider', 'openai')
+    models_list = svc.list_models(provider)
+    payload = {"provider": resolved, "models": models_list}
+    if resolved == "openrouter":
+        # Best-effort: senza chiave o catalogo irraggiungibile la chat usa il
+        # fallback statico e il pannello mostra le opzioni generiche.
+        capabilities = await run_in_threadpool(
+            openrouter_capabilities.refresh,
+            svc._get_api_key("api_key_openrouter"), force=refresh,
+        )
+        payload["capabilities"] = {
+            model: capability.as_dict()
+            for model, capability in capabilities.items()
+            if not models_list or model in models_list
+        }
+        payload["capabilities_source"] = openrouter_capabilities.source()
+    return payload
 
 
 @router.get("/admin/config/env-status")

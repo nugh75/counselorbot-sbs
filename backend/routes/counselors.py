@@ -133,7 +133,7 @@ async def list_public_counselors(
             provider = selected_connection.provider
         pub.is_personal = bool(r.owner_username)
         pub.suitable = suits(r, questionnaire_type, restricted)
-        pub.reasoning_capable = supports_reasoning(pub.model)
+        pub.reasoning_capable = supports_reasoning(pub.model, provider)
         pub.reasoning_mandatory = is_mandatory_reasoning(pub.model, provider)
         out.append(pub)
     # Gli adatti in cima: chi sceglie legge prima cio' che puo' usare.

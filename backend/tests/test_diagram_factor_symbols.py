@@ -114,8 +114,8 @@ def test_manual_generation_preserves_factor_dictionary_during_fallback_and_repai
                 raise diagram.AIError('primary unavailable')
             return json.dumps({**raw, 'title': 'x' * 81} if len(calls) == 2 else raw)
     monkeypatch.setattr(diagram, 'AIService', AI)
-    monkeypatch.setattr(diagram, '_resolve_counselor', lambda db, cid: ('ollama', 'primary', '', '', True, None))
-    monkeypatch.setattr(diagram, '_diagram_fallback', lambda db: ('ollama', 'reserve', True, None))
+    monkeypatch.setattr(diagram, '_resolve_counselor', lambda db, cid: ('ollama', 'primary', '', '', True, None, None))
+    monkeypatch.setattr(diagram, '_diagram_fallback', lambda db: ('ollama', 'reserve', True, None, None))
     with artifact_session() as db:
         db.add(models.Skill(slug='concept-diagram', name='Diagram', is_active=True, status='published'))
         db.add(models.QuestionnaireResult(session_id='symbols', username='alice', questionnaire_type='QSA'))

@@ -121,7 +121,7 @@ def test_stream_preserves_visible_text_on_interruption(monkeypatch):
         history=[], sanitize=False, components={},
     )
     monkeypatch.setattr(chat, "AIService", lambda db, username=None: ai)
-    monkeypatch.setattr(chat, "_resolve_counselor", lambda *a: (None,) * 6)
+    monkeypatch.setattr(chat, "_resolve_counselor", lambda *a: (None,) * 7)
     monkeypatch.setattr(chat, "_apply_counselor_overrides", lambda *a: None)
     monkeypatch.setattr(chat, "prepare_chat_turn", lambda *a, **kw: prepared)
     monkeypatch.setattr(chat, "session_memory", MagicMock())
@@ -167,7 +167,7 @@ def test_stream_uses_reflective_fallback_when_zero_content(monkeypatch):
         history=[], sanitize=False, components={},
     )
     monkeypatch.setattr(chat, "AIService", lambda db, username=None: ai)
-    monkeypatch.setattr(chat, "_resolve_counselor", lambda *a: (None,) * 6)
+    monkeypatch.setattr(chat, "_resolve_counselor", lambda *a: (None,) * 7)
     monkeypatch.setattr(chat, "_apply_counselor_overrides", lambda *a: None)
     monkeypatch.setattr(chat, "prepare_chat_turn", lambda *a, **kw: prepared)
     monkeypatch.setattr(chat, "session_memory", MagicMock())

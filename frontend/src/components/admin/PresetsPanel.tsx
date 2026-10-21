@@ -13,6 +13,15 @@ const PROVIDERS = [
     'ollama', 'llamacpp',
 ];
 
+const EFFORT_OPTIONS = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const;
+
+interface ModelCapability {
+    mandatory: boolean;
+    supported_efforts: string[];
+    default_effort: string | null;
+    supports_reasoning: boolean;
+}
+
 interface Preset {
     id: number;
     name: string;
@@ -22,6 +31,7 @@ interface Preset {
     max_tokens: number | null;
     disable_thinking: boolean;
     reasoning_budget: number | null;
+    reasoning_effort: string | null;
     notes: string | null;
     is_active: boolean;
     provider_configured: boolean;
@@ -36,13 +46,14 @@ type FormState = {
     max_tokens: string;
     disable_thinking: boolean;
     reasoning_budget: string;
+    reasoning_effort: string;
     notes: string;
     is_active: boolean;
 };
 
 const EMPTY_FORM: FormState = {
     name: '', provider: 'deepseek', model: '', temperature: '', max_tokens: '',
-    disable_thinking: false, reasoning_budget: '', notes: '', is_active: true,
+    disable_thinking: false, reasoning_budget: '', reasoning_effort: '', notes: '', is_active: true,
 };
 
 export function PresetsPanel() {
@@ -54,6 +65,7 @@ export function PresetsPanel() {
     const [form, setForm] = useState<FormState>(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
     const [liveModels, setLiveModels] = useState<string[]>([]);
+    const [capabilities, setCapabilities] = useState<Record<string, ModelCapability>>({});
     const [modelsLoading, setModelsLoading] = useState(false);
     const [manualModel, setManualModel] = useState(false);
     const modelRequest = useRef<AbortController | null>(null);
@@ -75,22 +87,30 @@ export function PresetsPanel() {
 
     useEffect(() => { void fetchPresets(); }, [fetchPresets]);
 
-    const fetchModels = useCallback(async (provider: string) => {
+    const fetchModels = useCallback(async (provider: string, refresh = false) => {
         modelRequest.current?.abort();
         const controller = new AbortController();
         modelRequest.current = controller;
         setModelsLoading(true);
         try {
-            const res = await fetch(`/api/admin/models?provider=${encodeURIComponent(provider)}`, { signal: controller.signal });
+            const query = `provider=${encodeURIComponent(provider)}${refresh ? '&refresh=1' : ''}`;
+            const res = await fetch(`/api/admin/models?${query}`, { signal: controller.signal });
             if (controller.signal.aborted) return;
             if (res.ok) {
                 const data = await res.json();
-                if (!controller.signal.aborted) setLiveModels(Array.isArray(data?.models) ? data.models : []);
+                if (!controller.signal.aborted) {
+                    setLiveModels(Array.isArray(data?.models) ? data.models : []);
+                    setCapabilities(data?.capabilities && typeof data.capabilities === 'object' ? data.capabilities : {});
+                }
             } else {
                 setLiveModels([]);
+                setCapabilities({});
             }
         } catch {
-            if (!controller.signal.aborted) setLiveModels([]);
+            if (!controller.signal.aborted) {
+                setLiveModels([]);
+                setCapabilities({});
+            }
         } finally {
             if (!controller.signal.aborted) setModelsLoading(false);
         }
@@ -102,18 +122,20 @@ export function PresetsPanel() {
         return () => modelRequest.current?.abort();
     }, [editingId, form.provider, fetchModels]);
 
-    const startNew = () => { setForm(EMPTY_FORM); setLiveModels([]); setSaveError(false); setManualModel(false); setEditingId('new'); };
+    const startNew = () => { setForm(EMPTY_FORM); setLiveModels([]); setCapabilities({}); setSaveError(false); setManualModel(false); setEditingId('new'); };
     const startEdit = (p: Preset) => {
         setForm({
             name: p.name, provider: p.provider, model: p.model,
             temperature: p.temperature != null ? String(p.temperature) : '',
             max_tokens: p.max_tokens != null ? String(p.max_tokens) : '',
-            disable_thinking: p.disable_thinking,
+            disable_thinking: p.reasoning_mandatory ? false : p.disable_thinking,
             reasoning_budget: p.reasoning_budget != null ? String(p.reasoning_budget) : '',
+            reasoning_effort: p.reasoning_effort || '',
             notes: p.notes || '', is_active: p.is_active,
         });
         setManualModel(false);
         setLiveModels([]);
+        setCapabilities({});
         setSaveError(false);
         setEditingId(p.id);
     };
@@ -132,6 +154,7 @@ export function PresetsPanel() {
                 max_tokens: form.max_tokens.trim() === '' ? null : Number(form.max_tokens),
                 disable_thinking: form.disable_thinking,
                 reasoning_budget: form.reasoning_budget.trim() === '' ? null : Number(form.reasoning_budget),
+                reasoning_effort: effortOptions.includes(form.reasoning_effort) && form.reasoning_effort !== '' ? form.reasoning_effort : null,
                 notes: form.notes.trim() || null,
                 is_active: form.is_active,
             };
@@ -160,8 +183,24 @@ export function PresetsPanel() {
         }
     };
 
+    const updateModel = (model: string) => {
+        const allowed = capabilities[model]?.supported_efforts?.filter(value => value !== 'none') || [];
+        setForm(current => ({
+            ...current,
+            model,
+            reasoning_effort: allowed.length && current.reasoning_effort && !allowed.includes(current.reasoning_effort)
+                ? ''
+                : current.reasoning_effort,
+        }));
+    };
+
     const inputCls = 'h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400';
     const invalidTokens = [form.max_tokens, form.reasoning_budget].some(value => value.trim() !== '' && (!Number.isSafeInteger(Number(value)) || Number(value) <= 0));
+    const capability = capabilities[form.model];
+    const catalogEfforts = capability?.supported_efforts?.filter(value => value !== 'none') || [];
+    const effortOptions: readonly string[] = catalogEfforts.length ? catalogEfforts : EFFORT_OPTIONS;
+    const reasoningMandatory = capability?.mandatory ?? editingPreset?.reasoning_mandatory ?? false;
+    const reasoningEnabled = capability?.supports_reasoning ?? true;
 
     const renderForm = () => (
         <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
@@ -171,7 +210,7 @@ export function PresetsPanel() {
                 </label>
                 <div className="flex flex-col text-xs font-medium text-slate-500">
                     <label htmlFor="preset_provider">{t('admin.presets.provider')}</label>
-                    <select id="preset_provider" className={inputCls} value={form.provider} onChange={(e) => { setForm({ ...form, provider: e.target.value, model: '' }); setLiveModels([]); setManualModel(false); }}>
+                    <select id="preset_provider" className={inputCls} value={form.provider} onChange={(e) => { setForm({ ...form, provider: e.target.value, model: '', reasoning_effort: '' }); setLiveModels([]); setCapabilities({}); setManualModel(false); }}>
                         {PROVIDERS.map((p) => <option key={p} value={p}>{p}</option>)}
                     </select>
                 </div>
@@ -180,12 +219,12 @@ export function PresetsPanel() {
                     <div className="flex items-start gap-1">
                         <div className="min-w-0 flex-1">
                             {manualModel ? (
-                                <input id="preset_model" className={inputCls} value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} placeholder={t('admin.config.customModelPlaceholder')} aria-invalid={!!form.model && !validModelId(form.model)} />
+                                <input id="preset_model" className={inputCls} value={form.model} onChange={(e) => updateModel(e.target.value)} placeholder={t('admin.config.customModelPlaceholder')} aria-invalid={!!form.model && !validModelId(form.model)} />
                             ) : (
-                                <ModelSearchSelect key={`${editingId}:${form.provider}`} id="preset_model" models={liveModels} value={form.model} loading={modelsLoading} onChange={model => setForm({ ...form, model })} />
+                                <ModelSearchSelect key={`${editingId}:${form.provider}`} id="preset_model" models={liveModels} value={form.model} loading={modelsLoading} onChange={updateModel} />
                             )}
                         </div>
-                        <button type="button" aria-label={t('admin.presets.reloadModels')} title={t('admin.presets.reloadModels')} onClick={() => void fetchModels(form.provider)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+                        <button type="button" aria-label={t('admin.presets.reloadModels')} title={t('admin.presets.reloadModels')} onClick={() => void fetchModels(form.provider, true)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
                             <RefreshCw className={`h-4 w-4 ${modelsLoading ? 'animate-spin' : ''}`} />
                         </button>
                         <button type="button" aria-label={manualModel ? t('admin.presets.useList') : t('admin.presets.useManual')} title={manualModel ? t('admin.presets.useList') : t('admin.presets.useManual')} onClick={() => setManualModel((v) => !v)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
@@ -204,11 +243,17 @@ export function PresetsPanel() {
                 <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.presets.reasoningBudget')}
                     <input className={inputCls} type="number" min="1" step="1" value={form.reasoning_budget} onChange={(e) => setForm({ ...form, reasoning_budget: e.target.value })} placeholder="auto" disabled={form.disable_thinking} aria-describedby="preset_token_help" />
                 </label>
+                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.presets.reasoningEffort')}
+                    <select id="preset_effort" className={inputCls} value={effortOptions.includes(form.reasoning_effort) ? form.reasoning_effort : ''} onChange={(e) => setForm({ ...form, reasoning_effort: e.target.value })} disabled={form.disable_thinking || !reasoningEnabled} aria-describedby="preset_effort_help">
+                        <option value="">{t('admin.presets.reasoningEffortAuto')}</option>
+                        {effortOptions.map((effort) => <option key={effort} value={effort}>{effort}</option>)}
+                    </select>
+                </label>
                 <label className="flex flex-col text-xs font-medium text-slate-500 sm:col-span-2 lg:col-span-2">{t('admin.presets.notes')}
                     <input className={inputCls} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
                 </label>
                 <label className="flex items-center gap-2 text-sm text-slate-600 mt-5">
-                    <input type="checkbox" checked={form.disable_thinking} onChange={(e) => setForm({ ...form, disable_thinking: e.target.checked })} disabled={editingPreset?.reasoning_mandatory} />
+                    <input type="checkbox" checked={form.disable_thinking} onChange={(e) => setForm({ ...form, disable_thinking: e.target.checked })} disabled={reasoningMandatory} />
                     {t('admin.presets.disableThinking')}
                 </label>
                 <label className="flex items-center gap-2 text-sm text-slate-600 mt-5">
@@ -220,9 +265,10 @@ export function PresetsPanel() {
                 <Callout variant="info">
                     <p>{t('admin.presets.tokenHelp')}</p>
                     <p className="mt-2">{t('admin.presets.reasoningHelp')}</p>
+                    <p id="preset_effort_help" className="mt-2">{t('admin.presets.reasoningEffortHelp')}</p>
                     <p className="mt-2">{t('admin.config.lengthProfilesHint')}</p>
                 </Callout>
-                {editingPreset?.reasoning_mandatory && <Callout variant="warning">{t('admin.presets.mandatoryReasoning')}</Callout>}
+                {reasoningMandatory && <Callout variant="warning">{t('admin.presets.mandatoryReasoning')}</Callout>}
                 {Number(form.max_tokens) > 0 && Number(form.max_tokens) < 2000 && <Callout variant="warning">{t('admin.presets.lowTokenWarning')}</Callout>}
                 {invalidTokens && <p role="alert" className="text-sm text-red-700">{t('admin.presets.invalidTokens')}</p>}
                 {saveError && <p role="alert" className="text-sm text-red-700">{t('admin.config.saveError')}</p>}
@@ -285,6 +331,7 @@ export function PresetsPanel() {
                                     <td className="px-3 py-2 font-mono text-xs text-slate-700">
                                         <span>{p.model}</span>
                                         {p.reasoning_mandatory && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-amber-800" title={t('admin.presets.mandatoryReasoning')}>{t('admin.presets.mandatoryShort')}</span>}
+                                        {p.reasoning_effort && <span className="ml-2 rounded bg-sky-100 px-1.5 py-0.5 text-2xs font-medium text-sky-800">{t('admin.presets.reasoningEffort')}: {p.reasoning_effort}</span>}
                                     </td>
                                     <td className="px-3 py-2">{p.is_active ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-slate-500" />}</td>
                                     <td className="px-3 py-2">

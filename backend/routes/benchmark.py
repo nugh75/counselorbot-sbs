@@ -41,6 +41,7 @@ async def start_benchmark(
             "max_tokens": p.max_tokens,
             "disable_thinking": bool(p.disable_thinking),
             "reasoning_budget": p.reasoning_budget,
+            "reasoning_effort": getattr(p, "reasoning_effort", None),
         }
         for p in presets
     ]

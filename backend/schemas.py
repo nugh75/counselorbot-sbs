@@ -1290,6 +1290,7 @@ class ModelPresetBase(BaseModel):
     max_tokens: Optional[int] = None
     disable_thinking: bool = False
     reasoning_budget: Optional[int] = None
+    reasoning_effort: Optional[Literal["minimal", "low", "medium", "high", "xhigh", "max"]] = None
     notes: Optional[str] = None
     is_active: bool = True
 
@@ -1306,6 +1307,7 @@ class ModelPresetUpdate(BaseModel):
     max_tokens: Optional[int] = None
     disable_thinking: Optional[bool] = None
     reasoning_budget: Optional[int] = None
+    reasoning_effort: Optional[Literal["minimal", "low", "medium", "high", "xhigh", "max"]] = None
     notes: Optional[str] = None
     is_active: Optional[bool] = None
 

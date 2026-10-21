@@ -17,6 +17,7 @@ from backend.chat_logic import (
 )
 from backend.reasoning_profiles import (
     DEEP_REASONING_BUDGET,
+    ReasoningPlan,
     is_mandatory_reasoning,
     mark_openrouter_mandatory_reasoning,
 )
@@ -188,3 +189,15 @@ def test_response_length_is_a_range_with_a_hard_cap():
     clipped, truncated = _limit_visible_words(text, "short")
     assert truncated is True
     assert len(clipped.split()) <= RESPONSE_LENGTH_PROFILES["short"]["max_words"] + 1
+
+
+def test_openai_effort_uses_the_resolved_preset_effort():
+    ai = _bare_ai()
+    ai._reasoning_plan = ReasoningPlan(
+        enabled=True, reasoning_budget=5000, max_tokens=7000, effort="medium",
+    )
+    assert ai._openai_reasoning_effort("o3") == "medium"
+    ai._reasoning_plan = ReasoningPlan(
+        enabled=True, reasoning_budget=16000, max_tokens=18000, effort="max",
+    )
+    assert ai._openai_reasoning_effort("o3") == "high"

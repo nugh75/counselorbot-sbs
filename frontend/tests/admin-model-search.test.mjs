@@ -15,7 +15,7 @@ async function fixture({ width = 1440, lang = 'it', dark = false, unavailable = 
     page.setDefaultTimeout(15000);
     const writes = [], errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    const preset = { id: 1, name: 'Fixture', provider: 'openrouter', model: 'saved/custom-model', temperature: 0.4, max_tokens: 512, reasoning_budget: 3000, disable_thinking: false, notes: 'keep notes', is_active: true, provider_configured: true };
+    const preset = { id: 1, name: 'Fixture', provider: 'openrouter', model: 'saved/custom-model', temperature: 0.4, max_tokens: 512, reasoning_budget: 3000, reasoning_effort: null, disable_thinking: false, notes: 'keep notes', is_active: true, provider_configured: true, reasoning_mandatory: false };
     const catalogs = { openrouter: ['google/gemini-3.8-flash', 'anthropic/claude-sonnet-5.5', 'vendor/other:free'], mistral: ['mistral-large-latest'] };
     await page.addInitScript(({ lang, dark }) => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', dark ? 'dark' : 'light'); }, { lang, dark });
     await page.route('**/api/**', async route => {
@@ -29,7 +29,13 @@ async function fixture({ width = 1440, lang = 'it', dark = false, unavailable = 
         if (path === '/api/admin/presets') data = [preset];
         if (path === '/api/admin/models') {
             if (unavailable) return route.fulfill({ status: 503, json: { detail: 'synthetic unavailable' } });
-            data = { models: catalogs[url.searchParams.get('provider')] || [] };
+            data = {
+                models: catalogs[url.searchParams.get('provider')] || [],
+                capabilities: {
+                    'google/gemini-3.8-flash': { mandatory: true, supported_efforts: ['low', 'medium', 'high'], default_effort: 'medium', supports_reasoning: true },
+                    'anthropic/claude-sonnet-5.5': { mandatory: true, supported_efforts: ['low', 'medium', 'high'], default_effort: 'high', supports_reasoning: true },
+                },
+            };
         }
         if (['POST', 'PUT'].includes(request.method())) {
             data = request.postDataJSON();
@@ -63,7 +69,7 @@ for (const width of [390, 1440]) test(`presets ${width}px: searching preserves t
         assert.equal(await search.inputValue(), '');
         await f.page.getByRole('button', { name: 'Salva', exact: true }).click();
         await f.page.getByRole('button', { name: 'Modifica Fixture', exact: true }).waitFor();
-        assert.deepEqual(f.writes[0].body, { name: 'Fixture', provider: 'openrouter', model: 'saved/custom-model', temperature: 0.4, max_tokens: 512, disable_thinking: false, reasoning_budget: 3000, notes: 'keep notes', is_active: true });
+        assert.deepEqual(f.writes[0].body, { name: 'Fixture', provider: 'openrouter', model: 'saved/custom-model', temperature: 0.4, max_tokens: 512, disable_thinking: false, reasoning_budget: 3000, reasoning_effort: null, notes: 'keep notes', is_active: true });
         assert.deepEqual(f.errors, []);
         assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     } finally { await f.context.close(); }
@@ -128,6 +134,7 @@ test('preset: token advice, positive integer validation and empty automatic budg
         await f.page.getByRole('button', { name: 'Modifica Fixture', exact: true }).waitFor();
         assert.equal(f.writes[0].body.max_tokens, null);
         assert.equal(f.writes[0].body.reasoning_budget, null);
+        assert.equal(f.writes[0].body.reasoning_effort, null);
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
 });
@@ -162,6 +169,31 @@ test('new preset: search selects a live model and empty budgets remain automatic
         assert.equal(f.writes[0].body.model, 'anthropic/claude-sonnet-5.5');
         assert.equal(f.writes[0].body.max_tokens, null);
         assert.equal(f.writes[0].body.reasoning_budget, null);
+        assert.equal(f.writes[0].body.reasoning_effort, null);
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('preset: mandatory catalog model locks off and limits effort choices', async () => {
+    const f = await fixture();
+    try {
+        await f.page.goto(`${origin}/admin?tab=presets`);
+        await f.page.getByRole('button', { name: 'Nuovo preset', exact: true }).click();
+        await f.page.getByLabel('Nome', { exact: true }).fill('Mandatory fixture');
+        await f.page.getByLabel('Provider', { exact: true }).selectOption('openrouter');
+        await f.page.locator('#preset_model_search').fill('claude');
+        await f.page.locator('#preset_model option[value="anthropic/claude-sonnet-5.5"]').waitFor({ state: 'attached' });
+        await f.page.locator('#preset_model').selectOption('anthropic/claude-sonnet-5.5');
+        const off = f.page.getByLabel('No reasoning', { exact: true });
+        assert.equal(await off.isDisabled(), true);
+        assert.equal(await f.page.getByText('Questo modello impone il ragionamento', { exact: false }).count(), 1);
+        const effort = f.page.locator('#preset_effort');
+        assert.deepEqual(await effort.locator('option').allTextContents(), ['Auto (modello)', 'low', 'medium', 'high']);
+        await effort.selectOption('high');
+        await f.page.getByRole('button', { name: 'Salva', exact: true }).click();
+        await f.page.getByRole('button', { name: 'Nuovo preset', exact: true }).waitFor();
+        assert.equal(f.writes[0].body.reasoning_effort, 'high');
+        assert.equal(f.writes[0].body.disable_thinking, false);
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
 });

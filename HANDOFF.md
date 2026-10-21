@@ -1,3 +1,19 @@
+# Handoff: budget adattivi OpenRouter (#403)
+Data: 2026-10-21 | Branch: `fix/adaptive-reasoning-budget`
+
+- Worktree isolato: `Counselorbot-worktrees/fix-adaptive-reasoning-budget`.
+- Base provvisoria: `feature/reasoning-effort-openrouter` / PR #418 (#402),
+  gestita dall’altro Codex. Nessuna modifica al suo worktree o alla produzione.
+- Piano unico risposta/riserva/totale; riserva adattiva locale, minimo Argon 32768,
+  cap output e confronto contesto da catalogo; blocco prima del provider se incompatibile.
+- Esiti sync/stream e tentativi nei log, compresi errori e stream parziali.
+- Editor e anteprima nelle sei lingue; guida operativa e di piattaforma aggiornate.
+- Validazione e limiti ambientali: `docs/operations/model-search-token-guidance.md`.
+- La PR va su #418 finché quella base non è integrata; poi retarget su main.
+- Verifiche: 159 backend mirati, 41 su Postgres, 600 unitari frontend e 17 browser;
+  build/type check/i18n/ESLint riusciti. Ruff: soli errori già presenti nella base.
+- Nessun deploy o sudo. Processi e container di validazione fermati a fine verifica.
+
 # Handoff: navigazione libera e rami facoltativi nelle chat guidate
 Data: 2026-10-20 | Branch: `feature/guided-chat-navigation-branches` | Seguito di #410 / PR #414
 
