@@ -21,6 +21,7 @@ from backend.prompt_config import (
 )
 from backend.prompt_contract import QUESTIONNAIRE_DIALOGUES, turn_contract
 from backend.prompt_variants import variant_key
+from backend.questionnaire_description import SENTINEL as DESCRIPTION_SENTINEL
 from backend.tests.artifact_database import artifact_session
 
 
@@ -227,8 +228,19 @@ def test_shared_wording_preserves_instrument_specific_tasks(runtime, step):
     prepared = prepare(runtime, step["id"])
     assert step["prompt"] in prepared.system_prompt_final
     contract = prepared.components["turn_contract"]
-    assert "preserve the current step's core questions, order, consent" in contract
-    assert "step's question budget" in contract
+    if step["id"] == "ztpi-t1":
+        # Since the descriptive-phase boundary, ZTPI's first reading keeps the
+        # step instructions but replaces personal questioning with the reading
+        # contract; it must not regain a mandatory personal question.
+        assert DESCRIPTION_SENTINEL in contract
+        assert "phase boundary takes priority" in contract
+        assert "no mandatory closing question" in contract
+        assert "Personal exploration and practical actions" in contract
+        assert "preserve the current step's core questions" not in contract
+        assert "use one contextualised question that lets the person choose" not in contract
+    else:
+        assert "preserve the current step's core questions, order, consent" in contract
+        assert "step's question budget" in contract
     # These tools have factor readings or narrative topics, not QPCS's five areas.
     assert "five areas" not in contract and "current profile reading" not in contract
 
@@ -348,7 +360,7 @@ def test_essential_path_keeps_its_fixed_tasks_and_question_free_summary(runtime)
                                      include_retrieval=False, include_history=False)
         assert "[SELF-QUESTIONING]" in prepared.system_prompt_final
         assert directive(phase) in prepared.system_prompt_final
-        assert "Add no steps or required turns" in prepared.components["turn_contract"]
+        assert "add no steps or required turns" in prepared.components["turn_contract"].lower()
         if phase == QSA_PHASES[-1]:
             assert "Do not ask another question" in prepared.system_prompt_final
             assert "When the step permits a closing question" in prepared.components["turn_contract"]

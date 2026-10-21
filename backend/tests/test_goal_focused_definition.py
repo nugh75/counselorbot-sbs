@@ -270,7 +270,7 @@ def test_qsa_essential_keeps_three_stages_without_consuming_clarifications():
         assert "moves to the next step after each completed reply" not in directive(phase)
         assert "never close while awaiting a depth choice" in directive(phase)
     assert "Do not emit [[AVANZA_STEP]] in this opening" in directive(QSA_PHASES[0], entry=True)
-    assert "Answer clarifications without advancing" in directive(QSA_PHASES[0])
+    assert "Answer requested clarifications about factors and scores without opening personal exploration" in directive(QSA_PHASES[0])
     assert "Exactly three" not in _ESSENTIAL_PATH_DESCRIPTIONS["QSA"]
     for qtype in ("OBIETTIVO_STUDIO", "OBIETTIVO_DOCENZA"):
         assert "not after a fixed number of replies" in _ESSENTIAL_PATH_DESCRIPTIONS[qtype]

@@ -327,13 +327,17 @@ def test_step_allows_practical_advice():
 
 
 def test_qa_defaults_require_depth_on_request():
-    # I default QA devono imporre profondità su richiesta: meccanismo + esempio
-    # + micro-passo/domanda riflessiva, restando dentro le regole di scope.
+    # I default QA devono imporre profondità su richiesta restando dentro le
+    # regole di scope: scelta esplicita prima dell'approfondimento, un meccanismo
+    # dal [KNOWLEDGE], un aspetto per volta e ritorno al percorso.
+    # Le vecchie diciture "MECHANISM"/"example"/"micro-step" sono state
+    # sostituite nella base dal testo attuale: l'aspettativa segue il prodotto.
     for prompt in (DEFAULT_SYSTEM_PROMPT_FACTOR_QA, DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR_QA):
         assert QA_DEPTH_SENTINEL in prompt, prompt
-        assert "MECHANISM" in prompt, prompt
-        assert "example" in prompt, prompt
-        assert "micro-step" in prompt, prompt
+        assert "one relevant mechanism from [KNOWLEDGE]" in prompt, prompt
+        assert "let the student choose to stay with it or continue" in prompt, prompt
+        assert "Explore one meaningful aspect at a time" in prompt, prompt
+        assert "offer a return to the path" in prompt, prompt
 
 
 def test_conversational_mode_detection():

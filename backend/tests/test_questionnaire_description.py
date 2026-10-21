@@ -380,7 +380,9 @@ def test_fresh_and_populated_seeds_keep_personal_openings_in_later_areas_only():
         for key in READINGS:
             if key not in STEPS:
                 continue
-            personal = db.query(models.GuidedStepQuestion).filter_by(step_id=key).all()
+            personal = (db.query(models.GuidedStepQuestion).filter_by(step_id=key)
+                        .order_by(models.GuidedStepQuestion.sort_order,
+                                  models.GuidedStepQuestion.id).all())
             assert not any(row.text in RESPONSE_OPENINGS.get(row.language, []) for row in personal)
             from backend.questionnaire_description import COMPREHENSION_SUGGESTIONS
             for language in LANGUAGES:
