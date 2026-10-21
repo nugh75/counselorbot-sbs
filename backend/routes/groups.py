@@ -728,6 +728,30 @@ async def delete_group_share(
 
 # --- Dashboard classe: studenti, transcript, note, messaggi ------------------
 
+def _require_student_result(db, current_user, group_id, username, **result_filter):
+    group = _require_visible_group(db, current_user, group_id)
+    _require_group_member(db, group, username)
+    result = db.query(models.QuestionnaireResult).filter_by(username=username, **result_filter).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Sessione non trovata per questo studente")
+    return result
+
+
+@router.get("/admin/groups/{group_id}/students/{username}/results/{result_id}")
+async def get_group_student_result(group_id: int, username: str, result_id: int, lang: str = "it",
+                                   current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..teacher_results import result_detail
+    result = _require_student_result(db, current_user, group_id, username, id=result_id)
+    return result_detail(db, result, lang)
+
+
+@router.get("/admin/groups/{group_id}/students/{username}/results/{result_id}/pdf")
+async def get_group_student_result_pdf(group_id: int, username: str, result_id: int, lang: str = "it",
+                                       current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from .survey import questionnaire_pdf_response
+    result = _require_student_result(db, current_user, group_id, username, id=result_id)
+    return questionnaire_pdf_response(db, result, lang=lang)
+
 @router.get("/admin/groups/{group_id}/students")
 async def get_group_students(
     group_id: int,
@@ -791,18 +815,7 @@ async def get_group_student_conversation(
     """Transcript di una sessione di uno studente della classe (informativa nell'invito)."""
     from .survey import _session_conversation_messages
 
-    group = _require_visible_group(db, current_user, group_id)
-    _require_group_member(db, group, username)
-    result = (
-        db.query(models.QuestionnaireResult)
-        .filter(
-            models.QuestionnaireResult.username == username,
-            models.QuestionnaireResult.session_id == session_id,
-        )
-        .first()
-    )
-    if not result:
-        raise HTTPException(status_code=404, detail="Sessione non trovata per questo studente")
+    _require_student_result(db, current_user, group_id, username, session_id=session_id)
     return _session_conversation_messages(db, session_id)
 
 

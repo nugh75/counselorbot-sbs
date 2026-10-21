@@ -1004,14 +1004,33 @@ vista classe esistente, dal più recente: username dello studente, strumento/que
 data e punteggi quando disponibili. Quando una classe è selezionata, il collegamento
 «Vista d'insieme della classe» permette di passare direttamente alla scheda dei risultati
 e dei partecipanti della classe (`/docente/classi/{id}?tab=students`).
-**Conversazione** apre su richiesta i messaggi già consultabili dalla classe,
-usando lo stesso componente e le stesse API di Classi e Piani di somministrazione.
-Il cambio classe svuota la vista precedente e interrompe le sue letture. Nessuna
+**Apri compilazione** mostra, per quel risultato e quello studente, il profilo
+dei fattori con le stesse visualizzazioni disponibili allo studente, la sintesi
+del counselor, **La mia lettura — riflessione dello studente** e la conversazione.
+La lettura è in sola consultazione e distingue punti di forza, aree da far
+crescere, «Cosa mi dice di me» e data dell'ultimo salvataggio. Se manca o è vuota,
+la scheda lo indica esplicitamente; non viene ricavata dal testo del chatbot.
+Il pulsante **Scarica il resoconto PDF** usa lo stesso generatore e la stessa
+sintesi canonica del documento dello studente, con il transcript completo.
+La sintesi conserva la cache e il comportamento di generazione già previsto
+nella vista studente. Il PDF non modifica la riflessione salvata.
+La stessa scheda è usata da Compilazioni, Classi (matrice ed elenco) e Piani di
+somministrazione. Le etichette accessibili includono la data per distinguere
+compilazioni ripetute; nei riquadri stretti i nomi dei fattori si adattano allo
+spazio disponibile, mantenendo codice e punteggio leggibili.
+Gli endpoint di dettaglio e PDF sono sotto
+`/admin/groups/{id}/students/{username}/results/{result_id}` e
+`/admin/administration-plans/{id}/students/{username}/results/{result_id}`
+(download con suffisso `/pdf`, lingua con `?lang=`). La sessione è ricavata dal
+risultato autorizzato, senza consentire accesso ad altre compilazioni del piano.
+Il cambio classe, studente, compilazione o lingua smonta il dettaglio precedente
+e interrompe le sue letture e download. Nessuna
 classe, nessuna compilazione visibile, caricamento ed errore hanno messaggi distinti;
 gli errori recuperabili offrono **Riprova**. L’assenza di risultati non viene
 interpretata come questionari incompleti. Sono conservati i controlli backend sul
 ruolo, sulla proprietà/condivisione della classe, sull’appartenenza dello studente
-e sulla sessione: nessun nuovo permesso o allargamento della visibilità.
+e sul risultato: la riflessione e il PDF seguono lo stesso perimetro del transcript.
+Le scritture della lettura e gli altri strumenti personali restano dello studente.
 
 Nella header la voce verso l'area è «Area docente» con l'icona a berretto da
 laurea, uguale per docenti, ricercatori e amministrazione: nel selettore «Area» da

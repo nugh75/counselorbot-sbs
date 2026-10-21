@@ -545,6 +545,31 @@ async def get_administration_plan_responses(
 
 # --- Studenti del piano (risultati + transcript). Note/messaggi: routes/groups.py --
 
+def _require_plan_student_result(db, current_user, plan_id, username, **result_filter):
+    plan = _require_visible_plan(db, current_user, plan_id)
+    result = db.query(models.QuestionnaireResult).filter_by(
+        administration_plan_id=plan.id, username=username, **result_filter,
+    ).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Sessione non trovata in questo piano")
+    return result
+
+
+@router.get("/admin/administration-plans/{plan_id}/students/{username}/results/{result_id}")
+async def get_plan_student_result(plan_id: int, username: str, result_id: int, lang: str = "it",
+                                  current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..teacher_results import result_detail
+    result = _require_plan_student_result(db, current_user, plan_id, username, id=result_id)
+    return result_detail(db, result, lang)
+
+
+@router.get("/admin/administration-plans/{plan_id}/students/{username}/results/{result_id}/pdf")
+async def get_plan_student_result_pdf(plan_id: int, username: str, result_id: int, lang: str = "it",
+                                      current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from .survey import questionnaire_pdf_response
+    result = _require_plan_student_result(db, current_user, plan_id, username, id=result_id)
+    return questionnaire_pdf_response(db, result, lang=lang)
+
 @router.get("/admin/administration-plans/{plan_id}/students")
 async def get_administration_plan_students(
     plan_id: int,
@@ -615,18 +640,7 @@ async def get_plan_student_conversation(
     """Transcript di una sessione di uno studente del piano (informativa in pagina gruppo)."""
     from .survey import _session_conversation_messages
 
-    plan = _require_visible_plan(db, current_user, plan_id)
-    result = (
-        db.query(models.QuestionnaireResult)
-        .filter(
-            models.QuestionnaireResult.administration_plan_id == plan.id,
-            models.QuestionnaireResult.username == username,
-            models.QuestionnaireResult.session_id == session_id,
-        )
-        .first()
-    )
-    if not result:
-        raise HTTPException(status_code=404, detail="Sessione non trovata in questo piano")
+    _require_plan_student_result(db, current_user, plan_id, username, session_id=session_id)
     return _session_conversation_messages(db, session_id)
 
 

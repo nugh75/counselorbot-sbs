@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from backend import auth, database, models
-from backend.routes import groups
+from backend.routes import groups, administration_plans, survey
 from backend.tests.artifact_database import artifact_session
 
 
@@ -43,6 +43,8 @@ def class_results_api():
                     "is_researcher": False, "groups": ["docenti"]}
         app = FastAPI()
         app.include_router(groups.router)
+        app.include_router(administration_plans.router)
+        app.include_router(survey.router)
         app.dependency_overrides[database.get_db] = lambda: db
         app.dependency_overrides[auth.get_current_user] = lambda: identity
         with TestClient(app) as client:

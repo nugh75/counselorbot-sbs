@@ -1,3 +1,50 @@
+# Handoff: dettaglio completo delle compilazioni per il docente (#406)
+Data: 2026-10-21 | Branch: `feature/teacher-result-detail-406` | Base: `d54d1807`
+
+Worktree separato `Counselorbot-worktrees/teacher-result-detail-406`, creato da
+origin/main aggiornato; il checkout dell’agente che segue #418 resta invariato.
+Audit e piano prima del codice in `docs/operations/teacher-result-detail.md`.
+
+«Apri compilazione» riunisce profilo dei risultati, sintesi canonica, lettura
+salvata dallo studente, PDF completo e conversazione. Componente condiviso da
+Compilazioni, matrice/elenco della classe e piani di somministrazione. Forze,
+aree di crescita e nota sono parole dello studente e hanno una sezione propria;
+lettura mancante o vuota esplicita. Le etichette del profilo si restringono anche
+nella scheda mobile. Date nelle etichette accessibili distinguono compilazioni
+ripetute. Guida docente e informativa gruppi aggiornate nelle sei lingue.
+
+Nuove letture di dettaglio/PDF per ID del risultato sotto il perimetro classe o
+piano. Stessi controlli del transcript; nessun accesso a un’altra compilazione
+solo perché dello stesso studente. Lettura risolta per username/sessione/strumento,
+nessun collegamento agli obiettivi personali restituito. PDF e sintesi riusano
+il percorso dello studente, con la cache/generazione ordinaria della sintesi.
+Nessuna migrazione DB o modifica dei prompt salvati. #247 resta separata.
+
+Verifiche: 36 backend su Postgres 15 isolato in tmpfs, inclusi PDF reali estratti
+e confrontati nelle sei lingue, accessi/revoche e compilazioni multiple; 600
+unitari frontend. Coperti 36 casi browser distinti con batterie parzialmente
+sovrapposte: 33/34 iniziali positivi, il timeout di navigazione della classe
+a freddo ricontrollato insieme ai due casi visuali; altri due casi finali su
+matrice e compilazioni ripetute positivi. Timeout di sola navigazione della
+fixture portato a 60 s, controlli interattivi invariati a 30 s. Un ulteriore avvio a freddo oltre 60 s
+è passato dopo la compilazione; controlli finali delle etichette a 320/1440 px
+positivi. Nessun LLM reale,
+SSO o dato produttivo nei test. Screenshot sintetici 320/1440 px verificati.
+Immagini Docker di validazione costruite per entrambi i lati
+(`counselorbot-teacher-results-validation:20261021`,
+`counselorbot-406-frontend-validation:20261021`): la batteria browser completa è
+stata rieseguita sul frontend compilato con 36/36 casi superati e la pagina
+docente risponde HTTP 200. Il container di prova è stato arrestato.
+
+Dettagli, comandi e limiti nel documento operativo. Nessun deploy o sudo:
+il rilascio ufficiale dopo il merge richiede comunque il rebuild delle due
+immagini con i tag di produzione. Database temporaneo arrestato e rimosso
+automaticamente (nessun volume); frontend dev su :3143 arrestato. Nessun nuovo
+processo dev rimasto attivo.
+
+Le modifiche estranee del checkout principale (`.timoniere.json`, `.herdr-web-ui/`,
+`chatgpt-connect.py` e gli artefatti dell’altro agente) non sono state toccate.
+
 # Handoff: budget adattivi OpenRouter (#403)
 Data: 2026-10-21 | Branch: `fix/adaptive-reasoning-budget`
 
