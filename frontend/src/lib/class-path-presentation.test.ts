@@ -109,7 +109,7 @@ test('guided results chats name both sources', () => {
     const personal = resolveStepPresentation('it', {
         step_type: 'guided_results_chat',
         tool_key: 'QSAr',
-        target_summary: {instrument_code: 'QSAr', source: 'personal'},
+        target_summary: {instrument_code: 'QSAr'},
     });
     assert.equal(personal.title, 'Analizza un questionario · QSAr · Da una compilazione personale');
 
@@ -136,4 +136,47 @@ test('a pending step falls back to the template description and the editor fallb
 
 test('derived titles ignore the saved override', () => {
     assert.equal(derivedStepTitle('it', {step_type: 'tool', tool_key: 'goals', title: 'Mio titolo'}, toolName), 'tool:goals');
+});
+
+for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
+    test(`all step types resolve defaults, explicit overrides and reset in ${lang}`, () => {
+        const steps = [
+            {step_type: 'tool', tool_key: 'timeline'},
+            {step_type: 'guided_chat', tool_key: 'SAVICKAS'},
+            {step_type: 'guided_results_chat', tool_key: 'QSAr'},
+            {step_type: 'guided_results_chat', target_summary: {instrument_code: 'QSAr', code: 'AP-1'}},
+            {step_type: 'questionnaire_administration', target_summary: {title: 'Plan title'}},
+            {step_type: 'assignment', assignment_summary: {title: 'Activity title'}},
+            {step_type: 'forum'},
+            {step_type: 'meeting', meeting_summary: {title: 'Meeting title'}},
+            {step_type: 'pending', pending_config: {kind: 'forum' as const, title: 'Template discussion'}},
+        ];
+        for (const step of steps) {
+            const plain = resolveStepPresentation(lang, step, {toolName});
+            assert.ok(plain.title);
+            const custom = resolveStepPresentation(lang, {...step, title: 'Personal', instructions: 'Class note', due_date: '2026-10-31'}, {toolName});
+            assert.equal(custom.title, 'Personal');
+            assert.equal(custom.note, 'Class note');
+            assert.equal(custom.dueDate, '2026-10-31');
+            assert.equal(resolveStepPresentation(lang, {...step, title: null, instructions: null, due_date: null}, {toolName}).title, plain.title);
+        }
+        assert.equal(resolveStepPresentation(lang, {step_type: 'questionnaire_administration', target_summary: {instrument_code: 'QSA'}}).dueDate, null);
+    });
+}
+
+test('meeting calendar days follow the reader timezone, including midnight and DST', () => {
+    const previous = process.env.TZ;
+    try {
+        for (const [zone, expected] of [['Europe/Stockholm', '2026-10-25'], ['America/Los_Angeles', '2026-10-24'], ['Pacific/Kiritimati', '2026-10-25']]) {
+            process.env.TZ = zone;
+            const step = {step_type: 'meeting', meeting_summary: {starts_at: '2026-10-24T23:30:00Z'}};
+            assert.equal(effectiveDueDate(step).value, expected);
+            assert.equal(localIsoDate('2026-10-24'), '2026-10-24');
+        }
+        process.env.TZ = 'Europe/Stockholm';
+        assert.equal(localIsoDate('2026-03-29T22:30:00Z'), '2026-03-30');
+    } finally {
+        if (previous === undefined) delete process.env.TZ;
+        else process.env.TZ = previous;
+    }
 });

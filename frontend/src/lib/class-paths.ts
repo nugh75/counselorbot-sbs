@@ -1,3 +1,5 @@
+// @ts-expect-error -- Node's TypeScript runner requires the extension.
+import { effectiveDueDate } from './class-path-presentation.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { parseMeeting, type ClassMeeting } from './class-meetings.ts';
 // `pending`: applied from a template, created at publication (#172); `meeting`: a class or group meeting (#175).
@@ -400,7 +402,7 @@ export function filterProgressStudents(
 ): ClassPathProgressStudent[] {
     if (filter === 'not_started') return progress.students.filter(student => student.done === 0);
     if (filter === 'late') {
-        const due = new Map(progress.steps.map(step => [step.id, step.due_date || null]));
+        const due = new Map(progress.steps.map(step => [step.id, effectiveDueDate(step).value]));
         return progress.students.filter(student => student.cells.some(cell => {
             const date = due.get(cell.step_id);
             return cell.state !== 'done' && cell.state !== 'unavailable' && date != null && date < today;
@@ -436,9 +438,10 @@ export function selectCurrentClassPath(paths: StudentClassPath[]): StudentClassP
     const getNearestIncompleteDueDate = (path: StudentClassPath): string | null => {
         let nearest: string | null = null;
         for (const step of path.steps) {
-            if (step.state !== 'done' && step.due_date) {
-                if (!nearest || step.due_date < nearest) {
-                    nearest = step.due_date;
+            const date = effectiveDueDate(step).value;
+            if (step.state !== 'done' && date) {
+                if (!nearest || date < nearest) {
+                    nearest = date;
                 }
             }
         }
@@ -448,9 +451,10 @@ export function selectCurrentClassPath(paths: StudentClassPath[]): StudentClassP
     const getNearestAnyDueDate = (path: StudentClassPath): string | null => {
         let nearest: string | null = null;
         for (const step of path.steps) {
-            if (step.due_date) {
-                if (!nearest || step.due_date < nearest) {
-                    nearest = step.due_date;
+            const date = effectiveDueDate(step).value;
+            if (date) {
+                if (!nearest || date < nearest) {
+                    nearest = date;
                 }
             }
         }

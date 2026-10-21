@@ -22,7 +22,7 @@ import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
 import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
-import { typedStepTargetLabel } from '@/lib/i18n-administration-steps';
+import { resolveStepPresentation } from '@/lib/class-path-presentation';
 
 const FILTERS: { value: ProgressFilter; key: PathTextKey }[] = [
     { value: 'all', key: 'filterAll' },
@@ -93,7 +93,7 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
         return chat >= 0 ? ` · ${stepKindText(lang, 'followsChat')} ${chat + 1}` : '';
     };
     const stepName = (step: ClassPathProgressStep, index: number) =>
-        `${l('stepLabel').replace('{n}', String(index + 1))} · ${step.title || typedStepTargetLabel(lang, step) || toolName(step.tool_key)}${followsName(step)}`;
+        `${l('stepLabel').replace('{n}', String(index + 1))} · ${resolveStepPresentation(lang, step, {toolName}).title}${followsName(step)}`;
     const formatDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(lang) : '');
 
     const students = filterProgressStudents(progress, filter, todayIso());

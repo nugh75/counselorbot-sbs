@@ -16,7 +16,8 @@ import {
     type StudentClassPathStep,
 } from '@/lib/class-paths';
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
-import { typedStepTargetLabel } from '@/lib/i18n-administration-steps';
+import { meetingWhen } from '@/lib/class-meetings';
+import { resolveStepPresentation } from '@/lib/class-path-presentation';
 
 interface Props {
     path: StudentClassPath;
@@ -117,8 +118,8 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                     const isDone = step.state === 'done';
                     const isLocked = step.state === 'locked';
                     const isUnavailable = step.state === 'unavailable';
-                    const toolDisplayName = typedStepTargetLabel(lang, step) ?? resolveClassPathToolName(step.tool_key, lang);
-                    const titleDisplay = step.title ? step.title : toolDisplayName;
+                    const presentation = resolveStepPresentation(lang, step, {toolName: key => resolveClassPathToolName(key, lang)});
+                    const titleDisplay = presentation.title;
                     const isActionBusy = actionStepId === step.id;
 
                     const containerClasses = isCurrent
@@ -201,15 +202,15 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                                             <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{pathPublicationText(lang, 'studentUnavailable')}</p>
                                         )}
 
-                                        {step.title && step.title !== toolDisplayName && (
+                                        {presentation.titleSource === 'override' && presentation.title !== presentation.derivedTitle && (
                                             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                                                {toolDisplayName}
+                                                {presentation.derivedTitle}
                                             </p>
                                         )}
 
-                                        {step.instructions && (
-                                            <p className="text-sm text-slate-600 dark:text-slate-300">
-                                                {step.instructions}
+                                        {presentation.note && (
+                                            <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
+                                                {presentation.note}
                                             </p>
                                         )}
 
@@ -223,8 +224,11 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                                         )}
 
                                         <div className="flex flex-wrap items-center gap-3 pt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                            {step.due_date && (
-                                                <span>{l('dueOn').replace('{date}', step.due_date)}</span>
+                                            {presentation.showDueDate && presentation.dueDate && (
+                                                <span>{l('dueOn').replace('{date}', presentation.dueDate)}</span>
+                                            )}
+                                            {step.step_type === 'meeting' && step.meeting_summary?.starts_at && (
+                                                <time dateTime={step.meeting_summary.starts_at}>{meetingWhen(step.meeting_summary, lang)}</time>
                                             )}
                                             {isDone && step.source && (
                                                 <span>

@@ -359,3 +359,23 @@ test('deep-dive steps keep their bound administration step for teacher and stude
     assert.equal(student.completion_kind,'guided_results_chat');
     assert.equal(parseClassPathStep({step_type:'forged',tool_key:'QSA'}).step_type,'tool');
 });
+
+test('progress lateness and hero selection share object dates and explicit overrides', () => {
+    const steps = [
+        {id: 1, step_type: 'assignment', target_summary: {title: 'Task', due_date: '2026-10-20'}},
+        {id: 2, step_type: 'questionnaire_administration', target_summary: {scheduled_at: '2026-10-18', instrument_code: 'QSA'}},
+        {id: 3, step_type: 'meeting', target_summary: {id: 3, starts_at: '2026-10-19T12:00:00Z'}},
+    ];
+    const progress = parseClassPathProgress({steps, students: [
+        {username: 'late', cells: steps.map(step => ({step_id: step.id, state: 'not_done'}))},
+        {username: 'done', cells: steps.map(step => ({step_id: step.id, state: 'done'}))},
+        {username: 'unavailable', cells: steps.map(step => ({step_id: step.id, state: 'unavailable'}))},
+    ]});
+    assert.deepEqual(filterProgressStudents(progress, 'late', '2026-10-21').map(row => row.username), ['late']);
+    const paths = steps.map(step => parseStudentClassPath({id: step.id, total: 1, done: 0, steps: [{...step, state: 'not_done'}]}));
+    assert.equal(selectCurrentClassPath(paths)?.id, 2);
+    paths[1].steps[0].due_date = '2026-10-30';
+    assert.equal(selectCurrentClassPath(paths)?.id, 3);
+    paths[2].steps[0].due_date = '2026-10-31';
+    assert.equal(selectCurrentClassPath(paths)?.id, 1);
+});

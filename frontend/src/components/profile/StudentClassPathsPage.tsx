@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Circle, Lock, AlertCircle, ArrowRight, Play } from 'lucide-react';
+import { CheckCircle2, Lock, AlertCircle, ArrowRight, Play } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { pathPublicationText } from '@/lib/i18n-path-publication';
 import { apiFetch } from '@/lib/auth';
@@ -20,7 +20,7 @@ import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
 import { MeetingDetails, useStudentMeetings } from './MeetingDetails';
 import { classMeetingText } from '@/lib/i18n-class-meetings';
 import { stepKindText } from '@/lib/i18n-step-kinds';
-import { typedStepTargetLabel } from '@/lib/i18n-administration-steps';
+import { resolveStepPresentation } from '@/lib/class-path-presentation';
 import { pathAssignmentText } from '@/lib/i18n-path-assignments';
 import { pathForumText } from '@/lib/i18n-path-forum';
 import { forumStepNotice } from '@/lib/path-forum';
@@ -169,8 +169,8 @@ export function StudentClassPathsPage() {
                                 const isDone = step.state === 'done';
                                 const isLocked = step.state === 'locked';
                                 const isUnavailable = step.state === 'unavailable';
-                                const toolDisplayName = typedStepTargetLabel(lang, step) ?? resolveClassPathToolName(step.tool_key, lang);
-                                const titleDisplay = step.title ? step.title : toolDisplayName;
+                                const presentation = resolveStepPresentation(lang, step, {toolName: key => resolveClassPathToolName(key, lang)});
+                                const titleDisplay = presentation.title;
                                 const isActionBusy = actionStepId === step.id;
 
                                 // State-based styles matching ASCII §8.3 & Design Rules
@@ -248,15 +248,15 @@ export function StudentClassPathsPage() {
                                                         <p className="mt-1 text-xs text-slate-600">{pathPublicationText(lang, 'studentUnavailable')}</p>
                                                     )}
 
-                                                    {step.title && step.title !== toolDisplayName && (
+                                                    {presentation.titleSource === 'override' && presentation.title !== presentation.derivedTitle && (
                                                         <p className="text-xs font-medium text-slate-500">
-                                                            {toolDisplayName}
+                                                            {presentation.derivedTitle}
                                                         </p>
                                                     )}
 
-                                                    {step.instructions && (
-                                                        <p className="text-sm text-slate-600">
-                                                            {step.instructions}
+                                                    {presentation.note && (
+                                                        <p className="whitespace-pre-wrap text-sm text-slate-600">
+                                                            {presentation.note}
                                                         </p>
                                                     )}
                                                     {step.step_type === 'assignment' && !isUnavailable && (
@@ -295,8 +295,8 @@ export function StudentClassPathsPage() {
                                                     )}
 
                                                     <div className="flex flex-wrap items-center gap-3 pt-0.5 text-xs text-slate-500">
-                                                        {step.due_date && (
-                                                            <span>{l('dueOn').replace('{date}', step.due_date)}</span>
+                                                        {presentation.showDueDate && presentation.dueDate && (
+                                                            <span>{l('dueOn').replace('{date}', presentation.dueDate)}</span>
                                                         )}
                                                         {isDone && step.source && (
                                                             <span>

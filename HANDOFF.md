@@ -1,3 +1,81 @@
+# OC3 — checkpoint di ripresa urgente (quota 1%)
+Data: 2026-10-21 | Branch: `feat/class-path-step-presentation`
+Task Diario: `96488cb8-46aa-423d-9435-fb497a1af048`, agente `s3-plan-presentation`.
+**INCOMPLETO: non segnare fatto. Nessuna PR ancora aperta.**
+
+## Stato concreto
+- S0/S1 pubblicati: `807fe006`, `6561f213`. Main integrato con merge ordinario
+  `df7a55a1` (conflitto solo HANDOFF, conservate entrambe le consegne).
+- S2 implementato: resolver usato da pagina studente, hero, progressi,
+  filtro ritardo e ordinamento. Hero mostra la data incontro con meetingWhen;
+  pagina completa la mostra in MeetingDetails. Test fixture corretta per usare
+  il contratto API reale `target_summary` (parser lo converte in meeting/assignment_summary).
+- S3 implementato: `forum_step_title_missing` solo in publication_problems;
+  azione e testo localizzati nelle sei lingue. Nessuna modifica al descriptor
+  di lettura: vecchi piani pubblicati ancora leggibili. Nuovi test backend e
+  fixture esistenti aggiornati con titolo esplicito, senza derivare dal topic.
+- S4 implementato: note visibili nel controllo condiviso dei template; data
+  nascosta perché il template non la salva. Anteprima espone testo classe/modello;
+  status `customized` conserva tutto il passo se titolo/nota differiscono dallo
+  snapshot iniziale (anche cancellazione esplicita e rimozione dal template).
+  Test backend parametrizzati aggiunti; from_class_path già copiava solo gli
+  override, ora coperto da test. Nessuna migrazione/nuovo endpoint.
+- Chiavi React stabili aggiunte per passi nuovi riordinati. Bug Diario sospetto
+  `a82f855f-9fea-4e00-876f-b925ab0d2efb` (non ancora riprodotto in browser).
+- S5 ancora DA FARE: documento operativo, catalogo funzionale, guida sei lingue,
+  screenshot, CONTEXT, guidance-refresh/check e riepilogo finale reale.
+
+## Verifiche reali e log
+- 12 test resolver originari passati (prima del checkpoint S1).
+- Ultima batteria mirata: 50/51 passati in `/tmp/oc3-unit-focused.log`;
+  fallimento nel NUOVO test ero/ritardo: fixture usava meeting_summary e
+  assignment_summary come payload API anziché target_summary. Corretti entrambi,
+  nuovo comando già avviato: leggere risultato, non presumere verde.
+- ESLint mirato terminato senza errori, 1 warning Circle inutilizzato nella
+  pagina studente (`/tmp/oc3-eslint.log`); rimuovere import e ripetere mirato.
+- TypeScript fallito: fixture S0 includeva campo source non dichiarato (corretto);
+  numerosi import PNG non risolti durante generazione iniziale next-env/types.
+  `/tmp/oc3-types.log`; ripetere dopo avvio/compilazione Next, classificare con prove.
+- Browser regressioni 0/7, timeout di navigazione durante compilazione fredda:
+  `/tmp/oc3-browser-regressions.log`; nuovo browser presentazione stesso timeout
+  `/tmp/oc3-browser-presentation.log`. Non attribuiti al prodotto senza evidenze.
+  Test presentazione in frontend/tests/class-path-presentation.test.mjs: sei lingue,
+  390/1440, editor save/reset, pagina studente e hero. Fixture target_summary
+  appena corretta; chiave pulsante corretta da save a saveDraft. Ancora da verificare.
+- Backend mirati IN CORSO: test_class_paths, test_path_publication, test_path_templates,
+  log `/tmp/oc3-backend-tests.log` (solo puntini all'ultimo controllo).
+- Node completo, i18n, guidance-check, browser riordino/template: ancora da eseguire.
+
+## Risorse avviate da questa sessione
+- Frontend dev loopback :3161, PID launcher 75901, server 75967;
+  `/tmp/oc3-dev.log`, script scripts/dev-class-path-presentation-tests.sh.
+  Origin backend forzato a 127.0.0.1:9, API browser interamente sintetiche.
+  Next segnala automaticamente `.env.development` preesistente; contenuto mai
+  ispezionato. Per isolamento più rigoroso usare snapshot frontend senza .env*,
+  o container dev con source mount mirati; non leggere/modificare quel file.
+- PostgreSQL effimero `counselorbot-oc3-pg`, tmpfs dati, loopback :18661,
+  DB counselorbot_test, utente oc3 e password sintetica synthetic-oc3.
+- Rete Docker interna `counselorbot-oc3-test`; backend test container
+  `counselorbot-oc3-backend-tests` (--rm), nessuna porta pubblicata, mount backend ro.
+  DATABASE_URL punta SOLO al PG sintetico. Monitorare con docker logs/status.
+- Immagine backend costruita `counselorbot-backend:oc3-presentation`,
+  sha256:3d4ba21a7839a0dbd133f251a8c18fff2a1102a2123dd1e2e1356fb4a163d025,
+  log `/tmp/oc3-backend-build.log`. I test backend aggiunti DOPO la build sono
+  letti via mount; ricostruire al termine per includerli. Frontend build ancora da fare.
+- Stop SOLO risorse proprie quando terminati: kill 75901 75967;
+  docker stop counselorbot-oc3-backend-tests (se ancora attivo) counselorbot-oc3-pg.
+  Nessun cleanup immagini/volumi; gestione al Timoniere.
+
+## Prossimo passo senza rifare audit
+1. Leggere i piccoli tail dei log e monitorare processi già attivi.
+2. Concludere unitari corretti, browser a compilazione pronta, backend mirati;
+   correggere i difetti introdotti. Non rilanciare suite ampie già passate.
+3. Completare S5, controlli, build isolate e stop risorse.
+4. Commit/push atomici, PR DRAFT verso main con --project CounselorBot --body-file.
+   Niente ready/merge/deploy. Notifica Diario best-effort subito dopo apertura.
+5. Solo a consegna interamente completa update-task fatto; audit indipendente
+   DeepSeek sullo SHA esatto avviato dal Timoniere. Baseline #349/#351 escluse.
+
 # OC3 — checkpoint presentazione passi (S0–S1)
 Data: 2026-10-21 | Branch: `feat/class-path-step-presentation`
 
