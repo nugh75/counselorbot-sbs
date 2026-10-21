@@ -306,12 +306,12 @@ export const administrationStepTexts = {
     "Resultat från steg",
   ],
   deepDiveRule: [
-    "Facoltativo. Lo studente apre una chat guidata sul risultato registrato nel passo di somministrazione scelto; il passo è fatto solo quando il server registra l’ultimo turno guidato di quella sessione. Salva il piano operativo dopo aver aggiunto la somministrazione per poterla collegare. Togliere l’approfondimento non annulla la somministrazione.",
-    "Optional. The student opens a guided chat on the result recorded by the chosen administration step; the step is done only when the server records the final guided turn of that session. Save the operational plan after adding the administration so you can link it. Removing the deep dive does not undo the administration.",
-    "Opcional. El estudiante abre un chat guiado sobre el resultado registrado en el paso de administración elegido; el paso se completa solo cuando el servidor registra el último turno guiado de esa sesión. Guarda el plan operativo después de añadir la administración para poder vincularla. Quitar la profundización no anula la administración.",
-    "Facultatif. L’élève ouvre une discussion guidée sur le résultat enregistré par l’étape de passation choisie ; l’étape n’est terminée que lorsque le serveur enregistre le dernier tour guidé de cette session. Enregistrez le plan opérationnel après avoir ajouté la passation pour pouvoir la lier. Retirer l’approfondissement n’annule pas la passation.",
-    "Optional. Lernende öffnen einen geführten Chat zum Ergebnis des gewählten Durchführungsschritts; der Schritt ist erst erledigt, wenn der Server die letzte geführte Runde dieser Sitzung speichert. Speichere den Arbeitsplan nach dem Hinzufügen der Durchführung, um sie zu verknüpfen. Das Entfernen der Vertiefung macht die Durchführung nicht rückgängig.",
-    "Valfritt. Eleven öppnar en vägledd chatt om resultatet från det valda enkätsteget; steget är klart först när servern registrerar den sista vägledda omgången i den sessionen. Spara arbetsplanen efter att du lagt till enkätomgången så att du kan koppla den. Att ta bort fördjupningen ångrar inte enkätomgången.",
+    "Facoltativo. Lo studente apre una chat guidata sul risultato registrato nel passo di somministrazione scelto; il passo è fatto solo quando il server registra l’ultimo turno guidato di quella sessione. Togliere l’approfondimento non annulla la somministrazione.",
+    "Optional. The student opens a guided chat on the result recorded by the chosen administration step; the step is done only when the server records the final guided turn of that session. Removing the deep dive does not undo the administration.",
+    "Opcional. El estudiante abre un chat guiado sobre el resultado registrado en el paso de administración elegido; el paso se completa solo cuando el servidor registra el último turno guiado de esa sesión. Quitar la profundización no anula la administración.",
+    "Facultatif. L’élève ouvre une discussion guidée sur le résultat enregistré par l’étape de passation choisie ; l’étape n’est terminée que lorsque le serveur enregistre le dernier tour guidé de cette session. Retirer l’approfondissement n’annule pas la passation.",
+    "Optional. Lernende öffnen einen geführten Chat zum Ergebnis des gewählten Durchführungsschritts; der Schritt ist erst erledigt, wenn der Server die letzte geführte Runde dieser Sitzung speichert. Das Entfernen der Vertiefung macht die Durchführung nicht rückgängig.",
+    "Valfritt. Eleven öppnar en vägledd chatt om resultatet från det valda enkätsteget; steget är klart först när servern registrerar den sista vägledda omgången i den sessionen. Att ta bort fördjupningen ångrar inte enkätomgången.",
   ],
   deepDiveReferenced: [
     "Un approfondimento usa questa somministrazione: rimuovi prima l’approfondimento.",
@@ -322,12 +322,12 @@ export const administrationStepTexts = {
     "En fördjupning använder den här enkätomgången: ta bort fördjupningen först.",
   ],
   deepDiveInvalid: [
-    "L’approfondimento deve seguire una somministrazione salvata di questo piano operativo, una sola volta.",
-    "The deep dive must follow a saved administration of this operational plan, once.",
-    "La profundización debe seguir a una administración guardada de este plan operativo, una sola vez.",
-    "L’approfondissement doit suivre une passation enregistrée de ce plan opérationnel, une seule fois.",
-    "Die Vertiefung muss einmal auf eine gespeicherte Durchführung dieses Arbeitsplans folgen.",
-    "Fördjupningen måste följa en sparad enkätomgång i den här arbetsplanen, en gång.",
+    "L’approfondimento deve seguire una somministrazione precedente di questo piano operativo, una sola volta.",
+    "The deep dive must follow an earlier administration of this operational plan, once.",
+    "La profundización debe seguir a una administración anterior de este plan operativo, una sola vez.",
+    "L’approfondissement doit suivre une passation précédente de ce plan opérationnel, une seule fois.",
+    "Die Vertiefung muss einmal auf eine vorherige Durchführung dieses Arbeitsplans folgen.",
+    "Fördjupningen måste följa en tidigare enkätomgång i den här arbetsplanen, en gång.",
   ],
   deepDiveIntro: [
     "Approfondisci in chat guidata il risultato già registrato nel passo di somministrazione. Il passo è fatto solo quando completi l’ultimo passo guidato; se esci, riprendi la stessa sessione.",
@@ -387,7 +387,7 @@ export function typedStepTargetLabel(
   lang: string,
   step: {
     step_type?: string;
-    target_summary?: { instrument_code: string; code: string } | null;
+    target_summary?: { instrument_code: string; code?: string; source?: 'personal' } | null;
     assignment_summary?: { title: string } | null;
     meeting_summary?: { title: string } | null;
   },
@@ -403,7 +403,7 @@ export function typedStepTargetLabel(
       ? `${classMeetingText(lang, "meeting")} · ${step.meeting_summary.title}`
       : classMeetingText(lang, "meeting");
   if (!step.target_summary) return null;
-  const target = `${step.target_summary.instrument_code} · ${step.target_summary.code}`;
+  const target = [step.target_summary.instrument_code, step.target_summary.code].filter(Boolean).join(' · ');
   return step.step_type === "guided_results_chat"
     ? `${administrationStepText(lang, "deepDive")} · ${target}`
     : target;

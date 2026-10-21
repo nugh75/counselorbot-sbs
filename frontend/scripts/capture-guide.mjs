@@ -15,6 +15,8 @@ import { classPickerText } from '../src/lib/i18n-class-picker.ts';
 import { classSettingsText } from '../src/lib/i18n-class-settings.ts';
 import { notebookLinkText } from '../src/lib/teacher-notebook-links.ts';
 import { classPathText } from '../src/lib/i18n-class-paths.ts';
+import { stepKindText } from '../src/lib/i18n-step-kinds.ts';
+import { resultsChatText } from '../src/lib/i18n-results-chats.ts';
 
 const origin = new URL(process.env.GUIDE_BASE_URL || 'http://127.0.0.1:3000').origin;
 const locales = ['it', 'en', 'es', 'fr', 'de', 'sv'];
@@ -226,6 +228,13 @@ try {
                 await page.evaluate(() => window.scrollTo(0, 0));
             }
             await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
+            if (name === 'teacher-class-paths') {
+                // The expanded questionnaire form is taller than a viewport. Keep
+                // real sticky controls outside the cropped card, rather than
+                // stitching the header and Save bar across the form.
+                await page.setViewportSize({width: 1440, height: await page.evaluate(() => document.documentElement.scrollHeight)});
+                await page.evaluate(() => window.scrollTo(0, 0));
+            }
             const fullClassPage = ['class-overview', 'class-tools', 'admin-classes', 'admin-locks', 'admin-audit'].includes(name);
             if (fullClassPage) {
                 // A tall viewport keeps the real sticky Save bar at the end without obscuring rows.
@@ -358,6 +367,10 @@ try {
             await page.getByRole('button', { name: classPathText(lang, 'open'), exact: true }).click();
             const editor = page.locator('[data-testid="add-step"]').locator('..');
             await editor.locator('[data-testid="path-step-card"]').nth(2).waitFor();
+            const addStep = page.locator('[data-testid="add-step"]');
+            await addStep.getByRole('button', {name: stepKindText(lang, 'addStep'), exact: true}).click();
+            await addStep.getByRole('radio', {name: stepKindText(lang, 'guided_chat'), exact: true}).check();
+            await addStep.getByRole('combobox', {name: resultsChatText(lang, 'analyzeQuestionnaire')}).selectOption('QSA');
             await capture('teacher-class-paths', editor);
             teacher = false;
             await go('/profilo/piani-operativi');

@@ -105,7 +105,7 @@ export function moveTemplateStep(steps: TemplateStep[], from: number, to: number
     const position = new Map(order.map((oldIndex, newIndex) => [oldIndex + 1, newIndex + 1]));
     return order.map(index => {
         const step = steps[index];
-        if (step.step_type !== 'guided_results_chat' || step.results_position == null) return step;
+        if (step.step_type !== 'guided_results_chat' || step.tool_key || step.results_position == null) return step;
         return {...step, results_position: position.get(step.results_position)};
     });
 }
@@ -122,7 +122,7 @@ export function templateStepPayload(step: TemplateStep) {
         case 'tool': return {...base, tool_key: step.tool_key};
         case 'questionnaire_administration':
             return {...base, instrument_code: step.instrument_code, locale: step.locale, plan_title: step.plan_title?.trim() || ''};
-        case 'guided_results_chat': return {...base, results_position: step.results_position};
+        case 'guided_results_chat': return step.tool_key ? {...base, tool_key: step.tool_key} : {...base, results_position: step.results_position};
         case 'assignment':
             return {...base, goal_id: step.goal_id, attachments: step.attachments ?? [], tool_keys: step.tool_keys ?? [],
                 assignment_instructions: step.assignment_instructions?.trim() || '', intent: step.intent ?? 'proposal',
@@ -138,6 +138,7 @@ export function templateStepsValid(steps: TemplateStep[]): boolean {
             case 'tool': return Boolean(step.tool_key);
             case 'questionnaire_administration': return Boolean(step.instrument_code);
             case 'guided_results_chat': {
+                if (step.tool_key) return TEMPLATE_QUESTIONNAIRES.includes(step.tool_key);
                 const source = step.results_position;
                 return source != null && source - 1 < index && steps[source - 1]?.step_type === 'questionnaire_administration';
             }

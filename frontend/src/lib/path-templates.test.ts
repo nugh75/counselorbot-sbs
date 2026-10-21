@@ -43,3 +43,13 @@ test('template update previews keep known values and reject other payloads', () 
         [['added', 'forum', 'apply'], ['removed', 'tool', 'started']]);
     assert.throws(() => parseTemplateUpdate({changes: null}));
 });
+
+test('personal questionnaire analyses need no administration and retain their source when reordered', () => {
+    for (const tool_key of ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP']) {
+        const personal = {...newTemplateStep('guided_results_chat'), tool_key};
+        assert.equal(templateStepsValid([personal]), true);
+        assert.deepEqual(templateStepPayload(personal), {step_type: 'guided_results_chat', title: null, instructions: null, tool_key});
+        assert.equal(moveTemplateStep([tool, personal], 0, 1)[0].tool_key, tool_key);
+    }
+    assert.equal(templateStepsValid([{...newTemplateStep('guided_results_chat'), tool_key: 'SAVICKAS'}]), false);
+});

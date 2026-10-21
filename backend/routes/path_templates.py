@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Annotated, Literal, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -43,7 +43,14 @@ class TemplateQuestionnaireStep(TemplateStepFields):
 
 class TemplateResultsChatStep(TemplateStepFields):
     step_type: Literal["guided_results_chat"]
-    results_position: int = Field(ge=1)
+    results_position: Optional[int] = Field(default=None, ge=1)
+    tool_key: Optional[Literal["QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP"]] = None
+
+    @model_validator(mode="after")
+    def one_results_source(self):
+        if (self.results_position is None) == (self.tool_key is None):
+            raise ValueError("Choose exactly one results source")
+        return self
 
 
 class TemplateAttachment(BaseModel):
@@ -131,7 +138,7 @@ def _step(db: Session, row: models.PathTemplateStep) -> dict:
         data.update(instrument_code=config.get("instrument_code"), locale=config.get("locale"),
                     plan_title=config.get("plan_title") or "")
     elif row.step_type == "guided_results_chat":
-        data["results_position"] = config.get("results_position")
+        data.update(results_position=config.get("results_position"), tool_key=config.get("tool_key"))
     elif row.step_type == "assignment":
         goal = db.get(models.GoalCatalogEntry, config.get("goal_id"))
         data.update(goal_id=config.get("goal_id"), goal_title=(goal.data or {}).get("title") if goal else None,

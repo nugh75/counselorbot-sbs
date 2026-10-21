@@ -367,3 +367,52 @@ def test_blocked_or_stale_update_changes_nothing(api):
     assert len(current["steps"]) == 1 and current["template_revision"] == 1 and counts(db) == before
     plain = client.post(f"/teacher/groups/{data['group'].id}/paths", json={"title": "Plain"}).json()
     assert client.get(f"/teacher/paths/{plain['id']}/template-update").status_code == 404
+
+
+def test_personal_results_template_needs_no_administration_and_round_trips(api):
+    client, db, identity, data = api
+    response = client.post('/teacher/path-templates', json={'title': 'Personal QSA', 'steps': [
+        {'step_type': 'guided_results_chat', 'tool_key': 'QSA'}]})
+    assert response.status_code == 201, response.text
+    template = response.json()
+    assert template['steps'][0]['tool_key'] == 'QSA'
+    before = counts(db)
+    path = apply(client, template, data['tutors']).json()[0]
+    assert path['steps'][0]['pending_config'] == {'kind': 'guided_results_chat', 'tool_key': 'QSA'}
+    response = client.post(f"/teacher/paths/{path['id']}/publish")
+    assert response.status_code == 200, response.text
+    assert response.json()['steps'][0]['tool_key'] == 'QSA'
+    assert counts(db) == before
+    response = client.post(f"/teacher/paths/{path['id']}/save-as-template", json={'title': 'Copy'})
+    assert response.status_code == 201, response.text
+    assert response.json()['steps'][0]['tool_key'] == 'QSA'
+    as_user(identity, 'tom')
+    step_id = path['steps'][0]['id']
+    assert client.get(f"/user/paths/{path['id']}/steps/{step_id}/deep-dive").json()['ready'] is False
+
+
+def test_new_analysis_can_link_pending_questionnaire_and_detect_existing_pending_chat(api):
+    client, db, _identity, data = api
+    template = create(client, data['goal'], steps=full_steps(data['goal'])[1:2])
+    path = apply(client, template, data['group']).json()[0]
+    source = path['steps'][0]
+    response = client.put(f"/teacher/paths/{path['id']}", json={
+        'revision': path['revision'], 'title': path['title'], 'steps': [
+            {'id': source['id'], 'step_type': 'pending'},
+            {'step_type': 'guided_results_chat', 'results_step_id': source['id']}]})
+    assert response.status_code == 200, response.text
+    published = client.post(f"/teacher/paths/{path['id']}/publish")
+    assert published.status_code == 200, published.text
+    steps = published.json()['steps']
+    assert [step['step_type'] for step in steps] == ['questionnaire_administration', 'guided_results_chat']
+    assert steps[1]['results_step_id'] == source['id']
+    # Mixed pending + new references must not create duplicate analyses.
+    template = create(client, data['goal'])
+    path = apply(client, template, data['group']).json()[0]
+    pending_steps = [{'id': step['id'], 'step_type': step['step_type'],
+                      **({'tool_key': step['tool_key']} if step['step_type'] == 'tool' else {})}
+                     for step in path['steps']]
+    response = client.put(f"/teacher/paths/{path['id']}", json={
+        'revision': path['revision'], 'title': path['title'], 'steps': pending_steps + [
+            {'step_type': 'guided_results_chat', 'results_step_id': path['steps'][1]['id']}]})
+    assert response.status_code == 422 and response.json()['detail'] == 'duplicate_results_chat'

@@ -47,6 +47,10 @@ def step_config(db: Session, steps) -> list[dict]:
             config = {}
         elif value.step_type == "questionnaire_administration":
             config = {"instrument_code": value.instrument_code, "locale": value.locale, "plan_title": value.plan_title}
+        elif value.step_type == "guided_results_chat" and value.tool_key:
+            if not template_tool_available(db, value.tool_key):
+                raise HTTPException(422, "template_tool_unavailable")
+            config = {"tool_key": value.tool_key}
         elif value.step_type == "guided_results_chat":
             source = value.results_position - 1
             if source >= index or steps[source].step_type != "questionnaire_administration":
@@ -110,13 +114,13 @@ def from_class_path(db: Session, path: models.ClassPath) -> list[dict]:
         kind, config = step.step_type, dict(step.pending_config or {})
         if kind == "pending":
             kind = config.pop("kind")
-            if kind == "guided_results_chat":
+            if kind == "guided_results_chat" and not config.get("tool_key"):
                 config = {"results_position": position.get(config.get("results_step_id"))}
         elif kind == "questionnaire_administration":
             plan = db.get(models.AdministrationPlan, step.administration_plan_id)
             config = {"instrument_code": plan.instrument_code, "locale": plan.locale, "plan_title": plan.title}
         elif kind == "guided_results_chat":
-            config = {"results_position": position.get(step.results_step_id)}
+            config = {"tool_key": step.tool_key} if step.tool_key else {"results_position": position.get(step.results_step_id)}
         elif kind == "assignment":
             row = db.get(models.TeacherAssignment, step.assignment_id)
             settings = db.get(models.AssignmentLearningSettings, row.id)
@@ -138,10 +142,10 @@ def from_class_path(db: Session, path: models.ClassPath) -> list[dict]:
         elif kind in ("tool", "guided_chat"):
             # A template keeps a standalone guided chat as a tool step naming the chat.
             kind, config = "tool", {"tool_key": step.tool_key}
-        if kind == "guided_results_chat" and not config["results_position"]:
+        if kind == "guided_results_chat" and not config.get("tool_key") and not config.get("results_position"):
             raise HTTPException(409, "results_step_unavailable")
         values.append({"id": None, "step_type": kind, "tool_key": step.tool_key if kind == "tool" else None,
-                       "config": {k: v for k, v in config.items() if k != "tool_key"},
+                       "config": {k: v for k, v in config.items() if kind != "tool" or k != "tool_key"},
                        "title": step.title, "instructions": step.instructions})
     return values
 
@@ -149,7 +153,7 @@ def from_class_path(db: Session, path: models.ClassPath) -> list[dict]:
 def template_snapshot(row: models.PathTemplateStep, ids_by_position: dict[int, int]) -> dict:
     """Comparable form of a template step: a results chat names its source step, not a position."""
     config = dict(row.config or {})
-    if row.step_type == "guided_results_chat":
+    if row.step_type == "guided_results_chat" and not config.get("tool_key"):
         config = {"results_template_step_id": ids_by_position.get(config.get("results_position"))}
     return {"step_type": row.step_type, "config": config, "title": row.title, "instructions": row.instructions}
 
@@ -159,7 +163,7 @@ def apply_template(db: Session, template: models.PathTemplate, group: models.Stu
     from .routes.class_paths import get_class_enabled_tool_keys
     rows = template_steps(db, template.id)
     enabled = get_class_enabled_tool_keys(db, group.id)
-    disabled = [row.position for row in rows if row.step_type == "tool" and row.config.get("tool_key") not in enabled]
+    disabled = [row.position for row in rows if row.step_type in ("tool", "guided_results_chat") and row.config.get("tool_key") and row.config["tool_key"] not in enabled]
     if disabled:
         raise HTTPException(409, {"code": "template_tool_disabled_for_class", "group_id": group.id, "positions": disabled})
     path = models.ClassPath(group_id=group.id, title=template.title, description=template.description,
@@ -177,7 +181,7 @@ def apply_template(db: Session, template: models.PathTemplate, group: models.Stu
         if row.step_type == "tool":
             step.step_type, step.tool_key = "tool", config["tool_key"]
         else:
-            if row.step_type == "guided_results_chat":
+            if row.step_type == "guided_results_chat" and not config.get("tool_key"):
                 config = {"results_step_id": created[config["results_position"]].id}
             step.step_type, step.pending_config = "pending", {"kind": row.step_type, **config}
         db.add(step)
@@ -231,7 +235,7 @@ def template_changes(db: Session, path: models.ClassPath, template: models.PathT
         if step is not None and step.template_snapshot == snapshot:
             continue
         state = status(step)
-        if state == "apply" and row.step_type == "tool" and row.config.get("tool_key") not in enabled:
+        if state == "apply" and row.step_type in ("tool", "guided_results_chat") and row.config.get("tool_key") and row.config["tool_key"] not in enabled:
             state = "tool_disabled"
         changes.append({"change": "changed" if step else "added", "template_step_id": row.id,
                         "step_id": step.id if step else None, "step_type": row.step_type,
@@ -281,7 +285,7 @@ def update_from_template(db: Session, path: models.ClassPath, template: models.P
         if row.step_type == "tool":
             step.step_type, step.tool_key, step.pending_config = "tool", config["tool_key"], None
         else:
-            if row.step_type == "guided_results_chat":
+            if row.step_type == "guided_results_chat" and not config.get("tool_key"):
                 source = linked[change["snapshot"]["config"]["results_template_step_id"]]
                 config = {"results_step_id": source.id}
             step.step_type, step.tool_key, step.pending_config = "pending", None, {"kind": row.step_type, **config}
@@ -315,6 +319,11 @@ def materialize_pending(db: Session, path: models.ClassPath, steps: list[models.
                     db, identity, group, title=config.get("plan_title") or path.title,
                     instrument_code=config["instrument_code"], locale=config["locale"])
                 step.administration_plan_id = plan.id
+            elif kind == "guided_results_chat" and config.get("tool_key"):
+                from .path_step_types import is_tool_available_for_results
+                if not is_tool_available_for_results(db, path.group_id, config["tool_key"]):
+                    raise HTTPException(409, "tool_unavailable")
+                step.tool_key = config["tool_key"]
             elif kind == "guided_results_chat":
                 source = db.get(models.ClassPathStep, config.get("results_step_id"))
                 if (not source or source.path_id != path.id or source.removed_at is not None

@@ -1,3 +1,32 @@
+# Handoff: analisi questionari nei piani operativi
+Data: 2026-10-21 | Branch: `fix/operational-plan-questionnaire-chats` | Issue: #249
+
+Issue esistente verificata e aggiornata prima del codice. Checkout isolato da
+`origin/main` (`b3ce3068`); modifiche della cartella iniziale conservate.
+
+Questionario e analisi si salvano insieme tramite `results_from`; anche i passi
+«Da preparare» sono collegabili. Analisi personale alternativa per i sei
+questionari: scelta esplicita dello studente, solo risultati propri e canonici,
+sessione esatta conservata con snapshot alla ripresa, completamento sull’ultimo
+turno della nuova sessione. Modelli, copia/applicazione e pubblicazione supportano
+entrambe le origini senza richiedere risultati in fase di progettazione. Nessun
+importatore esterno. Migrazione idempotente del solo vincolo dei target, ID e
+progressi precedenti conservati.
+
+179 backend distinti e 605 unitari frontend superati; otto nuovi casi browser,
+cinque di posizionamento e suite editor/modelli superati, TypeScript, i18n,
+Ruff F mirato ed ESLint dei file modificati. Fixture Home aggiornate all’ingresso
+`?view=home` e a una data stabile per le scadenze, senza ridurre le asserzioni.
+Guida e screenshot nelle sei lingue aggiornati; dettagli ripetibili in
+`docs/operations/operational-plan-questionnaire-chats.md`.
+
+Rebuild Docker backend/frontend riusciti con tag di validazione separati.
+Backend avviato sul solo DB sintetico: OpenAPI HTTP 200 e nuovi GET/POST presenti;
+frontend avviato senza rete: HTTP 200 per editor e pagina di analisi. Anche i
+19 test nuovi/concorrenza passano usando i file copiati nell’immagine backend.
+Nessun deploy o sudo. Frontend dev :3159, smoke e PostgreSQL temporaneo :18650
+arrestati; nessun processo o container di questa verifica resta attivo.
+
 # Handoff: dettaglio completo delle compilazioni per il docente (#406)
 Data: 2026-10-21 | Branch: `feature/teacher-result-detail-406` | Base: `d54d1807`
 

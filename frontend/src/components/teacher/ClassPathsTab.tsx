@@ -9,7 +9,8 @@ import { ArrowDown, ArrowUp, ArrowLeft, Archive, ArchiveRestore, CheckCircle2, C
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import type { ClassSettings, ClassTool } from '@/lib/class-settings';
 import { parseClassPath, parseClassPaths, pathStepTools, type ClassPath, type ClassPathStep } from '@/lib/class-paths';
-import { deepDiveSources } from '@/lib/results-deep-dive';
+import { resultsChatText } from '@/lib/i18n-results-chats';
+import { deepDiveSources, pathStepKey, resultsSourcePayload } from '@/lib/results-deep-dive';
 import { assignmentSaveError, assignmentStepInput, parsePathAssignments, selectablePathAssignments } from '@/lib/path-assignments';
 import { pathAssignmentText } from '@/lib/i18n-path-assignments';
 import type { AssignmentStepSummary } from '@/lib/class-paths';
@@ -39,7 +40,7 @@ import { ClassMeetingsManager } from './ClassMeetingsManager';
 import { classMeetingText } from '@/lib/i18n-class-meetings';
 import { meetingWhen, type ClassMeeting } from '@/lib/class-meetings';
 import { stepKindText, type StepKindTextKey } from '@/lib/i18n-step-kinds';
-import { guidedChatKeys, isLegacyQuestionnaireTool, isPersonalTool, type StepKind } from '@/lib/path-step-kinds';
+import { ADMINISTRATION_QUESTIONNAIRES, guidedChatKeys, isLegacyQuestionnaireTool, isPersonalTool, type StepKind } from '@/lib/path-step-kinds';
 
 type PathTextKey = keyof typeof classPathsTexts;
 type SettingsTextKey = keyof typeof classSettingsTexts;
@@ -82,6 +83,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     const [selectedAdministration,setSelectedAdministration] = useState('');
     const [administrationTitle,setAdministrationTitle] = useState('');
     const [administrationInstrument,setAdministrationInstrument] = useState('QSA');
+    const r = (key: Parameters<typeof resultsChatText>[1]) => resultsChatText(lang, key);
     const a = (key: Parameters<typeof administrationStepText>[1]) => administrationStepText(lang,key);
     const loadAdministrations = async () => {
         try {
@@ -116,12 +118,13 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         const target=administrations.find(row=>row.id===Number(selectedAdministration));
         if (!target) return;
         setSteps(current=>[...current,{position:current.length+1,step_type:'questionnaire_administration',
-            administration_plan_id:target.id,tool_key:'',auto_detect:true,can_self_mark:false,
+            administration_plan_id:target.id,tool_key:'',client_key:crypto.randomUUID(),auto_detect:true,can_self_mark:false,
             target_summary:{...target,institution_name:''}}]);
         setSelectedAdministration('');setNotice(null);
     };
-    // A deep dive follows a saved administration step: the server binds it by step ID.
+    // Link a saved, new or pending questionnaire; resolve new IDs atomically on save.
     const [selectedResultsStep,setSelectedResultsStep] = useState('');
+    const [selectedAnalysisKey, setSelectedAnalysisKey] = useState('');
     // TF6: a whole-class goal assignment of this class, existing or created here.
     const p = (key: Parameters<typeof pathAssignmentText>[1]) => pathAssignmentText(lang, key);
     const [pathAssignments, setPathAssignments] = useState<AssignmentStepSummary[]>([]);
@@ -219,21 +222,24 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     };
     // #177: a guided chat (on a questionnaire's results, or standalone) and its optional follow-up meeting.
     const [followUp, setFollowUp] = useState<'none' | 'group' | 'individual'>('none');
-    const chatReady = Boolean(selectedResultsStep || selectedChatKey);
+    const chatReady = Boolean(selectedResultsStep || selectedAnalysisKey || selectedChatKey);
     const addChat = (meeting?: ClassMeeting) => {
-        const source = steps.find(step => step.id === Number(selectedResultsStep));
-        if (selectedResultsStep && !source?.id) return;
-        const key = `chat-${Date.now()}`;
-        const chat: ClassPathStep = source?.id
-            ? {position: 0, step_type: 'guided_results_chat', results_step_id: source.id, tool_key: '', auto_detect: true,
+        const source = selectedResultsStep ? steps.find(step => pathStepKey(step) === selectedResultsStep) : undefined;
+        if (selectedResultsStep && !source) return;
+        const key = crypto.randomUUID();
+        const chat: ClassPathStep = source
+            ? {position: 0, step_type: 'guided_results_chat', results_step_id: source.id,
+                results_key: source.id === undefined ? pathStepKey(source) : undefined, tool_key: '', auto_detect: true,
                 can_self_mark: false, target_summary: source.target_summary, client_key: key}
+            : selectedAnalysisKey ? {position: 0, step_type: 'guided_results_chat', tool_key: selectedAnalysisKey,
+                auto_detect: true, can_self_mark: false, client_key: key}
             : {position: 0, step_type: 'guided_chat', tool_key: selectedChatKey, auto_detect: true, can_self_mark: false,
                 title: null, instructions: null, due_date: null, client_key: key};
         const added: ClassPathStep[] = [chat, ...(meeting ? [{position: 0, step_type: 'meeting' as const, meeting_id: meeting.id,
             meeting_summary: meeting, follows_key: key, tool_key: '', auto_detect: true, can_self_mark: false,
             title: null, instructions: null, due_date: null}] : [])];
         setSteps(current => [...current, ...added].map((step, index) => ({...step, position: index + 1})));
-        setSelectedResultsStep(''); setSelectedChatKey(''); setFollowUp('none'); setNotice(null);
+        setSelectedResultsStep(''); setSelectedAnalysisKey(''); setSelectedChatKey(''); setFollowUp('none'); setNotice(null);
     };
 
     const dirty =
@@ -260,6 +266,13 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     };
 
     const handleRemoveStep = (index: number) => {
+        const source = steps[index];
+        if (steps.some(step => (step.results_key && step.results_key === pathStepKey(source))
+            || (source.id != null && (step.results_step_id === source.id
+                || (step.pending_config?.kind === 'guided_results_chat' && step.pending_config.results_step_id === source.id))))) {
+            setNotice('deep_dive_referenced');
+            return;
+        }
         const nextSteps = steps.filter((_, i) => i !== index);
         nextSteps.forEach((s, i) => {
             s.position = i + 1;
@@ -326,7 +339,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     ...(s.step_type === 'pending' ? {}
                         : s.step_type === 'questionnaire_administration'
                         ? {administration_plan_id:s.administration_plan_id}
-                        : s.step_type === 'guided_results_chat' ? {results_step_id:s.results_step_id}
+                        : s.step_type === 'guided_results_chat' ? {...resultsSourcePayload(s, steps), ...(s.tool_key ? {tool_key: s.tool_key} : {})}
                             : s.step_type === 'assignment' ? {assignment_id:s.assignment_id}
                                 : s.step_type === 'forum' ? {topic_id:s.topic_id}
                                     : s.step_type === 'meeting' ? {meeting_id:s.meeting_id, ...followsIndex(s)} : {tool_key:s.tool_key}),
@@ -633,7 +646,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                 ) : (
                     <div className="space-y-3">
                         {steps.map((step, index) => {
-                            const source = steps.find(row => row.id !== undefined && row.id === step.results_step_id);
+                            const source = steps.find(row => (row.id !== undefined && row.id === step.results_step_id)
+                                || (step.results_key !== undefined && pathStepKey(row) === step.results_key));
                             const pending = step.step_type === 'pending' ? step.pending_config : null;
                             const pendingSource = pending?.kind === 'guided_results_chat'
                                 ? steps.find(row => row.id === pending.results_step_id) : undefined;
@@ -641,12 +655,14 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 ? `${pathTemplateText(lang, 'pending')} · ${pending.kind === 'questionnaire_administration'
                                     ? `${a('administration')} · ${pending.instrument_code} ${(pending.locale || '').toUpperCase()}`
                                     : pending.kind === 'guided_results_chat'
-                                        ? `${a('deepDive')} · ${a('deepDiveFrom')} #${pendingSource?.position ?? '?'}`
+                                        ? pending.tool_key ? `${r('analyzeQuestionnaire')} · ${pending.tool_key} · ${r('personalResults')}`
+                                        : `${a('deepDive')} · ${a('deepDiveFrom')} #${pendingSource?.position ?? '?'}`
                                         : pending.kind === 'assignment' ? p('assignment') : `${f('forum')} · ${pending.title || ''}`}`
                                 : step.step_type === 'questionnaire_administration'
                                 ? `${a('administration')} · ${step.target_summary?.code || step.administration_plan_id}`
                                 : step.step_type === 'guided_results_chat'
-                                    ? `${a('deepDive')} · ${a('deepDiveFrom')} #${source?.position ?? '?'}`
+                                    ? step.tool_key ? `${r('analyzeQuestionnaire')} · ${step.tool_key} · ${r('personalResults')}`
+                                    : `${a('deepDive')} · ${a('deepDiveFrom')} #${source?.position ?? '?'}`
                                     : step.step_type === 'assignment'
                                         ? `${p('assignment')} · ${step.assignment_summary?.title || `#${step.assignment_id}`}`
                                         : step.step_type === 'forum'
@@ -828,14 +844,23 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             </div>}
                             {kind === 'guided_chat' && <div className="space-y-3">
                                 <h4 className="text-sm font-semibold">{k('chatOnResults')}</h4>
-                                <label className="block w-full text-sm sm:w-auto">{a('deepDiveFrom')}<select value={selectedResultsStep} onChange={event=>{setSelectedResultsStep(event.target.value);if (event.target.value) setSelectedChatKey('');}} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
-                                    <option value="">{a('choose')}</option>
-                                    {deepDiveSources(steps).map(step=><option key={step.id} value={step.id}>{`#${step.position} · ${step.target_summary?.code || step.administration_plan_id}`}</option>)}
+                                <label className="block w-full text-sm sm:w-auto">{a('deepDiveFrom')}<select value={selectedResultsStep} onChange={event=>{setSelectedResultsStep(event.target.value);if (event.target.value) {setSelectedChatKey('');setSelectedAnalysisKey('');}}} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                    <option value="">{r('chooseSourceStep')}</option>
+                                    {deepDiveSources(steps).map(step=><option key={pathStepKey(step)} value={pathStepKey(step)}>{`#${step.position} · ${step.target_summary?.instrument_code || step.pending_config?.instrument_code || ''} · ${step.target_summary?.code || step.pending_config?.plan_title || step.administration_plan_id || ''}`}</option>)}
                                 </select></label>
-                                <p className="text-sm text-slate-600">{a('deepDiveRule')}</p>
+                                {deepDiveSources(steps).length === 0 && <p className="text-sm text-slate-600">{r('noQuestionnaireSteps')}</p>}
+                                <p className="text-sm text-slate-600">{r('planResultsHelp')}</p>
+                                <h4 className="text-sm font-semibold">{r('personalResults')}</h4>
+                                <label className="block text-sm">{r('analyzeQuestionnaire')}<select value={selectedAnalysisKey}
+                                    onChange={event => {setSelectedAnalysisKey(event.target.value);if (event.target.value) {setSelectedResultsStep('');setSelectedChatKey('');}}}
+                                    className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                    <option value="">{r('chooseQuestionnaire')}</option>
+                                    {enabledTools.filter(tool => ADMINISTRATION_QUESTIONNAIRES.includes(tool.key)).map(tool => <option key={tool.key} value={tool.key}>{`${r('analyzeQuestionnaire')} · ${tool.key}`}</option>)}
+                                </select></label>
+                                <p className="text-sm text-slate-600">{r('personalResultsHelp')}</p>
                                 <h4 className="text-sm font-semibold">{k('chatStandalone')}</h4>
                                 {chatKeys.length === 0 ? <p className="text-sm text-slate-600">{k('noChats')}</p> : (
-                                    <label className="block w-full text-sm sm:w-auto"><span className="sr-only">{k('chatStandalone')}</span><select value={selectedChatKey} onChange={event=>{setSelectedChatKey(event.target.value);if (event.target.value) setSelectedResultsStep('');}} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                    <label className="block w-full text-sm sm:w-auto"><span className="sr-only">{k('chatStandalone')}</span><select value={selectedChatKey} onChange={event=>{setSelectedChatKey(event.target.value);if (event.target.value) {setSelectedResultsStep('');setSelectedAnalysisKey('');}}} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                         <option value="">{k('chooseGuidedPath')}</option>
                                         {chatKeys.map(key => <option key={key} value={key}>{toolLabel(key, classSettings.tools, lang)}</option>)}
                                     </select></label>
