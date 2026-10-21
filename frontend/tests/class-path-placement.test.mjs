@@ -106,6 +106,8 @@ async function createFixture({
         serviceWorkers: 'block',
     });
     const page = await context.newPage();
+    // Stable relation to the fixture deadlines, independent of the calendar date.
+    await page.clock.install({ time: new Date('2026-10-01T12:00:00Z') });
     page.setDefaultTimeout(12000);
     const errors = [];
     const doneCalls = [];
@@ -245,7 +247,7 @@ async function createFixture({
 test('Home with active class path: hero card shown first, ochre current step, catalog collapsed with toggle', async () => {
     const f = await createFixture({ paths: [samplePath1], lang: 'it' });
     try {
-        await f.page.goto(`${origin}/`, { waitUntil: 'domcontentloaded' });
+        await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
 
         // Hero card is rendered
         const heroCard = f.page.locator('[data-testid="class-path-hero-card"]');
@@ -324,7 +326,7 @@ test('Home with several paths: path with nearest due date displayed first, link 
     // samplePath1 should be chosen first.
     const f = await createFixture({ paths: [samplePath2, samplePath1], lang: 'it' });
     try {
-        await f.page.goto(`${origin}/`, { waitUntil: 'domcontentloaded' });
+        await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
 
         const heroCard = f.page.locator('[data-testid="class-path-hero-card"]');
         await heroCard.waitFor({ state: 'visible' });
@@ -347,7 +349,7 @@ test('Home with several paths: path with nearest due date displayed first, link 
 test('Self-marking on hero card calls API and updates step state', async () => {
     const f = await createFixture({ paths: [samplePath1], lang: 'it' });
     try {
-        await f.page.goto(`${origin}/`, { waitUntil: 'domcontentloaded' });
+        await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
 
         const heroCard = f.page.locator('[data-testid="class-path-hero-card"]');
         await heroCard.waitFor({ state: 'visible' });
