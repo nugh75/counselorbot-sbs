@@ -231,6 +231,9 @@ def publication_problems(db, path, steps):
     problems = []
     for step in steps:
         descriptor = step_descriptor(db, path, step)
+        if step.step_type == "forum" and not (step.title or "").strip():
+            problems.append({"step_id": step.id, "position": step.position,
+                             "step_type": step.step_type, "reason": "forum_step_title_missing"})
         if not descriptor["available"]:
             problems.append({"step_id": step.id, "position": step.position,
                              "step_type": step.step_type, "reason": descriptor["availability_reason"]})

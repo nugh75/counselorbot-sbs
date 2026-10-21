@@ -69,6 +69,14 @@ export const pathPublicationTexts = {
     "Die Aufgabe wurde widerrufen oder gilt nicht mehr für die ganze Klasse: Ersetze den Schritt durch eine andere Aufgabe.",
     "Uppgiften har återkallats eller gäller inte längre hela klassen: ersätt steget med en annan uppgift.",
   ],
+  action_forum_title: [
+    "Aggiungi un titolo al passo forum prima di pubblicare: il titolo della discussione resta nel forum.",
+    "Add a title to the forum step before publishing: the discussion title stays in the forum.",
+    "Añade un título al paso del foro antes de publicar: el título de la discusión permanece en el foro.",
+    "Ajoutez un titre à l’étape du forum avant de publier : le titre de la discussion reste dans le forum.",
+    "Gib dem Forum-Schritt vor dem Veröffentlichen einen Titel: Der Diskussionstitel bleibt im Forum.",
+    "Ge forumsteget en titel före publicering: diskussionens titel stannar i forumet.",
+  ],
   action_forum: [
     "La discussione è nascosta o non è più in questa classe: ripristinala nel Forum o sostituisci il passo.",
     "The discussion is hidden or no longer in this class: restore it in the Forum or replace the step.",

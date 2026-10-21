@@ -60,3 +60,10 @@ test('publication texts exist in six languages without glyph labels', () => {
         }
     }
 });
+
+test('missing forum presentation title has its own localized publication action', () => {
+    assert.equal(unavailableAction('forum_step_title_missing'), 'forum_title');
+    for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
+        assert.ok(unavailableActionText(lang, 'forum_title'));
+    }
+});

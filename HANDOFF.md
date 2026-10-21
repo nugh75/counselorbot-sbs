@@ -27,10 +27,10 @@ Task Diario: `96488cb8-46aa-423d-9435-fb497a1af048`, agente `s3-plan-presentatio
 
 ## Verifiche reali e log
 - 12 test resolver originari passati (prima del checkpoint S1).
-- Ultima batteria mirata: 50/51 passati in `/tmp/oc3-unit-focused.log`;
+- Prima batteria mirata: 50/51 passati in `/tmp/oc3-unit-focused.log`;
   fallimento nel NUOVO test ero/ritardo: fixture usava meeting_summary e
   assignment_summary come payload API anziché target_summary. Corretti entrambi,
-  nuovo comando già avviato: leggere risultato, non presumere verde.
+  ripetizione conclusa: **51/51 passati**, durata 921 ms.
 - ESLint mirato terminato senza errori, 1 warning Circle inutilizzato nella
   pagina studente (`/tmp/oc3-eslint.log`); rimuovere import e ripetere mirato.
 - TypeScript fallito: fixture S0 includeva campo source non dichiarato (corretto);

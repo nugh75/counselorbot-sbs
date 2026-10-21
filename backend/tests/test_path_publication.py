@@ -107,7 +107,7 @@ def mixed_path(client, group, goal, *, mode="recommended"):
         keep(administration),
         {"step_type": "guided_results_chat", "results_step_id": administration["id"]},
         {"step_type": "assignment", "assignment_id": assignment["id"]},
-        {"step_type": "forum", "topic_id": topic["id"]},
+        {"step_type": "forum", "topic_id": topic["id"], "title": "Discuss with the class"},
         {"step_type": "tool", "tool_key": "timeline"},
     ])
     assert response.status_code == 200, response.text
@@ -368,3 +368,46 @@ def test_class_view_selection_keeps_path_rules_and_explains_hidden_tools(api):
     # The timeline is out of this view: unavailable, with a reason the page can show.
     assert (steps[4]["state"], steps[4]["availability_reason"]) == ("unavailable", "tool_unavailable")
     assert student_path["total"] == 4
+
+
+def test_forum_title_is_required_only_at_publication_and_legacy_reads_stay_open(api):
+    client, db, identity, group, _other, goal = api
+    path, _plan, _assignment, topic = mixed_path(client, group, goal)
+    steps = [keep(step, title="   ") if step["step_type"] == "forum" else keep(step)
+             for step in path["steps"]]
+    response = save(client, path, steps)
+    assert response.status_code == 200  # Drafts can remain incomplete.
+    path = response.json()
+    blocked = publish(client, path)
+    assert blocked.status_code == 409
+    assert blocked.json()["detail"]["problems"] == [{
+        "step_id": path["steps"][3]["id"], "position": 4,
+        "step_type": "forum", "reason": "forum_step_title_missing"}]
+    row = db.get(models.ClassPath, path["id"])
+    assert row.status == "draft" and row.published_at is None
+    assert all(step["active_from"] is None for step in client.get(f"/teacher/paths/{path['id']}").json()["steps"])
+    # A historical published plan remains readable and launchable; the topic's
+    # private title/body never enter its serialized step.
+    row.status = "published"
+    row.published_at = datetime.now(timezone.utc)
+    forum = db.get(models.ClassPathStep, path["steps"][3]["id"])
+    forum.active_from = row.published_at
+    db.commit()
+    as_user(identity, "alice")
+    student = client.get("/user/paths").json()[0]
+    shown = next(step for step in student["steps"] if step["step_type"] == "forum")
+    assert shown["state"] == "not_done" and shown["start_href"]
+    assert shown.get("availability_reason") is None
+    assert topic["title"] not in str(shown) and topic["body"] not in str(shown)
+
+
+def test_administration_summary_exposes_schedule_but_no_credentials(api):
+    client, db, _identity, group, _other, goal = api
+    path, plan, *_ = mixed_path(client, group, goal)
+    scheduled = datetime(2026, 10, 26, 23, 30, tzinfo=timezone.utc)
+    db.get(models.AdministrationPlan, plan["id"]).scheduled_at = scheduled
+    db.commit()
+    summary = client.get(f"/teacher/paths/{path['id']}").json()["steps"][0]["target_summary"]
+    assert summary["title"] == plan["title"]
+    assert datetime.fromisoformat(summary["scheduled_at"]) == scheduled
+    assert not ({"password", "institution_code", "hashed_password"} & summary.keys())
