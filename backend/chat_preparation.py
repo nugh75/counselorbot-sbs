@@ -238,7 +238,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         request = request.copy(update={'scores_context': score_context(request.scores_context, request.language)})
     effective_response_length = request.response_length
     max_tokens = _response_length_max_tokens(effective_response_length, request.max_tokens)
-    reasoning_disabled = _reasoning_disabled_for(ai_service, model)
+    reasoning_disabled = _reasoning_disabled_for(ai_service, model, provider)
     is_profile_step = (
         (request.phase or "").endswith("-profilo")
         or (getattr(step, "id", None) or "").endswith("-profilo")

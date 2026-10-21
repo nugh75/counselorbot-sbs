@@ -509,7 +509,7 @@ def _build_public_counselor(
     pub.model = preset.model if preset else active_model_val
     pub.is_personal = bool(r.owner_username)
     pub.suitable = suits(r, questionnaire_type, restricted)
-    pub.reasoning_capable = supports_reasoning(pub.model)
+    pub.reasoning_capable = supports_reasoning(pub.model, provider)
     pub.reasoning_mandatory = is_mandatory_reasoning(pub.model, provider)
     return pub
 

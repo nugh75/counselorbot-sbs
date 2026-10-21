@@ -1,6 +1,8 @@
 """Read-only prompt envelope audit for guided CounselorBot chats."""
 from __future__ import annotations
 
+from .reasoning_profiles import plan_details
+
 import logging
 import re
 import time
@@ -91,15 +93,15 @@ def _usage_cost_usd(usage: dict | None, provider: str | None, model: str | None)
     return model_pricing.estimate_cost_usd(provider, model, usage)
 
 
-def _resolve_counselor(db: Session, counselor_id: int | None) -> tuple[dict[str, Any] | None, str | None, str | None, str | None, bool | None, int | None, list[dict[str, str]]]:
+def _resolve_counselor(db: Session, counselor_id: int | None) -> tuple[dict[str, Any] | None, str | None, str | None, str | None, bool | None, int | None, str | None, list[dict[str, str]]]:
     warnings: list[dict[str, str]] = []
     if not counselor_id:
-        return None, None, None, None, None, None, warnings
+        return None, None, None, None, None, None, None, warnings
 
     counselor = db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).filter(models.Counselor.id == counselor_id).first()
     if not counselor:
         warnings.append({"code": "counselor_not_found", "message": f"Counselor {counselor_id} not found."})
-        return {"id": counselor_id, "found": False}, None, None, None, None, None, warnings
+        return {"id": counselor_id, "found": False}, None, None, None, None, None, None, warnings
     if not counselor.is_active:
         warnings.append({"code": "counselor_inactive", "message": f"Counselor {counselor_id} is inactive; global provider/model will be used."})
         return {
@@ -108,11 +110,12 @@ def _resolve_counselor(db: Session, counselor_id: int | None) -> tuple[dict[str,
             "name": counselor.name,
             "is_active": False,
             "questionnaire_types": counselor.questionnaire_types,
-        }, None, None, None, None, None, warnings
+        }, None, None, None, None, None, None, warnings
 
     provider = model = None
     disable_thinking = None
     reasoning_budget = None
+    reasoning_effort = None
     preset_info = None
     if counselor.preset_id:
         preset = db.query(models.ModelPreset).filter(models.ModelPreset.id == counselor.preset_id).first()
@@ -120,6 +123,7 @@ def _resolve_counselor(db: Session, counselor_id: int | None) -> tuple[dict[str,
             provider, model = preset.provider, preset.model
             disable_thinking = bool(preset.disable_thinking)
             reasoning_budget = preset.reasoning_budget
+            reasoning_effort = getattr(preset, "reasoning_effort", None)
             preset_info = {
                 "id": preset.id,
                 "name": preset.name,
@@ -127,6 +131,7 @@ def _resolve_counselor(db: Session, counselor_id: int | None) -> tuple[dict[str,
                 "model": preset.model,
                 "disable_thinking": bool(preset.disable_thinking),
                 "reasoning_budget": preset.reasoning_budget,
+                "reasoning_effort": reasoning_effort,
             }
         else:
             warnings.append({"code": "preset_not_found", "message": f"Preset {counselor.preset_id} referenced by counselor {counselor.id} not found."})
@@ -139,15 +144,17 @@ def _resolve_counselor(db: Session, counselor_id: int | None) -> tuple[dict[str,
         "questionnaire_types": counselor.questionnaire_types,
         "preset": preset_info,
         "persona_present": bool((counselor.persona or "").strip()),
-    }, provider, model, counselor.persona, disable_thinking, reasoning_budget, warnings
+    }, provider, model, counselor.persona, disable_thinking, reasoning_budget, reasoning_effort, warnings
 
 
-def _apply_counselor_overrides(ai_service: AIService, disable_thinking: bool | None, reasoning_budget: int | None) -> None:
+def _apply_counselor_overrides(ai_service: AIService, disable_thinking: bool | None, reasoning_budget: int | None, reasoning_effort: str | None = None) -> None:
     if disable_thinking is not None:
         ai_service.disable_thinking = bool(disable_thinking)
         ai_service.config["disable_thinking"] = "true" if disable_thinking else "false"
     if reasoning_budget is not None:
         ai_service.reasoning_budget_override = reasoning_budget
+    if reasoning_effort is not None:
+        ai_service.preset_reasoning_effort = reasoning_effort
 
 
 def _resolve_effective_message(request: ChatRequest, db: Session, warnings: list[dict[str, str]]) -> tuple[str, str | None, models.GuidedStep | None]:
@@ -269,7 +276,7 @@ def build_prompt_audit(
     if any(not key.startswith(("prompt_", "directive_")) for key in overrides):
         raise HTTPException(status_code=400, detail="Only prompt and directive text can be previewed.")
     ai_service.config = {**ai_service.config, **overrides}
-    counselor, c_provider, c_model, c_persona, c_disable_thinking, c_reasoning_budget, counselor_warnings = _resolve_counselor(db, request.counselor_id)
+    counselor, c_provider, c_model, c_persona, c_disable_thinking, c_reasoning_budget, c_reasoning_effort, counselor_warnings = _resolve_counselor(db, request.counselor_id)
     warnings.extend(counselor_warnings)
     if payload.model_preset_id is not None:
         preset = db.query(models.ModelPreset).filter_by(id=payload.model_preset_id, is_active=True).first()
@@ -277,7 +284,8 @@ def build_prompt_audit(
             raise HTTPException(400, "Preset di modello assente o inattivo.")
         c_provider, c_model = preset.provider, preset.model
         c_disable_thinking, c_reasoning_budget = bool(preset.disable_thinking), preset.reasoning_budget
-    _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
+        c_reasoning_effort = getattr(preset, "reasoning_effort", None)
+    _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget, c_reasoning_effort)
 
     # Retain input validation warnings; preparation itself is shared with /chat.
     _message, _phase_key, audit_step = _resolve_effective_message(request, db, warnings)
@@ -326,13 +334,21 @@ def build_prompt_audit(
     model = c_model or ai_service.config.get("model_name", "unknown")
     if getattr(ai_service, "chatgpt_model", None):
         provider, model = "openai_chatgpt", ai_service.chatgpt_model
-    from .model_context import ContextCapacityError, context_profile, fit_context
+    from .model_context import ContextCapacityError, context_profile, fit_context, validate_output_capacity
     from .reasoning_profiles import resolve_plan
     plan = resolve_plan(model, disable_thinking=ai_service.disable_thinking,
                         requested_max_tokens=max_tokens, fallback_max_tokens=700,
-                        budget_override=getattr(ai_service, "reasoning_budget_override", None))
+                        budget_override=getattr(ai_service, "reasoning_budget_override", None),
+                        requested_effort=getattr(ai_service, "requested_reasoning_effort", None),
+                        provider=provider)
     context_report = {}
+    warnings.extend({"code": code, "message": (
+        "The reasoning reserve only sizes total output; effort does not enforce a numeric reasoning cap."
+        if code == "adaptive_reasoning_reserve_not_guaranteed" else
+        "The required output exceeds the endpoint limit; generation is blocked without reducing essential content."
+    )} for code in plan.warnings)
     try:
+        validate_output_capacity(plan)
         system_prompt_final, full_message, history, context_report = fit_context(
             system_prompt_final, full_message, history,
             context_profile(ai_service.config, provider, model), plan.max_tokens,
@@ -394,6 +410,7 @@ def build_prompt_audit(
             "questionnaire_type": questionnaire_type,
             "language": request.language,
             "max_tokens": max_tokens,
+            "reasoning_plan": plan_details(plan),
             "response_length": request.response_length,
             "response_format": request.response_format,
             "guided_path": request.guided_path,
@@ -688,6 +705,10 @@ def run_prompt_audit_live(
     provider = getattr(ai_service, "last_provider", None) or result["resolved"].get("provider")
     model = getattr(ai_service, "last_model", None) or result["resolved"].get("model")
     result["resolved"].update(provider=provider, model=model, model_attempts=getattr(ai_service, "last_attempts", []))
+    plan_getter = getattr(ai_service, "_plan", None)
+    if callable(plan_getter):
+        result["resolved"]["reasoning_plan"] = plan_details(plan_getter())
+    result["resolved"]["completion"] = getattr(ai_service, "last_completion", None)
     if getattr(ai_service, "last_envelope", None):
         result["envelope"] = ai_service.last_envelope
         result["resolved"]["context_budget"] = ai_service.last_context_report

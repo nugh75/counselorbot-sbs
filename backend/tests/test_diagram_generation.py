@@ -18,8 +18,8 @@ SPEC = {"type": "flow", "title": "Un piano aiuta a iniziare",
 @pytest.fixture
 def generate(monkeypatch):
     monkeypatch.setattr(diagram, '_require_feature', lambda db: None)
-    monkeypatch.setattr(diagram, '_resolve_counselor', lambda db, cid: ('ollama', 'selected', None, None, True, None))
-    monkeypatch.setattr(diagram, '_diagram_fallback', lambda db: ('ollama', 'fallback', True, None))
+    monkeypatch.setattr(diagram, '_resolve_counselor', lambda db, cid: ('ollama', 'selected', None, None, True, None, None))
+    monkeypatch.setattr(diagram, '_diagram_fallback', lambda db: ('ollama', 'fallback', True, None, None))
 
     def run(replies):
         calls = []

@@ -9,7 +9,13 @@ type Dict = Record<string, string>;
 
 const it: Dict = {
     "admin.presets.tokenHelp": "Il limite del preset si usa nel benchmark e nelle chiamate che lo adottano. Lascia vuoto per il valore automatico; come punto di partenza usa 2000 token per il dialogo e 4000 per sintesi o tabelle. Nelle chat guidate il budget segue il selettore Lunghezza.",
-    "admin.presets.reasoningHelp": "Il budget di ragionamento è separato: lascia vuoto per il valore della famiglia del modello. CounselorBot aggiunge spazio per la risposta visibile. Un budget maggiore può aumentare tempi e costo; restano i limiti di output e contesto del provider.",
+    "admin.presets.reasoningHelp": "Il budget reasoning riserva spazio nel totale insieme alla risposta. Con gli effort adattivi è una riserva locale, non un limite numerico al pensiero del provider. L’anteprima mostra risposta, riserva e tetto totale; limiti incompatibili bloccano la chiamata. Più spazio può aumentare tempi e costo.",
+    "admin.presets.outputPlanTitle": "Budget di output",
+    "admin.presets.outputPlanNumbers": "Risposta richiesta: {response} · Riserva: {reserve} · Tetto totale: {total} token.",
+    "admin.presets.reasoningEffort": "Effort reasoning",
+    "admin.presets.reasoningEffortAuto": "Auto (modello)",
+    "admin.presets.reasoningEffortHelp": "Livello di ragionamento inviato a OpenRouter quando il catalogo lo supporta. Vuoto = default del modello. Se il modello impone reasoning, «No reasoning» usa il livello minimo.",
+
     "admin.presets.mandatoryReasoning": "Questo modello impone il ragionamento: «No reasoning» non ha effetto. La chat userà il livello più basso disponibile.",
     "admin.presets.mandatoryShort": "Reasoning obbligatorio",
     "admin.presets.lowTokenWarning": "Un limite sotto 2000 token può troncare sintesi, tabelle e risposte articolate. Prova 4000 oppure lascia vuoto; per le chat guidate scegli Lunga. Se il taglio continua, verifica il limite di output del modello e riduci il ragionamento dove supportato.",
@@ -773,7 +779,13 @@ const it: Dict = {
 
 const en: Dict = {
     "admin.presets.tokenHelp": "The preset limit applies to benchmarks and calls that use it. Leave blank for automatic defaults; start with 2000 tokens for dialogue and 4000 for summaries or tables. Guided chats follow the Length selector.",
-    "admin.presets.reasoningHelp": "The reasoning budget is separate: leave blank for the model family default. CounselorBot adds room for the visible answer. More reasoning may increase latency and cost; provider output and context limits still apply.",
+    "admin.presets.reasoningHelp": "The reasoning budget reserves space alongside the answer in the total. With adaptive effort it is a local reserve, not a numeric provider thinking limit. Preview shows answer, reserve and total output; incompatible limits block the call. More room may increase latency and cost.",
+    "admin.presets.outputPlanTitle": "Output budget",
+    "admin.presets.outputPlanNumbers": "Requested answer: {response} · Reserve: {reserve} · Total limit: {total} tokens.",
+    "admin.presets.reasoningEffort": "Reasoning effort",
+    "admin.presets.reasoningEffortAuto": "Auto (model)",
+    "admin.presets.reasoningEffortHelp": "Reasoning level sent to OpenRouter when the catalog supports it. Blank = model default. If the model mandates reasoning, “No reasoning” uses the lowest level.",
+
     "admin.presets.mandatoryReasoning": "This model mandates reasoning: “No reasoning” has no effect. The chat will use the lowest available level.",
     "admin.presets.mandatoryShort": "Reasoning required",
     "admin.presets.lowTokenWarning": "A limit below 2000 tokens may cut off summaries, tables and detailed answers. Try 4000 or leave blank; select Long in guided chats. If truncation continues, check the model output limit and reduce reasoning where supported.",
@@ -1531,7 +1543,13 @@ const en: Dict = {
 const es: Dict = {
     ...en,
     "admin.presets.tokenHelp": "El límite del preset se usa en benchmarks y llamadas que lo adoptan. Déjalo vacío para los valores automáticos; empieza con 2000 tokens para diálogo y 4000 para resúmenes o tablas. Los chats guiados siguen el selector Longitud.",
-    "admin.presets.reasoningHelp": "El presupuesto de razonamiento es independiente: vacío usa el valor de la familia del modelo. CounselorBot añade espacio para la respuesta visible. Más razonamiento puede aumentar tiempo y coste; siguen vigentes los límites de salida y contexto del proveedor.",
+    "admin.presets.reasoningHelp": "El presupuesto de razonamiento reserva espacio junto con la respuesta en el total. Con esfuerzo adaptativo es una reserva local, no un límite numérico al pensamiento del proveedor. La vista previa muestra respuesta, reserva y límite total; los límites incompatibles bloquean la llamada. Más espacio puede aumentar tiempo y coste.",
+    "admin.presets.outputPlanTitle": "Presupuesto de salida",
+    "admin.presets.outputPlanNumbers": "Respuesta solicitada: {response} · Reserva: {reserve} · Límite total: {total} tokens.",
+    "admin.presets.reasoningEffort": "Nivel de razonamiento",
+    "admin.presets.reasoningEffortAuto": "Auto (modelo)",
+    "admin.presets.reasoningEffortHelp": "Nivel de razonamiento enviado a OpenRouter cuando el catálogo lo admite. Vacío = valor del modelo. Si el modelo impone razonamiento, «Sin razonamiento» usa el nivel mínimo.",
+
     "admin.presets.mandatoryReasoning": "Este modelo impone el razonamiento: «Sin razonamiento» no tiene efecto. La chat usará el nivel más bajo disponible.",
     "admin.presets.mandatoryShort": "Razonamiento obligatorio",
     "admin.presets.lowTokenWarning": "Un límite inferior a 2000 tokens puede truncar resúmenes, tablas y respuestas detalladas. Prueba 4000 o déjalo vacío; elige Larga en chats guiados. Si continúa, comprueba el límite de salida del modelo y reduce el razonamiento cuando sea posible.",
@@ -2149,7 +2167,13 @@ const es: Dict = {
 const fr: Dict = {
     ...en,
     "admin.presets.tokenHelp": "La limite du préréglage sert aux benchmarks et aux appels qui le prennent en compte. Laissez vide pour les valeurs automatiques ; commencez par 2000 tokens pour le dialogue et 4000 pour les synthèses ou tableaux. Les chats guidés suivent le sélecteur Longueur.",
-    "admin.presets.reasoningHelp": "Le budget de raisonnement est distinct : vide utilise la valeur de la famille du modèle. CounselorBot ajoute de la place pour la réponse visible. Davantage de raisonnement peut augmenter délai et coût ; les limites de sortie et de contexte du fournisseur restent applicables.",
+    "admin.presets.reasoningHelp": "Le budget de raisonnement réserve de la place avec la réponse dans le total. Avec un effort adaptatif, cette réserve est locale et ne limite pas numériquement le raisonnement du fournisseur. L’aperçu montre réponse, réserve et plafond total ; des limites incompatibles bloquent l’appel. Plus de place peut augmenter délai et coût.",
+    "admin.presets.outputPlanTitle": "Budget de sortie",
+    "admin.presets.outputPlanNumbers": "Réponse demandée : {response} · Réserve : {reserve} · Plafond total : {total} tokens.",
+    "admin.presets.reasoningEffort": "Niveau de raisonnement",
+    "admin.presets.reasoningEffortAuto": "Auto (modèle)",
+    "admin.presets.reasoningEffortHelp": "Niveau de raisonnement envoyé à OpenRouter lorsque le catalogue le prend en charge. Vide = valeur du modèle. Si le modèle impose le raisonnement, « Sans raisonnement » utilise le niveau le plus bas.",
+
     "admin.presets.mandatoryReasoning": "Ce modèle impose le raisonnement : « Sans raisonnement » n’a aucun effet. La chat utilisera le niveau le plus bas disponible.",
     "admin.presets.mandatoryShort": "Raisonnement obligatoire",
     "admin.presets.lowTokenWarning": "Une limite inférieure à 2000 tokens peut tronquer synthèses, tableaux et réponses détaillées. Essayez 4000 ou laissez vide ; choisissez Longue dans les chats guidés. Si cela continue, vérifiez la limite de sortie du modèle et réduisez le raisonnement si possible.",
@@ -2767,7 +2791,13 @@ const fr: Dict = {
 const de: Dict = {
     ...en,
     "admin.presets.tokenHelp": "Das Preset-Limit gilt für Benchmarks und Aufrufe, die es übernehmen. Leer lassen für automatische Werte; mit 2000 Token für Dialoge und 4000 für Zusammenfassungen oder Tabellen beginnen. Geführte Chats folgen der Auswahl Länge.",
-    "admin.presets.reasoningHelp": "Das Denkbudget ist getrennt: leer gilt der Standard der Modellfamilie. CounselorBot ergänzt Platz für die sichtbare Antwort. Mehr Denken kann Dauer und Kosten erhöhen; Ausgabe- und Kontextgrenzen des Anbieters gelten weiterhin.",
+    "admin.presets.reasoningHelp": "Das Denkbudget reserviert zusammen mit der Antwort Platz in der Gesamtausgabe. Bei adaptivem Effort ist es eine lokale Reserve, keine numerische Denkgrenze beim Anbieter. Die Vorschau zeigt Antwort, Reserve und Gesamtgrenze; unvereinbare Grenzen blockieren den Aufruf. Mehr Platz kann Dauer und Kosten erhöhen.",
+    "admin.presets.outputPlanTitle": "Ausgabebudget",
+    "admin.presets.outputPlanNumbers": "Angeforderte Antwort: {response} · Reserve: {reserve} · Gesamtgrenze: {total} Token.",
+    "admin.presets.reasoningEffort": "Reasoning-Stufe",
+    "admin.presets.reasoningEffortAuto": "Auto (Modell)",
+    "admin.presets.reasoningEffortHelp": "Reasoning-Stufe, die an OpenRouter gesendet wird, wenn der Katalog sie unterstützt. Leer = Modellstandard. Wenn das Modell Reasoning erzwingt, nutzt „Kein Reasoning“ die niedrigste Stufe.",
+
     "admin.presets.mandatoryReasoning": "Dieses Modell erzwingt Denken: „Kein Reasoning“ hat keine Wirkung. Die Chat verwendet die niedrigste verfügbare Stufe.",
     "admin.presets.mandatoryShort": "Reasoning erforderlich",
     "admin.presets.lowTokenWarning": "Ein Limit unter 2000 Token kann Zusammenfassungen, Tabellen und ausführliche Antworten abschneiden. 4000 versuchen oder leer lassen; in geführten Chats Lang wählen. Bei weiteren Kürzungen die Ausgabegrenze prüfen und Denken soweit unterstützt reduzieren.",
@@ -3385,7 +3415,13 @@ const de: Dict = {
 const sv: Dict = {
     ...en,
     "admin.presets.tokenHelp": "Förinställningens gräns används i benchmark och anrop som tillämpar den. Lämna tomt för automatiska värden; börja med 2000 token för dialog och 4000 för sammanfattningar eller tabeller. Guidade chattar följer väljaren Längd.",
-    "admin.presets.reasoningHelp": "Tänkandebudgeten är separat: tomt använder modellfamiljens standardvärde. CounselorBot lägger till utrymme för det synliga svaret. Mer tänkande kan öka tid och kostnad; leverantörens utdata- och kontextgränser gäller fortfarande.",
+    "admin.presets.reasoningHelp": "Resonemangsbudgeten reserverar utrymme tillsammans med svaret i totalen. Med adaptiv ansträngning är det en lokal reserv, inte en numerisk gräns för leverantörens tänkande. Förhandsvisningen visar svar, reserv och totalgräns; oförenliga gränser blockerar anropet. Mer utrymme kan öka tid och kostnad.",
+    "admin.presets.outputPlanTitle": "Utdatabudget",
+    "admin.presets.outputPlanNumbers": "Begärt svar: {response} · Reserv: {reserve} · Totalgräns: {total} token.",
+    "admin.presets.reasoningEffort": "Resonemangssteg",
+    "admin.presets.reasoningEffortAuto": "Auto (modell)",
+    "admin.presets.reasoningEffortHelp": "Resonemangssteg som skickas till OpenRouter när katalogen stöder det. Tomt = modellens standard. Om modellen kräver resonemang använder ”Inget resonemang” den lägsta nivån.",
+
     "admin.presets.mandatoryReasoning": "Den här modellen kräver resonemang: ”Inget resonemang” har ingen effekt. Chatten använder den lägsta tillgängliga nivån.",
     "admin.presets.mandatoryShort": "Resonemang krävs",
     "admin.presets.lowTokenWarning": "En gräns under 2000 token kan kapa sammanfattningar, tabeller och utförliga svar. Prova 4000 eller lämna tomt; välj Lång i guidade chattar. Kontrollera modellens utdatagräns och minska tänkandet där det stöds om kapningen fortsätter.",

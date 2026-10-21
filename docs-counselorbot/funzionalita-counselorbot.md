@@ -979,6 +979,9 @@ i modelli con ragionamento obbligatorio (come Gemini Flash o DeepSeek R1) gestis
 automaticamente il parametro di reasoning: se il preset o il passo richiede la
 disattivazione del pensiero ma l'endpoint lo impone, la piattaforma evita l'errore 400
 ed esegue la risposta garantendo la continuità della conversazione e del thread guard.
+Il livello richiesto viene normalizzato sulle capacità del catalogo: se l’endpoint
+impone il ragionamento, la piattaforma usa il livello minimo disponibile e registra
+`effort_honored=false`; sugli altri modelli la disattivazione resta reale.
 Il vincolo è esposto anche nell’interfaccia: la scheda del preset e l’elenco dei
 counselor mostrano un’etichetta «Reasoning obbligatorio» e la chat disabilita
 «Nessuno» con un avviso, così la scelta non sembra ignorata.
@@ -1707,12 +1710,36 @@ L'editor dei preset spiega anche i **budget token**: come punto di partenza 2000
 per dialogo, 4000 per sintesi o tabelle, oppure vuoto per i valori automatici.
 Un tetto inferiore a 2000 mostra un consiglio contestuale; valori negativi, zero
 o frazionari non si salvano. Il budget di ragionamento è distinto e lasciare il
-campo vuoto mantiene il valore della famiglia. Il backend aggiunge il margine
+campo vuoto mantiene il valore della famiglia. Per OpenRouter l’editor legge dal
+catalogo gli **effort** dichiarati (`minimal`/`low`/`medium`/`high`/`xhigh`/`max`)
+e il default del modello: il valore scelto viaggia come `reasoning.effort`, mentre
+il budget numerico resta una riserva locale e non viene presentato come limite
+effettivo. Se il catalogo non risponde, restano i valori generici e l’ID manuale.
+La precedenza è studente → fonte personale → preset → default del catalogo.
+Il backend aggiunge il margine
 per la risposta visibile; costi, tempi e limiti di output/contesto del provider
 restano da considerare. Il limite del preset è usato dal benchmark e dalle chiamate
 che lo adottano: **nelle chat guidate decide Lunghezza**, mentre il preset del
 counselor determina modello, disattivazione del pensiero e budget di ragionamento.
 Nessun preset salvato viene corretto o aumentato automaticamente da questi aiuti.
+
+Per i **reasoner adattivi OpenRouter**, la riserva locale cresce anche con l’effort
+e con lo spazio richiesto dalla risposta. Il totale contiene risposta e ragionamento
+una sola volta. Gemini 4 Argon usa almeno 32768 token totali: questo spazio non
+obbliga a scrivere una risposta più lunga e non viene fatturato se non è usato.
+Il campo numerico non limita il pensiero quando il provider riceve un effort.
+Nell’anteprima della richiesta il blocco **Budget di output** mostra risposta
+richiesta, riserva locale e tetto totale, con i limiti del catalogo e gli avvisi.
+Se il piano supera l’output dell’endpoint o il contesto disponibile, la chiamata
+si ferma senza tagliare istruzioni, punteggi o artefatti essenziali; serve un modello
+compatibile oppure un effort minore. La lettura del profilo conserva almeno 4000
+token di risposta. I log distinguono risposta completa, limite raggiunto, output
+vuoto, solo ragionamento e ragionamento che esaurisce il totale, conservando anche
+i tentativi prima di un ripiego. Anche il benchmark dei preset registra il piano
+effettivo e i contatori di output di ogni prova. La diagnostica riparte per ogni
+tentativo, così i valori di un modello precedente non passano al successivo.
+Uno stream parziale mantiene il testo già mostrato
+e non passa a un altro modello dopo l’inizio della risposta visibile.
 
 Il **budget mensile** e i **ripieghi** convivono: quando la spesa registrata
 raggiunge il limite, i modelli a pagamento si fermano e l’invio passa al primo

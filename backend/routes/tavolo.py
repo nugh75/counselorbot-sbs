@@ -469,7 +469,7 @@ def tavolo_capabilities(
     personal_api.bind_counselor(db, counselor_id)
     connection = personal_api.active_settings(db, username, counselor_id)
     if connection:
-        candidates = [(connection.provider, connection.model_name, None, None)]
+        candidates = [(connection.provider, connection.model_name, None, None, None)]
     return {
         "available": bool(candidates),
         "fallback_origin": (
@@ -787,7 +787,7 @@ def read_capture(
 def _model_candidates(db: Session, counselor_id: int | None) -> list[ModelChoice]:
     candidates: list[ModelChoice] = []
     if counselor_id:
-        provider, model, _persona, name, disable_thinking, budget = _resolve_counselor(db, counselor_id)
+        provider, model, _persona, name, disable_thinking, budget, effort = _resolve_counselor(db, counselor_id)
         if name and (not provider or not model):
             # A counselor without a preset uses the global configuration, as in chat.
             config = {row.key: row.value for row in db.query(models.Config).filter(
@@ -796,7 +796,7 @@ def _model_candidates(db: Session, counselor_id: int | None) -> list[ModelChoice
             provider = config.get("active_provider") or "openai"
             model = config.get("model_name") or "gpt-4o"
         if provider and model:
-            candidates.append((provider, model, disable_thinking, budget))
+            candidates.append((provider, model, disable_thinking, budget, effort))
     fallback = _diagram_fallback(db)
     if fallback and fallback[:2] not in [choice[:2] for choice in candidates]:
         candidates.append(fallback)
@@ -822,14 +822,14 @@ async def _ask_model(db: Session, *, task: str, counselor_id: int | None,
     personal_api.bind_counselor(db, counselor_id)
     connection = personal_api.active_settings(db, username, counselor_id)
     if connection:
-        candidates = [(connection.provider, connection.model_name, None, None)]
+        candidates = [(connection.provider, connection.model_name, None, None, None)]
     if not candidates:
         raise HTTPException(status_code=422, detail="nessun modello configurato")
 
     unavailable = False
-    for provider, model, disable_thinking, budget in candidates:
+    for provider, model, disable_thinking, budget, effort in candidates:
         ai_service = AIService(db, username=username)
-        _apply_counselor_overrides(ai_service, disable_thinking, budget)
+        _apply_counselor_overrides(ai_service, disable_thinking, budget, effort)
         ai_service.config['ai_timeout_seconds'] = str(min(
             int(ai_service.config.get('ai_timeout_seconds') or 120), MODEL_TIMEOUT_SECONDS,
         ))

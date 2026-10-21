@@ -556,10 +556,10 @@ def fallback_analysis(message: str, language: str = "it", allowed_tool_ids: Coll
 
 def _counselor_runtime(db: Session, counselor_id: int | None):
     if not counselor_id:
-        return None, None, None, None, None
+        return None, None, None, None, None, None
     counselor = personal_api.require_visible_counselor(db, counselor_id)
     if counselor is None:
-        return None, None, None, None, None
+        return None, None, None, None, None, None
     preset = db.query(models.ModelPreset).filter(models.ModelPreset.id == counselor.preset_id).first() if counselor.preset_id else None
     return (
         counselor,
@@ -567,6 +567,7 @@ def _counselor_runtime(db: Session, counselor_id: int | None):
         preset.model if preset else None,
         bool(preset.disable_thinking) if preset else None,
         preset.reasoning_budget if preset else None,
+        getattr(preset, "reasoning_effort", None) if preset else None,
     )
 
 
@@ -802,7 +803,7 @@ def analyze_turn(
                      for item in (current_recommendations or []) if item.get("id") in TOOL_IDS and item.get("id") in allowed_tool_ids][:3]
     # Senza preset del counselor provider e model restano None: AIService usa il
     # provider attivo e il modello configurati (active_provider/model_name).
-    counselor, provider, model, disable_thinking, reasoning_budget = _counselor_runtime(db, counselor_id)
+    counselor, provider, model, disable_thinking, reasoning_budget, reasoning_effort = _counselor_runtime(db, counselor_id)
     catalog = "\n\n".join(
         "\n".join([f"{label}:"] + [f"- {tool_id}: {TOOL_DESCRIPTIONS[tool_id]}" for tool_id in ids if tool_id in allowed_tool_ids])
         for label, ids in TOOL_GROUPS
@@ -871,6 +872,8 @@ You only advise: never write, edit or fill in the student's Notebook, readings, 
             service.config["disable_thinking"] = "true" if disable_thinking else "false"
         if reasoning_budget is not None:
             service.reasoning_budget_override = reasoning_budget
+        if reasoning_effort is not None:
+            service.preset_reasoning_effort = reasoning_effort
         raw = service.get_response(
             (message or "").strip()[:4000],
             system_prompt,

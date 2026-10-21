@@ -1022,6 +1022,9 @@ class ModelPreset(Base):
     # Override del budget di ragionamento (token) per i modelli reasoning.
     # None = usa il default della famiglia del modello (reasoning_profiles).
     reasoning_budget = Column(Integer, nullable=True)
+    # Effort provider-neutral scelto dal docente (minimal/low/medium/high/
+    # xhigh/max). None = default del modello/catalogo.
+    reasoning_effort = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

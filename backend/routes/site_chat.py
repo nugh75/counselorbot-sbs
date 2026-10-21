@@ -9,6 +9,7 @@ Endpoint:
 - POST /site-chat/reindex  → ricostruzione forzata dell'indice (solo admin)
 """
 from .. import personal_api
+from ..reasoning_profiles import plan_details
 import json as _json
 import logging
 import re
@@ -25,13 +26,14 @@ from ..platform_guidance import GUIDE_DIRECTIVE, GUIDE_FILENAME, read_platform_g
 from .. import auth, database, models, model_pricing
 from ..chat_continuation import continuation_message
 from ..prompt_contract import persona_context
-from ..ai_service import AIService, AIError
+from ..ai_service import AIService, AIError, generation_details
 from ..chat_logic import (
     DEFAULT_NO_REASONING_DIRECTIVE,
     _apply_language_directive,
     _apply_reasoning_directive,
     _apply_response_length_directive,
     _reasoning_disabled_for,
+    _reasoning_suppressed_for,
     _limit_visible_words,
     _response_length_max_tokens,
     _strip_generic_acknowledgement,
@@ -470,12 +472,15 @@ async def site_chat_stream(
                     "usage": usage,
                     "response_length": request.response_length,
                     "effective_response_length": request.response_length,
-                    "reasoning_disabled": bool(getattr(ai_service, "disable_thinking", False)),
-                    "reasoning_plan": {
-                        "enabled": bool(getattr(reasoning_plan, "enabled", False)),
-                        "reasoning_budget": getattr(reasoning_plan, "reasoning_budget", None),
-                    },
+                    "reasoning_disabled": (
+                        _reasoning_suppressed_for(ai_service)
+                        if reasoning_plan is None
+                        else not bool(getattr(reasoning_plan, "enabled", False))
+                    ),
+                    "reasoning_plan": plan_details(reasoning_plan),
                     "reasoning_present": bool(getattr(ai_service, "last_thinking", None)),
+                    "completion": getattr(ai_service, "last_completion", None),
+                    "context_budget": getattr(ai_service, "last_context_report", None),
                     "cost_usd": cost_usd,
                     "credential_source": "personal" if getattr(ai_service, "personal_target", None) else "system",
                     "shared_owner": getattr(ai_service, "shared_owner", None),
@@ -556,7 +561,7 @@ async def site_chat_stream(
                 if not text:
                     continue
                 if isinstance(item, dict) and item.get("type") == "reasoning":
-                    if not getattr(ai_service, "disable_thinking", False):
+                    if not _reasoning_suppressed_for(ai_service):
                         yield f"data: {_json.dumps({'reasoning': text})}\n\n"
                     continue
                 chunks.append(text)
@@ -591,7 +596,7 @@ async def site_chat_stream(
                 try:
                     log_error(err_db, session_id, str(e), action="chat_error",
                               questionnaire_type=_SITE_QTYPE, mode="site_chat", phase=request.audience,
-                              conversation_id=conversation_id)
+                              conversation_id=conversation_id, generation_details=generation_details(ai_service))
                 finally:
                     err_db.close()
             yield f"data: {_json.dumps({'error': str(e)})}\n\n"

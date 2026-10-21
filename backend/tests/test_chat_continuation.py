@@ -84,7 +84,7 @@ def test_presentation_steps_never_reason():
 ])
 def test_preparation_errors_keep_only_safe_codes_before_streaming(monkeypatch, streaming, code, expected):
     monkeypatch.setattr(chat, 'AIService', lambda *args, **kwargs: SimpleNamespace(config={}))
-    monkeypatch.setattr(chat, '_resolve_counselor', lambda *args: (None,) * 6)
+    monkeypatch.setattr(chat, '_resolve_counselor', lambda *args: (None,) * 7)
     monkeypatch.setattr(chat, '_apply_counselor_overrides', lambda *args: None)
     def broken(*args, **kwargs):
         raise AIError('Private provider details', code=code)
@@ -131,7 +131,7 @@ def test_guided_continuation_streams_and_persists_one_complete_answer(monkeypatc
         history=[], sanitize=False, components={},
     )
     monkeypatch.setattr(chat, "AIService", lambda db, username=None: ai)
-    monkeypatch.setattr(chat, "_resolve_counselor", lambda *a: (None,) * 6)
+    monkeypatch.setattr(chat, "_resolve_counselor", lambda *a: (None,) * 7)
     monkeypatch.setattr(chat, "_apply_counselor_overrides", lambda *a: None)
     monkeypatch.setattr(chat, "prepare_chat_turn", lambda *a, **kw: prepared)
     monkeypatch.setattr(chat, "session_memory", MagicMock())

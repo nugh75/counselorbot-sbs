@@ -155,8 +155,8 @@ def _require_feature(db: Session) -> None:
         raise HTTPException(status_code=404, detail="diagrams disabled")
 
 
-# provider, model, disable_thinking, reasoning_budget
-ModelChoice = tuple[str, str, bool | None, int | None]
+# provider, model, disable_thinking, reasoning_budget, reasoning_effort
+ModelChoice = tuple[str, str, bool | None, int | None, str | None]
 
 
 def _diagram_fallback(db: Session) -> ModelChoice | None:
@@ -174,7 +174,8 @@ def _diagram_fallback(db: Session) -> ModelChoice | None:
     preset = db.query(models.ModelPreset).filter(models.ModelPreset.id == int(value)).first()
     if not preset or not preset.provider or not preset.model:
         return None
-    return preset.provider, preset.model, bool(preset.disable_thinking), preset.reasoning_budget
+    return (preset.provider, preset.model, bool(preset.disable_thinking),
+            preset.reasoning_budget, getattr(preset, "reasoning_effort", None))
 
 
 def _image_response(spec: DiagramSpec, *, theme: str, fmt: str, embed_title: bool, lang: str) -> Response:
@@ -238,7 +239,7 @@ async def diagram_from_message(
     owner = session_owner(db, request.session_id, identity) if request.session_id else None
     questionnaire_type = session_questionnaire(db, request.session_id)
     base_prompt = SPEC_ONLY_SYSTEM_PROMPT + factor_selection_prompt(questionnaire_type)
-    c_provider, c_model, _persona, _name, disable_thinking, reasoning_budget = _resolve_counselor(
+    c_provider, c_model, _persona, _name, disable_thinking, reasoning_budget, reasoning_effort = _resolve_counselor(
         db, request.counselor_id
     )
 
@@ -246,24 +247,24 @@ async def diagram_from_message(
     # quando il modello del counselor e' giu' o non sa scrivere lo spec.
     candidates: list[ModelChoice] = []
     if c_provider and c_model:
-        candidates.append((c_provider, c_model, disable_thinking, reasoning_budget))
+        candidates.append((c_provider, c_model, disable_thinking, reasoning_budget, reasoning_effort))
     fallback = _diagram_fallback(db)
     if fallback and fallback[:2] not in [c[:2] for c in candidates]:
         candidates.append(fallback)
     personal_api.bind_counselor(db, request.counselor_id)
     connection = personal_api.active_settings(db, identity.get("username") if identity.get("authenticated") else None, request.counselor_id)
     if connection:
-        candidates = [(connection.provider, connection.model_name, disable_thinking, reasoning_budget)]
+        candidates = [(connection.provider, connection.model_name, disable_thinking, reasoning_budget, reasoning_effort)]
     if not candidates:
         raise HTTPException(status_code=422, detail="selected counselor has no configured model")
 
     spec = None
     unavailable = False
-    for provider, model, dt, rb in candidates:
+    for provider, model, dt, rb, effort in candidates:
         # Un AIService per tentativo: gli override di un modello non devono
         # restare addosso al successivo.
         ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
-        _apply_counselor_overrides(ai_service, dt, rb)
+        _apply_counselor_overrides(ai_service, dt, rb, effort)
         ai_service.config['ai_timeout_seconds'] = str(min(
             int(ai_service.config.get('ai_timeout_seconds') or 120), DIAGRAM_MODEL_TIMEOUT_SECONDS,
         ))

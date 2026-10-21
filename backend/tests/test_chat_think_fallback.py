@@ -134,7 +134,7 @@ def mock_chat_context(monkeypatch):
     persist = MagicMock()
     monkeypatch.setattr(chat, "session_memory", MagicMock())
     monkeypatch.setattr(chat, "_update_markdown_memory_background", persist)
-    monkeypatch.setattr(chat, "_resolve_counselor", lambda *a: (None,) * 6)
+    monkeypatch.setattr(chat, "_resolve_counselor", lambda *a: (None,) * 7)
     monkeypatch.setattr(chat, "_apply_counselor_overrides", lambda *a: None)
     monkeypatch.setattr(chat, "_apply_idea_patch", lambda text, **kw: (text, None))
     monkeypatch.setattr(chat, "_record_recommendations", MagicMock(return_value={}))
