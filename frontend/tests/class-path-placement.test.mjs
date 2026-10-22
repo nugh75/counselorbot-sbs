@@ -321,24 +321,36 @@ test('Home without active class path: hero card absent, catalog open normally', 
     }
 });
 
-test('Home with several paths: path with nearest due date displayed first, link to all paths present', async () => {
+test('Home with several paths: every plan listed, nearest due date open first, others collapsible', async () => {
     // samplePath1 has due date 2026-10-15; samplePath2 has due date 2026-11-10.
-    // samplePath1 should be chosen first.
     const f = await createFixture({ paths: [samplePath2, samplePath1], lang: 'it' });
     try {
         await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
 
-        const heroCard = f.page.locator('[data-testid="class-path-hero-card"]');
-        await heroCard.waitFor({ state: 'visible' });
+        const list = f.page.locator('[data-testid="class-path-hero-list"]');
+        const cards = list.locator('[data-testid="class-path-hero-card"]');
+        await cards.first().waitFor({ state: 'visible' });
+        assert.equal(await cards.count(), 2);
 
-        // Title of nearest due date path is displayed
-        assert.ok((await heroCard.innerText()).includes('Inizio anno'));
+        const first = list.getByRole('button', { name: 'Inizio anno', exact: true });
+        const second = list.getByRole('button', { name: 'Percorso Autunno', exact: true });
+        assert.equal(await first.getAttribute('aria-expanded'), 'true');
+        assert.equal(await second.getAttribute('aria-expanded'), 'false');
+        assert.ok(await cards.nth(0).getByText('Compilazione QSA').isVisible());
+        assert.equal(await cards.nth(1).getByText('Obiettivi di studio').count(), 0);
+        // A folded plan still shows its progress.
+        assert.ok((await cards.nth(1).innerText()).includes('0 di 1 completati'));
 
-        // Link to all paths mentions count (2)
-        const allPathsLink = heroCard.getByRole('link', { name: /Vedi tutti i piani operativi/i });
-        await allPathsLink.waitFor({ state: 'visible' });
+        await second.click();
+        assert.equal(await second.getAttribute('aria-expanded'), 'true');
+        await cards.nth(1).getByText('Obiettivi di studio').waitFor({ state: 'visible' });
+        await first.click();
+        assert.equal(await cards.nth(0).getByText('Compilazione QSA').count(), 0);
+
+        const allPathsLink = list.getByRole('link', { name: /Vedi tutti i piani operativi/i });
         assert.equal(await allPathsLink.getAttribute('href'), '/profilo/piani-operativi');
         assert.ok((await allPathsLink.innerText()).includes('(2)'));
+        assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
 
         assert.deepEqual(f.errors, []);
     } finally {
@@ -394,6 +406,22 @@ test('Student area (/profilo): hero card displayed first when path active, tools
         assert.equal(await toggleBtn.getAttribute('aria-expanded'), 'true');
         assert.equal(await toolsSection.getAttribute('hidden'), null);
 
+        assert.deepEqual(f.errors, []);
+    } finally {
+        await f.context.close();
+    }
+});
+
+test('Student area (/profilo) on a phone: every plan listed and folded except the first', async () => {
+    const f = await createFixture({ paths: [samplePath2, samplePath1], lang: 'it', width: 390 });
+    try {
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
+        const cards = f.page.locator('[data-testid="class-path-hero-list"] [data-testid="class-path-hero-card"]');
+        await cards.first().waitFor({ state: 'visible' });
+        assert.equal(await cards.count(), 2);
+        assert.equal(await f.page.getByRole('button', { name: 'Percorso Autunno', exact: true }).getAttribute('aria-expanded'), 'false');
+        if (process.env.CLASS_PATH_SHOT) await f.page.screenshot({ path: process.env.CLASS_PATH_SHOT });
+        assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
         assert.deepEqual(f.errors, []);
     } finally {
         await f.context.close();

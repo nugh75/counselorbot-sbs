@@ -26,7 +26,7 @@ import { latestPausedByTool, suggestTools, type PausedChat } from '@/lib/catalog
 import { fetchOrientationSession, fetchOrientationStatus, type OrientationRecommendation } from '@/lib/orientation-api';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
 import { useUserAccess } from '@/lib/use-user-access';
-import { ClassPathHeroCard } from '@/components/profile/ClassPathHeroCard';
+import { ClassPathHeroList } from '@/components/profile/ClassPathHeroList';
 import { parseStudentClassPaths, selectCurrentClassPath, type StudentClassPath } from '@/lib/class-paths';
 import { classPathText } from '@/lib/i18n-class-paths';
 import { useCollapsedCatalog } from '@/lib/use-collapsed-catalog';
@@ -182,11 +182,7 @@ export function ReturningHome({
                     <h2 id="home-class-path-title" className="sr-only">
                         {classPathText(lang, 'yourClassPath')}
                     </h2>
-                    <ClassPathHeroCard
-                        path={currentPath}
-                        totalPathsCount={activePaths.length}
-                        onReload={handleReloadPaths}
-                    />
+                    <ClassPathHeroList paths={activePaths} onReload={handleReloadPaths} />
                 </section>
             )}
 

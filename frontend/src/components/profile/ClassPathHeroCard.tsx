@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Lock, AlertCircle, ArrowRight, Play } from 'lucide-react';
+import { CheckCircle2, Lock, AlertCircle, ArrowRight, Play, ChevronRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { pathPublicationText } from '@/lib/i18n-path-publication';
 import { apiFetch } from '@/lib/auth';
@@ -21,14 +21,19 @@ import { typedStepTargetLabel } from '@/lib/i18n-administration-steps';
 
 interface Props {
     path: StudentClassPath;
-    totalPathsCount?: number;
     onReload?: () => Promise<void> | void;
+    /** With several plans each card folds to its header and progress. */
+    collapsible?: boolean;
+    defaultOpen?: boolean;
 }
 
-export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props) {
+export function ClassPathHeroCard({ path, onReload, collapsible = false, defaultOpen = true }: Props) {
     const { lang } = useI18n();
     const l = (key: PathTextKey) => classPathText(lang, key);
     const [actionStepId, setActionStepId] = useState<number | null>(null);
+    const [open, setOpen] = useState(defaultOpen);
+    const stepsId = useId();
+    const expanded = !collapsible || open;
 
     const progressPercent = path.total > 0 ? Math.min(100, Math.round((path.done / path.total) * 100)) : 0;
     const progressLabel = l('progressCount')
@@ -66,7 +71,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
             className="space-y-6 border-indigo-200 shadow-sm dark:border-indigo-800"
         >
             {/* Header: Class label, Mode, Title, Progress */}
-            <div className="space-y-3 border-b border-slate-200/80 pb-4 dark:border-slate-800">
+            <div className={`space-y-3 ${expanded ? 'border-b border-slate-200/80 pb-4 dark:border-slate-800' : ''}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
                         {`${l('yourClassPath')} · ${path.group_name}`}
@@ -84,9 +89,23 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
 
                 <div>
                     <h2 className="font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl dark:text-white">
-                        {path.title}
+                        {collapsible ? (
+                            <button
+                                type="button"
+                                onClick={() => setOpen(value => !value)}
+                                aria-expanded={open}
+                                aria-controls={open ? stepsId : undefined}
+                                className="group flex min-h-11 w-full items-center gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                            >
+                                <ChevronRight
+                                    className={`h-5 w-5 shrink-0 text-slate-500 transition-transform dark:text-slate-400 ${open ? 'rotate-90' : ''}`}
+                                    aria-hidden
+                                />
+                                <span className="group-hover:text-indigo-700 dark:group-hover:text-indigo-400">{path.title}</span>
+                            </button>
+                        ) : path.title}
                     </h2>
-                    {path.description && (
+                    {expanded && path.description && (
                         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{path.description}</p>
                     )}
                 </div>
@@ -111,7 +130,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
             </div>
 
             {/* Steps List */}
-            <div className="space-y-3">
+            {expanded && <div id={stepsId} className="space-y-3">
                 {path.steps.map((step, index) => {
                     const stepNumber = index + 1;
                     const isCurrent = step.id === path.next_step_id;
@@ -277,22 +296,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                         </div>
                     );
                 })}
-            </div>
-
-            {/* Footer: link to all class paths */}
-            <div className="flex items-center justify-end border-t border-slate-100 pt-3 dark:border-slate-800">
-                <Link
-                    href="/profilo/piani-operativi"
-                    className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-indigo-700 transition-colors hover:text-indigo-900 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300"
-                >
-                    <span>
-                        {totalPathsCount > 1
-                            ? `${l('seeAllClassPaths')} (${totalPathsCount})`
-                            : l('seeAllClassPaths')}
-                    </span>
-                    <ArrowRight className="h-4 w-4" aria-hidden />
-                </Link>
-            </div>
+            </div>}
         </Card>
     );
 }

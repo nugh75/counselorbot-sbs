@@ -15,7 +15,7 @@ import { enabledResumeItems, personalSlugEnabled, type UserAccess } from '@/lib/
 import { usePersonalToolAccess } from '@/lib/use-personal-tool-access';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
-import { ClassPathHeroCard } from '@/components/profile/ClassPathHeroCard';
+import { ClassPathHeroList } from '@/components/profile/ClassPathHeroList';
 import { parseStudentClassPaths, selectCurrentClassPath, type StudentClassPath } from '@/lib/class-paths';
 import { classPathText } from '@/lib/i18n-class-paths';
 import { useCollapsedCatalog } from '@/lib/use-collapsed-catalog';
@@ -121,11 +121,7 @@ export function PersonalAreaHome() {
                     <h2 id="profile-class-path-title" className="sr-only">
                         {classPathText(lang, 'yourClassPath')}
                     </h2>
-                    <ClassPathHeroCard
-                        path={currentPath}
-                        totalPathsCount={paths.length}
-                        onReload={loadPaths}
-                    />
+                    <ClassPathHeroList paths={paths} onReload={loadPaths} />
                 </section>
             )}
 
