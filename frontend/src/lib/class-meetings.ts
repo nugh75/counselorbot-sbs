@@ -1,5 +1,5 @@
-// Class and group meetings (#175): planned by the teacher, attended by students,
-// who mark their own attendance. A `meeting` path step points at one of them.
+// Class and group meetings (#175): planned by the teacher, attended by students.
+// The student, the teacher from the register, or either marks attendance. A `meeting` path step points at one of them.
 // Individual meetings (#176) have bookable slots instead of one date.
 export interface MeetingSlot {
     id: number;
@@ -12,6 +12,8 @@ export interface MeetingSlot {
     /** Student view: the student's own slot. */
     mine?: boolean;
 }
+
+export type AttendanceMode = 'student' | 'teacher' | 'both';
 
 export interface ClassMeeting {
     id: number;
@@ -29,6 +31,10 @@ export interface ClassMeeting {
     booking_cancelled?: boolean;
     /** #189: the teacher shows it on students' timelines. */
     show_on_timeline?: boolean;
+    /** Who confirms attendance: the student, the teacher from the register, or either. */
+    attendance_mode: AttendanceMode;
+    /** Student view: the teacher marked it from the register. */
+    marked_by_teacher?: boolean;
     /** #190 teacher view: the home class first, then the other classes or groups. */
     group_ids?: number[];
     group_names?: string[];
@@ -67,6 +73,8 @@ export function parseMeeting(input: unknown): ClassMeeting | null {
         ...(raw.booking_slot_id !== undefined ? { booking_slot_id: raw.booking_slot_id != null ? Number(raw.booking_slot_id) : null } : {}),
         ...(raw.booking_cancelled != null ? { booking_cancelled: Boolean(raw.booking_cancelled) } : {}),
         ...(raw.show_on_timeline != null ? { show_on_timeline: Boolean(raw.show_on_timeline) } : {}),
+        attendance_mode: raw.attendance_mode === 'teacher' || raw.attendance_mode === 'both' ? raw.attendance_mode : 'student',
+        ...(raw.marked_by_teacher != null ? { marked_by_teacher: Boolean(raw.marked_by_teacher) } : {}),
         ...(Array.isArray(raw.group_ids) ? { group_ids: raw.group_ids.map(Number) } : {}),
         ...(Array.isArray(raw.group_names) ? { group_names: raw.group_names.map(String) } : {}),
         ...(raw.attendance_by_group && typeof raw.attendance_by_group === 'object'

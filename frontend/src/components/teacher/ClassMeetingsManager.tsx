@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { classMeetingText, type ClassMeetingTextKey } from '@/lib/i18n-class-meetings';
-import { fromLocalInput, meetingHost, meetingWhen, parseMeeting, parseMeetings, toLocalInput, type ClassMeeting, type MeetingSlot } from '@/lib/class-meetings';
+import { fromLocalInput, meetingHost, meetingWhen, parseMeeting, parseMeetings, toLocalInput, type AttendanceMode, type ClassMeeting, type MeetingSlot } from '@/lib/class-meetings';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
@@ -18,11 +18,12 @@ interface Draft {
     title: string; description: string; kind: ClassMeeting['kind']; startsAt: string; duration: string;
     mode: 'in_person' | 'online'; place: string; link: string;
     hostKind: HostKind; referralId: string; hostName: string; hostRole: string; showOnTimeline: boolean;
+    attendanceMode: AttendanceMode;
     /** #190: the other classes or groups, besides this one. */
     groupIds: number[];
 }
 const emptyDraft: Draft = { title: '', description: '', kind: 'group', startsAt: '', duration: '60', mode: 'in_person', place: '', link: '',
-    hostKind: 'teacher', referralId: '', hostName: '', hostRole: '', showOnTimeline: true, groupIds: [] };
+    hostKind: 'teacher', referralId: '', hostName: '', hostRole: '', showOnTimeline: true, attendanceMode: 'student', groupIds: [] };
 interface Referent { id: number; role: string; name: string | null }
 
 function draftOf(meeting: ClassMeeting): Draft {
@@ -33,6 +34,7 @@ function draftOf(meeting: ClassMeeting): Draft {
         referralId: meeting.referral_id ? String(meeting.referral_id) : '',
         hostName: meeting.host_kind === 'expert' ? meeting.host_name ?? '' : '',
         hostRole: meeting.host_kind === 'expert' ? meeting.host_role ?? '' : '', showOnTimeline: meeting.show_on_timeline !== false,
+        attendanceMode: meeting.attendance_mode,
         groupIds: (meeting.group_ids ?? []).filter(id => id !== meeting.group_id) };
 }
 
@@ -59,6 +61,7 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
     const [busy, setBusy] = useState(false);
     const [failure, setFailure] = useState<'error' | 'conflict' | 'slotTaken' | null>(null);
     const [confirmCancel, setConfirmCancel] = useState<number | null>(null);
+    const [registerOf, setRegisterOf] = useState<number | null>(null);
 
     const load = useCallback(async () => {
         try {
@@ -113,7 +116,7 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
             host_kind: draft.hostKind, referral_id: draft.hostKind === 'referent' ? Number(draft.referralId) || null : null,
             host_name: draft.hostKind === 'expert' ? draft.hostName.trim() || null : null,
             host_role: draft.hostKind === 'expert' ? draft.hostRole.trim() || null : null, show_on_timeline: draft.showOnTimeline,
-            group_ids: draft.groupIds };
+            attendance_mode: draft.attendanceMode, group_ids: draft.groupIds };
         const done = editing === 'new'
             ? await send(`/api/teacher/groups/${groupId}/meetings`, 'POST', body)
             : await send(`/api/teacher/meetings/${(editing as ClassMeeting).id}`, 'PUT', { ...body, revision: (editing as ClassMeeting).revision });
@@ -205,6 +208,12 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                                 : draft.groupIds.filter(id => id !== other.id) })} />{other.name}</label>)}
                 </div>
             </fieldset>}
+            <fieldset className="flex flex-wrap gap-4 text-sm">
+                <legend className="mb-1">{m('attendanceBy')}</legend>
+                {(['student', 'teacher', 'both'] as const).map(mode => <label key={mode} className="flex min-h-[44px] items-center gap-2">
+                    <input type="radio" name={`meeting-attendance-${groupId}`} checked={draft.attendanceMode === mode}
+                        onChange={() => setDraft({ ...draft, attendanceMode: mode })} className="h-4 w-4 accent-indigo-600" />{m(`attendance_${mode}`)}</label>)}
+            </fieldset>
             <label className="flex min-h-[44px] items-center gap-2 text-sm">
                 <input type="checkbox" checked={draft.showOnTimeline} onChange={event => setDraft({ ...draft, showOnTimeline: event.target.checked })}
                     className="h-4 w-4 accent-indigo-600" />{m('showOnTimeline')}</label>
@@ -223,7 +232,9 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                     <p className="min-w-0 flex-1 basis-full break-words font-semibold text-slate-800 sm:basis-auto">
                         {row.title}{row.status === 'cancelled' && <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">{m('cancelled')}</span>}
                     </p>
-                    {row.status === 'scheduled' && <div className="flex gap-1">
+                    {row.status === 'scheduled' && <div className="flex flex-wrap gap-1">
+                        {row.attendance_mode !== 'student' && <Button variant="secondary" size="sm" aria-expanded={registerOf === row.id}
+                            onClick={() => setRegisterOf(registerOf === row.id ? null : row.id)}>{m(registerOf === row.id ? 'hideRegister' : 'register')}</Button>}
                         <Button variant="secondary" size="sm" disabled={busy} onClick={() => open(row)}>{m('edit')}</Button>
                         <Button variant="secondary" size="sm" disabled={busy} onClick={() => setConfirmCancel(row.id)}>{m('cancelMeeting')}</Button>
                     </div>}
@@ -236,11 +247,57 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                         {(row.group_ids?.length ?? 0) > 1 && ` (${(row.group_ids ?? []).map((id, index) =>
                             `${row.group_names?.[index] ?? id}: ${row.attendance_by_group?.[String(id)] ?? 0}`).join(' · ')})`}</p>}
                 {(row.group_names?.length ?? 0) > 1 && <p className="text-xs text-slate-600">{`${m('forGroups')}: ${row.group_names!.join(', ')}`}</p>}
+                <p className="text-xs text-slate-600">{`${m('attendanceBy')}: ${m(`attendance_${row.attendance_mode}`)}`}</p>
+                {registerOf === row.id && row.status === 'scheduled' && row.attendance_mode !== 'student'
+                    && <AttendanceRegister lang={lang} meeting={row} onChanged={load} />}
                 {row.kind === 'individual' && row.status === 'scheduled'
                     && <SlotsEditor lang={lang} meeting={row} busy={busy} send={send} />}
                 {confirmCancel === row.id && <ConfirmInline question={m('cancelConfirm')} busy={busy}
                     onConfirm={() => void send(`/api/teacher/meetings/${row.id}/cancel`, 'POST', { revision: row.revision }).then(done => { if (done) setConfirmCancel(null); })}
                     onCancel={() => setConfirmCancel(null)} />}
+            </li>)}
+        </ul>}
+    </div>;
+}
+
+interface RegisterRow { username: string; name: string; attended: boolean; marked_by_teacher: boolean }
+
+/** The teacher's attendance register: one checkbox per student of the meeting's classes. */
+function AttendanceRegister({ lang, meeting, onChanged }: { lang: string; meeting: ClassMeeting; onChanged: () => Promise<void> }) {
+    const m = (key: ClassMeetingTextKey) => classMeetingText(lang, key);
+    const [rows, setRows] = useState<RegisterRow[] | null>(null);
+    const [failed, setFailed] = useState(false);
+    const [busy, setBusy] = useState<string | null>(null);
+    const load = useCallback(async () => {
+        try {
+            const response = await apiFetch(`/api/teacher/meetings/${meeting.id}/attendance`);
+            if (!response.ok) throw new Error('register');
+            setRows(((await response.json()) as { students: RegisterRow[] }).students);
+            setFailed(false);
+        } catch { setFailed(true); }
+    }, [meeting.id]);
+    useEffect(() => { void load(); }, [load]);
+    const toggle = async (row: RegisterRow) => {
+        setBusy(row.username);
+        try {
+            const response = await apiFetch(`/api/teacher/meetings/${meeting.id}/attendance/${encodeURIComponent(row.username)}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ attended: !row.attended }) });
+            if (!response.ok) throw new Error('mark');
+            await Promise.all([load(), onChanged()]);
+        } catch { setFailed(true); } finally { setBusy(null); }
+    };
+    return <div className="space-y-1 border-t border-slate-100 pt-2" data-testid="meeting-register">
+        <p className="text-xs font-semibold text-slate-700">{m('register')}</p>
+        {failed && <p role="alert" className="text-xs font-medium text-red-600">{m('error')}</p>}
+        {rows && !rows.length && <p className="text-xs text-slate-600">{m('registerEmpty')}</p>}
+        {rows && rows.length > 0 && <ul className="grid gap-x-4 sm:grid-cols-2">
+            {rows.map(row => <li key={row.username}>
+                <label className="flex min-h-[44px] items-center gap-2 text-sm">
+                    <input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={row.attended} disabled={busy !== null}
+                        onChange={() => void toggle(row)} />
+                    <span className="min-w-0 break-words">{row.name}</span>
+                    {row.attended && !row.marked_by_teacher && <span className="text-xs text-slate-500">({m('selfMarked')})</span>}
+                </label>
             </li>)}
         </ul>}
     </div>;
