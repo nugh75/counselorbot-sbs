@@ -12,12 +12,22 @@ import { toast } from '@/components/ui/Toast';
 import { classPathText, type PathTextKey } from '@/lib/i18n-class-paths';
 import {
     lockedStepUnlockNumber,
+    planStepHref,
     type StudentClassPath,
     type StudentClassPathStep,
 } from '@/lib/class-paths';
 import { plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
 import { typedStepTargetLabel } from '@/lib/i18n-administration-steps';
+import { pathAssignmentText } from '@/lib/i18n-path-assignments';
+import { pathForumText } from '@/lib/i18n-path-forum';
+import { forumStepNotice } from '@/lib/path-forum';
+import { classMeetingText } from '@/lib/i18n-class-meetings';
+import { stepKindText } from '@/lib/i18n-step-kinds';
+import type { ForumDiscussionLink } from '@/lib/forum';
+import type { ClassMeeting } from '@/lib/class-meetings';
+import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
+import { MeetingDetails } from './MeetingDetails';
 
 interface Props {
     path: StudentClassPath;
@@ -25,9 +35,13 @@ interface Props {
     /** With several plans each card folds to its header and progress. */
     collapsible?: boolean;
     defaultOpen?: boolean;
+    /** The student's forum links and meetings, loaded once by the list. */
+    discussionLinks?: ForumDiscussionLink[];
+    meetings?: ClassMeeting[] | null;
+    onMeetingsChanged?: () => Promise<void> | void;
 }
 
-export function ClassPathHeroCard({ path, onReload, collapsible = false, defaultOpen = true }: Props) {
+export function ClassPathHeroCard({ path, onReload, collapsible = false, defaultOpen = true, discussionLinks = [], meetings = null, onMeetingsChanged }: Props) {
     const { lang } = useI18n();
     const l = (key: PathTextKey) => classPathText(lang, key);
     const [actionStepId, setActionStepId] = useState<number | null>(null);
@@ -156,6 +170,7 @@ export function ClassPathHeroCard({ path, onReload, collapsible = false, default
                     return (
                         <div
                             key={step.id}
+                            id={`class-step-${step.id}`}
                             className={`rounded-xl border p-4 transition-colors ${containerClasses}`}
                         >
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -234,6 +249,33 @@ export function ClassPathHeroCard({ path, onReload, collapsible = false, default
                                                 {step.instructions}
                                             </p>
                                         )}
+                                        {step.step_type === 'assignment' && !isUnavailable && (
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">{pathAssignmentText(lang, 'studentRule')}</p>
+                                        )}
+                                        {step.step_type === 'forum' && !isUnavailable && (() => {
+                                            const notice = forumStepNotice(step.forum_state, isDone);
+                                            return (<>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">{pathForumText(lang, 'studentRule')}</p>
+                                                {notice && <p role="status" className="text-xs font-medium text-slate-700 dark:text-slate-300">{pathForumText(lang, `notice_${notice}`)}</p>}
+                                            </>);
+                                        })()}
+                                        {step.step_type === 'meeting' && step.follows_step_id != null && (() => {
+                                            const chatIndex = path.steps.findIndex(row => row.id === step.follows_step_id);
+                                            return chatIndex >= 0 && <p className="text-xs text-slate-500 dark:text-slate-400">{`${stepKindText(lang, 'followsChat')} [${chatIndex + 1}]`}</p>;
+                                        })()}
+                                        {step.step_type === 'meeting' && step.meeting_summary && !isUnavailable && (() => {
+                                            // The student's own view of the meeting carries slots and booking (#176).
+                                            const meeting = meetings?.find(row => row.id === step.meeting_id) ?? step.meeting_summary;
+                                            return (<>
+                                                <MeetingDetails lang={lang} meeting={meeting} attended={isDone}
+                                                    onChanged={async () => { await Promise.all([onReload?.(), onMeetingsChanged?.()]); }} />
+                                                {/* The rule matters once it can be followed: started, not yet marked. */}
+                                                {!isDone && meeting.status === 'scheduled' && meeting.kind === 'group' && meeting.starts_at
+                                                    && new Date(meeting.starts_at).getTime() <= Date.now()
+                                                    && <p className="text-xs text-slate-500 dark:text-slate-400">{classMeetingText(lang, 'studentRule')}</p>}
+                                            </>);
+                                        })()}
+                                        <ForumDiscussionLinks links={discussionLinks} kind="path_step" targetId={step.id} />
 
                                         {isLocked && (
                                             <p className="text-xs italic text-slate-500 dark:text-slate-400">
@@ -270,12 +312,12 @@ export function ClassPathHeroCard({ path, onReload, collapsible = false, default
                                 {/* Right side: actions */}
                                 <div className="flex flex-wrap items-center gap-2 pt-2 sm:shrink-0 sm:justify-end sm:pt-0">
                                     {step.start_href && !isLocked && !isUnavailable && (
-                                        <Link href={step.start_href}>
+                                        <Link href={planStepHref(step.start_href)}>
                                             <Button
                                                 variant={isCurrent ? 'accent' : 'secondary'}
                                                 size="sm"
                                             >
-                                                {l('start')}
+                                                {isDone ? l('reopen') : l('start')}
                                                 <ArrowRight className="h-4 w-4" aria-hidden />
                                             </Button>
                                         </Link>

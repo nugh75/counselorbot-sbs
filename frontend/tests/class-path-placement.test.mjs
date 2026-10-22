@@ -259,6 +259,9 @@ test('Home with active class path: hero card shown first, ochre current step, ca
         assert.ok((await heroCard.innerText()).includes('Inizio anno'));
 
         // Current step (step 102) is rendered with ochre styling and ▶
+        // A done step reopens; a chat start remembers the way back to the plan.
+        assert.equal(await heroCard.getByRole('link', { name: 'Riapri' }).getAttribute('href'), '/bussola');
+        assert.equal(await heroCard.getByRole('link', { name: 'Inizia' }).first().getAttribute('href'), '/?start=QSA&from=plan');
         const currentStep = heroCard.getByText('Compilazione QSA');
         await currentStep.waitFor({ state: 'visible' });
         const currentBadge = heroCard.getByText('In corso');

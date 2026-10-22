@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { filterProgressStudents, lockedStepUnlockNumber, pathStepTools, parseClassPath, parseClassPathProgress, progressCellCode, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths, selectCurrentClassPath, orderClassPaths } from './class-paths.ts';
+import { filterProgressStudents, lockedStepUnlockNumber, pathStepTools, parseClassPath, parseClassPathProgress, progressCellCode, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths, selectCurrentClassPath, orderClassPaths, planStepHref } from './class-paths.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { plannedDayIso, plannedDayLocation, plannedDayText } from './class-path-schedule.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
@@ -397,4 +397,10 @@ test('orderClassPaths keeps every plan, open ones first by nearest due date', ()
     const done = make(1, '2026-09-01', 'done'), later = make(2, '2026-11-01', 'not_done'), sooner = make(3, '2026-10-01', 'not_done');
     assert.deepEqual(orderClassPaths([done, later, sooner]).map(path => path.id), [3, 2, 1]);
     assert.deepEqual(orderClassPaths([]), []);
+});
+
+test('planStepHref marks only chat starts as coming from a plan', () => {
+    assert.equal(planStepHref('/?start=OBIETTIVO_STUDIO'), '/?start=OBIETTIVO_STUDIO&from=plan');
+    assert.equal(planStepHref('/profilo/timeline'), '/profilo/timeline');
+    assert.equal(planStepHref('/profilo/piani-operativi/1/2/approfondimento'), '/profilo/piani-operativi/1/2/approfondimento');
 });
