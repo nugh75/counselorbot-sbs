@@ -37,6 +37,18 @@ ENV BACKEND_ORIGIN=${BACKEND_ORIGIN}
 
 RUN npm run build
 
+# Development image for the test instance: full source and dev dependencies,
+# used with source bind mounts and Next.js hot reload. The default production
+# target remains `runner` below.
+FROM base AS dev
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+EXPOSE 3000
+CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0", "--port", "3000"]
+
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
