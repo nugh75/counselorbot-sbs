@@ -1107,7 +1107,13 @@ indirizzo /docente/percorsi reindirizza qui in modo permanente; con una propria
 immagine, `percorsi-classe.png`: si sceglie la classe e si preparano, pubblicano e seguono i suoi piani operativi
 con lo stesso editor della scheda Piani operativi della classe; nell’editor (della classe e dei
 modelli) un solo **+ Aggiungi passo** chiede «Cosa fa lo studente in questo passo?» e
-mostra solo il modulo del tipo scelto. Ogni passo può avere una **scadenza facoltativa**;
+mostra solo il modulo del tipo scelto. Un piano già salvato si apre come **riepilogo**:
+titolo, descrizione e ordine con «Modifica piano», e per ogni passo «Modifica» (titolo,
+istruzioni, date, spostamento e rimozione) e **«Sostituisci»**, che riapre lo stesso
+pannello di aggiunta e mette il passo scelto al posto di quello attuale (in un piano
+pubblicato il passo sostituito viene tolto e i progressi su di esso non contano più; un
+questionario analizzato da una chat del piano non si sostituisce finché c’è la chat);
+dopo ogni salvataggio il piano torna al riepilogo. Ogni passo può avere una **scadenza facoltativa**;
 questionario e chat guidata mostrano anche un **giorno previsto** (per il questionario è
 la data del piano di somministrazione, per la chat si imposta nel passo). Giorno previsto
 e scadenza possono convivere e sono solo informativi: non limitano l’accesso né il
