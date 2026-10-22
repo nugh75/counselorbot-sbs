@@ -14,6 +14,7 @@ from . import models
 from .class_tools import GUIDED_PATH_KEYS
 from .diagram_render import DiagramSpecError, parse_spec
 from .idea_map import IDEA_INSTRUMENT, resolve_focus
+from .qsa_essential import summary_instrument
 
 GUIDED_CHAT_COMPLETED = "guided_chat_completed"
 PQBL_SESSION_COMPLETED = "pqbl_session_completed"
@@ -38,16 +39,20 @@ def record_guided_chat_completion(db: Session, *, session_id: str, username: str
     """
     if not username or not phase or not session_id:
         return False
-    step = db.get(models.GuidedStep, phase)
-    if step is None or _last_guided_step_id(db, step.questionnaire_type) != step.id:
-        return False
+    # The essential paths' phases are virtual: their summary closes the path too.
+    questionnaire_type = summary_instrument(phase)
+    if questionnaire_type is None:
+        step = db.get(models.GuidedStep, phase)
+        if step is None or _last_guided_step_id(db, step.questionnaire_type) != step.id:
+            return False
+        questionnaire_type = step.questionnaire_type
     exists = (
         db.query(models.Log.id)
         .filter(
             models.Log.action == GUIDED_CHAT_COMPLETED,
             models.Log.session_id == session_id,
             models.Log.username == username,
-            models.Log.questionnaire_type == step.questionnaire_type,
+            models.Log.questionnaire_type == questionnaire_type,
         )
         .first()
     )
@@ -59,8 +64,8 @@ def record_guided_chat_completion(db: Session, *, session_id: str, username: str
         # Turn time, not transaction start: deep dives compare it with their binding.
         timestamp=datetime.now(timezone.utc),
         username=username,
-        questionnaire_type=step.questionnaire_type,
-        phase=step.id,
+        questionnaire_type=questionnaire_type,
+        phase=phase,
     ))
     return True
 
