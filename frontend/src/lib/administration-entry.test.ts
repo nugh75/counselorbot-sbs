@@ -7,7 +7,7 @@ import { administrationDraftKey, commitAdministrationEntry, parseAdministrationL
 // @ts-expect-error -- Node's TypeScript runner requires the extension.
 import { administrationStepText, administrationStepTexts, resultProvenanceText } from "./i18n-administration-steps.ts";
 
-test("launch preserves exact target and never carries a password", () => {
+test("launch preserves exact target and carries the class access password", () => {
   const launch = parseAdministrationLaunch({
     path_id: 1,
     step_id: 2,
@@ -15,10 +15,16 @@ test("launch preserves exact target and never carries a password", () => {
     instrument_code: "QSA",
     locale: "it",
     external_href: "https://www.competenzestrategiche.it/QSA/",
-    institution: { id: 4, name: "Synthetic", institution_code: "SYN" },
+    institution: {
+      id: 4,
+      name: "Synthetic",
+      institution_code: "SYN",
+      institution_password: "Synthetic-Class-Code",
+    },
   });
   assert.equal(launch.administration_plan_id, 3);
   assert.equal(launch.institution.name, "Synthetic");
+  assert.equal(launch.institution.institution_password, "Synthetic-Class-Code");
   assert.equal(launch.external_href, "https://www.competenzestrategiche.it/QSA/");
   const qsar = parseAdministrationLaunch({
     path_id: 1,
@@ -30,6 +36,19 @@ test("launch preserves exact target and never carries a password", () => {
     institution: { id: 4, name: "Synthetic", institution_code: "SYN" },
   });
   assert.equal(qsar.external_href, "https://www.competenzestrategiche.it/QSAr/");
+  assert.equal(qsar.institution.institution_password, null);
+  for (const institution_password of [42, true, {}])
+    assert.throws(() =>
+      parseAdministrationLaunch({
+        path_id: 1,
+        step_id: 2,
+        administration_plan_id: 3,
+        instrument_code: "QSA",
+        locale: "it",
+        external_href: "https://www.competenzestrategiche.it/QSA/",
+        institution: { id: 4, name: "Synthetic", institution_code: "SYN", institution_password },
+      }),
+    );
   assert.throws(() =>
     parseAdministrationLaunch({
       path_id: 1,
@@ -134,7 +153,7 @@ test('every administration message is explicit in all six interface languages', 
     assert.ok(values.every(value=>value.trim().length>0),key);
   }
   assert.match(administrationStepText('en','rule'),/confirmed import/);
-  assert.match(administrationStepText('it','loginHint'),/non è recuperabile/);
+  assert.match(administrationStepText('it','loginHint'),/codice di accesso della classe/);
   assert.match(administrationStepText('en','loginHint'),/does not complete/);
 });
 
@@ -154,6 +173,7 @@ test("in-app launch keeps the exact plan locale and has no external link", () =>
   assert.equal(launch.delivery_mode, "in_app");
   assert.equal(launch.locale, "en");
   assert.equal(launch.external_href, null);
+  assert.equal(launch.institution.institution_password, null);
   assert.equal(parseAdministrationLaunch({ ...inAppLaunch, delivery_mode: undefined, locale: "it",
     external_href: "https://www.competenzestrategiche.it/QSA/" }).delivery_mode, "external_it");
   for (const forged of [

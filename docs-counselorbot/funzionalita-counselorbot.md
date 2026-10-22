@@ -2169,11 +2169,15 @@ the single credential source. In **Teacher area → Institutes** a member teache
 chooses **Enter external credentials** (or **Replace external credentials**),
 types the code and password and saves with a revision check. The code is trimmed
 and compared case-insensitively; it must be unique across institutes. The
-password is never trimmed or transformed and is limited to 72 UTF-8 bytes. It is
-write-only: CounselorBot stores only a bcrypt verifier, never returns the password
-or hash in any response (teacher or administrator), and cannot show it again.
-Teachers give students the external login separately. A stale revision or a code
-used by another institute returns a conflict and keeps the typed code. The
+password is never trimmed or transformed and is limited to 72 UTF-8 bytes. The
+teacher editor never shows it again and no teacher or administrator response
+returns the password or either stored form. A separate Fernet-encrypted display
+copy, kept in the existing personal-credentials volume, lets members of the class
+read the code in the external administration step; the UI masks it behind
+**Mostra**. The bcrypt verifier still decides local verification. Credentials
+saved before this copy existed must be re-entered once with **Sostituisci
+credenziali esterne** before the student step can show them. A stale revision or
+a code used by another institute returns a conflict and keeps the typed code. The
 administrator password reset accepts only a plaintext entry, never a raw hash.
 
 Administration plans no longer store their own code or password: create/edit
@@ -2230,17 +2234,17 @@ columns is left to a later reviewed migration. The bcrypt helper now uses the
 Teachers can create or select an Italian administration in the class Operational plans tab.
 The class and research views reference the same administration ID; the server
 resolves the class and institute. The institute owns the external code and
-write-only password verifier. Students open competenzestrategiche.it and log in
-with the institute code and password supplied separately by their teacher; the
-password cannot be retrieved from CounselorBot.
+password. Students open competenzestrategiche.it and log in with the institute
+code and the class password, which the external step shows masked behind
+**Mostra**; if no readable copy exists, it asks them to request it from the teacher.
 
 A `questionnaire_administration` step is distinct from a legacy `tool` step.
 One canonical table in `backend/questionnaire_sources.py` — mirrored by
 `frontend/src/lib/questionnaire-sources.ts` — feeds both the Compass prompt and
 the launch response. The launch response opens the exact questionnaire chosen in
 the administration (for example `/QSAr/`, never the site home) and shows the external site's own
-labels, **Codice istituto/ente** and **Password di accesso**, with the password
-supplied separately by the teacher. Opening the external link does not complete
+labels, **Codice istituto/ente** and **Password di accesso**, both from the
+institute (the password masked behind **Mostra**). Opening the external link does not complete
 it. Students enter all questionnaire factor scores, locally verify institute
 credentials in a separate and explicitly local step, and explicitly use the
 scores in guided chat. The server commits the result, guided entry and exact step evidence

@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
-from .. import administration_context, auth, database, models, schemas
+from .. import administration_context, auth, database, institution_password, models, schemas
 from ..institution_access import require_institution_admin, teacher_institutions, require_teacher, require_institution_teacher
 
 router = APIRouter()
@@ -206,6 +206,9 @@ async def replace_teacher_institution_credentials(institution_id: int, request: 
         raise HTTPException(status_code=409, detail="institution_code_conflict")
     row.institution_code = code
     row.hashed_password = models.get_password_hash(password)
+    row.encrypted_password = institution_password.remember(
+        password, has_stored=bool(row.encrypted_password)
+    )
     row.revision += 1
     row.credentials_revision += 1
     try:
@@ -394,8 +397,12 @@ async def set_institution_password(
     row.credentials_revision += 1
     if payload.plain_password is not None:
         row.hashed_password = models.get_password_hash(payload.plain_password)
+        row.encrypted_password = institution_password.remember(
+            payload.plain_password, has_stored=bool(row.encrypted_password)
+        )
     else:
         row.hashed_password = None
+        row.encrypted_password = None
     db.commit()
     db.refresh(row)
     return row

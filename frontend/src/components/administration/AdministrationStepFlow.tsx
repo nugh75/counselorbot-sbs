@@ -48,6 +48,7 @@ export function AdministrationStepFlow({
   const [busy, setBusy] = useState(false);
   const [institutionCode, setInstitutionCode] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [grant, setGrant] = useState<string | null>(null);
   const [scores, setScores] = useState<Record<string, number> | null>(null);
@@ -406,7 +407,26 @@ export function AdministrationStepFlow({
                   {l("password")}
                 </dt>
                 <dd className="mt-1 text-sm text-slate-700">
-                  {l("passwordFromTeacher")}
+                  {launch.institution.institution_password ? (
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="select-all font-mono text-lg text-slate-900">
+                        {showPassword
+                          ? launch.institution.institution_password
+                          : "********"}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        aria-pressed={showPassword}
+                        onClick={() => setShowPassword((value) => !value)}
+                      >
+                        {showPassword ? l("hidePassword") : l("showPassword")}
+                      </Button>
+                    </span>
+                  ) : (
+                    l("passwordFromTeacher")
+                  )}
                 </dd>
               </div>
             </dl>

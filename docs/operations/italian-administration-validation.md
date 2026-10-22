@@ -22,10 +22,12 @@ use `external_it`; this does not claim that an external submission was verified.
 
 `POST /user/paths/{path}/steps/{step}/launch` returns the institute code, the
 questionnaire-specific external URL (`/QSAr/` for QSAr, not the site home) and
-factor definitions, never a password. Opening it creates no evidence. The
-student separately receives the external password from the teacher. The page
-shows the same code and access-password labels the external site asks for, and
-the local verification is a separate, explicit step before scores can be saved.
+factor definitions. For `external_it` plans it also returns the class password
+from the encrypted display copy (masked behind **Show** in the UI); in-app launches
+return `null`. Opening the launch creates no evidence. The local verification
+against the bcrypt verifier remains a separate, explicit step before scores can be
+saved. The page shows the same code and access-password labels the external site
+asks for.
 `POST /user/paths/{path}/steps/{step}/guided-entry` verifies current membership,
 strict order, target availability, the exact plan's institute grant, all factor
 scores (integer stanines 1–9) and any selected result's ownership/context. A manual

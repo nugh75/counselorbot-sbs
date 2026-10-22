@@ -229,6 +229,7 @@ import_module("backend.migrations.20261011_unified_ai_sources").migrate(database
 import_module("backend.migrations.20261011_reasoning_levels").migrate(database.engine)
 import_module("backend.migrations.20261011_class_personal_ai").migrate(database.engine)
 import_module("backend.migrations.20261011_teacher_shared_counselors").migrate(database.engine)
+import_module("backend.migrations.20261022_institution_password_display").migrate(database.engine)
 
 
 @asynccontextmanager

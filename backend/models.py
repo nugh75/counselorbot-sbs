@@ -1557,6 +1557,9 @@ class Institution(Base):
     institution_code = Column(String(50), unique=True, nullable=True, index=True)
     # Password hashed bcrypt; vuota significa istituto senza autenticazione.
     hashed_password = Column(String(255), nullable=True)
+    # Copia cifrata per mostrare il codice di accesso della classe nel passo di
+    # somministrazione. La verifica usa sempre solo hashed_password.
+    encrypted_password = Column(Text, nullable=True)
     # Bumped on every code/password change: verification grants bind to it.
     credentials_revision = Column(Integer, nullable=False, default=1, server_default="1")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
