@@ -150,7 +150,8 @@ A class path can include a questionnaire administration. In Italian you complete
 it on competenzestrategiche.it and enter your scores; in other languages you answer
 the items here, in the administration language. In both cases you verify the
 institute code and password: the external step shows both, with the password masked
-behind **Show**. If the password is not available there, ask your teacher. After
+behind **Show**. If the password is not available there, ask your teacher, who can
+reveal it in Institutes or re-enter it once. After
 saving an in-app result,
 bring it into guided chat: you do not retype the scores, and the step is done only
 once that entry is recorded. If the questionnaire is not available in the

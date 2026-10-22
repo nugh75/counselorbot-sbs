@@ -2174,15 +2174,20 @@ chooses **Enter external credentials** (or **Replace external credentials**),
 types the code and password and saves with a revision check. The code is trimmed
 and compared case-insensitively; it must be unique across institutes. The
 password is never trimmed or transformed and is limited to 72 UTF-8 bytes. The
-teacher editor never shows it again and no teacher or administrator response
-returns the password or either stored form. A separate Fernet-encrypted display
-copy, kept in the existing personal-credentials volume, lets members of the class
-read the code in the external administration step; the UI masks it behind
-**Mostra**. The bcrypt verifier still decides local verification. Credentials
-saved before this copy existed must be re-entered once with **Sostituisci
-credenziali esterne** before the student step can show them. A stale revision or
-a code used by another institute returns a conflict and keeps the typed code. The
-administrator password reset accepts only a plaintext entry, never a raw hash.
+teacher editor never prefills it and list/detail responses never include it; a
+member teacher can reveal it on request from the institute card with **Mostra**.
+A separate Fernet-encrypted display copy, kept in the existing
+personal-credentials volume, also lets members of the class read the code in the
+external administration step; there too the UI masks it behind **Mostra**. The
+bcrypt verifier still decides local verification. Credentials saved before this
+copy existed must be re-entered once with **Sostituisci credenziali esterne**
+before either reveal can show them. A stale revision or a code used by another
+institute returns a conflict and keeps the typed code. The administrator password
+reset accepts only a plaintext entry, never a raw hash. The reveal endpoint is
+available only to active institute members and sends `Cache-Control: no-store`;
+the institute card fetches the password only when the teacher presses **Mostra**,
+never while loading the list, and clears it again with **Nascondi** or after a
+credential save.
 
 Administration plans no longer store their own code or password: create/edit
 requests carrying `institution_code` or `institution_password` are rejected
