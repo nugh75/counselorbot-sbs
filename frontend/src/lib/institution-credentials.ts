@@ -1,5 +1,6 @@
 // Institute-owned external credentials and local verification grants (#149).
-// The password is write-only: it is sent once, never trimmed, never stored in the browser.
+// The password is write-only in this teacher flow: it is sent once, never trimmed,
+// never prefilled and never stored in the browser.
 
 const CODE_PATTERN = /^[A-Za-z0-9-]{1,50}$/;
 const MAX_PASSWORD_BYTES = 72;
