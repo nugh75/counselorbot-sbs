@@ -1,0 +1,51 @@
+# Test-instance override: source code is mounted into the containers and both
+# services run in hot-reload mode. Do not use this file for a real production
+# instance: it runs Next.js development mode and exposes debug information.
+#
+# Usage (from the repository root):
+#   scripts/dev-test-instance.sh up
+#   scripts/dev-test-instance.sh logs
+#   scripts/dev-test-instance.sh stop
+#
+# The first `up` builds the frontend development image; later code changes are
+# picked up through the bind mounts without rebuilding anything.
+
+services:
+  counselorbot-backend:
+    command: [uvicorn, backend.main:app, --host, 0.0.0.0, --port, "8000", --reload, --reload-dir, /app/backend]
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ./backend:/app/backend
+      - ./scripts:/app/scripts:ro
+
+  counselorbot-frontend:
+    image: counselorbot-portable-counselorbot-frontend:dev
+    build:
+      target: dev
+    command: [npm, run, dev, --, --hostname, 0.0.0.0, --port, "3000"]
+    environment:
+      NODE_ENV: development
+      BACKEND_ORIGIN: http://counselorbot-backend:8000
+      NEXT_DEV_ALLOWED_ORIGINS: ${COUNSELORBOT_HOSTNAME:-counselorbot.labform.net},localhost,127.0.0.1
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_APP_URL: https://${COUNSELORBOT_HOSTNAME:-counselorbot.labform.net}
+      NEXT_PUBLIC_AI4AUTH_BASE: ${COUNSELORBOT_AUTH_URL:-https://auth.labform.net}
+      NEXT_PUBLIC_AI4EDUC_PORTAL_URL: ${COUNSELORBOT_PORTAL_URL:-https://portal.labform.net}
+      NEXT_PUBLIC_AI4EDUC_MANAGER_URL: ${COUNSELORBOT_MANAGER_URL:-https://manager.labform.net}
+      NEXT_PUBLIC_AI4EDUC_PROJECT_ID: counselorbot-portable
+      NEXT_PUBLIC_API_URL: /api
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/next.config.ts:/app/next.config.ts:ro
+      - ./frontend/postcss.config.mjs:/app/postcss.config.mjs:ro
+      - ./frontend/tsconfig.json:/app/tsconfig.json:ro
+      - ./frontend/eslint.config.mjs:/app/eslint.config.mjs:ro
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/auth/me').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
