@@ -409,7 +409,7 @@ export function AdministrationStepFlow({
                 <dd className="mt-1 text-sm text-slate-700">
                   {launch.institution.institution_password ? (
                     <span className="flex flex-wrap items-center gap-2">
-                      <span className="select-all font-mono text-lg text-slate-900">
+                      <span className="select-all whitespace-pre-wrap font-mono text-lg text-slate-900">
                         {showPassword
                           ? launch.institution.institution_password
                           : "********"}

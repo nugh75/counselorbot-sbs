@@ -290,7 +290,8 @@ In a class, open Paths and create or select an Italian questionnaire administrat
 The research view opens the same administration, not a copy. Save the path draft
 and publish explicitly. Institute credentials must already be configured in Institutes.
 Students see the institute code and the class password in the external step, with the
-password masked behind **Show**; the teacher editor never shows it back. Credentials
+password masked behind **Show**. A member teacher can also reveal the password from the
+institute card with **Show**; list and editor responses still do not contain it. Credentials
 saved before the display copy existed must be re-entered once in Institutes.
 
 Students open competenzestrategiche.it, enter their factor scores, verify their

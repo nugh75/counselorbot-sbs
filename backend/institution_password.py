@@ -4,8 +4,9 @@ The password issued by competenzestrategiche.it belongs to the institute and is
 shared with every student of the class: it identifies the class on the external
 site and is not a personal secret. CounselorBot still verifies it against the
 bcrypt verifier; this module keeps a separate encrypted copy so that class
-members can read it in the external administration step. Teacher and
-administrator responses never return it.
+members can read it in the external administration step. Teacher list and
+detail responses never include it: a member teacher can reveal it on request
+from the institute page. Administrator responses never return it.
 
 The copy is encrypted with the installation Fernet key. The existing
 ``personal_api_credentials`` volume is reused deliberately: no new deployment

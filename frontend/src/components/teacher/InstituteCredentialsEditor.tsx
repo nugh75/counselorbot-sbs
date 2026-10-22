@@ -14,9 +14,9 @@ import { TeacherForbidden } from './TeacherAccess';
 
 const input = 'w-full min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm';
 
-// Write-only in this editor: the password is never prefilled, read back or kept
-// after a successful save. Class members can read the class access code in the
-// external administration step.
+// The password is never prefilled or kept after a successful save. A member
+// teacher can reveal the encrypted display copy from the institute card; class
+// members can read the class access code in the external administration step.
 export function InstituteCredentialsEditor({ institute, onSaved, onCancel }: { institute: TeacherInstitute; onSaved: () => void; onCancel: () => void }) {
     const { lang } = useI18n();
     const l = (key: CredentialTextKey) => credentialText(lang, key);

@@ -129,6 +129,32 @@ def test_teacher_saves_verifier_and_encrypted_display_copy(api):
     assert not models.verify_password(SECRET.strip(), stored)
 
 
+def test_member_teacher_can_reveal_the_display_copy_only_on_request(api):
+    client, sql = api
+    row = school(client)
+    path = f"/teacher/institutions/{row['id']}/password"
+    assert client.get(path).json() == {'password': None, 'reason': 'not_configured'}
+    row = configure(client, row)
+    listing = client.get('/teacher/institutions')
+    detail = client.get(f"/teacher/institutions/{row['id']}")
+    assert SECRET not in listing.text and SECRET not in detail.text
+    revealed = client.get(path)
+    assert revealed.status_code == 200, revealed.text
+    assert revealed.json() == {'password': SECRET, 'reason': None}
+    assert revealed.headers['cache-control'] == 'no-store'
+    # The reveal is a teacher-area action bound to an active institute membership.
+    for role, user, status in (('teacher', 'outsider', 403), ('researcher', 'first', 403),
+                               ('student', 'first', 403), ('admin', 'outsider', 403),
+                               ('anonymous', 'first', 401)):
+        assert client.get(path, headers={'x-test-role': role, 'x-test-user': user}).status_code == status
+    assert client.get(path, headers={'x-test-role': 'admin', 'x-test-user': 'first'}).status_code == 200
+    # A verifier without the encrypted copy is still configured, but not readable.
+    sql('UPDATE institutions SET encrypted_password = NULL WHERE id = :id', id=row['id'])
+    missing = client.get(path)
+    assert missing.status_code == 200
+    assert missing.json() == {'password': None, 'reason': 'display_copy_missing'}
+
+
 def test_credential_replacement_needs_revision_membership_and_teacher_role(api):
     client, _ = api
     row = school(client)
