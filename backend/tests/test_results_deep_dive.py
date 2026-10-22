@@ -486,3 +486,61 @@ def test_lost_administration_result_undoes_the_deep_dive(api, case):
     row = student_row(client)
     assert row["done"] == 0
     assert [step["state"] for step in row["steps"]] == ["not_done", "not_done"]
+
+
+@pytest.mark.parametrize("route", ["/chat", "/chat/stream"])
+def test_essential_summary_completes_the_deep_dive(api, route):
+    # Essential phases are virtual, outside guided_steps: the summary still closes the step.
+    client, db, group, identity = api
+    guided_steps(db)
+    plan, path = deep_dive_path(client, group, mode="strict")
+    identity.update(STUDENT)
+    enter_scores(client, plan, path)
+    session = start(client, path).json()["session_id"]
+    with patch.object(chat.AIService, "get_response", return_value="plain reply"), \
+            patch.object(chat.AIService, "stream_response", side_effect=stream_reply):
+        with chat_client(db, STUDENT) as chat_api:
+            for phase in ("qsa-essential-focus", "qsa-essential-action"):
+                chat_api.post(route, json={"message": "Hi", "questionnaire_type": "QSA", "session_id": session,
+                                           "phase": phase, "guided_path": "essential"}).raise_for_status()
+            assert student_row(client)["done"] == 1
+            for _ in range(2):
+                chat_api.post(route, json={"message": "Hi", "questionnaire_type": "QSA", "session_id": session,
+                                           "phase": "qsa-essential-summary", "guided_path": "essential"}).raise_for_status()
+    row = student_row(client)
+    assert (row["done"], row["total"]) == (2, 2)
+    assert row["steps"][1]["completion_kind"] == "guided_results_chat"
+    markers = db.query(models.Log).filter_by(action="guided_chat_completed", session_id=session).all()
+    assert [(m.questionnaire_type, m.phase) for m in markers] == [("QSA", "qsa-essential-summary")]
+
+
+def test_plan_analysis_session_has_its_final_report(api):
+    # The final choices after the plan's analysis read that session, not the entry's.
+    from backend.routes import survey
+
+    client, db, group, identity = api
+    plan, path = deep_dive_path(client, group)
+    identity.update(STUDENT)
+    entry = enter_scores(client, plan, path)
+    session = start(client, path).json()["session_id"]
+    db.add(models.Log(action="chat_message", session_id=session, username="student", questionnaire_type="QSA",
+                      phase="qsa-close", details={"user_input": "La mia scelta", "bot_response": "Risposta sul piano"}))
+    db.commit()
+    app = FastAPI()
+    app.include_router(survey.router)
+    app.dependency_overrides[survey.get_db] = lambda: db
+    app.dependency_overrides[auth.get_current_user] = lambda: identity
+    with TestClient(app) as report, \
+            patch.object(survey, "_generate_summary", return_value="Sintesi del piano") as generate:
+        conversation = report.get(f"/user/questionnaire-result/{session}/conversation")
+        assert conversation.status_code == 200, conversation.text
+        assert "Risposta sul piano" in conversation.text
+        summary = report.get(f"/user/questionnaire-result/{session}/summary")
+        assert summary.json() == {"summary": "Sintesi del piano", "status": "ready"}
+        assert generate.call_args.kwargs["result"].session_id == session
+        pdf = report.get(f"/questionnaire-result/{session}/pdf")
+        assert pdf.status_code == 200 and pdf.headers["content-type"] == "application/pdf"
+        identity.update(username="other")
+        assert report.get(f"/user/questionnaire-result/{session}/summary").status_code == 403
+    result = db.get(models.QuestionnaireResult, entry["result"]["id"])
+    assert result.session_id == entry["session_id"]

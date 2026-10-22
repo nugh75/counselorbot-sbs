@@ -2,6 +2,7 @@
 import hashlib
 import json
 import logging
+from types import SimpleNamespace
 from typing import List, Optional, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -48,6 +49,18 @@ def _get_owned_questionnaire_result(session_id: str, current_user: dict, db: Ses
             if not current_user.get("is_admin") and practice.owner_username != current_user.get("username"):
                 raise HTTPException(status_code=403, detail="Azione non consentita")
             return practice
+        binding = db.query(models.ClassPathDeepDiveSession).filter_by(session_id=session_id).first()
+        bound = db.get(models.QuestionnaireResult, binding.result_id) if binding else None
+        if bound:
+            if not current_user.get("is_admin") and binding.username != current_user.get("username"):
+                raise HTTPException(status_code=403, detail="Azione non consentita")
+            # A plan's results analysis has its own session: read its conversation
+            # on the bound result, without touching the result row.
+            return SimpleNamespace(
+                id=bound.id, session_id=binding.session_id, username=bound.username,
+                questionnaire_type=bound.questionnaire_type, scores=bound.scores,
+                submitted_at=bound.submitted_at,
+            )
         raise HTTPException(status_code=404, detail="Risultato non trovato")
     if not current_user.get("is_admin") and result.username != current_user.get("username"):
         raise HTTPException(status_code=403, detail="Azione non consentita")

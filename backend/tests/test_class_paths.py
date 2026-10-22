@@ -1023,6 +1023,19 @@ def test_marker_written_only_on_the_last_step_once_per_session(class_paths_api):
     assert len(_markers(db)) == 2
 
 
+def test_essential_summary_writes_the_marker_of_its_instrument(class_paths_api):
+    # Essential phases have no guided_steps row: only their summary closes the path.
+    _, db, _, _ = class_paths_api
+    record = class_path_completion.record_guided_chat_completion
+    assert record(db, session_id="ess", username=STUDENT, phase="obbstudio-essential-plan") is False
+    assert record(db, session_id="ess", username=STUDENT, phase="qsa-essential-followup") is False
+    assert record(db, session_id="ess", username=STUDENT, phase="obbstudio-essential-summary") is True
+    db.commit()
+    assert record(db, session_id="ess", username=STUDENT, phase="obbstudio-essential-summary") is False
+    assert [(m.questionnaire_type, m.phase) for m in _markers(db, "ess")] == [
+        ("OBIETTIVO_STUDIO", "obbstudio-essential-summary")]
+
+
 def test_marker_needs_a_user_and_a_known_step(class_paths_api):
     _, db, _, _ = class_paths_api
     _guided_steps(db)
