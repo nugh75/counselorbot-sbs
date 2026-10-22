@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { apiFetch, getIdentity } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n-context";
 import { administrationStepText } from "@/lib/i18n-administration-steps";
@@ -24,6 +23,7 @@ import { getSelectedCounselorId } from "@/lib/counselor";
 import { ScoreInputForm } from "@/components/qsa/ScoreInputForm";
 import { GuidedChatInterface } from "@/components/qsa/GuidedChatInterface";
 import { InAppAdministrationRunner } from "@/components/administration/InAppAdministrationRunner";
+import { PlanChatCompleted } from "@/components/administration/PlanChatCompleted";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Callout } from "@/components/ui/Callout";
@@ -37,7 +37,6 @@ export function AdministrationStepFlow({
   stepId: number;
 }) {
   const { lang } = useI18n();
-  const router = useRouter();
   const l = (key: Parameters<typeof administrationStepText>[1]) =>
     administrationStepText(lang, key);
   const [launch, setLaunch] = useState<AdministrationLaunch | null>(null);
@@ -57,6 +56,7 @@ export function AdministrationStepFlow({
   const [saved, setSaved] = useState<AdministrationResult | null>(null);
   const runnerSession = useRef<string | null>(null);
   const [ack, setAck] = useState<AdministrationEntryAck | null>(null);
+  const [completed, setCompleted] = useState(false);
   const [reload, setReload] = useState(0);
   const owner = useRef<string | null>(null);
   const draftKey = useRef<string | null>(null);
@@ -304,6 +304,8 @@ export function AdministrationStepFlow({
       )}
     </div>
   );
+  if (ack && questionnaire && completed)
+    return <PlanChatCompleted sessionId={ack.session_id} questionnaireType={questionnaire.id} />;
   if (ack && questionnaire)
     return (
       <GuidedChatInterface
@@ -312,7 +314,7 @@ export function AdministrationStepFlow({
         sessionId={ack.session_id}
         counselorId={getSelectedCounselorId()}
         locale={lang}
-        onComplete={() => router.push("/profilo/piani-operativi")}
+        onComplete={() => setCompleted(true)}
       />
     );
   return (
