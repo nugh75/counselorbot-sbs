@@ -4,7 +4,7 @@ import os
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from backend import auth, database, models
+from backend import auth, database, institution_password, models
 from backend.routes import class_paths, administration_plans
 from backend.questionnaire_sources import external_questionnaire_href
 from backend.tests.artifact_database import artifact_session
@@ -27,6 +27,9 @@ def api():
             kind="school",
             institution_code="SYN-150",
             hashed_password=models.get_password_hash("Invented-150"),
+            encrypted_password=institution_password.remember(
+                "Invented-150", has_stored=False
+            ),
         )
         db.add(school)
         db.flush()
@@ -143,12 +146,22 @@ def test_typed_step_launch_keeps_progress_undone(api):
     assert launch["administration_plan_id"] == plan["id"]
     assert launch["external_href"] == "https://www.competenzestrategiche.it/QSA/"
     assert launch["institution"]["institution_code"] == "SYN-150"
-    assert "password" not in str(launch)
+    assert launch["institution"]["institution_password"] == "Invented-150"
     assert client.get("/user/paths").json()[0]["done"] == 0
     assert (
         client.post(f"/user/paths/{path['id']}/steps/{step['id']}/done").status_code
         == 422
     )
+
+
+def test_launch_reveals_the_class_password_only_to_members(api):
+    client, db, group, identity = api
+    plan, path = typed_path(client, group)
+    step = path["steps"][0]
+    identity.update(username="stranger", groups=[])
+    response = client.post(f"/user/paths/{path['id']}/steps/{step['id']}/launch")
+    assert response.status_code == 403
+    assert "Invented-150" not in response.text
 
 
 def test_manual_entry_acknowledges_result_entry_and_evidence_atomically(api):
