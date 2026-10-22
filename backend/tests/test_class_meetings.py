@@ -549,3 +549,47 @@ def test_one_meeting_for_several_classes_or_groups(api):
         "title", "starts_at", "mode", "place")}, "kind": "group", "group_ids": [], "revision": record["revision"]})
     assert edited.status_code == 200 and edited.json()["group_ids"] == [group.id]
     assert client.get(f"/teacher/groups/{second.id}/meetings").json() == []
+
+
+def test_teacher_chooses_who_confirms_attendance(api):
+    client, db, identity, group, _other = api
+    meeting = plan(client, group, starts_at=when(hours=-1), attendance_mode="teacher").json()
+    assert meeting["attendance_mode"] == "teacher"
+    assert plan(client, group, attendance_mode="nobody").status_code == 422
+    path_id = path_with(client, group, meeting["id"]).json()["id"]
+    assert client.post(f"/teacher/paths/{path_id}/publish").status_code == 200
+    register = f"/teacher/meetings/{meeting['id']}/attendance"
+    # Teacher only: the student cannot mark, the register can.
+    as_user(identity, who("alice"))
+    assert client.get("/user/meetings").json()[0]["can_mark"] is False
+    refused = client.post(f"/user/meetings/{meeting['id']}/attendance")
+    assert refused.status_code == 409 and refused.json()["detail"] == "attendance_by_teacher"
+    as_user(identity, TEACHER)
+    assert client.get(register).json()["students"] == [
+        {"username": "alice", "name": "alice", "group_id": group.id, "attended": False, "marked_by_teacher": False}]
+    assert client.put(f"{register}/alice", json={"attended": True}).status_code == 200
+    assert client.put(f"{register}/bob", json={"attended": True}).status_code == 404     # not in the class
+    as_user(identity, who("alice"))
+    mine = client.get("/user/meetings").json()[0]
+    assert mine["attended"] is True and mine["marked_by_teacher"] is True
+    assert client.get("/user/paths").json()[0]["done"] == 1
+    assert client.delete(f"/user/meetings/{meeting['id']}/attendance").status_code == 409
+    # Both: the student marks too, but cannot take back the teacher's mark.
+    as_user(identity, TEACHER)
+    record = client.get(f"/teacher/groups/{group.id}/meetings").json()[0]
+    both = client.put(f"/teacher/meetings/{meeting['id']}", json={**{k: record[k] for k in (
+        "title", "starts_at", "mode", "place")}, "attendance_mode": "both", "revision": record["revision"]})
+    assert both.status_code == 200 and both.json()["attendance_mode"] == "both"
+    as_user(identity, who("alice"))
+    assert client.get("/user/meetings").json()[0]["can_mark"] is True
+    client.delete(f"/user/meetings/{meeting['id']}/attendance")
+    assert client.get("/user/meetings").json()[0]["attended"] is True
+    # Student only: the register is read-only.
+    as_user(identity, TEACHER)
+    assert client.put(f"{register}/alice", json={"attended": False}).status_code == 200
+    record = client.get(f"/teacher/groups/{group.id}/meetings").json()[0]
+    client.put(f"/teacher/meetings/{meeting['id']}", json={**{k: record[k] for k in (
+        "title", "starts_at", "mode", "place")}, "revision": record["revision"]})
+    refused = client.put(f"{register}/alice", json={"attended": True})
+    assert refused.status_code == 409 and refused.json()["detail"] == "attendance_by_student"
+    assert db.query(models.ClassMeetingAttendance).count() == 0
