@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import { classPathText, type PathTextKey } from '@/lib/i18n-class-paths';
 import { lockedStepUnlockNumber, parseStudentClassPaths, type StudentClassPath, type StudentClassPathStep } from '@/lib/class-paths';
+import { plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
 import { useTeacherResource } from '@/components/teacher/useTeacherResource';
 import { parseForumDiscussionLinks } from '@/lib/forum';
@@ -172,6 +173,8 @@ export function StudentClassPathsPage() {
                                 const toolDisplayName = typedStepTargetLabel(lang, step) ?? resolveClassPathToolName(step.tool_key, lang);
                                 const titleDisplay = step.title ? step.title : toolDisplayName;
                                 const isActionBusy = actionStepId === step.id;
+                                const planned = plannedDayText(step, lang);
+                                const plannedLocation = plannedDayLocation(step);
 
                                 // State-based styles matching ASCII §8.3 & Design Rules
                                 // The current step is a petrol card; ochre stays on its play icon and badge only
@@ -295,6 +298,12 @@ export function StudentClassPathsPage() {
                                                     )}
 
                                                     <div className="flex flex-wrap items-center gap-3 pt-0.5 text-xs text-slate-500">
+                                                        {planned && (
+                                                            <span>
+                                                                {l('plannedOn').replace('{date}', planned)}
+                                                                {plannedLocation ? ` · ${plannedLocation}` : ''}
+                                                            </span>
+                                                        )}
                                                         {step.due_date && (
                                                             <span>{l('dueOn').replace('{date}', step.due_date)}</span>
                                                         )}

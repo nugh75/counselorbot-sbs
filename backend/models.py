@@ -1960,6 +1960,8 @@ class ClassPathStep(Base):
     title = Column(String, nullable=True)
     instructions = Column(Text, nullable=True)
     due_date = Column(Date, nullable=True)
+    # Informational planned day; it never restricts access or completion.
+    scheduled_date = Column(Date, nullable=True)
     removed_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     # Applied from a template: `pending` steps keep the template config until

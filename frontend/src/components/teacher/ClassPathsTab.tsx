@@ -9,6 +9,7 @@ import { ArrowDown, ArrowUp, ArrowLeft, Archive, ArchiveRestore, CheckCircle2, C
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import type { ClassSettings, ClassTool } from '@/lib/class-settings';
 import { parseClassPath, parseClassPaths, pathStepTools, type ClassPath, type ClassPathStep } from '@/lib/class-paths';
+import { plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
 import { resultsChatText } from '@/lib/i18n-results-chats';
 import { deepDiveSources, pathStepKey, resultsSourcePayload } from '@/lib/results-deep-dive';
 import { assignmentSaveError, assignmentStepInput, parsePathAssignments, selectablePathAssignments } from '@/lib/path-assignments';
@@ -234,10 +235,10 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             : selectedAnalysisKey ? {position: 0, step_type: 'guided_results_chat', tool_key: selectedAnalysisKey,
                 auto_detect: true, can_self_mark: false, client_key: key}
             : {position: 0, step_type: 'guided_chat', tool_key: selectedChatKey, auto_detect: true, can_self_mark: false,
-                title: null, instructions: null, due_date: null, client_key: key};
+                title: null, instructions: null, due_date: null, scheduled_date: null, client_key: key};
         const added: ClassPathStep[] = [chat, ...(meeting ? [{position: 0, step_type: 'meeting' as const, meeting_id: meeting.id,
             meeting_summary: meeting, follows_key: key, tool_key: '', auto_detect: true, can_self_mark: false,
-            title: null, instructions: null, due_date: null}] : [])];
+            title: null, instructions: null, due_date: null, scheduled_date: null}] : [])];
         setSteps(current => [...current, ...added].map((step, index) => ({...step, position: index + 1})));
         setSelectedResultsStep(''); setSelectedAnalysisKey(''); setSelectedChatKey(''); setFollowUp('none'); setNotice(null);
     };
@@ -294,7 +295,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             tool_key: toolKey,
             title: null,
             instructions: null,
-            due_date: null,
+            due_date: null, scheduled_date: null,
             auto_detect: auto,
             can_self_mark: !auto,
         };
@@ -346,6 +347,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     title: s.title ? s.title.trim() : null,
                     instructions: s.instructions ? s.instructions.trim() : null,
                     due_date: s.due_date || null,
+                    scheduled_date: s.scheduled_date || null,
                 })),
             };
 
@@ -639,6 +641,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     <h3 className="text-base font-semibold text-slate-800">
                         {`${l('stepsHeading')} (${steps.length})`}
                     </h3>
+                    <p className="text-xs text-slate-500 md:max-w-xl">{l('scheduleHelp')}</p>
                 </div>
 
                 {steps.length === 0 ? (
@@ -686,6 +689,12 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 || (step.step_type === 'meeting' && step.id !== undefined && !step.meeting_summary);
                             // The server reason of a saved step says what to fix; a local check covers unsaved tools.
                             const action = pending ? null : unavailableAction(step.availability_reason || (unavailable ? 'tool_disabled_for_class' : null));
+                            const plannedDay = plannedDayText(step, lang);
+                            const plannedLocation = plannedDayLocation(step);
+                            const isChat = step.step_type === 'guided_chat' || step.step_type === 'guided_results_chat';
+                            const isQuestionnaire = step.step_type === 'questionnaire_administration';
+                            const isMeeting = step.step_type === 'meeting';
+                            const meetingDate = step.meeting_summary ? meetingWhen(step.meeting_summary, lang) : null;
                             return (
                                 <div
                                     key={step.id ? `step-${step.id}` : `new-step-${index}`}
@@ -753,19 +762,55 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                         />
                                     </div>
 
-                                    <div className="flex items-center gap-2 md:w-36">
-                                        <input
-                                            type="date"
-                                            value={step.due_date || ''}
-                                            onChange={e => {
-                                                const next = [...steps];
-                                                next[index].due_date = e.target.value || null;
-                                                setSteps(next);
-                                                if (notice === 'saved' || notice === 'published') setNotice(null);
-                                            }}
-                                            aria-label={`${name} ${l('dueHeader')}`}
-                                            className="block w-full rounded border border-slate-300 px-2 py-1 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
-                                        />
+                                    <div className="space-y-2 md:w-52">
+                                        {isMeeting ? (
+                                            <div>
+                                                <p className="text-[11px] font-medium text-slate-500">{l('meetingDate')}</p>
+                                                <p className="text-xs text-slate-700">{meetingDate || '—'}</p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {isQuestionnaire && (
+                                                    <div>
+                                                        <p className="text-[11px] font-medium text-slate-500">{l('plannedDayFromPlan')}</p>
+                                                        <p className="text-xs text-slate-700">{plannedDay || l('plannedDayNotSet')}</p>
+                                                        {plannedLocation && <p className="text-xs text-slate-500">{plannedLocation}</p>}
+                                                    </div>
+                                                )}
+                                                {isChat && (
+                                                    <label className="block text-[11px] font-medium text-slate-500">
+                                                        {l('plannedDayOptional')}
+                                                        <input
+                                                            type="date"
+                                                            value={step.scheduled_date || ''}
+                                                            onChange={e => {
+                                                                const next = [...steps];
+                                                                next[index].scheduled_date = e.target.value || null;
+                                                                setSteps(next);
+                                                                if (notice === 'saved' || notice === 'published') setNotice(null);
+                                                            }}
+                                                            aria-label={`${name} ${l('plannedDay')}`}
+                                                            className="mt-1 block w-full rounded border border-slate-300 px-2 py-1 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
+                                                        />
+                                                    </label>
+                                                )}
+                                                <label className="block text-[11px] font-medium text-slate-500">
+                                                    {l('dueDateOptional')}
+                                                    <input
+                                                        type="date"
+                                                        value={step.due_date || ''}
+                                                        onChange={e => {
+                                                            const next = [...steps];
+                                                            next[index].due_date = e.target.value || null;
+                                                            setSteps(next);
+                                                            if (notice === 'saved' || notice === 'published') setNotice(null);
+                                                        }}
+                                                        aria-label={`${name} ${l('dueHeader')}`}
+                                                        className="mt-1 block w-full rounded border border-slate-300 px-2 py-1 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
+                                                    />
+                                                </label>
+                                            </>
+                                        )}
                                     </div>
 
                                     <div className="flex items-center justify-end gap-1 md:w-28">
@@ -927,7 +972,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 onAdd={meeting => {
                                     setSteps(current => [...current, {position: current.length + 1, step_type: 'meeting', meeting_id: meeting.id,
                                         meeting_summary: meeting, tool_key: '', auto_detect: true, can_self_mark: false, title: null,
-                                        instructions: null, due_date: null}]);
+                                        instructions: null, due_date: null, scheduled_date: null}]);
                                     setNotice(null);
                                     closeAdd();
                                 }} />}

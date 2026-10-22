@@ -90,7 +90,7 @@ def test_put_steps_reorder_and_soft_remove(class_paths_api):
         "mode": "strict",
         "steps": [
             {"tool_key": "bussola", "title": "Start here", "instructions": "Complete orientation"},
-            {"tool_key": "QSA", "due_date": "2026-10-15"},
+            {"tool_key": "QSA", "due_date": "2026-10-15", "scheduled_date": "2026-10-10"},
             {"tool_key": "timeline", "title": "Personal milestone"},
         ],
     }
@@ -112,6 +112,7 @@ def test_put_steps_reorder_and_soft_remove(class_paths_api):
     assert step_qsa["position"] == 2
     assert step_qsa["tool_key"] == "QSA"
     assert step_qsa["due_date"] == "2026-10-15"
+    assert step_qsa["scheduled_date"] == "2026-10-10"
     assert step_qsa["auto_detect"] is True
     assert step_qsa["can_self_mark"] is False
 
@@ -126,7 +127,7 @@ def test_put_steps_reorder_and_soft_remove(class_paths_api):
         "title": "Draft 1 (reordered)",
         "mode": "strict",
         "steps": [
-            {"id": step_qsa["id"], "tool_key": "QSA", "due_date": "2026-10-15"},
+            {"id": step_qsa["id"], "tool_key": "QSA", "due_date": "2026-10-15", "scheduled_date": "2026-10-10"},
             {"id": step_bussola["id"], "tool_key": "bussola", "title": "Now compass"},
             {"tool_key": "goals", "title": "Study goal"},
         ],
@@ -139,6 +140,8 @@ def test_put_steps_reorder_and_soft_remove(class_paths_api):
 
     assert reordered_body["steps"][0]["id"] == step_qsa["id"]
     assert reordered_body["steps"][0]["position"] == 1
+    assert reordered_body["steps"][0]["due_date"] == "2026-10-15"
+    assert reordered_body["steps"][0]["scheduled_date"] == "2026-10-10"
     assert reordered_body["steps"][1]["id"] == step_bussola["id"]
     assert reordered_body["steps"][1]["position"] == 2
     assert reordered_body["steps"][2]["tool_key"] == "goals"

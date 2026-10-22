@@ -364,6 +364,8 @@ def step_descriptor(db, path, step):
             "locale": plan.locale,
             "institution_name": institute.name,
             "delivery_mode": plan.delivery_mode,
+            "scheduled_at": plan.scheduled_at.isoformat() if plan.scheduled_at else None,
+            "location": plan.location,
             **({"results_step_id": source.id} if deep_dive else {}),
         },
     }
