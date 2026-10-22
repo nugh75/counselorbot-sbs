@@ -1,6 +1,6 @@
 // Institute-owned external credentials and local verification grants (#149).
-// The password is write-only in this teacher flow: it is sent once, never trimmed,
-// never prefilled and never stored in the browser.
+// The password is sent once, never trimmed, never prefilled and never stored in
+// the browser; a member teacher can reveal the encrypted display copy on request.
 
 const CODE_PATTERN = /^[A-Za-z0-9-]{1,50}$/;
 const MAX_PASSWORD_BYTES = 72;
@@ -17,6 +17,23 @@ export function credentialDraftError(code: string, password: string): Credential
 
 export function credentialPayload(code: string, password: string, revision: number) {
     return { institution_code: code.trim(), password, revision };
+}
+
+export type InstitutePasswordReason = 'not_configured' | 'display_copy_missing' | null;
+
+export interface InstitutePassword {
+    password: string | null;
+    reason: InstitutePasswordReason;
+}
+
+export function parseInstitutePassword(payload: unknown): InstitutePassword {
+    const row = payload as { password?: unknown; reason?: unknown } | null;
+    if (!row || (row.password !== null && typeof row.password !== 'string')) {
+        throw new Error('Invalid institute password response');
+    }
+    const reason = row.reason === 'not_configured' || row.reason === 'display_copy_missing'
+        ? row.reason : null;
+    return { password: row.password, reason };
 }
 
 export interface VerificationRequest { planId: number; institutionName: string; institutionCode: string | null }

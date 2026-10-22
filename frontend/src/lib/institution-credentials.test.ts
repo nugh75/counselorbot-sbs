@@ -1,12 +1,22 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { contextFailure, credentialDraftError, credentialPayload, parseVerificationGrant, verificationRequest, verifyFailure, withInstitutionGrant } from './institution-credentials.ts';
+import { contextFailure, credentialDraftError, credentialPayload, parseInstitutePassword, parseVerificationGrant, verificationRequest, verifyFailure, withInstitutionGrant } from './institution-credentials.ts';
 
 const SECRET = ' Synthetic-Pass 149 ';
 
 test('credential payload trims only the code and never transforms the password', () => {
     assert.deepEqual(credentialPayload(' SYN-149 ', SECRET, 3), { institution_code: 'SYN-149', password: SECRET, revision: 3 });
+});
+
+test('institute password reveals are validated and keep the unavailable reason', () => {
+    assert.deepEqual(parseInstitutePassword({ password: SECRET, reason: null }), { password: SECRET, reason: null });
+    assert.deepEqual(parseInstitutePassword({ password: null, reason: 'display_copy_missing' }),
+        { password: null, reason: 'display_copy_missing' });
+    assert.deepEqual(parseInstitutePassword({ password: null, reason: 'not_configured' }),
+        { password: null, reason: 'not_configured' });
+    assert.throws(() => parseInstitutePassword(null));
+    assert.throws(() => parseInstitutePassword({ password: 149 }));
 });
 
 test('credential drafts reject invalid codes and empty or over-long passwords before sending', () => {

@@ -8,7 +8,7 @@ import re
 import unicodedata
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -68,6 +68,11 @@ class TeacherInstitutionCreate(BaseModel):
 
 class TeacherInstitutionUpdate(TeacherInstitutionCreate):
     revision: int = Field(ge=1)
+
+
+class TeacherInstitutionPasswordResponse(BaseModel):
+    password: str | None
+    reason: Literal["not_configured", "display_copy_missing"] | None = None
 
 
 def _teacher_response(db: Session, row: models.Institution) -> dict:
@@ -151,6 +156,21 @@ async def join_teacher_institution(institution_id: int, current_user: dict = Dep
 async def get_teacher_institution(institution_id: int, current_user: dict = Depends(auth.get_current_user),
                                   db: Session = Depends(get_db)):
     return _teacher_response(db, require_institution_teacher(db, current_user, institution_id))
+
+
+@router.get("/teacher/institutions/{institution_id}/password",
+            response_model=TeacherInstitutionPasswordResponse)
+async def reveal_teacher_institution_password(institution_id: int, response: Response,
+                                              current_user: dict = Depends(auth.get_current_user),
+                                              db: Session = Depends(get_db)):
+    """Reveal the class access password to a member teacher, only on request."""
+    row = require_institution_teacher(db, current_user, institution_id)
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    if not row.credentials_configured:
+        return {"password": None, "reason": "not_configured"}
+    password = institution_password.reveal(row.encrypted_password)
+    return {"password": password, "reason": None if password else "display_copy_missing"}
 
 
 @router.put("/teacher/institutions/{institution_id}")
