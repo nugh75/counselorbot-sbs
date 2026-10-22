@@ -230,6 +230,7 @@ import_module("backend.migrations.20261011_reasoning_levels").migrate(database.e
 import_module("backend.migrations.20261011_class_personal_ai").migrate(database.engine)
 import_module("backend.migrations.20261011_teacher_shared_counselors").migrate(database.engine)
 import_module("backend.migrations.20261022_institution_password_display").migrate(database.engine)
+import_module("backend.migrations.20261022_meeting_attendance_mode").migrate(database.engine)
 import_module("backend.migrations.20261022_class_path_planned_day").migrate(database.engine)
 
 

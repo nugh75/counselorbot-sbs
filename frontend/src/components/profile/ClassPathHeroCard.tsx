@@ -270,7 +270,7 @@ export function ClassPathHeroCard({ path, onReload, collapsible = false, default
                                                 <MeetingDetails lang={lang} meeting={meeting} attended={isDone}
                                                     onChanged={async () => { await Promise.all([onReload?.(), onMeetingsChanged?.()]); }} />
                                                 {/* The rule matters once it can be followed: started, not yet marked. */}
-                                                {!isDone && meeting.status === 'scheduled' && meeting.kind === 'group' && meeting.starts_at
+                                                {!isDone && meeting.status === 'scheduled' && meeting.kind === 'group' && meeting.attendance_mode !== 'teacher' && meeting.starts_at
                                                     && new Date(meeting.starts_at).getTime() <= Date.now()
                                                     && <p className="text-xs text-slate-500 dark:text-slate-400">{classMeetingText(lang, 'studentRule')}</p>}
                                             </>);

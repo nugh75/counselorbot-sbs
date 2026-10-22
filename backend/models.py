@@ -1995,6 +1995,7 @@ class ClassMeeting(Base):
         # A group meeting has one date; an individual one has its bookable slots.
         CheckConstraint("kind = 'individual' OR starts_at IS NOT NULL", name="class_meeting_group_date"),
         CheckConstraint("host_kind <> 'expert' OR host_name IS NOT NULL", name="class_meeting_expert_name"),
+        CheckConstraint("attendance_mode IN ('student', 'teacher', 'both')", name="class_meeting_attendance_mode"),
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -2012,6 +2013,8 @@ class ClassMeeting(Base):
     host_role = Column(String(200), nullable=True)
     # #189: shown on students' timelines (individual meetings: only the student's own slot).
     show_on_timeline = Column(Boolean, nullable=False, default=True, server_default="true")
+    # Who confirms attendance: the student, the teacher from the register, or either.
+    attendance_mode = Column(String(20), nullable=False, default="student", server_default="student")
     mode = Column(String(20), nullable=False)
     place = Column(String(300), nullable=True)
     link = Column(String(500), nullable=True)
@@ -2074,7 +2077,7 @@ class ClassMeetingBooking(Base):
 
 
 class ClassMeetingAttendance(Base):
-    """The student's own attendance mark (#175); there is no teacher register."""
+    """An attendance mark (#175): the student's own, or the teacher's from the register."""
 
     __tablename__ = "class_meeting_attendance"
     __table_args__ = (UniqueConstraint("meeting_id", "username", name="uq_class_meeting_attendance"),)
@@ -2083,6 +2086,8 @@ class ClassMeetingAttendance(Base):
     meeting_id = Column(Integer, ForeignKey("class_meetings.id", ondelete="CASCADE"), nullable=False, index=True)
     username = Column(String, nullable=False, index=True)
     marked_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    # The teacher who marked it from the register; empty when the student did.
+    marked_by = Column(String, nullable=True)
 
 
 class ClassPathProgress(Base):
