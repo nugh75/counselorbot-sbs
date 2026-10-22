@@ -436,8 +436,12 @@ export function progressCellCode(cell: ClassPathProgressCell): string {
  * 4. Breaks ties by path id ascending.
  */
 export function selectCurrentClassPath(paths: StudentClassPath[]): StudentClassPath | null {
-    if (!paths.length) return null;
-    if (paths.length === 1) return paths[0];
+    return orderClassPaths(paths)[0] ?? null;
+}
+
+// Priority order: open paths first, then the nearest due date, then creation.
+export function orderClassPaths(paths: StudentClassPath[]): StudentClassPath[] {
+    if (paths.length < 2) return paths;
 
     const getNearestIncompleteDueDate = (path: StudentClassPath): string | null => {
         let nearest: string | null = null;
@@ -486,5 +490,10 @@ export function selectCurrentClassPath(paths: StudentClassPath[]): StudentClassP
         return a.id - b.id;
     });
 
-    return sorted[0];
+    return sorted;
+}
+
+// A guided chat opened from a plan step remembers the way back to the plans.
+export function planStepHref(href: string): string {
+    return href.startsWith('/?start=') ? `${href}&from=plan` : href;
 }

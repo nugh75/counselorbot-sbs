@@ -175,7 +175,19 @@ for (const width of [390, 1440]) test(`final choices of the plan analysis stay o
         assert.equal(new URL(page.url()).pathname, '/profilo/piani-operativi/301/20/approfondimento');
         assert.ok(await page.getByRole('button', {name: 'Scarica il resoconto PDF'}).isVisible());
         assert.equal(await page.getByRole('link', {name: 'Torna ai piani operativi', exact: true}).getAttribute('href'), '/profilo/piani-operativi');
+        // The finished chat leaves no pause behind in Resume.
+        assert.ok(state.requests.some(row => row.p === '/api/session/frozen/bound-249' && row.method === 'DELETE'));
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));assert.deepEqual(state.errors, []);
+    } finally {await context.close();}
+});
+test('a completed analysis without a pause reopens on its final choices', async () => {
+    const {context, page, state} = await fixture({teacher: false, options: {personal: true, ready: true, source_href: '/?start=QSA', results: [], session: bound(8), completed: true}});
+    try {
+        await page.goto(`${origin}/profilo/piani-operativi/301/20/approfondimento`, {waitUntil: 'domcontentloaded'});
+        await page.getByRole('heading', {name: 'Analisi completata', exact: true}).waitFor();
+        await page.getByText('Sintesi sintetica del piano', {exact: true}).waitFor();
+        assert.equal(state.requests.filter(row => row.p.endsWith('/deep-dive') && row.method === 'POST').length, 0);
+        assert.deepEqual(state.errors, []);
     } finally {await context.close();}
 });
 

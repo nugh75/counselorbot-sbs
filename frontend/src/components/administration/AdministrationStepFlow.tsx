@@ -20,6 +20,7 @@ import {
 } from "@/lib/questionnaires";
 import { fetchInstruments } from "@/lib/instruments-api";
 import { getSelectedCounselorId } from "@/lib/counselor";
+import { deleteFrozenSession } from "@/lib/frozen-session";
 import { ScoreInputForm } from "@/components/qsa/ScoreInputForm";
 import { GuidedChatInterface } from "@/components/qsa/GuidedChatInterface";
 import { InAppAdministrationRunner } from "@/components/administration/InAppAdministrationRunner";
@@ -314,7 +315,10 @@ export function AdministrationStepFlow({
         sessionId={ack.session_id}
         counselorId={getSelectedCounselorId()}
         locale={lang}
-        onComplete={() => setCompleted(true)}
+        onComplete={() => {
+          setCompleted(true);
+          void deleteFrozenSession(ack.session_id).catch(() => {});
+        }}
       />
     );
   return (

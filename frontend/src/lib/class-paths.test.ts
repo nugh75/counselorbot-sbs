@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { filterProgressStudents, lockedStepUnlockNumber, pathStepTools, parseClassPath, parseClassPathProgress, progressCellCode, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths, selectCurrentClassPath } from './class-paths.ts';
+import { filterProgressStudents, lockedStepUnlockNumber, pathStepTools, parseClassPath, parseClassPathProgress, progressCellCode, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths, selectCurrentClassPath, orderClassPaths, planStepHref } from './class-paths.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { plannedDayIso, plannedDayLocation, plannedDayText } from './class-path-schedule.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
@@ -386,4 +386,21 @@ test('deep-dive steps keep their bound administration step for teacher and stude
     assert.equal(student.results_step_id,12);
     assert.equal(student.completion_kind,'guided_results_chat');
     assert.equal(parseClassPathStep({step_type:'forged',tool_key:'QSA'}).step_type,'tool');
+});
+
+test('orderClassPaths keeps every plan, open ones first by nearest due date', () => {
+    const make = (id: number, due: string | null, state: string) => parseStudentClassPath({
+        id, group_id: 1, group_name: '3B', title: `Plan ${id}`, mode: 'recommended',
+        steps: [{ id: id * 10, path_id: id, position: 1, tool_key: 'goals', due_date: due, state, source: null, start_href: null, can_self_mark: true }],
+        next_step_id: state === 'done' ? null : id * 10, done: state === 'done' ? 1 : 0, total: 1,
+    });
+    const done = make(1, '2026-09-01', 'done'), later = make(2, '2026-11-01', 'not_done'), sooner = make(3, '2026-10-01', 'not_done');
+    assert.deepEqual(orderClassPaths([done, later, sooner]).map(path => path.id), [3, 2, 1]);
+    assert.deepEqual(orderClassPaths([]), []);
+});
+
+test('planStepHref marks only chat starts as coming from a plan', () => {
+    assert.equal(planStepHref('/?start=OBIETTIVO_STUDIO'), '/?start=OBIETTIVO_STUDIO&from=plan');
+    assert.equal(planStepHref('/profilo/timeline'), '/profilo/timeline');
+    assert.equal(planStepHref('/profilo/piani-operativi/1/2/approfondimento'), '/profilo/piani-operativi/1/2/approfondimento');
 });
