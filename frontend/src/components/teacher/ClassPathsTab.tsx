@@ -118,7 +118,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     const addAdministrationStep = () => {
         const target=administrations.find(row=>row.id===Number(selectedAdministration));
         if (!target) return;
-        setSteps(current=>[...current,{position:current.length+1,step_type:'questionnaire_administration',
+        placeSteps([{position:0,step_type:'questionnaire_administration',
             administration_plan_id:target.id,tool_key:'',client_key:crypto.randomUUID(),auto_detect:true,can_self_mark:false,
             target_summary:{...target,institution_name:''}}]);
         setSelectedAdministration('');setNotice(null);
@@ -145,7 +145,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     const addAssignmentStep = () => {
         const target = pathAssignments.find(row => row.id === Number(selectedAssignment));
         if (!target) return;
-        setSteps(current => [...current, assignmentStepInput(target, current.length + 1)]);
+        placeSteps([assignmentStepInput(target, 0)]);
         setSelectedAssignment(''); setNotice(null);
     };
     // TF7: an exact published discussion of this class, read from the forum API.
@@ -165,10 +165,24 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     const addForumStep = () => {
         const target = forumTopics.find(row => row.id === Number(selectedTopic));
         if (!target) return;
-        setSteps(current => [...current, forumStepInput(target, path.group_id, current.length + 1)]);
+        placeSteps([forumStepInput(target, path.group_id, 0)]);
         setSelectedTopic(''); setNotice(null);
     };
     const [selectedToolKey, setSelectedToolKey] = useState<string>('');
+    // A saved plan reads as a summary: «Modifica» reopens the plan details or one step.
+    const [editingPlan, setEditingPlan] = useState(path.steps.length === 0);
+    const [openSteps, setOpenSteps] = useState<ClassPathStep[]>([]);
+    // The step whose place the next added step takes, if any.
+    const [replacing, setReplacing] = useState<number | null>(null);
+    const addPanel = useRef<HTMLDivElement | null>(null);
+    const placeSteps = (added: ClassPathStep[]) => {
+        setSteps(current => {
+            const at = replacing ?? current.length;
+            const next = [...current.slice(0, at), ...added, ...current.slice(replacing === null ? at : at + 1)];
+            return next.map((step, index) => step.position === index + 1 ? step : {...step, position: index + 1});
+        });
+        setReplacing(null);
+    };
 
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<'saved' | 'published' | 'conflict' | 'tool_disabled' | 'deep_dive_referenced' | 'deep_dive_invalid' | 'assignment_invalid' | 'forum_invalid' | 'blocked' | 'lifecycle_error' | 'error' | null>(null);
@@ -220,6 +234,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     const closeAdd = () => {
         setAdding(false);
         setKind(null);
+        setReplacing(null);
     };
     // #177: a guided chat (on a questionnaire's results, or standalone) and its optional follow-up meeting.
     const [followUp, setFollowUp] = useState<'none' | 'group' | 'individual'>('none');
@@ -239,7 +254,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         const added: ClassPathStep[] = [chat, ...(meeting ? [{position: 0, step_type: 'meeting' as const, meeting_id: meeting.id,
             meeting_summary: meeting, follows_key: key, tool_key: '', auto_detect: true, can_self_mark: false,
             title: null, instructions: null, due_date: null, scheduled_date: null}] : [])];
-        setSteps(current => [...current, ...added].map((step, index) => ({...step, position: index + 1})));
+        placeSteps(added);
         setSelectedResultsStep(''); setSelectedAnalysisKey(''); setSelectedChatKey(''); setFollowUp('none'); setNotice(null);
     };
 
@@ -266,11 +281,13 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         if (notice === 'saved') setNotice(null);
     };
 
+    // A questionnaire analysed by a later chat step stays while that chat is there.
+    const referenced = (source: ClassPathStep) => steps.some(step => (step.results_key && step.results_key === pathStepKey(source))
+        || (source.id != null && (step.results_step_id === source.id
+            || (step.pending_config?.kind === 'guided_results_chat' && step.pending_config.results_step_id === source.id))));
+
     const handleRemoveStep = (index: number) => {
-        const source = steps[index];
-        if (steps.some(step => (step.results_key && step.results_key === pathStepKey(source))
-            || (source.id != null && (step.results_step_id === source.id
-                || (step.pending_config?.kind === 'guided_results_chat' && step.pending_config.results_step_id === source.id))))) {
+        if (referenced(steps[index])) {
             setNotice('deep_dive_referenced');
             return;
         }
@@ -280,6 +297,17 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         });
         setSteps(nextSteps);
         if (notice === 'saved' || notice === 'published') setNotice(null);
+    };
+
+    const startReplace = (index: number) => {
+        if (referenced(steps[index])) {
+            setNotice('deep_dive_referenced');
+            return;
+        }
+        setReplacing(index);
+        setKind(null);
+        setAdding(true);
+        window.setTimeout(() => addPanel.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
     };
 
     const handleAddStep = (toolKey: string) => {
@@ -299,7 +327,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             auto_detect: auto,
             can_self_mark: !auto,
         };
-        setSteps([...steps, newStep]);
+        placeSteps([newStep]);
         setSelectedToolKey('');
         setSelectedChatKey('');
         if (notice === 'saved' || notice === 'published') setNotice(null);
@@ -382,6 +410,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             setDescription(next.description || '');
             setMode(next.mode);
             setSteps(next.steps);
+            setEditingPlan(false);
+            setOpenSteps([]);
             setNotice('saved');
             onUpdated(next);
             return next;
@@ -566,75 +596,89 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                 </p>
             )}
 
-            <Card className="space-y-4">
-                <div>
-                    <label htmlFor="path-title" className="block text-sm font-semibold text-slate-800">
-                        {l('titleLabel')}
-                    </label>
-                    <input
-                        id="path-title"
-                        type="text"
-                        value={title}
-                        onChange={e => {
-                            setTitle(e.target.value);
-                            if (notice === 'saved' || notice === 'published') setNotice(null);
-                        }}
-                        placeholder={l('titlePlaceholder')}
-                        className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-600 focus:outline-none"
-                    />
-                </div>
-
-                <div>
-                    <label htmlFor="path-description" className="block text-sm font-semibold text-slate-800">
-                        {l('descriptionLabel')}
-                    </label>
-                    <textarea
-                        id="path-description"
-                        rows={2}
-                        value={description}
-                        onChange={e => {
-                            setDescription(e.target.value);
-                            if (notice === 'saved' || notice === 'published') setNotice(null);
-                        }}
-                        placeholder={l('descriptionPlaceholder')}
-                        className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-600 focus:outline-none"
-                    />
-                </div>
-
-                <div>
-                    <span className="block text-sm font-semibold text-slate-800">{l('orderLabel')}</span>
-                    <div className="mt-2 space-y-2">
-                        <label className="flex items-start gap-2 text-sm text-slate-700">
-                            <input
-                                type="radio"
-                                name="path-mode"
-                                value="recommended"
-                                checked={mode === 'recommended'}
-                                onChange={() => {
-                                    setMode('recommended');
-                                    if (notice === 'saved' || notice === 'published') setNotice(null);
-                                }}
-                                className="mt-1 h-4 w-4 accent-indigo-600"
-                            />
-                            <span>{l('orderRecommended')}</span>
+            {editingPlan ? (
+                <Card className="space-y-4">
+                    <div>
+                        <label htmlFor="path-title" className="block text-sm font-semibold text-slate-800">
+                            {l('titleLabel')}
                         </label>
-                        <label className="flex items-start gap-2 text-sm text-slate-700">
-                            <input
-                                type="radio"
-                                name="path-mode"
-                                value="strict"
-                                checked={mode === 'strict'}
-                                onChange={() => {
-                                    setMode('strict');
-                                    if (notice === 'saved' || notice === 'published') setNotice(null);
-                                }}
-                                className="mt-1 h-4 w-4 accent-indigo-600"
-                            />
-                            <span>{l('orderStrict')}</span>
-                        </label>
+                        <input
+                            id="path-title"
+                            type="text"
+                            value={title}
+                            onChange={e => {
+                                setTitle(e.target.value);
+                                if (notice === 'saved' || notice === 'published') setNotice(null);
+                            }}
+                            placeholder={l('titlePlaceholder')}
+                            className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-600 focus:outline-none"
+                        />
                     </div>
-                </div>
-            </Card>
+
+                    <div>
+                        <label htmlFor="path-description" className="block text-sm font-semibold text-slate-800">
+                            {l('descriptionLabel')}
+                        </label>
+                        <textarea
+                            id="path-description"
+                            rows={2}
+                            value={description}
+                            onChange={e => {
+                                setDescription(e.target.value);
+                                if (notice === 'saved' || notice === 'published') setNotice(null);
+                            }}
+                            placeholder={l('descriptionPlaceholder')}
+                            className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-600 focus:outline-none"
+                        />
+                    </div>
+
+                    <div>
+                        <span className="block text-sm font-semibold text-slate-800">{l('orderLabel')}</span>
+                        <div className="mt-2 space-y-2">
+                            <label className="flex items-start gap-2 text-sm text-slate-700">
+                                <input
+                                    type="radio"
+                                    name="path-mode"
+                                    value="recommended"
+                                    checked={mode === 'recommended'}
+                                    onChange={() => {
+                                        setMode('recommended');
+                                        if (notice === 'saved' || notice === 'published') setNotice(null);
+                                    }}
+                                    className="mt-1 h-4 w-4 accent-indigo-600"
+                                />
+                                <span>{l('orderRecommended')}</span>
+                            </label>
+                            <label className="flex items-start gap-2 text-sm text-slate-700">
+                                <input
+                                    type="radio"
+                                    name="path-mode"
+                                    value="strict"
+                                    checked={mode === 'strict'}
+                                    onChange={() => {
+                                        setMode('strict');
+                                        if (notice === 'saved' || notice === 'published') setNotice(null);
+                                    }}
+                                    className="mt-1 h-4 w-4 accent-indigo-600"
+                                />
+                                <span>{l('orderStrict')}</span>
+                            </label>
+                        </div>
+                    </div>
+                    {currentPath.steps.length > 0 && (
+                        <Button variant="secondary" onClick={() => setEditingPlan(false)}>{l('doneEditing')}</Button>
+                    )}
+                </Card>
+            ) : (
+                <Card className="flex flex-wrap items-start justify-between gap-3" data-testid="path-summary">
+                    <div className="min-w-0 flex-1 space-y-1">
+                        <h2 className="break-words text-lg font-semibold text-slate-800">{title}</h2>
+                        {description && <p className="whitespace-pre-wrap text-sm text-slate-600">{description}</p>}
+                        <p className="text-xs text-slate-500">{`${l('orderLabel')}: ${mode === 'strict' ? l('orderStrict') : l('orderRecommended')}`}</p>
+                    </div>
+                    <Button variant="secondary" disabled={busy} onClick={() => setEditingPlan(true)}>{l('editPlan')}</Button>
+                </Card>
+            )}
 
             <Card className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
@@ -695,6 +739,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             const isQuestionnaire = step.step_type === 'questionnaire_administration';
                             const isMeeting = step.step_type === 'meeting';
                             const meetingDate = step.meeting_summary ? meetingWhen(step.meeting_summary, lang) : null;
+                            // A step not saved yet is always open; a saved one opens with «Modifica».
+                            const open = step.id === undefined || openSteps.includes(step);
                             return (
                                 <div
                                     key={step.id ? `step-${step.id}` : `new-step-${index}`}
@@ -736,30 +782,35 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                     <div className="min-w-0 flex-1 space-y-2">
                                         <ForumDiscussionLinks links={discussions.forbidden || discussions.failed ? [] : discussions.data?.links || []}
                                             kind="path_step" targetId={step.id ?? 0} />
-                                        <input
-                                            type="text"
-                                            value={step.title || ''}
-                                            onChange={e => {
-                                                const next = [...steps];
-                                                next[index].title = e.target.value;
-                                                setSteps(next);
-                                                if (notice === 'saved' || notice === 'published') setNotice(null);
-                                            }}
-                                            placeholder={l('stepTitlePlaceholder')}
-                                            className="block w-full rounded border border-slate-300 px-2.5 py-1.5 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
-                                        />
-                                        <input
-                                            type="text"
-                                            value={step.instructions || ''}
-                                            onChange={e => {
-                                                const next = [...steps];
-                                                next[index].instructions = e.target.value;
-                                                setSteps(next);
-                                                if (notice === 'saved' || notice === 'published') setNotice(null);
-                                            }}
-                                            placeholder={l('stepInstructionsPlaceholder')}
-                                            className="block w-full rounded border border-slate-300 px-2.5 py-1.5 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
-                                        />
+                                        {open ? <>
+                                            <input
+                                                type="text"
+                                                value={step.title || ''}
+                                                onChange={e => {
+                                                    const next = [...steps];
+                                                    next[index].title = e.target.value;
+                                                    setSteps(next);
+                                                    if (notice === 'saved' || notice === 'published') setNotice(null);
+                                                }}
+                                                placeholder={l('stepTitlePlaceholder')}
+                                                className="block w-full rounded border border-slate-300 px-2.5 py-1.5 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={step.instructions || ''}
+                                                onChange={e => {
+                                                    const next = [...steps];
+                                                    next[index].instructions = e.target.value;
+                                                    setSteps(next);
+                                                    if (notice === 'saved' || notice === 'published') setNotice(null);
+                                                }}
+                                                placeholder={l('stepInstructionsPlaceholder')}
+                                                className="block w-full rounded border border-slate-300 px-2.5 py-1.5 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
+                                            />
+                                        </> : <>
+                                            {step.title && <p className="break-words text-sm text-slate-800">{step.title}</p>}
+                                            {step.instructions && <p className="whitespace-pre-wrap text-xs text-slate-600">{step.instructions}</p>}
+                                        </>}
                                     </div>
 
                                     <div className="space-y-2 md:w-52">
@@ -777,7 +828,11 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                         {plannedLocation && <p className="text-xs text-slate-500">{plannedLocation}</p>}
                                                     </div>
                                                 )}
-                                                {isChat && (
+                                                {!open && <>
+                                                    {isChat && plannedDay && <p className="text-xs text-slate-700">{`${l('plannedDay')}: ${plannedDay}`}</p>}
+                                                    {step.due_date && <p className="text-xs text-slate-700">{`${l('dueHeader')}: ${new Date(`${step.due_date}T00:00:00`).toLocaleDateString(lang, { dateStyle: 'medium' })}`}</p>}
+                                                </>}
+                                                {open && isChat && (
                                                     <label className="block text-[11px] font-medium text-slate-500">
                                                         {l('plannedDayOptional')}
                                                         <input
@@ -794,7 +849,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                         />
                                                     </label>
                                                 )}
-                                                <label className="block text-[11px] font-medium text-slate-500">
+                                                {open && <label className="block text-[11px] font-medium text-slate-500">
                                                     {l('dueDateOptional')}
                                                     <input
                                                         type="date"
@@ -808,12 +863,21 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                         aria-label={`${name} ${l('dueHeader')}`}
                                                         className="mt-1 block w-full rounded border border-slate-300 px-2 py-1 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
                                                     />
-                                                </label>
+                                                </label>}
                                             </>
                                         )}
                                     </div>
 
-                                    <div className="flex items-center justify-end gap-1 md:w-28">
+                                    <div className="flex flex-wrap items-center justify-end gap-1 md:w-40">
+                                        {!open && <Button variant="secondary" size="sm" disabled={busy}
+                                            onClick={() => setOpenSteps(current => [...current, step])}
+                                            aria-label={`${l('editStep')} #${step.position}`}>{l('editStep')}</Button>}
+                                        {open && step.id !== undefined && <Button variant="secondary" size="sm"
+                                            onClick={() => setOpenSteps(current => current.filter(row => row !== step))}>{l('doneEditing')}</Button>}
+                                        <Button variant="secondary" size="sm" disabled={busy || replacing === index}
+                                            onClick={() => startReplace(index)}
+                                            aria-label={`${l('replaceStep')} #${step.position}`}>{l('replaceStep')}</Button>
+                                        {open && <>
                                         <button
                                             type="button"
                                             disabled={busy || index === 0}
@@ -844,6 +908,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                         >
                                             <X className="h-4 w-4" aria-hidden />
                                         </button>
+                                        </>}
                                     </div>
                                 </div>
                             );
@@ -851,11 +916,15 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     </div>
                 )}
 
-                <div className="mt-4 space-y-3 border-t border-slate-100 pt-3" data-testid="add-step">
+                <div ref={addPanel} className="mt-4 scroll-mt-24 space-y-3 border-t border-slate-100 pt-3" data-testid="add-step">
                     {!adding ? (
                         <Button variant="secondary" disabled={busy} onClick={() => setAdding(true)}>{k('addStep')}</Button>
                     ) : (
                         <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            {replacing !== null && steps[replacing] && <div role="status" className="space-y-1">
+                                <p className="text-sm font-semibold text-slate-800">{`${l('replacingStep')} #${steps[replacing].position}`}</p>
+                                <p className="text-xs text-slate-600">{l('replaceHelp')}</p>
+                            </div>}
                             <StepKindPicker lang={lang} value={kind} onChange={setKind} />
                             {kind === 'questionnaire' && <div className="space-y-3">
                             <Link href="/docente/somministrazioni" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-indigo-700 hover:underline">
@@ -970,7 +1039,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             {kind === 'meeting' && <ClassMeetingsManager lang={lang} groupId={path.group_id} addLabel={l('addStep')}
                                 usedIds={steps.flatMap(step => step.step_type === 'meeting' && step.meeting_id ? [step.meeting_id] : [])}
                                 onAdd={meeting => {
-                                    setSteps(current => [...current, {position: current.length + 1, step_type: 'meeting', meeting_id: meeting.id,
+                                    placeSteps([{position: 0, step_type: 'meeting', meeting_id: meeting.id,
                                         meeting_summary: meeting, tool_key: '', auto_detect: true, can_self_mark: false, title: null,
                                         instructions: null, due_date: null, scheduled_date: null}]);
                                     setNotice(null);
@@ -991,7 +1060,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 <p className="mt-1">{f('rule')}</p>
                             </details>
                             </div>}
-                            <Button variant="ghost" disabled={busy} onClick={closeAdd}>{k('close')}</Button>
+                            <Button variant="ghost" disabled={busy} onClick={closeAdd}>{replacing !== null ? l('cancelReplace') : k('close')}</Button>
                         </div>
                     )}
                 </div>

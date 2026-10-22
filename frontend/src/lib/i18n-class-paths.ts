@@ -109,6 +109,13 @@ export const classPathsTexts = {
     allPersonalTools: ['Tutti gli strumenti dell’area studente', 'All student area tools', 'Todas las herramientas del área del estudiante', 'Tous les outils de l’espace élève', 'Alle Werkzeuge des Bereich für Lernendes', 'Alla verktyg i elevområdet'],
     showCatalog: ['Mostra catalogo strumenti', 'Show tool catalog', 'Mostrar catálogo de herramientas', 'Afficher le catalogue d’outils', 'Werkzeugkatalog anzeigen', 'Visa verktygskatalog'],
     hideCatalog: ['Nascondi catalogo strumenti', 'Hide tool catalog', 'Ocultar catálogo de herramientas', 'Masquer le catalogue d’outils', 'Werkzeugkatalog ausblenden', 'Dölj verktygskatalog'],
+    editPlan: ['Modifica piano', 'Edit plan', 'Editar plan', 'Modifier le plan', 'Plan bearbeiten', 'Redigera planen'],
+    editStep: ['Modifica', 'Edit', 'Editar', 'Modifier', 'Bearbeiten', 'Redigera'],
+    doneEditing: ['Fatto', 'Done', 'Hecho', 'Terminé', 'Fertig', 'Klar'],
+    replaceStep: ['Sostituisci', 'Replace', 'Sustituir', 'Remplacer', 'Ersetzen', 'Ersätt'],
+    replacingStep: ['Sostituisci il passo', 'Replace step', 'Sustituir el paso', 'Remplacer l’étape', 'Schritt ersetzen', 'Ersätt steget'],
+    replaceHelp: ['Il passo che scegli prende il posto di quello attuale. Se il piano è pubblicato, il passo sostituito viene tolto e i progressi degli studenti su quel passo non contano più.', 'The step you choose takes the place of the current one. If the plan is published, the replaced step is removed and students’ progress on it no longer counts.', 'El paso que elijas ocupa el lugar del actual. Si el plan está publicado, el paso sustituido se elimina y el progreso de los estudiantes en él ya no cuenta.', 'L’étape choisie prend la place de l’étape actuelle. Si le plan est publié, l’étape remplacée est retirée et la progression des élèves sur celle-ci ne compte plus.', 'Der gewählte Schritt ersetzt den aktuellen. Ist der Plan veröffentlicht, wird der ersetzte Schritt entfernt und der Fortschritt der Lernenden darin zählt nicht mehr.', 'Steget du väljer ersätter det nuvarande. Om planen är publicerad tas det ersatta steget bort och elevernas framsteg i det räknas inte längre.'],
+    cancelReplace: ['Annulla sostituzione', 'Cancel replacement', 'Cancelar sustitución', 'Annuler le remplacement', 'Ersetzen abbrechen', 'Avbryt ersättningen'],
 } as const satisfies Record<string, readonly [string, string, string, string, string, string]>;
 
 export type PathTextKey = keyof typeof classPathsTexts;
