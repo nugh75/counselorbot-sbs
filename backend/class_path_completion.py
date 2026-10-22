@@ -18,6 +18,8 @@ from .qsa_essential import summary_instrument
 
 GUIDED_CHAT_COMPLETED = "guided_chat_completed"
 PQBL_SESSION_COMPLETED = "pqbl_session_completed"
+# The guided chat's closing phase, after its last guided step.
+CONCLUSION_PHASE = "conclusion"
 
 
 def _last_guided_step_id(db: Session, questionnaire_type: str) -> str | None:
@@ -46,6 +48,34 @@ def record_guided_chat_completion(db: Session, *, session_id: str, username: str
         if step is None or _last_guided_step_id(db, step.questionnaire_type) != step.id:
             return False
         questionnaire_type = step.questionnaire_type
+    return _add_marker(db, session_id=session_id, username=username,
+                       questionnaire_type=questionnaire_type, phase=phase)
+
+
+def record_guided_chat_conclusion(db: Session, *, session_id: str, username: str | None,
+                                  questionnaire_type: str | None) -> bool:
+    """Add the marker when the chat reaches its conclusion.
+
+    The phase index lets a student jump there past the last guided step; at
+    least one chat turn of theirs in the session is still required. The caller
+    commits.
+    """
+    if not username or not session_id or not questionnaire_type:
+        return False
+    turned = _exists(db.query(models.Log.id).filter(
+        models.Log.action == "chat_message",
+        models.Log.session_id == session_id,
+        models.Log.username == username,
+        models.Log.questionnaire_type == questionnaire_type,
+    ))
+    if not turned:
+        return False
+    return _add_marker(db, session_id=session_id, username=username,
+                       questionnaire_type=questionnaire_type, phase=CONCLUSION_PHASE)
+
+
+def _add_marker(db: Session, *, session_id: str, username: str, questionnaire_type: str,
+                phase: str) -> bool:
     exists = (
         db.query(models.Log.id)
         .filter(

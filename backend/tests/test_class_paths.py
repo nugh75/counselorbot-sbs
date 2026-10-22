@@ -751,7 +751,7 @@ from sqlalchemy.orm import Session  # noqa: E402
 from backend import class_access, class_path_completion  # noqa: E402
 from backend.diagram_render import DiagramEdge, DiagramNode, DiagramSpec  # noqa: E402
 from backend.dynamic_registry import set_session_factory  # noqa: E402
-from backend.routes import chat  # noqa: E402
+from backend.routes import chat, memory  # noqa: E402
 
 PUBLISHED_AT = datetime(2026, 10, 1, 9, 0, tzinfo=timezone.utc)
 BEFORE = PUBLISHED_AT - timedelta(days=1)
@@ -1050,6 +1050,7 @@ def test_marker_needs_a_user_and_a_known_step(class_paths_api):
 def _chat_client(db, identity):
     app = FastAPI()
     app.include_router(chat.router)
+    app.include_router(memory.router)
     app.add_exception_handler(class_access.ToolAccessDenied, class_access.tool_access_denied_handler)
 
     def override_db():
@@ -1101,6 +1102,34 @@ def test_chat_turn_on_last_step_writes_marker_once_even_when_resumed(class_paths
     markers = _markers(db, "sess-chat")
     assert len(markers) == 1
     assert markers[0].questionnaire_type == "SAVICKAS"
+
+
+def test_reaching_the_conclusion_writes_the_marker_after_a_turn(class_paths_api):
+    # The phase index lets a student jump to the conclusion past the last step.
+    _, db, _, _ = class_paths_api
+    _guided_steps(db)
+    student = {"username": STUDENT, "groups": ["studenti"], "is_admin": False,
+               "is_researcher": False, "authenticated": True}
+
+    def conclude(client, session_id):
+        response = client.post("/memory/event", json={
+            "session_id": session_id, "questionnaire_type": "SAVICKAS",
+            "phase": "conclusion", "completed_step": True})
+        assert response.status_code == 200, response.text
+
+    with patch.object(chat.AIService, "get_response", return_value="plain reply"), \
+            _chat_client(db, student) as client:
+        conclude(client, "sess-empty")
+        assert _markers(db) == []                  # no turn of the student yet
+        response = client.post("/chat", json={"message": "Hi", "questionnaire_type": "SAVICKAS",
+                                              "session_id": "sess-jump", "phase": "sav-1"})
+        assert response.status_code == 200, response.text
+        conclude(client, "sess-jump")
+        conclude(client, "sess-jump")
+
+    markers = _markers(db, "sess-jump")
+    assert [(m.questionnaire_type, m.username, m.phase) for m in markers] == [
+        ("SAVICKAS", STUDENT, "conclusion")]
 
 
 def test_preview_turn_writes_no_marker(class_paths_api):
