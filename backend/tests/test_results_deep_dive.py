@@ -497,6 +497,7 @@ def test_essential_summary_completes_the_deep_dive(api, route):
     identity.update(STUDENT)
     enter_scores(client, plan, path)
     session = start(client, path).json()["session_id"]
+    assert client.get(f"/user/paths/{path['id']}/steps/{path['steps'][1]['id']}/deep-dive").json()["completed"] is False
     with patch.object(chat.AIService, "get_response", return_value="plain reply"), \
             patch.object(chat.AIService, "stream_response", side_effect=stream_reply):
         with chat_client(db, STUDENT) as chat_api:
@@ -510,6 +511,8 @@ def test_essential_summary_completes_the_deep_dive(api, route):
     row = student_row(client)
     assert (row["done"], row["total"]) == (2, 2)
     assert row["steps"][1]["completion_kind"] == "guided_results_chat"
+    options = client.get(f"/user/paths/{path['id']}/steps/{path['steps'][1]['id']}/deep-dive").json()
+    assert options["completed"] is True
     markers = db.query(models.Log).filter_by(action="guided_chat_completed", session_id=session).all()
     assert [(m.questionnaire_type, m.phase) for m in markers] == [("QSA", "qsa-essential-summary")]
 

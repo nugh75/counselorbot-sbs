@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from . import models
-from .path_step_types import administration_evidence, personal_result_qualifies, results_step, step_descriptor
+from .path_step_types import administration_evidence, deep_dive_evidence, personal_result_qualifies, results_step, step_descriptor
 from .questionnaire_entry import result_payload
 
 
@@ -66,6 +66,7 @@ def deep_dive_options(db, identity, path_id, step_id):
         "personal": bool(step.tool_key),
         "results": candidates,
         "session": payload(binding, result, step) if binding and result else None,
+        "completed": bool(binding and result and deep_dive_evidence(db, step, username)),
         "ready": bool(result) if not step.tool_key else bool(candidates),
         "source_href": step_descriptor(db, path, source)["start_href"] if source else f"/?start={step.tool_key}",
     }

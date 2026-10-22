@@ -108,6 +108,8 @@ export interface ResultsDeepDiveOptions {
   source_href: string;
   results: {id: number; submitted_at: string; locale: string}[];
   session: ResultsDeepDiveSession | null;
+  /** The bound session already reached its final guided turn. */
+  completed: boolean;
 }
 
 export async function loadResultsDeepDiveOptions(
@@ -124,5 +126,5 @@ export async function loadResultsDeepDiveOptions(
   }
   // API controls this navigation; accept only local application links.
   if (!row.source_href.startsWith('/') || row.source_href.startsWith('//')) throw new ResultsDeepDiveError('error');
-  return {...row, session: row.session ? parseResultsDeepDive(row.session, pathId, stepId) : null};
+  return {...row, completed: row.completed === true, session: row.session ? parseResultsDeepDive(row.session, pathId, stepId) : null};
 }

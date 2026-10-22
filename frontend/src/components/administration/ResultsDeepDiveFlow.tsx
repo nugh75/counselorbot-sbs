@@ -9,7 +9,7 @@ import {
   ResultsDeepDiveError, loadResultsDeepDiveOptions, startResultsDeepDive,
   type ResultsDeepDiveFailure, type ResultsDeepDiveOptions, type ResultsDeepDiveSession,
 } from "@/lib/results-deep-dive";
-import { getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
+import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { getSelectedCounselorId } from "@/lib/counselor";
 import { GuidedChatInterface } from "@/components/qsa/GuidedChatInterface";
 import { PlanChatCompleted } from "@/components/administration/PlanChatCompleted";
@@ -65,12 +65,13 @@ export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId
       setFailure(error instanceof ResultsDeepDiveError ? error.reason : 'error');
     } finally { pending.current = false; setBusy(false); }
   };
-  if (session && completed) return <PlanChatCompleted sessionId={session.session_id} questionnaireType={session.result.questionnaire_type} />;
+  // Finished and no pause left to resume: the step reopens on its final choices.
+  if (session && (completed || (options?.completed && !snapshot))) return <PlanChatCompleted sessionId={session.session_id} questionnaireType={session.result.questionnaire_type} />;
   if (session) return <GuidedChatInterface
     scores={session.result.scores} questionnaireType={session.result.questionnaire_type}
     sessionId={session.session_id} counselorId={snapshot?.counselor_id ?? getSelectedCounselorId()} locale={snapshot?.locale || lang}
     frozenSnapshot={snapshot}
-    onComplete={() => setCompleted(true)} />;
+    onComplete={() => { setCompleted(true); void deleteFrozenSession(session.session_id).catch(() => {}); }} />;
   return <div className="space-y-4">
     <Link href="/profilo/piani-operativi">{l('back')}</Link>
     <h1 className="text-xl font-semibold">{l('deepDive')}</h1>
