@@ -15,6 +15,7 @@ import {
     type StudentClassPath,
     type StudentClassPathStep,
 } from '@/lib/class-paths';
+import { plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
 import { typedStepTargetLabel } from '@/lib/i18n-administration-steps';
 
@@ -120,6 +121,8 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                     const toolDisplayName = typedStepTargetLabel(lang, step) ?? resolveClassPathToolName(step.tool_key, lang);
                     const titleDisplay = step.title ? step.title : toolDisplayName;
                     const isActionBusy = actionStepId === step.id;
+                    const planned = plannedDayText(step, lang);
+                    const plannedLocation = plannedDayLocation(step);
 
                     const containerClasses = isCurrent
                         ? 'border-indigo-300 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-200 dark:border-indigo-800 dark:bg-indigo-950/30 dark:ring-indigo-900'
@@ -223,6 +226,12 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                                         )}
 
                                         <div className="flex flex-wrap items-center gap-3 pt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                            {planned && (
+                                                <span>
+                                                    {l('plannedOn').replace('{date}', planned)}
+                                                    {plannedLocation ? ` · ${plannedLocation}` : ''}
+                                                </span>
+                                            )}
                                             {step.due_date && (
                                                 <span>{l('dueOn').replace('{date}', step.due_date)}</span>
                                             )}

@@ -843,7 +843,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. |
 | Analisi combinata dei profili | `/profilo/analisi-combinata` | Generare una lettura integrata di almeno due strumenti tra QSA, QSAr e ZTPI. Si apre dal gruppo Conoscermi e riflettere e non compare più sotto i singoli risultati. |
 | Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. Lista breve con filtri (gruppo, tipo, finalità richiesta/proposta, stato) e un solo dettaglio aperto alla volta; pianificazione con spiegazione del lavoro personale; anteprima di restituzione con destinatario esplicito e copia fissa. Se l’attività indica degli strumenti, nel dettaglio ognuno si apre con «Apri qui» in una finestra dentro l’attività (Esc o «Chiudi e torna all’attività» riportano al punto di partenza) oppure con «Apri a pagina intera»; uno strumento disattivato dopo l’invio per la classe o il gruppo resta elencato come non disponibile. La revoca conferma in linea sulla scheda. |
-| Piani operativi | `/profilo/piani-operativi` | Seguire i piani operativi (fino a ottobre 2026 «Percorsi di classe»: sequenze ordinate di attività) pubblicati dai docenti per la propria classe; il vecchio indirizzo /profilo/percorsi (anche con i sottopercorsi) reindirizza qui in modo permanente; un passo di somministrazione si apre in `/profilo/piani-operativi/{pathId}/{stepId}` e il suo approfondimento guidato in `/profilo/piani-operativi/{pathId}/{stepId}/approfondimento`; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. Un passo incontro mostra data, ora, luogo o link; dall’inizio dell’incontro lo studente preme «Ho partecipato» (e può annullarlo) e il passo risulta fatto: non c’è registro del docente. Il piano operativo prioritario è inoltre visualizzato in cima alla panoramica dell'Area studente (`/profilo`) come hero card, con il catalogo strumenti sotto collassato. |
+| Piani operativi | `/profilo/piani-operativi` | Seguire i piani operativi (fino a ottobre 2026 «Percorsi di classe»: sequenze ordinate di attività) pubblicati dai docenti per la propria classe; il vecchio indirizzo /profilo/percorsi (anche con i sottopercorsi) reindirizza qui in modo permanente; un passo di somministrazione si apre in `/profilo/piani-operativi/{pathId}/{stepId}` e il suo approfondimento guidato in `/profilo/piani-operativi/{pathId}/{stepId}/approfondimento`; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. La card mostra, quando presenti, il **giorno previsto** e la **scadenza**: il giorno previsto è solo informativo e non limita l’accesso. Un passo incontro mostra data, ora, luogo o link; dall’inizio dell’incontro lo studente preme «Ho partecipato» (e può annullarlo) e il passo risulta fatto: non c’è registro del docente. Il piano operativo prioritario è inoltre visualizzato in cima alla panoramica dell'Area studente (`/profilo`) come hero card, con il catalogo strumenti sotto collassato. |
 | Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito; collegamenti contestuali alle assegnazioni del gruppo; messaggi generali del docente leggibili direttamente nella pagina; uscire da un gruppo richiede una conferma che nomina il gruppo e le conseguenze. |
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot, con guida a tre passi (Apri il bot, Conferma, Verifica collegamento), scadenza del codice visibile e verifica automatica al ritorno nella scheda. |
@@ -1107,8 +1107,12 @@ indirizzo /docente/percorsi reindirizza qui in modo permanente; con una propria
 immagine, `percorsi-classe.png`: si sceglie la classe e si preparano, pubblicano e seguono i suoi piani operativi
 con lo stesso editor della scheda Piani operativi della classe; nell’editor (della classe e dei
 modelli) un solo **+ Aggiungi passo** chiede «Cosa fa lo studente in questo passo?» e
-mostra solo il modulo del tipo scelto: compila un questionario (sempre tramite
-somministrazione), fa una chat guidata (sui risultati di un questionario del piano operativo, su una compilazione personale scelta dallo studente all’avvio, oppure un
+mostra solo il modulo del tipo scelto. Ogni passo può avere una **scadenza facoltativa**;
+questionario e chat guidata mostrano anche un **giorno previsto** (per il questionario è
+la data del piano di somministrazione, per la chat si imposta nel passo). Giorno previsto
+e scadenza possono convivere e sono solo informativi: non limitano l’accesso né il
+completamento. Il passo può consistere nel compilare un questionario (sempre tramite
+somministrazione), fare una chat guidata (sui risultati di un questionario del piano operativo, su una compilazione personale scelta dallo studente all’avvio, oppure un
 percorso guidato per riflettere su un’esperienza o una scelta: Savickas, Evento di
 studio, Evento professionale, Obiettivo di studio, Idea; quelli integrati senza voce nel
 catalogo sono sempre disponibili, anche per gli studenti delle classi, e il passo si
@@ -1117,9 +1121,9 @@ nessuno, un debriefing con la classe o il gruppo oppure un colloquio individuale
 tra gli incontri di quel tipo o creato al momento, che viene inserito subito dopo la
 chat come passo «Seguito della chat guidata #n»; nell’avanzamento il docente vede
 accanto all’incontro chi ha completato la chat; se toglie la chat o l’incontro, l’altro
-passo resta valido; salvare come modello un piano operativo con incontri non è ancora possibile), svolge un’attività (assegnazione), usa uno strumento (solo
+passo resta valido; salvare come modello un piano operativo con incontri non è ancora possibile), svolgere un’attività (assegnazione), usare uno strumento (solo
 strumenti personali: Tavolo, obiettivi, azioni, linea del tempo, Portfolio, flashcard,
-carte, confronto, Bussola, assistente), partecipa a un incontro (incontri della classe o
+carte, confronto, Bussola, assistente), partecipare a un incontro (incontri della classe o
 del gruppo: argomento, data e ora, durata, in presenza con luogo oppure online con link;
 il docente li crea, li sposta e li annulla da qui, vede quante presenze sono state segnate
 (dall’inizio dell’incontro); un incontro può anche essere **individuale, a fasce

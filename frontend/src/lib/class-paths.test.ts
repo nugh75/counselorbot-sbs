@@ -3,6 +3,8 @@ import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { filterProgressStudents, lockedStepUnlockNumber, pathStepTools, parseClassPath, parseClassPathProgress, progressCellCode, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths, selectCurrentClassPath } from './class-paths.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { plannedDayIso, plannedDayLocation, plannedDayText } from './class-path-schedule.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { classPathText, classPathsTexts } from './i18n-class-paths.ts';
 
 test('class-paths parser handles step auto-detect and self-marking', () => {
@@ -343,6 +345,32 @@ test('typed administration targets and activation survive teacher and student pa
     assert.equal(student.start_href,'/profilo/piani-operativi/1/12');
     assert.equal(student.can_self_mark,false);
     assert.equal(parseClassPathStep({tool_key:'QSA'}).step_type,'tool');
+});
+
+test('planned day and deadline coexist for teacher and student steps', () => {
+    const payload = {id:14,path_id:1,position:2,step_type:'guided_chat',tool_key:'SAVICKAS',
+        scheduled_date:'2026-11-02',due_date:'2026-11-09',auto_detect:true,can_self_mark:false};
+    const teacher=parseClassPathStep(payload);
+    const student=parseStudentClassPathStep(payload);
+    assert.equal(teacher.scheduled_date,'2026-11-02');
+    assert.equal(teacher.due_date,'2026-11-09');
+    assert.equal(student.scheduled_date,'2026-11-02');
+    assert.equal(student.due_date,'2026-11-09');
+    assert.equal(plannedDayIso(teacher),'2026-11-02');
+    assert.ok(plannedDayText(teacher,'it'));
+});
+
+test('questionnaire planned day comes from the administration plan, not a duplicate step field', () => {
+    const payload = {id:15,path_id:1,position:1,step_type:'questionnaire_administration',
+        administration_plan_id:3,scheduled_date:'2026-11-20',due_date:'2026-11-25',
+        target_summary:{id:3,code:'AP-SYN',title:'Synthetic',instrument_code:'QSA',locale:'it',
+            institution_name:'Synthetic',scheduled_at:'2026-11-02T16:58:00+01:00',location:'Aula 3'}};
+    const teacher=parseClassPathStep(payload);
+    assert.equal(teacher.scheduled_date,'2026-11-20');
+    assert.equal(teacher.due_date,'2026-11-25');
+    assert.equal(plannedDayIso(teacher),'2026-11-02T16:58:00+01:00');
+    assert.equal(plannedDayLocation(teacher),'Aula 3');
+    assert.ok(plannedDayText(teacher,'it'));
 });
 
 test('deep-dive steps keep their bound administration step for teacher and student', () => {

@@ -162,6 +162,7 @@ def _serialize_step(db: Session, step: models.ClassPathStep) -> dict:
         "title": step.title,
         "instructions": step.instructions,
         "due_date": step.due_date.isoformat() if step.due_date else None,
+        "scheduled_date": step.scheduled_date.isoformat() if step.scheduled_date else None,
         "auto_detect": auto,
         "can_self_mark": not auto,
         "pending_config": step.pending_config,
@@ -418,6 +419,7 @@ async def update_class_path(
             step.title = step_title
             step.instructions = step_instructions
             step.due_date = step_input.due_date
+            step.scheduled_date = step_input.scheduled_date
             placed.append(step)
         elif step_input.id is not None:
             # Check if the step belongs to this path and was previously removed
@@ -435,6 +437,7 @@ async def update_class_path(
                 archived_step.title = step_title
                 archived_step.instructions = step_instructions
                 archived_step.due_date = step_input.due_date
+                archived_step.scheduled_date = step_input.scheduled_date
                 placed.append(archived_step)
             else:
                 raise HTTPException(status_code=422, detail=f"Step ID {step_input.id} does not belong to this path")
@@ -453,6 +456,7 @@ async def update_class_path(
                 title=step_title,
                 instructions=step_instructions,
                 due_date=step_input.due_date,
+                scheduled_date=step_input.scheduled_date,
             )
             db.add(new_step)
             placed.append(new_step)
