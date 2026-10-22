@@ -1697,6 +1697,8 @@ accessibili a ogni account. L’assistente deve indicare la pagina e il prossimo
 passo utile, senza inventare pulsanti o promettere azioni eseguite automaticamente.
 Gli aggiornamenti tecnici delle dipendenze del server non cambiano funzioni, dati salvati o esportazioni descritti in questa guida. Per la compilazione containerizzata di produzione del frontend in Docker, il comando di build adotta esplicitamente Webpack (`next build --webpack`) e disabilita la telemetria Next.js (`NEXT_TELEMETRY_DISABLED=1`) per prevenire timeout e deadlock IPC sotto emulazione o vincoli di memoria.
 
+Per l'istanza di prova è disponibile una modalità hot reload: `scripts/dev-test-instance.sh` avvia il frontend con `next dev` e il backend con `uvicorn --reload`, montando il codice nel container. Le modifiche a pagine, componenti e codice Python si vedono senza ricostruire l'immagine; restano le stesse porte e lo stesso URL pubblico. Non è una modalità di produzione: espone informazioni di debug e va usata solo senza dati reali. Dettagli e comandi in `docs/operations/test-instance-hot-reload.md`.
+
 ### Sezioni della configurazione
 
 In **Amministrazione → Configurazione & Prompt** la sezione si sceglie dal

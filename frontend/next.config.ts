@@ -4,6 +4,16 @@ import { legacyRouteRedirects } from './src/lib/legacy-routes';
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Next dev blocks HMR websockets coming from a different origin. The test
+  // instance is reached through the portable nginx hostname, so allow it only
+  // in development; production builds ignore this option.
+  allowedDevOrigins:
+    process.env.NODE_ENV === "development"
+      ? (process.env.NEXT_DEV_ALLOWED_ORIGINS ?? "counselorbot.labform.net,localhost,127.0.0.1")
+          .split(",")
+          .map((host) => host.trim())
+          .filter(Boolean)
+      : undefined,
   serverExternalPackages: [],
   experimental: {
     proxyTimeout: 600_000, // 10 min for long AI responses (matches nginx)
