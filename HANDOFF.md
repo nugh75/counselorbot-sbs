@@ -1,4 +1,39 @@
+# Handoff: password di classe visibile nel passo di somministrazione
+
+Data: 2026-10-22 | Branch: `fix/institution-password-display` | Base: `ee7184ec`
+
+Nel passo del piano operativo lo studente vedeva «Quella comunicata dal docente»,
+ma la password di competenzestrategiche.it è un codice di accesso della classe, non
+un segreto personale. Il database conservava solo il verifier bcrypt, quindi non era
+recuperabile. La correzione aggiunge `institutions.encrypted_password`: una copia
+Fernet separata, scritta e cancellata insieme al verifier; la verifica locale
+continua a usare `hashed_password`.
+
+La risposta di launch espone `institution.institution_password` solo per i piani
+`external_it` e solo ai membri della classe; la UI la mostra come `********` con
+Mostra/Nascondi nelle sei lingue. Le API docente e amministratore non restituiscono
+mai la password né le due forme salvate. La copia riusa il volume
+`personal_api_credentials` già montato, con chiave gestita oppure
+`INSTITUTION_CREDENTIAL_KEY`/`_FILE` facoltativa: nessun nuovo volume e nessuna
+modifica Compose. Se la chiave non è utilizzabile il salvataggio del verifier non
+si blocca e la pagina studente ripiega sul messaggio localizzato.
+
+Limite operativo: le credenziali già salvate solo come bcrypt non hanno una copia
+leggibile. Il docente deve riaprire Istituti → Sostituisci credenziali esterne e
+salvare una volta; fino ad allora lo studente vede «Non disponibile qui: chiedila
+al docente». Anche la migrazione non fa backfill.
+
+Verifiche eseguite: 67 test backend mirati (credenziali istituto, migrazioni,
+Telegram, copia cifrata, amministrazione IT) su PostgreSQL sintetico; 605 test
+frontend; `tsc --noEmit`; `i18n:check` (3417 chiavi, sei lingue); `make
+guidance-refresh` e `make guidance-check`; build di produzione frontend. Il caso
+admin della matrice credenziali è stato corretto nel test: gli amministratori
+accedono all'area docente solo tramite membership attiva, quindi il caso 403 usa
+un account non membro (comportamento già presente su `main`). Nessun deploy, nessun
+riavvio di container di produzione e nessun comando sudo.
+
 # Handoff costruttore: confine descrittivo dei questionari (#431)
+
 Data: 2026-10-21 | Branch: `fix/questionnaire-descriptive-phase` | Base: `5f0f3195e5eff6cbe5ed42de6fb924f228dab1f7`
 
 Gate obbligatorio: Diario `prAutopilot=true`. La PR deve restare **DRAFT** fino
