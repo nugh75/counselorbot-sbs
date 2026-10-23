@@ -23,6 +23,13 @@ export interface PromptMapCounselor {
     context_level?: string;
 }
 
+export interface PromptMapStrategyOptions {
+    certified_strategy_limit: number;
+    /** null = tutte le strategie dello strumento. */
+    allowed_strategies: string[] | null;
+    certified_strategy_limit_editable: boolean;
+}
+
 export interface PromptMapEntry {
     key: string;
     kind: 'config' | 'guided_step' | 'step_questions' | 'counselor_persona';
@@ -42,6 +49,8 @@ export interface PromptMapEntry {
     read_only: boolean;
     translations?: Record<string, string>;
     effective?: Record<string, unknown>;
+    /** Solo per i componenti: strategie dello step come le legge la chat. */
+    options?: PromptMapStrategyOptions;
     variants?: Record<string, PromptMapEntry>;
     context_level?: string;
     context_label?: string;
@@ -227,7 +236,7 @@ export function saveRequest(entry: PromptMapEntry, value: string, language = 'it
 }
 
 /** JSON dei componenti: le modifiche ai flag sopra quanto già salvato (strategie e limiti restano). */
-export function componentsValue(stored: unknown, flags: Record<string, boolean>): string {
+export function componentsValue(stored: unknown, flags: Record<string, boolean>, options: Partial<PromptMapStrategyOptions> = {}): string {
     let saved: Record<string, unknown> = {};
     try {
         const parsed = typeof stored === 'string' && stored.trim() ? JSON.parse(stored) : {};
@@ -235,7 +244,7 @@ export function componentsValue(stored: unknown, flags: Record<string, boolean>)
     } catch {
         saved = {};
     }
-    return JSON.stringify({ ...saved, ...flags });
+    return JSON.stringify({ ...saved, ...flags, ...options });
 }
 
 export function booleanFlags(effective: Record<string, unknown> | undefined): Record<string, boolean> {
@@ -268,7 +277,7 @@ export function sortOrderChanges<Id>(ordered: SortOrderItem<Id>[]): SortOrderIte
 }
 
 /**
- * Id di un nuovo step come lo normalizza la vista classica: minuscole, cifre e
+ * Id di un nuovo step normalizzato: minuscole, cifre e
  * trattini. Durante la digitazione (`final = false`) i trattini finali restano.
  */
 export function normalizeStepId(value: string, final = true): string {

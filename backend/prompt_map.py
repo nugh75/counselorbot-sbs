@@ -20,11 +20,13 @@ from . import models
 from .model_context import estimate_tokens
 from .prompt_variants import attach_variants
 from .chat_logic import (
+    _default_certified_strategy_limit,
     _instrument_meta_system_prompt,
     guided_step_follow_up_mode,
     guided_step_system_prompt_key,
     _system_prompt_key,
     get_prompt_component_flags,
+    get_prompt_component_options,
     prompt_component_config_key,
     prompt_meta_config_key,
 )
@@ -443,6 +445,7 @@ def build_prompt_map(db, instrument: str) -> dict | None:
     step_entries: dict[str, list] = defaultdict(list)
     step_refs: dict[str, list] = defaultdict(list)
     level_of: dict[str, str] = {}
+    step_modes = {step.id: step.system_prompt_mode for step in steps_by_instrument[instrument]}
     for key, uses in uses_by_key.items():
         if not any(u.instrument == instrument for u in uses):
             continue
@@ -452,6 +455,12 @@ def build_prompt_map(db, instrument: str) -> dict | None:
         if uses[0].role == "components":
             # Flag effettivi come li calcola la chat (default di codice + override salvato).
             entry["effective"] = get_prompt_component_flags(db, instrument, uses[0].step_id)
+            # Strategie dello step (limite certificate, elenco consentito), come le legge la chat.
+            step_mode = step_modes.get(uses[0].step_id)
+            entry["options"] = {
+                **get_prompt_component_options(db, instrument, uses[0].step_id, step_mode),
+                "certified_strategy_limit_editable": _default_certified_strategy_limit(step_mode, uses[0].step_id) > 0,
+            }
         if level == LEVEL_COMMON:
             common.append(entry)
         elif level == LEVEL_GROUP:
@@ -493,6 +502,8 @@ def build_prompt_map(db, instrument: str) -> dict | None:
         entries = [
             _step_field(step, "label", DEST_STUDENT, WHEN_STUDENT, step.label),
             _step_field(step, "color_theme", DEST_STUDENT, WHEN_STUDENT, step.color_theme),
+            # Sceglie il prompt di sistema dello step (prima solo nella vista classica).
+            _step_field(step, "system_prompt_mode", DEST_CONTEXT, WHEN_ENTRY, step.system_prompt_mode),
             attach_variants(_step_field(step, "prompt", DEST_MODEL, WHEN_ENTRY, step.prompt), configs),
             # Il contesto subito dopo i campi dello step: decide cosa riceve il modello.
             *sorted(step_entries.get(step.id, []), key=lambda e: e["role"] != "components"),

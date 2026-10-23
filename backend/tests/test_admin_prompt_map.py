@@ -186,8 +186,12 @@ def test_step_fields_and_fixed_phases_are_on_the_step_level():
     assert ids[-2:] == list(PHASE_IDS), ids
     first = steps[0]
     fields = {e["field"]: e for e in first["entries"] if e["kind"] == "guided_step"}
-    assert {"label", "color_theme", "prompt"} <= set(fields)
+    assert {"label", "color_theme", "system_prompt_mode", "prompt"} <= set(fields)
     assert fields["label"]["destination"] == "student"
+    # La modalità sceglie il prompt di sistema: si modifica dalla mappa con la stessa API.
+    assert fields["system_prompt_mode"]["value"] == first["system_prompt_mode"]
+    assert fields["system_prompt_mode"]["editor"] == {
+        "method": "PUT", "path": f"/admin/guided-steps/{first['id']}", "field": "system_prompt_mode"}
     assert fields["prompt"]["destination"] == "model"
     assert fields["prompt"]["when"] == "entry"
     assert fields["prompt"]["editor"] == {"method": "PUT", "path": f"/admin/guided-steps/{first['id']}", "field": "prompt"}
@@ -227,6 +231,10 @@ def test_step_components_carry_runtime_flags_and_meta_override_key():
             components = next(e for e in step["entries"] if e["role"] == "components")
             assert components["destination"] == "context_filter"
             assert components["effective"] == chat_logic.get_prompt_component_flags(db, "EVENTO_STUDIO", step["id"])
+            options = chat_logic.get_prompt_component_options(db, "EVENTO_STUDIO", step["id"], step["system_prompt_mode"])
+            assert {k: components["options"][k] for k in options} == options
+            assert components["options"]["certified_strategy_limit_editable"] == (
+                chat_logic._default_certified_strategy_limit(step["system_prompt_mode"], step["id"]) > 0)
             meta_ref = next(ref for ref in step["refs"] if ref["role"] == "meta")
             assert meta_ref["override_key"] == chat_logic.prompt_meta_config_key("EVENTO_STUDIO", step["id"])
     finally:
@@ -361,8 +369,8 @@ def test_context_components_come_right_after_the_step_fields():
             if step["fixed"]:
                 continue
             fields = [e.get("field") if e["kind"] == "guided_step" else e["role"] for e in step["entries"]]
-            # Nome, colore, istruzione, poi il contesto; prompt, meta, note e domande dopo.
-            assert fields[:4] == ["label", "color_theme", "prompt", "components"], (instrument, step["id"], fields)
+            # Nome, colore, modalità, istruzione, poi il contesto; prompt, meta, note e domande dopo.
+            assert fields[:5] == ["label", "color_theme", "system_prompt_mode", "prompt", "components"], (instrument, step["id"], fields)
             assert fields[-1] == "suggested_questions", (instrument, step["id"], fields)
 
 

@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { chromium } from 'playwright';
 
 const origin = process.env.PROMPT_PREVIEW_BASE_URL || 'http://127.0.0.1:3107';
+// [label, settings group, removed classic tools group, search, empty, general]
 const labels = {
     it: ['Sezione', 'Impostazioni', 'Strumenti — vista classica', 'Cerca sezione…', 'Nessuna sezione trovata', 'Generale'],
     en: ['Section', 'Settings', 'Tools — classic view', 'Search sections…', 'No sections found', 'General'],
@@ -55,12 +56,13 @@ for (const language of Object.keys(labels)) {
             await trigger.click();
             const listbox = page.getByRole('listbox', { name: label });
             await listbox.getByRole('group', { name: settings, exact: true }).getByRole('option', { name: general, exact: true }).waitFor();
-            assert.equal(await listbox.getByRole('group', { name: tools, exact: true }).getByRole('option').count(), 11);
+            // The classic per-instrument view is gone: its texts live in the prompt map.
+            assert.equal(await listbox.getByRole('group', { name: tools, exact: true }).count(), 0);
             // Impostazioni: Generale first, then Mappa dei prompt, then Direttive globali.
             const [promptMap, directives] = generalLabels[language];
             const settingsOptions = await listbox.getByRole('group', { name: settings, exact: true }).getByRole('option').allTextContents();
             assert.deepEqual(settingsOptions.map(text => text.startsWith(promptMap) ? promptMap : text), [general, promptMap, directives]);
-            assert.equal(await listbox.getByRole('option').count(), 14);
+            assert.equal(await listbox.getByRole('option').count(), 3);
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
             const input = page.getByRole('combobox', { name: search });
             await input.fill('zzz');
@@ -72,29 +74,20 @@ for (const language of Object.keys(labels)) {
     });
 }
 
-test('search by full name, keyboard choice and URL persistence', async () => {
+test('search, keyboard choice and URL persistence', async () => {
     const f = await fixture('it');
     try {
         const { page, trigger } = f;
         await trigger.click();
         const input = page.getByRole('combobox', { name: 'Cerca sezione…' });
-        // The full name is searchable even though the option shows only the acronym.
-        await input.fill('zimbardo');
-        assert.deepEqual(await page.getByRole('listbox', { name: 'Sezione' }).getByRole('option').allTextContents(), ['ZTPI']);
+        await input.fill('diret');
+        assert.deepEqual(await page.getByRole('listbox', { name: 'Sezione' }).getByRole('option').allTextContents(), ['Direttive Globali']);
         await input.press('Enter');
-        await page.getByRole('heading', { name: /^ZTPI — / }).waitFor();
-        assert.equal(await sectionParam(page), 'ztpi');
-
-        await trigger.focus();
-        await trigger.press('ArrowDown');
-        await page.getByRole('combobox', { name: 'Cerca sezione…' }).fill('qsa');
-        await page.keyboard.press('ArrowDown');
-        await page.keyboard.press('Enter');
-        await page.getByRole('heading', { name: /^QSAr — / }).waitFor();
-        assert.equal(await sectionParam(page), 'qsar');
+        assert.equal(await sectionParam(page), 'directives');
 
         await page.reload();
-        await page.getByRole('heading', { name: /^QSAr — / }).waitFor();
+        await f.trigger.waitFor();
+        assert.match(await f.trigger.textContent(), /Direttive Globali/);
 
         await trigger.click();
         await page.getByRole('listbox', { name: 'Sezione' }).getByRole('option', { name: 'Generale', exact: true }).click();
@@ -102,17 +95,20 @@ test('search by full name, keyboard choice and URL persistence', async () => {
     } finally { await f.close(); }
 });
 
-test('shared link opens its section, other tabs drop it, unknown section falls back to general', async () => {
-    let f = await fixture('it', { path: '/admin?section=qap' });
+test('shared link opens its section, other tabs drop it, old instrument links fall back to general', async () => {
+    let f = await fixture('it', { path: '/admin?section=directives' });
     try {
-        await f.page.getByRole('heading', { name: /^QAP — / }).waitFor();
+        assert.match(await f.trigger.textContent(), /Direttive Globali/);
         await f.page.getByRole('button', { name: 'Log Conversazioni', exact: true }).click();
         assert.equal(await sectionParam(f.page), null);
     } finally { await f.close(); }
-    f = await fixture('it', { path: '/admin?section=removed' });
-    try {
-        assert.match(await f.trigger.textContent(), /Generale/);
-    } finally { await f.close(); }
+    // `?section=qap` pointed to the removed classic view.
+    for (const path of ['/admin?section=qap', '/admin?section=removed']) {
+        f = await fixture('it', { path });
+        try {
+            assert.match(await f.trigger.textContent(), /Generale/);
+        } finally { await f.close(); }
+    }
 });
 
 for (const language of Object.keys(labels)) {

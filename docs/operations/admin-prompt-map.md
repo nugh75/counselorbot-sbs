@@ -39,8 +39,19 @@ e [risultati CR1–CR4](model-context-levels-validation.md).
 - La persona del counselor è di sola lettura qui: "Modifica" apre un popup che
   usa la stessa API del tab Counselor per Totale; Ristretto e Minimo usano
   righe Config separate, con il proprio storico.
-- Le quattro schede storiche restano nella sezione *Strumenti — vista classica*
-  (stessi id di `?section=`).
+- La sezione *Strumenti — vista classica* non esiste più (23 ottobre 2026): ciò che
+  si configurava solo lì è nella mappa. Ogni step ha la voce **Modalità del prompt
+  di sistema** (`system_prompt_mode`, salvata con `PUT /admin/guided-steps/{id}`;
+  le modalità ammesse arrivano da `/admin/guided-steps/modes`). La voce dei
+  componenti include **Strategie dello step**: limite delle strategie certificate
+  per risposta (0 o 1, come la chat; bloccato a 0 per gli step che non propongono
+  consigli) e strategie approvate/certificate consentite (`allowed_strategies`),
+  salvate nello stesso JSON `prompt_components_<strumento>_<step>`; il backend le
+  espone in `options` (`get_prompt_component_options`). L'anteprima dello step
+  propone le compilazioni reali dello strumento (`/admin/questionnaire-results`).
+  I vecchi link `?section=<strumento>` aprono Generale. Le traduzioni dei prompt di
+  step che la vista classica salvava in `guided_step_prompt_<step>__<lingua>` non
+  sono lette dalla chat e non sono state riportate.
 
 URL: `/admin?section=prompt-map&instrument=QSA` (l'id `prompt-map` è nuovo; gli
 id esistenti di `?section=` non cambiano).

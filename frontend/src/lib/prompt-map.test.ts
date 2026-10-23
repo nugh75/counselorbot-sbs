@@ -58,6 +58,11 @@ test('component flags keep saved strategies and limits', () => {
         knowledge: true, history: false, allowed_strategies: ['s1'], certified_strategies_limit: 1,
     });
     assert.deepEqual(JSON.parse(componentsValue('', { knowledge: true })), { knowledge: true });
+    // Strategie dello step toccate nell'editor: sovrascrivono le salvate, le altre restano.
+    assert.deepEqual(JSON.parse(componentsValue(stored, { knowledge: true }, { allowed_strategies: ['s2'], certified_strategy_limit: 0 })), {
+        knowledge: true, allowed_strategies: ['s2'], certified_strategies_limit: 1, certified_strategy_limit: 0,
+    });
+    assert.deepEqual(JSON.parse(componentsValue(stored, {}, { allowed_strategies: null })).allowed_strategies, null);
     assert.deepEqual(booleanFlags({ knowledge: true, allowed_strategies: null, limit: 2 }), { knowledge: true });
 });
 
@@ -138,7 +143,7 @@ test('sections start with shared levels closed, instrument and steps open, only 
     assert.deepEqual(sectionsForEntry(map, 'missing'), []);
 });
 
-test('new step ids are normalized like the classic view', () => {
+test('new step ids are normalized to lowercase letters, digits and dashes', () => {
     assert.equal(normalizeStepId('QSA Nuovo!'), 'qsa-nuovo');
     assert.equal(normalizeStepId('qsa-nuovo-', false), 'qsa-nuovo-');
     assert.equal(normalizeStepId('  '), '');
