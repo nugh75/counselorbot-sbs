@@ -61,6 +61,7 @@ export const forumTexts = {
     unreadMarker: ['{count} nuovi', '{count} new', '{count} nuevos', '{count} nouveaux', '{count} neu', '{count} nya'],
     hiddenTopic: ['Questa discussione è stata nascosta dal docente.', 'This discussion was hidden by the teacher.', 'El docente ocultó esta discusión.', 'Cette discussion a été masquée par l’enseignant.', 'Diese Diskussion wurde von der Lehrkraft ausgeblendet.', 'Den här diskussionen har dolts av läraren.'],
     edited: ['modificato', 'edited', 'editado', 'modifié', 'bearbeitet', 'redigerat'],
+    editTitle: ['Modifica titolo', 'Edit title', 'Editar título', 'Modifier le titre', 'Titel bearbeiten', 'Redigera rubrik'],
     edit: ['Modifica', 'Edit', 'Editar', 'Modifier', 'Bearbeiten', 'Redigera'],
     save: ['Salva', 'Save', 'Guardar', 'Enregistrer', 'Speichern', 'Spara'],
     delete: ['Elimina', 'Delete', 'Eliminar', 'Supprimer', 'Löschen', 'Radera'],
