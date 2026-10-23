@@ -3,7 +3,9 @@ import test from 'node:test';
 
 import type { PromptMap, PromptMapEntry } from './prompt-map';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { badgeFor, booleanFlags, componentsValue, entryText, findEntry, levelCounts, levelSection, moveItem, needsSharedConfirm, normalizeStepId, saveRequest, sectionDefaultOpen, sectionsForEntry, sortOrderChanges, stepSection, stepsByInstrument } from './prompt-map.ts';
+import { badgeFor, booleanFlags, componentsValue, entryText, findEntry, levelCounts, levelSection, moveItem, needsSharedConfirm, normalizeStepId, saveRequest, sectionDefaultOpen, sectionsForEntry, skillConditionParts, sortOrderChanges, stepSection, stepsByInstrument } from './prompt-map.ts';
+// @ts-expect-error -- Node runs TypeScript files directly.
+import { PROMPT_MAP_DICTS } from './i18n-prompt-map.ts';
 
 function entry(overrides: Partial<PromptMapEntry>): PromptMapEntry {
     return {
@@ -140,4 +142,27 @@ test('new step ids are normalized like the classic view', () => {
     assert.equal(normalizeStepId('QSA Nuovo!'), 'qsa-nuovo');
     assert.equal(normalizeStepId('qsa-nuovo-', false), 'qsa-nuovo-');
     assert.equal(normalizeStepId('  '), '');
+});
+
+test('skill conditions read as words, one part per intent or rule', () => {
+    assert.deepEqual(skillConditionParts({ routing: 'primary', conditions: { intents: ['advice', 'guided'] } }).map(p => p.key), [
+        'admin.promptMap.skills.intent.advice', 'admin.promptMap.skills.intent.guided',
+    ]);
+    assert.deepEqual(skillConditionParts({ routing: 'always', conditions: {} }).map(p => p.key), ['admin.promptMap.skills.when.always']);
+    assert.deepEqual(skillConditionParts({ routing: 'optional', conditions: { requires_scores: true, min_salient_factors: 2 } }), [
+        { key: 'admin.promptMap.skills.when.relevant' },
+        { key: 'admin.promptMap.skills.when.scores' },
+        { key: 'admin.promptMap.skills.when.salient', params: { count: 2 } },
+    ]);
+});
+
+test('every skill label used by the prompt map exists in all six languages', () => {
+    const keys = Object.keys(PROMPT_MAP_DICTS.it).filter(key => key.startsWith('admin.promptMap.skills.'));
+    assert.ok(keys.length > 30);
+    for (const intent of ['compare', 'referral', 'factual', 'reading', 'advice', 'clarify', 'guided']) {
+        assert.ok(keys.includes(`admin.promptMap.skills.intent.${intent}`), intent);
+    }
+    for (const lang of ['en', 'es', 'fr', 'de', 'sv'] as const) {
+        for (const key of keys) assert.ok(PROMPT_MAP_DICTS[lang][key], `${lang} ${key}`);
+    }
 });
