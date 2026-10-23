@@ -1973,6 +1973,12 @@ spento per lo strumento, un avviso dice che nessuna skill entra.
 
 ### Skill della chat: creazione guidata e prova
 
+**Amministrazione → Immagini del tavolo** (`/admin?tab=tavoloImages`) carica in blocco
+le immagini del Tavolo con il loro CSV di nome e utilizzo, e permette di correggere nome e
+utilizzo o eliminare ogni immagine. L'elenco arriva da `GET /admin/tavolo-images` come
+`{ images: [...] }`; una risposta di forma diversa mostra un elenco vuoto senza bloccare il
+resto dell'Amministrazione.
+
 **Amministrazione → Skill** (`/admin?tab=skills`) elenca le skill della chat:
 comportamenti in più che il counselor aggiunge alla risposta quando servono (un
 consiglio dal catalogo certificato, letture verificate, una fonte pubblica, un
