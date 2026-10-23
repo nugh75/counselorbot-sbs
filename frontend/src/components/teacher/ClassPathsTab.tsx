@@ -288,7 +288,11 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     };
 
     const handleUpdateStep = (index: number, patch: Partial<Pick<ClassPathStep, 'title' | 'instructions' | 'due_date'>>) => {
-        setSteps(current => current.map((row, rowIndex) => rowIndex === index ? {...row, ...patch} : row));
+        const previous = steps[index];
+        const updated = {...previous, ...patch};
+        setSteps(current => current.map((row, rowIndex) => rowIndex === index ? updated : row));
+        // Open steps are tracked by object: keep the edited step open.
+        setOpenSteps(current => current.map(row => (row === previous ? updated : row)));
         if (notice === 'saved' || notice === 'published') setNotice(null);
     };
 
