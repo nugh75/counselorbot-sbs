@@ -30,7 +30,9 @@ Savickas, Eventi, IDEA e Obiettivi conservano le proprie domande narrative.
 ## Presentazione, attività e navigazione
 
 La presentazione (`/`) offre quattro ingressi illustrati: **Bussola**, **Analisi
-questionari**, **Percorsi guidati**, **Area studente e strumenti**. Il collegamento
+questionari**, **Percorsi guidati**, **Area studente e strumenti**. La Bussola
+consiglia da quale strumento partire e non somministra questionari né produce
+punteggi. Il collegamento
 “Vedi tutte le attività e i percorsi” apre il catalogo (`/?view=home`). Subito sotto,
 un riquadro illustrato in evidenza, **Dicci com’è andata**, apre il **Questionario di
 gradimento** (`/questionario`), tradotto nelle sei lingue; chi non ha ancora
@@ -191,9 +193,13 @@ catalog order is used. When no questionnaire is enabled, no starting-tool card i
 shown. The Guide remains available independently of these class toggles.
 
 
-- **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti. Non
-  somministra questionari, non raccoglie punteggi e non svolge al proprio interno
-  le altre interviste. Le raccomandazioni aprono gli strumenti nelle loro pagine.
+- **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti.
+  Ascolta ciò che lo studente vuole affrontare e consiglia da quale strumento
+  partire, aiutando a valutare tempi e impegno. Non somministra questionari, non
+  produce punteggi e non fa diagnosi, non svolge al proprio interno le altre
+  interviste. Le raccomandazioni aprono gli strumenti nelle loro pagine. La
+  stessa descrizione, nelle sei lingue, compare nella pagina, nella scheda del
+  catalogo, nella Guida e nelle impostazioni della classe.
   Usa il modello del preset del counselor scelto; senza preset usa il provider e
   il modello attivi configurati dall’amministratore.
 - **Assistente** (`/assistente`): risponde sui materiali della base selezionata,

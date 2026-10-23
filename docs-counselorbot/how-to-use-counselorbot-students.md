@@ -21,7 +21,8 @@ scores. They are different things, and you edit your Notebook yourself.
 
 The **Compass** (`/bussola`) helps you choose a starting tool. When you ask where
 to start, it proposes QSA first, or QSAr if you explicitly want the shorter version.
-You can also choose a specific tool directly. The **Assistant** (`/assistente`)
+You can also choose a specific tool directly. It does not administer questionnaires
+and does not produce scores. The **Assistant** (`/assistente`)
 explains the selected knowledge base; choose CounselorBot for platform questions.
 The illustrated **Guide** (`/guide`) is available even before signing in.
 
