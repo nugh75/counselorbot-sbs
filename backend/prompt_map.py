@@ -368,16 +368,15 @@ def _step_skills(instrument: str, step_id: str, step_mode: str | None,
     spenta o in bozza, condizione che lo step non soddisfa, componente spenta):
     la mappa deve spiegare perche' una skill non c'e', non solo dire quali ci sono.
     """
-    # Come `registry.bindings_for`: si sceglie fra gli agganci accesi (lo step
-    # vince sul wildcard); quelli spenti compaiono solo se non ce n'e' uno acceso.
+    # Come `registry.bindings_for`: l'aggancio dello step vince sul wildcard,
+    # anche spento; se e' spento la skill resta visibile con il motivo.
     chosen: dict[int, models.GuidedStepSkill] = {}
-    for enabled in (True, False):
-        for row in rows:
-            if row.step_id not in (step_id, "*") or bool(row.enabled) is not enabled:
-                continue
-            current = chosen.get(row.skill_id)
-            if current is None or (current.enabled == enabled and current.step_id == "*" and row.step_id != "*"):
-                chosen[row.skill_id] = row
+    for row in rows:
+        if row.step_id not in (step_id, "*"):
+            continue
+        current = chosen.get(row.skill_id)
+        if current is None or (current.step_id == "*" and row.step_id != "*"):
+            chosen[row.skill_id] = row
     out = []
     for skill_id, row in chosen.items():
         skill = skills_by_id.get(skill_id)

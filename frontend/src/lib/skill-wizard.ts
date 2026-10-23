@@ -84,8 +84,10 @@ export function formToConditions(form: ConditionForm): Record<string, unknown> |
     return conditions;
 }
 
-// Come la chat sceglie gli agganci (skills.registry.bindings_for): solo quelli
-// accesi contano, e quello `*` vale per tutti gli step.
+// Scelta mostrata dal wizard: `*` acceso = tutti gli step, altrimenti gli step
+// con un aggancio acceso. Un aggancio spento su un solo step (creato via API)
+// esclude quello step anche col `*` acceso (skills.registry.bindings_for): il
+// wizard non lo crea e la mappa dei prompt lo mostra.
 export function bindingChoice(entries: StepSkillEntry[], skillId: number): BindingChoice {
     const own = entries.filter(entry => entry.skill_id === skillId && entry.enabled);
     if (own.some(entry => entry.step_id === '*')) return { mode: 'all', steps: [] };
