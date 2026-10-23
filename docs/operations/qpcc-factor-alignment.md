@@ -60,7 +60,9 @@ Gli identificativi dei passi restano stabili:
 La dimensione A è esplorata in due passi per distinguere l’ansia in pubblico
 da insicurezza/inadeguatezza. A1–A3: alto = maggiore difficoltà dichiarata.
 M2: orientamento all’io, interpretato nel contesto, senza classificarlo come
-forza/crescita. UI, sidebar, PDF, OpenCode e bande delle strategie rispettano
+forza/crescita. Nel profilo la scala di M2 è grigia e neutra, con una nota
+visibile accanto alla barra e una voce dedicata nella legenda: il punteggio
+resta quello calcolato e l’assenza di fascia non è un errore. UI, sidebar, PDF, OpenCode e bande delle strategie rispettano
 queste differenze. Nella vista QPCC, l’assenza di fattori nella fascia di forza
 non viene descritta come equilibrio globale o assenza di valori estremi. Il bug
 generico è registrato nel Diario; gli altri strumenti mantengono il comportamento

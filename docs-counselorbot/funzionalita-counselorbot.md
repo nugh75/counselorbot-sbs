@@ -478,7 +478,9 @@ mai un interrogatorio procedurale: il chatbot fornisce spiegazioni o approfondim
 e costrutti solo se la persona li richiede esplicitamente.
 La durata indicativa è di 20–30 minuti nel rispetto della riservatezza; non vengono somministrati item né assegnati nuovi punteggi. A1–A3 alti
 indicano maggiori difficoltà dichiarate; M2 viene discusso nel contesto, senza
-un giudizio automatico di forza/debolezza. I nomi e le etichette del profilo
+un giudizio automatico di forza/debolezza. Nel profilo la barra di M2 resta
+grigia e neutra, con una nota accanto e una voce in legenda che spiegano la
+scala neutra: non è un errore né un valore mancante. I nomi e le etichette del profilo
 seguono la lingua scelta anche nei resoconti. Se nessun fattore rientra nella
 fascia dei punti di forza, il riepilogo lo indica senza dichiarare equilibrato
 il profilo nel suo insieme. La sintesi resta qualitativa,
