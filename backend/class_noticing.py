@@ -6,15 +6,13 @@ Conteggi e grafici sono calcolati qui, non dal modello.
 """
 import hashlib
 import json
-import logging
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 from . import models
 from .ai_service import AIService
-from .teacher_noticing import KINDS, _parse_json, noticing
+from .teacher_noticing import KINDS, ask_json, noticing
 
-logger = logging.getLogger(__name__)
 
 CLASS_NOTICING_ACTION = "class_noticing"
 CLASS_NOTICING_PROMPT_VERSION = 1
@@ -137,13 +135,8 @@ def class_noticing(db, group, lang: str, *, instrument: str | None = None, days:
     fingerprint = _fingerprint(items, lang)
     items_by_id = {item["id"]: item for item in items}
     if generate:
-        try:
-            answer = AIService(db, username=username).get_response(
-                _prompt(items, _PDF_SUMMARY_LANG_NAME[lang]), _SYSTEM_PROMPT, "generic", max_tokens=1500)
-        except Exception as exc:
-            logger.warning("Class noticing failed for group %s: %s", group.id, exc)
-            answer = None
-        data = _parse_json(answer)
+        data = ask_json(AIService(db, username=username), _prompt(items, _PDF_SUMMARY_LANG_NAME[lang]),
+                        _SYSTEM_PROMPT, f"Class noticing for group {group.id}", max_tokens=2500)
         if data is None:
             return {**base, "status": "unavailable"}
         db.add(models.Log(session_id=_session_key(group.id), username=username, action=CLASS_NOTICING_ACTION,

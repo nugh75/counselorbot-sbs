@@ -91,8 +91,23 @@ def _parse_json(answer: str | None) -> dict | None:
     return data if isinstance(data, dict) else None
 
 
-def _parse(answer: str | None) -> list | None:
-    data = _parse_json(answer)
+def ask_json(ai, prompt: str, system: str, label: str, **kwargs) -> dict | None:
+    """Risposta JSON del modello; un secondo tentativo se la prima e' vuota, tagliata o illeggibile."""
+    for attempt in (1, 2):
+        try:
+            answer = ai.get_response(prompt, system, "generic", **kwargs)
+        except Exception as exc:
+            logger.warning("%s: model call failed (attempt %s): %s", label, attempt, exc)
+            continue
+        data = _parse_json(answer)
+        if data is not None:
+            return data
+        logger.warning("%s: unreadable model answer (attempt %s, %s chars): %r",
+                       label, attempt, len(answer or ""), (answer or "")[:200])
+    return None
+
+
+def _items(data: dict | None) -> list | None:
     items = data.get("items") if data else None
     return items if isinstance(items, list) else None
 
@@ -141,17 +156,13 @@ def noticing(db, result, lang: str, *, generate: bool = False) -> dict:
         last_chat = (db.query(models.Log)
                      .filter(models.Log.session_id == result.session_id, models.Log.action == "chat_message")
                      .order_by(models.Log.id.desc()).first())
-        try:
-            answer = AIService(db, username=result.username).get_response(
-                _prompt(result.questionnaire_type, _transcript(messages), _PDF_SUMMARY_LANG_NAME[lang]),
-                _SYSTEM_PROMPT, "generic", max_tokens=1200,
-                provider=last_chat.provider if last_chat else None,
-                model=last_chat.model_name if last_chat else None,
-            )
-        except Exception as exc:
-            logger.warning("Noticing generation failed for session %s: %s", result.session_id, exc)
-            answer = None
-        items = _parse(answer)
+        items = _items(ask_json(
+            AIService(db, username=result.username),
+            _prompt(result.questionnaire_type, _transcript(messages), _PDF_SUMMARY_LANG_NAME[lang]),
+            _SYSTEM_PROMPT, f"Noticing for session {result.session_id}", max_tokens=2000,
+            provider=last_chat.provider if last_chat else None,
+            model=last_chat.model_name if last_chat else None,
+        ))
         if items is None:
             return {"status": "unavailable", "items": [], "generated_at": None}
         db.add(models.Log(session_id=result.session_id, action=NOTICING_ACTION,
