@@ -233,8 +233,15 @@ export function forumPostActions(post: ForumPost, { moderator, active }: { moder
     };
 }
 
-export function forumTopicRenamable(topic: ForumTopic, { moderator, active }: { moderator: boolean; active: boolean }): boolean {
+export function forumTopicEditable(topic: ForumTopic, { moderator, active }: { moderator: boolean; active: boolean }): boolean {
     return active && topic.title !== null && (moderator || (topic.own && !topic.hidden && !topic.locked));
+}
+
+/** PATCH payload for a discussion edit: only the trimmed fields that changed, or null. */
+export function forumTopicChanges(initial: { title: string; body: string }, draft: { title: string; body: string }): { title?: string; body?: string } | null {
+    const title = draft.title.trim(), body = draft.body.trim();
+    const changes = { ...(title !== initial.title ? { title } : {}), ...(body !== initial.body ? { body } : {}) };
+    return Object.keys(changes).length ? changes : null;
 }
 
 export function parseForumUnread(value: unknown): ForumUnread {
