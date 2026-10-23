@@ -1990,6 +1990,8 @@ class PathStepFields(BaseModel):
     title: Optional[str] = None
     instructions: Optional[str] = None
     due_date: Optional[date] = None
+    # Informational only; coexists with due_date and never limits access.
+    scheduled_date: Optional[date] = None
 
 
 class ClassPathStepInput(PathStepFields):
@@ -2079,6 +2081,7 @@ class ClassPathStepResponse(BaseModel):
     title: Optional[str] = None
     instructions: Optional[str] = None
     due_date: Optional[date] = None
+    scheduled_date: Optional[date] = None
     auto_detect: bool = False
     can_self_mark: bool = True
 
@@ -2172,6 +2175,7 @@ class StudentClassPathStep(BaseModel):
     title: Optional[str] = None
     instructions: Optional[str] = None
     due_date: Optional[date] = None
+    scheduled_date: Optional[date] = None
     state: str = "not_done"  # 'done' | 'not_done' | 'locked' | 'unavailable'
     source: Optional[str] = None  # 'student' | 'teacher' | 'automatic' | None
     start_href: Optional[str] = None

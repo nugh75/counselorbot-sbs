@@ -27,7 +27,7 @@ const path = { id: 301, group_id: 11, title: 'Metodo di studio', description: nu
           target_summary: { code: 'AB12', instrument_code: 'QSA', locale: 'it', title: 'Avvio' } },
     ] };
 
-async function prepare(page) {
+async function prepare(page, saved = []) {
     page.setDefaultTimeout(20000);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -46,6 +46,12 @@ async function prepare(page) {
         if (p === '/api/admin/groups') return json([group]);
         if (p === '/api/teacher/path-templates') return json({ mine: [], shared: [] });
         if (p === '/api/teacher/groups/11/paths') return json([path]);
+        if (p === '/api/teacher/paths/301' && route.request().method() === 'PUT') {
+            const body = route.request().postDataJSON();
+            saved.push(body);
+            return json({ ...path, revision: body.revision + 1, title: body.title, steps: body.steps.map((step, index) => ({
+                ...path.steps.find(row => row.id === step.id), ...step, id: step.id ?? 900 + index, position: index + 1, auto_detect: true })) });
+        }
         if (p === '/api/teacher/groups/11/settings') return json(settings);
         if (p === '/api/teacher/groups/11/administrations') return json([{ id: 5, title: 'Avvio', code: 'AB12', locale: 'it', instrument_code: 'QSA' },
             { id: 6, title: 'Seconda', code: 'CD34', locale: 'it', instrument_code: 'QSA' }]);
@@ -143,6 +149,47 @@ async function openEditor(page) {
     assert.equal(await add.getByRole('radio', { name: 'Compila un questionario' }).isChecked(), true);
 
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    assert.deepEqual(errors, []);
+    await page.close();
+}
+
+{
+    // A saved plan reads as a summary: «Modifica» reopens it, «Sostituisci» swaps a step in place.
+    const page = await browser.newPage({ viewport: { width: 1280, height: 950 } });
+    const saved = [];
+    const errors = await prepare(page, saved);
+    await openEditor(page);
+    const summary = page.locator('[data-testid="path-summary"]');
+    await summary.getByRole('heading', { name: 'Metodo di studio' }).waitFor();
+    assert.equal(await page.locator('#path-title').count(), 0);
+    const cards = page.locator('[data-testid="path-step-card"]');
+    assert.equal(await cards.nth(0).getByRole('textbox').count(), 0);
+
+    await summary.getByRole('button', { name: 'Modifica piano' }).click();
+    await page.locator('#path-title').fill('Metodo di studio 2');
+    await cards.nth(1).getByRole('button', { name: 'Modifica #2' }).click();
+    await cards.nth(1).getByPlaceholder(/titolo/i).fill('Compilazione in aula');
+
+    await cards.nth(0).getByRole('button', { name: 'Sostituisci #1' }).click();
+    const add = page.locator('[data-testid="add-step"]');
+    await add.getByText('Sostituisci il passo #1').waitFor();
+    await add.getByRole('radio', { name: 'Usa uno strumento' }).check();
+    await add.getByRole('combobox', { name: 'Scegli uno strumento abilitato…' }).selectOption('tavolo');
+    await add.getByRole('button', { name: 'Aggiungi passo', exact: true }).click();
+    assert.equal(await cards.count(), 2);
+    await cards.nth(0).getByText('Tavolo').waitFor();
+
+    await page.getByRole('button', { name: 'Salva bozza' }).click();
+    await page.getByText('Metodo di studio 2').first().waitFor();
+    await page.locator('[data-testid="path-summary"]').waitFor();
+    assert.equal(saved.length, 1);
+    assert.deepEqual(saved[0].steps.map(step => [step.id ?? null, step.tool_key ?? step.administration_plan_id]),
+        [[null, 'tavolo'], [2, 5]]);
+    assert.equal(saved[0].steps[1].title, 'Compilazione in aula');
+    // Back to the summary: no open fields left.
+    assert.equal(await page.locator('#path-title').count(), 0);
+    assert.equal(await cards.getByRole('textbox').count(), 0);
+    await cards.nth(1).getByText('Compilazione in aula').waitFor();
     assert.deepEqual(errors, []);
     await page.close();
 }

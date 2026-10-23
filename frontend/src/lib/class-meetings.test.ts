@@ -41,3 +41,11 @@ test('individual meetings have slots instead of a date and name their host', () 
     // A group meeting without its date is malformed.
     assert.equal(parseMeeting({ ...meeting, starts_at: null }), null);
 });
+
+test('who confirms attendance defaults to the student', () => {
+    assert.equal(parseMeeting(meeting)?.attendance_mode, 'student');
+    assert.equal(parseMeeting({ ...meeting, attendance_mode: 'both' })?.attendance_mode, 'both');
+    assert.equal(parseMeeting({ ...meeting, attendance_mode: 'nobody' })?.attendance_mode, 'student');
+    const marked = parseMeeting({ ...meeting, attendance_mode: 'teacher', attended: true, marked_by_teacher: true });
+    assert.deepEqual([marked?.attendance_mode, marked?.marked_by_teacher], ['teacher', true]);
+});

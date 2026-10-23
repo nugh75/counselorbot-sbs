@@ -289,8 +289,10 @@ student's own choice for a counselor always comes first.
 In a class, open Paths and create or select an Italian questionnaire administration.
 The research view opens the same administration, not a copy. Save the path draft
 and publish explicitly. Institute credentials must already be configured in Institutes.
-Give students the external institute code and password separately; the password is
-write-only and cannot be recovered here.
+Students see the institute code and the class password in the external step, with the
+password masked behind **Show**. A member teacher can also reveal the password from the
+institute card with **Show**; list and editor responses still do not contain it. Credentials
+saved before the display copy existed must be re-entered once in Institutes.
 
 Students open competenzestrategiche.it, enter their factor scores, verify their
 institute credentials, and choose to use the scores in guided chat. Opening the

@@ -10,7 +10,8 @@ import { Callout } from '@/components/ui/Callout';
 
 /**
  * #175/#176: when, where or the link of a class or group meeting, the booking of
- * an individual one, and the student's own attendance mark from the start.
+ * an individual one, and the student's own attendance mark from the start, when
+ * the teacher lets the student confirm it.
  */
 export function MeetingDetails({ lang, meeting, attended, onChanged, showTitle = false }: {
     lang: string; meeting: ClassMeeting; attended: boolean; onChanged: () => void | Promise<void>; showTitle?: boolean;
@@ -28,6 +29,9 @@ export function MeetingDetails({ lang, meeting, attended, onChanged, showTitle =
     const start = individual ? mine?.starts_at ?? null : meeting.starts_at;
     const started = start !== null && new Date(start).getTime() <= Date.now();
     const host = meetingHost(meeting);
+    const selfMark = meeting.attendance_mode !== 'teacher';
+    // The teacher's mark is taken back from the register only.
+    const teacherMark = attended && meeting.marked_by_teacher === true;
 
     const call = async (path: string, method: string, body?: object) => {
         setBusy(true);
@@ -76,7 +80,11 @@ export function MeetingDetails({ lang, meeting, attended, onChanged, showTitle =
                 onClick={() => void call(`/api/user/meetings/${meeting.id}/booking`, 'DELETE')}>{m('cancelBooking')}</Button>}
         </div>}
 
-        {!cancelled && (started
+        {!cancelled && (teacherMark
+            ? <p role="status" className="text-xs font-medium text-emerald-700">{m('confirmedByTeacher')}</p>
+            : !selfMark
+            ? <p className="text-xs text-slate-500">{attended ? m('attendedDone') : m('teacherConfirms')}</p>
+            : started
             ? <div className="flex flex-wrap items-center gap-2">
                 {attended && <span role="status" className="text-xs font-medium text-emerald-700">{m('attendedDone')}</span>}
                 <Button variant={attended ? 'ghost' : 'secondary'} size="sm" disabled={busy}

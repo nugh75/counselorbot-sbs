@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from .. import auth, database, models, schemas
+from .. import auth, database, institution_password, models, schemas
 from ..class_access import class_enables, resolve_access
 from ..path_step_types import (step_descriptor, completion_evidence, validate_step_input, validate_composition,
                                apply_step_target, administration_target, forum_student_state,
@@ -162,6 +162,7 @@ def _serialize_step(db: Session, step: models.ClassPathStep) -> dict:
         "title": step.title,
         "instructions": step.instructions,
         "due_date": step.due_date.isoformat() if step.due_date else None,
+        "scheduled_date": step.scheduled_date.isoformat() if step.scheduled_date else None,
         "auto_detect": auto,
         "can_self_mark": not auto,
         "pending_config": step.pending_config,
@@ -418,6 +419,7 @@ async def update_class_path(
             step.title = step_title
             step.instructions = step_instructions
             step.due_date = step_input.due_date
+            step.scheduled_date = step_input.scheduled_date
             placed.append(step)
         elif step_input.id is not None:
             # Check if the step belongs to this path and was previously removed
@@ -435,6 +437,7 @@ async def update_class_path(
                 archived_step.title = step_title
                 archived_step.instructions = step_instructions
                 archived_step.due_date = step_input.due_date
+                archived_step.scheduled_date = step_input.scheduled_date
                 placed.append(archived_step)
             else:
                 raise HTTPException(status_code=422, detail=f"Step ID {step_input.id} does not belong to this path")
@@ -453,6 +456,7 @@ async def update_class_path(
                 title=step_title,
                 instructions=step_instructions,
                 due_date=step_input.due_date,
+                scheduled_date=step_input.scheduled_date,
             )
             db.add(new_step)
             placed.append(new_step)
@@ -997,13 +1001,21 @@ async def launch_step(path_id: int, step_id: int, current_user=Depends(auth.get_
                 "topic_id":step.topic_id, "group_id":path.group_id, "start_href":descriptor["start_href"]}
     from ..questionnaire_sources import external_questionnaire_href
     plan, institution = administration_target(db, path.group_id, step.administration_plan_id)
+    # The external password is a class access code: only members of the class
+    # reach this endpoint, and it is shown only for the external delivery.
+    display_password = (
+        institution_password.reveal(institution.encrypted_password)
+        if plan.delivery_mode == "external_it"
+        else None
+    )
     return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id, "administration_plan_id":plan.id,
             "instrument_code":plan.instrument_code, "locale":plan.locale, "delivery_mode":plan.delivery_mode,
             "external_href":external_questionnaire_href(plan.instrument_code) if plan.delivery_mode == "external_it" else None,
             "score_factors":[{"code":factor.code, "label_i18n":factor.label_i18n or {}, "label_it":factor.label_it,
                               "label_en":factor.label_en} for factor in db.query(models.Factor).filter_by(
                                   instrument_code=plan.instrument_code).order_by(models.Factor.sort_order, models.Factor.id)],
-            "institution":{"id":institution.id, "name":institution.name, "institution_code":institution.institution_code}}
+            "institution":{"id":institution.id, "name":institution.name, "institution_code":institution.institution_code,
+                           "institution_password":display_password}}
 
 
 @router.post("/user/paths/{path_id}/steps/{step_id}/guided-entry")

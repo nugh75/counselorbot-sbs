@@ -58,6 +58,7 @@ async function fixture({width = 1440, teacher = true, pending = false, options =
             {id: 'intro', label: 'Presentazione', sort_order: 0, system_prompt_mode: 'generic'},
             {id: 'qsa-focus', label: 'Il mio metodo', sort_order: 1, system_prompt_mode: 'generic'}]});
         if (p === '/api/memory/user/bound-249') return json({});
+        if (p === '/api/user/questionnaire-result/bound-249/summary') return json({summary: 'Sintesi sintetica del piano', status: 'ready'});
         if (p === '/api/counselors') return json([{id: 1, name: 'Counselor sintetico', suitable: true, is_active: true, language: ['it']}]);
         if (p.endsWith('/recommendations')) return json({reading: [], strategy: []});
         if (p === '/api/chat/stream') return route.fulfill({contentType: 'text/event-stream', body: `data: ${JSON.stringify({display: 'Risposta sintetica'})}\n\ndata: ${JSON.stringify({done: true, response: 'Risposta sintetica'})}\n\n`});
@@ -159,6 +160,34 @@ test('explicit result choice reopens the same frozen session', async () => {
         await page.reload({waitUntil: 'domcontentloaded'});await page.getByText('Riflessione conservata sul risultato otto', {exact: true}).waitFor();
         assert.equal(state.requests.filter(row => row.p.endsWith('/deep-dive') && row.method === 'POST').length, 1);
         assert.equal(await page.getByRole('combobox', {name: 'Scegli la compilazione'}).count(), 0);assert.deepEqual(state.errors, []);
+    } finally {await context.close();}
+});
+
+for (const width of [390, 1440]) test(`final choices of the plan analysis stay on the step at ${width}px`, async () => {
+    const {context, page, state} = await fixture({teacher: false, width, options: {personal: true, ready: true, source_href: '/?start=QSA', results: [], session: bound(8)}});
+    state.snapshot = {session_id: 'bound-249', questionnaire_type: 'QSA', current_phase: 'conclusion', scores: result(8).scores,
+        counselor_id: 1, locale: 'it', guided_path: 'complete', messages: [{role: 'assistant', content: 'Conclusione sintetica'}]};
+    try {
+        await page.goto(`${origin}/profilo/piani-operativi/301/20/approfondimento`, {waitUntil: 'domcontentloaded'});
+        await page.getByRole('button', {name: 'Continua alle scelte finali', exact: true}).click();
+        await page.getByRole('heading', {name: 'Analisi completata', exact: true}).waitFor();
+        await page.getByText('Sintesi sintetica del piano', {exact: true}).waitFor();
+        assert.equal(new URL(page.url()).pathname, '/profilo/piani-operativi/301/20/approfondimento');
+        assert.ok(await page.getByRole('button', {name: 'Scarica il resoconto PDF'}).isVisible());
+        assert.equal(await page.getByRole('link', {name: 'Torna ai piani operativi', exact: true}).getAttribute('href'), '/profilo/piani-operativi');
+        // The finished chat leaves no pause behind in Resume.
+        assert.ok(state.requests.some(row => row.p === '/api/session/frozen/bound-249' && row.method === 'DELETE'));
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));assert.deepEqual(state.errors, []);
+    } finally {await context.close();}
+});
+test('a completed analysis without a pause reopens on its final choices', async () => {
+    const {context, page, state} = await fixture({teacher: false, options: {personal: true, ready: true, source_href: '/?start=QSA', results: [], session: bound(8), completed: true}});
+    try {
+        await page.goto(`${origin}/profilo/piani-operativi/301/20/approfondimento`, {waitUntil: 'domcontentloaded'});
+        await page.getByRole('heading', {name: 'Analisi completata', exact: true}).waitFor();
+        await page.getByText('Sintesi sintetica del piano', {exact: true}).waitFor();
+        assert.equal(state.requests.filter(row => row.p.endsWith('/deep-dive') && row.method === 'POST').length, 0);
+        assert.deepEqual(state.errors, []);
     } finally {await context.close();}
 });
 

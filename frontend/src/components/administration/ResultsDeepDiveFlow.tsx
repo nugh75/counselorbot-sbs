@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { apiFetch, getIdentity } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n-context";
 import { administrationStepText } from "@/lib/i18n-administration-steps";
@@ -10,16 +9,16 @@ import {
   ResultsDeepDiveError, loadResultsDeepDiveOptions, startResultsDeepDive,
   type ResultsDeepDiveFailure, type ResultsDeepDiveOptions, type ResultsDeepDiveSession,
 } from "@/lib/results-deep-dive";
-import { getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
+import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { getSelectedCounselorId } from "@/lib/counselor";
 import { GuidedChatInterface } from "@/components/qsa/GuidedChatInterface";
+import { PlanChatCompleted } from "@/components/administration/PlanChatCompleted";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Callout } from "@/components/ui/Callout";
 
 export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId: number }) {
   const { lang } = useI18n();
-  const router = useRouter();
   const l = (key: Parameters<typeof administrationStepText>[1]) => administrationStepText(lang, key);
   const r = (key: Parameters<typeof resultsChatText>[1]) => resultsChatText(lang, key);
   const [session, setSession] = useState<ResultsDeepDiveSession | null>(null);
@@ -30,6 +29,7 @@ export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
+  const [completed, setCompleted] = useState(false);
   const owner = useRef<string | null>(null);
   const pending = useRef(false);
   useEffect(() => {
@@ -65,11 +65,13 @@ export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId
       setFailure(error instanceof ResultsDeepDiveError ? error.reason : 'error');
     } finally { pending.current = false; setBusy(false); }
   };
+  // Finished and no pause left to resume: the step reopens on its final choices.
+  if (session && (completed || (options?.completed && !snapshot))) return <PlanChatCompleted sessionId={session.session_id} questionnaireType={session.result.questionnaire_type} />;
   if (session) return <GuidedChatInterface
     scores={session.result.scores} questionnaireType={session.result.questionnaire_type}
     sessionId={session.session_id} counselorId={snapshot?.counselor_id ?? getSelectedCounselorId()} locale={snapshot?.locale || lang}
     frozenSnapshot={snapshot}
-    onComplete={() => router.push("/profilo/piani-operativi")} />;
+    onComplete={() => { setCompleted(true); void deleteFrozenSession(session.session_id).catch(() => {}); }} />;
   return <div className="space-y-4">
     <Link href="/profilo/piani-operativi">{l('back')}</Link>
     <h1 className="text-xl font-semibold">{l('deepDive')}</h1>

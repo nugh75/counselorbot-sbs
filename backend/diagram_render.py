@@ -166,6 +166,8 @@ PALETTE = {
         "accent_text": "#5a3211",
         "edge": "#64748b",
         "edge_strong": "#41707a",
+        "edge_ok": "#15803d",
+        "edge_obstacle": "#b91c1c",
         "icon": "#17747a",
         "title": "#0f172a",
         "surface": "#ffffff",
@@ -181,6 +183,8 @@ PALETTE = {
         "accent_text": "#f3dcbe",
         "edge": "#94a3b8",
         "edge_strong": "#7fb3b6",
+        "edge_ok": "#4ade80",
+        "edge_obstacle": "#f87171",
         "icon": "#9acbcd",
         "title": "#f1f5f9",
         "surface": "#1e293b",
@@ -211,14 +215,22 @@ EDGE_GLYPH = {
     "unclear": "\u2508?\u2508",
 }
 
+# Colore: rosso per l'ostacolo, verde per ogni altro arco (stessa palette in
+# web, PDF e Telegram). Il colore non porta il significato da solo: tratto,
+# punta e legenda distinguono comunque i tipi.
 EDGE_STYLE = {
     "drives": {"penwidth": "1.5"},
-    "strengthens": {"penwidth": "2.6", "color_key": "edge_strong"},
+    "strengthens": {"penwidth": "2.6"},
     "weakens": {"penwidth": "1.5", "style": "dashed", "arrowhead": "tee"},
     "feedback": {"penwidth": "1.2", "style": "dashed", "arrowhead": "vee", "constraint": "false"},
     "link": {"penwidth": "1.3", "style": "dotted", "dir": "none"},
-    "unclear": {"penwidth": "1.0", "style": "dotted", "dir": "none", "color_key": "flaw"},
+    "unclear": {"penwidth": "1.0", "style": "dotted", "dir": "none"},
 }
+
+
+def _edge_colour_key(kind: str) -> str:
+    return "edge_obstacle" if kind == "weakens" else "edge_ok"
+
 
 # Connettori della descrizione testuale (screen reader, TTS, PDF): un verbo per
 # tipo di arco, cosi' chi non vede il tratteggio legge comunque il significato.
@@ -715,11 +727,9 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
     for edge_index, edge in enumerate(spec.edges):
         attrs: list[str] = []
         style = EDGE_STYLE[edge.kind]
+        attrs.append(f'color="{colors[_edge_colour_key(edge.kind)]}"')
         for key, value in style.items():
-            if key == "color_key":
-                attrs.append(f'color="{colors[value]}"')
-            else:
-                attrs.append(f'{key}="{value}"')
+            attrs.append(f'{key}="{value}"')
 
         if edge.label and spec.type in ("relation", "cycle"):
             # Solo `dot` riserva spazio vero alle etichette degli archi; `neato`

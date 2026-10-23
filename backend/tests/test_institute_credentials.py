@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
-from backend import auth, database, models, scoring_service
+from backend import auth, database, institution_password, models, scoring_service
 from backend.routes import administration_plans, groups, institutions, survey
 
 DB_URL = 'postgresql://c4_test@127.0.0.1:18649/counselorbot_test'
@@ -108,19 +108,51 @@ def counts(sql):
 
 # --- Institute credential writer ---------------------------------------------------
 
-def test_teacher_saves_write_only_credentials_on_the_institute(api):
+def test_teacher_saves_verifier_and_encrypted_display_copy(api):
     client, sql = api
     row = school(client)
     saved = configure(client, row)
     assert saved['credentials_configured'] is True
     assert saved['institution_code'] == 'SYN-149'
     assert saved['revision'] == row['revision'] + 1
-    assert not {'password', 'hashed_password'} & saved.keys()
+    assert not {'password', 'hashed_password', 'encrypted_password'} & saved.keys()
     assert SECRET not in client.get(f"/teacher/institutions/{row['id']}").text
-    stored = sql('SELECT hashed_password FROM institutions WHERE id = :id', id=row['id'])[0][0]
+    stored, sealed = sql(
+        'SELECT hashed_password, encrypted_password FROM institutions WHERE id = :id',
+        id=row['id'],
+    )[0]
     assert stored != SECRET and models.verify_password(SECRET, stored)
+    # The display copy is encrypted at rest and preserves the exact secret.
+    assert sealed and SECRET not in sealed
+    assert institution_password.reveal(sealed) == SECRET
     # The password is never trimmed: the stripped variant is a different secret.
     assert not models.verify_password(SECRET.strip(), stored)
+
+
+def test_member_teacher_can_reveal_the_display_copy_only_on_request(api):
+    client, sql = api
+    row = school(client)
+    path = f"/teacher/institutions/{row['id']}/password"
+    assert client.get(path).json() == {'password': None, 'reason': 'not_configured'}
+    row = configure(client, row)
+    listing = client.get('/teacher/institutions')
+    detail = client.get(f"/teacher/institutions/{row['id']}")
+    assert SECRET not in listing.text and SECRET not in detail.text
+    revealed = client.get(path)
+    assert revealed.status_code == 200, revealed.text
+    assert revealed.json() == {'password': SECRET, 'reason': None}
+    assert revealed.headers['cache-control'] == 'no-store'
+    # The reveal is a teacher-area action bound to an active institute membership.
+    for role, user, status in (('teacher', 'outsider', 403), ('researcher', 'first', 403),
+                               ('student', 'first', 403), ('admin', 'outsider', 403),
+                               ('anonymous', 'first', 401)):
+        assert client.get(path, headers={'x-test-role': role, 'x-test-user': user}).status_code == status
+    assert client.get(path, headers={'x-test-role': 'admin', 'x-test-user': 'first'}).status_code == 200
+    # A verifier without the encrypted copy is still configured, but not readable.
+    sql('UPDATE institutions SET encrypted_password = NULL WHERE id = :id', id=row['id'])
+    missing = client.get(path)
+    assert missing.status_code == 200
+    assert missing.json() == {'password': None, 'reason': 'display_copy_missing'}
 
 
 def test_credential_replacement_needs_revision_membership_and_teacher_role(api):
@@ -129,8 +161,11 @@ def test_credential_replacement_needs_revision_membership_and_teacher_role(api):
     path = f"/teacher/institutions/{row['id']}/credentials"
     body = {'institution_code': 'SYN-149', 'password': SECRET, 'revision': row['revision']}
     assert client.put(path, json=body, headers={'x-test-user': 'outsider'}).status_code == 403
-    for role, status in (('researcher', 403), ('student', 403), ('admin', 403), ('anonymous', 401)):
-        assert client.put(path, json=body, headers={'x-test-role': role}).status_code == status
+    # Administrators reach the teacher area, but only through an active membership:
+    # the default test user is a member, so the admin case needs a non-member account.
+    for role, user, status in (('researcher', 'first', 403), ('student', 'first', 403),
+                               ('admin', 'outsider', 403), ('anonymous', 'first', 401)):
+        assert client.put(path, json=body, headers={'x-test-role': role, 'x-test-user': user}).status_code == status
     assert client.get(f"/teacher/institutions/{row['id']}").json()['credentials_configured'] is False
     configure(client, row)
     stale = client.put(path, json={**body, 'password': 'Other-149'})
@@ -163,19 +198,25 @@ def test_institution_code_is_unique_regardless_of_case_or_whitespace(api):
     assert response.status_code == 409 and response.json()['detail'] == 'institution_code_conflict'
 
 
-def test_admin_institute_responses_never_include_a_hash(api):
-    client, _ = api
+def test_admin_institute_responses_never_include_a_hash_or_the_password(api):
+    client, sql = api
     row = configure(client, school(client))
     admin = {'x-test-role': 'admin'}
     listing = client.get('/admin/institutions', headers=admin)
     assert listing.status_code == 200
     assert all('hashed_password' not in item for item in listing.json())
+    assert all('encrypted_password' not in item for item in listing.json())
     assert listing.json()[0]['credentials_configured'] is True
     reset = client.put(f"/admin/institutions/{row['id']}/password", headers=admin, json={'plain_password': 'Reset-149'})
     assert reset.status_code == 200 and 'hashed_password' not in reset.json() and 'Reset-149' not in reset.text
+    sealed = sql('SELECT encrypted_password FROM institutions WHERE id = :id', id=row['id'])[0][0]
+    assert institution_password.reveal(sealed) == 'Reset-149'
     raw = client.put(f"/admin/institutions/{row['id']}/password", headers=admin,
                      json={'hashed_password': models.get_password_hash('Injected-149')})
     assert raw.status_code == 422
+    cleared = client.put(f"/admin/institutions/{row['id']}/password", headers=admin, json={'plain_password': None})
+    assert cleared.status_code == 200
+    assert tuple(sql('SELECT hashed_password, encrypted_password FROM institutions WHERE id = :id', id=row['id'])[0]) == (None, None)
 
 
 # --- Canonical administration references ------------------------------------------

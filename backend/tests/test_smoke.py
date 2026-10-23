@@ -5881,8 +5881,10 @@ def test_group_membership_web_flow():
     main.app.dependency_overrides[auth.get_current_user] = student_override
     try:
         # Join idempotente (codice classe dal profilo o dal link invito)
-        assert client.post("/groups/join", json={"code": group["code"]}).status_code == 200
-        assert client.post("/groups/join", json={"code": group["code"]}).status_code == 200
+        first = client.post("/groups/join", json={"code": group["code"]})
+        assert first.status_code == 200 and first.json()["already_member"] is False
+        second = client.post("/groups/join", json={"code": group["code"]})
+        assert second.status_code == 200 and second.json()["already_member"] is True
         my_groups = client.get("/user/groups").json()
         assert len([g for g in my_groups if g["group_id"] == group["id"]]) == 1
         membership_id = my_groups[0]["membership_id"]

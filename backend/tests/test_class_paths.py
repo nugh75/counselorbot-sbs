@@ -90,7 +90,7 @@ def test_put_steps_reorder_and_soft_remove(class_paths_api):
         "mode": "strict",
         "steps": [
             {"tool_key": "bussola", "title": "Start here", "instructions": "Complete orientation"},
-            {"tool_key": "QSA", "due_date": "2026-10-15"},
+            {"tool_key": "QSA", "due_date": "2026-10-15", "scheduled_date": "2026-10-10"},
             {"tool_key": "timeline", "title": "Personal milestone"},
         ],
     }
@@ -112,6 +112,7 @@ def test_put_steps_reorder_and_soft_remove(class_paths_api):
     assert step_qsa["position"] == 2
     assert step_qsa["tool_key"] == "QSA"
     assert step_qsa["due_date"] == "2026-10-15"
+    assert step_qsa["scheduled_date"] == "2026-10-10"
     assert step_qsa["auto_detect"] is True
     assert step_qsa["can_self_mark"] is False
 
@@ -126,7 +127,7 @@ def test_put_steps_reorder_and_soft_remove(class_paths_api):
         "title": "Draft 1 (reordered)",
         "mode": "strict",
         "steps": [
-            {"id": step_qsa["id"], "tool_key": "QSA", "due_date": "2026-10-15"},
+            {"id": step_qsa["id"], "tool_key": "QSA", "due_date": "2026-10-15", "scheduled_date": "2026-10-10"},
             {"id": step_bussola["id"], "tool_key": "bussola", "title": "Now compass"},
             {"tool_key": "goals", "title": "Study goal"},
         ],
@@ -139,6 +140,8 @@ def test_put_steps_reorder_and_soft_remove(class_paths_api):
 
     assert reordered_body["steps"][0]["id"] == step_qsa["id"]
     assert reordered_body["steps"][0]["position"] == 1
+    assert reordered_body["steps"][0]["due_date"] == "2026-10-15"
+    assert reordered_body["steps"][0]["scheduled_date"] == "2026-10-10"
     assert reordered_body["steps"][1]["id"] == step_bussola["id"]
     assert reordered_body["steps"][1]["position"] == 2
     assert reordered_body["steps"][2]["tool_key"] == "goals"
@@ -748,7 +751,7 @@ from sqlalchemy.orm import Session  # noqa: E402
 from backend import class_access, class_path_completion  # noqa: E402
 from backend.diagram_render import DiagramEdge, DiagramNode, DiagramSpec  # noqa: E402
 from backend.dynamic_registry import set_session_factory  # noqa: E402
-from backend.routes import chat  # noqa: E402
+from backend.routes import chat, memory  # noqa: E402
 
 PUBLISHED_AT = datetime(2026, 10, 1, 9, 0, tzinfo=timezone.utc)
 BEFORE = PUBLISHED_AT - timedelta(days=1)
@@ -1020,6 +1023,19 @@ def test_marker_written_only_on_the_last_step_once_per_session(class_paths_api):
     assert len(_markers(db)) == 2
 
 
+def test_essential_summary_writes_the_marker_of_its_instrument(class_paths_api):
+    # Essential phases have no guided_steps row: only their summary closes the path.
+    _, db, _, _ = class_paths_api
+    record = class_path_completion.record_guided_chat_completion
+    assert record(db, session_id="ess", username=STUDENT, phase="obbstudio-essential-plan") is False
+    assert record(db, session_id="ess", username=STUDENT, phase="qsa-essential-followup") is False
+    assert record(db, session_id="ess", username=STUDENT, phase="obbstudio-essential-summary") is True
+    db.commit()
+    assert record(db, session_id="ess", username=STUDENT, phase="obbstudio-essential-summary") is False
+    assert [(m.questionnaire_type, m.phase) for m in _markers(db, "ess")] == [
+        ("OBIETTIVO_STUDIO", "obbstudio-essential-summary")]
+
+
 def test_marker_needs_a_user_and_a_known_step(class_paths_api):
     _, db, _, _ = class_paths_api
     _guided_steps(db)
@@ -1034,6 +1050,7 @@ def test_marker_needs_a_user_and_a_known_step(class_paths_api):
 def _chat_client(db, identity):
     app = FastAPI()
     app.include_router(chat.router)
+    app.include_router(memory.router)
     app.add_exception_handler(class_access.ToolAccessDenied, class_access.tool_access_denied_handler)
 
     def override_db():
@@ -1085,6 +1102,34 @@ def test_chat_turn_on_last_step_writes_marker_once_even_when_resumed(class_paths
     markers = _markers(db, "sess-chat")
     assert len(markers) == 1
     assert markers[0].questionnaire_type == "SAVICKAS"
+
+
+def test_reaching_the_conclusion_writes_the_marker_after_a_turn(class_paths_api):
+    # The phase index lets a student jump to the conclusion past the last step.
+    _, db, _, _ = class_paths_api
+    _guided_steps(db)
+    student = {"username": STUDENT, "groups": ["studenti"], "is_admin": False,
+               "is_researcher": False, "authenticated": True}
+
+    def conclude(client, session_id):
+        response = client.post("/memory/event", json={
+            "session_id": session_id, "questionnaire_type": "SAVICKAS",
+            "phase": "conclusion", "completed_step": True})
+        assert response.status_code == 200, response.text
+
+    with patch.object(chat.AIService, "get_response", return_value="plain reply"), \
+            _chat_client(db, student) as client:
+        conclude(client, "sess-empty")
+        assert _markers(db) == []                  # no turn of the student yet
+        response = client.post("/chat", json={"message": "Hi", "questionnaire_type": "SAVICKAS",
+                                              "session_id": "sess-jump", "phase": "sav-1"})
+        assert response.status_code == 200, response.text
+        conclude(client, "sess-jump")
+        conclude(client, "sess-jump")
+
+    markers = _markers(db, "sess-jump")
+    assert [(m.questionnaire_type, m.username, m.phase) for m in markers] == [
+        ("SAVICKAS", STUDENT, "conclusion")]
 
 
 def test_preview_turn_writes_no_marker(class_paths_api):

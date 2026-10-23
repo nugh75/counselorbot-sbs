@@ -21,7 +21,8 @@ scores. They are different things, and you edit your Notebook yourself.
 
 The **Compass** (`/bussola`) helps you choose a starting tool. When you ask where
 to start, it proposes QSA first, or QSAr if you explicitly want the shorter version.
-You can also choose a specific tool directly. The **Assistant** (`/assistente`)
+You can also choose a specific tool directly. It does not administer questionnaires
+and does not produce scores. The **Assistant** (`/assistente`)
 explains the selected knowledge base; choose CounselorBot for platform questions.
 The illustrated **Guide** (`/guide`) is available even before signing in.
 
@@ -148,8 +149,11 @@ shared or hidden: these permissions apply to different content.
 
 A class path can include a questionnaire administration. In Italian you complete
 it on competenzestrategiche.it and enter your scores; in other languages you answer
-the items here, in the administration language. In both cases you first verify the
-institute code and password your teacher gives you. After saving an in-app result,
+the items here, in the administration language. In both cases you verify the
+institute code and password: the external step shows both, with the password masked
+behind **Show**. If the password is not available there, ask your teacher, who can
+reveal it in Institutes or re-enter it once. After
+saving an in-app result,
 bring it into guided chat: you do not retype the scores, and the step is done only
 once that entry is recorded. If the questionnaire is not available in the
 administration language, the step says so and does not switch language. Your

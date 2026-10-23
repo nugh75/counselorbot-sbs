@@ -123,6 +123,7 @@ def test_teacher_role_is_required_for_every_teacher_endpoint(api, role, status):
     assert client.get('/teacher/institutions', headers=headers).status_code == status
     assert client.get('/teacher/institutions/directory', headers=headers).status_code == status
     assert client.get(f"/teacher/institutions/{school['id']}", headers=headers).status_code == status
+    assert client.get(f"/teacher/institutions/{school['id']}/password", headers=headers).status_code == status
     assert client.post(f"/teacher/institutions/{school['id']}/join", headers=headers).status_code == status
     assert client.post('/teacher/institutions', headers=headers, json={'name': 'Role test'}).status_code == (201 if status == 200 else status)
     assert client.put(f"/teacher/institutions/{school['id']}", headers=headers,

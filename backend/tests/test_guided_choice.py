@@ -174,3 +174,21 @@ def test_resumed_history_keeps_the_actual_depth_choice(runtime, monkeypatch, tmp
     assert 'Preferisco adesso proseguire.' in result.full_message
     assert GUIDED_CHOICE_SENTINEL in result.system_prompt_final
     assert memory.get_progress('choice-resumed')['current_phase'] == CUSTOM['id']
+
+
+def test_resumed_session_still_invites_to_move_on_after_several_exchanges(runtime):
+    """#411: the exchange count is persisted, so a resumed step keeps the choice invitation."""
+    from backend.step_closure import step_choice_context
+    db, _ = runtime
+    step = db.get(models.GuidedStep, CUSTOM['id'])
+    ctx = lambda: step_choice_context(db, step, CUSTOM['id'], CUSTOM['questionnaire_type'], 'resumed-411')
+    for _ in range(3):
+        db.add(models.Log(session_id='resumed-411', action='chat_message', phase=CUSTOM['id'], details={}))
+    db.flush()
+    assert ctx() == ''
+    db.add(models.Log(session_id='resumed-411', action='chat_message', phase=CUSTOM['id'], details={}))
+    db.add(models.Log(session_id='resumed-411', action='chat_message', phase=CUSTOM['id'],
+                      details={'exploration': 'chosen'}))
+    db.flush()
+    text = ctx()
+    assert '[STEP DIRECTION CHOICE]' in text and 'consent' in text

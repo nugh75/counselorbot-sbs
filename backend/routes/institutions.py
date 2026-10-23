@@ -8,13 +8,13 @@ import re
 import unicodedata
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
-from .. import administration_context, auth, database, models, schemas
+from .. import administration_context, auth, database, institution_password, models, schemas
 from ..institution_access import require_institution_admin, teacher_institutions, require_teacher, require_institution_teacher
 
 router = APIRouter()
@@ -68,6 +68,11 @@ class TeacherInstitutionCreate(BaseModel):
 
 class TeacherInstitutionUpdate(TeacherInstitutionCreate):
     revision: int = Field(ge=1)
+
+
+class TeacherInstitutionPasswordResponse(BaseModel):
+    password: str | None
+    reason: Literal["not_configured", "display_copy_missing"] | None = None
 
 
 def _teacher_response(db: Session, row: models.Institution) -> dict:
@@ -153,6 +158,21 @@ async def get_teacher_institution(institution_id: int, current_user: dict = Depe
     return _teacher_response(db, require_institution_teacher(db, current_user, institution_id))
 
 
+@router.get("/teacher/institutions/{institution_id}/password",
+            response_model=TeacherInstitutionPasswordResponse)
+async def reveal_teacher_institution_password(institution_id: int, response: Response,
+                                              current_user: dict = Depends(auth.get_current_user),
+                                              db: Session = Depends(get_db)):
+    """Reveal the class access password to a member teacher, only on request."""
+    row = require_institution_teacher(db, current_user, institution_id)
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    if not row.credentials_configured:
+        return {"password": None, "reason": "not_configured"}
+    password = institution_password.reveal(row.encrypted_password)
+    return {"password": password, "reason": None if password else "display_copy_missing"}
+
+
 @router.put("/teacher/institutions/{institution_id}")
 async def update_teacher_institution(institution_id: int, payload: TeacherInstitutionUpdate,
                                      current_user: dict = Depends(auth.get_current_user),
@@ -206,6 +226,9 @@ async def replace_teacher_institution_credentials(institution_id: int, request: 
         raise HTTPException(status_code=409, detail="institution_code_conflict")
     row.institution_code = code
     row.hashed_password = models.get_password_hash(password)
+    row.encrypted_password = institution_password.remember(
+        password, has_stored=bool(row.encrypted_password)
+    )
     row.revision += 1
     row.credentials_revision += 1
     try:
@@ -394,8 +417,12 @@ async def set_institution_password(
     row.credentials_revision += 1
     if payload.plain_password is not None:
         row.hashed_password = models.get_password_hash(payload.plain_password)
+        row.encrypted_password = institution_password.remember(
+            payload.plain_password, has_stored=bool(row.encrypted_password)
+        )
     else:
         row.hashed_password = None
+        row.encrypted_password = None
     db.commit()
     db.refresh(row)
     return row
