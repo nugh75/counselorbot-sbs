@@ -19,7 +19,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import auth, models
-from .class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, builtin_guided_paths
+from .class_tools import ALWAYS_ON, GUIDED_PATH_KEYS, PERSONAL_TOOL_KEYS, builtin_guided_paths
 
 
 class ToolAccessDenied(HTTPException):
@@ -204,8 +204,8 @@ def resolve_access(db: Session, identity) -> dict:
 def require_tool(db: Session, identity, tool_key: str | None, *, preview: bool = False) -> None:
     """Guard for every start/write entry point of a tool.
 
-    Keys that are neither instruments nor personal tools (generic chat, legacy
-    types) are not toggleable and pass. Instrument codes match case-insensitively
+    Keys that are neither instruments, built-in guided paths nor personal tools
+    (generic chat, legacy types) are not toggleable and pass. Instrument codes match case-insensitively
     so a client cannot dodge the guard by changing case. The global disable binds
     admins too, except in the admin sandbox preview (decisions 5/21, C4), which
     the chat routes already restrict to admins.
@@ -219,8 +219,12 @@ def require_tool(db: Session, identity, tool_key: str | None, *, preview: bool =
         rows = db.query(models.Instrument).filter(func.lower(models.Instrument.code) == key.lower()).all()
         rows = [row for row in rows if row.code == key] or rows
         if not rows:
-            return
-        canonical = rows[0].code
+            if key.upper() not in GUIDED_PATH_KEYS:
+                return
+            # A built-in guided path without a row: only the class layer applies.
+            rows, canonical = [], key.upper()
+        else:
+            canonical = rows[0].code
         if preview and identity.get("is_admin"):
             return
         for row in rows:
