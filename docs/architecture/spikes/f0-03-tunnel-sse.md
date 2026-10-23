@@ -130,3 +130,8 @@ Alla fine: `cloudflared tunnel delete f0-03-spike` e rimuovere il record DNS `f0
 6. Il messaggio «prova subito» del piano (§3.4, punto 1) non deve più dire «risposte tutte insieme»: i limiti da dichiarare sono
    URL che cambia, nessuna garanzia, uso «di prova» secondo Cloudflare.
 7. Tunnel nominativo: misurare con il §3 prima di chiudere F1-10; se conferma 524 a 100 s, l'heartbeat del punto 2 basta.
+
+## Open items
+
+Restano aperti nell'issue #505: misura sul tunnel nominativo seguendo il §3 (serve il login Cloudflare del proprietario)
+e conteggio delle richieste per pagina sull'app vera (rimandato a F1-09).
