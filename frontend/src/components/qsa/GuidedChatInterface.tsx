@@ -565,6 +565,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
+    const [pathLoadFailed, setPathLoadFailed] = useState(false);
+    const [pathLoadAttempt, setPathLoadAttempt] = useState(0);
     const [showAdvanceSuggestion, setShowAdvanceSuggestion] = useState(false);
     // Bozza del libretto dalla sintesi dell'Evento significativo.
     const [eventBookletDraft, setEventBookletDraft] = useState<EventBookletDraft | null>(null);
@@ -742,6 +744,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
         if (!pathStarted) { setInitialLoading(false); return; }
         const loadData = async () => {
+            setInitialLoading(true);
+            setPathLoadFailed(false);
             try {
                 const res = essential ? null : await fetch(`/api/qsa/guided-ui-texts?questionnaire_type=${questionnaireType}&lang=${activeLocale}`);
                 if (res && !res.ok) throw new Error("Unable to load guided steps");
@@ -847,7 +851,12 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 setQuestionsIntro(data.text_guided_questions_intro || t('guided.questionsIntro'));
                 setConclusionText(data.text_guided_conclusion || t('guided.conclusionText'));
             } catch {
-                if (essential) {
+                if (!isMounted) return;
+                if (questionnaireType === 'QSA' && !essential) {
+                    // A transport error must not replace the configured path or
+                    // start the final questions. Retry the same session instead.
+                    setPathLoadFailed(true);
+                } else if (essential) {
                     const phases = essentialPhasesFor(questionnaireType);
                     setSteps(essentialSteps(questionnaireType, activeLocale));
                     setPhases([...phases]);
@@ -869,7 +878,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
         loadData();
         return () => { isMounted = false; };
-    }, [questionnaireType, sessionId, activeLocale, t, frozenSnapshot, pathStarted, essential]);
+    }, [questionnaireType, sessionId, activeLocale, t, frozenSnapshot, pathStarted, essential, pathLoadAttempt]);
 
     // Helpers for current phase
     const getStepDef = (phaseId: string): StepDef | undefined => steps.find(s => s.id === phaseId);
@@ -936,7 +945,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
     // Phase change handler
     useEffect(() => {
-        if (!currentPhase || initialLoading || !pathStarted) return;
+        if (!currentPhase || initialLoading || !pathStarted || pathLoadFailed) return;
         // Genera l'intro dello step solo alla PRIMA visita: tornando a uno step già
         // visitato (pulsante "Step precedente") si cambia solo il contesto attivo,
         // senza rigenerare messaggi o duplicare il banner.
@@ -974,7 +983,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         }
         // The phase guard above intentionally makes this effect run once per phase.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentPhase, initialLoading]);
+    }, [currentPhase, initialLoading, pathLoadFailed]);
 
     const generateReflectionQuestions = async () => {
         const controller = beginRequest();
@@ -1506,6 +1515,14 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             </div>
         );
     }
+
+    if (pathLoadFailed) return <div className="mx-auto w-full max-w-md space-y-4 p-4">
+        {onBack && <button type="button" onClick={onBack} className="min-h-11 text-sm text-slate-600">{t('nav.back')}</button>}
+        <div role="alert" className="glass-panel space-y-3 p-5">
+            <p className="text-sm text-slate-700">{chatLayoutLabel(activeLocale, 'pathLoadError')}</p>
+            <Button onClick={() => setPathLoadAttempt(attempt => attempt + 1)}>{chatLayoutLabel(activeLocale, 'retry')}</Button>
+        </div>
+    </div>;
 
     const currentStepIndex = phases.indexOf(currentPhase) + 1;
     const totalSteps = phases.length;
