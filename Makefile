@@ -123,6 +123,13 @@ telegram-send-test: ## Messaggio di prova: make telegram-send-test CHAT_ID=<id>
 telegram-logs: ## Log del backend (webhook incluso)
 	docker compose logs -f backend
 
+# Versione unica: VERSION alla radice, propagata ai package.json e al backend.
+.PHONY: version-sync version-check
+version-sync:
+	python3 scripts/sync-version.py
+version-check:
+	python3 scripts/sync-version.py --check
+
 # Dopo modifiche al prodotto: aggiornare il Markdown e la Guida, poi registrare.
 .PHONY: guidance-check guidance-refresh
 guidance-check:
