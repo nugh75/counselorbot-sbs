@@ -8,15 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image as ImageIcon, Save, Trash2, Upload } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-
-interface AdminImage {
-    id: string;
-    name: string;
-    usage: string;
-    original_name: string;
-    created_by: string;
-    url: string;
-}
+import { parseAdminTavoloImages, type AdminTavoloImage as AdminImage } from '@/lib/tavolo-images';
 
 interface UploadResult {
     created: number;
@@ -42,7 +34,7 @@ export function TavoloImagesPanel() {
             const response = await fetch('/api/admin/tavolo-images');
             if (response.status === 401 || response.status === 403) { window.location.href = '/'; return; }
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            setImages(await response.json() as AdminImage[]);
+            setImages(parseAdminTavoloImages(await response.json()));
         } catch {
             setError(t('admin.tavoloImages.error.load'));
             setImages([]);

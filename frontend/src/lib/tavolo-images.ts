@@ -78,3 +78,18 @@ export async function fetchTavoloImages(): Promise<TavoloImageEntry[]> {
         return BUILTIN_CARD_IMAGES;
     }
 }
+
+export interface AdminTavoloImage extends TavoloImageEntry {
+    original_name: string;
+    created_by: string;
+    url: string;
+}
+
+// La lista dell'amministrazione arriva dentro { images: [...] }, come quella
+// pubblica: un corpo diverso diventa una lista vuota, non un crash della pagina.
+export function parseAdminTavoloImages(body: unknown): AdminTavoloImage[] {
+    const images = (body as { images?: unknown } | null)?.images;
+    if (!Array.isArray(images)) return [];
+    return images.filter((image): image is AdminTavoloImage =>
+        typeof image === 'object' && image !== null && typeof (image as { id?: unknown }).id === 'string');
+}
