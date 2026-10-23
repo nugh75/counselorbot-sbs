@@ -2850,6 +2850,10 @@ def _component_enabled(flags: dict[str, bool] | None, name: str) -> bool:
 
 
 MAX_READING_CONTEXT_CHARS = 1800
+# Blocchi `knowledge` delle skill che portano materiale verificato (catalogo
+# letture, fonti pubbliche, referenti dell'istituto): le loro direttive dicono
+# al modello di citare solo questo, quindi non devono mai restare fuori.
+SKILL_SOURCE_MARKERS = ("[CERTIFIED_READINGS]", "[WEB_SOURCES]", "[REFERRALS]")
 _SCORE_COMPONENT_RE = re.compile(r"\b([A-Z]{1,3}\d{1,2}r?)\b", re.IGNORECASE)
 
 
@@ -3300,16 +3304,17 @@ def build_context_envelope(
     if knowledge_context and not any("[KNOWLEDGE]" in p for p in parts_system):
         parts_system.append("[KNOWLEDGE]\n" + knowledge_context)
 
-    # Una richiesta esplicita di letture o un dato puntuale puo' usare il
-    # catalogo editoriale certificato e le fonti pubbliche recuperate ora
-    # anche negli step che tengono spento il RAG generale. Il filtro sul
+    # Una richiesta esplicita di letture, un dato puntuale o un referente puo'
+    # usare il materiale verificato delle skill anche dove [KNOWLEDGE] resta
+    # vuoto: gli step che tengono spento il RAG generale e Idea, che lo esclude
+    # in `_retrieved_context` per lasciare il contesto alla mappa. Il filtro sul
     # marcatore impedisce a qualunque altro blocco knowledge di attraversare
     # il confine configurato dall'admin.
-    if not _component_enabled(component_flags, "knowledge"):
+    if not _component_enabled(component_flags, "knowledge") or questionnaire_type == IDEA_INSTRUMENT:
         source_blocks = [
             block
             for block in (skills_blocks or {}).get("knowledge", [])
-            if block.lstrip().startswith(("[CERTIFIED_READINGS]", "[WEB_SOURCES]"))
+            if block.lstrip().startswith(SKILL_SOURCE_MARKERS)
         ]
         if source_blocks and not any("[KNOWLEDGE]" in p for p in parts_system):
             parts_system.append("[KNOWLEDGE]\n" + "\n\n".join(source_blocks))
