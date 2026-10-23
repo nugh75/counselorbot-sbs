@@ -1933,7 +1933,7 @@ accessibile in 3 passaggi:
 
 Ogni step della mappa (anche Domande e Conclusione) ha il riquadro **Skill in
 questo step**: le skill che la chat aggancia a quello step, con la stessa regola
-del motore. Per ciascuna si legge quando entra in parole («quando chiede un
+del motore: l'aggancio di uno step prevale su quello valido per tutti gli step, anche quando è spento, e così toglie la skill da quello step soltanto. Per ciascuna si legge quando entra in parole («quando chiede un
 consiglio», «a ogni turno»…), come viene scelta (una per turno in base
 all'intento, sempre, se pertinente), dove va nel prompt (in coda, fra le
 conoscenze, sezione dopo il ruolo), se l'aggancio vale per tutti gli step o solo

@@ -46,7 +46,6 @@ def bindings_for(db, questionnaire_type: str, step_id: str | None, *, include_sk
         db.query(models.GuidedStepSkill)
         .filter(
             models.GuidedStepSkill.questionnaire_type == questionnaire_type,
-            models.GuidedStepSkill.enabled.is_(True),
             models.GuidedStepSkill.step_id.in_([step_id or "*", "*"]),
         )
         .all()
@@ -57,12 +56,14 @@ def bindings_for(db, questionnaire_type: str, step_id: str | None, *, include_sk
     if not rows and included is None:
         return []
 
-    # L'aggancio esplicito allo step vince sul wildcard.
+    # L'aggancio esplicito allo step vince sul wildcard, anche spento: e' cosi'
+    # che si toglie da un solo step una skill valida per tutto lo strumento.
     by_skill: dict[int, models.GuidedStepSkill] = {}
     for row in rows:
         current = by_skill.get(row.skill_id)
         if current is None or (current.step_id == "*" and row.step_id != "*"):
             by_skill[row.skill_id] = row
+    by_skill = {skill_id: row for skill_id, row in by_skill.items() if row.enabled}
 
     skills = (
         db.query(models.Skill)
