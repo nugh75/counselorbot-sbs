@@ -130,9 +130,12 @@ protezione revisioni admin; non applicato ad alcuna installazione operativa.
 Base: `5f0f3195e5eff6cbe5ed42de6fb924f228dab1f7`. Branch
 `fix/questionnaire-descriptive-phase`; commit atomici `b0192040` (feat),
 `ccfd923f` (test), `f8f4c178` (docs), `8db181e0` (aspettative legacy),
-`263121d9` (screenshot). PR **#433** aperta **DRAFT** sul progetto CounselorBot:
-<https://github.com/nugh75/counselorbot-sbs/pull/433>. Nessun `gh pr ready`,
-merge o deploy. Task Diario `9e4587c0-c861-4772-85d2-22528f8c7633`: in questa
+`263121d9` (screenshot), `0f7b1eaf` (docs), `33bf2d01` (merge di `origin/main`).
+PR **#433** sul progetto CounselorBot:
+<https://github.com/nugh75/counselorbot-sbs/pull/433>. Il costruttore non ha
+eseguito `gh pr ready`, merge o deploy; il proprietario ha portato la PR in
+review alle 21:13Z (`ready_for_review`). Task Diario
+`9e4587c0-c861-4772-85d2-22528f8c7633`: in questa
 sessione non è disponibile alcuna CLI/MCP Diario, quindi la notifica non è
 stata eseguita; il task resta aperto per il proprietario/revisore.
 
