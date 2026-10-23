@@ -30,7 +30,9 @@ Savickas, Eventi, IDEA e Obiettivi conservano le proprie domande narrative.
 ## Presentazione, attività e navigazione
 
 La presentazione (`/`) offre quattro ingressi illustrati: **Bussola**, **Analisi
-questionari**, **Percorsi guidati**, **Area studente e strumenti**. Il collegamento
+questionari**, **Percorsi guidati**, **Area studente e strumenti**. La Bussola
+consiglia da quale strumento partire e non somministra questionari né produce
+punteggi. Il collegamento
 “Vedi tutte le attività e i percorsi” apre il catalogo (`/?view=home`). Subito sotto,
 un riquadro illustrato in evidenza, **Dicci com’è andata**, apre il **Questionario di
 gradimento** (`/questionario`), tradotto nelle sei lingue; chi non ha ancora
@@ -192,9 +194,13 @@ catalog order is used. When no questionnaire is enabled, no starting-tool card i
 shown. The Guide remains available independently of these class toggles.
 
 
-- **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti. Non
-  somministra questionari, non raccoglie punteggi e non svolge al proprio interno
-  le altre interviste. Le raccomandazioni aprono gli strumenti nelle loro pagine.
+- **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti.
+  Ascolta ciò che lo studente vuole affrontare e consiglia da quale strumento
+  partire, aiutando a valutare tempi e impegno. Non somministra questionari, non
+  produce punteggi e non fa diagnosi, non svolge al proprio interno le altre
+  interviste. Le raccomandazioni aprono gli strumenti nelle loro pagine. La
+  stessa descrizione, nelle sei lingue, compare nella pagina, nella scheda del
+  catalogo, nella Guida e nelle impostazioni della classe.
   Usa il modello del preset del counselor scelto; senza preset usa il provider e
   il modello attivi configurati dall’amministratore.
 - **Assistente** (`/assistente`): risponde sui materiali della base selezionata,
@@ -336,6 +342,8 @@ anche ai prompt personalizzati senza riscriverli nel database e resta presente
 nei livelli Totale/Ristretto/Minimo. In IDEA l'orientamento riguarda il ramo della
 mappa e il seguito concordato, senza inventare una sequenza fissa. Audit, piano,
 attivazione e limiti delle verifiche: `docs/operations/guided-chat-choice.md`.
+
+**Introduzione della chat guidata (#409).** Al primo ingresso in una chat guidata (non IDEA, non anteprima, non sessione congelata) in cima alla conversazione compare una breve scheda che spiega scopo del percorso, passaggi, possibilità di approfondire e dove stanno i pulsanti avanti/indietro: nella barra sotto la finestra della chat, sulla destra, su desktop, in una barra sotto la casella di scrittura su mobile. Si chiude con «Ho capito» e non ricompare (preferenza nel browser). Testi in sei lingue.
 
 Nelle chat guidate dei questionari, anche con Iride, dopo la lettura del profilo
 una domanda contestualizzata aiuta la persona a scegliere cosa comprendere meglio.
@@ -487,7 +495,9 @@ mai un interrogatorio procedurale: il chatbot fornisce spiegazioni o approfondim
 e costrutti solo se la persona li richiede esplicitamente.
 La durata indicativa è di 20–30 minuti nel rispetto della riservatezza; non vengono somministrati item né assegnati nuovi punteggi. A1–A3 alti
 indicano maggiori difficoltà dichiarate; M2 viene discusso nel contesto, senza
-un giudizio automatico di forza/debolezza. I nomi e le etichette del profilo
+un giudizio automatico di forza/debolezza. Nel profilo la barra di M2 resta
+grigia e neutra, con una nota accanto e una voce in legenda che spiegano la
+scala neutra: non è un errore né un valore mancante. I nomi e le etichette del profilo
 seguono la lingua scelta anche nei resoconti. Se nessun fattore rientra nella
 fascia dei punti di forza, il riepilogo lo indica senza dichiarare equilibrato
 il profilo nel suo insieme. La sintesi resta qualitativa,
@@ -671,7 +681,7 @@ viene riscritto. Casi verificati e limiti della guardia sono descritti in
 `docs/operations/chat-continuation-duplicates.md` (#425).
 Durante la generazione (sia in streaming SSE sia sincrona), i blocchi di ragionamento interno emessi da modelli di reasoning (tag `<think>...</think>`, `<thinking>` o `<sto_pensando>`, inclusi tag aperti o orfani) vengono filtrati ed eliminati in tempo reale, impedendo fughe di catena di pensiero verso l’utente e garantendo che la memoria di sessione e i log conservino solo la risposta visibile. Se una risposta risulta vuota, composta da soli spazi o svuotata dalla rimozione del reasoning (oppure in caso di errore vuoto del provider), il sistema evita errori 500/502 o messaggi vuoti e invia un fallback gentile e riflessivo, contestualizzato al passo corrente della chat guidata e nella lingua dell’utente (italiano, inglese, spagnolo, francese, tedesco, svedese), differenziato tra introduzione del tema all'ingresso dello step (o benvenuto nel Patto di Collaborazione) e prosecuzione della riflessione nei turni successivi. I contratti di dialogo escludono cliché terapeutici e meta-disclaimer ripetitivi (come "è un'ipotesi e non una verità", "senza giudizio", "non è un difetto"), affidando la natura non diagnostica al patto iniziale e la formulazione delle ipotesi alla modalità epistemica e alla curiosità fenomenologica naturale.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
-e feedback quando disponibili. Il lettore nel menu di navigazione legge il testo visibile,
+e feedback quando disponibili. Nei diagrammi gli archi che indicano un ostacolo sono rossi e tutti gli altri verdi (stessa palette in web, PDF e Telegram, temi chiaro e scuro); tratteggio, punta a T e legenda li distinguono anche senza il colore. Il lettore nel menu di navigazione legge il testo visibile,
 con impostazioni di voce e motore (Edge TTS online oppure Piper locale 100% offline con dodici voci ONNX incorporate, attivo anche nella configurazione portatile); la correzione della pronuncia è visibile solo
 all’amministratore. La chat guidata e la Bussola accettano
 registrazione del microfono o file audio: la trascrizione è da controllare, salvo
@@ -850,7 +860,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Taccuino | `/profilo/taccuino` | Scrivere contesto, difficoltà, risorse personali e ciò che conta per sé; conservare revisioni esplicite; trasformare la difficoltà principale in un obiettivo. |
 | Cambiamenti | `/profilo/cambiamenti` | Riflettere sulle differenze fra revisioni del Taccuino. |
 | Portfolio | `/profilo/portfolio` | Documentare lavori con titolo, descrizione, categoria, data, collegamenti e immagini; collegare un lavoro a un obiettivo attivo con «Collega a un obiettivo». Chiudere con la X un modulo con modifiche non salvate chiede conferma prima di scartarle. |
-| Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. |
+| Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. Nel quadro dei risultati con più aree, i pulsanti «Tutte le aree» e il nome di ciascuna area permettono di leggere un’area alla volta con gli stessi dati; «Tutte le aree» riporta alla visione completa. Le fasce usano colore, simbolo ed etichetta, spiegati dalla legenda. |
 | Analisi combinata dei profili | `/profilo/analisi-combinata` | Generare una lettura integrata di almeno due strumenti tra QSA, QSAr e ZTPI. Si apre dal gruppo Conoscermi e riflettere e non compare più sotto i singoli risultati. |
 | Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. Lista breve con filtri (gruppo, tipo, finalità richiesta/proposta, stato) e un solo dettaglio aperto alla volta; pianificazione con spiegazione del lavoro personale; anteprima di restituzione con destinatario esplicito e copia fissa. Se l’attività indica degli strumenti, nel dettaglio ognuno si apre con «Apri qui» in una finestra dentro l’attività (Esc o «Chiudi e torna all’attività» riportano al punto di partenza) oppure con «Apri a pagina intera»; uno strumento disattivato dopo l’invio per la classe o il gruppo resta elencato come non disponibile. La revoca conferma in linea sulla scheda. |
 | Piani operativi | `/profilo/piani-operativi` | Seguire i piani operativi (fino a ottobre 2026 «Percorsi di classe»: sequenze ordinate di attività) pubblicati dai docenti per la propria classe; il vecchio indirizzo /profilo/percorsi (anche con i sottopercorsi) reindirizza qui in modo permanente; un passo di somministrazione si apre in `/profilo/piani-operativi/{pathId}/{stepId}` e il suo approfondimento guidato in `/profilo/piani-operativi/{pathId}/{stepId}/approfondimento`; alla fine della chat guidata di questi passi «Continua alle scelte finali» resta nel passo e mostra lo stesso riepilogo con il resoconto PDF della chat avviata dalla home, più «Torna ai piani operativi»; la chat conclusa non resta in «Riprendi» e un approfondimento concluso si riapre sul riepilogo; la sintesi del percorso essenziale (QSA e Obiettivi) completa il passo come la sintesi del percorso completo; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. La card mostra, quando presenti, il **giorno previsto** e la **scadenza**: il giorno previsto è solo informativo e non limita l’accesso. Un passo incontro mostra data, ora, luogo o link; il passo risulta fatto quando la presenza è confermata, come ha scelto il docente: dall’inizio dell’incontro lo studente preme «Ho partecipato» (e può annullarlo); se conferma il docente, lo studente legge «La presenza la conferma il docente» e poi «Presenza confermata dal docente», che solo il docente può togliere dal registro. La Guida (sezione dei piani operativi) spiega allo studente entrambe le possibilità. In cima alla panoramica dell'Area studente (`/profilo`) e alla home compaiono tutti i piani operativi pubblicati per lo studente, uno per card: il prioritario (prima i piani non completati, poi la scadenza più vicina) è aperto, gli altri sono chiusi e mostrano titolo, classe e avanzamento; il titolo apre o chiude la card e sotto resta «Vedi tutti i piani operativi (N)». La pagina `/profilo/piani-operativi` usa le stesse card (un link del forum a un passo apre il piano che lo contiene). In ogni card un passo incontro mostra dettagli e «Ho partecipato», un passo forum o compito la sua regola e i link alla discussione; un passo già fatto si apre con «Riapri». Una chat guidata avviata da un passo (`/?start=…&from=plan`) offre a fine percorso, accanto al riepilogo, «Torna ai piani operativi». Il catalogo strumenti sotto resta collassato. |
