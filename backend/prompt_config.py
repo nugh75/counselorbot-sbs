@@ -105,7 +105,11 @@ DEFAULT_GUIDED_TEXT_CONCLUSION = (
 
 # --- QSAr System Prompts ---
 
-DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR = _text("default_system_prompt_qsar_factor")
+# Registro specifico del QSAr (scuola secondaria di primo grado, #423): la
+# direttiva globale `directive_register` tiene solo i vincoli comuni (il "tu").
+DEFAULT_QSAR_REGISTER_DIRECTIVE = '\n\n' + _text("qsar_register_directive")
+
+DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR = _text("default_system_prompt_qsar_factor") + DEFAULT_QSAR_REGISTER_DIRECTIVE
 
 DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR_QA = (
     "In the follow-up phase of an analysis step already completed, answer the "
@@ -113,6 +117,7 @@ DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR_QA = (
     "already discussed and relevant to the question. Do not produce tables unless explicitly requested, "
     "do not re-analyse the whole profile and do not anticipate other steps. Do not use opening greetings."
     + DEFAULT_QA_DEPTH_DIRECTIVE
+    + DEFAULT_QSAR_REGISTER_DIRECTIVE
 )
 
 DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL = (
@@ -121,11 +126,13 @@ DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL = (
     "Avoid diagnoses and do not use opening greetings. Start directly with the requested analysis."
     + DEFAULT_FACTOR_INTERPLAY_QSAR
     + DEFAULT_SECOND_LEVEL_METHOD
+    + DEFAULT_QSAR_REGISTER_DIRECTIVE
 )
 
 DEFAULT_SYSTEM_PROMPT_QSAR_GENERIC = (
     "Analyse the QSAr profile (Learning Strategies Questionnaire - Short form) "
     "clearly and non-diagnostically, referring to the profile provided."
+    + DEFAULT_QSAR_REGISTER_DIRECTIVE
 )
 
 # --- Cross-instrument synthesis (secondo livello inter-strumento) ---

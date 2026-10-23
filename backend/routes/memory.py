@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .. import auth, class_access, database, models
+from ..class_path_completion import CONCLUSION_PHASE, record_guided_chat_conclusion
 from ..api_models import MemoryEventRequest
 from ..dynamic_registry import DynamicInstrumentSet, HISTORIC_INSTRUMENT_CODES
 from ..memory_service import session_memory
@@ -89,6 +90,11 @@ async def memory_event(
         user_message=request.user_message,
         completed_step=request.completed_step,
     )
+    # Reaching the conclusion closes the chat for the plan step that started it.
+    if request.phase == CONCLUSION_PHASE and record_guided_chat_conclusion(
+            db, session_id=request.session_id, username=identity.get("username"),
+            questionnaire_type=request.questionnaire_type):
+        db.commit()
     return {"status": "recorded"}
 
 

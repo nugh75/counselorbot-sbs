@@ -14,6 +14,14 @@ Il selettore precedente ammetteva soltanto somministrazioni salvate; escludeva i
 - Il server verifica accesso al piano/classe/strumento, proprietà, strumento e punteggi canonici. La scelta esplicita crea la sessione una sola volta; riaperture e retry la riusano, e un diverso risultato non la sostituisce. Risultati antecedenti al piano sono utilizzabili nella modalità personale; il completamento richiede comunque l’ultimo turno della nuova sessione dopo l’attivazione del passo.
 - Piani e sessioni esistenti conservano ID, progressi e collegamenti. La migrazione amplia solo il vincolo sui target ed è ripetibile.
 
+## Fine della chat e completamento
+
+- Nei passi somministrazione e analisi, «Continua alle scelte finali» resta nel passo e mostra `PlanChatCompleted`: titolo, `SessionReport` (sintesi e PDF completo) e «Torna ai piani operativi». Prima rimandava subito al piano senza scelte finali.
+- A fine chat il frontend cancella la pausa della sessione (`DELETE /session/frozen/{id}`), come la home: la chat non resta in «Riprendi». GET `.../deep-dive` restituisce `completed` (ultimo turno della sessione vincolata già registrato): senza pausa da riprendere, il passo si riapre direttamente sulle scelte finali.
+- Sintesi, conversazione e PDF (`/user/questionnaire-result/{session_id}/…`, `/questionnaire-result/{session_id}/pdf`) accettano anche la sessione dell’analisi: risolvono il risultato vincolato a quella sessione per lo stesso studente, in sola lettura e con la conversazione della sessione.
+- Le fasi essenziali sono virtuali, fuori da `guided_steps`: il turno sulla fase di sintesi (`qsa-essential-summary`, `obbstudio-essential-summary`, `obbdocenza-essential-summary`) scrive ora il marcatore `guided_chat_completed` dello strumento. Prima un piano con analisi o chat Obiettivo svolte in modalità essenziale non si completava mai e, in modalità vincolante, bloccava i passi successivi.
+- Test: `backend/tests/test_results_deep_dive.py` (sintesi essenziale, report della sessione d’analisi), `backend/tests/test_class_paths.py` (marcatore essenziale), scenario browser «final choices» in `frontend/tests/plan-questionnaire-chats.test.mjs` a 390/1440 px.
+
 ## Validazione
 
 Verifiche del 21 ottobre 2026, con soli dati e risposte sintetici:

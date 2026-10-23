@@ -22,6 +22,8 @@ import { ClassSettingLock } from './ClassSettingLock';
 import { ClassSettingsAudit } from './ClassSettingsAudit';
 import { ClassPathsTab } from './ClassPathsTab';
 import { ClassOverviewTab } from './ClassOverviewTab';
+import { ClassCouncilTab } from './ClassCouncilTab';
+import { ClassNoticingTab } from './ClassNoticingTab';
 import { PlanStudentsPanel } from '@/components/admin/PlanStudentsPanel';
 import { useTeacherAccessState } from './useTeacherAccessState';
 import { useTeacherResource } from './useTeacherResource';
@@ -320,7 +322,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
     const l = (key: TextKey) => classSettingsText(lang, key);
     const groups = useTeacherResource('/api/admin/groups', parseClassGroups);
     const settings = useTeacherResource(`/api/teacher/groups/${groupId}/settings`, parseClassSettings);
-    const [tab, setTab] = useState<'overview' | 'students' | 'paths' | 'forum' | 'audit' | 'toolsTab'>(() => {
+    const [tab, setTab] = useState<'overview' | 'students' | 'paths' | 'forum' | 'audit' | 'toolsTab' | 'council' | 'noticing'>(() => {
         const raw = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
         return ({
             students: 'students',
@@ -330,6 +332,8 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
             paths: 'paths',
             forum: 'forum',
             audit: 'audit',
+            council: 'council',
+            noticing: 'noticing',
         } as const)[raw as 'students'] ?? 'overview';
     });
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -340,7 +344,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
         <p>{l('loadError')}</p>
         <Button variant="secondary" onClick={() => { void groups.reload(); void settings.reload(); }}>{l('reload')}</Button>
     </Callout>;
-    const activeTabs = ['overview', 'students', 'paths', 'forum', 'audit', 'toolsTab'] as const;
+    const activeTabs = ['overview', 'students', 'noticing', 'paths', 'forum', 'council', 'audit', 'toolsTab'] as const;
     const breadcrumbItems = getClassBreadcrumbs(group.name, groupId, tab, lang, adminRoute);
     return <div className="space-y-5">
         <TeacherBreadcrumbs
@@ -377,11 +381,17 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
         <div id="class-panel-students" role="tabpanel" aria-labelledby="class-tab-students" hidden={tab !== 'students'} tabIndex={0}>
             {tab === 'students' && <PlanStudentsPanel base={`/api/admin/groups/${groupId}`} withNotes />}
         </div>
+        <div id="class-panel-noticing" role="tabpanel" aria-labelledby="class-tab-noticing" hidden={tab !== 'noticing'} tabIndex={0}>
+            {tab === 'noticing' && <ClassNoticingTab groupId={groupId} />}
+        </div>
         <div id="class-panel-paths" role="tabpanel" aria-labelledby="class-tab-paths" hidden={tab !== 'paths'} tabIndex={0}>
             <ClassPathsTab groupId={groupId} classSettings={settings.data} institutionId={group.institution_id ?? null} />
         </div>
         <div id="class-panel-forum" role="tabpanel" aria-labelledby="class-tab-forum" hidden={tab !== 'forum'} tabIndex={0}>
             <ForumView groupId={groupId} />
+        </div>
+        <div id="class-panel-council" role="tabpanel" aria-labelledby="class-tab-council" hidden={tab !== 'council'} tabIndex={0}>
+            {tab === 'council' && <ClassCouncilTab groupId={groupId} />}
         </div>
         <div id="class-panel-audit" role="tabpanel" aria-labelledby="class-tab-audit" hidden={tab !== 'audit'} tabIndex={0}>
             {tab === 'audit' && <ClassSettingsAudit key={settings.data.revision} settings={settings.data} />}

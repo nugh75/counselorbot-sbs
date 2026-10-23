@@ -79,7 +79,8 @@ test('a plan date is read from the administration summary', () => {
     });
     assert.equal(presentation.dueDate, '2026-10-26');
     assert.equal(presentation.dueDateSource, 'administration');
-    assert.equal(presentation.showDueDate, true);
+    // Shown once, as the planned day with its location.
+    assert.equal(presentation.showDueDate, false);
 });
 
 test('date-only values never shift across timezones', () => {

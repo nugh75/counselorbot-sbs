@@ -145,6 +145,43 @@ def test_mixed_path_publishes_every_type_with_one_activation(api):
     assert client.post(f"/user/paths/{published['id']}/steps/{step_id}/launch").status_code == 403
 
 
+def test_planned_day_and_deadline_coexist_without_restricting_completion(api):
+    client, db, identity, group, other, goal = api
+    plan = client.post(f"/teacher/groups/{group.id}/administrations", json={
+        "title": "Questionnaire in class", "instrument_code": "QSA", "locale": "it",
+        "status": "active", "scheduled_at": "2026-11-02T16:58:00+01:00",
+        "location": "Aula 3"}).json()
+    path = client.post(f"/teacher/groups/{group.id}/paths", json={
+        "title": "Planned day", "mode": "recommended"}).json()
+    response = save(client, path, [
+        {"step_type": "questionnaire_administration", "administration_plan_id": plan["id"],
+         "due_date": "2026-11-09"},
+        {"step_type": "guided_chat", "tool_key": "SAVICKAS",
+         "scheduled_date": "2026-11-02", "due_date": "2026-11-09"},
+    ])
+    assert response.status_code == 200, response.text
+    path = response.json()
+    questionnaire, chat = path["steps"]
+    assert questionnaire["due_date"] == "2026-11-09"
+    assert questionnaire["target_summary"]["location"] == "Aula 3"
+    planned_at = datetime.fromisoformat(questionnaire["target_summary"]["scheduled_at"])
+    assert planned_at.astimezone(timezone.utc).hour == 15
+    assert chat["scheduled_date"] == "2026-11-02"
+    assert chat["due_date"] == "2026-11-09"
+
+    published = publish(client, path, revision=path["revision"])
+    assert published.status_code == 200, published.text
+    as_user(identity, "alice")
+    [student_path] = client.get("/user/paths").json()
+    student_questionnaire, student_chat = student_path["steps"]
+    assert student_questionnaire["due_date"] == "2026-11-09"
+    assert student_questionnaire["target_summary"]["location"] == "Aula 3"
+    student_planned_at = datetime.fromisoformat(student_questionnaire["target_summary"]["scheduled_at"])
+    assert student_planned_at.astimezone(timezone.utc).hour == 15
+    assert student_chat["scheduled_date"] == "2026-11-02"
+    assert student_chat["due_date"] == "2026-11-09"
+
+
 def test_publication_reports_every_unavailable_target_without_partial_writes(api):
     client, db, identity, group, other, goal = api
     path, plan, assignment, topic = mixed_path(client, group, goal)

@@ -1786,6 +1786,8 @@ class SkillUpdate(BaseModel):
 
 class SkillResponse(SkillBase):
     id: int
+    # Skill di serie: si disattiva, non si cancella, e lo slug non cambia.
+    builtin: bool = False
 
     class Config:
         from_attributes = True
@@ -1811,6 +1813,10 @@ class SkillPreviewRequest(BaseModel):
     language: str = "it"
     scores_context: str = ""
     message: str = ""
+    # Skill da provare anche se in bozza, spenta o non agganciata.
+    include_skill_id: Optional[int] = None
+    # Versione non salvata (wizard): con `include_skill_id` sostituisce quella salvata.
+    draft: Optional[SkillBase] = None
 
 
 class SkillPreviewResponse(BaseModel):
@@ -1819,6 +1825,10 @@ class SkillPreviewResponse(BaseModel):
     blocks: dict
     ids: dict
     trace: List[dict]
+    # Flag dei componenti del prompt con cui la chat prepara questo turno.
+    component_flags: dict = {}
+    # Per ogni skill resa: slot e se il testo arriva davvero nel prompt finale.
+    delivery: List[dict] = []
 
 
 # --- Istituti, referenti ed eventi di orientamento ---
@@ -1990,6 +2000,8 @@ class PathStepFields(BaseModel):
     title: Optional[str] = None
     instructions: Optional[str] = None
     due_date: Optional[date] = None
+    # Informational only; coexists with due_date and never limits access.
+    scheduled_date: Optional[date] = None
 
 
 class ClassPathStepInput(PathStepFields):
@@ -2079,6 +2091,7 @@ class ClassPathStepResponse(BaseModel):
     title: Optional[str] = None
     instructions: Optional[str] = None
     due_date: Optional[date] = None
+    scheduled_date: Optional[date] = None
     auto_detect: bool = False
     can_self_mark: bool = True
 
@@ -2172,6 +2185,7 @@ class StudentClassPathStep(BaseModel):
     title: Optional[str] = None
     instructions: Optional[str] = None
     due_date: Optional[date] = None
+    scheduled_date: Optional[date] = None
     state: str = "not_done"  # 'done' | 'not_done' | 'locked' | 'unavailable'
     source: Optional[str] = None  # 'student' | 'teacher' | 'automatic' | None
     start_href: Optional[str] = None

@@ -15,6 +15,7 @@ import { Callout } from '@/components/ui/Callout';
 import { GroupsPanel } from '@/components/admin/GroupsPanel';
 import { credentialText } from '@/lib/i18n-institution-credentials';
 import { InstituteCredentialsEditor } from './InstituteCredentialsEditor';
+import { InstitutePasswordReveal } from './InstitutePasswordReveal';
 import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
 import { parseClassGroups } from './class-group-types';
@@ -118,6 +119,7 @@ export function InstitutesPanel() {
             {own.failed && <Callout variant="danger"><p>{l('loadError')}</p><Button onClick={() => void own.reload()}>{l('reload')}</Button></Callout>}
             {!own.loading && !own.failed && own.data?.length === 0 && <p>{l('empty')}</p>}
             {own.data?.map(row => <Card key={row.id}><div className="flex flex-wrap items-center justify-between gap-3"><Link href={`/docente/istituti/${row.id}`} className="min-h-11 break-words font-semibold text-indigo-700">{row.name}</Link><Button variant="secondary" disabled={editor !== undefined || joining} onClick={() => setEditor(row)}>{l('edit')}</Button></div><p className="text-sm text-slate-600">{l('credentials')}: {l(row.credentials_configured ? 'configured' : 'missing')}{row.institution_code && <> · {credentialText(lang, 'codeLabel')}: <span className="font-mono">{row.institution_code}</span></>}</p>
+                {row.credentials_configured && <InstitutePasswordReveal institute={row} onForbidden={() => setForbidden(true)} />}
                 {credentialsFor === row.id
                     ? <InstituteCredentialsEditor institute={row} onSaved={() => { setCredentialsFor(null); reload(); }} onCancel={() => setCredentialsFor(null)} />
                     : <Button variant="secondary" className="mt-2" disabled={editor !== undefined || joining || credentialsFor !== null} onClick={() => setCredentialsFor(row.id)}>{credentialText(lang, row.credentials_configured ? 'replaceCredentials' : 'setCredentials')}</Button>}

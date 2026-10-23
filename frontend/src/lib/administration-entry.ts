@@ -12,7 +12,12 @@ export interface AdministrationLaunch {
     label_it: string | null;
     label_en: string | null;
   }[];
-  institution: { id: number; name: string; institution_code: string | null };
+  institution: {
+    id: number;
+    name: string;
+    institution_code: string | null;
+    institution_password: string | null;
+  };
 }
 // Manual Italian entry carries scores; in-app entry carries the saved runner result.
 export interface AdministrationEntryDraft {
@@ -81,7 +86,10 @@ export function parseAdministrationLaunch(
     !deliveryValid ||
     !row.institution ||
     !Number.isInteger(row.institution.id) ||
-    typeof row.institution.name !== "string"
+    typeof row.institution.name !== "string" ||
+    (row.institution.institution_password !== undefined &&
+      row.institution.institution_password !== null &&
+      typeof row.institution.institution_password !== "string")
   ) {
     throw new Error("Invalid administration launch");
   }
@@ -98,6 +106,11 @@ export function parseAdministrationLaunch(
       id: row.institution.id,
       name: row.institution.name,
       institution_code: row.institution.institution_code,
+      // The external password is the class access code, not a personal secret.
+      institution_password:
+        typeof row.institution.institution_password === "string"
+          ? row.institution.institution_password
+          : null,
     },
   };
 }

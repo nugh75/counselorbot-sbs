@@ -30,7 +30,9 @@ Savickas, Eventi, IDEA e Obiettivi conservano le proprie domande narrative.
 ## Presentazione, attività e navigazione
 
 La presentazione (`/`) offre quattro ingressi illustrati: **Bussola**, **Analisi
-questionari**, **Percorsi guidati**, **Area studente e strumenti**. Il collegamento
+questionari**, **Percorsi guidati**, **Area studente e strumenti**. La Bussola
+consiglia da quale strumento partire e non somministra questionari né produce
+punteggi. Il collegamento
 “Vedi tutte le attività e i percorsi” apre il catalogo (`/?view=home`). Subito sotto,
 un riquadro illustrato in evidenza, **Dicci com’è andata**, apre il **Questionario di
 gradimento** (`/questionario`), tradotto nelle sei lingue; chi non ha ancora
@@ -161,6 +163,7 @@ Nell'interfaccia utente del selettore counselor (`CounselorSelector`):
 - Sotto la copertina compaiono: la testata con nome del counselor, badge del modello AI impiegato (locale/cloud con icona), eventuale stato di disponibilità; la frase distintiva localizzata (tagline); i chip delle categorie di approccio; il paragrafo descrittivo del counselor e l'elenco degli strumenti supportati (`questionnaire_types`).
 - Sopra l'elenco è presente una barra di ricerca per approccio («Che tipo di counselor vorresti?») con pulsante di ricerca e scheda di proposta che evidenzia il counselor consigliato con la sua copertina orizzontale 16:9 compatta, la motivazione e un pulsante per selezionarlo direttamente con un click.
 - Sopra le schede è disponibile un filtro rapido a chip per categorie di approccio («Tutti», chip con selezione multipla e pulsante «Azzera filtri»); il selettore mostra solo i counselor che contengono tutti i tag selezionati (logica AND), preservando la priorità dell'eventuale counselor raccomandato se rispetta tutti i filtri attivi.
+- Nella barra delle raccomandazioni (letture e film, strategie, consigli e domande) la scheda selezionata mostra il proprio titolo sotto l'icona; le altre restano compatte con icona e conteggio e il nome accessibile non cambia.
 
 Nel pannello di gestione e costruzione dei counselor (`CounselorsPanel`, Issue #288), l'amministratore può generare, caricare o personalizzare direttamente l'avatar e la copertina 16:9 di ciascuna persona virtuale:
 - **Anteprima 16:9 live nel form**: accanto al campo avatar compare una preview compatta in formato 16:9 gestita dal componente `CounselorCover`, che visualizza l'illustrazione o la copertina corrente oppure il fallback vettoriale procedurale tematico della categoria.
@@ -191,9 +194,13 @@ catalog order is used. When no questionnaire is enabled, no starting-tool card i
 shown. The Guide remains available independently of these class toggles.
 
 
-- **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti. Non
-  somministra questionari, non raccoglie punteggi e non svolge al proprio interno
-  le altre interviste. Le raccomandazioni aprono gli strumenti nelle loro pagine.
+- **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti.
+  Ascolta ciò che lo studente vuole affrontare e consiglia da quale strumento
+  partire, aiutando a valutare tempi e impegno. Non somministra questionari, non
+  produce punteggi e non fa diagnosi, non svolge al proprio interno le altre
+  interviste. Le raccomandazioni aprono gli strumenti nelle loro pagine. La
+  stessa descrizione, nelle sei lingue, compare nella pagina, nella scheda del
+  catalogo, nella Guida e nelle impostazioni della classe.
   Usa il modello del preset del counselor scelto; senza preset usa il provider e
   il modello attivi configurati dall’amministratore.
 - **Assistente** (`/assistente`): risponde sui materiali della base selezionata,
@@ -336,6 +343,8 @@ nei livelli Totale/Ristretto/Minimo. In IDEA l'orientamento riguarda il ramo del
 mappa e il seguito concordato, senza inventare una sequenza fissa. Audit, piano,
 attivazione e limiti delle verifiche: `docs/operations/guided-chat-choice.md`.
 
+**Introduzione della chat guidata (#409).** Al primo ingresso in una chat guidata (non IDEA, non anteprima, non sessione congelata) in cima alla conversazione compare una breve scheda che spiega scopo del percorso, passaggi, possibilità di approfondire e dove stanno i pulsanti avanti/indietro: nella barra sotto la finestra della chat, sulla destra, su desktop, in una barra sotto la casella di scrittura su mobile. Si chiude con «Ho capito» e non ricompare (preferenza nel browser). Testi in sei lingue.
+
 Nelle chat guidate dei questionari, anche con Iride, dopo la lettura del profilo
 una domanda contestualizzata aiuta la persona a scegliere cosa comprendere meglio.
 Durante gli approfondimenti il counselor accompagna gradualmente dall’esperienza
@@ -421,6 +430,15 @@ di QSAr e ZTPI. Gli hash dei testi di fabbrica precedenti restano censiti in `pr
 per consentire l'aggiornamento sicuro e trasparente tramite la funzione «Allinea prompt di fabbrica»
 senza alterare le personalizzazioni introdotte dagli amministratori.
 
+Il registro linguistico è diviso in due livelli. La direttiva globale `[REGISTER]` contiene solo i
+vincoli comuni a tutti gli strumenti, cioè il «tu» informale nelle sei lingue. Il registro specifico
+dello strumento sta nei prompt di fabbrica del QSAr (`[QSAR REGISTER]`, in analisi dei fattori,
+approfondimenti, secondo livello e prompt generico): il QSAr si rivolge a studenti della scuola
+secondaria di primo grado, quindi chiede parole di uso quotidiano al posto dei termini tecnici,
+frasi brevi con un'idea ciascuna ed esempi presi dalla giornata scolastica (compiti, verifiche,
+lezioni, studio con i compagni). Le righe del database ferme al testo di fabbrica precedente si
+aggiornano con «Allinea prompt di fabbrica»; quelle personalizzate restano invariate.
+
 Nei percorsi a intervista qualitativa (QPCC, QAP, Savickas, Evento Significativo, Obiettivi di apprendimento) e nelle analisi dimensionali (QPCS, QSA, QSAr, ZTPI), i testi dei prompt di step prescrivono tassativamente la formulazione di **esattamente una sola domanda aperta per turno su un singolo aspetto** (vietando elenchi puntati o domande multiple a raffica), rimandando altri aspetti ai turni successivi solo se necessari. In tutti i percorsi e nei contratti universali di piattaforma (`turn_contract` e `INTRO_ALLOWED_QUESTIONS`), le domande dell'assistente sono definite espressamente come **spunti aperti per facilitare l'auto-interrogazione della persona** sulla propria esperienza, scelte, strategie e risorse, mai come un interrogatorio asimmetrico o un questionario direttivo («io ti faccio domande mirate e tu rispondi»). Il chatbot **fornisce chiarimenti o spiegazioni su concetti, scale e meccanismi esclusivamente in due situazioni**: quando la persona li richiede espressamente o quando il modello rileva dall'intervento dell'utente che qualcosa detto in precedenza è stato frainteso o non compreso bene; al di fuori di questi due casi è vietato dispensare lezioni teoriche, dissertazioni o spiegazioni non richieste. È altresì vietato in tutte le introduzioni e turni di chat l'uso di formule retoriche di contrasto («non è... ma...», es. «non è un giudizio ma un'opportunità», «non misura quanto vali ma raccoglie...») e di cliché terapeutici o meta-disclaimer difensivi («senza giudizio / non con giudizio», «non misura quanto vali», «non ci sono risposte giuste o sbagliate», «autopercezioni non verdetti», «non ti farò domande del questionario», «non è un test o un voto», «etichette fisse», «è un'ipotesi non una verità», «non è una diagnosi», «non è un difetto»). Nel percorso QPCC di Pellerey–Orio, il contratto canonico in codice (`qpcc.directive()`) e i testi di step trattano i punteggi dichiarati esclusivamente come autopercezioni e ipotesi esplorative da verificare insieme alla persona, mai come diagnosi, etichette o fatti oggettivi; è vietato attribuire emozioni o stati affettivi (come ansia o insicurezza) non esplicitamente nominati dalla persona ed è obbligatorio accogliere immediatamente il rifiuto di una lettura o di una strategia abbandonandola senza riproporla.
 Il budget numerico rigido di turni («at most two follow-ups», «two or three questions in total») è
 stato sostituito da un criterio qualitativo di comprensione orientato all'agire con tetto di sicurezza
@@ -477,7 +495,9 @@ mai un interrogatorio procedurale: il chatbot fornisce spiegazioni o approfondim
 e costrutti solo se la persona li richiede esplicitamente.
 La durata indicativa è di 20–30 minuti nel rispetto della riservatezza; non vengono somministrati item né assegnati nuovi punteggi. A1–A3 alti
 indicano maggiori difficoltà dichiarate; M2 viene discusso nel contesto, senza
-un giudizio automatico di forza/debolezza. I nomi e le etichette del profilo
+un giudizio automatico di forza/debolezza. Nel profilo la barra di M2 resta
+grigia e neutra, con una nota accanto e una voce in legenda che spiegano la
+scala neutra: non è un errore né un valore mancante. I nomi e le etichette del profilo
 seguono la lingua scelta anche nei resoconti. Se nessun fattore rientra nella
 fascia dei punti di forza, il riepilogo lo indica senza dichiarare equilibrato
 il profilo nel suo insieme. La sintesi resta qualitativa,
@@ -661,7 +681,7 @@ viene riscritto. Casi verificati e limiti della guardia sono descritti in
 `docs/operations/chat-continuation-duplicates.md` (#425).
 Durante la generazione (sia in streaming SSE sia sincrona), i blocchi di ragionamento interno emessi da modelli di reasoning (tag `<think>...</think>`, `<thinking>` o `<sto_pensando>`, inclusi tag aperti o orfani) vengono filtrati ed eliminati in tempo reale, impedendo fughe di catena di pensiero verso l’utente e garantendo che la memoria di sessione e i log conservino solo la risposta visibile. Se una risposta risulta vuota, composta da soli spazi o svuotata dalla rimozione del reasoning (oppure in caso di errore vuoto del provider), il sistema evita errori 500/502 o messaggi vuoti e invia un fallback gentile e riflessivo, contestualizzato al passo corrente della chat guidata e nella lingua dell’utente (italiano, inglese, spagnolo, francese, tedesco, svedese), differenziato tra introduzione del tema all'ingresso dello step (o benvenuto nel Patto di Collaborazione) e prosecuzione della riflessione nei turni successivi. I contratti di dialogo escludono cliché terapeutici e meta-disclaimer ripetitivi (come "è un'ipotesi e non una verità", "senza giudizio", "non è un difetto"), affidando la natura non diagnostica al patto iniziale e la formulazione delle ipotesi alla modalità epistemica e alla curiosità fenomenologica naturale.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
-e feedback quando disponibili. Il lettore nel menu di navigazione legge il testo visibile,
+e feedback quando disponibili. Nei diagrammi gli archi che indicano un ostacolo sono rossi e tutti gli altri verdi (stessa palette in web, PDF e Telegram, temi chiaro e scuro); tratteggio, punta a T e legenda li distinguono anche senza il colore. Il lettore nel menu di navigazione legge il testo visibile,
 con impostazioni di voce e motore (Edge TTS online oppure Piper locale 100% offline con dodici voci ONNX incorporate, attivo anche nella configurazione portatile); la correzione della pronuncia è visibile solo
 all’amministratore. La chat guidata e la Bussola accettano
 registrazione del microfono o file audio: la trascrizione è da controllare, salvo
@@ -830,7 +850,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Funzione | Dove | Che cosa permette |
 | --- | --- | --- |
 | Obiettivi | `/profilo/obiettivi` | Organizzare gli obiettivi in una rete, dal perché al come: sopraobiettivi e sottobiettivi, anche con più genitori; toccare un obiettivo per modificarlo in una finestra popup, dove si scrive un nuovo obiettivo o si adotta e personalizza una proposta del catalogo (in creazione restano visibili titolo, motivazione e data di revisione; criteri, priorità, stato e condivisione sono sotto «Più dettagli»); scegliere un metodo (strategie certificate o proprie), pianificare azioni e controlli, collegare prove e lavori; chiudere con un bilancio, che diventa una tappa della Linea del tempo; scaricare il PDF «Percorso dell’obiettivo»; condividere un ramo con i docenti di un gruppo (mai i sopraobiettivi). Su computer anche vista mappa. Completare un’attività non conclude automaticamente un obiettivo: lo stato resta sempre manuale, è la persona a rivederlo. |
-| Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, azioni datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario, collegamenti al Portfolio e la rilettura dell’esperienza (cosa ha funzionato, cosa proverò), che può diventare un obiettivo o un’azione; per le tappe future o senza data compare anche «Cosa programmo»; una legenda spiega i simboli; azioni e obiettivi si aprono sulle loro pagine. Gli incontri della classe o del gruppo che il docente mostra nella linea del tempo (opzione «Mostra nella linea del tempo degli studenti», attiva di default) compaiono sull’asse e nel calendario come «Incontro della classe o del gruppo», con data, ora e luogo oppure «Online», segnati se annullati, e hanno un proprio filtro; quelli individuali compaiono solo alla fascia prenotata dallo studente; non vengono copiati nei dati personali. Sopra la linea, chi è in una classe o in un gruppo trova «Incontri delle tue classi o gruppi»: data, luogo o link, con chi è l’incontro, incontri annullati, la prenotazione delle fasce degli incontri individuali e il pulsante «Ho partecipato» dall’inizio dell’incontro o della propria fascia. |
+| Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, azioni datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario, collegamenti al Portfolio e la rilettura dell’esperienza (cosa ha funzionato, cosa proverò), che può diventare un obiettivo o un’azione; per le tappe future o senza data compare anche «Cosa programmo»; una legenda spiega i simboli; azioni e obiettivi si aprono sulle loro pagine. Gli incontri della classe o del gruppo che il docente mostra nella linea del tempo (opzione «Mostra nella linea del tempo degli studenti», attiva di default) compaiono sull’asse e nel calendario come «Incontro della classe o del gruppo», con data, ora e luogo oppure «Online», segnati se annullati, e hanno un proprio filtro; quelli individuali compaiono solo alla fascia prenotata dallo studente; non vengono copiati nei dati personali. Sopra la linea, chi è in una classe o in un gruppo trova «Incontri delle tue classi o gruppi»: data, luogo o link, con chi è l’incontro, incontri annullati, la prenotazione delle fasce degli incontri individuali e il pulsante «Ho partecipato» dall’inizio dell’incontro o della propria fascia, quando il docente lascia allo studente la conferma della presenza. |
 | Studiare da un PDF (pQBL) | `/profilo/pqbl` | Caricare un PDF con testo selezionabile (massimo 100 MB; un PDF scansionato passa dall'OCR locale o, se manca, dal provider di visione scelto dall'amministratore, con la stessa protezione dei dati della chat; senza OCR utilizzabile compare un errore chiaro), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. |
 | Flashcard | `/profilo/flashcard` | Preparare mazzi di domande e risposte, modificarli (il nome del mazzo si cambia direttamente nella pagina: Invio salva, Esc annulla) e ripassare in una sessione di studio, mostrando la risposta e registrando il proprio esito. |
 | Tavolo | `/profilo/tavolo` | Lavorare con materiali, idee e counselor; riaprire Tavoli salvati quando la funzione è abilitata. In cima c’è «I tuoi tavoli salvati» (aprire, rinominare nella riga, eliminare); sotto, in «Crea un nuovo tavolo», la creazione manuale, la composizione con AI e la scelta di counselor e modello, che contano solo per la creazione con AI. |
@@ -840,10 +860,13 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Taccuino | `/profilo/taccuino` | Scrivere contesto, difficoltà, risorse personali e ciò che conta per sé; conservare revisioni esplicite; trasformare la difficoltà principale in un obiettivo. |
 | Cambiamenti | `/profilo/cambiamenti` | Riflettere sulle differenze fra revisioni del Taccuino. |
 | Portfolio | `/profilo/portfolio` | Documentare lavori con titolo, descrizione, categoria, data, collegamenti e immagini; collegare un lavoro a un obiettivo attivo con «Collega a un obiettivo». Chiudere con la X un modulo con modifiche non salvate chiede conferma prima di scartarle. |
-| Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. |
+| Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. Nel quadro dei risultati con più aree, i pulsanti «Tutte le aree» e il nome di ciascuna area permettono di leggere un’area alla volta con gli stessi dati; «Tutte le aree» riporta alla visione completa. Le fasce usano colore, simbolo ed etichetta, spiegati dalla legenda. |
 | Analisi combinata dei profili | `/profilo/analisi-combinata` | Generare una lettura integrata di almeno due strumenti tra QSA, QSAr e ZTPI. Si apre dal gruppo Conoscermi e riflettere e non compare più sotto i singoli risultati. |
 | Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. Lista breve con filtri (gruppo, tipo, finalità richiesta/proposta, stato) e un solo dettaglio aperto alla volta; pianificazione con spiegazione del lavoro personale; anteprima di restituzione con destinatario esplicito e copia fissa. Se l’attività indica degli strumenti, nel dettaglio ognuno si apre con «Apri qui» in una finestra dentro l’attività (Esc o «Chiudi e torna all’attività» riportano al punto di partenza) oppure con «Apri a pagina intera»; uno strumento disattivato dopo l’invio per la classe o il gruppo resta elencato come non disponibile. La revoca conferma in linea sulla scheda. |
-| Piani operativi | `/profilo/piani-operativi` | Seguire i piani operativi (fino a ottobre 2026 «Percorsi di classe»: sequenze ordinate di attività) pubblicati dai docenti per la propria classe; il vecchio indirizzo /profilo/percorsi (anche con i sottopercorsi) reindirizza qui in modo permanente; un passo di somministrazione si apre in `/profilo/piani-operativi/{pathId}/{stepId}` e il suo approfondimento guidato in `/profilo/piani-operativi/{pathId}/{stepId}/approfondimento`; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. Un passo incontro mostra data, ora, luogo o link; dall’inizio dell’incontro lo studente preme «Ho partecipato» (e può annullarlo) e il passo risulta fatto: non c’è registro del docente. Il piano operativo prioritario è inoltre visualizzato in cima alla panoramica dell'Area studente (`/profilo`) come hero card, con il catalogo strumenti sotto collassato. |
+| Piani operativi | `/profilo/piani-operativi` | Seguire i piani operativi (fino a ottobre 2026 «Percorsi di classe»: sequenze ordinate di attività) pubblicati dai docenti per la propria classe; il vecchio indirizzo /profilo/percorsi (anche con i sottopercorsi) reindirizza qui in modo permanente; un passo di somministrazione si apre in `/profilo/piani-operativi/{pathId}/{stepId}` e il suo approfondimento guidato in `/profilo/piani-operativi/{pathId}/{stepId}/approfondimento`; alla fine della chat guidata di questi passi «Continua alle scelte finali» resta nel passo e mostra lo stesso riepilogo con il resoconto PDF della chat avviata dalla home, più «Torna ai piani operativi»; la chat conclusa non resta in «Riprendi» e un approfondimento concluso si riapre sul riepilogo; la sintesi del percorso essenziale (QSA e Obiettivi) completa il passo come la sintesi del percorso completo; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. La card mostra, quando presenti, il **giorno previsto** e la **scadenza**: il giorno previsto è solo informativo e non limita l’accesso. Un passo incontro mostra data, ora, luogo o link; il passo risulta fatto quando la presenza è confermata, come ha scelto il docente: dall’inizio dell’incontro lo studente preme «Ho partecipato» (e può annullarlo); se conferma il docente, lo studente legge «La presenza la conferma il docente» e poi «Presenza confermata dal docente», che solo il docente può togliere dal registro. La Guida (sezione dei piani operativi) spiega allo studente entrambe le possibilità. In cima alla panoramica dell'Area studente (`/profilo`) e alla home compaiono tutti i piani operativi pubblicati per lo studente, uno per card: il prioritario (prima i piani non completati, poi la scadenza più vicina) è aperto, gli altri sono chiusi e mostrano titolo, classe e avanzamento; il titolo apre o chiude la card e sotto resta «Vedi tutti i piani operativi (N)». La pagina `/profilo/piani-operativi` usa le stesse card (un link del forum a un passo apre il piano che lo contiene). In ogni card un passo incontro mostra dettagli e «Ho partecipato», un passo forum o compito la sua regola e i link alla discussione; un passo già fatto si apre con «Riapri». Una chat guidata avviata da un passo (`/?start=…&from=plan`) offre a fine percorso, accanto al riepilogo, «Torna ai piani operativi». Il catalogo strumenti sotto resta collassato. |
+| Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito (dopo l’adesione, o aprendo un link `/gruppo?g=...`, compare un riquadro verde «Sei nel gruppo» con il nome del gruppo, anche su telefono; se si faceva già parte del gruppo lo dice, e un codice non valido o un errore di rete hanno messaggi distinti dal caricamento); collegamenti contestuali alle assegnazioni del gruppo; messaggi generali del docente leggibili direttamente nella pagina; uscire da un gruppo richiede una conferma che nomina il gruppo e le conseguenze. |
+| Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
+| Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot, con guida a tre passi (Apri il bot, Conferma, Verifica collegamento), scadenza del codice visibile e verifica automatica al ritorno nella scheda. |
 
 Nei passi dei piani operativi titolo e data vengono dall’oggetto collegato:
 il piano di somministrazione usa il proprio titolo e la data programmata,
@@ -857,10 +880,6 @@ titolo prima della pubblicazione; il titolo della discussione resta nel forum e
 i vecchi piani pubblicati restano leggibili. I modelli mostrano anche le note:
 «Aggiorna da modello» confronta il testo della classe con quello proposto e
 conserva i passi con titolo o nota personalizzati, comprese cancellazioni esplicite.
-
-| Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito; collegamenti contestuali alle assegnazioni del gruppo; messaggi generali del docente leggibili direttamente nella pagina; uscire da un gruppo richiede una conferma che nomina il gruppo e le conseguenze. |
-| Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
-| Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot, con guida a tre passi (Apri il bot, Conferma, Verifica collegamento), scadenza del codice visibile e verifica automatica al ritorno nella scheda. |
 
 In Risultati e conversazioni, «Risultato della compilazione» è aperto inizialmente e si può richiudere o riaprire premendo il titolo, anche da tastiera con Invio o Spazio. La chiusura nasconde sintesi, grafici, dettagli e conversazione con il counselor; i contenuti non vengono cancellati e «La mia lettura» resta accessibile subito sotto.
 
@@ -1061,6 +1080,39 @@ Il pulsante **Scarica il resoconto PDF** usa lo stesso generatore e la stessa
 sintesi canonica del documento dello studente, con il transcript completo.
 La sintesi conserva la cache e il comportamento di generazione già previsto
 nella vista studente. Il PDF non modifica la riflessione salvata.
+**Quadro di noticing (#247).** Tra la riflessione e la conversazione, il riquadro
+**Quadro di noticing** propone al docente fino a sei elementi da riprendere con lo
+studente, ciascuno con un tipo: *Da riprendere*, *Risorsa*, *Difficoltà*, *Da
+attenzionare*. Il quadro si genera solo quando il docente preme **Genera il quadro**:
+aprire la compilazione non chiama il modello. Ogni elemento riporta, in un blocco
+citato distinto dal testo dell'IA, le parole dello studente che lo sostengono, e il
+collegamento **Vai al messaggio N** evidenzia quel messaggio nella conversazione
+(numerata). Il server scarta le citazioni che non si ritrovano alla lettera nel
+messaggio dello studente indicato e gli elementi rimasti senza citazioni; il controllo
+si ripete a ogni lettura. Il quadro è salvato per compilazione e lingua: se la
+conversazione cambia dopo la generazione il riquadro lo segnala e propone **Aggiorna
+il quadro**; sono indicati anche i casi senza messaggi dello studente e di modello
+non raggiungibile. Se il modello risponde in modo vuoto, tagliato o non leggibile
+il server riprova una volta e registra nel log un'anteprima della risposta (#466);
+lo stesso vale per il noticing della classe. Gli accessi sono gli stessi del dettaglio (classe visibile o piano
+di somministrazione); il quadro non entra nel PDF né nel link del consiglio di classe.
+
+**Noticing della classe (#464).** La scheda **Noticing** di `/docente/classi/{id}`
+(`?tab=noticing`) analizza le chat dei questionari di tutti gli studenti della classe,
+con filtro per strumento e periodo (sempre, ultimi 30 o 90 giorni). Il pulsante
+**Analizza la classe** genera prima il quadro di noticing di ogni compilazione che
+non lo ha o che è cambiata, mostrando l'avanzamento («Compilazioni analizzate: N di M»),
+poi chiede al modello di raggruppare in temi soltanto gli elementi già verificati sulle
+parole dello studente. La scheda mostra: alcuni **suggerimenti per il docente** brevi;
+un grafico a barre degli **studenti per tipo di elemento** (Da riprendere, Risorsa,
+Difficoltà, Da attenzionare) sul totale degli studenti con una chat; i **temi della
+classe**, ciascuno con il numero di studenti che lo sollevano, una barra, un
+suggerimento e, aprendo «Chi lo solleva», nome dello studente, strumento, elemento,
+frase citata e il pulsante **Apri la compilazione** che mostra il dettaglio completo.
+Conteggi e grafici sono calcolati dal server, non dal modello; temi con elementi non
+più validi li perdono a ogni lettura. L'analisi è salvata per classe, lingua e filtri:
+se compaiono chat nuove o cambiate la scheda lo segnala e propone **Aggiorna l'analisi**.
+Gli accessi sono quelli della classe visibile al docente.
 La stessa scheda è usata da Compilazioni, Classi (matrice ed elenco) e Piani di
 somministrazione. Le etichette accessibili includono la data per distinguere
 compilazioni ripetute; nei riquadri stretti i nomi dei fattori si adattano allo
@@ -1121,8 +1173,18 @@ indirizzo /docente/percorsi reindirizza qui in modo permanente; con una propria
 immagine, `percorsi-classe.png`: si sceglie la classe e si preparano, pubblicano e seguono i suoi piani operativi
 con lo stesso editor della scheda Piani operativi della classe; nell’editor (della classe e dei
 modelli) un solo **+ Aggiungi passo** chiede «Cosa fa lo studente in questo passo?» e
-mostra solo il modulo del tipo scelto: compila un questionario (sempre tramite
-somministrazione), fa una chat guidata (sui risultati di un questionario del piano operativo, su una compilazione personale scelta dallo studente all’avvio, oppure un
+mostra solo il modulo del tipo scelto. Un piano già salvato si apre come **riepilogo**:
+titolo, descrizione e ordine con «Modifica piano», e per ogni passo «Modifica» (titolo,
+istruzioni, date, spostamento e rimozione) e **«Sostituisci»**, che riapre lo stesso
+pannello di aggiunta e mette il passo scelto al posto di quello attuale (in un piano
+pubblicato il passo sostituito viene tolto e i progressi su di esso non contano più; un
+questionario analizzato da una chat del piano non si sostituisce finché c’è la chat);
+dopo ogni salvataggio il piano torna al riepilogo. Ogni passo può avere una **scadenza facoltativa**;
+questionario e chat guidata mostrano anche un **giorno previsto** (per il questionario è
+la data del piano di somministrazione, per la chat si imposta nel passo). Giorno previsto
+e scadenza possono convivere e sono solo informativi: non limitano l’accesso né il
+completamento. Il passo può consistere nel compilare un questionario (sempre tramite
+somministrazione), fare una chat guidata (sui risultati di un questionario del piano operativo, su una compilazione personale scelta dallo studente all’avvio, oppure un
 percorso guidato per riflettere su un’esperienza o una scelta: Savickas, Evento di
 studio, Evento professionale, Obiettivo di studio, Idea; quelli integrati senza voce nel
 catalogo sono sempre disponibili, anche per gli studenti delle classi, e il passo si
@@ -1131,9 +1193,9 @@ nessuno, un debriefing con la classe o il gruppo oppure un colloquio individuale
 tra gli incontri di quel tipo o creato al momento, che viene inserito subito dopo la
 chat come passo «Seguito della chat guidata #n»; nell’avanzamento il docente vede
 accanto all’incontro chi ha completato la chat; se toglie la chat o l’incontro, l’altro
-passo resta valido; salvare come modello un piano operativo con incontri non è ancora possibile), svolge un’attività (assegnazione), usa uno strumento (solo
+passo resta valido; salvare come modello un piano operativo con incontri non è ancora possibile), svolgere un’attività (assegnazione), usare uno strumento (solo
 strumenti personali: Tavolo, obiettivi, azioni, linea del tempo, Portfolio, flashcard,
-carte, confronto, Bussola, assistente), partecipa a un incontro (incontri della classe o
+carte, confronto, Bussola, assistente), partecipare a un incontro (incontri della classe o
 del gruppo: argomento, data e ora, durata, in presenza con luogo oppure online con link;
 il docente li crea, li sposta e li annulla da qui, vede quante presenze sono state segnate
 (dall’inizio dell’incontro); un incontro può anche essere **individuale, a fasce
@@ -1180,6 +1242,10 @@ link alla pagina dedicata con filtro già impostato),
 assegnazioni** dopo Piani operativi: si sceglie la classe o il gruppo e si creano,
 spostano e annullano gli incontri di classe o di gruppo e i colloqui individuali a fasce,
 con prenotazioni, presenze e altre classi coinvolte, senza aprire un piano operativo;
+per ogni incontro il docente sceglie **chi conferma la presenza** — lo studente (predefinito),
+il docente dal **registro presenze** (una casella per studente delle classi coinvolte, che
+segnala anche le presenze segnate dagli studenti) oppure entrambi; cambiare la scelta non
+cancella le presenze già segnate;
 `?class={id}` la preseleziona; aggiungere un incontro a un piano operativo resta nell’editor del
 piano operativo), `/docente/assegnazioni` (pagina di sola assegnazione: da «Nuova assegnazione» si
 sceglie un obiettivo pubblicato del catalogo — obbligatorio — per il gruppo o la
@@ -1302,6 +1368,20 @@ screens per language with `GUIDE_SCREENS=class-settings` and
 `frontend/scripts/capture-guide.mjs`. Operational plans are distinct from the guided
 path inside one instrument: a strict step lock does not disable its catalog tool.
 
+**Class council link (#422).** The **Class council** tab on `/docente/classi/{id}` lets the
+class owner (or an administrator) create a read-only link to `/consiglio/{token}` with a
+validity of 7, 14, 30, 60 or 90 days. The server generates a 10-character password, stores only
+its hash and shows it once next to the link, with copy buttons; the teacher sends it separately.
+The tab lists the links with state (active, expired, revoked), expiry and last view, and an
+active link can be revoked. Whoever opens the link signs in with their own account and enters
+the password; after ten wrong attempts the link is locked for 15 minutes, and unknown, expired
+and revoked links answer alike. The page shows the class and one collapsible sheet per student,
+with search and print: operational plans with steps done and deadlines, questionnaire results
+with scores and the report summary of the chat when one exists, assignments with the response
+the student shared and the teacher's feedback, and the goals shared with the class. Full
+conversations, private workspaces and unshared goals are never shown. Each view is logged
+(`class_council_view`) and the page is excluded from search engines.
+
 **Operational plans builder (P1, #96).** The **Operational plans** tab on `/docente/classi/{id}`
 provides the teacher-side builder for sequenced operational plans (`class_paths`
 and `class_path_steps`). The class owner, co-teachers and administrators can create
@@ -1325,7 +1405,7 @@ the 6 platform languages.
 
 **Operational plans publishing and student view (P2, #97).** Teachers can publish plans via a sticky `[Publish]` button on `/docente/classi/{id}` (calling `POST /teacher/paths/{path_id}/publish`), which sets status to `published` and marks `published_at` on first publication. Teachers can also archive and restore plans. Students enrolled in active classes view published plans at `/profilo/piani-operativi` (accessible from the first group «Conoscermi e riflettere» in the student area, `/profilo`). The layout strictly follows identity guidelines: ochre is used only for the current step's play icon and `Button variant="accent"` for `[Inizia]` (the current step container and badge are petrol), with petrol for primary structure and slate for neutrals. Each published plan card displays class name, title, description, and overall progress count and progress bar (`done of total done`). In strict mode (`strict`), future steps are locked (displaying a lock icon with «Si sblocca dopo il passo {n}») until preceding steps are finished. Steps whose tool is disabled for the student's class are displayed as unavailable and excluded from both total and done counts. For tools without automatic detection, students can mark and unmark steps as completed (`POST / DELETE /user/paths/{path_id}/steps/{step_id}/done`). Attempts to self-mark unavailable or auto-detect tools are rejected with HTTP 422. Progress resolution guarantees teacher precedence over student self-marks. Non-members receive HTTP 403 without existence oracles. All interfaces and notices are fully translated into the 6 platform languages.
 
-**Automatic step completion and strict mode (P3, #98).** Step completion is computed on read (`GET /user/paths`), never stored, from evidence the student created at or after the plan's `published_at`: a questionnaire result of that type for scored instruments (`tool_category=assessment`); a completed Bussola session (`completed_at`); a saved Tavolo (`saved_at`); a new personal goal; a completed pQBL learning session (`pqbl_session_completed` log); an Idea map revision with a branch to work on (the `idea_map` focus rule); and, for guided chats (Savickas, Evento, Obiettivo di studio, dynamic guided instruments), a new server-side `guided_chat_completed` log written when a `/chat` or `/chat/stream` turn on the instrument's last guided step completes. The marker is written once per session, instrument and student: further turns or a resumed session add nothing, and admin preview turns write none. Evidence created before `published_at` is ignored. The state of each step follows teacher mark > student mark > automatic evidence > not done; automatic completions show «rilevato automaticamente» (6 languages). In strict mode a step counts as done only when every earlier available step is done: all steps after the current one render locked (`🔒 Si sblocca dopo il passo {n}`, where {n} is the current step) and are excluded from the done count, even if they already have evidence or a self-mark; they count again as soon as the earlier steps are completed. Unavailable steps are skipped by the ordering. The lock affects the operational plan only: tool access, the catalog and the chat guards are unchanged.
+**Automatic step completion and strict mode (P3, #98).** Step completion is computed on read (`GET /user/paths`), never stored, from evidence the student created at or after the plan's `published_at`: a questionnaire result of that type for scored instruments (`tool_category=assessment`); a completed Bussola session (`completed_at`); a saved Tavolo (`saved_at`); a new personal goal; a completed pQBL learning session (`pqbl_session_completed` log); an Idea map revision with a branch to work on (the `idea_map` focus rule); and, for guided chats (Savickas, Evento, Obiettivo di studio, dynamic guided instruments), a new server-side `guided_chat_completed` log written when a `/chat` or `/chat/stream` turn on the instrument's last guided step completes, or when the chat reaches its conclusion (`/memory/event` with phase `conclusion`, also after jumping there from the phase index) once the student has had at least one turn in that session. The marker is written once per session, instrument and student: further turns or a resumed session add nothing, and admin preview turns write none. Evidence created before `published_at` is ignored. The state of each step follows teacher mark > student mark > automatic evidence > not done; automatic completions show «rilevato automaticamente» (6 languages). In strict mode a step counts as done only when every earlier available step is done: all steps after the current one render locked (`🔒 Si sblocca dopo il passo {n}`, where {n} is the current step) and are excluded from the done count, even if they already have evidence or a self-mark; they count again as soon as the earlier steps are completed. Unavailable steps are skipped by the ordering. The lock affects the operational plan only: tool access, the catalog and the chat guards are unchanged.
 
 **Teacher progress view and overrides (P4, #99).** Once an operational plan is published, the plan editor in the **Operational plans** tab shows a **Progressi** section: a students × steps matrix (`GET /teacher/paths/{path_id}/progress`, owner, co-teachers and admins; drafts get 422). Only current members of the class are listed: students who left keep their marks but disappear from the matrix. Each cell shows a check icon (done) or `·` (not done) followed by the source — `a` automatic, `s` student, `t` teacher — or a lock icon (locked by strict order) and `—` (tool no longer available, excluded from the counts). Each row ends with the student's done count and a footer row gives the done count per step. Filters: all, late (an available step past its due date and not done) and not started (nothing done yet). Cells are buttons, so the matrix works with the keyboard; on phones it becomes a per-student list with an expandable row. Selecting a cell opens a panel where the teacher can **mark done**, **mark not done** (optional reason, up to 500 characters) or **clear the teacher mark** (`PUT /teacher/paths/{path_id}/steps/{step_id}/progress/{username}` with `state` `done`, `not_done` or `clear`). The mark is stored with author and time and wins over the student's mark and the automatic evidence, in the teacher matrix and in the student's own view (which shows «fonte: docente»); clearing it falls back to the student mark, then to automatic evidence. In strict order a teacher mark on a later step is kept and shown in the panel, but the step stays locked until the earlier steps are done. Steps whose tool is unavailable accept only `clear` (422 otherwise); unknown students or steps outside the plan get 404. All labels exist in the 6 platform languages.
 
@@ -1711,6 +1791,8 @@ accessibili a ogni account. L’assistente deve indicare la pagina e il prossimo
 passo utile, senza inventare pulsanti o promettere azioni eseguite automaticamente.
 Gli aggiornamenti tecnici delle dipendenze del server non cambiano funzioni, dati salvati o esportazioni descritti in questa guida. Per la compilazione containerizzata di produzione del frontend in Docker, il comando di build adotta esplicitamente Webpack (`next build --webpack`) e disabilita la telemetria Next.js (`NEXT_TELEMETRY_DISABLED=1`) per prevenire timeout e deadlock IPC sotto emulazione o vincoli di memoria.
 
+Per l'istanza di prova è disponibile una modalità hot reload: `scripts/dev-test-instance.sh` avvia il frontend con `next dev` e il backend con `uvicorn --reload`, montando il codice nel container. Le modifiche a pagine, componenti e codice Python si vedono senza ricostruire l'immagine; restano le stesse porte e lo stesso URL pubblico. Non è una modalità di produzione: espone informazioni di debug e va usata solo senza dati reali. Dettagli e comandi in `docs/operations/test-instance-hot-reload.md`.
+
 ### Sezioni della configurazione
 
 In **Amministrazione → Configurazione & Prompt** la sezione si sceglie dal
@@ -1861,6 +1943,56 @@ accessibile in 3 passaggi:
    riepilogo della configurazione e invio coordinato che crea lo strumento (`POST /admin/instruments`),
    gli step iniziali (`POST /admin/guided-steps`) e associa i counselor abilitati
    (`PUT /admin/counselors/{id}`). Al termine, la mappa seleziona automaticamente il nuovo percorso.
+
+Ogni step della mappa (anche Domande e Conclusione) ha il riquadro **Skill in
+questo step**: le skill che la chat aggancia a quello step, con la stessa regola
+del motore. Per ciascuna si legge quando entra in parole («quando chiede un
+consiglio», «a ogni turno»…), come viene scelta (una per turno in base
+all'intento, sempre, se pertinente), dove va nel prompt (in coda, fra le
+conoscenze, sezione dopo il ruolo), se l'aggancio vale per tutti gli step o solo
+per questo, e il link **Modifica** che apre la skill nella scheda Skill. Le skill
+che oggi non entrano restano visibili con il motivo: aggancio o skill spenti,
+bozza, condizione su strumento/step/tipo di step, componente del prompt spenta,
+materiale nelle Conoscenze con la componente spenta. Se il motore delle skill è
+spento per lo strumento, un avviso dice che nessuna skill entra.
+
+### Skill della chat: creazione guidata e prova
+
+**Amministrazione → Skill** (`/admin?tab=skills`) elenca le skill della chat:
+comportamenti in più che il counselor aggiunge alla risposta quando servono (un
+consiglio dal catalogo certificato, letture verificate, una fonte pubblica, un
+referente dell'istituto, uno schema, la mappa di Idea). Per ogni skill si vede
+quando entra, come viene scelta, lo stato (bozza o pubblicata) e un interruttore
+**Attiva**. Le skill di serie hanno l'etichetta «di serie»: si spengono ma non si
+cancellano né si rinominano, perché all'avvio verrebbero ricreate.
+
+**Nuova skill guidata** (e la matita su una skill esistente) apre una procedura in
+sei passi; nulla si salva prima dell'ultimo:
+
+1. **Cosa fa**: nome, identificatore ricavato dal nome, descrizione (letta anche
+   dal selettore automatico quando deve scegliere fra più skill).
+2. **Quando entra**: per quali richieste dello studente vale (confronto fra profili,
+   a chi rivolgersi, domanda fattuale, letture, consiglio, dubbio su un risultato,
+   apertura dello step; nessuna spunta = ogni turno), se servono i punteggi, e per
+   ogni strumento se non è agganciata, vale per tutti gli step o solo per quelli
+   scelti. Le altre condizioni stanno in un JSON avanzato, controllato al salvataggio.
+3. **Contenuto**: le istruzioni per il modello, in inglese, ed eventualmente un
+   handler, cioè il materiale verificato che il server recupera (strategie,
+   letture, fonti pubbliche, referenti), con la sua spiegazione. Un handler nuovo
+   richiede uno sviluppo: dal pannello si usano quelli previsti dal codice.
+4. **Posizione**: come viene scelta rispetto alle altre skill (principale: una per
+   turno; sempre; supporto; facoltativa) e dove va nel prompt, ciascuna opzione
+   spiegata; tetto di caratteri e priorità.
+5. **Prova**: strumento, step, lingua, punteggi e messaggio dello studente;
+   «Prova questo turno» prepara il turno come la chat vera, con la versione che si
+   sta scrivendo e **senza salvarla**. Dice se la skill entra, se il suo testo
+   arriva davvero al modello e, se no, perché; dove il motore è spento la prova è
+   simulata e lo dice.
+6. **Pubblica**: riepilogo, bozza o pubblicata, attiva. Togliere una skill da uno
+   strumento spegne l'aggancio invece di cancellarlo.
+
+`/admin?tab=skills&skill=<id>` apre direttamente una skill (è il link della mappa
+dei prompt). Dettagli tecnici in `docs/architecture/skills-component.md`.
 
 ### Sandbox di collaudo per l'amministratore (Anteprima chat)
 
@@ -2181,12 +2313,21 @@ the single credential source. In **Teacher area → Institutes** a member teache
 chooses **Enter external credentials** (or **Replace external credentials**),
 types the code and password and saves with a revision check. The code is trimmed
 and compared case-insensitively; it must be unique across institutes. The
-password is never trimmed or transformed and is limited to 72 UTF-8 bytes. It is
-write-only: CounselorBot stores only a bcrypt verifier, never returns the password
-or hash in any response (teacher or administrator), and cannot show it again.
-Teachers give students the external login separately. A stale revision or a code
-used by another institute returns a conflict and keeps the typed code. The
-administrator password reset accepts only a plaintext entry, never a raw hash.
+password is never trimmed or transformed and is limited to 72 UTF-8 bytes. The
+teacher editor never prefills it and list/detail responses never include it; a
+member teacher can reveal it on request from the institute card with **Mostra**.
+A separate Fernet-encrypted display copy, kept in the existing
+personal-credentials volume, also lets members of the class read the code in the
+external administration step; there too the UI masks it behind **Mostra**. The
+bcrypt verifier still decides local verification. Credentials saved before this
+copy existed must be re-entered once with **Sostituisci credenziali esterne**
+before either reveal can show them. A stale revision or a code used by another
+institute returns a conflict and keeps the typed code. The administrator password
+reset accepts only a plaintext entry, never a raw hash. The reveal endpoint is
+available only to active institute members and sends `Cache-Control: no-store`;
+the institute card fetches the password only when the teacher presses **Mostra**,
+never while loading the list, and clears it again with **Nascondi** or after a
+credential save.
 
 Administration plans no longer store their own code or password: create/edit
 requests carrying `institution_code` or `institution_password` are rejected
@@ -2242,17 +2383,17 @@ columns is left to a later reviewed migration. The bcrypt helper now uses the
 Teachers can create or select an Italian administration in the class Operational plans tab.
 The class and research views reference the same administration ID; the server
 resolves the class and institute. The institute owns the external code and
-write-only password verifier. Students open competenzestrategiche.it and log in
-with the institute code and password supplied separately by their teacher; the
-password cannot be retrieved from CounselorBot.
+password. Students open competenzestrategiche.it and log in with the institute
+code and the class password, which the external step shows masked behind
+**Mostra**; if no readable copy exists, it asks them to request it from the teacher.
 
 A `questionnaire_administration` step is distinct from a legacy `tool` step.
 One canonical table in `backend/questionnaire_sources.py` — mirrored by
 `frontend/src/lib/questionnaire-sources.ts` — feeds both the Compass prompt and
 the launch response. The launch response opens the exact questionnaire chosen in
 the administration (for example `/QSAr/`, never the site home) and shows the external site's own
-labels, **Codice istituto/ente** and **Password di accesso**, with the password
-supplied separately by the teacher. Opening the external link does not complete
+labels, **Codice istituto/ente** and **Password di accesso**, both from the
+institute (the password masked behind **Mostra**). Opening the external link does not complete
 it. Students enter all questionnaire factor scores, locally verify institute
 credentials in a separate and explicitly local step, and explicitly use the
 scores in guided chat. The server commits the result, guided entry and exact step evidence

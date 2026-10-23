@@ -114,13 +114,15 @@ export interface ClassPathStep {
     /** #177: the guided chat step this meeting follows up. */
     follows_step_id?: number | null;
     active_from?: string | null;
-    target_summary?: {id?: number; title?: string; code?: string; instrument_code: string; locale?: string; institution_name?: string; scheduled_at?: string | null; source?: 'personal'} | null;
+    target_summary?: {id?: number; title?: string; code?: string; instrument_code: string; locale?: string; institution_name?: string; source?: 'personal'; scheduled_at?: string | null; location?: string | null} | null;
     /** Server reason code when the step cannot be used now (TF8). */
     availability_reason?: string | null;
     completion_kind?: string | null;
     title?: string | null;
     instructions?: string | null;
     due_date?: string | null;
+    /** Informational planned day; can coexist with due_date. */
+    scheduled_date?: string | null;
     auto_detect?: boolean;
     can_self_mark?: boolean;
     pending_config?: PendingStepConfig | null;
@@ -171,6 +173,7 @@ export function parseClassPathStep(input: unknown): ClassPathStep {
         title: raw.title ? String(raw.title) : null,
         instructions: raw.instructions ? String(raw.instructions) : null,
         due_date: raw.due_date ? String(raw.due_date) : null,
+        scheduled_date: raw.scheduled_date ? String(raw.scheduled_date) : null,
         auto_detect: auto,
         can_self_mark: raw.can_self_mark != null ? Boolean(raw.can_self_mark) : !auto,
         pending_config: stepType === 'pending' && raw.pending_config && typeof raw.pending_config === 'object'
@@ -221,13 +224,15 @@ export interface StudentClassPathStep {
     /** #177: the guided chat step this meeting follows up. */
     follows_step_id?: number | null;
     active_from?: string | null;
-    target_summary?: {id?: number; title?: string; code?: string; instrument_code: string; locale?: string; institution_name?: string; scheduled_at?: string | null; source?: 'personal'} | null;
+    target_summary?: {id?: number; title?: string; code?: string; instrument_code: string; locale?: string; institution_name?: string; source?: 'personal'; scheduled_at?: string | null; location?: string | null} | null;
     /** Server reason code when the step cannot be used now (TF8). */
     availability_reason?: string | null;
     completion_kind?: string | null;
     title?: string | null;
     instructions?: string | null;
     due_date?: string | null;
+    /** Informational planned day; can coexist with due_date. */
+    scheduled_date?: string | null;
     state: 'done' | 'not_done' | 'locked' | 'unavailable';
     source?: 'student' | 'teacher' | 'automatic' | null;
     start_href?: string | null;
@@ -269,6 +274,7 @@ export function parseStudentClassPathStep(input: unknown): StudentClassPathStep 
         title: raw.title ? String(raw.title) : null,
         instructions: raw.instructions ? String(raw.instructions) : null,
         due_date: raw.due_date ? String(raw.due_date) : null,
+        scheduled_date: raw.scheduled_date ? String(raw.scheduled_date) : null,
         state,
         source,
         start_href: raw.start_href ? String(raw.start_href) : null,
@@ -432,8 +438,12 @@ export function progressCellCode(cell: ClassPathProgressCell): string {
  * 4. Breaks ties by path id ascending.
  */
 export function selectCurrentClassPath(paths: StudentClassPath[]): StudentClassPath | null {
-    if (!paths.length) return null;
-    if (paths.length === 1) return paths[0];
+    return orderClassPaths(paths)[0] ?? null;
+}
+
+// Priority order: open paths first, then the nearest due date, then creation.
+export function orderClassPaths(paths: StudentClassPath[]): StudentClassPath[] {
+    if (paths.length < 2) return paths;
 
     const getNearestIncompleteDueDate = (path: StudentClassPath): string | null => {
         let nearest: string | null = null;
@@ -484,5 +494,10 @@ export function selectCurrentClassPath(paths: StudentClassPath[]): StudentClassP
         return a.id - b.id;
     });
 
-    return sorted[0];
+    return sorted;
+}
+
+// A guided chat opened from a plan step remembers the way back to the plans.
+export function planStepHref(href: string): string {
+    return href.startsWith('/?start=') ? `${href}&from=plan` : href;
 }

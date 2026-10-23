@@ -65,7 +65,8 @@ export interface StepPresentation {
     /** Effective date (YYYY-MM-DD, local) used by deadlines and progress. */
     dueDate: string | null;
     dueDateSource: DueDateSource | null;
-    /** Whether a path row shows the date: a meeting shows it in its own details. */
+    /** Whether a path row shows the date: a meeting shows it in its own details,
+     * an administration plan as the planned day (class-path-schedule.ts). */
     showDueDate: boolean;
 }
 
@@ -179,7 +180,9 @@ export function resolveStepPresentation(
         note: step.instructions?.trim() || null,
         dueDate,
         dueDateSource,
-        // The meeting date already sits in the meeting details: show it once.
-        showDueDate: dueDateSource === 'override' || (type !== 'meeting' && dueDate != null),
+        // The meeting date already sits in the meeting details and the plan's
+        // date in the planned-day line: show each date once.
+        showDueDate: dueDateSource === 'override'
+            || (type !== 'meeting' && dueDateSource !== 'administration' && dueDate != null),
     };
 }

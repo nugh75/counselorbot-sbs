@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Lock, AlertCircle, ArrowRight, Play } from 'lucide-react';
+import { CheckCircle2, Lock, AlertCircle, ArrowRight, Play, ChevronRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { pathPublicationText } from '@/lib/i18n-path-publication';
 import { apiFetch } from '@/lib/auth';
@@ -12,23 +12,42 @@ import { toast } from '@/components/ui/Toast';
 import { classPathText, type PathTextKey } from '@/lib/i18n-class-paths';
 import {
     lockedStepUnlockNumber,
+    planStepHref,
     type StudentClassPath,
     type StudentClassPathStep,
 } from '@/lib/class-paths';
+import { plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
-import { meetingWhen } from '@/lib/class-meetings';
+import { pathAssignmentText } from '@/lib/i18n-path-assignments';
+import { pathForumText } from '@/lib/i18n-path-forum';
+import { forumStepNotice } from '@/lib/path-forum';
+import { classMeetingText } from '@/lib/i18n-class-meetings';
+import { stepKindText } from '@/lib/i18n-step-kinds';
+import type { ForumDiscussionLink } from '@/lib/forum';
+import type { ClassMeeting } from '@/lib/class-meetings';
+import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
+import { MeetingDetails } from './MeetingDetails';
 import { resolveStepPresentation } from '@/lib/class-path-presentation';
 
 interface Props {
     path: StudentClassPath;
-    totalPathsCount?: number;
     onReload?: () => Promise<void> | void;
+    /** With several plans each card folds to its header and progress. */
+    collapsible?: boolean;
+    defaultOpen?: boolean;
+    /** The student's forum links and meetings, loaded once by the list. */
+    discussionLinks?: ForumDiscussionLink[];
+    meetings?: ClassMeeting[] | null;
+    onMeetingsChanged?: () => Promise<void> | void;
 }
 
-export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props) {
+export function ClassPathHeroCard({ path, onReload, collapsible = false, defaultOpen = true, discussionLinks = [], meetings = null, onMeetingsChanged }: Props) {
     const { lang } = useI18n();
     const l = (key: PathTextKey) => classPathText(lang, key);
     const [actionStepId, setActionStepId] = useState<number | null>(null);
+    const [open, setOpen] = useState(defaultOpen);
+    const stepsId = useId();
+    const expanded = !collapsible || open;
 
     const progressPercent = path.total > 0 ? Math.min(100, Math.round((path.done / path.total) * 100)) : 0;
     const progressLabel = l('progressCount')
@@ -66,7 +85,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
             className="space-y-6 border-indigo-200 shadow-sm dark:border-indigo-800"
         >
             {/* Header: Class label, Mode, Title, Progress */}
-            <div className="space-y-3 border-b border-slate-200/80 pb-4 dark:border-slate-800">
+            <div className={`space-y-3 ${expanded ? 'border-b border-slate-200/80 pb-4 dark:border-slate-800' : ''}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
                         {`${l('yourClassPath')} · ${path.group_name}`}
@@ -84,9 +103,23 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
 
                 <div>
                     <h2 className="font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl dark:text-white">
-                        {path.title}
+                        {collapsible ? (
+                            <button
+                                type="button"
+                                onClick={() => setOpen(value => !value)}
+                                aria-expanded={open}
+                                aria-controls={open ? stepsId : undefined}
+                                className="group flex min-h-11 w-full items-center gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                            >
+                                <ChevronRight
+                                    className={`h-5 w-5 shrink-0 text-slate-500 transition-transform dark:text-slate-400 ${open ? 'rotate-90' : ''}`}
+                                    aria-hidden
+                                />
+                                <span className="group-hover:text-indigo-700 dark:group-hover:text-indigo-400">{path.title}</span>
+                            </button>
+                        ) : path.title}
                     </h2>
-                    {path.description && (
+                    {expanded && path.description && (
                         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{path.description}</p>
                     )}
                 </div>
@@ -111,7 +144,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
             </div>
 
             {/* Steps List */}
-            <div className="space-y-3">
+            {expanded && <div id={stepsId} className="space-y-3">
                 {path.steps.map((step, index) => {
                     const stepNumber = index + 1;
                     const isCurrent = step.id === path.next_step_id;
@@ -121,6 +154,8 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                     const presentation = resolveStepPresentation(lang, step, {toolName: key => resolveClassPathToolName(key, lang)});
                     const titleDisplay = presentation.title;
                     const isActionBusy = actionStepId === step.id;
+                    const planned = plannedDayText(step, lang);
+                    const plannedLocation = plannedDayLocation(step);
 
                     const containerClasses = isCurrent
                         ? 'border-indigo-300 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-200 dark:border-indigo-800 dark:bg-indigo-950/30 dark:ring-indigo-900'
@@ -135,6 +170,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                     return (
                         <div
                             key={step.id}
+                            id={`class-step-${step.id}`}
                             className={`rounded-xl border p-4 transition-colors ${containerClasses}`}
                         >
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -213,6 +249,33 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                                                 {presentation.note}
                                             </p>
                                         )}
+                                        {step.step_type === 'assignment' && !isUnavailable && (
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">{pathAssignmentText(lang, 'studentRule')}</p>
+                                        )}
+                                        {step.step_type === 'forum' && !isUnavailable && (() => {
+                                            const notice = forumStepNotice(step.forum_state, isDone);
+                                            return (<>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">{pathForumText(lang, 'studentRule')}</p>
+                                                {notice && <p role="status" className="text-xs font-medium text-slate-700 dark:text-slate-300">{pathForumText(lang, `notice_${notice}`)}</p>}
+                                            </>);
+                                        })()}
+                                        {step.step_type === 'meeting' && step.follows_step_id != null && (() => {
+                                            const chatIndex = path.steps.findIndex(row => row.id === step.follows_step_id);
+                                            return chatIndex >= 0 && <p className="text-xs text-slate-500 dark:text-slate-400">{`${stepKindText(lang, 'followsChat')} [${chatIndex + 1}]`}</p>;
+                                        })()}
+                                        {step.step_type === 'meeting' && step.meeting_summary && !isUnavailable && (() => {
+                                            // The student's own view of the meeting carries slots and booking (#176).
+                                            const meeting = meetings?.find(row => row.id === step.meeting_id) ?? step.meeting_summary;
+                                            return (<>
+                                                <MeetingDetails lang={lang} meeting={meeting} attended={isDone}
+                                                    onChanged={async () => { await Promise.all([onReload?.(), onMeetingsChanged?.()]); }} />
+                                                {/* The rule matters once it can be followed: started, not yet marked. */}
+                                                {!isDone && meeting.status === 'scheduled' && meeting.kind === 'group' && meeting.attendance_mode !== 'teacher' && meeting.starts_at
+                                                    && new Date(meeting.starts_at).getTime() <= Date.now()
+                                                    && <p className="text-xs text-slate-500 dark:text-slate-400">{classMeetingText(lang, 'studentRule')}</p>}
+                                            </>);
+                                        })()}
+                                        <ForumDiscussionLinks links={discussionLinks} kind="path_step" targetId={step.id} />
 
                                         {isLocked && (
                                             <p className="text-xs italic text-slate-500 dark:text-slate-400">
@@ -224,11 +287,14 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                                         )}
 
                                         <div className="flex flex-wrap items-center gap-3 pt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                            {planned && (
+                                                <span>
+                                                    {l('plannedOn').replace('{date}', planned)}
+                                                    {plannedLocation ? ` · ${plannedLocation}` : ''}
+                                                </span>
+                                            )}
                                             {presentation.showDueDate && presentation.dueDate && (
                                                 <span>{l('dueOn').replace('{date}', presentation.dueDate)}</span>
-                                            )}
-                                            {step.step_type === 'meeting' && step.meeting_summary?.starts_at && (
-                                                <time dateTime={step.meeting_summary.starts_at}>{meetingWhen(step.meeting_summary, lang)}</time>
                                             )}
                                             {isDone && step.source && (
                                                 <span>
@@ -246,12 +312,12 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                                 {/* Right side: actions */}
                                 <div className="flex flex-wrap items-center gap-2 pt-2 sm:shrink-0 sm:justify-end sm:pt-0">
                                     {step.start_href && !isLocked && !isUnavailable && (
-                                        <Link href={step.start_href}>
+                                        <Link href={planStepHref(step.start_href)}>
                                             <Button
                                                 variant={isCurrent ? 'accent' : 'secondary'}
                                                 size="sm"
                                             >
-                                                {l('start')}
+                                                {isDone ? l('reopen') : l('start')}
                                                 <ArrowRight className="h-4 w-4" aria-hidden />
                                             </Button>
                                         </Link>
@@ -272,22 +338,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                         </div>
                     );
                 })}
-            </div>
-
-            {/* Footer: link to all class paths */}
-            <div className="flex items-center justify-end border-t border-slate-100 pt-3 dark:border-slate-800">
-                <Link
-                    href="/profilo/piani-operativi"
-                    className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-indigo-700 transition-colors hover:text-indigo-900 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300"
-                >
-                    <span>
-                        {totalPathsCount > 1
-                            ? `${l('seeAllClassPaths')} (${totalPathsCount})`
-                            : l('seeAllClassPaths')}
-                    </span>
-                    <ArrowRight className="h-4 w-4" aria-hidden />
-                </Link>
-            </div>
+            </div>}
         </Card>
     );
 }

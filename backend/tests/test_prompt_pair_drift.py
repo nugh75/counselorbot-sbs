@@ -54,6 +54,41 @@ def test_anchor_directive_is_removed_from_every_factor_prompt():
         assert "[ANCHOR]" not in prompt, f"{name} factor prompt ha ancora [ANCHOR]"
 
 
+def test_qsar_register_lives_in_the_qsar_prompts_not_in_the_global_directive():
+    # #423: il registro per la secondaria di primo grado e' del solo QSAr; la
+    # direttiva globale tiene i vincoli comuni (il "tu") e non parla di strumenti.
+    import json
+    from pathlib import Path
+
+    from backend.prompt_config import (
+        ALL_CONFIG_TEXT_DEFINITIONS,
+        DEFAULT_QSAR_REGISTER_DIRECTIVE,
+        DEFAULT_SYSTEM_PROMPT_QSAR_GENERIC,
+    )
+    from backend.prompt_updates import digest
+
+    directive = DEFAULT_QSAR_REGISTER_DIRECTIVE.strip()
+    assert directive.startswith("[QSAR REGISTER]") and "lower-secondary" in directive
+    qsar = {
+        "prompt_qsar_factor": DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR,
+        "prompt_qsar_factor_qa": DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR_QA,
+        "prompt_qsar_second_level": DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL,
+        "prompt_qsar_generic": DEFAULT_SYSTEM_PROMPT_QSAR_GENERIC,
+    }
+    for key, prompt in qsar.items():
+        assert prompt.count(directive) == 1, f"{key}: registro QSAr assente o duplicato"
+    for prompt in (DEFAULT_SYSTEM_PROMPT_FACTOR, DEFAULT_SYSTEM_PROMPT_FACTOR_QA,
+                   DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL, DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR):
+        assert "[QSAR REGISTER]" not in prompt
+    register = next(i["default"] for i in ALL_CONFIG_TEXT_DEFINITIONS if i["key"] == "directive_register")
+    assert "'tu'" in register and "QSAr" not in register and "secondary" not in register
+    # Le righe ferme al testo di fabbrica precedente restano allineabili.
+    legacy = json.loads((Path(__file__).parents[1] / "prompt_factory_legacy.json").read_text())
+    for key, prompt in qsar.items():
+        assert digest(prompt) in legacy["configs"][key], key
+        assert len(legacy["configs"][key]) >= 2, f"{key}: hash di fabbrica precedente perso"
+
+
 def test_shared_directives_reach_both_members_of_each_pair():
     # Le direttive a sorgente unica devono essere composte in entrambi i rami:
     # se un refactor ne stacca uno, lo strumento perde la regola in silenzio.

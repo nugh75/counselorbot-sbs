@@ -5881,8 +5881,10 @@ def test_group_membership_web_flow():
     main.app.dependency_overrides[auth.get_current_user] = student_override
     try:
         # Join idempotente (codice classe dal profilo o dal link invito)
-        assert client.post("/groups/join", json={"code": group["code"]}).status_code == 200
-        assert client.post("/groups/join", json={"code": group["code"]}).status_code == 200
+        first = client.post("/groups/join", json={"code": group["code"]})
+        assert first.status_code == 200 and first.json()["already_member"] is False
+        second = client.post("/groups/join", json={"code": group["code"]})
+        assert second.status_code == 200 and second.json()["already_member"] is True
         my_groups = client.get("/user/groups").json()
         assert len([g for g in my_groups if g["group_id"] == group["id"]]) == 1
         membership_id = my_groups[0]["membership_id"]
@@ -7075,9 +7077,26 @@ def test_skills_preview_policy_is_active_for_every_supported_instrument():
     })
     assert created.status_code == 200, created.text
 
+    # La preview prepara il turno come la chat: senza step un consiglio non si
+    # apre, quindi si prova la richiesta di consiglio dentro uno step avviato.
+    db = _TestSession()
+    try:
+        for questionnaire_type in SEEDED_INSTRUMENTS:
+            step_id = f"smoke-advice-{questionnaire_type}"
+            if db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first() is None:
+                db.add(models.GuidedStep(
+                    id=step_id, sort_order=999, label="Smoke advice step",
+                    prompt="Smoke advice step prompt", system_prompt_mode="second-level",
+                    color_theme="slate", questionnaire_type=questionnaire_type,
+                ))
+        db.commit()
+    finally:
+        db.close()
+
     for questionnaire_type in SEEDED_INSTRUMENTS:
         preview = client.post("/admin/skills/preview", json={
             "questionnaire_type": questionnaire_type,
+            "step_id": f"smoke-advice-{questionnaire_type}",
             "language": "it",
             "scores_context": "",
             "message": "Dammi un consiglio concreto",

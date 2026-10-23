@@ -35,6 +35,8 @@ from .guided_text_i18n import SECONDARY_LANGS
 from .idea_map import IDEA_INSTRUMENT
 from .prompt_config import ALL_CONFIG_TEXT_DEFINITIONS, GLOBAL_DIRECTIVE_DEFINITIONS
 from .routes.chat import guided_phase_text_keys
+from .skills import engine as skills_engine
+from .skills.registry import COMPONENT_FLAG_BY_SLUG
 
 LEVEL_COMMON = "common"
 LEVEL_GROUP = "group"
@@ -339,6 +341,81 @@ def _persona_entry(db, instrument: str, configs: dict) -> dict:
     }
 
 
+_SKILL_RANK = {"always": 0, "support": 0, "primary": 1}
+
+
+def _static_exclusion(conditions, instrument: str, step_id: str, step_mode: str | None) -> str | None:
+    """Condizioni che si decidono gia' dalla struttura dello step, senza il turno."""
+    if not isinstance(conditions, dict):
+        return None
+    instruments = conditions.get("questionnaire_types")
+    if instruments and instrument.upper() not in {str(v).upper() for v in instruments}:
+        return "instrument"
+    step_ids = conditions.get("step_ids")
+    if step_ids and step_id not in {str(v) for v in step_ids}:
+        return "step"
+    modes = conditions.get("step_modes")
+    if modes and (step_mode or "").strip().lower() not in {str(v).strip().lower() for v in modes}:
+        return "step_mode"
+    return None
+
+
+def _step_skills(instrument: str, step_id: str, step_mode: str | None,
+                 rows: list, skills_by_id: dict, flags: dict) -> list[dict]:
+    """Skill agganciate a uno step, con lo stesso aggancio che usa la chat.
+
+    Restano visibili anche quelle che oggi non entrano (aggancio spento, skill
+    spenta o in bozza, condizione che lo step non soddisfa, componente spenta):
+    la mappa deve spiegare perche' una skill non c'e', non solo dire quali ci sono.
+    """
+    # Come `registry.bindings_for`: si sceglie fra gli agganci accesi (lo step
+    # vince sul wildcard); quelli spenti compaiono solo se non ce n'e' uno acceso.
+    chosen: dict[int, models.GuidedStepSkill] = {}
+    for enabled in (True, False):
+        for row in rows:
+            if row.step_id not in (step_id, "*") or bool(row.enabled) is not enabled:
+                continue
+            current = chosen.get(row.skill_id)
+            if current is None or (current.enabled == enabled and current.step_id == "*" and row.step_id != "*"):
+                chosen[row.skill_id] = row
+    out = []
+    for skill_id, row in chosen.items():
+        skill = skills_by_id.get(skill_id)
+        if skill is None:
+            continue
+        blocked = []
+        if not row.enabled:
+            blocked.append("binding_off")
+        if not skill.is_active:
+            blocked.append("skill_off")
+        if skill.status != "published":
+            blocked.append("draft")
+        exclusion = _static_exclusion(skill.conditions, instrument, step_id, step_mode)
+        if exclusion:
+            blocked.append(exclusion)
+        flag = COMPONENT_FLAG_BY_SLUG.get(skill.slug)
+        if flag is not None and not bool(flags.get(flag, True)):
+            blocked.append("component")
+        out.append({
+            "id": skill.id,
+            "slug": skill.slug,
+            "name": skill.name,
+            "description": skill.description or "",
+            "routing": skill.routing,
+            "slot": skill.slot,
+            "handler": skill.handler,
+            "conditions": skill.conditions or {},
+            "binding": "step" if row.step_id != "*" else "all",
+            "blocked": blocked,
+            # Il materiale degli handler va nello slot knowledge: con la
+            # componente spenta passano solo le fonti verificate.
+            "knowledge_off": bool(skill.handler) and not bool(flags.get("knowledge", True)),
+            "sort_order": (row.sort_order or skill.sort_order or 0),
+        })
+    out.sort(key=lambda e: (bool(e["blocked"]), _SKILL_RANK.get(e["routing"], 2), e["sort_order"], e["slug"]))
+    return out
+
+
 def build_prompt_map(db, instrument: str) -> dict | None:
     """Mappa a quattro livelli per uno strumento; None se lo strumento non esiste e non ha step."""
     steps_by_instrument = _steps_by_instrument(db)
@@ -401,6 +478,17 @@ def build_prompt_map(db, instrument: str) -> dict | None:
     for row in questions:
         questions_by_step[row.step_id].append(row)
 
+    skill_rows = (
+        db.query(models.GuidedStepSkill)
+        .filter(models.GuidedStepSkill.questionnaire_type == instrument)
+        .all()
+    )
+    skills_by_id = {skill.id: skill for skill in db.query(models.Skill).all()}
+
+    def skills_for(step_id: str, step_mode: str | None) -> list[dict]:
+        flags = get_prompt_component_flags(db, instrument, step_id)
+        return _step_skills(instrument, step_id, step_mode, skill_rows, skills_by_id, flags)
+
     steps_out = []
     for step in steps_by_instrument[instrument]:
         entries = [
@@ -428,6 +516,7 @@ def build_prompt_map(db, instrument: str) -> dict | None:
             "fixed": False,
             "entries": entries,
             "refs": refs,
+            "skills": skills_for(step.id, step.system_prompt_mode),
         })
     for phase in (QUESTIONS_PHASE, CONCLUSION_PHASE):
         entries = list(step_entries.get(phase, []))
@@ -446,12 +535,15 @@ def build_prompt_map(db, instrument: str) -> dict | None:
             "fixed": True,
             "entries": entries,
             "refs": list(step_refs.get(phase, [])),
+            "skills": skills_for(phase, None),
         })
 
     common.insert(0, _persona_entry(db, instrument, configs))
     return {
         "instrument": instrument,
         "instruments": ordered_instruments(db),
+        # Spento: nessuna skill entra, la chat usa il percorso strategie storico.
+        "skills_engine": {"enabled": skills_engine.enabled(db, instrument)},
         "levels": {
             "common": common,
             "groups": [{"instruments": list(k), "entries": v} for k, v in groups.items()],

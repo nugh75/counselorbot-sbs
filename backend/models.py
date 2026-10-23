@@ -1220,6 +1220,27 @@ class GroupShare(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class ClassCouncilLink(Base):
+    """Read-only link for the class council (#422): a signed-in user opens it with its password.
+
+    Only the bcrypt hash of the password is stored; the teacher sees it once.
+    """
+
+    __tablename__ = "class_council_links"
+
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, index=True, nullable=False)
+    token = Column(String, unique=True, index=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    created_by = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+    failed_attempts = Column(Integer, nullable=False, default=0)
+    last_failed_at = Column(DateTime(timezone=True), nullable=True)
+    last_viewed_at = Column(DateTime(timezone=True), nullable=True)
+
+
 class TelegramAccountLink(Base):
     """Mapping verificato telegram_user_id -> username CounselorBot."""
 
@@ -1557,6 +1578,9 @@ class Institution(Base):
     institution_code = Column(String(50), unique=True, nullable=True, index=True)
     # Password hashed bcrypt; vuota significa istituto senza autenticazione.
     hashed_password = Column(String(255), nullable=True)
+    # Copia cifrata per mostrare il codice di accesso della classe nel passo di
+    # somministrazione. La verifica usa sempre solo hashed_password.
+    encrypted_password = Column(Text, nullable=True)
     # Bumped on every code/password change: verification grants bind to it.
     credentials_revision = Column(Integer, nullable=False, default=1, server_default="1")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -1957,6 +1981,8 @@ class ClassPathStep(Base):
     title = Column(String, nullable=True)
     instructions = Column(Text, nullable=True)
     due_date = Column(Date, nullable=True)
+    # Informational planned day; it never restricts access or completion.
+    scheduled_date = Column(Date, nullable=True)
     removed_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     # Applied from a template: `pending` steps keep the template config until
@@ -1990,6 +2016,7 @@ class ClassMeeting(Base):
         # A group meeting has one date; an individual one has its bookable slots.
         CheckConstraint("kind = 'individual' OR starts_at IS NOT NULL", name="class_meeting_group_date"),
         CheckConstraint("host_kind <> 'expert' OR host_name IS NOT NULL", name="class_meeting_expert_name"),
+        CheckConstraint("attendance_mode IN ('student', 'teacher', 'both')", name="class_meeting_attendance_mode"),
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -2007,6 +2034,8 @@ class ClassMeeting(Base):
     host_role = Column(String(200), nullable=True)
     # #189: shown on students' timelines (individual meetings: only the student's own slot).
     show_on_timeline = Column(Boolean, nullable=False, default=True, server_default="true")
+    # Who confirms attendance: the student, the teacher from the register, or either.
+    attendance_mode = Column(String(20), nullable=False, default="student", server_default="student")
     mode = Column(String(20), nullable=False)
     place = Column(String(300), nullable=True)
     link = Column(String(500), nullable=True)
@@ -2069,7 +2098,7 @@ class ClassMeetingBooking(Base):
 
 
 class ClassMeetingAttendance(Base):
-    """The student's own attendance mark (#175); there is no teacher register."""
+    """An attendance mark (#175): the student's own, or the teacher's from the register."""
 
     __tablename__ = "class_meeting_attendance"
     __table_args__ = (UniqueConstraint("meeting_id", "username", name="uq_class_meeting_attendance"),)
@@ -2078,6 +2107,8 @@ class ClassMeetingAttendance(Base):
     meeting_id = Column(Integer, ForeignKey("class_meetings.id", ondelete="CASCADE"), nullable=False, index=True)
     username = Column(String, nullable=False, index=True)
     marked_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    # The teacher who marked it from the register; empty when the student did.
+    marked_by = Column(String, nullable=True)
 
 
 class ClassPathProgress(Base):

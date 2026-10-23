@@ -6,12 +6,29 @@ evidence (#150-#155, #157) are implemented here.
 
 ## Secret storage decision
 
-The institute stores the external password only as a **bcrypt verifier**
-(`institutions.hashed_password`), never in a recoverable form. Plan section 5 is
-explicit: teacher reads expose the code and `credentials_configured`, a saved hash
-cannot be recovered to display the password, and teachers distribute the external
-login separately. Class handoffs may show the institute code; the password is never
-shown back to anyone. No encryption key is introduced.
+The institute keeps the external password in two forms with separate jobs:
+
+- `institutions.hashed_password` is the **bcrypt verifier** checked by
+  `POST /user/administrations/{id}/verify-institution`. It is written on every
+  credential save and reset and is never returned to any client.
+- `institutions.encrypted_password` is a **Fernet-encrypted display copy** used by
+  the external (`external_it`) operational-plan step and by the explicit teacher
+  reveal. The class password is a class access code, not a personal secret: every
+  student who can launch the step must be able to read it before opening
+  competenzestrategiche.it. Both UIs keep it masked behind a **Show/Hide** control.
+
+Teacher list/detail and administrator responses expose only the code and
+`credentials_configured`; neither the password nor either stored form is returned.
+The dedicated reveal endpoint below returns the decrypted display copy only to an
+active institute member, with `Cache-Control: no-store`.
+The display copy lives in the existing `personal_api_credentials` volume and uses
+the `INSTITUTION_CREDENTIAL_KEY` / `_FILE` store (optional; a managed key is
+created in that volume on first save). No new volume or Compose change is needed.
+Existing installations that stored only the bcrypt verifier have no readable copy:
+a teacher must re-enter the credentials once (`Replace external credentials`) to
+populate it. Until then, and whenever the copy cannot be decrypted, the student
+step falls back to "Not available here: ask your teacher" and the institute card
+asks the teacher to re-enter the password once.
 
 The institute code is not secret: it is stored as entered (outer whitespace
 trimmed), compared case-insensitively and unique across institutes. The password is
@@ -22,8 +39,10 @@ bcrypt would otherwise truncate them silently.
 
 | Interface | Behavior |
 |---|---|
-| `PUT /teacher/institutions/{id}/credentials` | Member teacher only; body `{institution_code, password, revision}` parsed by hand so 422 errors never echo the secret; 409 `institution_revision_conflict` / `institution_code_conflict`; bumps `revision` and `credentials_revision`. |
-| `PUT /admin/institutions/{id}/password` | Plaintext reset only; raw hashes rejected; responses carry `credentials_configured`, never `hashed_password`. |
+| `PUT /teacher/institutions/{id}/credentials` | Member teacher only; body `{institution_code, password, revision}` parsed by hand so 422 errors never echo the secret; 409 `institution_revision_conflict` / `institution_code_conflict`; stores the bcrypt verifier and refreshes the encrypted display copy; bumps `revision` and `credentials_revision`. |
+| `GET /teacher/institutions/{id}/password` | Active institute member only; returns `{password, reason}` from the decrypted display copy (`reason` `not_configured` / `display_copy_missing` when unavailable); sends `Cache-Control: no-store`. List and detail responses never include the password. |
+| `PUT /admin/institutions/{id}/password` | Plaintext reset only; raw hashes rejected; responses carry `credentials_configured`, never `hashed_password`, `encrypted_password` or the password. A `null` plaintext clears both stored forms. |
+| `POST /user/paths/{path_id}/steps/{step_id}/launch` | Class members only. For `external_it` plans the `institution` object also carries `institution_password` (decrypted display copy, `null` when unavailable); in-app launches always return `null`. |
 | `/admin/administration-plans` create/edit | `institution_id` replaces legacy fields (rejected with `administration_credentials_moved_to_institution`); edits require `revision` (409 `administration_revision_conflict`); link needs admin or active membership (403 `institution_link_forbidden`); class institute must match (422 `administration_institution_mismatch`). |
 | `GET /admin/administration-plans/institution-options` | Linkable institutes: all active for administrators, memberships otherwise. |
 | `POST /user/administrations/{id}/verify-institution` | Authenticated; returns a 30-minute grant bound to user, plan, institute and credential revision; digest-only storage; 10 failures per user/plan in 15 minutes → 429. |
@@ -39,6 +58,12 @@ TF1 migration, in one transaction under an advisory lock. It adds the plan
 institute FK, `institution_link_state`, `reconciliation_reason`, `revision` and
 `institutions.credentials_revision`, then classifies only rows whose state is still
 NULL, so replays change nothing.
+
+`backend/migrations/20261022_institution_password_display.py` then adds the
+nullable `institutions.encrypted_password` column under its own advisory lock
+(`ADD COLUMN IF NOT EXISTS`, replay-safe). It never backfills: a bcrypt verifier
+cannot be decrypted, so legacy rows keep `NULL` and both the student step and the
+institute card show the fallback until the teacher re-enters the credentials.
 
 | Legacy row | Result |
 |---|---|
@@ -63,7 +88,10 @@ schemas created and dropped per test; invented secrets only.
 ```bash
 DATABASE_URL=postgresql://c4_test@127.0.0.1:18649/counselorbot_test PYTHON_DOTENV_DISABLED=1 \
   backend/.venv/bin/python -m pytest -q backend/tests/test_institute_credentials.py \
-  backend/tests/test_institute_credentials_migration.py backend/tests/test_institute_credentials_telegram.py
+  backend/tests/test_institute_credentials_migration.py backend/tests/test_institute_credentials_telegram.py \
+  backend/tests/test_institution_password.py backend/tests/test_institution_password_display_migration.py
+DATABASE_URL=postgresql://c5_test@127.0.0.1:18650/counselorbot_test PYTHON_DOTENV_DISABLED=1 \
+  backend/.venv/bin/python -m pytest -q backend/tests/test_it_administration.py
 npm test --prefix frontend
 npm run build --prefix frontend
 make guidance-check
@@ -71,13 +99,15 @@ make guidance-check
 
 Each new backend test was first observed failing for the missing feature (404
 endpoints, missing fields, plaintext password persisted in validation metadata,
-bcrypt helper raising). Coverage: write-only credentials and no echo on 422 or in
-logs, role matrix, revision and code conflicts, admin hash non-disclosure, plan
+bcrypt helper raising). Coverage: credential ownership and no echo on 422 or in
+logs, encrypted display copy at rest and its reveal/clear paths, role matrix,
+revision and code conflicts, admin non-disclosure of hash and password, plan
 round trip/options, legacy field rejection, membership/class/inactive checks,
 research visibility, reconciliation, grant issuance/throttling/binding/expiry/
 rotation, no partial writes for score and manual results, instrument mismatch,
-missing credentials, metadata scrubbing, concurrent plan edits, Telegram refusal
-and migration replay for canonical/empty/conflicting/ambiguous/class cases.
+missing credentials, metadata scrubbing, concurrent plan edits, Telegram refusal,
+launch reveal only for external class members, and migration replay for
+canonical/empty/conflicting/ambiguous/class and display-copy columns.
 
 Frontend unit tests cover credential payloads, verification parsing, grant
 placement and plan institute field semantics. A Playwright suite
@@ -107,3 +137,24 @@ legacy plan credential form, so the check now passes.
 
 A full `backend/tests` run was stopped at 57% after the lean-build instruction:
 external-provider timeouts made it impractically slow. It is not claimed as passed.
+
+## Display copy follow-up (2026-10-22)
+
+The password is now displayed to class members in the external step and can be
+revealed by a member teacher in the institute card, so the write-only wording
+above is superseded by the storage decision at the top of this document.
+
+| Check | Result |
+| --- | --- |
+| `test_institute_credentials.py`, both credential migration suites and Telegram (`c4`, 127.0.0.1:18649) | 31 passed |
+| `test_it_administration.py` (`c5`, 127.0.0.1:18650) | 33 passed |
+| `test_institution_password.py` (key fallbacks, no database) | 3 passed |
+| Frontend units | 608 passed |
+| `tsc --noEmit`, `i18n:check` (3417 keys, six languages) | Passed |
+| `make guidance-refresh`, `make guidance-check` | Passed |
+| Production frontend build | Passed |
+
+The role-matrix test now checks `admin -> 403` with a non-member account:
+administrators reach the teacher area only through an active institute membership
+(`require_teacher`), so the old expectation using the member default user was
+stale on `main`. No authorization behavior changed in this fix.

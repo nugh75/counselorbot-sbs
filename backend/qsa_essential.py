@@ -47,6 +47,11 @@ def is_essential_summary(phase: str | None) -> bool:
     return (phase or "") in SUMMARY_PHASES
 
 
+def summary_instrument(phase: str | None) -> str | None:
+    """Instrument whose essential path closes on `phase`, if it is a summary."""
+    return next((code for code, phases in _ESSENTIAL_PATHS.items() if phases[-1] == phase), None)
+
+
 _QSA_TASKS = {
     QSA_PHASES[0]: (
         "Briefly read the available QSA profile and explain the in-scope factors and scores, respecting each factor's direction; never assume every high or low score is a difficulty. Keep the reading descriptive. The next experience stage can take up a personal focus if the person wishes.",

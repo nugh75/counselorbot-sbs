@@ -214,6 +214,17 @@ def test_dot_draws_weakening_edge_dashed_with_tee():
     assert 'arrowhead="tee"' in weakening
 
 
+@pytest.mark.parametrize("theme,red,green", [("light", "#b91c1c", "#15803d"), ("dark", "#f87171", "#4ade80")])
+def test_dot_colours_obstacle_red_and_every_other_edge_green(theme, red, green):
+    dot = to_dot(parse_spec({**MIXED, "edges": [
+        {"from": "n", "to": "c", "kind": kind} for kind in
+        ("drives", "strengthens", "weakens", "feedback", "link", "unclear")
+    ]}), theme=theme)
+    for kind_line in [line for line in dot.splitlines() if '"n" -> "c"' in line]:
+        expected = red if 'arrowhead="tee"' in kind_line else green
+        assert f'color="{expected}"' in kind_line
+
+
 def test_dot_draws_strengthening_edge_thicker():
     dot = to_dot(parse_spec(MIXED))
     strengthening = [
@@ -223,7 +234,7 @@ def test_dot_draws_strengthening_edge_thicker():
     ]
     assert len(strengthening) == 2
     assert all('penwidth="2.6"' in line for line in strengthening)
-    assert all("#41707a" in line for line in strengthening)  # petrol piu' fondo
+    assert all("#15803d" in line for line in strengthening)  # verde, come ogni non-ostacolo
 
 
 def test_edge_label_sits_on_an_opaque_chip():

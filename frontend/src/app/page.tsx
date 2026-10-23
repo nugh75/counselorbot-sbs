@@ -3,6 +3,7 @@
 import { isReusableProfile } from '@/lib/questionnaires';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -60,6 +61,7 @@ import { fetchAccountPreferences, saveAccountPreferences } from '@/lib/account-p
 import { isStartableQuestionnaireId } from '@/lib/tool-catalog';
 import { enterStep, startTrail, stepAtDepth, type Trail } from '@/lib/flow-history';
 import { parseStudentClassPaths, type StudentClassPath } from '@/lib/class-paths';
+import { administrationStepText } from '@/lib/i18n-administration-steps';
 
 
 type Step = 'intro' | 'base' | 'counselor-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'chat-settings' | 'interaction' | 'completed' | 'farewell';
@@ -94,6 +96,8 @@ export default function Home() {
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
     const router = useRouter();
     const [step, setStep] = useState<Step>('intro');
+    // Started from an operational plan step: the final screen leads back there.
+    const [fromPlan, setFromPlan] = useState(false);
     const [toolsAnchor, setToolsAnchor] = useState<string | null>(null);
 
     // Il catalogo strumenti (step 'base') viene aperto anche dalla presentazione:
@@ -601,7 +605,9 @@ export default function Home() {
         if (!requestedId) return;
 
         entryClaimed.current = true;
+        const startedFromPlan = params.get('from') === 'plan';
         void (async () => {
+            setFromPlan(startedFromPlan);
             const access = await fetchUserAccess();
             if (!isToolAllowed(access, requestedId)) {
                 // Disabled tool: deep link falls back to the catalog with warning
@@ -861,6 +867,7 @@ export default function Home() {
     };
 
     const analyzeAnother = () => {
+        setFromPlan(false);
         setResume(null);
         setScores(null);
         setScoreOrigin('new');
@@ -1177,6 +1184,14 @@ export default function Home() {
                                     questionnaireType={selectedQuestionnaire?.id || 'QSA'}
                                     onReturnHome={analyzeAnother}
                                 />
+                                {fromPlan && (
+                                    <Link
+                                        href="/profilo/piani-operativi"
+                                        className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                    >
+                                        {administrationStepText(lang, 'back')}
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     )}

@@ -33,6 +33,8 @@ class SkillsResult:
     meta: dict[str, dict] = field(default_factory=dict)
     # diagnostica per la preview admin
     trace: list[dict] = field(default_factory=list)
+    # slug -> [(slot, testo)] reso: l'anteprima verifica che arrivi nel prompt
+    rendered: dict[str, list[tuple[str, str]]] = field(default_factory=dict)
 
 
 def truncate(text: str, limit: int) -> str:
@@ -157,6 +159,7 @@ def render(bindings: list[SkillBinding], ctx: SkillContext, total_max_chars: int
         entry["chars"] = skill_used
         for slot, text in limited_segments:
             result.blocks.setdefault(slot, []).append(text)
+        result.rendered[skill.slug] = limited_segments
         if output_ids:
             result.ids[skill.slug] = output_ids
         if output_meta:
@@ -263,14 +266,20 @@ def build_context(
     )
 
 
-def run_skills(ctx: SkillContext, *, router_enabled: bool = True) -> SkillsResult:
-    """Filtra, seleziona e rende le skill agganciate allo step corrente."""
+def run_skills(ctx: SkillContext, *, router_enabled: bool = True, include_skill_id: int | None = None,
+               include_skill=None) -> SkillsResult:
+    """Filtra, seleziona e rende le skill agganciate allo step corrente.
+
+    `include_skill_id`, `include_skill`: solo anteprima admin, vedi `registry.bindings_for`."""
     from . import conditions as _conditions
     from .registry import COMPONENT_FLAG_BY_SLUG, bindings_for
 
     result = SkillsResult()
     try:
-        bindings = bindings_for(ctx.db, ctx.questionnaire_type, ctx.step_id)
+        bindings = bindings_for(
+            ctx.db, ctx.questionnaire_type, ctx.step_id,
+            include_skill_id=include_skill_id, include_skill=include_skill,
+        )
     except Exception as exc:
         logger.warning("Caricamento skill fallito: %s", exc)
         return result
@@ -310,5 +319,6 @@ def run_skills(ctx: SkillContext, *, router_enabled: bool = True) -> SkillsResul
     result.blocks = rendered.blocks
     result.ids = rendered.ids
     result.meta = rendered.meta
+    result.rendered = rendered.rendered
     result.trace.extend(rendered.trace)
     return result

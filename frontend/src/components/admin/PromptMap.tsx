@@ -13,9 +13,9 @@ import { estimateTokens } from '@/lib/context-tokens';
 import type { AdminGuidedStepQuestion } from '@/lib/guided-step-questions';
 import {
     PROMPT_MAP_LANGUAGES, badgeFor, booleanFlags, componentsValue, entryAnchor, entryText, findEntry, levelAnchor, levelCounts,
-    levelSection, moveItem, needsSharedConfirm, normalizeStepId, saveRequest, sectionDefaultOpen, sectionsForEntry, sortOrderChanges, stepAnchor, stepSection, stepsByInstrument,
+    levelSection, moveItem, needsSharedConfirm, normalizeStepId, saveRequest, sectionDefaultOpen, sectionsForEntry, skillConditionParts, sortOrderChanges, stepAnchor, stepSection, stepsByInstrument,
     type PromptMap as PromptMapData, type PromptMapBadge, type PromptMapCounselor, type PromptMapEntry, type PromptMapInstrument,
-    type PromptMapLevel, type PromptMapRef, type PromptMapStep, type PromptMapUser,
+    type PromptMapLevel, type PromptMapRef, type PromptMapSkill, type PromptMapStep, type PromptMapUser,
 } from '@/lib/prompt-map';
 
 // Vista "Mappa dei prompt": i testi delle chat guidate di uno strumento dal
@@ -360,6 +360,44 @@ function RefRow({ map, refItem, onGo, onOverride }: {
         </div>
         {text && <p className="mt-1 line-clamp-1 break-words text-[11px] text-slate-400">{text}</p>}
     </li>;
+}
+
+// Skill che la chat aggancia allo step: quando entrano, dove vanno nel prompt
+// e, per quelle che oggi restano fuori, perche'. Si modificano nella scheda Skill.
+function StepSkills({ skills, engineOn }: { skills: PromptMapSkill[]; engineOn: boolean }) {
+    const { t } = useI18n();
+    return <div data-step-skills className="mt-4">
+        <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{t('admin.promptMap.skills.title')}</p>
+        <p className="mb-2 text-[11px] text-slate-500">{t('admin.promptMap.skills.hint')}</p>
+        {!engineOn && <p className="mb-2 flex items-center gap-1 rounded bg-amber-50 px-2 py-1 text-xs text-amber-900">
+            <AlertTriangle aria-hidden className="h-3.5 w-3.5" />{t('admin.promptMap.skills.engineOff')}
+        </p>}
+        {skills.length === 0 ? <p className="text-xs text-slate-500">{t('admin.promptMap.skills.none')}</p> : <ul className="space-y-2">
+            {skills.map(skill => {
+                const off = skill.blocked.length > 0 || !engineOn;
+                return <li key={skill.id} className={`rounded border px-3 py-2 text-xs ${off ? 'border-dashed border-slate-200 bg-slate-50/70 text-slate-500' : 'border-violet-200 bg-violet-50/60 text-slate-700'}`}>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="font-semibold">{skill.name}</span>
+                        <code className="font-mono text-[11px]">{skill.slug}</code>
+                        <span className="rounded bg-white px-1.5 py-0.5 text-[11px] ring-1 ring-slate-200">{t(`admin.promptMap.skills.routing.${skill.routing}`)}</span>
+                        <span className="rounded bg-white px-1.5 py-0.5 text-[11px] ring-1 ring-slate-200">{t(`admin.promptMap.skills.slot.${skill.slot}`)}</span>
+                        <span className="text-[11px]">{t(skill.binding === 'step' ? 'admin.promptMap.skills.bindingStep' : 'admin.promptMap.skills.bindingAll')}</span>
+                        <a href={`/admin?tab=skills&skill=${skill.id}`} className="inline-flex items-center gap-0.5 font-semibold text-indigo-600 hover:underline">
+                            <Pencil aria-hidden className="h-3 w-3" />{t('admin.promptMap.skills.edit')}
+                        </a>
+                    </div>
+                    <p className="mt-1">
+                        <span className="font-semibold">{t('admin.promptMap.skills.whenLabel')}</span>{' '}
+                        {skillConditionParts(skill).map(part => t(part.key, part.params)).join(' · ')}
+                    </p>
+                    {skill.blocked.length > 0 && <p className="mt-1 text-amber-800">
+                        {t('admin.promptMap.skills.blockedLabel')} {skill.blocked.map(reason => t(`admin.promptMap.skills.blocked.${reason}`)).join(' · ')}
+                    </p>}
+                    {skill.knowledge_off && <p className="mt-1 text-amber-800">{t('admin.promptMap.skills.knowledgeOff')}</p>}
+                </li>;
+            })}
+        </ul>}
+    </div>;
 }
 
 function DialogShell({ title, hint, onClose, children, footer }: {
@@ -978,6 +1016,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                     editor: { method: 'POST', path: '/admin/config' }, read_only: false,
                 }} />)}
         </div>
+        {map && step.skills && <StepSkills skills={step.skills} engineOn={map.skills_engine?.enabled ?? true} />}
         {map && step.refs.length > 0 && <div className="mt-4">
             <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">{t('admin.promptMap.inherited')}</p>
             <ul className="space-y-2">

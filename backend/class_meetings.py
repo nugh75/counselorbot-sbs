@@ -1,7 +1,8 @@
 """Class and group meetings (#175): the target of `meeting` path steps.
 
-A meeting belongs to one class or group. Students of that class see it and mark
-their own attendance; the attendance is the step's completion evidence.
+A meeting belongs to one class or group. Students of that class see it; the
+student, the teacher from the register, or either marks attendance, as the
+teacher chose. The attendance is the step's completion evidence.
 """
 from datetime import datetime, timezone
 
@@ -46,7 +47,12 @@ def meeting_summary(row: models.ClassMeeting) -> dict:
             "duration_minutes": row.duration_minutes, "mode": row.mode, "place": row.place, "link": row.link,
             "status": row.status, "cancelled_at": row.cancelled_at.isoformat() if row.cancelled_at else None,
             "revision": row.revision, "kind": row.kind, "host_kind": row.host_kind,
-            "host_name": row.host_name, "host_role": row.host_role, "show_on_timeline": row.show_on_timeline}
+            "host_name": row.host_name, "host_role": row.host_role, "show_on_timeline": row.show_on_timeline,
+            "attendance_mode": row.attendance_mode}
+
+
+STUDENT_MARKS = ("student", "both")
+TEACHER_MARKS = ("teacher", "both")
 
 
 def attendance(db: Session, meeting_id: int, username: str) -> models.ClassMeetingAttendance | None:

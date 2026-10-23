@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { apiFetch, getIdentity } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n-context";
 import { administrationStepText } from "@/lib/i18n-administration-steps";
@@ -21,9 +20,11 @@ import {
 } from "@/lib/questionnaires";
 import { fetchInstruments } from "@/lib/instruments-api";
 import { getSelectedCounselorId } from "@/lib/counselor";
+import { deleteFrozenSession } from "@/lib/frozen-session";
 import { ScoreInputForm } from "@/components/qsa/ScoreInputForm";
 import { GuidedChatInterface } from "@/components/qsa/GuidedChatInterface";
 import { InAppAdministrationRunner } from "@/components/administration/InAppAdministrationRunner";
+import { PlanChatCompleted } from "@/components/administration/PlanChatCompleted";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Callout } from "@/components/ui/Callout";
@@ -37,7 +38,6 @@ export function AdministrationStepFlow({
   stepId: number;
 }) {
   const { lang } = useI18n();
-  const router = useRouter();
   const l = (key: Parameters<typeof administrationStepText>[1]) =>
     administrationStepText(lang, key);
   const [launch, setLaunch] = useState<AdministrationLaunch | null>(null);
@@ -48,6 +48,7 @@ export function AdministrationStepFlow({
   const [busy, setBusy] = useState(false);
   const [institutionCode, setInstitutionCode] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [grant, setGrant] = useState<string | null>(null);
   const [scores, setScores] = useState<Record<string, number> | null>(null);
@@ -56,6 +57,7 @@ export function AdministrationStepFlow({
   const [saved, setSaved] = useState<AdministrationResult | null>(null);
   const runnerSession = useRef<string | null>(null);
   const [ack, setAck] = useState<AdministrationEntryAck | null>(null);
+  const [completed, setCompleted] = useState(false);
   const [reload, setReload] = useState(0);
   const owner = useRef<string | null>(null);
   const draftKey = useRef<string | null>(null);
@@ -303,6 +305,8 @@ export function AdministrationStepFlow({
       )}
     </div>
   );
+  if (ack && questionnaire && completed)
+    return <PlanChatCompleted sessionId={ack.session_id} questionnaireType={questionnaire.id} />;
   if (ack && questionnaire)
     return (
       <GuidedChatInterface
@@ -311,7 +315,10 @@ export function AdministrationStepFlow({
         sessionId={ack.session_id}
         counselorId={getSelectedCounselorId()}
         locale={lang}
-        onComplete={() => router.push("/profilo/piani-operativi")}
+        onComplete={() => {
+          setCompleted(true);
+          void deleteFrozenSession(ack.session_id).catch(() => {});
+        }}
       />
     );
   return (
@@ -406,7 +413,26 @@ export function AdministrationStepFlow({
                   {l("password")}
                 </dt>
                 <dd className="mt-1 text-sm text-slate-700">
-                  {l("passwordFromTeacher")}
+                  {launch.institution.institution_password ? (
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="select-all whitespace-pre-wrap font-mono text-lg text-slate-900">
+                        {showPassword
+                          ? launch.institution.institution_password
+                          : "********"}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        aria-pressed={showPassword}
+                        onClick={() => setShowPassword((value) => !value)}
+                      >
+                        {showPassword ? l("hidePassword") : l("showPassword")}
+                      </Button>
+                    </span>
+                  ) : (
+                    l("passwordFromTeacher")
+                  )}
                 </dd>
               </div>
             </dl>

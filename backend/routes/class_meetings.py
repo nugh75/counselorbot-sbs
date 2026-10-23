@@ -2,7 +2,8 @@
 
 The teacher plans them and, for now, manages everything, including meetings
 held by an institute referent or an external expert (invited by the teacher
-outside the platform). Students book a slot and mark their own attendance.
+outside the platform). Students book a slot; attendance is marked by the
+student, by the teacher from the register, or by either, as the teacher chose.
 """
 from datetime import datetime, timezone
 from typing import Literal, Optional
@@ -13,8 +14,8 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
-from ..class_meetings import (active_bookings, attendance, book_slot, meeting_group_ids, meeting_summary,
-                              meetings_for_groups, my_booking, slots)
+from ..class_meetings import (STUDENT_MARKS, TEACHER_MARKS, active_bookings, attendance, book_slot,
+                              meeting_group_ids, meeting_summary, meetings_for_groups, my_booking, slots)
 from ..goals import membership_ids
 from .groups import _require_visible_group, _username
 
@@ -37,6 +38,7 @@ class MeetingWrite(BaseModel):
     host_name: Optional[str] = Field(default=None, max_length=200)
     host_role: Optional[str] = Field(default=None, max_length=200)
     show_on_timeline: bool = True
+    attendance_mode: Literal["student", "teacher", "both"] = "student"
     # #190: other classes or groups the meeting is also for; the home class is implied.
     group_ids: list[int] = Field(default_factory=list, max_length=50)
 
@@ -90,6 +92,11 @@ class SlotUpdate(SlotWrite):
 class BookingMove(BaseModel):
     model_config = ConfigDict(extra="forbid")
     slot_id: int = Field(gt=0)
+
+
+class AttendanceWrite(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    attended: bool
 
 
 class BookingWrite(BaseModel):
@@ -178,6 +185,8 @@ def _apply(db: Session, identity, group: models.StudentGroup, row: models.ClassM
     row.mode, row.place, row.link = payload.mode, payload.place, payload.link
     row.host_kind, row.referral_id, row.host_name, row.host_role = payload.host_kind, payload.referral_id, host_name, host_role
     row.show_on_timeline = payload.show_on_timeline
+    # A mode change keeps the marks already given, by either side.
+    row.attendance_mode = payload.attendance_mode
     # The other classes must be active classes or groups the teacher manages.
     extra = [group_id for group_id in dict.fromkeys(payload.group_ids) if group_id != group.id]
     for group_id in extra:
@@ -252,6 +261,49 @@ def cancel_meeting(meeting_id: int, payload: RevisionOnly, identity=Depends(auth
         row.revision += 1
     db.commit()
     return _teacher_record(db, row)
+
+
+def _register_students(db: Session, row: models.ClassMeeting) -> list[tuple[int, str]]:
+    """The students of the meeting's classes or groups, each once, under their first class."""
+    group_ids = meeting_group_ids(db, row)
+    seen: dict[str, int] = {}
+    for group_id, username in (db.query(models.GroupMembership.group_id, models.GroupMembership.username)
+                               .filter(models.GroupMembership.group_id.in_(group_ids))
+                               .order_by(models.GroupMembership.username)):
+        seen.setdefault(username, group_id)
+    return [(group_id, username) for username, group_id in seen.items()]
+
+
+@router.get("/teacher/meetings/{meeting_id}/attendance")
+def attendance_register(meeting_id: int, identity=Depends(auth.get_current_plan_manager),
+                        db: Session = Depends(get_db)):
+    row = _teacher_meeting(db, identity, meeting_id, for_update=False)
+    students = _register_students(db, row)
+    names = _names(db, [username for _, username in students])
+    marks = {mark.username: mark for mark in db.query(models.ClassMeetingAttendance).filter_by(meeting_id=row.id)}
+    return {"attendance_mode": row.attendance_mode, "students": [
+        {"username": username, "name": names.get(username) or username, "group_id": group_id,
+         "attended": username in marks, "marked_by_teacher": bool(username in marks and marks[username].marked_by)}
+        for group_id, username in students]}
+
+
+@router.put("/teacher/meetings/{meeting_id}/attendance/{username}")
+def set_attendance(meeting_id: int, username: str, payload: AttendanceWrite,
+                   identity=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    row = _teacher_meeting(db, identity, meeting_id)
+    if row.status == "cancelled":
+        raise HTTPException(409, "meeting_cancelled")
+    if row.attendance_mode not in TEACHER_MARKS:
+        raise HTTPException(409, "attendance_by_student")
+    if username not in {name for _, name in _register_students(db, row)}:
+        raise HTTPException(404, "student_not_found")
+    mark = attendance(db, row.id, username)
+    if payload.attended and mark is None:
+        db.add(models.ClassMeetingAttendance(meeting_id=row.id, username=username, marked_by=_username(identity) or ""))
+    elif not payload.attended and mark is not None:
+        db.delete(mark)
+    db.commit()
+    return {"username": username, "attended": payload.attended}
 
 
 def _individual(row: models.ClassMeeting) -> None:
@@ -358,7 +410,9 @@ def _student_record(db: Session, row: models.ClassMeeting, username: str, names:
     own = next((group_id for group_id in meeting_group_ids(db, row) if group_id in names), row.group_id)
     data = {**meeting_summary(row), "group_name": names.get(own, ""), "attended": mark is not None,
             "attended_at": mark.marked_at.isoformat() if mark else None,
-            "can_mark": row.status == "scheduled" and start is not None and start <= datetime.now(timezone.utc)}
+            "marked_by_teacher": bool(mark and mark.marked_by),
+            "can_mark": row.attendance_mode in STUDENT_MARKS and row.status == "scheduled"
+            and start is not None and start <= datetime.now(timezone.utc)}
     if row.kind == "individual":
         booking = my_booking(db, row.id, username)
         taken = active_bookings(db, row.id)
@@ -410,6 +464,8 @@ def mark_attendance(meeting_id: int, identity=Depends(auth.get_current_user), db
     username = _username(identity) or ""
     if row.status == "cancelled":
         raise HTTPException(409, "meeting_cancelled")
+    if row.attendance_mode not in STUDENT_MARKS:
+        raise HTTPException(409, "attendance_by_teacher")
     start = _attendable_from(db, row, username)
     if start is None:
         raise HTTPException(409, "meeting_not_booked")
@@ -424,6 +480,10 @@ def mark_attendance(meeting_id: int, identity=Depends(auth.get_current_user), db
 @router.delete("/user/meetings/{meeting_id}/attendance")
 def unmark_attendance(meeting_id: int, identity=Depends(auth.get_current_user), db: Session = Depends(get_db)):
     row = _student_meeting(db, identity, meeting_id)
-    db.query(models.ClassMeetingAttendance).filter_by(meeting_id=row.id, username=_username(identity) or "").delete()
+    if row.attendance_mode not in STUDENT_MARKS:
+        raise HTTPException(409, "attendance_by_teacher")
+    # The teacher's own mark stays: only the teacher takes it back.
+    db.query(models.ClassMeetingAttendance).filter_by(meeting_id=row.id, username=_username(identity) or "",
+                                                      marked_by=None).delete()
     db.commit()
     return {"attended": False}
