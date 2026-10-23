@@ -46,6 +46,11 @@ class ForumPostUpdate(BaseModel):
     body: ForumBody
 
 
+class ForumTopicUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    title: ForumTitle
+
+
 class ForumHide(BaseModel):
     model_config = ConfigDict(extra="forbid")
     reason: ForumReason
