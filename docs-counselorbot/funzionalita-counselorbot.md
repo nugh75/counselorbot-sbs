@@ -200,6 +200,9 @@ lingua e Congela sessione. Formato e lunghezza sono scelte indipendenti.
 Il percorso essenziale QSA prevede tre risposte e la sintesi; non va esteso a QSAr
 o agli altri questionari. I due percorsi sugli obiettivi hanno la propria versione
 essenziale. L’esperienza OpenCode è un’alternativa quando disponibile.
+Se il percorso completo QSA non riesce a caricare gli step, mostra un errore con
+**Riprova**: ricarica il percorso della stessa sessione conservando fase e messaggi,
+senza saltare alle domande finali o sostituire i prompt configurati.
 
 Per chi ha ruolo docente, ricercatore o amministratore, la scelta compare in due
 testi: nella scheda **Impostazioni della conversazione** prima di avviare e nel

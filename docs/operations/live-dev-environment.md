@@ -6,6 +6,21 @@ modifiche dal browser del Mac, **senza toccare i container di produzione**
 
 ## Comandi
 
+### QSA e Prompting: fixture senza backend
+
+`scripts/dev-qsa-prompting-frontend.sh` avvia Next con hot reload su
+`127.0.0.1:3158`, dopo il controllo porta. Usa uno snapshot nella `.tmp` del
+worktree, esclude i file ambiente e rispecchia le modifiche a `frontend/src`.
+Riavvia dopo rimozioni di file o modifiche alla configurazione. Il backend è
+`127.0.0.1:9`: tutte le API dei test sono intercettate con dati sintetici, senza DB.
+
+Tunnel: `ssh -N -L 3158:127.0.0.1:3158 <utente>@<server>`;
+URL `http://localhost:3158`. Senza fixture le API sono indisponibili.
+Stop: Ctrl+C nel terminale dello script. Nessuna modifica dei container operativi.
+Comandi dei test e confronto degli artefatti:
+[qsa-prompting-regression.md](qsa-prompting-regression.md).
+
+
 ### Class settings S1 (#88), secret-free worktree verification
 
 Use `scripts/dev-class-settings-backend.sh` (:8002, explicit local

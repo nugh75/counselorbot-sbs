@@ -1066,3 +1066,64 @@ Validation and reproducible secret-free commands:
 `docs/operations/class-forum-validation.md`. Draft PR and task closure follow
 successful tests and dev verification. Future slices must retain the import,
 export and PDF privacy gates: no forum data reaches any local or external LLM.
+
+# Handoff: QSA e Prompting (13 ottobre 2026, task 5ef78f32)
+
+- Branch `fix/qsa-prompting-regression`, base `cfb48674` (#252).
+- Bug riprodotto `945e01ec-3457-40bb-89d1-82657baa70d6`: HTTP/rete/JSON falliti
+  su guided-ui-texts eliminavano il percorso QSA completo e generavano la fase
+  Domande. Fix limitato: errore visibile e Riprova, senza sostituzioni di prompt
+  o scritture DB. Test sintetici con dieci step, ripresa e nessun turno AI dopo
+  caricamento fallito.
+- Segnalazione originale `7202fceb-a1b6-47cf-a549-aed35c80a7bc` resta sospetta:
+  non è provato il fallimento nella sessione dell'utente e la diversa UI Prompting
+  ricordata non è stata identificata. Nessuna evidenza di rollback di queste UI;
+  runtime backend coincide con main nei quattro file controllati, DB/endpoint
+  restituiscono dieci step, UI Mappa distribuita verificata con 22 test.
+- #253 rimane OPEN/non distribuita: nessun difetto correlato identificato nel suo
+  diff. Recovery6503 non toccata, nessuna API di merge/deploy prenotata o eseguita.
+- Diagnosi, limiti e procedura conservativa: `docs/operations/qsa-prompting-regression.md`.
+  Runner dev senza file ambiente: `scripts/dev-qsa-prompting-frontend.sh` (:3158).
+- Review indipendente di `review_qsa_prompting`, stesso gpt-6.1-sol high su scelta
+  esplicita dell'utente per questo task: nessun blocker, subordinata ai test finali.
+- Bug non registrati: nessuno. Entrambi sono registrati LOCAL nel Diario;
+  `not-linked` non significa issue GitHub pubblicata. Non aprire issue a mano.
+- Non chiudere task5ef78f32 come fatto finché manca l'identificazione della UI
+  Prompting attesa. Nessun merge/deploy/sudo, nessun dato operativo modificato.
+
+## Stato di consegna parziale: sandbox cambiata durante le verifiche
+
+Il nuovo profilo `workspace-write` nega la scrittura dei metadata Git condivisi
+(`Counselorbot/.git/worktrees/qsa-prompting-regression/index.lock`), l'accesso al
+socket Docker e la connessione a GitHub. `git add` fallisce con Operation not
+permitted, Docker con permission denied, `gh pr list` non raggiunge l'API.
+Nessun commit/push/PR è stato creato; il branch e i dieci file sono conservati.
+
+Verifiche osservate prima del cambio profilo: 429 test unitari verdi,
+TypeScript e lint dei file modificati verdi, i18n 3325 chiavi/sei lingue,
+guidance-check verde; artefatto originale: Prompting 22/22, QPCC 8/8,
+QSA percorso/ripresa/pannello 3/3. La regressione HTTP503 fallisce sull'artefatto
+originale con phase=questions; il singolo retry HTTP passa sul codice corretto.
+Le fixture successive tengono il servizio indisponibile fino al retry esplicito,
+compatibili con il doppio effetto iniziale di React in dev.
+
+Da verificare prima del commit: tutti e sei i nuovi casi sul codice finale,
+Prompting/QPCC sul nuovo artefatto, risultato del rebuild
+`s9-qsa-prompting-frontend:local`. Le sessioni tool del build e delle suite finali
+sono state perse al cambio profilo: nessun esito completo è attestato.
+Il tentativo browser sotto la nuova sandbox fallisce all'avvio di Chromium;
+non è un fallimento funzionale del fix. Non aprire la PR con questi check pendenti.
+
+Dev ultimo avvio su3158, stato attuale non verificabile sotto sandbox; il PID
+atteso42089 non è rilevato da lsof, quindi non è stato segnalato alla cieca.
+Il container di baseline `s9-qsa-prompting-runtime` era stato fermato prima del
+cambio profilo; anche `s9-qsa-prompting-frontend` sulla rete interna era fermo.
+Nessun container del fix su3159 è stato avviato. Verificare i soli processi propri
+prima della ripresa; stop dev con Ctrl+C, oppure identificazione tramite
+`lsof -nP -iTCP:3158 -sTCP:LISTEN`. Mai toccare processi preesistenti.
+
+PR title previsto: `fix: keep QSA steps when path loading fails`.
+Commit previsti: fix con codice/test/traduzioni/funzionalità/manifest; separato
+commit docs con diagnosi, runner isolato, CONTEXT e handoff. Dopo ripristino
+permessi, completare test, review diff/staged, commit/push, PR sul board
+`CounselorBot`, notify PR best-effort. Task5ef resta aperto, nessun notify di chiusura.
