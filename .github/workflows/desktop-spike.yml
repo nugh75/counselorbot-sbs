@@ -147,11 +147,13 @@ jobs:
         run: find "$HOME" -name backend.log -path '*counselorbot.spike*' -exec tail -60 {} \; 2>/dev/null || true
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: spike-${{ matrix.runner }}
           path: |
             desktop/spike-tauri/src-tauri/target/release/bundle/dmg/*.dmg
             desktop/spike-tauri/src-tauri/target/release/bundle/nsis/*.exe
             desktop/spike-tauri/src-tauri/target/release/bundle/deb/*.deb
+            ${{ runner.temp }}/spike-gui.png
           retention-days: 7
           if-no-files-found: warn

@@ -12,6 +12,10 @@ args=()
 [ "$mode" = smoke ] && args=(--smoke)
 SPIKE_REPORT_FILE="$report" "$@" "$exe" "${args[@]}" &
 pid=$!
+# Evidence of what the window shows (macOS runners have a real desktop session).
+if [ "$mode" = gui ] && command -v screencapture >/dev/null; then
+    (sleep 30; screencapture -x "${RUNNER_TEMP:-/tmp}/spike-gui.png") &
+fi
 start=$(date +%s)
 while [ ! -s "$report" ] && [ $(( $(date +%s) - start )) -lt "$timeout" ]; do
     [ "$mode" = smoke ] && ! kill -0 "$pid" 2>/dev/null && break

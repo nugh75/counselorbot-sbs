@@ -114,6 +114,7 @@ fn write_report(report: &Value, gui: bool) {
 
 #[tauri::command]
 async fn backend_status(app: AppHandle) -> Value {
+    eprintln!("spike: page called backend_status");
     let report = tauri::async_runtime::spawn_blocking(move || probe(&app.state::<Backend>()))
         .await
         .unwrap_or_else(|e| json!({ "ok": false, "error": e.to_string() }));
@@ -125,6 +126,9 @@ fn main() {
     let smoke = std::env::args().any(|arg| arg == "--smoke");
     let app = tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![backend_status])
+        .on_page_load(|webview, payload| {
+            eprintln!("spike: page load {:?} {} in {}", payload.event(), payload.url(), webview.label());
+        })
         .setup(move |app| {
             let backend = spawn_backend(app.handle())?;
             app.manage(backend);
@@ -140,6 +144,7 @@ fn main() {
                     .title("CounselorBot — spike F0-01")
                     .inner_size(820.0, 640.0)
                     .build()?;
+                eprintln!("spike: window created");
             }
             Ok(())
         })
