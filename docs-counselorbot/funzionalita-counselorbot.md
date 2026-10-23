@@ -1079,7 +1079,9 @@ messaggio dello studente indicato e gli elementi rimasti senza citazioni; il con
 si ripete a ogni lettura. Il quadro è salvato per compilazione e lingua: se la
 conversazione cambia dopo la generazione il riquadro lo segnala e propone **Aggiorna
 il quadro**; sono indicati anche i casi senza messaggi dello studente e di modello
-non raggiungibile. Gli accessi sono gli stessi del dettaglio (classe visibile o piano
+non raggiungibile. Se il modello risponde in modo vuoto, tagliato o non leggibile
+il server riprova una volta e registra nel log un'anteprima della risposta (#466);
+lo stesso vale per il noticing della classe. Gli accessi sono gli stessi del dettaglio (classe visibile o piano
 di somministrazione); il quadro non entra nel PDF né nel link del consiglio di classe.
 
 **Noticing della classe (#464).** La scheda **Noticing** di `/docente/classi/{id}`
