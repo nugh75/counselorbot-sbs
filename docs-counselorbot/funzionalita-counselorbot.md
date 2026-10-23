@@ -1834,6 +1834,23 @@ esplicita la gerarchia di scelta del modello a tre livelli: 1) abbonamento ChatG
 dell'utente (se collegato), 2) connessione API personale o condivisa, 3) riserva di sistema
 per chi non possiede 1 o 2.
 
+Le **connessioni ai modelli locali** hanno due indirizzi: **Ollama** e **Server
+locale / compatibile OpenAI** (il provider `llamacpp`, che serve llama.cpp,
+llama-swap, LM Studio, vLLM, LiteLLM o un server di scuola su `/v1`). Il pulsante
+**Rileva server locali** prova con un timeout breve Ollama (`127.0.0.1:11434`),
+LM Studio (`127.0.0.1:1234/v1`) e l'indirizzo scritto nel campo del server
+compatibile, anche se non ancora salvato. Per ciascuno mostra se risponde, se
+chiede una chiave o se è irraggiungibile, l'elenco dei modelli di chat caricati e il
+pulsante **Usa questo indirizzo**, che salva l'indirizzo trovato (non quando è
+fissato da una variabile d'ambiente). Se il backend gira in Docker, `127.0.0.1` è il
+container: il rilevamento prova prima `host.docker.internal`, cioè il computer che
+lo ospita, e propone quell'indirizzo. Il server compatibile può avere una **chiave
+facoltativa**, necessaria per vLLM o LiteLLM protetti: è un segreto come le altre
+chiavi, si imposta come `LLAMACPP_API_KEY` in ai4educ Console (pagina Segreti) e il
+pannello ne mostra solo la presenza. La chiave va solo all'indirizzo salvato, mai a
+un indirizzo appena scritto o a Ollama e LM Studio. Senza chiave tutto funziona come
+prima.
+
 Se provider e modello non sono impostati, il pannello dichiara espressamente lo stato reale
 («Nessuna riserva di sistema configurata: gli utenti senza ChatGPT o chiave personale non
 possono chattare»). Il pulsante **«Prova»** (protetto da `browser_mutation` come le altre
