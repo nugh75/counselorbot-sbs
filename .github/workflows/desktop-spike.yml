@@ -108,6 +108,7 @@ jobs:
             echo "### ${{ matrix.runner }}"
             echo '```'
             du -sh ../../backend | sed 's/^/backend onedir: /'
+            du -sh ../../backend/_internal/* | sort -h | tail -6
             find bundle -maxdepth 2 \( -name '*.dmg' -o -name '*.app' -o -name '*.exe' -o -name '*.msi' -o -name '*.deb' -o -name '*.AppImage' \) -exec du -sh {} \;
             grep -E "seconds|onedir_mb" "$RUNNER_TEMP/pyinstaller.txt"
             echo '```'
@@ -120,7 +121,8 @@ jobs:
           cp -R "$app" "$RUNNER_TEMP/"
           exe="$RUNNER_TEMP/$(basename "$app")/Contents/MacOS/counselorbot-spike"
           bash desktop/spike-tauri/scripts/check-app.sh "$exe" smoke 300
-          bash desktop/spike-tauri/scripts/check-app.sh "$exe" gui 300
+          # Started directly from the shell the window never appeared (run 40037618847).
+          bash desktop/spike-tauri/scripts/check-app.sh "$RUNNER_TEMP/$(basename "$app")" gui 300
 
       - name: Installed app check (Windows, NSIS per-user install)
         if: startsWith(matrix.runner, 'windows')
