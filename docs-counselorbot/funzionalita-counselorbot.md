@@ -1067,6 +1067,20 @@ Il pulsante **Scarica il resoconto PDF** usa lo stesso generatore e la stessa
 sintesi canonica del documento dello studente, con il transcript completo.
 La sintesi conserva la cache e il comportamento di generazione già previsto
 nella vista studente. Il PDF non modifica la riflessione salvata.
+**Quadro di noticing (#247).** Tra la riflessione e la conversazione, il riquadro
+**Quadro di noticing** propone al docente fino a sei elementi da riprendere con lo
+studente, ciascuno con un tipo: *Da riprendere*, *Risorsa*, *Difficoltà*, *Da
+attenzionare*. Il quadro si genera solo quando il docente preme **Genera il quadro**:
+aprire la compilazione non chiama il modello. Ogni elemento riporta, in un blocco
+citato distinto dal testo dell'IA, le parole dello studente che lo sostengono, e il
+collegamento **Vai al messaggio N** evidenzia quel messaggio nella conversazione
+(numerata). Il server scarta le citazioni che non si ritrovano alla lettera nel
+messaggio dello studente indicato e gli elementi rimasti senza citazioni; il controllo
+si ripete a ogni lettura. Il quadro è salvato per compilazione e lingua: se la
+conversazione cambia dopo la generazione il riquadro lo segnala e propone **Aggiorna
+il quadro**; sono indicati anche i casi senza messaggi dello studente e di modello
+non raggiungibile. Gli accessi sono gli stessi del dettaglio (classe visibile o piano
+di somministrazione); il quadro non entra nel PDF né nel link del consiglio di classe.
 La stessa scheda è usata da Compilazioni, Classi (matrice ed elenco) e Piani di
 somministrazione. Le etichette accessibili includono la data per distinguere
 compilazioni ripetute; nei riquadri stretti i nomi dei fattori si adattano allo
