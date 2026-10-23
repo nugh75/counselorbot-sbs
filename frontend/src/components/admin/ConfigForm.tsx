@@ -21,6 +21,8 @@ import { ModelSearchSelect } from '@/components/admin/ModelSearchSelect';
 import { validModelId } from '@/lib/model-search';
 import { systemAIText } from '@/lib/i18n-system-ai';
 import { formatProbeDetail, systemAIRoleLabel, type SystemAITestResponse } from '@/lib/system-ai-fallback';
+import { LocalLlmDetect } from '@/components/admin/LocalLlmDetect';
+import { localLlmText } from '@/lib/local-llm';
 
 // --- Types ---
 
@@ -134,7 +136,7 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
         ]
     },
     llamacpp: {
-        label: 'llama.cpp / llama-swap',
+        label: 'Server locale / compatibile OpenAI',
         models: [
             'default',
             'qwen3',
@@ -668,7 +670,7 @@ export function ConfigForm() {
 
     const localConnections = [
         { key: 'ollama_ip', label: 'Ollama IP Address' },
-        { key: 'llamacpp_url', label: 'llama.cpp / llama-swap URL' },
+        { key: 'llamacpp_url', label: localLlmText(lang, 'customLabel') },
     ];
 
     const sectionGroups: SectionFilterGroup[] = [
@@ -899,6 +901,16 @@ export function ConfigForm() {
                             </div>
                         );
                     })}
+                    <LocalLlmDetect
+                        customUrl={getConfigValue('llamacpp_url')}
+                        currentValues={{ ollama_ip: getConfigValue('ollama_ip'), llamacpp_url: getConfigValue('llamacpp_url') }}
+                        envOverrides={envOverrides}
+                        onUse={(key, value) => {
+                            const label = localConnections.find(def => def.key === key)?.label || key;
+                            setConfigDraft(key, value, label);
+                            handleSaveConfig({ key, value, description: label });
+                        }}
+                    />
                 </div>
             </div>
 
