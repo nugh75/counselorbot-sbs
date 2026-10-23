@@ -212,6 +212,11 @@ Backup: `pg_dump` dal pannello («Esporta backup») e prima di ogni aggiornament
 - **non supporta Server-Sent Events**;
 - nessuna garanzia di disponibilità; pensato «per test e sviluppo».
 
+**Misurato in F0-03** ([report](spikes/f0-03-tunnel-sse.md)): le risposte SSE in `POST` (tutte quelle di CounselorBot)
+scorrono in streaming reale; sono bufferizzate solo le `GET`. Il limite pratico è il **taglio a ~60 s senza byte**
+(prima delle intestazioni o nel corpo): serve un heartbeat `: ping` ogni 15 s. Nessun 429 fino a 270 richieste contemporanee.
+Il testo che segue è la stima precedente allo spike.
+
 Conseguenze per CounselorBot: la chat, il sito-chat e la lettura vocale usano SSE
 (`frontend/src/app/api/*/stream/route.ts`). **Con il quick tunnel lo streaming va considerato non funzionante**
 finché lo spike F0-03 non lo misura. Per una classe di 30 il limite di 200 richieste è sufficiente,
