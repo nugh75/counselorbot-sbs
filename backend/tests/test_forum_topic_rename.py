@@ -54,7 +54,7 @@ def test_nobody_else_renames_a_discussion(forum_api, actor):
 
 
 @pytest.mark.parametrize("payload", [{"title": " "}, {"title": "T" * 161}, {"title": "Bad\x00title"},
-                                     {"title": "Bell\x07"}, {"title": 5}, {}, {"title": "Ok", "body": "Other"}])
+                                     {"title": "Bell\x07"}, {"title": 5}, {}, {"title": "Ok", "pinned": True}])
 def test_rename_input_limits_match_creation(forum_api, payload):
     client, _, group_id, identity = forum_api
     topic = student_topic(client, identity, group_id)

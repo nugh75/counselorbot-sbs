@@ -1443,13 +1443,16 @@ interface controls are included; the guide sections and screenshots arrived with
 Titles, messages and reasons reject invisible control characters (for example
 NUL); tabs and line breaks are kept. Character lengths for titles and messages are validated on publication.
 
-**Discussion title edit.** Inside an open discussion, «Modifica titolo» lets
-the author fix a wrong title (`PATCH /forum/topics/{id}`, same 160-character and
-control-character rules as creation) while the class is active and the
-discussion is neither closed nor hidden; with pre-approval on, a student's new
-title waits for approval again. Class owners, co-teachers and administrators
-can edit any discussion title, closed or hidden ones included. Nobody else can;
-the discussion shows «modificato» after the change.
+**Discussion title and description edit.** Inside an open discussion,
+«Modifica discussione» opens one form with the title and the opening text
+(description) and lets the author fix either or both (`PATCH /forum/topics/{id}`
+with `title`, `body` or both; same limits as creation: 160 characters for the
+title, 4000 for the text, no control characters) while the class is active and
+the discussion is neither closed nor hidden; with pre-approval on, a student's
+edited discussion waits for approval again. Class owners, co-teachers and
+administrators can edit any discussion, closed or hidden ones included. Nobody
+else can; the discussion shows «modificato» after the change. Replies keep
+their own «Modifica» button.
 
 **Forum resource links (F5, #106).** When opening a class discussion, a class
 teacher or administrator may select an optional link to a step of a published

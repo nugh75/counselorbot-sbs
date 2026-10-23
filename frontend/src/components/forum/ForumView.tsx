@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Lock, Pin } from 'lucide-react';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
-import { forumClosedNotice, forumDraftValid, forumLink, forumPostActions, forumTopicRenamable, parseForumDetail, parseForumList, parseForumLog, parseForumPost,
+import { forumClosedNotice, forumDraftValid, forumLink, forumPostActions, forumTopicChanges, forumTopicEditable, parseForumDetail, parseForumList, parseForumLog, parseForumPost,
     parseForumMutes, parseForumPending, parseForumTopic, parseForumTargets, forumTargetHref, type ForumPost, type ForumTopic, type ForumTarget } from '@/lib/forum';
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
 import { forumText, type forumTexts } from '@/lib/i18n-forum';
@@ -61,21 +61,30 @@ function EditForm({ initial, busy, onSave, onCancel }: { initial: string; busy: 
     </form>;
 }
 
-function TitleForm({ initial, busy, onSave, onCancel }: { initial: string; busy: boolean; onSave: (title: string) => void; onCancel: () => void }) {
+function TopicForm({ initial, busy, onSave, onCancel }: {
+    initial: { title: string; body: string }; busy: boolean; onSave: (changes: { title?: string; body?: string }) => void; onCancel: () => void;
+}) {
     const { lang } = useI18n(); const l = (key: TextKey) => forumText(lang, key);
-    const [title, setTitle] = useState(initial);
-    const valid = forumDraftValid('x', title);
-    useDraftGuard(title !== initial, l('discard'), { blocked: busy });
-    return <form className="space-y-2" onSubmit={event => { event.preventDefault(); if (valid) onSave(title.trim()); }}>
+    const [title, setTitle] = useState(initial.title); const [body, setBody] = useState(initial.body);
+    const dirty = title !== initial.title || body !== initial.body;
+    const valid = forumDraftValid(body, title);
+    const changes = forumTopicChanges(initial, { title, body });
+    useDraftGuard(dirty, l('discard'), { blocked: busy });
+    return <form className="space-y-2" onSubmit={event => { event.preventDefault(); if (valid && changes) onSave(changes); }}>
         <label className="block text-sm font-semibold text-slate-700">{l('title')}
             <input value={title} maxLength={160} disabled={busy} onChange={event => setTitle(event.target.value)}
                 className="mt-1 block min-h-[44px] w-full rounded-md border border-slate-300 bg-white p-2 font-normal" />
             <span className="font-mono text-xs text-slate-500">{title.length} / 160</span>
         </label>
+        <label className="block text-sm font-semibold text-slate-700">{l('body')}
+            <textarea value={body} maxLength={4000} disabled={busy} rows={6} onChange={event => setBody(event.target.value)}
+                className="mt-1 block w-full rounded-md border border-slate-300 bg-white p-3 text-base font-normal" />
+            <span className="font-mono text-xs text-slate-500">{body.length} / 4000</span>
+        </label>
         <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={busy || !valid || title.trim() === initial}>{l('save')}</Button>
+            <Button type="submit" disabled={busy || !valid || !changes}>{l('save')}</Button>
             <Button type="button" variant="secondary" disabled={busy}
-                onClick={() => { if (title === initial || window.confirm(l('discard'))) onCancel(); }}>{l('cancel')}</Button>
+                onClick={() => { if (!dirty || window.confirm(l('discard'))) onCancel(); }}>{l('cancel')}</Button>
         </div>
     </form>;
 }
@@ -241,7 +250,7 @@ function ForumDiscussion({ groupId, groupActive, topicId, onBack, onForbidden, o
     const { lang } = useI18n(); const l = (key: TextKey) => forumText(lang, key);
     const [offset, setOffset] = useState(0);
     const [acting, setActing] = useState(false); const [actionError, setActionError] = useState(false);
-    const [renaming, setRenaming] = useState(false);
+    const [editing, setEditing] = useState(false);
     const account = useRef(getViewAsAccount()?.username);
     const resource = useTeacherResource(`/api/forum/topics/${topicId}?offset=${offset}`, parseForumDetail);
     const detail = resource.data;
@@ -270,13 +279,14 @@ function ForumDiscussion({ groupId, groupActive, topicId, onBack, onForbidden, o
     const targetHref = detail.topic.link ? forumTargetHref(detail.topic.link, detail.can_moderate ? groupId : undefined) : undefined;
     return <Card className="space-y-4">
         <Button variant="secondary" onClick={onBack}>{l('back')}</Button>
-        {renaming && detail.topic.title !== null ? <TitleForm initial={detail.topic.title} busy={acting} onCancel={() => setRenaming(false)}
-            onSave={title => void act(`/api/forum/topics/${topicId}`, 'PATCH', { title }).then(done => { if (done) setRenaming(false); })} />
+        {editing && detail.topic.title !== null && detail.topic.body !== null ? <TopicForm initial={{ title: detail.topic.title, body: detail.topic.body }}
+            busy={acting} onCancel={() => setEditing(false)}
+            onSave={changes => void act(`/api/forum/topics/${topicId}`, 'PATCH', changes).then(done => { if (done) setEditing(false); })} />
             : <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="min-w-0 break-words text-lg font-bold text-slate-800">{detail.topic.title || l('hidden')}{detail.topic.pinned && ` · ${l('pinned')}`}</h3>
-                {forumTopicRenamable(detail.topic, { moderator: detail.can_moderate, active: groupActive })
-                    && detail.forum_enabled !== false && !detail.mute &&
-                    <Button size="sm" variant="secondary" disabled={acting} onClick={() => setRenaming(true)}>{l('editTitle')}</Button>}
+                {forumTopicEditable(detail.topic, { moderator: detail.can_moderate, active: groupActive })
+                    && detail.topic.body !== null && detail.forum_enabled !== false && !detail.mute &&
+                    <Button size="sm" variant="secondary" disabled={acting} onClick={() => setEditing(true)}>{l('editTopic')}</Button>}
             </div>}
         {detail.topic.link && <p className="break-words text-sm text-slate-600">{l('linkedResource')}: {' '}
             {targetHref ? <Link href={targetHref} className="text-indigo-700 underline">

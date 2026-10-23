@@ -296,8 +296,9 @@ def topic_detail(topic_id: int, offset: int = Query(0, ge=0), limit: int = Query
 @router.patch("/forum/topics/{topic_id}")
 def rename_topic(topic_id: int, payload: ForumTopicUpdate,
                  identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
-    # Title only: the author fixes a wrong name, moderators keep their tools on
-    # closed or hidden discussions. Author renames follow pre-approval like edits.
+    # Title and/or opening text: the author fixes a wrong name or description,
+    # moderators keep their tools on closed or hidden discussions. Author edits
+    # follow pre-approval like reply edits.
     topic = _get_topic(db, topic_id)
     _, staff = _access(db, identity, topic.group_id, write=True)
     status = _student_write(db, identity, topic.group_id, staff)
@@ -310,7 +311,8 @@ def rename_topic(topic_id: int, payload: ForumTopicUpdate,
         if topic.locked:
             raise HTTPException(403, "forum_topic_closed")
         topic.status = status
-    topic.title = payload.title
+    for name in payload.model_fields_set:
+        setattr(topic, name, getattr(payload, name))
     topic.edited_at = db.scalar(func.statement_timestamp())
     db.commit()
     db.refresh(topic)

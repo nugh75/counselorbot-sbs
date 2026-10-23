@@ -47,8 +47,16 @@ class ForumPostUpdate(BaseModel):
 
 
 class ForumTopicUpdate(BaseModel):
+    # Title, description or both; an omitted field keeps its current value.
     model_config = ConfigDict(extra="forbid")
-    title: ForumTitle
+    title: ForumTitle | None = None
+    body: ForumBody | None = None
+
+    @model_validator(mode="after")
+    def _title_or_body(self):
+        if not self.model_fields_set or None in (getattr(self, name) for name in self.model_fields_set):
+            raise ValueError("title or body required")
+        return self
 
 
 class ForumHide(BaseModel):
