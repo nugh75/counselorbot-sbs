@@ -201,6 +201,7 @@ Postgres incorporato: si includono i binari ufficiali (`postgres`, `initdb`, `pg
 password generata e salvata nel portachiavi di sistema. Rischi: aggiornamento di versione maggiore
 (serve `pg_upgrade` o dump/restore guidato), antivirus su Windows che rallentano i file del cluster.
 Backup: `pg_dump` dal pannello («Esporta backup») e prima di ogni aggiornamento dell'app.
+Esito dello spike F0-02 (fonti dei binari, dimensioni e tempi misurati): [spikes/f0-02-embedded-postgres.md](spikes/f0-02-embedded-postgres.md).
 
 ### 3.4 Tunnel
 
