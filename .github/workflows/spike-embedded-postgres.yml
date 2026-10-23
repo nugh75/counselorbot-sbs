@@ -1,0 +1,52 @@
+name: Spike embedded Postgres
+# F0-02 (docs/architecture/spikes/f0-02-embedded-postgres.md): manual runs only,
+# plus pushes to spike branches. It never runs on main by itself.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'spike/**'
+    paths:
+      - 'scripts/spikes/embedded_postgres_*.py'
+      - '.github/workflows/spike-embedded-postgres.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, macos-15-intel, windows-latest, ubuntu-22.04]
+        source: [theseus, zonky]
+        include:
+          - source: theseus
+            version: '15.19.1'
+          - source: zonky
+            version: '15.19.0'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt
+      - name: initdb, start, backend migrations
+        run: python scripts/spikes/embedded_postgres_probe.py --source ${{ matrix.source }} --version ${{ matrix.version }} --work "${{ runner.temp }}/pg-spike" --report report.json
+      - name: Logs
+        if: always()
+        shell: bash
+        run: |
+          tail -n 60 "${{ runner.temp }}/pg-spike/backend.log" || true
+          tail -n 30 "${{ runner.temp }}/pg-spike/postgres.log" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-${{ matrix.os }}-${{ matrix.source }}
+          path: |
+            report.json
+            ${{ runner.temp }}/pg-spike/backend.log
+            ${{ runner.temp }}/pg-spike/postgres.log
+          if-no-files-found: ignore
