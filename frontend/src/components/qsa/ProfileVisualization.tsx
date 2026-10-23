@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { factorTranslationKey } from '@/lib/questionnaires';
 
 import { cn } from '@/lib/utils';
@@ -176,7 +177,12 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
 
             <div className="relative col-span-2 row-start-2 min-w-0 sm:flex-1">
                 {isNeutral ? (
-                    <div className="flex h-6 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-2xs text-slate-600">1–9</div>
+                    <div className="space-y-1">
+                        <div className="flex h-6 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-2xs text-slate-600">1–9</div>
+                        {/* La scala grigia non e' un errore: M2 si legge nel contesto,
+                            senza fascia di forza o di crescita. */}
+                        <p className="text-2xs leading-tight text-slate-500">{t('profile.QPCC.neutralNote')}</p>
+                    </div>
                 ) : isZTPI ? (
                     <div className="flex h-6 rounded-md overflow-hidden border border-slate-200">
                         {ztpiSegments.map((segment, idx) => (
@@ -229,6 +235,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
 
 export function ProfileVisualization({ scores, questionnaire }: ProfileVisualizationProps) {
     const { t, tf } = useI18n();
+    const [view, setView] = useState<string>('all');
     const invertedSet = new Set(questionnaire.invertedFactors);
     const isZTPI = questionnaire.id === 'ZTPI';
     const positiveLegend = isZTPI ? t('profile.legend.ztpiPositive') : t('profile.strength');
@@ -244,7 +251,11 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
             .sort(([a], [b]) => a.localeCompare(b)),
     }));
 
-    const gridCols = columns.length === 1 ? '' : 'md:grid-cols-2';
+    // Vista per area: stessi dati, una sola colonna alla volta; 'all' li mostra tutti.
+    const areaLabel = (prefix: string) => questionnaire.id === 'QPCC' ? t(`dimension.QPCC.${prefix}`) : PREFIX_SECTION_COLOR[prefix] ? t(`profile.section.${prefix}`) : `${prefix}`;
+    const activeView = columns.some(c => c.prefix === view) ? view : 'all';
+    const visibleColumns = activeView === 'all' ? columns : columns.filter(c => c.prefix === activeView);
+    const gridCols = visibleColumns.length === 1 ? '' : 'md:grid-cols-2';
 
     // Sintesi: classifica ogni fattore come forza / crescita e prende i primi 3.
     // ZTPI usa la zona (ideal=forza, far=crescita); gli altri usano soglie 7/3,
@@ -329,10 +340,31 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                 </div>
             )}
 
+            {columns.length > 1 && (
+                <div role="group" aria-label={t('profile.view.label')} className="flex flex-wrap justify-center gap-1.5">
+                    {[['all', t('profile.view.all')], ...columns.map(c => [c.prefix, areaLabel(c.prefix)])].map(([key, label]) => (
+                        <button
+                            key={key}
+                            type="button"
+                            aria-pressed={activeView === key}
+                            onClick={() => setView(key)}
+                            className={cn(
+                                'min-h-9 rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+                                activeView === key
+                                    ? 'border-indigo-700 bg-indigo-700 text-white'
+                                    : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
+                            )}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+            )}
+
             <div className={cn("grid gap-x-8 gap-y-2", gridCols)}>
-                {columns.map(({ prefix, entries }) => {
+                {visibleColumns.map(({ prefix, entries }) => {
                     const sectionColor = PREFIX_SECTION_COLOR[prefix] || 'text-slate-700';
-                    const sectionLabel = questionnaire.id === 'QPCC' ? t(`dimension.QPCC.${prefix}`) : PREFIX_SECTION_COLOR[prefix] ? t(`profile.section.${prefix}`) : `${prefix}`;
+                    const sectionLabel = areaLabel(prefix);
                     return (
                         <div key={prefix} className="space-y-0.5">
                             <h4 className={cn("text-sm font-semibold mb-1 pb-1 border-b border-slate-200", sectionColor)}>
@@ -375,6 +407,12 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                         <span className="text-slate-600">{label}</span>
                     </div>
                 ))}
+                {questionnaire.id === 'QPCC' && (
+                    <div className="flex items-center gap-2">
+                        <span className="h-5 w-5 rounded-sm border border-slate-300 bg-slate-100" aria-hidden="true" />
+                        <span className="text-slate-600">{t('profile.legend.neutralScale')}</span>
+                    </div>
+                )}
                 {questionnaire.invertedFactors.length > 0 && (
                     <div className="flex items-center gap-1 text-slate-500">
                         <ArrowLeftRight className="h-3 w-3" aria-hidden />
