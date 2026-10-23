@@ -18,6 +18,7 @@ const TEXTS = {
         goTools: 'Vai agli strumenti',
         goProfile: 'Vai al tuo profilo',
         invalid: 'Invito non valido o scaduto. Chiedi al docente un nuovo link.',
+        alreadyMember: 'Facevi già parte di questo gruppo.',
         missing: 'Link senza codice gruppo.',
     },
     en: {
@@ -28,32 +29,34 @@ const TEXTS = {
         goTools: 'Go to the instruments',
         goProfile: 'Go to your profile',
         invalid: 'Invalid or expired invitation. Ask your teacher for a new link.',
+        alreadyMember: 'You were already in this group.',
         missing: 'The link has no group code.',
     },
     es: {
         title: 'Invitación al grupo', joining: 'Uniéndote al grupo...', joined: 'Te has unido al grupo',
         instrument: 'Instrumento del grupo', goTools: 'Ir a los instrumentos', goProfile: 'Ir a tu perfil',
-        invalid: 'Invitación no válida o caducada. Pide un nuevo enlace a tu docente.', missing: 'El enlace no contiene el código del grupo.',
+        invalid: 'Invitación no válida o caducada. Pide un nuevo enlace a tu docente.', alreadyMember: 'Ya formabas parte de este grupo.', missing: 'El enlace no contiene el código del grupo.',
     },
     fr: {
         title: 'Invitation au groupe', joining: 'Inscription au groupe...', joined: 'Vous avez rejoint le groupe',
         instrument: 'Outil du groupe', goTools: 'Accéder aux outils', goProfile: 'Accéder à votre profil',
-        invalid: 'Invitation non valide ou expirée. Demandez un nouveau lien à votre enseignant.', missing: 'Le lien ne contient aucun code de groupe.',
+        invalid: 'Invitation non valide ou expirée. Demandez un nouveau lien à votre enseignant.', alreadyMember: 'Vous faisiez déjà partie de ce groupe.', missing: 'Le lien ne contient aucun code de groupe.',
     },
     de: {
         title: 'Gruppeneinladung', joining: 'Beitritt zur Gruppe...', joined: 'Sie sind der Gruppe beigetreten',
         instrument: 'Instrument der Gruppe', goTools: 'Zu den Instrumenten', goProfile: 'Zu Ihrem Profil',
-        invalid: 'Ungültige oder abgelaufene Einladung. Bitten Sie Ihre Lehrkraft um einen neuen Link.', missing: 'Der Link enthält keinen Gruppencode.',
+        invalid: 'Ungültige oder abgelaufene Einladung. Bitten Sie Ihre Lehrkraft um einen neuen Link.', alreadyMember: 'Sie waren bereits in dieser Gruppe.', missing: 'Der Link enthält keinen Gruppencode.',
     },
     sv: {
         title: 'Gruppinbjudan', joining: 'Går med i gruppen...', joined: 'Du har gått med i gruppen',
         instrument: 'Gruppens instrument', goTools: 'Gå till instrumenten', goProfile: 'Gå till din profil',
-        invalid: 'Ogiltig eller utgången inbjudan. Be din lärare om en ny länk.', missing: 'Länken saknar gruppkod.',
+        invalid: 'Ogiltig eller utgången inbjudan. Be din lärare om en ny länk.', alreadyMember: 'Du var redan med i den här gruppen.', missing: 'Länken saknar gruppkod.',
     },
 };
 
 interface JoinedGroup {
     name: string;
+    already_member?: boolean;
 }
 
 function GroupJoinInner() {
@@ -86,13 +89,14 @@ function GroupJoinInner() {
         <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-6 p-6 text-center">
             <Users className="h-10 w-10 text-slate-500" aria-hidden />
             <h1 className="text-2xl font-bold text-slate-800">{texts.title}</h1>
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            {!error && !group && <p className="text-sm text-slate-500">{texts.joining}</p>}
+            {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+            {!error && !group && <p role="status" className="text-sm text-slate-500">{texts.joining}</p>}
             {group && (
                 <>
-                    <p className="text-lg font-semibold text-slate-700">
+                    <p role="status" className="w-full rounded-md border border-emerald-200 bg-emerald-50 p-4 text-lg font-semibold text-emerald-800">
                         {texts.joined}: {group.name}
                     </p>
+                    {group.already_member && <p className="text-sm text-slate-600">{texts.alreadyMember}</p>}
                     <p className="max-w-sm text-xs text-slate-500">{learningText(lang, 'groupVisibility')}</p>
                     <div className="flex flex-col gap-2 sm:flex-row">
                         <Link
