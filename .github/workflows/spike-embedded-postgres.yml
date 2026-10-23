@@ -26,6 +26,9 @@ jobs:
           - os: ubuntu-22.04
             source: theseus-musl
             version: '15.19.1'
+          - os: ubuntu-22.04
+            source: source
+            version: '15.19'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:

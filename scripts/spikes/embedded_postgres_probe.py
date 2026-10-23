@@ -17,6 +17,7 @@ import socket
 import subprocess
 import sys
 import tarfile
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -79,12 +80,17 @@ def free_port() -> int:
 
 
 def run(cmd, **kwargs):
-    started = time.perf_counter()
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False, **kwargs)
-    elapsed = time.perf_counter() - started
-    if result.returncode != 0:
-        print(result.stdout, result.stderr, sep="\n", file=sys.stderr)
-        raise SystemExit(f"command failed ({result.returncode}): {cmd[0]}")
+    # Output goes to a file, not a pipe: on Windows the postgres started by
+    # pg_ctl inherits the handles and a pipe would never reach EOF.
+    with tempfile.TemporaryFile("w+", encoding="utf-8", errors="replace") as out:
+        started = time.perf_counter()
+        result = subprocess.run(cmd, stdout=out, stderr=subprocess.STDOUT,
+                                stdin=subprocess.DEVNULL, check=False, **kwargs)
+        elapsed = time.perf_counter() - started
+        if result.returncode != 0:
+            out.seek(0)
+            print(out.read(), file=sys.stderr)
+            raise SystemExit(f"command failed ({result.returncode}): {cmd[0]}")
     return elapsed
 
 
@@ -95,7 +101,52 @@ def download(url: str, dest: Path) -> float:
     return time.perf_counter() - started
 
 
+def build_from_source(version: str, work: Path) -> tuple[Path, dict]:
+    """Relocatable build on the oldest supported distro (Ubuntu 22.04)."""
+    url = f"https://ftp.postgresql.org/pub/source/v{version}/postgresql-{version}.tar.bz2"
+    archive = work / "source.tar.bz2"
+    info = {"url": url, "download_s": round(download(url, archive), 2)}
+    with tarfile.open(archive) as tar:
+        tar.extractall(work, filter="tar")
+    src = work / f"postgresql-{version}"
+    install = work / "pgsql"
+    started = time.perf_counter()
+    run(["./configure", f"--prefix={install}", "--without-icu", "--without-readline"], cwd=src)
+    # $ORIGIN rpath keeps libpq found by pg_dump/psql wherever the folder is moved.
+    run(["make", f"-j{os.cpu_count()}", "install", "rpathdir=$$ORIGIN/../lib"], cwd=src)
+    info["build_s"] = round(time.perf_counter() - started, 2)
+    packed = work / "packed.tar.gz"
+    with tarfile.open(packed, "w:gz") as tar:
+        tar.add(install, arcname="pgsql")
+    info["archive_bytes"] = packed.stat().st_size
+    # Move the tree to prove the build is relocatable.
+    moved = work / "pgsql-moved"
+    shutil.move(str(install), moved)
+    return moved, info
+
+
+def describe_install(install: Path, info: dict) -> None:
+    info["installed_bytes"] = dir_size(install)
+    info["installed_bytes_by_dir"] = {
+        d.name: dir_size(d) for d in install.iterdir() if d.is_dir()
+    }
+    info["runtime_bytes"] = sum(
+        f.stat().st_size for f in install.rglob("*")
+        if f.is_file() and not f.is_symlink() and not is_build_only(f.relative_to(install))
+    )
+    info["largest_files"] = sorted(
+        ((str(f.relative_to(install)), f.stat().st_size) for f in install.rglob("*")
+         if f.is_file() and not f.is_symlink()),
+        key=lambda item: -item[1],
+    )[:8]
+    info["tools_present"] = {t: (install / "bin" / f"{t}{EXE}").exists() for t in TOOLS}
+
+
 def fetch_binaries(source: str, version: str, work: Path) -> tuple[Path, dict]:
+    if source == "source":
+        install, info = build_from_source(version, work)
+        describe_install(install, info)
+        return install, info
     key = (platform.system(), platform.machine())
     archive = work / "download"
     if source.startswith("theseus"):
@@ -128,20 +179,7 @@ def fetch_binaries(source: str, version: str, work: Path) -> tuple[Path, dict]:
             tar.extractall(install, filter="tar")
         info["inner_txz_bytes"] = (work / inner).stat().st_size
     info["extract_s"] = round(time.perf_counter() - started, 2)
-    info["installed_bytes"] = dir_size(install)
-    info["installed_bytes_by_dir"] = {
-        d.name: dir_size(d) for d in install.iterdir() if d.is_dir()
-    }
-    info["runtime_bytes"] = sum(
-        f.stat().st_size for f in install.rglob("*")
-        if f.is_file() and not f.is_symlink() and not is_build_only(f.relative_to(install))
-    )
-    info["largest_files"] = sorted(
-        ((str(f.relative_to(install)), f.stat().st_size) for f in install.rglob("*")
-         if f.is_file() and not f.is_symlink()),
-        key=lambda item: -item[1],
-    )[:8]
-    info["tools_present"] = {t: (install / "bin" / f"{t}{EXE}").exists() for t in TOOLS}
+    describe_install(install, info)
     return install, info
 
 
@@ -191,7 +229,7 @@ def boot_backend(db_url: str, scratch: Path, log: Path) -> float:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--source", choices=["theseus", "theseus-musl", "zonky"], required=True)
+    parser.add_argument("--source", choices=["theseus", "theseus-musl", "zonky", "source"], required=True)
     parser.add_argument("--version", required=True)
     parser.add_argument("--work", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
