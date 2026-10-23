@@ -266,16 +266,20 @@ def build_context(
     )
 
 
-def run_skills(ctx: SkillContext, *, router_enabled: bool = True, include_skill_id: int | None = None) -> SkillsResult:
+def run_skills(ctx: SkillContext, *, router_enabled: bool = True, include_skill_id: int | None = None,
+               include_skill=None) -> SkillsResult:
     """Filtra, seleziona e rende le skill agganciate allo step corrente.
 
-    `include_skill_id`: solo anteprima admin, vedi `registry.bindings_for`."""
+    `include_skill_id`, `include_skill`: solo anteprima admin, vedi `registry.bindings_for`."""
     from . import conditions as _conditions
     from .registry import COMPONENT_FLAG_BY_SLUG, bindings_for
 
     result = SkillsResult()
     try:
-        bindings = bindings_for(ctx.db, ctx.questionnaire_type, ctx.step_id, include_skill_id=include_skill_id)
+        bindings = bindings_for(
+            ctx.db, ctx.questionnaire_type, ctx.step_id,
+            include_skill_id=include_skill_id, include_skill=include_skill,
+        )
     except Exception as exc:
         logger.warning("Caricamento skill fallito: %s", exc)
         return result

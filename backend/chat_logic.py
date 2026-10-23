@@ -2415,7 +2415,8 @@ def _retrieved_context(
     nei blocchi [STUDENT] e [PROFILE] del system prompt.
 
     `skills_probe` serve all'anteprima admin delle skill: in ingresso puo'
-    portare `include_skill_id` (una skill da provare anche in bozza) e
+    portare `include_skill_id` o `include_skill` (una skill da provare anche in
+    bozza o non salvata) e
     `simulate_engine`, in uscita riceve intent, trace e testo reso per skill."""
     if component_flags is None:
         component_flags = PROMPT_COMPONENT_DEFAULTS
@@ -2587,7 +2588,9 @@ def _retrieved_context(
             knowledge_sources=rag_sources,
         )
         skills_result = skills_engine.run_skills(
-            ctx, include_skill_id=(skills_probe or {}).get("include_skill_id"),
+            ctx,
+            include_skill_id=(skills_probe or {}).get("include_skill_id"),
+            include_skill=(skills_probe or {}).get("include_skill"),
         )
         if skills_probe is not None:
             skills_probe.update(

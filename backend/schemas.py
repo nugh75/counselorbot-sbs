@@ -1815,6 +1815,8 @@ class SkillPreviewRequest(BaseModel):
     message: str = ""
     # Skill da provare anche se in bozza, spenta o non agganciata.
     include_skill_id: Optional[int] = None
+    # Versione non salvata (wizard): con `include_skill_id` sostituisce quella salvata.
+    draft: Optional[SkillBase] = None
 
 
 class SkillPreviewResponse(BaseModel):

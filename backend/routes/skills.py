@@ -276,6 +276,12 @@ async def preview_skills(
         use_phase_prompt=bool(payload.step_id and not message.strip()),
     )
     probe = {"include_skill_id": payload.include_skill_id, "simulate_engine": True}
+    if payload.draft is not None:
+        draft = payload.draft.model_dump()
+        _validate(draft)
+        # Mai aggiunta alla sessione: la prova non scrive nulla.
+        probe["include_skill"] = models.Skill(id=payload.include_skill_id, **draft)
+        probe["include_skill_id"] = None
     try:
         prepared = prepare_chat_turn(
             db, AIService(db), request, f"skill-preview-{uuid.uuid4()}", {"username": ""},
