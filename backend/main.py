@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import models, auth, database
+from .version import __version__
 from .prompt_config import (
     ALL_CONFIG_TEXT_DEFINITIONS,
     DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR,
@@ -309,7 +310,13 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, version=__version__)
+
+
+@app.get("/version")
+def get_version():
+    return {"version": __version__}
+
 
 # CORS
 app.add_middleware(
