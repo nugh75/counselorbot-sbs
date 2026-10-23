@@ -1851,7 +1851,8 @@ facoltativa**, necessaria per vLLM o LiteLLM protetti: è un segreto come le alt
 chiavi, si imposta come `LLAMACPP_API_KEY` in ai4educ Console (pagina Segreti) e il
 pannello ne mostra solo la presenza. La chiave va solo all'indirizzo salvato, mai a
 un indirizzo appena scritto o a Ollama e LM Studio. Senza chiave tutto funziona come
-prima.
+prima. Gli indirizzi di Ollama, del server compatibile e di OmniRoute li cambiano
+solo gli amministratori, non i ricercatori.
 
 Se provider e modello non sono impostati, il pannello dichiara espressamente lo stato reale
 («Nessuna riserva di sistema configurata: gli utenti senza ChatGPT o chiave personale non
