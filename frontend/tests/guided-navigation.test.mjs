@@ -258,3 +258,39 @@ test('QSA summary follow-up opens a branch and keeps the visible summary as retu
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }
 });
+
+for (const [width, instrument, section] of [[390, 'QSA', 'La chat guidata'], [1440, 'QSA', 'La chat guidata'], [1440, 'OBIETTIVO_STUDIO', 'Area studente e obiettivi']]) {
+    test(`the opening instructions open the ${instrument} guide section in a popup without losing the chat at ${width}px`, async () => {
+        const { context, page, state } = await fixture(width, instrument);
+        if (instrument === 'OBIETTIVO_STUDIO') state.guidedSteps = STEPS;
+        state.script = body => ({ text: `Apertura ${body.phase}` });
+        try {
+            await page.goto(`${origin}/?resume=1`);
+            await page.getByRole('button', { name: 'Inizia', exact: true }).click();
+            const intro = page.getByTestId('guided-intro');
+            await intro.getByRole('heading', { name: 'Come funziona questa chat' }).waitFor();
+            for (const text of ['20–40 minuti', 'Rispondi con parole tue', '«Congela sessione»']) await intro.getByText(text, { exact: false }).waitFor();
+            await page.locator('#guided-composer').fill('Bozza da conservare');
+            const open = intro.getByRole('button', { name: 'Apri la guida', exact: true });
+            await open.focus();
+            await page.keyboard.press('Enter');
+            const dialog = page.getByRole('dialog', { name: section });
+            await dialog.waitFor();
+            assert.equal(await dialog.getByRole('heading', { name: 'I tasti della conversazione' }).count(), section === 'La chat guidata' ? 1 : 0);
+            const full = dialog.getByRole('link', { name: 'Apri la guida completa in una nuova scheda' });
+            assert.match(await full.getAttribute('href'), /^\/guide#guide-section-(7|12)$/);
+            assert.equal(await full.getAttribute('target'), '_blank');
+            await page.keyboard.press('Escape');
+            await dialog.waitFor({ state: 'detached' });
+            assert.equal(await open.evaluate(node => node === document.activeElement), true);
+            assert.equal(await page.locator('#guided-composer').inputValue(), 'Bozza da conservare');
+            await intro.getByRole('button', { name: 'Ho capito', exact: true }).click();
+            await intro.waitFor({ state: 'detached' });
+            await page.getByRole('button', { name: 'Apri la guida', exact: true }).click();
+            await page.getByRole('button', { name: 'Chiudi la guida', exact: true }).click();
+            await dialog.waitFor({ state: 'detached' });
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+            assert.deepEqual(state.errors, []);
+        } finally { await context.close(); }
+    });
+}
