@@ -1322,6 +1322,20 @@ screens per language with `GUIDE_SCREENS=class-settings` and
 `frontend/scripts/capture-guide.mjs`. Operational plans are distinct from the guided
 path inside one instrument: a strict step lock does not disable its catalog tool.
 
+**Class council link (#422).** The **Class council** tab on `/docente/classi/{id}` lets the
+class owner (or an administrator) create a read-only link to `/consiglio/{token}` with a
+validity of 7, 14, 30, 60 or 90 days. The server generates a 10-character password, stores only
+its hash and shows it once next to the link, with copy buttons; the teacher sends it separately.
+The tab lists the links with state (active, expired, revoked), expiry and last view, and an
+active link can be revoked. Whoever opens the link signs in with their own account and enters
+the password; after ten wrong attempts the link is locked for 15 minutes, and unknown, expired
+and revoked links answer alike. The page shows the class and one collapsible sheet per student,
+with search and print: operational plans with steps done and deadlines, questionnaire results
+with scores and the report summary of the chat when one exists, assignments with the response
+the student shared and the teacher's feedback, and the goals shared with the class. Full
+conversations, private workspaces and unshared goals are never shown. Each view is logged
+(`class_council_view`) and the page is excluded from search engines.
+
 **Operational plans builder (P1, #96).** The **Operational plans** tab on `/docente/classi/{id}`
 provides the teacher-side builder for sequenced operational plans (`class_paths`
 and `class_path_steps`). The class owner, co-teachers and administrators can create
