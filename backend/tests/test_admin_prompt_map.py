@@ -400,8 +400,8 @@ def test_step_skills_match_the_runtime_bindings():
         )
         diagram = db.query(models.Skill).filter(models.Skill.slug == "concept-diagram").one()
         comparison = db.query(models.Skill).filter(models.Skill.slug == "profile-comparison").one()
-        # Oggi un aggancio esplicito spento non batte il wildcard acceso (come
-        # in `bindings_for`); spegnere il wildcard toglie la skill ovunque.
+        # Un aggancio esplicito spento toglie la skill da quello step soltanto;
+        # spegnere il wildcard la toglie ovunque.
         db.add(models.GuidedStepSkill(questionnaire_type="QSA", step_id=step.id, skill_id=diagram.id, enabled=False))
         wildcard = db.query(models.GuidedStepSkill).filter(
             models.GuidedStepSkill.questionnaire_type == "QSA",
@@ -423,8 +423,10 @@ def test_step_skills_match_the_runtime_bindings():
             assert shown == runtime, (step_id, shown, runtime)
 
         by_slug = {entry["slug"]: entry for entry in steps[step.id]["skills"]}
-        assert by_slug["concept-diagram"]["binding"] == "all"
-        assert by_slug["concept-diagram"]["blocked"] == []
+        assert by_slug["concept-diagram"]["binding"] == "step"
+        assert "binding_off" in by_slug["concept-diagram"]["blocked"]
+        other = next(item for item in prompt_map["levels"]["steps"] if item["id"] not in (step.id, "questions", "conclusion"))
+        assert next(e for e in other["skills"] if e["slug"] == "concept-diagram")["blocked"] == []
         assert "binding_off" in by_slug["profile-comparison"]["blocked"]
         assert by_slug["certified-advice"]["binding"] == "all"
         assert by_slug["certified-advice"]["conditions"] == {"intents": ["advice", "guided"]}
