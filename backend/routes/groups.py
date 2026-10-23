@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -743,6 +743,25 @@ async def get_group_student_result(group_id: int, username: str, result_id: int,
     from ..teacher_results import result_detail
     result = _require_student_result(db, current_user, group_id, username, id=result_id)
     return result_detail(db, result, lang)
+
+
+@router.get("/admin/groups/{group_id}/noticing")
+async def get_class_noticing(group_id: int, lang: str = "it", instrument: Optional[str] = None,
+                             days: Optional[int] = Query(None, ge=1, le=3650),
+                             current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..class_noticing import class_noticing
+    group = _require_visible_group(db, current_user, group_id)
+    return class_noticing(db, group, lang, instrument=instrument, days=days)
+
+
+@router.post("/admin/groups/{group_id}/noticing")
+async def generate_class_noticing(group_id: int, lang: str = "it", instrument: Optional[str] = None,
+                                  days: Optional[int] = Query(None, ge=1, le=3650),
+                                  current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..class_noticing import class_noticing
+    group = _require_visible_group(db, current_user, group_id)
+    return class_noticing(db, group, lang, instrument=instrument, days=days, generate=True,
+                          username=_username(current_user))
 
 
 @router.get("/admin/groups/{group_id}/students/{username}/results/{result_id}/noticing")

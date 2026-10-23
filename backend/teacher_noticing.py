@@ -78,7 +78,7 @@ Answer with this JSON and nothing else:
 """.strip()
 
 
-def _parse(answer: str | None) -> list | None:
+def _parse_json(answer: str | None) -> dict | None:
     if not answer:
         return None
     start, end = answer.find("{"), answer.rfind("}")
@@ -88,7 +88,12 @@ def _parse(answer: str | None) -> list | None:
         data = json.loads(answer[start:end + 1])
     except ValueError:
         return None
-    items = data.get("items") if isinstance(data, dict) else None
+    return data if isinstance(data, dict) else None
+
+
+def _parse(answer: str | None) -> list | None:
+    data = _parse_json(answer)
+    items = data.get("items") if data else None
     return items if isinstance(items, list) else None
 
 
