@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Compass } from 'lucide-react';
 import { guidedIntroText } from '@/lib/i18n-guided-intro';
 
@@ -11,11 +11,13 @@ function wasSeen(): boolean {
 }
 
 // Al primo ingresso spiega scopo, passaggi, approfondimento e dove stanno i
-// pulsanti avanti/indietro (in alto a destra su desktop, in barra sotto la
+// pulsanti avanti/indietro (barra sotto la finestra della chat su desktop, barra sotto la
 // casella di scrittura su mobile: vedi ChatWorkspace). Una volta chiusa non
 // ricompare.
 export function GuidedChatIntro({ locale }: { locale: string }) {
-    const [hidden, setHidden] = useState(wasSeen);
+    // Letto dopo il mount: lo storage non esiste lato server, e leggerlo nell'inizializzatore romperebbe l'idratazione.
+    const [hidden, setHidden] = useState(true);
+    useEffect(() => { setHidden(wasSeen()); }, []);
     if (hidden) return null;
 
     const dismiss = () => {
