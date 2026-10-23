@@ -968,9 +968,18 @@ async def join_group(
     )
     if not group:
         raise HTTPException(status_code=404, detail="Classe non trovata")
+    already_member = (
+        db.query(models.GroupMembership.id)
+        .filter(
+            models.GroupMembership.group_id == group.id,
+            models.GroupMembership.username == current_user["username"],
+        )
+        .first()
+        is not None
+    )
     ensure_membership(db, group.id, current_user["username"], "web")
     db.commit()
-    return {"group_id": group.id, "code": group.code, "name": group.name}
+    return {"group_id": group.id, "code": group.code, "name": group.name, "already_member": already_member}
 
 
 @router.get("/user/groups")
