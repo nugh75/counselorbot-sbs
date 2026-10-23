@@ -1786,6 +1786,8 @@ class SkillUpdate(BaseModel):
 
 class SkillResponse(SkillBase):
     id: int
+    # Skill di serie: si disattiva, non si cancella, e lo slug non cambia.
+    builtin: bool = False
 
     class Config:
         from_attributes = True

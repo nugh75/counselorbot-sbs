@@ -10,8 +10,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models, schemas
+from ..skills import conditions as skills_conditions
 from ..skills import engine as skills_engine
 from ..skills import handlers as skills_handlers
+from ..skills_seed import BUILTIN_SKILL_SLUGS
 
 router = APIRouter()
 get_db = database.get_personal_ai_db
@@ -46,6 +48,21 @@ def _validate(payload_dict: dict) -> None:
     handler = payload_dict.get("handler")
     if handler and handler not in skills_handlers.handler_names():
         raise HTTPException(status_code=400, detail=f"handler sconosciuto: {handler}")
+    errors = skills_conditions.validate(payload_dict.get("conditions"))
+    if errors:
+        raise HTTPException(status_code=400, detail="; ".join(errors))
+    params = payload_dict.get("handler_params")
+    if params is not None and not isinstance(params, dict):
+        raise HTTPException(status_code=400, detail="handler_params deve essere un oggetto JSON")
+    max_chars = payload_dict.get("max_chars")
+    if max_chars is not None and max_chars <= 0:
+        raise HTTPException(status_code=400, detail="max_chars deve essere maggiore di zero")
+
+
+def _response(skill: models.Skill) -> schemas.SkillResponse:
+    return schemas.SkillResponse.model_validate(skill).model_copy(
+        update={"builtin": skill.slug in BUILTIN_SKILL_SLUGS}
+    )
 
 
 @router.get("/admin/skills", response_model=List[schemas.SkillResponse])
@@ -53,11 +70,12 @@ async def list_skills(
     current_user: models.User = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
-    return (
+    rows = (
         db.query(models.Skill)
         .order_by(models.Skill.sort_order.asc(), models.Skill.id.asc())
         .all()
     )
+    return [_response(skill) for skill in rows]
 
 
 @router.get("/admin/skills/handlers")
@@ -85,7 +103,7 @@ async def create_skill(
     db.add(skill)
     db.commit()
     db.refresh(skill)
-    return skill
+    return _response(skill)
 
 
 @router.get("/admin/skills/step-map", response_model=schemas.StepSkillMap)
@@ -166,11 +184,21 @@ async def update_skill(
     if invalid_nulls:
         raise HTTPException(status_code=400, detail=f"campi non annullabili: {', '.join(invalid_nulls)}")
     _validate(data)
+    if "slug" in data:
+        slug = (data["slug"] or "").strip()
+        if not slug:
+            raise HTTPException(status_code=400, detail="slug obbligatorio")
+        if slug != skill.slug and skill.slug in BUILTIN_SKILL_SLUGS:
+            raise HTTPException(status_code=400, detail="lo slug di una skill di serie non si cambia")
+        clash = db.query(models.Skill).filter(models.Skill.slug == slug, models.Skill.id != skill.id).first()
+        if clash is not None:
+            raise HTTPException(status_code=409, detail="slug gia' esistente")
+        data["slug"] = slug
     for key, value in data.items():
         setattr(skill, key, value)
     db.commit()
     db.refresh(skill)
-    return skill
+    return _response(skill)
 
 
 @router.delete("/admin/skills/{skill_id}")
@@ -182,6 +210,9 @@ async def delete_skill(
     skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
     if skill is None:
         raise HTTPException(status_code=404, detail="skill non trovata")
+    if skill.slug in BUILTIN_SKILL_SLUGS:
+        # Il seed la ricreerebbe al prossimo avvio, pubblicata e agganciata.
+        raise HTTPException(status_code=409, detail="skill di serie: disattivala invece di cancellarla")
     bound = db.query(models.GuidedStepSkill).filter(models.GuidedStepSkill.skill_id == skill_id).count()
     if bound:
         raise HTTPException(status_code=409, detail=f"skill agganciata a {bound} step: sganciala prima")
