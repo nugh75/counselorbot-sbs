@@ -23,13 +23,30 @@ ALWAYS_ON = frozenset({"notebook", "results", "classes", "assignments"})
 # #174: tools an activity can ask the student to open (personal and support, not the forum switch).
 ACTIVITY_TOOL_KEYS = tuple(key for key, (category, _) in PERSONAL_TOOL_KEYS.items() if category in ("personal", "support"))
 # The app's built-in guided paths («Percorsi guidati»). Without an instrument row
-# they are not toggleable and `require_tool` lets them pass, so access lists and
-# class paths offer them too; with a row, the instrument rules apply.
+# they are class tools of the guided category, on unless the class switches them
+# off; with a row, the instrument rules apply.
 GUIDED_PATH_KEYS = ("SAVICKAS", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE", "OBIETTIVO_STUDIO", "IDEA")
+# Same names as the frontend's `q.<KEY>.fullName`.
+GUIDED_PATH_LABELS = {
+    "SAVICKAS": {"it": "Intervista Savickas di Career Counseling", "en": "Savickas Career Counseling Interview",
+                 "es": "Entrevista de Asesoramiento Profesional de Savickas",
+                 "fr": "Entretien d'Accompagnement de Carrière de Savickas",
+                 "de": "Savickas Laufbahnberatungs-Interview", "sv": "Savickas Karriärvägledningsintervju"},
+    "EVENTO_STUDIO": {"it": "Evento significativo di studio", "en": "Significant study event",
+                      "es": "Evento significativo de estudio", "fr": "Événement d’étude significatif",
+                      "de": "Bedeutsames Lernereignis", "sv": "Betydelsefull studiehändelse"},
+    "EVENTO_PROFESSIONALE": {"it": "Evento significativo professionale", "en": "Significant professional event",
+                             "es": "Evento significativo profesional", "fr": "Événement professionnel significatif",
+                             "de": "Bedeutsames berufliches Ereignis", "sv": "Betydelsefull professionell händelse"},
+    "OBIETTIVO_STUDIO": {"it": "Il mio obiettivo di apprendimento", "en": "My learning objective",
+                         "es": "Mi objetivo de aprendizaje", "fr": "Mon objectif d’apprentissage",
+                         "de": "Mein Lernziel", "sv": "Mitt inlärningsmål"},
+    "IDEA": {"it": "Idea", "en": "Idea", "es": "Idea", "fr": "Idée", "de": "Idee", "sv": "Idé"},
+}
 
 
 def builtin_guided_paths(db: Session) -> list[str]:
-    """Guided paths with no instrument row: always available."""
+    """Guided paths with no instrument row: no admin switch, only the class one."""
     codes = {code.upper() for (code,) in db.query(models.Instrument.code)}
     return [key for key in GUIDED_PATH_KEYS if key not in codes]
 
@@ -52,6 +69,10 @@ def tool_catalog(db: Session, disabled_keys: list[str]) -> list[dict]:
             "enabled": bool(instrument.is_active) and instrument.code not in disabled,
             "always_on": False,
         })
+    for key in builtin_guided_paths(db):
+        tools.append({"key": key, "kind": "instrument", "category": "guided",
+                      "label_i18n": dict(GUIDED_PATH_LABELS[key]), "admin_enabled": True,
+                      "enabled": key not in disabled, "always_on": False})
     for key, (category, label_key) in PERSONAL_TOOL_KEYS.items():
         tools.append({"key": key, "kind": "personal", "category": category,
                       "label_key": label_key, "label_i18n": {}, "admin_enabled": True,

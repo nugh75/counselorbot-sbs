@@ -75,7 +75,7 @@ def is_tool_available_for_class(db: Session, group_id: int, tool_key: str) -> bo
     if key_lower in PERSONAL_TOOL_KEYS:
         canonical = key_lower
     elif key_lower.upper() in builtin_guided_paths(db):
-        return True
+        canonical = key_lower.upper()
     else:
         instrument = (
             db.query(models.Instrument)
@@ -138,7 +138,7 @@ def get_class_enabled_tool_keys(db: Session, group_id: int) -> set[str]:
     return {
         row["key"] for row in catalog
         if row["enabled"] and not row.get("always_on", False) and row["key"] not in ALWAYS_ON
-    } | set(builtin_guided_paths(db))
+    }
 
 
 def _serialize_step(db: Session, step: models.ClassPathStep) -> dict:

@@ -1301,7 +1301,12 @@ The **Overview** tab (`ClassOverviewTab`, Issue #276) serves as the central oper
 5. **Class Status & Actions**: active/archived toggle (`PUT /api/admin/groups/{id}` with `is_active`) and secure class deletion (`DELETE /api/admin/groups/{id}`) with modal confirmation dialog and prevention of deletion if linked to administration plans.
 **Tools & counselors** lets owners, co-teachers and administrators
 choose student questionnaires, guided chats (including dynamic instruments),
-personal tools, Compass, Assistant and the class forum. Nella barra dei tab di classe
+personal tools, Compass, Assistant and the class forum. Tra le chat guidate ci sono
+anche i percorsi guidati integrati (Intervista Savickas, Idea, Evento significativo
+di studio e professionale, Il mio obiettivo di apprendimento) anche senza una riga
+strumento: attivi di default, se il docente li spegne spariscono dall’elenco dello
+studente, il server ne rifiuta l’avvio e i piani della classe non li accettano come
+passo. Nella barra dei tab di classe
 (`ClassSettingsPage`, Issue #284), il tab «Strumenti e counselor» è posizionato
 in fondo all'elenco dopo «Registro modifiche», secondo la sequenza ordinata:
 `overview` (Panoramica) → `students` (Studenti e risultati) → `paths` (Piani operativi) →
