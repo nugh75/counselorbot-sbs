@@ -1811,6 +1811,8 @@ Gli aggiornamenti tecnici delle dipendenze del server non cambiano funzioni, dat
 
 Per l'istanza di prova è disponibile una modalità hot reload: `scripts/dev-test-instance.sh` avvia il frontend con `next dev` e il backend con `uvicorn --reload`, montando il codice nel container. Le modifiche a pagine, componenti e codice Python si vedono senza ricostruire l'immagine; restano le stesse porte e lo stesso URL pubblico. Non è una modalità di produzione: espone informazioni di debug e va usata solo senza dati reali. Dettagli e comandi in `docs/operations/test-instance-hot-reload.md`.
 
+La piattaforma ha una sola versione, scritta nel file `VERSION` alla radice del repository e propagata al frontend e al backend. Il backend la espone in `GET /version` (risposta `{"version": "X.Y.Z"}`) e nei metadati OpenAPI; le future app desktop useranno la stessa. Non cambia funzioni, dati salvati o permessi. Procedura di rilascio in `docs/operations/release.md`.
+
 ### Sezioni della configurazione
 
 In **Amministrazione → Configurazione & Prompt** la sezione si sceglie dal
