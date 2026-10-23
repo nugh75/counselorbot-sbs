@@ -1,3 +1,67 @@
+# Handoff 23 ottobre 2026: stato dopo il ciclo issue di ottobre e prossimi passi
+
+Data: 2026-10-23 | Base: `d83d088a` (main dopo PR #467) | Timoniere: `t-copilota-7t1n`
+
+## Fatto e in produzione (counselorbot.labform.net, portable su questo Mac)
+
+- Fix in parallelo con agenti Herdr: PR #451 (#426), #452 (#424), #453 (#409),
+  #454 (#408), #455 (#421), #456 (#407), #457 (#411), #458 (#423, registro QSAr),
+  #461 (#413). Prompt di fabbrica riallineati (20 aggiornamenti, 0 residui).
+- #460: frontend portable in **build di produzione** (non più `next dev`), vedi
+  `docs/operations/test-instance-hot-reload.md`. Backend sempre con `uvicorn --reload`.
+- #462 (#422): link con password per il consiglio di classe (`/consiglio/{token}`).
+- #463 (#247): quadro di noticing per compilazione, generato su richiesta, con
+  citazioni verificate alla lettera.
+- #465 (#464): tab **Noticing** della classe (grafici, temi, suggerimenti, studenti
+  con citazioni). #467 (#466): un secondo tentativo e log se il modello risponde male.
+- Pulizia: container e immagini di prova rimossi, 11 worktree mergiate eliminate,
+  PR #349/#351 chiuse come superate, milestone 2, 3, 11, 27 e 28 chiuse,
+  diario aggiornato (obiettivo «Issue aperte ottobre 2026» raggiunto, nuovo
+  obiettivo «Area docente 21-23 ottobre»).
+
+## Note operative
+
+- Deploy: backup `docker exec counselorbot-portable-postgres-1 sh -c 'pg_dumpall -U "$POSTGRES_USER"'`
+  (l'utente `postgres` non esiste) in
+  `/Volumes/sviluppo/console-platform/portable/data/backups/counselorbot/`,
+  poi `git pull --ff-only` nel checkout principale. Se cambia `frontend/`:
+  `docker compose --env-file .env -f docker-compose.portable.yml up -d --build --no-deps counselorbot-frontend`
+  e `docker image prune -f`. Nessun sudo.
+- Dopo ogni merge `docs/operations/platform-guidance-state.json` va in conflitto
+  nelle PR aperte: merge di `origin/main`, `git checkout --theirs` del file,
+  `make guidance-refresh`, commit.
+- Mac con 8 GB: un solo stack di test alla volta. `next dev` aveva saturato la VM
+  Docker (Postgres in recovery, backend bloccato); dettagli su #254.
+
+## Da fare, in ordine suggerito
+
+1. **Validare il noticing con classi reali** (compito nel diario): oggi solo una
+   compilazione della classe 1 ha messaggi dello studente. Raccogliere il parere
+   dei tutor su tipi di elemento, numero di temi e suggerimenti.
+2. **Baseline test verdi** #348 (backend) e #350 (frontend): da rifare da `main`
+   attuale, le PR #349/#351 erano superate.
+3. **Stabilità portable** #254, #255, #256 (proxy, IPv6 di herder, timeout auth).
+4. **Prompt guidati** #57–#60: riduzione delle ridondanze, mai iniziato.
+5. **OpenRouter** #404, #405 (milestone 26).
+6. **Navbar** #83.
+7. **Profili di installazione** #207–#214 (fase successiva, molti compiti nel diario).
+8. Bloccati o lontani: #135 (firma helper, decisione del proprietario), #157, #9.
+
+## Pendenze da decidere
+
+- PR #434 (solo `HANDOFF.md`, esito di #431) ancora aperta: unire o chiudere.
+- Worktree con modifiche non committate, da controllare prima di toglierle:
+  `feat-class-path-step-presentation` (8 file, nessuna PR),
+  `practice-student-results-nav` (13 file, PR #365 già unita),
+  `qsa-prompting-regression` (10 file, legata al compito di diario «step QSA
+  mancanti dopo aggiornamento QPCC», ancora da fare).
+- Worktree `task-28b8858d`, `task-476e4e0a`, `task-a6566a73`: pulite ma su una
+  storia che non risulta in `main`; probabile storia riscritta, da verificare.
+- Tab Herdr opencode «Ripresa refactoring piani lato docente» e «Controllare
+  container Docker attivi» lasciate aperte: non avviate da questa sessione.
+- #466 è stata aperta a mano come bug: per la regola del diario i bug arrivano
+  dalla sincronizzazione; se serve, riclassificarla.
+
 # Handoff: password di classe visibile nel passo di somministrazione
 
 Data: 2026-10-22 | Branch: `fix/institution-password-display` | Base: `ee7184ec`

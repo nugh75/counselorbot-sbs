@@ -1079,7 +1079,9 @@ messaggio dello studente indicato e gli elementi rimasti senza citazioni; il con
 si ripete a ogni lettura. Il quadro è salvato per compilazione e lingua: se la
 conversazione cambia dopo la generazione il riquadro lo segnala e propone **Aggiorna
 il quadro**; sono indicati anche i casi senza messaggi dello studente e di modello
-non raggiungibile. Gli accessi sono gli stessi del dettaglio (classe visibile o piano
+non raggiungibile. Se il modello risponde in modo vuoto, tagliato o non leggibile
+il server riprova una volta e registra nel log un'anteprima della risposta (#466);
+lo stesso vale per il noticing della classe. Gli accessi sono gli stessi del dettaglio (classe visibile o piano
 di somministrazione); il quadro non entra nel PDF né nel link del consiglio di classe.
 
 **Noticing della classe (#464).** La scheda **Noticing** di `/docente/classi/{id}`
@@ -1928,6 +1930,56 @@ accessibile in 3 passaggi:
    riepilogo della configurazione e invio coordinato che crea lo strumento (`POST /admin/instruments`),
    gli step iniziali (`POST /admin/guided-steps`) e associa i counselor abilitati
    (`PUT /admin/counselors/{id}`). Al termine, la mappa seleziona automaticamente il nuovo percorso.
+
+Ogni step della mappa (anche Domande e Conclusione) ha il riquadro **Skill in
+questo step**: le skill che la chat aggancia a quello step, con la stessa regola
+del motore. Per ciascuna si legge quando entra in parole («quando chiede un
+consiglio», «a ogni turno»…), come viene scelta (una per turno in base
+all'intento, sempre, se pertinente), dove va nel prompt (in coda, fra le
+conoscenze, sezione dopo il ruolo), se l'aggancio vale per tutti gli step o solo
+per questo, e il link **Modifica** che apre la skill nella scheda Skill. Le skill
+che oggi non entrano restano visibili con il motivo: aggancio o skill spenti,
+bozza, condizione su strumento/step/tipo di step, componente del prompt spenta,
+materiale nelle Conoscenze con la componente spenta. Se il motore delle skill è
+spento per lo strumento, un avviso dice che nessuna skill entra.
+
+### Skill della chat: creazione guidata e prova
+
+**Amministrazione → Skill** (`/admin?tab=skills`) elenca le skill della chat:
+comportamenti in più che il counselor aggiunge alla risposta quando servono (un
+consiglio dal catalogo certificato, letture verificate, una fonte pubblica, un
+referente dell'istituto, uno schema, la mappa di Idea). Per ogni skill si vede
+quando entra, come viene scelta, lo stato (bozza o pubblicata) e un interruttore
+**Attiva**. Le skill di serie hanno l'etichetta «di serie»: si spengono ma non si
+cancellano né si rinominano, perché all'avvio verrebbero ricreate.
+
+**Nuova skill guidata** (e la matita su una skill esistente) apre una procedura in
+sei passi; nulla si salva prima dell'ultimo:
+
+1. **Cosa fa**: nome, identificatore ricavato dal nome, descrizione (letta anche
+   dal selettore automatico quando deve scegliere fra più skill).
+2. **Quando entra**: per quali richieste dello studente vale (confronto fra profili,
+   a chi rivolgersi, domanda fattuale, letture, consiglio, dubbio su un risultato,
+   apertura dello step; nessuna spunta = ogni turno), se servono i punteggi, e per
+   ogni strumento se non è agganciata, vale per tutti gli step o solo per quelli
+   scelti. Le altre condizioni stanno in un JSON avanzato, controllato al salvataggio.
+3. **Contenuto**: le istruzioni per il modello, in inglese, ed eventualmente un
+   handler, cioè il materiale verificato che il server recupera (strategie,
+   letture, fonti pubbliche, referenti), con la sua spiegazione. Un handler nuovo
+   richiede uno sviluppo: dal pannello si usano quelli previsti dal codice.
+4. **Posizione**: come viene scelta rispetto alle altre skill (principale: una per
+   turno; sempre; supporto; facoltativa) e dove va nel prompt, ciascuna opzione
+   spiegata; tetto di caratteri e priorità.
+5. **Prova**: strumento, step, lingua, punteggi e messaggio dello studente;
+   «Prova questo turno» prepara il turno come la chat vera, con la versione che si
+   sta scrivendo e **senza salvarla**. Dice se la skill entra, se il suo testo
+   arriva davvero al modello e, se no, perché; dove il motore è spento la prova è
+   simulata e lo dice.
+6. **Pubblica**: riepilogo, bozza o pubblicata, attiva. Togliere una skill da uno
+   strumento spegne l'aggancio invece di cancellarlo.
+
+`/admin?tab=skills&skill=<id>` apre direttamente una skill (è il link della mappa
+dei prompt). Dettagli tecnici in `docs/architecture/skills-component.md`.
 
 ### Sandbox di collaudo per l'amministratore (Anteprima chat)
 

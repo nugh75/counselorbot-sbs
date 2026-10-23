@@ -173,6 +173,11 @@ def asks_about_platform(message: str) -> bool:
     return bool(_PLATFORM_QUESTION.search(_plain(message)))
 
 
+# Valori che `classify` puo' restituire (oltre a ""): li usa la validazione
+# delle condizioni `intents` delle skill.
+KNOWN_INTENTS = ("compare", "referral", "factual", "reading", "advice", "clarify", "guided")
+
+
 def classify(message: str, *, guided: bool = False) -> str:
     """Ritorna compare|referral|factual|reading|advice|clarify|guided oppure "".
 

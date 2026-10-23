@@ -419,6 +419,12 @@ SKILL_SEEDS = [
 ]
 
 
+# Skill di serie: `seed_skills` le ricrea a ogni avvio se mancano, quindi
+# l'admin le disattiva invece di cancellarle, e il loro slug non cambia
+# (il codice le cerca per slug).
+BUILTIN_SKILL_SLUGS = frozenset(seed["slug"] for seed in SKILL_SEEDS)
+
+
 def seed_skill_configs(db) -> bool:
     """Inserisce i valori operativi mancanti senza sovrascrivere l'admin."""
     changed = False
