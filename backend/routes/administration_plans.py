@@ -563,6 +563,22 @@ async def get_plan_student_result(plan_id: int, username: str, result_id: int, l
     return result_detail(db, result, lang)
 
 
+@router.get("/admin/administration-plans/{plan_id}/students/{username}/results/{result_id}/noticing")
+async def get_plan_student_noticing(plan_id: int, username: str, result_id: int, lang: str = "it",
+                                     current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..teacher_noticing import noticing
+    result = _require_plan_student_result(db, current_user, plan_id, username, id=result_id)
+    return noticing(db, result, lang)
+
+
+@router.post("/admin/administration-plans/{plan_id}/students/{username}/results/{result_id}/noticing")
+async def generate_plan_student_noticing(plan_id: int, username: str, result_id: int, lang: str = "it",
+                                          current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..teacher_noticing import noticing
+    result = _require_plan_student_result(db, current_user, plan_id, username, id=result_id)
+    return noticing(db, result, lang, generate=True)
+
+
 @router.get("/admin/administration-plans/{plan_id}/students/{username}/results/{result_id}/pdf")
 async def get_plan_student_result_pdf(plan_id: int, username: str, result_id: int, lang: str = "it",
                                       current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
