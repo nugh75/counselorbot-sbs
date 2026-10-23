@@ -62,11 +62,40 @@ const texts = {
         'Inget element stöds av elevens ord citerade ordagrant.',
     ],
     loadError: ['Il quadro non è stato caricato.', 'The overview could not be loaded.', 'No se ha podido cargar el cuadro.', 'Le tableau n’a pas pu être chargé.', 'Die Übersicht konnte nicht geladen werden.', 'Översikten kunde inte laddas.'],
+    classTitle: ['Noticing della classe', 'Class noticing', 'Noticing de la clase', 'Noticing de la classe', 'Noticing der Klasse', 'Klassens noticing'],
+    classIntro: [
+        'Analizza le chat dei questionari degli studenti della classe: per ogni compilazione l’IA individua gli elementi da riprendere con citazioni dello studente, poi li raggruppa in temi comuni con brevi suggerimenti.',
+        'Analyses the questionnaire chats of the class’s students: for each compilation AI finds the elements to take up, quoting the student, then groups them into shared themes with short suggestions.',
+        'Analiza los chats de los cuestionarios del alumnado de la clase: en cada cumplimentación la IA identifica los elementos para retomar citando al estudiante y luego los agrupa en temas comunes con sugerencias breves.',
+        'Analyse les chats des questionnaires des élèves de la classe : pour chaque passation, l’IA repère les éléments à reprendre en citant l’élève, puis les regroupe en thèmes communs avec de brèves suggestions.',
+        'Analysiert die Fragebogen-Chats der Lernenden der Klasse: Für jede Bearbeitung findet die KI aufzugreifende Elemente mit Zitaten und fasst sie zu gemeinsamen Themen mit kurzen Vorschlägen zusammen.',
+        'Analyserar elevernas enkätchattar i klassen: för varje ifyllning hittar AI det som är värt att ta upp, med citat från eleven, och grupperar det i gemensamma teman med korta förslag.',
+    ],
+    instrument: ['Strumento', 'Instrument', 'Instrumento', 'Instrument', 'Instrument', 'Instrument'],
+    allInstruments: ['Tutti gli strumenti', 'All instruments', 'Todos los instrumentos', 'Tous les instruments', 'Alle Instrumente', 'Alla instrument'],
+    period: ['Periodo', 'Period', 'Periodo', 'Période', 'Zeitraum', 'Period'],
+    allTime: ['Sempre', 'All time', 'Siempre', 'Toujours', 'Gesamter Zeitraum', 'Hela tiden'],
+    lastDays: ['Ultimi {n} giorni', 'Last {n} days', 'Últimos {n} días', '{n} derniers jours', 'Letzte {n} Tage', 'Senaste {n} dagarna'],
+    analyse: ['Analizza la classe', 'Analyse the class', 'Analizar la clase', 'Analyser la classe', 'Klasse analysieren', 'Analysera klassen'],
+    reanalyse: ['Aggiorna l’analisi', 'Update the analysis', 'Actualizar el análisis', 'Mettre à jour l’analyse', 'Analyse aktualisieren', 'Uppdatera analysen'],
+    progress: ['Compilazioni analizzate: {done} di {total}', 'Compilations analysed: {done} of {total}', 'Cumplimentaciones analizadas: {done} de {total}', 'Passations analysées : {done} sur {total}', 'Analysierte Bearbeitungen: {done} von {total}', 'Analyserade ifyllningar: {done} av {total}'],
+    grouping: ['Raggruppo i temi della classe…', 'Grouping the class themes…', 'Agrupando los temas de la clase…', 'Regroupement des thèmes de la classe…', 'Themen der Klasse werden gruppiert…', 'Grupperar klassens teman…'],
+    coverage: ['{chat} studenti su {students} hanno una chat · {pending} compilazioni da analizzare', '{chat} of {students} students have a chat · {pending} compilations to analyse', '{chat} de {students} estudiantes tienen chat · {pending} cumplimentaciones por analizar', '{chat} élèves sur {students} ont un chat · {pending} passations à analyser', '{chat} von {students} Lernenden haben einen Chat · {pending} Bearbeitungen zu analysieren', '{chat} av {students} elever har en chatt · {pending} ifyllningar att analysera'],
+    classMissing: ['La classe non è ancora stata analizzata con questi filtri.', 'The class has not been analysed with these filters yet.', 'La clase aún no se ha analizado con estos filtros.', 'La classe n’a pas encore été analysée avec ces filtres.', 'Die Klasse wurde mit diesen Filtern noch nicht analysiert.', 'Klassen har ännu inte analyserats med dessa filter.'],
+    classStale: ['Ci sono chat nuove o cambiate dopo l’ultima analisi: aggiornala.', 'Some chats are new or changed since the last analysis: update it.', 'Hay chats nuevos o modificados desde el último análisis: actualízalo.', 'Des chats sont nouveaux ou ont changé depuis la dernière analyse : mettez-la à jour.', 'Seit der letzten Analyse gibt es neue oder geänderte Chats: Aktualisieren Sie sie.', 'Det finns nya eller ändrade chattar sedan senaste analysen: uppdatera den.'],
+    classEmpty: ['Nessuna chat con messaggi degli studenti da analizzare con questi filtri.', 'No chat with student messages to analyse with these filters.', 'No hay chats con mensajes del alumnado para analizar con estos filtros.', 'Aucun chat avec des messages d’élèves à analyser avec ces filtres.', 'Keine Chats mit Nachrichten der Lernenden für diese Filter.', 'Inga chattar med elevmeddelanden att analysera med dessa filter.'],
+    suggestions: ['Suggerimenti per il docente', 'Suggestions for the teacher', 'Sugerencias para el docente', 'Suggestions pour l’enseignant', 'Vorschläge für die Lehrkraft', 'Förslag till läraren'],
+    kindsChart: ['Studenti per tipo di elemento', 'Students per kind of element', 'Estudiantes por tipo de elemento', 'Élèves par type d’élément', 'Lernende nach Art des Elements', 'Elever per typ av element'],
+    themes: ['Temi della classe', 'Class themes', 'Temas de la clase', 'Thèmes de la classe', 'Themen der Klasse', 'Klassens teman'],
+    students: ['studenti', 'students', 'estudiantes', 'élèves', 'Lernende', 'elever'],
+    showStudents: ['Chi lo solleva', 'Who raises it', 'Quién lo plantea', 'Qui le soulève', 'Wer es anspricht', 'Vem som tar upp det'],
+    openCompilation: ['Apri la compilazione', 'Open the compilation', 'Abrir la cumplimentación', 'Ouvrir la passation', 'Bearbeitung öffnen', 'Öppna ifyllningen'],
+    noThemes: ['Nessun tema comune è sostenuto dagli elementi verificati.', 'No shared theme is supported by the verified elements.', 'Ningún tema común está respaldado por los elementos verificados.', 'Aucun thème commun n’est étayé par les éléments vérifiés.', 'Kein gemeinsames Thema wird durch die geprüften Elemente gestützt.', 'Inget gemensamt tema stöds av de verifierade elementen.'],
 } as const satisfies Record<string, Localized>;
 
 export type NoticingTextKey = keyof typeof texts;
 
-export function noticingText(lang: string, key: NoticingTextKey): string {
+export function noticingText(lang: string, key: NoticingTextKey, values: Record<string, string | number> = {}): string {
     const index = ['it', 'en', 'es', 'fr', 'de', 'sv'].indexOf(lang);
-    return texts[key][index < 0 ? 1 : index];
+    return Object.entries(values).reduce<string>((text, [name, value]) => text.replaceAll(`{${name}}`, String(value)), texts[key][index < 0 ? 1 : index]);
 }

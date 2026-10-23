@@ -178,6 +178,7 @@ export const classSettingsTexts = {
     statusInactive: ['Inattiva', 'Inactive', 'Inactiva', 'Inactive', 'Inaktiv', 'Inaktiv'],
     shared: ['Condivisa', 'Shared', 'Compartida', 'Partagée', 'Geteilt', 'Delad'],
     council: ['Consiglio di classe', 'Class council', 'Consejo de clase', 'Conseil de classe', 'Klassenkonferenz', 'Klasskonferens'],
+    noticing: ['Noticing', 'Noticing', 'Noticing', 'Noticing', 'Noticing', 'Noticing'],
 } as const satisfies Record<string, readonly [string, string, string, string, string, string]>;
 
 export function classSettingsText(lang: string, key: keyof typeof classSettingsTexts): string {

@@ -1081,6 +1081,23 @@ conversazione cambia dopo la generazione il riquadro lo segnala e propone **Aggi
 il quadro**; sono indicati anche i casi senza messaggi dello studente e di modello
 non raggiungibile. Gli accessi sono gli stessi del dettaglio (classe visibile o piano
 di somministrazione); il quadro non entra nel PDF né nel link del consiglio di classe.
+
+**Noticing della classe (#464).** La scheda **Noticing** di `/docente/classi/{id}`
+(`?tab=noticing`) analizza le chat dei questionari di tutti gli studenti della classe,
+con filtro per strumento e periodo (sempre, ultimi 30 o 90 giorni). Il pulsante
+**Analizza la classe** genera prima il quadro di noticing di ogni compilazione che
+non lo ha o che è cambiata, mostrando l'avanzamento («Compilazioni analizzate: N di M»),
+poi chiede al modello di raggruppare in temi soltanto gli elementi già verificati sulle
+parole dello studente. La scheda mostra: alcuni **suggerimenti per il docente** brevi;
+un grafico a barre degli **studenti per tipo di elemento** (Da riprendere, Risorsa,
+Difficoltà, Da attenzionare) sul totale degli studenti con una chat; i **temi della
+classe**, ciascuno con il numero di studenti che lo sollevano, una barra, un
+suggerimento e, aprendo «Chi lo solleva», nome dello studente, strumento, elemento,
+frase citata e il pulsante **Apri la compilazione** che mostra il dettaglio completo.
+Conteggi e grafici sono calcolati dal server, non dal modello; temi con elementi non
+più validi li perdono a ogni lettura. L'analisi è salvata per classe, lingua e filtri:
+se compaiono chat nuove o cambiate la scheda lo segnala e propone **Aggiorna l'analisi**.
+Gli accessi sono quelli della classe visibile al docente.
 La stessa scheda è usata da Compilazioni, Classi (matrice ed elenco) e Piani di
 somministrazione. Le etichette accessibili includono la data per distinguere
 compilazioni ripetute; nei riquadri stretti i nomi dei fattori si adattano allo
