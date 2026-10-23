@@ -8,6 +8,14 @@
 set -euo pipefail
 spike_dir="$(cd "$(dirname "$0")/.." && pwd)"
 repo_root="$(cd "$spike_dir/../.." && pwd)"
+sep=":"
+case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*)
+        # Git Bash does not translate /d/a/... inside "src;dest": give Python D:/a/... paths.
+        sep=";"
+        spike_dir="$(cygpath -m "$spike_dir")" repo_root="$(cygpath -m "$repo_root")"
+        ;;
+esac
 python="${PYTHON:-python}"
 build_dir="$spike_dir/.build"
 out_dir="$spike_dir/src-tauri/backend"
@@ -22,8 +30,6 @@ find "$build_dir/src" -name __pycache__ -prune -exec rm -rf {} +
 # migrations/ is a namespace package too: collect-submodules skips those.
 touch "$build_dir/src/backend/__init__.py" "$build_dir/src/backend/migrations/__init__.py"
 
-sep=":"
-case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) sep=";" ;; esac
 src="$build_dir/src"
 json_args=()
 for json in "$src"/backend/*.json; do
