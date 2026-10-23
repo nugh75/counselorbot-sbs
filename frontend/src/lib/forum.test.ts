@@ -70,7 +70,7 @@ test('every forum message has six nonempty language strings', () => {
 });
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { forumClosedNotice, forumPostActions, parseForumDetail, parseForumList, parseForumLog, parseForumMutes, parseForumPending, parseForumPost } from './forum.ts';
+import { forumClosedNotice, forumPostActions, forumTopicRenamable, parseForumDetail, parseForumList, parseForumLog, parseForumMutes, parseForumPending, parseForumPost } from './forum.ts';
 
 const reply = { id: 1, author_display_name: 'Anna', body: 'Text', hidden: false, deleted: false,
     hidden_reason: null, own: false, created_at: '2026-10-08T10:00:00Z', edited_at: null };
@@ -127,4 +127,14 @@ test('forum parsers require moderation fields and reject malformed log entries',
     assert.deepEqual(parseForumLog({ entries: [entry], has_more: false }).entries, [entry]);
     assert.throws(() => parseForumLog({ entries: [{ ...entry, reason: 7 }], has_more: false }));
     assert.throws(() => parseForumLog({ entries: [], has_more: 'no' }));
+});
+
+test('discussion title edit is for its author on an open topic and for moderators', () => {
+    const topic = { ...reply, group_id: 1, title: 'Wrnog', pinned: false, locked: false, last_post_at: reply.created_at, replies_count: 0 };
+    assert.equal(forumTopicRenamable({ ...topic, own: true }, { moderator: false, active: true }), true);
+    assert.equal(forumTopicRenamable(topic, { moderator: false, active: true }), false);
+    assert.equal(forumTopicRenamable({ ...topic, own: true, locked: true }, { moderator: false, active: true }), false);
+    assert.equal(forumTopicRenamable({ ...topic, own: true, hidden: true }, { moderator: false, active: true }), false);
+    assert.equal(forumTopicRenamable({ ...topic, locked: true, hidden: true }, { moderator: true, active: true }), true);
+    assert.equal(forumTopicRenamable({ ...topic, own: true }, { moderator: true, active: false }), false);
 });
