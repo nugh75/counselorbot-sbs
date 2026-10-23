@@ -15,7 +15,7 @@ import {
     PROMPT_MAP_LANGUAGES, badgeFor, booleanFlags, componentsValue, entryAnchor, entryText, findEntry, levelAnchor, levelCounts,
     levelSection, moveItem, needsSharedConfirm, normalizeStepId, saveRequest, sectionDefaultOpen, sectionsForEntry, skillConditionParts, sortOrderChanges, stepAnchor, stepSection, stepsByInstrument,
     type PromptMap as PromptMapData, type PromptMapBadge, type PromptMapCounselor, type PromptMapEntry, type PromptMapInstrument,
-    type PromptMapLevel, type PromptMapRef, type PromptMapSkill, type PromptMapStep, type PromptMapUser,
+    type PromptMapLevel, type PromptMapRef, type PromptMapSkill, type PromptMapStep, type PromptMapStrategyOptions, type PromptMapUser,
 } from '@/lib/prompt-map';
 
 // Vista "Mappa dei prompt": i testi delle chat guidate di uno strumento dal
@@ -141,6 +141,78 @@ function sharedUsers(entry: PromptMapEntry, name: (id: string) => string, t: (ke
     return steps.map(step => step.label).join(' · ');
 }
 
+/** Modalità ammesse per uno step, dall'API (il pannello non ne tiene una copia). */
+function useStepModes(enabled = true) {
+    const [modes, setModes] = useState<string[]>([]);
+    useEffect(() => {
+        if (!enabled) return;
+        apiFetch(`${STEPS_API}/modes`)
+            .then(response => response.ok ? response.json() : Promise.reject(new Error('modes')))
+            .then((items: { mode: string }[]) => setModes(items.map(item => item.mode)))
+            .catch(() => setModes(['generic']));
+    }, [enabled]);
+    return modes;
+}
+
+interface StrategyChoice { id: string; label: string; kind: 'approved' | 'certified' }
+interface ApprovedStrategyRow { id: string; questionnaires?: string[]; texts?: Record<string, string> }
+interface CertifiedStrategyRow { slug: string; questionnaire_types?: string[]; is_active?: boolean; [key: `name_${string}`]: string | undefined }
+
+/** Limite delle strategie certificate e strategie consentite dello step (nel JSON dei componenti). */
+function StrategyOptionsEditor({ instrument, options, onChange }: {
+    instrument: string;
+    options: PromptMapStrategyOptions;
+    onChange: (patch: Partial<PromptMapStrategyOptions>) => void;
+}) {
+    const { t, lang } = useI18n();
+    const [choices, setChoices] = useState<StrategyChoice[] | null>(null);
+    const [error, setError] = useState(false);
+    useEffect(() => {
+        const code = instrument.toUpperCase();
+        const matches = (codes?: string[]) => (codes ?? []).some(item => item.toUpperCase() === code);
+        const json = (url: string) => apiFetch(url).then(response => response.ok ? response.json() : Promise.reject(new Error(url)));
+        Promise.all([json('/api/admin/approved-strategies'), json('/api/admin/certified-strategies')])
+            .then(([approved, certified]: [{ strategies?: ApprovedStrategyRow[] }, CertifiedStrategyRow[]]) => setChoices([
+                ...(approved.strategies ?? []).filter(row => matches(row.questionnaires))
+                    .map(row => ({ id: row.id, label: row.texts?.[lang] || row.texts?.it || row.id, kind: 'approved' as const })),
+                ...(Array.isArray(certified) ? certified : []).filter(row => row.is_active && matches(row.questionnaire_types))
+                    .map(row => ({ id: row.slug, label: row[`name_${lang}`] || row.name_it || row.slug, kind: 'certified' as const })),
+            ]))
+            .catch(() => setError(true));
+    }, [instrument, lang]);
+    const allowed = options.allowed_strategies;
+    const toggle = (id: string) => {
+        const current = allowed ?? (choices ?? []).map(choice => choice.id);
+        onChange({ allowed_strategies: current.includes(id) ? current.filter(item => item !== id) : [...current, id] });
+    };
+    return <fieldset data-strategy-options className="space-y-2 rounded border border-slate-200 p-2">
+        <legend className="px-1 text-xs font-semibold text-slate-600">{t('admin.promptMap.strategies.title')}</legend>
+        <label className="flex flex-wrap items-center gap-2 text-xs text-slate-700">
+            {t('admin.promptMap.strategies.limit')}
+            <select value={options.certified_strategy_limit} disabled={!options.certified_strategy_limit_editable}
+                onChange={event => onChange({ certified_strategy_limit: Number(event.target.value) })}
+                className="rounded border border-slate-300 bg-white px-2 py-1 text-xs disabled:bg-slate-100">
+                <option value={0}>{t('admin.promptMap.strategies.limitNone')}</option>
+                <option value={1}>1</option>
+            </select>
+        </label>
+        {!options.certified_strategy_limit_editable && <p className="text-[11px] text-slate-500">{t('admin.promptMap.strategies.limitLocked')}</p>}
+        {error && <p role="alert" className="text-xs text-red-700">{t('admin.promptMap.strategies.loadError')}</p>}
+        {(['approved', 'certified'] as const).map(kind => {
+            const rows = (choices ?? []).filter(choice => choice.kind === kind);
+            return rows.length > 0 && <div key={kind}>
+                <p className="text-[11px] font-semibold text-slate-500">{t('admin.promptMap.strategies.allowed')} · {t(`admin.promptMap.strategies.${kind}`)}</p>
+                <div className="mt-1 grid max-h-40 gap-1 overflow-y-auto">
+                    {rows.map(choice => <label key={choice.id} className="flex items-start gap-2 text-xs text-slate-700">
+                        <input type="checkbox" className="mt-0.5" checked={!allowed || allowed.includes(choice.id)} onChange={() => toggle(choice.id)} />
+                        <span><code className="mr-1 text-[10px] text-slate-500">{choice.id}</code>{choice.label}</span>
+                    </label>)}
+                </div>
+            </div>;
+        })}
+    </fieldset>;
+}
+
 function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
     entry: PromptMapEntry;
     onSaved: () => void;
@@ -154,11 +226,15 @@ function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
     const [language, setLanguage] = useState('it');
     const [draft, setDraft] = useState(() => entryText(entry, 'it'));
     const [flags, setFlags] = useState(() => booleanFlags(entry.effective));
+    // Solo le opzioni toccate: le altre restano quelle salvate (o il default della chat).
+    const [strategyOptions, setStrategyOptions] = useState<Partial<PromptMapStrategyOptions>>({});
     const [confirming, setConfirming] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const isComponents = entry.role === 'components';
     const isColor = entry.kind === 'guided_step' && entry.field === 'color_theme';
+    const isMode = entry.kind === 'guided_step' && entry.field === 'system_prompt_mode';
+    const modes = useStepModes(isMode);
     const shared = needsSharedConfirm(entry);
 
     const save = async () => {
@@ -166,7 +242,7 @@ function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
         setSaving(true);
         setError('');
         try {
-            const value = isComponents ? componentsValue(entry.value, flags) : draft;
+            const value = isComponents ? componentsValue(entry.value, flags, strategyOptions) : draft;
             const request = saveRequest(entry, value, multilingual ? language : 'it');
             const response = await apiFetch(request.url, {
                 method: request.method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request.body),
@@ -195,9 +271,16 @@ function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
                 <input type="checkbox" checked={on} onChange={event => { setFlags({ ...flags, [flag]: event.target.checked }); setConfirming(false); }} />
                 {componentLabels?.[flag] || flag}
             </label>)}
+            {entry.options && <div className="sm:col-span-2">
+                <StrategyOptionsEditor instrument={entry.used_by.instruments[0] || ''} options={{ ...entry.options, ...strategyOptions }}
+                    onChange={patch => { setStrategyOptions({ ...strategyOptions, ...patch }); setConfirming(false); }} />
+            </div>}
         </fieldset> : isColor ? <select aria-label={t('admin.promptMap.field.color_theme')} value={draft} onChange={event => setDraft(event.target.value)}
             className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm">
             {COLOR_THEMES.map(color => <option key={color} value={color}>{t(`admin.color.${color}`)}</option>)}
+        </select> : isMode ? <select aria-label={t('admin.promptMap.field.system_prompt_mode')} value={draft} onChange={event => setDraft(event.target.value)}
+            className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm">
+            {(modes.includes(draft) ? modes : [draft, ...modes]).map(item => <option key={item} value={item}>{item}</option>)}
         </select> : entry.kind === 'guided_step' && entry.field === 'label' ? <input id={fieldId} aria-label={t('admin.promptMap.field.label')} value={draft}
             onChange={event => { setDraft(event.target.value); setConfirming(false); }}
             className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm" /> : <textarea id={fieldId} aria-label={entry.key} value={draft}
@@ -312,6 +395,12 @@ function EntryCard({ entry: baseEntry, highlighted, onSaved, onEditPersona, onEd
             {Object.entries(flags).map(([flag, on]) => <span key={flag} className={`rounded px-1.5 py-0.5 text-[11px] ${on ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400 line-through'}`}>
                 {componentLabels?.[flag] || flag}
             </span>)}
+        </p>}
+        {entry.options && !editing && <p className="mt-1 text-[11px] text-slate-500">
+            {t('admin.promptMap.strategies.limit')}: {entry.options.certified_strategy_limit || t('admin.promptMap.strategies.limitNone')}
+            {' · '}{t('admin.promptMap.strategies.allowed')}: {entry.options.allowed_strategies
+                ? t('admin.promptMap.strategies.allowedCount', { count: entry.options.allowed_strategies.length })
+                : t('admin.promptMap.strategies.allowedAll')}
         </p>}
 
         {entry.kind === 'guided_step' && entry.field === 'color_theme' && !editing && <p className="mt-2 flex items-center gap-2 text-xs text-slate-600">
@@ -672,6 +761,17 @@ function StepPreview({ map, step, componentLabels }: { map: PromptMapData; step:
     const { t } = useI18n();
     const name = useInstrumentName();
     const [open, setOpen] = useState(false);
+    // Compilazioni reali dello strumento: l'anteprima può usare i punteggi di una sessione.
+    const [results, setResults] = useState<{ session_id: string; username?: string | null }[]>([]);
+    useEffect(() => {
+        if (!open) return;
+        const code = map.instrument.toUpperCase();
+        apiFetch('/api/admin/questionnaire-results?limit=100')
+            .then(response => response.ok ? response.json() : [])
+            .then((rows: { session_id: string; username?: string | null; questionnaire_type: string }[]) =>
+                setResults(rows.filter(row => row.questionnaire_type.toUpperCase() === code)))
+            .catch(() => setResults([]));
+    }, [open, map.instrument]);
     const prompt = step.entries.find(entry => entry.kind === 'guided_step' && entry.field === 'prompt');
     return <div>
         <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}
@@ -685,7 +785,7 @@ function StepPreview({ map, step, componentLabels }: { map: PromptMapData; step:
                 <span className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5">{t('admin.promptMap.previewOther')}</span>
             </p>
             {/* Valori salvati: nessun override, l'anteprima legge il DB come la chat. */}
-            <PromptRequestPreview configs={[]} results={[]} componentLabels={componentLabels} followUpMode={step.follow_up_mode}
+            <PromptRequestPreview configs={[]} results={results} componentLabels={componentLabels} followUpMode={step.follow_up_mode}
                 step={{ id: step.id, prompt: String(prompt?.value ?? ''), questionnaire_type: map.instrument, system_prompt_mode: step.system_prompt_mode || 'generic' }}
                 blockClassName={(key, origin) => {
                     const level = previewBlockLevel(map, step, key, origin);
@@ -709,18 +809,11 @@ function AddStepForm({ map, onCreated, onCancel }: { map: PromptMapData; onCreat
     const [id, setId] = useState('');
     const [label, setLabel] = useState('');
     const [mode, setMode] = useState('generic');
-    const [modes, setModes] = useState<string[]>([]);
+    const modes = useStepModes();
     const [before, setBefore] = useState('');
     const [prompt, setPrompt] = useState('');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
-
-    useEffect(() => {
-        apiFetch(`${STEPS_API}/modes`)
-            .then(response => response.ok ? response.json() : Promise.reject(new Error('modes')))
-            .then((items: { mode: string }[]) => setModes(items.map(item => item.mode)))
-            .catch(() => setModes(['generic']));
-    }, []);
 
     const create = async () => {
         const stepId = normalizeStepId(id);
