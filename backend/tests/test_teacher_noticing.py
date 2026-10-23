@@ -80,3 +80,15 @@ def test_noticing_keeps_class_and_plan_permissions(details, model, role):
     assert client.get(f'{plan_base}/{first.id}/noticing').status_code == plan_expected
     if role in ('owner', 'admin'):
         assert client.post(f'{plan_base}/{second.id}/noticing').status_code == 404
+
+
+def test_unreadable_answer_is_retried_once(details, monkeypatch):
+    client, db, _, (owned, *_), first, *_ = details
+    answers = iter(['{"items": [{"kind": "revisit", "te', json.dumps(ANSWER)])
+    calls = []
+    monkeypatch.setattr(teacher_noticing.AIService, '__init__', lambda self, *a, **kw: None)
+    monkeypatch.setattr(teacher_noticing.AIService, 'get_response', lambda self, *a, **kw: calls.append(1) or next(answers))
+    url = f'/admin/groups/{owned}/students/student.owned/results/{first.id}/noticing'
+    assert client.post(url).json()['status'] == 'ready' and len(calls) == 2
+    monkeypatch.setattr(teacher_noticing.AIService, 'get_response', lambda self, *a, **kw: calls.append(1) or '')
+    assert client.post(url).json()['status'] == 'unavailable' and len(calls) == 4
