@@ -19,6 +19,7 @@ from . import vision_service
 from . import pii
 from . import pii_ner
 from .api_secrets import API_KEY_ENV_MAP, config_key, resolve_api_secrets
+from .local_llm import LLAMACPP_DEFAULT_URL, LLAMACPP_KEY_CONFIG, llamacpp_api_key, openai_base
 from .model_context import ContextCapacityError, context_profile, fit_context, validate_output_capacity
 from .reasoning_profiles import (
     DEEP_REASONING_BUDGET,
@@ -742,6 +743,12 @@ class AIService:
                 config_dict[key] = resolved.value
             else:
                 config_dict.pop(key, None)
+        # The optional key of the OpenAI-compatible local server follows the same rule.
+        _, llamacpp_key = llamacpp_api_key()
+        if llamacpp_key:
+            config_dict[LLAMACPP_KEY_CONFIG] = llamacpp_key
+        else:
+            config_dict.pop(LLAMACPP_KEY_CONFIG, None)
 
         # Non-secret runtime settings keep their existing environment override.
         for db_key, env_vars in ENV_KEY_MAP.items():
@@ -798,10 +805,7 @@ class AIService:
                 base = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
                 client = OpenAI(base_url=f"{base}/v1", api_key="ollama", timeout=timeout)
             elif provider == 'llamacpp':
-                base = (self._get_api_key('llamacpp_url') or "http://localhost:8080").rstrip('/')
-                if not base.endswith('/v1'):
-                    base = f"{base}/v1"
-                client = OpenAI(base_url=base, api_key="llamacpp", timeout=timeout)
+                client = self._llamacpp_client(timeout)
             elif provider in OPENAI_COMPAT_PROVIDERS:
                 client = self._openai_compatible_client(provider, timeout=timeout)
             else:
@@ -1171,6 +1175,13 @@ class AIService:
             raise AIError("The model reached its output token limit before completing the response.")
         return content
 
+    def _llamacpp_client(self, timeout):
+        """Server locale / compatibile OpenAI (llama.cpp, LM Studio, vLLM, LiteLLM) su /v1."""
+        # Senza chiave configurata il client ne vuole comunque una: i server locali la ignorano.
+        api_key = self._get_api_key(LLAMACPP_KEY_CONFIG) or "llamacpp"
+        return OpenAI(base_url=openai_base(self._get_api_key('llamacpp_url') or LLAMACPP_DEFAULT_URL),
+                      api_key=api_key, timeout=timeout)
+
     def _openai_compatible_client(self, provider: str, timeout=None):
         """Client OpenAI puntato a un provider OpenAI-compatibile (base_url + chiave)."""
         api_key = self._get_api_key(f'api_key_{provider}')
@@ -1334,17 +1345,7 @@ class AIService:
 
     def _call_llamacpp(self, user_message, system_prompt, model, max_tokens: int = 8000, history=None):
         """llama.cpp / llama-server / llama-swap: endpoint OpenAI-compatibile su /v1."""
-        base_url = self._get_api_key('llamacpp_url') or "http://localhost:8080"
-        base_url = base_url.rstrip('/')
-        # accetta sia l'host nudo sia un URL che termina già con /v1
-        if not base_url.endswith('/v1'):
-            base_url = f"{base_url}/v1"
-
-        client = OpenAI(
-            base_url=base_url,
-            api_key="llamacpp",  # richiesta dal client ma non usata dal server
-            timeout=httpx.Timeout(self._int_config("ai_timeout_seconds", 120, 10, 600), connect=10.0),
-        )
+        client = self._llamacpp_client(httpx.Timeout(self._int_config("ai_timeout_seconds", 120, 10, 600), connect=10.0))
         system_prompt = self._apply_no_think(system_prompt)
         nak = self._normalize_history(history)
         messages = [{"role": "system", "content": system_prompt}]
@@ -1650,10 +1651,7 @@ class AIService:
             raise AIError("The model reached its output token limit before completing the response.")
 
     def _stream_llamacpp(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
-        base_url = (self._get_api_key('llamacpp_url') or "http://localhost:8080").rstrip('/')
-        if not base_url.endswith('/v1'):
-            base_url = f"{base_url}/v1"
-        client = OpenAI(base_url=base_url, api_key="llamacpp", timeout=httpx.Timeout(self._int_config("ai_timeout_seconds", 120, 10, 600), connect=10.0))
+        client = self._llamacpp_client(httpx.Timeout(self._int_config("ai_timeout_seconds", 120, 10, 600), connect=10.0))
         system_prompt = self._apply_no_think(system_prompt)
         yield from self._iter_chat_stream(client, model or "default", system_prompt, user_message, max_tokens=max_tokens, history=history)
 

@@ -74,6 +74,7 @@ from .routes import site_chat as site_chat_routes
 from .routes import learner_profile as learner_profile_routes
 from .routes import external_privacy as external_privacy_routes
 from .routes import document_retrieval as document_retrieval_routes
+from .routes import local_llm as local_llm_routes
 from .routes import personal_api as personal_api_routes
 from .routes import teacher_profile as teacher_profile_routes
 from .routes import practice_notebooks as practice_notebook_routes
@@ -2059,6 +2060,7 @@ app.include_router(site_chat_routes.router)
 app.include_router(learner_profile_routes.router)
 app.include_router(external_privacy_routes.router)
 app.include_router(document_retrieval_routes.router)
+app.include_router(local_llm_routes.router)
 app.include_router(personal_api_routes.router)
 app.include_router(teacher_profile_routes.router)
 app.include_router(practice_notebook_routes.router)
