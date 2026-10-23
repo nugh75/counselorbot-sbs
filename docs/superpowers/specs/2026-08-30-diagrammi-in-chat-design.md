@@ -84,8 +84,14 @@ Unico punto che conosce la grafica.
   |---|---|---|
   | nodo fill / bordo / testo | `#e9f2f2` / `#69abad` / `#0e3539` | `#103f42` / `#3c8d90` / `#c8e0e1` |
   | nodo accento | `#faf1e3` / `#dca055` / `#5a3211` | `#6f3c13` / `#dca055` / `#f3dcbe` |
-  | archi ed etichette | `#64748b` | `#94a3b8` |
+  | etichette | `#64748b` | `#94a3b8` |
+  | archi (tutti tranne ostacolo) | `#15803d` | `#4ade80` |
+  | archi «ostacola» (`weakens`) | `#b91c1c` | `#f87171` |
   | sfondo PNG | `#ffffff` | `#1e293b` |
+
+  Il colore non regge da solo il significato: l'ostacolo resta tratteggiato con
+  punta a T, e la legenda e la descrizione testuale nominano ogni tipo di arco.
+  Contrasto sullo sfondo: rosso 6,5:1 / 5,3:1, verde 5,0:1 / 8,4:1 (chiaro / scuro).
 
   forme `box` `style="rounded,filled"`, penwidth 1.2, font
   `Inter,DejaVu Sans,sans-serif`;

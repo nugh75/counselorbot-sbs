@@ -43,6 +43,7 @@ import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
 import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
 import { IdeaBranchIntro } from '@/components/qsa/IdeaBranchIntro';
+import { GuidedChatIntro } from '@/components/qsa/GuidedChatIntro';
 import { IdeaPanel } from '@/components/qsa/IdeaPanel';
 import { IdeaSourcesPanel } from '@/components/qsa/IdeaSourcesPanel';
 import { IdeaTabs } from '@/components/qsa/IdeaTabs';
@@ -2027,6 +2028,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             empty={visibleMessages.length === 0}
                         />
                     )}
+                    {!isIdea && hasStepNavigation && !preview && !frozenSnapshot && !activeExploration && <GuidedChatIntro locale={activeLocale} />}
                     {isIdea && !activeExploration && hiddenMessages > 0 && (
                         <p className="mx-auto rounded-full bg-slate-50 px-3 py-1 text-2xs font-medium uppercase tracking-widest text-slate-500">
                             {t('idea.branches.onlyThis')}

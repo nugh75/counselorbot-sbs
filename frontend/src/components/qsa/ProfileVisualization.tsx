@@ -177,7 +177,12 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
 
             <div className="relative col-span-2 row-start-2 min-w-0 sm:flex-1">
                 {isNeutral ? (
-                    <div className="flex h-6 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-2xs text-slate-600">1–9</div>
+                    <div className="space-y-1">
+                        <div className="flex h-6 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-2xs text-slate-600">1–9</div>
+                        {/* La scala grigia non e' un errore: M2 si legge nel contesto,
+                            senza fascia di forza o di crescita. */}
+                        <p className="text-2xs leading-tight text-slate-500">{t('profile.QPCC.neutralNote')}</p>
+                    </div>
                 ) : isZTPI ? (
                     <div className="flex h-6 rounded-md overflow-hidden border border-slate-200">
                         {ztpiSegments.map((segment, idx) => (
@@ -402,6 +407,12 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                         <span className="text-slate-600">{label}</span>
                     </div>
                 ))}
+                {questionnaire.id === 'QPCC' && (
+                    <div className="flex items-center gap-2">
+                        <span className="h-5 w-5 rounded-sm border border-slate-300 bg-slate-100" aria-hidden="true" />
+                        <span className="text-slate-600">{t('profile.legend.neutralScale')}</span>
+                    </div>
+                )}
                 {questionnaire.invertedFactors.length > 0 && (
                     <div className="flex items-center gap-1 text-slate-500">
                         <ArrowLeftRight className="h-3 w-3" aria-hidden />
