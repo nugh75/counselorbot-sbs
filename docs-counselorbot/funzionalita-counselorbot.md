@@ -1797,13 +1797,13 @@ Per l'istanza di prova è disponibile una modalità hot reload: `scripts/dev-tes
 
 In **Amministrazione → Configurazione & Prompt** la sezione si sceglie dal
 filtro **Sezione**, non da una fila di pulsanti. Il filtro raggruppa
-**Impostazioni** (Generale, Mappa dei prompt, Direttive Globali) e **Strumenti —
-vista classica** (QSA, QSAr, ZTPI, Savickas, eventi significativi, obiettivi,
-QPCS, QPCC, QAP, con le quattro schede storiche) e ha un campo di
-ricerca che trova anche il nome esteso dello strumento. Si usa con mouse o
-tastiera (frecce, Invio, Esc). La sezione scelta resta nell’indirizzo
-(`/admin?section=qsa`): ricaricando la pagina o condividendo il link si riapre
-la stessa sezione; un valore non riconosciuto apre Generale.
+**Impostazioni** (Generale, Mappa dei prompt, Direttive Globali) e ha un campo di
+ricerca. Si usa con mouse o tastiera (frecce, Invio, Esc). La sezione scelta resta
+nell’indirizzo (`/admin?section=directives`): ricaricando la pagina o condividendo
+il link si riapre la stessa sezione; un valore non riconosciuto apre Generale.
+La vecchia sezione **Strumenti — vista classica** è stata tolta: i testi e le
+impostazioni di ogni strumento si modificano nella **Mappa dei prompt**, e i vecchi
+link a uno strumento (`/admin?section=qsa`) aprono Generale.
 
 Nella sezione Generale, le sezioni operative principali presentano in primo piano
 **Funzioni**, l'**AI dello studente** (che riunisce in quest'ordine **API personali**,
@@ -2121,8 +2121,12 @@ comune, ocra per i gruppi, petrolio per lo strumento, viola per lo step; i blocc
 su fondo grigio arrivano dal codice o dai dati della sessione. Il turno libero dello studente usa
 lo stesso tipo di richiesta della chat, per esempio le domande sui fattori in QSA.
 
-Le quattro schede storiche restano nella vista classica di ogni strumento, che ha
-il collegamento «Apri nella mappa dei prompt». La pagina funziona anche su
+Nella mappa ogni step ha anche la **modalità del prompt di sistema** (sceglie quale
+prompt di sistema riceve il modello) e, nei componenti del contesto, le **strategie
+dello step**: quante strategie certificate proporre per risposta e quali strategie
+approvate o certificate sono consentite. L’anteprima di uno step può usare i
+punteggi di una compilazione reale dello strumento. Queste impostazioni prima si
+trovavano solo nella vista classica, ora rimossa. La pagina funziona anche su
 telefono: i livelli diventano una barra scorrevole e lo step si sceglie da un menu.
 Testi dell’interfaccia nelle sei lingue.
 
