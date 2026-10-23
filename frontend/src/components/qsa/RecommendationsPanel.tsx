@@ -662,12 +662,17 @@ function TabButton({ active, count, id, controls, label, icon, onClick, onKeyDow
                 onClick={onClick}
                 onKeyDown={onKeyDown}
                 className={cn(
-                    'flex min-h-[44px] min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
+                    'flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-md px-1 py-1.5 text-xs font-medium transition-colors',
                     active ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700',
                 )}
             >
-                {icon}
-                <span className="text-2xs tabular-nums">{count}</span>
+                <span className="flex items-center gap-1.5">
+                    {icon}
+                    <span className="text-2xs tabular-nums">{count}</span>
+                </span>
+                <span aria-hidden="true" className="block h-3 max-w-full truncate text-2xs leading-3">
+                    {active ? label : ''}
+                </span>
             </button>
         </Tooltip>
     );
