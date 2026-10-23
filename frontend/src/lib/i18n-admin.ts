@@ -3,6 +3,7 @@
 import { readingsIt, readingsEn, readingsEs, readingsFr, readingsDe, readingsSv } from './i18n-readings';
 import { PROMPT_ALIGNMENT_DICTS } from './i18n-prompt-alignment';
 import { PROMPT_MAP_DICTS } from './i18n-prompt-map';
+import { SKILLS_DICTS } from './i18n-skills';
 import type { Lang } from './i18n';
 
 type Dict = Record<string, string>;
@@ -7029,10 +7030,10 @@ const counselorCoversSv: Dict = {
 };
 
 export const ADMIN_DICTS: Record<Lang, Dict> = {
-    it: { ...it, ...trainingIt, ...pqblIt, ...certifiedIt, ...assistantQuestionsIt, ...guidedStepQuestionsIt, ...administrationPlansIt, ...promptAuditIt, ...assistantAdminIt, ...ragDocsIt, ...readingsIt, ...counselorExtrasIt, ...counselorCoversIt, ...PROMPT_ALIGNMENT_DICTS.it, ...PROMPT_MAP_DICTS.it },
-    en: { ...en, ...trainingEn, ...pqblEn, ...certifiedEn, ...assistantQuestionsEn, ...guidedStepQuestionsEn, ...administrationPlansEn, ...promptAuditEn, ...assistantAdminEn, ...ragDocsEn, ...readingsEn, ...counselorExtrasEn, ...counselorCoversEn, ...PROMPT_ALIGNMENT_DICTS.en, ...PROMPT_MAP_DICTS.en },
-    es: { ...es, ...trainingEs, ...pqblEs, ...certifiedEs, ...assistantQuestionsEs, ...guidedStepQuestionsEs, ...administrationPlansEs, ...promptAuditEs, ...assistantAdminEs, ...ragDocsEs, ...readingsEs, ...counselorExtrasEs, ...counselorCoversEs, ...PROMPT_ALIGNMENT_DICTS.es, ...PROMPT_MAP_DICTS.es },
-    fr: { ...fr, ...trainingFr, ...pqblFr, ...certifiedFr, ...assistantQuestionsFr, ...guidedStepQuestionsFr, ...administrationPlansFr, ...promptAuditFr, ...assistantAdminFr, ...ragDocsFr, ...readingsFr, ...counselorExtrasFr, ...counselorCoversFr, ...PROMPT_ALIGNMENT_DICTS.fr, ...PROMPT_MAP_DICTS.fr },
-    de: { ...de, ...trainingDe, ...pqblDe, ...certifiedDe, ...assistantQuestionsDe, ...guidedStepQuestionsDe, ...administrationPlansDe, ...promptAuditDe, ...assistantAdminDe, ...ragDocsDe, ...readingsDe, ...counselorExtrasDe, ...counselorCoversDe, ...PROMPT_ALIGNMENT_DICTS.de, ...PROMPT_MAP_DICTS.de },
-    sv: { ...sv, ...trainingSv, ...pqblSv, ...certifiedSv, ...assistantQuestionsSv, ...guidedStepQuestionsSv, ...administrationPlansSv, ...promptAuditSv, ...assistantAdminSv, ...ragDocsSv, ...readingsSv, ...counselorExtrasSv, ...counselorCoversSv, ...PROMPT_ALIGNMENT_DICTS.sv, ...PROMPT_MAP_DICTS.sv },
+    it: { ...it, ...trainingIt, ...pqblIt, ...certifiedIt, ...assistantQuestionsIt, ...guidedStepQuestionsIt, ...administrationPlansIt, ...promptAuditIt, ...assistantAdminIt, ...ragDocsIt, ...readingsIt, ...counselorExtrasIt, ...counselorCoversIt, ...PROMPT_ALIGNMENT_DICTS.it, ...PROMPT_MAP_DICTS.it, ...SKILLS_DICTS.it },
+    en: { ...en, ...trainingEn, ...pqblEn, ...certifiedEn, ...assistantQuestionsEn, ...guidedStepQuestionsEn, ...administrationPlansEn, ...promptAuditEn, ...assistantAdminEn, ...ragDocsEn, ...readingsEn, ...counselorExtrasEn, ...counselorCoversEn, ...PROMPT_ALIGNMENT_DICTS.en, ...PROMPT_MAP_DICTS.en, ...SKILLS_DICTS.en },
+    es: { ...es, ...trainingEs, ...pqblEs, ...certifiedEs, ...assistantQuestionsEs, ...guidedStepQuestionsEs, ...administrationPlansEs, ...promptAuditEs, ...assistantAdminEs, ...ragDocsEs, ...readingsEs, ...counselorExtrasEs, ...counselorCoversEs, ...PROMPT_ALIGNMENT_DICTS.es, ...PROMPT_MAP_DICTS.es, ...SKILLS_DICTS.es },
+    fr: { ...fr, ...trainingFr, ...pqblFr, ...certifiedFr, ...assistantQuestionsFr, ...guidedStepQuestionsFr, ...administrationPlansFr, ...promptAuditFr, ...assistantAdminFr, ...ragDocsFr, ...readingsFr, ...counselorExtrasFr, ...counselorCoversFr, ...PROMPT_ALIGNMENT_DICTS.fr, ...PROMPT_MAP_DICTS.fr, ...SKILLS_DICTS.fr },
+    de: { ...de, ...trainingDe, ...pqblDe, ...certifiedDe, ...assistantQuestionsDe, ...guidedStepQuestionsDe, ...administrationPlansDe, ...promptAuditDe, ...assistantAdminDe, ...ragDocsDe, ...readingsDe, ...counselorExtrasDe, ...counselorCoversDe, ...PROMPT_ALIGNMENT_DICTS.de, ...PROMPT_MAP_DICTS.de, ...SKILLS_DICTS.de },
+    sv: { ...sv, ...trainingSv, ...pqblSv, ...certifiedSv, ...assistantQuestionsSv, ...guidedStepQuestionsSv, ...administrationPlansSv, ...promptAuditSv, ...assistantAdminSv, ...ragDocsSv, ...readingsSv, ...counselorExtrasSv, ...counselorCoversSv, ...PROMPT_ALIGNMENT_DICTS.sv, ...PROMPT_MAP_DICTS.sv, ...SKILLS_DICTS.sv },
 };

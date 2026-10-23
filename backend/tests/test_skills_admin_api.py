@@ -133,3 +133,26 @@ def test_preview_simulates_the_engine_where_it_is_off():
     assert data["engine_enabled"] is False
     assert data["intent"] == "clarify"
     assert any(entry["slug"] == "profile-wayfinder" for entry in data["delivery"])
+
+
+def test_preview_tries_an_unsaved_draft_without_writing():
+    saved = _create("draft-unsaved", status="published", instructions_i18n={"en": "## Saved text"}).json()
+    draft = {**saved, "instructions_i18n": {"en": "## Edited, not saved"}}
+    for key in ("id", "builtin"):
+        draft.pop(key)
+    response = client.post("/admin/skills/preview", json={
+        "questionnaire_type": "QSA", "message": "ciao", "include_skill_id": saved["id"], "draft": draft,
+    })
+    assert response.status_code == 200, response.text
+    rendered = "\n".join(text for texts in response.json()["blocks"].values() for text in texts)
+    assert "Edited, not saved" in rendered and "Saved text" not in rendered
+    assert _by_slug()["draft-unsaved"]["instructions_i18n"] == {"en": "## Saved text"}
+
+    brand_new = {"slug": "never-saved", "name": "Never saved", "routing": "always", "slot": "directive_tail",
+                 "instructions_i18n": {"en": "## Brand new"}}
+    data = client.post("/admin/skills/preview", json={"questionnaire_type": "QSA", "message": "ciao", "draft": brand_new}).json()
+    assert any(entry["slug"] == "never-saved" and entry["in_prompt"] for entry in data["delivery"])
+    assert "never-saved" not in _by_slug()
+
+    invalid = {**brand_new, "conditions": {"intent": ["advice"]}}
+    assert client.post("/admin/skills/preview", json={"questionnaire_type": "QSA", "draft": invalid}).status_code == 400

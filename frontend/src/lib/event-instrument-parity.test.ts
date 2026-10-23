@@ -10,7 +10,6 @@ const LISTS = [
     '../app/strumenti/[id]/page.tsx',
     '../components/qsa/ProfileVisualization.tsx',
     '../components/admin/CounselorsPanel.tsx',
-    '../components/admin/SkillsPanel.tsx',
     '../components/admin/PromptExportPanel.tsx',
     '../components/admin/LogViewer.tsx',
     '../components/admin/QuestionnaireResultsViewer.tsx',
@@ -19,6 +18,8 @@ const LISTS = [
 // Fuori di proposito: niente letture certificate per gli eventi, e un evento
 // non e' un profilo da sommare agli altri.
 // - components/admin/CertifiedReadingsPanel.tsx
+// Non piu' una lista: la scheda Skill legge gli strumenti da GET /admin/skills/catalog.
+// - components/admin/SkillsPanel.tsx
 // - lib/profile-tracker.ts, app/profilo/page.tsx (addCompletedProfile)
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');

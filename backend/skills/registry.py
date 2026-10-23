@@ -32,12 +32,15 @@ class SkillBinding:
         return self.skill.slug
 
 
-def bindings_for(db, questionnaire_type: str, step_id: str | None, *, include_skill_id: int | None = None) -> list[SkillBinding]:
+def bindings_for(db, questionnaire_type: str, step_id: str | None, *, include_skill_id: int | None = None,
+                 include_skill=None) -> list[SkillBinding]:
     """Skill pubblicate e attive agganciate a (strumento, step), ordinate.
 
-    `include_skill_id` serve solo all'anteprima admin: aggiunge quella skill
-    anche se e' in bozza, spenta o non ancora agganciata, cosi' la si prova
-    prima di pubblicarla. Condizioni, router e budget restano quelli veri.
+    `include_skill_id` e `include_skill` servono solo all'anteprima admin:
+    aggiungono quella skill anche se e' in bozza, spenta o non ancora
+    agganciata, cosi' la si prova prima di pubblicarla. `include_skill` e' una
+    `Skill` non salvata (il form del wizard): con lo stesso id sostituisce la
+    versione salvata. Condizioni, router e budget restano quelli veri.
     """
     rows = (
         db.query(models.GuidedStepSkill)
@@ -48,11 +51,9 @@ def bindings_for(db, questionnaire_type: str, step_id: str | None, *, include_sk
         )
         .all()
     )
-    included = (
-        db.query(models.Skill).filter(models.Skill.id == include_skill_id).first()
-        if include_skill_id is not None
-        else None
-    )
+    included = include_skill
+    if included is None and include_skill_id is not None:
+        included = db.query(models.Skill).filter(models.Skill.id == include_skill_id).first()
     if not rows and included is None:
         return []
 
@@ -73,7 +74,8 @@ def bindings_for(db, questionnaire_type: str, step_id: str | None, *, include_sk
         .all()
     )
 
-    if included is not None and all(skill.id != included.id for skill in skills):
+    if included is not None:
+        skills = [skill for skill in skills if included.id is None or skill.id != included.id]
         skills.append(included)
 
     bindings = []
