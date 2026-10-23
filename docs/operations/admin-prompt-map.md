@@ -90,6 +90,22 @@ una seconda conferma. Cambiare lingua o chiudere con una bozza chiede conferma.
 Il riordino aggiorna soltanto le posizioni cambiate. La scheda classica usa gli
 stessi dati; non si creano copie dei testi.
 
+### Skill dello step
+
+Ogni step (anche Domande e Conclusione) elenca le skill che la chat gli
+aggancia, con la stessa regola di `skills.registry.bindings_for` (aggancio
+acceso dello step, altrimenti quello `*` dello strumento). Per ciascuna: quando
+entra in parole (dall'intento o dalle condizioni), come viene scelta
+(`routing`), dove va nel prompt (`slot`), se l'aggancio vale per tutti gli step
+o solo per questo, e un link alla scheda Skill. Le skill che oggi non entrano
+restano visibili con il motivo: aggancio o skill spenti, bozza, condizione su
+strumento/step/tipo di step che lo step non soddisfa, componente del prompt
+spenta, materiale nello slot Conoscenze con la componente spenta. Se il motore
+delle skill è spento per lo strumento (`skills_engine.enabled` nella risposta
+di `GET /admin/prompt-map`) lo dice un avviso: nessuna skill entra. Le
+condizioni che dipendono dal turno (intento, punteggi) si provano
+nell'anteprima della scheda Skill.
+
 ### Aggiunta, spostamento, eliminazione di step
 
 ```text

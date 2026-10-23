@@ -56,6 +56,24 @@ export interface PromptMapRef {
     override_key?: string;
 }
 
+export type PromptMapSkillBlock = 'binding_off' | 'skill_off' | 'draft' | 'instrument' | 'step' | 'step_mode' | 'component';
+
+// Skill agganciata a uno step, come la aggancia la chat (prompt_map._step_skills).
+export interface PromptMapSkill {
+    id: number;
+    slug: string;
+    name: string;
+    description: string;
+    routing: string;
+    slot: string;
+    handler: string | null;
+    conditions: Record<string, unknown>;
+    binding: 'step' | 'all';
+    blocked: PromptMapSkillBlock[];
+    knowledge_off: boolean;
+    sort_order: number;
+}
+
 export interface PromptMapStep {
     id: string;
     label: string;
@@ -68,6 +86,7 @@ export interface PromptMapStep {
     fixed: boolean;
     entries: PromptMapEntry[];
     refs: PromptMapRef[];
+    skills?: PromptMapSkill[];
 }
 
 export interface PromptMapGroup {
@@ -83,6 +102,7 @@ export interface PromptMapInstrument {
 export interface PromptMap {
     instrument: string;
     instruments: PromptMapInstrument[];
+    skills_engine?: { enabled: boolean };
     levels: {
         common: PromptMapEntry[];
         groups: PromptMapGroup[];
@@ -254,4 +274,37 @@ export function sortOrderChanges<Id>(ordered: SortOrderItem<Id>[]): SortOrderIte
 export function normalizeStepId(value: string, final = true): string {
     const id = value.toLowerCase().replace(/[^a-z0-9-]/g, '-');
     return final ? id.replace(/^-+|-+$/g, '') : id;
+}
+
+export interface SkillConditionPart {
+    key: string;
+    params?: Record<string, string | number>;
+}
+
+// «Quando entra» di una skill in parole: chiavi i18n `admin.promptMap.skills.*`.
+// Le condizioni che dipendono solo dalla struttura (strumento, step, mode)
+// arrivano gia' decise dal backend in `blocked`.
+export function skillConditionParts(skill: Pick<PromptMapSkill, 'routing' | 'conditions'>): SkillConditionPart[] {
+    const conditions = skill.conditions ?? {};
+    const list = (key: string) => (Array.isArray(conditions[key]) ? (conditions[key] as unknown[]).map(String) : []);
+    const parts: SkillConditionPart[] = [];
+    const intents = list('intents');
+    if (intents.length) {
+        parts.push(...intents.map(intent => ({ key: `admin.promptMap.skills.intent.${intent}` })));
+    } else if (skill.routing === 'always' || skill.routing === 'support') {
+        parts.push({ key: 'admin.promptMap.skills.when.always' });
+    } else {
+        parts.push({ key: 'admin.promptMap.skills.when.relevant' });
+    }
+    if (conditions.requires_scores === true) parts.push({ key: 'admin.promptMap.skills.when.scores' });
+    if (typeof conditions.min_salient_factors === 'number') {
+        parts.push({ key: 'admin.promptMap.skills.when.salient', params: { count: conditions.min_salient_factors } });
+    }
+    const bands = conditions.factor_bands as { any_of?: unknown[] } | undefined;
+    if (Array.isArray(bands?.any_of) && bands.any_of.length) {
+        parts.push({ key: 'admin.promptMap.skills.when.bands', params: { bands: bands.any_of.map(String).join(', ') } });
+    }
+    const languages = list('languages');
+    if (languages.length) parts.push({ key: 'admin.promptMap.skills.when.languages', params: { languages: languages.join(', ') } });
+    return parts;
 }

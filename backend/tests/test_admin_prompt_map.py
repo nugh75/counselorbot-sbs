@@ -381,6 +381,64 @@ def test_follow_up_mode_mirrors_guided_chat():
     assert chat_logic.guided_step_follow_up_mode(step("evento-interview")) == "evento-interview"
 
 
+def test_step_skills_match_the_runtime_bindings():
+    """Ogni step mostra le skill che la chat aggancia, e perche' le altre restano fuori."""
+    from backend.skills.registry import bindings_for
+    from backend.skills_seed import seed_skills
+
+    _seed_all_instruments()
+    db = _TestSession()
+    try:
+        seed_skills(db)
+        for key, value in (("skills_engine_enabled", "true"), ("skills_engine_instruments", '["QSA"]')):
+            db.merge(models.Config(key=key, value=value))
+        step = (
+            db.query(models.GuidedStep)
+            .filter(models.GuidedStep.questionnaire_type == "QSA")
+            .order_by(models.GuidedStep.sort_order)
+            .first()
+        )
+        diagram = db.query(models.Skill).filter(models.Skill.slug == "concept-diagram").one()
+        comparison = db.query(models.Skill).filter(models.Skill.slug == "profile-comparison").one()
+        # Oggi un aggancio esplicito spento non batte il wildcard acceso (come
+        # in `bindings_for`); spegnere il wildcard toglie la skill ovunque.
+        db.add(models.GuidedStepSkill(questionnaire_type="QSA", step_id=step.id, skill_id=diagram.id, enabled=False))
+        wildcard = db.query(models.GuidedStepSkill).filter(
+            models.GuidedStepSkill.questionnaire_type == "QSA",
+            models.GuidedStepSkill.step_id == "*",
+            models.GuidedStepSkill.skill_id == comparison.id,
+        ).one()
+        wildcard.enabled = False
+        db.commit()
+
+        prompt_map = _map(_client(), "QSA")
+        assert prompt_map["skills_engine"] == {"enabled": True}
+        steps = {item["id"]: item for item in prompt_map["levels"]["steps"]}
+        for step_id, item in steps.items():
+            runtime = {binding.slug for binding in bindings_for(db, "QSA", step_id)}
+            shown = {
+                entry["slug"] for entry in item["skills"]
+                if not set(entry["blocked"]) & {"binding_off", "skill_off", "draft"}
+            }
+            assert shown == runtime, (step_id, shown, runtime)
+
+        by_slug = {entry["slug"]: entry for entry in steps[step.id]["skills"]}
+        assert by_slug["concept-diagram"]["binding"] == "all"
+        assert by_slug["concept-diagram"]["blocked"] == []
+        assert "binding_off" in by_slug["profile-comparison"]["blocked"]
+        assert by_slug["certified-advice"]["binding"] == "all"
+        assert by_slug["certified-advice"]["conditions"] == {"intents": ["advice", "guided"]}
+        assert "approved-strategies" not in by_slug
+        assert _map(_client(), "QPCS")["skills_engine"] == {"enabled": False}
+    finally:
+        db.query(models.GuidedStepSkill).filter(
+            models.GuidedStepSkill.enabled.is_(False), models.GuidedStepSkill.step_id != "*",
+        ).delete()
+        db.query(models.GuidedStepSkill).filter(models.GuidedStepSkill.step_id == "*").update({"enabled": True})
+        db.commit()
+        db.close()
+
+
 if __name__ == "__main__":
     test_instruments_endpoint_lists_seeded_instruments()
     test_every_runtime_key_appears_once_at_one_level()
