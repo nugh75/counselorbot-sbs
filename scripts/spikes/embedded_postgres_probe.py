@@ -57,6 +57,21 @@ def dir_size(path: Path) -> int:
     return sum(f.stat().st_size for f in path.rglob("*") if f.is_file() and not f.is_symlink())
 
 
+def grant_users(path: Path) -> None:
+    """Windows runners are elevated: initdb/pg_ctl drop to a restricted token that
+    cannot read files an elevated process created, so give the Users group access.
+    A desktop app running as a normal user does not need this."""
+    if IS_WINDOWS:
+        run(["icacls", str(path), "/grant", "*S-1-5-32-545:(OI)(CI)F", "/T", "/Q"])
+
+
+def is_build_only(rel: Path) -> bool:
+    """Files an app does not need at runtime: headers, static libs, PGXS, docs."""
+    parts = rel.parts
+    return (parts[0] in {"include", "dependency-notices"} or rel.suffix == ".a"
+            or "pgxs" in parts or "doc" in parts or "man" in parts)
+
+
 def free_port() -> int:
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
@@ -83,8 +98,11 @@ def download(url: str, dest: Path) -> float:
 def fetch_binaries(source: str, version: str, work: Path) -> tuple[Path, dict]:
     key = (platform.system(), platform.machine())
     archive = work / "download"
-    if source == "theseus":
+    if source.startswith("theseus"):
         target = THESEUS_TARGETS[key]
+        if source == "theseus-musl":
+            # The glibc build needs GLIBC_2.36, newer than Ubuntu 22.04.
+            target = target.replace("-gnu", "-musl")
         url = (f"https://github.com/theseus-rs/postgresql-binaries/releases/download/"
                f"{version}/postgresql-{version}-{target}.tar.gz")
     else:
@@ -97,7 +115,7 @@ def fetch_binaries(source: str, version: str, work: Path) -> tuple[Path, dict]:
 
     install = work / "pgsql"
     started = time.perf_counter()
-    if source == "theseus":
+    if source.startswith("theseus"):
         with tarfile.open(archive) as tar:
             tar.extractall(work / "unpacked", filter="tar")
         shutil.move(str(next((work / "unpacked").iterdir())), install)
@@ -114,6 +132,15 @@ def fetch_binaries(source: str, version: str, work: Path) -> tuple[Path, dict]:
     info["installed_bytes_by_dir"] = {
         d.name: dir_size(d) for d in install.iterdir() if d.is_dir()
     }
+    info["runtime_bytes"] = sum(
+        f.stat().st_size for f in install.rglob("*")
+        if f.is_file() and not f.is_symlink() and not is_build_only(f.relative_to(install))
+    )
+    info["largest_files"] = sorted(
+        ((str(f.relative_to(install)), f.stat().st_size) for f in install.rglob("*")
+         if f.is_file() and not f.is_symlink()),
+        key=lambda item: -item[1],
+    )[:8]
     info["tools_present"] = {t: (install / "bin" / f"{t}{EXE}").exists() for t in TOOLS}
     return install, info
 
@@ -164,7 +191,7 @@ def boot_backend(db_url: str, scratch: Path, log: Path) -> float:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--source", choices=["theseus", "zonky"], required=True)
+    parser.add_argument("--source", choices=["theseus", "theseus-musl", "zonky"], required=True)
     parser.add_argument("--version", required=True)
     parser.add_argument("--work", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
@@ -182,6 +209,8 @@ def main() -> None:
     data_root = user_data_dir()
     shutil.rmtree(data_root, ignore_errors=True)
     data_root.mkdir(parents=True)
+    grant_users(work)
+    grant_users(data_root)
     pgdata = data_root / "postgres"
     pwfile = work / "pw"
     password = secrets.token_urlsafe(24)
