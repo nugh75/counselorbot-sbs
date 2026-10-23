@@ -21,6 +21,7 @@ from .. import prompt_revisions
 from ..dynamic_registry import invalidate_instrument_cache
 from ..content_versions import CATALOG_CONTENT_TYPES, CONTENT_TYPES, ContentVersionError
 from ..ai_service import AIService, configured_fallback_targets
+from ..local_llm import LLAMACPP_KEY_CONFIG
 from .chatgpt import browser_mutation
 from ..api_secrets import (
     API_KEY_ENV_MAP,
@@ -39,6 +40,12 @@ from ..training_dataset import (
 
 router = APIRouter()
 get_db = database.get_db
+
+# Privacy settings and the endpoints that receive chats (and the local server key): admins only.
+ADMIN_ONLY_CONFIG_KEYS = {
+    'external_pii_redact', 'external_pii_fallback', 'pii_ner_enabled', 'pii_ner_model',
+    'ollama_ip', 'llamacpp_url', 'omniroute_url',
+}
 
 _KNOWN_LOG_PROVIDERS = {
     "openai",
@@ -1158,12 +1165,12 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
         if not current_user.get("is_admin"):
             raise HTTPException(403, "Accesso riservato agli amministratori")
         raise HTTPException(409, "Usare il pannello API personali in Amministrazione")
-    if provider_from_config_key(config.key):
+    if provider_from_config_key(config.key) or config.key == LLAMACPP_KEY_CONFIG:
         raise HTTPException(
             status_code=409,
             detail="Le chiavi API si modificano in ai4educ Console, pagina Segreti",
         )
-    if config.key in {'external_pii_redact', 'external_pii_fallback', 'pii_ner_enabled', 'pii_ner_model'} and not current_user.get('is_admin'):
+    if config.key in ADMIN_ONLY_CONFIG_KEYS and not current_user.get('is_admin'):
         raise HTTPException(403, 'Accesso riservato agli amministratori')
     from ..model_context import context_levels, validate_routing_config
     try:

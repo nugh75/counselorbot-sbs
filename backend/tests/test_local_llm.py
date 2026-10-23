@@ -179,3 +179,59 @@ def test_route_is_admin_only_and_browser_only(client):
     client.actor["identity"] = dict(client.actor["identity"], is_admin=False)
     assert client.post("/admin/local-llm/detect", json={}).status_code == 403
     assert client.calls == []
+
+
+@pytest.fixture
+def config_client():
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+    from sqlalchemy.pool import StaticPool
+
+    from backend import models
+    from backend.routes import admin
+
+    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    for table in (models.Config, models.PromptRevision):
+        table.__table__.create(engine)
+    with Session(engine) as session:
+        app = FastAPI()
+        app.include_router(admin.router)
+        actor = {"identity": dict(auth._anonymous_identity(), authenticated=True, username="admin", is_admin=True)}
+        app.dependency_overrides[database.get_db] = lambda: session
+        app.dependency_overrides[auth.get_identity] = lambda: actor["identity"]
+        with TestClient(app, headers={"X-Requested-With": "CounselorBot"}) as c:
+            c.actor, c.db = actor, session
+            yield c
+    engine.dispose()
+
+
+def _researcher(client):
+    client.actor["identity"] = dict(auth._anonymous_identity(), authenticated=True, username="ricerca",
+                                    is_researcher=True)
+
+
+@pytest.mark.parametrize("key", ["ollama_ip", "llamacpp_url", "omniroute_url"])
+def test_only_admins_change_llm_endpoints(config_client, key):
+    from backend import models
+
+    _researcher(config_client)
+    assert config_client.post("/admin/config", json={"key": key, "value": "http://elsewhere:9000"}).status_code == 403
+    assert config_client.db.query(models.Config).filter_by(key=key).count() == 0
+    config_client.actor["identity"] = dict(config_client.actor["identity"], is_admin=True, is_researcher=False)
+    assert config_client.post("/admin/config", json={"key": key, "value": "http://gpu.lan:8000"}).status_code == 200
+    assert config_client.db.query(models.Config).filter_by(key=key).one().value == "http://gpu.lan:8000"
+
+
+def test_local_server_key_is_never_a_config_row(config_client):
+    from backend import models
+
+    for actor in ({"is_admin": True}, {"is_researcher": True}):
+        config_client.actor["identity"] = dict(auth._anonymous_identity(), authenticated=True, username="u", **actor)
+        assert config_client.post("/admin/config", json={"key": "api_key_llamacpp", "value": SECRET}).status_code == 409
+    assert config_client.db.query(models.Config).count() == 0
+
+
+def test_researchers_keep_their_other_settings(config_client):
+    _researcher(config_client)
+    assert config_client.post("/admin/config", json={"key": "model_name", "value": "qwen3:4b"}).status_code == 200
+    assert config_client.post("/admin/config", json={"key": "active_provider", "value": "ollama"}).status_code == 200
