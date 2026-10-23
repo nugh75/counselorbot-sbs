@@ -264,7 +264,7 @@ def test_replacing_an_activated_target_creates_a_new_step(api):
     assert response.status_code == 409 and response.json()["detail"] == "activated_step_target_immutable"
 
     # Replacement: drop the old step and add the new target; it activates now.
-    response = save(client, published, [*kept[:3], {"step_type": "forum", "topic_id": second["id"]}, kept[4]])
+    response = save(client, published, [*kept[:3], {"step_type": "forum", "topic_id": second["id"], "title": "Second discussion"}, kept[4]])
     assert response.status_code == 200, response.text
     replacement = response.json()["steps"][3]
     assert replacement["id"] != forum["id"] and replacement["topic_id"] == second["id"]
@@ -284,7 +284,7 @@ def test_steps_added_while_archived_activate_on_restore(api):
     archived = client.post(f"/teacher/paths/{path['id']}/archive").json()
     late = client.post(f"/groups/{group.id}/forum/topics", json={"title": "Late", "body": "Opening"}).json()
     response = save(client, archived, [*[keep(step) for step in published["steps"]],
-                                       {"step_type": "forum", "topic_id": late["id"]}])
+                                       {"step_type": "forum", "topic_id": late["id"], "title": "Late discussion"}])
     assert response.status_code == 200, response.text
     assert response.json()["steps"][5]["active_from"] is None
     restored = client.post(f"/teacher/paths/{path['id']}/restore").json()

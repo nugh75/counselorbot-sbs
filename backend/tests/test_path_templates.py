@@ -330,7 +330,7 @@ def test_update_from_template_spares_started_steps_and_created_objects(api):
         kept(template, 0, title="Renamed tool"), kept(template, 1), kept(template, 2), kept(template, 3),
         kept(template, 4, topic_title="New question"),
         {"step_type": "tool", "tool_key": "timeline"},
-        {"step_type": "forum", "topic_title": "Closing", "topic_body": "One last word"},
+        {"step_type": "forum", "title": "Closing", "topic_title": "Closing", "topic_body": "One last word"},
     ])
     statuses = {(c["change"], c["step_type"]): c["status"]
                 for c in client.get(f"/teacher/paths/{path['id']}/template-update").json()["changes"]}

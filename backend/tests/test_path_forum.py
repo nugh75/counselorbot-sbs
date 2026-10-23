@@ -65,7 +65,8 @@ def reply(client, topic_row, body="reply"):
 
 
 def forum_step(topic_row, step_id=None):
-    row = {"step_type": "forum", "topic_id": topic_row["id"]}
+    # A forum step needs its own title to be published (forum_step_title_missing).
+    row = {"step_type": "forum", "topic_id": topic_row["id"], "title": "Class discussion"}
     return {**row, "id": step_id} if step_id else row
 
 

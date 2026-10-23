@@ -77,6 +77,11 @@ try {
         await page.getByRole('button', {name: text(lang, 'open'), exact: true}).click();
         const cards = page.getByTestId('path-step-card');
         await cards.nth(0).getByText('Strategie di apprendimento', {exact: false}).waitFor();
+        // Saved steps open with «Modifica»; closed, they show the effective title and note.
+        assert.equal(await cards.nth(4).getByText('La mia storia', {exact: true}).count(), 1);
+        for (let position = 1; position <= 5; position += 1) {
+            await page.getByRole('button', {name: `${text(lang, 'editStep')} #${position}`, exact: true}).click();
+        }
         assert.equal(await cards.nth(0).getByRole('textbox').count(), 0);
         assert.equal(await cards.nth(2).locator('input[type=date]').count(), 0);
         assert.equal(await cards.nth(2).getByRole('button', {name: text(lang, 'differentDate')}).count(), 0);
@@ -96,6 +101,8 @@ try {
             assert.equal(saves.at(-1).steps[0].title, 'Titolo scelto');
             assert.equal(saves.at(-1).steps[0].instructions, 'Nota aggiuntiva\nsenza duplicati');
             assert.equal(saves.at(-1).steps[0].due_date, '2026-10-28');
+            // Saving closes saved steps again, as for every plan.
+            await page.getByRole('button', {name: `${text(lang, 'editStep')} #1`, exact: true}).click();
             await card.getByRole('button', {name: text(lang, 'useDefaultTitle')}).click();
             await card.getByRole('button', {name: text(lang, 'useObjectDate')}).click();
             await card.getByRole('button', {name: text(lang, 'removeNote')}).click();
@@ -108,7 +115,18 @@ try {
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${lang} ${width} editor overflow`);
         await mkdir('output/playwright', {recursive: true});
         await page.screenshot({path: `output/playwright/presentation-editor-${lang}-${width}.png`, fullPage: true});
-        if (width === 1440 && process.env.UPDATE_GUIDE_SCREENSHOTS === '1') await page.screenshot({path: `public/guide/${lang}/teacher-class-paths.png`, fullPage: true});
+        if (width === 1440 && process.env.UPDATE_GUIDE_SCREENSHOTS === '1') {
+            // Guide image: the steps panel only, with two steps open to show the
+            // presentation controls, and no fixed bars painted over it.
+            await page.reload();
+            await page.getByRole('button', {name: text(lang, 'open'), exact: true}).click();
+            for (const position of [1, 5]) {
+                await page.getByRole('button', {name: `${text(lang, 'editStep')} #${position}`, exact: true}).click();
+            }
+            await page.addStyleTag({content: 'header, nav, .fixed, .sticky { visibility: hidden !important; }'});
+            const panel = page.getByRole('heading', {name: `${text(lang, 'stepsHeading')} (5)`, exact: true}).locator('xpath=../..');
+            await panel.screenshot({path: `public/guide/${lang}/teacher-class-paths.png`});
+        }
         assert.deepEqual(errors, []);
         await context.close();
         const student = await prepare(lang, width, true);
