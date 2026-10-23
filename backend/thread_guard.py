@@ -483,7 +483,7 @@ SUPPORTED_PROVIDERS: tuple[tuple[str, str, bool], ...] = (
     ("deepinfra", "DeepInfra", False),
     ("omniroute", "OmniRoute", False),
     ("ollama", "Ollama (locale)", True),
-    ("llamacpp", "llama.cpp (locale)", True),
+    ("llamacpp", "Server locale / compatibile OpenAI", True),
 )
 
 
