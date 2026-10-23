@@ -13,6 +13,8 @@ import { QUESTIONNAIRES, isReusableProfile, type QuestionnaireType } from '@/lib
 import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
+import { noticingMessageId } from '@/lib/teacher-noticing';
+import { NoticingPanel } from './NoticingPanel';
 import { useTeacherResource } from './useTeacherResource';
 
 export interface StudentResult {
@@ -45,7 +47,16 @@ function StudentResultDetails({ path, username, result }: { path: string; userna
     const [pdfError, setPdfError] = useState(false);
     const [accessLost, setAccessLost] = useState(false);
     const pending = useRef<AbortController | null>(null);
+    const messagePrefix = useId();
+    const [highlighted, setHighlighted] = useState<number | null>(null);
     useEffect(() => () => { pending.current?.abort(); }, []);
+
+    const showMessage = (index: number) => {
+        setHighlighted(index);
+        const element = document.getElementById(noticingMessageId(messagePrefix, index));
+        element?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        element?.focus({ preventScroll: true });
+    };
 
     const download = async () => {
         if (pending.current) return;
@@ -113,12 +124,14 @@ function StudentResultDetails({ path, username, result }: { path: string; userna
                 {reading.updated_at && <p className="text-xs text-slate-600">{l('updated')}{' '}<time dateTime={reading.updated_at}>{new Date(reading.updated_at).toLocaleString(lang)}</time></p>}
             </> : <p>{l('noReading')}</p>}
         </section>
+        <NoticingPanel path={`${path}/noticing`} onQuote={showMessage} />
         <section className="space-y-2" aria-label={l('conversation')}>
             <h3 className="font-semibold text-slate-800">{l('conversation')}</h3>
             <div className="max-h-96 space-y-3 overflow-y-auto break-words rounded-md border border-slate-200 bg-slate-50 p-3">
                 {!data.conversation.length && <p>{l('noConversation')}</p>}
-                {data.conversation.map((message, index) => <div key={index}>
-                    <p className="font-semibold">{message.role === 'student' ? l('student') : 'CounselorBot'}</p>
+                {data.conversation.map((message, index) => <div key={index} id={noticingMessageId(messagePrefix, index)} tabIndex={-1}
+                    className={`rounded-md p-1 ${highlighted === index ? 'bg-violet-100 ring-2 ring-violet-400' : ''}`}>
+                    <p className="font-semibold"><span className="mr-2 text-xs font-normal text-slate-500">{index + 1}</span>{message.role === 'student' ? l('student') : 'CounselorBot'}</p>
                     <div className="prose prose-sm max-w-full overflow-x-auto text-slate-700"><ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown></div>
                 </div>)}
             </div>
