@@ -29,7 +29,7 @@ const TEXTS = {
         via: 'iscritto via',
         joinPlaceholder: "Codice di invito (GR-ABC123)",
         join: 'Entra',
-        joinError: "Codice di invito non valido.",
+        joinError: "Codice di invito non valido.", joinedOk: "Sei nel gruppo", joinedAlready: "Fai già parte del gruppo", joinNetworkError: "Iscrizione non riuscita. Controlla la connessione e riprova.",
         loading: 'Caricamento…',
         loadError: 'Impossibile caricare i gruppi. I dati non sono persi.',
         retry: 'Riprova',
@@ -44,7 +44,7 @@ const TEXTS = {
         via: 'joined via',
         joinPlaceholder: "Invitation code (GR-ABC123)",
         join: 'Join',
-        joinError: "Invalid invitation code.",
+        joinError: "Invalid invitation code.", joinedOk: "You joined the group", joinedAlready: "You are already in the group", joinNetworkError: "Joining failed. Check your connection and try again.",
         loading: 'Loading…',
         loadError: 'The groups could not be loaded. Your data is not lost.',
         retry: 'Retry',
@@ -56,7 +56,7 @@ const TEXTS = {
         leaveConsequence: "Solo podrás volver a entrar con una nueva invitación del docente.",
         leaveError: "La salida ha fallado. Inténtalo de nuevo.",
         via: 'inscrito mediante',
-        joinPlaceholder: "Código de invitación (GR-ABC123)", join: 'Entrar', joinError: "Código de invitación no válido.",
+        joinPlaceholder: "Código de invitación (GR-ABC123)", join: 'Entrar', joinError: "Código de invitación no válido.", joinedOk: "Te has unido al grupo", joinedAlready: "Ya formas parte del grupo", joinNetworkError: "La inscripción ha fallado. Comprueba la conexión e inténtalo de nuevo.",
         loading: 'Cargando…',
         loadError: 'No se pudieron cargar los grupos. Tus datos no se han perdido.',
         retry: 'Reintentar',
@@ -68,7 +68,7 @@ const TEXTS = {
         leaveConsequence: "Tu ne pourras y revenir qu’avec une nouvelle invitation de l’enseignant.",
         leaveError: "La sortie a échoué. Réessaie.",
         via: 'inscrit via',
-        joinPlaceholder: "Code d’invitation (GR-ABC123)", join: 'Rejoindre', joinError: "Code d’invitation non valide.",
+        joinPlaceholder: "Code d’invitation (GR-ABC123)", join: 'Rejoindre', joinError: "Code d’invitation non valide.", joinedOk: "Vous avez rejoint le groupe", joinedAlready: "Vous faites déjà partie du groupe", joinNetworkError: "L’inscription a échoué. Vérifiez la connexion et réessayez.",
         loading: 'Chargement…',
         loadError: 'Impossible de charger les groupes. Tes données ne sont pas perdues.',
         retry: 'Réessayer',
@@ -80,7 +80,7 @@ const TEXTS = {
         leaveConsequence: "Ein erneuter Beitritt geht nur mit einer neuen Einladung der Lehrkraft.",
         leaveError: "Das Verlassen ist fehlgeschlagen. Versuche es erneut.",
         via: 'beigetreten über',
-        joinPlaceholder: "Einladungscode (GR-ABC123)", join: 'Beitreten', joinError: "Ungültiger Einladungscode.",
+        joinPlaceholder: "Einladungscode (GR-ABC123)", join: 'Beitreten', joinError: "Ungültiger Einladungscode.", joinedOk: "Sie sind der Gruppe beigetreten", joinedAlready: "Sie sind bereits in der Gruppe", joinNetworkError: "Der Beitritt ist fehlgeschlagen. Prüfen Sie die Verbindung und versuchen Sie es erneut.",
         loading: 'Wird geladen…',
         loadError: 'Die Gruppen konnten nicht geladen werden. Deine Daten sind nicht verloren.',
         retry: 'Erneut versuchen',
@@ -92,7 +92,7 @@ const TEXTS = {
         leaveConsequence: "Du kan bara komma tillbaka med en ny inbjudan från läraren.",
         leaveError: "Det gick inte att lämna. Försök igen.",
         via: 'gick med via',
-        joinPlaceholder: "Inbjudningskod (GR-ABC123)", join: 'Gå med', joinError: "Ogiltig inbjudningskod.",
+        joinPlaceholder: "Inbjudningskod (GR-ABC123)", join: 'Gå med', joinError: "Ogiltig inbjudningskod.", joinedOk: "Du har gått med i gruppen", joinedAlready: "Du är redan med i gruppen", joinNetworkError: "Det gick inte att gå med. Kontrollera anslutningen och försök igen.",
         loading: 'Läser in…',
         loadError: 'Det gick inte att läsa in grupperna. Dina data har inte gått förlorade.',
         retry: 'Försök igen',
@@ -104,7 +104,8 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
     const [groups, setGroups] = useState<MyGroup[]>([]);
     const [unreadByGroup, setUnreadByGroup] = useState<Record<string, number>>({});
     const [joinCode, setJoinCode] = useState('');
-    const [joinError, setJoinError] = useState(false);
+    const [joinError, setJoinError] = useState<'' | 'invalid' | 'network'>('');
+    const [joinResult, setJoinResult] = useState<{ name: string; already: boolean } | null>(null);
     const [busy, setBusy] = useState(false);
     // F03: caricamento, errore e dati distinguibili; un errore su un
     // ricaricamento non cancella i gruppi già mostrati.
@@ -159,18 +160,24 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
     const join = async () => {
         if (!joinCode.trim()) return;
         setBusy(true);
-        setJoinError(false);
+        setJoinError('');
+        setJoinResult(null);
         try {
             const res = await apiFetch('/api/groups/join', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ code: joinCode.trim() }),
             });
-            if (!res.ok) throw new Error('join failed');
+            if (!res.ok) {
+                setJoinError(res.status === 404 ? 'invalid' : 'network');
+                return;
+            }
+            const payload = await res.json() as { name: string; already_member?: boolean };
             setJoinCode('');
+            setJoinResult({ name: payload.name, already: Boolean(payload.already_member) });
             await load();
         } catch {
-            setJoinError(true);
+            setJoinError('network');
         } finally {
             setBusy(false);
         }
@@ -279,7 +286,12 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                     {texts.join}
                 </button>
             </div>
-            {joinError && <p className="text-sm text-red-600">{texts.joinError}</p>}
+            {joinError && <p role="alert" className="text-sm text-red-600">{joinError === 'invalid' ? texts.joinError : texts.joinNetworkError}</p>}
+            {joinResult && (
+                <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">
+                    {joinResult.already ? texts.joinedAlready : texts.joinedOk}: {joinResult.name}
+                </p>
+            )}
         </section>
     );
 }
