@@ -9,6 +9,8 @@ import { ArrowDown, ArrowUp, ArrowLeft, Archive, ArchiveRestore, CheckCircle2, C
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import type { ClassSettings, ClassTool } from '@/lib/class-settings';
 import { parseClassPath, parseClassPaths, pathStepTools, type ClassPath, type ClassPathStep } from '@/lib/class-paths';
+import { resolveStepPresentation } from '@/lib/class-path-presentation';
+import { StepPresentationFields } from './StepPresentationFields';
 import { plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
 import { resultsChatText } from '@/lib/i18n-results-chats';
 import { deepDiveSources, pathStepKey, resultsSourcePayload } from '@/lib/results-deep-dive';
@@ -75,7 +77,11 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     const [title, setTitle] = useState(path.title);
     const [description, setDescription] = useState(path.description || '');
     const [mode, setMode] = useState<'recommended' | 'strict'>(path.mode);
-    const [steps, setSteps] = useState<ClassPathStep[]>(path.steps);
+    const [steps, setStepsState] = useState<ClassPathStep[]>(path.steps);
+    const setSteps = (action: ClassPathStep[] | ((current: ClassPathStep[]) => ClassPathStep[])) => {
+        setStepsState(current => (typeof action === 'function' ? action(current) : action).map(step =>
+            step.id || step.client_key ? step : {...step, client_key: crypto.randomUUID()}));
+    };
     const [administrations, setAdministrations] = useState<{id:number;title:string;code:string;locale:string;instrument_code:string;delivery_mode?:string}[]>([]);
     // Italian runs on the external site; other languages only where the app serves that instrument locale.
     const [servedLocales, setServedLocales] = useState<Record<string,string[]>>({});
@@ -279,6 +285,15 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         });
         setSteps(nextSteps);
         if (notice === 'saved') setNotice(null);
+    };
+
+    const handleUpdateStep = (index: number, patch: Partial<Pick<ClassPathStep, 'title' | 'instructions' | 'due_date'>>) => {
+        const previous = steps[index];
+        const updated = {...previous, ...patch};
+        setSteps(current => current.map((row, rowIndex) => rowIndex === index ? updated : row));
+        // Open steps are tracked by object: keep the edited step open.
+        setOpenSteps(current => current.map(row => (row === previous ? updated : row)));
+        if (notice === 'saved' || notice === 'published') setNotice(null);
     };
 
     // A questionnaire analysed by a later chat step stays while that chat is there.
@@ -719,6 +734,11 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             : step.step_type === 'guided_chat'
                                             ? `${k('guidedChat')} · ${toolLabel(step.tool_key, classSettings.tools, lang)}`
                                             : toolLabel(step.tool_key, classSettings.tools, lang);
+                            // The title and the date are overrides: show the object's own values until the teacher asks for one.
+                            const presentation = resolveStepPresentation(lang, step, {
+                                toolName: key => toolLabel(key, classSettings.tools, lang),
+                                ...(step.step_type === 'pending' ? {fallbackTitle: name} : {}),
+                            });
                             // #177: a follow-up names the chat it follows, saved or just added.
                             const followed = step.step_type === 'meeting' ? steps.find(row =>
                                 (step.follows_step_id != null && row.id === step.follows_step_id)
@@ -743,9 +763,9 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             const open = step.id === undefined || openSteps.includes(step);
                             return (
                                 <div
-                                    key={step.id ? `step-${step.id}` : `new-step-${index}`}
+                                    key={step.id ? `step-${step.id}` : `new-step-${step.client_key}`}
                                     data-testid="path-step-card"
-                                    className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 md:flex-row md:items-center"
+                                    className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 md:flex-row md:items-start"
                                 >
                                     <div className="flex items-center gap-3 md:w-48">
                                         <span className="font-mono text-sm font-bold text-slate-500">{`#${step.position}`}</span>
@@ -782,34 +802,15 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                     <div className="min-w-0 flex-1 space-y-2">
                                         <ForumDiscussionLinks links={discussions.forbidden || discussions.failed ? [] : discussions.data?.links || []}
                                             kind="path_step" targetId={step.id ?? 0} />
-                                        {open ? <>
-                                            <input
-                                                type="text"
-                                                value={step.title || ''}
-                                                onChange={e => {
-                                                    const next = [...steps];
-                                                    next[index].title = e.target.value;
-                                                    setSteps(next);
-                                                    if (notice === 'saved' || notice === 'published') setNotice(null);
-                                                }}
-                                                placeholder={l('stepTitlePlaceholder')}
-                                                className="block w-full rounded border border-slate-300 px-2.5 py-1.5 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
+                                        {open ? (
+                                            <StepPresentationFields
+                                                presentation={presentation}
+                                                step={step}
+                                                update={patch => handleUpdateStep(index, patch)}
                                             />
-                                            <input
-                                                type="text"
-                                                value={step.instructions || ''}
-                                                onChange={e => {
-                                                    const next = [...steps];
-                                                    next[index].instructions = e.target.value;
-                                                    setSteps(next);
-                                                    if (notice === 'saved' || notice === 'published') setNotice(null);
-                                                }}
-                                                placeholder={l('stepInstructionsPlaceholder')}
-                                                className="block w-full rounded border border-slate-300 px-2.5 py-1.5 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
-                                            />
-                                        </> : <>
-                                            {step.title && <p className="break-words text-sm text-slate-800">{step.title}</p>}
-                                            {step.instructions && <p className="whitespace-pre-wrap text-xs text-slate-600">{step.instructions}</p>}
+                                        ) : <>
+                                            <p className="break-words text-sm text-slate-800">{presentation.title}</p>
+                                            {presentation.note && <p className="whitespace-pre-wrap text-xs text-slate-600">{presentation.note}</p>}
                                         </>}
                                     </div>
 
@@ -830,7 +831,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                 )}
                                                 {!open && <>
                                                     {isChat && plannedDay && <p className="text-xs text-slate-700">{`${l('plannedDay')}: ${plannedDay}`}</p>}
-                                                    {step.due_date && <p className="text-xs text-slate-700">{`${l('dueHeader')}: ${new Date(`${step.due_date}T00:00:00`).toLocaleDateString(lang, { dateStyle: 'medium' })}`}</p>}
+                                                    {presentation.showDueDate && presentation.dueDate && <p className="text-xs text-slate-700">{`${l('dueHeader')}: ${new Date(`${presentation.dueDate}T12:00:00`).toLocaleDateString(lang, { dateStyle: 'medium' })}`}</p>}
                                                 </>}
                                                 {open && isChat && (
                                                     <label className="block text-[11px] font-medium text-slate-500">
@@ -849,21 +850,6 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                         />
                                                     </label>
                                                 )}
-                                                {open && <label className="block text-[11px] font-medium text-slate-500">
-                                                    {l('dueDateOptional')}
-                                                    <input
-                                                        type="date"
-                                                        value={step.due_date || ''}
-                                                        onChange={e => {
-                                                            const next = [...steps];
-                                                            next[index].due_date = e.target.value || null;
-                                                            setSteps(next);
-                                                            if (notice === 'saved' || notice === 'published') setNotice(null);
-                                                        }}
-                                                        aria-label={`${name} ${l('dueHeader')}`}
-                                                        className="mt-1 block w-full rounded border border-slate-300 px-2 py-1 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
-                                                    />
-                                                </label>}
                                             </>
                                         )}
                                     </div>

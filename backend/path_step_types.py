@@ -231,6 +231,9 @@ def publication_problems(db, path, steps):
     problems = []
     for step in steps:
         descriptor = step_descriptor(db, path, step)
+        if step.step_type == "forum" and not (step.title or "").strip():
+            problems.append({"step_id": step.id, "position": step.position,
+                             "step_type": step.step_type, "reason": "forum_step_title_missing"})
         if not descriptor["available"]:
             problems.append({"step_id": step.id, "position": step.position,
                              "step_type": step.step_type, "reason": descriptor["availability_reason"]})
@@ -364,6 +367,7 @@ def step_descriptor(db, path, step):
             "locale": plan.locale,
             "institution_name": institute.name,
             "delivery_mode": plan.delivery_mode,
+            # The plan's own date, so a path step can derive its deadline.
             "scheduled_at": plan.scheduled_at.isoformat() if plan.scheduled_at else None,
             "location": plan.location,
             **({"results_step_id": source.id} if deep_dive else {}),

@@ -96,6 +96,50 @@ accedono all'area docente solo tramite membership attiva, quindi il caso 403 usa
 un account non membro (comportamento già presente su `main`). Nessun deploy, nessun
 riavvio di container di produzione e nessun comando sudo.
 
+# Handoff: presentazione dei passi del piano operativo (OC3, #470, PR #471)
+
+Data: 2026-10-23. Branch `feat/class-path-step-presentation`, Diario
+`96488cb8-46aa-423d-9435-fb497a1af048`. Completata la checklist di #470 dopo
+il lavoro del costruttore (S0–S4, 21 ottobre); documentazione S5 già sul branch.
+
+- Merge di `main` (`60244c4f`): conflitti con giorno previsto (f3f48bf7),
+  card dei piani nella panoramica (2811dbe4) e editor a passi espandibili. La
+  pagina piani dello studente prende la versione di main (card hero per ogni
+  piano), la card hero usa il resolver condiviso più giorno previsto e luogo.
+  La data di un piano di somministrazione compare una volta, come «Previsto il
+  …» con il luogo: il resolver non la ripete come scadenza, ma scadenze e filtro
+  «In ritardo» la usano. Il paragrafo OC3 della guida è uscito dalla tabella
+  che spezzava.
+- Bug del merge corretto (`04e7e7ff`): l'editor teneva aperti i passi per
+  oggetto e i campi di presentazione sostituiscono l'oggetto, quindi un passo
+  salvato si chiudeva alla prima battuta.
+- Fixture (`9ab2ce37`): tre passi forum di test senza titolo
+  (`test_path_publication`, `test_path_forum`, `test_path_templates`), ora
+  rifiutati da `forum_step_title_missing`. Il test browser apre i passi salvati
+  con «Modifica».
+- Warning ESLint `Circle`: sparito, il file è quello di main.
+- Screenshot della guida rigenerati nelle sei lingue dal solo pannello Passi
+  (`UPDATE_GUIDE_SCREENSHOTS=1`), con il passo 1 e il 5 aperti.
+
+Verifiche: `tests/class-path-presentation.test.mjs` su build di produzione
+locale (`next build` + `next start` su 127.0.0.1:3161, backend chiuso, API
+sintetiche) 12/12 combinazioni lingua×larghezza; `node --test src/lib/*.test.ts`
+656 passati; backend su Postgres effimero: `test_path_publication` 14,
+`test_path_templates` 17, `test_path_forum` 13, `test_class_paths` 56,
+`test_class_view` 10 passati. Rossi identici su main e branch (non OC3):
+`test_path_forum_concurrency` 2, `test_forum_steps_migration` 8 errori,
+`test_path_templates_migration` 4 errori, `test_it_administration` 32 errori,
+`test_assignment_tools` 1, `test_class_meetings` 4 errori; ESLint
+`PersonalAreaHome.tsx` (set-state-in-effect) e `tsc` nei file della guida
+sono già su main.
+
+Limiti: nell'editor, un passo questionario aperto mostra la data del piano sia
+nei campi di presentazione («dal piano di somministrazione», con «Data diversa»
+per una scadenza propria) sia nella colonna del giorno previsto. Bug Diario
+sospetto `a82f855f` (chiavi React dei passi riordinati) non riprodotto.
+Piani pubblicati con passi forum senza titolo restano leggibili; vanno
+completati al primo ripristino o ripubblicazione.
+
 # Handoff costruttore: confine descrittivo dei questionari (#431)
 
 Data: 2026-10-21 | Branch: `fix/questionnaire-descriptive-phase` | Base: `5f0f3195e5eff6cbe5ed42de6fb924f228dab1f7`

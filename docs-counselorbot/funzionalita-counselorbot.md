@@ -868,6 +868,19 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot, con guida a tre passi (Apri il bot, Conferma, Verifica collegamento), scadenza del codice visibile e verifica automatica al ritorno nella scheda. |
 
+Nei passi dei piani operativi titolo e data vengono dall’oggetto collegato:
+il piano di somministrazione usa il proprio titolo e la data programmata,
+l’assegnazione la propria scadenza e l’incontro il giorno nel fuso locale.
+«Personalizza il titolo» e «Data diversa» creano override espliciti e cancellabili;
+per gli incontri non si propone una nuova data manuale. Ogni data compare una volta: quella dell’incontro nei suoi dettagli, quella del piano di somministrazione come «Previsto il …» con il luogo; scadenze e filtro «In ritardo» la usano comunque. Le note per la classe
+sono aggiuntive e facoltative, con testo multilinea; la presentazione del piano
+compare una volta nell’intestazione. Vista studente, hero, progressi e filtro
+«In ritardo» condividono gli stessi valori effettivi. Un passo forum richiede un
+titolo prima della pubblicazione; il titolo della discussione resta nel forum e
+i vecchi piani pubblicati restano leggibili. I modelli mostrano anche le note:
+«Aggiorna da modello» confronta il testo della classe con quello proposto e
+conserva i passi con titolo o nota personalizzati, comprese cancellazioni esplicite.
+
 In Risultati e conversazioni, «Risultato della compilazione» è aperto inizialmente e si può richiudere o riaprire premendo il titolo, anche da tastiera con Invio o Spazio. La chiusura nasconde sintesi, grafici, dettagli e conversazione con il counselor; i contenuti non vengono cancellati e «La mia lettura» resta accessibile subito sotto.
 
 «La mia lettura» si salva esplicitamente per la compilazione selezionata. Se il

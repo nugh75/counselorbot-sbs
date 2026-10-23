@@ -13,7 +13,7 @@ const CHANGE_LABEL: Record<TemplateChange['change'], PathTemplateTextKey> = {
     added: 'changeAdded', changed: 'changeChanged', removed: 'changeRemoved',
 };
 const STATUS_LABEL: Record<TemplateChange['status'], PathTemplateTextKey> = {
-    apply: 'statusApply', started: 'statusStarted', created: 'statusCreated', tool_disabled: 'statusToolDisabled',
+    customized: 'statusCustomized', apply: 'statusApply', started: 'statusStarted', created: 'statusCreated', tool_disabled: 'statusToolDisabled',
 };
 
 /** «Update from template» (#172): differences first, then only untouched steps change. */
@@ -99,6 +99,13 @@ export function PathTemplateUpdate({ lang, pathId, revision, disabled, onUpdated
                                     {` · ${l(TYPE_LABEL[row.step_type])}`}
                                     {row.tool_key ? ` · ${toolName(row.tool_key, lang)}` : ''}
                                     {row.title ? ` · ${row.title}` : ''}
+                                    {(row.current_presentation || row.template_presentation) && <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                                        {(['current_presentation', 'template_presentation'] as const).map(key => <div key={key}>
+                                            <p className="font-medium">{l(key === 'current_presentation' ? 'currentPresentation' : 'templatePresentation')}</p>
+                                            <p className="whitespace-pre-wrap break-words">{l('stepTitle')}: {row[key]?.title || l('defaultTitle')}</p>
+                                            <p className="whitespace-pre-wrap break-words">{l('stepNote')}: {row[key]?.instructions || l('emptyNote')}</p>
+                                        </div>)}
+                                    </div>}
                                     <span className={`block text-xs ${row.status === 'apply' ? 'text-emerald-700' : 'text-slate-600'}`}>
                                         {l(STATUS_LABEL[row.status])}
                                     </span>

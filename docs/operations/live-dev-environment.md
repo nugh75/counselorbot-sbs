@@ -513,3 +513,15 @@ uso con dati reali. PostgreSQL sintetico separato: container temporaneo
 `counselorbot-249-postgres`, porta loopback 18650, utente `c5_test`, database
 `counselorbot_test`, dati in tmpfs. I test API usano il network del container e
 le fixture con transazione/schema isolati. Non avviare i test sul database reale.
+
+## Presentazione dei passi OC3
+
+`scripts/dev-class-path-presentation-tests.sh` avvia Next in hot reload su
+127.0.0.1:3161, backend chiuso 127.0.0.1:9 e API interamente simulate da Playwright.
+Prima verificare porta libera con `lsof -nP -iTCP:3161 -sTCP:LISTEN`.
+Nessun dato applicativo richiesto; PostgreSQL sintetico separato solo per pytest
+(tmpfs, 18661; container counselorbot-oc3-pg). Dettagli/stato in HANDOFF.md OC3.
+Da SSH: `ssh -N -L 3161:127.0.0.1:3161 <utente>@<server>`, poi
+http://localhost:3161 (le API simulate esistono solo nei test, non nel browser libero).
+Stop frontend con Ctrl-C nel terminale dedicato; stop PG con
+`docker stop counselorbot-oc3-pg`. Nessun collegamento a produzione.

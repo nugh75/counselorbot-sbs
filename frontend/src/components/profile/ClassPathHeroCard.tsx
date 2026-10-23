@@ -18,7 +18,6 @@ import {
 } from '@/lib/class-paths';
 import { plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
-import { typedStepTargetLabel } from '@/lib/i18n-administration-steps';
 import { pathAssignmentText } from '@/lib/i18n-path-assignments';
 import { pathForumText } from '@/lib/i18n-path-forum';
 import { forumStepNotice } from '@/lib/path-forum';
@@ -28,6 +27,7 @@ import type { ForumDiscussionLink } from '@/lib/forum';
 import type { ClassMeeting } from '@/lib/class-meetings';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
 import { MeetingDetails } from './MeetingDetails';
+import { resolveStepPresentation } from '@/lib/class-path-presentation';
 
 interface Props {
     path: StudentClassPath;
@@ -151,8 +151,8 @@ export function ClassPathHeroCard({ path, onReload, collapsible = false, default
                     const isDone = step.state === 'done';
                     const isLocked = step.state === 'locked';
                     const isUnavailable = step.state === 'unavailable';
-                    const toolDisplayName = typedStepTargetLabel(lang, step) ?? resolveClassPathToolName(step.tool_key, lang);
-                    const titleDisplay = step.title ? step.title : toolDisplayName;
+                    const presentation = resolveStepPresentation(lang, step, {toolName: key => resolveClassPathToolName(key, lang)});
+                    const titleDisplay = presentation.title;
                     const isActionBusy = actionStepId === step.id;
                     const planned = plannedDayText(step, lang);
                     const plannedLocation = plannedDayLocation(step);
@@ -238,15 +238,15 @@ export function ClassPathHeroCard({ path, onReload, collapsible = false, default
                                             <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{pathPublicationText(lang, 'studentUnavailable')}</p>
                                         )}
 
-                                        {step.title && step.title !== toolDisplayName && (
+                                        {presentation.titleSource === 'override' && presentation.title !== presentation.derivedTitle && (
                                             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                                                {toolDisplayName}
+                                                {presentation.derivedTitle}
                                             </p>
                                         )}
 
-                                        {step.instructions && (
-                                            <p className="text-sm text-slate-600 dark:text-slate-300">
-                                                {step.instructions}
+                                        {presentation.note && (
+                                            <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
+                                                {presentation.note}
                                             </p>
                                         )}
                                         {step.step_type === 'assignment' && !isUnavailable && (
@@ -293,8 +293,8 @@ export function ClassPathHeroCard({ path, onReload, collapsible = false, default
                                                     {plannedLocation ? ` · ${plannedLocation}` : ''}
                                                 </span>
                                             )}
-                                            {step.due_date && (
-                                                <span>{l('dueOn').replace('{date}', step.due_date)}</span>
+                                            {presentation.showDueDate && presentation.dueDate && (
+                                                <span>{l('dueOn').replace('{date}', presentation.dueDate)}</span>
                                             )}
                                             {isDone && step.source && (
                                                 <span>

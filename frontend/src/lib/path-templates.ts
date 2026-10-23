@@ -8,6 +8,7 @@ export const TEMPLATE_TOOLS = ['tavolo', 'goals', 'actions', 'timeline', 'portfo
     'comparison', 'bussola', 'assistant'];
 
 export interface TemplateStep {
+    client_key?: string;
     id?: number;
     step_type: TemplateStepType;
     title?: string | null;
@@ -154,7 +155,9 @@ export interface TemplateChange {
     step_type: TemplateStepType;
     tool_key: string | null;
     title: string | null;
-    status: 'apply' | 'started' | 'created' | 'tool_disabled';
+    status: 'apply' | 'started' | 'created' | 'tool_disabled' | 'customized';
+    current_presentation?: {title: string | null; instructions: string | null} | null;
+    template_presentation?: {title: string | null; instructions: string | null} | null;
 }
 
 export interface TemplateUpdatePreview {
@@ -176,8 +179,16 @@ export function parseTemplateUpdate(input: unknown): TemplateUpdatePreview {
                 step_type: (TEMPLATE_STEP_TYPES as string[]).includes(String(row.step_type)) ? row.step_type as TemplateStepType : 'tool',
                 tool_key: row.tool_key ? String(row.tool_key) : null,
                 title: row.title ? String(row.title) : null,
-                status: row.status === 'apply' || row.status === 'started' || row.status === 'created' ? row.status : 'tool_disabled',
+                current_presentation: parsePresentation(row.current_presentation),
+                template_presentation: parsePresentation(row.template_presentation),
+                status: row.status === 'customized' ? 'customized' : row.status === 'apply' || row.status === 'started' || row.status === 'created' ? row.status : 'tool_disabled',
             };
         }),
     };
+}
+
+function parsePresentation(value: unknown): {title: string | null; instructions: string | null} | null {
+    if (!value || typeof value !== 'object') return null;
+    const row = value as Record<string, unknown>;
+    return {title: row.title == null ? null : String(row.title), instructions: row.instructions == null ? null : String(row.instructions)};
 }
