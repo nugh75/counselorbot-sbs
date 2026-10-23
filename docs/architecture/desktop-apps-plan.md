@@ -201,6 +201,7 @@ Postgres incorporato: si includono i binari ufficiali (`postgres`, `initdb`, `pg
 password generata e salvata nel portachiavi di sistema. Rischi: aggiornamento di versione maggiore
 (serve `pg_upgrade` o dump/restore guidato), antivirus su Windows che rallentano i file del cluster.
 Backup: `pg_dump` dal pannello («Esporta backup») e prima di ogni aggiornamento dell'app.
+Esito dello spike F0-02 (fonti dei binari, dimensioni e tempi misurati): [spikes/f0-02-embedded-postgres.md](spikes/f0-02-embedded-postgres.md).
 
 ### 3.4 Tunnel
 
@@ -211,6 +212,11 @@ Backup: `pg_dump` dal pannello («Esporta backup») e prima di ogni aggiornament
 - massimo **200 richieste contemporanee** (oltre: `429`);
 - **non supporta Server-Sent Events**;
 - nessuna garanzia di disponibilità; pensato «per test e sviluppo».
+
+**Misurato in F0-03** ([report](spikes/f0-03-tunnel-sse.md)): le risposte SSE in `POST` (tutte quelle di CounselorBot)
+scorrono in streaming reale; sono bufferizzate solo le `GET`. Il limite pratico è il **taglio a ~60 s senza byte**
+(prima delle intestazioni o nel corpo): serve un heartbeat `: ping` ogni 15 s. Nessun 429 fino a 270 richieste contemporanee.
+Il testo che segue è la stima precedente allo spike.
 
 Conseguenze per CounselorBot: la chat, il sito-chat e la lettura vocale usano SSE
 (`frontend/src/app/api/*/stream/route.ts`). **Con il quick tunnel lo streaming va considerato non funzionante**

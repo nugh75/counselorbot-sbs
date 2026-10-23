@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import models, auth, database
+from .version import __version__
 from .prompt_config import (
     ALL_CONFIG_TEXT_DEFINITIONS,
     DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR,
@@ -73,6 +74,7 @@ from .routes import site_chat as site_chat_routes
 from .routes import learner_profile as learner_profile_routes
 from .routes import external_privacy as external_privacy_routes
 from .routes import document_retrieval as document_retrieval_routes
+from .routes import local_llm as local_llm_routes
 from .routes import personal_api as personal_api_routes
 from .routes import teacher_profile as teacher_profile_routes
 from .routes import practice_notebooks as practice_notebook_routes
@@ -308,7 +310,13 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, version=__version__)
+
+
+@app.get("/version")
+def get_version():
+    return {"version": __version__}
+
 
 # CORS
 app.add_middleware(
@@ -2052,6 +2060,7 @@ app.include_router(site_chat_routes.router)
 app.include_router(learner_profile_routes.router)
 app.include_router(external_privacy_routes.router)
 app.include_router(document_retrieval_routes.router)
+app.include_router(local_llm_routes.router)
 app.include_router(personal_api_routes.router)
 app.include_router(teacher_profile_routes.router)
 app.include_router(practice_notebook_routes.router)
