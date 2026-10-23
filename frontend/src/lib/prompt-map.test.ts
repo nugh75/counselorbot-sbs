@@ -143,7 +143,7 @@ test('sections start with shared levels closed, instrument and steps open, only 
     assert.deepEqual(sectionsForEntry(map, 'missing'), []);
 });
 
-test('new step ids are normalized like the classic view', () => {
+test('new step ids are normalized to lowercase letters, digits and dashes', () => {
     assert.equal(normalizeStepId('QSA Nuovo!'), 'qsa-nuovo');
     assert.equal(normalizeStepId('qsa-nuovo-', false), 'qsa-nuovo-');
     assert.equal(normalizeStepId('  '), '');

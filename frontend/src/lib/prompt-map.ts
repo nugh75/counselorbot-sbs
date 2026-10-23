@@ -277,7 +277,7 @@ export function sortOrderChanges<Id>(ordered: SortOrderItem<Id>[]): SortOrderIte
 }
 
 /**
- * Id di un nuovo step come lo normalizza la vista classica: minuscole, cifre e
+ * Id di un nuovo step normalizzato: minuscole, cifre e
  * trattini. Durante la digitazione (`final = false`) i trattini finali restano.
  */
 export function normalizeStepId(value: string, final = true): string {

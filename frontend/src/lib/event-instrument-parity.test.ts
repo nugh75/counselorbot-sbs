@@ -39,7 +39,9 @@ test('the catalog, the admin prompt sections and the suggested questions include
     assert.equal(catalog.match(/'EVENTO_STUDIO'/g)?.length, 2);
     assert.equal(catalog.match(/'EVENTO_PROFESSIONALE'/g)?.length, 2);
     const config = read('../components/admin/ConfigForm.tsx');
-    assert.ok(config.includes("questionnaireType: 'EVENTO_STUDIO'") && config.includes("questionnaireType: 'EVENTO_PROFESSIONALE'"));
+    // Le sezioni dei prompt per strumento sono nella mappa dei prompt, elencate dal backend.
+    const promptMap = read('../../../backend/prompt_map.py');
+    assert.ok(promptMap.includes('"EVENTO_STUDIO", "EVENTO_PROFESSIONALE"'));
     // Mode e chiavi del prompt di sistema arrivano dal backend: nessuna copia nel pannello.
     assert.ok(read('../../../backend/prompt_config.py').includes('"evento-interview": "prompt_evento_interview"'));
     assert.ok(!config.includes("'evento-interview': 'prompt_evento_interview'") && !config.includes('SYSTEM_PROMPT_KEY_BY_'));

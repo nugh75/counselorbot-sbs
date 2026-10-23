@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown, Pencil, Award, XCircle, Sparkles } from 'lucide-react';
+import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, RefreshCw, Save, Server, Award, XCircle, Sparkles } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { PersonalAPIPolicy } from '@/components/admin/PersonalAPIPolicy';
@@ -13,13 +12,11 @@ import { personalAPIText } from '@/lib/i18n-personal-api';
 import { ExternalPrivacySettings } from '@/components/admin/ExternalPrivacySettings';
 import { DocumentRetrievalSettings } from '@/components/admin/DocumentRetrievalSettings';
 import { Callout } from '@/components/ui/Callout';
-import { PromptHistory } from '@/components/admin/PromptHistory';
-import { PromptRequestPreview, GuidedStepPromptPreview } from '@/components/admin/PromptRequestPreview';
 import { PromptFactoryAlignment, type FactoryAlignmentResult } from '@/components/admin/PromptFactoryAlignment';
 import { ModelContextSettings } from '@/components/admin/ModelContextSettings';
 import { AI4EDUC_SECRETS_URL } from '@/lib/auth';
 import { SectionFilter, type SectionFilterGroup } from '@/components/admin/SectionFilter';
-import { PromptMap, writeInstrumentParam } from '@/components/admin/PromptMap';
+import { PromptMap } from '@/components/admin/PromptMap';
 import { ModelSearchSelect } from '@/components/admin/ModelSearchSelect';
 import { validModelId } from '@/lib/model-search';
 import { systemAIText } from '@/lib/i18n-system-ai';
@@ -58,35 +55,6 @@ interface GuidedStep {
     // Chiave del prompt di sistema risolta dal backend come a runtime.
     system_prompt_key?: string | null;
 }
-
-interface GuidedStepMode {
-    mode: string;
-    system_prompt_key: string | null;
-}
-
-interface QuestionnaireResult {
-    id: number;
-    session_id: string;
-    questionnaire_type: string;
-    username?: string | null;
-    submitted_at: string;
-}
-
-interface ApprovedStrategyOption {
-    id: string;
-    questionnaires?: string[];
-    texts?: Record<string, string>;
-}
-
-interface CertifiedStrategyOption {
-    slug: string;
-    questionnaire_types?: string[];
-    is_active?: boolean;
-    name_it?: string;
-    [key: `name_${string}`]: string | undefined;
-}
-
-type InstrumentSubsection = 'step-prompts' | 'system-prompts' | 'texts' | 'guided-steps';
 
 // --- Constants ---
 
@@ -274,75 +242,10 @@ const DEFAULT_PLACEHOLDERS: Record<string, [string, string]> = {
     sv: ['Swedish', 'svenska'],
 };
 
-const INSTRUMENT_SUBSECTIONS: Array<{ id: InstrumentSubsection; labelKey: string }> = [
-    { id: 'step-prompts', labelKey: 'admin.config.inner.stepPrompts' },
-    { id: 'system-prompts', labelKey: 'admin.config.inner.systemPrompts' },
-    { id: 'texts', labelKey: 'admin.config.inner.texts' },
-    { id: 'guided-steps', labelKey: 'admin.config.inner.guidedSteps' },
-];
-
-const COLOR_THEMES = [
-    { value: 'blue', label: 'Blu', dot: 'bg-blue-500' },
-    { value: 'purple', label: 'Viola', dot: 'bg-purple-500' },
-    { value: 'indigo', label: 'Indigo', dot: 'bg-indigo-500' },
-    { value: 'pink', label: 'Rosa', dot: 'bg-pink-500' },
-    { value: 'orange', label: 'Arancione', dot: 'bg-orange-500' },
-    { value: 'teal', label: 'Teal', dot: 'bg-teal-500' },
-    { value: 'green', label: 'Verde', dot: 'bg-green-500' },
-    { value: 'red', label: 'Rosso', dot: 'bg-red-500' },
-    { value: 'amber', label: 'Ambra', dot: 'bg-amber-500' },
-    { value: 'cyan', label: 'Ciano', dot: 'bg-cyan-500' },
-    { value: 'slate', label: 'Grigio', dot: 'bg-slate-500' },
-    { value: 'rose', label: 'Rosa chiaro', dot: 'bg-rose-500' },
-];
-
-const PROMPT_COMPONENT_DEFAULTS: Record<string, boolean> = {
-    system_prompt: true,
-    step_prompt: true,
-    cognitive_factors: true,
-    affective_factors: true,
-    other_scores: true,
-    knowledge: true,
-    history: true,
-    counselor: true,
-    metadata: true,
-    profile: true,
-    student_booklet: true,
-    rag_counselorbot: false,
-    rag_competenzestrategiche: true,
-    rag_questionari: false,
-    approved_strategies: true,
-    certified_strategies: true,
-    shared_responses: true,
-};
-
-const PROMPT_LANGUAGES = [
-    { code: 'it', label: 'Italiano' },
-    { code: 'en', label: 'English' },
-    { code: 'es', label: 'Español' },
-    { code: 'fr', label: 'Français' },
-    { code: 'de', label: 'Deutsch' },
-    { code: 'sv', label: 'Svenska' },
-];
-
 const PROMPT_COMPONENT_TEXTS: Record<string, {
-    title: string;
-    rag_title: string;
-    strategies_title: string;
-    select_approved_strategies: string;
-    select_certified_strategies: string;
-    certified_strategies_limit: string;
-    no_limit: string;
     labels: Record<string, string>;
 }> = {
     it: {
-        title: 'Componenti passati alla fase',
-        rag_title: 'Fonti di Conoscenza RAG e Risposte',
-        strategies_title: 'Strategie Consigliate',
-        select_approved_strategies: 'Seleziona Strategie Approvate Attive',
-        select_certified_strategies: 'Seleziona Strategie Certificate Attive',
-        certified_strategies_limit: 'Limite strategie certificate',
-        no_limit: 'Nessuna',
         labels: {
             system_prompt: 'Prompt di sistema',
             meta_system_prompt: 'Meta system prompt strumento',
@@ -365,13 +268,6 @@ const PROMPT_COMPONENT_TEXTS: Record<string, {
         },
     },
     en: {
-        title: 'Components passed to this phase',
-        rag_title: 'RAG Knowledge Sources and Responses',
-        strategies_title: 'Recommended Strategies',
-        select_approved_strategies: 'Select Active Approved Strategies',
-        select_certified_strategies: 'Select Active Certified Strategies',
-        certified_strategies_limit: 'Certified strategies limit',
-        no_limit: 'None',
         labels: {
             system_prompt: 'System prompt',
             meta_system_prompt: 'Instrument meta system prompt',
@@ -394,13 +290,6 @@ const PROMPT_COMPONENT_TEXTS: Record<string, {
         },
     },
     es: {
-        title: 'Componentes pasados a esta fase',
-        rag_title: 'Fuentes de Conocimiento RAG y Respuestas',
-        strategies_title: 'Estrategias Recomendadas',
-        select_approved_strategies: 'Seleccionar Estrategias Aprobadas Activas',
-        select_certified_strategies: 'Seleccionar Estrategias Certificadas Activas',
-        certified_strategies_limit: 'Límite de estrategias certificadas',
-        no_limit: 'Ninguno',
         labels: {
             system_prompt: 'Prompt de sistema',
             meta_system_prompt: 'Meta prompt de sistema del instrumento',
@@ -423,13 +312,6 @@ const PROMPT_COMPONENT_TEXTS: Record<string, {
         },
     },
     fr: {
-        title: 'Composants transmis à cette phase',
-        rag_title: 'Sources de Connaissances RAG et Réponses',
-        strategies_title: 'Stratégies Recommandées',
-        select_approved_strategies: 'Sélectionner les Stratégies Approuvées Actives',
-        select_certified_strategies: 'Sélectionner les Stratégies Certifiées Actives',
-        certified_strategies_limit: 'Limite des stratégies certifiées',
-        no_limit: 'Aucune',
         labels: {
             system_prompt: 'Prompt système',
             meta_system_prompt: 'Meta prompt système de l’instrument',
@@ -452,13 +334,6 @@ const PROMPT_COMPONENT_TEXTS: Record<string, {
         },
     },
     de: {
-        title: 'An diese Phase übergebene Komponenten',
-        rag_title: 'RAG-Wissensquellen und Antworten',
-        strategies_title: 'Empfohlene Strategien',
-        select_approved_strategies: 'Aktive genehmigte Strategien auswählen',
-        select_certified_strategies: 'Aktive zertifizierte Strategien auswählen',
-        certified_strategies_limit: 'Limit für zertifizierte Strategien',
-        no_limit: 'Keine',
         labels: {
             system_prompt: 'System-Prompt',
             meta_system_prompt: 'Instrument-Meta-System-Prompt',
@@ -481,13 +356,6 @@ const PROMPT_COMPONENT_TEXTS: Record<string, {
         },
     },
     sv: {
-        title: 'Komponenter som skickas till denna fas',
-        rag_title: 'RAG-kunskapskällor och svar',
-        strategies_title: 'Rekommenderade strategier',
-        select_approved_strategies: 'Välj aktiva godkända strategier',
-        select_certified_strategies: 'Välj aktiva certifierade strategier',
-        certified_strategies_limit: 'Gräns för certifierade strategier',
-        no_limit: 'Ingen',
         labels: {
             system_prompt: 'Systemprompt',
             meta_system_prompt: 'Instrumentets meta-systemprompt',
@@ -511,21 +379,8 @@ const PROMPT_COMPONENT_TEXTS: Record<string, {
     },
 };
 
-const PROMPT_UI_TEXTS: Record<string, Record<string, string>> = {
-    it: { languagePrompt: 'Lingua prompt', guidanceNotes: 'Appunti per modificare la fase', edit: 'Modifica', save: 'Salva', cancel: 'Annulla', loading: 'Caricamento...', finalPrompt: 'Prompt finale assemblato' },
-    en: { languagePrompt: 'Prompt language', guidanceNotes: 'Notes for editing this phase', edit: 'Edit', save: 'Save', cancel: 'Cancel', loading: 'Loading...', finalPrompt: 'Final assembled prompt' },
-    es: { languagePrompt: 'Idioma del prompt', guidanceNotes: 'Notas para editar esta fase', edit: 'Editar', save: 'Guardar', cancel: 'Cancelar', loading: 'Cargando...', finalPrompt: 'Prompt final ensamblado' },
-    fr: { languagePrompt: 'Langue du prompt', guidanceNotes: 'Notes pour modifier cette phase', edit: 'Modifier', save: 'Enregistrer', cancel: 'Annuler', loading: 'Chargement...', finalPrompt: 'Prompt final assemblé' },
-    de: { languagePrompt: 'Prompt-Sprache', guidanceNotes: 'Notizen zur Bearbeitung dieser Phase', edit: 'Bearbeiten', save: 'Speichern', cancel: 'Abbrechen', loading: 'Wird geladen...', finalPrompt: 'Final zusammengesetzter Prompt' },
-    sv: { languagePrompt: 'Promptspråk', guidanceNotes: 'Anteckningar för att redigera denna fas', edit: 'Redigera', save: 'Spara', cancel: 'Avbryt', loading: 'Laddar...', finalPrompt: 'Slutlig sammanställd prompt' },
-};
-
 function promptComponentText(language: string) {
     return PROMPT_COMPONENT_TEXTS[language] || PROMPT_COMPONENT_TEXTS.it;
-}
-
-function promptUiText(language: string) {
-    return PROMPT_UI_TEXTS[language] || PROMPT_UI_TEXTS.it;
 }
 
 // --- Helper to get auth header ---
@@ -539,629 +394,16 @@ function authJsonHeaders(): Record<string, string> {
     return { 'Content-Type': 'application/json' };
 }
 
-function normalizedQuestionnaireType(questionnaireType: string): string {
-    return questionnaireType.trim().toUpperCase();
-}
-
-function textStats(text: string | null | undefined): { chars: number; lines: number } {
-    const value = text || '';
-    return {
-        chars: value.length,
-        lines: value ? value.split('\n').length : 0,
-    };
-}
-
-function promptKeyForStep(step: GuidedStep | undefined): string {
-    return step?.system_prompt_key || '';
-}
-
-function promptComponentConfigKey(questionnaireType: string, stepId: string): string {
-    return `prompt_components_${questionnaireType.trim().toUpperCase().replace(/[^A-Za-z0-9_-]+/g, '-')}_${stepId.trim().replace(/[^A-Za-z0-9_-]+/g, '-')}`;
-}
-
-function promptGuidanceConfigKey(questionnaireType: string, stepId: string): string {
-    return `prompt_guidance_${questionnaireType.trim().toUpperCase().replace(/[^A-Za-z0-9_-]+/g, '-')}_${stepId.trim().replace(/[^A-Za-z0-9_-]+/g, '-')}`;
-}
-
-function promptMetaConfigKey(questionnaireType: string, stepId?: string): string {
-    const q = questionnaireType.trim().toUpperCase().replace(/[^A-Za-z0-9_-]+/g, '-');
-    const base = `prompt_meta_${q}`;
-    if (stepId) {
-        const s = stepId.trim().replace(/[^A-Za-z0-9_-]+/g, '-');
-        return `${base}_${s}`;
-    }
-    return base;
-}
-
-function localizedStepPromptConfigKey(stepId: string, language: string): string {
-    return `guided_step_prompt_${stepId.trim().replace(/[^A-Za-z0-9_-]+/g, '-')}${language === 'it' ? '' : `__${language}`}`;
-}
-
-function parseComponentFlags(raw: string, defaults?: Record<string, boolean | number> | null): Record<string, boolean> {
-    const base: Record<string, boolean> = { ...PROMPT_COMPONENT_DEFAULTS };
-    for (const [name, value] of Object.entries(defaults || {})) {
-        if (typeof value === 'boolean') base[name] = value;
-    }
-    try {
-        return { ...base, ...(JSON.parse(raw || '{}') || {}) };
-    } catch {
-        return base;
-    }
-}
-
-function parseComponentFlagOverrides(raw: string): Record<string, boolean> {
-    try {
-        const parsed = JSON.parse(raw || '{}') || {};
-        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-        return Object.fromEntries(
-            Object.keys(PROMPT_COMPONENT_DEFAULTS)
-                .filter((name) => name in parsed)
-                .map((name) => [name, Boolean(parsed[name])])
-        );
-    } catch {
-        return {};
-    }
-}
-
-function defaultCertifiedStrategyLimit(mode: string | undefined): number {
-    return mode === 'second-level' || mode === 'qsar-second-level' ? 3 : 2;
-}
-
-function parseCertifiedStrategyLimit(raw: string, fallback: number): number {
-    try {
-        const parsed = JSON.parse(raw || '{}') || {};
-        const value = Number(parsed.certified_strategy_limit);
-        if (!Number.isFinite(value)) return fallback;
-        return Math.max(0, Math.min(3, Math.trunc(value)));
-    } catch {
-        return fallback;
-    }
-}
-
-function parseAllowedStrategies(raw: string): string[] | undefined {
-    try {
-        const parsed = JSON.parse(raw || '{}') || {};
-        if (parsed && Array.isArray(parsed.allowed_strategies)) {
-            return parsed.allowed_strategies.map(String);
-        }
-    } catch {}
-    return undefined;
-}
-
-function EditablePromptTextBlock({
-    title,
-    subtitle,
-    text,
-    emptyLabel,
-    editing,
-    draft,
-    onEdit,
-    onDraftChange,
-    onSave,
-    onCancel,
-    editLabel,
-    saveLabel,
-    cancelLabel,
-}: {
-    title: string;
-    subtitle?: string;
-    text: string | null | undefined;
-    emptyLabel: string;
-    editing: boolean;
-    draft: string;
-    onEdit: () => void;
-    onDraftChange: (value: string) => void;
-    onSave: () => void;
-    onCancel: () => void;
-    editLabel: string;
-    saveLabel: string;
-    cancelLabel: string;
-}) {
-    const { t } = useI18n();
-    const value = editing ? draft : (text || '');
-    const stats = textStats(value);
-    return (
-        <div className="rounded-lg border border-slate-200 bg-white">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
-                <div>
-                    <h5 className="text-sm font-semibold text-slate-800">{title}</h5>
-                    {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
-                        {stats.chars} {t('admin.config.chars')} · {stats.lines} {t('admin.config.lines')}
-                    </span>
-                    {!editing && (
-                        <button type="button" onClick={onEdit} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-indigo-600" title={editLabel}>
-                            <Pencil className="h-4 w-4" />
-                        </button>
-                    )}
-                </div>
-            </div>
-            {editing ? (
-                <div className="space-y-3 p-4">
-                    <textarea
-                        className="min-h-[220px] w-full rounded-md border border-slate-300 bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500"
-                        value={draft}
-                        onChange={(event) => onDraftChange(event.target.value)}
-                    />
-                    <div className="flex gap-2">
-                        <button type="button" onClick={onSave} className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700">{saveLabel}</button>
-                        <button type="button" onClick={onCancel} className="rounded-md bg-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-300">{cancelLabel}</button>
-                    </div>
-                </div>
-            ) : (
-                <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words p-4 text-xs leading-relaxed text-slate-700">
-                    {value.trim() ? value : emptyLabel}
-                </pre>
-            )}
-        </div>
-    );
-}
-
-function StepPromptsPanel({
-    questionnaireType,
-    steps,
-    selectedStepId,
-    onSelectStep,
-    onEditSystemPrompts,
-    onEditStep,
-    configs,
-    savedConfigs,
-    savedSteps,
-    results,
-    selectedSessionId,
-    onSelectSession,
-    selectedCounselorId,
-    onSelectCounselor,
-    selectedLanguage,
-    onSelectLanguage,
-    onSaveComponentFlags,
-    onSaveSystemPrompt,
-    onSaveMetaPrompt,
-    onSaveGuidance,
-    onSaveStepPrompt,
-    onDirtyChange,
-    t,
-}: {
-    questionnaireType: string;
-    steps: GuidedStep[];
-    selectedStepId: string;
-    onSelectStep: (stepId: string) => void;
-    onEditSystemPrompts: () => void;
-    onEditStep: () => void;
-    configs: ConfigItem[];
-    savedConfigs: ConfigItem[];
-    savedSteps: GuidedStep[];
-    results: QuestionnaireResult[];
-    selectedSessionId: string;
-    onSelectSession: (sessionId: string) => void;
-    selectedCounselorId: number | '';
-    onSelectCounselor: (counselorId: number | '') => void;
-    selectedLanguage: string;
-    onSelectLanguage: (language: string) => void;
-    onSaveComponentFlags: (key: string, flags: Record<string, unknown>) => Promise<boolean>;
-    onSaveSystemPrompt: (key: string, value: string) => void;
-    onSaveMetaPrompt: (key: string, value: string) => void;
-    onSaveGuidance: (key: string, value: string) => void;
-    onSaveStepPrompt: (step: GuidedStep, value: string, language: string, localizedKey: string) => void;
-    onDirtyChange: (dirty: boolean) => void;
-    t: (key: string, vars?: Record<string, string | number>) => string;
-}) {
-    const selectedStep = steps.find((step) => step.id === selectedStepId) || steps[0];
-    const systemPromptKey = promptKeyForStep(selectedStep);
-    const systemPrompt = configs.find((config) => config.key === systemPromptKey)?.value || '';
-    const componentKey = selectedStep ? promptComponentConfigKey(questionnaireType, selectedStep.id) : '';
-    const guidanceKey = selectedStep ? promptGuidanceConfigKey(questionnaireType, selectedStep.id) : '';
-    const metaPromptKey = promptMetaConfigKey(questionnaireType, selectedStep?.id);
-    const instrumentMetaKey = promptMetaConfigKey(questionnaireType);
-    const componentConfigValue = configs.find((config) => config.key === componentKey)?.value || '';
-    const configFlags = parseComponentFlags(componentConfigValue, selectedStep?.component_defaults);
-    const configFlagOverrides = parseComponentFlagOverrides(componentConfigValue);
-    const defaultCertifiedLimit = Number(selectedStep?.component_defaults?.certified_strategy_limit
-        ?? defaultCertifiedStrategyLimit(selectedStep?.system_prompt_mode));
-    const configCertifiedStrategyLimit = parseCertifiedStrategyLimit(componentConfigValue, defaultCertifiedLimit);
-    const guidanceText = configs.find((config) => config.key === guidanceKey)?.value || '';
-    const metaPrompt = configs.find((config) => config.key === metaPromptKey)?.value
-        || configs.find((config) => config.key === instrumentMetaKey)?.value
-        || '';
-    const localizedStepKey = selectedStep ? localizedStepPromptConfigKey(selectedStep.id, selectedLanguage) : '';
-    const localizedStepValue = selectedLanguage === 'it'
-        ? selectedStep?.prompt || ''
-        : (configs.find((config) => config.key === localizedStepKey)?.value || selectedStep?.prompt || '');
-    const savedStep = savedSteps.find(step => step.id === selectedStep?.id);
-    const savedLocalizedStep = savedStep ? { ...savedStep, prompt: selectedLanguage === 'it' ? savedStep.prompt : savedConfigs.find(c => c.key === localizedStepKey)?.value || savedStep.prompt } : undefined;
-    const [componentDraft, setComponentDraft] = useState<Record<string, unknown> | null>(null);
-    // ponytail: reuse public /counselors fetch (active only), filter client-side by instrument.
-    const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
-    useEffect(() => { fetchCounselors().then(setCounselors).catch(() => setCounselors([])); }, []);
-
-    const [allApprovedStrategies, setAllApprovedStrategies] = useState<ApprovedStrategyOption[]>([]);
-    const [allCertifiedStrategies, setAllCertifiedStrategies] = useState<CertifiedStrategyOption[]>([]);
-    useEffect(() => {
-        fetch('/api/admin/approved-strategies')
-            .then((res) => (res.ok ? res.json() : null))
-            .then((data) => {
-                if (data && Array.isArray(data.strategies)) {
-                    setAllApprovedStrategies(data.strategies);
-                }
-            })
-            .catch(() => {});
-
-        fetch('/api/admin/certified-strategies')
-            .then((res) => (res.ok ? res.json() : null))
-            .then((data) => {
-                if (Array.isArray(data)) {
-                    setAllCertifiedStrategies(data);
-                }
-            })
-            .catch(() => {});
-    }, []);
-    // Counselors with empty/null questionnaire_types are "available for all instruments"
-    // (matches backend behavior in prompt_audit.py _add_static_warnings).
-    const instrumentCounselors = counselors.filter((c) =>
-        !c.questionnaire_types || c.questionnaire_types.length === 0 ||
-        c.questionnaire_types.some((t) => normalizedQuestionnaireType(t) === normalizedQuestionnaireType(questionnaireType))
-    );
-    const [editingPrompt, setEditingPrompt] = useState<'system' | 'meta' | 'guidance' | 'step' | null>(null);
-    const [systemDraft, setSystemDraft] = useState(systemPrompt);
-    const [metaDraft, setMetaDraft] = useState(metaPrompt);
-    const [guidanceDraft, setGuidanceDraft] = useState(guidanceText);
-    const [stepDraft, setStepDraft] = useState(selectedStep?.prompt || '');
-    useEffect(() => {
-        onDirtyChange(editingPrompt !== null || componentDraft !== null);
-        return () => onDirtyChange(false);
-    }, [editingPrompt, componentDraft, onDirtyChange]);
-    const modeLabel = selectedStep?.system_prompt_mode
-        ? t(`admin.mode.${selectedStep.system_prompt_mode}`)
-        : '';
-
-    const flags = {
-        ...PROMPT_COMPONENT_DEFAULTS,
-        ...configFlags,
-        ...configFlagOverrides,
-        ...(componentDraft as Record<string, boolean> | null),
-    };
-    const certifiedStrategyLimit = configCertifiedStrategyLimit;
-    const configAllowedStrategies = parseAllowedStrategies(componentConfigValue);
-    const allowedStrategies = configAllowedStrategies;
-    const componentConfigPayload = {
-        ...flags,
-        certified_strategy_limit: certifiedStrategyLimit,
-        allowed_strategies: allowedStrategies,
-        ...componentDraft,
-    };
-
-    const toggleFlag = (name: string) => {
-        if (!componentKey) return;
-        setComponentDraft({ ...componentConfigPayload, [name]: !flags[name] });
-    };
-    const updateCertifiedStrategyLimit = (value: number) => {
-        if (!componentKey) return;
-        setComponentDraft({ ...componentConfigPayload, certified_strategy_limit: value });
-    };
-    const eligibleApproved = allApprovedStrategies.filter((s) =>
-        Array.isArray(s.questionnaires) &&
-        s.questionnaires.some((q: string) => q.toUpperCase() === questionnaireType.toUpperCase())
-    );
-    const eligibleCertified = allCertifiedStrategies.filter((s) =>
-        Array.isArray(s.questionnaire_types) &&
-        s.questionnaire_types.some((q: string) => q.toUpperCase() === questionnaireType.toUpperCase()) &&
-        s.is_active
-    );
-    const isStrategyAllowed = (idOrSlug: string) => {
-        if (!componentConfigPayload.allowed_strategies) {
-            return true;
-        }
-        return componentConfigPayload.allowed_strategies.includes(idOrSlug);
-    };
-    const toggleStrategyAllowed = (idOrSlug: string) => {
-        if (!componentKey) return;
-        let currentList: string[];
-        if (!componentConfigPayload.allowed_strategies) {
-            const allSlugs = [
-                ...eligibleApproved.map((s) => s.id),
-                ...eligibleCertified.map((s) => s.slug),
-            ];
-            currentList = allSlugs;
-        } else {
-            currentList = [...componentConfigPayload.allowed_strategies];
-        }
-        if (currentList.includes(idOrSlug)) {
-            currentList = currentList.filter((item) => item !== idOrSlug);
-        } else {
-            currentList.push(idOrSlug);
-        }
-        setComponentDraft({
-            ...componentConfigPayload,
-            allowed_strategies: currentList,
-        });
-    };
-    const componentText = promptComponentText(selectedLanguage);
-    const uiText = promptUiText(selectedLanguage);
-
-    return (
-        <div className="prompt-workspace glass-panel p-5 space-y-5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-700">
-                        <Layers className="h-4 w-4 text-indigo-600" />
-                        {t('admin.promptAudit.title')}
-                    </h3>
-                    <p className="mt-1 max-w-3xl text-xs text-slate-500">
-                        {t('admin.promptAudit.subtitle')}
-                    </p>
-                </div>
-            </div>
-
-            <details className="rounded-lg border border-slate-200 p-3">
-            <summary className="cursor-pointer text-sm text-slate-600">{uiText.guidanceNotes}</summary>
-            <EditablePromptTextBlock
-                title={uiText.guidanceNotes}
-                subtitle={guidanceKey}
-                text={guidanceText}
-                emptyLabel={t('admin.promptAudit.empty')}
-                editing={editingPrompt === 'guidance'}
-                draft={guidanceDraft}
-                onEdit={() => { setGuidanceDraft(guidanceText); setEditingPrompt('guidance'); }}
-                onDraftChange={setGuidanceDraft}
-                onSave={() => {
-                    if (!guidanceKey) return;
-                    onSaveGuidance(guidanceKey, guidanceDraft);
-                    setEditingPrompt(null);
-                }}
-                onCancel={() => { setGuidanceDraft(guidanceText); setEditingPrompt(null); }}
-                editLabel={uiText.edit}
-                saveLabel={uiText.save}
-                cancelLabel={uiText.cancel}
-            />
-
-            </details>
-            <div className="grid gap-4 lg:grid-cols-4">
-                <label className="space-y-2 text-xs font-semibold text-slate-500">
-                    {t('admin.promptAudit.stepSelect')}
-                    <select className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedStep?.id || ''} onChange={(event) => onSelectStep(event.target.value)}>
-                        {steps.map((step) => <option key={step.id} value={step.id}>{step.sort_order}. {step.label || step.id}</option>)}
-                    </select>
-                </label>
-                <label className="space-y-2 text-xs font-semibold text-slate-500">
-                    {t('admin.promptAudit.sessionSelect')}
-                    <select className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedSessionId} onChange={(event) => onSelectSession(event.target.value)}>
-                        <option value="">{t('admin.promptAudit.noSession')}</option>
-                        {results.map((result) => <option key={result.session_id} value={result.session_id}>{result.username || '-'} · {result.session_id} · {new Date(result.submitted_at).toLocaleDateString()}</option>)}
-                    </select>
-                </label>
-                <label className="space-y-2 text-xs font-semibold text-slate-500">
-                    {t('admin.promptAudit.counselorSelect')}
-                    <select className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedCounselorId} onChange={(event) => onSelectCounselor(event.target.value ? Number(event.target.value) : '')}>
-                        <option value="">{t('admin.promptAudit.noCounselor')}</option>
-                        {instrumentCounselors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                </label>
-                <label className="space-y-2 text-xs font-semibold text-slate-500">
-                    {uiText.languagePrompt}
-                    <select className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedLanguage} onChange={(event) => onSelectLanguage(event.target.value)}>
-                        {PROMPT_LANGUAGES.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
-                    </select>
-                </label>
-                <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 sm:grid-cols-3 lg:col-span-4">
-                    <div><p className="font-semibold uppercase tracking-wider text-slate-500">{t('admin.promptAudit.instrument')}</p><p className="mt-1 font-mono text-slate-800">{questionnaireType}</p></div>
-                    <div><p className="font-semibold uppercase tracking-wider text-slate-500">{t('admin.promptAudit.mode')}</p><p className="mt-1 text-slate-800">{modeLabel}</p></div>
-                    <div><p className="font-semibold uppercase tracking-wider text-slate-500">{t('admin.promptAudit.promptKey')}</p><p className="mt-1 break-words font-mono text-slate-800">{systemPromptKey || '-'}</p></div>
-                </div>
-            </div>
-
-            <details className="rounded-lg border border-slate-200 bg-white p-4 space-y-4">
-                <summary className="cursor-pointer text-sm font-semibold text-slate-800">{componentText.title}</summary>
-                <div>
-                    {componentDraft && <button type="button" onClick={async () => { if (await onSaveComponentFlags(componentKey, componentConfigPayload)) setComponentDraft(null); }} className="mt-2 rounded bg-indigo-600 px-3 py-2 text-xs text-white">{uiText.save}</button>}
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                        {Object.keys(PROMPT_COMPONENT_DEFAULTS)
-                            .filter((name) => !['rag_counselorbot', 'rag_competenzestrategiche', 'rag_questionari', 'approved_strategies', 'certified_strategies', 'shared_responses'].includes(name))
-                            .map((name) => (
-                                <label key={name} className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
-                                    <input type="checkbox" className="accent-indigo-600" checked={flags[name]} onChange={() => toggleFlag(name)} />
-                                    {componentText.labels[name] || name}
-                                </label>
-                            ))}
-                    </div>
-                </div>
-
-                {flags.knowledge && (
-                    <div className="space-y-4">
-                        {/* Fonti RAG e Documentazione */}
-                        <div className="rounded-lg border border-indigo-100 bg-indigo-50/20 p-4 space-y-3">
-                            <h5 className="text-xs font-semibold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
-                                <Layers className="w-3.5 h-3.5 text-indigo-600" />
-                                {componentText.rag_title}
-                            </h5>
-                            <div className="grid gap-2">
-                                {['rag_counselorbot', 'rag_competenzestrategiche', 'rag_questionari', 'shared_responses'].map((name) => (
-                                    <label key={name} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
-                                        <input type="checkbox" className="accent-indigo-600" checked={flags[name]} onChange={() => toggleFlag(name)} />
-                                        {componentText.labels[name] || name}
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Strategie QSA */}
-                        <div className="rounded-lg border border-indigo-100 bg-indigo-50/20 p-4 space-y-3">
-                            <h5 className="text-xs font-semibold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
-                                <Award className="w-3.5 h-3.5 text-indigo-600" />
-                                {componentText.strategies_title}
-                            </h5>
-                            <div className="grid gap-2">
-                                {['approved_strategies', 'certified_strategies'].map((name) => (
-                                    <label key={name} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
-                                        <input type="checkbox" className="accent-indigo-600" checked={flags[name]} onChange={() => toggleFlag(name)} />
-                                        {componentText.labels[name] || name}
-                                    </label>
-                                ))}
-                                <label className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
-                                    <span>{componentText.certified_strategies_limit}</span>
-                                    <select
-                                        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-                                        value={Number(componentConfigPayload.certified_strategy_limit)}
-                                        onChange={(event) => updateCertifiedStrategyLimit(Number(event.target.value))}
-                                        disabled={!flags.knowledge || !flags.certified_strategies}
-                                    >
-                                        <option value={0}>{componentText.no_limit}</option>
-                                        <option value={1}>1</option>
-                                        <option value={2}>2</option>
-                                        <option value={3}>3</option>
-                                    </select>
-                                </label>
-                            </div>
-
-                            {flags.approved_strategies && eligibleApproved.length > 0 && (
-                                <div className="mt-3 space-y-1.5 border-t border-indigo-100 pt-3">
-                                    <p className="text-2xs font-bold uppercase tracking-wider text-indigo-700/70 ml-1">{componentText.select_approved_strategies}</p>
-                                    <div className="grid gap-1.5 max-h-[160px] overflow-y-auto pr-1">
-                                        {eligibleApproved.map((strategy) => (
-                                            <label key={strategy.id} className="flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2 text-[11px] text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
-                                                <input
-                                                    type="checkbox"
-                                                    className="accent-indigo-600 mt-0.5"
-                                                    checked={isStrategyAllowed(strategy.id)}
-                                                    onChange={() => toggleStrategyAllowed(strategy.id)}
-                                                />
-                                                <div className="leading-tight">
-                                                    <span className="font-mono text-[9px] font-bold text-slate-500 mr-1">[{strategy.id}]</span>
-                                                    {strategy.texts?.[selectedLanguage] || strategy.texts?.it || strategy.id}
-                                                </div>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {flags.certified_strategies && eligibleCertified.length > 0 && (
-                                <div className="mt-3 space-y-1.5 border-t border-indigo-100 pt-3">
-                                    <p className="text-2xs font-bold uppercase tracking-wider text-indigo-700/70 ml-1">{componentText.select_certified_strategies}</p>
-                                    <div className="grid gap-1.5 max-h-[160px] overflow-y-auto pr-1">
-                                        {eligibleCertified.map((strategy) => (
-                                            <label key={strategy.slug} className="flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2 text-[11px] text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
-                                                <input
-                                                    type="checkbox"
-                                                    className="accent-indigo-600 mt-0.5"
-                                                    checked={isStrategyAllowed(strategy.slug)}
-                                                    onChange={() => toggleStrategyAllowed(strategy.slug)}
-                                                />
-                                                <div className="leading-tight">
-                                                    <span className="font-mono text-[9px] font-bold text-slate-500 mr-1">[{strategy.slug}]</span>
-                                                    {strategy[`name_${selectedLanguage}`] || strategy.name_it || strategy.slug}
-                                                </div>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-            </details>
-
-            <div className="grid items-start gap-4 xl:grid-cols-2">
-            <div className="grid gap-4">
-                <EditablePromptTextBlock
-                    title={componentText.labels.step_prompt}
-                    subtitle={localizedStepKey || selectedStep?.id}
-                    text={localizedStepValue}
-                    emptyLabel={t('admin.promptAudit.empty')}
-                    editing={editingPrompt === 'step'}
-                    draft={stepDraft}
-                    onEdit={() => { setStepDraft(localizedStepValue); setEditingPrompt('step'); }}
-                    onDraftChange={setStepDraft}
-                    onSave={() => {
-                        if (!selectedStep) return;
-                        onSaveStepPrompt(selectedStep, stepDraft, selectedLanguage, localizedStepKey);
-                        setEditingPrompt(null);
-                    }}
-                    onCancel={() => { setStepDraft(localizedStepValue); setEditingPrompt(null); }}
-                    editLabel={uiText.edit}
-                    saveLabel={uiText.save}
-                    cancelLabel={uiText.cancel}
-                />
-                <EditablePromptTextBlock
-                    title={componentText.labels.system_prompt}
-                    subtitle={systemPromptKey}
-                    text={systemPrompt}
-                    emptyLabel={t('admin.promptAudit.empty')}
-                    editing={editingPrompt === 'system'}
-                    draft={systemDraft}
-                    onEdit={() => { setSystemDraft(systemPrompt); setEditingPrompt('system'); }}
-                    onDraftChange={setSystemDraft}
-                    onSave={() => {
-                        if (!systemPromptKey) return;
-                        onSaveSystemPrompt(systemPromptKey, systemDraft);
-                        setEditingPrompt(null);
-                    }}
-                    onCancel={() => { setSystemDraft(systemPrompt); setEditingPrompt(null); }}
-                    editLabel={uiText.edit}
-                    saveLabel={uiText.save}
-                    cancelLabel={uiText.cancel}
-                />
-                <EditablePromptTextBlock
-                    title={componentText.labels.meta_system_prompt}
-                    subtitle={metaPromptKey}
-                    text={metaPrompt}
-                    emptyLabel={t('admin.promptAudit.empty')}
-                    editing={editingPrompt === 'meta'}
-                    draft={metaDraft}
-                    onEdit={() => { setMetaDraft(metaPrompt); setEditingPrompt('meta'); }}
-                    onDraftChange={setMetaDraft}
-                    onSave={() => {
-                        onSaveMetaPrompt(metaPromptKey, metaDraft);
-                        setEditingPrompt(null);
-                    }}
-                    onCancel={() => { setMetaDraft(metaPrompt); setEditingPrompt(null); }}
-                    editLabel={uiText.edit}
-                    saveLabel={uiText.save}
-                    cancelLabel={uiText.cancel}
-                />
-            </div>
-            {selectedStep && <PromptRequestPreview
-                step={{ ...selectedStep, prompt: editingPrompt === 'step' ? stepDraft : localizedStepValue }}
-                savedConfigs={savedConfigs}
-                savedStep={savedLocalizedStep}
-                language={selectedLanguage}
-                results={results}
-                hideContextControls
-                selectedSession={selectedSessionId} selectedCounselor={selectedCounselorId}
-                onSession={onSelectSession} onCounselor={onSelectCounselor} onLanguage={onSelectLanguage}
-                componentFlags={componentDraft ? componentConfigPayload : undefined} componentFlagsDirty={!!componentDraft} componentLabels={componentText.labels}
-                configs={[...configs.filter(c => c.key !== systemPromptKey && c.key !== metaPromptKey),
-                    { key: systemPromptKey, value: editingPrompt === 'system' ? systemDraft : systemPrompt },
-                    { key: metaPromptKey, value: editingPrompt === 'meta' ? metaDraft : metaPrompt }]}
-            />}
-            </div>
-
-            <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-4 text-xs text-slate-600">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex flex-wrap gap-2">
-                        <button type="button" onClick={onEditSystemPrompts} className="rounded-md border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">{t('admin.promptAudit.editSystemPrompt')}</button>
-                        <button type="button" onClick={onEditStep} className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700">{t('admin.promptAudit.editStep')}</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
 // --- Component ---
 
 export function ConfigForm() {
     const { t, lang } = useI18n();
     const [configs, setConfigs] = useState<ConfigItem[]>([]);
     const [savedConfigs, setSavedConfigs] = useState<ConfigItem[]>([]);
-    const [savedSteps, setSavedSteps] = useState<GuidedStep[]>([]);
     const [loading, setLoading] = useState(true);
     const [section, setSection] = useState<string>(readSectionParam);
-    const [instrumentSubsection, setInstrumentSubsection] = useState<InstrumentSubsection>('step-prompts');
     const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
     const [factoryAlignmentBusy, setFactoryAlignmentBusy] = useState(false);
-    const [hasPromptDraft, setHasPromptDraft] = useState(false);
     const [pendingPromptSaves, setPendingPromptSaves] = useState(0);
 
     const showToast = (type: 'success' | 'error', msg: string) => {
@@ -1187,39 +429,22 @@ export function ConfigForm() {
 
     // Dynamic guided steps
     const [guidedSteps, setGuidedSteps] = useState<GuidedStep[]>([]);
-    const [stepModes, setStepModes] = useState<GuidedStepMode[]>([]);
-    const [showNewStepForm, setShowNewStepForm] = useState(false);
-    const [newStep, setNewStep] = useState<GuidedStep>({
-        id: '', sort_order: 0, label: '', prompt: '',
-        system_prompt_mode: 'generic', color_theme: 'blue', questionnaire_type: 'QSA',
-    });
-    const [promptStepIds, setPromptStepIds] = useState<Record<string, string>>({});
-    const [promptSessionIds, setPromptSessionIds] = useState<Record<string, string>>({});
-    const [promptCounselorIds, setPromptCounselorIds] = useState<Record<string, number | ''>>({});
-    const [promptLanguages, setPromptLanguages] = useState<Record<string, string>>({});
-    const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
     const [placeholderDraft, setPlaceholderDraft] = useState<Record<string, [string, string]>>({});
 
     const openSection = (nextSection: string) => {
         setSection(nextSection);
         writeSectionParam(nextSection === 'general' ? null : nextSection);
-        if (nextSection !== 'general') {
-            setInstrumentSubsection('step-prompts');
-            setShowNewStepForm(false);
-        }
     };
 
     // --- Fetch all data ---
 
     const fetchConfigs = async () => {
         try {
-            const [configRes, envRes, apiKeysRes, stepsRes, resultsRes, modesRes] = await Promise.all([
+            const [configRes, envRes, apiKeysRes, stepsRes] = await Promise.all([
                 fetch('/api/admin/config', { headers: authHeaders() }),
                 fetch('/api/admin/config/env-status', { headers: authHeaders() }),
                 fetch('/api/admin/api-keys', { headers: authHeaders() }),
                 fetch('/api/admin/guided-steps', { headers: authHeaders() }),
-                fetch('/api/admin/questionnaire-results?limit=100', { headers: authHeaders() }),
-                fetch('/api/admin/guided-steps/modes', { headers: authHeaders() }),
             ]);
 
             if (configRes.ok) {
@@ -1236,9 +461,7 @@ export function ConfigForm() {
 
             if (envRes.ok) setEnvOverrides(await envRes.json());
             if (apiKeysRes.ok) setApiKeyStatuses(await apiKeysRes.json());
-            if (stepsRes.ok) { const steps: GuidedStep[] = await stepsRes.json(); setGuidedSteps(steps); setSavedSteps(steps); }
-            if (resultsRes.ok) setQuestionnaireResults(await resultsRes.json());
-            if (modesRes.ok) setStepModes(await modesRes.json());
+            if (stepsRes.ok) { const steps: GuidedStep[] = await stepsRes.json(); setGuidedSteps(steps); }
         } catch (error) {
             console.error('Failed to fetch config', error);
         } finally {
@@ -1378,32 +601,11 @@ export function ConfigForm() {
 
     const getConfigValue = (key: string) => configs.find(c => c.key === key)?.value || '';
 
-    const saveComponentFlags = async (key: string, flags: Record<string, unknown>) => {
-        const value = JSON.stringify(flags);
-        setConfigDraft(key, value, key);
-        return handleSaveConfig({ key, value, description: key });
-    };
-
-    // Testi rivolti allo studente: salvati per-lingua con chiave suffissata (es. text_..._en).
-    // L'italiano usa la chiave base; le altre lingue la chiave suffissata (fallback all'italiano).
-    const isSecondaryLang = lang !== 'it';
-    const textConfigKey = (baseKey: string) => isSecondaryLang ? `${baseKey}__${lang}` : baseKey;
-    const getTextValue = (baseKey: string) => {
-        const k = textConfigKey(baseKey);
-        const found = configs.find(c => c.key === k)?.value;
-        if (found !== undefined && found !== '') return found;
-        return isSecondaryLang ? getConfigValue(baseKey) : '';
-    };
-
     const setConfigDraft = (key: string, value: string, description: string) => {
         setConfigs(prev => {
             const others = prev.filter(p => p.key !== key);
             return [...others, { key, value, description }];
         });
-    };
-
-    const saveConfigKey = async (key: string, description: string) => {
-        await handleSaveConfig({ key, value: getConfigValue(key), description });
     };
 
     // --- Provider/Model ---
@@ -1460,155 +662,6 @@ export function ConfigForm() {
         }
     };
 
-    // --- Guided Steps CRUD ---
-
-    const handleSaveStep = async (step: GuidedStep) => {
-        setPendingPromptSaves(count => count + 1);
-        try {
-            const res = await fetch(`/api/admin/guided-steps/${step.id}`, {
-                method: 'PUT',
-                headers: authJsonHeaders(),
-                body: JSON.stringify({
-                    label: step.label,
-                    prompt: step.prompt,
-                    system_prompt_mode: step.system_prompt_mode,
-                    color_theme: step.color_theme,
-                }),
-            });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            // Il mode salvato puo' cambiare la chiave del prompt di sistema: la risolve il backend.
-            const { system_prompt_key }: GuidedStep = await res.json();
-            setSavedSteps(previous => [...previous.filter(s => s.id !== step.id), { ...step, system_prompt_key }]);
-            setGuidedSteps(previous => previous.map(s => s.id === step.id ? { ...s, system_prompt_key } : s));
-            showToast('success', t('admin.config.saved'));
-        } catch (error) {
-            console.error('Failed to save step', error);
-            showToast('error', t('admin.config.saveError'));
-        } finally {
-            setPendingPromptSaves(count => count - 1);
-        }
-    };
-
-    const handleCreateStep = async () => {
-        if (!newStep.id.trim() || !newStep.label.trim()) return;
-        const sameType = guidedSteps.filter(s => s.questionnaire_type === newStep.questionnaire_type);
-        const stepToCreate = {
-            ...newStep,
-            id: newStep.id.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
-            sort_order: sameType.length > 0 ? Math.max(...sameType.map(s => s.sort_order)) + 1 : 1,
-        };
-        setPendingPromptSaves(count => count + 1);
-        try {
-            const res = await fetch('/api/admin/guided-steps', {
-                method: 'POST',
-                headers: authJsonHeaders(),
-                body: JSON.stringify(stepToCreate),
-            });
-            if (res.ok) {
-                const created = await res.json();
-                setGuidedSteps(prev => [...prev, created]);
-                setSavedSteps(prev => [...prev, created]);
-                setPromptStepIds(prev => ({ ...prev, [created.questionnaire_type]: created.id }));
-                setNewStep({ id: '', sort_order: 0, label: '', prompt: '', system_prompt_mode: 'generic', color_theme: 'blue', questionnaire_type: newStep.questionnaire_type });
-                setShowNewStepForm(false);
-                showToast('success', t('admin.config.saved'));
-            } else {
-                throw new Error(`HTTP ${res.status}`);
-            }
-        } catch (error) {
-            console.error('Failed to create step', error);
-            showToast('error', t('admin.config.saveError'));
-        } finally {
-            setPendingPromptSaves(count => count - 1);
-        }
-    };
-
-    const handleDeleteStep = async (stepId: string) => {
-        if (!confirm(t('admin.config.confirmDeleteStep', { id: stepId }))) return;
-        setPendingPromptSaves(count => count + 1);
-        try {
-            const res = await fetch(`/api/admin/guided-steps/${stepId}`, {
-                method: 'DELETE',
-                headers: authHeaders(),
-            });
-            if (res.ok) {
-                setGuidedSteps(prev => prev.filter(s => s.id !== stepId));
-                setSavedSteps(prev => prev.filter(s => s.id !== stepId));
-                setPromptStepIds(prev => {
-                    const next = { ...prev };
-                    for (const [qType, selectedId] of Object.entries(next)) {
-                        if (selectedId === stepId) delete next[qType];
-                    }
-                    return next;
-                });
-                showToast('success', t('admin.config.deleted'));
-            } else {
-                throw new Error(`HTTP ${res.status}`);
-            }
-        } catch (error) {
-            console.error('Failed to delete step', error);
-            showToast('error', t('admin.config.saveError'));
-        } finally {
-            setPendingPromptSaves(count => count - 1);
-        }
-    };
-
-    const handleMoveStep = async (stepId: string, direction: 'up' | 'down') => {
-        const step = guidedSteps.find(s => s.id === stepId);
-        if (!step) return;
-        // Riordino ristretto agli step dello stesso questionario.
-        const siblings = guidedSteps
-            .filter(s => s.questionnaire_type === step.questionnaire_type)
-            .sort((a, b) => a.sort_order - b.sort_order);
-        const idx = siblings.findIndex(s => s.id === stepId);
-        const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-        if (swapIdx < 0 || swapIdx >= siblings.length) return;
-
-        const a = siblings[idx];
-        const b = siblings[swapIdx];
-        setPendingPromptSaves(count => count + 1);
-        // Scambia i sort_order tra i due step adiacenti.
-        setGuidedSteps(prev => prev.map(s => {
-            if (s.id === a.id) return { ...s, sort_order: b.sort_order };
-            if (s.id === b.id) return { ...s, sort_order: a.sort_order };
-            return s;
-        }));
-
-        try {
-            const res = await fetch('/api/admin/guided-steps/reorder', {
-                method: 'PATCH',
-                headers: authJsonHeaders(),
-                body: JSON.stringify([
-                    { id: a.id, sort_order: b.sort_order },
-                    { id: b.id, sort_order: a.sort_order },
-                ]),
-            });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            setSavedSteps(prev => prev.map(s => {
-                if (s.id === a.id) return { ...s, sort_order: b.sort_order };
-                if (s.id === b.id) return { ...s, sort_order: a.sort_order };
-                return s;
-            }));
-            showToast('success', t('admin.config.saved'));
-        } catch (error) {
-            console.error('Failed to reorder steps', error);
-            showToast('error', t('admin.config.saveError'));
-        } finally {
-            setPendingPromptSaves(count => count - 1);
-        }
-    };
-
-    // Mode ammessi dal backend; il mode corrente resta selezionabile anche se non e' in lista,
-    // cosi' il select non lo sostituisce in silenzio con la prima opzione.
-    const modeOptions = (current: string) => {
-        const modes = stepModes.map(m => m.mode);
-        return current && !modes.includes(current) ? [current, ...modes] : modes;
-    };
-
-    const updateStepField = (stepId: string, field: keyof GuidedStep, value: string | number) => {
-        setGuidedSteps(prev => prev.map(s => s.id === stepId ? { ...s, [field]: value } : s));
-    };
-
     // --- Render ---
 
     if (loading) return <div className="text-center py-8 text-slate-500">{t('admin.config.loading')}</div>;
@@ -1617,217 +670,6 @@ export function ConfigForm() {
         { key: 'ollama_ip', label: 'Ollama IP Address' },
         { key: 'llamacpp_url', label: 'llama.cpp / llama-swap URL' },
     ];
-
-    const questionnaireConfigs = [
-        {
-            id: 'qsa',
-            questionnaireType: 'QSA',
-            title: `QSA — ${t('q.QSA.fullName')}`,
-            color: 'blue' as const,
-            systemPrompts: [
-                { key: 'prompt_meta_QSA', label: 'Meta system prompt QSA' },
-                { key: 'prompt_intro', label: 'Prompt Presentazione QSA' },
-                { key: 'prompt_factor', label: 'Prompt Analisi Fattori' },
-                { key: 'prompt_second_level', label: 'Prompt Secondo Livello' },
-                { key: 'prompt_generic', label: 'Prompt Chat Generica' },
-                { key: 'prompt_guided_questions', label: 'Prompt Fase Domande e Approfondimenti' },
-            ],
-            texts: [
-                { key: 'label_guided_questions', label: 'Titolo Step Domande', type: 'input' as const },
-                { key: 'text_guided_questions_phase_banner', label: 'Banner Ingresso Fase Domande', type: 'input' as const },
-                { key: 'text_guided_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
-                { key: 'label_guided_conclusion', label: 'Titolo Step Conclusione', type: 'input' as const },
-                { key: 'text_guided_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
-            ],
-        },
-        {
-            id: 'qsar',
-            questionnaireType: 'QSAr',
-            title: `QSAr — ${t('q.QSAr.fullName')}`,
-            color: 'sky' as const,
-            systemPrompts: [
-                { key: 'prompt_meta_QSAR', label: 'Meta system prompt QSAr' },
-                { key: 'prompt_qsar_factor', label: 'Prompt Analisi Fattori' },
-                { key: 'prompt_qsar_second_level', label: 'Prompt Secondo Livello' },
-                { key: 'prompt_qsar_factor_qa', label: 'Prompt Approfondimento' },
-                { key: 'prompt_qsar_generic', label: 'Prompt Chat Generica' },
-            ],
-            texts: [
-                { key: 'text_qsar_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
-                { key: 'text_qsar_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
-            ],
-        },
-        {
-            id: 'ztpi',
-            questionnaireType: 'ZTPI',
-            title: `ZTPI — ${t('q.ZTPI.fullName')}`,
-            color: 'emerald' as const,
-            systemPrompts: [
-                { key: 'prompt_meta_ZTPI', label: 'Meta system prompt ZTPI' },
-                { key: 'prompt_ztpi_factor', label: 'Prompt Analisi Fattori' },
-                { key: 'prompt_ztpi_btp', label: 'Prompt Profilo Temporale Bilanciato' },
-            ],
-            texts: [
-                { key: 'text_ztpi_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
-                { key: 'text_ztpi_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
-            ],
-        },
-        {
-            id: 'savickas',
-            questionnaireType: 'SAVICKAS',
-            title: `Savickas — ${t('q.SAVICKAS.fullName')}`,
-            color: 'amber' as const,
-            systemPrompts: [
-                { key: 'prompt_meta_SAVICKAS', label: 'Meta system prompt Savickas' },
-                { key: 'prompt_savickas_interview', label: 'Prompt Intervista' },
-                { key: 'prompt_savickas_summary', label: 'Prompt Sintesi Finale' },
-            ],
-            texts: [
-                { key: 'text_savickas_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
-                { key: 'text_savickas_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
-            ],
-        },
-        {
-            id: 'evento-studio',
-            questionnaireType: 'EVENTO_STUDIO',
-            title: t('q.EVENTO_STUDIO.fullName'),
-            color: 'amber' as const,
-            systemPrompts: [
-                { key: 'prompt_meta_EVENTO_STUDIO', label: 'Meta system prompt Evento significativo di studio' },
-                { key: 'prompt_evento_interview', label: 'Prompt Intervista' },
-                { key: 'prompt_evento_summary', label: 'Prompt Sintesi Finale' },
-            ],
-            texts: [
-                { key: 'text_evento_studio_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
-                { key: 'text_evento_studio_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
-            ],
-        },
-        {
-            id: 'evento-professionale',
-            questionnaireType: 'EVENTO_PROFESSIONALE',
-            title: t('q.EVENTO_PROFESSIONALE.fullName'),
-            color: 'amber' as const,
-            systemPrompts: [
-                { key: 'prompt_meta_EVENTO_PROFESSIONALE', label: 'Meta system prompt Evento significativo professionale' },
-                { key: 'prompt_evento_interview', label: 'Prompt Intervista' },
-                { key: 'prompt_evento_summary', label: 'Prompt Sintesi Finale' },
-            ],
-            texts: [
-                { key: 'text_evento_professionale_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
-                { key: 'text_evento_professionale_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
-            ],
-        },
-        {
-            id: 'obiettivo-studio',
-            questionnaireType: 'OBIETTIVO_STUDIO',
-            title: t('q.OBIETTIVO_STUDIO.fullName'),
-            color: 'indigo' as const,
-            systemPrompts: [
-                { key: 'prompt_obbstudio_intro', label: 'Prompt Presentazione' },
-                { key: 'prompt_obiettivo_interview', label: 'Prompt Conversazione' },
-                { key: 'prompt_obiettivo_summary', label: 'Prompt Sintesi Finale' },
-            ],
-            texts: [
-                { key: 'text_obbstudio_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
-                { key: 'text_obbstudio_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
-            ],
-        },
-        {
-            id: 'obiettivo-docenza',
-            questionnaireType: 'OBIETTIVO_DOCENZA',
-            title: t('q.OBIETTIVO_DOCENZA.fullName'),
-            color: 'indigo' as const,
-            systemPrompts: [
-                { key: 'prompt_obbdocenza_intro', label: 'Prompt Presentazione' },
-                { key: 'prompt_obiettivo_interview', label: 'Prompt Conversazione' },
-                { key: 'prompt_obiettivo_summary', label: 'Prompt Sintesi Finale' },
-            ],
-            texts: [
-                { key: 'text_obbdocenza_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
-                { key: 'text_obbdocenza_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
-            ],
-        },
-        {
-            id: 'qpcs',
-            questionnaireType: 'QPCS',
-            title: `QPCS — ${t('q.QPCS.fullName')}`,
-            color: 'purple' as const,
-            systemPrompts: [
-                { key: 'prompt_meta_QPCS', label: 'Meta system prompt QPCS' },
-                { key: 'prompt_qpcs_factor', label: 'Prompt Analisi Fattori' },
-                ...(configs.some(c => c.key === 'prompt_qpcs_analysis')
-                    ? [{ key: 'prompt_qpcs_analysis', label: 'Prompt Percorso Guidato' }]
-                    : []),
-                ...(configs.some(c => c.key === 'prompt_qpcs_summary')
-                    ? [{ key: 'prompt_qpcs_summary', label: 'Prompt Sintesi Finale' }]
-                    : []),
-            ],
-            texts: [
-                { key: 'text_qpcs_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
-                { key: 'text_qpcs_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
-            ],
-        },
-        {
-            id: 'qpcc',
-            questionnaireType: 'QPCC',
-            title: `QPCC — ${t('q.QPCC.fullName')}`,
-            color: 'indigo' as const,
-            systemPrompts: [
-                { key: 'prompt_meta_QPCC', label: 'Meta system prompt QPCC' },
-                { key: 'prompt_qpcc_factor', label: 'Prompt Analisi Fattori' },
-                ...(configs.some(c => c.key === 'prompt_qpcc_interview')
-                    ? [{ key: 'prompt_qpcc_interview', label: 'Prompt Percorso Guidato' }]
-                    : []),
-                ...(configs.some(c => c.key === 'prompt_qpcc_summary')
-                    ? [{ key: 'prompt_qpcc_summary', label: 'Prompt Sintesi Finale' }]
-                    : []),
-            ],
-            texts: [
-                { key: 'text_qpcc_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
-                { key: 'text_qpcc_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
-            ],
-        },
-        {
-            id: 'qap',
-            questionnaireType: 'QAP',
-            title: `QAP — ${t('q.QAP.fullName')}`,
-            color: 'green' as const,
-            systemPrompts: [
-                { key: 'prompt_meta_QAP', label: 'Meta system prompt QAP' },
-                { key: 'prompt_qap_factor', label: 'Prompt Analisi Risorse' },
-                ...(configs.some(c => c.key === 'prompt_qap_interview')
-                    ? [{ key: 'prompt_qap_interview', label: 'Prompt Percorso Guidato' }]
-                    : []),
-                ...(configs.some(c => c.key === 'prompt_qap_summary')
-                    ? [{ key: 'prompt_qap_summary', label: 'Prompt Sintesi Finale' }]
-                    : []),
-            ],
-            texts: [
-                { key: 'text_qap_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
-                { key: 'text_qap_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
-            ],
-        },
-    ].map((config) => ({
-        ...config,
-        systemPrompts: config.systemPrompts.map((item) => ({
-            ...item,
-            label: t(`admin.config.label.${item.key}`),
-        })),
-        texts: config.texts.map((item) => ({
-            ...item,
-            label: t(`admin.config.label.${item.key}`),
-        })),
-    }));
-
-    const colorMap = {
-        blue: { border: 'border-blue-400', bg: 'bg-blue-50', title: 'text-blue-700', dot: 'bg-blue-500', ring: 'focus:ring-blue-500', subBg: 'bg-blue-100/50', subTitle: 'text-blue-600' },
-        sky: { border: 'border-sky-400', bg: 'bg-sky-50', title: 'text-sky-700', dot: 'bg-sky-500', ring: 'focus:ring-sky-500', subBg: 'bg-sky-100/50', subTitle: 'text-sky-600' },
-        purple: { border: 'border-purple-400', bg: 'bg-purple-50', title: 'text-purple-700', dot: 'bg-purple-500', ring: 'focus:ring-purple-500', subBg: 'bg-purple-100/50', subTitle: 'text-purple-600' },
-        indigo: { border: 'border-indigo-400', bg: 'bg-indigo-50', title: 'text-indigo-700', dot: 'bg-indigo-500', ring: 'focus:ring-indigo-500', subBg: 'bg-indigo-100/50', subTitle: 'text-indigo-600' },
-        emerald: { border: 'border-emerald-400', bg: 'bg-emerald-50', title: 'text-emerald-700', dot: 'bg-emerald-500', ring: 'focus:ring-emerald-500', subBg: 'bg-emerald-100/50', subTitle: 'text-emerald-600' },
-        amber: { border: 'border-amber-400', bg: 'bg-amber-50', title: 'text-amber-700', dot: 'bg-amber-500', ring: 'focus:ring-amber-500', subBg: 'bg-amber-100/50', subTitle: 'text-amber-600' },
-        green: { border: 'border-green-400', bg: 'bg-green-50', title: 'text-green-700', dot: 'bg-green-500', ring: 'focus:ring-green-500', subBg: 'bg-green-100/50', subTitle: 'text-green-600' },
-    };
 
     const sectionGroups: SectionFilterGroup[] = [
         {
@@ -1838,35 +680,18 @@ export function ConfigForm() {
                 { id: 'directives', label: t('admin.config.section.directives'), icon: <FileText aria-hidden className="w-4 h-4 shrink-0 text-amber-600" /> },
             ],
         },
-        {
-            label: t('admin.config.section.groupTools'),
-            items: questionnaireConfigs.map((q) => {
-                const shortLabel = q.title.split('—')[0].trim();
-                return {
-                    id: q.id,
-                    label: shortLabel,
-                    detail: shortLabel === q.title ? undefined : q.title,
-                    icon: <span aria-hidden className={`w-2.5 h-2.5 shrink-0 rounded-full ${colorMap[q.color].dot}`} />,
-                };
-            }),
-        },
     ];
     // An unknown `?section=` (old link, removed instrument) falls back to the general settings.
     const activeSection = sectionGroups.some(group => group.items.some(item => item.id === section)) ? section : 'general';
 
-    const hasUnsavedChanges = hasPromptDraft || showNewStepForm || pendingPromptSaves > 0
-        || configs.some(item => item.value !== savedConfigs.find(saved => saved.key === item.key)?.value)
-        || guidedSteps.some(step => JSON.stringify(step) !== JSON.stringify(savedSteps.find(saved => saved.id === step.id)));
+    const hasUnsavedChanges = pendingPromptSaves > 0
+        || configs.some(item => item.value !== savedConfigs.find(saved => saved.key === item.key)?.value);
 
     const applyFactoryResult = (result: FactoryAlignmentResult) => {
         const updateConfigs = (items: ConfigItem[]) => items.map(item =>
             Object.hasOwn(result.config_values, item.key) ? { ...item, value: result.config_values[item.key] } : item);
-        const updateSteps = (items: GuidedStep[]) => items.map(step =>
-            Object.hasOwn(result.step_prompts, step.id) ? { ...step, prompt: result.step_prompts[step.id] } : step);
         setConfigs(updateConfigs);
         setSavedConfigs(updateConfigs);
-        setGuidedSteps(updateSteps);
-        setSavedSteps(updateSteps);
     };
 
     return (
@@ -2546,419 +1371,6 @@ export function ConfigForm() {
             {/* 3. Strumento attivo: prompt, testi e step separati in tab interne */}
             {activeSection === 'prompt-map' && <PromptMap componentLabels={promptComponentText(lang).labels} />}
 
-            {questionnaireConfigs.filter((q) => q.id === activeSection).map((q) => {
-                const c = colorMap[q.color];
-                const allKeys = [...q.systemPrompts.map(p => p.key), ...q.texts.map(t => textConfigKey(t.key))];
-                const sectionSteps = guidedSteps
-                    .filter(s => normalizedQuestionnaireType(s.questionnaire_type) === normalizedQuestionnaireType(q.questionnaireType))
-                    .sort((a, b) => a.sort_order - b.sort_order);
-                const selectedPromptStepId = promptStepIds[q.questionnaireType] || sectionSteps[0]?.id || '';
-                return (
-                    <div key={q.id} className={`space-y-4 border-l-4 ${c.border} pl-4`}>
-                        {/* Header questionario */}
-                        <div className={`${c.bg} rounded-lg px-4 py-3 flex flex-wrap items-center justify-between gap-3`}>
-                            <div className="flex items-center gap-2">
-                                <div className={`w-3 h-3 rounded-full ${c.dot}`} />
-                                <h3 className={`text-sm font-bold ${c.title} uppercase tracking-wider`}>
-                                    {q.title}
-                                </h3>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={() => { writeInstrumentParam(q.questionnaireType); openSection('prompt-map'); }}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 hover:opacity-80 ${c.title} text-xs font-bold rounded-lg transition-colors border ${c.border}`}
-                            >
-                                <Layers className="w-3.5 h-3.5" />
-                                {t('admin.promptMap.openMap')}
-                            </button>
-                            <button
-                                onClick={async () => {
-                                    for (const key of allKeys) {
-                                        await saveConfigKey(key, key);
-                                    }
-                                }}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 hover:opacity-80 ${c.title} text-xs font-bold rounded-lg transition-colors border ${c.border}`}
-                                title={t('admin.config.saveAllTitle')}
-                            >
-                                <Save className="w-3.5 h-3.5" />
-                                {t('admin.config.saveAll')}
-                            </button>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-white p-1">
-                            {INSTRUMENT_SUBSECTIONS.map((sub) => {
-                                const active = instrumentSubsection === sub.id;
-                                return (
-                                    <button
-                                        key={sub.id}
-                                        type="button"
-                                        onClick={() => {
-                                            setInstrumentSubsection(sub.id);
-                                            if (sub.id !== 'guided-steps') setShowNewStepForm(false);
-                                        }}
-                                        className={`rounded-md border px-3 py-2 text-xs font-semibold transition-colors ${
-                                            active
-                                                ? `${c.bg} ${c.border} ${c.title}`
-                                                : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                                        }`}
-                                    >
-                                        {t(sub.labelKey)}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {instrumentSubsection === 'step-prompts' && (
-                            sectionSteps.length > 0 ? (
-                                <StepPromptsPanel
-                                    key={`${q.questionnaireType}-${selectedPromptStepId}-${promptLanguages[q.questionnaireType] || lang || 'it'}`}
-                                    questionnaireType={q.questionnaireType}
-                                    steps={sectionSteps}
-                                    selectedStepId={selectedPromptStepId}
-                                    onSelectStep={(stepId) => setPromptStepIds(prev => ({ ...prev, [q.questionnaireType]: stepId }))}
-                                    onEditSystemPrompts={() => setInstrumentSubsection('system-prompts')}
-                                    onEditStep={() => setInstrumentSubsection('guided-steps')}
-                                    configs={configs} savedConfigs={savedConfigs} savedSteps={savedSteps}
-                                    results={questionnaireResults.filter((result) => normalizedQuestionnaireType(result.questionnaire_type) === normalizedQuestionnaireType(q.questionnaireType))}
-                                    selectedSessionId={promptSessionIds[q.questionnaireType] || ''}
-                                    onSelectSession={(sessionId) => setPromptSessionIds(prev => ({ ...prev, [q.questionnaireType]: sessionId }))}
-                                    selectedCounselorId={promptCounselorIds[q.questionnaireType] ?? ''}
-                                    onSelectCounselor={(counselorId) => setPromptCounselorIds(prev => ({ ...prev, [q.questionnaireType]: counselorId }))}
-                                    selectedLanguage={promptLanguages[q.questionnaireType] || lang || 'it'}
-                                    onSelectLanguage={(language) => setPromptLanguages(prev => ({ ...prev, [q.questionnaireType]: language }))}
-                                    onSaveComponentFlags={saveComponentFlags}
-                                    onDirtyChange={setHasPromptDraft}
-                                    onSaveSystemPrompt={(key, value) => {
-                                        setConfigDraft(key, value, key);
-                                        handleSaveConfig({ key, value, description: key });
-                                    }}
-                                    onSaveMetaPrompt={(key, value) => {
-                                        setConfigDraft(key, value, key);
-                                        handleSaveConfig({ key, value, description: key });
-                                    }}
-                                    onSaveGuidance={(key, value) => {
-                                        setConfigDraft(key, value, key);
-                                        handleSaveConfig({ key, value, description: key });
-                                    }}
-                                    onSaveStepPrompt={(step, value, language, localizedKey) => {
-                                        if (language !== 'it') {
-                                            setConfigDraft(localizedKey, value, localizedKey);
-                                            handleSaveConfig({ key: localizedKey, value, description: localizedKey });
-                                            return;
-                                        }
-                                        const updated = { ...step, prompt: value };
-                                        setGuidedSteps(prev => prev.map(s => s.id === step.id ? updated : s));
-                                        handleSaveStep(updated);
-                                    }}
-                                    t={t}
-                                />
-                            ) : (
-                                <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
-                                    {t('admin.config.noSteps')}
-                                </div>
-                            )
-                        )}
-
-                        {instrumentSubsection === 'system-prompts' && (
-                            <div className="space-y-3">
-                                <div className={`${c.subBg} rounded px-3 py-1.5`}>
-                                    <h4 className={`text-xs font-bold ${c.subTitle} uppercase tracking-wider`}>
-                                        {t('admin.config.systemPrompts')}
-                                    </h4>
-                                </div>
-                                {q.systemPrompts.map((def) => {
-                                    const currentVal = getConfigValue(def.key);
-                                    return (
-                                        <div key={def.key} className="glass-panel p-5 space-y-3">
-                                            <div className="flex justify-between items-start gap-3">
-                                                <h3 className={`text-sm font-bold ${c.title}`}>{t(`admin.config.label.${def.key}`)}</h3>
-                                                <button
-                                                    onClick={() => saveConfigKey(def.key, def.label)}
-                                                    className="p-2 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors shrink-0"
-                                                >
-                                                    <Save className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                            <textarea
-                                                className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[160px] ${c.ring} outline-none font-mono text-slate-900`}
-                                                value={currentVal}
-                                                onChange={(e) => setConfigDraft(def.key, e.target.value, def.label)}
-                                            />
-                                            <PromptHistory scope="config" targetKey={def.key} currentValue={currentVal} onRestored={(value) => setConfigDraft(def.key, value, def.label)} />
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {instrumentSubsection === 'texts' && (
-                            q.texts.length > 0 ? (
-                                <div className="space-y-3">
-                                    <div className={`${c.subBg} rounded px-3 py-1.5 flex items-center justify-between`}>
-                                        <h4 className={`text-xs font-bold ${c.subTitle} uppercase tracking-wider`}>
-                                            {t('admin.config.textsMessages')}
-                                        </h4>
-                                        <span className={`text-2xs font-bold ${c.subTitle} bg-white/60 px-2 py-0.5 rounded uppercase`}>
-                                            {t('admin.config.editingLang')}: {lang.toUpperCase()}
-                                        </span>
-                                    </div>
-                                    {q.texts.map((def) => {
-                                        const localizedKey = textConfigKey(def.key);
-                                        const currentVal = getTextValue(def.key);
-                                        return (
-                                            <div key={def.key} className="glass-panel p-5 space-y-3">
-                                                <div className="flex justify-between items-start gap-3">
-                                                    <h3 className={`text-sm font-bold ${c.title}`}>{t(`admin.config.label.${def.key}`)}</h3>
-                                                    <button
-                                                        onClick={() => saveConfigKey(localizedKey, def.label)}
-                                                        className="p-2 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors shrink-0"
-                                                    >
-                                                        <Save className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                                {def.type === 'input' ? (
-                                                    <input
-                                                        className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm ${c.ring} outline-none text-slate-900`}
-                                                        value={currentVal}
-                                                        onChange={(e) => setConfigDraft(localizedKey, e.target.value, def.label)}
-                                                    />
-                                                ) : (
-                                                    <textarea
-                                                        className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[100px] ${c.ring} outline-none font-mono text-slate-900`}
-                                                        value={currentVal}
-                                                        onChange={(e) => setConfigDraft(localizedKey, e.target.value, def.label)}
-                                                    />
-                                                )}
-                                                <PromptHistory scope="config" targetKey={localizedKey} currentValue={currentVal} onRestored={(value) => setConfigDraft(localizedKey, value, def.label)} />
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
-                                    {t('admin.config.noTexts')}
-                                </div>
-                            )
-                        )}
-
-                        {instrumentSubsection === 'guided-steps' && (
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.guidedSteps')}</h3>
-                                        <p className="text-xs text-slate-500 ml-1 mt-1">
-                                            {t('admin.config.guidedStepsDesc')}
-                                        </p>
-                                    </div>
-                                    <button
-                                        onClick={() => { setNewStep(prev => ({ ...prev, questionnaire_type: q.questionnaireType })); setShowNewStepForm(true); }}
-                                        className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-md transition-colors shadow-sm"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                        {t('admin.config.addStep')}
-                                    </button>
-                                </div>
-
-                                {/* New Step Form */}
-                                {showNewStepForm && (
-                                    <div className="glass-panel p-6 space-y-4 border-2 border-dashed border-indigo-300 bg-indigo-50/30">
-                                        <h3 className="text-sm font-semibold text-indigo-700">{t('admin.config.newStep')}</h3>
-
-                                        <div className="grid md:grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepId')}</label>
-                                                <input
-                                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 font-mono"
-                                                    placeholder={t('admin.config.placeholderStepId')}
-                                                    value={newStep.id}
-                                                    onChange={(e) => setNewStep(prev => ({ ...prev, id: e.target.value }))}
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepTitle')}</label>
-                                                <input
-                                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900"
-                                                    placeholder={t('admin.config.placeholderStepTitle')}
-                                                    value={newStep.label}
-                                                    onChange={(e) => setNewStep(prev => ({ ...prev, label: e.target.value }))}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid md:grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepSystemPrompt')}</label>
-                                                <select
-                                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                    value={newStep.system_prompt_mode}
-                                                    onChange={(e) => setNewStep(prev => ({ ...prev, system_prompt_mode: e.target.value }))}
-                                                >
-                                                    {modeOptions(newStep.system_prompt_mode).map(mode => (
-                                                        <option key={mode} value={mode}>{t(`admin.mode.${mode}`)}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepColor')}</label>
-                                                <select
-                                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                    value={newStep.color_theme}
-                                                    onChange={(e) => setNewStep(prev => ({ ...prev, color_theme: e.target.value }))}
-                                                >
-                                                    {COLOR_THEMES.map(c => (
-                                                        <option key={c.value} value={c.value}>{t(`admin.color.${c.value}`)}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepPromptCreate')}</label>
-                                            <textarea
-                                                className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-slate-900"
-                                                placeholder={t('admin.config.placeholderStepPrompt')}
-                                                value={newStep.prompt}
-                                                onChange={(e) => setNewStep(prev => ({ ...prev, prompt: e.target.value }))}
-                                            />
-                                        </div>
-
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={handleCreateStep}
-                                                disabled={!newStep.id.trim() || !newStep.label.trim() || !newStep.prompt.trim()}
-                                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50"
-                                            >
-                                                {t('admin.config.createStep')}
-                                            </button>
-                                            <button
-                                                onClick={() => setShowNewStepForm(false)}
-                                                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-lg transition-colors"
-                                            >
-                                                {t('admin.config.cancel')}
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Existing Steps */}
-                                <div className="space-y-4">
-                                    {sectionSteps.map((step, idx) => {
-                                        const colorDef = COLOR_THEMES.find(c => c.value === step.color_theme);
-                                        return (
-                                            <div key={step.id} className="glass-panel p-6 space-y-4">
-                                                {/* Header with dynamic title */}
-                                                <div className="flex justify-between items-start gap-3">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className={`w-3 h-3 rounded-full ${colorDef?.dot || 'bg-indigo-500'}`} />
-                                                        <h3 className="text-sm font-semibold text-slate-900">
-                                                            {step.label || step.id}
-                                                        </h3>
-                                                        <span className="text-2xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                                                            {step.id}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <button
-                                                            onClick={() => handleMoveStep(step.id, 'up')}
-                                                            disabled={idx === 0}
-                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-600 transition-colors disabled:opacity-30"
-                                                            title={t('admin.config.moveUp')}
-                                                        >
-                                                            <ChevronUp className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleMoveStep(step.id, 'down')}
-                                                            disabled={idx === sectionSteps.length - 1}
-                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-600 transition-colors disabled:opacity-30"
-                                                            title={t('admin.config.moveDown')}
-                                                        >
-                                                            <ChevronDown className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleSaveStep(step)}
-                                                            className="p-1.5 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors"
-                                                            title={t('admin.config.save')}
-                                                        >
-                                                            <Save className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteStep(step.id)}
-                                                            className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-colors"
-                                                            title={t('admin.config.delete')}
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                {/* Editable fields */}
-                                                <div className="grid md:grid-cols-3 gap-4">
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepTitle')}</label>
-                                                        <input
-                                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900"
-                                                            value={step.label}
-                                                            onChange={(e) => updateStepField(step.id, 'label', e.target.value)}
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepSystemPrompt')}</label>
-                                                        <select
-                                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                            value={step.system_prompt_mode}
-                                                            onChange={(e) => updateStepField(step.id, 'system_prompt_mode', e.target.value)}
-                                                        >
-                                                            {modeOptions(step.system_prompt_mode).map(mode => (
-                                                                <option key={mode} value={mode}>{t(`admin.mode.${mode}`)}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                                                            <Palette className="w-3 h-3" /> {t('admin.config.stepColor')}
-                                                        </label>
-                                                        <select
-                                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                            value={step.color_theme}
-                                                            onChange={(e) => updateStepField(step.id, 'color_theme', e.target.value)}
-                                                        >
-                                                            {COLOR_THEMES.map(c => (
-                                                                <option key={c.value} value={c.value}>{t(`admin.color.${c.value}`)}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
-
-                                                <div className="prompt-workspace grid items-start gap-4 xl:grid-cols-2">
-                                                <div className="space-y-2">
-                                                    <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepPromptSend')}</label>
-                                                    <textarea
-                                                        className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-slate-900"
-                                                        value={step.prompt}
-                                                        onChange={(e) => updateStepField(step.id, 'prompt', e.target.value)}
-                                                    />
-                                                    <pre className="prompt-print-value">{step.prompt}</pre>
-                                                    <PromptHistory scope="guided_step" targetKey={step.id} currentValue={step.prompt} onRestored={(value) => updateStepField(step.id, 'prompt', value)} />
-                                                </div>
-                                                <GuidedStepPromptPreview key={step.id} step={step} savedStep={savedSteps.find(s => s.id === step.id)} configs={configs} savedConfigs={savedConfigs} componentLabels={promptComponentText(lang).labels} language="it" results={questionnaireResults.filter(r => normalizedQuestionnaireType(r.questionnaire_type) === normalizedQuestionnaireType(q.questionnaireType))} />
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-
-                                    {sectionSteps.length === 0 && !showNewStepForm && (
-                                        <div className="text-center py-8 text-slate-500 text-sm">
-                                            {t('admin.config.noSteps')}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
-            })}
             </fieldset>
         </div>
     );

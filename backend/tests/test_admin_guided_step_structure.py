@@ -94,7 +94,7 @@ def test_new_step_goes_where_the_reorder_puts_it_and_the_map_follows():
         ])
         assert response.status_code == 200, response.text
         assert _step_ids(client) == ["pmtest-c", "pmtest-a", "pmtest-b"]
-        # La creazione registra la revisione del prompt, come dalla vista classica.
+        # La creazione registra la revisione del prompt.
         db = _TestSession()
         try:
             revisions = db.query(models.PromptRevision).filter(

@@ -193,10 +193,3 @@ export function PromptRequestPreview({ step, configs, results, language = 'it', 
         </div>}
     </section>;
 }
-
-export function GuidedStepPromptPreview(props: React.ComponentProps<typeof PromptRequestPreview>) {
-    const [open, setOpen] = useState(false);
-    const { lang } = useI18n();
-    const label = (labels[lang as keyof typeof labels] || labels.en)[0];
-    return <div><button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="rounded border border-indigo-200 px-3 py-2 text-sm text-indigo-700">{label}</button>{open && <PromptRequestPreview {...props} />}</div>;
-}

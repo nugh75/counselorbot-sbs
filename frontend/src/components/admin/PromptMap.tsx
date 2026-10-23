@@ -823,7 +823,7 @@ function AddStepForm({ map, onCreated, onCancel }: { map: PromptMapData; onCreat
         setError('');
         try {
             const sortOrder = steps.reduce((max, step) => Math.max(max, step.sort_order ?? 0), 0) + 1;
-            // Stessa API e stesso formato della scheda "Step guidati" (vista classica).
+            // Stessa API e stesso formato di POST /admin/guided-steps.
             const response = await apiFetch(STEPS_API, {
                 method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({
                     id: stepId, sort_order: sortOrder, label: label.trim(), prompt, system_prompt_mode: mode,
