@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <title>CounselorBot — spike F0-01</title>
+  <style>
+    body { font: 15px system-ui, sans-serif; margin: 24px; color: #1f2933; background: #f7f8fa; }
+    h1 { font-size: 20px; }
+    #state { font-weight: 600; }
+    .ok { color: #1a7f37; } .ko { color: #b42318; }
+    pre { background: #fff; border: 1px solid #d0d7de; padding: 12px; overflow: auto; max-height: 420px; }
+  </style>
+</head>
+<body>
+  <h1>CounselorBot — spike F0-01</h1>
+  <p>Backend: <span id="state">avvio in corso…</span></p>
+  <h2>/auth/me</h2>
+  <pre id="me">—</pre>
+  <h2>Diagnostica (/spike/info)</h2>
+  <pre id="info">—</pre>
+  <script>
+    const state = document.getElementById("state");
+    window.__TAURI__.core.invoke("backend_status").then((report) => {
+      state.textContent = report.ok ? `pronto in ${report.ready_seconds}s (porta ${report.port})` : "errore";
+      state.className = report.ok ? "ok" : "ko";
+      document.getElementById("me").textContent = JSON.stringify(report.auth_me, null, 2);
+      document.getElementById("info").textContent = JSON.stringify(report.spike_info, null, 2);
+    }).catch((error) => {
+      state.textContent = String(error);
+      state.className = "ko";
+    });
+  </script>
+</body>
+</html>
