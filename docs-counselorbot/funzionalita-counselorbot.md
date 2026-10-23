@@ -844,6 +844,20 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Analisi combinata dei profili | `/profilo/analisi-combinata` | Generare una lettura integrata di almeno due strumenti tra QSA, QSAr e ZTPI. Si apre dal gruppo Conoscermi e riflettere e non compare più sotto i singoli risultati. |
 | Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. Lista breve con filtri (gruppo, tipo, finalità richiesta/proposta, stato) e un solo dettaglio aperto alla volta; pianificazione con spiegazione del lavoro personale; anteprima di restituzione con destinatario esplicito e copia fissa. Se l’attività indica degli strumenti, nel dettaglio ognuno si apre con «Apri qui» in una finestra dentro l’attività (Esc o «Chiudi e torna all’attività» riportano al punto di partenza) oppure con «Apri a pagina intera»; uno strumento disattivato dopo l’invio per la classe o il gruppo resta elencato come non disponibile. La revoca conferma in linea sulla scheda. |
 | Piani operativi | `/profilo/piani-operativi` | Seguire i piani operativi (fino a ottobre 2026 «Percorsi di classe»: sequenze ordinate di attività) pubblicati dai docenti per la propria classe; il vecchio indirizzo /profilo/percorsi (anche con i sottopercorsi) reindirizza qui in modo permanente; un passo di somministrazione si apre in `/profilo/piani-operativi/{pathId}/{stepId}` e il suo approfondimento guidato in `/profilo/piani-operativi/{pathId}/{stepId}/approfondimento`; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. Un passo incontro mostra data, ora, luogo o link; dall’inizio dell’incontro lo studente preme «Ho partecipato» (e può annullarlo) e il passo risulta fatto: non c’è registro del docente. Il piano operativo prioritario è inoltre visualizzato in cima alla panoramica dell'Area studente (`/profilo`) come hero card, con il catalogo strumenti sotto collassato. |
+
+Nei passi dei piani operativi titolo e data vengono dall’oggetto collegato:
+il piano di somministrazione usa il proprio titolo e la data programmata,
+l’assegnazione la propria scadenza e l’incontro il giorno nel fuso locale.
+«Personalizza il titolo» e «Data diversa» creano override espliciti e cancellabili;
+per gli incontri non si propone una nuova data manuale. Le note per la classe
+sono aggiuntive e facoltative, con testo multilinea; la presentazione del piano
+compare una volta nell’intestazione. Vista studente, hero, progressi e filtro
+«In ritardo» condividono gli stessi valori effettivi. Un passo forum richiede un
+titolo prima della pubblicazione; il titolo della discussione resta nel forum e
+i vecchi piani pubblicati restano leggibili. I modelli mostrano anche le note:
+«Aggiorna da modello» confronta il testo della classe con quello proposto e
+conserva i passi con titolo o nota personalizzati, comprese cancellazioni esplicite.
+
 | Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito; collegamenti contestuali alle assegnazioni del gruppo; messaggi generali del docente leggibili direttamente nella pagina; uscire da un gruppo richiede una conferma che nomina il gruppo e le conseguenze. |
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot, con guida a tre passi (Apri il bot, Conferma, Verifica collegamento), scadenza del codice visibile e verifica automatica al ritorno nella scheda. |

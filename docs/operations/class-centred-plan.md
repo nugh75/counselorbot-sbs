@@ -519,6 +519,11 @@ The existing `/docente/classi` list keeps its cards; each card gains a
 
 ### 8.2 Teacher — class path builder (`Class paths` tab)
 
+Presentation contract (OC3): [step titles, dates and notes](class-path-step-presentation.md).
+Object names/dates are defaults; explicit overrides can be reset. Notes are optional
+and additional. A forum step needs its own title when publishing. Templates expose
+notes and preserve class-specific title/note changes with a visible comparison.
+
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │ CLASS PATHS                                         [+ New path]      │
@@ -554,6 +559,10 @@ The existing `/docente/classi` list keeps its cards; each card gains a
 ```
 
 ### 8.3 Student — class path view (home + `/profilo/percorsi`)
+
+All views, progress labels, lateness and hero ordering use the same effective
+presentation. Meeting date/time appears once in its details; legacy overrides
+remain explicit. The optional plan introduction appears once at the top.
 
 ```
 HOME (student in a class with a published path)
