@@ -1220,6 +1220,27 @@ class GroupShare(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class ClassCouncilLink(Base):
+    """Read-only link for the class council (#422): a signed-in user opens it with its password.
+
+    Only the bcrypt hash of the password is stored; the teacher sees it once.
+    """
+
+    __tablename__ = "class_council_links"
+
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, index=True, nullable=False)
+    token = Column(String, unique=True, index=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    created_by = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+    failed_attempts = Column(Integer, nullable=False, default=0)
+    last_failed_at = Column(DateTime(timezone=True), nullable=True)
+    last_viewed_at = Column(DateTime(timezone=True), nullable=True)
+
+
 class TelegramAccountLink(Base):
     """Mapping verificato telegram_user_id -> username CounselorBot."""
 
