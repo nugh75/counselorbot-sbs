@@ -4,6 +4,29 @@ Questa configurazione serve **solo all'istanza di prova**: frontend e backend
 girano in modalità sviluppo con il codice montato nei container. Non è una
 configurazione di produzione e non va usata con dati reali.
 
+## Stato attuale: frontend di produzione, backend con hot reload
+
+Dal 23 ottobre 2026 l'istanza su questo Mac usa il frontend di produzione
+(`next build`); il backend resta con `uvicorn --reload`. `next dev` occupava da
+solo 1,2 GB e fino a 4 CPU nella VM Docker da 5,5 GB, con il Mac (8 GB) in swap:
+il backend impiegava oltre 30 minuti a ripartire dopo un pull e il Postgres
+portable si riavviava.
+
+Deploy:
+
+1. backup con `pg_dumpall` e `git pull --ff-only` nel checkout principale; il
+   backend si ricarica da solo;
+2. se il pull tocca `frontend/`, ricostruire solo il frontend:
+
+   ```bash
+   docker compose --env-file .env -f docker-compose.portable.yml up -d --build --no-deps counselorbot-frontend
+   ```
+
+3. `docker image prune -f` dopo la build, per non accumulare immagini.
+
+`scripts/dev-test-instance.sh up` riporta anche il frontend in hot reload:
+usarlo solo per una sessione di prova, non come stato normale.
+
 ## Cosa cambia rispetto al deploy normale
 
 - Il frontend usa `next dev` (hot reload) invece del build di produzione.
