@@ -1,17 +1,24 @@
-"""Skill della chat: CRUD admin, mappa step, preview.
+"""Skill della chat: CRUD admin, mappa step, catalogo, preview.
 
-La preview e' lo strumento diagnostico principale: mostra quali skill si
-attivano per uno step, con che testo, e il motivo di ogni esclusione (condizioni
-non soddisfatte, componente spenta, budget esaurito, scelta del router).
+La preview e' lo strumento diagnostico principale: prepara il turno con la
+stessa funzione della chat e mostra quali skill si attivano per uno step, con
+che testo, se quel testo arriva davvero nel prompt, e il motivo di ogni
+esclusione (condizioni non soddisfatte, componente spenta, budget esaurito,
+scelta del router).
 """
+import inspect
+import uuid
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models, schemas
+from ..skills import conditions as skills_conditions
 from ..skills import engine as skills_engine
 from ..skills import handlers as skills_handlers
+from ..skills.intents import KNOWN_INTENTS
+from ..skills_seed import BUILTIN_SKILL_SLUGS, ENGINE_INSTRUMENTS
 
 router = APIRouter()
 get_db = database.get_personal_ai_db
@@ -46,6 +53,21 @@ def _validate(payload_dict: dict) -> None:
     handler = payload_dict.get("handler")
     if handler and handler not in skills_handlers.handler_names():
         raise HTTPException(status_code=400, detail=f"handler sconosciuto: {handler}")
+    errors = skills_conditions.validate(payload_dict.get("conditions"))
+    if errors:
+        raise HTTPException(status_code=400, detail="; ".join(errors))
+    params = payload_dict.get("handler_params")
+    if params is not None and not isinstance(params, dict):
+        raise HTTPException(status_code=400, detail="handler_params deve essere un oggetto JSON")
+    max_chars = payload_dict.get("max_chars")
+    if max_chars is not None and max_chars <= 0:
+        raise HTTPException(status_code=400, detail="max_chars deve essere maggiore di zero")
+
+
+def _response(skill: models.Skill) -> schemas.SkillResponse:
+    return schemas.SkillResponse.model_validate(skill).model_copy(
+        update={"builtin": skill.slug in BUILTIN_SKILL_SLUGS}
+    )
 
 
 @router.get("/admin/skills", response_model=List[schemas.SkillResponse])
@@ -53,11 +75,12 @@ async def list_skills(
     current_user: models.User = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
-    return (
+    rows = (
         db.query(models.Skill)
         .order_by(models.Skill.sort_order.asc(), models.Skill.id.asc())
         .all()
     )
+    return [_response(skill) for skill in rows]
 
 
 @router.get("/admin/skills/handlers")
@@ -65,6 +88,34 @@ async def list_handlers(
     current_user: models.User = Depends(auth.get_current_active_admin),
 ):
     return {"handlers": skills_handlers.handler_names()}
+
+
+@router.get("/admin/skills/catalog")
+async def skills_catalog(
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Cosa serve al wizard per comporre una skill senza scrivere JSON a mano."""
+    handlers = []
+    for name in skills_handlers.handler_names():
+        doc = inspect.getdoc(skills_handlers.get_handler(name)) or ""
+        handlers.append({"name": name, "summary": doc.split("\n\n")[0].replace("\n", " ")})
+    instruments = list(ENGINE_INSTRUMENTS)
+    for row in db.query(models.GuidedStepSkill.questionnaire_type).distinct().all():
+        if row[0] not in instruments:
+            instruments.append(row[0])
+    return {
+        "handlers": handlers,
+        "condition_keys": sorted(skills_conditions.KNOWN_CONDITION_KEYS),
+        "intents": list(KNOWN_INTENTS),
+        "routing": sorted(_ALLOWED_ROUTING),
+        "slots": sorted(_ALLOWED_SLOTS),
+        "instruments": [
+            {"code": code, "engine_enabled": skills_engine.enabled(db, code)}
+            for code in instruments
+        ],
+        "builtin_slugs": sorted(BUILTIN_SKILL_SLUGS),
+    }
 
 
 @router.post("/admin/skills", response_model=schemas.SkillResponse)
@@ -85,7 +136,7 @@ async def create_skill(
     db.add(skill)
     db.commit()
     db.refresh(skill)
-    return skill
+    return _response(skill)
 
 
 @router.get("/admin/skills/step-map", response_model=schemas.StepSkillMap)
@@ -166,11 +217,21 @@ async def update_skill(
     if invalid_nulls:
         raise HTTPException(status_code=400, detail=f"campi non annullabili: {', '.join(invalid_nulls)}")
     _validate(data)
+    if "slug" in data:
+        slug = (data["slug"] or "").strip()
+        if not slug:
+            raise HTTPException(status_code=400, detail="slug obbligatorio")
+        if slug != skill.slug and skill.slug in BUILTIN_SKILL_SLUGS:
+            raise HTTPException(status_code=400, detail="lo slug di una skill di serie non si cambia")
+        clash = db.query(models.Skill).filter(models.Skill.slug == slug, models.Skill.id != skill.id).first()
+        if clash is not None:
+            raise HTTPException(status_code=409, detail="slug gia' esistente")
+        data["slug"] = slug
     for key, value in data.items():
         setattr(skill, key, value)
     db.commit()
     db.refresh(skill)
-    return skill
+    return _response(skill)
 
 
 @router.delete("/admin/skills/{skill_id}")
@@ -182,6 +243,9 @@ async def delete_skill(
     skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
     if skill is None:
         raise HTTPException(status_code=404, detail="skill non trovata")
+    if skill.slug in BUILTIN_SKILL_SLUGS:
+        # Il seed la ricreerebbe al prossimo avvio, pubblicata e agganciata.
+        raise HTTPException(status_code=409, detail="skill di serie: disattivala invece di cancellarla")
     bound = db.query(models.GuidedStepSkill).filter(models.GuidedStepSkill.skill_id == skill_id).count()
     if bound:
         raise HTTPException(status_code=409, detail=f"skill agganciata a {bound} step: sganciala prima")
@@ -196,34 +260,46 @@ async def preview_skills(
     current_user: models.User = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
+    """Prepara il turno con `prepare_chat_turn`, come la chat, senza generare."""
     from ..ai_service import AIService
+    from ..api_models import ChatRequest
+    from ..chat_preparation import prepare_chat_turn
 
-    step = (
-        db.query(models.GuidedStep).filter(models.GuidedStep.id == payload.step_id).first()
-        if payload.step_id
-        else None
-    )
-    ctx = skills_engine.build_context(
-        db,
-        AIService(db),
+    message = payload.message or ""
+    request = ChatRequest(
+        message=message,
         questionnaire_type=payload.questionnaire_type,
-        step_id=payload.step_id,
-        step_mode=step.system_prompt_mode if step else None,
-        language=payload.language,
-        query=payload.message,
-        step_query=" ".join(
-            part for part in (step.label if step else "", step.prompt if step else "", payload.message, payload.scores_context) if part
-        ),
-        message=payload.message,
-        scores_context=payload.scores_context,
-        component_flags={},
-        handler_options={},
+        phase=payload.step_id or None,
+        language=payload.language or "it",
+        scores_context=payload.scores_context or "",
+        # Senza messaggio si prova l'ingresso nello step, come al primo turno.
+        use_phase_prompt=bool(payload.step_id and not message.strip()),
     )
-    result = skills_engine.run_skills(ctx)
+    probe = {"include_skill_id": payload.include_skill_id, "simulate_engine": True}
+    try:
+        prepared = prepare_chat_turn(
+            db, AIService(db), request, f"skill-preview-{uuid.uuid4()}", {"username": ""},
+            include_retrieval=True, include_history=False, create_anonymous_code=False,
+            skills_probe=probe,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"anteprima non preparabile: {exc}")
+
+    prompt = f"{prepared.system_prompt_final}\n\n{prepared.full_message}"
+    blocks: dict[str, list[str]] = {}
+    delivery = []
+    for slug, segments in (probe.get("rendered") or {}).items():
+        for slot, text in segments:
+            blocks.setdefault(slot, []).append(text)
+            delivery.append({"slug": slug, "slot": slot, "chars": len(text), "in_prompt": text.strip() in prompt})
     return schemas.SkillPreviewResponse(
         engine_enabled=skills_engine.enabled(db, payload.questionnaire_type),
-        intent=ctx.intent,
-        blocks=result.blocks,
-        ids=result.ids,
-        trace=result.trace,
+        intent=probe.get("intent", ""),
+        blocks=blocks,
+        ids=probe.get("ids", {}),
+        trace=probe.get("trace", []),
+        component_flags={k: v for k, v in prepared.component_flags.items() if isinstance(v, bool)},
+        delivery=delivery,
     )

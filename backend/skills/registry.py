@@ -32,8 +32,13 @@ class SkillBinding:
         return self.skill.slug
 
 
-def bindings_for(db, questionnaire_type: str, step_id: str | None) -> list[SkillBinding]:
-    """Skill pubblicate e attive agganciate a (strumento, step), ordinate."""
+def bindings_for(db, questionnaire_type: str, step_id: str | None, *, include_skill_id: int | None = None) -> list[SkillBinding]:
+    """Skill pubblicate e attive agganciate a (strumento, step), ordinate.
+
+    `include_skill_id` serve solo all'anteprima admin: aggiunge quella skill
+    anche se e' in bozza, spenta o non ancora agganciata, cosi' la si prova
+    prima di pubblicarla. Condizioni, router e budget restano quelli veri.
+    """
     rows = (
         db.query(models.GuidedStepSkill)
         .filter(
@@ -43,7 +48,12 @@ def bindings_for(db, questionnaire_type: str, step_id: str | None) -> list[Skill
         )
         .all()
     )
-    if not rows:
+    included = (
+        db.query(models.Skill).filter(models.Skill.id == include_skill_id).first()
+        if include_skill_id is not None
+        else None
+    )
+    if not rows and included is None:
         return []
 
     # L'aggancio esplicito allo step vince sul wildcard.
@@ -63,11 +73,15 @@ def bindings_for(db, questionnaire_type: str, step_id: str | None) -> list[Skill
         .all()
     )
 
+    if included is not None and all(skill.id != included.id for skill in skills):
+        skills.append(included)
+
     bindings = []
     for skill in skills:
-        row = by_skill[skill.id]
+        row = by_skill.get(skill.id)
         params = dict(skill.handler_params or {})
-        params.update(row.override_params or {})
-        bindings.append(SkillBinding(skill=skill, params=params, sort_order=row.sort_order or skill.sort_order or 0))
+        params.update((row.override_params if row else None) or {})
+        sort_order = (row.sort_order if row else 0) or skill.sort_order or 0
+        bindings.append(SkillBinding(skill=skill, params=params, sort_order=sort_order))
     bindings.sort(key=lambda b: (b.sort_order, b.slug))
     return bindings

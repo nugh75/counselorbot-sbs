@@ -209,7 +209,8 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
                       c_persona="", counselor_name=None, include_retrieval=True,
                       include_history=True, create_anonymous_code=False,
                       component_overrides=None, retrieval_context=None,
-                      provider=None, model=None, journey_override=None, allow_generation=False, config_overrides=None, step_mode_override=None):
+                      provider=None, model=None, journey_override=None, allow_generation=False, config_overrides=None, step_mode_override=None,
+                      skills_probe=None):
     from .questionnaire_description import is_description_phase
     description_phase = request.phase
     description_mode = None
@@ -443,6 +444,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
             excluded_certified_strategy_ids=previous_certified_strategy_ids(db, conversation_id),
             username=identity.get("username", "") if identity else "",
             practice_notebook_id=practice_notebook_id_for_turn(db, identity, request),
+            skills_probe=skills_probe,
         )
     sanitize = _should_sanitize_ztpi_text(request.mode, request.phase)
     if sanitize:

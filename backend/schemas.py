@@ -1786,6 +1786,8 @@ class SkillUpdate(BaseModel):
 
 class SkillResponse(SkillBase):
     id: int
+    # Skill di serie: si disattiva, non si cancella, e lo slug non cambia.
+    builtin: bool = False
 
     class Config:
         from_attributes = True
@@ -1811,6 +1813,8 @@ class SkillPreviewRequest(BaseModel):
     language: str = "it"
     scores_context: str = ""
     message: str = ""
+    # Skill da provare anche se in bozza, spenta o non agganciata.
+    include_skill_id: Optional[int] = None
 
 
 class SkillPreviewResponse(BaseModel):
@@ -1819,6 +1823,10 @@ class SkillPreviewResponse(BaseModel):
     blocks: dict
     ids: dict
     trace: List[dict]
+    # Flag dei componenti del prompt con cui la chat prepara questo turno.
+    component_flags: dict = {}
+    # Per ogni skill resa: slot e se il testo arriva davvero nel prompt finale.
+    delivery: List[dict] = []
 
 
 # --- Istituti, referenti ed eventi di orientamento ---
