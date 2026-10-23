@@ -343,7 +343,9 @@ nei livelli Totale/Ristretto/Minimo. In IDEA l'orientamento riguarda il ramo del
 mappa e il seguito concordato, senza inventare una sequenza fissa. Audit, piano,
 attivazione e limiti delle verifiche: `docs/operations/guided-chat-choice.md`.
 
-**Introduzione della chat guidata (#409).** Al primo ingresso in una chat guidata (non IDEA, non anteprima, non sessione congelata) in cima alla conversazione compare una breve scheda che spiega scopo del percorso, passaggi, possibilità di approfondire e dove stanno i pulsanti avanti/indietro: nella barra sotto la finestra della chat, sulla destra, su desktop, in una barra sotto la casella di scrittura su mobile. Si chiude con «Ho capito» e non ricompare (preferenza nel browser). Testi in sei lingue.
+**Introduzione della chat guidata (#409).** Al primo ingresso in una chat guidata, IDEA compresa (non anteprima, non sessione congelata), in cima alla conversazione compare una breve scheda uguale per tutti gli strumenti: cosa fa la chat (un tema alla volta, nessuna risposta giusta o sbagliata), quanto dura (circa 20–40 minuti per una prima conversazione, salvataggio automatico dopo ogni risposta), cosa fare (rispondere con parole proprie e inviare con Invio, continuare a scrivere per approfondire), dove stanno i pulsanti avanti/indietro (nella barra sotto la finestra della chat, sulla destra, su desktop, in una barra sotto la casella di scrittura su mobile; non in IDEA) e come chiudere (concludere all’ultimo passaggio o «Congela sessione» dai tre punti). Si chiude con «Ho capito» e non ricompare (preferenza nel browser). Testi in sei lingue.
+
+**Guida in popup dalla chat guidata.** La scheda iniziale ha il pulsante «Apri la guida», che resta in cima alla chat anche dopo «Ho capito». Apre in un dialog modale la sezione pertinente della Guida all’interfaccia, con gli stessi testi della pagina `/guide`: «Evento significativo di studio» per EVENTO_STUDIO, «Evento significativo professionale» per EVENTO_PROFESSIONALE, «Area studente e obiettivi» per OBIETTIVO_STUDIO e «La chat guidata» con i tasti della conversazione per questionari, Savickas, IDEA e Obiettivo di docenza. Si usa da tastiera, si chiude con Esc, con la X o cliccando fuori; il focus torna al pulsante e conversazione e bozza restano intatte. Il link «Apri la guida completa» apre `/guide` alla stessa sezione in una nuova scheda.
 
 Nelle chat guidate dei questionari, anche con Iride, dopo la lettura del profilo
 una domanda contestualizzata aiuta la persona a scegliere cosa comprendere meglio.
@@ -1301,7 +1303,12 @@ The **Overview** tab (`ClassOverviewTab`, Issue #276) serves as the central oper
 5. **Class Status & Actions**: active/archived toggle (`PUT /api/admin/groups/{id}` with `is_active`) and secure class deletion (`DELETE /api/admin/groups/{id}`) with modal confirmation dialog and prevention of deletion if linked to administration plans.
 **Tools & counselors** lets owners, co-teachers and administrators
 choose student questionnaires, guided chats (including dynamic instruments),
-personal tools, Compass, Assistant and the class forum. Nella barra dei tab di classe
+personal tools, Compass, Assistant and the class forum. Tra le chat guidate ci sono
+anche i percorsi guidati integrati (Intervista Savickas, Idea, Evento significativo
+di studio e professionale, Il mio obiettivo di apprendimento) anche senza una riga
+strumento: attivi di default, se il docente li spegne spariscono dall’elenco dello
+studente, il server ne rifiuta l’avvio e i piani della classe non li accettano come
+passo. Nella barra dei tab di classe
 (`ClassSettingsPage`, Issue #284), il tab «Strumenti e counselor» è posizionato
 in fondo all'elenco dopo «Registro modifiche», secondo la sequenza ordinata:
 `overview` (Panoramica) → `students` (Studenti e risultati) → `paths` (Piani operativi) →
@@ -1435,6 +1442,14 @@ and path/assignment links are separate later slices. Six-language
 interface controls are included; the guide sections and screenshots arrived with F6 (#107).
 Titles, messages and reasons reject invisible control characters (for example
 NUL); tabs and line breaks are kept. Character lengths for titles and messages are validated on publication.
+
+**Discussion title edit.** Inside an open discussion, «Modifica titolo» lets
+the author fix a wrong title (`PATCH /forum/topics/{id}`, same 160-character and
+control-character rules as creation) while the class is active and the
+discussion is neither closed nor hidden; with pre-approval on, a student's new
+title waits for approval again. Class owners, co-teachers and administrators
+can edit any discussion title, closed or hidden ones included. Nobody else can;
+the discussion shows «modificato» after the change.
 
 **Forum resource links (F5, #106).** When opening a class discussion, a class
 teacher or administrator may select an optional link to a step of a published

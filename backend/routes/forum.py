@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from .. import auth, database, models
 from ..class_access import class_tool_enabled, forum_option, require_class_tool
-from ..forum_schemas import ForumHide, ForumMuteCreate, ForumPostCreate, ForumPostUpdate, ForumTopicCreate
+from ..forum_schemas import ForumHide, ForumMuteCreate, ForumPostCreate, ForumPostUpdate, ForumTopicCreate, ForumTopicUpdate
 from ..group_visibility import _visible_group_query
 
 router = APIRouter()
@@ -291,6 +291,30 @@ def topic_detail(topic_id: int, offset: int = Query(0, ge=0), limit: int = Query
             "has_more": len(posts) > limit, "can_moderate": staff, **state,
             "can_reply": bool(group.is_active and topic.status == "published" and not topic.locked and not topic.hidden_at
                               and state["forum_enabled"] and not state["mute"])}
+
+
+@router.patch("/forum/topics/{topic_id}")
+def rename_topic(topic_id: int, payload: ForumTopicUpdate,
+                 identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    # Title only: the author fixes a wrong name, moderators keep their tools on
+    # closed or hidden discussions. Author renames follow pre-approval like edits.
+    topic = _get_topic(db, topic_id)
+    _, staff = _access(db, identity, topic.group_id, write=True)
+    status = _student_write(db, identity, topic.group_id, staff)
+    db.refresh(topic)
+    if not staff:
+        if topic.author_username != identity["username"]:
+            raise HTTPException(403, "forum_not_author")
+        if topic.hidden_at is not None:
+            raise HTTPException(409, "forum_post_hidden")
+        if topic.locked:
+            raise HTTPException(403, "forum_topic_closed")
+        topic.status = status
+    topic.title = payload.title
+    topic.edited_at = db.scalar(func.statement_timestamp())
+    db.commit()
+    db.refresh(topic)
+    return _topic(db, topic, staff, identity["username"])
 
 
 @router.post("/forum/topics/{topic_id}/posts", status_code=201)

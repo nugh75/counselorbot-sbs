@@ -2028,7 +2028,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             empty={visibleMessages.length === 0}
                         />
                     )}
-                    {!isIdea && hasStepNavigation && !preview && !frozenSnapshot && !activeExploration && <GuidedChatIntro locale={activeLocale} />}
+                    {(isIdea || hasStepNavigation) && !preview && !frozenSnapshot && !activeExploration && <GuidedChatIntro locale={activeLocale} questionnaireType={questionnaireType} stepNavigation={!isIdea} />}
                     {isIdea && !activeExploration && hiddenMessages > 0 && (
                         <p className="mx-auto rounded-full bg-slate-50 px-3 py-1 text-2xs font-medium uppercase tracking-widest text-slate-500">
                             {t('idea.branches.onlyThis')}

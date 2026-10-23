@@ -233,6 +233,10 @@ export function forumPostActions(post: ForumPost, { moderator, active }: { moder
     };
 }
 
+export function forumTopicRenamable(topic: ForumTopic, { moderator, active }: { moderator: boolean; active: boolean }): boolean {
+    return active && topic.title !== null && (moderator || (topic.own && !topic.hidden && !topic.locked));
+}
+
 export function parseForumUnread(value: unknown): ForumUnread {
     const row = record(value);
     if (!Number.isInteger(row.total) || !row.by_group || typeof row.by_group !== 'object' || Array.isArray(row.by_group)) {
