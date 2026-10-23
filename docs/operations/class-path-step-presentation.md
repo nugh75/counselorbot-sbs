@@ -26,7 +26,8 @@ i limiti precedenti (note fino a 3000). I pulsanti del controllo non inviano for
 
 Gli incontri non propongono una nuova data manuale; gli override storici restano
 visibili, modificabili e cancellabili. La data dell’incontro appare nei dettagli,
-una volta; una diversa scadenza storica resta distinta. Date senza ora non si
+una volta; quella della somministrazione nella riga «Previsto il …» con il luogo
+(`class-path-schedule.ts`, dal 22 ottobre su main), non anche come scadenza; una diversa scadenza storica resta distinta. Date senza ora non si
 spostano col fuso; datetime seguono il calendario locale, anche a mezzanotte/DST.
 Il filtro ritardo ora include le date degli oggetti quando manca un override:
 è il cambio di comportamento approvato. Le fasce individuali non inventano date.

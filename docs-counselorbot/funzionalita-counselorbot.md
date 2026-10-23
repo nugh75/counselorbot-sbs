@@ -872,7 +872,7 @@ Nei passi dei piani operativi titolo e data vengono dall’oggetto collegato:
 il piano di somministrazione usa il proprio titolo e la data programmata,
 l’assegnazione la propria scadenza e l’incontro il giorno nel fuso locale.
 «Personalizza il titolo» e «Data diversa» creano override espliciti e cancellabili;
-per gli incontri non si propone una nuova data manuale. Le note per la classe
+per gli incontri non si propone una nuova data manuale. Ogni data compare una volta: quella dell’incontro nei suoi dettagli, quella del piano di somministrazione come «Previsto il …» con il luogo; scadenze e filtro «In ritardo» la usano comunque. Le note per la classe
 sono aggiuntive e facoltative, con testo multilinea; la presentazione del piano
 compare una volta nell’intestazione. Vista studente, hero, progressi e filtro
 «In ritardo» condividono gli stessi valori effettivi. Un passo forum richiede un
