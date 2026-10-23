@@ -70,9 +70,22 @@ def _natives():
     return {"modules": modules, "checks": checks, "tools": tools}
 
 
+def _windows_fcntl_stub():
+    """rag_index/rag_reindex_job import the Unix-only fcntl: on Windows the
+    backend does not even import. Spike only: a no-op lock is enough with one
+    worker; the product needs a portable lock (see the spike report)."""
+    import types
+    stub = types.ModuleType("fcntl")
+    stub.LOCK_SH, stub.LOCK_EX, stub.LOCK_NB, stub.LOCK_UN = 1, 2, 4, 8
+    stub.flock = lambda fd, operation: None
+    sys.modules["fcntl"] = stub
+
+
 def main():
     args = _parse_args()
     data_dir = _prepare_env(args)
+    if sys.platform == "win32":
+        _windows_fcntl_stub()
     import uvicorn
     from backend import main as backend_main
 
