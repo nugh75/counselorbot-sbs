@@ -336,6 +336,8 @@ nei livelli Totale/Ristretto/Minimo. In IDEA l'orientamento riguarda il ramo del
 mappa e il seguito concordato, senza inventare una sequenza fissa. Audit, piano,
 attivazione e limiti delle verifiche: `docs/operations/guided-chat-choice.md`.
 
+**Introduzione della chat guidata (#409).** Al primo ingresso in una chat guidata (non IDEA, non anteprima, non sessione ripresa) in cima alla conversazione compare una breve scheda che spiega scopo del percorso, passaggi, possibilità di approfondire e dove stanno i pulsanti avanti/indietro: in alto a destra sopra la conversazione su desktop, in una barra sotto la casella di scrittura su mobile. Si chiude con «Ho capito» e non ricompare (preferenza nel browser). Testi in sei lingue.
+
 Nelle chat guidate dei questionari, anche con Iride, dopo la lettura del profilo
 una domanda contestualizzata aiuta la persona a scegliere cosa comprendere meglio.
 Durante gli approfondimenti il counselor accompagna gradualmente dall’esperienza
