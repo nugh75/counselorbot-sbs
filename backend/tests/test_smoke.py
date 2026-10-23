@@ -7077,9 +7077,26 @@ def test_skills_preview_policy_is_active_for_every_supported_instrument():
     })
     assert created.status_code == 200, created.text
 
+    # La preview prepara il turno come la chat: senza step un consiglio non si
+    # apre, quindi si prova la richiesta di consiglio dentro uno step avviato.
+    db = _TestSession()
+    try:
+        for questionnaire_type in SEEDED_INSTRUMENTS:
+            step_id = f"smoke-advice-{questionnaire_type}"
+            if db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first() is None:
+                db.add(models.GuidedStep(
+                    id=step_id, sort_order=999, label="Smoke advice step",
+                    prompt="Smoke advice step prompt", system_prompt_mode="second-level",
+                    color_theme="slate", questionnaire_type=questionnaire_type,
+                ))
+        db.commit()
+    finally:
+        db.close()
+
     for questionnaire_type in SEEDED_INSTRUMENTS:
         preview = client.post("/admin/skills/preview", json={
             "questionnaire_type": questionnaire_type,
+            "step_id": f"smoke-advice-{questionnaire_type}",
             "language": "it",
             "scores_context": "",
             "message": "Dammi un consiglio concreto",
