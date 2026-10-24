@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import models, auth, database
+from . import shell_internal
 from .version import __version__
 from .native_deps import native_capabilities
 from .prompt_config import (
@@ -314,9 +315,25 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan, version=__version__)
 
 
+# Versione del contratto guscio <-> sidecar delle app desktop (ADR-0002).
+DESKTOP_CONTRACT = 1
+
+
 @app.get("/version")
 def get_version():
     return {"version": __version__}
+
+
+@app.get("/health")
+def get_health():
+    """Pronto a servire (ADR-0002 §2.2): uvicorn risponde solo dopo il lifespan.
+    Nessun dato personale e nessuna autenticazione."""
+    return {
+        "status": "ok",
+        "version": __version__,
+        "desktop_contract": DESKTOP_CONTRACT,
+        "db": database.engine.dialect.name,
+    }
 
 
 @app.get("/capabilities")
@@ -2056,6 +2073,8 @@ def _seed_instruments_catalog(db):
 
 
 # --- Registrazione router ---
+app.add_middleware(shell_internal.ShellInternalMiddleware)
+app.include_router(shell_internal.router)
 app.include_router(admin_routes.router)
 app.include_router(survey_routes.router)
 app.include_router(chat_routes.router)

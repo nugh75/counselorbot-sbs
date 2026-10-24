@@ -25,6 +25,36 @@ Agente `s28-pr519-sol` (Codex), task Diario
   Nessun processo dev avviato. Suite Postgres e browser live non eseguiti:
   integrazione documentale, test mirati senza rete e dati SQLite effimeri.
 
+# Handoff F1-05a — 24 ottobre 2026 (s27-f105a-sol)
+
+Branch `chore/f1-05a-dual-db-ci`, PR **DRAFT #522**, issue #520.
+Subentro Codex da head `5feafc41`; commit preesistenti preservati.
+Provenienza artifact, numeri iniziali, estensione proposta della baseline
+Postgres e procedura di verifica: `docs/operations/dual-db-ci.md`.
+Le due run complete iniziali coincidono nei node ID; la run cancellata è esclusa.
+Rimossi dalla baseline i tre fallimenti da dipendenze native mancanti.
+CI su codice `ddbdb18c`: run PR `40071399643` e dispatch `40071395812` verdi.
+Postgres PR: 5046 pass, 45 fail, 10 skip; SQLite PR: 4043 pass, 341 fail,
+237 error (24 moduli non importabili), 10 skip. Anche 23 subtest passati.
+Node ID identici nelle repliche: 45 Postgres, 578 SQLite, zero voci nuove o
+non più fallenti. Il controllo sul codice pre-F1-05a `e3863061` riproduce
+gli stessi 45 fallimenti Postgres (5016 pass). Dopo questi test cambiano solo
+documentazione e handoff, senza modifiche al codice o alle configurazioni CI.
+Test locali del controllo: 15 pass; portabilità: 213 occorrenze note, zero nuove;
+guidance-check e version-check passano. Nessun Docker, dev process, merge o deploy.
+I test della consegna sono risolti. Prima del merge restano la revisione
+applicabile coordinata dal Timoniere e l'accettazione esplicita dell'estensione
+Postgres del contratto; nessuna revisione precedente è riutilizzata.
+Startup verde solo per l'eccezione esatta F1-05c: avvio e idempotenza reali
+non sono validati. Il motore F1-05b e il guscio F1-02 non sono modificati.
+Bug registrati LOCAL nel Diario: `5bb5d5b5` (dipendenze CI), `c0649383`
+(suite Postgres), `10f93315` (baseline SQLite); il primo è risolto dopo i tre
+test OCR/PDF tornati verdi. Sync `not-linked`, nessuna
+issue manuale aperta. Nessun bug rimasto non registrato.
+PR presente nel board CounselorBot. Notifica di apertura inviata best-effort:
+`recipient_not_ready`, fase pending; canale mobile disattivato. Non ritentata
+con prompt al Timoniere in lavoro. Nessun agente o successore avviato.
+
 # Handoff 23 ottobre 2026: stato dopo il ciclo issue di ottobre e prossimi passi
 
 Data: 2026-10-23 | Base: `d83d088a` (main dopo PR #467) | Timoniere: `t-copilota-7t1n`
@@ -3487,3 +3517,31 @@ Validation and reproducible secret-free commands:
 `docs/operations/class-forum-validation.md`. Draft PR and task closure follow
 successful tests and dev verification. Future slices must retain the import,
 export and PDF privacy gates: no forum data reaches any local or external LLM.
+
+# Handoff: guscio desktop docente F1-02 — s26-f102-sol (2026-10-24)
+
+Branch `feature/f1-02-tauri-shell`, PR DRAFT #523, milestone Desktop apps,
+Part of #499. Preservati i commit S22 fino a `56ad1def`; integrata `main`
+con F1-19 (#521), conservando firma dell'origine e blocco `/api/internal/*`.
+Contratti, build, comandi di prova e limiti:
+`docs/operations/desktop-teacher-shell.md`.
+
+Test locali: sidecar Python 11, wrapper Node 4, backend health/interno/origine
+29, helper frontend 9; tutti passati. Passati anche `cargo check --locked -j 1`,
+rustfmt, controlli sintattici, guidance refresh/check e gate contro origin/main.
+Il cargo test locale completo è stato interrotto per limitare il carico sul Mac
+da 8 GB; Rust e lifecycle dei pacchetti sono verificati dalla matrice CI
+macOS arm64/x64, Windows x64 e Ubuntu 22.04. Per gli esiti riferiti all'ultimo
+SHA consultare i controlli di PR #523 (non riusare esiti di revisioni precedenti).
+
+Difetti registrati nel Diario: `9f705b41` (snapshot PID dello smoke),
+`3c4f9dd8` (tunnel su mismatch/origine pubblica, local-only), `fa010972`
+(rewrite frontend fissato in build, residuo F1-03). Nessuna issue manuale.
+Registrati anche `1a977fa7` (stato smoke/origine reso atomico) e `296a9474`
+(CI Windows: percorso risorse verbatim incompatibile con l'entrypoint Node,
+normalizzato con `dunce`; regressione Windows con spazi e caratteri Unicode).
+Backend minimal senza lifespan e quick tunnel sono solo prove. F1-03,
+F1-06, F1-08, F1-09/F1-10 e F1-05* restano necessari prima dell'uso reale.
+Nessun merge, deploy, sudo, rebuild Docker o processo dev persistente.
+Revisione del Timoniere richiesta prima di qualsiasi merge; PR da mantenere
+in bozza fino al gate applicabile. Non sono stati avviati altri agenti.

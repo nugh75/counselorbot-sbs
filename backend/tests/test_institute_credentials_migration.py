@@ -12,7 +12,6 @@ from sqlalchemy import create_engine, event, text
 
 from backend import models
 
-DB_URL = 'postgresql://c4_test@127.0.0.1:18649/counselorbot_test'
 migration = import_module('backend.migrations.20261009_institute_credentials')
 tf1 = import_module('backend.migrations.20261009_teacher_institutes')
 NEW_PLAN_COLUMNS = ('institution_id', 'revision', 'institution_link_state', 'reconciliation_reason')
@@ -21,7 +20,7 @@ NEW_PLAN_COLUMNS = ('institution_id', 'revision', 'institution_link_state', 'rec
 @pytest.fixture
 def legacy():
     url = os.environ['DATABASE_URL']
-    assert url == DB_URL
+    assert url.rsplit('/', 1)[-1] == 'counselorbot_test'
     schema = 'tf2m_' + uuid.uuid4().hex
     engine = create_engine(url)
 
