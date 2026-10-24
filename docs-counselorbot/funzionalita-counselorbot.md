@@ -98,6 +98,19 @@ Piper locale quando disponibile, altrimenti Edge filtrato; il menu mantiene
 la scelta esplicita Edge/Piper salvata nel browser. Il profilo desktop docente
 mantiene per ora Edge filtrato, perché Piper è ancora escluso da F1-07.
 
+Con il blocco P6 tutto ciò che il backend invia a modelli e servizi esterni
+(chat, riassunti, visione, OCR, ricerca nei documenti, lettura vocale, Telegram)
+passa da un unico gateway: un servizio è considerato locale solo se l'host è
+fidato, testi, istruzioni, cronologia e documenti verso l'esterno vengono
+filtrati insieme e ricontrollati prima dell'invio, immagini e audio non escono
+e la risposta torna in chiaro solo a chi può vederla. Il filtro esterno non si
+può più disattivare dalla configurazione; anche la vecchia lettura vocale della
+chat ora è filtrata. Un Ollama su un host non dichiarato fidato non riceve più
+testi privati per la ricerca nei documenti. Finché finalità, consensi e
+autorizzazioni (blocchi P7-P9) non esistono, il gateway li verifica senza
+bloccare e usa il filtro attuale (regole e modello NER locale); non cambiano
+schermate né percorsi. Nessuna garanzia di anonimizzazione o conformità GDPR.
+
 ## Lettura dei questionari e approfondimento
 
 Nelle chat guidate di QSA, QSAr, ZTPI, QPCS, QPCC e QAP, la descrizione dei

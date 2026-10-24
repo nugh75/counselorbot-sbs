@@ -1,3 +1,23 @@
+# Handoff 24 ottobre 2026: Privacy Layer P6 — gateway AI unico
+
+Agente `s63` (Claude Opus 5.5), branch `feature/privacy-p6-ai-gateway`.
+
+- **Obiettivo**: un solo punto di uscita fail-closed verso modelli e servizi esterni (02 §6).
+- **Modifiche**: `backend/privacy/gateway.py` (`AIGateway` a 7 passi, `prepare`/`send`, `context_for`, `is_local`,
+  `shadow_report`); migrati `ai_service` (`_anonymize_external`), `vision_service`, `qsa_extractor`, `pqbl_generator`,
+  `embedding_service` (Ollama non fidato = remoto), `routes/voice_reader` e `/chat/tts` (ora filtrato), `telegram_bot`;
+  `external_pii_redact=false` ignorato; `PrivacyEvent.target`/`categories_count`. Doc `docs/privacy/p6-gateway.md`.
+- **Decisione utente**: modalità `transitional` di default (passi 1, 2, 7 contati, non bloccanti; filtro `pii_ner`
+  senza motore P4); `strict` via `PRIVACY_GATEWAY_MODE` quando esistono P7, eventi P8, P9 e modello P4.
+- **Test eseguiti**: `TEST_DB=sqlite` Python 3.11.9 `test_privacy_p6_gateway.py` + `test_ai_egress_guard.py` 100 pass;
+  98 file di test su AI/privacy: nessuna nuova regressione (restano 2 Piper P6a-c già rotti su `main`,
+  `practice_notebooks` rotto su `main`, graphviz assente in locale, ratchet SQLite noto). Postgres e Docker non eseguiti.
+- **Limiti**: `notify` consegna a Telegram (D2/D9); contesto unico `guided_chat`/`system`; un primo giro dell'E2E,
+  prima della correzione per `httpx2`, ha raggiunto l'API OpenAI reale con testo sintetico e chiave finta (401).
+  Nessun deploy, sudo o processo dev attivo.
+
+---
+
 # Handoff 24 ottobre 2026: F1-08 — portachiavi di sistema e chiavi API
 
 Agente `s53-f108-codex`, task `6688d4db-e02e-4674-8bb0-8e50f700a436`, branch `feature/f1-08-keychain-api-keys`.
