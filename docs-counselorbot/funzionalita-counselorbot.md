@@ -108,8 +108,9 @@ può più disattivare dalla configurazione; anche la vecchia lettura vocale dell
 chat ora è filtrata. Un Ollama su un host non dichiarato fidato non riceve più
 testi privati per la ricerca nei documenti. Finché finalità, consensi e
 autorizzazioni (blocchi P7-P9) non esistono, il gateway li verifica senza
-bloccare e usa il filtro attuale (regole e modello NER locale); non cambiano
-schermate né percorsi. Nessuna garanzia di anonimizzazione o conformità GDPR.
+bloccare e usa il filtro attuale (regole e modello NER locale); l'operatore
+potrà attivare il controllo completo con `PRIVACY_GATEWAY_MODE=strict` quando
+quei blocchi saranno pronti. Non cambiano schermate né percorsi. Nessuna garanzia di anonimizzazione o conformità GDPR.
 
 ## Lettura dei questionari e approfondimento
 
