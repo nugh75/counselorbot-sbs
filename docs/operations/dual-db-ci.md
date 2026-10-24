@@ -19,8 +19,33 @@ non soltanto lo stesso numero di fallimenti.
 | [40066013563](https://github.com/nugh75/counselorbot-sbs/actions/runs/40066013563), 1 | push `5feafc41` | 5018 pass, 48 fail, 10 skip | 4015 pass, 344 fail, 237 error, 10 skip |
 | [40066026591](https://github.com/nugh75/counselorbot-sbs/actions/runs/40066026591), 1 | merge PR `982abb0`, base `b315fa7f` | 5033 pass, 48 fail, 10 skip | 4030 pass, 344 fail, 237 error, 10 skip |
 
-Entrambe riportano anche 23 subtest passati. Dei 237 errori SQLite,
-24 sono moduli non importabili: i test contenuti **non sono eseguiti**.
+La replica del vecchio head (`40066026591`, tentativo 2) è stata cancellata
+dalla normale concorrenza della PR dopo il push del nuovo codice; non entra
+nelle misure. La run `40065921563` non contiene artifact di fallimenti.
+
+Conferma su `ddbdb18c`, con dipendenze corrette e ratchet rigoroso:
+
+| Run | Postgres | SQLite |
+|---|---|---|
+| [40071395812](https://github.com/nugh75/counselorbot-sbs/actions/runs/40071395812), dispatch del branch | 5031 pass, 45 fail, 10 skip | 4028 pass, 341 fail, 237 error, 10 skip |
+| [40071399643](https://github.com/nugh75/counselorbot-sbs/actions/runs/40071399643), merge PR | 5046 pass, 45 fail, 10 skip | 4043 pass, 341 fail, 237 error, 10 skip |
+| `tests (postgres baseline)`, nello stesso dispatch, codice `e3863061` | 5016 pass, gli stessi 45 fail, 10 skip | — |
+
+Tutte le suite riportano anche 23 subtest passati e zero voci nuove/non più
+fallenti. I 45 node ID Postgres coincidono fra branch, merge PR e controllo
+sulla base; i 578 SQLite coincidono fra branch e merge PR. Non sono emerse
+differenze da flake nei node ID delle repliche confrontate. Entrambe le run
+sono concluse con successo (cinque job nel dispatch, quattro nella PR).
+I tre test OCR/PDF esclusi dalla baseline passano nel JUnit del dispatch.
+La differenza di 15 pass tra branch e merge PR resta quella della base.
+Ambiente registrato nei log: immagine `ubuntu-24.04` `20261012.334.1`,
+Python 3.12, SQLite 3.45.1, SQLAlchemy 2.0.55, pytest 9.1.1,
+psycopg2-binary 2.9.13, PyMuPDF/PyMuPDF4LLM 1.28.2. I requisiti restano quelli
+del repository: prima di attribuire differenze al codice, confrontare anche
+le versioni risolte e l'immagine runner delle run confrontate.
+
+Dei 237 errori SQLite, 24 sono moduli non importabili: i test contenuti
+**non sono eseguiti**.
 La differenza di 15 pass tra push e PR deriva dai test di firma origine
 aggiunti dalla base della PR; non è un miglioramento della compatibilità.
 La run cancellata non è usata per popolare le liste. I numeri della prima
@@ -31,8 +56,8 @@ Tre fallimenti degli artifact sono esclusi dalle liste: i due test OCR in
 `test_rag_pdf_upload.py` e il PDF con font Inter in `test_pdf_diagrams.py`.
 Il runner installa ora Graphviz, Inter e i dati Tesseract italiano/inglese,
 come l'immagine backend. Le liste iniziali contengono quindi **45 node ID
-Postgres e 578 SQLite**; questi numeri devono essere confermati dalle run
-con le dipendenze corrette. Nessun nuovo errore va inserito per rendere verde CI.
+Postgres e 578 SQLite**, confermati dalle run con le dipendenze corrette.
+Nessun nuovo errore va inserito per rendere verde CI.
 
 ## Estensione esplicita del contratto Postgres
 
@@ -46,6 +71,10 @@ I fallimenti riguardano soprattutto aspettative dei prompt cambiate, mock
 obsoleti, dipendenze dall'ordine dei test, concorrenza forum e riferimenti RAG
 rimossi. Non sono tutti automaticamente errori dei test: finché non analizzati,
 restano problemi osservati da diagnosticare. Non si cambia il prodotto in F1-05a.
+I 15 file che contengono i 45 node ID Postgres sono identici byte per byte
+alla base `e3863061`; anche il corpo della fixture Postgres ha lo stesso AST
+(l'import di psycopg2 è soltanto spostato dentro la funzione). Nessun file
+applicativo del backend è cambiato nel branch F1-05a.
 Diversi hanno già bug nel Diario (fra gli altri forum privacy, QPCC brief,
 parità prompt, component flags e smoke RAG); i restanti sono segnalati come gruppo.
 
