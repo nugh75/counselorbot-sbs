@@ -34,6 +34,12 @@ il nucleo non è collegato alle chat esistenti. Il filtro PII completo, la
 cifratura e il gateway AI operativo richiedono i blocchi successivi. Non sono
 introdotte nuove schermate o garanzie di anonimizzazione o conformità GDPR.
 
+Per misurare i futuri rilevatori di dati personali è disponibile un corpus
+sintetico italiano di contesto scolastico (blocco P2), con nomi, codici fiscali,
+contatti e riferimenti a certificazioni del tutto inventati, e uno strumento di
+misura per sviluppatori. Non cambia il comportamento della piattaforma né il
+filtro attuale, che resta limitato e non riconosce nomi, scuole o luoghi.
+
 ## Lettura dei questionari e approfondimento
 
 Nelle chat guidate di QSA, QSAr, ZTPI, QPCS, QPCC e QAP, la descrizione dei
