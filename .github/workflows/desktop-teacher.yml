@@ -29,12 +29,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # app,dmg: with dmg alone Tauri deletes bundle/macos/*.app, which the
+          # lifecycle test runs.
           - runner: macos-14
             platform: macos-arm64
-            bundles: dmg
+            bundles: app,dmg
           - runner: macos-15-intel
             platform: macos-x64
-            bundles: dmg
+            bundles: app,dmg
           - runner: windows-latest
             platform: windows-x64
             bundles: nsis
