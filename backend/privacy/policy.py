@@ -2,6 +2,8 @@
 
 P1 does not register these stubs with existing routes. P4/P5/P6/P7/P8/P9
 will supply detection, crypto, gateway, grants, audit and consent storage.
+Detection and pseudonymization delegate to the engine installed with
+``configure_engine`` (P4); without one they stay unavailable.
 """
 from __future__ import annotations
 
@@ -83,17 +85,32 @@ def egress_requirements(request: AIRequest, ctx: PrivacyContext,
     return EgressRequirements(external, pseudonymize, pseudonymize)
 
 
+_ENGINE = None
+
+
+def configure_engine(engine) -> None:
+    """Install a ``pseudonymization.PseudonymizationEngine`` (``None`` removes it)."""
+    global _ENGINE
+    _ENGINE = engine
+
+
 def detect_pii(text: str, ctx: PrivacyContext) -> list[PIISpan]:
-    raise PIIDetectorUnavailable() from None
+    if _ENGINE is None:
+        raise PIIDetectorUnavailable() from None
+    return _ENGINE.detect_pii(text, ctx)
 
 
 def pseudonymize(texts: Sequence[str], ctx: PrivacyContext,
                  policy: CategoryPolicy) -> PseudonymizedBatch:
-    raise PIIDetectorUnavailable() from None
+    if _ENGINE is None:
+        raise PIIDetectorUnavailable() from None
+    return _ENGINE.pseudonymize(texts, ctx, policy)
 
 
 def depseudonymize(text: str, ctx: PrivacyContext) -> str:
-    raise AccessDenied() from None
+    if _ENGINE is None:
+        raise AccessDenied() from None
+    return _ENGINE.restore_authorized(text, ctx)
 
 
 restore_authorized = depseudonymize

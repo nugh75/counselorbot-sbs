@@ -1,3 +1,31 @@
+# Handoff 24 ottobre 2026: Privacy Layer P4 — pseudonimizzazione locale
+
+Agente `s47-p4-opus` (Claude Opus 5.5), task Diario
+`d79ba1e3-7769-4348-a60c-227e0e6b1c1f`, branch `feature/privacy-p4-local-pseudonymization`, issue #553.
+
+- **Obiettivo**: motore di produzione del Privacy Layer scelto in P3: rilevamento a tre strati e pseudonimizzazione
+  per conversazione con mappa bidirezionale e ripristino autorizzato.
+- **Modifiche**: `backend/privacy/detect.py` (regole autoritative con telefono/CF/email estesi, gazetteer di contesto
+  `SchoolContext` + valori già visti, `GlinerLayer` con SHA-256 fissato, `fuse` che non lascia scoperte parti di span),
+  `gliner_onnx.py` (porta di produzione, finestre sovrapposte), `pseudonymization.py` (`ScopeMap`, `InMemoryMapStore`,
+  `PseudonymizationEngine`: segnaposto `[PERSONA_1]` coerenti e non collegabili, neutralizzazione, verifica residui,
+  ripristino solo con `Decision` positiva), `policy.configure_engine`, `backend/requirements-pii.txt` (opzionale).
+  Doc `docs/privacy/p4-pseudonimizzazione.md`, regola di unione precisata in 02 §3.2. Il modulo
+  `pseudonymize.py` del piano si chiama `pseudonymization.py`: col nome del piano oscurava la funzione pubblica
+  `backend.privacy.pseudonymize`.
+- **Esito misure** (mascherati, senza nomi noti): corpus persone 0,97, scuole 0,97, telefono/CF/email 1,00; holdout
+  1,00. ~0,8–1 s a rilevamento con macchina carica (load ~16).
+- **Da fare**: mappa cifrata `privacy_pseudonym_maps` (P5), autorizzazione reale (P7), collegamento al gateway e
+  `SchoolContext` dal DB (P6), export fp16 proprio + download con hash, dipendenze ML nella build desktop, togliere
+  `macos-15-intel`, generalizzazioni fini (età, tipo di scuola).
+- **Test eseguiti**: `TEST_DB=sqlite` Python 3.11.9: `test_privacy_p4_pseudonymization.py` + `test_privacy_core.py`
+  + `test_privacy_p3_engine_spike.py` + `test_privacy_corpus_benchmark.py` 232 pass, 5 skip (pesi reali); con
+  `PRIVACY_PII_MODEL_DIR` (venv con tokenizers) i 2 test sul modello vero passano (4 min 24 s). `ruff` F/E9 pulito,
+  `make guidance-check` verde. Postgres non eseguito (nessun DB coinvolto). Nessun deploy, sudo, rebuild Docker o
+  processo dev attivo.
+
+---
+
 # Handoff 24 ottobre 2026: F1-11 — heartbeat SSE
 
 Agente `s48-f111-codex`, task `293dc817-4b51-48ef-be46-425bb11c426e`,

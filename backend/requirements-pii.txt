@@ -1,0 +1,5 @@
+# Optional ML layer of the local PII detector (Privacy Layer P4, GLiNER ONNX).
+# Not in requirements.txt: without it detection is unavailable (fail-closed).
+# macOS: Apple Silicon only (no onnxruntime x86_64 wheels after 1.23.2).
+onnxruntime==1.31.0
+tokenizers==0.23.3
