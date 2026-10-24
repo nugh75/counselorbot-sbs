@@ -272,6 +272,9 @@ shown. The Guide remains available independently of these class toggles.
   già indicizzati; il nuovo indice entra in servizio solo quando è completo. Un
   errore mantiene disponibile il precedente. I file degli indici già presenti
   sono riconosciuti; le generazioni non più usate vengono pulite dopo almeno 24 ore.
+  Un solo lavoro di indicizzazione alla volta anche con più processi del backend:
+  il blocco su file è portabile (Linux, macOS e Windows, per le future app desktop)
+  e non cambia il comportamento dell'installazione attuale.
   La ricerca verifica la dimensione dei vettori e usa le parole chiave in caso
   di incompatibilità. Il backend calcola una stima di token e costo prima del
   build, visibile nella sezione «Recupero documenti». Le collezioni vuote non richiedono embedding;

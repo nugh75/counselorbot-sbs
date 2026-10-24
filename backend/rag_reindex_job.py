@@ -1,7 +1,7 @@
 """«Reindicizza tutto»: one sequential job over every collection, with progress.
 
 The state is a small JSON file next to the indexes, so every worker and a page
-reload see the same progress. An exclusive flock held for the whole job makes
+reload see the same progress. An exclusive file lock held for the whole job makes
 the start idempotent across workers. A state still marked "running" without a
 lock holder means the worker stopped mid-job: it is reported as interrupted.
 Errors are classified codes only (never provider messages, texts or keys).
@@ -9,7 +9,6 @@ Errors are classified codes only (never provider messages, texts or keys).
 from __future__ import annotations
 
 import copy
-import fcntl
 import json
 import logging
 import os
@@ -19,7 +18,7 @@ import time
 
 from sqlalchemy.orm import Session
 
-from . import rag_index
+from . import file_lock, rag_index
 
 logger = logging.getLogger(__name__)
 _start_lock = threading.Lock()
@@ -35,9 +34,7 @@ def _paths() -> tuple[str, str]:
 def _lock_held(lock_path: str) -> bool:
     try:
         with open(lock_path, "a") as lockf:
-            try:
-                fcntl.flock(lockf, fcntl.LOCK_SH | fcntl.LOCK_NB)
-            except BlockingIOError:
+            if file_lock.is_locked(lockf):
                 return True
     except OSError:
         pass
@@ -82,9 +79,7 @@ def start(ai_service, collections: list[dict]) -> tuple[bool, dict, str | None]:
     os.makedirs(os.path.dirname(state_path), exist_ok=True)
     with _start_lock:
         lockf = open(lock_path, "a")
-        try:
-            fcntl.flock(lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
+        if not file_lock.lock(lockf, blocking=False):
             lockf.close()
             return False, read_state(), "reindex_running"
         if not rag_index._build_reservation.acquire():

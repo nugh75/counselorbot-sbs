@@ -491,6 +491,7 @@ sicurezza o multipiattaforma (modello più capace + revisione). Stime in giorni 
 | F1-15 | CI release desktop | Workflow matrice, asset nella Release, `latest.json`, smoke test; firma condizionale ai segreti | 4 | F1-01, F1-02 | T3 |
 | F1-16 | Updater e backup pre-aggiornamento | Canali stabile/beta, backup automatico, rollback documentato | 2 | F1-15, F1-05 | T2 |
 | F1-17 | Documentazione e test (#213) | Guida docente in `docs/operations/`, `funzionalita-counselorbot.md`, privacy/DPIA modello, smoke test | 3 | tutti | T2 |
+| F1-18 | Lock di file portabile nel backend | `fcntl` sostituito da un lock comune (`flock` su POSIX, `msvcrt` su Windows) in `rag_index.py` e `rag_reindex_job.py`; test di esclusione e concorrenza; job CI `windows-latest` che importa il backend | 1 | F0-01 | T2 |
 
 Parallelismo: dopo F0-04, **F1-03, F1-04, F1-08, F1-12** possono procedere insieme; F1-06 e F1-13 sono sul percorso
 critico della sicurezza e vanno in sequenza. F1-12 è indipendente e utile anche all'installazione attuale.
