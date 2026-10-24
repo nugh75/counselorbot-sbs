@@ -39,6 +39,22 @@ fn open_in_browser(app: AppHandle, shell: State<'_, Shell>) -> Result<(), String
 }
 
 #[tauri::command]
+fn open_tunnel_in_browser(app: AppHandle, shell: State<'_, Shell>) -> Result<(), String> {
+    let url = shell.supervisor.snapshot().tunnel_url.ok_or("Quick tunnel non attivo")?;
+    app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn start_quick_tunnel(shell: State<'_, Shell>) -> Result<(), String> {
+    shell.supervisor.start_quick_tunnel()
+}
+
+#[tauri::command]
+fn stop_quick_tunnel(shell: State<'_, Shell>) -> Result<(), String> {
+    shell.supervisor.stop_quick_tunnel()
+}
+
+#[tauri::command]
 fn export_diagnostics(app: AppHandle, shell: State<'_, Shell>) -> Result<String, String> {
     let target = app.path().download_dir().unwrap_or_else(|_| shell.data_root.clone());
     diagnostics::export(&shell.data_root, &shell.version, &target).map(|p| p.display().to_string())
@@ -84,7 +100,7 @@ fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> 
         Mode::Window => {
             WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
                 .title("CounselorBot Docente")
-                .inner_size(560.0, 520.0)
+                .inner_size(580.0, 680.0)
                 .build()?;
         }
         Mode::Headless => {}
@@ -128,7 +144,15 @@ pub fn run(mode: Mode) {
         }));
     }
     let app = builder
-        .invoke_handler(tauri::generate_handler![shell_status, open_in_browser, export_diagnostics, quit])
+        .invoke_handler(tauri::generate_handler![
+            shell_status,
+            open_in_browser,
+            export_diagnostics,
+            quit,
+            start_quick_tunnel,
+            stop_quick_tunnel,
+            open_tunnel_in_browser,
+        ])
         .setup(move |app| {
             setup(app.handle(), mode).map_err(|error| {
                 logs::log(format!("avvio non riuscito: {error}"));
