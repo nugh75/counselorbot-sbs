@@ -1,3 +1,32 @@
+# Handoff 24 ottobre 2026: Privacy Layer P2 — corpus sintetico italiano e benchmark PII
+
+Agente `s43-p2-opus` (Claude Opus 5.5), task Diario
+`e7888984-0a59-4804-a2b9-f329060eff7e`, branch `feature/privacy-p2-italian-corpus`, issue #544.
+
+- `backend/privacy/corpus/generator.py`: generatore deterministico (seme fisso)
+  di `it_school_v1.jsonl`, 613 frasi annotate (offset, `PIICategory`,
+  segnaposto atteso `[PERSONA_1]`, testo pseudonimizzato atteso, tag). Nomi
+  inventati per combinazione casuale, CF con check char corretto, IBAN mod-97,
+  domini `example`, IP TEST-NET. Copre registro, note disciplinari, relazioni,
+  DSA/BES/Legge 104, art. 9, contatti, anagrafica, scuole, social; casi
+  ambigui («Rosa», «Sole», «Volta»), negativi, indiretti, typo, gergo.
+- `backend/privacy/corpus/benchmark.py`: `evaluate(detector, records)` per
+  qualunque `PIIDetector` — P/R/F1 per categoria (esatta e per sovrapposizione),
+  copertura indipendente dalla categoria, recall per tag, falsi negativi per id,
+  latenza; report senza testo del corpus. `RulesBaselineDetector` adatta
+  `backend/pii.py` (che non espone offset) come riferimento P3.
+- `scripts/privacy_eval.py`: CLI con report JSON e `--summary`.
+- Baseline regole: email 0,98, IBAN/IP/URL/social 1,00, CF 0,73, telefono 0,63,
+  salute 0,55, persone/scuole/luoghi/indirizzi 0; copertura 0,22; ≈ 0,06 ms/frase.
+  Fissate come soglie di non regressione in `backend/tests/test_privacy_corpus_benchmark.py`.
+- Scostamento dal piano: corpus in `backend/privacy/corpus/` (come da task) invece
+  di `backend/tests/privacy_corpus/`; il piano è aggiornato. Entra nell'immagine
+  Docker tramite il COPY esistente (~270 KB, nessun effetto a runtime).
+- Verifiche: nuova suite 12 pass con `TEST_DB=sqlite` e `TEST_DB=postgres`
+  (Python 3.11.9), `test_privacy_core.py` 170 pass, SQL portability, guidance
+  refresh/check, diff-check. Nessun rebuild Docker, deploy, sudo o processo dev.
+- Da fare: revisione umana campionaria delle etichette prima di P3.
+
 # Handoff 24 ottobre 2026: F1-05f compatibilità SQLite — SQL a runtime
 
 Agenti `s39-f105f-sol` (implementazione) e `s42-f105f-opus` (finalizzazione), task Diario

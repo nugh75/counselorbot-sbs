@@ -81,3 +81,46 @@ La suite è senza database e provider in entrambi i profili: verifica contratti,
 diagnostica, policy e assenza di I/O all'import. Non prova persistenza, motore
 PII o trasporto AI, che non esistono ancora nel nucleo. `backend/Dockerfile`
 include il pacchetto tramite `COPY backend/privacy/ backend/privacy/`.
+
+## Corpus sintetico e benchmark P2
+
+`backend/privacy/corpus/` contiene il corpus sintetico italiano
+`it_school_v1.jsonl` (613 frasi scuola/università) e il suo generatore
+deterministico `generator.py` (seme fisso; il test fallisce se il file
+committato diverge: rigenerare con `python3 -m backend.privacy.corpus.generator`).
+Nessun dato reale: nomi e cognomi comuni combinati a caso (composti, accenti,
+apostrofi, nomi di famiglie di origine straniera), codici fiscali calcolati con
+carattere di controllo corretto (codici catastali reali solo per il calcolo),
+IBAN con mod-97 valido, email su domini `example`, IP `192.0.2.0/24`.
+
+Ogni riga JSONL: `id`, `text`, `tags`, `quasi_identifiers`, `entities`
+(`start`/`end` in caratteri, `category` = valore di `PIICategory`, `text`,
+`placeholder` atteso come `[PERSONA_1]`, stesso valore ⇒ stesso segnaposto nella
+frase) ed `expected_pseudonymized`. Tag: registro, disciplina, relazioni, salute
+(DSA/BES/Legge 104, diagnosi), art9, contatti, anagrafica, scuola, social,
+pagamenti, combinazione (≥ 3 quasi-identificatori), ambiguo («Rosa», «Sole»,
+«Volta»), negativo (nessuna entità), indiretto, typo, punteggiatura, gergo.
+Limiti: voti e note disciplinari non sono categorie del contratto P1 e restano
+contesto (sono annotate le persone); le date di eventi non sono annotate, solo
+le date di nascita; la coreferenza («Marco» dopo «Marco Rossi») ha segnaposto
+distinti. Le etichette sono generate dai template e verificate dai test di
+integrità; una revisione umana campionaria resta consigliata prima di P3.
+
+`backend/privacy/corpus/benchmark.py` esegue qualunque `PIIDetector` e produce
+un report JSON senza testo del corpus: precision/recall/F1 per categoria con
+corrispondenza esatta e per sovrapposizione, punteggio indipendente dalla
+categoria (il testo è comunque coperto?), recall per tag, falsi negativi per id
+e latenza per frase (migliore di N ripetizioni, p50/p95, µs per carattere).
+`RulesBaselineDetector` adatta il motore a regole attuale (`backend/pii.py`) come
+riferimento per P3:
+
+```sh
+python3 scripts/privacy_eval.py --summary --out /tmp/privacy-report.json
+TEST_DB=sqlite python -m pytest backend/tests/test_privacy_corpus_benchmark.py
+```
+
+Misura di riferimento (24/10/2026, regole, sovrapposizione): email R 0,98,
+IBAN/IP/URL/social 1,00, codice fiscale R 0,73 (manca il minuscolo/spaziato),
+telefono R 0,63, salute R 0,55; persona, scuola, città, indirizzo, data di
+nascita, art. 9 R 0; copertura complessiva 0,22; latenza media ≈ 0,06 ms/frase.
+I test fissano questi valori come soglie minime di non regressione.
