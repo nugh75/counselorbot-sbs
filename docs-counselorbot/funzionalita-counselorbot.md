@@ -12,7 +12,8 @@ minimal e il quick tunnel servono soltanto alle prove tecniche. Il backend
 prevede già un accesso locale del docente (link monouso aperto dal guscio,
 sessione valida 30 giorni solo dal PC, mai dal tunnel), ma la pagina di accesso
 non è ancora collegata. Sul PC il docente è amministratore; l'amministrazione
-risponde solo dal PC, mai dal tunnel. Prompt Lab, Telegram, OpenCode, l'assistente
+risponde solo dal PC, mai dal tunnel (i controlli del profilo docente sono
+caricati solo quando servono, così il forum resta isolato). Prompt Lab, Telegram, OpenCode, l'assistente
 ChatGPT, le voci Piper e la sincronizzazione con Console non sono disponibili
 nell'app; integrazione completa SQLite e configurazione operativa
 restano da completare.
