@@ -1,0 +1,153 @@
+name: desktop-teacher
+
+# F1-02 (#499): build of the teacher app and lifecycle test of its shell on the
+# four target runners. Heavy (PyInstaller + next build + tauri build per OS):
+# only on pull requests that touch desktop/, or by hand.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - desktop/**
+      - .github/workflows/desktop-teacher.yml
+      - backend/shell_internal.py
+      - backend/tests/test_shell_contract.py
+      - frontend/src/proxy.ts
+      - frontend/src/lib/shell-internal*
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-teacher-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            platform: macos-arm64
+            bundles: app
+          - runner: macos-15-intel
+            platform: macos-x64
+            bundles: app
+          - runner: windows-latest
+            platform: windows-x64
+            bundles: nsis
+          - runner: ubuntu-22.04
+            platform: linux-x64
+            bundles: deb
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 75
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            desktop/teacher/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/teacher/src-tauri
+          cache-on-failure: true
+      - name: Linux system libraries for Tauri
+        if: startsWith(matrix.runner, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xvfb
+
+      - name: Sidecar wrapper tests (Node)
+        run: node --test desktop/teacher/sidecar/server-wrapper.test.js
+
+      - name: Package backend (PyInstaller onedir)
+        run: |
+          bash desktop/teacher/scripts/build-backend.sh > "$RUNNER_TEMP/backend.txt" 2>&1 || { tail -80 "$RUNNER_TEMP/backend.txt"; exit 1; }
+          grep -E "seconds|_mb" "$RUNNER_TEMP/backend.txt"
+
+      - name: Sidecar entrypoint tests (Python)
+        env:
+          PYTHON_DOTENV_DISABLED: "1"
+          DATABASE_URL: sqlite:///${{ runner.temp }}/shell-contract.sqlite3
+        run: python -m pytest -q desktop/teacher/sidecar/test_server.py backend/tests/test_shell_contract.py backend/tests/test_request_origin.py
+
+      - name: Build frontend (Next standalone) and stage node
+        run: |
+          bash desktop/teacher/scripts/build-frontend.sh > "$RUNNER_TEMP/frontend.txt" 2>&1 || { tail -80 "$RUNNER_TEMP/frontend.txt"; exit 1; }
+          grep -E "seconds|_mb" "$RUNNER_TEMP/frontend.txt"
+
+      - name: Fetch cloudflared
+        run: bash desktop/teacher/scripts/fetch-cloudflared.sh ${{ matrix.platform }} desktop/teacher/src-tauri/cloudflared
+
+      - name: Frontend boundary and origin tests
+        working-directory: frontend
+        run: |
+          node --test --experimental-strip-types src/lib/shell-internal.test.ts src/lib/request-origin.test.ts
+          npx eslint src/proxy.ts src/lib/shell-internal.ts src/lib/shell-internal.test.ts
+
+      - name: Shell unit tests (Rust)
+        working-directory: desktop/teacher/src-tauri
+        run: cargo test --locked --release
+
+      - name: Build Tauri app
+        working-directory: desktop/teacher
+        run: |
+          npm ci --no-audit --no-fund
+          npx tauri build --bundles ${{ matrix.bundles }}
+
+      - name: Sizes
+        run: |
+          cd desktop/teacher/src-tauri
+          {
+            echo "### ${{ matrix.runner }}"
+            echo '```'
+            du -sh backend frontend node cloudflared
+            find target/release/bundle -maxdepth 2 \( -name '*.app' -o -name '*.exe' -o -name '*.deb' \) -exec du -sh {} \;
+            cat "$RUNNER_TEMP/backend.txt" "$RUNNER_TEMP/frontend.txt" | grep -E "seconds|_mb"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Lifecycle test (macOS)
+        if: startsWith(matrix.runner, 'macos')
+        run: |
+          app=$(find desktop/teacher/src-tauri/target/release/bundle/macos -maxdepth 1 -name '*.app' | head -1)
+          cp -R "$app" "$RUNNER_TEMP/"
+          bash desktop/teacher/scripts/check-lifecycle.sh "$RUNNER_TEMP/$(basename "$app")/Contents/MacOS/counselorbot-teacher"
+
+      - name: Lifecycle test (Windows, NSIS per-user install)
+        if: startsWith(matrix.runner, 'windows')
+        run: |
+          installer=$(find desktop/teacher/src-tauri/target/release/bundle/nsis -name '*.exe' | head -1)
+          "$installer" //S
+          exe="$LOCALAPPDATA/CounselorBot Docente/counselorbot-teacher.exe"
+          ls -la "$(dirname "$exe")"
+          bash desktop/teacher/scripts/check-lifecycle.sh "$exe"
+
+      - name: Lifecycle test (Linux, .deb)
+        if: startsWith(matrix.runner, 'ubuntu')
+        run: |
+          sudo apt-get install -y ./desktop/teacher/src-tauri/target/release/bundle/deb/*.deb
+          bash desktop/teacher/scripts/check-lifecycle.sh /usr/bin/counselorbot-teacher xvfb-run -a
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: teacher-${{ matrix.platform }}
+          path: |
+            desktop/teacher/src-tauri/target/release/bundle/nsis/*.exe
+            desktop/teacher/src-tauri/target/release/bundle/deb/*.deb
+            ${{ runner.temp }}/cb-lifecycle.*/teacher-*.json
+          retention-days: 3
+          if-no-files-found: ignore

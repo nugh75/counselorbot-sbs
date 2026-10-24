@@ -1,0 +1,9 @@
+/.build/
+/node_modules/
+/src-tauri/target/
+/src-tauri/gen/schemas
+# Sidecars staged by scripts/ (built per platform, never committed)
+/src-tauri/backend/
+/src-tauri/frontend/
+/src-tauri/node/
+/src-tauri/cloudflared/

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { isShellInternalPath } from './lib/shell-internal';
 
 import { applyRequestOrigin } from '@/lib/request-origin';
 
@@ -10,6 +11,9 @@ import { applyRequestOrigin } from '@/lib/request-origin';
 //   così lo sviluppatore entra senza passare da ai4auth (il suo cookie è sul
 //   dominio .ai4educ.org e localhost non può mai presentarlo).
 export default function proxy(request: NextRequest) {
+    // Le rotte /internal/* del backend servono solo al guscio desktop: il
+    // rewrite /api/:path* non deve mai inoltrarle (ADR-0002 §2.6).
+    if (isShellInternalPath(request.nextUrl.pathname)) return new NextResponse(null, { status: 404 });
     if (!request.nextUrl.pathname.startsWith('/api/')) return NextResponse.next();
 
     const headers = new Headers(request.headers);
