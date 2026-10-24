@@ -1,0 +1,13 @@
+:root { color-scheme: light dark; --ok: #1a7f37; --err: #c62828; --muted: #6b7280; }
+body { font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; padding: 24px; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+#phase { font-weight: 600; margin: 16px 0 4px; }
+#phase.ready { color: var(--ok); }
+#phase.error { color: var(--err); }
+#message { margin: 0 0 12px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+td { padding: 4px 8px 4px 0; border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
+.muted { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+button { font: inherit; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--muted); background: transparent; color: inherit; cursor: pointer; }
+button:disabled { opacity: .5; cursor: default; }
