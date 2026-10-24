@@ -4,10 +4,10 @@ The institute display copy uses the same Fernet store as personal API
 credentials. Tests must never create a key file in the checkout, so they run
 with an ephemeral installation key for the whole session.
 
-With TEST_DB=sqlite (ADR-0003 §5.1) the suite runs on SQLite files: tests
-marked postgres_only are skipped, and the ratchet compares the failures with
-sqlite_known_failures.txt. A failure not in the list fails the run, and so does
-a listed test that passes (remove it: the list can only get shorter).
+TEST_DB=postgres|sqlite (ADR-0003 §5.1) picks the database; with sqlite, tests
+marked postgres_only are skipped. The ratchet compares the failures with
+<TEST_DB>_known_failures.txt: a failure not in the list fails the run, and so
+does a listed test that passes (remove it: the list can only get shorter).
 """
 import os
 import tempfile
@@ -18,8 +18,9 @@ from cryptography.fernet import Fernet
 
 os.environ.setdefault("INSTITUTION_CREDENTIAL_KEY", Fernet.generate_key().decode())
 
-SQLITE = os.environ.get("TEST_DB", "postgres").strip().lower() == "sqlite"
-KNOWN_FAILURES_FILE = Path(__file__).with_name("sqlite_known_failures.txt")
+TEST_DB = os.environ.get("TEST_DB", "postgres").strip().lower()
+SQLITE = TEST_DB == "sqlite"
+KNOWN_FAILURES_FILE = Path(__file__).with_name(f"{TEST_DB}_known_failures.txt")
 
 if SQLITE and not os.environ.get("DATABASE_URL", "").startswith("sqlite"):
     # The module-level engine must never reach a Postgres server in a SQLite run.
@@ -34,16 +35,14 @@ def load_known_failures(path=KNOWN_FAILURES_FILE):
 
 
 def pytest_addoption(parser):
-    parser.addoption("--sqlite-failures-out", default=None,
-                     help="with TEST_DB=sqlite, write the sorted failing node ids to this file")
+    parser.addoption("--failures-out", default=None, help="write the sorted failing node ids to this file")
 
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "postgres_only: Postgres-only test (legacy migrations), skipped with TEST_DB=sqlite")
-    if SQLITE:
-        # Modules that cannot even be imported on SQLite are listed as known failures.
-        config.option.continue_on_collection_errors = True
-        config.pluginmanager.register(SqliteRatchet(config), "sqlite-ratchet")
+    # Modules that cannot even be imported (e.g. on SQLite) are listed as known failures.
+    config.option.continue_on_collection_errors = True
+    config.pluginmanager.register(KnownFailuresRatchet(config), "known-failures-ratchet")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -55,7 +54,7 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip)
 
 
-class SqliteRatchet:
+class KnownFailuresRatchet:
     def __init__(self, config):
         self.config = config
         self.known = load_known_failures()
@@ -87,7 +86,7 @@ class SqliteRatchet:
 
     @pytest.hookimpl(trylast=True)
     def pytest_sessionfinish(self, session, exitstatus):
-        out = self.config.getoption("--sqlite-failures-out")
+        out = self.config.getoption("--failures-out")
         if out:
             Path(out).write_text("".join(f"{nodeid}\n" for nodeid in sorted(self.failed)), encoding="utf-8")
         if exitstatus not in (pytest.ExitCode.OK, pytest.ExitCode.TESTS_FAILED):
@@ -99,7 +98,7 @@ class SqliteRatchet:
     def pytest_terminal_summary(self, terminalreporter):
         unexpected, now_passing = self._outcome()
         write = terminalreporter.write_line
-        terminalreporter.section("SQLite ratchet (backend/tests/sqlite_known_failures.txt)")
+        terminalreporter.section(f"Known failures ratchet (backend/tests/{KNOWN_FAILURES_FILE.name})")
         write(f"known failures still failing: {len(self.failed & self.known)}")
         write(f"unexpected failures: {len(unexpected)}")
         for nodeid in unexpected:
