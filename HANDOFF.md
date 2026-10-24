@@ -1,7 +1,7 @@
 # Handoff 24 ottobre 2026: Privacy Layer P2 — corpus sintetico italiano e benchmark PII
 
 Agente `s43-p2-opus` (Claude Opus 5.5), task Diario
-`e7888984-0a59-4804-a2b9-f329060eff7e`, branch `feature/privacy-p2-italian-corpus`, issue #544.
+`e7888984-0a59-4804-a2b9-f329060eff7e`, branch `feature/privacy-p2-italian-corpus`, issue #544, commit `694cdb36` (feat) e `adb241bf` (docs).
 
 - `backend/privacy/corpus/generator.py`: generatore deterministico (seme fisso)
   di `it_school_v1.jsonl`, 613 frasi annotate (offset, `PIICategory`,
