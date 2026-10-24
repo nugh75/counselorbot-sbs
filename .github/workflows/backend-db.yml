@@ -1,0 +1,134 @@
+name: backend-db
+
+# F1-05a (#499, ADR-0003 §5.2): the backend suite on Postgres and on SQLite.
+# Only on PRs touching the backend or these checks, or by hand; never on every push of main.
+on:
+  workflow_dispatch:
+  push:
+    branches: [chore/f1-05a-dual-db-ci]
+  pull_request:
+    paths:
+      - backend/**
+      - scripts/check-sql-portability.py
+      - scripts/sql-portability-exceptions.txt
+      - .github/workflows/backend-db.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-db-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONPATH: ${{ github.workspace }}
+  OLLAMA_PRELOAD: 'false'
+
+jobs:
+  tests-postgres:
+    name: tests (postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: c5_test
+          POSTGRES_DB: counselorbot_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['18650:5432']
+        options: >-
+          --health-cmd "pg_isready -U c5_test" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      # The URL several suites assert on (they refuse any other database).
+      DATABASE_URL: postgresql://c5_test@127.0.0.1:18650/counselorbot_test
+      TEST_DB: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt
+      - name: Backend suite on Postgres
+        run: |
+          export DATA_DIR="$RUNNER_TEMP/data" SESSION_MEMORY_DIR="$RUNNER_TEMP/memory"
+          python -m pytest backend/tests -q -p no:cacheprovider -W ignore::DeprecationWarning
+
+  tests-sqlite:
+    name: tests (sqlite)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      TEST_DB: sqlite
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt
+      - name: Backend suite on SQLite with the ratchet (backend/tests/sqlite_known_failures.txt)
+        run: |
+          export DATABASE_URL="sqlite:///$RUNNER_TEMP/backend.sqlite3" DATA_DIR="$RUNNER_TEMP/data" SESSION_MEMORY_DIR="$RUNNER_TEMP/memory"
+          python -c "import sqlite3; print('SQLite', sqlite3.sqlite_version)"
+          python -m pytest backend/tests -q -p no:cacheprovider -W ignore::DeprecationWarning \
+            --sqlite-failures-out "$RUNNER_TEMP/sqlite-failures.txt"
+      - name: Upload the current SQLite failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sqlite-failures
+          path: ${{ runner.temp }}/sqlite-failures.txt
+          if-no-files-found: ignore
+
+  startup-sqlite:
+    name: startup (sqlite)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Startup on SQLite stops at personal_api.py:194 (ADD COLUMN IF NOT EXISTS) until F1-05c,
+    # which removes this line.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt
+      - name: Start the backend twice on the same SQLite file
+        run: |
+          data="$RUNNER_TEMP/cb"
+          export DATABASE_URL="sqlite:///$data/cb.sqlite3" DATA_DIR="$data/uploads" SESSION_MEMORY_DIR="$data/sessions" \
+            RAG_INDEX_DIR="$data/rag" PERSONAL_API_CREDENTIALS_DIR="$data/credentials" STRATEGY_MEMORY_FILE="$data/strategy_memory.json"
+          mkdir -p "$data"
+          for run in 1 2; do
+            python -m uvicorn backend.main:app --host 127.0.0.1 --port 8765 > "$data/run$run.log" 2>&1 &
+            pid=$!
+            code=000
+            for _ in $(seq 1 120); do
+              kill -0 "$pid" 2>/dev/null || break
+              code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8765/health || true)
+              # 404 = the server is up but /health is not on main yet (F1-02 adds it).
+              [ "$code" = 200 ] || [ "$code" = 404 ] && break
+              sleep 2
+            done
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+            echo "run $run: GET /health -> $code"
+            if [ "$code" != 200 ] && [ "$code" != 404 ]; then tail -n 60 "$data/run$run.log"; exit 1; fi
+          done
+
+  portability:
+    name: portability
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python scripts/check-sql-portability.py
