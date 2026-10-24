@@ -77,6 +77,7 @@ def test_forum_import_graph_has_no_ai_rag_context_or_export_path():
         "backend.forum_schemas",
         "backend.auth",
         "backend.database",
+        "backend.db_compat",
         "backend.models",
         "backend.group_visibility",
         "backend.class_tools",
