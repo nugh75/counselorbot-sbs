@@ -19,6 +19,7 @@ Agenti `s65-f115-agy` (Gemini, interrotto per quota) e `s67-f1-15-ci-matrix` (Cl
   - `cargo test` del guscio: 37 test passati
   - snippet dei checksum provato su un bundle fittizio; YAML del workflow valido
   - `make guidance-refresh` e `make guidance-check`
+  - CI `desktop-teacher` verde sui 4 runner (lifecycle test inclusi); checksum del DMG ARM64 scaricato verificato
 - **Note operative**: nessun deploy, comando sudo o container Docker coinvolto. La matrice gira solo in CI (PR su `desktop/**`): DMG e installer non sono stati prodotti in locale.
 
 ---

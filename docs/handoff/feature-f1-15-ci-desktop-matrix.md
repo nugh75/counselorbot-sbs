@@ -4,7 +4,7 @@ Branch: feature/f1-15-ci-desktop-matrix · Issue: #576 · PR: #577
 Task diario: a3711ce4-4f3b-404e-85fa-91adc4794c9a · Aggiornato: 2026-10-24
 
 ## Stato
-PR #577: fix CI macOS spinto, nuova esecuzione in corso.
+Pronto per il merge — PR #577, CI verde sui 4 runner.
 
 ## Fatto
 - Workflow `desktop-teacher`: bundle `dmg` su macos-14/macos-15-intel, NSIS su
@@ -22,11 +22,15 @@ PR #577: fix CI macOS spinto, nuova esecuzione in corso.
 - Snippet checksum provato su bundle fittizio (`shasum -c` OK).
 - YAML del workflow valido. `cargo test`: 37 passati.
 - guidance-refresh/check: documentazione allineata.
+- CI run 40136113852 verde: macos-14 10 min, macos-15-intel 26 min, windows
+  15 min, ubuntu 10 min (lifecycle test inclusi). Artifact 225–387 MB.
+- DMG ARM64 scaricato: `shasum -a 256 -c` OK.
 
 ## Prossimi passi
-- Merge da parte dell'utente dopo la CI `desktop-teacher` sui 4 runner.
+- Merge da parte dell'utente.
 - Resto di F1-15: Release, `latest.json`, firma condizionale.
 
 ## Blocchi e rischi
-- DMG/NSIS/deb prodotti solo in CI: non provati in locale.
+- Installer non firmati. Negli artifact i file stanno sotto il percorso
+  completo del runner (antenato comune con i report lifecycle in runner.temp).
 - Nessun deploy, sudo o segreto.
