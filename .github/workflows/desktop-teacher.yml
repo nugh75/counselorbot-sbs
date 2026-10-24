@@ -62,6 +62,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: desktop/teacher/src-tauri
+          cache-on-failure: true
       - name: Linux system libraries for Tauri
         if: startsWith(matrix.runner, 'ubuntu')
         run: |
