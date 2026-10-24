@@ -8,6 +8,7 @@ use std::time::Duration;
 use tauri::{AppHandle, Manager, RunEvent, State, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_opener::OpenerExt;
 
+use crate::credentials::{CredentialStatus, Credentials, MemoryStore, OsStore, ProbeResult};
 use crate::datadir::DataDir;
 use crate::supervisor::{self, Handle, Status};
 use crate::{diagnostics, logs, platform};
@@ -20,11 +21,53 @@ pub enum Mode {
 }
 
 struct Shell {
+    credentials: Arc<Credentials>,
     supervisor: Arc<Handle>,
     data_root: PathBuf,
     version: String,
     // Held for the whole run: the OS releases it even if the shell is killed.
     _lock: File,
+}
+
+// Blocking OS APIs and HTTP probes run away from the webview event loop.
+async fn credential_job<T: Send + 'static>(
+    job: impl FnOnce() -> Result<T, String> + Send + 'static,
+) -> Result<T, String> {
+    tauri::async_runtime::spawn_blocking(job).await.map_err(|_| "Operazione portachiavi non completata.".to_string())?
+}
+
+#[tauri::command]
+async fn credential_status(shell: State<'_, Shell>) -> Result<Vec<CredentialStatus>, String> {
+    let credentials = Arc::clone(&shell.credentials);
+    credential_job(move || credentials.status()).await
+}
+
+#[tauri::command]
+async fn save_credential(shell: State<'_, Shell>, provider: String, value: String) -> Result<(), String> {
+    let credentials = Arc::clone(&shell.credentials);
+    credential_job(move || credentials.save(&provider, &value)).await
+}
+
+#[tauri::command]
+async fn remove_credential(shell: State<'_, Shell>, provider: String) -> Result<(), String> {
+    let credentials = Arc::clone(&shell.credentials);
+    credential_job(move || credentials.remove(&provider)).await
+}
+
+#[tauri::command]
+async fn test_credential(
+    shell: State<'_, Shell>,
+    provider: String,
+    value: Option<String>,
+) -> Result<ProbeResult, String> {
+    let credentials = Arc::clone(&shell.credentials);
+    credential_job(move || credentials.test(&provider, value)).await
+}
+
+#[tauri::command]
+async fn apply_credentials(shell: State<'_, Shell>) -> Result<(), String> {
+    let supervisor = Arc::clone(&shell.supervisor);
+    credential_job(move || supervisor.apply_credentials()).await
 }
 
 #[tauri::command]
@@ -105,7 +148,13 @@ fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> 
     logs::init_shell_log(&data.logs())?;
     let lock = lock_instance(&data)?;
     logs::log(format!("guscio {version} avviato, cartella dati {}", data.root.display()));
+    let credentials = Arc::new(if mode == Mode::Window {
+        Credentials::new(OsStore)
+    } else {
+        Credentials::new(MemoryStore::default())
+    });
     let config = supervisor::Config {
+        credentials: Arc::clone(&credentials),
         data: data.clone(),
         resources: platform::resource_path(app.path().resource_dir()?),
         shell_exe: std::env::current_exe()?,
@@ -114,7 +163,13 @@ fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> 
         report_file: std::env::var_os("COUNSELORBOT_REPORT_FILE").map(PathBuf::from),
     };
     let handle = Arc::new(supervisor::start(config));
-    app.manage(Shell { supervisor: Arc::clone(&handle), data_root: data.root.clone(), version, _lock: lock });
+    app.manage(Shell {
+        credentials,
+        supervisor: Arc::clone(&handle),
+        data_root: data.root.clone(),
+        version,
+        _lock: lock,
+    });
     match mode {
         Mode::Window => {
             WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
@@ -165,6 +220,11 @@ pub fn run(mode: Mode) {
     let app = builder
         .invoke_handler(tauri::generate_handler![
             shell_status,
+            credential_status,
+            save_credential,
+            remove_credential,
+            test_credential,
+            apply_credentials,
             open_in_browser,
             export_diagnostics,
             quit,

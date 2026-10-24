@@ -11,6 +11,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod app;
+mod credentials;
 mod datadir;
 mod diagnostics;
 mod health;

@@ -27,6 +27,18 @@ nell'app; integrazione completa SQLite e configurazione operativa
 restano da completare.
 Le funzioni web descritte qui continuano a riferirsi all'installazione corrente.
 
+Il guscio desktop ha un pannello **Chiavi API**: inserimento mascherato,
+stato configurata/mancante, salvataggio nel portachiavi del sistema e rimozione.
+Il valore salvato non viene mostrato. **Testa connessione** verifica la bozza
+inserita oppure la chiave salvata senza generare risposte AI; non salva la
+bozza e svuota il campo. OpenAI, Anthropic, Gemini, OpenRouter, Mistral, Groq,
+Cerebras e DeepSeek hanno un test remoto; gli altri fornitori indicano quando
+la verifica non è disponibile. OpenCode e Privacy KEK sono voci riservate e
+non attivano le rispettive funzioni. **Applica e riavvia servizi** rende effettive
+le modifiche interrompendo le richieste locali in corso. Le chiavi passano al
+backend in memoria, senza file `.env`; le prove automatiche non accedono al
+portachiavi reale. Restano i limiti sperimentali dell'app descritti sopra.
+
 È disponibile il nucleo tecnico P1 del Privacy Layer: definisce tipi, errori
 senza contenuti personali e regole conservative per finalità, consenso e invio
 ai modelli. Le operazioni sono ancora segnaposto che rifiutano l'esecuzione;

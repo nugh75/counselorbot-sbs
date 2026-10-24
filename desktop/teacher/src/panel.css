@@ -256,6 +256,24 @@ button:disabled { opacity: .45; cursor: default; }
   max-width: 100%;
   height: auto;
 }
+
+.credential { border-bottom: 1px solid var(--card-border); padding: 12px 0; }
+#credentials-title { font-size: 15px; font-weight: 600; cursor: pointer; }
+#credential-list { max-height: 390px; overflow-y: auto; padding-right: 4px; }
+.credential label { display: block; font-weight: 600; }
+.credential input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--muted);
+  border-radius: 6px;
+}
+.credential .actions { margin-top: 8px; }
 .qr-caption {
   font-size: 12px;
   color: #4b5563;
