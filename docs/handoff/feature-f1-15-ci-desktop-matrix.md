@@ -1,10 +1,10 @@
 # Handoff — F1-15 matrice CI installer desktop
 Agente: s67-f1-15-ci-matrix (riprende s65-f115-agy, Gemini, fermato per quota)
-Branch: feature/f1-15-ci-desktop-matrix · Issue: #576 · PR: —
+Branch: feature/f1-15-ci-desktop-matrix · Issue: #576 · PR: #577
 Task diario: a3711ce4-4f3b-404e-85fa-91adc4794c9a · Aggiornato: 2026-10-24
 
 ## Stato
-Verifiche locali verdi; commit e PR in corso.
+PR #577 aperta; verifiche locali verdi, CI in corso.
 
 ## Fatto
 - Workflow `desktop-teacher`: bundle `dmg` su macos-14/macos-15-intel, NSIS su
@@ -22,7 +22,8 @@ Verifiche locali verdi; commit e PR in corso.
 - guidance-refresh/check: documentazione allineata.
 
 ## Prossimi passi
-- Push, PR, controllo della CI `desktop-teacher` sui 4 runner.
+- Merge da parte dell'utente dopo la CI `desktop-teacher` sui 4 runner.
+- Resto di F1-15: Release, `latest.json`, firma condizionale.
 
 ## Blocchi e rischi
 - DMG/NSIS/deb prodotti solo in CI: non provati in locale.
