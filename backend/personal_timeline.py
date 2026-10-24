@@ -3,8 +3,9 @@ import hashlib
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
-from sqlalchemy import func, text
+from sqlalchemy import func
 
+from .db_compat import xact_lock
 from . import models
 from .orientation_referral_service import _i18n, _matches, _scoped
 from .reading_audience import resolve_audience_band
@@ -27,9 +28,7 @@ def imported_id(session_id, item_id):
 def _lock_personal_timeline(db, username):
     # Shared by every entry point that may import or migrate the personal workspace:
     # two tabs (or an import followed by a migration in the same request) cannot race.
-    if db.get_bind().dialect.name == 'postgresql':
-        key = int.from_bytes(hashlib.sha256(f'{username}:None'.encode()).digest()[:8], 'big', signed=True)
-        db.execute(text('SELECT pg_advisory_xact_lock(:key)'), {'key': key})
+    xact_lock(db, 'visual-workspace', username, None)
 
 
 def ensure_personal_timeline(db, username):

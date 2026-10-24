@@ -13,6 +13,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
+from ..db_compat import xact_lock
 from .. import embedding_service, models, rag_reindex_job
 from ..ai_service import AIError, AIService
 from ..api_secrets import API_KEY_ENV_MAP, environment_secret
@@ -131,8 +132,7 @@ def update_settings(request: RetrievalUpdate, identity=Depends(require_admin), d
             or (model == 'google/gemini-embedding-2' and dimensions and int(dimensions) > 3072)):
         raise HTTPException(400, 'Invalid document retrieval settings')
     # Serialize the four-key update, including a first save before seed rows.
-    if db.get_bind().dialect.name == 'postgresql':
-        db.execute(text('SELECT pg_advisory_xact_lock(414216)'))
+    xact_lock(db, 414216)
     for key, value in values.items():
         row = db.get(models.Config, key)
         # Keep the existing description of seeded rows.

@@ -1,12 +1,11 @@
 """Explicit transfers of student-authored visual work to personal annotations."""
-import hashlib
 from typing import Annotated, Literal
 
 from fastapi import HTTPException
 from pydantic import Field, StringConstraints
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .db_compat import xact_lock
 from . import models, schemas
 from .message_diagrams import session_questionnaire
 from .routes.learner_profile import _latest_revision
@@ -51,9 +50,7 @@ def personal_context(db: Session, session_id: str, username: str, language: str 
 
 
 def transfer_to_personal(db: Session, session_id: str, username: str, update: PersonalTransfer) -> dict:
-    if db.get_bind().dialect.name == 'postgresql':
-        key = int.from_bytes(hashlib.sha256(f'visual-personal:{username}'.encode()).digest()[:8], 'big', signed=True)
-        db.execute(text('SELECT pg_advisory_xact_lock(:key)'), {'key': key})
+    xact_lock(db, 'visual-personal', username)
     current = load_workspace(db, session_id, username)
     if current['revision'] != update.revision:
         raise HTTPException(409, 'personal_conflict')

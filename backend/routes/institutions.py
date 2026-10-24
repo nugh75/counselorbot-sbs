@@ -9,11 +9,11 @@ import unicodedata
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
+from ..db_compat import xact_lock
 from .. import administration_context, auth, database, institution_password, models, schemas
 from ..institution_access import require_institution_admin, teacher_institutions, require_teacher, require_institution_teacher
 
@@ -218,7 +218,7 @@ async def replace_teacher_institution_credentials(institution_id: int, request: 
     if not administration_context.valid_password(password):
         raise HTTPException(status_code=422, detail="invalid_institution_password")
     # Serialize writers of the same normalized code across institutes, then lock the row.
-    db.execute(text("SELECT pg_advisory_xact_lock(149, hashtext(:code))"), {"code": code.lower()})
+    xact_lock(db, 149, code.lower())
     row = require_institution_teacher(db, current_user, institution_id, lock=True)
     if row.revision != revision:
         raise HTTPException(status_code=409, detail="institution_revision_conflict")

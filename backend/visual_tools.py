@@ -1,13 +1,12 @@
 """Student-owned visual work. No model calls, prompts or questionnaire scores."""
-import hashlib
 from datetime import date
 from typing import Annotated, Literal
 
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .db_compat import xact_lock
 from . import models, pii
 
 ACTION = 'visual_workspace'
@@ -294,9 +293,7 @@ def redact_workspace_text(value):
 def save_workspace(db: Session, session_id: str, username: str, update: SaveWorkspace, *, commit: bool = True) -> dict:
     # Serialize writes even for narrative sessions without a questionnaire row.
     # The version check prevents one browser tab overwriting another tab's work.
-    if db.get_bind().dialect.name == 'postgresql':
-        key = int.from_bytes(hashlib.sha256(f'{username}:{session_id}'.encode()).digest()[:8], 'big', signed=True)
-        db.execute(text('SELECT pg_advisory_xact_lock(:key)'), {'key': key})
+    xact_lock(db, 'visual-workspace', username, session_id)
     current = load_workspace(db, session_id, username)
     if update.revision != current['revision']:
         raise HTTPException(409, 'The workspace was updated elsewhere')

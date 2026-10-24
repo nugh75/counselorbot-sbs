@@ -7,9 +7,10 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import Field
-from sqlalchemy import or_, text
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from ..db_compat import xact_lock
 from .. import auth, database, models
 from ..class_access import class_enables
 from ..class_tools import ACTIVITY_TOOL_KEYS
@@ -132,8 +133,7 @@ def assign(payload: AssignmentWrite, db: Session = Depends(database.get_db), use
             values.pop(field)
     digest = hashlib.sha256(json.dumps(values, sort_keys=True).encode()).hexdigest()
     # Serialize retries before checking the unique key, including concurrent requests.
-    key = int.from_bytes(hashlib.sha256(f"assignment:{user['username']}:{payload.request_id}".encode()).digest()[:8], 'big', signed=True)
-    db.execute(text('SELECT pg_advisory_xact_lock(:key)'), {'key': key})
+    xact_lock(db, 'assignment', user['username'], payload.request_id)
     existing = db.query(models.TeacherAssignment).filter_by(author_username=user['username'], request_id=payload.request_id).first()
     if existing:
         if existing.request_hash != digest:

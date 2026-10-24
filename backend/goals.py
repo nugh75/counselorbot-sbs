@@ -1,13 +1,13 @@
 """Personal goals coordinate existing resources without copying private work."""
-import hashlib
 import json
 from datetime import date
 from typing import Annotated, Literal
 
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import or_, text
+from sqlalchemy import or_
 
+from .db_compat import xact_lock
 from . import models
 from .visual_tools import SavePersonalWorkspace, load_workspace, save_workspace
 
@@ -170,9 +170,7 @@ def validate_share(db, username, group_id):
 
 def lock_network(db, username):
     """Serialize structure changes per student so concurrent requests cannot close a cycle."""
-    if db.get_bind().dialect.name == 'postgresql':
-        key = int.from_bytes(hashlib.sha256(f'goal-network:{username}'.encode()).digest()[:8], 'big', signed=True)
-        db.execute(text('SELECT pg_advisory_xact_lock(:key)'), {'key': key})
+    xact_lock(db, 'goal-network', username)
 
 
 def parent_ids(db, goal_id):
