@@ -85,5 +85,4 @@ Aggiornare Graphviz = cambiare `VERSION` e i due SHA-256 nello script.
 - Workflow [`.github/workflows/desktop-native-deps.yml`](../../.github/workflows/desktop-native-deps.yml) (manuale o su
   `feature/f1-04-**`): macOS arm64/x64 e Linux senza Graphviz, Linux con apt, Windows con il Graphviz incluso;
   typecheck, i18n e lint del frontend.
-- Limite noto: su Windows la rotta HTTP non si può importare finché resta `import fcntl` (B1 dello spike), quindi il test
-  del 503 lì è saltato; il resto gira.
+- Sulle PR che toccano questi file `test_native_deps.py` gira anche nel workflow `backend-windows` (runner senza Graphviz).
