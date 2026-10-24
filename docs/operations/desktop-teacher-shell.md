@@ -101,10 +101,14 @@ usare i PID del report e il lancio successivo sulla stessa cartella di prova.
   seed o disponibilità delle funzioni SQLite. È solo per lo smoke F1-02.
   Nell'avvio ordinario il lifespan resta obbligatorio.
 - Il tunnel è spento se non configurato. `{"tunnel":{"mode":"quick"}}` in
-  `config/shell.json` lo abilita solo per prove. Quando arriva il nuovo URL il
-  backend riparte con `COUNSELORBOT_PUBLIC_ORIGIN` e il frontend con la nuova
-  porta backend. Il quick tunnel dipende dalla rete Cloudflare e non è una
-  soluzione per lezioni. La modalità nominativa è rifiutata fino a F1-10.
+  `config/shell.json` lo abilita per prove immediate («Prova subito»). Quando
+  arriva il nuovo URL il backend riparte con `COUNSELORBOT_PUBLIC_ORIGIN` e il
+  frontend con la nuova porta backend. La modalità nominativa con dominio
+  personalizzato (F1-10) consente di configurare un dominio stabile
+  (es. `https://counselor.tuascuola.it`) e un token Cloudflare
+  (`CLOUDFLARE_TUNNEL_TOKEN` o salvato in `credentials/cloudflared_token`).
+  Se il token nominativo non è impostato, il sistema ripiega in automatico
+  e trasparentemente sul quick tunnel automatico (F1-09).
 - Il rewrite generale Next congela ancora il backend durante la build:
   F1-03 deve renderlo dinamico prima di dichiarare l'app utilizzabile. La
   firma F1-19 e il blocco interno sono già integrati.

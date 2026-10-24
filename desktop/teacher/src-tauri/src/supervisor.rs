@@ -14,7 +14,7 @@ use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 use base64::Engine;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::datadir::{DataDir, ShellConfig};
 use crate::sidecar::{self, Exit, Proc, Spec};
@@ -48,6 +48,14 @@ pub struct SidecarStatus {
     pub restarts: usize,
 }
 
+#[derive(Serialize, Deserialize, Clone, Default, PartialEq, Eq, Debug)]
+pub struct TunnelSettings {
+    pub mode: String,
+    pub custom_domain: Option<String>,
+    pub has_token: bool,
+    pub active_url: Option<String>,
+}
+
 #[derive(Serialize, Clone, Default)]
 pub struct Status {
     /// "preparing" | "ready" | "error" | "stopped"
@@ -61,6 +69,8 @@ pub struct Status {
     pub frontend_url: Option<String>,
     pub tunnel_url: Option<String>,
     pub tunnel_mode: String,
+    pub custom_domain: Option<String>,
+    pub has_tunnel_token: bool,
     pub cloudflared_pid: Option<u32>,
     pub sidecars: Vec<SidecarStatus>,
 }
@@ -69,6 +79,9 @@ enum Command {
     Stop(Sender<()>),
     StartQuickTunnel(Sender<Result<(), String>>),
     StopQuickTunnel(Sender<Result<(), String>>),
+    StartNamedTunnel(Sender<Result<(), String>>),
+    SaveNamedTunnelConfig { custom_domain: String, token: Option<String>, reply: Sender<Result<(), String>> },
+    GetTunnelSettings(Sender<TunnelSettings>),
 }
 
 pub struct Handle {
@@ -99,6 +112,26 @@ impl Handle {
         let (reply, done) = mpsc::channel();
         self.commands.send(Command::StopQuickTunnel(reply)).map_err(|e| e.to_string())?;
         done.recv_timeout(Duration::from_secs(30)).map_err(|e| format!("arresto del tunnel: {e}"))?
+    }
+
+    pub fn start_named_tunnel(&self) -> Result<(), String> {
+        let (reply, done) = mpsc::channel();
+        self.commands.send(Command::StartNamedTunnel(reply)).map_err(|e| e.to_string())?;
+        done.recv_timeout(Duration::from_secs(30)).map_err(|e| format!("avvio del tunnel nominativo: {e}"))?
+    }
+
+    pub fn save_named_tunnel_config(&self, custom_domain: String, token: Option<String>) -> Result<(), String> {
+        let (reply, done) = mpsc::channel();
+        self.commands
+            .send(Command::SaveNamedTunnelConfig { custom_domain, token, reply })
+            .map_err(|e| e.to_string())?;
+        done.recv_timeout(Duration::from_secs(30)).map_err(|e| format!("salvataggio configurazione tunnel: {e}"))?
+    }
+
+    pub fn get_tunnel_settings(&self) -> Result<TunnelSettings, String> {
+        let (reply, done) = mpsc::channel();
+        self.commands.send(Command::GetTunnelSettings(reply)).map_err(|e| e.to_string())?;
+        done.recv_timeout(Duration::from_secs(10)).map_err(|e| format!("lettura impostazioni tunnel: {e}"))
     }
 
     pub fn snapshot(&self) -> Status {
@@ -211,6 +244,18 @@ impl Supervisor {
                 }
                 Ok(Command::StopQuickTunnel(reply)) => {
                     let res = self.handle_stop_quick_tunnel();
+                    let _ = reply.send(res);
+                }
+                Ok(Command::StartNamedTunnel(reply)) => {
+                    let res = self.handle_start_named_tunnel();
+                    let _ = reply.send(res);
+                }
+                Ok(Command::SaveNamedTunnelConfig { custom_domain, token, reply }) => {
+                    let res = self.handle_save_named_tunnel_config(custom_domain, token);
+                    let _ = reply.send(res);
+                }
+                Ok(Command::GetTunnelSettings(reply)) => {
+                    let res = self.handle_get_tunnel_settings();
                     let _ = reply.send(res);
                 }
                 Err(RecvTimeoutError::Timeout) => self.watch(),
@@ -490,20 +535,17 @@ impl Supervisor {
 
     fn start_tunnel(&mut self) -> Result<(), Failure> {
         let mode = self.shell.tunnel.mode.clone();
-        if mode == "named" {
-            return Err(Failure::Fatal(
-                "Il tunnel nominativo richiede la configurazione prevista in F1-10.".into(),
-                None,
-            ));
-        }
-        if mode != "quick" {
+        if mode != "quick" && mode != "named" {
             return Ok(());
         }
         let port = self.frontend.as_ref().and_then(|f| f.port).unwrap_or(0);
         let url = format!("http://127.0.0.1:{port}");
         let cloudflared = self.config.resources.join("cloudflared").join(format!("cloudflared{EXE_SUFFIX}"));
-        let mut tunnel_args: Vec<OsString> = vec!["tunnel".into(), "--no-autoupdate".into()];
-        tunnel_args.extend(["--url".into(), url.into()]);
+
+        let token = self.config.data.read_tunnel_token(&self.shell.tunnel);
+        let is_named_with_token = mode == "named" && token.is_some();
+        let tunnel_args = build_cloudflared_args(&mode, &url, token.as_deref());
+
         let spec = if cfg!(windows) {
             // The Job Object stops cloudflared with the shell: no lifeline needed.
             Spec {
@@ -542,8 +584,20 @@ impl Supervisor {
         }
         self.tunnel = Some(proc);
         self.tunnel_started = Some(Instant::now());
-        self.status.lock().unwrap().tunnel_url = None;
+
+        if is_named_with_token {
+            let stable_url = self.shell.tunnel.custom_domain.clone().unwrap_or_default();
+            self.status.lock().unwrap().tunnel_url = if !stable_url.is_empty() { Some(stable_url) } else { None };
+        } else {
+            self.status.lock().unwrap().tunnel_url = None;
+        }
+
         self.publish();
+
+        if is_named_with_token && self.status.lock().unwrap().tunnel_url.is_some() {
+            self.restart_after_backend();
+        }
+
         Ok(())
     }
 
@@ -554,8 +608,11 @@ impl Supervisor {
         if self.backend.is_none() || self.frontend.is_none() {
             return Err("CounselorBot non e' ancora pronto.".into());
         }
-        if self.tunnel.is_some() {
+        if self.tunnel.is_some() && self.shell.tunnel.mode == "quick" {
             return Ok(());
+        }
+        if let Some(tunnel) = self.tunnel.take() {
+            tunnel.stop();
         }
         self.shell.tunnel.mode = "quick".into();
         if let Err(error) = self.config.data.save_config(&self.shell) {
@@ -565,6 +622,70 @@ impl Supervisor {
             Failure::Fatal(msg, _) => msg,
             Failure::Stopping => "Avvio interrotto.".into(),
         })
+    }
+
+    pub fn handle_start_named_tunnel(&mut self) -> Result<(), String> {
+        if let Some(err) = &self.version_error {
+            return Err(format!("Versione non compatibile: {err}"));
+        }
+        if self.backend.is_none() || self.frontend.is_none() {
+            return Err("CounselorBot non e' ancora pronto.".into());
+        }
+        if self.tunnel.is_some() && self.shell.tunnel.mode == "named" {
+            return Ok(());
+        }
+        if let Some(tunnel) = self.tunnel.take() {
+            tunnel.stop();
+        }
+        self.shell.tunnel.mode = "named".into();
+        if let Err(error) = self.config.data.save_config(&self.shell) {
+            logs::log(format!("config/shell.json non salvato: {error}"));
+        }
+        self.start_tunnel().map_err(|e| match e {
+            Failure::Fatal(msg, _) => msg,
+            Failure::Stopping => "Avvio interrotto.".into(),
+        })
+    }
+
+    pub fn handle_save_named_tunnel_config(
+        &mut self,
+        custom_domain: String,
+        token: Option<String>,
+    ) -> Result<(), String> {
+        let normalized = normalize_custom_domain(&custom_domain)?;
+        if let Some(tok) = &token {
+            let trimmed = tok.trim();
+            if !trimmed.is_empty() {
+                validate_tunnel_token(trimmed)?;
+                if let Err(e) = self.config.data.save_tunnel_token(trimmed) {
+                    logs::log(format!("errore salvataggio credenziali token: {e}"));
+                }
+                self.shell.tunnel.token = Some(trimmed.to_string());
+            }
+        }
+        self.shell.tunnel.custom_domain = Some(normalized);
+        if let Err(error) = self.config.data.save_config(&self.shell) {
+            logs::log(format!("config/shell.json non salvato: {error}"));
+        }
+        self.publish();
+        if self.tunnel.is_some() && self.shell.tunnel.mode == "named" {
+            if let Some(tunnel) = self.tunnel.take() {
+                tunnel.stop();
+            }
+            let _ = self.start_tunnel();
+        }
+        Ok(())
+    }
+
+    pub fn handle_get_tunnel_settings(&self) -> TunnelSettings {
+        let has_token = self.config.data.read_tunnel_token(&self.shell.tunnel).is_some();
+        let active_url = self.status.lock().unwrap().tunnel_url.clone();
+        TunnelSettings {
+            mode: self.shell.tunnel.mode.clone(),
+            custom_domain: self.shell.tunnel.custom_domain.clone(),
+            has_token,
+            active_url,
+        }
     }
 
     pub fn handle_stop_quick_tunnel(&mut self) -> Result<(), String> {
@@ -622,11 +743,12 @@ impl Supervisor {
         if let Some(status) = self.tunnel.as_mut().and_then(|p| p.try_wait()) {
             self.tunnel = None;
             logs::log(format!("cloudflared: uscito ({status})"));
-            if self.shell.tunnel.mode == "quick" && self.may_restart("cloudflared") {
+            let is_tunnel_mode = self.shell.tunnel.mode == "quick" || self.shell.tunnel.mode == "named";
+            if is_tunnel_mode && self.may_restart("cloudflared") {
                 if let Err(Failure::Fatal(message, hint)) = self.start_tunnel() {
                     self.fail(message, hint);
                 }
-            } else if self.shell.tunnel.mode == "quick" {
+            } else if is_tunnel_mode {
                 self.fail("Il tunnel si e' chiuso 3 volte in 5 minuti.".into(), Some("diagnostics"));
             } else {
                 self.publish();
@@ -637,7 +759,7 @@ impl Supervisor {
             // ADR-0002 §2.1: the public origin changes with every quick tunnel.
             // Restart the backend with it, and the frontend with its new port.
             self.restart_after_backend();
-        } else if self.shell.tunnel.mode == "quick"
+        } else if (self.shell.tunnel.mode == "quick" || self.shell.tunnel.mode == "named")
             && self.status.lock().unwrap().tunnel_url.is_none()
             && self.tunnel_started.is_some_and(|at| at.elapsed() > self.timeout())
         {
@@ -691,10 +813,8 @@ impl Supervisor {
     }
 
     fn read_tunnel_url(&mut self) -> bool {
-        if self.tunnel.is_none()
-            || self.shell.tunnel.mode != "quick"
-            || self.status.lock().unwrap().tunnel_url.is_some()
-        {
+        let is_tunnel_mode = self.shell.tunnel.mode == "quick" || self.shell.tunnel.mode == "named";
+        if self.tunnel.is_none() || !is_tunnel_mode || self.status.lock().unwrap().tunnel_url.is_some() {
             return false;
         }
         let Ok(text) = std::fs::read(self.config.data.logs().join("cloudflared.log")) else { return false };
@@ -779,6 +899,8 @@ impl Supervisor {
             let mut status = self.status.lock().unwrap();
             status.frontend_url = self.frontend.as_ref().and_then(|f| f.port).map(|p| format!("http://127.0.0.1:{p}"));
             status.tunnel_mode = self.shell.tunnel.mode.clone();
+            status.custom_domain = self.shell.tunnel.custom_domain.clone();
+            status.has_tunnel_token = self.config.data.read_tunnel_token(&self.shell.tunnel).is_some();
             status.cloudflared_pid = cloudflared_pid;
             status.sidecars = sidecars;
             status.clone()
@@ -815,6 +937,79 @@ pub fn find_quick_tunnel_url(text: &str) -> Option<String> {
             None
         }
     })
+}
+
+/// Builds the arguments for `cloudflared` given mode, local frontend URL, and optional token.
+/// If mode is "named" and token is provided: `tunnel --no-autoupdate run --token <TOKEN>`.
+/// If mode is "named" and token is missing, it falls back transparently to quick tunnel:
+/// `tunnel --no-autoupdate --url <URL>`.
+/// If mode is "quick": `tunnel --no-autoupdate --url <URL>`.
+pub fn build_cloudflared_args(mode: &str, frontend_url: &str, token: Option<&str>) -> Vec<OsString> {
+    let mut args: Vec<OsString> = vec!["tunnel".into(), "--no-autoupdate".into()];
+    match mode {
+        "named" => {
+            if let Some(tok) = token.filter(|t| !t.trim().is_empty()) {
+                args.push("run".into());
+                args.push("--token".into());
+                args.push(tok.trim().into());
+            } else {
+                args.push("--url".into());
+                args.push(frontend_url.into());
+            }
+        }
+        _ => {
+            args.push("--url".into());
+            args.push(frontend_url.into());
+        }
+    }
+    args
+}
+
+/// Normalizes a custom domain into `https://<domain>` and validates its hostname format.
+pub fn normalize_custom_domain(raw: &str) -> Result<String, String> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return Err("Il dominio personalizzato non puo' essere vuoto.".into());
+    }
+    let without_scheme =
+        trimmed.strip_prefix("https://").or_else(|| trimmed.strip_prefix("http://")).unwrap_or(trimmed);
+    let host = without_scheme.trim_end_matches('/');
+    if host.is_empty() {
+        return Err("Il dominio personalizzato non e' valido.".into());
+    }
+    if host.contains('/') || host.contains(':') || host.contains(' ') || host.contains('@') {
+        return Err(format!("Il dominio '{host}' contiene caratteri non validi (percorsi, porte o spazi)."));
+    }
+    if !host.contains('.') {
+        return Err(format!("Il dominio '{host}' deve contenere un punto (es. counselor.tuascuola.it)."));
+    }
+    for part in host.split('.') {
+        if part.is_empty() {
+            return Err("Il dominio non puo' contenere punti consecutivi o iniziare/terminare con un punto.".into());
+        }
+        if part.starts_with('-') || part.ends_with('-') {
+            return Err("Le parti del dominio non possono iniziare o terminare con un trattino.".into());
+        }
+        if !part.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+            return Err(format!("La parte '{part}' contiene caratteri non ammessi."));
+        }
+    }
+    Ok(format!("https://{host}"))
+}
+
+/// Validates that a Cloudflare Tunnel token contains acceptable characters and length.
+pub fn validate_tunnel_token(raw: &str) -> Result<String, String> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return Err("Il token del tunnel Cloudflare non puo' essere vuoto.".into());
+    }
+    if trimmed.len() < 20 {
+        return Err("Il token del tunnel e' troppo corto per essere valido.".into());
+    }
+    if !trimmed.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '=' || c == '+' || c == '/') {
+        return Err("Il token contiene caratteri non ammessi.".into());
+    }
+    Ok(trimmed.to_string())
 }
 
 #[cfg(test)]
@@ -996,5 +1191,87 @@ mod tests {
         assert_eq!(a.len(), 43);
         assert_ne!(a, b);
         assert!(a.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'));
+    }
+
+    #[test]
+    fn cloudflared_args_selection_quick_vs_named_with_token() {
+        // Quick tunnel mode
+        let quick_args = build_cloudflared_args("quick", "http://127.0.0.1:32102", None);
+        let quick_strs: Vec<String> = quick_args.into_iter().map(|s| s.to_string_lossy().into_owned()).collect();
+        assert_eq!(quick_strs, vec!["tunnel", "--no-autoupdate", "--url", "http://127.0.0.1:32102"]);
+
+        // Named tunnel with token
+        let token = "eyJhIjoiMTIzNDUiLCJ0IjoiNjg3OSJ9";
+        let named_args = build_cloudflared_args("named", "http://127.0.0.1:32102", Some(token));
+        let named_strs: Vec<String> = named_args.into_iter().map(|s| s.to_string_lossy().into_owned()).collect();
+        assert_eq!(named_strs, vec!["tunnel", "--no-autoupdate", "run", "--token", token]);
+
+        // Named tunnel without token (or empty) falls back transparently to quick tunnel
+        let fallback_args = build_cloudflared_args("named", "http://127.0.0.1:32102", None);
+        let fallback_strs: Vec<String> = fallback_args.into_iter().map(|s| s.to_string_lossy().into_owned()).collect();
+        assert_eq!(fallback_strs, vec!["tunnel", "--no-autoupdate", "--url", "http://127.0.0.1:32102"]);
+
+        let empty_fallback_args = build_cloudflared_args("named", "http://127.0.0.1:32102", Some("   "));
+        let empty_fallback_strs: Vec<String> =
+            empty_fallback_args.into_iter().map(|s| s.to_string_lossy().into_owned()).collect();
+        assert_eq!(empty_fallback_strs, vec!["tunnel", "--no-autoupdate", "--url", "http://127.0.0.1:32102"]);
+    }
+
+    #[test]
+    fn custom_domain_normalization_and_validation() {
+        assert_eq!(normalize_custom_domain("counselor.tuascuola.it").unwrap(), "https://counselor.tuascuola.it");
+        assert_eq!(
+            normalize_custom_domain("https://counselor.tuascuola.it/").unwrap(),
+            "https://counselor.tuascuola.it"
+        );
+        assert_eq!(normalize_custom_domain("http://labform.net").unwrap(), "https://labform.net");
+        assert_eq!(normalize_custom_domain("  app.scuola.edu.it  ").unwrap(), "https://app.scuola.edu.it");
+
+        // Invalid domains
+        assert!(normalize_custom_domain("").is_err());
+        assert!(normalize_custom_domain("   ").is_err());
+        assert!(normalize_custom_domain("localhost").is_err()); // no dot
+        assert!(normalize_custom_domain("foo..bar.com").is_err());
+        assert!(normalize_custom_domain("-invalid.com").is_err());
+        assert!(normalize_custom_domain("counselor.scuola.it:8080").is_err());
+        assert!(normalize_custom_domain("counselor.scuola.it/path").is_err());
+    }
+
+    #[test]
+    fn tunnel_token_validation() {
+        let valid_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
+        assert_eq!(validate_tunnel_token(valid_token).unwrap(), valid_token);
+
+        assert!(validate_tunnel_token("").is_err());
+        assert!(validate_tunnel_token("too-short").is_err());
+        assert!(validate_tunnel_token("invalid characters with spaces in between!!").is_err());
+    }
+
+    #[test]
+    fn named_tunnel_lifecycle_and_stable_url() {
+        let mut supervisor = supervisor("named-lifecycle");
+        mock_tunnel(&mut supervisor);
+        supervisor.status.lock().unwrap().phase = "ready".into();
+
+        // Save configuration
+        let res = supervisor.handle_save_named_tunnel_config(
+            "counselor.tuascuola.it".into(),
+            Some("eyJhIjoiMTIzNDUiLCJ0IjoiNjg3OSIsInMiOiJ4eXoifQ==".into()),
+        );
+        assert!(res.is_ok());
+        assert_eq!(supervisor.shell.tunnel.custom_domain.as_deref(), Some("https://counselor.tuascuola.it"));
+        assert!(supervisor.config.data.read_tunnel_token(&supervisor.shell.tunnel).is_some());
+
+        // Settings query
+        let settings = supervisor.handle_get_tunnel_settings();
+        assert_eq!(settings.custom_domain.as_deref(), Some("https://counselor.tuascuola.it"));
+        assert!(settings.has_token);
+
+        // Stop tunnel
+        assert!(supervisor.handle_stop_quick_tunnel().is_ok());
+        assert_eq!(supervisor.shell.tunnel.mode, "off");
+        assert!(supervisor.status.lock().unwrap().tunnel_url.is_none());
+
+        std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
     }
 }
