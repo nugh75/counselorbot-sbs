@@ -1,6 +1,6 @@
 # CounselorBot: funzionalità e interfaccia attuali
 
-Aggiornato: 18 ottobre 2026. Questo è il riferimento operativo dell’Assistente
+Aggiornato: 24 ottobre 2026. Questo è il riferimento operativo dell’Assistente
 CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
@@ -18,6 +18,13 @@ ChatGPT, le voci Piper e la sincronizzazione con Console non sono disponibili
 nell'app; integrazione completa SQLite e configurazione operativa
 restano da completare.
 Le funzioni web descritte qui continuano a riferirsi all'installazione corrente.
+
+È disponibile il nucleo tecnico P1 del Privacy Layer: definisce tipi, errori
+senza contenuti personali e regole conservative per finalità, consenso e invio
+ai modelli. Le operazioni sono ancora segnaposto che rifiutano l'esecuzione;
+il nucleo non è collegato alle chat esistenti. Il filtro PII completo, la
+cifratura e il gateway AI operativo richiedono i blocchi successivi. Non sono
+introdotte nuove schermate o garanzie di anonimizzazione o conformità GDPR.
 
 ## Lettura dei questionari e approfondimento
 
