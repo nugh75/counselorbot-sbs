@@ -11,6 +11,8 @@ Agente `s35-f105d-sol` (Codex Sol high), task Diario
 - Sostituite le 14 chiamate applicative, preservando la chiave condivisa tra
   workspace e timeline. Migrazioni legacy, lock di sessione dell'avvio e
   Prompt Lab restano nei rispettivi rami Postgres. Eccezioni SQL: 201 → 185.
+- Follow-up CI PR #533: rimosso l’import `sqlalchemy.text` inutilizzato da
+  `routes/document_retrieval.py`; `ruff check --select F` sul file verde.
 - Contratto operativo: `docs/operations/transaction-locks.md`; CONTEXT e
   documentazione funzionalità aggiornati, stato della Guida rigenerato.
 - Verifiche: helper 33 pass con Postgres 15 effimero (29 casi SQLite/unitari
