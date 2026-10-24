@@ -94,7 +94,7 @@ class Span:
 
 | Operazione | Firma | Errori | Note |
 |---|---|---|---|
-| `detect_pii` | `(text: str, ctx: PrivacyContext) -> list[Span]` | `DetectorUnavailable` | regole + elenco nomi noti + modello ML (§3.4); unione degli span, vince il più lungo |
+| `detect_pii` | `(text: str, ctx: PrivacyContext) -> list[Span]` | `DetectorUnavailable` | regole + elenco nomi noti + modello ML (§3.4); unione degli span: le regole su dati strutturati e validati (email, telefono, CF, IBAN, URL, IP, social, documenti) sono autoritative, sul resto vince il più lungo, a parità la categoria più specifica; uno span perdente conserva le parti non coperte (precisato in P3/P4) |
 | `pseudonymize` | `(texts: Sequence[str], ctx, policy: CategoryPolicy) -> PseudonymizedBatch` | `DetectorUnavailable`, `PolicyBlocked(category)`, `ResidualPII` | applica azioni per categoria, poi **verifica residui** (secondo passaggio di rilevamento sul risultato) |
 | `restore_authorized` | `(text: str, ctx) -> str` | `AccessDenied` | ripristina solo se `ctx.principal` può vedere `ctx.subject` in chiaro (studente stesso, docente autorizzato) |
 | `encrypt_sensitive` | `(value: bytes, field: FieldRef) -> SealedValue` | `KeyUnavailable` | AES-256-GCM, AAD = `FieldRef` (§4.2) |

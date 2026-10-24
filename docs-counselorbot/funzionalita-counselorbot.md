@@ -40,6 +40,13 @@ contatti e riferimenti a certificazioni del tutto inventati, e uno strumento di
 misura per sviluppatori. Non cambia il comportamento della piattaforma né il
 filtro attuale, che resta limitato e non riconosce nomi, scuole o luoghi.
 
+Il blocco P4 aggiunge al Privacy Layer un motore locale di pseudonimizzazione
+(regole, nomi noti della classe e dell'istituto, modello GLiNER eseguito sul
+computer, senza invio di testo all'esterno) che sostituisce i dati personali con
+segnaposto come `[PERSONA_1]`, coerenti per tutta la conversazione e ripristinabili
+solo con autorizzazione. Il motore non è ancora collegato alle chat: il filtro in
+uso resta quello attuale finché il gateway AI (P6) non lo adotta.
+
 ## Lettura dei questionari e approfondimento
 
 Nelle chat guidate di QSA, QSAr, ZTPI, QPCS, QPCC e QAP, la descrizione dei
