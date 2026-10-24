@@ -98,10 +98,10 @@ def derive_key(root: bytes, label: str) -> bytes:
 
 
 def subject_pid(k_pid: bytes, username: str) -> str:
-    """``HMAC-SHA-256(K_pid, username)`` truncated to 128 bits, base32 without padding (26 characters)."""
+    """``HMAC-SHA-256(K_pid, username)`` truncated to 128 bits, lowercase RFC 4648 base32 without padding (26 chars)."""
     check_key(k_pid)
     digest = hmac.new(k_pid, username.encode("utf-8"), hashlib.sha256).digest()[:16]
-    return base64.b32encode(digest).decode("ascii").rstrip("=")
+    return base64.b32encode(digest).decode("ascii").rstrip("=").lower()
 
 
 def normalize(value: str) -> str:

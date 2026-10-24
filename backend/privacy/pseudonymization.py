@@ -13,9 +13,9 @@
 - The map (placeholder <-> original) never leaves the backend. Restoring
   requires a positive ``authorize_data_access`` decision (P7); until then
   every restore is ``AccessDenied``. Maps live in a :class:`MapStore`; the
-  default keeps them in process memory only. The encrypted
-  ``privacy_pseudonym_maps`` store plugs in here once P5 provides the keys
-  (``ScopeMap.to_bytes`` is the plaintext it will seal).
+  default keeps them in process memory only, ``map_store.SqlAlchemyMapStore``
+  keeps them encrypted in ``privacy_pseudonym_maps`` (P8). Each map belongs to
+  one ``subject_pid``, set by ``subject_pid_of`` from ``PrivacyContext.subject``.
 """
 from __future__ import annotations
 
@@ -94,6 +94,7 @@ class ScopeMap(_SafeRepresentation):
     reverse: dict[str, str] = field(default_factory=dict)      # placeholder -> original
     categories: dict[str, str] = field(default_factory=dict)   # placeholder -> category value
     counters: dict[str, int] = field(default_factory=dict)     # label -> last number
+    subject_pid: str = ""
 
     def placeholder(self, category: PIICategory, value: str) -> str:
         key = f"{category.value}\x1f{normalize(category, value)}"
@@ -115,13 +116,14 @@ class ScopeMap(_SafeRepresentation):
 
     def copy(self) -> "ScopeMap":
         return ScopeMap(self.scope_id, self.locale, self.mapping_ref, dict(self.forward),
-                        dict(self.reverse), dict(self.categories), dict(self.counters))
+                        dict(self.reverse), dict(self.categories), dict(self.counters), self.subject_pid)
 
     def to_bytes(self) -> bytes:
         return json.dumps({"v": 1, "scope_id": self.scope_id, "locale": self.locale,
                            "mapping_ref": self.mapping_ref, "forward": self.forward,
                            "reverse": self.reverse, "categories": self.categories,
-                           "counters": self.counters}, ensure_ascii=False).encode("utf-8")
+                           "counters": self.counters, "subject_pid": self.subject_pid},
+                          ensure_ascii=False).encode("utf-8")
 
     @classmethod
     def from_bytes(cls, data: bytes) -> "ScopeMap":
@@ -131,7 +133,7 @@ class ScopeMap(_SafeRepresentation):
                 raise ValueError
             return cls(raw["scope_id"], raw["locale"], raw["mapping_ref"], dict(raw["forward"]),
                        dict(raw["reverse"]), dict(raw["categories"]),
-                       {k: int(v) for k, v in raw["counters"].items()})
+                       {k: int(v) for k, v in raw["counters"].items()}, raw.get("subject_pid", ""))
         except Exception:
             raise PrivacyError() from None
 
@@ -177,10 +179,12 @@ class PseudonymizationEngine:
     RESIDUAL_ROUNDS = 2
 
     def __init__(self, detector: LocalPIIDetector, *, store: MapStore | None = None,
-                 authorize: Callable[[PrivacyContext], Decision] | None = None):
+                 authorize: Callable[[PrivacyContext], Decision] | None = None,
+                 subject_pid_of: Callable[[str], str] | None = None):
         self.detector = detector
         self.store = store if store is not None else InMemoryMapStore()
         self.authorize = authorize or _default_authorize
+        self.subject_pid_of = subject_pid_of
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
 
@@ -196,7 +200,17 @@ class PseudonymizationEngine:
 
     def _load(self, ctx: PrivacyContext) -> ScopeMap:
         scope_id = self._scope_id(ctx)
-        return self.store.get(scope_id) or ScopeMap(scope_id, ctx.locale)
+        smap = self.store.get(scope_id)
+        if self.subject_pid_of is None:
+            return smap or ScopeMap(scope_id, ctx.locale)
+        if type(ctx.subject) is not str or not ctx.subject.strip():
+            raise PolicyBlocked() from None
+        pid = self.subject_pid_of(ctx.subject)
+        if smap is None:
+            return ScopeMap(scope_id, ctx.locale, subject_pid=pid)
+        if smap.subject_pid != pid:  # a scope never mixes the values of two subjects
+            raise PolicyBlocked() from None
+        return smap
 
     def detect_pii(self, text: str, ctx: PrivacyContext) -> list[PIISpan]:
         return self.detector.detect_pii(neutralize(text), ctx, known=self._load(ctx).known())

@@ -89,7 +89,7 @@ def test_nonces_never_repeat_over_100k_encryptions():
 def test_subject_pid_and_blind_index():
     k_pid, k_idx = crypto.generate_key(), crypto.generate_key()
     pid = crypto.subject_pid(k_pid, "giulia.rossi")
-    assert len(pid) == 26 and pid.isalnum() and pid == pid.upper()
+    assert len(pid) == 26 and pid.isalnum() and pid == pid.lower()
     assert pid == crypto.subject_pid(k_pid, "giulia.rossi") != crypto.subject_pid(k_pid, "giulia.rossi2")
     assert pid != crypto.subject_pid(crypto.generate_key(), "giulia.rossi")
     assert crypto.blind_index(k_idx, " Giulia@Example.IT ") == crypto.blind_index(k_idx, "giulia@example.it")

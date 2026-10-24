@@ -69,6 +69,12 @@ versione verificati, senza nomi di file arbitrari o percorsi personali.
 Le sole regole non garantiscono il riconoscimento di nomi sconosciuti: il
 filtro ML completo e il contesto delle chat richiedono ancora P6.
 
+Il blocco P8 rende persistenti le mappe dei segnaposto: ogni valore originale è
+salvato nel database solo cifrato, legato alla propria riga e all'interessato,
+che compare con un identificativo pseudonimo invece dello username. Così i
+segnaposto di una conversazione restano gli stessi anche dopo un riavvio. Anche
+questo non è ancora collegato alle chat (gateway AI, P6).
+
 ## Lettura dei questionari e approfondimento
 
 Nelle chat guidate di QSA, QSAr, ZTPI, QPCS, QPCC e QAP, la descrizione dei

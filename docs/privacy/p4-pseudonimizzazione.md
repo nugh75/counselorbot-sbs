@@ -50,8 +50,8 @@ sovrapposizione fa tornare in chiaro una parte di valore, e nessuno span ML tocc
 - **Ripristino**: `restore_authorized` e `stream_restorer` (riusa `pii_ner.StreamRestorer`) chiedono una `Decision`
   positiva a `authorize_data_access` (P7); oggi nega sempre ⇒ `AccessDenied`. Solo i segnaposto della propria
   conversazione vengono ripristinati.
-- **Conservazione**: `InMemoryMapStore` tiene le mappe solo in memoria (perse al riavvio). La tabella cifrata
-  `privacy_pseudonym_maps` arriva con le chiavi di P5: `ScopeMap.to_bytes()` è il testo che verrà cifrato.
+- **Conservazione**: `InMemoryMapStore` tiene le mappe solo in memoria (perse al riavvio); `SqlAlchemyMapStore` (P8,
+  [p8-subject-mappe](p8-subject-mappe.md)) le tiene cifrate in `privacy_pseudonym_maps`, una riga per segnaposto.
   `forget(ctx)` cancella la mappa con la conversazione.
 
 ## 4. Configurazione

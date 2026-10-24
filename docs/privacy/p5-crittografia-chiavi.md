@@ -31,7 +31,7 @@ esistenti passano alle DEK con P12, `decrypt_authorized` si collega all'autorizz
 |---|---|---|
 | KEK (`K_root`) | solo ambiente: `PRIVACY_KEK` o `PRIVACY_KEK_FILE` (base64url, 32 byte; una sola delle due) | avvolge le chiavi di `privacy_keys`, mai nel DB |
 | DEK `content`, `mapping`, `credentials`, `research` | `privacy_keys`, avvolte dalla KEK | cifratura per finalità; una DEK non decifra valori di un'altra finalità (`IntegrityError`) |
-| `K_pid` (`purpose='pid'`, id fisso) | `privacy_keys` | `subject_pid = base32(HMAC-SHA-256(K_pid, username)[:16])`, 26 caratteri |
+| `K_pid` (`purpose='pid'`, id fisso) | `privacy_keys` | `subject_pid = base32(HMAC-SHA-256(K_pid, username)[:16])` minuscolo, 26 caratteri (P8) |
 | radice `index` (id fisso) | `privacy_keys` | `K_idx[campo] = HKDF(radice, "idx:<campo>")`; `blind_index = HMAC-SHA-256(K_idx[campo], NFKC+trim+casefold(valore))` |
 
 - **L1**: la KEK sta nell'ambiente del server (o in un file montato come segreto). **L2**: il guscio desktop la legge
