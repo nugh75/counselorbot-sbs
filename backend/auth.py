@@ -53,7 +53,11 @@ AI4AUTH_PUBLIC_HOST = os.environ.get("AI4AUTH_PUBLIC_HOST", "").strip()
 
 # Mantenuto solo per il bootstrap dell'utente admin locale (seed) — non usato
 # per il login, che passa interamente da ai4auth.
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+# Parametri Argon2id espliciti (P5, 02 §4.3): uguali ai default di passlib 1.7.4 (RFC 9106,
+# sopra il minimo OWASP m=19 MiB t=2 p=1), fissati perché un aggiornamento non li cambi in silenzio.
+# Se cambiano, `deprecated="auto"` segnala il rehash degli hash esistenti.
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto", argon2__type="ID",
+                           argon2__memory_cost=65536, argon2__rounds=3, argon2__parallelism=4)
 
 
 def verify_password(plain_password, hashed_password):

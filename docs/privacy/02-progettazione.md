@@ -175,8 +175,9 @@ La politica è dati (tabella `privacy_category_policies`), non codice; il defaul
 
 ### 4.3 Password
 
-Argon2id con parametri espliciti (oggi `CryptContext(schemes=["argon2"])`, `backend/auth.py:35`: tipo e parametri effettivi
-**da verificare** nel blocco P5) e rehash al login se i parametri cambiano (`deprecated="auto"` lo consente già).
+Argon2id con parametri espliciti e rehash al login se i parametri cambiano (`deprecated="auto"` lo consente già).
+Verificato in P5: i default di passlib erano già Argon2id m=64 MiB, t=3, p=4 (RFC 9106, sopra il minimo OWASP), ora fissati
+in `backend/auth.py` ([p5-crittografia-chiavi](p5-crittografia-chiavi.md) §4).
 
 ### 4.4 Chiavi separate
 

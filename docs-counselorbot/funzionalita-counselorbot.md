@@ -47,6 +47,14 @@ segnaposto come `[PERSONA_1]`, coerenti per tutta la conversazione e ripristinab
 solo con autorizzazione. Il motore non è ancora collegato alle chat: il filtro in
 uso resta quello attuale finché il gateway AI (P6) non lo adotta.
 
+Il blocco P5 aggiunge la cifratura a riposo (AES-256-GCM, ogni valore legato al
+proprio campo, riga e interessato) e la gestione delle chiavi: una chiave radice
+fornita dall'ambiente o, sull'app desktop, dal portachiavi del sistema, chiavi
+separate per finalità conservate solo cifrate, identificativi pseudonimi degli
+interessati e un kit di recupero protetto da passphrase. Nessun dato esistente è
+ancora cifrato: la migrazione delle colonne arriva con il blocco P11. Le
+password locali usano Argon2id con parametri ora fissati esplicitamente.
+
 ## Lettura dei questionari e approfondimento
 
 Nelle chat guidate di QSA, QSAr, ZTPI, QPCS, QPCC e QAP, la descrizione dei
