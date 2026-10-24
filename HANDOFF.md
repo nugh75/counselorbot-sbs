@@ -1,3 +1,19 @@
+# Handoff 24 ottobre 2026: Privacy Layer P11 — cifratura a riposo dei contenuti
+
+Agente `s64`, branch `feature/privacy-p11-db-encryption`.
+
+- **Obiettivo**: cifrare a riposo i contenuti sensibili su SQLite e Postgres (02 §4.2, §9).
+- **Modifiche**: `backend/privacy/field_crypto.py` (DEK `content`, interruttore `PRIVACY_DB_ENCRYPTION`, lettura trasparente),
+  `encrypted_types.py` (`EncryptedText`, `EncryptedLogDetails`), colonne `teacher_notes.text`, `idea_references.text`,
+  `learner_profile_reflections.note`, `logs.email` (+ `logs.email_idx` indice cieco, migrazione `20261024_log_email_blind_index`),
+  chiavi di contenuto di `logs.details`, file di `memory_service.py`. Doc `docs/privacy/p11-cifratura-db.md`.
+- **Da fare**: job di riempimento dei record esistenti con kit di recupero (02 §9.3/§9.6), AAD legato alla riga (P7),
+  altre colonne di testo libero, Fernet → DEK (P12). Passo manuale: nessuno (interruttore spento di default).
+- **Test eseguiti**: `test_privacy_p11_db_encryption.py` 11 pass su SQLite e su Postgres 16 (container temporaneo,
+  rimosso); con P5/P8/P13/idea/ledger/teacher_noticing/timeline 177 pass. `test_smoke.py` richiede `DATABASE_URL` (non impostata).
+
+---
+
 # Handoff 24 ottobre 2026: F1-08 — portachiavi di sistema e chiavi API
 
 Agente `s53-f108-codex`, task `6688d4db-e02e-4674-8bb0-8e50f700a436`, branch `feature/f1-08-keychain-api-keys`.
