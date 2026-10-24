@@ -16,9 +16,6 @@ ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("check_sql_portability", ROOT / "scripts" / "check-sql-portability.py")
 portability = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(portability)
-startup_spec = importlib.util.spec_from_file_location("sqlite_startup_log", ROOT / "scripts" / "check-sqlite-startup-log.py")
-startup = importlib.util.module_from_spec(startup_spec)
-startup_spec.loader.exec_module(startup)
 
 
 def test_portability_rules_flag_postgres_only_sql_and_spare_python():
@@ -86,21 +83,6 @@ def test_ratchet_pytest_exit_status(tmp_path, source, known, strict, status):
         capture_output=True, text=True, timeout=30,
     )
     assert result.returncode == status, result.stdout + result.stderr
-
-
-def test_startup_exception_matches_only_the_documented_f1_05c_failure():
-    log = ('File "/runner/backend/personal_api.py", line 194, in ensure_schema\n'
-           'sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) near "EXISTS": syntax error\n'
-           '[SQL: ALTER TABLE counselors ADD COLUMN IF NOT EXISTS owner_username VARCHAR]\n'
-           'ERROR: Application startup failed. Exiting.\n')
-    assert startup.is_known_blocker(log)
-    for before, after in [
-        ("personal_api.py", "other.py"), ("ensure_schema", "other_function"),
-        ("owner_username VARCHAR", "unexpected TEXT"), ("syntax error", "other error"),
-        ("Application startup failed. Exiting.", ""),
-    ]:
-        assert not startup.is_known_blocker(log.replace(before, after))
-    assert not startup.is_known_blocker(log + "[SQL: SELECT unexpected()]\n")
 
 
 def test_artifact_session_uses_the_selected_database_with_the_desktop_pragmas():

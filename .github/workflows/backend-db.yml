@@ -14,7 +14,6 @@ on:
       - backend/**
       - scripts/check-sql-portability.py
       - scripts/sql-portability-exceptions.txt
-      - scripts/check-sqlite-startup-log.py
       - .github/workflows/backend-db.yml
 
 permissions:
@@ -132,8 +131,7 @@ jobs:
     name: startup (sqlite)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Only the exact personal_api.ensure_schema blocker is tolerated until
-    # F1-05c. Dependency, import, timeout and other startup failures block CI.
+    # Both runs must serve HTTP: any startup failure blocks CI (ADR-0003, F1-05c).
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -159,16 +157,12 @@ jobs:
               [ "$code" = 200 ] || [ "$code" = 404 ] && break
               sleep 2
             done
-            exited=false
-            kill -0 "$pid" 2>/dev/null || exited=true
             kill "$pid" 2>/dev/null || true
             wait "$pid" 2>/dev/null || true
             echo "run $run: GET /health -> $code"
             if [ "$code" != 200 ] && [ "$code" != 404 ]; then
               tail -n 60 "$data/run$run.log"
-              [ "$exited" = true ] || exit 1
-              python scripts/check-sqlite-startup-log.py "$data/run$run.log"
-              exit $?
+              exit 1
             fi
           done
       - name: Upload isolated SQLite startup logs
