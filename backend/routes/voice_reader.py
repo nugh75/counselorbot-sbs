@@ -20,8 +20,11 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from .. import database, install_profile, models, pii
+from .. import database, install_profile, models
+from ..privacy.errors import PrivacyError
+from ..privacy.gateway import AIGateway, context_for
 from ..privacy.policy import is_trusted_local
+from ..privacy.types import AIRequest, Target
 from ..api_models import TTSRequest
 from ..chat_logic import strip_markdown
 from ..diagram_blocks import strip_for_speech
@@ -31,6 +34,7 @@ from .chat import _split_text_for_tts
 router = APIRouter(prefix="/tts")
 LANGUAGES = {"it", "en", "es", "fr", "de", "sv"}
 PIPER_URL = os.environ.get("PIPER_URL", "http://piper:8000").rstrip("/")
+EDGE_TTS_URL = "https://speech.platform.bing.com"
 _voice_cache: tuple[float, list[dict]] = (0, [])
 VOICE_PROFILES = json.loads((Path(__file__).resolve().parents[1] / "voice_profiles.json").read_text())
 
@@ -72,6 +76,18 @@ def correct_pronunciation(text: str, rules: list[PronunciationRule]) -> str:
     return regex.sub(lambda match: ordered[int(match.lastgroup[1:])].spoken, text)
 
 
+def speech_text(text: str, voice: str = "", engine: str = "edge") -> str:
+    """Text a TTS engine may receive, through the AI gateway (P6, kind="tts").
+
+    Edge (external) gets the deterministic redaction of P6c; a trusted Piper
+    the text as it is. ValueError when the filter cannot run."""
+    target = Target("piper", voice, PIPER_URL) if engine == "piper" else Target("edge_tts", voice, EDGE_TTS_URL)
+    try:
+        return AIGateway().prepare(AIRequest("tts", target, [text]), context_for(None)).request.texts[0]
+    except PrivacyError:
+        raise ValueError("pii_redaction_unavailable") from None
+
+
 def spoken_segments(text: str, language: str, rules: list[PronunciationRule] | None = None, plain_text: bool = False,
                     *, external: bool = False) -> list[dict]:
     clean = text
@@ -86,7 +102,7 @@ def spoken_segments(text: str, language: str, rules: list[PronunciationRule] | N
     clean = correct_pronunciation(clean, rules or [])
     # Filter the whole corrected text BEFORE chunk boundaries can split a PII.
     if external:
-        clean = pii.redact_always(clean, fail_closed=True)
+        clean = speech_text(clean)
     if len(clean) > 120000:
         raise HTTPException(422, "Corrected text exceeds the reader limit")
     segments = []
@@ -184,6 +200,7 @@ async def voices(engine: Literal["auto", "edge", "piper"] = "auto"):
 async def synthesize(segment: dict, voice: str, engine: str = "edge") -> dict:
     if engine == "piper":
         _require_piper(engine)
+        segment = {**segment, "text": speech_text(segment["text"], voice, "piper")}
         async with httpx.AsyncClient(timeout=40, trust_env=False, follow_redirects=False) as client:
             response = await client.post(f"{PIPER_URL}/synthesize",
                                          json={"text": segment["text"], "voice": voice})
@@ -194,7 +211,7 @@ async def synthesize(segment: dict, voice: str, engine: str = "edge") -> dict:
     words = []
     # WordBoundary is opt-in in edge-tts 7.2; units are 100 ns, relative to
     # this segment, as in TD_daniele's sintetizza_chunk_con_tempi.
-    segment = {**segment, "text": pii.redact_always(segment["text"], fail_closed=True)}
+    segment = {**segment, "text": speech_text(segment["text"], voice)}
     communicate = edge_tts.Communicate(segment["text"], voice, boundary="WordBoundary")
     async for event in communicate.stream():
         if event["type"] == "audio":

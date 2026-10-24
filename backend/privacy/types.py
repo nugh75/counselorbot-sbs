@@ -206,6 +206,8 @@ class PrivacyEvent(_SafeRepresentation):
                         "grant_created", "grant_revoked", "data_accessed", "ai_transmission",
                         "break_glass", "export", "erasure"]
     purpose: str
+    target: str = ""                                            # ai_transmission: provider
+    categories_count: Mapping[str, int] = field(default_factory=dict)  # counts only, never values
 
 
 @dataclass(frozen=True, repr=False)

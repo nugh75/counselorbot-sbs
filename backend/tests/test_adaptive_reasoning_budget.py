@@ -25,7 +25,8 @@ def make_ai(monkeypatch, *, fallback=False):
     ai.temperature = None
     ai.last_usage = ai.last_thinking = None
     ai._get_api_key = lambda key: "fixture-key"
-    ai._anonymize_external = lambda provider, message, system, history: (message, system, history, {})
+    ai._anonymize_external = lambda provider, message, system, history, **kw: (
+        message, system, history, NS(restore=lambda text: text, stream_restorer=lambda: None))
     ai._targets = lambda *args: [("openrouter", MODEL)] + ([("openai", "gpt-4o")] if fallback else [])
     reserve = Mock(return_value="Fallback answer.")
     ai._providers = {

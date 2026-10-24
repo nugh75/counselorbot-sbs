@@ -20,7 +20,8 @@ def db(monkeypatch, tmp_path):
     monkeypatch.setenv('API_KEY_ANTHROPIC', 'system-anthropic-test')
     with artifact_session() as session:
         session.add(models.Config(key=personal_api.POLICY_KEY, value='true'))
-        session.add(models.Config(key='external_pii_redact', value='false'))
+        # P6: no opt-out of the external filter; deterministic rules only, no NER request.
+        session.add(models.Config(key='pii_ner_enabled', value='false'))
         session.commit()
         yield session
 

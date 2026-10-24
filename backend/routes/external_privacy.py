@@ -26,10 +26,11 @@ def _enabled(value):
 
 def settings(db):
     values = {r.key: r.value for r in db.query(models.Config).filter(models.Config.key.in_((*KEYS, 'pii_ner_model')))}
-    redact = _enabled(values.get('external_pii_redact', 'true'))
+    # `external_pii_redact` no longer disables the filter (P6 gateway): only
+    # the NER choice and the fallback define the mode.
     local = _enabled(values.get('pii_ner_enabled', 'true'))
     fallback = (values.get('external_pii_fallback') or 'block').strip().lower()
-    mode = ('local' if local else 'basic') if redact and fallback == 'block' else 'custom'
+    mode = ('local' if local else 'basic') if fallback == 'block' else 'custom'
     return {'mode': mode, 'local_model': values.get('pii_ner_model') or 'qwen3:0.6b'}
 
 

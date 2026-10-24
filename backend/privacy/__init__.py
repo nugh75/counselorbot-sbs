@@ -1,14 +1,16 @@
 """Public Privacy Layer contracts (P1); no I/O, keys or database on import.
 
-The local engine (P4) lives in ``detect`` and ``pseudonymization``, imported on demand.
+The local engine (P4) lives in ``detect`` and ``pseudonymization``, imported on demand;
+the AI egress gateway (P6) in ``gateway``.
 """
 from .errors import (
     AccessDenied, AuditUnavailable, ConsentMissingError, DetectorUnavailable,
     EgressBlockedError, IntegrityError, KeyUnavailable, PIIDetectorUnavailable,
     PolicyBlocked, PrivacyError, PurposeDisabled, PurposeDisabledError, ResidualPII,
 )
+from .gateway import AIGateway
 from .policy import (
-    AIGateway, authorize_data_access, configure_engine, decrypt_authorized, default_category_policy,
+    authorize_data_access, configure_engine, decrypt_authorized, default_category_policy,
     depseudonymize, detect_pii, egress_requirements, encrypt_sensitive,
     is_local_target, is_trusted_local, pseudonymize, record_privacy_event, require_purpose,
     restore_authorized,

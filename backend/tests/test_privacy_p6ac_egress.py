@@ -121,13 +121,14 @@ _ASYNC_HTTPX_SEND = httpx.AsyncClient.send
 def test_remote_named_local_provider_filters_entire_envelope_even_with_optout(provider, key):
     ai = service(**{key: "http://203.0.113.7:11434", "pii_ner_enabled": "false"})
     ai.external_pii_redact = False
-    message, system, history, mapping = ai._anonymize_external(
+    message, system, history, prepared = ai._anonymize_external(
         provider, "student@example.org", "teacher@example.org",
         [{"role": "user", "content": "previous@example.org"}])
     assert "student@example.org" not in message
     assert "teacher@example.org" not in system
     assert "previous@example.org" not in str(history)
-    assert set(mapping.values()) == {"student@example.org", "teacher@example.org", "previous@example.org"}
+    assert [prepared.restore(text) for text in (message, system, history[0]["content"])] == [
+        "student@example.org", "teacher@example.org", "previous@example.org"]
 
 
 def test_remote_ner_is_blocked_before_it_can_receive_original_text():

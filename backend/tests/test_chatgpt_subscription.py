@@ -302,7 +302,7 @@ def test_subscription_failure_is_localized_and_never_falls_back(signed, monkeypa
         accounts.set_preference(db,"alice",True,"model")
         accounts.bind_identity(db,{"username":"alice","authenticated":True},language)
         ai=AIService(db)
-        monkeypatch.setattr(ai,"_anonymize_external",lambda provider,message,system,history:(message,system,history,{}))
+        monkeypatch.setattr(ai,"_anonymize_external",lambda provider,message,system,history,**kw:(message,system,history,SimpleNamespace(restore=lambda text: text, stream_restorer=lambda: None)))
         paid=Mock(side_effect=AssertionError("Paid fallback must not run"))
         ai._providers["openai"]["call"]=paid
         def failed(*args,**kwargs):
