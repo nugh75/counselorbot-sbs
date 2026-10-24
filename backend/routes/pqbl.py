@@ -37,6 +37,8 @@ from ..pqbl_generator import (
     ALLOWED_SESSION_SIZES,
     PAGES_PER_SEGMENT,
     QUESTIONS_PER_CHUNK,
+    OcrUnavailableError,
+    ocr_unavailable_message,
     pdf_total_pages,
     extract_pdf_text_range,
     generate_batch_for_chunk,
@@ -269,7 +271,7 @@ def _generate_all_chunks(document_id: str):
                 db.commit()
             except (AIError, ValueError) as e:
                 logger.warning(f"pQBL: segmento {seg_idx + 1}/{n_segments} fallito: {e}")
-                doc.error_detail = (
+                doc.error_detail = ocr_unavailable_message(doc.language) if isinstance(e, OcrUnavailableError) else (
                     f"Segmento {seg_idx + 1} su {n_segments} fallito: {e}. "
                     "Le domande già generate sono disponibili."
                 )

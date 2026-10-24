@@ -10,6 +10,7 @@ Le misure descritte non rendono da sole il trattamento conforme al GDPR.
 | [03-piano-blocchi.md](03-piano-blocchi.md) | blocchi P0–P17 con Definition of Done, dipendenze, aree toccate, tier, parallelismo e collisioni con i compiti desktop |
 | [04-decisioni-titolare-dpo.md](04-decisioni-titolare-dpo.md) | decisioni D1–D14 per titolare/DPO/consulente, documenti da produrre, fonti normative e stato della verifica |
 | [p13-logs-diagnostica.md](p13-logs-diagnostica.md) | redazione distruttiva fail-closed, gazetteer nei log, download backend risanitizzati e ZIP desktop offline senza testo libero |
+| [p6ac-network-egress.md](p6ac-network-egress.md) | correzioni P6a-c operative: immagini solo su host fidati, classificazione URL, lettura Edge filtrata e preferenza API per Piper locale |
 | [spikes/p3-pii-engine.md](spikes/p3-pii-engine.md) | spike P3: regole, gazetteer, Ollama NER e GLiNER ONNX misurati sul corpus P2 e su un holdout; PyInstaller; licenze; raccomandazione (regole + gazetteer di contesto + GLiNER multi PII fp16) |
 | [p5-crittografia-chiavi.md](p5-crittografia-chiavi.md) | P5: AES-256-GCM con AAD per campo, KEK da ambiente/portachiavi, DEK per finalità in `privacy_keys`, `subject_pid`, indici ciechi, rotazione, kit di recupero, parametri Argon2id |
 | [p8-subject-mappe.md](p8-subject-mappe.md) | P8: `subject_pid` base32 minuscolo, indici ciechi, tabella `privacy_pseudonym_maps` cifrata con la DEK `mapping` e `SqlAlchemyMapStore` |

@@ -8,7 +8,10 @@ Detection and pseudonymization delegate to the engine installed with
 from __future__ import annotations
 
 from ipaddress import ip_address
+import os
+import re
 from typing import Iterator, Sequence
+from urllib.parse import urlsplit
 
 from .errors import (
     AccessDenied, AuditUnavailable, ConsentMissingError, EgressBlockedError,
@@ -66,6 +69,52 @@ Hostnames and malformed values are treated as external until resolved by P6.
                 return True
         except ValueError:
             continue
+    return False
+
+
+def is_trusted_local(url: str) -> bool:
+    """Trust loopback or exact hosts declared by the installation operator.
+
+    No DNS lookup, private-subnet inference, wildcard or provider-name shortcut.
+    Both environment lists accept comma/whitespace-separated hostnames or IPs
+    (IPv6 with optional brackets), without scheme, port or path. Redirects and
+    environment proxies must also be disabled by callers carrying private data.
+    """
+    if not isinstance(url, str) or not url or re.search(r"[\s\\\x00-\x1f\x7f]", url):
+        return False
+    try:
+        parsed = urlsplit(url)
+        host = parsed.hostname
+        if (parsed.scheme not in {"http", "https"} or not host
+                or parsed.username is not None or parsed.password is not None
+                or "%" in host or parsed.fragment or parsed.port == 0):
+            return False
+    except ValueError:
+        return False
+    host = host.lower().removesuffix(".")
+    if host == "localhost":
+        return True
+    try:
+        address = ip_address(host)
+        if address.is_loopback:
+            return True
+    except ValueError:
+        address = None
+    for name in ("PRIVACY_LOCAL_HOSTS", "TRUSTED_LOCAL_HOSTS"):
+        for entry in re.split(r"[,\s]+", os.environ.get(name, "")):
+            entry = entry.lower().removesuffix(".")
+            if entry.startswith("[") and entry.endswith("]"):
+                entry = entry[1:-1]
+            if not entry or any(char in entry for char in "/@*%\\?#"):
+                continue
+            if address is not None:
+                try:
+                    if address == ip_address(entry):
+                        return True
+                except ValueError:
+                    continue
+            elif host == entry:
+                return True
     return False
 
 

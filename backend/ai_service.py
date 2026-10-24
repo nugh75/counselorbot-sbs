@@ -16,6 +16,7 @@ from . import models
 from . import embedding_service
 from . import personal_api
 from . import vision_service
+from .privacy.policy import is_trusted_local
 from . import pii
 from . import pii_ner
 from .api_secrets import API_KEY_ENV_MAP, config_key, resolve_api_secrets
@@ -705,11 +706,19 @@ class AIService:
                             system_prompt: str, history: list):
         """Anonimizza l'envelope per i provider esterni (GDPR minimizzazione).
 
-        Ritorna `(user_message, system_prompt, history, mapping)`; per provider
-        locali o flag spento i testi restano invariati e il mapping e' vuoto.
+        Ritorna `(user_message, system_prompt, history, mapping)`; gli endpoint
+        locali fidati evitano il filtro. Ollama/llama.cpp su host non fidati
+        vengono filtrati anche con opt-out; il detector deve essere locale.
         Con `external_pii_fallback=block`, un detector NER non raggiungibile
         blocca la chiamata invece di esporre i dati."""
-        if provider in LOCAL_PROVIDERS or not self.external_pii_redact:
+        local_url = {
+            'ollama': self._ollama_base(),
+            'llamacpp': self.config.get('llamacpp_url') or LLAMACPP_DEFAULT_URL,
+        }.get(provider)
+        if local_url is not None and is_trusted_local(local_url):
+            return user_message, system_prompt, history, {}
+        # An untrusted "local" provider must never inherit the old opt-out.
+        if local_url is None and not self.external_pii_redact:
             return user_message, system_prompt, history, {}
         history = history or []
         texts = [user_message, system_prompt] + [m.get('content', '') for m in history]
@@ -717,6 +726,12 @@ class AIService:
         # must not keep requiring Ollama after an administrator selects basic.
         ner_flag = self.config.get('pii_ner_enabled')
         ner_enabled = None if ner_flag is None else str(ner_flag).strip().lower() not in ('0', 'false', 'no', 'off')
+        if not is_trusted_local(self._ollama_base()):
+            if (ner_enabled if ner_enabled is not None else pii_ner.is_ner_enabled()):
+                # The detector itself would send the original envelope remotely.
+                raise AIError("Modello PII locale non disponibile su un host fidato.",
+                              code="personalAPI.errors.privacy")
+            ner_enabled = False
         anon_texts, mapping, ner_ok = pii_ner.anonymize_texts(
             texts, ollama_base=self._ollama_base(), ner_enabled=ner_enabled,
             ner_model=self.config.get('pii_ner_model'))
@@ -1026,16 +1041,13 @@ class AIService:
                     model: str | None = None, timeout: int | None = None) -> str:
         """OCR di una pagina con il provider di visione configurato.
 
-        Il ripiego di `qsa_extractor` passa da qui: nessun modello e' cablato e i
-        provider esterni attraversano `_anonymize_external` — la stessa policy
-        della chat, `external_pii_fallback=block` compreso. Con `block` e detector
-        NER locale non raggiungibile la chiamata esterna viene bloccata (AIError
-        con codice privacy) invece di esporre il documento. Un provider assente o
-        mal configurato solleva `vision_service.VisionError`, classificato e
-        tradotto per l'utente dal chiamante."""
+        I ripieghi QSA/pQBL passano da qui. Immagini esterne bloccate prima
+        anche del detector: redigere il prompt non redige la scansione.
+        Errori classificati e localizzati dai chiamanti."""
         if self.personal_error:
             raise AIError(self.personal_error, code=self.personal_error_code)
         resolved_provider, resolved_model = vision_service.resolve(self.config, provider, model)
+        vision_service.require_local_target(self.config, resolved_provider)
         self.last_provider, self.last_model = resolved_provider, resolved_model
         prompt, _system, _history, _mapping = self._anonymize_external(
             resolved_provider, prompt, "", [])

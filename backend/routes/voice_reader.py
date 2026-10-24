@@ -20,7 +20,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from .. import database, install_profile, models
+from .. import database, install_profile, models, pii
+from ..privacy.policy import is_trusted_local
 from ..api_models import TTSRequest
 from ..chat_logic import strip_markdown
 from ..diagram_blocks import strip_for_speech
@@ -47,7 +48,7 @@ class PronunciationRule(BaseModel):
 
 
 class ReaderRequest(TTSRequest):
-    engine: Literal["edge", "piper"] = "edge"
+    engine: Literal["auto", "edge", "piper"] = "auto"
     plain_text: bool = False
     text: str = Field(min_length=1, max_length=120000)
     language: str = Field(default="it", pattern="^(it|en|es|fr|de|sv)$")
@@ -71,7 +72,8 @@ def correct_pronunciation(text: str, rules: list[PronunciationRule]) -> str:
     return regex.sub(lambda match: ordered[int(match.lastgroup[1:])].spoken, text)
 
 
-def spoken_segments(text: str, language: str, rules: list[PronunciationRule] | None = None, plain_text: bool = False) -> list[dict]:
+def spoken_segments(text: str, language: str, rules: list[PronunciationRule] | None = None, plain_text: bool = False,
+                    *, external: bool = False) -> list[dict]:
     clean = text
     if not plain_text:
         clean = strip_for_speech(clean, lang=language)
@@ -82,6 +84,9 @@ def spoken_segments(text: str, language: str, rules: list[PronunciationRule] | N
         clean = re.sub(r'`([^`]*)`', r'\1', clean)
         clean = strip_markdown(clean)
     clean = correct_pronunciation(clean, rules or [])
+    # Filter the whole corrected text BEFORE chunk boundaries can split a PII.
+    if external:
+        clean = pii.redact_always(clean, fail_closed=True)
     if len(clean) > 120000:
         raise HTTPException(422, "Corrected text exceeds the reader limit")
     segments = []
@@ -107,7 +112,7 @@ def reader_voice(request: ReaderRequest, db: Session) -> str:
         counselor = personal_api.visible_counselor(db, request.counselor_id) if hasattr(db, 'query') else (db.get(models.Counselor, request.counselor_id) if hasattr(db, 'get') else None)
         if counselor and counselor.voice_mapping:
             assigned = counselor.voice_mapping.get(request.language)
-            if request.engine == "edge":
+            if request.engine in {"auto", "edge"}:
                 return assigned or request.voice
             # Use the counselor's configured voice profile, including multilingual
             # voices, without a network call or guessing gender from a new name.
@@ -124,14 +129,36 @@ def _require_piper(engine: str) -> None:
     # Piper e' escluso dal profilo teacher-pc (ADR-0001): resta solo Edge.
     if engine == "piper":
         install_profile.require_lab_features()
+        if not is_trusted_local(PIPER_URL):
+            raise HTTPException(503, "Local voice service requires a trusted host")
+
+
+async def piper_available() -> bool:
+    """Probe only a trusted service, with no user text and a short timeout."""
+    if install_profile.teacher_pc() or not is_trusted_local(PIPER_URL):
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=2, trust_env=False, follow_redirects=False) as client:
+            response = await client.get(f"{PIPER_URL}/voices")
+            response.raise_for_status()
+            return bool(response.json().get("voices"))
+    except (httpx.HTTPError, ValueError, AttributeError):
+        return False
+
+
+async def resolve_engine(engine: str) -> str:
+    if engine == "auto":
+        return "piper" if await piper_available() else "edge"
+    _require_piper(engine)
+    return engine
 
 
 @router.get("/voices")
-async def voices(engine: Literal["edge", "piper"] = "edge"):
-    _require_piper(engine)
+async def voices(engine: Literal["auto", "edge", "piper"] = "auto"):
+    engine = await resolve_engine(engine)
     if engine == "piper":
         try:
-            async with httpx.AsyncClient(timeout=10) as client:
+            async with httpx.AsyncClient(timeout=10, trust_env=False, follow_redirects=False) as client:
                 response = await client.get(f"{PIPER_URL}/voices")
                 response.raise_for_status()
                 return response.json()
@@ -156,7 +183,8 @@ async def voices(engine: Literal["edge", "piper"] = "edge"):
 
 async def synthesize(segment: dict, voice: str, engine: str = "edge") -> dict:
     if engine == "piper":
-        async with httpx.AsyncClient(timeout=40) as client:
+        _require_piper(engine)
+        async with httpx.AsyncClient(timeout=40, trust_env=False, follow_redirects=False) as client:
             response = await client.post(f"{PIPER_URL}/synthesize",
                                          json={"text": segment["text"], "voice": voice})
             response.raise_for_status()
@@ -166,6 +194,7 @@ async def synthesize(segment: dict, voice: str, engine: str = "edge") -> dict:
     words = []
     # WordBoundary is opt-in in edge-tts 7.2; units are 100 ns, relative to
     # this segment, as in TD_daniele's sintetizza_chunk_con_tempi.
+    segment = {**segment, "text": pii.redact_always(segment["text"], fail_closed=True)}
     communicate = edge_tts.Communicate(segment["text"], voice, boundary="WordBoundary")
     async for event in communicate.stream():
         if event["type"] == "audio":
@@ -196,10 +225,22 @@ async def reader_events(segments: list[dict], voice: str, engine: str = "edge"):
 
 @router.post("/stream")
 async def stream(request: ReaderRequest, db: Session = Depends(database.get_personal_ai_db)):
-    _require_piper(request.engine)
-    segments = spoken_segments(request.text, request.language, request.pronunciations, request.plain_text)
+    engine = await resolve_engine(request.engine)
+    if engine == "piper":
+        voice = request.voice
+        if not re.fullmatch(r"[a-z]{2}_[A-Z]{2}-[a-z0-9_]+-[a-z_]+", voice):
+            gender = VOICE_PROFILES["edge_genders"].get(voice, "female")
+            voice = VOICE_PROFILES["piper_defaults"][request.language][gender]
+        request = request.model_copy(update={"engine": engine, "voice": voice})
+    else:
+        request = request.model_copy(update={"engine": engine})
+    try:
+        segments = spoken_segments(request.text, request.language, request.pronunciations,
+                                   request.plain_text, external=engine == "edge")
+    except ValueError:
+        raise HTTPException(503, "Speech privacy filter unavailable") from None
     if not segments:
         raise HTTPException(422, "No readable text")
     voice = reader_voice(request, db)
-    return StreamingResponse(heartbeat(reader_events(segments, voice, request.engine)), media_type="text/event-stream",
+    return StreamingResponse(heartbeat(reader_events(segments, voice, engine)), media_type="text/event-stream",
                              headers={"Cache-Control": "no-store, no-transform", "X-Accel-Buffering": "no"})

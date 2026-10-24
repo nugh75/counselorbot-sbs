@@ -79,6 +79,10 @@ def _ner_entities(text: str, base_url: str, model: str) -> list:
     Gli errori di trasporto (rete, timeout) PROPAGANO: il chiamante deve
     distinguere "nessuna entita'" da "il detector non ha risposto" (policy
     di fallback). Un JSON malformato e' invece trattato come lista vuota."""
+    from .privacy.policy import is_trusted_local
+
+    if not is_trusted_local(base_url):
+        raise ValueError("pii_local_host_untrusted")
     prompt = (
         "Extract personal information from the following text. "
         "Recognize only these categories: person name (nome), postal address (indirizzo), "
@@ -101,6 +105,8 @@ def _ner_entities(text: str, base_url: str, model: str) -> list:
             "stream": False,
         },
         timeout=10.0,
+        follow_redirects=False,
+        trust_env=False,
     )
     resp.raise_for_status()
     content = resp.json().get("message", {}).get("content", "")

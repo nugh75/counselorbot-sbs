@@ -458,11 +458,14 @@ def redact(text: Optional[str], *, school_context=None) -> Optional[str]:
         return REDACTION_ERROR
 
 
-def redact_always(text: Optional[str], *, school_context=None) -> Optional[str]:
+def redact_always(
+    text: Optional[str], *, school_context=None, fail_closed: bool = False
+) -> Optional[str]:
     """Come `redact`, ma ignora il flag di config.
 
     Serve quando il testo esce dal sistema — una query verso una fonte esterna —
     dove la redazione non e' una preferenza di logging ma una condizione.
+    I chiamanti con `fail_closed=True` bloccano l'uscita in caso di errore.
     """
     if text is None:
         return text
@@ -473,6 +476,8 @@ def redact_always(text: Optional[str], *, school_context=None) -> Optional[str]:
     try:
         return _redact_spans(text, school_context=school_context)
     except Exception:
+        if fail_closed:
+            raise ValueError("pii_redaction_unavailable") from None
         return REDACTION_ERROR
 
 

@@ -14,6 +14,8 @@ import requests
 from PIL import Image, UnidentifiedImageError
 
 from .pdf_images import render_pdf_pages
+from .privacy.policy import is_trusted_local
+from .vision_service import VisionError
 
 logger = logging.getLogger(__name__)
 
@@ -141,12 +143,17 @@ def _validate_scores(
 
 
 def _ollama_post(ollama_url: str, endpoint: str, payload: dict[str, Any], timeout: int) -> dict[str, Any]:
+    if not is_trusted_local(ollama_url):
+        raise VisionError(PRIVACY_BLOCKED_CODE)
     try:
-        response = requests.post(
-            f"{ollama_url.rstrip('/')}{endpoint}",
-            json=payload,
-            timeout=timeout,
-        )
+        with requests.Session() as client:
+            client.trust_env = False
+            response = client.post(
+                f"{ollama_url.rstrip('/')}{endpoint}", json=payload,
+                timeout=timeout, allow_redirects=False,
+            )
+        if 300 <= response.status_code < 400:
+            raise VisionError(PRIVACY_BLOCKED_CODE)
         response.raise_for_status()
         data = response.json()
     except requests.RequestException as exc:

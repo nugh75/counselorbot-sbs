@@ -75,6 +75,17 @@ che compare con un identificativo pseudonimo invece dello username. Così i
 segnaposto di una conversazione restano gli stessi anche dopo un riavvio. Anche
 questo non è ancora collegato alle chat (gateway AI, P6).
 
+Le correzioni P6a-c bloccano l'invio di immagini a provider esterni: OCR e
+visione richiedono un servizio su loopback o su un host dichiarato fidato
+dall'operatore. Il nome Ollama e un indirizzo di rete privata non bastano.
+La lettura con Edge applica il filtro deterministico ai dati riconoscibili
+(per esempio contatti e codici) dopo le correzioni di pronuncia; se il filtro
+fallisce, la lettura si ferma. Il filtro non garantisce la rimozione di nomi,
+luoghi o informazioni sensibili in prosa. Il default dell'API lettore preferisce
+Piper locale quando disponibile, altrimenti Edge filtrato; il menu mantiene
+la scelta esplicita Edge/Piper salvata nel browser. Il profilo desktop docente
+mantiene per ora Edge filtrato, perché Piper è ancora escluso da F1-07.
+
 ## Lettura dei questionari e approfondimento
 
 Nelle chat guidate di QSA, QSAr, ZTPI, QPCS, QPCC e QAP, la descrizione dei
@@ -383,10 +394,9 @@ i 25 item sostitutivi non sono i 63 item canonici e manca la chiave autorizzata.
 
 I risultati si inseriscono manualmente oppure si estraggono da PDF/immagine, con
 controllo della persona prima di proseguire. L'estrazione prova prima l'OCR locale;
-se non è disponibile (per esempio su un'installazione senza Ollama) usa un provider
-di visione scelto dall'amministratore tra quelli supportati, senza alcun modello
-predefinito, e passa dalla stessa protezione dei dati della chat: nella modalità
-bloccante l'invio del documento viene fermato. Se non c'è alcun servizio di visione
+il ripiego di visione configurato dall'amministratore può usare solo Ollama su
+un host locale fidato. Le immagini non vengono inviate a provider esterni,
+anche quando il filtro testuale della chat è spento. Se non c'è alcun servizio locale di visione
 utilizzabile compare un messaggio localizzato che invita a inserire i dati a mano.
 La visualizzazione e la chat aiutano
 la riflessione sui fattori; un punteggio alto non è sempre un punto di forza, perché
@@ -765,7 +775,7 @@ viene riscritto. Casi verificati e limiti della guardia sono descritti in
 Durante la generazione (sia in streaming SSE sia sincrona), i blocchi di ragionamento interno emessi da modelli di reasoning (tag `<think>...</think>`, `<thinking>` o `<sto_pensando>`, inclusi tag aperti o orfani) vengono filtrati ed eliminati in tempo reale, impedendo fughe di catena di pensiero verso l’utente e garantendo che la memoria di sessione e i log conservino solo la risposta visibile. Se una risposta risulta vuota, composta da soli spazi o svuotata dalla rimozione del reasoning (oppure in caso di errore vuoto del provider), il sistema evita errori 500/502 o messaggi vuoti e invia un fallback gentile e riflessivo, contestualizzato al passo corrente della chat guidata e nella lingua dell’utente (italiano, inglese, spagnolo, francese, tedesco, svedese), differenziato tra introduzione del tema all'ingresso dello step (o benvenuto nel Patto di Collaborazione) e prosecuzione della riflessione nei turni successivi. I contratti di dialogo escludono cliché terapeutici e meta-disclaimer ripetitivi (come "è un'ipotesi e non una verità", "senza giudizio", "non è un difetto"), affidando la natura non diagnostica al patto iniziale e la formulazione delle ipotesi alla modalità epistemica e alla curiosità fenomenologica naturale.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
 e feedback quando disponibili. Nei diagrammi gli archi che indicano un ostacolo sono rossi e tutti gli altri verdi (stessa palette in web, PDF e Telegram, temi chiaro e scuro); tratteggio, punta a T e legenda li distinguono anche senza il colore. Il disegno richiede il programma Graphviz: su un'installazione che non lo ha (per esempio un'app desktop senza Graphviz) il riquadro lo dice chiaramente, senza «Riprova», e riporta comunque le relazioni in testo; `GET /api/capabilities` indica se i diagrammi sono disponibili. Il lettore nel menu di navigazione legge il testo visibile,
-con impostazioni di voce e motore (Edge TTS online oppure Piper locale 100% offline con dodici voci ONNX incorporate, attivo anche nella configurazione portatile); la correzione della pronuncia è visibile solo
+con impostazioni di voce e motore (Edge TTS online con filtro PII deterministico obbligatorio oppure Piper su host locale fidato, con dodici voci ONNX incorporate, attivo anche nella configurazione portatile); la correzione della pronuncia è visibile solo
 all’amministratore. La chat guidata e la Bussola accettano
 registrazione del microfono o file audio: la trascrizione è da controllare, salvo
 invio immediato scelto esplicitamente. In conversazione vocale si avvia e si ferma
@@ -934,7 +944,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | --- | --- | --- |
 | Obiettivi | `/profilo/obiettivi` | Organizzare gli obiettivi in una rete, dal perché al come: sopraobiettivi e sottobiettivi, anche con più genitori; toccare un obiettivo per modificarlo in una finestra popup, dove si scrive un nuovo obiettivo o si adotta e personalizza una proposta del catalogo (in creazione restano visibili titolo, motivazione e data di revisione; criteri, priorità, stato e condivisione sono sotto «Più dettagli»); scegliere un metodo (strategie certificate o proprie), pianificare azioni e controlli, collegare prove e lavori; chiudere con un bilancio, che diventa una tappa della Linea del tempo; scaricare il PDF «Percorso dell’obiettivo»; condividere un ramo con i docenti di un gruppo (mai i sopraobiettivi). Su computer anche vista mappa. Completare un’attività non conclude automaticamente un obiettivo: lo stato resta sempre manuale, è la persona a rivederlo. |
 | Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, azioni datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario, collegamenti al Portfolio e la rilettura dell’esperienza (cosa ha funzionato, cosa proverò), che può diventare un obiettivo o un’azione; per le tappe future o senza data compare anche «Cosa programmo»; una legenda spiega i simboli; azioni e obiettivi si aprono sulle loro pagine. Gli incontri della classe o del gruppo che il docente mostra nella linea del tempo (opzione «Mostra nella linea del tempo degli studenti», attiva di default) compaiono sull’asse e nel calendario come «Incontro della classe o del gruppo», con data, ora e luogo oppure «Online», segnati se annullati, e hanno un proprio filtro; quelli individuali compaiono solo alla fascia prenotata dallo studente; non vengono copiati nei dati personali. Sopra la linea, chi è in una classe o in un gruppo trova «Incontri delle tue classi o gruppi»: data, luogo o link, con chi è l’incontro, incontri annullati, la prenotazione delle fasce degli incontri individuali e il pulsante «Ho partecipato» dall’inizio dell’incontro o della propria fascia, quando il docente lascia allo studente la conferma della presenza. |
-| Studiare da un PDF (pQBL) | `/profilo/pqbl` | Caricare un PDF con testo selezionabile (massimo 100 MB; un PDF scansionato passa dall'OCR locale o, se manca, dal provider di visione scelto dall'amministratore, con la stessa protezione dei dati della chat; senza OCR utilizzabile compare un errore chiaro), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. |
+| Studiare da un PDF (pQBL) | `/profilo/pqbl` | Caricare un PDF con testo selezionabile (massimo 100 MB; un PDF scansionato richiede OCR/visione su host locale fidato, senza invio di immagini a provider esterni; senza OCR utilizzabile compare un errore nella lingua scelta), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. |
 | Flashcard | `/profilo/flashcard` | Preparare mazzi di domande e risposte, modificarli (il nome del mazzo si cambia direttamente nella pagina: Invio salva, Esc annulla) e ripassare in una sessione di studio, mostrando la risposta e registrando il proprio esito. |
 | Tavolo | `/profilo/tavolo` | Lavorare con materiali, idee e counselor; riaprire Tavoli salvati quando la funzione è abilitata. In cima c’è «I tuoi tavoli salvati» (aprire, rinominare nella riga, eliminare); sotto, in «Crea un nuovo tavolo», la creazione manuale, la composizione con AI e la scelta di counselor e modello, che contano solo per la creazione con AI. |
 | Carte da ordinare | `/profilo/carte` | Raccogliere e ordinare pensieri in più mazzi, usando colonne, modelli e trascinamento; mazzi e colonne si rinominano direttamente nella pagina. Non sono le Flashcard per il ripasso. |
