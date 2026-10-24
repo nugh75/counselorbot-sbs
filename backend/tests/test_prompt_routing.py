@@ -16,7 +16,7 @@ def ai(monkeypatch):
         "ai_fallback_targets": json.dumps([{"provider": "openrouter", "model": "openrouter/free"}]),
     })
     service = AIService(None)
-    monkeypatch.setattr("backend.ai_service.pii_ner.anonymize_texts", lambda texts, **kwargs:
+    monkeypatch.setattr("backend.pii_ner.anonymize_texts", lambda texts, **kwargs:
                         ([text.replace("Anna Rossi", "[PERSON_1]") for text in texts], {"[PERSON_1]": "Anna Rossi"}, True))
     return service
 

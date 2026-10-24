@@ -30,7 +30,7 @@ def desktop(tmp_path, monkeypatch):
     with database.write_session() as db:
         db.add_all(models.Config(key=key, value=value) for key, value in {
             "active_provider": "openai", "model_name": "synthetic-model",
-            "external_pii_redact": "false", "monthly_budget_usd": "1000000",
+            "pii_ner_enabled": "false", "monthly_budget_usd": "1000000",
             "ai_fallback_targets": "[]",
         }.items())
         db.add(models.GuidedStep(id="load-step", questionnaire_type="QSA", label="Synthetic step",

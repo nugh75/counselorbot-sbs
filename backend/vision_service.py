@@ -24,7 +24,10 @@ from openai import OpenAI
 from sqlalchemy.orm import Session
 
 from .api_secrets import resolve_api_secret
+from .privacy.errors import PrivacyError
+from .privacy.gateway import AIGateway, context_for
 from .privacy.policy import is_trusted_local
+from .privacy.types import AIRequest, Target
 
 logger = logging.getLogger(__name__)
 
@@ -107,12 +110,14 @@ def call(
     image_base64: str,
     *,
     timeout: int | None = None,
+    ctx=None,
 ) -> str:
     """Riconosce una pagina immagine e restituisce il testo del modello.
 
-    Il testo (`prompt`) arriva gia' filtrato da `AIService.call_vision`. Errori di
-    trasporto e risposte vuote diventano `VisionError` senza esporre chiavi, URL o
-    corpi di risposta."""
+    Prompt e immagine passano dal gateway AI (`kind="vision"`, P6): immagini
+    verso host non fidati bloccate, prompt filtrato. Errori di trasporto e
+    risposte vuote diventano `VisionError` senza esporre chiavi, URL o corpi
+    di risposta."""
     if provider not in PROVIDERS or provider == "none":
         raise VisionError("vision_unsupported_provider")
     require_local_target(config, provider)
@@ -126,10 +131,10 @@ def call(
         if not key:
             raise VisionError("vision_missing_key")
 
-    client: Any
-    try:
+    def transport(request: AIRequest) -> str:
+        prompt = request.texts[0]
+        client: Any
         if provider == "ollama":
-            base = (config.get("ollama_ip") or "http://localhost:11434").rstrip("/")
             response = httpx.post(
                 f"{base}/api/generate",
                 json={
@@ -193,6 +198,17 @@ def call(
                 text = response.choices[0].message.content
             finally:
                 client.close()
+        # Not text (None, a list): an invalid response, not a privacy block.
+        return text if isinstance(text, str) else ""
+
+    base = (config.get("ollama_ip") or "http://localhost:11434").rstrip("/") if provider == "ollama" else ""
+    # The gateway checks presence and destination of the image, not its bytes.
+    request = AIRequest("vision", Target(provider, model, base), [prompt],
+                        images=[image_base64.encode("ascii")])
+    try:
+        text = AIGateway(config, transport=transport).send(request, ctx or context_for(None)).text
+    except PrivacyError:
+        raise VisionError("personalAPI.errors.privacy") from None
     except VisionError:
         raise
     except Exception as exc:

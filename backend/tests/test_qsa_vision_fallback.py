@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from backend import models, pii_ner, qsa_extractor as qsa, vision_service
 from backend.ai_service import AIService
+from backend.privacy.gateway import AIGateway
 from backend.api_secrets import API_KEY_ENV_MAP
 
 QSA_SCORES = {f"C{i}": (i % 9) + 1 for i in range(1, 8)}
@@ -97,19 +98,19 @@ def test_fallback_routes_through_aiservice_to_trusted_local_vision(db, monkeypat
     monkeypatch.setattr(vision_service.httpx, "post", post)
     path = forced_fallback(monkeypatch, tmp_path)
 
-    anonymize_calls = []
-    original = ai._anonymize_external
+    gateway_calls = []
+    original = AIGateway.prepare
 
-    def spy(provider, message, system, history):
-        anonymize_calls.append(provider)
-        return original(provider, message, system, history)
+    def spy(self, request, ctx):
+        gateway_calls.append(request.kind)
+        return original(self, request, ctx)
 
-    monkeypatch.setattr(ai, "_anonymize_external", spy)
+    monkeypatch.setattr(AIGateway, "prepare", spy)
 
     result = qsa.extract_questionnaire_data(path, vision_call=ai.call_vision)
 
     assert result == QSA_SCORES
-    assert anonymize_calls == ["ollama"]
+    assert gateway_calls == ["vision"]
     assert ai.last_provider == "ollama" and ai.last_model == "local-vision-x"
     assert post.call_args.args[0] == "http://127.0.0.1:11434/api/generate"
     prompt = post.call_args.kwargs["json"]["prompt"]

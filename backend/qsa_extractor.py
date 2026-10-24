@@ -14,7 +14,10 @@ import requests
 from PIL import Image, UnidentifiedImageError
 
 from .pdf_images import render_pdf_pages
+from .privacy.errors import PrivacyError
+from .privacy.gateway import AIGateway, context_for
 from .privacy.policy import is_trusted_local
+from .privacy.types import AIRequest, Target
 from .vision_service import VisionError
 
 logger = logging.getLogger(__name__)
@@ -145,6 +148,19 @@ def _validate_scores(
 def _ollama_post(ollama_url: str, endpoint: str, payload: dict[str, Any], timeout: int) -> dict[str, Any]:
     if not is_trusted_local(ollama_url):
         raise VisionError(PRIVACY_BLOCKED_CODE)
+    # Texts and page images pass through the AI gateway (P6, kind="ocr").
+    messages = payload.get("messages")
+    texts = [m["content"] for m in messages] if messages else [payload.get("prompt", "")]
+    request = AIRequest("ocr", Target("ollama", payload.get("model", ""), ollama_url), texts,
+                        images=[image.encode("ascii") for image in payload.get("images", [])])
+    try:
+        texts = AIGateway().prepare(request, context_for(None)).request.texts
+    except PrivacyError:
+        raise VisionError(PRIVACY_BLOCKED_CODE) from None
+    if messages:
+        payload = {**payload, "messages": [dict(m, content=t) for m, t in zip(messages, texts)]}
+    else:
+        payload = {**payload, "prompt": texts[0]}
     try:
         with requests.Session() as client:
             client.trust_env = False

@@ -21,7 +21,10 @@ import re
 import unicodedata
 from typing import List, Optional
 
+from .privacy.errors import PrivacyError
+from .privacy.gateway import AIGateway, context_for
 from .privacy.policy import is_trusted_local
+from .privacy.types import AIRequest, Target
 from .vision_service import VisionError
 
 logger = logging.getLogger(__name__)
@@ -121,18 +124,29 @@ def _local_ollama_ocr(images: list, ollama_url: str, ocr_model: str) -> str:
         raise VisionError("personalAPI.errors.privacy")
     pages: List[str] = []
     for i, image in enumerate(images):
-        payload = {
-            "model": ocr_model,
-            "prompt": OCR_PROMPT,
-            "images": [_page_image_base64(image)],
-            "stream": False,
-            "options": {"temperature": 0},
-        }
+        page = _page_image_base64(image)
+
+        def transport(request: AIRequest) -> str:
+            payload = {
+                "model": ocr_model,
+                "prompt": request.texts[0],
+                "images": [page],
+                "stream": False,
+                "options": {"temperature": 0},
+            }
+            response = httpx.post(f"{ollama_url}/api/generate", json=payload, timeout=240.0,
+                                  follow_redirects=False, trust_env=False)
+            response.raise_for_status()
+            return response.json().get("response") or ""
+
         logger.info(f"pQBL: OCR locale con {ocr_model} per pagina {i + 1}...")
-        response = httpx.post(f"{ollama_url}/api/generate", json=payload, timeout=240.0,
-                              follow_redirects=False, trust_env=False)
-        response.raise_for_status()
-        pages.append(response.json().get("response") or "")
+        # Page image and prompt pass through the AI gateway (P6, kind="ocr").
+        request = AIRequest("ocr", Target("ollama", ocr_model, ollama_url), [OCR_PROMPT],
+                            images=[page.encode("ascii")])
+        try:
+            pages.append(AIGateway(transport=transport).send(request, context_for(None)).text)
+        except PrivacyError:
+            raise VisionError("personalAPI.errors.privacy") from None
     return _join_page_texts(pages)
 
 

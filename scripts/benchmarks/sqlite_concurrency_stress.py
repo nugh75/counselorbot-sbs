@@ -61,7 +61,7 @@ def _run(engine, workers, rounds, chunks, chunk_delay):
     with write_session() as db:
         db.add_all(models.Config(key=key, value=value) for key, value in {
             "active_provider": "openai", "model_name": "synthetic-load-model",
-            "external_pii_redact": "false", "monthly_budget_usd": "1000000",
+            "pii_ner_enabled": "false", "monthly_budget_usd": "1000000",
             "ai_fallback_targets": "[]", "load-housekeeping": "0",
         }.items())
         db.add_all(models.FrozenSession(username=f"load-student-{i}", session_id=f"load-{i}",

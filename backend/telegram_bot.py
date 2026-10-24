@@ -10,9 +10,14 @@ import os
 
 import httpx
 
+from .privacy.errors import PrivacyError
+from .privacy.gateway import AIGateway, context_for
+from .privacy.types import AIRequest, Target
+
 logger = logging.getLogger(__name__)
 
 TELEGRAM_MESSAGE_MAX = 4096
+TELEGRAM_URL = "https://api.telegram.org"
 
 
 def bot_enabled() -> bool:
@@ -25,7 +30,19 @@ def webhook_secret() -> str:
 
 def _api_url(method: str) -> str:
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
-    return f"https://api.telegram.org/bot{token}/{method}"
+    return f"{TELEGRAM_URL}/bot{token}/{method}"
+
+
+def _notify(texts: list[str], images: list[bytes] | None = None) -> list[str] | None:
+    """Contents for the student's own chat, through the AI gateway (P6, kind="notify").
+
+    Delivered as they are to the linked data subject; None when the gateway blocks."""
+    request = AIRequest("notify", Target("telegram", "", TELEGRAM_URL), texts, images=images or [])
+    try:
+        return AIGateway().prepare(request, context_for(None)).request.texts
+    except PrivacyError:
+        logger.error("Telegram message blocked by the privacy gateway")
+        return None
 
 
 def split_message(text: str, max_len: int = TELEGRAM_MESSAGE_MAX) -> list[str]:
@@ -54,6 +71,9 @@ async def send_message(chat_id: int, text: str, keyboard: list[list[dict]] | Non
     chunks = split_message(text)
     if not chunks:
         return
+    chunks = _notify(chunks)
+    if chunks is None:
+        return
     async with httpx.AsyncClient(timeout=15.0) as client:
         for i, chunk in enumerate(chunks):
             payload: dict = {"chat_id": chat_id, "text": chunk}
@@ -72,9 +92,13 @@ async def send_photo(chat_id: int, image: bytes, caption: str = "") -> None:
     """Invia un'immagine (i diagrammi della chat arrivano qui come PNG)."""
     if not image:
         return
+    allowed = _notify([caption[:1024]], [image])
+    if allowed is None:
+        return
+    caption = allowed[0]
     data: dict = {"chat_id": str(chat_id)}
     if caption:
-        data["caption"] = caption[:1024]
+        data["caption"] = caption
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
             response = await client.post(
@@ -123,7 +147,7 @@ async def download_file(file_id: str) -> bytes | None:
             file_path = ((info.json().get("result") or {}).get("file_path") or "").strip()
             if not file_path:
                 return None
-            content = await client.get(f"https://api.telegram.org/file/bot{token}/{file_path}")
+            content = await client.get(f"{TELEGRAM_URL}/file/bot{token}/{file_path}")
             if content.status_code != 200:
                 logger.error("Telegram download fallito: %s", content.status_code)
                 return None
