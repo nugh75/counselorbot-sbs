@@ -1,3 +1,36 @@
+# Handoff 24 ottobre 2026: F1-05j backup e ripristino SQLite
+
+Agente `s49-f105j-codex`, task Diario `b2fa405f-2e23-48e2-b020-878673b39024`,
+branch `feature/f1-05j-sqlite-backup`.
+
+- **Obiettivo**: backup online consistente del database SQLite desktop,
+  integrità verificata, retention e ripristino con copia preventiva.
+- **Modifiche**: `backend/sqlite_backup.py`, helper `create_backup` e
+  `restore_backup` basati su `sqlite3.Connection.backup`; snapshot autonomi in
+  `DATA_DIR/backups`, `integrity_check` obbligatorio, pubblicazione atomica,
+  7 copie per database (N configurabile), pulizia dei temporanei e timeout.
+  Restore solo dopo chiusura di richieste/job/connessioni (`database_stopped=True`),
+  staging verificato e backup preventivo; sicurezza conservata anche con orologio
+  arretrato. PostgreSQL: `None` senza accessi SQLite/filesystem.
+- **Test eseguiti**: comando richiesto con Python 3.11.9, 38 pass; con
+  `TEST_DB=sqlite`, backup + motore + db_compat + schema, 74 pass. Coperti commit
+  concorrente tra passi nativi, WAL/non committati, integrità/corruzione,
+  retention concorrente, timeout, restore e guasti. SQL portability,
+  guidance-refresh/check e diff whitespace verdi.
+- **Documentazione**: `docs/operations/sqlite-backups.md`, CONTEXT, funzionalità,
+  manifest guidance e handoff vivo del branch. Guida/screenshot sei lingue
+  rivisti, nessun controllo UI cambiato. Collegamento updater ancora F1-16.
+- **Limiti**: solo database (non upload/chiavi); restore richiede DB corrente
+  verificabile e tutti gli accessi fermi. `DATA_DIR/backups` è oggi
+  `<radice>/uploads/backups`, distinto dal layout futuro del guscio.
+- Commit feature `88300719`, pushato; [PR #552](https://github.com/nugh75/counselorbot-sbs/pull/552)
+  aperta verso main e collegata al progetto CounselorBot. Diario: task fatto,
+  URL PR nel body; notifica Timoniere inviata, ricezione non confermata.
+- Rebuild Docker finale non completato; nessun ulteriore rebuild su richiesta
+  dell'utente. Nessun build o processo dev ancora attivo, nessun deploy o sudo.
+  Bug temporanei SHM
+  `c7b07a14-1020-42d6-8184-4affa50e9bcf` registrato e risolto nel Diario.
+
 # Handoff 24 ottobre 2026: Privacy Layer P3 — spike motore PII
 
 Agente `s46-p3-opus` (Claude Opus 5.5), task Diario

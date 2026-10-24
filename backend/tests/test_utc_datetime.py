@@ -49,23 +49,18 @@ def test_utc_datetime_ddl_compilation_contracts():
 
 
 def test_models_use_utcdatetime_and_no_raw_datetime_timezone():
-    """Aware timestamps use UTCDateTime; F1-06 local sessions retain naive UTC."""
+    """All model timestamps, including local sessions, use UTCDateTime."""
     found_utc_columns = 0
     raw_datetime_columns = []
-    local_session_columns = set()
 
     for table in models.Base.metadata.tables.values():
         for column in table.columns:
             if isinstance(column.type, UTCDateTime):
                 found_utc_columns += 1
             elif isinstance(column.type, DateTime):
-                if table.name == "local_sessions" and not column.type.timezone:
-                    local_session_columns.add(column.name)
-                else:
-                    raw_datetime_columns.append(f"{table.name}.{column.name}")
+                raw_datetime_columns.append(f"{table.name}.{column.name}")
 
-    assert found_utc_columns >= 161, f"Expected at least 161 UTCDateTime columns, found {found_utc_columns}"
-    assert local_session_columns == {"created_at", "last_seen_at", "expires_at", "revoked_at"}
+    assert found_utc_columns >= 165, f"Expected at least 165 UTCDateTime columns, found {found_utc_columns}"
     assert raw_datetime_columns == [], f"Found raw DateTime columns in models: {raw_datetime_columns}"
 
 
