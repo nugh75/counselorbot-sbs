@@ -2363,3 +2363,21 @@ class ClassPathStepEvidence(Base):
     import_confirmation_id = Column(Integer, ForeignKey("questionnaire_import_confirmations.id", ondelete="CASCADE"), nullable=True)
     recorded_at = Column(UTCDateTime, nullable=False, server_default=func.now())
     invalidated_at = Column(UTCDateTime, nullable=True)
+
+
+class PrivacyKey(Base):
+    """Data keys of the Privacy Layer (P5), only wrapped by the KEK: the KEK never reaches the database.
+
+    `content`/`mapping`/`credentials`/`research` are the per-purpose DEKs (02 §4.2); `pid` and `index`
+    are the HMAC roots of `subject_pid` and blind indexes (02 §4.4), never rotated.
+    """
+    __tablename__ = "privacy_keys"
+    __table_args__ = (
+        CheckConstraint("purpose IN ('content', 'mapping', 'credentials', 'research', 'pid', 'index')",
+                        name="ck_privacy_key_purpose"),
+    )
+    key_id = Column(String(64), primary_key=True)
+    purpose = Column(String(16), nullable=False, index=True)
+    wrapped_key = Column(Text, nullable=False)
+    created_at = Column(UTCDateTime, nullable=False)
+    retired_at = Column(UTCDateTime, nullable=True)
