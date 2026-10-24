@@ -157,7 +157,7 @@ La politica è dati (tabella `privacy_category_policies`), non codice; il defaul
 ### 4.1 Identificativi
 
 - Interessati: si mantiene `username` come chiave interna (cambiarla tocca 100+ tabelle). Verso log, eventi e ricerca si
-  usa un **ID pseudonimo** `subject_pid = HMAC-SHA-256(K_pid, username)` troncato a 128 bit, base32. Rigenerabile solo con `K_pid`.
+  usa un **ID pseudonimo** `subject_pid = HMAC-SHA-256(K_pid, username)` troncato a 128 bit, base32 minuscolo senza padding. Rigenerabile solo con `K_pid`.
 - Ricerca deterministica di valori cifrati (es. email): **indice cieco** `HMAC-SHA-256(K_idx[campo], normalizza(valore))`.
 - Codici di ricerca (`anonymous_research_codes`): la tabella di corrispondenza va cifrata o sostituita da HMAC con chiave
   della finalità ricerca, tenuta separata (04-D3).
