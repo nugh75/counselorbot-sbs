@@ -104,7 +104,9 @@ usare i PID del report e il lancio successivo sulla stessa cartella di prova.
 - Il rewrite generale Next congela ancora il backend durante la build:
   F1-03 deve renderlo dinamico prima di dichiarare l'app utilizzabile. La
   firma F1-19 e il blocco interno sono già integrati.
-- Il pannello apre l'URL locale senza link docente monouso (F1-06).
+- Il pannello apre l'URL locale senza link docente monouso: il backend F1-06
+  espone `POST /internal/local-auth/teacher-link` e `/local-auth/redeem`, ma
+  la chiamata del guscio e la pagina `/accesso-locale` restano da collegare.
   Portachiavi F1-08, QR F1-09, firma/updater/release F1-15 restano separati.
 
 La PR resta in bozza: revisione coordinata dal Timoniere obbligatoria dopo
