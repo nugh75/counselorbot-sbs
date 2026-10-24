@@ -27,7 +27,7 @@ from .api_secrets import resolve_api_secret
 from .privacy.errors import PrivacyError
 from .privacy.gateway import AIGateway, context_for
 from .privacy.policy import is_trusted_local
-from .privacy.types import AIRequest, Target
+from .privacy.types import AIRequest, AIResponse, Target
 
 logger = logging.getLogger(__name__)
 
@@ -206,7 +206,8 @@ def call(
     request = AIRequest("vision", Target(provider, model, base), [prompt],
                         images=[image_base64.encode("ascii")])
     try:
-        text = AIGateway(config, transport=transport).send(request, ctx or context_for(None)).text
+        reply = AIGateway(config, transport=transport).send(request, ctx or context_for(None))
+        text = reply.text if isinstance(reply, AIResponse) else ""
     except PrivacyError:
         raise VisionError("personalAPI.errors.privacy") from None
     except VisionError:
