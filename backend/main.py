@@ -237,6 +237,9 @@ import_module("backend.migrations.20261011_teacher_shared_counselors").migrate(d
 import_module("backend.migrations.20261022_institution_password_display").migrate(database.engine)
 import_module("backend.migrations.20261022_meeting_attendance_mode").migrate(database.engine)
 import_module("backend.migrations.20261022_class_path_planned_day").migrate(database.engine)
+# SQLite: i CHECK di un file creato da una versione precedente seguono il modello (ADR-0003 §3.4).
+from .sqlite_schema import sync_sqlite_check_constraints
+sync_sqlite_check_constraints(database.engine, models.Base.metadata)
 
 
 @asynccontextmanager
