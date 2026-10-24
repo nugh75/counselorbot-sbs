@@ -1595,32 +1595,32 @@ async def audit_qsa(
 # cablato): messaggio per l'utente al posto dell'errore tecnico, che resta nei
 # log. Il filtro privacy esterno blocca l'invio del documento con policy `block`.
 _VISION_UNAVAILABLE_MESSAGE_BY_LANG = {
-    "it": "Non è stato possibile leggere il documento: nessun servizio di visione (OCR) "
+    "it": "Non è stato possibile leggere il documento: nessun servizio locale fidato di visione (OCR) "
           "è configurato o raggiungibile. Contatta un amministratore o inserisci i dati manualmente.",
-    "en": "The document could not be read: no vision (OCR) service is configured or reachable. "
+    "en": "The document could not be read: no trusted local vision (OCR) service is configured or reachable. "
           "Contact an administrator or enter the data manually.",
-    "es": "No se ha podido leer el documento: no hay ningún servicio de visión (OCR) configurado "
+    "es": "No se ha podido leer el documento: no hay ningún servicio local de confianza de visión (OCR) configurado "
           "o accesible. Contacta con un administrador o introduce los datos manualmente.",
-    "fr": "Le document n'a pas pu être lu : aucun service de vision (OCR) n'est configuré ou "
+    "fr": "Le document n'a pas pu être lu : aucun service local de confiance de vision (OCR) n'est configuré ou "
           "accessible. Contacte un administrateur ou saisis les données manuellement.",
-    "de": "Das Dokument konnte nicht gelesen werden: Es ist kein Vision- (OCR-) Dienst konfiguriert "
+    "de": "Das Dokument konnte nicht gelesen werden: Es ist kein vertrauenswürdiger lokaler Vision- (OCR-) Dienst konfiguriert "
           "oder erreichbar. Wende dich an einen Administrator oder gib die Daten manuell ein.",
-    "sv": "Dokumentet kunde inte läsas: ingen visions- (OCR-) tjänst är konfigurerad eller nåbar. "
+    "sv": "Dokumentet kunde inte läsas: ingen betrodd lokal visions- (OCR-) tjänst är konfigurerad eller nåbar. "
           "Kontakta en administratör eller ange uppgifterna manuellt.",
 }
 _VISION_PRIVACY_MESSAGE_BY_LANG = {
     "it": "Il documento non può essere inviato a un servizio esterno con la protezione dei dati "
-          "attuale. Riprova, oppure contatta un amministratore.",
+          "attuale. Usa un OCR locale fidato o contatta un amministratore.",
     "en": "The document cannot be sent to an external service under the current data protection "
-          "settings. Try again or contact an administrator.",
+          "settings. Use trusted local OCR or contact an administrator.",
     "es": "El documento no se puede enviar a un servicio externo con la protección de datos actual. "
-          "Inténtalo de nuevo o contacta con un administrador.",
+          "Usa un OCR local de confianza o contacta con un administrador.",
     "fr": "Le document ne peut pas être envoyé à un service externe avec la protection des données "
-          "actuelle. Réessaie ou contacte un administrateur.",
+          "actuelle. Utilise un OCR local de confiance ou contacte un administrateur.",
     "de": "Das Dokument kann mit dem aktuellen Datenschutz nicht an einen externen Dienst gesendet "
-          "werden. Versuche es erneut oder wende dich an einen Administrator.",
+          "werden. Nutze einen vertrauenswürdigen lokalen OCR-Dienst oder wende dich an einen Administrator.",
     "sv": "Dokumentet kan inte skickas till en extern tjänst med det aktuella dataskyddet. "
-          "Försök igen eller kontakta en administratör.",
+          "Använd betrodd lokal OCR eller kontakta en administratör.",
 }
 _VISION_UNAVAILABLE_CODES = frozenset({
     VISION_UNAVAILABLE_CODE, "vision_not_configured", "vision_unsupported_provider",

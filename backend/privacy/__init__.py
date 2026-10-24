@@ -10,7 +10,7 @@ from .errors import (
 from .policy import (
     AIGateway, authorize_data_access, configure_engine, decrypt_authorized, default_category_policy,
     depseudonymize, detect_pii, egress_requirements, encrypt_sensitive,
-    is_local_target, pseudonymize, record_privacy_event, require_purpose,
+    is_local_target, is_trusted_local, pseudonymize, record_privacy_event, require_purpose,
     restore_authorized,
 )
 from .types import (
@@ -34,6 +34,6 @@ __all__ = [
     "SensitivityLevel", "Span", "Target", "TreatmentMode", "authorize_data_access",
     "configure_engine",
     "decrypt_authorized", "default_category_policy", "depseudonymize", "detect_pii",
-    "egress_requirements", "encrypt_sensitive", "is_local_target", "pseudonymize",
+    "egress_requirements", "encrypt_sensitive", "is_local_target", "is_trusted_local", "pseudonymize",
     "record_privacy_event", "require_purpose", "restore_authorized",
 ]

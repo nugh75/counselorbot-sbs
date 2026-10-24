@@ -21,6 +21,9 @@ import re
 import unicodedata
 from typing import List, Optional
 
+from .privacy.policy import is_trusted_local
+from .vision_service import VisionError
+
 logger = logging.getLogger(__name__)
 
 # Limiti per restare nel contesto del modello: PDF più lunghi vengono troncati.
@@ -41,6 +44,24 @@ OCR_PROMPT = (
 #: Codice stabile del PDF scansionato senza OCR utilizzabile; il messaggio
 #: dell'eccezione arriva all'utente in `error_detail` tramite `routes/pqbl.py`.
 OCR_UNAVAILABLE_CODE = "pqbl.errors.ocrUnavailable"
+OCR_UNAVAILABLE_MESSAGES = {
+    "it": "Il PDF scansionato richiede un servizio OCR locale fidato, che non è disponibile. "
+          "Le immagini non vengono inviate a servizi esterni. Carica un PDF con testo selezionabile o contatta un amministratore.",
+    "en": "The scanned PDF requires a trusted local OCR service, which is unavailable. "
+          "Images are not sent to external services. Upload a PDF with selectable text or contact an administrator.",
+    "es": "El PDF escaneado requiere un servicio OCR local de confianza, que no está disponible. "
+          "Las imágenes no se envían a servicios externos. Sube un PDF con texto seleccionable o contacta con un administrador.",
+    "fr": "Le PDF numérisé nécessite un service OCR local de confiance, qui est indisponible. "
+          "Les images ne sont pas envoyées à des services externes. Importe un PDF avec du texte sélectionnable ou contacte un administrateur.",
+    "de": "Das gescannte PDF benötigt einen vertrauenswürdigen lokalen OCR-Dienst, der nicht verfügbar ist. "
+          "Bilder werden nicht an externe Dienste gesendet. Lade ein PDF mit auswählbarem Text hoch oder kontaktiere einen Administrator.",
+    "sv": "Den skannade PDF-filen kräver en betrodd lokal OCR-tjänst som inte är tillgänglig. "
+          "Bilder skickas inte till externa tjänster. Ladda upp en PDF med markerbar text eller kontakta en administratör.",
+}
+
+
+def ocr_unavailable_message(language: str) -> str:
+    return OCR_UNAVAILABLE_MESSAGES.get(language, OCR_UNAVAILABLE_MESSAGES["it"])
 
 
 class OcrUnavailableError(ValueError):
@@ -96,6 +117,8 @@ def _local_ollama_ocr(images: list, ollama_url: str, ocr_model: str) -> str:
     """OCR locale via Ollama. Ritorna il testo estratto (vuoto se nessuno)."""
     import httpx
 
+    if not is_trusted_local(ollama_url):
+        raise VisionError("personalAPI.errors.privacy")
     pages: List[str] = []
     for i, image in enumerate(images):
         payload = {
@@ -106,7 +129,8 @@ def _local_ollama_ocr(images: list, ollama_url: str, ocr_model: str) -> str:
             "options": {"temperature": 0},
         }
         logger.info(f"pQBL: OCR locale con {ocr_model} per pagina {i + 1}...")
-        response = httpx.post(f"{ollama_url}/api/generate", json=payload, timeout=240.0)
+        response = httpx.post(f"{ollama_url}/api/generate", json=payload, timeout=240.0,
+                              follow_redirects=False, trust_env=False)
         response.raise_for_status()
         pages.append(response.json().get("response") or "")
     return _join_page_texts(pages)

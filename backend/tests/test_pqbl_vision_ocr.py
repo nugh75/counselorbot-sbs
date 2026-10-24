@@ -127,12 +127,15 @@ def test_local_ocr_is_preferred_over_the_vision_provider(monkeypatch, tmp_path):
     vision.assert_not_called()
 
 
-def test_scanned_pdf_uses_the_configured_vision_provider(db, monkeypatch, scanned_pdf):
-    ai = service(db, vision_provider="openrouter", vision_model="vendor/vision-x",
+def test_scanned_pdf_uses_the_configured_trusted_local_vision_provider(db, monkeypatch, scanned_pdf):
+    ai = service(db, vision_provider="ollama", vision_model="local-vision-x",
+                 ollama_ip="http://127.0.0.1:11434",
                  external_pii_redact="true", external_pii_fallback="block",
                  pii_ner_enabled="false")
-    monkeypatch.setenv("API_KEY_OPENROUTER", "fake-system-key")
-    constructor, client = fake_provider(monkeypatch)
+    response = Mock()
+    response.json.return_value = {"response": VISION_TEXT}
+    post = Mock(return_value=response)
+    monkeypatch.setattr(vision_service.httpx, "post", post)
 
     anonymize_calls = []
     original = ai._anonymize_external
@@ -148,15 +151,12 @@ def test_scanned_pdf_uses_the_configured_vision_provider(db, monkeypatch, scanne
 
     # Due pagine scansionate: il testo delle due pagine viene unito.
     assert result.count(VISION_TEXT) == 2
-    # Il filtro privacy esterno della chat è stato applicato al provider vision.
-    assert anonymize_calls == ["openrouter", "openrouter"]
-    assert ai.last_provider == "openrouter" and ai.last_model == "vendor/vision-x"
-    # Chiamata tramite il client del provider configurato, con la chiave di sistema.
-    assert constructor.call_args.kwargs["api_key"] == "fake-system-key"
-    assert constructor.call_args.kwargs["base_url"] == "https://openrouter.ai/api/v1"
-    prompt = client.chat.completions.create.call_args.kwargs["messages"][0]["content"][0]["text"]
+    assert anonymize_calls == ["ollama", "ollama"]
+    assert ai.last_provider == "ollama" and ai.last_model == "local-vision-x"
+    assert post.call_args.args[0] == "http://127.0.0.1:11434/api/generate"
+    prompt = post.call_args.kwargs["json"]["prompt"]
     assert "Markdown" in prompt  # prompt OCR, nessun modello cablato
-    assert client.chat.completions.create.call_count == 2
+    assert post.call_count == 2
 
 
 def test_missing_vision_provider_is_a_clear_classified_error(db, monkeypatch, scanned_pdf):

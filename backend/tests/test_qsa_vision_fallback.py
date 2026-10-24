@@ -87,11 +87,14 @@ def fake_provider(monkeypatch, scores=None, content=None):
     return constructor, client
 
 
-def test_fallback_routes_through_aiservice_and_applies_privacy_filter(db, monkeypatch, tmp_path):
-    ai = service(db, vision_provider="openrouter", vision_model="vendor/vision-x",
+def test_fallback_routes_through_aiservice_to_trusted_local_vision(db, monkeypatch, tmp_path):
+    ai = service(db, vision_provider="ollama", vision_model="local-vision-x",
+                 ollama_ip="http://127.0.0.1:11434",
                  external_pii_redact="true", external_pii_fallback="block", pii_ner_enabled="false")
-    monkeypatch.setenv("API_KEY_OPENROUTER", "fake-system-key")
-    constructor, client = fake_provider(monkeypatch)
+    response = Mock()
+    response.json.return_value = {"response": json.dumps(QSA_SCORES)}
+    post = Mock(return_value=response)
+    monkeypatch.setattr(vision_service.httpx, "post", post)
     path = forced_fallback(monkeypatch, tmp_path)
 
     anonymize_calls = []
@@ -106,14 +109,11 @@ def test_fallback_routes_through_aiservice_and_applies_privacy_filter(db, monkey
     result = qsa.extract_questionnaire_data(path, vision_call=ai.call_vision)
 
     assert result == QSA_SCORES
-    # Il filtro privacy esterno della chat e' stato applicato al provider vision.
-    assert anonymize_calls == ["openrouter"]
-    assert ai.last_provider == "openrouter" and ai.last_model == "vendor/vision-x"
-    # La chiamata e' passata dal client del provider configurato, con la chiave di sistema.
-    assert constructor.call_args.kwargs["api_key"] == "fake-system-key"
-    assert constructor.call_args.kwargs["base_url"] == "https://openrouter.ai/api/v1"
-    prompt = client.chat.completions.create.call_args.kwargs["messages"][0]["content"][0]["text"]
-    assert "vendor/vision-x" not in prompt and "C1" in prompt
+    assert anonymize_calls == ["ollama"]
+    assert ai.last_provider == "ollama" and ai.last_model == "local-vision-x"
+    assert post.call_args.args[0] == "http://127.0.0.1:11434/api/generate"
+    prompt = post.call_args.kwargs["json"]["prompt"]
+    assert "local-vision-x" not in prompt and "C1" in prompt
 
 
 def test_block_policy_stops_external_vision_before_any_provider_call(db, monkeypatch, tmp_path):

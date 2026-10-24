@@ -1,3 +1,14 @@
+# Handoff 24 ottobre 2026: Privacy Layer P6a-c — controlli sull'uscita di rete
+
+Agente `s52-p6ac-codex`, task Diario `4d2e0973-0b46-4c43-84df-527c4297d544`, branch `feature/privacy-p6ac-network-egress`, issue #558.
+
+- **Obiettivo**: nessun dato personale lascia la macchina verso host non fidati: immagini, host locali, rilevatore NER e TTS.
+- **Modifiche**: host locali fidati solo se loopback o in allowlist operatore (LAN e nomi provider non bastano); Vision/QSA/pQBL bloccano le immagini verso provider esterni (nessun bypass prima del consenso P9); detector NER remoto bloccato; Ollama/llama.cpp remoti filtrati anche con opt-out; Edge TTS redatto dopo la pronuncia e prima dei segmenti, errore del filtro bloccante; API lettore: default Piper fidato se raggiungibile, altrimenti Edge filtrato; divieto Piper teacher-pc (F1-07) conservato. Doc `docs/privacy/p6ac-network-egress.md`.
+- **Limiti**: filtro Edge deterministico (non copre nomi, luoghi, salute); fiducia hostname senza risoluzione/pinning DNS; gateway completo resta P6. Bug privacy local-only `3cbd6803-6d6d-43f2-80ab-d8561bf03821`.
+- **Test eseguiti**: `TEST_DB=sqlite` Python 3.11.9 `test_privacy_p6ac_egress.py` 62 pass (ratchet known failures pulito); `make guidance-check` verde; regressione precedente 350 pass (OCR, lettore, teacher-pc, PII, P1). Postgres, rebuild Docker e smoke Docker non eseguiti. Nessun deploy, sudo o processo dev attivo.
+
+---
+
 # Handoff 24 ottobre 2026: Privacy Layer P8 — subject PID e mappe cifrate dei segnaposto
 
 Agente `s57-p8-opus` (Claude Opus 5.5), task Diario `2f863b9b-8966-442f-a411-d5bce55965cc`,
