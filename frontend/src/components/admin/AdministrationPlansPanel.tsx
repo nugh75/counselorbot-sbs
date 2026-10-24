@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Check, Copy, FileText, Link2, MapPin, Pencil, Plus, QrCode, RefreshCw, Search, Trash2, Users, X } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useI18n } from '@/lib/i18n-context';
-import { apiFetch } from '@/lib/auth';
+import { apiFetch, getAuthUrls } from '@/lib/auth';
 import { parsePlanInstitutionOptions, planIdFromHash, planInstitutionField, type PlanInstitutionOption } from '@/lib/administration-plans';
 import Link from 'next/link';
 import { credentialText, type CredentialTextKey } from '@/lib/i18n-institution-credentials';
@@ -89,7 +89,6 @@ const EMPTY: FormState = {
     external_researchers: '',
 };
 
-const LANDING_BASE = process.env.NEXT_PUBLIC_AI4AUTH_BASE || 'https://auth.ai4educ.org';
 const INSTRUMENTS = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP'];
 const LOCALES: { value: LocaleCode; label: string }[] = [
     { value: 'it', label: 'Italiano (competenzestrategiche.it)' },
@@ -241,7 +240,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
             locale: plan.locale,
             school_level: plan.school_level ?? '',
         });
-        return `${LANDING_BASE}/avvio?${q.toString()}`;
+        return `${getAuthUrls().authBase}/avvio?${q.toString()}`;
     };
 
     // Classi del docente/admin: agganciabili al piano (gli inviti vivono sulla classe).

@@ -14,7 +14,7 @@ import { HeaderMenu } from './HeaderMenu';
 import { HeaderResume } from './HeaderResume';
 import { TooltipProvider } from '@/components/ui/Tooltip';
 import { cn } from '@/lib/utils';
-import { AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
+import { getAuthUrls, getIdentity, type Identity } from '@/lib/auth';
 import { currentHeaderLink, headerNavigation, type HeaderLinkKey } from '@/lib/header-navigation';
 import { useUserAccess } from '@/lib/use-user-access';
 import { useI18n } from '@/lib/i18n-context';
@@ -50,8 +50,9 @@ export function Header() {
     // Una sola descrizione delle voci per barra e menu (P3 dell'audit navbar).
     const nav = headerNavigation({ identity, access, accessLoading });
     const current = currentHeaderLink(nav.links, pathname);
-    const servicesHref = nav.services === 'manager' ? AI4EDUC_MANAGER_URL : nav.services === 'portal' ? AI4EDUC_PORTAL_URL : undefined;
-    const logoutHref = nav.authenticated ? AI4AUTH_LOGOUT_URL : undefined;
+    const authUrls = getAuthUrls();
+    const servicesHref = nav.services === 'manager' ? authUrls.managerUrl : nav.services === 'portal' ? authUrls.portalUrl : undefined;
+    const logoutHref = nav.authenticated ? authUrls.logoutUrl : undefined;
 
     // Barra desktop (P4): prima l'ingresso alle aree, poi gli strumenti di
     // supporto, con etichette visibili e mai tagliate. Se lo spazio manca si

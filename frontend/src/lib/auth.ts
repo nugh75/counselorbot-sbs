@@ -2,6 +2,8 @@
 // Remote-* iniettati da nginx ed espone /api/auth/me.
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { createAuthUrls } from './auth-urls.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { getRuntimeConfig } from './runtime-config.ts';
 
 export interface Identity {
     email: string;
@@ -136,24 +138,14 @@ export async function getIdentity(): Promise<Identity | null> {
     return real;
 }
 
-// Console ai4educ: portale per tutti gli utenti, manager per gli amministratori.
-const authUrls = createAuthUrls({
-    appUrl: process.env.NEXT_PUBLIC_APP_URL,
-    authBase: process.env.NEXT_PUBLIC_AI4AUTH_BASE,
-    portalUrl: process.env.NEXT_PUBLIC_AI4EDUC_PORTAL_URL,
-    managerUrl: process.env.NEXT_PUBLIC_AI4EDUC_MANAGER_URL,
-    projectId: process.env.NEXT_PUBLIC_AI4EDUC_PROJECT_ID,
-});
-export const AI4EDUC_PORTAL_URL = authUrls.portalUrl;
-export const AI4EDUC_MANAGER_URL = authUrls.managerUrl;
-export const AI4EDUC_SECRETS_URL = authUrls.secretsUrl;
-
-// Logout gestito da ai4auth (distrugge la sessione e il cookie di dominio)
-export const AI4AUTH_LOGOUT_URL = authUrls.logoutUrl;
+// URL ai4auth e Console ai4educ (portale per tutti, manager per gli admin; il
+// logout distrugge la sessione e il cookie di dominio). Calcolati a ogni uso
+// dalla configurazione di avvio del server (F1-03), non fissati nel bundle.
+export function getAuthUrls() {
+    return createAuthUrls(getRuntimeConfig());
+}
 
 // Login ai4auth con ritorno alla pagina corrente (?rd=)
-export const AI4AUTH_LOGIN_URL = authUrls.loginUrl;
-
 export function ai4authLoginUrl(returnPath: string = '/admin'): string {
-    return authUrls.login(returnPath, typeof window !== 'undefined' ? window.location.origin : undefined);
+    return getAuthUrls().login(returnPath, typeof window !== 'undefined' ? window.location.origin : undefined);
 }

@@ -15,6 +15,7 @@ export function createAuthUrls(options: AuthUrlOptions = {}) {
     return {
         portalUrl: options.portalUrl || 'https://portal.ai4educ.org/',
         managerUrl,
+        authBase,
         loginUrl,
         logoutUrl: `${authBase}/logout`,
         secretsUrl: `${managerUrl}/segreti?project=${encodeURIComponent(options.projectId || 'counselorbot-10-step')}`,

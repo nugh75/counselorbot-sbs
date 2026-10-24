@@ -14,7 +14,7 @@ import { DocumentRetrievalSettings } from '@/components/admin/DocumentRetrievalS
 import { Callout } from '@/components/ui/Callout';
 import { PromptFactoryAlignment, type FactoryAlignmentResult } from '@/components/admin/PromptFactoryAlignment';
 import { ModelContextSettings } from '@/components/admin/ModelContextSettings';
-import { AI4EDUC_SECRETS_URL } from '@/lib/auth';
+import { getAuthUrls } from '@/lib/auth';
 import { SectionFilter, type SectionFilterGroup } from '@/components/admin/SectionFilter';
 import { PromptMap } from '@/components/admin/PromptMap';
 import { ModelSearchSelect } from '@/components/admin/ModelSearchSelect';
@@ -782,7 +782,7 @@ export function ConfigForm() {
                     <div className="space-y-2">
                         <p>{t('admin.config.apiKeysContract')}</p>
                         <a
-                            href={AI4EDUC_SECRETS_URL}
+                            href={getAuthUrls().secretsUrl}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1.5 font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
