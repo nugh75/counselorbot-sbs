@@ -1,3 +1,41 @@
+# Handoff 24 ottobre 2026: Fase 1 desktop integrata in main (F1-05a, F1-05b, F1-02)
+
+Agente `s31-merge-opus` (Claude Opus 5.5), task Diario
+`0ebb940d-c6c7-451b-8fa5-7bf7b210231e`, branch `chore/merge-desktop-phase1`.
+Revisione cross-modello derogata dall'utente per quota (task Diario
+`a24cf609-898a-4351-9980-1ef183fe49bb`).
+
+- Merge su `main` con merge commit: #523 F1-02 guscio Tauri (`fb9e38ec`),
+  #522 F1-05a fixture e CI dual-DB (`68ecc7c6`), #519 F1-05b motore SQLite
+  (`0c1b40a9`). Tutte e tre `MERGED`, verificato con `gh pr view` e
+  `git log origin/main`. Base `main` attuale: `0c1b40a9`.
+- #522 e #523 risultavano già merged all'avvio del task; dopo di loro #519 era
+  `CONFLICTING` solo su `HANDOFF.md` e `docs/operations/platform-guidance-state.json`.
+  Risolto con merge ordinario di `origin/main` nel branch (`8c9a2d56`, nessun
+  rebase né force push): conservate entrambe le sezioni di handoff, stato della
+  guida rigenerato con `make guidance-refresh`, `make guidance-check` verde.
+- CI sul nuovo head di #519 verde 12/12: engine su ubuntu-22.04, macos-latest,
+  macos-15-intel, windows-latest; tests (postgres), tests (sqlite) e
+  startup (sqlite) del controllo dual-DB (nessun fallimento fuori baseline);
+  portability, offline-retrieval, documentation. #523 era verde sui quattro
+  runner build (Ubuntu, macOS arm64, macOS x64, Windows NSIS).
+- Nessun test locale, build Docker, deploy, sudo o processo dev: solo
+  integrazione e documentazione.
+
+## Prossimi passi (Fase 1)
+
+Ordine da `docs/architecture/desktop-apps-plan.md`:
+
+1. **F1-05c** compatibilità DDL SQLite: `add_column_if_missing` in
+   `db_compat.py` al posto delle 49 righe `ADD COLUMN IF NOT EXISTS`; avvio su
+   SQLite nuovo due volte sullo stesso file e su Postgres senza errori. Toglie
+   l'eccezione F1-05c che oggi tiene verde `startup (sqlite)`.
+2. **F1-06** fornitore di identità locale (link monouso / QR del docente,
+   `local_sessions`, sessione docente rifiutata dal tunnel): parallelizzabile
+   con F1-05c, F1-05d, F1-05e.
+3. **F1-13** abbinamento studenti: dipende da F1-06 **e** da F1-09, quindi va
+   avviato solo dopo entrambi.
+
 # Handoff 24 ottobre 2026: integrazione PR #519 dopo #521
 
 Agente `s28-pr519-sol` (Codex), task Diario
