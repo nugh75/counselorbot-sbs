@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 
 import { backendOrigin } from '@/lib/backend-origin';
+import { applyRequestOrigin } from '@/lib/request-origin';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -12,6 +13,7 @@ export async function POST(request: NextRequest) {
         const value = request.headers.get(name);
         if (value) headers.set(name, value);
     }
+    applyRequestOrigin(request.headers, headers);
     try {
         const upstream = await fetch(`${backendOrigin()}/tts/stream`, {
             method: 'POST', headers, body: await request.text(), signal: request.signal,
