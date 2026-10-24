@@ -260,6 +260,13 @@ def test_responses_transport_exact_payload_completion_usage_and_close(monkeypatc
     monkeypatch.setattr(responses, "require_ready", lambda db: None)
     monkeypatch.setattr(responses, "access_token", lambda db: "fixture-oauth")
     monkeypatch.setattr(responses, "preference", lambda db: "model")
+    # This transport test replaces credential lookups; their transaction
+    # boundary is covered with a real DB in test_sqlite_load_concurrency.py.
+    @contextmanager
+    def lookup(_db):
+        yield SimpleNamespace(info={})
+    monkeypatch.setattr(responses, "independent_read_session", lookup)
+    transport_db = SimpleNamespace(info={})
     events = [SimpleNamespace(type="response.output_text.delta", delta="Hello"),
               SimpleNamespace(type="response.completed", response=SimpleNamespace(usage=SimpleNamespace(model_dump=lambda: {"input_tokens":10,"output_tokens":2})))]
     @contextmanager
@@ -271,7 +278,7 @@ def test_responses_transport_exact_payload_completion_usage_and_close(monkeypatc
         return SimpleNamespace(responses=SimpleNamespace(create=create), close=lambda: closes.append(True))
     monkeypatch.setattr(responses, "OpenAI", client)
     history = [{"role":"user","content":"Before"}, {"role":"assistant","content":"Reply"}, {"role":"system","content":"ignored"}]
-    output = list(responses.stream(None, "model", "Now", "English instructions", history))
+    output = list(responses.stream(transport_db, "model", "Now", "English instructions", history))
     assert output == ["Hello", {"type":"usage","usage":{"input_tokens":10,"output_tokens":2}}]
     assert calls == [responses.preview("model", "Now", "English instructions", history)["body"]]
     assert calls[0]["input"] == history[:2] + [{"role":"user","content":"Now"}]
@@ -280,11 +287,11 @@ def test_responses_transport_exact_payload_completion_usage_and_close(monkeypatc
     assert closes == [True]
     events.pop()
     with pytest.raises(accounts.ChatGPTError, match="incomplete"):
-        list(responses.stream(None, "model", "Now", "English instructions"))
+        list(responses.stream(transport_db, "model", "Now", "English instructions"))
     assert closes == [True, True]
     events[:] = [SimpleNamespace(type="response.failed", response=SimpleNamespace(error=SimpleNamespace(code="subscription_sharing_usage_limit_reached")))]
     with pytest.raises(accounts.ChatGPTError, match="quota"):
-        list(responses.stream(None, "model", "Now", "English instructions"))
+        list(responses.stream(transport_db, "model", "Now", "English instructions"))
 
 
 @pytest.mark.parametrize("language", ["it","en","es","fr","de","sv"])

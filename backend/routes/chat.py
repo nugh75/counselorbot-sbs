@@ -180,7 +180,7 @@ def _resolve_counselor(db, counselor_id):
 
 
 def _watch_thread(prepared, request, db, *, session_id, username, effective_message,
-                  response_content, recommended) -> None:
+                  response_content, recommended, step_prompt=None) -> None:
     """Hand the finished turn to the guard.
 
     Fire and forget, and never on the way out: the reply has already left, and a
@@ -198,7 +198,7 @@ def _watch_thread(prepared, request, db, *, session_id, username, effective_mess
         questionnaire_type=prepared.questionnaire_type,
         step_id=request.phase or None,
         step_label=prepared.step_label or "",
-        step_prompt=getattr(step, "prompt", "") or "",
+        step_prompt=(getattr(step, "prompt", "") or "") if step_prompt is None else step_prompt,
         language=request.language or "it",
         advice_ids=list(recommended.get("strategy", [])) + list(recommended.get("reading", [])),
         candidate_ids=list(prepared.certified_strategy_ids or []),
@@ -494,7 +494,7 @@ def _apply_idea_patch(response_content: str, *, questionnaire_type: str, usernam
     cleaned, patch = extract_patch(response_content)
     if patch is None or not allow_write:
         return cleaned, None
-    map_db = database.SessionLocal()
+    map_db = database.write_session()
     try:
         revision = apply_and_store(
             map_db, username, session_id, patch, source="turn", step_id=step_id,
@@ -907,9 +907,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     Variante streaming di /chat (Server-Sent Events).
     Eventi: {"delta": "..."} per ogni pezzo, poi {"done": true, "response": <full>, "session_id": ...}.
     Il logging e l'aggiornamento della memoria Markdown avvengono al termine dello stream.
-    NB: la sessione `db` viene chiusa al ritorno della funzione (prima che il
-    generatore venga consumato), perciò l'AIService carica la config subito e
-    il logging usa una sessione fresca.
+    La preparazione viene committata e chiusa esplicitamente prima dello stream,
+    indipendentemente dal ciclo di vita delle dipendenze FastAPI. Il logging usa
+    sessioni brevi di scrittura; il generatore conserva solo valori già letti.
     """
     import json as _json
 
@@ -982,6 +982,14 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
     # Risolto qui, con la sessione della richiesta: il log scrive dopo lo stream.
     practice_notebook_id = practice_notebook_id_for_turn(db, identity, request)
+    required_factor_codes = (
+        _phase_factor_codes(db, request.phase) if _requires_complete_factor_output(request.mode) else None
+    )
+    step_title = localized(step, "label", request.language) if step else ""
+    step_order = step.sort_order if step else None
+    guard_step_prompt = getattr(getattr(prepared, "step", None), "prompt", "") or ""
+    db.commit()
+    db.close()
 
     def _log_stream(
         response_content: str,
@@ -994,7 +1002,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         model = getattr(ai_service, "last_model", None) or c_model or ai_service.config.get("model_name", "unknown")
         plan_getter = getattr(ai_service, "_plan", None)
         reasoning_plan = plan_getter() if callable(plan_getter) else None
-        log_db = database.SessionLocal()
+        log_db = database.write_session()
         try:
             cost_usd = _usage_cost_usd(usage, provider, model)
             _details = pii.redact_details({
@@ -1080,7 +1088,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             _watch_thread(prepared, request, log_db, session_id=session_id,
                           username=identity.get("username") if identity else "",
                           effective_message=effective_message,
-                          response_content=response_content, recommended=recommended)
+                          response_content=response_content, recommended=recommended,
+                          step_prompt=guard_step_prompt)
             return response_id
         except Exception as e:
             logger.error(f"Errore log stream session {session_id}: {e}")
@@ -1220,8 +1229,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             else:
                 response_content = _student_visible_response(
                     raw_response, questionnaire_type, request.language, sanitize,
-                    required_codes=_phase_factor_codes(db, request.phase)
-                    if _requires_complete_factor_output(request.mode) else None,
+                    required_codes=required_factor_codes,
                 )
                 response_content, idea_revision_id = _apply_idea_patch(
                     response_content,
@@ -1275,8 +1283,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     )
                     retry = _student_visible_response(
                         retry, questionnaire_type, request.language, sanitize,
-                        required_codes=_phase_factor_codes(db, request.phase)
-                        if _requires_complete_factor_output(request.mode) else None,
+                        required_codes=required_factor_codes,
                     )
                     retry = strip_thinking(retry)
                     retry, _ = _limit_visible_words(retry, effective_response_length)
@@ -1300,7 +1307,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals})}\n\n"
                 return
 
-            exploration_event, control_signals = exploration_transition(request, control_signals, title=localized(step, "label", request.language) if step else "", has_content=bool(response_content.strip()))
+            exploration_event, control_signals = exploration_transition(request, control_signals, title=step_title, has_content=bool(response_content.strip()))
             if request.exploration:
                 booklet_draft = goal_draft_value = None
 
@@ -1335,7 +1342,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             response_id = _log_stream(response_content, usage_info, recommended)
             recommendations_for_response: dict[str, list[dict]] = {"reading": [], "strategy": []}
             if not request.preview:
-                recommendation_db = database.SessionLocal()
+                recommendation_db = database.write_session()
                 try:
                     user_message_to_couple = effective_message or request.message if not getattr(request, "use_phase_prompt", False) else None
                     recommendations_for_response = _record_recommendations(
@@ -1354,7 +1361,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                         matched_on=recommendation_meta,
                         turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
                         step_id=request.phase or "",
-                        step_order=step.sort_order if step else None,
+                        step_order=step_order,
                         user_message=user_message_to_couple,
                     )
                 except Exception as exc:
@@ -1415,7 +1422,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
             try:
                 from ..chat_logic import log_error as _log_error
-                _err_db = database.SessionLocal()
+                _err_db = database.write_session()
                 try:
                     _log_error(_err_db, session_id, str(e), identity=identity,
                                questionnaire_type=questionnaire_type, mode=request.mode, phase=request.phase,
