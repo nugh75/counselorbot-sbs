@@ -1,3 +1,13 @@
+# Handoff 24 ottobre 2026: F1-14 — anti-sospensione e «docente offline»
+
+Agente `s55-f114-claude` (Claude Sonnet 5.5), task Diario `59e42279-4d36-4766-b1b3-d4bb203b00fa`, branch `feature/f1-14-anti-sleep-offline-status`.
+
+- **Obiettivo**: il PC del docente non va in sospensione a lezione attiva; gli studenti vedono «Il docente è offline» invece del 502.
+- **Modifiche**: `desktop/teacher/src-tauri/src/sleep.rs` (`SleepGuard` su trait `Inhibitor`: IOKit `PreventUserIdleSystemSleep` su macOS, `SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)` su Windows, nessuna inibizione altrove); il supervisore la attiva in `publish()` solo con fase `ready` e backend, frontend e tunnel in esecuzione, la rilascia a stop/errore/tunnel spento. `frontend/public/offline.html` + `offline.js` (nuovo controllo ogni 10 s e pulsante «Riprova»), `sw-offline.js` (service worker che ripiega sulla pagina per 502–504/530 o rete assente), registrato da `layout.tsx`.
+- **Limite**: il service worker esiste solo dopo una prima visita; chi apre il link per la prima volta con il tunnel senza origine vede ancora la pagina Cloudflare (il quick tunnel non permette pagine di errore proprie). Le bozze restano gestite da `ChatContinuation`.
+- **Test**: vedi PR (`cargo test`, `npm run test:offline`, `make guidance-check`).
+---
+
 # Handoff 24 ottobre 2026: F1-10 — tunnel nominativo guidato con dominio personalizzato
 
 Agente `s62-f110-agy` (Gemini / Antigravity), task Diario `1c655936-880d-4731-a489-d12f4ad34ac4`,

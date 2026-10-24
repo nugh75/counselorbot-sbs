@@ -43,6 +43,8 @@ export default function RootLayout({
                     al build (F1-03): stessa build per Docker e desktop. Eseguito
                     prima dell'idratazione, quindi prima di ogni componente. */}
                 <Script src="/runtime-config.js" strategy="beforeInteractive" />
+                {/* F1-14: pagina «docente offline» al posto dell'errore 502 del tunnel. */}
+                <Script src="/register-offline.js" strategy="afterInteractive" />
                 {/* No-flash: tema e lingua salvati applicati prima del primo paint.
                     La lingua arrivava solo dopo l'idratazione, quindi il primo
                     rendering — e con esso la voce di uno screen reader — partiva
