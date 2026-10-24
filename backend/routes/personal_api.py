@@ -98,7 +98,8 @@ async def current_owner(request: Request, identity: dict = Depends(auth.get_iden
     return identity
 
 
-async def require_admin(identity: dict = Depends(current_owner)):
+async def require_admin(_local: None = Depends(auth.require_local_origin_for_admin),
+                        identity: dict = Depends(current_owner)):
     if not identity.get("is_admin"):
         raise HTTPException(403, "Accesso riservato agli amministratori")
     return identity

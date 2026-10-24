@@ -22,6 +22,7 @@ import httpx
 from sqlalchemy.orm import Session
 
 from . import models, database
+from .install_profile import teacher_pc
 from .auth import ADMIN_GROUPS
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,8 @@ _CODE_ALPHABET = string.ascii_uppercase + string.digits
 
 
 def _disabled() -> bool:
-    return os.environ.get("ADMIN_SYNC_DISABLED", "").lower() in ("1", "true", "yes")
+    # Console sync e' esclusa dal profilo teacher-pc (ADR-0001).
+    return teacher_pc() or os.environ.get("ADMIN_SYNC_DISABLED", "").lower() in ("1", "true", "yes")
 
 
 def _base_url() -> str:

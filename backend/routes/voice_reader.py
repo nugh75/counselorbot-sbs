@@ -20,7 +20,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from .. import database, models
+from .. import database, install_profile, models
 from ..api_models import TTSRequest
 from ..chat_logic import strip_markdown
 from ..diagram_blocks import strip_for_speech
@@ -119,8 +119,15 @@ def reader_voice(request: ReaderRequest, db: Session) -> str:
     return request.voice
 
 
+def _require_piper(engine: str) -> None:
+    # Piper e' escluso dal profilo teacher-pc (ADR-0001): resta solo Edge.
+    if engine == "piper":
+        install_profile.require_lab_features()
+
+
 @router.get("/voices")
 async def voices(engine: Literal["edge", "piper"] = "edge"):
+    _require_piper(engine)
     if engine == "piper":
         try:
             async with httpx.AsyncClient(timeout=10) as client:
@@ -188,6 +195,7 @@ async def reader_events(segments: list[dict], voice: str, engine: str = "edge"):
 
 @router.post("/stream")
 async def stream(request: ReaderRequest, db: Session = Depends(database.get_personal_ai_db)):
+    _require_piper(request.engine)
     segments = spoken_segments(request.text, request.language, request.pronunciations, request.plain_text)
     if not segments:
         raise HTTPException(422, "No readable text")
