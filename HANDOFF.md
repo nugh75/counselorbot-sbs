@@ -14,6 +14,19 @@ Agente `s64`, branch `feature/privacy-p11-db-encryption`.
 - **Fix CI (PR #571)**: `test_forum_privacy.py::test_forum_import_graph_has_no_ai_rag_context_or_export_path` falliva perché
   `models` importa ora `backend.privacy.*` (tipi di colonna cifrati). L'insieme atteso include i sei moduli: solo
   crittografia e chiavi locali, senza provider, rete, RAG o esportazione. Test eseguito: 1 pass su SQLite.
+- **Merge con main**: `git merge origin/main` (senza rebase); conflitti solo in `HANDOFF.md` e `docs/privacy/README.md`,
+  risolti tenendo entrambe le parti (nessun conflitto in `backend/privacy`, quindi nessun codice P6 toccato).
+
+---
+
+# Handoff 24 ottobre 2026: P16 — bozze documentali GDPR
+
+Agente `s68-p16-gdpr-drafts` (Claude Opus), task `8b3129bd-d608-4f0c-baa7-87354b95d7d0`, branch `docs/privacy-p16-gdpr-drafts`, issue #572.
+
+- **Obiettivo**: le dieci bozze di 04 §Documenti in `docs/privacy/bozze/`, con disclaimer e campi `[DA VALIDARE]`.
+- **Modifiche**: informative studente (linguaggio per minori), docente (con istruzioni per l'app desktop) e AI; consenso alla condivisione con il docente; informativa e consenso per la ricerca; conservazione e diritti; data breach; schema DPIA; registro art. 30; misure art. 32; `bozze/README.md`. Ogni bozza separa ciò che è attivo oggi da ciò che è progettato.
+- **Note**: le 7 bozze iniziali di agy sono state corrette perché davano per attive misure non ancora rilasciate. Oggi il docente vede il taccuino dei membri della classe (`routes/groups.py:827`). Dettagli in `docs/handoff/docs-privacy-p16-gdpr-drafts.md`.
+- **Test**: `make guidance-refresh`, `make guidance-check`. Nessun deploy, sudo o processo dev.
 
 ---
 
