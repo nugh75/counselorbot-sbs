@@ -38,7 +38,7 @@ Per misurare i futuri rilevatori di dati personali è disponibile un corpus
 sintetico italiano di contesto scolastico (blocco P2), con nomi, codici fiscali,
 contatti e riferimenti a certificazioni del tutto inventati, e uno strumento di
 misura per sviluppatori. Non cambia il comportamento della piattaforma né il
-filtro attuale, che resta limitato e non riconosce nomi, scuole o luoghi.
+filtro completo delle chat; i log beneficiano delle protezioni P13 descritte sotto.
 
 Il blocco P4 aggiunge al Privacy Layer un motore locale di pseudonimizzazione
 (regole, nomi noti della classe e dell'istituto, modello GLiNER eseguito sul
@@ -54,6 +54,20 @@ separate per finalità conservate solo cifrate, identificativi pseudonimi degli
 interessati e un kit di recupero protetto da passphrase. Nessun dato esistente è
 ancora cifrato: la migrazione delle colonne arriva con il blocco P11. Le
 password locali usano Argon2id con parametri ora fissati esplicitamente.
+
+Il blocco P13 protegge log e diagnostica: un errore di redazione sostituisce
+il testo con `[ERRORE_REDAZIONE]`, senza registrare l'eccezione originale.
+I log usano anche regole e nomi contestuali del gazetteer; l'estrattore dei
+questionari registra solo eventi operativi, senza punteggi o risposte.
+Gli export CSV/JSON amministrativi risanitizzano anche i record storici e
+omettono identificatori e campi di punteggi/risposte, anche se la redazione
+conversazionale è disabilitata. Se la sanitizzazione non è disponibile, il
+download è bloccato con un errore 503, senza restituire i dati grezzi.
+Lo ZIP diagnostico desktop funziona offline:
+omette il testo libero dei log e conserva solo timestamp, livelli, layout e
+versione verificati, senza nomi di file arbitrari o percorsi personali.
+Le sole regole non garantiscono il riconoscimento di nomi sconosciuti: il
+filtro ML completo e il contesto delle chat richiedono ancora P6.
 
 ## Lettura dei questionari e approfondimento
 

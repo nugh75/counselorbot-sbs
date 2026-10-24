@@ -121,6 +121,8 @@ def main(argv=None):
         app.router.lifespan_context = no_lifespan
 
     config = uvicorn.Config(app, host=args.host, port=args.port, workers=1, log_level="info")
+    from backend.log_privacy import install_log_redaction
+    install_log_redaction()
     server = uvicorn.Server(config)
     stop_requested = watch_stdin(server) if args.lifeline else threading.Event()
     print(f"sidecar: avvio su {args.host}:{args.port}", file=sys.stderr, flush=True)

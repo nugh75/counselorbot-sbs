@@ -1068,7 +1068,7 @@ async def export_logs(
     db: Session = Depends(get_db),
 ):
     """Esporta i log (CSV/JSON) con gli stessi filtri di /admin/logs.
-    Rispetta gli stessi filtri di read_logs. I PII sono gia' redatti nel DB.
+    Rispetta gli stessi filtri di read_logs. Risanitizza anche i log storici.
     ``sort`` controlla l'ordine temporale: "desc" (default) o "asc"."""
     query = db.query(models.Log)
     query = _apply_log_filters(
@@ -1085,29 +1085,45 @@ async def export_logs(
     _prepare_log_response(db, logs)
 
     fmt = (format or "csv").lower()
+    payload = [
+        {
+            "id": log.id,
+            "timestamp": log.timestamp.isoformat() if log.timestamp else None,
+            "session_id": log.session_id,
+            "conversation_id": log.conversation_id,
+            "username": log.username,
+            "email": log.email,
+            "anonymous_research_code": log.anonymous_research_code,
+            "action": log.action,
+            "provider": log.provider,
+            "model_name": log.model_name,
+            "questionnaire_type": log.questionnaire_type,
+            "phase": log.phase,
+            "mode": log.mode,
+            "response_id": log.response_id,
+            "cost_usd": log.cost_usd,
+            "helpful": getattr(log, "helpful", None),
+            "details": log.details,
+        }
+        for log in logs
+    ]
+    try:
+        from ..privacy.detect import SchoolContext
+        usernames = {log.username for log in logs if log.username}
+        display_names = db.query(models.UserDisplayName.display_name).filter(
+            models.UserDisplayName.username.in_(usernames)).all() if usernames else []
+        schools = db.query(models.Institution.name).all()
+        school = SchoolContext(
+            people=tuple(usernames) + tuple(name for (name,) in display_names if name),
+            institutions=tuple(name for (name,) in schools if name),
+        )
+        with pii.log_redaction_context(school):
+            payload = pii.redact_diagnostics(payload)
+    except Exception:
+        raise HTTPException(status_code=503, detail="privacy.errors.diagnosticsUnavailable") from None
+    if not isinstance(payload, list) or not all(isinstance(row, dict) and "details" in row for row in payload):
+        raise HTTPException(status_code=503, detail="privacy.errors.diagnosticsUnavailable")
     if fmt == "json":
-        payload = [
-            {
-                "id": log.id,
-                "timestamp": log.timestamp.isoformat() if log.timestamp else None,
-                "session_id": log.session_id,
-                "conversation_id": log.conversation_id,
-                "username": log.username,
-                "email": log.email,
-                "anonymous_research_code": log.anonymous_research_code,
-                "action": log.action,
-                "provider": log.provider,
-                "model_name": log.model_name,
-                "questionnaire_type": log.questionnaire_type,
-                "phase": log.phase,
-                "mode": log.mode,
-                "response_id": log.response_id,
-                "cost_usd": log.cost_usd,
-                "helpful": getattr(log, "helpful", None),
-                "details": log.details,
-            }
-            for log in logs
-        ]
         return Response(
             content=json.dumps(payload, ensure_ascii=False, indent=2),
             media_type="application/json",
@@ -1123,24 +1139,14 @@ async def export_logs(
         "provider", "model_name", "questionnaire_type", "phase", "mode",
         "response_id", "cost_usd", "helpful", "details",
     ])
-    for log in logs:
-        writer.writerow([
-            log.id,
-            log.timestamp.isoformat() if log.timestamp else "",
-            log.session_id,
-            log.conversation_id or "",
-            log.username or "",
-            log.anonymous_research_code or "",
-            log.action,
-            log.provider or "",
-            log.model_name or "",
-            log.questionnaire_type or "",
-            log.phase or "",
-            log.mode or "",
-            log.response_id or "",
-            log.cost_usd if log.cost_usd is not None else "",
-            getattr(log, "helpful", ""),
-            json.dumps(log.details, ensure_ascii=False),
+    columns = [
+        "id", "timestamp", "session_id", "conversation_id", "username", "anonymous_research_code", "action",
+        "provider", "model_name", "questionnaire_type", "phase", "mode",
+        "response_id", "cost_usd", "helpful",
+    ]
+    for row in payload:
+        writer.writerow([row.get(column) for column in columns] + [
+            json.dumps(row["details"], ensure_ascii=False),
         ])
     return Response(
         content=output.getvalue(),

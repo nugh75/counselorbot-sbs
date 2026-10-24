@@ -9,11 +9,25 @@ all'LLM resta integro).
 La redazione e' controllata dal flag di config `log_pii_redact` (default:
 attiva). Quando disattivata, `redact()` restituisce il testo invariato.
 """
-import logging
+from contextlib import contextmanager
+from contextvars import ContextVar
 import re
 from typing import Optional
 
-logger = logging.getLogger(__name__)
+REDACTION_ERROR = "[ERRORE_REDAZIONE]"
+_log_school_context: ContextVar = ContextVar("log_school_context", default=None)
+
+
+@contextmanager
+def log_redaction_context(school_context):
+    """Scope known names to this request/task; never share a roster globally."""
+    from .privacy.detect import GazetteerLayer
+
+    token = _log_school_context.set(GazetteerLayer(school_context))
+    try:
+        yield
+    finally:
+        _log_school_context.reset(token)
 
 # --- Config -----------------------------------------------------------------
 
@@ -391,10 +405,14 @@ def restore(text: Optional[str], mapping: dict) -> Optional[str]:
     return out
 
 
-def _redact_spans(text: str) -> str:
-    """Redazione distruttiva basata sullo stesso motore di `find_pii`."""
+def _redact_spans(text: str, *, school_context=None) -> str:
+    """Legacy labels plus P4 rules/gazetteer, without loading the ML model."""
+    from .privacy.detect import GazetteerLayer, RulesLayer
+
     spans = []  # (start, end, label)
     for ptype, value in find_pii(text):
+        if not isinstance(value, str) or not value:
+            raise ValueError("Invalid PII match")
         idx = 0
         while True:
             idx = text.find(value, idx)
@@ -402,19 +420,26 @@ def _redact_spans(text: str) -> str:
                 break
             spans.append((idx, idx + len(value), _LABELS[ptype]))
             idx += len(value)
-    # Ordine discendente come in `anonymize`.
-    spans.sort(key=lambda s: s[0], reverse=True)
-    out = list(text)
-    placed: list = []  # (start, end) gia' sostituiti
-    for start, end, label in spans:
-        if any(start < p_end and end > p_start for p_start, p_end in placed):
-            continue
-        out[start:end] = [label]
-        placed.append((start, end))
-    return "".join(out)
+    school = school_context if school_context is not None else _log_school_context.get()
+    # These deterministic layers do not consult PrivacyContext or any provider.
+    gazetteer = school if isinstance(school, GazetteerLayer) else GazetteerLayer(school)
+    for layer in (RulesLayer(), gazetteer):
+        spans.extend((s.start, s.end, f"[{s.category.value}]")
+                     for s in layer.detect_pii(text, None))
+    # Union overlapping hits: skipping a longer overlap would expose its tail.
+    merged = []
+    for start, end, label in sorted(spans, key=lambda s: s[0]):
+        if merged and start < merged[-1][1]:
+            old_start, old_end, old_label = merged[-1]
+            merged[-1] = (old_start, max(old_end, end), old_label)
+        else:
+            merged.append((start, end, label))
+    for start, end, label in reversed(merged):
+        text = text[:start] + label + text[end:]
+    return text
 
 
-def redact(text: Optional[str]) -> Optional[str]:
+def redact(text: Optional[str], *, school_context=None) -> Optional[str]:
     """Redige PII in `text`. Ritorna None per None.
 
     Se la redazione e' disattivata (config), ritorna il testo invariato.
@@ -422,70 +447,108 @@ def redact(text: Optional[str]) -> Optional[str]:
     if text is None:
         return None
     if not isinstance(text, str):
-        return text
+        return REDACTION_ERROR
     if not _pii_redact_enabled or not text:
         return text
     try:
-        return _redact_spans(text)
-    except Exception as e:  # pragma: no cover - difensivo
-        logger.warning("PII redaction failed (returning original): %s", e)
-        return text
+        return _redact_spans(text, school_context=school_context)
+    except Exception:
+        # Exception messages/tracebacks can contain the entire input. Do not log
+        # even the error here (also avoids recursive failures in log formatters).
+        return REDACTION_ERROR
 
 
-def redact_always(text: Optional[str]) -> Optional[str]:
+def redact_always(text: Optional[str], *, school_context=None) -> Optional[str]:
     """Come `redact`, ma ignora il flag di config.
 
     Serve quando il testo esce dal sistema — una query verso una fonte esterna —
     dove la redazione non e' una preferenza di logging ma una condizione.
     """
-    if not isinstance(text, str) or not text:
+    if text is None:
+        return text
+    if not isinstance(text, str):
+        return REDACTION_ERROR
+    if not text:
         return text
     try:
-        return _redact_spans(text)
-    except Exception as e:  # pragma: no cover - difensivo
-        logger.warning("PII redaction failed (returning original): %s", e)
-        return text
+        return _redact_spans(text, school_context=school_context)
+    except Exception:
+        return REDACTION_ERROR
 
 
-def redact_details(details: dict, *fields: str) -> dict:
+def redact_details(details: dict, *fields: str, school_context=None) -> dict:
     """Redige in-place i `fields` specificati dentro un dict `details`.
 
     Esempio: ``redact_details(details, "user_input", "bot_response")``.
-    Campi mancanti o non-stringa vengono ignorati. Ritorna lo stesso dict.
+    Campi mancanti ignorati; contenuti JSON annidati redatti. Ritorna lo stesso dict.
     Se la redazione e' disattivata, non fa nulla.
     """
+    if not isinstance(details, dict):
+        return {"error": REDACTION_ERROR}
     if not details or not _pii_redact_enabled:
         return details
-    for f in fields:
-        v = details.get(f)
-        if isinstance(v, str):
-            details[f] = redact(v)
+    try:
+        for f in fields:
+            if f in details:
+                details[f] = _redact_value(details[f], school_context=school_context)
+    except Exception:
+        return {"error": REDACTION_ERROR}
     return details
 
 
-def redact_envelope(envelope: dict) -> dict:
+def redact_envelope(envelope: dict, *, school_context=None) -> dict:
     """Redige PII in un envelope di log `{system_prompt_final, full_message, history}`.
 
     Ritorna una **copia nuova**: la `history` proviene da
     ``session_memory.get_transcript()`` e i suoi dict sono condivisi con la memoria di
     sessione, quindi non vanno mutati in place. Rispetta il flag `_pii_redact_enabled`
     (se off, ritorna comunque una copia non redatta)."""
-    if not isinstance(envelope, dict):
-        return envelope
-    history_out = []
-    for item in envelope.get("history") or []:
-        if isinstance(item, dict):
-            new_item = dict(item)
-            if isinstance(new_item.get("content"), str):
-                new_item["content"] = redact(new_item["content"])
-            history_out.append(new_item)
-        else:
-            history_out.append(item)
-    return {
-        "system_prompt_final": redact(envelope.get("system_prompt_final")),
-        "full_message": redact(envelope.get("full_message")),
-        "history": history_out,
+    result = _redact_value(envelope, school_context=school_context)
+    return result if isinstance(result, dict) else {"error": REDACTION_ERROR}
+
+
+def _redact_value(value, *, school_context=None, always=False):
+    """Copy JSON-like payloads, including nested history and multimodal parts."""
+    try:
+        if isinstance(value, str):
+            fn = redact_always if always else redact
+            return fn(value, school_context=school_context)
+        if isinstance(value, dict):
+            return {_redact_value(k, school_context=school_context, always=always):
+                    _redact_value(v, school_context=school_context, always=always)
+                    for k, v in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [_redact_value(v, school_context=school_context, always=always) for v in value]
+        if value is None or type(value) in (int, float, bool):
+            return value
+    except Exception:
+        pass
+    return REDACTION_ERROR
+
+
+def redact_diagnostics(value, *, school_context=None):
+    """Mandatory export sanitization; never rely on historical DB redaction.
+
+    Direct identifiers and personal questionnaire data are omitted by key;
+    remaining free text passes through rules/gazetteer even with logging off.
+    """
+    private_fields = {
+        "username", "email", "name", "first_name", "last_name", "display_name",
+        "student", "student_name", "teacher_name", "school", "institution",
+        "session_id", "conversation_id", "response_id", "anonymous_research_code",
+        "scores", "score", "answers", "responses", "profile", "score_data",
     }
+    try:
+        if isinstance(value, dict):
+            return {redact_always(k, school_context=school_context):
+                    ("[OMESSO]" if k.lower() in private_fields and v is not None else
+                     redact_diagnostics(v, school_context=school_context))
+                    for k, v in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [redact_diagnostics(v, school_context=school_context) for v in value]
+        return _redact_value(value, school_context=school_context, always=True)
+    except Exception:
+        return REDACTION_ERROR
 
 
 def detect_pii_types(text: Optional[str]) -> set[str]:
