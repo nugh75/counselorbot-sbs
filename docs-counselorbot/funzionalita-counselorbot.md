@@ -7,7 +7,7 @@ un elenco di azioni che l’assistente può eseguire al posto della persona.
 
 È in sviluppo un'app desktop docente sperimentale: il guscio avvia e sorveglia
 i processi locali, mostra lo stato ed esporta diagnostica senza database o
-credenziali. Non è ancora disponibile per lezioni o dati reali: il backend
+credenziali. Con tunnel e server attivi impedisce la sospensione del PC (macOS e Windows). Se il docente va offline, gli studenti che avevano già aperto l'app vedono «Il docente è offline» con nuovo controllo ogni 10 secondi, invece dell'errore 502. Non è ancora disponibile per lezioni o dati reali: il backend
 minimal e il quick tunnel servono soltanto alle prove tecniche. Il backend
 prevede già un accesso locale del docente (link monouso aperto dal guscio,
 sessione valida 30 giorni solo dal PC, mai dal tunnel), ma la pagina di accesso
