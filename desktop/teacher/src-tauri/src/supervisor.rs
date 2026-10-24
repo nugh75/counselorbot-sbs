@@ -18,6 +18,7 @@ use serde::Serialize;
 
 use crate::datadir::{DataDir, ShellConfig};
 use crate::sidecar::{self, Exit, Proc, Spec};
+use crate::sleep::{SleepGuard, System};
 use crate::{health, logs, pids, platform};
 
 pub const DESKTOP_CONTRACT: u64 = 1;
@@ -160,6 +161,7 @@ struct Supervisor {
     tunnel_started: Option<Instant>,
     crashes: HashMap<&'static str, Vec<Instant>>,
     version_error: Option<String>,
+    sleep: SleepGuard<System>,
 }
 
 impl Supervisor {
@@ -181,6 +183,7 @@ impl Supervisor {
             tunnel_started: None,
             crashes: HashMap::new(),
             version_error: None,
+            sleep: SleepGuard::new(System::default()),
         }
     }
 
@@ -755,7 +758,19 @@ impl Supervisor {
         }
     }
 
+    /// Lezione attiva: guscio pronto e tunnel acceso. Sveglio solo in questo caso.
+    fn session_active(&self) -> bool {
+        self.status.lock().unwrap().phase == "ready"
+            && self.backend.is_some()
+            && self.frontend.is_some()
+            && self.tunnel.is_some()
+    }
+
     fn publish(&mut self) {
+        let active = self.session_active();
+        if let Some(error) = self.sleep.set(active) {
+            logs::log(format!("anti-sospensione non attivata: {error}"));
+        }
         self.write_pids(None);
         let cloudflared_pid = if cfg!(windows) {
             self.tunnel.as_ref().map(|t| t.pid())

@@ -19,6 +19,7 @@ mod logs;
 mod pids;
 mod platform;
 mod sidecar;
+mod sleep;
 mod supervisor;
 
 fn main() {
