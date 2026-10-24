@@ -50,11 +50,19 @@ jobs:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: backend/requirements.txt
-      - run: pip install -r backend/requirements.txt
-      - name: Backend suite on Postgres
+      - run: sudo apt-get update -q && sudo apt-get install -y --no-install-recommends graphviz && pip install -r backend/requirements.txt
+      - name: Backend suite on Postgres with the ratchet (backend/tests/postgres_known_failures.txt)
         run: |
           export DATA_DIR="$RUNNER_TEMP/data" SESSION_MEMORY_DIR="$RUNNER_TEMP/memory"
-          python -m pytest backend/tests -q -p no:cacheprovider -W ignore::DeprecationWarning
+          python -m pytest backend/tests -q -p no:cacheprovider -W ignore::DeprecationWarning \
+            --failures-out "$RUNNER_TEMP/postgres-failures.txt"
+      - name: Upload the current Postgres failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-failures
+          path: ${{ runner.temp }}/postgres-failures.txt
+          if-no-files-found: ignore
 
   tests-sqlite:
     name: tests (sqlite)
@@ -69,13 +77,13 @@ jobs:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: backend/requirements.txt
-      - run: pip install -r backend/requirements.txt
+      - run: sudo apt-get update -q && sudo apt-get install -y --no-install-recommends graphviz && pip install -r backend/requirements.txt
       - name: Backend suite on SQLite with the ratchet (backend/tests/sqlite_known_failures.txt)
         run: |
           export DATABASE_URL="sqlite:///$RUNNER_TEMP/backend.sqlite3" DATA_DIR="$RUNNER_TEMP/data" SESSION_MEMORY_DIR="$RUNNER_TEMP/memory"
           python -c "import sqlite3; print('SQLite', sqlite3.sqlite_version)"
           python -m pytest backend/tests -q -p no:cacheprovider -W ignore::DeprecationWarning \
-            --sqlite-failures-out "$RUNNER_TEMP/sqlite-failures.txt"
+            --failures-out "$RUNNER_TEMP/sqlite-failures.txt"
       - name: Upload the current SQLite failures
         if: always()
         uses: actions/upload-artifact@v4
