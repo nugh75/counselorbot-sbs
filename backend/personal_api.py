@@ -3,10 +3,9 @@ import json
 
 from cryptography.fernet import Fernet, InvalidToken
 from sqlalchemy import text
-from sqlalchemy.dialects.postgresql import insert
 
 from . import models
-from .db_compat import add_column_if_missing, xact_lock
+from .db_compat import add_column_if_missing, dialect_insert, xact_lock
 from .api_secrets import API_KEY_ENV_MAP
 from .credential_storage import CredentialStore, CredentialStorageError
 
@@ -47,7 +46,7 @@ def installation_status(db):
 
 
 def set_installation_enabled(db, enabled):
-    db.execute(insert(models.Config).values(key=POLICY_KEY, value="false", description="Personal API connections enabled")
+    db.execute(dialect_insert(db, models.Config).values(key=POLICY_KEY, value="false", description="Personal API connections enabled")
                .on_conflict_do_nothing(index_elements=["key"]))
     setting = db.query(models.Config).filter_by(key=POLICY_KEY).with_for_update().one()
     if enabled:

@@ -1,14 +1,10 @@
 # Postgres-only SQL still allowed in the backend (ADR-0003 §5.1). Checked by scripts/check-sql-portability.py.
 # <path> <rule> <count>. Counts can only go down: F1-05c..g remove them; never add a line by hand.
 backend/chat_logic.py pg-cast 1
-backend/chatgpt_connections.py postgresql-dialect 1
-backend/goals.py postgresql-dialect 1
 backend/main.py pg-advisory 2
 backend/main.py pg-cast 4
-backend/personal_api.py postgresql-dialect 1
 backend/prompt_lab/provision.py pg-cast 2
 backend/prompt_lab/storage.py datetime-timezone 5
 backend/prompt_lab/worker.py pg-advisory 1
-backend/routes/admin.py date-trunc 3
+backend/routes/admin.py date-trunc 2
 backend/routes/admin.py pg-cast 2
-backend/routes/forum.py postgresql-dialect 1

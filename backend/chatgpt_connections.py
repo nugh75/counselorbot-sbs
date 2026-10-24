@@ -14,13 +14,13 @@ import threading
 import time
 import uuid
 
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.fernet import InvalidToken
 import httpx
 from jose import jwt, JWTError
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from . import models
+from .db_compat import dialect_insert
 from .credential_storage import CredentialStore, CredentialStorageError
 
 ISSUER = "https://auth.openai.com"
@@ -79,7 +79,7 @@ def installation_status(db):
 
 
 def set_installation_enabled(db, active):
-    db.execute(insert(models.Config).values(key="chatgpt_enabled", value="false", description="Personal ChatGPT connections enabled")
+    db.execute(dialect_insert(db, models.Config).values(key="chatgpt_enabled", value="false", description="Personal ChatGPT connections enabled")
                .on_conflict_do_nothing(index_elements=["key"]))
     setting = db.query(models.Config).filter_by(key="chatgpt_enabled").with_for_update().one()
     if active:
@@ -206,10 +206,10 @@ def start_link(db, username):
     require_ready(db)
     now = datetime.now(timezone.utc)
     # A single stable host identifier survives restarts; concurrent workers agree.
-    db.execute(insert(models.Config).values(key="chatgpt_host_id", value="urn:uuid:" + str(uuid.uuid4()),
+    db.execute(dialect_insert(db, models.Config).values(key="chatgpt_host_id", value="urn:uuid:" + str(uuid.uuid4()),
                  description="Opaque SIWC host identifier").on_conflict_do_nothing(index_elements=["key"]))
     host_id = db.query(models.Config).filter_by(key="chatgpt_host_id").one().value
-    db.execute(insert(models.ChatGPTConnection).values(username=username)
+    db.execute(dialect_insert(db, models.ChatGPTConnection).values(username=username)
                .on_conflict_do_nothing(index_elements=["username"]))
     row = db.query(models.ChatGPTConnection).filter_by(username=username).with_for_update().one()
     db.query(models.ChatGPTLink).filter(models.ChatGPTLink.username == username).delete()

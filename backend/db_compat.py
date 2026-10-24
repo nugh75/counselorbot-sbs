@@ -183,6 +183,22 @@ def is_sqlite(bind) -> bool:
     return _dialect_name(bind) == "sqlite"
 
 
+def dialect_insert(bind, table):
+    """Build an INSERT with ON CONFLICT for the actual Session/Connection/Engine.
+
+    Both supported dialects expose excluded, on_conflict_do_nothing and
+    on_conflict_do_update. Unsupported engines fail before executing any SQL.
+    """
+    dialect = _dialect_name(bind)
+    if dialect == "postgresql":
+        from sqlalchemy.dialects.postgresql import insert
+    elif dialect == "sqlite":
+        from sqlalchemy.dialects.sqlite import insert
+    else:
+        raise NotImplementedError(f"dialect_insert does not support {dialect!r}")
+    return insert(table)
+
+
 def add_column_if_missing(conn, table_name, column_name, type_expr, default=None) -> bool:
     """Aggiunge la colonna se manca; True se l'ha aggiunta. Idempotente su entrambi i dialetti.
 

@@ -9,12 +9,12 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
-from sqlalchemy import cast, func, or_, text as sa_text
+from sqlalchemy import DateTime, cast, func, or_, text as sa_text
 from sqlalchemy.types import Text
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from ..db_compat import xact_lock
+from ..db_compat import is_sqlite, xact_lock
 from .. import models, schemas, auth, database, pii, pii_ner
 from .. import content_version_service
 from .. import openrouter_capabilities
@@ -653,11 +653,19 @@ def _runrate(cost_to_date: float, start: datetime, end: datetime, now: datetime)
 
 
 def _cost_period_aggregate(db: Session, unit: str, filt: dict) -> list[dict]:
-    """Somma costo + turni per periodo (week/month/year) via SQL date_trunc.
+    """Somma costo + turni per periodo (week/month/year) sui due motori SQL.
 
     Calcolato su tutta la storia (i filtri data sono azzerati dal chiamante),
     rispettando gli altri filtri (provider/modello/questionario/...)."""
-    period_col = func.date_trunc(unit, models.Log.timestamp)
+    if is_sqlite(db):
+        # SQLite >= 3.35: avoid the newer ISO-week strftime directives.
+        # Moving back six days then forward to Monday includes Monday itself.
+        modifiers = {"week": ("-6 days", "weekday 1"),
+                     "month": ("start of month",), "year": ("start of year",)}
+        period_col = func.strftime("%Y-%m-%d 00:00:00", models.Log.timestamp,
+                                   *modifiers[unit], type_=DateTime())
+    else:
+        period_col = func.date_trunc(unit, models.Log.timestamp)
     q = db.query(
         period_col.label("period"),
         func.coalesce(func.sum(models.Log.cost_usd), 0.0).label("cost"),
