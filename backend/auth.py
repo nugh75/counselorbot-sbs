@@ -14,17 +14,23 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, Request, status
 from starlette.concurrency import run_in_threadpool
 
-from .install_profile import teacher_pc
-from .request_origin import request_origin
-
 # `institute` (#212) non esiste ancora: un valore sconosciuto blocca l'avvio
 # invece di lasciare tutti anonimi.
 AUTH_PROVIDER = os.environ.get("AUTH_PROVIDER", "ai4auth").strip().lower() or "ai4auth"
 if AUTH_PROVIDER not in ("ai4auth", "local"):
     raise RuntimeError(f"AUTH_PROVIDER must be 'ai4auth' or 'local', not {AUTH_PROVIDER!r}")
-# Il PC del docente non ha ai4auth: senza il fornitore locale nessuno sarebbe admin.
-if teacher_pc() and AUTH_PROVIDER != "local":
-    raise RuntimeError("COUNSELORBOT_PROFILE=teacher-pc requires AUTH_PROVIDER=local")
+
+
+def _check_profile_provider() -> None:
+    # Il PC del docente non ha ai4auth: senza il fornitore locale nessuno sarebbe admin.
+    # Import pigro: il forum importa auth e il suo grafo non deve crescere.
+    from .install_profile import teacher_pc
+
+    if teacher_pc() and AUTH_PROVIDER != "local":
+        raise RuntimeError("COUNSELORBOT_PROFILE=teacher-pc requires AUTH_PROVIDER=local")
+
+
+_check_profile_provider()
 
 # Gruppi ai4auth che abilitano la dashboard admin (lista separata da virgole).
 # `admins` (superadmin globale) e' sempre incluso; aggiungi gruppi per-servizio
@@ -202,6 +208,8 @@ async def get_current_user(request: Request, identity: dict = Depends(get_identi
 async def require_local_origin_for_admin(request: Request) -> None:
     """Con il fornitore locale le rotte admin valgono solo da origine `local`
     (ADR-0002 §2.7, F1-07): dal tunnel 403 prima di guardare la sessione."""
+    from .request_origin import request_origin
+
     if local_provider_enabled() and not request_origin(request.headers).is_local:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
