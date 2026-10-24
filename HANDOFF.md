@@ -3460,3 +3460,28 @@ Validation and reproducible secret-free commands:
 `docs/operations/class-forum-validation.md`. Draft PR and task closure follow
 successful tests and dev verification. Future slices must retain the import,
 export and PDF privacy gates: no forum data reaches any local or external LLM.
+
+# Handoff: guscio desktop docente F1-02 — s26-f102-sol (2026-10-24)
+
+Branch `feature/f1-02-tauri-shell`, PR DRAFT #523, milestone Desktop apps,
+Part of #499. Preservati i commit S22 fino a `56ad1def`; integrata `main`
+con F1-19 (#521), conservando firma dell'origine e blocco `/api/internal/*`.
+Contratti, build, comandi di prova e limiti:
+`docs/operations/desktop-teacher-shell.md`.
+
+Test locali: sidecar Python 11, wrapper Node 4, backend health/interno/origine
+29, helper frontend 9; tutti passati. Passati anche `cargo check --locked -j 1`,
+rustfmt, controlli sintattici, guidance refresh/check e gate contro origin/main.
+Il cargo test locale completo è stato interrotto per limitare il carico sul Mac
+da 8 GB; Rust e lifecycle dei pacchetti sono verificati dalla matrice CI
+macOS arm64/x64, Windows x64 e Ubuntu 22.04. Per gli esiti riferiti all'ultimo
+SHA consultare i controlli di PR #523 (non riusare esiti di revisioni precedenti).
+
+Difetti registrati nel Diario: `9f705b41` (snapshot PID dello smoke),
+`3c4f9dd8` (tunnel su mismatch/origine pubblica, local-only), `fa010972`
+(rewrite frontend fissato in build, residuo F1-03). Nessuna issue manuale.
+Backend minimal senza lifespan e quick tunnel sono solo prove. F1-03,
+F1-06, F1-08, F1-09/F1-10 e F1-05* restano necessari prima dell'uso reale.
+Nessun merge, deploy, sudo, rebuild Docker o processo dev persistente.
+Revisione del Timoniere richiesta prima di qualsiasi merge; PR da mantenere
+in bozza fino al gate applicabile. Non sono stati avviati altri agenti.
