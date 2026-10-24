@@ -101,7 +101,7 @@ Legenda strategia: **P** = SQLAlchemy portabile (un solo codice), **D** = ramo p
 
 | Costrutto | Misura | Su SQLite | Strategia | Compito |
 |---|---|---|---|---|
-| `DateTime(timezone=True)` | **161** colonne in `models.py`; 64 chiamate `datetime.now(timezone.utc)` in 37 file | restituisce datetime **senza fuso** anche se salvato con fuso (misurato): confronti e sottrazioni con datetime «aware» → `TypeError` | **P**: `TypeDecorator` `UTCDateTime` (salva in UTC, restituisce sempre aware UTC) al posto di `DateTime(timezone=True)` | F1-05e |
+| `DateTime(timezone=True)` | **161** colonne in `models.py`; 64 chiamate `datetime.now(timezone.utc)` in 37 file | restituisce datetime **senza fuso** anche se salvato con fuso (misurato): confronti e sottrazioni con datetime «aware» → `TypeError` | **P**: `TypeDecorator` `UTCDateTime` con `impl = DateTime(timezone=True)` (salva in UTC, restituisce sempre aware UTC) al posto di `DateTime(timezone=True)`; su Postgres la DDL resta identica (`TIMESTAMP WITH TIME ZONE`): nessuna migrazione | F1-05e |
 | chiavi esterne | 58 `ForeignKey(` in `models.py`, 53 con `ondelete=` | **ignorate** di default: niente `ON DELETE CASCADE/SET NULL`, righe orfane | **P**: `PRAGMA foreign_keys=ON` a ogni connessione | F1-05b |
 | `CheckConstraint` | 20 in `models.py` | creati da `create_all` (misurato); ridefinirli richiede ricostruzione | vedi §3 | F1-05g |
 | lunghezze `String(n)` | — | non applicate | — (dove conta ci sono già `CHECK length(...)`, es. `models.py:2141`) | — |
@@ -164,8 +164,22 @@ Il `sqlite3` incluso da Python 3.12 nelle build PyInstaller soddisfa il requisit
   della chiamata e rilasciato sugli eventi `after_commit` / `after_rollback` della sessione. Equivale all'advisory lock
   **perché il desktop ha un solo processo** (1 worker, ADR-0002 §2.1); l'helper rifiuta di partire su SQLite con più worker.
 - `with_for_update()` resta: su Postgres blocca la riga, su SQLite le scritture sono comunque serializzate dal lock del database.
-  Rischio da misurare (F1-05h): una transazione che legge, aspetta un LLM e poi scrive può ricevere `SQLITE_BUSY`; la regola
-  è non tenere transazioni aperte durante le chiamate ai modelli.
+
+### 4.3 Transazioni di scrittura: `BEGIN IMMEDIATE`
+
+Con le transazioni *deferred* predefinite di SQLite, una transazione che prima legge e poi scrive può fallire subito con
+`SQLITE_BUSY` (snapshot superato da un altro writer), e in quel caso `busy_timeout` **non** aiuta. Quindi:
+
+- Il motore SQLite disattiva la gestione delle transazioni del driver `pysqlite` e apre le transazioni dall'evento
+  `begin` di SQLAlchemy (ricetta documentata da SQLAlchemy per pysqlite).
+- Le sessioni **di scrittura** aprono con **`BEGIN IMMEDIATE`** (prendono subito il lock di scrittura, attendendo fino a
+  `busy_timeout`); le sessioni di sola lettura restano `BEGIN` (deferred), che in WAL non blocca nessuno.
+- Quali sessioni scrivono: la dipendenza `get_db` usa `IMMEDIATE` per i metodi `POST`, `PUT`, `PATCH`, `DELETE`;
+  un helper `write_session()` per i cicli in background e i job; `xact_lock` su SQLite richiede una sessione di scrittura.
+- Rovescio: una transazione `IMMEDIATE` tiene il lock di scrittura fino al commit. **Nessuna transazione di scrittura
+  può restare aperta durante una chiamata a un modello** (le rotte di chat in streaming fanno commit prima della chiamata e
+  aprono sessioni brevi per salvare il risultato). F1-05b introduce il meccanismo, F1-05h lo applica ai percorsi lunghi
+  e misura sotto carico.
 
 ## 5. CI su entrambi i database
 

@@ -69,6 +69,7 @@ Sidecar della Fase 1: **backend**, **frontend**, **cloudflared**. Nessun Postgre
 | percorsi del §1.2 | sempre impostati, anche se il default sembra adatto (F0-01 B5) |
 | `HOST` / `PORT` | `127.0.0.1` / porta scelta dal guscio |
 | `COUNSELORBOT_SHELL_SECRET` | 32 byte casuali per avvio (base64url), solo in memoria |
+| `COUNSELORBOT_FRONTEND_SECRET` | 32 byte casuali per avvio, passati **anche al frontend**: firma l'origine della richiesta (§2.7) |
 | `COUNSELORBOT_PUBLIC_ORIGIN` | origine pubblica del tunnel (`https://…`), aggiornata con riavvio del backend quando cambia |
 | `OLLAMA_PRELOAD` | `false` |
 | chiavi API | dal portachiavi |
@@ -110,9 +111,19 @@ Tre difese, tutte obbligatorie:
 2. **Windows: Job Object** con `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`: tutti i sidecar (anche `cloudflared`, che non
    possiamo modificare) vengono chiusi dal sistema quando il guscio termina. Processi avviati con `CREATE_NO_WINDOW`.
    Linux: `prctl(PR_SET_PDEATHSIG, SIGTERM)` nel figlio come rinforzo.
-3. **Pulizia al riavvio**: `run/sidecars.json` registra PID, nome eseguibile e ora di avvio. Al lancio successivo il
+3. **Lifeline per `cloudflared` su macOS e Linux**: `cloudflared` non legge stdin e su macOS non esiste né Job Object
+   né `PDEATHSIG`. Il guscio lo avvia attraverso **se stesso in modalità lifeline**
+   (`<eseguibile del guscio> --lifeline -- cloudflared tunnel …`): un processo minimo, senza finestra né webview, che avvia
+   `cloudflared` come figlio, legge la pipe di vita su stdin e a EOF manda SIGTERM a `cloudflared`, poi SIGKILL dopo 5 s.
+   Nessun binario in più da firmare o spedire.
+4. **Pulizia al riavvio**: `run/sidecars.json` registra PID, nome eseguibile e ora di avvio. Al lancio successivo il
    guscio termina i processi rimasti **solo se** PID, nome e ora di avvio coincidono (mai PID riciclati da altri programmi).
-   Copre `cloudflared` su macOS/Linux.
+
+**Limite dichiarato**: senza la lifeline (o se anche il processo lifeline venisse ucciso con SIGKILL insieme al guscio,
+es. «Uscita forzata» di un gruppo di processi), su macOS `cloudflared` può restare attivo dopo un crash fino al successivo
+avvio dell'app (difesa 4) o al riavvio del Mac. Il tunnel resterebbe aperto verso una porta locale ormai chiusa:
+gli studenti vedono un errore 502 di Cloudflare, nessun dato è esposto. Test di F1-02: SIGKILL al guscio su macOS →
+nessun `cloudflared` vivo dopo 10 s.
 
 Arresto normale (finestra chiusa / «Esci»): SIGTERM (Unix) o chiusura della pipe (Windows) → attesa 10 s → kill.
 Ordine inverso: cloudflared → frontend → backend. Istanza unica: plugin single-instance di Tauri + `run/shell.lock`.
@@ -130,8 +141,32 @@ Ordine inverso: cloudflared → frontend → backend. Istanza unica: plugin sing
 
 `/internal/*` serve solo al guscio: risponde **solo** se la richiesta arriva da loopback, non porta nessuna intestazione
 `Cf-*`, `X-Forwarded-*`, e presenta `X-CounselorBot-Shell-Secret` uguale a `COUNSELORBOT_SHELL_SECRET`
-(confronto a tempo costante). Il rewrite di Next (`/api/:path*` → backend, `frontend/next.config.ts:39-46`) inoltrerebbe
+(confronto a tempo costante) e nessuna `X-CounselorBot-Origin` (§2.7). Il rewrite di Next (`/api/:path*` → backend, `frontend/next.config.ts:39-46`) inoltrerebbe
 `/api/internal/*`: il frontend lo **blocca** con 404 e il backend lo rifiuta comunque per le intestazioni `X-Forwarded-*` (test in F1-02).
+
+### 2.7 Origine della richiesta: tunnel o locale
+
+Tutte le richieste, del docente (`http://127.0.0.1:<frontend>`) e degli studenti (via `cloudflared`), arrivano al backend
+**dal frontend su loopback**: il backend non può distinguerle dall'indirizzo, e le intestazioni `Cf-*` aggiunte da
+Cloudflare non arrivano in modo affidabile. Il proxy di streaming le **scarta**: inoltra solo un elenco fisso di
+intestazioni (`frontend/src/lib/stream-proxy.ts:6`, usato da chat, site-chat e OpenCode; la rotta TTS
+`frontend/src/app/api/tts/stream/route.ts:10-13` ha un elenco proprio). Il contratto quindi **non** si basa su `Cf-*` al backend:
+
+1. Il **frontend** decide l'origine sulla richiesta che riceve: `tunnel` se c'è almeno una tra `cf-connecting-ip`,
+   `cf-ray`, `cf-visitor` (Cloudflare le imposta sempre sull'edge e un client non può toglierle), altrimenti `local`.
+2. Il frontend **cancella** ogni intestazione `X-CounselorBot-Origin`, `X-CounselorBot-Client-IP`,
+   `X-CounselorBot-Frontend-Secret` in arrivo e imposta le proprie:
+   `X-CounselorBot-Origin: tunnel|local`, `X-CounselorBot-Client-IP: <cf-connecting-ip o indirizzo della connessione>`,
+   `X-CounselorBot-Frontend-Secret: <COUNSELORBOT_FRONTEND_SECRET>` (32 byte casuali per avvio, passati dal guscio a
+   frontend e backend, come oggi `FORWARD_AUTH_SHARED_SECRET`).
+3. Lo fa in **un solo helper** usato da entrambi i percorsi verso il backend: il middleware `frontend/src/proxy.ts`
+   (che vale per il rewrite `/api/:path*`), `stream-proxy.ts` e la rotta TTS.
+4. Il **backend** (con `AUTH_PROVIDER=local`) si fida di `X-CounselorBot-Origin` e `X-CounselorBot-Client-IP` solo se
+   il segreto coincide (confronto a tempo costante). **Fail-closed**: intestazione assente, segreto errato o valore
+   sconosciuto ⇒ origine `tunnel`.
+
+L'«origine» serve a: rifiutare le sessioni `teacher` dal tunnel (§3.3), le rotte admin solo locali (F1-07),
+l'IP per i limiti di abbinamento (§4.3). Compito: **F1-19**.
 
 ## 3. Identità locale (fornitore `local`, parte di #209)
 
@@ -157,8 +192,8 @@ Ordine inverso: cloudflared → frontend → backend. Istanza unica: plugin sing
   → `{token, expires_in: 60}`; apre `http://127.0.0.1:<frontend>/accesso-locale#t=<token>`; la pagina invia il token
   a `POST /api/local-auth/redeem` e riceve `cb_session` di tipo `teacher`. «Apri nel browser» del pannello ripete il giro.
 - Identità: `username = "docente"`, `groups = ["docenti", "admins"]` → `is_admin = true` (#208: sul PC il docente è admin).
-- **Difesa in profondità**: una sessione `teacher` presentata in una richiesta con intestazioni `Cf-*` (cioè arrivata
-  dal tunnel) è trattata come anonima. Le rotte admin/docente non sono quindi mai usabili dal tunnel (test 403 in F1-07).
+- **Difesa in profondità**: una sessione `teacher` presentata in una richiesta con origine `tunnel` (§2.7, fail-closed)
+  è trattata come anonima. Le rotte admin/docente non sono quindi mai usabili dal tunnel (test 403 in F1-07).
 
 ### 3.4 Studenti
 
@@ -201,14 +236,14 @@ Rotte del backend; dal browser si chiamano con il prefisso `/api` (rewrite di Ne
 
 ### 4.3 Limiti
 
-- IP del client = `CF-Connecting-IP` (solo se la richiesta arriva dal tunnel), altrimenti l'indirizzo della connessione.
+- IP del client = `X-CounselorBot-Client-IP` validata dal segreto del frontend (§2.7), cioè `CF-Connecting-IP` per il tunnel.
 - `pair` e `recover`: 10 tentativi al minuto per IP, 60 al minuto per classe; dopo 10 errori consecutivi da un IP,
   blocco di 15 minuti. Contatori in memoria (1 worker): si azzerano al riavvio, accettabile.
 - Nessun messaggio o tempo di risposta che distingua «classe inesistente», «codice scaduto», «codice revocato».
 
 ## 5. Conseguenze
 
-- F1-02 implementa §1–§2, F1-06 §3, F1-13 §4; F1-07 aggiunge i test 403 dal tunnel.
+- F1-02 implementa §1–§2.6, F1-19 §2.7, F1-06 §3, F1-13 §4; F1-07 aggiunge i test 403 dal tunnel.
 - Le nuove tabelle (`local_sessions`, `class_pairing_codes`) nascono portabili Postgres/SQLite (regole di ADR-0003 §6).
 - Le rotte `local-auth` esistono solo con `AUTH_PROVIDER=local`: il profilo Console non cambia.
 - Il quick tunnel cambia URL a ogni avvio: QR rigenerato, studenti rientrano con il codice personale. Con il tunnel
