@@ -1,6 +1,8 @@
 fastapi
 uvicorn
 sqlalchemy>=2.0,<2.1
+# Only batch_alter_table, as a library, for SQLite rebuilds (ADR-0003 §3).
+alembic>=1.13,<2
 pydantic
 python-dotenv
 psycopg2-binary

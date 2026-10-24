@@ -47,6 +47,7 @@ PYTHONPATH="$src" "$python" -m PyInstaller --noconfirm --onedir --console --name
     --collect-submodules backend \
     --collect-submodules uvicorn \
     --collect-submodules passlib \
+    --collect-submodules alembic \
     --collect-all pymupdf --collect-all pymupdf4llm \
     --add-data "$src/backend/prompts${sep}backend/prompts" \
     --add-data "$src/backend/diagram_icons${sep}backend/diagram_icons" \
