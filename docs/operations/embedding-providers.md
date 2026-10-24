@@ -76,8 +76,9 @@ A failed NER attempt is not retried for `NER_RETRY_SECONDS` (60 s) per
 `ollama_ip`/model and process: meanwhile the query is refused at once (still
 fail-closed) instead of waiting for the 10 s detector timeout on every turn and
 collection. With `send_raw` the deterministic filter alone applies meanwhile.
-Unlike chat, redaction is always applied, even with `external_pii_redact=false`:
-retrieval never needs the real values. Score-like figures (`4/9`, `3,5/9`, `75%`,
+Redaction is always applied (since P6 `external_pii_redact=false` is ignored
+everywhere): retrieval never needs the real values. The filtered query then passes the
+AI gateway residual check (`docs/privacy/p6-gateway.md`). Score-like figures (`4/9`, `3,5/9`, `75%`,
 dates written with slashes, `4 su 9`/`4 out of 9`, `percentile 75`/`75° percentile`,
 `punteggio: 4`/`score: 4`, `4 punti`, with the equivalents in the six interface
 languages) are then removed and the query is capped to 4,000

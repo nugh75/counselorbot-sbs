@@ -11,6 +11,7 @@ Le misure descritte non rendono da sole il trattamento conforme al GDPR.
 | [04-decisioni-titolare-dpo.md](04-decisioni-titolare-dpo.md) | decisioni D1–D14 per titolare/DPO/consulente, documenti da produrre, fonti normative e stato della verifica |
 | [p13-logs-diagnostica.md](p13-logs-diagnostica.md) | redazione distruttiva fail-closed, gazetteer nei log, download backend risanitizzati e ZIP desktop offline senza testo libero |
 | [p6ac-network-egress.md](p6ac-network-egress.md) | correzioni P6a-c operative: immagini solo su host fidati, classificazione URL, lettura Edge filtrata e preferenza API per Piper locale |
+| [p6-gateway.md](p6-gateway.md) | P6: `AIGateway` unico a 7 passi fail-closed, modalità `strict`/`transitional`, migrazione dei punti di uscita per `kind`, rimozione di `external_pii_redact=false`, test statico anti-bypass ed E2E su trasporto HTTP simulato |
 | [spikes/p3-pii-engine.md](spikes/p3-pii-engine.md) | spike P3: regole, gazetteer, Ollama NER e GLiNER ONNX misurati sul corpus P2 e su un holdout; PyInstaller; licenze; raccomandazione (regole + gazetteer di contesto + GLiNER multi PII fp16) |
 | [p5-crittografia-chiavi.md](p5-crittografia-chiavi.md) | P5: AES-256-GCM con AAD per campo, KEK da ambiente/portachiavi, DEK per finalità in `privacy_keys`, `subject_pid`, indici ciechi, rotazione, kit di recupero, parametri Argon2id |
 | [p8-subject-mappe.md](p8-subject-mappe.md) | P8: `subject_pid` base32 minuscolo, indici ciechi, tabella `privacy_pseudonym_maps` cifrata con la DEK `mapping` e `SqlAlchemyMapStore` |
@@ -18,8 +19,8 @@ Le misure descritte non rendono da sole il trattamento conforme al GDPR.
 | [bozze/](bozze/README.md) | P16: dieci bozze GDPR (informative studente/docente/AI, consensi condivisione e ricerca, conservazione, data breach, schema DPIA, registro art. 30, misure art. 32) con campi `[DA VALIDARE]`; nessuna dichiarazione di conformità |
 
 I quattro livelli: **L1** server (Console/portable), **L2** app desktop docente, **L3** app desktop studente (Fase 2, non
-ancora esistente), **L4** livello web Next.js (unico ingresso verso il backend). Il gateway AI non esiste come processo: va
-costruito dentro il backend.
+ancora esistente), **L4** livello web Next.js (unico ingresso verso il backend). Il gateway AI non è un processo separato:
+vive dentro il backend (`backend/privacy/gateway.py`, P6).
 
 ## Nucleo P1 implementato
 
@@ -47,7 +48,8 @@ introduce tabelle o migrazioni e non modifica i flussi AI esistenti.
   sollevano `AccessDenied`. La cifratura senza servizio dà `KeyUnavailable`;
   la decifratura si ferma prima sull'autorizzazione. `authorize_data_access`
   restituisce sempre una decisione negativa; gli eventi danno
-  `AuditUnavailable` e `AIGateway.send(request, ctx)` dà `EgressBlockedError`.
+  `AuditUnavailable`. `AIGateway.send(request, ctx)` senza trasporto dà
+  `EgressBlockedError`; il gateway operativo è P6 ([p6-gateway.md](p6-gateway.md)).
 - Ogni errore espone un codice fisso `privacy.errors.*`; argomenti, keyword
   e note diagnostiche libere sono scartati. `DetectorUnavailable` e
   `PurposeDisabled` sono alias di `PIIDetectorUnavailable` e

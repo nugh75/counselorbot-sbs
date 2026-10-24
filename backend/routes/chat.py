@@ -1824,6 +1824,11 @@ async def text_to_speech(request: TTSRequest, db: Session = Depends(get_db)):
                 if custom_voice:
                     voice = custom_voice
 
+        # Edge is external: the AI gateway (P6, kind="tts") filters the whole text
+        # before chunk boundaries can split an identifier.
+        from .voice_reader import speech_text
+        clean_text = speech_text(clean_text, voice)
+
         audio_bytes = io.BytesIO()
         for text_chunk in _split_text_for_tts(clean_text):
             communicate = edge_tts.Communicate(text_chunk, voice)

@@ -23,6 +23,10 @@ from sqlalchemy.orm import Session
 
 from . import models, pii_ner
 from .api_secrets import resolve_api_secret
+from .privacy.errors import PrivacyError
+from .privacy.gateway import AIGateway, context_for
+from .privacy.policy import is_trusted_local
+from .privacy.types import AIRequest, Target
 
 PROVIDERS = {
     "ollama",
@@ -428,10 +432,14 @@ def embed_texts(
     if provider == "none":
         raise EmbeddingError("embedding_disabled")
     external = provider != "ollama"
+    ollama_url = (config.get("ollama_ip") or "http://localhost:11434").rstrip("/")
+    # Privacy follows the host, not the provider name (P6b): an Ollama outside
+    # the trusted hosts is remote, although it needs no key, price or budget.
+    remote = external or not is_trusted_local(ollama_url)
     # Privacy policy, no config bypass: private text never leaves the process;
     # documents only from a public corpus; queries only against a public corpus
     # and only after the PII filter and score removal.
-    if external and (purpose == "private" or not public_corpus):
+    if remote and (purpose == "private" or not public_corpus):
         raise EmbeddingError("embedding_privacy_blocked")
     if not model:
         raise EmbeddingError("embedding_invalid_config")
@@ -444,8 +452,20 @@ def embed_texts(
         and dimensions > 3072
     ):
         raise EmbeddingError("embedding_invalid_dimensions")
-    if external and purpose == "query":
-        texts = filter_external_query(config, texts)
+    # Every text passes through the AI gateway (P6, kind="embedding"): public
+    # documents as they are, queries through `filter_external_query`.
+    target_url = {"ollama": ollama_url, "mistral": "https://api.mistral.ai",
+                  "openrouter": "https://openrouter.ai/api/v1"}.get(provider, "")
+    gateway = AIGateway(
+        config,
+        text_filter=(lambda batch: filter_external_query(config, batch)) if purpose == "query" else None,
+        public_content=purpose == "document" and public_corpus,
+    )
+    try:
+        texts = gateway.prepare(AIRequest("embedding", Target(provider, model, target_url), list(texts)),
+                                context_for(None)).request.texts
+    except PrivacyError:
+        raise EmbeddingError("embedding_privacy_blocked") from None
     # Validate the whole input before spending on its first batch.
     batches = list(_batches(texts, provider))
     try:
@@ -506,7 +526,7 @@ def embed_texts(
 
                     def call():
                         reply = client.post(
-                            f"{(config.get('ollama_ip') or 'http://localhost:11434').rstrip('/')}/api/embed",
+                            f"{ollama_url}/api/embed",
                             json=payload,
                         )
                         reply.raise_for_status()

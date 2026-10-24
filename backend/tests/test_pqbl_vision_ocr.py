@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 
 from backend import models, pqbl_generator as pqbl, vision_service
 from backend.ai_service import AIService
+from backend.privacy.gateway import AIGateway
 from backend.api_secrets import API_KEY_ENV_MAP
 
 #: Testo finto restituito dal client del provider di visione (mai rete reale).
@@ -137,21 +138,21 @@ def test_scanned_pdf_uses_the_configured_trusted_local_vision_provider(db, monke
     post = Mock(return_value=response)
     monkeypatch.setattr(vision_service.httpx, "post", post)
 
-    anonymize_calls = []
-    original = ai._anonymize_external
+    gateway_calls = []
+    original = AIGateway.prepare
 
-    def spy(provider, message, system, history):
-        anonymize_calls.append(provider)
-        return original(provider, message, system, history)
+    def spy(self, request, ctx):
+        gateway_calls.append(request.kind)
+        return original(self, request, ctx)
 
-    monkeypatch.setattr(ai, "_anonymize_external", spy)
+    monkeypatch.setattr(AIGateway, "prepare", spy)
 
     result = pqbl.extract_pdf_text_range(
         scanned_pdf, 0, 2, vision_call=ai.call_vision)
 
     # Due pagine scansionate: il testo delle due pagine viene unito.
     assert result.count(VISION_TEXT) == 2
-    assert anonymize_calls == ["ollama", "ollama"]
+    assert gateway_calls == ["vision", "vision"]
     assert ai.last_provider == "ollama" and ai.last_model == "local-vision-x"
     assert post.call_args.args[0] == "http://127.0.0.1:11434/api/generate"
     prompt = post.call_args.kwargs["json"]["prompt"]

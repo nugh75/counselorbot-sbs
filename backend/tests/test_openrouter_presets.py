@@ -213,7 +213,8 @@ def test_fallback_re_resolves_effort_for_each_attempt(db, monkeypatch):
             def call(*_args, **_kwargs):
                 return "" if model == "vendor/mandatory" else "ok"
 
-            return {"call": call}, plan.max_tokens, message, system, history, {}
+            passthrough = MagicMock(restore=lambda text: text)
+            return {"call": call}, plan.max_tokens, message, system, history, passthrough
 
         monkeypatch.setattr(ai, "_attempt_input", fake_attempt)
         monkeypatch.setattr(ai, "_targets", lambda provider, model: [

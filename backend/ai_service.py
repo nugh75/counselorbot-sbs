@@ -16,9 +16,9 @@ from . import models
 from . import embedding_service
 from . import personal_api
 from . import vision_service
-from .privacy.policy import is_trusted_local
-from . import pii
-from . import pii_ner
+from .privacy.errors import PrivacyError
+from .privacy.gateway import AIGateway, context_for
+from .privacy.types import AIRequest, Target
 from .api_secrets import API_KEY_ENV_MAP, config_key, resolve_api_secrets
 from .local_llm import LLAMACPP_DEFAULT_URL, LLAMACPP_KEY_CONFIG, llamacpp_api_key, openai_base
 from .model_context import ContextCapacityError, context_profile, fit_context, validate_output_capacity
@@ -223,6 +223,8 @@ def _is_openrouter_reasoning_error(exc: Exception) -> bool:
 class AIService:
     def __init__(self, db: Session, username: str | None = None):
         self.db = db
+        # Data subject of the calls, for the privacy gateway (P6).
+        self.privacy_username = username
         self.config = self._load_config()
         # #202: livello di ragionamento della fonte personale; prevale sul preset.
         self.personal_reasoning = None
@@ -304,9 +306,9 @@ class AIService:
         self.ollama_keep_alive = self.config.get('ollama_keep_alive', '5m') or '5m'
         self.ollama_preload_enabled = str(self.config.get('ollama_preload', 'false')).lower() == 'true'
         self.embedding_provider, self.embedding_model, self.embedding_dimensions = embedding_service.options(self.config)
-        # Anonimizzazione PII verso provider esterni (vedi `_anonymize_external`).
+        # Anonimizzazione PII verso provider esterni: sempre attiva (P6, gateway in
+        # `_anonymize_external`); `external_pii_redact=false` non la spegne più.
         # `block` = errore se il detector NER non risponde; `send_raw` = invio comunque.
-        self.external_pii_redact = str(self.config.get('external_pii_redact', 'true')).lower() not in ('0', 'false', 'no', 'off')
         self.external_pii_fallback = (self.config.get('external_pii_fallback') or 'block').strip().lower()
 
         # Registro provider: un'unica fonte di verità per dispatch sync/stream.
@@ -706,49 +708,45 @@ class AIService:
     def _ollama_base(self) -> str:
         return (self.config.get('ollama_ip') or 'http://localhost:11434').rstrip('/')
 
-    def _anonymize_external(self, provider: str, user_message: str,
-                            system_prompt: str, history: list):
-        """Anonimizza l'envelope per i provider esterni (GDPR minimizzazione).
-
-        Ritorna `(user_message, system_prompt, history, mapping)`; gli endpoint
-        locali fidati evitano il filtro. Ollama/llama.cpp su host non fidati
-        vengono filtrati anche con opt-out; il detector deve essere locale.
-        Con `external_pii_fallback=block`, un detector NER non raggiungibile
-        blocca la chiamata invece di esporre i dati."""
-        local_url = {
+    def _privacy_target(self, provider: str, model: str = "") -> Target:
+        # Only engines that run the model themselves can be local; any other
+        # provider, local proxies included (omniroute), forwards elsewhere.
+        url = {
             'ollama': self._ollama_base(),
             'llamacpp': self.config.get('llamacpp_url') or LLAMACPP_DEFAULT_URL,
-        }.get(provider)
-        if local_url is not None and is_trusted_local(local_url):
-            return user_message, system_prompt, history, {}
-        # An untrusted "local" provider must never inherit the old opt-out.
-        if local_url is None and not self.external_pii_redact:
-            return user_message, system_prompt, history, {}
+        }.get(provider, "")
+        return Target(provider, model or "", url)
+
+    def _anonymize_external(self, provider: str, user_message: str,
+                            system_prompt: str, history: list, *, kind: str = "chat", model: str = ""):
+        """Passa l'envelope dal gateway AI (P6, GDPR minimizzazione).
+
+        Ritorna `(user_message, system_prompt, history, prepared)`; il ripristino
+        della risposta usa `prepared.restore` / `prepared.stream_restorer`. Gli
+        host locali fidati non vengono filtrati; ogni altro provider sì, senza
+        opt-out. Un filtro non disponibile o residui PII bloccano la chiamata."""
         history = history or []
-        texts = [user_message, system_prompt] + [m.get('content', '') for m in history]
-        # Read this instance's DB snapshot: another worker's module-level flag
-        # must not keep requiring Ollama after an administrator selects basic.
-        ner_flag = self.config.get('pii_ner_enabled')
-        ner_enabled = None if ner_flag is None else str(ner_flag).strip().lower() not in ('0', 'false', 'no', 'off')
-        if not is_trusted_local(self._ollama_base()):
-            if (ner_enabled if ner_enabled is not None else pii_ner.is_ner_enabled()):
-                # The detector itself would send the original envelope remotely.
-                raise AIError("Modello PII locale non disponibile su un host fidato.",
-                              code="personalAPI.errors.privacy")
-            ner_enabled = False
-        anon_texts, mapping, ner_ok = pii_ner.anonymize_texts(
-            texts, ollama_base=self._ollama_base(), ner_enabled=ner_enabled,
-            ner_model=self.config.get('pii_ner_model'))
-        if not ner_ok and self.external_pii_fallback == 'block':
+        request = AIRequest(kind, self._privacy_target(provider, model), [user_message, system_prompt],
+                            attachments_context=[m.get('content', '') for m in history])
+        try:
+            config = {**self.config, 'external_pii_fallback': getattr(self, 'external_pii_fallback', None)}
+            prepared = AIGateway(config).prepare(request, self.privacy_context())
+        except PrivacyError:
             raise AIError(
-                "Anonimizzazione PII non disponibile (modello locale non raggiungibile). "
-                "Riprova, oppure disattiva la redazione esterna dal pannello admin.",
-                code="personalAPI.errors.privacy")
+                "Anonimizzazione PII non disponibile (modello locale non raggiungibile o dati "
+                "non filtrabili): la richiesta non è stata inviata.",
+                code="personalAPI.errors.privacy") from None
+        message, system = prepared.request.texts
+        filtered = prepared.request.attachments_context
         anon_history = [
-            dict(m, content=anon_texts[2 + i]) if m.get('content') else m
+            dict(m, content=filtered[i]) if m.get('content') else m
             for i, m in enumerate(history)
         ]
-        return anon_texts[0], anon_texts[1], anon_history, mapping
+        return message, system, anon_history, prepared
+
+    def privacy_context(self):
+        # Instances built without __init__ (tests, tools) act without a subject.
+        return context_for(getattr(self, "privacy_username", None))
 
     def _load_config(self):
         configs = self.db.query(models.Config).all()
@@ -952,11 +950,12 @@ class AIService:
         )
         self.last_envelope = {"system_prompt_final": system, "full_message": message, "history": history}
         # A local-to-cloud fallback crosses the privacy boundary too.
-        message, system, history, mapping = self._anonymize_external(provider, message, system, history)
+        message, system, history, prepared = self._anonymize_external(
+            provider, message, system, history, kind="chat_stream" if streaming else "chat", model=model)
         self.last_usage = None
         self.last_thinking = None
         self.last_provider, self.last_model = provider, model
-        return entry, plan.max_tokens, message, system, history, mapping
+        return entry, plan.max_tokens, message, system, history, prepared
 
     def _response_with_fallback(self, message, system, provider, model, max_tokens, history, json_mode):
         self.last_attempts = []
@@ -965,7 +964,7 @@ class AIService:
             attempt = {"provider": selected_provider, "model": selected_model, "status": "failed"}
             self.last_attempts.append(attempt)
             try:
-                entry, mt, msg, sys, hist, mapping = self._attempt_input(
+                entry, mt, msg, sys, hist, prepared = self._attempt_input(
                     selected_provider, selected_model, message, system, history, max_tokens, False)
                 kwargs = {"max_tokens": mt, "history": hist}
                 if selected_provider == "ollama":
@@ -982,7 +981,7 @@ class AIService:
                     raise AIError("Il modello ha restituito una risposta vuota")
                 attempt["status"] = "succeeded"
                 self._attempt_report(attempt)
-                return pii.restore(result, mapping) if mapping else result
+                return prepared.restore(result)
             except Exception as exc:
                 last_error = exc
                 # Log classifications only; upstream errors can contain request data.
@@ -1012,7 +1011,7 @@ class AIService:
         attempt = {"provider": provider, "model": model, "status": "failed"}
         self.last_attempts = [attempt]
         try:
-            entry, mt, user_message, system_prompt, _history, pii_mapping = self._attempt_input(
+            entry, mt, user_message, system_prompt, _history, prepared = self._attempt_input(
                 provider, model, user_message, system_prompt, None, max_tokens, False)
             result = entry['call'](user_message, system_prompt, model, max_tokens=mt)
             if result:
@@ -1026,7 +1025,7 @@ class AIService:
                 raise AIError("Il modello ha restituito una risposta vuota")
             attempt["status"] = "succeeded"
             self._attempt_report(attempt)
-            return pii.restore(result, pii_mapping) if pii_mapping else result
+            return prepared.restore(result)
         except AIError as exc:
             attempt["error_type"] = type(exc).__name__
             self._attempt_report(attempt)
@@ -1047,17 +1046,16 @@ class AIService:
 
         I ripieghi QSA/pQBL passano da qui. Immagini esterne bloccate prima
         anche del detector: redigere il prompt non redige la scansione.
-        Errori classificati e localizzati dai chiamanti."""
+        Errori classificati e localizzati dai chiamanti; prompt e immagine
+        passano dal gateway AI dentro `vision_service.call`."""
         if self.personal_error:
             raise AIError(self.personal_error, code=self.personal_error_code)
         resolved_provider, resolved_model = vision_service.resolve(self.config, provider, model)
         vision_service.require_local_target(self.config, resolved_provider)
         self.last_provider, self.last_model = resolved_provider, resolved_model
-        prompt, _system, _history, _mapping = self._anonymize_external(
-            resolved_provider, prompt, "", [])
         return vision_service.call(
             self.config, self.db, resolved_provider, resolved_model, prompt,
-            image_base64, timeout=timeout)
+            image_base64, timeout=timeout, ctx=self.privacy_context())
 
     # Token massimi per i riassunti (~80 parole → 120 token sono sufficienti)
     SUMMARY_MAX_TOKENS = 300
@@ -1100,8 +1098,8 @@ class AIService:
         provider, summary_model = self._apply_budget_lock(provider, summary_model)
         # Anonimizza il testo verso provider esterni (il riassunto resta con i
         # placeholder: e' testo interno, mai mostrato allo studente).
-        user_msg, _sp, _h, _m = self._anonymize_external(
-            provider, user_msg, SUMMARY_SYSTEM_PROMPT, None)
+        user_msg, _sp, _h, _prepared = self._anonymize_external(
+            provider, user_msg, SUMMARY_SYSTEM_PROMPT, None, kind="summary", model=summary_model)
         try:
             return self._provider(provider)['call'](user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
         except Exception as e:
@@ -1407,9 +1405,9 @@ class AIService:
             attempt = {"provider": selected_provider, "model": selected_model, "status": "failed"}
             self.last_attempts.append(attempt)
             try:
-                entry, mt, msg, sys, hist, mapping = self._attempt_input(
+                entry, mt, msg, sys, hist, prepared = self._attempt_input(
                     selected_provider, selected_model, user_message, system_prompt, history, max_tokens, True)
-                restorer = pii_ner.StreamRestorer(mapping) if mapping else None
+                restorer = prepared.stream_restorer()
                 if entry['stream']:
                     output = entry['stream'](msg, sys, selected_model, max_tokens=mt, history=hist)
                 else:
@@ -1423,8 +1421,8 @@ class AIService:
                         reasoning_seen = reasoning_seen or item.get("type") == "reasoning"
                         if restorer and item.get("type") == "content":
                             item = {**item, "text": restorer.feed(item["text"])}
-                        elif mapping:
-                            item = {**item, "text": pii.restore(item["text"], mapping)}
+                        else:
+                            item = {**item, "text": prepared.restore(item["text"])}
                     yield item
                 if self.last_completion is None:
                     self._record_completion(None, content_seen, reasoning_seen or bool(self.last_thinking))
