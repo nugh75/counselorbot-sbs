@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { MotionConfig } from 'framer-motion';
 import { Inter, Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
@@ -38,6 +39,10 @@ export default function RootLayout({
     return (
         <html lang="it" suppressHydrationWarning>
             <head>
+                {/* URL di ai4auth e della Console letti all'avvio del server, non
+                    al build (F1-03): stessa build per Docker e desktop. Eseguito
+                    prima dell'idratazione, quindi prima di ogni componente. */}
+                <Script src="/runtime-config.js" strategy="beforeInteractive" />
                 {/* No-flash: tema e lingua salvati applicati prima del primo paint.
                     La lingua arrivava solo dopo l'idratazione, quindi il primo
                     rendering — e con esso la voce di uno screen reader — partiva

@@ -30,12 +30,11 @@ services:
       BACKEND_ORIGIN: http://counselorbot-backend:8000
       NEXT_DEV_ALLOWED_ORIGINS: ${COUNSELORBOT_HOSTNAME:-counselorbot.labform.net},localhost,127.0.0.1
       NEXT_TELEMETRY_DISABLED: "1"
-      NEXT_PUBLIC_APP_URL: https://${COUNSELORBOT_HOSTNAME:-counselorbot.labform.net}
-      NEXT_PUBLIC_AI4AUTH_BASE: ${COUNSELORBOT_AUTH_URL:-https://auth.labform.net}
-      NEXT_PUBLIC_AI4EDUC_PORTAL_URL: ${COUNSELORBOT_PORTAL_URL:-https://portal.labform.net}
-      NEXT_PUBLIC_AI4EDUC_MANAGER_URL: ${COUNSELORBOT_MANAGER_URL:-https://manager.labform.net}
-      NEXT_PUBLIC_AI4EDUC_PROJECT_ID: counselorbot-portable
-      NEXT_PUBLIC_API_URL: /api
+      COUNSELORBOT_APP_URL: https://${COUNSELORBOT_HOSTNAME:-counselorbot.labform.net}
+      COUNSELORBOT_AUTH_URL: ${COUNSELORBOT_AUTH_URL:-https://auth.labform.net}
+      COUNSELORBOT_PORTAL_URL: ${COUNSELORBOT_PORTAL_URL:-https://portal.labform.net}
+      COUNSELORBOT_MANAGER_URL: ${COUNSELORBOT_MANAGER_URL:-https://manager.labform.net}
+      COUNSELORBOT_PROJECT_ID: counselorbot-portable
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public

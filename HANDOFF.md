@@ -1,3 +1,37 @@
+# Handoff 24 ottobre 2026: F1-03 frontend senza URL fissi al build
+
+Agente `s44-f103-opus` (Claude Opus 5.5), task Diario
+`afa375f0-73a3-4aec-bc34-da73253cdde4`, branch `feature/f1-03-runtime-app-url`, issue #549.
+
+- Obiettivo: stessa build standalone del frontend per Docker, portabile e
+  desktop; nessun `NEXT_PUBLIC_*` compilato nel bundle.
+- `frontend/src/lib/runtime-config.ts` + rotta `GET /runtime-config.js`
+  (`force-dynamic`, `no-store`): il server Next legge all'avvio
+  `COUNSELORBOT_APP_URL`, `COUNSELORBOT_AUTH_URL`, `COUNSELORBOT_PORTAL_URL`,
+  `COUNSELORBOT_MANAGER_URL`, `COUNSELORBOT_PROJECT_ID` e li pubblica in
+  `window.__COUNSELORBOT_CONFIG__` (`<` escapato). Il layout lo carica con
+  `next/script` `beforeInteractive`, prima dell'idratazione.
+- `lib/auth.ts`: le costanti di modulo `AI4AUTH_*`/`AI4EDUC_*` diventano
+  `getAuthUrls()` calcolato a ogni uso; Header, ConfigForm, piani di
+  somministrazione e contatti ricerca (`LANDING_BASE` → `authBase`) aggiornati.
+  Valori assenti ⇒ default ai4educ di `createAuthUrls` (invariato per sbs).
+- `frontend/Dockerfile`: tolti ARG/ENV `NEXT_PUBLIC_*` (anche `NEXT_PUBLIC_API_URL`,
+  già inutilizzato: le API sono relative `/api`). Compose portabile e dev:
+  le stesse URL passano da `build.args` a `environment` con i nomi
+  `COUNSELORBOT_*`; `frontend/.env.development` usa `COUNSELORBOT_APP_URL`.
+- Docs: `portable-installation.md` (cambio URL = ricreare il container, niente
+  build), `desktop-apps-plan.md` §3.2, `.env.example`, funzionalità + guidance-refresh.
+- Test: `src/lib/runtime-config.test.ts` (lettura env, script servito e riletto,
+  escape `</script>`, default SSR) + `auth-urls.test.ts`: 8 pass (Node 22);
+  `tsc`, eslint sui file toccati (solo warning preesistenti), `npm run build`,
+  `make guidance-check`. `npm run lint` si ferma su `i18n:check` per
+  `components/teacher/ClassCouncilTab.tsx`, file non toccato (preesistente).
+- Deploy portabile: serve `up -d --build --no-deps counselorbot-frontend`
+  (Dockerfile e compose cambiati). Nessun sudo. Nessun deploy fatto qui.
+- Desktop (F1-02): il guscio può passare `COUNSELORBOT_APP_URL` (URL del
+  tunnel) all'avvio del sidecar frontend; con `AUTH_PROVIDER=local` (F1-06)
+  il login ai4auth non serve.
+
 # Handoff 24 ottobre 2026: F1-05g compatibilità SQLite — aggiornamenti dello schema
 
 Agente `s45-f105g-opus` (Claude Opus 5.5), task Diario

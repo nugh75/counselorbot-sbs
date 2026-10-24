@@ -87,6 +87,11 @@ Il backend usa un worker per la prima installazione. Il codice
 viene copiato nelle immagini: le modifiche richiedono una nuova build.
 Il frontend copia anche `public` con proprietario `nextjs`, per rendere
 leggibili guide e immagini quando il checkout macOS ha permessi `0700`/`0600`.
+Gli URL pubblici (`COUNSELORBOT_HOSTNAME`, `COUNSELORBOT_AUTH_URL`,
+`COUNSELORBOT_PORTAL_URL`, `COUNSELORBOT_MANAGER_URL`) non sono più compilati
+nel frontend: il server li legge all'avvio e li serve in `/runtime-config.js`
+(F1-03). Dopo averli cambiati basta ricreare il container frontend
+(`up -d --no-deps counselorbot-frontend`), senza nuova build.
 
 I dati persistono in volumi nominati del progetto: DB, upload, memoria,
 raccolte dinamiche, indici RAG e chiavi private opzionali. `docs` e

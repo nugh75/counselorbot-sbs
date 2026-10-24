@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Building2, Check, Copy, FileText, Link2, Mail, Pencil, Phone, Plus, QrCode, RefreshCw, Search, Trash2, User, X } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useI18n } from '@/lib/i18n-context';
+import { getAuthUrls } from '@/lib/auth';
 
 type LocaleCode = 'en' | 'es' | 'sv';
 
@@ -113,9 +114,6 @@ const EMPTY: FormState = {
     notes: '',
     is_active: true,
 };
-
-// Host pubblico ai4auth che serve la landing /avvio (configurabile via env).
-const LANDING_BASE = process.env.NEXT_PUBLIC_AI4AUTH_BASE || 'https://auth.ai4educ.org';
 
 const INSTRUMENTS = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP'];
 const LOCALES: { value: LocaleCode; label: string }[] = [
@@ -263,7 +261,8 @@ export function ResearchContactsPanel() {
         if (contact.name) q.set('rname', contact.name);
         if (contact.email) q.set('remail', contact.email);
         if (contact.institution) q.set('rinst', contact.institution);
-        return `${LANDING_BASE}/avvio?${q.toString()}`;
+        // Host pubblico ai4auth che serve la landing /avvio (configurazione di avvio).
+        return `${getAuthUrls().authBase}/avvio?${q.toString()}`;
     };
 
     const cardText = (contact: ResearchContact) => {

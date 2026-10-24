@@ -175,8 +175,11 @@ Export statico (scartato per ora): 12 route dinamiche senza `generateStaticParam
 (`frontend/src/app/api/{chat,site-chat,tts}/stream`, `api/opencode/workspace/[key]/chat`), rewrite e redirect
 in `frontend/next.config.ts` andrebbero tutti riportati in FastAPI.
 
-**Variabili di build.** Il frontend incorpora URL al momento del build (`frontend/Dockerfile`, `NEXT_PUBLIC_*`): per il desktop
-servono valori relativi (`NEXT_PUBLIC_API_URL=/api`) e un `NEXT_PUBLIC_APP_URL` letto a runtime, perché l'URL del tunnel cambia (F1-03).
+**Variabili di build.** Fatto in F1-03: il frontend non incorpora più URL al build. `COUNSELORBOT_APP_URL`,
+`COUNSELORBOT_AUTH_URL`, `COUNSELORBOT_PORTAL_URL`, `COUNSELORBOT_MANAGER_URL`, `COUNSELORBOT_PROJECT_ID` si leggono
+all'avvio del server Next e arrivano al browser da `/runtime-config.js` (`frontend/src/lib/runtime-config.ts`), caricato
+prima dell'idratazione; le chiamate API erano già relative (`/api`). La stessa build standalone serve Docker e desktop:
+il guscio passa le variabili all'avvio del sidecar frontend (o le omette: valgono i default ai4educ).
 
 ### 3.3 Database: SQLite sul desktop, Postgres sui server
 
