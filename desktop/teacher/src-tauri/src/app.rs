@@ -64,11 +64,8 @@ fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> 
     let version = app.package_info().version.to_string();
     // Only explicit test modes can override the data root; lifecycle checks must
     // never touch the teacher's installed app data.
-    let root = if mode != Mode::Window {
-        std::env::var_os("COUNSELORBOT_TEST_DATA_DIR").map(PathBuf::from)
-    } else {
-        None
-    };
+    let root =
+        if mode != Mode::Window { std::env::var_os("COUNSELORBOT_TEST_DATA_DIR").map(PathBuf::from) } else { None };
     let data = DataDir::prepare(root.unwrap_or(app.path().app_local_data_dir()?), &version)?;
     logs::init_shell_log(&data.logs())?;
     let lock = lock_instance(&data)?;
@@ -106,7 +103,10 @@ fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> 
                 };
                 logs::log(format!("smoke: {} {:?}", status.phase, status.message));
                 if let Some(report) = report {
-                    let _ = std::fs::write(report.with_extension("ready.json"), serde_json::to_vec_pretty(&status).unwrap());
+                    let _ = std::fs::write(
+                        report.with_extension("ready.json"),
+                        serde_json::to_vec_pretty(&status).unwrap(),
+                    );
                 }
                 app.exit(if status.phase == "ready" { 0 } else { 1 });
             });

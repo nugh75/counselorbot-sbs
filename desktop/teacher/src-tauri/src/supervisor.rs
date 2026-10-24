@@ -324,11 +324,17 @@ impl Supervisor {
                     }
                     Exit::DataUnusable => {
                         return Err(Failure::Fatal(
-                            "Cartella dati o database inutilizzabile (permessi, disco pieno o database danneggiato).".into(),
+                            "Cartella dati o database inutilizzabile (permessi, disco pieno o database danneggiato)."
+                                .into(),
                             Some("restore_backup"),
                         ))
                     }
-                    Exit::Requested => return Err(Failure::Fatal("Il backend si e' fermato durante l'avvio.".into(), Some("diagnostics"))),
+                    Exit::Requested => {
+                        return Err(Failure::Fatal(
+                            "Il backend si e' fermato durante l'avvio.".into(),
+                            Some("diagnostics"),
+                        ))
+                    }
                     Exit::Crash => {
                         logs::log(format!("backend: uscito durante l'avvio ({status})"));
                         if self.may_restart("backend") {
@@ -462,7 +468,10 @@ impl Supervisor {
     fn start_tunnel(&mut self) -> Result<(), Failure> {
         let mode = self.shell.tunnel.mode.clone();
         if mode == "named" {
-            return Err(Failure::Fatal("Il tunnel nominativo richiede la configurazione prevista in F1-10.".into(), None));
+            return Err(Failure::Fatal(
+                "Il tunnel nominativo richiede la configurazione prevista in F1-10.".into(),
+                None,
+            ));
         }
         if mode != "quick" {
             return Ok(());
@@ -498,9 +507,8 @@ impl Supervisor {
                 lifeline: true,
             }
         };
-        self.tunnel_log_offset = std::fs::metadata(self.config.data.logs().join("cloudflared.log"))
-            .map(|m| m.len())
-            .unwrap_or(0);
+        self.tunnel_log_offset =
+            std::fs::metadata(self.config.data.logs().join("cloudflared.log")).map(|m| m.len()).unwrap_or(0);
         let proc = sidecar::spawn(&spec, &self.config.data.logs(), &self.job, None)
             .map_err(|e| Failure::Fatal(format!("avvio di cloudflared: {e}"), Some("diagnostics")))?;
         // A rotation at spawn starts a new file.
@@ -621,7 +629,10 @@ impl Supervisor {
     }
 
     fn read_tunnel_url(&mut self) -> bool {
-        if self.tunnel.is_none() || self.shell.tunnel.mode != "quick" || self.status.lock().unwrap().tunnel_url.is_some() {
+        if self.tunnel.is_none()
+            || self.shell.tunnel.mode != "quick"
+            || self.status.lock().unwrap().tunnel_url.is_some()
+        {
             return false;
         }
         let Ok(text) = std::fs::read(self.config.data.logs().join("cloudflared.log")) else { return false };
@@ -667,11 +678,12 @@ impl Supervisor {
     }
 
     fn write_pids(&self, starting: Option<&Proc>) {
-        let records: Vec<pids::Record> = [self.backend.as_ref(), self.frontend.as_ref(), self.tunnel.as_ref(), starting]
-            .into_iter()
-            .flatten()
-            .filter_map(|p| p.record.clone())
-            .collect();
+        let records: Vec<pids::Record> =
+            [self.backend.as_ref(), self.frontend.as_ref(), self.tunnel.as_ref(), starting]
+                .into_iter()
+                .flatten()
+                .filter_map(|p| p.record.clone())
+                .collect();
         if let Err(error) = pids::write(&self.config.data.run(), pids::SIDECARS_FILE, &records) {
             logs::log(format!("run/sidecars.json non scritto: {error}"));
         }
@@ -731,10 +743,15 @@ mod tests {
         let (_, receiver) = mpsc::channel();
         Supervisor::new(
             Config {
-                resources: data.path("resources"), shell_exe: std::env::current_exe().unwrap(),
-                data, version: "1.2.3".into(), minimal_backend: true, report_file: None,
+                resources: data.path("resources"),
+                shell_exe: std::env::current_exe().unwrap(),
+                data,
+                version: "1.2.3".into(),
+                minimal_backend: true,
+                report_file: None,
             },
-            Arc::new(Mutex::new(Status::default())), receiver,
+            Arc::new(Mutex::new(Status::default())),
+            receiver,
         )
     }
 
@@ -743,7 +760,8 @@ mod tests {
         let supervisor = supervisor("env");
         let backend = supervisor.backend_spec(32101);
         let frontend = supervisor.frontend_spec(32102, 32101);
-        let env = |spec: &Spec, name: &str| spec.env.iter().find(|(key, _)| key == name).map(|(_, value)| value.clone());
+        let env =
+            |spec: &Spec, name: &str| spec.env.iter().find(|(key, _)| key == name).map(|(_, value)| value.clone());
         assert_eq!(env(&backend, "HOST").as_deref(), Some("127.0.0.1"));
         assert_eq!(env(&frontend, "HOSTNAME").as_deref(), Some("127.0.0.1"));
         assert_eq!(env(&frontend, "BACKEND_ORIGIN").as_deref(), Some("http://127.0.0.1:32101"));
@@ -754,7 +772,10 @@ mod tests {
         assert_eq!(env(&backend, "COUNSELORBOT_FRONTEND_SECRET"), env(&frontend, "COUNSELORBOT_FRONTEND_SECRET"));
         assert!(backend.lifeline && frontend.lifeline);
         supervisor.status.lock().unwrap().tunnel_url = Some("https://fixture.trycloudflare.com".into());
-        assert_eq!(env(&supervisor.backend_spec(32103), "COUNSELORBOT_PUBLIC_ORIGIN").as_deref(), Some("https://fixture.trycloudflare.com"));
+        assert_eq!(
+            env(&supervisor.backend_spec(32103), "COUNSELORBOT_PUBLIC_ORIGIN").as_deref(),
+            Some("https://fixture.trycloudflare.com")
+        );
         std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
     }
 
@@ -763,7 +784,9 @@ mod tests {
         let mut supervisor = supervisor("version");
         supervisor.check_version(r#"{"version":"1.2.3","desktop_contract":1}"#);
         assert!(supervisor.version_error.is_none());
-        for health in [r#"{"version":"9.0.0","desktop_contract":1}"#, r#"{"version":"1.2.3","desktop_contract":2}"#, "invalid"] {
+        for health in
+            [r#"{"version":"9.0.0","desktop_contract":1}"#, r#"{"version":"1.2.3","desktop_contract":2}"#, "invalid"]
+        {
             supervisor.status.lock().unwrap().tunnel_url = Some("https://fixture.trycloudflare.com".into());
             supervisor.check_version(health);
             assert!(supervisor.version_error.is_some());
@@ -775,7 +798,9 @@ mod tests {
     #[test]
     fn crash_budget_allows_three_restarts_in_five_minutes() {
         let mut supervisor = supervisor("budget");
-        for _ in 0..3 { assert!(supervisor.may_restart("backend")); }
+        for _ in 0..3 {
+            assert!(supervisor.may_restart("backend"));
+        }
         assert!(!supervisor.may_restart("backend"));
         assert!(supervisor.may_restart("frontend"));
         supervisor.crashes.insert("backend", vec![Instant::now() - RESTART_WINDOW]);
@@ -793,8 +818,13 @@ mod tests {
             ("sleep", vec!["60"])
         };
         let spec = Spec {
-            name: "cloudflared", program: program.into(), args: args.into_iter().map(OsString::from).collect(),
-            env: vec![], cwd: supervisor.config.data.root.clone(), log_file: "cloudflared.log", lifeline: false,
+            name: "cloudflared",
+            program: program.into(),
+            args: args.into_iter().map(OsString::from).collect(),
+            env: vec![],
+            cwd: supervisor.config.data.root.clone(),
+            log_file: "cloudflared.log",
+            lifeline: false,
         };
         let tunnel = sidecar::spawn(&spec, &supervisor.config.data.logs(), &supervisor.job, None).unwrap();
         let record = tunnel.record.clone().unwrap();

@@ -195,9 +195,11 @@ mod tests {
     fn refuses_a_newer_layout_or_another_app() {
         let root = temp("newer");
         std::fs::create_dir_all(&root).unwrap();
-        std::fs::write(root.join("layout.json"), r#"{"layout": 2, "app": "teacher", "created_with": "9.0.0"}"#).unwrap();
+        std::fs::write(root.join("layout.json"), r#"{"layout": 2, "app": "teacher", "created_with": "9.0.0"}"#)
+            .unwrap();
         assert!(DataDir::prepare(root.clone(), "1.0.0").is_err());
-        std::fs::write(root.join("layout.json"), r#"{"layout": 1, "app": "student", "created_with": "1.0.0"}"#).unwrap();
+        std::fs::write(root.join("layout.json"), r#"{"layout": 1, "app": "student", "created_with": "1.0.0"}"#)
+            .unwrap();
         assert!(DataDir::prepare(root.clone(), "1.0.0").is_err());
         std::fs::remove_dir_all(&root).unwrap();
     }
