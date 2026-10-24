@@ -87,6 +87,13 @@ che compare con un identificativo pseudonimo invece dello username. Così i
 segnaposto di una conversazione restano gli stessi anche dopo un riavvio. Anche
 questo non è ancora collegato alle chat (gateway AI, P6).
 
+Il blocco P11 cifra a riposo, quando l'amministratore accende
+`PRIVACY_DB_ENCRYPTION`, le note del docente, i riferimenti Idea, le riflessioni
+sul profilo dello studente, il testo delle chat nei log, l'email dei log (cercabile
+solo tramite indice cieco) e i file di memoria della sessione. I dati già salvati
+restano leggibili e in chiaro finché non vengono riscritti: il riempimento dei
+record esistenti non c'è ancora.
+
 Le correzioni P6a-c bloccano l'invio di immagini a provider esterni: OCR e
 visione richiedono un servizio su loopback o su un host dichiarato fidato
 dall'operatore. Il nome Ollama e un indirizzo di rete privata non bastano.

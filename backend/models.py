@@ -1,7 +1,9 @@
 from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, Date, DateTime, JSON, UniqueConstraint, ForeignKey, CheckConstraint, Index, text
+from sqlalchemy import event
 from sqlalchemy.sql import func
 from .database import Base
 from .db_compat import UTCDateTime
+from .privacy.encrypted_types import EncryptedLogDetails, EncryptedText
 
 import bcrypt
 
@@ -164,7 +166,9 @@ class Log(Base):
     user_id = Column(Integer, nullable=True)
     # Identita' testuale (ai4auth fornisce username/email, non un User.id integer).
     username = Column(String, index=True, nullable=True)
-    email = Column(String, nullable=True)
+    email = Column(EncryptedText("logs", "email"), nullable=True)
+    # Indice cieco HMAC dell'email (P11): ricerca senza leggere la colonna cifrata.
+    email_idx = Column(String, index=True, nullable=True)
     anonymous_research_code = Column(String, index=True, nullable=True)
     timestamp = Column(UTCDateTime, server_default=func.now())
     action = Column(String) # e.g., "login", "chat_message", "qsa_analysis"
@@ -177,7 +181,7 @@ class Log(Base):
     # FK logica -> shared_chat_responses.id (per join feedback inline).
     response_id = Column(String, index=True, nullable=True)
     cost_usd = Column(Float, nullable=True)
-    details = Column(JSON) # e.g., prompt used, score data, message content
+    details = Column(EncryptedLogDetails) # e.g., prompt used, score data, message content (P11: chiavi di contenuto cifrate)
 
 class UserDisplayName(Base):
     """Nome visualizzato per utenti (docenti, ricercatori, admin).
@@ -865,7 +869,7 @@ class LearnerProfileReflection(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, nullable=False, index=True)
-    note = Column(Text, nullable=False)
+    note = Column(EncryptedText("learner_profile_reflections", "note"), nullable=False)
     current_revision_id = Column(Integer, nullable=True, index=True)
     previous_revision_id = Column(Integer, nullable=True, index=True)
     session_id = Column(String, nullable=True, index=True)
@@ -1328,7 +1332,7 @@ class TeacherNote(Base):
     username = Column(String, index=True, nullable=False)  # studente
     author_username = Column(String, index=True, nullable=False)
     kind = Column(String, nullable=False, default="note")  # note | message
-    text = Column(Text, nullable=False)
+    text = Column(EncryptedText("teacher_notes", "text"), nullable=False)
     visible_to_student = Column(Boolean, nullable=False, default=False)
     telegram_delivered = Column(Boolean, nullable=True)  # solo kind=message
     created_at = Column(UTCDateTime, server_default=func.now())
@@ -1544,7 +1548,7 @@ class IdeaReference(Base):
     session_id = Column(String, nullable=False, index=True)
     filename = Column(String, nullable=False)
     kind = Column(String, nullable=False)
-    text = Column(Text, nullable=False)
+    text = Column(EncryptedText("idea_references", "text"), nullable=False)
     truncated = Column(Boolean, nullable=False, default=False)
     created_at = Column(UTCDateTime, server_default=func.now())
 
@@ -2402,3 +2406,12 @@ class PrivacyPseudonymMap(Base):
     locale = Column(String(16), nullable=False)
     mapping_ref = Column(String(64), nullable=False)
     created_at = Column(UTCDateTime, nullable=False)
+
+
+@event.listens_for(Log, "before_insert")
+@event.listens_for(Log, "before_update")
+def _index_log_email(mapper, connection, log):
+    """P11: with encryption on, the sealed email is searchable only through its blind index."""
+    from .privacy import field_crypto
+    if log.email and field_crypto.enabled():
+        log.email_idx = field_crypto.blind_index("logs.email", log.email)

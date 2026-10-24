@@ -19,7 +19,32 @@ Agente `s63` (Claude Opus 5.5), branch `feature/privacy-p6-ai-gateway`.
   tenute entrambe le voci. P11 (#571) non è su `main` e non è incluso. Rieseguiti solo i test P6.
 - **CI #575**: `tests (sqlite)` 4 e `tests (postgres)` 9 fallimenti fuori ratchet, gli stessi test dei run di F1-05h
   (40129126537, già su `main`) e P11 (40132612909): Piper P6a-c, `practice_notebooks`, `sse_heartbeat`, e su Postgres
-  `test_routes_commit_and_release…` di `test_sqlite_load_concurrency`. Nessuno introdotto da P6; da sistemare a parte.
+  `test_routes_commit_and_release…` di `test_sqlite_load_concurrency`. Nessuno introdotto da P6; baseline accettata dal Timoniere.
+- **Merge P11**: `origin/main` con #571 (cifratura a riposo) unito senza rebase; codice P11 (`models.py`,
+  `backend/privacy/*`) fuso senza conflitti, conflitti solo in questo file e nello stato guidance (rigenerato).
+  Test: `test_privacy_p6_gateway`, `test_ai_egress_guard`, `test_forum_privacy`, `test_privacy_p11_db_encryption`
+  114 pass, 1 fallimento già nel ratchet SQLite (`forum_metadata_reader…`, moduli `class_council`); `guidance-check` verde.
+
+---
+
+# Handoff 24 ottobre 2026: Privacy Layer P11 — cifratura a riposo dei contenuti
+
+Agente `s64`, branch `feature/privacy-p11-db-encryption`.
+
+- **Obiettivo**: cifrare a riposo i contenuti sensibili su SQLite e Postgres (02 §4.2, §9).
+- **Modifiche**: `backend/privacy/field_crypto.py` (DEK `content`, interruttore `PRIVACY_DB_ENCRYPTION`, lettura trasparente),
+  `encrypted_types.py` (`EncryptedText`, `EncryptedLogDetails`), colonne `teacher_notes.text`, `idea_references.text`,
+  `learner_profile_reflections.note`, `logs.email` (+ `logs.email_idx` indice cieco, migrazione `20261024_log_email_blind_index`),
+  chiavi di contenuto di `logs.details`, file di `memory_service.py`. Doc `docs/privacy/p11-cifratura-db.md`.
+- **Da fare**: job di riempimento dei record esistenti con kit di recupero (02 §9.3/§9.6), AAD legato alla riga (P7),
+  altre colonne di testo libero, Fernet → DEK (P12). Passo manuale: nessuno (interruttore spento di default).
+- **Test eseguiti**: `test_privacy_p11_db_encryption.py` 11 pass su SQLite e su Postgres 16 (container temporaneo,
+  rimosso); con P5/P8/P13/idea/ledger/teacher_noticing/timeline 177 pass. `test_smoke.py` richiede `DATABASE_URL` (non impostata).
+- **Fix CI (PR #571)**: `test_forum_privacy.py::test_forum_import_graph_has_no_ai_rag_context_or_export_path` falliva perché
+  `models` importa ora `backend.privacy.*` (tipi di colonna cifrati). L'insieme atteso include i sei moduli: solo
+  crittografia e chiavi locali, senza provider, rete, RAG o esportazione. Test eseguito: 1 pass su SQLite.
+- **Merge con main**: `git merge origin/main` (senza rebase); conflitti solo in `HANDOFF.md` e `docs/privacy/README.md`,
+  risolti tenendo entrambe le parti (nessun conflitto in `backend/privacy`, quindi nessun codice P6 toccato).
 
 ---
 
