@@ -181,7 +181,7 @@ def test_routes_flush_headers_and_first_frame_before_slow_work(monkeypatch, rout
     ai = SimpleNamespace(config={}, stream_response=MagicMock())
     db = MagicMock()
     db.info = {"chatgpt_language": "sv"}
-    # A stream owns its DB session until its sync generator actually exits.
+    # The request session is explicitly closed before provider/retrieval work.
     sessions = MagicMock()
     monkeypatch.setattr(chat.database, "SessionLocal", sessions)
     monkeypatch.setattr(chat, "AIService", lambda *a, **kw: ai)
@@ -273,8 +273,7 @@ def test_routes_flush_headers_and_first_frame_before_slow_work(monkeypatch, rout
         events = [json.loads(message["body"][6:]) for message in sent if message.get("body", b"").startswith(b"data: ")]
         assert events[-1].get("error") or events[-1].get("done") or events[-1].get("type") == "done"
         if route == "site_chat":
-            stream_db = sessions.return_value.__enter__.return_value
-            assert ai.db is stream_db
-            stream_db.info.update.assert_called_once_with(db.info)
-            sessions.return_value.__exit__.assert_called_once()
+            db.commit.assert_called_once()
+            db.close.assert_called_once()
+            sessions.assert_not_called()
     asyncio.run(asyncio.wait_for(check(), 3))

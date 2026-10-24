@@ -1,5 +1,6 @@
 """The SIWC Responses transport, shared by dispatch and prompt inspection."""
 from openai import OpenAI, APIStatusError, APIConnectionError
+from .database import independent_read_session
 
 from .chatgpt_connections import ChatGPTError, RESOURCE, access_token, mark_reconnect, preference, require_ready
 
@@ -33,11 +34,15 @@ class _EffortRejected(Exception):
 
 
 def _stream(db, model, message, instructions, history, timeout, effort):
-    require_ready(db)
-    # Connection is not consent to infer: activation and model are explicit.
-    if preference(db) != model:
-        raise ChatGPTError("model")
-    token = access_token(db)
+    # Revalidate consent and refresh credentials in a short session. Never
+    # reopen the request's SQLite write transaction across the Responses stream.
+    with independent_read_session(db) as lookup:
+        lookup.info.update(db.info)
+        require_ready(lookup)
+        # Connection is not consent to infer: activation and model are explicit.
+        if preference(lookup) != model:
+            raise ChatGPTError("model")
+        token = access_token(lookup)
     client = OpenAI(api_key=token, base_url=RESOURCE, timeout=timeout, max_retries=0)
     completed = False
     try:

@@ -5,7 +5,7 @@ from fastapi import Depends, Request
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from starlette.requests import HTTPConnection
 from . import auth
 from .db_compat import check_sqlite_workers
@@ -85,6 +85,18 @@ def as_write_session(db):
 def write_session():
     """Sessione di scrittura per cicli in background e job; chi la apre la chiude."""
     return as_write_session(SessionLocal())
+
+
+def independent_read_session(db):
+    """Short committed-state lookup without inheriting SQLite's write intent.
+
+    Callers own/close this session before provider I/O. A Connection bind keeps
+    test savepoints; production Engine binds use a separate connection.
+    """
+    bind = db.get_bind()
+    if isinstance(bind, Engine) and bind.dialect.name == "sqlite":
+        bind = bind.execution_options(sqlite_begin=None)
+    return Session(bind=bind, join_transaction_mode="create_savepoint")
 
 
 def get_db(connection: HTTPConnection):
