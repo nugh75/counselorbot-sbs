@@ -1,6 +1,7 @@
-from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, Date, DateTime, JSON, UniqueConstraint, ForeignKey, CheckConstraint, Index, text
+from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, Date, JSON, UniqueConstraint, ForeignKey, CheckConstraint, Index, text
 from sqlalchemy.sql import func
 from .database import Base
+from .db_compat import UTCDateTime
 
 import bcrypt
 
@@ -59,7 +60,7 @@ class ChatGPTConnection(Base):
     preferred_model = Column(String, nullable=True)
     catalog = Column(JSON, nullable=True)
     last_error = Column(String, nullable=True)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class ChatGPTLink(Base):
@@ -69,7 +70,7 @@ class ChatGPTLink(Base):
     username = Column(String, nullable=False, index=True)
     nonce = Column(String, nullable=False)
     expected_client_id = Column(String, nullable=True)
-    expires_at = Column(DateTime(timezone=True), nullable=False)
+    expires_at = Column(UTCDateTime, nullable=False)
 
 
 class LocalSession(Base):
@@ -109,7 +110,7 @@ class PersonalAPISettings(Base):
     model_name = Column(String, nullable=False)
     encrypted_key = Column(Text, nullable=False)
     enabled = Column(Boolean, nullable=False, default=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class APISecret(Base):
@@ -118,7 +119,7 @@ class APISecret(Base):
 
     provider = Column(String, primary_key=True, index=True)
     encrypted_value = Column(Text, nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
     updated_by = Column(String, nullable=True)
 
 
@@ -130,7 +131,7 @@ class PersonalAPIConnection(Base):
     provider = Column(String, nullable=False)
     model_name = Column(String, nullable=False)
     encrypted_key = Column(Text, nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class PersonalAIRouting(Base):
@@ -168,7 +169,7 @@ class Log(Base):
     username = Column(String, index=True, nullable=True)
     email = Column(String, nullable=True)
     anonymous_research_code = Column(String, index=True, nullable=True)
-    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    timestamp = Column(UTCDateTime, server_default=func.now())
     action = Column(String) # e.g., "login", "chat_message", "qsa_analysis"
     # Campi chiave denormalizzati e indicizzati per filtri rapidi.
     provider = Column(String, index=True, nullable=True)
@@ -192,7 +193,7 @@ class UserDisplayName(Base):
     username = Column(String, primary_key=True, index=True)
     display_name = Column(String, nullable=True)
     email = Column(String, nullable=True)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class GuidedStep(Base):
@@ -220,14 +221,14 @@ class GuidedStepQuestion(Base):
     text = Column(Text, nullable=False)
     sort_order = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 class SurveyResponse(Base):
     __tablename__ = "survey_responses"
     
     id = Column(Integer, primary_key=True, index=True)
-    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+    submitted_at = Column(UTCDateTime, server_default=func.now())
     
     # Dati di base
     eta = Column(String, nullable=True)
@@ -267,7 +268,7 @@ class StrategyFeedback(Base):
     phase = Column(String, nullable=True)
     language = Column(String, nullable=True)
     helpful = Column(Boolean, nullable=False)
-    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+    submitted_at = Column(UTCDateTime, server_default=func.now())
 
 
 class SharedChatResponse(Base):
@@ -281,8 +282,8 @@ class SharedChatResponse(Base):
     language = Column(String, nullable=False, default="it")
     response_text = Column(Text, nullable=False)
     helpful = Column(Boolean, nullable=True, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    rated_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
+    rated_at = Column(UTCDateTime, nullable=True)
 
 
 class QuestionnaireResult(Base):
@@ -302,7 +303,7 @@ class QuestionnaireResult(Base):
     source_system = Column(String(64), nullable=True)
     source_record_id = Column(String, nullable=True)
     locale = Column(String(8), nullable=True)
-    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+    submitted_at = Column(UTCDateTime, server_default=func.now())
 
 
 class ValidationResponse(Base):
@@ -326,7 +327,7 @@ class ValidationResponse(Base):
     administration_plan_id = Column(Integer, index=True, nullable=True)
     research_contact_id = Column(Integer, index=True, nullable=True)
     duration_seconds = Column(Integer, nullable=True)
-    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+    submitted_at = Column(UTCDateTime, server_default=func.now())
 
 
 class AnonymousResearchCode(Base):
@@ -337,8 +338,8 @@ class AnonymousResearchCode(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, nullable=False, unique=True, index=True)
     code = Column(String, nullable=False, unique=True, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class ResearchContact(Base):
@@ -359,8 +360,8 @@ class ResearchContact(Base):
     source = Column(String, nullable=False, default="manual")
     # username ai4auth per i contatti sincronizzati (chiave di idempotenza)
     ext_username = Column(String, nullable=True, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class AdministrationPlan(Base):
@@ -377,7 +378,7 @@ class AdministrationPlan(Base):
     locale = Column(String, index=True, nullable=False, default="en")
     # Fascia dei partecipanti al piano: secondaria | universita | adulti.
     school_level = Column(String, nullable=True)
-    scheduled_at = Column(DateTime(timezone=True), nullable=True)
+    scheduled_at = Column(UTCDateTime, nullable=True)
     location = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     status = Column(String, nullable=False, default="planned", index=True)
@@ -393,8 +394,8 @@ class AdministrationPlan(Base):
     institution_code = Column(String(50), nullable=True, index=True)
     institution_password = Column(String(100), nullable=True)
     created_by_username = Column(String, nullable=True, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class AdministrationPlanResearcher(Base):
@@ -406,7 +407,7 @@ class AdministrationPlanResearcher(Base):
     plan_id = Column(Integer, index=True, nullable=False)
     research_contact_id = Column(Integer, index=True, nullable=True)
     external_name = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class AssistantQuestion(Base):
@@ -425,8 +426,8 @@ class AssistantQuestion(Base):
     text = Column(Text, nullable=False)
     sort_order = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class TrainingExample(Base):
@@ -447,8 +448,8 @@ class TrainingExample(Base):
     review_notes = Column(Text, nullable=True)
     auto_score = Column(JSON, nullable=True)
     source = Column(String, nullable=False, default="synthetic-template-v1")
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 # --- Catalogo strumenti editabile da admin (item + regole di scala, DB-driven) ---
@@ -565,7 +566,7 @@ class PqblDocument(Base):
     file_path = Column(String, nullable=True)  # path al PDF salvato (pulito dopo la generazione)
     chunks_total = Column(Integer, nullable=False, default=0)
     chunks_done = Column(Integer, nullable=False, default=0)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class PqblQuestion(Base):
@@ -591,8 +592,8 @@ class PqblSession(Base):
     document_id = Column(String, index=True, nullable=False)
     username = Column(String, nullable=True, index=True)
     mode = Column(String, nullable=False, default="learning")  # learning | final_test
-    started_at = Column(DateTime(timezone=True), server_default=func.now())
-    finished_at = Column(DateTime(timezone=True), nullable=True)
+    started_at = Column(UTCDateTime, server_default=func.now())
+    finished_at = Column(UTCDateTime, nullable=True)
 
 
 class PqblAttempt(Base):
@@ -607,7 +608,7 @@ class PqblAttempt(Base):
     selected_key = Column(String, nullable=False)
     correct = Column(Boolean, nullable=False)
     first_try = Column(Boolean, nullable=False, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class GoalCatalogEntry(Base):
@@ -620,8 +621,8 @@ class GoalCatalogEntry(Base):
     status = Column(String, nullable=False, default="draft", index=True)
     version = Column(Integer, nullable=False, default=1)
     data = Column(JSON, nullable=False, default=dict)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class TeacherAssignment(Base):
@@ -644,8 +645,8 @@ class TeacherAssignment(Base):
     instructions = Column(Text, nullable=False, default="")
     request_id = Column(String, nullable=False)
     request_hash = Column(String, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    revoked_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
+    revoked_at = Column(UTCDateTime, nullable=True)
 
 
 class AssignmentLearningSettings(Base):
@@ -668,9 +669,9 @@ class AssignmentWork(Base):
     event_id = Column(String, nullable=True)
     revision = Column(Integer, nullable=False, default=1)
     submission = Column(JSON, nullable=True)
-    submitted_at = Column(DateTime(timezone=True), nullable=True)
+    submitted_at = Column(UTCDateTime, nullable=True)
     feedback = Column(Text, nullable=False, default="")
-    feedback_at = Column(DateTime(timezone=True), nullable=True)
+    feedback_at = Column(UTCDateTime, nullable=True)
 
 
 class AssignmentRecipient(Base):
@@ -700,8 +701,8 @@ class PersonalGoal(Base):
     revision = Column(Integer, nullable=False, default=1)
     # Metodo: strategie certificate {kind:'certified', slug} o proprie {kind:'own', id}.
     method = Column(JSON, nullable=False, default=list)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class GoalResourceLink(Base):
@@ -729,7 +730,7 @@ class GoalEdge(Base):
     id = Column(Integer, primary_key=True)
     parent_id = Column(Integer, ForeignKey("personal_goals.id", ondelete="CASCADE"), nullable=False, index=True)
     child_id = Column(Integer, ForeignKey("personal_goals.id", ondelete="CASCADE"), nullable=False, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class PersonalStrategy(Base):
@@ -738,8 +739,8 @@ class PersonalStrategy(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String, nullable=False, index=True)
     text = Column(String(300), nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class GoalReview(Base):
@@ -754,7 +755,7 @@ class GoalReview(Base):
     change = Column(Text, nullable=False, default="")
     learned = Column(Text, nullable=False, default="")
     next_step = Column(Text, nullable=False, default="")
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class ResultReading(Base):
@@ -768,8 +769,8 @@ class ResultReading(Base):
     strengths = Column(JSON, nullable=False, default=list)
     growth_areas = Column(JSON, nullable=False, default=list)
     note = Column(Text, nullable=False, default="")
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class TeacherProfileRevision(Base):
@@ -787,7 +788,7 @@ class TeacherProfileRevision(Base):
     username = Column(String, nullable=False, index=True)
     data = Column(JSON, nullable=False)
     source = Column(String, nullable=False, default="manual")  # manual|orientation
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class TeacherPracticeNotebook(Base):
@@ -808,9 +809,9 @@ class TeacherPracticeNotebook(Base):
     # Classi dello studente simulato (del docente o condivise con lui): in
     # prova il loro contesto entra solo dove uno studente vero lo riceverebbe.
     group_ids = Column(JSON, nullable=False, default=list)
-    archived_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    archived_at = Column(UTCDateTime, nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class TeacherPracticeResult(Base):
@@ -831,7 +832,7 @@ class TeacherPracticeResult(Base):
     scores = Column(JSON, nullable=False, default=dict)
     session_id = Column(String, nullable=False, index=True)
     source = Column(String, nullable=False, default="manual")  # manual|generated|chat
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
     @property
     def username(self) -> str:
@@ -857,7 +858,7 @@ class LearnerProfileRevision(Base):
     data = Column(JSON, nullable=False)
     source = Column(String, nullable=False, default="manual")  # autosave|intake|session_start|session_end|orientation|manual
     session_id = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class LearnerProfileReflection(Base):
@@ -871,8 +872,8 @@ class LearnerProfileReflection(Base):
     current_revision_id = Column(Integer, nullable=True, index=True)
     previous_revision_id = Column(Integer, nullable=True, index=True)
     session_id = Column(String, nullable=True, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class OrientationSession(Base):
@@ -894,9 +895,9 @@ class OrientationSession(Base):
     notebook_draft = Column(JSON, nullable=False, default=dict)
     notebook_reviewed = Column(Boolean, nullable=False, default=False)
     notebook_revision_id = Column(Integer, nullable=True, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    completed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
+    completed_at = Column(UTCDateTime, nullable=True)
 
 
 class StudentBooklet(Base):
@@ -913,8 +914,8 @@ class StudentBooklet(Base):
     session_id = Column(String, nullable=True, index=True)
     questionnaire_type = Column(String, nullable=False, index=True)
     data = Column(JSON, nullable=False, default=dict)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class PortfolioItem(Base):
@@ -935,8 +936,8 @@ class PortfolioItem(Base):
     item_date = Column(String, nullable=True)   # data del lavoro (YYYY-MM-DD), testo libero
     link = Column(String, nullable=True)         # URL opzionale al lavoro
     images = Column(JSON, nullable=False, default=list)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class FrozenSession(Base):
@@ -954,8 +955,8 @@ class FrozenSession(Base):
     session_id = Column(String, nullable=False, index=True)
     questionnaire_type = Column(String, nullable=False, index=True)
     data = Column(JSON, nullable=False, default=dict)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class MemorySessionOwner(Base):
@@ -969,7 +970,7 @@ class MemorySessionOwner(Base):
 
     session_id = Column(String, primary_key=True)
     username = Column(String, nullable=False, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class RecommendationHistory(Base):
@@ -997,7 +998,7 @@ class RecommendationHistory(Base):
     slug = Column(String, nullable=False, index=True)
     turn_index = Column(Integer, nullable=True)
     payload = Column(JSON, nullable=False, default=dict)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class OrientationToolBrief(Base):
@@ -1019,7 +1020,7 @@ class OrientationToolBrief(Base):
     tool_id = Column(String, primary_key=True, index=True)
     brief = Column(Text, nullable=False)
     is_active = Column(Boolean, nullable=False, default=True)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class ModelPreset(Base):
@@ -1047,7 +1048,7 @@ class ModelPreset(Base):
     reasoning_effort = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class BenchmarkRun(Base):
@@ -1067,8 +1068,8 @@ class BenchmarkRun(Base):
     presets = Column(JSON, nullable=True)   # [{provider, model, name}]
     summary = Column(JSON, nullable=True)   # [{provider, model, quality, tok_s, ...}]
     error = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    finished_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
+    finished_at = Column(UTCDateTime, nullable=True)
 
 
 class Counselor(Base):
@@ -1102,7 +1103,7 @@ class Counselor(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     show_in_assistant = Column(Boolean, nullable=False, default=False)
     assistant_audience = Column(String, nullable=True)  # null=entrambi, "studente", "docente"
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class CertifiedStrategy(Base):
@@ -1147,7 +1148,7 @@ class CertifiedStrategy(Base):
     source_reference = Column(Text, nullable=True)
     sort_order = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 
@@ -1201,8 +1202,8 @@ class CertifiedReading(Base):
     status = Column(String, nullable=False, default="draft")   # draft | certified
     is_active = Column(Boolean, nullable=False, default=True)
     sort_order = Column(Integer, nullable=False, default=0)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class WebLookupCache(Base):
@@ -1220,7 +1221,7 @@ class WebLookupCache(Base):
     language = Column(String, nullable=False, default="it")
     sources = Column(JSON, nullable=True)     # fonti interrogate, in ordine
     payload = Column(JSON, nullable=True)     # lista di LookupResult serializzati
-    fetched_at = Column(DateTime(timezone=True), server_default=func.now())
+    fetched_at = Column(UTCDateTime, server_default=func.now())
 
 
 class GroupShare(Base):
@@ -1237,7 +1238,7 @@ class GroupShare(Base):
     group_id = Column(Integer, index=True, nullable=False)
     shared_with_username = Column(String, index=True, nullable=False)
     granted_by_username = Column(String, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class ClassCouncilLink(Base):
@@ -1253,12 +1254,12 @@ class ClassCouncilLink(Base):
     token = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     created_by = Column(String, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    expires_at = Column(DateTime(timezone=True), nullable=False)
-    revoked_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
+    expires_at = Column(UTCDateTime, nullable=False)
+    revoked_at = Column(UTCDateTime, nullable=True)
     failed_attempts = Column(Integer, nullable=False, default=0)
-    last_failed_at = Column(DateTime(timezone=True), nullable=True)
-    last_viewed_at = Column(DateTime(timezone=True), nullable=True)
+    last_failed_at = Column(UTCDateTime, nullable=True)
+    last_viewed_at = Column(UTCDateTime, nullable=True)
 
 
 class TelegramAccountLink(Base):
@@ -1274,8 +1275,8 @@ class TelegramAccountLink(Base):
     # Gruppo di somministrazione (deep link g_<codice piano|codice contatto>)
     administration_plan_id = Column(Integer, index=True, nullable=True)
     research_contact_id = Column(Integer, index=True, nullable=True)
-    linked_at = Column(DateTime(timezone=True), server_default=func.now())
-    revoked_at = Column(DateTime(timezone=True), nullable=True)
+    linked_at = Column(UTCDateTime, server_default=func.now())
+    revoked_at = Column(UTCDateTime, nullable=True)
 
 
 class TelegramLinkCode(Base):
@@ -1286,9 +1287,9 @@ class TelegramLinkCode(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, nullable=False, index=True)
     code_hash = Column(String, nullable=False, index=True)
-    expires_at = Column(DateTime(timezone=True), nullable=False)
-    used_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(UTCDateTime, nullable=False)
+    used_at = Column(UTCDateTime, nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class TelegramConversationState(Base):
@@ -1310,7 +1311,7 @@ class TelegramConversationState(Base):
     counselor_id = Column(Integer, nullable=True)
     # Sessione pQBL in corso: {session_id, document_id, queue[], index, questions{}}.
     pqbl_state = Column(JSON, nullable=True)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class TeacherNote(Base):
@@ -1333,7 +1334,7 @@ class TeacherNote(Base):
     text = Column(Text, nullable=False)
     visible_to_student = Column(Boolean, nullable=False, default=False)
     telegram_delivered = Column(Boolean, nullable=True)  # solo kind=message
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class StudentGroup(Base):
@@ -1363,7 +1364,7 @@ class StudentGroup(Base):
     context_visible_to_students = Column(Boolean, nullable=False, default=False)
     image_url = Column(String, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class ClassSettings(Base):
@@ -1385,7 +1386,7 @@ class ClassSettings(Base):
     locked_forum_options = Column(JSON, nullable=False, default=dict)
     revision = Column(Integer, nullable=False, default=1)
     updated_by = Column(String, nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class ClassSettingsAuditLog(Base):
@@ -1407,7 +1408,7 @@ class ClassSettingsAuditLog(Base):
     old_value = Column(JSON, nullable=True)
     new_value = Column(JSON, nullable=True)
     reason = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    created_at = Column(UTCDateTime, server_default=func.now(), index=True)
 
 
 class GroupMembership(Base):
@@ -1419,7 +1420,7 @@ class GroupMembership(Base):
     group_id = Column(Integer, index=True, nullable=False)
     username = Column(String, index=True, nullable=False)
     joined_via = Column(String, nullable=False, default="web")  # web | telegram | teacher
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class Skill(Base):
@@ -1448,8 +1449,8 @@ class Skill(Base):
     sort_order = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
     status = Column(String, nullable=False, default="draft")      # draft | published
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class GuidedStepSkill(Base):
@@ -1490,7 +1491,7 @@ class IdeaMapRevision(Base):
     # piu' profondo). Viaggia con la revisione perche' anche spostarsi fra i
     # rami e' un momento del ragionamento, e lo storico deve poterlo mostrare.
     focus_id = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class IdeaReference(Base):
@@ -1508,7 +1509,7 @@ class IdeaReference(Base):
     kind = Column(String, nullable=False)
     text = Column(Text, nullable=False)
     truncated = Column(Boolean, nullable=False, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class IdeaSource(Base):
@@ -1544,7 +1545,7 @@ class IdeaSource(Base):
     pdf_path = Column(String, nullable=True)
     license = Column(String, nullable=True)
     retrieved_at = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class ContentLanguageVersion(Base):
@@ -1568,10 +1569,10 @@ class ContentLanguageVersion(Base):
     source = Column(String, nullable=True)                      # human | published:<rif> | llm:<modello>
     version_label = Column(String, nullable=True)               # aggancia le validation_responses
     approved_by = Column(String, nullable=True)
-    approved_at = Column(DateTime(timezone=True), nullable=True)
+    approved_at = Column(UTCDateTime, nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class Institution(Base):
@@ -1603,8 +1604,8 @@ class Institution(Base):
     encrypted_password = Column(Text, nullable=True)
     # Bumped on every code/password change: verification grants bind to it.
     credentials_revision = Column(Integer, nullable=False, default=1, server_default="1")
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
     @property
     def credentials_configured(self) -> bool:
@@ -1626,8 +1627,8 @@ class InstitutionVerificationGrant(Base):
     administration_plan_id = Column(Integer, ForeignKey("administration_plans.id", ondelete="CASCADE"), nullable=False)
     institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False)
     credentials_revision = Column(Integer, nullable=False)
-    expires_at = Column(DateTime(timezone=True), nullable=False, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(UTCDateTime, nullable=False, index=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class InstitutionVerificationAttempt(Base):
@@ -1638,7 +1639,7 @@ class InstitutionVerificationAttempt(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(255), nullable=False, index=True)
     administration_plan_id = Column(Integer, nullable=False, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    created_at = Column(UTCDateTime, server_default=func.now(), index=True)
 
 
 class InstitutionTeacher(Base):
@@ -1653,8 +1654,8 @@ class InstitutionTeacher(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     created_by = Column(String, nullable=False)
     updated_by = Column(String, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class InstitutionCategoryCollection(Base):
@@ -1674,7 +1675,7 @@ class InstitutionOrientationCategory(Base):
     position = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
     updated_by = Column(String, nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class InstitutionReferralCategory(Base):
@@ -1682,7 +1683,7 @@ class InstitutionReferralCategory(Base):
     category_id = Column(String(36), ForeignKey("institution_orientation_categories.id", ondelete="CASCADE"), primary_key=True)
     content_id = Column(Integer, ForeignKey("orientation_referrals.id", ondelete="CASCADE"), primary_key=True)
     updated_by = Column(String, nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
 
 
 class InstitutionEventCategory(Base):
@@ -1690,7 +1691,7 @@ class InstitutionEventCategory(Base):
     category_id = Column(String(36), ForeignKey("institution_orientation_categories.id", ondelete="CASCADE"), primary_key=True)
     content_id = Column(Integer, ForeignKey("orientation_events.id", ondelete="CASCADE"), primary_key=True)
     updated_by = Column(String, nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
 
 
 class OrientationReferral(Base):
@@ -1728,8 +1729,8 @@ class OrientationReferral(Base):
     status = Column(String, nullable=False, default="draft")   # draft | certified
     is_active = Column(Boolean, nullable=False, default=True)
     sort_order = Column(Integer, nullable=False, default=0)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class OrientationEvent(Base):
@@ -1751,9 +1752,9 @@ class OrientationEvent(Base):
     title_i18n = Column(JSON, nullable=False)
     summary_i18n = Column(JSON, nullable=True)
 
-    starts_at = Column(DateTime(timezone=True), nullable=False)
-    ends_at = Column(DateTime(timezone=True), nullable=False)
-    registration_deadline = Column(DateTime(timezone=True), nullable=True)
+    starts_at = Column(UTCDateTime, nullable=False)
+    ends_at = Column(UTCDateTime, nullable=False)
+    registration_deadline = Column(UTCDateTime, nullable=True)
 
     page_url = Column(String, nullable=True)
     location = Column(String, nullable=True)
@@ -1765,8 +1766,8 @@ class OrientationEvent(Base):
     status = Column(String, nullable=False, default="draft")
     is_active = Column(Boolean, nullable=False, default=True)
     sort_order = Column(Integer, nullable=False, default=0)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class PromptRevision(Base):
@@ -1788,7 +1789,7 @@ class PromptRevision(Base):
     origin = Column(String, nullable=False)
     author = Column(String, nullable=True)
     note = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    created_at = Column(UTCDateTime, server_default=func.now(), index=True)
 
 
 class PromptExperimentDecision(Base):
@@ -1808,7 +1809,7 @@ class PromptExperimentDecision(Base):
     revision_id = Column(Integer, nullable=True)
     author = Column(String, nullable=False)
     note = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class Tavolo(Base):
@@ -1828,14 +1829,14 @@ class Tavolo(Base):
     # un tavolo senza origine e' un disegno senza il motivo per cui fu fatto.
     origin_session_id = Column(String, nullable=True, index=True)
     origin_instrument = Column(String, nullable=True)
-    saved_at = Column(DateTime(timezone=True), nullable=True)
+    saved_at = Column(UTCDateTime, nullable=True)
     # L'immagine e' catturata dal browser al salvataggio, percio' non invecchia:
     # un tavolo cambia solo quando lo si salva. La resa a parole la scrive il
     # server, e c'e' sempre, anche quando la cattura fallisce.
     capture_path = Column(String, nullable=True)
     rendition = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class TavoloRevision(Base):
@@ -1861,7 +1862,7 @@ class TavoloRevision(Base):
     graph = Column(JSON, nullable=False)
     author = Column(String, nullable=False)  # person|model
     kind = Column(String, nullable=False)  # seed|edit|proposal|accept|reject
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class TavoloImage(Base):
@@ -1882,7 +1883,7 @@ class TavoloImage(Base):
     original_name = Column(String, nullable=False)
     content_type = Column(String, nullable=False)
     created_by = Column(String, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 # ==============================================================================
@@ -1905,12 +1906,12 @@ class ClassPath(Base):
     description = Column(Text, nullable=True)
     mode = Column(String, nullable=False, default="recommended")  # recommended | strict
     status = Column(String, nullable=False, default="draft")  # draft | published | archived
-    published_at = Column(DateTime(timezone=True), nullable=True)
+    published_at = Column(UTCDateTime, nullable=True)
     created_by = Column(String, nullable=False)
     revision = Column(Integer, nullable=False, default=1)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    archived_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
+    archived_at = Column(UTCDateTime, nullable=True)
     # Applied from a template: a copy, never changed by later template edits.
     template_id = Column(Integer, ForeignKey("path_templates.id", ondelete="SET NULL"), nullable=True, index=True)
     template_revision = Column(Integer, nullable=True)
@@ -1926,10 +1927,10 @@ class PathTemplate(Base):
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     mode = Column(String, nullable=False, default="recommended")
-    shared_at = Column(DateTime(timezone=True), nullable=True)
+    shared_at = Column(UTCDateTime, nullable=True)
     revision = Column(Integer, nullable=False, default=1)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class PathTemplateStep(Base):
@@ -1997,14 +1998,14 @@ class ClassPathStep(Base):
     # Forum step: a published discussion of the same class (checked on save). The
     # default NO ACTION still lets a class deletion cascade to topics and steps.
     topic_id = Column(Integer, ForeignKey("forum_topics.id"), nullable=True)
-    active_from = Column(DateTime(timezone=True), nullable=True)
+    active_from = Column(UTCDateTime, nullable=True)
     title = Column(String, nullable=True)
     instructions = Column(Text, nullable=True)
     due_date = Column(Date, nullable=True)
     # Informational planned day; it never restricts access or completion.
     scheduled_date = Column(Date, nullable=True)
-    removed_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    removed_at = Column(UTCDateTime, nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
     # Applied from a template: `pending` steps keep the template config until
     # publication creates the class object they describe.
     pending_config = Column(JSON, nullable=True)
@@ -2043,7 +2044,7 @@ class ClassMeeting(Base):
     group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
-    starts_at = Column(DateTime(timezone=True), nullable=True)
+    starts_at = Column(UTCDateTime, nullable=True)
     duration_minutes = Column(Integer, nullable=True)
     # #176: individual meetings, with the teacher, an institute referent or an
     # external expert (name and role only, no account; the teacher invites them).
@@ -2062,10 +2063,10 @@ class ClassMeeting(Base):
     organizer_username = Column(String, nullable=False)
     manager_username = Column(String, nullable=False)
     status = Column(String(20), nullable=False, default="scheduled", server_default="scheduled")
-    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+    cancelled_at = Column(UTCDateTime, nullable=True)
     revision = Column(Integer, nullable=False, default=1)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
 class ClassMeetingGroup(Base):
@@ -2085,11 +2086,11 @@ class ClassMeetingSlot(Base):
 
     id = Column(Integer, primary_key=True)
     meeting_id = Column(Integer, ForeignKey("class_meetings.id", ondelete="CASCADE"), nullable=False, index=True)
-    starts_at = Column(DateTime(timezone=True), nullable=False)
+    starts_at = Column(UTCDateTime, nullable=False)
     duration_minutes = Column(Integer, nullable=True)
     status = Column(String(20), nullable=False, default="open", server_default="open")
     revision = Column(Integer, nullable=False, default=1)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(UTCDateTime, server_default=func.now())
 
 
 class ClassMeetingBooking(Base):
@@ -2113,8 +2114,8 @@ class ClassMeetingBooking(Base):
     slot_id = Column(Integer, ForeignKey("class_meeting_slots.id", ondelete="CASCADE"), nullable=False, index=True)
     username = Column(String, nullable=False, index=True)
     status = Column(String(20), nullable=False, default="active", server_default="active")
-    booked_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    changed_at = Column(DateTime(timezone=True), nullable=True)
+    booked_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
+    changed_at = Column(UTCDateTime, nullable=True)
 
 
 class ClassMeetingAttendance(Base):
@@ -2126,7 +2127,7 @@ class ClassMeetingAttendance(Base):
     id = Column(Integer, primary_key=True)
     meeting_id = Column(Integer, ForeignKey("class_meetings.id", ondelete="CASCADE"), nullable=False, index=True)
     username = Column(String, nullable=False, index=True)
-    marked_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    marked_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
     # The teacher who marked it from the register; empty when the student did.
     marked_by = Column(String, nullable=True)
 
@@ -2150,7 +2151,7 @@ class ClassPathProgress(Base):
     source = Column(String, nullable=False)  # 'student' | 'teacher'
     actor_username = Column(String, nullable=False)
     reason = Column(Text, nullable=True)  # optional note on a teacher override
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
 
 
 
@@ -2172,14 +2173,14 @@ class ForumTopic(Base):
     status = Column(String, nullable=False, default="published")
     pinned = Column(Boolean, nullable=False, default=False)
     locked = Column(Boolean, nullable=False, default=False)
-    hidden_at = Column(DateTime(timezone=True), nullable=True)
+    hidden_at = Column(UTCDateTime, nullable=True)
     hidden_by = Column(String, nullable=True)
     hidden_reason = Column(Text, nullable=True)
     link_kind = Column(String, nullable=True)
     link_id = Column(Integer, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    edited_at = Column(DateTime(timezone=True), nullable=True)
-    last_post_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
+    edited_at = Column(UTCDateTime, nullable=True)
+    last_post_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
 
 
 class ForumPost(Base):
@@ -2195,12 +2196,12 @@ class ForumPost(Base):
     author_display_name = Column(String, nullable=False)
     body = Column(Text, nullable=False)
     status = Column(String, nullable=False, default="published")
-    hidden_at = Column(DateTime(timezone=True), nullable=True)
+    hidden_at = Column(UTCDateTime, nullable=True)
     hidden_by = Column(String, nullable=True)
     hidden_reason = Column(Text, nullable=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    edited_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_at = Column(UTCDateTime, nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
+    edited_at = Column(UTCDateTime, nullable=True)
 
 
 class ForumMute(Base):
@@ -2216,9 +2217,9 @@ class ForumMute(Base):
     username = Column(String, nullable=False, index=True)
     muted_by = Column(String, nullable=False)
     reason = Column(Text, nullable=False)
-    until = Column(DateTime(timezone=True), nullable=True)
-    lifted_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    until = Column(UTCDateTime, nullable=True)
+    lifted_at = Column(UTCDateTime, nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
 
 
 class ForumRead(Base):
@@ -2226,7 +2227,7 @@ class ForumRead(Base):
 
     topic_id = Column(Integer, ForeignKey("forum_topics.id", ondelete="CASCADE"), primary_key=True)
     username = Column(String, primary_key=True)
-    last_read_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    last_read_at = Column(UTCDateTime, nullable=False, server_default=func.now())
 
 
 # --- Class forum moderation log (#103): append-only, ids and reasons only ---
@@ -2254,7 +2255,7 @@ class ForumModerationLog(Base):
     target_kind = Column(String, nullable=False)
     target_id = Column(Integer, nullable=True)
     reason = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
 
 
 class QuestionnaireGuidedEntry(Base):
@@ -2268,7 +2269,7 @@ class QuestionnaireGuidedEntry(Base):
     session_id = Column(String, nullable=False)
     request_id = Column(String(64), nullable=False)
     step_id = Column(Integer, ForeignKey("class_path_steps.id", ondelete="CASCADE"), nullable=True)
-    accepted_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    accepted_at = Column(UTCDateTime, nullable=False, server_default=func.now())
 
 
 class QuestionnaireImportConfirmation(Base):
@@ -2286,8 +2287,8 @@ class QuestionnaireImportConfirmation(Base):
     username = Column(String, nullable=False)
     batch_id = Column(String, nullable=False)
     confirmed_by = Column(String, nullable=False)
-    confirmed_at = Column(DateTime(timezone=True), nullable=False)
-    invalidated_at = Column(DateTime(timezone=True), nullable=True)
+    confirmed_at = Column(UTCDateTime, nullable=False)
+    invalidated_at = Column(UTCDateTime, nullable=True)
 
 
 class ClassPathDeepDiveSession(Base):
@@ -2304,7 +2305,7 @@ class ClassPathDeepDiveSession(Base):
     username = Column(String, nullable=False, index=True)
     result_id = Column(Integer, ForeignKey("questionnaire_results.id", ondelete="CASCADE"), nullable=False)
     session_id = Column(String(64), nullable=False)
-    started_at = Column(DateTime(timezone=True), nullable=False)
+    started_at = Column(UTCDateTime, nullable=False)
 
 
 class ClassPathStepEvidence(Base):
@@ -2322,5 +2323,5 @@ class ClassPathStepEvidence(Base):
     result_id = Column(Integer, ForeignKey("questionnaire_results.id", ondelete="CASCADE"), nullable=False)
     guided_entry_id = Column(Integer, ForeignKey("questionnaire_guided_entries.id", ondelete="CASCADE"), nullable=True)
     import_confirmation_id = Column(Integer, ForeignKey("questionnaire_import_confirmations.id", ondelete="CASCADE"), nullable=True)
-    recorded_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
-    invalidated_at = Column(DateTime(timezone=True), nullable=True)
+    recorded_at = Column(UTCDateTime, nullable=False, server_default=func.now())
+    invalidated_at = Column(UTCDateTime, nullable=True)
