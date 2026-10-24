@@ -1818,6 +1818,8 @@ La piattaforma ha una sola versione, scritta nel file `VERSION` alla radice del 
 
 Le future app desktop useranno un database SQLite su file al posto di Postgres (ADR-0003). Su SQLite il backend attiva il giornale WAL, l'attesa fino a 5 secondi quando il file è occupato, le chiavi esterne (stesse cancellazioni a cascata di Postgres) e `synchronous=NORMAL`; le richieste che scrivono (`POST`, `PUT`, `PATCH`, `DELETE`) e i lavori in background prendono subito il lock di scrittura (`BEGIN IMMEDIATE`), le letture no. Con una versione di SQLite precedente alla 3.35 il backend non parte (codice di uscita 3). Server e installazione portable restano su Postgres senza cambiamenti di funzioni, dati o permessi.
 
+Per le future app desktop il frontend stabilisce l'origine di ogni richiesta verso il server: «tunnel» se arriva da Internet attraverso Cloudflare (studenti), «locale» se arriva dal PC del docente. Il server la accetta solo se è firmata con il segreto che l'app genera a ogni avvio; senza firma valida la tratta sempre come «tunnel», cioè con le restrizioni più severe. Intestazioni di origine inviate da un browser vengono scartate. Nelle installazioni server attuali (Docker) il segreto non esiste: nessuna funzione, dato o permesso cambia. Contratto in `docs/architecture/adr/0002-desktop-phase-1-contracts.md` §2.7.
+
 ### Sezioni della configurazione
 
 In **Amministrazione → Configurazione & Prompt** la sezione si sceglie dal
