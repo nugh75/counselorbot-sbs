@@ -14,22 +14,60 @@
 
   <table><tbody id="sidecars"></tbody></table>
 
-  <!-- Sezione Quick Tunnel (F1-09, ADR-0001 §2, ADR-0002 §2.1) -->
+  <!-- Sezione Tunnel Cloudflare (F1-09, F1-10, ADR-0001 §2, ADR-0002 §2.1) -->
   <section class="card" id="tunnel-card">
     <div class="tunnel-header">
-      <h2>Quick Tunnel</h2>
+      <h2>Tunnel Cloudflare</h2>
       <span class="badge off" id="tunnel-badge">Disattivato</span>
     </div>
 
-    <!-- Banner prescritta da ADR-0001 §2: Solo per prove -->
+    <!-- Scelta modalità tunnel -->
+    <div class="tunnel-mode-selector">
+      <label class="radio-label">
+        <input type="radio" name="tunnel-mode-choice" value="quick" id="mode-quick" checked>
+        <span>Tunnel temporaneo rapido</span>
+      </label>
+      <label class="radio-label">
+        <input type="radio" name="tunnel-mode-choice" value="named" id="mode-named">
+        <span>Tunnel stabile nominativo</span>
+      </label>
+    </div>
+
+    <!-- Banner Quick Tunnel («Prova subito») -->
     <div class="banner warning" id="tunnel-warning" style="display: none;">
       <strong>⚠️ Solo per prove («Prova subito»)</strong>
       <p>Il Quick Tunnel è temporaneo e rate-limitato da Cloudflare. Non usarlo per le lezioni con gli studenti: l'indirizzo cambia ad ogni avvio e la connessione può essere interrotta.</p>
     </div>
 
+    <!-- Banner Tunnel Nominativo («Lezioni / Classe») -->
+    <div class="banner info" id="named-info" style="display: none;">
+      <strong>🔒 Dominio personalizzato stabile</strong>
+      <p>Tunnel nominativo con dominio permanente per le lezioni con gli studenti. L'indirizzo resta sempre lo stesso e i link di classe rimangono validi.</p>
+    </div>
+
+    <!-- Pannello configurazione Tunnel Nominativo -->
+    <div class="named-config-panel" id="named-config-panel" style="display: none;">
+      <div class="form-group">
+        <label for="custom-domain-input">Dominio personalizzato:</label>
+        <input type="text" id="custom-domain-input" placeholder="es. counselor.tuascuola.it" autocomplete="off" spellcheck="false">
+        <div class="field-hint">Il dominio registrato su Cloudflare (es. counselor.tuascuola.it).</div>
+      </div>
+      <div class="form-group">
+        <label for="tunnel-token-input">Token tunnel Cloudflare (CLOUDFLARE_TUNNEL_TOKEN):</label>
+        <input type="password" id="tunnel-token-input" placeholder="Incolla qui il token del tunnel..." autocomplete="off">
+        <div class="field-hint" id="token-status-hint">Il token viene conservato in sicurezza tra le credenziali locali.</div>
+      </div>
+      <div class="config-actions">
+        <button id="save-named-config" type="button">Salva configurazione</button>
+        <button id="test-named-config" type="button">Verifica parametri</button>
+        <span class="config-feedback" id="named-feedback"></span>
+      </div>
+    </div>
+
     <div class="tunnel-actions">
       <button id="start-tunnel" disabled>Avvia Quick Tunnel</button>
-      <button id="stop-tunnel" style="display: none;">Ferma Quick Tunnel</button>
+      <button id="start-named-tunnel" style="display: none;" disabled>Avvia Tunnel nominativo</button>
+      <button id="stop-tunnel" style="display: none;">Ferma Tunnel</button>
       <button id="open-tunnel" style="display: none;">Apri URL nel browser</button>
       <button id="copy-tunnel" style="display: none;">Copia link</button>
     </div>
@@ -41,7 +79,7 @@
       </div>
       <div class="qr-box">
         <div id="qrcode"></div>
-        <div class="qr-caption">Inquadra con smartphone o tablet per accedere alle prove</div>
+        <div class="qr-caption" id="qr-caption">Inquadra con smartphone o tablet per accedere alle prove</div>
       </div>
     </div>
   </section>
