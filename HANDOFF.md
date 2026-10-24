@@ -1,3 +1,22 @@
+# Handoff 24 ottobre 2026: Privacy Layer P5 — crittografia a riposo e chiavi
+
+Agente `s51-p5-opus` (Claude Opus 5.5), task Diario `893b9d78-d1d7-4dc8-87fb-497089510ea2`,
+branch `feature/privacy-p5-crypto-keys`, issue #556.
+
+- **Obiettivo**: motore crittografico e gerarchia delle chiavi del Privacy Layer (02 §4, §9.6).
+- **Modifiche**: `backend/privacy/crypto.py` (AES-256-GCM, nonce casuale 96 bit, formato `v1.<key_id>.<b64url>`,
+  AAD `<tabella>.<colonna>:<id riga>:<subject_pid>`, `subject_pid` HMAC troncato a 128 bit base32, indici ciechi con
+  `K_idx[campo]` derivata via HKDF), `keys.py` (KEK da `PRIVACY_KEK`/`PRIVACY_KEK_FILE`, su L2 passata dal guscio;
+  `KeyRing` con DEK `content`/`mapping`/`credentials`/`research` avvolte in `privacy_keys`, `pid`/`index` a id fisso,
+  rotazione DEK, riavvolgimento KEK, kit di recupero Argon2id + AES-GCM), tabella `privacy_keys`, Argon2id esplicito
+  in `auth.py` (stessi valori di prima: m=64 MiB, t=3, p=4). Doc `docs/privacy/p5-crittografia-chiavi.md`.
+- **Da fare**: collegare `encrypt_sensitive`/`decrypt_authorized` (P7/P11), colonne cifrate (P11), Fernet → DEK (P12).
+- **Test eseguiti**: `TEST_DB=sqlite` Python 3.11.9: `test_privacy_p5_crypto.py` 37 pass; con core/P4/schema/UTC/
+  db_compat 256 pass, 3 skip. `ruff` F/E9 pulito, `make guidance-check` verde. Postgres locale non eseguito (due DB di
+  test di altri agenti già attivi): affidato alla CI `backend-db.yml`. Nessun deploy, sudo, rebuild Docker o dev attivo.
+
+---
+
 # Handoff 24 ottobre 2026: Privacy Layer P4 — pseudonimizzazione locale
 
 Agente `s47-p4-opus` (Claude Opus 5.5), task Diario
