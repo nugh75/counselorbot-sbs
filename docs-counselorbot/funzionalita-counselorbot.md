@@ -11,7 +11,15 @@ credenziali. Non è ancora disponibile per lezioni o dati reali: il backend
 minimal e il quick tunnel servono soltanto alle prove tecniche. Il backend
 prevede già un accesso locale del docente (link monouso aperto dal guscio,
 sessione valida 30 giorni solo dal PC, mai dal tunnel), ma la pagina di accesso
-non è ancora collegata. Sul PC il docente è amministratore; l'amministrazione
+non è ancora collegata. Il backend prevede anche l'abbinamento degli studenti
+alle classi del docente: un codice di classe valido 7 giorni (un nuovo codice
+annulla il precedente, chi è già dentro resta), uno pseudonimo scelto dallo
+studente senza email né nome reale (se già usato nella classe riceve un numero,
+mai un errore), un codice personale di 12 caratteri mostrato una volta per
+rientrare da un altro dispositivo, l'approvazione facoltativa del docente, la
+revoca immediata di un dispositivo e limiti ai tentativi. Le pagine «Unisciti»
+per lo studente e dei dispositivi per il docente non sono ancora collegate.
+Sul PC il docente è amministratore; l'amministrazione
 risponde solo dal PC, mai dal tunnel (i controlli del profilo docente sono
 caricati solo quando servono, così il forum resta isolato). Prompt Lab, Telegram, OpenCode, l'assistente
 ChatGPT, le voci Piper e la sincronizzazione con Console non sono disponibili

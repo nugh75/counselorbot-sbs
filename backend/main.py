@@ -12,7 +12,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import models, auth, database
-from . import install_profile, local_auth, shell_internal
+from . import install_profile, local_auth, local_pairing, shell_internal
 from .version import __version__
 from .native_deps import native_capabilities
 from .prompt_config import (
@@ -2074,6 +2074,7 @@ app.add_middleware(shell_internal.ShellInternalMiddleware)
 app.include_router(shell_internal.router)
 app.include_router(local_auth.internal_router)
 app.include_router(local_auth.router)
+app.include_router(local_pairing.router)
 app.include_router(admin_routes.router)
 app.include_router(survey_routes.router)
 app.include_router(chat_routes.router)

@@ -1416,8 +1416,48 @@ class GroupMembership(Base):
     id = Column(Integer, primary_key=True, index=True)
     group_id = Column(Integer, index=True, nullable=False)
     username = Column(String, index=True, nullable=False)
-    joined_via = Column(String, nullable=False, default="web")  # web | telegram | teacher
+    joined_via = Column(String, nullable=False, default="web")  # web | telegram | teacher | pairing
     created_at = Column(UTCDateTime, server_default=func.now())
+
+
+class ClassPairingCode(Base):
+    """Class pairing key of the desktop teacher app (ADR-0002 §4.1); only the key's SHA-256."""
+
+    __tablename__ = "class_pairing_codes"
+    __table_args__ = (
+        CheckConstraint("uses >= 0", name="ck_class_pairing_code_uses"),
+        CheckConstraint("max_uses IS NULL OR max_uses > 0", name="ck_class_pairing_code_max_uses"),
+    )
+    id = Column(Integer, primary_key=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id"), nullable=False, index=True)
+    key_hash = Column(String(64), nullable=False, unique=True)
+    created_at = Column(UTCDateTime, nullable=False)
+    expires_at = Column(UTCDateTime, nullable=False)
+    revoked_at = Column(UTCDateTime, nullable=True)
+    uses = Column(Integer, nullable=False, default=0)
+    max_uses = Column(Integer, nullable=True)
+    requires_approval = Column(Boolean, nullable=False, default=False)
+
+
+class LocalStudent(Base):
+    """Paired student of the local provider (ADR-0002 §3.4, §4.2): pseudonym, class, personal code hash.
+
+    `pending` identities exist but stay unauthenticated until the teacher approves them.
+    """
+
+    __tablename__ = "local_students"
+    __table_args__ = (
+        CheckConstraint("status IN ('pending', 'active')", name="ck_local_student_status"),
+        UniqueConstraint("group_id", "pseudonym", name="uq_local_student_group_pseudonym"),
+    )
+    id = Column(Integer, primary_key=True)
+    username = Column(String(16), nullable=False, unique=True)
+    pseudonym = Column(String(64), nullable=False)
+    group_id = Column(Integer, ForeignKey("student_groups.id"), nullable=False, index=True)
+    personal_code_hash = Column(String(64), nullable=False, unique=True)
+    status = Column(String(16), nullable=False, default="active")
+    created_at = Column(UTCDateTime, nullable=False)
+    approved_at = Column(UTCDateTime, nullable=True)
 
 
 class Skill(Base):
