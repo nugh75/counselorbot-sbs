@@ -16,7 +16,7 @@ set -uo pipefail
 exe="$1"
 shift
 launcher=("$@")
-tmp="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
+tmp=$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/cb-lifecycle.XXXXXX")
 report="$tmp/teacher-report.json"
 export COUNSELORBOT_REPORT_FILE="$report"
 # Until the SQLite work (F1-05*) lands the backend runs without its lifespan.
@@ -24,10 +24,14 @@ export COUNSELORBOT_BACKEND_MINIMAL=1
 
 windows=false
 case "$(uname -s)" in
-    MINGW*|MSYS*|CYGWIN*) windows=true; data="$LOCALAPPDATA/org.ai4educ.counselorbot.teacher" ;;
-    Darwin) data="$HOME/Library/Application Support/org.ai4educ.counselorbot.teacher" ;;
-    *) data="${XDG_DATA_HOME:-$HOME/.local/share}/org.ai4educ.counselorbot.teacher" ;;
+    MINGW*|MSYS*|CYGWIN*) windows=true ;;
 esac
+data="$tmp/data"
+export COUNSELORBOT_TEST_DATA_DIR="$data"
+if $windows; then
+    export COUNSELORBOT_TEST_DATA_DIR="$(cygpath -m "$data")"
+    export COUNSELORBOT_REPORT_FILE="$(cygpath -m "$report")"
+fi
 mkdir -p "$data/config"
 echo '{"tunnel": {"mode": "quick"}}' > "$data/config/shell.json"
 
@@ -88,10 +92,17 @@ echo "smoke: exit $code in $(( $(date +%s) - start )) s"
 cat "$report" 2>/dev/null
 [ "$code" = 0 ] && ok "smoke pronto e chiuso" || { fail "smoke exit $code"; show_logs; }
 sleep 2
+# The final report has stopped PIDs cleared. Inspect the ready snapshot instead.
+stopped_report="$report"
+report="$tmp/teacher-report.ready.json"
+[ "$(field r.phase)" = ready ] || fail "snapshot ready assente"
 for name in backend frontend cloudflared; do
     pid=$(pid_of "$name")
     if alive "$pid"; then fail "$name ($pid) vivo dopo l'arresto normale"; fi
 done
+pid=$(field r.cloudflared_pid)
+if alive "$pid"; then fail "cloudflared reale ($pid) vivo dopo l'arresto normale"; fi
+report="$stopped_report"
 [ -f "$data/layout.json" ] && ok "layout.json: $(cat "$data/layout.json")" || fail "layout.json assente"
 
 # ---- 2. headless: health and protected internal routes ----
@@ -107,6 +118,10 @@ code=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$backend_po
 code=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$frontend_port/api/internal/ping")
 [ "$code" = 404 ] && ok "/api/internal dal frontend: 404" || fail "/api/internal dal frontend: $code"
 echo "tunnel: $(field r.tunnel_url)"
+# The shell and each sidecar bind only loopback (also checked by wrapper tests).
+if command -v lsof >/dev/null; then
+    lsof -nP -a -p "$(pid_of backend),$(pid_of frontend)" -iTCP -sTCP:LISTEN
+fi
 
 # ---- 3. a crashed backend is restarted ----
 old_backend=$(pid_of backend)

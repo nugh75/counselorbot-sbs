@@ -62,7 +62,14 @@ fn lock_instance(data: &DataDir) -> Result<File, String> {
 
 fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> {
     let version = app.package_info().version.to_string();
-    let data = DataDir::prepare(app.path().app_local_data_dir()?, &version)?;
+    // Only explicit test modes can override the data root; lifecycle checks must
+    // never touch the teacher's installed app data.
+    let root = if mode != Mode::Window {
+        std::env::var_os("COUNSELORBOT_TEST_DATA_DIR").map(PathBuf::from)
+    } else {
+        None
+    };
+    let data = DataDir::prepare(root.unwrap_or(app.path().app_local_data_dir()?), &version)?;
     logs::init_shell_log(&data.logs())?;
     let lock = lock_instance(&data)?;
     logs::log(format!("guscio {version} avviato, cartella dati {}", data.root.display()));
@@ -86,15 +93,21 @@ fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> 
         Mode::Headless => {}
         Mode::Smoke => {
             let app = app.clone();
+            let report = std::env::var_os("COUNSELORBOT_REPORT_FILE").map(PathBuf::from);
             std::thread::spawn(move || {
                 let status = loop {
                     let status = handle.snapshot();
-                    if status.phase != "preparing" {
+                    let tunnel_pending = status.sidecars.iter().any(|s| s.name == "cloudflared" && s.pid.is_some())
+                        && status.tunnel_url.is_none();
+                    if status.phase != "preparing" && !(status.phase == "ready" && tunnel_pending) {
                         break status;
                     }
                     std::thread::sleep(Duration::from_millis(250));
                 };
                 logs::log(format!("smoke: {} {:?}", status.phase, status.message));
+                if let Some(report) = report {
+                    let _ = std::fs::write(report.with_extension("ready.json"), serde_json::to_vec_pretty(&status).unwrap());
+                }
                 app.exit(if status.phase == "ready" { 0 } else { 1 });
             });
         }

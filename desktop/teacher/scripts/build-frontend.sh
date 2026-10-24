@@ -30,7 +30,7 @@ cp -R .next/static "$out_dir/.next/static"
 [ -d public ] && cp -R public "$out_dir/public"
 cp "$app_dir/sidecar/server-wrapper.js" "$out_dir/server-wrapper.js"
 
-node_bin="$(command -v node)"
+node_bin="$(node -p 'process.execPath')"
 case "$(uname -s)" in
     MINGW*|MSYS*|CYGWIN*) cp "$node_bin" "$node_dir/node.exe" ;;
     *) cp "$node_bin" "$node_dir/node" && chmod +x "$node_dir/node" ;;

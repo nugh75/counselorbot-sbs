@@ -142,6 +142,7 @@ struct Supervisor {
     frontend: Option<Proc>,
     tunnel: Option<Proc>,
     tunnel_log_offset: u64,
+    tunnel_started: Option<Instant>,
     crashes: HashMap<&'static str, Vec<Instant>>,
     version_error: Option<String>,
 }
@@ -162,6 +163,7 @@ impl Supervisor {
             frontend: None,
             tunnel: None,
             tunnel_log_offset: 0,
+            tunnel_started: None,
             crashes: HashMap::new(),
             version_error: None,
         }
@@ -266,6 +268,9 @@ impl Supervisor {
             ("PYTHONUNBUFFERED".into(), "1".into()),
         ];
         env.extend(self.config.data.backend_env());
+        if let Some(origin) = &self.status.lock().unwrap().tunnel_url {
+            env.push(("COUNSELORBOT_PUBLIC_ORIGIN".into(), origin.clone()));
+        }
         let native = self.config.resources.join("native").join("bin");
         if native.is_dir() {
             env.push(("NATIVE_BIN_DIR".into(), native.to_string_lossy().into_owned()));
@@ -362,6 +367,14 @@ impl Supervisor {
         } else {
             self.version_error = None;
         }
+        // A restart may load a different backend. Never leave an existing
+        // tunnel published after the version/contract check fails.
+        if self.version_error.is_some() {
+            if let Some(tunnel) = self.tunnel.take() {
+                tunnel.stop();
+            }
+            self.status.lock().unwrap().tunnel_url = None;
+        }
     }
 
     fn frontend_spec(&self, port: u16, backend_port: u16) -> Spec {
@@ -448,21 +461,17 @@ impl Supervisor {
 
     fn start_tunnel(&mut self) -> Result<(), Failure> {
         let mode = self.shell.tunnel.mode.clone();
-        if mode != "quick" && mode != "named" {
+        if mode == "named" {
+            return Err(Failure::Fatal("Il tunnel nominativo richiede la configurazione prevista in F1-10.".into(), None));
+        }
+        if mode != "quick" {
             return Ok(());
         }
         let port = self.frontend.as_ref().and_then(|f| f.port).unwrap_or(0);
         let url = format!("http://127.0.0.1:{port}");
         let cloudflared = self.config.resources.join("cloudflared").join(format!("cloudflared{EXE_SUFFIX}"));
         let mut tunnel_args: Vec<OsString> = vec!["tunnel".into(), "--no-autoupdate".into()];
-        if mode == "named" {
-            let Some(name) = self.shell.tunnel.name.clone() else {
-                return Err(Failure::Fatal("Tunnel nominativo senza nome in config/shell.json.".into(), None));
-            };
-            tunnel_args.extend(["run".into(), "--url".into(), url.into(), name.into()]);
-        } else {
-            tunnel_args.extend(["--url".into(), url.into()]);
-        }
+        tunnel_args.extend(["--url".into(), url.into()]);
         let spec = if cfg!(windows) {
             // The Job Object stops cloudflared with the shell: no lifeline needed.
             Spec {
@@ -501,6 +510,7 @@ impl Supervisor {
             self.tunnel_log_offset = 0;
         }
         self.tunnel = Some(proc);
+        self.tunnel_started = Some(Instant::now());
         self.status.lock().unwrap().tunnel_url = None;
         self.publish();
         Ok(())
@@ -553,7 +563,16 @@ impl Supervisor {
             }
             return;
         }
-        self.read_tunnel_url();
+        if self.read_tunnel_url() {
+            // ADR-0002 §2.1: the public origin changes with every quick tunnel.
+            // Restart the backend with it, and the frontend with its new port.
+            self.restart_after_backend();
+        } else if self.shell.tunnel.mode == "quick"
+            && self.status.lock().unwrap().tunnel_url.is_none()
+            && self.tunnel_started.is_some_and(|at| at.elapsed() > self.timeout())
+        {
+            self.fail("Il quick tunnel non ha restituito un URL entro il timeout.".into(), Some("diagnostics"));
+        }
     }
 
     /// A new backend has a new port: the frontend restarts with the new BACKEND_ORIGIN.
@@ -561,6 +580,9 @@ impl Supervisor {
         self.set_phase("preparing", None, None);
         if let Some(frontend) = self.frontend.take() {
             frontend.stop();
+        }
+        if let Some(backend) = self.backend.take() {
+            backend.stop();
         }
         let result = self.start_backend().and_then(|_| self.after_frontend_restart());
         self.settle(result);
@@ -598,18 +620,19 @@ impl Supervisor {
         }
     }
 
-    fn read_tunnel_url(&mut self) {
+    fn read_tunnel_url(&mut self) -> bool {
         if self.tunnel.is_none() || self.shell.tunnel.mode != "quick" || self.status.lock().unwrap().tunnel_url.is_some() {
-            return;
+            return false;
         }
-        let Ok(text) = std::fs::read(self.config.data.logs().join("cloudflared.log")) else { return };
+        let Ok(text) = std::fs::read(self.config.data.logs().join("cloudflared.log")) else { return false };
         let start = (self.tunnel_log_offset as usize).min(text.len());
         let text = String::from_utf8_lossy(&text[start..]);
         if let Some(url) = find_quick_tunnel_url(&text) {
             logs::log(format!("cloudflared: tunnel {url}"));
             self.status.lock().unwrap().tunnel_url = Some(url);
-            self.publish();
+            return true;
         }
+        false
     }
 
     // ---- stop ----
@@ -701,6 +724,65 @@ pub fn find_quick_tunnel_url(text: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn supervisor(name: &str) -> Supervisor {
+        let root = std::env::temp_dir().join(format!("cb-supervisor-{name}-{}", std::process::id()));
+        let data = DataDir::prepare(root, "1.2.3").unwrap();
+        let (_, receiver) = mpsc::channel();
+        Supervisor::new(
+            Config {
+                resources: data.path("resources"), shell_exe: std::env::current_exe().unwrap(),
+                data, version: "1.2.3".into(), minimal_backend: true, report_file: None,
+            },
+            Arc::new(Mutex::new(Status::default())), receiver,
+        )
+    }
+
+    #[test]
+    fn sidecar_environment_obeys_the_frozen_contract() {
+        let supervisor = supervisor("env");
+        let backend = supervisor.backend_spec(32101);
+        let frontend = supervisor.frontend_spec(32102, 32101);
+        let env = |spec: &Spec, name: &str| spec.env.iter().find(|(key, _)| key == name).map(|(_, value)| value.clone());
+        assert_eq!(env(&backend, "HOST").as_deref(), Some("127.0.0.1"));
+        assert_eq!(env(&frontend, "HOSTNAME").as_deref(), Some("127.0.0.1"));
+        assert_eq!(env(&frontend, "BACKEND_ORIGIN").as_deref(), Some("http://127.0.0.1:32101"));
+        assert_eq!(env(&backend, "AUTH_PROVIDER").as_deref(), Some("local"));
+        assert_eq!(env(&backend, "COUNSELORBOT_PROFILE").as_deref(), Some("teacher-pc"));
+        assert_eq!(env(&backend, "OLLAMA_PRELOAD").as_deref(), Some("false"));
+        assert!(env(&frontend, "COUNSELORBOT_SHELL_SECRET").is_none());
+        assert_eq!(env(&backend, "COUNSELORBOT_FRONTEND_SECRET"), env(&frontend, "COUNSELORBOT_FRONTEND_SECRET"));
+        assert!(backend.lifeline && frontend.lifeline);
+        supervisor.status.lock().unwrap().tunnel_url = Some("https://fixture.trycloudflare.com".into());
+        assert_eq!(env(&supervisor.backend_spec(32103), "COUNSELORBOT_PUBLIC_ORIGIN").as_deref(), Some("https://fixture.trycloudflare.com"));
+        std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
+    }
+
+    #[test]
+    fn version_and_contract_mismatch_prevent_tunnel_publication() {
+        let mut supervisor = supervisor("version");
+        supervisor.check_version(r#"{"version":"1.2.3","desktop_contract":1}"#);
+        assert!(supervisor.version_error.is_none());
+        for health in [r#"{"version":"9.0.0","desktop_contract":1}"#, r#"{"version":"1.2.3","desktop_contract":2}"#, "invalid"] {
+            supervisor.status.lock().unwrap().tunnel_url = Some("https://fixture.trycloudflare.com".into());
+            supervisor.check_version(health);
+            assert!(supervisor.version_error.is_some());
+            assert!(supervisor.status.lock().unwrap().tunnel_url.is_none());
+        }
+        std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
+    }
+
+    #[test]
+    fn crash_budget_allows_three_restarts_in_five_minutes() {
+        let mut supervisor = supervisor("budget");
+        for _ in 0..3 { assert!(supervisor.may_restart("backend")); }
+        assert!(!supervisor.may_restart("backend"));
+        assert!(supervisor.may_restart("frontend"));
+        supervisor.crashes.insert("backend", vec![Instant::now() - RESTART_WINDOW]);
+        assert!(supervisor.may_restart("backend"));
+        assert_eq!(supervisor.crashes["backend"].len(), 1);
+        std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
+    }
 
     #[test]
     fn quick_tunnel_url_is_read_from_the_log() {

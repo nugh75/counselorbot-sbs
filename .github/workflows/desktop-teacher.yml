@@ -9,6 +9,10 @@ on:
     paths:
       - desktop/**
       - .github/workflows/desktop-teacher.yml
+      - backend/shell_internal.py
+      - backend/tests/test_shell_contract.py
+      - frontend/src/proxy.ts
+      - frontend/src/lib/shell-internal*
 
 permissions:
   contents: read
@@ -73,7 +77,10 @@ jobs:
           grep -E "seconds|_mb" "$RUNNER_TEMP/backend.txt"
 
       - name: Sidecar entrypoint tests (Python)
-        run: python -m pytest -q desktop/teacher/sidecar/test_server.py
+        env:
+          PYTHON_DOTENV_DISABLED: "1"
+          DATABASE_URL: sqlite:///${{ runner.temp }}/shell-contract.sqlite3
+        run: python -m pytest -q desktop/teacher/sidecar/test_server.py backend/tests/test_shell_contract.py backend/tests/test_request_origin.py
 
       - name: Build frontend (Next standalone) and stage node
         run: |
@@ -83,9 +90,15 @@ jobs:
       - name: Fetch cloudflared
         run: bash desktop/teacher/scripts/fetch-cloudflared.sh ${{ matrix.platform }} desktop/teacher/src-tauri/cloudflared
 
+      - name: Frontend boundary and origin tests
+        working-directory: frontend
+        run: |
+          node --test --experimental-strip-types src/lib/shell-internal.test.ts src/lib/request-origin.test.ts
+          npx eslint src/proxy.ts src/lib/shell-internal.ts src/lib/shell-internal.test.ts
+
       - name: Shell unit tests (Rust)
         working-directory: desktop/teacher/src-tauri
-        run: cargo test --locked
+        run: cargo test --locked --release
 
       - name: Build Tauri app
         working-directory: desktop/teacher
@@ -134,5 +147,6 @@ jobs:
           path: |
             desktop/teacher/src-tauri/target/release/bundle/nsis/*.exe
             desktop/teacher/src-tauri/target/release/bundle/deb/*.deb
+            ${{ runner.temp }}/cb-lifecycle.*/teacher-*.json
           retention-days: 3
           if-no-files-found: ignore
