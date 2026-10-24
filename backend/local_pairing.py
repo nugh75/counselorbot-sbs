@@ -287,13 +287,12 @@ async def recover(request: Request, db: Session = Depends(database.get_db)):
 @router.get("/devices")
 def devices(_teacher: dict = Depends(_require_teacher), db: Session = Depends(database.get_db)):
     """Sessioni studente attive e in attesa, raggruppate per classe."""
-    now_naive = local_auth._now()
     rows = (
         db.query(models.LocalSession, models.LocalStudent, models.StudentGroup)
         .join(models.LocalStudent, models.LocalStudent.username == models.LocalSession.username)
         .join(models.StudentGroup, models.StudentGroup.id == models.LocalStudent.group_id)
         .filter(models.LocalSession.kind == "student", models.LocalSession.revoked_at.is_(None),
-                models.LocalSession.expires_at > now_naive)
+                models.LocalSession.expires_at > _now())
         .order_by(models.StudentGroup.name, func.lower(models.LocalStudent.pseudonym), models.LocalSession.id)
         .all()
     )
@@ -306,8 +305,8 @@ def devices(_teacher: dict = Depends(_require_teacher), db: Session = Depends(da
             "pseudonym": student.pseudonym,
             "device_label": session.device_label,
             "status": student.status,
-            "created_at": session.created_at.replace(tzinfo=timezone.utc).isoformat(),
-            "last_seen_at": session.last_seen_at.replace(tzinfo=timezone.utc).isoformat(),
+            "created_at": session.created_at.isoformat(),
+            "last_seen_at": session.last_seen_at.isoformat(),
         })
     return {"classes": list(classes.values())}
 
@@ -341,7 +340,7 @@ def approve_device(session_id: int, _teacher: dict = Depends(_require_teacher),
 def revoke_device(session_id: int, _teacher: dict = Depends(_require_teacher),
                   db: Session = Depends(database.get_db)):
     session, _student = _student_session(db, session_id)
-    session.revoked_at = local_auth._now()
+    session.revoked_at = _now()
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
