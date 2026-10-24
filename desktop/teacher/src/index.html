@@ -11,7 +11,41 @@
   <div class="muted" id="version"></div>
   <p id="phase">Preparazione…</p>
   <p id="message"></p>
+
   <table><tbody id="sidecars"></tbody></table>
+
+  <!-- Sezione Quick Tunnel (F1-09, ADR-0001 §2, ADR-0002 §2.1) -->
+  <section class="card" id="tunnel-card">
+    <div class="tunnel-header">
+      <h2>Quick Tunnel</h2>
+      <span class="badge off" id="tunnel-badge">Disattivato</span>
+    </div>
+
+    <!-- Banner prescritta da ADR-0001 §2: Solo per prove -->
+    <div class="banner warning" id="tunnel-warning" style="display: none;">
+      <strong>⚠️ Solo per prove («Prova subito»)</strong>
+      <p>Il Quick Tunnel è temporaneo e rate-limitato da Cloudflare. Non usarlo per le lezioni con gli studenti: l'indirizzo cambia ad ogni avvio e la connessione può essere interrotta.</p>
+    </div>
+
+    <div class="tunnel-actions">
+      <button id="start-tunnel" disabled>Avvia Quick Tunnel</button>
+      <button id="stop-tunnel" style="display: none;">Ferma Quick Tunnel</button>
+      <button id="open-tunnel" style="display: none;">Apri URL nel browser</button>
+      <button id="copy-tunnel" style="display: none;">Copia link</button>
+    </div>
+
+    <div id="tunnel-content" style="display: none;">
+      <div class="tunnel-url-box">
+        <span class="tunnel-url-label">Indirizzo pubblico:</span>
+        <a id="tunnel-url-link" href="#" class="tunnel-url" title="Apri nel browser"></a>
+      </div>
+      <div class="qr-box">
+        <div id="qrcode"></div>
+        <div class="qr-caption">Inquadra con smartphone o tablet per accedere alle prove</div>
+      </div>
+    </div>
+  </section>
+
   <div class="muted" id="folder"></div>
   <div class="actions">
     <button id="open" disabled>Apri nel browser</button>
@@ -19,6 +53,8 @@
     <button id="quit">Esci</button>
   </div>
   <p class="muted" id="notice"></p>
+
+  <script src="qr.js"></script>
   <script src="panel.js"></script>
 </body>
 </html>

@@ -1,3 +1,31 @@
+# Handoff 24 ottobre 2026: F1-09 Quick tunnel automatico
+
+Agente `s37-f109-agy` (Gemini 3.8 Flash High), task Diario
+`a3373526-6402-4adf-8a5b-ee0a0a71986a`, branch `feature/f1-09-quick-tunnel`, Issue #211.
+
+- **Supervisor & Sidecar (`desktop/teacher/src-tauri/src/supervisor.rs`)**:
+  - Aggiunti comandi e gestione on-demand `start_quick_tunnel` e `stop_quick_tunnel`.
+  - Estrazione URL pubblico dai log di `cloudflared` con matching regex `https://[a-zA-Z0-9-]+\.trycloudflare\.com` ed esclusione endpoint interno `api.trycloudflare.com`.
+  - Supervisione del processo `cloudflared` tramite lifeline/Job Object senza processi orfani all'arresto on-demand o alla chiusura del guscio.
+  - Sincronizzazione automatica di `COUNSELORBOT_PUBLIC_ORIGIN` sul backend tramite riavvio controllato quando l'URL cambia o viene disattivato (ADR-0002 §2.1).
+  - Tracciamento `tunnel_mode` nello stato pubblicato per aggiornamento reattivo dell'interfaccia.
+- **App Tauri (`desktop/teacher/src-tauri/src/app.rs`)**:
+  - Registrati i comandi `start_quick_tunnel`, `stop_quick_tunnel`, `open_tunnel_in_browser`.
+  - Dimensioni finestra aggiornate a 580x680 per accogliere card tunnel e QR code.
+- **Pannello Docente (`desktop/teacher/src/`)**:
+  - `qr.js`: generatore compatto e autosufficiente (basato su Nayuki / licenza MIT) che produce SVG vettoriali ad alta definizione senza dipendenze o CDN esterne.
+  - `qr.test.js`: test unitari Node per la corretta generazione di codici QR e markup SVG per domini trycloudflare.
+  - `index.html` e `panel.css`: card dedicata Quick Tunnel con badge di stato, banner obbligatorio «Solo per prove («Prova subito»)» (ADR-0001 §2: temporaneo e rate-limitato, mai per lezioni), visualizzazione link e QR code per scansione rapida dagli studenti, pulsanti di avvio, arresto, apertura nel browser e copia link negli appunti.
+  - `panel.js`: integrazione reattiva con Tauri IPC, rendering stato e QR code, feedback utente.
+- **CI (`.github/workflows/desktop-teacher.yml`)**:
+  - Inclusa esecuzione di `desktop/teacher/src/qr.test.js` nei test Node.
+- **Verifiche eseguite**:
+  - Rust test suite `desktop/teacher/src-tauri`: 18 test passati (inclusi ciclo di vita on-demand e regex URL).
+  - Rust formatting: `cargo fmt --check` verde.
+  - Node test suite: 6 test passati (`server-wrapper.test.js` + `qr.test.js`).
+  - Verifiche guida e versione: `make version-check` e `make guidance-check` verdi.
+  - `git diff --check` verde.
+
 # Handoff 24 ottobre 2026: F1-05c colonne idempotenti SQLite
 
 Agente `s32-f105c-opus` (Claude Opus 5.5), task Diario

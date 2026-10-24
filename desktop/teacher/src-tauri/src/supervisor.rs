@@ -60,12 +60,15 @@ pub struct Status {
     pub data_dir: String,
     pub frontend_url: Option<String>,
     pub tunnel_url: Option<String>,
+    pub tunnel_mode: String,
     pub cloudflared_pid: Option<u32>,
     pub sidecars: Vec<SidecarStatus>,
 }
 
 enum Command {
     Stop(Sender<()>),
+    StartQuickTunnel(Sender<Result<(), String>>),
+    StopQuickTunnel(Sender<Result<(), String>>),
 }
 
 pub struct Handle {
@@ -84,6 +87,18 @@ impl Handle {
         if let Some(thread) = self.thread.lock().unwrap().take() {
             let _ = thread.join();
         }
+    }
+
+    pub fn start_quick_tunnel(&self) -> Result<(), String> {
+        let (reply, done) = mpsc::channel();
+        self.commands.send(Command::StartQuickTunnel(reply)).map_err(|e| e.to_string())?;
+        done.recv_timeout(Duration::from_secs(30)).map_err(|e| format!("avvio del tunnel: {e}"))?
+    }
+
+    pub fn stop_quick_tunnel(&self) -> Result<(), String> {
+        let (reply, done) = mpsc::channel();
+        self.commands.send(Command::StopQuickTunnel(reply)).map_err(|e| e.to_string())?;
+        done.recv_timeout(Duration::from_secs(30)).map_err(|e| format!("arresto del tunnel: {e}"))?
     }
 
     pub fn snapshot(&self) -> Status {
@@ -190,6 +205,14 @@ impl Supervisor {
             }
             match self.commands.recv_timeout(POLL) {
                 Ok(Command::Stop(reply)) => self.pending_stop = Some(reply),
+                Ok(Command::StartQuickTunnel(reply)) => {
+                    let res = self.handle_start_quick_tunnel();
+                    let _ = reply.send(res);
+                }
+                Ok(Command::StopQuickTunnel(reply)) => {
+                    let res = self.handle_stop_quick_tunnel();
+                    let _ = reply.send(res);
+                }
                 Err(RecvTimeoutError::Timeout) => self.watch(),
                 Err(RecvTimeoutError::Disconnected) => {
                     self.stop_all();
@@ -524,6 +547,43 @@ impl Supervisor {
         Ok(())
     }
 
+    pub fn handle_start_quick_tunnel(&mut self) -> Result<(), String> {
+        if let Some(err) = &self.version_error {
+            return Err(format!("Versione non compatibile: {err}"));
+        }
+        if self.backend.is_none() || self.frontend.is_none() {
+            return Err("CounselorBot non e' ancora pronto.".into());
+        }
+        if self.tunnel.is_some() {
+            return Ok(());
+        }
+        self.shell.tunnel.mode = "quick".into();
+        if let Err(error) = self.config.data.save_config(&self.shell) {
+            logs::log(format!("config/shell.json non salvato: {error}"));
+        }
+        self.start_tunnel().map_err(|e| match e {
+            Failure::Fatal(msg, _) => msg,
+            Failure::Stopping => "Avvio interrotto.".into(),
+        })
+    }
+
+    pub fn handle_stop_quick_tunnel(&mut self) -> Result<(), String> {
+        self.shell.tunnel.mode = "off".into();
+        if let Err(error) = self.config.data.save_config(&self.shell) {
+            logs::log(format!("config/shell.json non salvato: {error}"));
+        }
+        if let Some(tunnel) = self.tunnel.take() {
+            tunnel.stop();
+        }
+        self.tunnel_started = None;
+        let had_url = self.status.lock().unwrap().tunnel_url.take().is_some();
+        self.publish();
+        if had_url {
+            self.restart_after_backend();
+        }
+        Ok(())
+    }
+
     // ---- watch ----
 
     fn watch(&mut self) {
@@ -562,12 +622,14 @@ impl Supervisor {
         if let Some(status) = self.tunnel.as_mut().and_then(|p| p.try_wait()) {
             self.tunnel = None;
             logs::log(format!("cloudflared: uscito ({status})"));
-            if self.may_restart("cloudflared") {
+            if self.shell.tunnel.mode == "quick" && self.may_restart("cloudflared") {
                 if let Err(Failure::Fatal(message, hint)) = self.start_tunnel() {
                     self.fail(message, hint);
                 }
-            } else {
+            } else if self.shell.tunnel.mode == "quick" {
                 self.fail("Il tunnel si e' chiuso 3 volte in 5 minuti.".into(), Some("diagnostics"));
+            } else {
+                self.publish();
             }
             return;
         }
@@ -716,6 +778,7 @@ impl Supervisor {
         let snapshot = {
             let mut status = self.status.lock().unwrap();
             status.frontend_url = self.frontend.as_ref().and_then(|f| f.port).map(|p| format!("http://127.0.0.1:{p}"));
+            status.tunnel_mode = self.shell.tunnel.mode.clone();
             status.cloudflared_pid = cloudflared_pid;
             status.sidecars = sidecars;
             status.clone()
@@ -730,10 +793,27 @@ impl Supervisor {
 pub fn find_quick_tunnel_url(text: &str) -> Option<String> {
     text.match_indices("https://").find_map(|(start, _)| {
         let rest = &text[start..];
-        let end = rest.find(|c: char| c.is_whitespace() || c == '|' || c == '"').unwrap_or(rest.len());
+        let end = rest
+            .find(|c: char| {
+                c.is_whitespace()
+                    || c == '|'
+                    || c == '"'
+                    || c == '\''
+                    || c == '<'
+                    || c == '>'
+                    || c == ')'
+                    || c == ']'
+                    || c == ','
+            })
+            .unwrap_or(rest.len());
         let url = &rest[..end];
         let host = &url["https://".len()..];
-        (host.ends_with(".trycloudflare.com") && host != "api.trycloudflare.com").then(|| url.to_string())
+        let sub = host.strip_suffix(".trycloudflare.com")?;
+        if !sub.is_empty() && sub != "api" && sub.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+            Some(url.to_string())
+        } else {
+            None
+        }
     })
 }
 
@@ -870,7 +950,43 @@ mod tests {
                    2026-10-24T10:00:02Z INF |  https://brave-lion-example.trycloudflare.com                      |\n";
         assert_eq!(find_quick_tunnel_url(log).as_deref(), Some("https://brave-lion-example.trycloudflare.com"));
         assert_eq!(find_quick_tunnel_url("ERR failed to request https://api.trycloudflare.com/tunnel"), None);
+        assert_eq!(find_quick_tunnel_url("https://invalid_sub.trycloudflare.com"), None);
+        assert_eq!(find_quick_tunnel_url("https://.trycloudflare.com"), None);
+        assert_eq!(
+            find_quick_tunnel_url("URL: 'https://sample-123.trycloudflare.com'").as_deref(),
+            Some("https://sample-123.trycloudflare.com")
+        );
         assert_eq!(find_quick_tunnel_url("nothing yet"), None);
+    }
+
+    #[test]
+    fn on_demand_quick_tunnel_lifecycle() {
+        let mut supervisor = supervisor("on-demand");
+        // Cannot start when not ready
+        assert!(supervisor.handle_start_quick_tunnel().is_err());
+
+        // Cannot start when version error
+        supervisor.version_error = Some("mismatch".into());
+        assert!(supervisor.handle_start_quick_tunnel().is_err());
+        supervisor.version_error = None;
+
+        // Mock ready state with running tunnel
+        let record = mock_tunnel(&mut supervisor);
+        assert!(pids::alive(&record));
+        supervisor.shell.tunnel.mode = "quick".into();
+        supervisor.status.lock().unwrap().tunnel_url = Some("https://fixture.trycloudflare.com".into());
+
+        // Stop on-demand
+        assert!(supervisor.handle_stop_quick_tunnel().is_ok());
+        assert_eq!(supervisor.shell.tunnel.mode, "off");
+        assert!(supervisor.tunnel.is_none());
+        assert!(!pids::alive(&record));
+        assert!(supervisor.status.lock().unwrap().tunnel_url.is_none());
+
+        // Repeated stop is a no-op Ok
+        assert!(supervisor.handle_stop_quick_tunnel().is_ok());
+
+        std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
     }
 
     #[test]

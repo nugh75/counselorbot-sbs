@@ -1,13 +1,164 @@
-:root { color-scheme: light dark; --ok: #1a7f37; --err: #c62828; --muted: #6b7280; }
-body { font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; padding: 24px; }
-h1 { font-size: 20px; margin: 0 0 4px; }
-#phase { font-weight: 600; margin: 16px 0 4px; }
+:root {
+  color-scheme: light dark;
+  --ok: #1a7f37;
+  --err: #c62828;
+  --warn-bg: #fff8e6;
+  --warn-border: #f59e0b;
+  --warn-text: #92400e;
+  --muted: #6b7280;
+  --card-bg: color-mix(in srgb, currentColor 4%, transparent);
+  --card-border: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --warn-bg: #2d2415;
+    --warn-border: #b45309;
+    --warn-text: #fde68a;
+  }
+}
+
+body {
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  margin: 0;
+  padding: 20px;
+}
+
+h1 { font-size: 19px; margin: 0 0 2px; }
+h2 { font-size: 15px; margin: 0; font-weight: 600; }
+
+#phase { font-weight: 600; margin: 12px 0 2px; }
 #phase.ready { color: var(--ok); }
 #phase.error { color: var(--err); }
-#message { margin: 0 0 12px; }
-table { border-collapse: collapse; width: 100%; margin: 12px 0; }
-td { padding: 4px 8px 4px 0; border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
-.muted { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-button { font: inherit; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--muted); background: transparent; color: inherit; cursor: pointer; }
-button:disabled { opacity: .5; cursor: default; }
+#message { margin: 0 0 10px; }
+
+table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px; }
+td { padding: 4px 8px 4px 0; border-bottom: 1px solid var(--card-border); }
+
+.muted { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+button {
+  font: inherit;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--muted);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+button:hover:not(:disabled) {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+button:disabled { opacity: .45; cursor: default; }
+
+/* Sezione Quick Tunnel */
+.card {
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  padding: 12px 14px;
+  margin: 14px 0;
+}
+
+.tunnel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.badge.off {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  color: var(--muted);
+}
+.badge.starting {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* Banner warning ADR-0001 §2 */
+.banner.warning {
+  border-left: 4px solid var(--warn-border);
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+.banner.warning strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+.banner.warning p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.tunnel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tunnel-url-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 12px;
+  font-size: 13px;
+}
+.tunnel-url-label {
+  font-weight: 500;
+  color: var(--muted);
+}
+.tunnel-url {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0969da;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+@media (prefers-color-scheme: dark) {
+  .tunnel-url {
+    color: #58a6ff;
+  }
+}
+
+.qr-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+#qrcode svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.qr-caption {
+  font-size: 12px;
+  color: #4b5563;
+  margin-top: 8px;
+  text-align: center;
+}
