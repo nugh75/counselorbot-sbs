@@ -327,9 +327,16 @@ impl Supervisor {
                 return true;
             }
             Ok(
-                Command::ApplyCredentials(reply) | Command::StartQuickTunnel(reply) | Command::StopQuickTunnel(reply),
+                Command::ApplyCredentials(reply)
+                | Command::StartQuickTunnel(reply)
+                | Command::StopQuickTunnel(reply)
+                | Command::StartNamedTunnel(reply)
+                | Command::SaveNamedTunnelConfig { reply, .. },
             ) => {
                 let _ = reply.send(Err("Preparazione in corso. Attendi e riprova.".into()));
+            }
+            Ok(Command::GetTunnelSettings(reply)) => {
+                let _ = reply.send(self.handle_get_tunnel_settings());
             }
             Err(_) => {}
         }
