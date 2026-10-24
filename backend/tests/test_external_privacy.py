@@ -29,7 +29,10 @@ def test_reading_policy_preserves_defaults_and_custom_configuration(client, db):
     assert response.json() == {'mode': 'local', 'local_model': 'qwen3:0.6b'}
     assert response.headers['cache-control'] == 'no-store'
     assert db.query(models.Config).filter(models.Config.key.in_(external_privacy.KEYS)).count() == 0
+    # P6: the obsolete opt-out no longer changes the mode, the fallback does.
     db.add(models.Config(key='external_pii_redact', value='false')); db.commit()
+    assert client.get('/admin/external-privacy').json()['mode'] == 'local'
+    db.add(models.Config(key='external_pii_fallback', value='send_raw')); db.commit()
     assert client.get('/admin/external-privacy').json()['mode'] == 'custom'
 
 
@@ -55,7 +58,7 @@ def test_preview_csrf_and_invalid_modes_are_rejected_without_mutations(client, d
     assert client.put('/admin/external-privacy', json={'mode': 'basic'}, headers={'X-Requested-With': ''}).status_code == 403
     for body in [{'mode': 'off'}, {'mode': 'send_raw'}, {'mode': 'basic', 'username': 'other'}]:
         assert client.put('/admin/external-privacy', json=body).status_code == 422
-    assert client.get('/admin/external-privacy').json()['mode'] == 'custom'
+    assert client.get('/admin/external-privacy').json()['mode'] == 'basic'
 
 
 @pytest.mark.parametrize('key', external_privacy.KEYS + ('pii_ner_model',))
