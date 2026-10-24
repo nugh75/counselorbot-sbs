@@ -36,6 +36,8 @@ def load_known_failures(path=KNOWN_FAILURES_FILE):
 
 def pytest_addoption(parser):
     parser.addoption("--failures-out", default=None, help="write the sorted failing node ids to this file")
+    parser.addoption("--strict-known-failures", action="store_true",
+                     help="full-suite CI: also reject missing, skipped or deselected baseline entries")
 
 
 def pytest_configure(config):
@@ -57,6 +59,7 @@ def pytest_collection_modifyitems(config, items):
 class KnownFailuresRatchet:
     def __init__(self, config):
         self.config = config
+        self.strict = config.getoption("--strict-known-failures")
         self.known = load_known_failures()
         self.failed = set()
         self.passed = set()
@@ -80,7 +83,7 @@ class KnownFailuresRatchet:
         unexpected = sorted(self.failed - self.known)
         now_passing = sorted(
             entry for entry in self.known
-            if entry not in self.failed and (entry in self.passed or entry in self.collected_modules)
+            if entry not in self.failed and (self.strict or entry in self.passed or entry in self.collected_modules)
         )
         return unexpected, now_passing
 
@@ -103,6 +106,6 @@ class KnownFailuresRatchet:
         write(f"unexpected failures: {len(unexpected)}")
         for nodeid in unexpected:
             write(f"  NEW FAILURE  {nodeid}")
-        write(f"listed but now passing (remove them from the list): {len(now_passing)}")
+        write(f"listed but no longer failing (passing, missing or skipped in strict mode): {len(now_passing)}")
         for nodeid in now_passing:
             write(f"  NOW PASSING  {nodeid}")

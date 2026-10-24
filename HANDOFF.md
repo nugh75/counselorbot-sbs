@@ -1,3 +1,20 @@
+# Handoff F1-05a — 24 ottobre 2026 (s27-f105a-sol)
+
+Branch `chore/f1-05a-dual-db-ci`, PR **DRAFT #522**, issue #520.
+Subentro Codex da head `5feafc41`; commit preesistenti preservati.
+Provenienza artifact, numeri iniziali, estensione proposta della baseline
+Postgres e procedura di verifica: `docs/operations/dual-db-ci.md`.
+Le due run complete iniziali coincidono nei node ID; la run cancellata è esclusa.
+Rimossi dalla baseline i tre fallimenti da dipendenze native mancanti.
+Controllo Postgres sulla base originale e conferma CI della consegna in corso.
+Test locali del controllo: 15 pass; portabilità: 213 occorrenze note, zero nuove;
+guidance-check e version-check passano. Nessun Docker, dev process, merge o deploy.
+La consegna richiede ancora risultati CI e revisione applicabile coordinata
+dal Timoniere; nessuna precedente revisione è considerata valida sul nuovo codice.
+Bug registrati LOCAL nel Diario: `5bb5d5b5` (dipendenze CI), `c0649383`
+(suite Postgres), `10f93315` (baseline SQLite); sync `not-linked`, nessuna
+issue manuale aperta. Nessun bug rimasto non registrato.
+
 # Handoff 23 ottobre 2026: stato dopo il ciclo issue di ottobre e prossimi passi
 
 Data: 2026-10-23 | Base: `d83d088a` (main dopo PR #467) | Timoniere: `t-copilota-7t1n`
