@@ -5,6 +5,13 @@ CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
 
+È in sviluppo un'app desktop docente sperimentale: il guscio avvia e sorveglia
+i processi locali, mostra lo stato ed esporta diagnostica senza database o
+credenziali. Non è ancora disponibile per lezioni o dati reali: il backend
+minimal e il quick tunnel servono soltanto alle prove tecniche; autenticazione,
+integrazione completa SQLite e configurazione operativa restano da completare.
+Le funzioni web descritte qui continuano a riferirsi all'installazione corrente.
+
 ## Lettura dei questionari e approfondimento
 
 Nelle chat guidate di QSA, QSAr, ZTPI, QPCS, QPCC e QAP, la descrizione dei
