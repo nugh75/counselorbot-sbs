@@ -1,3 +1,24 @@
+# Handoff 24 ottobre 2026: F1-05e compatibilità SQLite — date e ore UTC con UTCDateTime
+
+Agente `s34-f105e-agy` (Gemini 3.8 Flash High), task Diario
+`8bbe0bd0-48cb-4262-ad93-59501b92dc1f`, branch `feature/f1-05e-utc-datetime`.
+
+- `backend/db_compat.py`: definita classe `UTCDateTime(TypeDecorator)` con `impl = DateTime(timezone=True)` e `cache_ok = True`.
+  - `process_bind_param`: converte datetime aware in UTC, assume UTC per datetime naive, None invariato; gestisce anche stringhe ISO.
+  - `process_result_value`: garantisce che i datetime restituiti siano sempre aware con `timezone.utc` (se naive assegna UTC; se aware converte in UTC), None invariato.
+  - Su Postgres compila come `TIMESTAMP WITH TIME ZONE` (identico a `DateTime(timezone=True)`), garantendo nessuna modifica allo schema e nessuna migrazione per l'ambiente di produzione.
+- `backend/models.py`: sostituite tutte le 161 dichiarazioni di colonna `DateTime(timezone=True)` con `UTCDateTime`, importato da `.db_compat`.
+- `scripts/sql-portability-exceptions.txt`: rimossa l'eccezione `backend/models.py datetime-timezone 161`, totale eccezioni sceso da 201 a 40. `python3 scripts/check-sql-portability.py` passa con 0 violazioni.
+- `backend/tests/test_utc_datetime.py`: suite mirata che verifica:
+  a) Roundtrip di valori aware e naive sia su SQLite sia su Postgres (`artifact_session()` e test dedicato): il valore riletto è sempre aware in UTC.
+  b) Confronto e sottrazione con `datetime.now(timezone.utc)` su SQLite senza TypeError, con verifica di controllo del fallimento su `DateTime(timezone=True)` nativo di SQLite.
+  c) Verifica contrattuale della DDL compilata per il dialetto postgresql (identica a prima, `TIMESTAMP WITH TIME ZONE`) e su tutti i modelli di `Base.metadata.tables`.
+- Verifiche eseguite:
+  - `TEST_DB=sqlite python3 -m pytest backend/tests/test_utc_datetime.py -q` (6 passed, 1 skipped per postgres_only).
+  - `make guidance-check` e `make version-check` (verdi).
+  - `python3 scripts/check-sql-portability.py` (ok, 40 note, 0 nuove).
+- Nessun deploy, sudo, rebuild Docker o processi dev rimasti attivi.
+
 # Handoff 24 ottobre 2026: Privacy Layer P1 — s38-p1-sol
 
 Task Diario `1cc50c38-2dee-4c46-ad0a-6148018efbc7`, branch
