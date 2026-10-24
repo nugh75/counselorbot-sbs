@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Docente offline</title>
+  <style>
+    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;background:#f8fafc;color:#0f172a;text-align:center}
+    main{max-width:26rem;padding:1.5rem}
+    .icon{font-size:3rem;line-height:1}
+    button{margin-top:1rem;padding:.6rem 1.4rem;font-size:1rem;border:0;border-radius:.5rem;background:#2563eb;color:#fff;cursor:pointer}
+    p.small{font-size:.85rem;color:#475569}
+    @media (prefers-color-scheme:dark){body{background:#0f172a;color:#f1f5f9}p.small{color:#94a3b8}}
+  </style>
+</head>
+<body>
+  <main role="status" aria-live="polite">
+    <div class="icon" aria-hidden="true">📡</div>
+    <h1>Il docente è offline</h1>
+    <p id="message">La lezione non è ancora iniziata o il docente è momentaneamente offline.</p>
+    <button id="retry" type="button">Riprova</button>
+    <p class="small" id="state">Nuovo tentativo automatico ogni 10 secondi.</p>
+  </main>
+  <script src="/offline.js"></script>
+</body>
+</html>
