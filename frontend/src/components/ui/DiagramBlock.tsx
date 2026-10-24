@@ -25,6 +25,8 @@ interface RenderState {
     key: string;
     markup: string | null;
     failed: boolean;
+    // 503: l'installazione non ha Graphviz (app desktop). Riprovare non serve.
+    engineMissing?: boolean;
 }
 
 // Campione del tratto: lo stesso segno che il renderer disegna nell'arco.
@@ -141,6 +143,7 @@ function DiagramView({ spec, locale, renderedSvg, imageUrl, onPickNode }: Diagra
     const suppliedMarkup = useMemo(() => renderedSvg === undefined ? null : sanitizeSvgMarkup(renderedSvg), [renderedSvg]);
     const markup = renderedSvg !== undefined ? suppliedMarkup : renderState.key === renderKey ? renderState.markup : null;
     const failed = renderedSvg !== undefined ? !suppliedMarkup : renderState.key === renderKey && renderState.failed;
+    const engineMissing = failed && renderedSvg === undefined && !!renderState.engineMissing;
     const activeNode = spec.nodes.find(node => node.id === selected) ?? (step === null ? null : spec.nodes[step]);
     const relatedEdges = (spec.edges ?? []).filter(edge => {
         if (selected) return edge.from === selected || edge.to === selected;
@@ -162,10 +165,14 @@ function DiagramView({ spec, locale, renderedSvg, imageUrl, onPickNode }: Diagra
             body: JSON.stringify({ spec: JSON.parse(normalizedSpecJson), theme: isDark ? 'dark' : 'light',
                 format: 'svg', embed_title: false, lang: locale }), signal: controller.signal,
         }).then(response => {
+            if (response.status === 503) {
+                setRenderState({ key: renderKey, markup: null, failed: true, engineMissing: true });
+                return null;
+            }
             if (!response.ok) throw new Error('render failed');
             return response.text();
         }).then(source => {
-            if (controller.signal.aborted) return;
+            if (source === null || controller.signal.aborted) return;
             const clean = sanitizeSvgMarkup(source);
             if (!clean) throw new Error('invalid svg');
             setRenderState({ key: renderKey, markup: clean, failed: false });
@@ -319,8 +326,8 @@ function DiagramView({ spec, locale, renderedSvg, imageUrl, onPickNode }: Diagra
         {markup ? <DiagramViewport markup={markup} spec={spec} zoom={zoom} setZoom={setZoom} reading={reading}
             step={step} selected={selected} onSelect={select} fullscreen={full} positionRef={position} reset={reset}
             motion={motion} label={spec.title} />
-            : failed ? <div className="space-y-2 p-4"><p role="status">{diagramRequestLabel('renderFailed', locale)}</p>
-                <Tooltip content={diagramRequestLabel('retry', locale)}><button aria-label={diagramRequestLabel('retry', locale)} type="button" className={controlClass} onClick={() => setRetry(value => value + 1)}><RotateCcw className="h-5 w-5" aria-hidden="true" /></button></Tooltip></div>
+            : failed ? <div className="space-y-2 p-4"><p role="status">{diagramRequestLabel(engineMissing ? 'engineMissing' : 'renderFailed', locale)}</p>
+                {!engineMissing && <Tooltip content={diagramRequestLabel('retry', locale)}><button aria-label={diagramRequestLabel('retry', locale)} type="button" className={controlClass} onClick={() => setRetry(value => value + 1)}><RotateCcw className="h-5 w-5" aria-hidden="true" /></button></Tooltip>}</div>
                 : <div className="flex min-h-40 items-center justify-center gap-2 p-4 text-sm text-indigo-700" role="status">
                     <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />{labels('loading')}</div>}
         {(activeNode || showText || failed) && <div className={`space-y-3 border-t border-slate-200 p-3 ${full ? 'max-h-[35dvh] shrink-0 overflow-auto' : ''}`}>

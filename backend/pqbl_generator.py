@@ -71,14 +71,12 @@ def pdf_total_pages(path: str) -> int:
 
 
 def render_pages_to_images(path: str, start_page: int, end_page: int) -> list:
-    """Rasterizza le pagine richieste (1-based per pdf2image) in immagini JPEG.
+    """Rasterizza le pagine richieste in immagini (`start_page` 0-based, `end_page` esclusa).
 
-    Isolata per poterla sostituire nei test senza poppler né rete."""
-    from pdf2image import convert_from_path
+    Isolata per poterla sostituire nei test senza PDF né rete."""
+    from .pdf_images import render_pdf_pages
 
-    return convert_from_path(
-        path, dpi=150, first_page=start_page + 1, last_page=end_page
-    )
+    return render_pdf_pages(path, dpi=150, first_page=start_page + 1, last_page=end_page)
 
 
 def _page_image_base64(image) -> str:

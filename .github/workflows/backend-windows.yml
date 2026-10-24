@@ -1,7 +1,7 @@
 name: backend-windows
 
 # F1-18 (#499): the backend must import on Windows and its file lock must work
-# there. Light check: only on PRs touching these files, or by hand.
+# there. F1-04: diagrams degrade cleanly without Graphviz. Light check: only on PRs touching these files, or by hand.
 on:
   workflow_dispatch:
   pull_request:
@@ -10,6 +10,11 @@ on:
       - backend/rag_index.py
       - backend/rag_reindex_job.py
       - backend/tests/test_file_lock.py
+      - backend/native_deps.py
+      - backend/diagram_render.py
+      - backend/routes/diagram.py
+      - backend/pdf_images.py
+      - backend/tests/test_native_deps.py
       - backend/requirements.txt
       - .github/workflows/backend-windows.yml
 
@@ -42,3 +47,5 @@ jobs:
         run: python -c "import backend.main, backend.rag_index, backend.rag_reindex_job; print('backend imported')"
       - name: File lock tests (exclusion and cross-process concurrency)
         run: python -m pytest backend/tests/test_file_lock.py -q
+      - name: Native dependency tests (no Graphviz on the runner)
+        run: python -m pytest backend/tests/test_native_deps.py -q -rs

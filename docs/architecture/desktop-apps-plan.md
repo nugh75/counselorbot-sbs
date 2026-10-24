@@ -67,7 +67,7 @@ di autenticazione intercambiabile prevista da #209.
 `backend/Dockerfile:12-14` installa `poppler-utils` (PDF → immagini), `graphviz` (diagrammi),
 `tesseract-ocr-ita/eng` (OCR dei PDF RAG). Il codice già degrada se `dot` manca
 (`backend/diagram_render.py:877`, `:901`). Sul desktop vanno **inclusi** o resi
-**facoltativi con messaggio chiaro** (compito F1-04).
+**facoltativi con messaggio chiaro** (compito F1-04). Esito: [`desktop-native-deps.md`](desktop-native-deps.md).
 
 ### 2.3 Provider LLM già supportati
 
