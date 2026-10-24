@@ -38,7 +38,7 @@ def main() -> int:
     from backend.instrument_translation import configured_translator
 
     catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
-    db = next(database.get_db())
+    db = database.SessionLocal()  # Legge solo la config; le traduzioni vanno nel JSON.
     try:
         translate, model = configured_translator(db)
         print(f"modello: {model}")

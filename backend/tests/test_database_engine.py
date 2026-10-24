@@ -289,3 +289,18 @@ def test_old_sqlite_stops_the_backend_with_exit_code_3(tmp_path):
     )
     assert result.returncode == 3, result.stderr
     assert "3.31.1" in result.stderr
+
+
+def test_get_db_is_only_used_as_a_fastapi_dependency():
+    """get_db needs the request: scripts and jobs use SessionLocal() or write_session()."""
+    import re
+    direct_call = re.compile(r"(?<![\w.])(?:database\.)?get_db\(\)")
+    offenders = []
+    for folder in ("backend", "scripts"):
+        for path in (REPO_ROOT / folder).rglob("*.py"):
+            if "tests" in path.parts:
+                continue
+            for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                if direct_call.search(line) and "Depends(" not in line and not line.lstrip().startswith("def "):
+                    offenders.append(f"{path.relative_to(REPO_ROOT)}:{number}")
+    assert offenders == []
