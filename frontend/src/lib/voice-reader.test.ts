@@ -38,6 +38,20 @@ afterEach(() => {
     Object.assign(globalThis, { fetch: saved.fetch, Audio: saved.Audio, requestAnimationFrame: saved.raf, cancelAnimationFrame: saved.cancel });
 });
 
+test('voice SSE ignores heartbeat comments split across byte boundaries', async () => {
+    const events = [{ type: 'init', segments: [segment(0)] }, chunk(0), { type: 'done' }];
+    const body = ': ping\n\n' + events.map(event => `data: ${JSON.stringify(event)}\n\n: ping\n\n`).join('');
+    const response = new Response(new ReadableStream({
+        start(stream) {
+            for (const byte of new TextEncoder().encode(body)) stream.enqueue(new Uint8Array([byte]));
+            stream.close();
+        },
+    }));
+    const received: Record<string, unknown>[] = [];
+    await readVoiceEvents(response, event => received.push(event));
+    assert.deepEqual(received, events);
+});
+
 test('word timings preserve canonical accented text and reject invalid or unmatched words', () => {
     assert.deepEqual(normalizeWords([['È', 0, .2], { word: 'così', start: .3, end: .6 }, ['missing', .7, 1], ['È', -1, 2]], 'È così.'), [
         { word: 'È', start: 0, end: .2, from: 0, to: 1 }, { word: 'così', start: .3, end: .6, from: 2, to: 6 },

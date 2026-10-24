@@ -37,6 +37,7 @@ from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService
 from ..api_models import ChatRequest, OpencodeChatRequest, OpencodeWorkspaceRequest
 from ..chat_continuation import continuation_message, continuation_prefix, merge_continuation
+from ..sse import heartbeat
 from ..chat_logic import (
     _apply_language_directive,
     _apply_qsa_factor_directive,
@@ -1138,7 +1139,7 @@ async def chat_opencode(
                     pass
 
     return StreamingResponse(
-        stream(),
+        heartbeat(stream()),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache, no-transform",

@@ -126,3 +126,32 @@ test('SSE chunks can split CRLF and UTF-8 without corrupting a completed answer'
     })));
     assert.equal((await streamChat({}, () => {})).response, 'Perché?');
 });
+
+for (const endpoint of ['/api/chat/stream', '/api/site-chat/stream', '/api/opencode/workspace/cb-12345678/chat']) {
+    test(`${endpoint} ignores heartbeat comments across byte boundaries`, async (t) => {
+        const ping = ': ping\n\n';
+        const body = ping + event({ session_id: 's1' }) + ping + event({ display: 'Perché?' })
+            + ping + event({ reasoning: 'fixture' }) + ping + event({ done: true, response: 'Perché?' }) + ping;
+        t.mock.method(globalThis, 'fetch', async (url: unknown, init: RequestInit) => {
+            assert.equal(url, endpoint);
+            assert.equal(init.method, 'POST');
+            return new Response(new ReadableStream({
+                start(stream) {
+                    for (const byte of new TextEncoder().encode(body)) stream.enqueue(new Uint8Array([byte]));
+                    stream.close();
+                },
+            }));
+        });
+        const updates: string[] = [], reasoning: string[] = [];
+        const result = await streamChat({}, text => updates.push(text), undefined, text => reasoning.push(text), endpoint);
+        assert.equal(result.response, 'Perché?');
+        assert.equal(result.session_id, 's1');
+        assert.deepEqual(updates, ['Perché?']);
+        assert.deepEqual(reasoning, ['fixture']);
+    });
+}
+
+test('heartbeat comments do not mark an interrupted response as complete', async (t) => {
+    t.mock.method(globalThis, 'fetch', async () => new Response(': ping\n\n' + event({ display: 'Prefisso' }) + ': ping\n\n'));
+    await assert.rejects(streamChat({}, () => {}), IncompleteChatStreamError);
+});

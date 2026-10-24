@@ -1,0 +1,59 @@
+name: SSE quick tunnel regression
+
+# External Cloudflare behavior can change: run deliberately, never on each push.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install the isolated fixture runtime
+        run: pip install fastapi uvicorn
+      - name: Install the cloudflared version measured in F0-03
+        run: |
+          curl --fail --location --retry 3 https://github.com/cloudflare/cloudflared/releases/download/2026.3.0/cloudflared-linux-amd64 -o "$RUNNER_TEMP/cloudflared"
+          chmod +x "$RUNNER_TEMP/cloudflared"
+          "$RUNNER_TEMP/cloudflared" --version
+      - name: Probe real helper through a quick tunnel for 75 seconds
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m scripts.spikes.sse_heartbeat_probe serve > "$RUNNER_TEMP/sse-origin.log" 2>&1 &
+          origin_pid=$!
+          tunnel_pid=''
+          trap 'kill "$origin_pid" ${tunnel_pid:+"$tunnel_pid"} 2>/dev/null || true; wait || true' EXIT
+          for attempt in {1..30}; do
+            curl --silent --fail http://127.0.0.1:8791/openapi.json > /dev/null && break
+            kill -0 "$origin_pid"
+            sleep 1
+          done
+          curl --silent --fail http://127.0.0.1:8791/openapi.json > /dev/null
+          "$RUNNER_TEMP/cloudflared" tunnel --no-autoupdate --url http://127.0.0.1:8791 > "$RUNNER_TEMP/sse-tunnel.log" 2>&1 &
+          tunnel_pid=$!
+          tunnel_url=''
+          for attempt in {1..60}; do
+            tunnel_url=$(rg -o 'https://[a-z0-9-]+\.trycloudflare\.com' "$RUNNER_TEMP/sse-tunnel.log" | head -1 || true)
+            if [ -n "$tunnel_url" ] && curl --silent --fail --max-time 3 "$tunnel_url/openapi.json" > /dev/null; then break; fi
+            kill -0 "$tunnel_pid"
+            sleep 1
+          done
+          test -n "$tunnel_url"
+          python -m scripts.spikes.sse_heartbeat_probe check "$tunnel_url" --require-cloudflare | tee "$RUNNER_TEMP/sse-result.jsonl"
+      - name: Upload synthetic probe evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sse-tunnel-probe
+          path: |
+            ${{ runner.temp }}/sse-origin.log
+            ${{ runner.temp }}/sse-tunnel.log
+            ${{ runner.temp }}/sse-result.jsonl

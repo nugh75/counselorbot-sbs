@@ -24,6 +24,7 @@ from .. import database, install_profile, models
 from ..api_models import TTSRequest
 from ..chat_logic import strip_markdown
 from ..diagram_blocks import strip_for_speech
+from ..sse import heartbeat
 from .chat import _split_text_for_tts
 
 router = APIRouter(prefix="/tts")
@@ -200,5 +201,5 @@ async def stream(request: ReaderRequest, db: Session = Depends(database.get_pers
     if not segments:
         raise HTTPException(422, "No readable text")
     voice = reader_voice(request, db)
-    return StreamingResponse(reader_events(segments, voice, request.engine), media_type="text/event-stream",
+    return StreamingResponse(heartbeat(reader_events(segments, voice, request.engine)), media_type="text/event-stream",
                              headers={"Cache-Control": "no-store, no-transform", "X-Accel-Buffering": "no"})

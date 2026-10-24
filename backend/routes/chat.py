@@ -22,6 +22,7 @@ from .. import auth, class_access, database, models, model_pricing
 from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService, AIError, generation_details
 from ..chat_continuation import continuation_message, merge_continuation
+from ..sse import heartbeat
 from .. import pii
 from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
 from ..diagram_blocks import strip_for_speech
@@ -1434,10 +1435,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             yield f"data: {_json.dumps({'error': str(e), **({'error_code': e.code} if isinstance(e, AIError) and e.code else {})})}\n\n"
 
     return StreamingResponse(
-        event_gen(),
+        heartbeat(event_gen()),
         media_type="text/event-stream",
         headers={
-            "Cache-Control": "no-cache",
+            "Cache-Control": "no-cache, no-transform",
             "X-Accel-Buffering": "no",  # disabilita il buffering di nginx
             "Connection": "keep-alive",
         },
