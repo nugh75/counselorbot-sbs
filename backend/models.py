@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, Float, Integer, String, Text, Date, JSON, UniqueConstraint, ForeignKey, CheckConstraint, Index, text
+from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, Date, JSON, UniqueConstraint, ForeignKey, CheckConstraint, Index, text
 from sqlalchemy.sql import func
 from .database import Base
 from .db_compat import UTCDateTime
@@ -74,10 +74,7 @@ class ChatGPTLink(Base):
 
 
 class LocalSession(Base):
-    """`cb_session` of the local identity provider (ADR-0002 §3.2); only the token's SHA-256.
-
-    Times are naive UTC in plain DateTime columns: portable until UTCDateTime (F1-05e).
-    """
+    """`cb_session` of the local identity provider (ADR-0002 §3.2); only the token's SHA-256."""
     __tablename__ = "local_sessions"
     __table_args__ = (
         CheckConstraint("kind IN ('teacher', 'student')", name="ck_local_session_kind"),
@@ -87,10 +84,10 @@ class LocalSession(Base):
     username = Column(String, nullable=False, index=True)
     kind = Column(String(16), nullable=False)
     device_label = Column(String, nullable=True)
-    created_at = Column(DateTime, nullable=False)
-    last_seen_at = Column(DateTime, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
-    revoked_at = Column(DateTime, nullable=True)
+    created_at = Column(UTCDateTime, nullable=False)
+    last_seen_at = Column(UTCDateTime, nullable=False)
+    expires_at = Column(UTCDateTime, nullable=False)
+    revoked_at = Column(UTCDateTime, nullable=True)
 
 
 class Config(Base):
