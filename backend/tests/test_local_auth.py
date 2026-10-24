@@ -134,7 +134,7 @@ def test_teacher_session_from_tunnel_is_anonymous(local, headers):
     assert me["authenticated"] is False and me["is_admin"] is False
     local.cookies.clear()
     local.cookies.set(local_auth.COOKIE_NAME, cookie)
-    assert local.get("/admin/config/env-status", headers=headers).status_code == 401
+    assert local.get("/admin/config/env-status", headers=headers).status_code == 403  # F1-07
     assert local.get("/admin/config/env-status", headers=LOCAL).status_code == 200
 
 

@@ -8,11 +8,11 @@ import os
 import re
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import models, auth, database
-from . import local_auth, shell_internal
+from . import install_profile, local_auth, shell_internal
 from .version import __version__
 from .native_deps import native_capabilities
 from .prompt_config import (
@@ -2077,7 +2077,7 @@ app.include_router(local_auth.router)
 app.include_router(admin_routes.router)
 app.include_router(survey_routes.router)
 app.include_router(chat_routes.router)
-app.include_router(chatgpt_routes.router)
+app.include_router(chatgpt_routes.router, dependencies=[Depends(install_profile.require_lab_features)])
 app.include_router(voice_reader_routes.router)
 app.include_router(audio_input_routes.router)
 app.include_router(memory_routes.router)
@@ -2097,7 +2097,7 @@ app.include_router(readings_routes.router)
 app.include_router(milestones_routes.router)
 app.include_router(personal_strategies_routes.router)
 app.include_router(pqbl_routes.router)
-app.include_router(opencode_routes.router)
+app.include_router(opencode_routes.router, dependencies=[Depends(install_profile.require_lab_features)])
 app.include_router(presets_routes.router)
 app.include_router(benchmark_routes.router)
 app.include_router(prompt_audit_routes.router)
@@ -2116,7 +2116,7 @@ app.include_router(administration_plans_routes.router)
 app.include_router(assistant_questions_routes.router)
 app.include_router(rag_docs_routes.router)
 app.include_router(guided_step_questions_routes.router)
-app.include_router(telegram_routes.router)
+app.include_router(telegram_routes.router, dependencies=[Depends(install_profile.require_lab_features)])
 app.include_router(groups_routes.router)
 app.include_router(forum_routes.router)
 app.include_router(assignments_routes.router)
@@ -2129,7 +2129,7 @@ app.include_router(idea_map_routes.router)
 app.include_router(institutions_routes.router)
 app.include_router(institution_categories_routes.router)
 app.include_router(orientation_referrals_routes.router)
-app.include_router(prompt_experiments_routes.router)
+app.include_router(prompt_experiments_routes.router, dependencies=[Depends(install_profile.require_lab_features)])
 app.include_router(class_paths_routes.router)
 app.include_router(path_templates_routes.router)
 app.include_router(class_meetings_routes.router)
