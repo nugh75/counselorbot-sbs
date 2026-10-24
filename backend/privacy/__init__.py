@@ -1,11 +1,14 @@
-"""Public Privacy Layer contracts (P1); no I/O, keys or database on import."""
+"""Public Privacy Layer contracts (P1); no I/O, keys or database on import.
+
+The local engine (P4) lives in ``detect`` and ``pseudonymization``, imported on demand.
+"""
 from .errors import (
     AccessDenied, AuditUnavailable, ConsentMissingError, DetectorUnavailable,
     EgressBlockedError, IntegrityError, KeyUnavailable, PIIDetectorUnavailable,
     PolicyBlocked, PrivacyError, PurposeDisabled, PurposeDisabledError, ResidualPII,
 )
 from .policy import (
-    AIGateway, authorize_data_access, decrypt_authorized, default_category_policy,
+    AIGateway, authorize_data_access, configure_engine, decrypt_authorized, default_category_policy,
     depseudonymize, detect_pii, egress_requirements, encrypt_sensitive,
     is_local_target, pseudonymize, record_privacy_event, require_purpose,
     restore_authorized,
@@ -29,6 +32,7 @@ __all__ = [
     "PrivacyRole", "PseudonymizedBatch", "Pseudonymizer", "PseudonymMap", "PurposeDisabled",
     "PurposeDisabledError", "PurposePolicy", "ResidualPII", "ResourceRef", "SealedValue",
     "SensitivityLevel", "Span", "Target", "TreatmentMode", "authorize_data_access",
+    "configure_engine",
     "decrypt_authorized", "default_category_policy", "depseudonymize", "detect_pii",
     "egress_requirements", "encrypt_sensitive", "is_local_target", "pseudonymize",
     "record_privacy_event", "require_purpose", "restore_authorized",
