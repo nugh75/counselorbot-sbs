@@ -1,3 +1,40 @@
+# Handoff 24 ottobre 2026: F1-13 abbinamento studenti desktop (ADR-0002 §4)
+
+Agente `s40-f113-opus` (Claude Opus 5.5), task Diario
+`56bfc165-1e54-4cb6-8c6f-88c8414f6c00`, branch `feature/f1-13-student-pairing`.
+
+- **Main rotto, riparato a parte (PR #539, issue #538)**: il merge F1-05e
+  (a8f7badb) aveva tolto `add_column_if_missing` da `backend/db_compat.py` e
+  l'import `DateTime` usato da `LocalSession`; il backend non si importava.
+  Ripristinati alla lettera. I due commit della fix sono anche in questo branch:
+  le PR si possono unire in qualsiasi ordine.
+- `backend/local_pairing.py`: rotte `/local-auth/pair`, `recover`, `devices`,
+  `devices/{id}/approve`, `DELETE devices/{id}`, `students/{username}/personal-code`,
+  `classes/{group_id}/pairing-code` come da tabella §4.2; `logout` in
+  `local_auth.py`. Tabelle nuove portabili `class_pairing_codes` e
+  `local_students` (UTCDateTime, create da `create_all`, nessuna migrazione).
+  Chiave di classe 32 byte (solo hash, link `COUNSELORBOT_PUBLIC_ORIGIN/unisciti#k=`),
+  7 giorni, nuovo codice revoca i precedenti; codice personale 12 base32 (hash),
+  accettato con spazi/trattini/minuscole; pseudonimo con suffisso `Luna 2`, mai
+  errore; abbinamento sotto `xact_lock` per classe (usi e nomi senza gare).
+  Stessa risposta 401 per chiave inesistente/scaduta/revocata/esaurita/classe
+  disattivata. Limiti in memoria §4.3 con `Retry-After`.
+- Scelta: studente `pending` ⇒ `identity_from_request` restituisce anonimo (non
+  un'identità con username e `authenticated=false`), perché 78 rotte a identità
+  facoltativa potrebbero usare lo username. Approvare un dispositivo attiva lo
+  studente, quindi tutte le sue sessioni. Rotte docente 403 senza sessione
+  admin da origine `local`.
+- Da fare: pagine `/unisciti` (studente) e dispositivi/QR (docente), chiamata
+  del guscio; `group_id` docente non filtrato per proprietario (sul PC il
+  docente è l'unico admin).
+- Verifiche: `TEST_DB=sqlite` `test_local_pairing.py` + `test_local_auth.py`
+  **53 pass** (venv Python 3.12 di `feature-f1-02-tauri-shell`). Postgres non
+  eseguito in locale: due Postgres di test di altri agenti già attivi (regola
+  una istanza alla volta), demandato alla CI `backend-db.yml`. SQL portability
+  (nessuna nuova), ruff F, guidance-check, version-check, diff-check verdi.
+- Nessun deploy, sudo, rebuild Docker (il Dockerfile copia già `backend/*.py`)
+  o processo dev rimasto attivo.
+
 # Handoff 24 ottobre 2026: F1-05e compatibilità SQLite — date e ore UTC con UTCDateTime
 
 Agente `s34-f105e-agy` (Gemini 3.8 Flash High), task Diario
