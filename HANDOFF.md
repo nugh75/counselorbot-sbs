@@ -17,6 +17,9 @@ Agente `s63` (Claude Opus 5.5), branch `feature/privacy-p6-ai-gateway`.
   Nessun deploy, sudo o processo dev attivo.
 - **Aggiornamento**: merge di `origin/main` (P16, solo documenti) senza rebase; unico conflitto in questo file,
   tenute entrambe le voci. P11 (#571) non è su `main` e non è incluso. Rieseguiti solo i test P6.
+- **CI #575**: `tests (sqlite)` 4 e `tests (postgres)` 9 fallimenti fuori ratchet, gli stessi test dei run di F1-05h
+  (40129126537, già su `main`) e P11 (40132612909): Piper P6a-c, `practice_notebooks`, `sse_heartbeat`, e su Postgres
+  `test_routes_commit_and_release…` di `test_sqlite_load_concurrency`. Nessuno introdotto da P6; da sistemare a parte.
 
 ---
 
