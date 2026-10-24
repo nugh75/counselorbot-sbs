@@ -34,9 +34,13 @@ def local(db, monkeypatch):
     monkeypatch.setenv(SECRET_ENV, SHELL_SECRET)
     monkeypatch.setenv("COUNSELORBOT_FRONTEND_SECRET", FRONTEND_SECRET)
     monkeypatch.setattr(local_auth, "_open_session", lambda: nullcontext(db))
+    # Other suites leave auth overrides on the shared app: run with real auth only.
+    previous = dict(app.dependency_overrides)
+    app.dependency_overrides.clear()
     app.dependency_overrides[database.get_db] = lambda: db
     yield TestClient(app, client=("127.0.0.1", 50000))
-    app.dependency_overrides.pop(database.get_db, None)
+    app.dependency_overrides.clear()
+    app.dependency_overrides.update(previous)
 
 
 def _teacher_link(client):
