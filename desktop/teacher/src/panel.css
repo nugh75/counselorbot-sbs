@@ -110,6 +110,106 @@ button:disabled { opacity: .45; cursor: default; }
   line-height: 1.4;
 }
 
+/* Banner info */
+.banner.info {
+  border-left: 4px solid #0284c7;
+  background: color-mix(in srgb, #0284c7 10%, transparent);
+  color: inherit;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+.banner.info strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+.banner.info p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Selezione modalita' tunnel */
+.tunnel-mode-selector {
+  display: flex;
+  gap: 16px;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.radio-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+.radio-label input[type="radio"] {
+  cursor: pointer;
+  margin: 0;
+}
+
+/* Pannello configurazione Tunnel Nominativo */
+.named-config-panel {
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.form-group {
+  margin-bottom: 10px;
+}
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.form-group input[type="text"],
+.form-group input[type="password"] {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--muted);
+  background: transparent;
+  color: inherit;
+}
+.form-group input:focus {
+  outline: none;
+  border-color: #0969da;
+}
+.field-hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.config-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.config-feedback {
+  font-size: 12px;
+  font-weight: 500;
+}
+.config-feedback.ok {
+  color: var(--ok);
+}
+.config-feedback.err {
+  color: var(--err);
+}
+
 .tunnel-actions {
   display: flex;
   flex-wrap: wrap;

@@ -40,7 +40,7 @@ fn open_in_browser(app: AppHandle, shell: State<'_, Shell>) -> Result<(), String
 
 #[tauri::command]
 fn open_tunnel_in_browser(app: AppHandle, shell: State<'_, Shell>) -> Result<(), String> {
-    let url = shell.supervisor.snapshot().tunnel_url.ok_or("Quick tunnel non attivo")?;
+    let url = shell.supervisor.snapshot().tunnel_url.ok_or("Tunnel non attivo")?;
     app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
 }
 
@@ -52,6 +52,25 @@ fn start_quick_tunnel(shell: State<'_, Shell>) -> Result<(), String> {
 #[tauri::command]
 fn stop_quick_tunnel(shell: State<'_, Shell>) -> Result<(), String> {
     shell.supervisor.stop_quick_tunnel()
+}
+
+#[tauri::command]
+fn start_named_tunnel(shell: State<'_, Shell>) -> Result<(), String> {
+    shell.supervisor.start_named_tunnel()
+}
+
+#[tauri::command]
+fn save_named_tunnel_config(
+    shell: State<'_, Shell>,
+    custom_domain: String,
+    token: Option<String>,
+) -> Result<(), String> {
+    shell.supervisor.save_named_tunnel_config(custom_domain, token)
+}
+
+#[tauri::command]
+fn get_tunnel_settings(shell: State<'_, Shell>) -> Result<supervisor::TunnelSettings, String> {
+    shell.supervisor.get_tunnel_settings()
 }
 
 #[tauri::command]
@@ -151,6 +170,9 @@ pub fn run(mode: Mode) {
             quit,
             start_quick_tunnel,
             stop_quick_tunnel,
+            start_named_tunnel,
+            save_named_tunnel_config,
+            get_tunnel_settings,
             open_tunnel_in_browser,
         ])
         .setup(move |app| {

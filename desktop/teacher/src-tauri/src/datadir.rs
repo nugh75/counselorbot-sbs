@@ -44,12 +44,14 @@ pub struct DataDir {
     pub first_run: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default, PartialEq, Eq, Debug)]
 #[serde(default)]
 pub struct TunnelConfig {
     /// "off" (default), "quick" (prove), "named" (dominio del docente)
     pub mode: String,
     pub name: Option<String>,
+    pub custom_domain: Option<String>,
+    pub token: Option<String>,
 }
 
 /// `config/shell.json`: preferenze non segrete.
@@ -155,6 +157,52 @@ impl DataDir {
         let text = serde_json::to_string_pretty(config).unwrap_or_default();
         std::fs::write(self.path("config/shell.json"), text)
     }
+
+    /// Reads Cloudflare tunnel token checking in order:
+    /// 1. CLOUDFLARE_TUNNEL_TOKEN environment variable
+    /// 2. credentials/cloudflared_token file (user-only permissions)
+    /// 3. token property in TunnelConfig
+    pub fn read_tunnel_token(&self, config: &TunnelConfig) -> Option<String> {
+        if let Ok(tok) = std::env::var("CLOUDFLARE_TUNNEL_TOKEN") {
+            let trimmed = tok.trim();
+            if !trimmed.is_empty() {
+                return Some(trimmed.to_string());
+            }
+        }
+        let cred_file = self.path("credentials/cloudflared_token");
+        if let Ok(tok) = std::fs::read_to_string(&cred_file) {
+            let trimmed = tok.trim();
+            if !trimmed.is_empty() {
+                return Some(trimmed.to_string());
+            }
+        }
+        if let Some(tok) = &config.token {
+            let trimmed = tok.trim();
+            if !trimmed.is_empty() {
+                return Some(trimmed.to_string());
+            }
+        }
+        None
+    }
+
+    /// Saves the tunnel token into credentials/cloudflared_token (with 0600 on unix).
+    pub fn save_tunnel_token(&self, token: &str) -> std::io::Result<()> {
+        let cred_file = self.path("credentials/cloudflared_token");
+        let trimmed = token.trim();
+        if trimmed.is_empty() {
+            if cred_file.exists() {
+                let _ = std::fs::remove_file(&cred_file);
+            }
+            return Ok(());
+        }
+        std::fs::write(&cred_file, trimmed)?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = std::fs::set_permissions(&cred_file, std::fs::Permissions::from_mode(0o600));
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -226,11 +274,25 @@ mod tests {
         assert_eq!(data.load_config().frontend_port, None);
         let mut config = data.load_config();
         config.frontend_port = Some(31234);
-        config.tunnel.mode = "quick".into();
+        config.tunnel.mode = "named".into();
+        config.tunnel.custom_domain = Some("https://counselor.tuascuola.it".into());
+        config.tunnel.token = Some("mock-token-abc".into());
         data.save_config(&config).unwrap();
         let loaded = data.load_config();
         assert_eq!(loaded.frontend_port, Some(31234));
-        assert_eq!(loaded.tunnel.mode, "quick");
+        assert_eq!(loaded.tunnel.mode, "named");
+        assert_eq!(loaded.tunnel.custom_domain.as_deref(), Some("https://counselor.tuascuola.it"));
+        assert_eq!(loaded.tunnel.token.as_deref(), Some("mock-token-abc"));
+
+        // Token resolution precedence
+        assert_eq!(data.read_tunnel_token(&loaded.tunnel).as_deref(), Some("mock-token-abc"));
+        data.save_tunnel_token("file-token-xyz").unwrap();
+        assert_eq!(data.read_tunnel_token(&loaded.tunnel).as_deref(), Some("file-token-xyz"));
+
+        // Clean up token file
+        data.save_tunnel_token("").unwrap();
+        assert_eq!(data.read_tunnel_token(&loaded.tunnel).as_deref(), Some("mock-token-abc"));
+
         std::fs::remove_dir_all(&root).unwrap();
     }
 }
