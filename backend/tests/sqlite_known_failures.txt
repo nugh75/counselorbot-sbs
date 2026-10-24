@@ -1,0 +1,1 @@
+# Backend tests that fail with TEST_DB=sqlite today (ADR-0003 §5.1). The list can only get shorter.
