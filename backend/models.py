@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, Date, JSON, UniqueConstraint, ForeignKey, CheckConstraint, Index, text
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Float, Integer, String, Text, Date, JSON, UniqueConstraint, ForeignKey, CheckConstraint, Index, text
 from sqlalchemy.sql import func
 from .database import Base
 from .db_compat import UTCDateTime
