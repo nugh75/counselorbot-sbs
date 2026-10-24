@@ -159,7 +159,8 @@ da 44 px.
 
 L’accesso personale usa l’account della Console ai4educ collegata all’installazione.
 Login, uscita e collegamenti a Portale, Console e Segreti seguono i domini
-configurati per quella installazione; dopo il login si torna alla pagina richiesta
+configurati per quella installazione, letti all’avvio del server e non fissati
+nella build (la stessa build serve installazioni web e app desktop); dopo il login si torna alla pagina richiesta
 di CounselorBot. Nell’installazione `counselorbot.labform.net` l’account è quello
 gestito da `auth.labform.net` e `manager.labform.net`. Il collegamento **Segreti**
 dell’amministrazione seleziona il progetto Docker di questa installazione.
