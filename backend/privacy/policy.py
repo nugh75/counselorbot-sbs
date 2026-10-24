@@ -1,7 +1,8 @@
 """Conservative policy defaults and fail-closed, unconfigured operations.
 
-P1 does not register these stubs with existing routes. P4/P5/P6/P7/P8/P9
-will supply detection, crypto, gateway, grants, audit and consent storage.
+P1 does not register these stubs with existing routes. P4/P5/P7/P8/P9
+will supply detection, crypto, grants, audit and consent storage; the AI
+gateway (P6) lives in ``gateway``.
 Detection and pseudonymization delegate to the engine installed with
 ``configure_engine`` (P4); without one they stay unavailable.
 """
@@ -10,7 +11,7 @@ from __future__ import annotations
 from ipaddress import ip_address
 import os
 import re
-from typing import Iterator, Sequence
+from typing import Sequence
 from urllib.parse import urlsplit
 
 from .errors import (
@@ -18,7 +19,7 @@ from .errors import (
     KeyUnavailable, PIIDetectorUnavailable, PolicyBlocked, PurposeDisabledError,
 )
 from .types import (
-    Action, AIChunk, AIRequest, AIResponse, CategoryPolicy, DataAction, Decision,
+    Action, AIRequest, CategoryPolicy, DataAction, Decision,
     EgressRequirements, FieldRef, LegalBasis, PIICategory, PIISpan, Principal,
     PrivacyContext, PrivacyEvent, PrivacyPurpose, PseudonymizedBatch,
     PurposePolicy, ResourceRef, SealedValue, Target,
@@ -181,10 +182,3 @@ def authorize_data_access(principal: Principal, action: DataAction,
 
 def record_privacy_event(event: PrivacyEvent) -> None:
     raise AuditUnavailable() from None
-
-
-class AIGateway:
-    """No provider is configured in P1; never returns input as a fallback."""
-
-    def send(self, request: AIRequest, ctx: PrivacyContext) -> AIResponse | Iterator[AIChunk]:
-        raise EgressBlockedError() from None
