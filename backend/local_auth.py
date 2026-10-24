@@ -41,8 +41,7 @@ def _hash(token: str) -> str:
 
 
 def _now() -> datetime:
-    # UTC naive: colonne DateTime semplici, uguali su Postgres e SQLite.
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(timezone.utc)
 
 
 def _open_session():
