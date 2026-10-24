@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from .memory_embeddings import memory_embedder
+from .privacy import field_crypto
 
 
 DEFAULT_TTL_SECONDS = 7200
@@ -697,6 +698,9 @@ class SessionMemory:
 
     # --- Utilities ---
 
+    def _row_id(self, session_id: str) -> str:
+        return self._path(session_id).stem
+
     def _path(self, session_id: str) -> Path:
         safe = re.sub(r"[^A-Za-z0-9_.-]", "_", session_id or "unknown")[:120]
         return self._memory_dir / f"{safe}.md"
@@ -706,12 +710,17 @@ class SessionMemory:
         if not path.exists():
             return ""
         try:
-            return path.read_text(encoding="utf-8")
+            text = path.read_text(encoding="utf-8")
         except OSError:
             return ""
+        # P11: files written with the switch on hold a sealed token; older ones are plain Markdown.
+        return field_crypto.open_text("session_memory", "file", text.strip(), self._row_id(session_id)) \
+            if field_crypto.is_sealed(text.strip()) else text
 
     def _write(self, session_id: str, text: str) -> None:
         self._memory_dir.mkdir(parents=True, exist_ok=True)
+        if field_crypto.enabled():
+            text = field_crypto.seal_text("session_memory", "file", text, self._row_id(session_id))
         self._path(session_id).write_text(text, encoding="utf-8")
 
     def _touch(self, session_id: str) -> None:
