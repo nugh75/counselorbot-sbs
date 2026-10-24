@@ -1,6 +1,6 @@
 # Handoff — F1-05f SQL runtime SQLite/Postgres
 Agenti: s39-f105f-sol, s42-f105f-opus · Branch: feature/f1-05f-sqlite-runtime-sql
-Task diario: 002aa71d-d456-40b9-9926-f4450cf68c83 · PR: —
+Task diario: 002aa71d-d456-40b9-9926-f4450cf68c83 · PR: #543
 Aggiornato: 2026-10-24
 
 ## Stato
