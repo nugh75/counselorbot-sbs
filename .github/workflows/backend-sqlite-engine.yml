@@ -1,0 +1,43 @@
+name: backend-sqlite-engine
+
+# F1-05b (#499, ADR-0003 §4.1): the desktop SQLite engine (PRAGMA, BEGIN IMMEDIATE,
+# version >= 3.35) on the four desktop runners, with the Python the sidecar ships.
+# Light check: only on PRs touching the engine, or by hand.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - backend/database.py
+      - backend/db_compat.py
+      - backend/tests/test_database_engine.py
+      - .github/workflows/backend-sqlite-engine.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-sqlite-engine-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  engine:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest, macos-latest, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt pytest
+      - name: Bundled SQLite version
+        run: python -c "import platform, sqlite3; print(platform.platform(), platform.machine(), 'SQLite', sqlite3.sqlite_version)"
+      - name: Engine tests
+        run: python -m pytest backend/tests/test_database_engine.py -q -rs
