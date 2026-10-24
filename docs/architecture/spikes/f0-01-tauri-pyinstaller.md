@@ -16,8 +16,9 @@ e lo mostra nella finestra. Verificato:
 | Windows (`windows-latest`, Server 2025) | NSIS per utente (+ `.msi`) | ✅ CI, installazione silenziosa | ✅ CI |
 | Ubuntu 22.04 (`ubuntu-22.04`) | `.deb` installato con apt, `.AppImage` | ✅ CI (deb e AppImage) | ✅ CI (WebKitGTK sotto Xvfb) |
 
-Run di riferimento: [40039560955](https://github.com/nugh75/counselorbot-sbs/actions/runs/40039560955)
-(Linux e Windows verdi; macOS solo il controllo finestra fallisce, vedi §4.1).
+Run di riferimento: [40041774537](https://github.com/nugh75/counselorbot-sbs/actions/runs/40041774537), verde sui 4 runner
+(il controllo finestra macOS è solo un avviso, vedi §3.3). Misure di §2 dalla run
+[40039560955](https://github.com/nugh75/counselorbot-sbs/actions/runs/40039560955), stesso codice.
 Sul runner Linux il backend impacchettato è partito anche in **modalità completa** contro Postgres 15 reale:
 lifespan, seed e tutte le migrazioni della madre in **12–13 s**, `/auth/me` 200.
 
