@@ -577,11 +577,15 @@ class AIService:
             month_start = datetime.now(timezone.utc).replace(
                 day=1, hour=0, minute=0, second=0, microsecond=0
             )
-            spent = self.db.query(func.coalesce(func.sum(models.Log.cost_usd), 0.0)).filter(
-                models.Log.timestamp >= month_start,
-                models.Log.cost_usd.isnot(None),
-                func.coalesce(models.Log.details["credential_source"].as_string(), "system") != "personal",
-            ).scalar() or 0.0
+            # Dispatch can run after the request session has closed. A lazy
+            # budget check must release its connection before provider I/O.
+            from .database import independent_read_session
+            with independent_read_session(self.db) as budget_db:
+                spent = budget_db.query(func.coalesce(func.sum(models.Log.cost_usd), 0.0)).filter(
+                    models.Log.timestamp >= month_start,
+                    models.Log.cost_usd.isnot(None),
+                    func.coalesce(models.Log.details["credential_source"].as_string(), "system") != "personal",
+                ).scalar() or 0.0
             self._budget_locked_cache = float(spent) >= self.monthly_budget_usd
         except Exception as e:
             logger.warning("Budget unavailable; paid dispatch blocked (%s)", type(e).__name__)

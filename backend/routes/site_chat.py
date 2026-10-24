@@ -410,6 +410,10 @@ async def site_chat_stream(
     )
 
     cat_weights, aud_weights, max_per_source, min_score = _retrieval_params(ai_service)
+    # Retrieval and dispatch use the loaded config and independent short DB
+    # operations. Release POST's BEGIN IMMEDIATE before embeddings/provider I/O.
+    db.commit()
+    db.close()
 
     def _log_and_persist(answer: str, sources: list[str], results: list[dict], usage: dict | None = None) -> str | None:
         """Logga l'interazione, aggiorna la memoria conversazionale e crea il
@@ -418,7 +422,7 @@ async def site_chat_stream(
         actual_model = getattr(ai_service, "last_model", None) or model
         plan_getter = getattr(ai_service, "_plan", None)
         reasoning_plan = plan_getter() if callable(plan_getter) else None
-        log_db = database.SessionLocal()
+        log_db = database.write_session()
         response_id = None
         try:
             cost_usd = _usage_cost_usd(usage, actual_provider, actual_model)
@@ -488,7 +492,7 @@ async def site_chat_stream(
             logger.error("Site-chat memoria fallita: %s", e)
         return response_id
 
-    def event_gen(db):
+    def event_gen():
         # Retrieval (embeddings/IO bloccanti) fuori dall'event loop.
         try:
             results = index.search(
@@ -498,8 +502,9 @@ async def site_chat_stream(
         except AIError as e:
             if not isinstance(e, EmbeddingUnavailable):  # già segnalato una volta da rag_index
                 logger.error("Site-chat retrieval AIError: %s", e)
-            log_error(db, session_id, str(e), action="chat_error", questionnaire_type=_SITE_QTYPE,
-                      mode="site_chat", phase=request.audience, conversation_id=conversation_id)
+            with database.write_session() as err_db:
+                log_error(err_db, session_id, str(e), action="chat_error", questionnaire_type=_SITE_QTYPE,
+                          mode="site_chat", phase=request.audience, conversation_id=conversation_id)
             results = None
             retrieval_error = _retrieval_unavailable_message(request.language)
         else:
@@ -595,7 +600,7 @@ async def site_chat_stream(
         except Exception as e:
             logger.error("Errore site-chat stream %s: %s", session_id, e)
             if isinstance(e, AIError):
-                err_db = database.SessionLocal()
+                err_db = database.write_session()
                 try:
                     log_error(err_db, session_id, str(e), action="chat_error",
                               questionnaire_type=_SITE_QTYPE, mode="site_chat", phase=request.audience,
@@ -604,14 +609,9 @@ async def site_chat_stream(
                     err_db.close()
             yield f"data: {_json.dumps({'error': str(e)})}\n\n"
 
-    db_info = dict(db.info)
-
     def stream_events():
         yield f"data: {_json.dumps({'session_id': session_id, 'conversation_id': conversation_id})}\n\n"
-        with database.write_session() as stream_db:
-            stream_db.info.update(db_info)
-            ai_service.db = stream_db
-            yield from event_gen(stream_db)
+        yield from event_gen()
 
     return StreamingResponse(
         heartbeat(stream_events()),

@@ -31,6 +31,7 @@ COPY backend/privacy/ backend/privacy/
 COPY backend/tests/ backend/tests/
 COPY knowledge/ knowledge/
 COPY scripts/chatgpt-connect.py scripts/chatgpt-connect.py
+COPY scripts/benchmarks/ scripts/benchmarks/
 
 # Create __init__.py to make it a proper package
 RUN touch backend/__init__.py

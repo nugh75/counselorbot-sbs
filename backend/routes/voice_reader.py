@@ -242,5 +242,7 @@ async def stream(request: ReaderRequest, db: Session = Depends(database.get_pers
     if not segments:
         raise HTTPException(422, "No readable text")
     voice = reader_voice(request, db)
+    db.commit()
+    db.close()
     return StreamingResponse(heartbeat(reader_events(segments, voice, engine)), media_type="text/event-stream",
                              headers={"Cache-Control": "no-store, no-transform", "X-Accel-Buffering": "no"})

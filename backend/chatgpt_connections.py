@@ -114,6 +114,8 @@ def bind_identity(db, identity, language="it"):
 def credential_session(db):
     # Credential renewal must not commit the caller's pending chat/score writes.
     with Session(bind=db.get_bind(), join_transaction_mode="create_savepoint") as private:
+        from .database import as_write_session
+        as_write_session(private)
         yield private
 
 
@@ -296,8 +298,10 @@ def preference(db):
     source = chosen_source(db, owner(db), getattr(db, "info", {}).get("personal_ai_counselor_id"))
     if not source or source[0] != "chatgpt":
         return None
-    with credential_session(db) as private:
-        row = private.query(models.ChatGPTConnection).filter_by(username=owner(db)).first()
+    # This lookup never writes. Reuse the caller's transaction: a second
+    # IMMEDIATE connection would contend with POST's own SQLite writer lock.
+    with db.no_autoflush:
+        row = db.query(models.ChatGPTConnection).filter_by(username=owner(db)).first()
         return source[1] if row else None
 
 

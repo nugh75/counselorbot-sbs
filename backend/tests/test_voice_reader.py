@@ -151,7 +151,7 @@ def test_stream_starts_before_synthesis_and_cancel_does_not_generate_more():
 def test_api_validation_and_no_cache():
     app = FastAPI()
     app.include_router(reader.router)
-    app.dependency_overrides[reader.database.get_db] = lambda: None
+    app.dependency_overrides[reader.database.get_personal_ai_db] = lambda: SimpleNamespace(commit=lambda: None, close=lambda: None)
     with TestClient(app) as client:
         assert client.post('/tts/stream', json={'text': ''}).status_code == 422
         assert client.post('/tts/stream', json={'text': 'Ciao', 'voice': '../../secret'}).status_code == 422
