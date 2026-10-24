@@ -5,6 +5,7 @@ copied; orphaned IDs become unlinked classes, preserving every class record.
 """
 import logging
 from sqlalchemy import text
+from ..db_compat import add_column_if_missing
 
 logger = logging.getLogger(__name__)
 
@@ -14,8 +15,8 @@ def migrate(engine):
         if connection.dialect.name != 'postgresql':
             return
         connection.execute(text("SELECT pg_advisory_xact_lock(14820261009)"))
-        connection.execute(text("ALTER TABLE institutions ADD COLUMN IF NOT EXISTS created_by VARCHAR"))
-        connection.execute(text("ALTER TABLE institutions ADD COLUMN IF NOT EXISTS revision INTEGER NOT NULL DEFAULT 1"))
+        add_column_if_missing(connection, "institutions", "created_by", "VARCHAR")
+        add_column_if_missing(connection, "institutions", "revision", "INTEGER NOT NULL", default="1")
         repaired = connection.execute(text("""
             UPDATE student_groups SET institution_id = NULL
             WHERE institution_id IS NOT NULL

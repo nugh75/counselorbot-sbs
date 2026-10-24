@@ -1,6 +1,7 @@
 """Path templates (#172): template links on paths and replay-safe pending steps."""
 
 from sqlalchemy import text
+from ..db_compat import add_column_if_missing
 from .. import models
 
 # Frozen #172 target check, added after its column; later slices widen it themselves.
@@ -28,15 +29,13 @@ def migrate(engine):
         # create_all already ran at startup; repeat it here so the references exist.
         models.PathTemplate.__table__.create(connection, checkfirst=True)
         models.PathTemplateStep.__table__.create(connection, checkfirst=True)
-        connection.execute(text(
-            "ALTER TABLE class_paths ADD COLUMN IF NOT EXISTS template_id "
-            "INTEGER REFERENCES path_templates(id) ON DELETE SET NULL"))
-        connection.execute(text("ALTER TABLE class_paths ADD COLUMN IF NOT EXISTS template_revision INTEGER"))
+        add_column_if_missing(connection, "class_paths", "template_id",
+                              "INTEGER REFERENCES path_templates(id) ON DELETE SET NULL")
+        add_column_if_missing(connection, "class_paths", "template_revision", "INTEGER")
         connection.execute(text("CREATE INDEX IF NOT EXISTS ix_class_paths_template_id ON class_paths (template_id)"))
-        connection.execute(text("ALTER TABLE class_path_steps ADD COLUMN IF NOT EXISTS pending_config JSON"))
-        connection.execute(text(
-            "ALTER TABLE class_path_steps ADD COLUMN IF NOT EXISTS template_step_id "
-            "INTEGER REFERENCES path_template_steps(id) ON DELETE SET NULL"))
+        add_column_if_missing(connection, "class_path_steps", "pending_config", "JSON")
+        add_column_if_missing(connection, "class_path_steps", "template_step_id",
+                              "INTEGER REFERENCES path_template_steps(id) ON DELETE SET NULL")
         # Widen the TF7 target check once; existing rows already satisfy it.
         definition = connection.execute(text(
             "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = "

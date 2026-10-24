@@ -18,6 +18,7 @@ import logging
 import re
 
 from sqlalchemy import text
+from ..db_compat import add_column_if_missing
 
 logger = logging.getLogger(__name__)
 
@@ -25,19 +26,19 @@ BCRYPT_RE = re.compile(r"^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$")
 
 
 def _add_columns(connection):
-    for statement in (
-        "ALTER TABLE institutions ADD COLUMN IF NOT EXISTS institution_code VARCHAR(50)",
-        "ALTER TABLE institutions ADD COLUMN IF NOT EXISTS hashed_password VARCHAR(255)",
-        "ALTER TABLE institutions ADD COLUMN IF NOT EXISTS credentials_revision INTEGER NOT NULL DEFAULT 1",
-        "ALTER TABLE administration_plans ADD COLUMN IF NOT EXISTS institution_code VARCHAR(50)",
-        "ALTER TABLE administration_plans ADD COLUMN IF NOT EXISTS institution_password VARCHAR(100)",
-        "ALTER TABLE administration_plans ADD COLUMN IF NOT EXISTS revision INTEGER NOT NULL DEFAULT 1",
-        "ALTER TABLE administration_plans ADD COLUMN IF NOT EXISTS institution_id INTEGER",
-        "ALTER TABLE administration_plans ADD COLUMN IF NOT EXISTS reconciliation_reason VARCHAR(64)",
+    for table, column, type_expr, default in (
+        ("institutions", "institution_code", "VARCHAR(50)", None),
+        ("institutions", "hashed_password", "VARCHAR(255)", None),
+        ("institutions", "credentials_revision", "INTEGER NOT NULL", "1"),
+        ("administration_plans", "institution_code", "VARCHAR(50)", None),
+        ("administration_plans", "institution_password", "VARCHAR(100)", None),
+        ("administration_plans", "revision", "INTEGER NOT NULL", "1"),
+        ("administration_plans", "institution_id", "INTEGER", None),
+        ("administration_plans", "reconciliation_reason", "VARCHAR(64)", None),
         # No default yet: existing rows stay NULL until classified below.
-        "ALTER TABLE administration_plans ADD COLUMN IF NOT EXISTS institution_link_state VARCHAR(32)",
+        ("administration_plans", "institution_link_state", "VARCHAR(32)", None),
     ):
-        connection.execute(text(statement))
+        add_column_if_missing(connection, table, column, type_expr, default)
     has_fk = connection.execute(text("""
         SELECT 1 FROM pg_constraint
         WHERE conrelid = 'administration_plans'::regclass AND conname = 'fk_administration_plan_institution'

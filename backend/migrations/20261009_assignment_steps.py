@@ -1,6 +1,7 @@
 """TF6 replay-safe assignment step target."""
 
 from sqlalchemy import text
+from ..db_compat import add_column_if_missing
 
 # Frozen TF6 target check, added after its column; later slices widen it themselves.
 TF6_STEP_TARGET_CHECK = (
@@ -20,11 +21,9 @@ def migrate(engine):
         return
     with engine.begin() as connection:
         connection.execute(text("SELECT pg_advisory_xact_lock(15320261009)"))
-        connection.execute(
-            text(
-                "ALTER TABLE class_path_steps ADD COLUMN IF NOT EXISTS assignment_id "
-                "INTEGER REFERENCES teacher_assignments(id) ON DELETE RESTRICT"
-            )
+        add_column_if_missing(
+            connection, "class_path_steps", "assignment_id",
+            "INTEGER REFERENCES teacher_assignments(id) ON DELETE RESTRICT",
         )
         # Widen the TF5 target check once; existing rows already satisfy it.
         definition = connection.execute(

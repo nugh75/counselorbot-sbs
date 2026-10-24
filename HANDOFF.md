@@ -1,3 +1,28 @@
+# Handoff 24 ottobre 2026: F1-05c colonne idempotenti SQLite
+
+Agente `s32-f105c-opus` (Claude Opus 5.5), task Diario
+`1b0449ce-6d15-4ed7-892a-f94c6b157232`, branch `feature/f1-05c-sqlite-columns`.
+
+- `backend/db_compat.py`: `add_column_if_missing(conn, table, column, type_expr, default=None)`
+  con `sqlalchemy.inspect`; su Postgres resta `IF NOT EXISTS` (worker concorrenti).
+- Sostituite tutte le 49 righe `ADD COLUMN IF NOT EXISTS`: avvio (`personal_api`,
+  `counselor_identity`, `main`), `prompt_lab/provision` e le 20 migrazioni legacy
+  (ancora solo Postgres: su SQLite gli upgrade restano a F1-05g). Default `'[]'`
+  senza `::json` anche in `main.py` (`teacher_assignments.attachments`).
+- Rimossa l'eccezione F1-05c: `scripts/check-sqlite-startup-log.py`, il suo test e
+  il ramo della CI. Eccezioni di portabilità da 213 a 201.
+- Verifiche locali (Python 3.12 della venv di `feature-f1-02-tauri-shell`):
+  avvio due volte sullo stesso file SQLite nuovo, `/health` 200 entrambe, nessun
+  errore nei log; SQLite mirati `test_db_compat`, `test_dual_db_checks`,
+  `test_database_engine` 43 pass; `test_personal_connections` solo i 14 fallimenti
+  noti (`hashtext`, F1-05d). Postgres 15 effimero: avvio riuscito; riavvio dopo
+  aver eliminato a mano 4 colonne: `/health` 200, colonne ricreate con default.
+  `test_db_compat` su Postgres: 1 pass, 1 fail non diagnosticato perché il disco
+  della VM Docker si è riempito (`initdb: No space left on device`); suite
+  Postgres mirata interrotta per durata (>20 min). Postgres demandato alla CI
+  `tests (postgres)`. guidance-check e version-check verdi.
+- Nessun deploy, sudo, rebuild Docker o processo dev rimasto attivo.
+
 # Handoff 24 ottobre 2026: Fase 1 desktop integrata in main (F1-05a, F1-05b, F1-02)
 
 Agente `s31-merge-opus` (Claude Opus 5.5), task Diario

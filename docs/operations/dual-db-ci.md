@@ -126,16 +126,13 @@ usare `@pytest.mark.postgres_only`, con motivazione. I moduli in baseline
 possono coprire errori successivi al primo: quando tornano importabili, i nuovi
 node ID emersi richiedono analisi e revisione, non un aggiornamento meccanico.
 
-## Startup SQLite: eccezione temporanea limitata
+## Startup SQLite: due avvii reali
 
-Il probe tenta due avvii sullo stesso file e accetta HTTP 200 (oppure 404
-finché `/health` arriva con F1-02). Si tollera esclusivamente un processo
-terminato con l'errore `personal_api.ensure_schema`, `near "EXISTS"`, sullo
-statement `ALTER TABLE counselors ADD COLUMN IF NOT EXISTS owner_username VARCHAR`.
-`scripts/check-sqlite-startup-log.py` verifica tutti questi dettagli. La CI emette
-un warning: **avvio, secondo avvio e idempotenza non sono ancora validati**.
-Errori di dipendenze/import, timeout, altri statement o altri errori SQL bloccano.
-Non esiste più `continue-on-error` sull'intero job. F1-05c deve rimuovere
-l'eccezione e ottenere due avvii reali riusciti. I log sono artifact del runner.
+Il probe avvia il backend due volte sullo stesso file SQLite e accetta HTTP 200
+(oppure 404 finché `/health` arriva con F1-02). Qualunque altro esito blocca:
+dipendenze, import, timeout, errori SQL. Da F1-05c non esistono eccezioni: le
+colonne dell'avvio passano da `db_compat.add_column_if_missing`, che controlla
+la colonna con `sqlalchemy.inspect` e su Postgres mantiene `IF NOT EXISTS` per i
+worker concorrenti. I log sono artifact del runner.
 
 Nessun deploy, processo dev o rebuild Docker locale è necessario per F1-05a.

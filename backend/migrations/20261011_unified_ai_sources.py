@@ -1,6 +1,7 @@
 """One choice per counselor between a personal API connection and a ChatGPT model (#200)."""
 
 from sqlalchemy import text
+from ..db_compat import add_column_if_missing
 
 
 def migrate(engine):
@@ -8,8 +9,8 @@ def migrate(engine):
         return
     with engine.begin() as connection:
         connection.execute(text("SELECT pg_advisory_xact_lock(20020261011)"))
-        connection.execute(text("ALTER TABLE personal_ai_routing ADD COLUMN IF NOT EXISTS default_chatgpt_model VARCHAR(200)"))
-        connection.execute(text("ALTER TABLE personal_counselor_connections ADD COLUMN IF NOT EXISTS chatgpt_model VARCHAR(200)"))
+        add_column_if_missing(connection, "personal_ai_routing", "default_chatgpt_model", "VARCHAR(200)")
+        add_column_if_missing(connection, "personal_counselor_connections", "chatgpt_model", "VARCHAR(200)")
         connection.execute(text("ALTER TABLE personal_counselor_connections ALTER COLUMN connection_id DROP NOT NULL"))
         connection.execute(text("""
             DO $$ BEGIN

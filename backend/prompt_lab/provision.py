@@ -1,6 +1,7 @@
 """Explicit owner-only schema setup and least-privilege worker grants."""
 from sqlalchemy import text
 from . import storage
+from ..db_compat import add_column_if_missing
 
 
 def provision():
@@ -8,8 +9,8 @@ def provision():
     with storage.session_factory()() as db:
         if db.bind.dialect.name != 'postgresql':
             raise RuntimeError('Deployment requires the dedicated PostgreSQL database')
+        add_column_if_missing(db.connection(), 'lab_results', 'raw_response', 'TEXT')
         for query in [
-            'ALTER TABLE lab_results ADD COLUMN IF NOT EXISTS raw_response TEXT',
             'GRANT USAGE ON SCHEMA public TO prompt_lab_worker',
             'GRANT SELECT ON lab_experiments, lab_runs, lab_results TO prompt_lab_worker',
             'GRANT UPDATE (state, cases, candidates, summary, error) ON lab_experiments TO prompt_lab_worker',

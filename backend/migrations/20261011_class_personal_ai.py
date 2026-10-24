@@ -1,6 +1,7 @@
 """Per-class permission for students' own APIs and ChatGPT (#217)."""
 
 from sqlalchemy import text
+from ..db_compat import add_column_if_missing
 
 
 def migrate(engine):
@@ -9,4 +10,4 @@ def migrate(engine):
     with engine.begin() as connection:
         connection.execute(text("SELECT pg_advisory_xact_lock(21720261011)"))
         # Existing classes keep today's behaviour: allowed.
-        connection.execute(text("ALTER TABLE class_settings ADD COLUMN IF NOT EXISTS students_personal_ai BOOLEAN NOT NULL DEFAULT TRUE"))
+        add_column_if_missing(connection, "class_settings", "students_personal_ai", "BOOLEAN NOT NULL", default="TRUE")

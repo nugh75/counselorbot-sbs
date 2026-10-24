@@ -1,6 +1,7 @@
 """TF3 replay-safe typed envelopes and truthful legacy result provenance."""
 
 from sqlalchemy import text
+from ..db_compat import add_column_if_missing
 from .. import models
 
 
@@ -28,9 +29,8 @@ def migrate(engine):
         }
         for table, columns in additions.items():
             for column in columns:
-                connection.execute(
-                    text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column}")
-                )
+                name, type_expr = column.split(" ", 1)
+                add_column_if_missing(connection, table, name, type_expr)
         connection.execute(
             text("ALTER TABLE class_path_steps ALTER COLUMN tool_key DROP NOT NULL")
         )

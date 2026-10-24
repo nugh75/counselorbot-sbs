@@ -3,6 +3,7 @@
 import json
 
 from sqlalchemy import text
+from ..db_compat import add_column_if_missing
 
 
 def migrate(engine):
@@ -10,7 +11,7 @@ def migrate(engine):
         return
     with engine.begin() as connection:
         connection.execute(text("SELECT pg_advisory_xact_lock(17220261011)"))
-        connection.execute(text("ALTER TABLE class_path_steps ADD COLUMN IF NOT EXISTS template_snapshot JSON"))
+        add_column_if_missing(connection, "class_path_steps", "template_snapshot", "JSON")
         # Steps applied before this column existed are taken as in step with their template.
         rows = connection.execute(text(
             "SELECT s.id, t.template_id, t.step_type, t.config, t.title, t.instructions "

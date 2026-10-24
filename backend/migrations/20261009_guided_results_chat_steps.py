@@ -1,6 +1,7 @@
 """TF5 replay-safe deep-dive step target and bound guided sessions."""
 
 from sqlalchemy import text
+from ..db_compat import add_column_if_missing
 from .. import models
 
 # Frozen TF5 target check: later slices widen it in their own migration, after
@@ -19,11 +20,8 @@ def migrate(engine):
         return
     with engine.begin() as connection:
         connection.execute(text("SELECT pg_advisory_xact_lock(15220261009)"))
-        connection.execute(
-            text(
-                "ALTER TABLE class_path_steps ADD COLUMN IF NOT EXISTS results_step_id "
-                "INTEGER REFERENCES class_path_steps(id)"
-            )
+        add_column_if_missing(
+            connection, "class_path_steps", "results_step_id", "INTEGER REFERENCES class_path_steps(id)"
         )
         # Widen the TF3 target check once; existing rows already satisfy it.
         definition = connection.execute(

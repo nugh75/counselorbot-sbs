@@ -1,6 +1,7 @@
 """Guided chat steps and their follow-up (#177): `guided_chat` type and `follows_step_id`."""
 
 from sqlalchemy import text
+from ..db_compat import add_column_if_missing
 
 # Frozen #177 target check: `guided_chat` names its chat in tool_key like a tool step.
 GUIDED_CHAT_STEP_TARGET_CHECK = (
@@ -29,9 +30,8 @@ def migrate(engine):
         return
     with engine.begin() as connection:
         connection.execute(text("SELECT pg_advisory_xact_lock(17720261010)"))
-        connection.execute(text(
-            "ALTER TABLE class_path_steps ADD COLUMN IF NOT EXISTS follows_step_id INTEGER "
-            "REFERENCES class_path_steps(id) ON DELETE SET NULL"))
+        add_column_if_missing(connection, "class_path_steps", "follows_step_id",
+                              "INTEGER REFERENCES class_path_steps(id) ON DELETE SET NULL")
         # Widen the #175 target check once; existing rows have no guided_chat step.
         definition = connection.execute(text(
             "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = "
