@@ -1,6 +1,7 @@
 """TF7 replay-safe forum step target."""
 
 from sqlalchemy import text
+from ..db_compat import add_column_if_missing
 from .. import models
 
 # Frozen TF7 target check, added after its column; later slices widen it themselves.
@@ -26,11 +27,8 @@ def migrate(engine):
     target = foreign_key.column
     with engine.begin() as connection:
         connection.execute(text("SELECT pg_advisory_xact_lock(15420261010)"))
-        connection.execute(
-            text(
-                "ALTER TABLE class_path_steps ADD COLUMN IF NOT EXISTS topic_id "
-                f"INTEGER REFERENCES {target.table.name}({target.name})"
-            )
+        add_column_if_missing(
+            connection, "class_path_steps", "topic_id", f"INTEGER REFERENCES {target.table.name}({target.name})"
         )
         # Widen the TF6 target check once; existing rows already satisfy it.
         definition = connection.execute(

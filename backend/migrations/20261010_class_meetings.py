@@ -1,6 +1,7 @@
 """Class and group meetings (#175): meeting tables and the replay-safe `meeting` step type."""
 
 from sqlalchemy import text
+from ..db_compat import add_column_if_missing
 from .. import models
 
 # Frozen #175 target check: every other step type keeps meeting_id empty.
@@ -31,8 +32,7 @@ def migrate(engine):
         # create_all already ran at startup; repeat it here so the references exist.
         models.ClassMeeting.__table__.create(connection, checkfirst=True)
         models.ClassMeetingAttendance.__table__.create(connection, checkfirst=True)
-        connection.execute(text(
-            "ALTER TABLE class_path_steps ADD COLUMN IF NOT EXISTS meeting_id INTEGER REFERENCES class_meetings(id)"))
+        add_column_if_missing(connection, "class_path_steps", "meeting_id", "INTEGER REFERENCES class_meetings(id)")
         # Widen the #172 target check once; existing rows have no meeting and satisfy it.
         definition = connection.execute(text(
             "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = "
