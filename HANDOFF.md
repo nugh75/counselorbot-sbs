@@ -6,8 +6,11 @@ Agente `s40-f113-opus` (Claude Opus 5.5), task Diario
 - **Main rotto, riparato a parte (PR #539, issue #538)**: il merge F1-05e
   (a8f7badb) aveva tolto `add_column_if_missing` da `backend/db_compat.py` e
   l'import `DateTime` usato da `LocalSession`; il backend non si importava.
-  Ripristinati alla lettera. I due commit della fix sono anche in questo branch:
-  le PR si possono unire in qualsiasi ordine.
+  Helper ripristinato alla lettera; `LocalSession` passa a `UTCDateTime` e
+  `local_auth._now()` a UTC aware (il test UTCDateTime vieta `DateTime` grezzo);
+  `backend.db_compat` ammesso nel grafo di import del forum; 55 voci tolte dal
+  ratchet SQLite (ora passano in CI). La fix è unita in questo branch con un
+  merge: le PR si possono unire in qualsiasi ordine.
 - `backend/local_pairing.py`: rotte `/local-auth/pair`, `recover`, `devices`,
   `devices/{id}/approve`, `DELETE devices/{id}`, `students/{username}/personal-code`,
   `classes/{group_id}/pairing-code` come da tabella §4.2; `logout` in
