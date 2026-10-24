@@ -12,14 +12,13 @@ from sqlalchemy import create_engine, event, text
 
 from backend import models
 
-DB_URL = 'postgresql://c4_test@127.0.0.1:18649/counselorbot_test'
 migration = import_module('backend.migrations.20261022_institution_password_display')
 
 
 @pytest.fixture
 def legacy():
     url = os.environ['DATABASE_URL']
-    assert url == DB_URL
+    assert url.rsplit('/', 1)[-1] == 'counselorbot_test'
     schema = 'tf2p_' + uuid.uuid4().hex
     engine = create_engine(url)
 

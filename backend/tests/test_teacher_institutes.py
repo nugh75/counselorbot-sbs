@@ -16,7 +16,7 @@ from backend.routes import groups, institutions
 def api():
     # Never silently fall back to an operational database.
     url = os.environ['DATABASE_URL']
-    assert url == 'postgresql://c3_test@127.0.0.1:18648/counselorbot_test'
+    assert url.rsplit('/', 1)[-1] == 'counselorbot_test'
     engine = create_engine(url)
     schema = 'tf1_' + uuid.uuid4().hex
     with engine.begin() as connection:

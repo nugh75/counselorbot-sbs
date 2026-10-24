@@ -16,7 +16,6 @@ from sqlalchemy.orm import Session
 from backend import auth, database, institution_password, models, scoring_service
 from backend.routes import administration_plans, groups, institutions, survey
 
-DB_URL = 'postgresql://c4_test@127.0.0.1:18649/counselorbot_test'
 SECRET = ' Synthetic-Pass 149 '  # Leading/trailing spaces must survive unchanged.
 ROLES = {'teacher': ['docenti'], 'admin': ['admins'], 'researcher': ['researchers'],
          'student': ['studenti'], 'anonymous': []}
@@ -26,7 +25,7 @@ ROLES = {'teacher': ['docenti'], 'admin': ['admins'], 'researcher': ['researcher
 def api(monkeypatch):
     # Never silently fall back to an operational database.
     url = os.environ['DATABASE_URL']
-    assert url == DB_URL
+    assert url.rsplit('/', 1)[-1] == 'counselorbot_test'
     engine = create_engine(url)
     schema = 'tf2_' + uuid.uuid4().hex
     with engine.begin() as connection:

@@ -1,3 +1,33 @@
+# Handoff F1-05a — 24 ottobre 2026 (s27-f105a-sol)
+
+Branch `chore/f1-05a-dual-db-ci`, PR **DRAFT #522**, issue #520.
+Subentro Codex da head `5feafc41`; commit preesistenti preservati.
+Provenienza artifact, numeri iniziali, estensione proposta della baseline
+Postgres e procedura di verifica: `docs/operations/dual-db-ci.md`.
+Le due run complete iniziali coincidono nei node ID; la run cancellata è esclusa.
+Rimossi dalla baseline i tre fallimenti da dipendenze native mancanti.
+CI su codice `ddbdb18c`: run PR `40071399643` e dispatch `40071395812` verdi.
+Postgres PR: 5046 pass, 45 fail, 10 skip; SQLite PR: 4043 pass, 341 fail,
+237 error (24 moduli non importabili), 10 skip. Anche 23 subtest passati.
+Node ID identici nelle repliche: 45 Postgres, 578 SQLite, zero voci nuove o
+non più fallenti. Il controllo sul codice pre-F1-05a `e3863061` riproduce
+gli stessi 45 fallimenti Postgres (5016 pass). Dopo questi test cambiano solo
+documentazione e handoff, senza modifiche al codice o alle configurazioni CI.
+Test locali del controllo: 15 pass; portabilità: 213 occorrenze note, zero nuove;
+guidance-check e version-check passano. Nessun Docker, dev process, merge o deploy.
+I test della consegna sono risolti. Prima del merge restano la revisione
+applicabile coordinata dal Timoniere e l'accettazione esplicita dell'estensione
+Postgres del contratto; nessuna revisione precedente è riutilizzata.
+Startup verde solo per l'eccezione esatta F1-05c: avvio e idempotenza reali
+non sono validati. Il motore F1-05b e il guscio F1-02 non sono modificati.
+Bug registrati LOCAL nel Diario: `5bb5d5b5` (dipendenze CI), `c0649383`
+(suite Postgres), `10f93315` (baseline SQLite); il primo è risolto dopo i tre
+test OCR/PDF tornati verdi. Sync `not-linked`, nessuna
+issue manuale aperta. Nessun bug rimasto non registrato.
+PR presente nel board CounselorBot. Notifica di apertura inviata best-effort:
+`recipient_not_ready`, fase pending; canale mobile disattivato. Non ritentata
+con prompt al Timoniere in lavoro. Nessun agente o successore avviato.
+
 # Handoff 23 ottobre 2026: stato dopo il ciclo issue di ottobre e prossimi passi
 
 Data: 2026-10-23 | Base: `d83d088a` (main dopo PR #467) | Timoniere: `t-copilota-7t1n`
