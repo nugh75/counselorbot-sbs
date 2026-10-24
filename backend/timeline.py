@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException
 from pydantic import Field
-from sqlalchemy import text
 
+from .db_compat import xact_lock
 from . import models, pii
 from .schemas import PORTFOLIO_MAX_TEXT_CHARS
 from .visual_tools import LABELS, Identifier, StrictModel, Workspace, workspace_model, load_workspace
@@ -96,9 +96,7 @@ def snapshot_preview(db, session_id, username, update):
 
 def save_snapshot(db, session_id, username, update):
     # Same lock as workspace saves: check, create and idempotency record are atomic.
-    if db.get_bind().dialect.name == 'postgresql':
-        key = int.from_bytes(hashlib.sha256(f'{username}:{session_id}'.encode()).digest()[:8], 'big', signed=True)
-        db.execute(text('SELECT pg_advisory_xact_lock(:key)'), {'key': key})
+    xact_lock(db, 'visual-workspace', username, session_id)
     request_hash = hashlib.sha256(update.model_dump_json().encode()).hexdigest()
     prior = db.query(models.Log).filter(models.Log.username == username,
         models.Log.session_id == session_id, models.Log.action == 'timeline_snapshot').all()

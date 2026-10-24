@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models
-from .db_compat import add_column_if_missing
+from .db_compat import add_column_if_missing, xact_lock
 from .api_secrets import API_KEY_ENV_MAP
 from .credential_storage import CredentialStore, CredentialStorageError
 
@@ -61,8 +61,7 @@ def set_installation_enabled(db, enabled):
 
 
 def lock_choice(db, username):
-    db.execute(text("SELECT pg_advisory_xact_lock(hashtext('counselorbot-personal-ai'), hashtext(:username))"),
-               {"username": username})
+    xact_lock(db, "counselorbot-personal-ai", username)
 
 
 def encryption_ready() -> bool:

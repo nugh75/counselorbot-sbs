@@ -14,6 +14,7 @@ from sqlalchemy.types import Text
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
+from ..db_compat import xact_lock
 from .. import models, schemas, auth, database, pii, pii_ner
 from .. import content_version_service
 from .. import openrouter_capabilities
@@ -1182,8 +1183,7 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
         if config.key in {"model_context_profiles", "model_context_levels"}:
             # Both Config rows form one contract, including first insertions.
             # Serialize saves so concurrent requests cannot create dangling levels.
-            if db.get_bind().dialect.name == "postgresql":
-                db.execute(sa_text("SELECT pg_advisory_xact_lock(:key)"), {"key": 73051005})
+            xact_lock(db, 73051005)
             values = {row.key: row.value for row in db.query(models.Config).filter(
                 models.Config.key.in_(["model_context_profiles", "model_context_levels"])
             ).all()}

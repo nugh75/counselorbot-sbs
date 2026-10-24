@@ -1,3 +1,36 @@
+# Handoff 24 ottobre 2026: F1-05d lock transazionali SQLite/Postgres
+
+Agente `s35-f105d-sol` (Codex Sol high), task Diario
+`9c6c590e-2228-4481-aeb6-a91bb75bb58b`, branch `feature/f1-05d-sqlite-locks`.
+
+- `backend/db_compat.py`: `xact_lock(db, *parts)` con Blake2b signed 64-bit
+  su Postgres; registro debole di lock thread su SQLite, riacquisizione nella
+  stessa transazione, rilascio su commit/rollback/close e conservazione sui
+  savepoint. Controllo multi-worker all'avvio del motore SQLite e nell'helper
+  (`WEB_CONCURRENCY`, `UVICORN_WORKERS`, CLI e `GUNICORN_CMD_ARGS`).
+- Sostituite le 14 chiamate applicative, preservando la chiave condivisa tra
+  workspace e timeline. Migrazioni legacy, lock di sessione dell'avvio e
+  Prompt Lab restano nei rispettivi rami Postgres. Eccezioni SQL: 201 → 185.
+- Follow-up CI PR #533: rimosso l’import `sqlalchemy.text` inutilizzato da
+  `routes/document_retrieval.py`; `ruff check --select F` sul file verde.
+- Contratto operativo: `docs/operations/transaction-locks.md`; CONTEXT e
+  documentazione funzionalità aggiornati, stato della Guida rigenerato.
+- Verifiche: helper 33 pass con Postgres 15 effimero (29 casi SQLite/unitari
+  e 4 prove reali Postgres); senza Postgres 29 pass, 4 skip. Suite applicativa
+  mirata Postgres: 227 pass. SQLite: 244 pass, 1 fallimento già noto, 4 skip;
+  percorsi collegati: 138 pass, 35 fallimenti già noti, 6 skip. Nessun nuovo
+  fallimento nei gruppi; ulteriori percorsi: 29 pass e 23 fallimenti noti; rimosse 81 eccezioni SQLite confermate passanti
+  (578 → 497). Suite completa demandata alla CI dual-DB.
+- Avvio SQLite due volte sullo stesso file: `/health` 200 entrambe; primo
+  tentativo con timeout troppo breve, ripetuto con successo. I test applicativi
+  richiedono la venv Python 3.12; Python 3.9 di sistema non importa i modelli
+  esistenti con annotazioni `str | None`. `PYTHONPATH=.` serve usando il binario
+  `pytest` del Mac; `python -m pytest` include già il checkout.
+- Rebuild `counselorbot-f105d-backend` completato, isolato dai container in uso.
+  Helper nell’immagine finale: 29 pass, 4 skip.
+  Portabilità SQL, guidance-check, version-check e diff-check verdi.
+  Nessun deploy o sudo; server di prova e Postgres effimero arrestati.
+
 # Handoff 24 ottobre 2026: F1-09 Quick tunnel automatico
 
 Agente `s37-f109-agy` (Gemini 3.8 Flash High), task Diario
@@ -24,7 +57,7 @@ Agente `s37-f109-agy` (Gemini 3.8 Flash High), task Diario
   - Rust formatting: `cargo fmt --check` verde.
   - Node test suite: 6 test passati (`server-wrapper.test.js` + `qr.test.js`).
   - Verifiche guida e versione: `make version-check` e `make guidance-check` verdi.
-  - `git diff --check` verde.
+  - `git diff --check` verde.)
 
 # Handoff 24 ottobre 2026: F1-05c colonne idempotenti SQLite
 

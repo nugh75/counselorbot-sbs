@@ -5,14 +5,13 @@ workspace. Storage follows the revisioned personal-workspace pattern: one
 Log(action="personal_flashcards") row per save, scoped to the authenticated
 username, with a revision check against concurrent edits.
 """
-import hashlib
 
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import Annotated, Literal
 
+from .db_compat import xact_lock
 from . import models, pii
 
 ACTION = 'personal_flashcards'
@@ -80,9 +79,7 @@ def load_flashcards(db: Session, username: str) -> dict:
 def save_flashcards(db: Session, username: str, update: SaveFlashcards, *, commit: bool = True) -> dict:
     # One write at a time per user; the version check keeps two browser tabs
     # (or a stale auto-save) from silently overwriting each other.
-    if db.get_bind().dialect.name == 'postgresql':
-        key = int.from_bytes(hashlib.sha256(f'flashcards:{username}'.encode()).digest()[:8], 'big', signed=True)
-        db.execute(text('SELECT pg_advisory_xact_lock(:key)'), {'key': key})
+    xact_lock(db, 'flashcards', username)
     current = load_flashcards(db, username)
     if update.revision != current['revision']:
         raise HTTPException(409, 'The flashcards were updated elsewhere')

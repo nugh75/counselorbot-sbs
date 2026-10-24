@@ -8,6 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from starlette.requests import HTTPConnection
 from . import auth
+from .db_compat import check_sqlite_workers
 
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./counselorbot.db")
 DATA_DIR = os.getenv("DATA_DIR", "/app/uploads")
@@ -33,6 +34,8 @@ def configure_sqlite_engine(sqlite_engine):
     Ricetta SQLAlchemy per pysqlite: il driver non emette piu' BEGIN da solo,
     lo fa l'evento `begin`, IMMEDIATE se il motore ha `sqlite_begin="IMMEDIATE"`.
     """
+
+    check_sqlite_workers()
 
     @event.listens_for(sqlite_engine, "connect")
     def _on_connect(dbapi_connection, _record):

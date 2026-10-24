@@ -1,11 +1,11 @@
 """Catalog authoring, voluntary adoption and links to owned personal resources."""
-import hashlib
-from sqlalchemy import text, and_, or_
+from sqlalchemy import and_, or_
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
+from ..db_compat import xact_lock
 from .. import auth, class_access, database, models
 from ..goals import (ActionCreate, CatalogWrite, GoalCreate, GoalWrite, LinkWrite, ParentWrite, ReviewWrite,
                      catalog_dict, catalog_visible, goal_dict, membership_ids, owned_goal,
@@ -97,9 +97,7 @@ def list_resources(db: Session = Depends(database.get_db), user=Depends(auth.get
 def create_goal(payload: GoalCreate, db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
     class_access.require_tool(db, user, 'goals')
     if payload.request_id:
-        key = int.from_bytes(hashlib.sha256(f"goal:{user['username']}:{payload.request_id}".encode()).digest()[:8], 'big', signed=True)
-        if db.get_bind().dialect.name == 'postgresql':
-            db.execute(text('SELECT pg_advisory_xact_lock(:key)'), {'key': key})
+        xact_lock(db, 'goal', user['username'], payload.request_id)
         existing = db.query(models.PersonalGoal).filter_by(username=user['username'], request_id=payload.request_id).first()
         if existing:
             return goal_dict(db, existing)

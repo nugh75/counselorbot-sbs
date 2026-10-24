@@ -3,9 +3,9 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ..db_compat import xact_lock
 from .. import models
 from ..database import get_db
 from .chatgpt import browser_mutation
@@ -41,7 +41,7 @@ def read_settings(identity=Depends(require_admin), db: Session = Depends(get_db)
 @router.put('/admin/external-privacy', dependencies=[Depends(browser_mutation)])
 def update_settings(request: PrivacyUpdate, identity=Depends(require_admin), db: Session = Depends(get_db)):
     # Serialize the three-key update, including a first save before seed rows.
-    db.execute(text('SELECT pg_advisory_xact_lock(414215)'))
+    xact_lock(db, 414215)
     values = dict(external_pii_redact='true', external_pii_fallback='block',
                   pii_ner_enabled='true' if request.mode == 'local' else 'false')
     for key, value in values.items():

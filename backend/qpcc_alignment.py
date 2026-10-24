@@ -9,6 +9,7 @@ import hashlib
 import json
 from pathlib import Path
 
+from .db_compat import xact_lock
 from . import models, prompt_config, prompt_revisions
 from .qpcc import FACTORS
 
@@ -110,8 +111,7 @@ def make_plan(db):
 def apply_plan(db, plan, *, rollback=False):
     pending = []
     try:
-        from sqlalchemy import text
-        db.execute(text('SELECT pg_advisory_xact_lock(242, 63)'))
+        xact_lock(db, 242, 63)
         for change in plan['changes']:
             scope = change['scope']
             if scope == 'config' and change['key'] not in json.loads(Path(__file__).with_name('qpcc_factory_legacy.json').read_text())['configs']:
