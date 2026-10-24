@@ -6,6 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models
+from .db_compat import add_column_if_missing
 from .api_secrets import API_KEY_ENV_MAP
 from .credential_storage import CredentialStore, CredentialStorageError
 
@@ -191,9 +192,9 @@ def migrate_legacy_connections(db, username=None):
 
 def ensure_schema(connection):
     """Run before prompt snapshots can query an upgraded Counselor model."""
-    connection.execute(text("ALTER TABLE counselors ADD COLUMN IF NOT EXISTS owner_username VARCHAR"))
+    add_column_if_missing(connection, "counselors", "owner_username", "VARCHAR")
     connection.execute(text("CREATE INDEX IF NOT EXISTS ix_counselors_owner_username ON counselors(owner_username)"))
-    connection.execute(text("ALTER TABLE pqbl_documents ADD COLUMN IF NOT EXISTS counselor_id INTEGER"))
+    add_column_if_missing(connection, "pqbl_documents", "counselor_id", "INTEGER")
     from .counselor_identity import ensure_counselor_schema
     ensure_counselor_schema(connection)
 

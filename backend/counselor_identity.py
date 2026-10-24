@@ -691,21 +691,10 @@ def recommend_counselor(
 
 def ensure_counselor_schema(connection) -> None:
     """Garantisce la presenza delle colonne tagline_i18n, approach_categories, avatar_url (idempotente)."""
-    from sqlalchemy import text
-    try:
-        connection.execute(text("ALTER TABLE counselors ADD COLUMN IF NOT EXISTS tagline_i18n JSON"))
-        connection.execute(text("ALTER TABLE counselors ADD COLUMN IF NOT EXISTS approach_categories JSON DEFAULT '[]'::json"))
-        connection.execute(text("ALTER TABLE counselors ADD COLUMN IF NOT EXISTS avatar_url VARCHAR"))
-    except Exception:
-        for col in [
-            "ADD COLUMN tagline_i18n JSON",
-            "ADD COLUMN approach_categories JSON DEFAULT '[]'",
-            "ADD COLUMN avatar_url VARCHAR",
-        ]:
-            try:
-                connection.execute(text(f"ALTER TABLE counselors {col}"))
-            except Exception:
-                pass
+    from .db_compat import add_column_if_missing
+    add_column_if_missing(connection, "counselors", "tagline_i18n", "JSON")
+    add_column_if_missing(connection, "counselors", "approach_categories", "JSON", default="'[]'")
+    add_column_if_missing(connection, "counselors", "avatar_url", "VARCHAR")
 
 
 def get_all_approach_categories(db: Session) -> List[str]:

@@ -556,7 +556,7 @@ def _run_seed_and_migrations():
             ("class_path_progress", "ADD COLUMN reason TEXT"),
             # Optional catalog add-ons (strategies/readings) delivered with a goal
             # assignment (#143). Existing rows default to an empty list.
-            ("teacher_assignments", "ADD COLUMN attachments JSON DEFAULT '[]'::json"),
+            ("teacher_assignments", "ADD COLUMN attachments JSON DEFAULT '[]'"),
         ]:
             try:
                 with database.engine.connect() as conn:
@@ -672,18 +672,15 @@ def _run_seed_and_migrations():
                 except Exception as e:
                     logger.debug(f"{table} migration skipped/failed ({clause}): {e}")
 
-        for table, clause in [
-            ("personal_goals", "ADD COLUMN IF NOT EXISTS method JSON NOT NULL DEFAULT '[]'"),
-            ("goal_resource_links", "ADD COLUMN IF NOT EXISTS role VARCHAR NOT NULL DEFAULT 'related'"),
-            ("teacher_practice_notebooks", "ADD COLUMN IF NOT EXISTS group_ids JSON NOT NULL DEFAULT '[]'"),
-            ("account_preferences", "ADD COLUMN IF NOT EXISTS class_view VARCHAR"),
+        from .db_compat import add_column_if_missing
+        for table, column, type_expr, default in [
+            ("personal_goals", "method", "JSON NOT NULL", "'[]'"),
+            ("goal_resource_links", "role", "VARCHAR NOT NULL", "'related'"),
+            ("teacher_practice_notebooks", "group_ids", "JSON NOT NULL", "'[]'"),
+            ("account_preferences", "class_view", "VARCHAR", None),
         ]:
-            try:
-                with database.engine.connect() as conn:
-                    conn.execute(sa_text(f"ALTER TABLE {table} {clause}"))
-                    conn.commit()
-            except Exception as e:
-                logger.debug(f"{table} migration skipped/failed ({clause}): {e}")
+            with database.engine.begin() as conn:
+                add_column_if_missing(conn, table, column, type_expr, default)
 
         # A2: every action link is a means; normalize rows written before the role existed.
         try:
