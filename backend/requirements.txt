@@ -18,7 +18,6 @@ anthropic
 google-genai
 mistralai
 requests
-pdf2image
 pillow
 fpdf2
 numpy

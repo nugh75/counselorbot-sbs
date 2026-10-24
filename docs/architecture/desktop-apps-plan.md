@@ -73,7 +73,7 @@ di autenticazione intercambiabile prevista da #209.
 `backend/Dockerfile:12-14` installa `poppler-utils` (PDF → immagini), `graphviz` (diagrammi),
 `tesseract-ocr-ita/eng` (OCR dei PDF RAG). Il codice già degrada se `dot` manca
 (`backend/diagram_render.py:877`, `:901`). Sul desktop vanno **inclusi** o resi
-**facoltativi con messaggio chiaro** (compito F1-04).
+**facoltativi con messaggio chiaro** (compito F1-04). Esito: [`desktop-native-deps.md`](desktop-native-deps.md).
 
 ### 2.3 Provider LLM già supportati
 
@@ -474,7 +474,7 @@ sicurezza o multipiattaforma (modello più capace + revisione). Stime in giorni 
 | F1-01 ✅ | Versione unica nel repo | File `VERSION`, script di propagazione, check CI (#501) | 1 | — | T1 |
 | F1-02 🔒 | Guscio Tauri: avvio/stop/sorveglianza sidecar | ADR-0002 §1–§2: cartella dati e `layout.json`, porte, `GET /health` nel backend, log su file con rotazione, pipe di vita su stdin (backend e `server-wrapper.js`), Job Object su Windows, lifeline `--lifeline` per `cloudflared` su macOS/Linux, pulizia PID al riavvio, codici di uscita, `/internal/*` protetto. Test: uccidere il guscio con SIGKILL / «Termina processo» non lascia processi sui 3 sistemi, `cloudflared` compreso (CI) | 5 | F0-04 | T3 |
 | F1-03 ∥ | Frontend senza URL fissi al build | `NEXT_PUBLIC_APP_URL` e affini letti a runtime; build standalone identica per Docker e desktop; test | 2 | F0-04 | T2 |
-| F1-04 ∥ | Dipendenze native | `pdf2image`/Poppler sostituiti da PyMuPDF; Graphviz incluso o render lato client; matrice per piattaforma | 3 | F0-01 | T2 |
+| F1-04 ✅ | Dipendenze native | `pdf2image`/Poppler sostituiti da PyMuPDF; `dot` rilevato a runtime (`backend/native_deps.py`, `NATIVE_BIN_DIR`, `GET /capabilities`); matrice per piattaforma in [`desktop-native-deps.md`](desktop-native-deps.md) (#516) | 3 | F0-01 | T2 |
 | F1-05a 🔒 ∥ | Compatibilità SQLite — fixture e CI a doppio DB | ADR-0003 §5: `artifact_database.py` indipendente dal dialetto (`TEST_DB=postgres|sqlite`, SQLite su file con i PRAGMA desktop), marcatore `postgres_only`, cricchetto `sqlite_known_failures.txt`, `scripts/check-sql-portability.py` con eccezioni, workflow `backend-db.yml` (solo PR su `backend/**` e manuale), regola test aggiornata in `CONTEXT.md`. Report del numero di test verdi su SQLite al punto di partenza | 3 | F0-04 | T3 |
 | F1-05b ∥ | Compatibilità SQLite — motore | `backend/database.py`: WAL, `busy_timeout=5000`, `foreign_keys=ON`, `synchronous=NORMAL`; controllo SQLite ≥ 3.35 (uscita 3); `is_sqlite()`/`is_postgres()` in `backend/db_compat.py`; transazioni aperte dall'evento `begin`, **`BEGIN IMMEDIATE`** per le sessioni di scrittura (`get_db` su POST/PUT/PATCH/DELETE, `write_session()`) e deferred per le letture (ADR-0003 §4.3). Test: PRAGMA attivi, cascata `ondelete` su SQLite, versione, due scritture concorrenti read-then-write senza `SQLITE_BUSY` | 1,5 | F0-04 | T2 |
 | F1-05c | Compatibilità SQLite — colonne idempotenti | `add_column_if_missing` in `db_compat.py`; sostituite le 49 righe `ADD COLUMN IF NOT EXISTS` (24 file), obbligatori i 6 punti dell'avvio (`personal_api.py:194`, `:196`; `counselor_identity.py:696-698`; `main.py:659`); default senza `::json`. Test: avvio su SQLite nuovo **due volte** sullo stesso file e su Postgres, zero errori non inghiottiti | 2 | F1-05a, F1-05b | T2 |
@@ -502,8 +502,8 @@ sicurezza o multipiattaforma (modello più capace + revisione). Stime in giorni 
 
 **Cosa parte in parallelo dopo questo ADR**
 
-- **Subito, in parallelo** (file diversi): F1-02 (guscio, `desktop/`), F1-03 (frontend), F1-04 (dipendenze native),
-  F1-05a (test e CI), F1-05b (`database.py`), F1-05i (profilo), F1-11 (rotte SSE), F1-19 (origine della richiesta, frontend). F1-18 è già su `main` (#513).
+- **Subito, in parallelo** (file diversi): F1-02 (guscio, `desktop/`), F1-03 (frontend),
+  F1-05a (test e CI), F1-05b (`database.py`), F1-05i (profilo), F1-11 (rotte SSE), F1-19 (origine della richiesta, frontend). F1-04 (#516) e F1-18 (#513) sono già su `main`.
 - **Dopo F1-05a + F1-05b**: F1-05c ∥ F1-05d ∥ F1-05e ∥ F1-06. F1-05f dopo F1-05e (stesso `models.py`).
 - **Poi**: F1-05g (dopo c, e), F1-05h (dopo d), F1-05j (dopo b e F1-02); F1-07 e F1-13 dopo F1-06.
 - **Percorsi critici**: sicurezza F1-05a + F1-19 → F1-06 → F1-13 → F1-07; guscio F1-02 → F1-09 → F1-13 → F1-15 → F1-16.

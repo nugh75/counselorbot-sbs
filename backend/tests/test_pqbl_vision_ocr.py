@@ -1,6 +1,6 @@
 """OCR dei PDF scansionati pQBL tramite un provider di visione configurabile.
 
-Nessuna chiamata di rete: pdf2image, l'OCR locale e i client dei provider sono
+Nessuna chiamata di rete: la rasterizzazione, l'OCR locale e i client dei provider sono
 finti e ogni trasporto HTTP è vietato. Verifica il contratto del compito:
 - il PDF con testo nativo continua a essere letto senza alcun OCR;
 - il PDF scansionato usa il provider di visione configurato via

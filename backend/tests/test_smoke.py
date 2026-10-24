@@ -41,6 +41,7 @@ import backend.routes.idea_map as idea_map_routes
 import backend.routes.survey as survey_routes
 import backend.chat_logic as chat_logic
 from backend.memory_service import session_memory
+from backend.native_deps import find_program
 from backend.prompt_config import MODE_TO_SYSTEM_PROMPT_KEY
 from backend.qsa_extractor import (
     DEFAULT_OCR_MODEL,
@@ -7997,8 +7998,9 @@ def test_diagram_endpoint_rejects_invalid_spec():
 def test_diagram_endpoint_renders_svg_when_graphviz_present():
     _set_diagram_skill(True)
     r = client.post("/diagram/render", json={"spec": _DIAGRAM_SPEC, "theme": "dark"})
-    if not shutil.which("dot"):
-        assert r.status_code == 422       # graphviz assente: errore pulito, non 500
+    if not find_program("dot"):
+        assert r.status_code == 503       # graphviz assente: errore pulito, non 500
+        assert r.json()["detail"]["code"] == "diagram.errors.graphvizUnavailable"
         return
     assert r.status_code == 200, r.text
     assert r.headers["content-type"].startswith("image/svg+xml")
