@@ -82,6 +82,14 @@ def test_forum_import_graph_has_no_ai_rag_context_or_export_path():
         "backend.group_visibility",
         "backend.class_tools",
         "backend.class_access",
+        # P11: models.py imports the encrypted column types. Local AES-GCM and key handling only:
+        # no provider, network, RAG or export dependency.
+        "backend.privacy.encrypted_types",
+        "backend.privacy.field_crypto",
+        "backend.privacy.keys",
+        "backend.privacy.crypto",
+        "backend.privacy.errors",
+        "backend.privacy.types",
     }
     route = ast.parse(module_path("backend.routes.forum").read_text())
     db_references = {node.attr for node in ast.walk(route) if isinstance(node, ast.Attribute)

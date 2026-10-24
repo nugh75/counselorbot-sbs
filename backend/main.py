@@ -241,6 +241,7 @@ import_module("backend.migrations.20261011_teacher_shared_counselors").migrate(d
 import_module("backend.migrations.20261022_institution_password_display").migrate(database.engine)
 import_module("backend.migrations.20261022_meeting_attendance_mode").migrate(database.engine)
 import_module("backend.migrations.20261022_class_path_planned_day").migrate(database.engine)
+import_module("backend.migrations.20261024_log_email_blind_index").migrate(database.engine)
 # SQLite: i CHECK di un file creato da una versione precedente seguono il modello (ADR-0003 §3.4).
 from .sqlite_schema import sync_sqlite_check_constraints
 sync_sqlite_check_constraints(database.engine, models.Base.metadata)
@@ -256,6 +257,10 @@ async def lifespan(app: FastAPI):
 
     # Seeding/migrazioni idempotenti + background task pulizia memoria
     _seed_and_migrate()
+    from .privacy import field_crypto as _field_crypto
+    if _field_crypto.enabled():
+        # P11: keys are created now, outside any write transaction (SQLite would lock on first use).
+        _field_crypto.ensure_keys()
     asyncio.create_task(_memory_cleanup_loop())
     asyncio.create_task(_log_retention_loop())
     # Carica i flag PII dalla config (default attivi).
