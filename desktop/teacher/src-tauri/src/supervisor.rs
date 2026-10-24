@@ -640,7 +640,11 @@ impl Supervisor {
         let text = String::from_utf8_lossy(&text[start..]);
         if let Some(url) = find_quick_tunnel_url(&text) {
             logs::log(format!("cloudflared: tunnel {url}"));
-            self.status.lock().unwrap().tunnel_url = Some(url);
+            // The smoke thread reads this same snapshot: never expose "ready"
+            // with the new URL before its backend restart has completed.
+            let mut status = self.status.lock().unwrap();
+            status.phase = "preparing".into();
+            status.tunnel_url = Some(url);
             return true;
         }
         false
@@ -809,9 +813,7 @@ mod tests {
         std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
     }
 
-    #[test]
-    fn mismatch_stops_an_already_running_tunnel() {
-        let mut supervisor = supervisor("running-mismatch");
+    fn mock_tunnel(supervisor: &mut Supervisor) -> pids::Record {
         let (program, args) = if cfg!(windows) {
             ("powershell", vec!["-NoProfile", "-Command", "Start-Sleep -Seconds 60"])
         } else {
@@ -828,11 +830,37 @@ mod tests {
         };
         let tunnel = sidecar::spawn(&spec, &supervisor.config.data.logs(), &supervisor.job, None).unwrap();
         let record = tunnel.record.clone().unwrap();
-        assert!(pids::alive(&record));
         supervisor.tunnel = Some(tunnel);
+        record
+    }
+
+    #[test]
+    fn mismatch_stops_an_already_running_tunnel() {
+        let mut supervisor = supervisor("running-mismatch");
+        let record = mock_tunnel(&mut supervisor);
+        assert!(pids::alive(&record));
         supervisor.check_version(r#"{"version":"9.0.0","desktop_contract":1}"#);
         assert!(supervisor.tunnel.is_none());
         assert!(!pids::alive(&record));
+        std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
+    }
+
+    #[test]
+    fn new_tunnel_origin_is_not_ready_until_the_backend_restarts() {
+        let mut supervisor = supervisor("origin-ready");
+        mock_tunnel(&mut supervisor);
+        supervisor.shell.tunnel.mode = "quick".into();
+        supervisor.status.lock().unwrap().phase = "ready".into();
+        std::fs::write(
+            supervisor.config.data.logs().join("cloudflared.log"),
+            "INF https://fixture.trycloudflare.com\n",
+        )
+        .unwrap();
+        assert!(supervisor.read_tunnel_url());
+        let status = supervisor.status.lock().unwrap().clone();
+        assert_eq!(status.phase, "preparing");
+        assert_eq!(status.tunnel_url.as_deref(), Some("https://fixture.trycloudflare.com"));
+        supervisor.tunnel.take().unwrap().stop();
         std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
     }
 
