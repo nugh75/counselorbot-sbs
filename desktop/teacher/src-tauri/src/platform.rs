@@ -9,6 +9,30 @@
 
 use std::process::{Child, Command};
 
+/// Tauri can return verbatim Windows paths (\\?\C:\...). Node's entrypoint
+/// loader cannot resolve those (nodejs/node#62446). Strip the prefix only when
+/// the path has an equivalent legacy representation; keep Unix paths intact.
+pub fn resource_path(path: std::path::PathBuf) -> std::path::PathBuf {
+    #[cfg(windows)]
+    return dunce::simplified(&path).to_path_buf();
+    #[cfg(not(windows))]
+    path
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn node_resources_have_normal_windows_paths_with_spaces_and_unicode() {
+        let normal = PathBuf::from(r"C:\Users\Docente É\AppData\Local\CounselorBot Docente");
+        let verbatim = PathBuf::from(r"\\?\C:\Users\Docente É\AppData\Local\CounselorBot Docente");
+        assert_eq!(resource_path(verbatim), normal);
+        assert_eq!(resource_path(normal.clone()), normal);
+    }
+}
+
 #[cfg(windows)]
 pub struct Job(windows_sys::Win32::Foundation::HANDLE);
 

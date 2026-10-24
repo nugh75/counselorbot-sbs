@@ -10,7 +10,7 @@ use tauri_plugin_opener::OpenerExt;
 
 use crate::datadir::DataDir;
 use crate::supervisor::{self, Handle, Status};
-use crate::{diagnostics, logs};
+use crate::{diagnostics, logs, platform};
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum Mode {
@@ -72,7 +72,7 @@ fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> 
     logs::log(format!("guscio {version} avviato, cartella dati {}", data.root.display()));
     let config = supervisor::Config {
         data: data.clone(),
-        resources: app.path().resource_dir()?,
+        resources: platform::resource_path(app.path().resource_dir()?),
         shell_exe: std::env::current_exe()?,
         version: version.clone(),
         minimal_backend: std::env::var("COUNSELORBOT_BACKEND_MINIMAL").as_deref() == Ok("1"),

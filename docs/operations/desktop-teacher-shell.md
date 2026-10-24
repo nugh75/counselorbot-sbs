@@ -6,6 +6,12 @@ profilo SQLite completo, autenticazione locale, API personali/portachiavi,
 frontend a origine backend dinamica e tunnel per lezioni sono compiti distinti.
 Identificatore immutabile: `org.ai4educ.counselorbot.teacher`.
 
+Su Windows il guscio normalizza i percorsi risorse verbatim prima di passarli
+ai sidecar: l'entrypoint Node non gestisce correttamente il prefisso esteso
+(`EISDIR lstat C:`, [Node #62446](https://github.com/nodejs/node/issues/62446)).
+La dipendenza Windows `dunce`, già presente nella risoluzione Tauri, conserva
+i percorsi che non hanno una rappresentazione breve equivalente.
+
 ## Avvio e dati
 
 Tauri usa `app_local_data_dir()`, crea `layout.json` versione 1 e tutte le
