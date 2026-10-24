@@ -1,3 +1,29 @@
+# Handoff 24 ottobre 2026: F1-15 — Matrice CI build e packaging desktop (DMG ARM64/Intel, Windows NSIS, Linux deb)
+
+Agenti `s65-f115-agy` (Gemini, interrotto per quota) e `s67-f1-15-ci-matrix` (Claude), task `a3711ce4-4f3b-404e-85fa-91adc4794c9a`, branch `feature/f1-15-ci-desktop-matrix`.
+
+- **Obiettivo**: compilazione automatica e packaging degli installer desktop per docente (macOS DMG ARM64/Intel, Windows NSIS, Linux deb) con checksum SHA-256 e caricamento artifact della build.
+- **Modifiche principali**:
+  - `desktop/teacher/src-tauri/tauri.conf.json`: aggiunta configurazione del bundle DMG (`bundle > macOS > dmg: {}`), confermando la presenza di NSIS (`bundle > windows > nsis: { installMode: "currentUser" }`) e del target deb.
+  - `.github/workflows/desktop-teacher.yml`:
+    - Matrice a 4 runner aggiornata per packaging completo: `macos-14` (bundle `dmg`, platform `macos-arm64`), `macos-15-intel` (bundle `dmg`, platform `macos-x64`), `windows-latest` (bundle `nsis`, platform `windows-x64`), `ubuntu-22.04` (bundle `deb`, platform `linux-x64`).
+    - Generazione checksum SHA-256 (`.sha256`) per tutti i bundle prodotti (`*.dmg`, `*.exe`, `*.deb`): `sha256sum` su Linux e Git Bash Windows, `shasum -a 256` su macOS.
+    - Upload artifact della build (`actions/upload-artifact@v4`) con inclusione di `*.dmg`, `*.exe`, `*.deb` e relativi file `.sha256` per ogni runner.
+    - Riepilogo dimensioni e checksum in `$GITHUB_STEP_SUMMARY`.
+    - macOS con `--bundles app,dmg`: con solo `dmg` Tauri cancella `bundle/macos/*.app`, che serve al lifecycle test (primo giro CI rosso su macos-14).
+  - `docs/operations/desktop-teacher-shell.md`: aggiornati riferimenti alla matrice CI a 4 runner, packaging DMG/NSIS/deb e checksum SHA-256.
+  - `docs/architecture/desktop-apps-plan.md`: F1-15 parziale (🟡): restano asset nella Release, `latest.json` e firma condizionale.
+  - `desktop/teacher/src-tauri/src/supervisor.rs`: corretto match non esaustivo che impediva la compilazione su main (comandi tunnel con nome F1-10 non gestiti durante l'attesa di prontezza F1-08).
+- **Test eseguiti**:
+  - `cargo check --manifest-path desktop/teacher/src-tauri/Cargo.toml` (verde dopo il fix; su main falliva con E0004)
+  - `cargo test` del guscio: 37 test passati
+  - snippet dei checksum provato su un bundle fittizio; YAML del workflow valido
+  - `make guidance-refresh` e `make guidance-check`
+  - CI `desktop-teacher` verde sui 4 runner (lifecycle test inclusi); checksum del DMG ARM64 scaricato verificato
+- **Note operative**: nessun deploy, comando sudo o container Docker coinvolto. La matrice gira solo in CI (PR su `desktop/**`): DMG e installer non sono stati prodotti in locale.
+
+---
+
 # Handoff 24 ottobre 2026: Privacy Layer P6 — gateway AI unico
 
 Agente `s63` (Claude Opus 5.5), branch `feature/privacy-p6-ai-gateway`.

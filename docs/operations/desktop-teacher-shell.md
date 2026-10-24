@@ -72,14 +72,22 @@ bash desktop/teacher/scripts/build-frontend.sh
 bash desktop/teacher/scripts/fetch-cloudflared.sh macos-arm64 desktop/teacher/src-tauri/cloudflared
 cd desktop/teacher
 npm ci
-npx tauri build --bundles app
+npx tauri build --bundles app,dmg   # nsis su Windows, deb su Linux
 ```
 
 Sostituire piattaforma e bundle sui rispettivi sistemi. Gli script ricreano
 solo le proprie cartelle di output, ignorate da Git. cloudflared è fissato a
-2026.10.0 con SHA-256 degli asset. La CI `desktop-teacher` costruisce e prova
-macOS arm64/x64, Windows x64 (NSIS per utente), Ubuntu 22.04 (.deb).
-Gli installer sono sperimentali, non firmati; nessuna pubblicazione Release.
+2026.10.0 con SHA-256 degli asset. La CI `desktop-teacher` (F1-15) compila ed
+esegue il packaging degli installer su una matrice a 4 runner:
+- macOS DMG per Apple Silicon ARM64 (`macos-14`)
+- macOS DMG per Intel (`macos-15-intel`)
+- Windows NSIS installer `.exe` per utente (`windows-latest`)
+- Linux `.deb` (`ubuntu-22.04`)
+
+Per ogni installer vengono calcolati i checksum SHA-256 (`.sha256`) e caricati
+insieme ai bundle negli artifact della build (`teacher-<platform>`). Gli installer
+sono sperimentali e non firmati. Pubblicazione nella Release, `latest.json` e
+firma restano da fare (resto di F1-15, updater F1-16).
 
 ```sh
 python -m pytest -q desktop/teacher/sidecar/test_server.py backend/tests/test_shell_contract.py
@@ -119,7 +127,8 @@ usare i PID del report e il lancio successivo sulla stessa cartella di prova.
 - Il pannello apre l'URL locale senza link docente monouso: il backend F1-06
   espone `POST /internal/local-auth/teacher-link` e `/local-auth/redeem`, ma
   la chiamata del guscio e la pagina `/accesso-locale` restano da collegare.
-  Firma/updater/release F1-15 restano separati; F1-08 ora gestisce il portachiavi.
+  F1-08 gestisce il portachiavi e F1-15 la matrice CI di packaging DMG/NSIS/deb
+  con checksum SHA-256; Release, firma e updater (F1-16) restano separati.
 
 La PR resta in bozza: revisione coordinata dal Timoniere obbligatoria dopo
 l'ultimo codice. Una revisione precedente non copre le modifiche successive.

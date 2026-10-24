@@ -1,8 +1,10 @@
 name: desktop-teacher
 
-# F1-02 (#499): build of the teacher app and lifecycle test of its shell on the
-# four target runners. Heavy (PyInstaller + next build + tauri build per OS):
-# only on pull requests that touch desktop/, or by hand.
+# F1-02 (#499) / F1-15: build of the teacher app, packaging of release bundles
+# (macOS DMG ARM64/Intel, Windows NSIS, Linux deb) with SHA-256 checksums,
+# and lifecycle test of its shell on the four target runners. Heavy
+# (PyInstaller + next build + tauri build per OS): only on pull requests that
+# touch desktop/, or by hand.
 on:
   workflow_dispatch:
   pull_request:
@@ -27,12 +29,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # app,dmg: with dmg alone Tauri deletes bundle/macos/*.app, which the
+          # lifecycle test runs.
           - runner: macos-14
             platform: macos-arm64
-            bundles: app
+            bundles: app,dmg
           - runner: macos-15-intel
             platform: macos-x64
-            bundles: app
+            bundles: app,dmg
           - runner: windows-latest
             platform: windows-x64
             bundles: nsis
@@ -107,6 +111,16 @@ jobs:
           npm ci --no-audit --no-fund
           npx tauri build --bundles ${{ matrix.bundles }}
 
+      - name: SHA-256 checksums of the installers
+        working-directory: desktop/teacher/src-tauri/target/release/bundle
+        run: |
+          # sha256sum on Linux and Git Bash (Windows), shasum on macOS.
+          sum() { if command -v sha256sum >/dev/null; then sha256sum "$@"; else shasum -a 256 "$@"; fi; }
+          for f in dmg/*.dmg nsis/*.exe deb/*.deb; do
+            [ -f "$f" ] || continue
+            (cd "$(dirname "$f")" && sum "$(basename "$f")" | tee "$(basename "$f").sha256")
+          done
+
       - name: Sizes
         run: |
           cd desktop/teacher/src-tauri
@@ -114,7 +128,8 @@ jobs:
             echo "### ${{ matrix.runner }}"
             echo '```'
             du -sh backend frontend node cloudflared
-            find target/release/bundle -maxdepth 2 \( -name '*.app' -o -name '*.exe' -o -name '*.deb' \) -exec du -sh {} \;
+            find target/release/bundle -maxdepth 2 \( -name '*.app' -o -name '*.exe' -o -name '*.deb' -o -name '*.dmg' \) -exec du -sh {} \;
+            find target/release/bundle -maxdepth 2 -name '*.sha256' -exec cat {} \;
             cat "$RUNNER_TEMP/backend.txt" "$RUNNER_TEMP/frontend.txt" | grep -E "seconds|_mb"
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
@@ -146,8 +161,12 @@ jobs:
         with:
           name: teacher-${{ matrix.platform }}
           path: |
+            desktop/teacher/src-tauri/target/release/bundle/dmg/*.dmg
+            desktop/teacher/src-tauri/target/release/bundle/dmg/*.sha256
             desktop/teacher/src-tauri/target/release/bundle/nsis/*.exe
+            desktop/teacher/src-tauri/target/release/bundle/nsis/*.sha256
             desktop/teacher/src-tauri/target/release/bundle/deb/*.deb
+            desktop/teacher/src-tauri/target/release/bundle/deb/*.sha256
             ${{ runner.temp }}/cb-lifecycle.*/teacher-*.json
           retention-days: 3
           if-no-files-found: ignore
