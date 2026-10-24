@@ -1,0 +1,44 @@
+name: backend-windows
+
+# F1-18 (#499): the backend must import on Windows and its file lock must work
+# there. Light check: only on PRs touching these files, or by hand.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - backend/file_lock.py
+      - backend/rag_index.py
+      - backend/rag_reindex_job.py
+      - backend/tests/test_file_lock.py
+      - backend/requirements.txt
+      - .github/workflows/backend-windows.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  import-and-lock:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt pytest
+      - name: Import the backend and the RAG modules
+        env:
+          DATABASE_URL: 'sqlite:///${{ runner.temp }}/backend.db'
+          DATA_DIR: '${{ runner.temp }}/data'
+          SESSION_MEMORY_DIR: '${{ runner.temp }}/memory'
+        run: python -c "import backend.main, backend.rag_index, backend.rag_reindex_job; print('backend imported')"
+      - name: File lock tests (exclusion and cross-process concurrency)
+        run: python -m pytest backend/tests/test_file_lock.py -q
