@@ -1816,6 +1816,8 @@ Per l'istanza di prova è disponibile una modalità hot reload: `scripts/dev-tes
 
 La piattaforma ha una sola versione, scritta nel file `VERSION` alla radice del repository e propagata al frontend e al backend. Il backend la espone in `GET /version` (risposta `{"version": "X.Y.Z"}`) e nei metadati OpenAPI; le future app desktop useranno la stessa. Non cambia funzioni, dati salvati o permessi. Procedura di rilascio in `docs/operations/release.md`.
 
+Per le future app desktop il frontend stabilisce l'origine di ogni richiesta verso il server: «tunnel» se arriva da Internet attraverso Cloudflare (studenti), «locale» se arriva dal PC del docente. Il server la accetta solo se è firmata con il segreto che l'app genera a ogni avvio; senza firma valida la tratta sempre come «tunnel», cioè con le restrizioni più severe. Intestazioni di origine inviate da un browser vengono scartate. Nelle installazioni server attuali (Docker) il segreto non esiste: nessuna funzione, dato o permesso cambia. Contratto in `docs/architecture/adr/0002-desktop-phase-1-contracts.md` §2.7.
+
 ### Sezioni della configurazione
 
 In **Amministrazione → Configurazione & Prompt** la sezione si sceglie dal

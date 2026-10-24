@@ -2,6 +2,8 @@
 import { backendOrigin } from './backend-origin.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { chatHTTPErrorCode } from './chat-errors.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { applyRequestOrigin } from './request-origin.ts';
 
 const authHeaders = ['cookie', 'x-forwarded-auth-secret', 'x-forwarded-host', 'remote-user', 'remote-email', 'remote-name', 'remote-groups', 'x-view-as', 'x-counselorbot-language'];
 
@@ -11,6 +13,7 @@ export async function proxyChatStream(request: Request, path: string): Promise<R
         const value = request.headers.get(name);
         if (value) headers.set(name, value);
     }
+    applyRequestOrigin(request.headers, headers);
     try {
         const upstream = await fetch(`${backendOrigin()}${path}`, {
             method: 'POST', headers, body: await request.text(), signal: request.signal,
