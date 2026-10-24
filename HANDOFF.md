@@ -1,3 +1,35 @@
+# Handoff 24 ottobre 2026: Privacy Layer P1 — s38-p1-sol
+
+Task Diario `1cc50c38-2dee-4c46-ad0a-6148018efbc7`, branch
+`feature/privacy-p1-core-contracts`, base `da0fff7c` (main aggiornato).
+
+- Creati `backend/privacy/{__init__,types,errors,policy}.py`: enum, dataclass
+  con diagnostica senza valori, protocolli, codici i18n fissi, contratti di
+  rilevamento/pseudonimizzazione/ripristino, crittografia, autorizzazione,
+  audit e gateway. Operazioni non configurate fail-closed; nessun flusso
+  applicativo esistente migrato. Le mappe sono oggetti backend, non ancora
+  persistiti/cifrati: P4/P5. Dettagli API e limiti in `docs/privacy/README.md`.
+- Policy: finalità non configurate o `undefined` disabilitate, consenso quando
+  richiesto, target classificati per IP risolto/allowlist e mai per provider,
+  media esterni bloccati, filtro per testi esterni e finalità locali sensibili.
+  Il piano di uscita non autorizza l'invio: `AIGateway.send` blocca sempre.
+- Errori senza argomenti originali o note libere; contesto implicito nascosto
+  nei traceback standard. Le integrazioni devono usare `raise ... from None`
+  e non registrare frame locals, attributi, `vars` o `asdict`.
+- Verifiche: `test_privacy_core.py` **170 pass** con `TEST_DB=postgres` e
+  **170 pass** con `TEST_DB=sqlite`, sia sul Mac (Python 3.11.9 selezionato
+  con `PYENV_VERSION=3.11.9 python3 -m pytest`) sia nell'immagine Docker
+  Python 3.10 senza rete. Suite deliberatamente senza accessi DB: nessuna
+  verifica di persistenza reale richiesta da P1. Tre test del gate guida
+  passati; SQL portability (201 occorrenze note, nessuna nuova), guidance
+  refresh/check anche contro `origin/main`, version-check e diff-check verdi.
+- Dockerfile: aggiunto `COPY backend/privacy/ backend/privacy/`; immagine
+  isolata `counselorbot-privacy-p1-core-contracts:local` ricostruita e testata
+  con `docker run --rm --network none`, senza volumi né dati reali.
+- Guide funzionali, CONTEXT e manifest aggiornati; nessuna modifica UI o
+  screenshot necessaria. Nessun deploy, sudo o processo dev rimasto attivo.
+  PR in bozza per la revisione del nucleo privacy; nessun merge dell'agente.
+
 # Handoff 24 ottobre 2026: F1-05d lock transazionali SQLite/Postgres
 
 Agente `s35-f105d-sol` (Codex Sol high), task Diario
@@ -29,7 +61,7 @@ Agente `s35-f105d-sol` (Codex Sol high), task Diario
 - Rebuild `counselorbot-f105d-backend` completato, isolato dai container in uso.
   Helper nell’immagine finale: 29 pass, 4 skip.
   Portabilità SQL, guidance-check, version-check e diff-check verdi.
-  Nessun deploy o sudo; server di prova e Postgres effimero arrestati.
+  Nessun deploy o sudo; server di prova e Postgres effimero arrestati.)
 
 # Handoff 24 ottobre 2026: F1-09 Quick tunnel automatico
 

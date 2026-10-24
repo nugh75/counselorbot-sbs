@@ -27,6 +27,7 @@ COPY backend/routes/ backend/routes/
 COPY backend/migrations/ backend/migrations/
 COPY backend/skills/ backend/skills/
 COPY backend/prompt_lab/ backend/prompt_lab/
+COPY backend/privacy/ backend/privacy/
 COPY backend/tests/ backend/tests/
 COPY knowledge/ knowledge/
 COPY scripts/chatgpt-connect.py scripts/chatgpt-connect.py
