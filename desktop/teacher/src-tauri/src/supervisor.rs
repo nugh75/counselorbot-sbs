@@ -785,6 +785,28 @@ mod tests {
     }
 
     #[test]
+    fn mismatch_stops_an_already_running_tunnel() {
+        let mut supervisor = supervisor("running-mismatch");
+        let (program, args) = if cfg!(windows) {
+            ("powershell", vec!["-NoProfile", "-Command", "Start-Sleep -Seconds 60"])
+        } else {
+            ("sleep", vec!["60"])
+        };
+        let spec = Spec {
+            name: "cloudflared", program: program.into(), args: args.into_iter().map(OsString::from).collect(),
+            env: vec![], cwd: supervisor.config.data.root.clone(), log_file: "cloudflared.log", lifeline: false,
+        };
+        let tunnel = sidecar::spawn(&spec, &supervisor.config.data.logs(), &supervisor.job, None).unwrap();
+        let record = tunnel.record.clone().unwrap();
+        assert!(pids::alive(&record));
+        supervisor.tunnel = Some(tunnel);
+        supervisor.check_version(r#"{"version":"9.0.0","desktop_contract":1}"#);
+        assert!(supervisor.tunnel.is_none());
+        assert!(!pids::alive(&record));
+        std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
+    }
+
+    #[test]
     fn quick_tunnel_url_is_read_from_the_log() {
         let log = "2026-10-24T10:00:00Z INF Requesting new quick Tunnel on trycloudflare.com...\n\
                    2026-10-24T10:00:02Z INF |  https://brave-lion-example.trycloudflare.com                      |\n";
