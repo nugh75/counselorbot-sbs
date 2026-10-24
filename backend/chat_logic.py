@@ -157,10 +157,10 @@ async def _log_retention_loop(interval_seconds: int = 3600):
     la retention è disattivata (nessuna cancellazione).
     """
     from sqlalchemy import text as sa_text
-    from .database import SessionLocal as _SessionLocal
+    from .database import write_session
     while True:
         await asyncio.sleep(interval_seconds)
-        db = _SessionLocal()
+        db = write_session()
         try:
             days = _get_int_config(db, "log_retention_days", 90)
             if days <= 0:
