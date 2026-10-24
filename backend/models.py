@@ -2381,3 +2381,24 @@ class PrivacyKey(Base):
     wrapped_key = Column(Text, nullable=False)
     created_at = Column(UTCDateTime, nullable=False)
     retired_at = Column(UTCDateTime, nullable=True)
+
+
+class PrivacyPseudonymMap(Base):
+    """Persistent pseudonym maps of the Privacy Layer (P8, 02 §3.3): one row per placeholder of a scope.
+
+    The original value is sealed with the `mapping` DEK and bound by AAD to its row id and `subject_pid`;
+    `scope_id` is the conversation, so the map lives and is deleted with it. No clear PII in any column.
+    """
+    __tablename__ = "privacy_pseudonym_maps"
+    __table_args__ = (
+        UniqueConstraint("scope_id", "placeholder", name="uq_privacy_pseudonym_map_placeholder"),
+    )
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    scope_id = Column(String(255), nullable=False, index=True)
+    subject_pid = Column(String(32), nullable=False, index=True)
+    placeholder = Column(String(64), nullable=False)
+    original_value_encrypted = Column(Text, nullable=False)
+    category = Column(String(32), nullable=False)
+    locale = Column(String(16), nullable=False)
+    mapping_ref = Column(String(64), nullable=False)
+    created_at = Column(UTCDateTime, nullable=False)
