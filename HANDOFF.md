@@ -1,3 +1,21 @@
+# Handoff 24 ottobre 2026: F1-05f compatibilità SQLite — SQL a runtime
+
+Agenti `s39-f105f-sol` (implementazione) e `s42-f105f-opus` (finalizzazione), task Diario
+`002aa71d-d456-40b9-9926-f4450cf68c83`, branch `feature/f1-05f-sqlite-runtime-sql`.
+
+- `backend/db_compat.py`: `dialect_insert(bind, table)` sceglie l'INSERT del dialetto (upsert portabili);
+  usato da obiettivi, API personali, collegamenti ChatGPT e segnalibri forum.
+- Costi admin: periodi settimana/mese/anno con `strftime` su SQLite (settimane ISO), funzione nativa su Postgres.
+- `backend/models.py`: indici parziali booking con `sqlite_where` oltre a `postgresql_where` (solo `status = 'active'`).
+- Fix collaterali: ripristinati `add_column_if_missing` e import `DateTime`; test UTC preserva le colonne naive LocalSession.
+- Doc: `docs/operations/runtime-sql-compatibility.md`, `CONTEXT.md`, funzionalità + guidance-refresh.
+- Limiti: file SQLite sperimentali creati prima non ricevono i nuovi indici (serve migrazione separata);
+  le altre chiamate forum a `statement_timestamp` restano da rendere portabili.
+- Verifiche: `TEST_DB=sqlite pytest test_sqlite_create_all test_runtime_sql_compat test_db_compat` 13 pass,
+  `test_forum -k read_marker_upsert` 1 pass, `make guidance-check` e `check-sql-portability.py` verdi.
+  Postgres affidato alla CI dual-db.
+- Nessun deploy, sudo, rebuild Docker o processo dev attivo.
+
 # Handoff 24 ottobre 2026: F1-13 abbinamento studenti desktop (ADR-0002 §4)
 
 Agente `s40-f113-opus` (Claude Opus 5.5), task Diario
