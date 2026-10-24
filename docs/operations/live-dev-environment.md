@@ -180,6 +180,18 @@ Nessun database, account reale o provider LLM viene contattato. `CHROMIUM_PATH`
 può essere omesso quando il browser Playwright è installato. Arresto frontend:
 `Ctrl+C` nel primo terminale. Non avviare insieme altri runner che usano 3135/3136.
 
+Origine della richiesta (F1-19, ADR-0002 §2.7) sullo stesso frontend, un runner
+alla volta perché usa anch'esso 3136: senza segreto verifica che le
+`X-CounselorBot-*` inviate dal client spariscano (produzione Docker); con il
+segreto verifica che rewrite `/api`, chat e voce portino la stessa origine.
+
+```bash
+cd frontend
+node --test tests/request-origin.test.mjs        # frontend avviato senza segreto
+# riavviare il frontend con: COUNSELORBOT_FRONTEND_SECRET=fixture-frontend-secret bash scripts/dev-stream-proxy-tests.sh
+REQUEST_ORIGIN_SECRET=fixture-frontend-secret node --test tests/request-origin.test.mjs
+```
+
 Nel cloud Codex, una build Turbopack con font Google può richiedere la CA di
 sistema: `NEXT_TURBOPACK_EXPERIMENTAL_USE_SYSTEM_TLS_CERTS=1 npm run build`.
 Il comando mantiene TLS verificato e il proxy ereditato. Verificato con font
