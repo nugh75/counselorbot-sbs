@@ -1,7 +1,7 @@
 # Handoff 24 ottobre 2026: F1-11 — heartbeat SSE
 
 Agente `s48-f111-codex`, task `293dc817-4b51-48ef-be46-425bb11c426e`,
-branch `feature/f1-11-sse-heartbeat`.
+branch `feature/f1-11-sse-heartbeat`. PR [#554](https://github.com/nugh75/counselorbot-sbs/pull/554) aperta su `main` nella board CounselorBot; task Diario **fatto**.
 
 - **Obiettivo**: prevenire i tagli per inattività del tunnel durante lo streaming.
 - **Modifiche**: helper comune `backend/sse.py`, commenti `: ping` ogni 15 s su chat, Assistente, voce e OpenCode; primo evento prima del provider streaming, retrieval Assistente dopo le intestazioni; un solo avanzamento pendente e chiusura del generatore alla disconnessione.
