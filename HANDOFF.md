@@ -11,6 +11,9 @@ Agente `s64`, branch `feature/privacy-p11-db-encryption`.
   altre colonne di testo libero, Fernet → DEK (P12). Passo manuale: nessuno (interruttore spento di default).
 - **Test eseguiti**: `test_privacy_p11_db_encryption.py` 11 pass su SQLite e su Postgres 16 (container temporaneo,
   rimosso); con P5/P8/P13/idea/ledger/teacher_noticing/timeline 177 pass. `test_smoke.py` richiede `DATABASE_URL` (non impostata).
+- **Fix CI (PR #571)**: `test_forum_privacy.py::test_forum_import_graph_has_no_ai_rag_context_or_export_path` falliva perché
+  `models` importa ora `backend.privacy.*` (tipi di colonna cifrati). L'insieme atteso include i sei moduli: solo
+  crittografia e chiavi locali, senza provider, rete, RAG o esportazione. Test eseguito: 1 pass su SQLite.
 
 ---
 
