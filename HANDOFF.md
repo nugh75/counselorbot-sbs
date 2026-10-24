@@ -1,3 +1,27 @@
+# Handoff 24 ottobre 2026: F1-10 — tunnel nominativo guidato con dominio personalizzato
+
+Agente `s62-f110-agy` (Gemini / Antigravity), task Diario `1c655936-880d-4731-a489-d12f4ad34ac4`,
+branch `feature/f1-10-named-tunnel`, issue #214.
+
+- **Obiettivo**: modalità di tunnel Cloudflare nominativo con dominio personalizzato stabile per l'app desktop docente (03 §3.4, #214), per evitare che il link di classe cambi ad ogni riavvio dell'applicazione.
+- **Modifiche principali**:
+  - `desktop/teacher/src-tauri/src/datadir.rs`: supporto a `custom_domain` e `token` in `TunnelConfig`, lettura token con precedenza (`CLOUDFLARE_TUNNEL_TOKEN` env -> `credentials/cloudflared_token` file protetto 0600 -> `config.token`), salvataggio sicuro del token su file.
+  - `desktop/teacher/src-tauri/src/supervisor.rs`: selezione argomenti `cloudflared` (`build_cloudflared_args`: esegue `cloudflared tunnel --no-autoupdate run --token <TOKEN>` se impostato, altrimenti ripiega automaticamente e trasparentemente sul quick tunnel `trycloudflare.com`), validazione e normalizzazione URL dominio (`https://<domain>`), validazione formato token Cloudflare, sincronizzazione dell'URL stabile in `COUNSELORBOT_PUBLIC_ORIGIN` per le sessioni docente/studente. Comandi `start_named_tunnel`, `save_named_tunnel_config`, `get_tunnel_settings`.
+  - `desktop/teacher/src-tauri/src/app.rs`: registrazione comandi IPC Tauri `start_named_tunnel`, `save_named_tunnel_config`, `get_tunnel_settings`.
+  - `desktop/teacher/src/index.html`: selettore radio modalità ("Tunnel temporaneo rapido" predefinito vs "Tunnel stabile nominativo"), pannello di configurazione con campi dominio e token, pulsanti di verifica e salvataggio, istruzioni guidate per Cloudflare Zero Trust.
+  - `desktop/teacher/src/panel.css`: stili per selettore modalità, card di configurazione dominio/token e feedback di stato.
+  - `desktop/teacher/src/panel.js`: logica di selezione modalità, validazione client-side del dominio e del token, interazione IPC per salvataggio e recupero impostazioni, rendering dinamico dell'URL stabile e aggiornamento caption QR code.
+  - `desktop/teacher/src/qr.test.js`: test unitari per encoding URL dominio stabile (`https://counselor.tuascuola.it`) e test delle funzioni di validazione `validateDomainInput` e `validateTokenInput`.
+  - `docs/operations/desktop-teacher-shell.md`: aggiornamento sezione limiti e documentazione della modalità tunnel nominativo guidato F1-10.
+- **Test eseguiti**:
+  - `node --test desktop/teacher/sidecar/server-wrapper.test.js desktop/teacher/src/qr.test.js`: 9/9 passati.
+  - Test unitari Rust (`supervisor.rs`): selezione argomenti cloudflared (quick vs named con token vs fallback), normalizzazione e validazione dominio, validazione token, gestione ciclo di vita URL stabile.
+  - `cargo fmt --check`: formattazione Rust conforme al 100%.
+  - `make guidance-check`: verificato.
+- **Note operative**: nessun deploy, comando sudo o container Docker coinvolto; non richiede processi attivi al termine.
+
+---
+
 # Handoff 24 ottobre 2026: Privacy Layer P8 — subject PID e mappe cifrate dei segnaposto
 
 Agente `s57-p8-opus` (Claude Opus 5.5), task Diario `2f863b9b-8966-442f-a411-d5bce55965cc`,
