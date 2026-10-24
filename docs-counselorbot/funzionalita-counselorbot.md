@@ -1816,6 +1816,8 @@ Per l'istanza di prova è disponibile una modalità hot reload: `scripts/dev-tes
 
 La piattaforma ha una sola versione, scritta nel file `VERSION` alla radice del repository e propagata al frontend e al backend. Il backend la espone in `GET /version` (risposta `{"version": "X.Y.Z"}`) e nei metadati OpenAPI; le future app desktop useranno la stessa. Non cambia funzioni, dati salvati o permessi. Procedura di rilascio in `docs/operations/release.md`.
 
+Le future app desktop useranno un database SQLite su file al posto di Postgres (ADR-0003). Su SQLite il backend attiva il giornale WAL, l'attesa fino a 5 secondi quando il file è occupato, le chiavi esterne (stesse cancellazioni a cascata di Postgres) e `synchronous=NORMAL`; le richieste che scrivono (`POST`, `PUT`, `PATCH`, `DELETE`) e i lavori in background prendono subito il lock di scrittura (`BEGIN IMMEDIATE`), le letture no. Con una versione di SQLite precedente alla 3.35 il backend non parte (codice di uscita 3). Server e installazione portable restano su Postgres senza cambiamenti di funzioni, dati o permessi.
+
 ### Sezioni della configurazione
 
 In **Amministrazione → Configurazione & Prompt** la sezione si sceglie dal
