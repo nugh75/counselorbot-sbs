@@ -25,6 +25,7 @@ from ..class_access import require_tool
 from ..platform_guidance import GUIDE_DIRECTIVE, GUIDE_FILENAME, read_platform_guide
 from .. import auth, database, models, model_pricing
 from ..chat_continuation import continuation_message, merge_continuation
+from ..sse import heartbeat
 from ..prompt_contract import persona_context
 from ..ai_service import AIService, AIError, generation_details
 from ..chat_logic import (
@@ -410,34 +411,7 @@ async def site_chat_stream(
 
     cat_weights, aud_weights, max_per_source, min_score = _retrieval_params(ai_service)
 
-    # Retrieval (embeddings/IO bloccanti) fuori dall'event loop.
-    try:
-        results = await run_in_threadpool(
-            index.search, ai_service, question, top_k,
-            request.audience, cat_weights, aud_weights, max_per_source, min_score,
-        )
-    except AIError as e:
-        if not isinstance(e, EmbeddingUnavailable):  # già segnalato una volta da rag_index
-            logger.error("Site-chat retrieval AIError: %s", e)
-        log_error(db, session_id, str(e), action="chat_error", questionnaire_type=_SITE_QTYPE,
-                  mode="site_chat", phase=request.audience, conversation_id=conversation_id)
-        results = None
-        retrieval_error = _retrieval_unavailable_message(request.language)
-    else:
-        retrieval_error = None
-        results = _filter_single_instrument_results(question, results)
-
-    if platform_reference is not None:
-        # The live document is sufficient grounding for platform help even when
-        # the embedding service is unavailable. Other collections retain their
-        # existing failure behavior. Drop old indexed copies of this same file.
-        results = [{"source": GUIDE_FILENAME, "title": "CounselorBot: funzionalità attuali",
-                    "text": platform_reference}] + [
-            result for result in (results or []) if result["source"] != GUIDE_FILENAME
-        ]
-        retrieval_error = None
-
-    def _log_and_persist(answer: str, sources: list[str], usage: dict | None = None) -> str | None:
+    def _log_and_persist(answer: str, sources: list[str], results: list[dict], usage: dict | None = None) -> str | None:
         """Logga l'interazione, aggiorna la memoria conversazionale e crea il
         candidato per il 'mi piace'. Ritorna response_id (per l'evento done)."""
         actual_provider = getattr(ai_service, "last_provider", None) or provider
@@ -514,8 +488,34 @@ async def site_chat_stream(
             logger.error("Site-chat memoria fallita: %s", e)
         return response_id
 
-    def event_gen():
-        yield f"data: {_json.dumps({'session_id': session_id, 'conversation_id': conversation_id})}\n\n"
+    def event_gen(db):
+        # Retrieval (embeddings/IO bloccanti) fuori dall'event loop.
+        try:
+            results = index.search(
+                ai_service, question, top_k,
+                request.audience, cat_weights, aud_weights, max_per_source, min_score,
+            )
+        except AIError as e:
+            if not isinstance(e, EmbeddingUnavailable):  # già segnalato una volta da rag_index
+                logger.error("Site-chat retrieval AIError: %s", e)
+            log_error(db, session_id, str(e), action="chat_error", questionnaire_type=_SITE_QTYPE,
+                      mode="site_chat", phase=request.audience, conversation_id=conversation_id)
+            results = None
+            retrieval_error = _retrieval_unavailable_message(request.language)
+        else:
+            retrieval_error = None
+            results = _filter_single_instrument_results(question, results)
+
+        if platform_reference is not None:
+            # The live document is sufficient grounding for platform help even when
+            # the embedding service is unavailable. Other collections retain their
+            # existing failure behavior. Drop old indexed copies of this same file.
+            results = [{"source": GUIDE_FILENAME, "title": "CounselorBot: funzionalità attuali",
+                        "text": platform_reference}] + [
+                result for result in (results or []) if result["source"] != GUIDE_FILENAME
+            ]
+            retrieval_error = None
+
         # Errore di retrieval (es. modello embedding non disponibile)
         if retrieval_error is not None:
             yield f"data: {_json.dumps({'error': retrieval_error})}\n\n"
@@ -590,7 +590,7 @@ async def site_chat_stream(
             if truncated:
                 yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': answer, 'session_id': session_id, 'conversation_id': conversation_id})}\n\n"
                 return
-            response_id = _log_and_persist(answer, sources, usage_info)
+            response_id = _log_and_persist(answer, sources, results, usage_info)
             yield f"data: {_json.dumps({'done': True, 'response': answer, 'session_id': session_id, 'conversation_id': conversation_id, 'sources': sources, 'response_id': response_id})}\n\n"
         except Exception as e:
             logger.error("Errore site-chat stream %s: %s", session_id, e)
@@ -604,11 +604,20 @@ async def site_chat_stream(
                     err_db.close()
             yield f"data: {_json.dumps({'error': str(e)})}\n\n"
 
+    db_info = dict(db.info)
+
+    def stream_events():
+        yield f"data: {_json.dumps({'session_id': session_id, 'conversation_id': conversation_id})}\n\n"
+        with database.write_session() as stream_db:
+            stream_db.info.update(db_info)
+            ai_service.db = stream_db
+            yield from event_gen(stream_db)
+
     return StreamingResponse(
-        event_gen(),
+        heartbeat(stream_events()),
         media_type="text/event-stream",
         headers={
-            "Cache-Control": "no-cache",
+            "Cache-Control": "no-cache, no-transform",
             "X-Accel-Buffering": "no",
             "Connection": "keep-alive",
         },

@@ -708,6 +708,13 @@ Anche la modifica di un profilo QPCC richiede i dieci fattori canonici con stani
 intere 1–9: profili legacy, incompleti o misti vengono rifiutati senza salvare.
 Al termine della chat guidata (sia reale sia su taccuino di prova), la schermata finale di completamento è lineare e priva di scelte dispersive: mostra l’avvenuto completamento con il riepilogo testuale della sintesi emersa e offre due sole azioni chiare: il download diretto del report PDF completo (che scarica il documento e riporta alla pagina principale) e il pulsante per tornare direttamente alla pagina principale, azzerando le selezioni di sessione ed evitando schermate o bivi intermedi. Per le sessioni di prova, la schermata e il download del PDF restano riservati al docente proprietario o all’amministratore, senza registrare compilazioni reali degli studenti.
 
+Durante le attese prolungate, chat guidate, Bussola, Assistente, OpenCode e lettura
+vocale mantengono attivo il collegamento con un segnale ogni 15 secondi di silenzio.
+Il segnale non aggiunge testo o audio e non indica che la risposta sia completa.
+Questo evita il taglio per inattività osservato sul tunnel di prova mentre
+il modello genera la risposta; la ripresa resta disponibile per
+le altre interruzioni del collegamento.
+
 La generazione può essere interrotta; “Continua” riprende una risposta incompleta.
 In caso di interruzione del trasporto o di risposta segnalata come incompleta,
 la chat tenta prima di proseguire automaticamente; dopo tre tentativi offre

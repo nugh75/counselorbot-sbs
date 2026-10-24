@@ -494,7 +494,7 @@ sicurezza o multipiattaforma (modello più capace + revisione). Stime in giorni 
 | F1-08 | Pannello chiavi API e portachiavi | Inserimento/verifica chiavi, salvataggio sicuro, passaggio al backend come env; nessun segreto su disco | 2 | F1-02 | T2 |
 | F1-09 | Quick tunnel automatico (#211) | Avvio/stop `cloudflared`, lettura URL, QR e messaggio «solo prove»; conteggio richieste per pagina (HAR, da F0-03) | 2 | F1-02 | T2 |
 | F1-10 | Tunnel nominativo guidato (#214) | Login Cloudflare del docente, creazione tunnel e DNS sul suo dominio (`labform.net` per il proprietario), URL stabile salvato; misura di F0-03 §3 | 3 | F1-09 | T2 |
-| F1-11 ∥ | Heartbeat SSE e test di regressione del tunnel | `: ping` ogni 15 s su `chat`, `site_chat`, `voice_reader`; intestazioni prima della chiamata al modello; job manuale contro un quick tunnel (F0-03 §5) | 1,5 | F0-03 | T2 |
+| F1-11 ✅ | Heartbeat SSE e test di regressione del tunnel | [Implementazione e verifiche](../operations/sse-heartbeat.md): `: ping` ogni 15 s su `chat`, `site_chat`, `voice_reader` e OpenCode; intestazioni prima del provider streaming (preparazione chat prima della risposta HTTP); job manuale `sse-tunnel.yml` contro un quick tunnel (F0-03 §5) | 1,5 | F0-03 | T2 |
 | F1-12 ✅ | LLM locale: chiave facoltativa + rilevamento | (#504) | 2 | — | T2 |
 | F1-13 🔒 | Abbinamento studenti | ADR-0002 §4: codici di classe, `pair`/`recover`, codice personale, pseudonimi senza enumerazione, approvazione, revoca, limiti; test di sicurezza su entrambi i DB | 4 | F1-06, F1-09 | T3 |
 | F1-14 | Anti-sospensione e stato «docente offline» | Inibizione sospensione a lezione attiva sui 3 sistemi; pagina offline per gli studenti | 2 | F1-02 | T2 |

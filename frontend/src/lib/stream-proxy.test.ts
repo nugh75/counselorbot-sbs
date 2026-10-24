@@ -12,7 +12,8 @@ test('all proxies support host development and preserve the Docker/internal fall
 });
 
 test('proxy streams without consuming the upstream and forwards trusted identity, language and cancellation', async (t) => {
-    const upstream = new Response('data: {"done":true,"response":"Test"}\n\n');
+    const body = ': ping\n\ndata: {"done":true,"response":"Test"}\n\n: ping\n\n';
+    const upstream = new Response(body);
     const request = new Request('http://localhost/api/chat/stream', { method: 'POST', body: '{"message":"Test"}',
         headers: { cookie: 'fixture=yes', 'x-view-as': 'fixture', 'x-counselorbot-language': 'sv', 'remote-user': 'fixture-user', 'authorization': 'must-not-forward' } });
     t.mock.method(globalThis, 'fetch', async (url: string, init: RequestInit) => {
@@ -30,7 +31,7 @@ test('proxy streams without consuming the upstream and forwards trusted identity
     const response = await proxyChatStream(request, '/chat/stream');
     assert.equal(upstream.bodyUsed, false);
     assert.equal(response.headers.get('x-accel-buffering'), 'no');
-    assert.match(await response.text(), /"done":true/);
+    assert.equal(await response.text(), body);
 });
 
 test('proxy replaces spoofed origin headers with the signed tunnel origin', async (t) => {
