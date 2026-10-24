@@ -15,6 +15,19 @@ Agente `s63` (Claude Opus 5.5), branch `feature/privacy-p6-ai-gateway`.
 - **Limiti**: `notify` consegna a Telegram (D2/D9); contesto unico `guided_chat`/`system`; un primo giro dell'E2E,
   prima della correzione per `httpx2`, ha raggiunto l'API OpenAI reale con testo sintetico e chiave finta (401).
   Nessun deploy, sudo o processo dev attivo.
+- **Aggiornamento**: merge di `origin/main` (P16, solo documenti) senza rebase; unico conflitto in questo file,
+  tenute entrambe le voci. P11 (#571) non è su `main` e non è incluso. Rieseguiti solo i test P6.
+
+---
+
+# Handoff 24 ottobre 2026: P16 — bozze documentali GDPR
+
+Agente `s68-p16-gdpr-drafts` (Claude Opus), task `8b3129bd-d608-4f0c-baa7-87354b95d7d0`, branch `docs/privacy-p16-gdpr-drafts`, issue #572.
+
+- **Obiettivo**: le dieci bozze di 04 §Documenti in `docs/privacy/bozze/`, con disclaimer e campi `[DA VALIDARE]`.
+- **Modifiche**: informative studente (linguaggio per minori), docente (con istruzioni per l'app desktop) e AI; consenso alla condivisione con il docente; informativa e consenso per la ricerca; conservazione e diritti; data breach; schema DPIA; registro art. 30; misure art. 32; `bozze/README.md`. Ogni bozza separa ciò che è attivo oggi da ciò che è progettato.
+- **Note**: le 7 bozze iniziali di agy sono state corrette perché davano per attive misure non ancora rilasciate. Oggi il docente vede il taccuino dei membri della classe (`routes/groups.py:827`). Dettagli in `docs/handoff/docs-privacy-p16-gdpr-drafts.md`.
+- **Test**: `make guidance-refresh`, `make guidance-check`. Nessun deploy, sudo o processo dev.
 
 ---
 

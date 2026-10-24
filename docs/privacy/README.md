@@ -15,6 +15,7 @@ Le misure descritte non rendono da sole il trattamento conforme al GDPR.
 | [spikes/p3-pii-engine.md](spikes/p3-pii-engine.md) | spike P3: regole, gazetteer, Ollama NER e GLiNER ONNX misurati sul corpus P2 e su un holdout; PyInstaller; licenze; raccomandazione (regole + gazetteer di contesto + GLiNER multi PII fp16) |
 | [p5-crittografia-chiavi.md](p5-crittografia-chiavi.md) | P5: AES-256-GCM con AAD per campo, KEK da ambiente/portachiavi, DEK per finalità in `privacy_keys`, `subject_pid`, indici ciechi, rotazione, kit di recupero, parametri Argon2id |
 | [p8-subject-mappe.md](p8-subject-mappe.md) | P8: `subject_pid` base32 minuscolo, indici ciechi, tabella `privacy_pseudonym_maps` cifrata con la DEK `mapping` e `SqlAlchemyMapStore` |
+| [bozze/](bozze/README.md) | P16: dieci bozze GDPR (informative studente/docente/AI, consensi condivisione e ricerca, conservazione, data breach, schema DPIA, registro art. 30, misure art. 32) con campi `[DA VALIDARE]`; nessuna dichiarazione di conformità |
 
 I quattro livelli: **L1** server (Console/portable), **L2** app desktop docente, **L3** app desktop studente (Fase 2, non
 ancora esistente), **L4** livello web Next.js (unico ingresso verso il backend). Il gateway AI non è un processo separato:
