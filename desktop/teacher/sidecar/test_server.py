@@ -3,6 +3,7 @@ import importlib.util
 import io
 import os
 from pathlib import Path
+import shutil
 import socket
 import subprocess
 import sys
@@ -97,7 +98,11 @@ def test_main_uses_one_worker_and_classifies_startup(monkeypatch, started, stopp
     app = SimpleNamespace(router=SimpleNamespace(lifespan_context=None))
     fake = SimpleNamespace(started=started, should_exit=False, run=lambda **_: None)
     config = {}
+    redaction_installed = []
     monkeypatch.setitem(sys.modules, "backend", SimpleNamespace(main=SimpleNamespace(app=app)))
+    monkeypatch.setitem(sys.modules, "backend.log_privacy", SimpleNamespace(
+        install_log_redaction=lambda: redaction_installed.append(True),
+    ))
     monkeypatch.setitem(sys.modules, "uvicorn", SimpleNamespace(
         Config=lambda application, **kwargs: config.update(kwargs), Server=lambda _: fake,
     ))
@@ -110,6 +115,7 @@ def test_main_uses_one_worker_and_classifies_startup(monkeypatch, started, stopp
     assert error.value.code == expected
     assert config["workers"] == 1
     assert config["host"] == "127.0.0.1"
+    assert redaction_installed == [True]
     assert app.router.lifespan_context is not None
 
 
@@ -118,6 +124,11 @@ def test_real_uvicorn_stops_when_parent_pipe_closes(tmp_path):
     backend = tmp_path / "backend"
     backend.mkdir()
     (backend / "__init__.py").write_text("")
+    source = ENTRYPOINT.resolve().parents[3] / "backend"
+    for module in ("pii.py", "log_privacy.py"):
+        shutil.copyfile(source / module, backend / module)
+    shutil.copytree(source / "privacy", backend / "privacy",
+                    ignore=shutil.ignore_patterns("__pycache__", "corpus"))
     (backend / "main.py").write_text(
         "from fastapi import FastAPI\napp = FastAPI()\n"
         "@app.get('/health')\ndef health(): return {'status': 'ok'}\n"

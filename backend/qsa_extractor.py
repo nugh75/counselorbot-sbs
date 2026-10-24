@@ -16,13 +16,6 @@ from PIL import Image, UnidentifiedImageError
 from .pdf_images import render_pdf_pages
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-import sys
-if not logger.handlers:
-    _handler = logging.StreamHandler(sys.stdout)
-    _handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
-    logger.addHandler(_handler)
-
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_OCR_MODEL = "glm-ocr:latest"
@@ -114,9 +107,9 @@ def _validate_scores(
     data: Any,
     expected_factors: tuple[str, ...] = EXPECTED_FACTORS,
 ) -> dict[str, int]:
-    logger.info(f"Validatore: avvio con dati={data}")
+    logger.info("[Validatore] avvio validazione.")
     if not isinstance(data, dict):
-        logger.error(f"Validatore fallito: dati non sono un dizionario/JSON. Ricevuto: {type(data)}")
+        logger.error("[Validatore] formato della risposta non valido.")
         raise ValueError("La risposta estratta non è un oggetto JSON")
 
     # Normalizza le chiavi (maiuscolo e senza spazi) per tollerare variazioni dell'LLM
@@ -135,17 +128,15 @@ def _validate_scores(
         # Tolleriamo i numeri restituiti come stringhe (es. "5")
         if isinstance(value, str):
             try:
-                original_value = value
                 value = int(value.strip().replace('"', '').replace("'", ""))
-                logger.info(f"Validatore: convertito {factor_upper} da stringa '{original_value}' a intero {value}")
             except (ValueError, TypeError):
                 pass
 
         if not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= 9:
-            logger.error(f"Validatore fallito: punteggio non valido per fattore '{factor}'. Valore estratto: {value} (tipo: {type(value)})")
+            logger.error("[Validatore] valore non valido.")
             raise ValueError(f"Punteggio non valido o mancante per {factor}")
         scores[factor] = value
-    logger.info(f"Validatore completato con successo: {scores}")
+    logger.info("[Validatore] validazione completata.")
     return scores
 
 
@@ -175,18 +166,11 @@ def _run_ocr(
     questionnaire_type: str,
     expected_factors: tuple[str, ...],
 ) -> str:
-    logger.info(
-        f"[OCR] Avvio OCR locale. Modello: '{ocr_model}', URL Ollama: '{ollama_url}', "
-        f"Tipo questionario: '{questionnaire_type}', Pagine totali da elaborare: {len(images)}."
-    )
+    logger.info("[OCR] avvio OCR locale.")
     factor_list = ", ".join(expected_factors)
     pages: list[str] = []
     for page_number, image in enumerate(images, start=1):
-        image_len = len(image)
-        logger.info(
-            f"[OCR] Invio pagina {page_number}/{len(images)} a Ollama OCR. "
-            f"Dimensione immagine base64: {image_len} caratteri."
-        )
+        logger.info("[OCR] invio pagina al motore locale.")
         try:
             data = _ollama_post(
                 ollama_url,
@@ -209,32 +193,20 @@ def _run_ocr(
             )
             text = data.get("response")
             if isinstance(text, str) and text.strip():
-                snippet = text.strip()[:200].replace('\n', ' ')
-                logger.info(
-                    f"[OCR] Pagina {page_number} elaborata correttamente. "
-                    f"Lunghezza testo estratto: {len(text)} caratteri. "
-                    f"Estratto iniziale: '{snippet}...'"
-                )
+                logger.info("[OCR] pagina elaborata.")
                 pages.append(f"--- PAGINA {page_number} ---\n{text.strip()}")
             else:
-                logger.warning(
-                    f"[OCR] La risposta per la pagina {page_number} è vuota o di tipo non valido: {type(text)}"
-                )
-        except Exception as ocr_exc:
-            logger.error(
-                f"[OCR] Errore durante l'OCR della pagina {page_number} con modello '{ocr_model}': {ocr_exc}"
-            )
+                logger.warning("[OCR] risposta vuota o non valida.")
+        except Exception:
+            logger.error("[OCR] errore OCR locale.")
             raise
 
     if not pages:
-        logger.error("[OCR] Fallimento OCR: nessuna pagina ha restituito testo leggibile.")
+        logger.error("[OCR] nessun testo leggibile.")
         raise ValueError("L'OCR non ha trovato testo nel documento")
     
     combined_text = "\n\n".join(pages)
-    logger.info(
-        f"[OCR] OCR locale completato con successo. Pagine totali caricate: {len(pages)}. "
-        f"Dimensione totale del testo combinato: {len(combined_text)} caratteri."
-    )
+    logger.info("[OCR] OCR locale completato.")
     return combined_text
 
 
@@ -245,10 +217,7 @@ def _parse_scores(
     questionnaire_type: str,
     expected_factors: tuple[str, ...],
 ) -> dict[str, int]:
-    logger.info(
-        f"[Parser] Avvio parsing dei punteggi con Ollama. Modello: '{parser_model}', URL: '{ollama_url}', "
-        f"Tipo questionario: '{questionnaire_type}', Lunghezza testo OCR: {len(ocr_text)} caratteri."
-    )
+    logger.info("[Parser] avvio parsing locale.")
     factor_list = ", ".join(expected_factors)
     try:
         data = _ollama_post(
@@ -290,28 +259,21 @@ def _parse_scores(
             timeout=180,
         )
         content = data.get("message", {}).get("content")
-        logger.info(f"[Parser] Risposta grezza ricevuta da Ollama ({parser_model}): '{content}'")
+        logger.info("[Parser] risposta ricevuta.")
         if not isinstance(content, str):
-            logger.error(
-                f"[Parser] Errore: la risposta dal modello di parsing non è una stringa. Ricevuto: {type(content)}"
-            )
+            logger.error("[Parser] formato della risposta non valido.")
             raise ValueError("Gemma non ha restituito i punteggi")
         
         try:
             parsed_json = json.loads(content)
-            logger.info(f"[Parser] JSON decodificato con successo: {parsed_json}")
+            logger.info("[Parser] JSON decodificato.")
         except json.JSONDecodeError as json_exc:
-            logger.error(
-                f"[Parser] Errore critico: Impossibile decodificare il JSON restituito da Ollama. "
-                f"Contenuto grezzo errato: '{content}'. Errore: {json_exc}"
-            )
+            logger.error("[Parser] JSON non valido.")
             raise ValueError(f"La risposta del parser non è un JSON valido: {json_exc}") from json_exc
 
         return _validate_scores(parsed_json, expected_factors)
-    except Exception as exc:
-        logger.error(
-            f"[Parser] Errore durante il parsing dei punteggi con modello '{parser_model}': {exc}"
-        )
+    except Exception:
+        logger.error("[Parser] parsing locale fallito.")
         raise
 
 
@@ -338,18 +300,15 @@ def _run_vision_fallback(
     risolve il provider, applica la policy privacy esterna della chat e chiama il
     client corrispondente. Senza provider `vision_call` solleva un errore
     classificato, propagato al chiamante per un messaggio localizzato."""
-    logger.info(
-        f"[Fallback] Avvio ripiego via provider di visione per tipo questionario: "
-        f"'{questionnaire_type}' con {len(images)} pagine disponibili."
-    )
+    logger.info("[Fallback] avvio ripiego vision.")
     if vision_call is None:
-        logger.error("[Fallback] Nessun provider di visione configurato per il ripiego.")
+        logger.error("[Fallback] provider vision assente.")
         raise VisionUnavailableError(
             "Nessun provider di visione configurato per l'estrazione del documento"
         )
 
     if not images:
-        logger.error("[Fallback] Nessuna immagine di pagina disponibile per il ripiego.")
+        logger.error("[Fallback] nessuna pagina disponibile.")
         raise ValueError("No pages available to process")
 
     # La tabella dei punteggi sta nella prima pagina: basta quella.
@@ -360,23 +319,17 @@ def _run_vision_fallback(
         "Return ONLY a raw JSON object whose keys are the factor names and whose values are integers from 1 to 9. "
         "Do not include any explanation or markdown formatting."
     )
-    logger.info(
-        f"[Fallback] Invio della prima pagina al provider di visione configurato. "
-        f"Dimensione base64 dell'immagine: {len(encoded_image)} caratteri."
-    )
+    logger.info("[Fallback] invio pagina al provider.")
 
     content = vision_call(prompt, encoded_image)
-    logger.info("[Fallback] Risposta del provider di visione ricevuta.")
+    logger.info("[Fallback] risposta ricevuta.")
 
     content_clean = _strip_json_fences(content or "")
     try:
         parsed_json = json.loads(content_clean)
-        logger.info(f"[Fallback] JSON del ripiego decodificato correttamente: {parsed_json}")
+        logger.info("[Fallback] JSON decodificato.")
     except json.JSONDecodeError as json_exc:
-        logger.error(
-            f"[Fallback] Impossibile decodificare il JSON del ripiego vision. "
-            f"Contenuto pulito: '{content_clean}'. Errore: {json_exc}"
-        )
+        logger.error("[Fallback] JSON non valido.")
         raise ValueError(f"La risposta del ripiego vision non è un JSON valido: {json_exc}") from json_exc
 
     return _validate_scores(parsed_json, expected_factors)
@@ -397,35 +350,26 @@ def extract_questionnaire_data(
     risolve il provider/modello configurati, applica la policy privacy esterna
     della chat e non usa alcun modello cablato. Se manca o non e' configurato il
     risultato porta `error_code` per un messaggio localizzato a valle."""
-    logger.info(
-        f"[Pipeline] Inizio pipeline di estrazione per il file: '{file_path}'. "
-        f"Tipo questionario richiesto: '{questionnaire_type}'."
-    )
+    logger.info("[Pipeline] avvio estrazione.")
     path = Path(file_path)
     if not path.exists():
         err_msg = f"File non trovato nel file system: '{file_path}'"
-        logger.error(f"[Pipeline] {err_msg}")
+        logger.error("[Pipeline] file non trovato.")
         return {"error": err_msg}
 
     resolved_url = ollama_url or os.getenv("OLLAMA_BASE_URL") or DEFAULT_OLLAMA_URL
     resolved_ocr_model = ocr_model or os.getenv("QSA_OCR_MODEL") or DEFAULT_OCR_MODEL
     resolved_parser_model = parser_model or os.getenv("QSA_PARSER_MODEL") or DEFAULT_PARSER_MODEL
 
-    logger.info(
-        f"[Pipeline] Configurazione risolta -> URL Ollama: '{resolved_url}', "
-        f"Modello OCR: '{resolved_ocr_model}', Modello Parser: '{resolved_parser_model}'."
-    )
-
     try:
         expected_factors = _questionnaire_factors(questionnaire_type)
-        logger.info(f"[Pipeline] Fattori attesi per il questionario '{questionnaire_type}': {expected_factors}")
         
-        logger.info(f"[Pipeline] Conversione in corso del file '{file_path}' in immagini...")
+        logger.info("[Pipeline] conversione documento.")
         images = _encode_document_pages(path)
-        logger.info(f"[Pipeline] Documento convertito con successo. Pagine generate: {len(images)}")
+        logger.info("[Pipeline] documento convertito.")
         
         try:
-            logger.info("[Pipeline] --- Tentativo di ESTRAZIONE LOCALE tramite Ollama ---")
+            logger.info("[Pipeline] tentativo estrazione locale.")
             ocr_text = _run_ocr(
                 images,
                 resolved_url,
@@ -440,40 +384,32 @@ def extract_questionnaire_data(
                 questionnaire_type,
                 expected_factors,
             )
-            logger.info(f"[Pipeline] Estrazione locale completata con successo! Punteggi estratti: {scores}")
+            logger.info("[Pipeline] estrazione locale completata.")
             return scores
         except Exception as local_exc:
-            logger.warning(
-                f"[Pipeline] Estrazione locale fallita con errore: {local_exc}. "
-                f"Procedo con il TENTATIVO DI FALLBACK via provider di visione..."
-            )
+            logger.warning("[Pipeline] estrazione locale fallita, tentativo di ripiego.")
             try:
                 scores = _run_vision_fallback(
                     images, questionnaire_type, expected_factors, vision_call)
-                logger.info(f"[Pipeline] Estrazione via provider di visione completata con successo! Punteggi estratti: {scores}")
+                logger.info("[Pipeline] estrazione vision completata.")
                 return scores
             except VisionUnavailableError as vision_exc:
-                logger.error(f"[Pipeline] Ripiego vision non disponibile: {vision_exc}.")
+                logger.error("[Pipeline] ripiego vision non disponibile.")
                 return {"error": str(vision_exc), "error_code": vision_exc.code}
             except Exception as fallback_exc:
                 # Un errore classificato a monte (privacy, chiave, trasporto) conserva
                 # il codice: il chiamante lo traduce in un messaggio localizzato.
                 code = getattr(fallback_exc, "code", None)
                 if isinstance(code, str) and code:
-                    logger.error(
-                        f"[Pipeline] Ripiego vision fallito con codice {code}: {fallback_exc}."
-                    )
+                    logger.error("[Pipeline] ripiego vision rifiutato.")
                     return {"error": str(fallback_exc), "error_code": code}
-                logger.error(
-                    f"[Pipeline] Anche il ripiego via provider di visione è fallito. "
-                    f"Errore fallback: {fallback_exc}."
-                )
+                logger.error("[Pipeline] ripiego vision fallito.")
                 raise RuntimeError(
                     f"Estrazione fallita sia localmente ({local_exc}) sia con ripiego vision ({fallback_exc})"
                 ) from fallback_exc
             
     except Exception as exc:
-        logger.error(f"[Pipeline] Errore fatale finale durante l'estrazione: {exc}")
+        logger.error("[Pipeline] estrazione fallita.")
         return {"error": str(exc)}
 
 

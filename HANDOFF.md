@@ -1,3 +1,21 @@
+# Handoff 24 ottobre 2026: Privacy Layer P13 — log e diagnostica senza PII
+
+Agente `s54-p13-codex` (completato da Claude Sonnet 5.5), task Diario `3cfe10bc-acdf-4ce9-805c-ce2abb5452fd`,
+branch `feature/privacy-p13-logs-diagnostics`.
+
+- **Obiettivo**: redazione di PII e token di autorizzazione nei log applicativi e nel bundle diagnostico del docente
+  desktop.
+- **Modifiche**: `backend/log_privacy.py` (filtri e formatter sanitizzante per `logging`), integrazione in
+  `backend/main.py`, `backend/pii.py` (redazione fail-closed), `backend/qsa_extractor.py` (solo eventi operativi
+  fissi, niente testo OCR/punteggi), `backend/routes/admin.py` (export CSV/JSON risanitizzati anche con flag off),
+  sidecar e `diagnostics.rs` del desktop (solo metadati strutturali, testo libero omesso). Doc
+  `docs/privacy/p13-logs-diagnostica.md`.
+- **Limiti**: il gazetteer riconosce nomi noti/contestuali, non tutti i nomi liberi (ML in P6).
+- **Test eseguiti**: `TEST_DB=sqlite` Python 3.11.9: `test_privacy_p13_logs.py` + `desktop/teacher/sidecar/test_server.py`
+  43 pass; `make guidance-check` dopo `make guidance-refresh`. Nessun deploy, sudo o processo dev attivo.
+
+---
+
 # Handoff 24 ottobre 2026: Privacy Layer P5 — crittografia a riposo e chiavi
 
 Agente `s51-p5-opus` (Claude Opus 5.5), task Diario `893b9d78-d1d7-4dc8-87fb-497089510ea2`,

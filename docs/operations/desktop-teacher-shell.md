@@ -51,7 +51,11 @@ Codice backend 3: errore dati e indicazione di ripristino; 4: altra porta;
 crash: fino a tre riavvii per sidecar in cinque minuti. Il ripristino effettivo
 dei backup è F1-05j. stdout/stderr vanno direttamente nei file; rotazione
 all'apertura sopra 10 MB, cinque file. L'esportazione diagnostica comprende
-log, layout e versione, escludendo DB, credenziali e registri runtime.
+log sanitizzati, layout e versione, escludendo DB, credenziali e registri runtime.
+Con P13 il testo libero viene omesso anche nei log storici: lo ZIP conserva
+solo timestamp/livelli, nomi di file ammessi e metadati verificati. Funziona
+anche a backend fermo; dettagli e limiti in
+[`p13-logs-diagnostica.md`](../privacy/p13-logs-diagnostica.md).
 
 ## Build e prove isolate
 

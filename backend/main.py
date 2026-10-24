@@ -8,6 +8,10 @@ import os
 import re
 from contextlib import asynccontextmanager
 
+from .log_privacy import install_log_redaction
+
+install_log_redaction()
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -244,6 +248,8 @@ sync_sqlite_check_constraints(database.engine, models.Base.metadata)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Sidecar uvicorn can configure new handlers after importing this module.
+    install_log_redaction()
     # Precarica il modello Ollama in memoria all'avvio (evita cold start)
     from .database import SessionLocal as _SessionLocal
     from .ai_service import AIService as _AIService
