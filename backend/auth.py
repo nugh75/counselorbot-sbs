@@ -1,6 +1,8 @@
-"""Autenticazione tramite ai4auth.
+"""Autenticazione: fornitore `ai4auth` (default) o `local` (ADR-0002 §3).
 
-Il percorso preferito usa gli header iniettati da un proxy fidato e firmati
+`AUTH_PROVIDER=local` (app docente) usa le sessioni `cb_session` di
+`local_auth` e ignora intestazioni `Remote-*` e ai4auth. Con `ai4auth` il
+percorso preferito usa gli header iniettati da un proxy fidato e firmati
 con un segreto condiviso. Se il proxy non e' ancora configurato per il
 segreto, il backend valida il cookie della richiesta direttamente presso
 ai4auth prima di leggere l'identita'.
@@ -10,6 +12,13 @@ import secrets
 import httpx
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, Request, status
+from starlette.concurrency import run_in_threadpool
+
+# `institute` (#212) non esiste ancora: un valore sconosciuto blocca l'avvio
+# invece di lasciare tutti anonimi.
+AUTH_PROVIDER = os.environ.get("AUTH_PROVIDER", "ai4auth").strip().lower() or "ai4auth"
+if AUTH_PROVIDER not in ("ai4auth", "local"):
+    raise RuntimeError(f"AUTH_PROVIDER must be 'ai4auth' or 'local', not {AUTH_PROVIDER!r}")
 
 # Gruppi ai4auth che abilitano la dashboard admin (lista separata da virgole).
 # `admins` (superadmin globale) e' sempre incluso; aggiungi gruppi per-servizio
@@ -52,6 +61,10 @@ def _is_researcher(groups) -> bool:
     return any(marker in group for group in lowered for marker in RESEARCH_GROUP_MARKERS)
 
 
+def local_provider_enabled() -> bool:
+    return AUTH_PROVIDER == "local"
+
+
 def _anonymous_identity() -> dict:
     return {
         "email": "",
@@ -61,6 +74,7 @@ def _anonymous_identity() -> dict:
         "is_admin": False,
         "is_researcher": False,
         "authenticated": False,
+        "auth_provider": AUTH_PROVIDER,
     }
 
 
@@ -77,11 +91,21 @@ def _identity_from_headers(headers) -> dict:
         "is_admin": bool(ADMIN_GROUPS & set(groups)),
         "is_researcher": _is_researcher(groups),
         "authenticated": bool(username or email),
+        "auth_provider": "ai4auth",
     }
 
 
 async def get_identity(request: Request) -> dict:
-    """Identita' certificata dal proxy o verificata direttamente con ai4auth."""
+    """Identita' certificata dal proxy o verificata direttamente con ai4auth,
+    oppure della sessione locale con `AUTH_PROVIDER=local`."""
+    if local_provider_enabled():
+        from . import local_auth
+
+        identity = await run_in_threadpool(local_auth.identity_from_request, request)
+        if identity is None:
+            return _anonymous_identity()
+        return {**identity, "auth_provider": "local"}
+
     supplied_secret = request.headers.get("X-Forwarded-Auth-Secret", "")
     trusted = bool(FORWARD_AUTH_SHARED_SECRET) and secrets.compare_digest(
         supplied_secret, FORWARD_AUTH_SHARED_SECRET
@@ -127,7 +151,7 @@ VIEW_AS_DEMO_ACCOUNTS = {
 }
 
 
-def _impersonated_demo_identity(username: str) -> dict:
+def _impersonated_demo_identity(username: str, auth_provider: str) -> dict:
     cfg = VIEW_AS_DEMO_ACCOUNTS[username]
     return {
         "email": f"{username}@anteprima.local",
@@ -137,6 +161,7 @@ def _impersonated_demo_identity(username: str) -> dict:
         "is_admin": False,
         "is_researcher": cfg["is_researcher"],
         "authenticated": True,
+        "auth_provider": auth_provider,
     }
 
 
@@ -148,7 +173,7 @@ def _apply_view_as(identity: dict, request: Request) -> dict:
     if identity.get("is_admin"):
         view_as = request.headers.get("X-View-As") or request.query_params.get("view_as")
         if view_as and view_as in VIEW_AS_DEMO_ACCOUNTS:
-            return _impersonated_demo_identity(view_as)
+            return _impersonated_demo_identity(view_as, identity.get("auth_provider", AUTH_PROVIDER))
     return identity
 
 

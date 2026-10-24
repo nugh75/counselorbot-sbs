@@ -8,8 +8,11 @@ un elenco di azioni che l’assistente può eseguire al posto della persona.
 È in sviluppo un'app desktop docente sperimentale: il guscio avvia e sorveglia
 i processi locali, mostra lo stato ed esporta diagnostica senza database o
 credenziali. Non è ancora disponibile per lezioni o dati reali: il backend
-minimal e il quick tunnel servono soltanto alle prove tecniche; autenticazione,
-integrazione completa SQLite e configurazione operativa restano da completare.
+minimal e il quick tunnel servono soltanto alle prove tecniche. Il backend
+prevede già un accesso locale del docente (link monouso aperto dal guscio,
+sessione valida 30 giorni solo dal PC, mai dal tunnel), ma la pagina di accesso
+non è ancora collegata; integrazione completa SQLite e configurazione operativa
+restano da completare.
 Le funzioni web descritte qui continuano a riferirsi all'installazione corrente.
 
 ## Lettura dei questionari e approfondimento
