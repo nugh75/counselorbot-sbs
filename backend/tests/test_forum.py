@@ -495,3 +495,23 @@ def test_archived_classes_excluded_from_unread_badge(forum_api):
     assert str(group_id) not in unread_archived_teacher["by_group"]
 
 
+def test_read_marker_upsert_is_idempotent_and_refreshes_timestamp(forum_api):
+    from datetime import datetime, timezone
+
+    client, db, group_id, identity = forum_api
+    topic = models.ForumTopic(group_id=group_id, title="Read marker", body="Synthetic body",
+                              author_username="owner", author_display_name="Teacher")
+    db.add(topic)
+    db.commit()
+    endpoint = f"/forum/topics/{topic.id}/read"
+    assert client.post(endpoint).status_code == 200
+    marker = db.query(models.ForumRead).one()
+    assert marker.username == identity["username"]
+    assert marker.last_read_at is not None
+    old = datetime(2000, 1, 1, tzinfo=timezone.utc)
+    marker.last_read_at = old
+    db.commit()
+    assert client.post(endpoint).status_code == 200
+    db.expire_all()
+    assert db.query(models.ForumRead).count() == 1
+    assert db.query(models.ForumRead).one().last_read_at > old

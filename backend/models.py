@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, Date, JSON, UniqueConstraint, ForeignKey, CheckConstraint, Index, text
+from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, Date, DateTime, JSON, UniqueConstraint, ForeignKey, CheckConstraint, Index, text
 from sqlalchemy.sql import func
 from .database import Base
 from .db_compat import UTCDateTime
@@ -2141,9 +2141,10 @@ class ClassMeetingBooking(Base):
     __tablename__ = "class_meeting_bookings"
     __table_args__ = (
         CheckConstraint("status IN ('active', 'cancelled_by_teacher')", name="class_meeting_booking_status"),
-        Index("uq_class_meeting_booking_slot", "slot_id", unique=True, postgresql_where=text("status = 'active'")),
+        Index("uq_class_meeting_booking_slot", "slot_id", unique=True, postgresql_where=text("status = 'active'"),
+              sqlite_where=text("status = 'active'")),
         Index("uq_class_meeting_booking_student", "meeting_id", "username", unique=True,
-              postgresql_where=text("status = 'active'")),
+              postgresql_where=text("status = 'active'"), sqlite_where=text("status = 'active'")),
     )
 
     id = Column(Integer, primary_key=True)

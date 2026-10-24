@@ -5,9 +5,9 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
-from sqlalchemy.dialects.postgresql import insert
 
 from .. import auth, database, models
+from ..db_compat import dialect_insert, is_sqlite
 from ..class_access import class_tool_enabled, forum_option, require_class_tool
 from ..forum_schemas import ForumHide, ForumMuteCreate, ForumPostCreate, ForumPostUpdate, ForumTopicCreate, ForumTopicUpdate
 from ..group_visibility import _visible_group_query
@@ -346,7 +346,9 @@ def mark_read(topic_id: int, identity=Depends(auth.get_current_user), db: Sessio
     topic = _get_topic(db, topic_id)
     _, staff = _access(db, identity, topic.group_id)
     _check_pending_visibility(topic, staff, identity["username"])
-    statement = insert(models.ForumRead).values(topic_id=topic_id, username=identity["username"], last_read_at=func.statement_timestamp())
+    now = func.current_timestamp() if is_sqlite(db) else func.statement_timestamp()
+    statement = dialect_insert(db, models.ForumRead).values(
+        topic_id=topic_id, username=identity["username"], last_read_at=now)
     db.execute(statement.on_conflict_do_update(
         index_elements=["topic_id", "username"], set_={"last_read_at": statement.excluded.last_read_at},
     ))

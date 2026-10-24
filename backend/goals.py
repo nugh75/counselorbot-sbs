@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import or_
 
-from .db_compat import xact_lock
+from .db_compat import dialect_insert, xact_lock
 from . import models
 from .visual_tools import SavePersonalWorkspace, load_workspace, save_workspace
 
@@ -355,7 +355,6 @@ def goals_context(db, username, *, tavolo_id=None):
 
 def seed_goals(db):
     """Idempotent, editable seed; ON CONFLICT supports concurrent startup workers."""
-    from sqlalchemy.dialects.postgresql import insert
     entries = [
         ('study', 'Organizzare meglio lo studio', 'Studio', 'Sperimenta un modo sostenibile di pianificare e rivedere lo studio.', 'Quale cambiamento concreto vuoi osservare?', 'Scegli una strategia per il metodo; pianifica una piccola azione; racconta com’è andata in un controllo.'),
         ('procrastination', 'Cominciare senza rimandare', 'Autoregolazione', 'Esplora cosa rende difficile iniziare e prova un primo passo.', 'In quali situazioni riesci a iniziare più facilmente?', 'Individua una difficoltà nel Taccuino; scegli un’attività breve; registra cosa ti ha aiutato.'),
@@ -365,7 +364,7 @@ def seed_goals(db):
         ('strengths', 'Riconoscere risorse e interessi', 'Conoscermi', 'Rileggi esperienze e lavori per riconoscere ciò che ti interessa e ti aiuta.', 'Quali esempi concreti sostengono ciò che scopri?', 'Raccogli carte; collega esperienze e lavori; aggiorna la tua riflessione nel Taccuino.'),
     ]
     for slug, title, area, description, criteria, suggestions in entries:
-        db.execute(insert(models.GoalCatalogEntry).values(slug='initial-' + slug, author_username='system',
+        db.execute(dialect_insert(db, models.GoalCatalogEntry).values(slug='initial-' + slug, author_username='system',
             status='published', version=1, data=dict(title=title, area=area, description=description,
             criteria=criteria, suggestions=suggestions, audience='', language='it')).on_conflict_do_nothing(index_elements=['slug']))
     db.commit()
