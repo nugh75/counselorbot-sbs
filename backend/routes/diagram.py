@@ -23,6 +23,7 @@ from ..message_diagrams import session_owner, session_questionnaire, save_diagra
 from ..diagram_render import (
     DiagramSpec,
     DiagramSpecError,
+    GraphvizUnavailableError,
     describe,
     parse_spec,
     render,
@@ -181,6 +182,10 @@ def _diagram_fallback(db: Session) -> ModelChoice | None:
 def _image_response(spec: DiagramSpec, *, theme: str, fmt: str, embed_title: bool, lang: str) -> Response:
     try:
         payload = render(spec, theme=theme, fmt=fmt, embed_title=embed_title, lang=lang)
+    except GraphvizUnavailableError as exc:
+        # Installazione senza Graphviz (app desktop): non e' colpa dello spec.
+        logger.warning("Diagramma non disegnato: %s", exc)
+        raise HTTPException(status_code=503, detail={"code": exc.code, "message": str(exc)})
     except DiagramSpecError as exc:
         logger.info("Diagramma non renderizzabile: %s", exc)
         raise HTTPException(status_code=422, detail=str(exc))

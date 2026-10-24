@@ -10,7 +10,6 @@ from __future__ import annotations
 import hashlib
 import logging
 import re
-import shutil
 import subprocess
 from functools import lru_cache
 from pathlib import Path
@@ -20,6 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, ValidationIn
 
 from .diagram_icon_catalog import DIAGRAM_ICONS
 from .diagram_symbols import INSTRUMENTS, factor_id, resolve_symbol
+from .native_deps import find_program
 
 logger = logging.getLogger(__name__)
 
@@ -276,6 +276,15 @@ FLAW_WORDS = {
 
 class DiagramSpecError(ValueError):
     """Spec non conforme al contratto dichiarato al modello."""
+
+
+class GraphvizUnavailableError(DiagramSpecError):
+    """Graphviz non e' installato: lo spec e' buono, manca chi lo disegna.
+
+    Sottoclasse apposta: PDF e Telegram ripiegano sul testo come per uno spec
+    rotto, la rotta HTTP risponde 503 con `code` perche' l'interfaccia lo dica."""
+
+    code = "diagram.errors.graphvizUnavailable"
 
 
 class DiagramNode(BaseModel):
@@ -874,7 +883,7 @@ def _xml_escape(text: str) -> str:
 
 
 def graphviz_available() -> bool:
-    return shutil.which("dot") is not None
+    return find_program("dot") is not None
 
 
 def render(spec: DiagramSpec, *, theme: str = "light", fmt: str = "svg",
@@ -897,11 +906,13 @@ def _render_cached(spec_json: str, theme: str, fmt: str, embed_title: bool, lang
     spec = DiagramSpec.model_validate_json(spec_json)
     dot_source = to_dot(spec, theme=theme, embed_title=embed_title, raster=(fmt == "png"),
                         lang=lang)
-    engine = engine_for(spec.type)
-    if shutil.which(engine) is None:
-        raise DiagramSpecError(f"motore graphviz non disponibile: {engine}")
+    # Un solo binario per tutti i layout: `dot -Kneato` e' `neato`, e le app
+    # desktop devono impacchettare e cercare un programma solo.
+    dot = find_program("dot")
+    if dot is None:
+        raise GraphvizUnavailableError("motore graphviz non disponibile: dot")
 
-    command = [engine, f"-T{fmt}"]
+    command = [dot, f"-K{engine_for(spec.type)}", f"-T{fmt}"]
     if fmt == "png":
         command.append("-Gdpi=144")
     try:

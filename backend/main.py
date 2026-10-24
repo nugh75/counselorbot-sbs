@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import models, auth, database
 from .version import __version__
+from .native_deps import native_capabilities
 from .prompt_config import (
     ALL_CONFIG_TEXT_DEFINITIONS,
     DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR,
@@ -316,6 +317,12 @@ app = FastAPI(lifespan=lifespan, version=__version__)
 @app.get("/version")
 def get_version():
     return {"version": __version__}
+
+
+@app.get("/capabilities")
+def get_capabilities():
+    """Funzioni che dipendono da programmi esterni (Graphviz): si'/no."""
+    return native_capabilities()
 
 
 # CORS
