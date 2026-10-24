@@ -1,0 +1,60 @@
+name: Spike PII engine freeze
+# P3 (docs/privacy/spikes/p3-pii-engine.md §5): onnxruntime + tokenizers + a
+# GLiNER ONNX model inside a PyInstaller onedir on the desktop runners. macOS is
+# Apple Silicon only: onnxruntime ships no macOS x86_64 wheel after 1.23.2.
+# Manual runs, plus pull requests that touch the probe. Never on main by itself.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/spikes/p3_gliner_onnx.py'
+      - 'scripts/spikes/p3_onnx_freeze_probe.py'
+      - '.github/workflows/spike-pii-engine.yml'
+permissions:
+  contents: read
+env:
+  # Recommended model and export (report §6), 568 MB.
+  MODEL_REPO: onnx-community/gliner_multi_pii-v1
+  MODEL_FILE: model_fp16.onnx
+jobs:
+  freeze:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, windows-latest, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # Same PyInstaller as desktop/teacher/scripts/build-backend.sh.
+      - run: pip install onnxruntime==1.31.0 tokenizers==0.23.3 numpy pyinstaller==6.22.3
+      - name: Download model
+        shell: bash
+        run: |
+          mkdir -p model
+          for f in gliner_config.json tokenizer.json; do
+            curl -sfL -o "model/$f" "https://huggingface.co/$MODEL_REPO/resolve/main/$f"
+          done
+          curl -sfL -o "model/$MODEL_FILE" "https://huggingface.co/$MODEL_REPO/resolve/main/onnx/$MODEL_FILE"
+      - name: PyInstaller onedir
+        shell: bash
+        run: |
+          start=$(date +%s)
+          python -m PyInstaller --noconfirm --onedir --console --name p3-onnx-probe \
+            --paths scripts/spikes scripts/spikes/p3_onnx_freeze_probe.py
+          echo "pyinstaller_seconds=$(( $(date +%s) - start ))" >> "$GITHUB_STEP_SUMMARY"
+          du -sk dist/p3-onnx-probe | awk '{printf "onedir_mb=%.1f\n", $1/1024}' >> "$GITHUB_STEP_SUMMARY"
+      - name: Run frozen probe
+        shell: bash
+        run: |
+          ./dist/p3-onnx-probe/p3-onnx-probe model "$MODEL_FILE" | tee probe.json
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"; cat probe.json >> "$GITHUB_STEP_SUMMARY"; echo '```' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p3-probe-${{ matrix.os }}
+          path: probe.json
+          if-no-files-found: ignore
