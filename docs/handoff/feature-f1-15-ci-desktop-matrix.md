@@ -4,7 +4,7 @@ Branch: feature/f1-15-ci-desktop-matrix · Issue: #576 · PR: #577
 Task diario: a3711ce4-4f3b-404e-85fa-91adc4794c9a · Aggiornato: 2026-10-24
 
 ## Stato
-PR #577 aperta; verifiche locali verdi, CI in corso.
+PR #577: fix CI macOS spinto, nuova esecuzione in corso.
 
 ## Fatto
 - Workflow `desktop-teacher`: bundle `dmg` su macos-14/macos-15-intel, NSIS su
@@ -13,6 +13,8 @@ PR #577 aperta; verifiche locali verdi, CI in corso.
   Git Bash, `sha256sum` c'è già); ripristinata ricerca `.app` in `bundle/macos`.
 - `tauri.conf.json`: `bundle.macOS.dmg` (NSIS per utente già presente).
 - Piano: F1-15 🟡 (restano Release, `latest.json`, firma condizionale).
+- CI 1° giro: deb verde; macos-14 rosso (`cp: : No such file`): con solo
+  `dmg` Tauri cancella `bundle/macos/*.app`. Fix: `--bundles app,dmg` su macOS.
 - Fix: `supervisor.rs` non compilava su main (match non esaustivo, F1-10 × F1-08).
 
 ## Verifiche

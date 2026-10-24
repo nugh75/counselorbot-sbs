@@ -72,7 +72,7 @@ bash desktop/teacher/scripts/build-frontend.sh
 bash desktop/teacher/scripts/fetch-cloudflared.sh macos-arm64 desktop/teacher/src-tauri/cloudflared
 cd desktop/teacher
 npm ci
-npx tauri build --bundles dmg   # o nsis su Windows, deb su Linux
+npx tauri build --bundles app,dmg   # nsis su Windows, deb su Linux
 ```
 
 Sostituire piattaforma e bundle sui rispettivi sistemi. Gli script ricreano

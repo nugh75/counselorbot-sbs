@@ -10,7 +10,7 @@ Agenti `s65-f115-agy` (Gemini, interrotto per quota) e `s67-f1-15-ci-matrix` (Cl
     - Generazione checksum SHA-256 (`.sha256`) per tutti i bundle prodotti (`*.dmg`, `*.exe`, `*.deb`): `sha256sum` su Linux e Git Bash Windows, `shasum -a 256` su macOS.
     - Upload artifact della build (`actions/upload-artifact@v4`) con inclusione di `*.dmg`, `*.exe`, `*.deb` e relativi file `.sha256` per ogni runner.
     - Riepilogo dimensioni e checksum in `$GITHUB_STEP_SUMMARY`.
-    - Lifecycle test macOS invariato: il bundle `dmg` produce anche `bundle/macos/*.app`.
+    - macOS con `--bundles app,dmg`: con solo `dmg` Tauri cancella `bundle/macos/*.app`, che serve al lifecycle test (primo giro CI rosso su macos-14).
   - `docs/operations/desktop-teacher-shell.md`: aggiornati riferimenti alla matrice CI a 4 runner, packaging DMG/NSIS/deb e checksum SHA-256.
   - `docs/architecture/desktop-apps-plan.md`: F1-15 parziale (🟡): restano asset nella Release, `latest.json` e firma condizionale.
   - `desktop/teacher/src-tauri/src/supervisor.rs`: corretto match non esaustivo che impediva la compilazione su main (comandi tunnel con nome F1-10 non gestiti durante l'attesa di prontezza F1-08).
