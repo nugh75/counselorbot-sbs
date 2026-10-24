@@ -41,6 +41,7 @@ pub fn spawn(spec: &Spec, logs_dir: &Path, job: &platform::Job, port: Option<u16
     let log = logs::open(logs_dir, spec.log_file).map_err(|e| format!("log {}: {e}", spec.log_file))?;
     let log_err = log.try_clone().map_err(|e| e.to_string())?;
     let mut command = Command::new(&spec.program);
+    crate::credentials::remove_inherited(&mut command);
     command
         .args(&spec.args)
         .envs(spec.env.iter().map(|(k, v)| (k.as_str(), v.as_str())))

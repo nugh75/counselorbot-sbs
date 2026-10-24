@@ -14,6 +14,18 @@
 
   <table><tbody id="sidecars"></tbody></table>
 
+  <details class="card" id="credentials-card">
+    <summary id="credentials-title">Chiavi API</summary>
+    <p>Le chiavi sono conservate nel portachiavi del sistema. Il valore salvato non viene mostrato.</p>
+    <p class="muted">Il test usa la chiave inserita, oppure quella già salvata, senza generare risposte AI. Dopo un test reinserisci la chiave per salvarla. Salvataggio e rimozione richiedono «Applica e riavvia servizi»: il riavvio interrompe le richieste in corso.</p>
+    <div class="actions">
+      <button id="refresh-credentials" type="button">Aggiorna stato</button>
+      <button id="apply-credentials" type="button" disabled>Applica e riavvia servizi</button>
+    </div>
+    <p id="credentials-notice" role="status" aria-live="polite"></p>
+    <div id="credential-list"></div>
+  </details>
+
   <!-- Sezione Tunnel Cloudflare (F1-09, F1-10, ADR-0001 §2, ADR-0002 §2.1) -->
   <section class="card" id="tunnel-card">
     <div class="tunnel-header">
@@ -94,5 +106,6 @@
 
   <script src="qr.js"></script>
   <script src="panel.js"></script>
+  <script src="credentials.js"></script>
 </body>
 </html>

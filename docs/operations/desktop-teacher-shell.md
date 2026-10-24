@@ -2,9 +2,13 @@
 
 Il guscio in `desktop/teacher` implementa il ciclo di vita previsto da
 ADR-0002 §1–§2.6. Non è ancora un'app docente utilizzabile con dati reali:
-profilo SQLite completo, autenticazione locale, API personali/portachiavi,
+profilo SQLite completo, autenticazione locale, API personali,
 frontend a origine backend dinamica e tunnel per lezioni sono compiti distinti.
 Identificatore immutabile: `org.ai4educ.counselorbot.teacher`.
+
+Il pannello chiavi API e il portachiavi di sistema (F1-08) sono descritti in
+`desktop-api-keys.md`: nessun valore nei file, accesso solo dal pannello nativo,
+passaggio al solo backend attraverso l'ambiente del processo.
 
 Su Windows il guscio normalizza i percorsi risorse verbatim prima di passarli
 ai sidecar: l'entrypoint Node non gestisce correttamente il prefisso esteso
@@ -115,7 +119,7 @@ usare i PID del report e il lancio successivo sulla stessa cartella di prova.
 - Il pannello apre l'URL locale senza link docente monouso: il backend F1-06
   espone `POST /internal/local-auth/teacher-link` e `/local-auth/redeem`, ma
   la chiamata del guscio e la pagina `/accesso-locale` restano da collegare.
-  Portachiavi F1-08, QR F1-09, firma/updater/release F1-15 restano separati.
+  Firma/updater/release F1-15 restano separati; F1-08 ora gestisce il portachiavi.
 
 La PR resta in bozza: revisione coordinata dal Timoniere obbligatoria dopo
 l'ultimo codice. Una revisione precedente non copre le modifiche successive.

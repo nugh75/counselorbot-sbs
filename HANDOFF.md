@@ -1,3 +1,14 @@
+# Handoff 24 ottobre 2026: F1-08 — portachiavi di sistema e chiavi API
+
+Agente `s53-f108-codex`, task `6688d4db-e02e-4674-8bb0-8e50f700a436`, branch `feature/f1-08-keychain-api-keys`.
+
+- **Obiettivo**: chiavi API del desktop teacher nel portachiavi del sistema (macOS Keychain / Windows Credential Manager).
+- **Modifiche**: `credentials.rs` (crate `keyring`, IPC senza lettura dei valori, nessun fallback su file, errori senza dettagli nativi), `credentials.js` e pannello mascherato in `index.html`/`panel.css` (stato, CRUD, test GET autenticati, riavvio esplicito); le chiavi arrivano solo all'ambiente del backend, alias mancanti vuoti, rimossi dai sidecar non privilegiati (`app.rs`, `sidecar.rs`, `supervisor.rs`). Doc `docs/operations/desktop-api-keys.md`.
+- **Limiti**: OpenCode escluso dal profilo teacher-pc (credenziale riservata). Controllo browser su fixture sintetica non eseguito.
+- **Test eseguiti**: `cargo test` 27 pass; `node --test credentials.test.js` 5 pass; `make guidance-check` verde. Nessun deploy, sudo, segreto reale o processo dev attivo.
+
+---
+
 # Handoff 24 ottobre 2026: F1-14 — anti-sospensione e «docente offline»
 
 Agente `s55-f114-claude` (Claude Sonnet 5.5), task Diario `59e42279-4d36-4766-b1b3-d4bb203b00fa`, branch `feature/f1-14-anti-sleep-offline-status`.

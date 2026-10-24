@@ -31,6 +31,7 @@ const RESTART_WINDOW: Duration = Duration::from_secs(300);
 const EXE_SUFFIX: &str = std::env::consts::EXE_SUFFIX;
 
 pub struct Config {
+    pub credentials: Arc<crate::credentials::Credentials>,
     pub data: DataDir,
     pub resources: PathBuf,
     pub shell_exe: PathBuf,
@@ -78,6 +79,7 @@ pub struct Status {
 
 enum Command {
     Stop(Sender<()>),
+    ApplyCredentials(Sender<Result<(), String>>),
     StartQuickTunnel(Sender<Result<(), String>>),
     StopQuickTunnel(Sender<Result<(), String>>),
     StartNamedTunnel(Sender<Result<(), String>>),
@@ -92,6 +94,13 @@ pub struct Handle {
 }
 
 impl Handle {
+    pub fn apply_credentials(&self) -> Result<(), String> {
+        let (reply, done) = mpsc::channel();
+        self.commands.send(Command::ApplyCredentials(reply)).map_err(|_| "Supervisore non disponibile.")?;
+        done.recv_timeout(Duration::from_secs(600))
+            .map_err(|_| "Riavvio non completato; controlla lo stato dei servizi.")?
+    }
+
     /// Stops every sidecar (reverse order) and waits for the supervisor thread.
     pub fn stop(&self) {
         let (reply, done) = mpsc::channel();
@@ -241,6 +250,16 @@ impl Supervisor {
             }
             match self.commands.recv_timeout(POLL) {
                 Ok(Command::Stop(reply)) => self.pending_stop = Some(reply),
+                Ok(Command::ApplyCredentials(reply)) => {
+                    self.restart_after_backend();
+                    let status = self.status.lock().unwrap();
+                    let result = if status.phase == "ready" {
+                        Ok(())
+                    } else {
+                        Err(status.message.clone().unwrap_or_else(|| "Riavvio non completato.".into()))
+                    };
+                    let _ = reply.send(result);
+                }
                 Ok(Command::StartQuickTunnel(reply)) => {
                     let res = self.handle_start_quick_tunnel();
                     let _ = reply.send(res);
@@ -301,12 +320,27 @@ impl Supervisor {
         true
     }
 
+    fn stop_requested_while_waiting(&mut self) -> bool {
+        match self.commands.try_recv() {
+            Ok(Command::Stop(reply)) => {
+                self.pending_stop = Some(reply);
+                return true;
+            }
+            Ok(
+                Command::ApplyCredentials(reply) | Command::StartQuickTunnel(reply) | Command::StopQuickTunnel(reply),
+            ) => {
+                let _ = reply.send(Err("Preparazione in corso. Attendi e riprova.".into()));
+            }
+            Err(_) => {}
+        }
+        false
+    }
+
     fn wait_ready(&mut self, proc: &mut Proc, probe: &dyn Fn(u16) -> Result<String, String>) -> Wait {
         let started = Instant::now();
         let timeout = self.timeout();
         loop {
-            if let Ok(Command::Stop(reply)) = self.commands.try_recv() {
-                self.pending_stop = Some(reply);
+            if self.stop_requested_while_waiting() {
                 return Wait::Stopping;
             }
             if let Some(status) = proc.try_wait() {
@@ -322,7 +356,7 @@ impl Supervisor {
         }
     }
 
-    fn backend_spec(&self, port: u16) -> Spec {
+    fn backend_spec(&self, port: u16) -> Result<Spec, Failure> {
         let backend_dir = self.config.resources.join("backend");
         let bundled = backend_dir.join("_internal");
         let docs = bundled.join("docs-counselorbot").to_string_lossy().into_owned();
@@ -339,6 +373,9 @@ impl Supervisor {
             ("PYTHONUNBUFFERED".into(), "1".into()),
         ];
         env.extend(self.config.data.backend_env());
+        env.extend(self.config.credentials.backend_env().map_err(|message| Failure::Fatal(message, None))?);
+        // Bundled desktop startup must not load operator .env files.
+        env.push(("PYTHON_DOTENV_DISABLED".into(), "1".into()));
         if let Some(origin) = &self.status.lock().unwrap().tunnel_url {
             env.push(("COUNSELORBOT_PUBLIC_ORIGIN".into(), origin.clone()));
         }
@@ -350,7 +387,7 @@ impl Supervisor {
         if self.config.minimal_backend {
             args.push("--minimal".into());
         }
-        Spec {
+        Ok(Spec {
             name: "backend",
             program: backend_dir.join(format!("counselorbot-backend{EXE_SUFFIX}")),
             args,
@@ -358,7 +395,7 @@ impl Supervisor {
             cwd: self.config.data.root.clone(),
             log_file: "backend.log",
             lifeline: true,
-        }
+        })
     }
 
     fn start_backend(&mut self) -> Result<(), Failure> {
@@ -377,7 +414,7 @@ impl Supervisor {
         };
         for _ in 0..PORT_ATTEMPTS {
             let port = health::free_port().map_err(|e| Failure::Fatal(format!("porta: {e}"), None))?;
-            let spec = self.backend_spec(port);
+            let spec = self.backend_spec(port)?;
             let mut proc = sidecar::spawn(&spec, &self.config.data.logs(), &self.job, Some(port))
                 .map_err(|e| Failure::Fatal(format!("avvio del backend: {e}"), Some("diagnostics")))?;
             self.write_pids(Some(&proc));
@@ -1031,12 +1068,103 @@ pub fn validate_tunnel_token(raw: &str) -> Result<String, String> {
 mod tests {
     use super::*;
 
+    #[test]
+    fn commands_during_health_wait_receive_a_reply_and_stop_still_works() {
+        let mut supervisor = supervisor("waiting-commands");
+        let (sender, receiver) = mpsc::channel();
+        supervisor.commands = receiver;
+        for command in [Command::ApplyCredentials, Command::StartQuickTunnel, Command::StopQuickTunnel] {
+            let (reply, done) = mpsc::channel();
+            sender.send(command(reply)).unwrap();
+            assert!(!supervisor.stop_requested_while_waiting());
+            assert_eq!(
+                done.recv_timeout(Duration::from_secs(1)).unwrap().unwrap_err(),
+                "Preparazione in corso. Attendi e riprova."
+            );
+        }
+        let (reply, _done) = mpsc::channel();
+        sender.send(Command::Stop(reply)).unwrap();
+        assert!(supervisor.stop_requested_while_waiting());
+        assert!(supervisor.pending_stop.is_some());
+        std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
+    }
+
+    #[test]
+    fn credentials_reach_only_backend_env_and_never_files_or_diagnostics() {
+        use std::io::Read;
+        let mut supervisor = supervisor("credential-integration");
+        let sentinel = "synthetic-f108-integration-secret";
+        supervisor.config.credentials.save("openai", sentinel).unwrap();
+        supervisor.config.credentials.save("anthropic", sentinel).unwrap();
+        supervisor.config.credentials.save("privacy_kek", sentinel).unwrap();
+        let mut spec = supervisor.backend_spec(32101).unwrap_or_else(|_| panic!("backend spec"));
+        let frontend = supervisor.frontend_spec(32102, 32101);
+        assert!(!frontend.env.iter().any(|(_, value)| value == sentinel));
+        // Exercise the actual spawn path. The child checks env in memory and
+        // prints only a fixed result, never the synthetic credential.
+        spec.program = PathBuf::from(if cfg!(windows) { "python" } else { "python3" });
+        spec.args = vec!["-c".into(), "import os; assert os.environ['API_KEY_OPENAI']; assert os.environ['API_KEY_OPENAI'] == os.environ['OPENAI_API_KEY'] == os.environ['ANTHROPIC_API_KEY'] == os.environ['PRIVACY_KEK']; assert not os.environ['API_KEY_GROQ']; print('credential-env-ok')".into()];
+        let mut child = sidecar::spawn(&spec, &supervisor.config.data.logs(), &supervisor.job, None).unwrap();
+        let deadline = Instant::now() + Duration::from_secs(20);
+        loop {
+            if let Some(status) = child.try_wait() {
+                assert!(status.success());
+                break;
+            }
+            assert!(Instant::now() < deadline, "fixture child timed out");
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        assert!(std::fs::read_to_string(supervisor.config.data.logs().join("backend.log"))
+            .unwrap()
+            .contains("credential-env-ok"));
+        supervisor.shell.frontend_port = Some(32102);
+        supervisor.config.data.save_config(&supervisor.shell).unwrap();
+        supervisor.publish();
+        let report = supervisor.config.data.run().join("report.json");
+        std::fs::write(&report, serde_json::to_vec(&supervisor.status.lock().unwrap().clone()).unwrap()).unwrap();
+        fn scan(path: &std::path::Path, secret: &[u8]) {
+            for entry in std::fs::read_dir(path).unwrap() {
+                let path = entry.unwrap().path();
+                if path.is_dir() {
+                    scan(&path, secret);
+                } else {
+                    let bytes = std::fs::read(&path).unwrap();
+                    assert!(
+                        !bytes.windows(secret.len()).any(|w| w == secret),
+                        "credential persisted in {}",
+                        path.display()
+                    );
+                }
+            }
+        }
+        scan(&supervisor.config.data.root, sentinel.as_bytes());
+        let archive =
+            crate::diagnostics::export(&supervisor.config.data.root, "1.2.3", &supervisor.config.data.root.join("out"))
+                .unwrap();
+        let mut archive = zip::ZipArchive::new(std::fs::File::open(archive).unwrap()).unwrap();
+        for i in 0..archive.len() {
+            let mut bytes = Vec::new();
+            archive.by_index(i).unwrap().read_to_end(&mut bytes).unwrap();
+            assert!(!bytes.windows(sentinel.len()).any(|w| w == sentinel.as_bytes()));
+        }
+        drop(archive);
+        supervisor.config.credentials.remove("openai").unwrap();
+        let spec = supervisor.backend_spec(32103).unwrap_or_else(|_| panic!("backend spec"));
+        assert!(spec
+            .env
+            .iter()
+            .filter(|(name, _)| ["API_KEY_OPENAI", "OPENAI_API_KEY"].contains(&name.as_str()))
+            .all(|(_, value)| value.is_empty()));
+        std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
+    }
+
     fn supervisor(name: &str) -> Supervisor {
         let root = std::env::temp_dir().join(format!("cb-supervisor-{name}-{}", std::process::id()));
         let data = DataDir::prepare(root, "1.2.3").unwrap();
         let (_, receiver) = mpsc::channel();
         Supervisor::new(
             Config {
+                credentials: Arc::new(crate::credentials::Credentials::new(crate::credentials::MemoryStore::default())),
                 resources: data.path("resources"),
                 shell_exe: std::env::current_exe().unwrap(),
                 data,
@@ -1052,7 +1180,7 @@ mod tests {
     #[test]
     fn sidecar_environment_obeys_the_frozen_contract() {
         let supervisor = supervisor("env");
-        let backend = supervisor.backend_spec(32101);
+        let backend = supervisor.backend_spec(32101).unwrap_or_else(|_| panic!("backend spec"));
         let frontend = supervisor.frontend_spec(32102, 32101);
         let env =
             |spec: &Spec, name: &str| spec.env.iter().find(|(key, _)| key == name).map(|(_, value)| value.clone());
@@ -1067,7 +1195,11 @@ mod tests {
         assert!(backend.lifeline && frontend.lifeline);
         supervisor.status.lock().unwrap().tunnel_url = Some("https://fixture.trycloudflare.com".into());
         assert_eq!(
-            env(&supervisor.backend_spec(32103), "COUNSELORBOT_PUBLIC_ORIGIN").as_deref(),
+            env(
+                &supervisor.backend_spec(32103).unwrap_or_else(|_| panic!("backend spec")),
+                "COUNSELORBOT_PUBLIC_ORIGIN"
+            )
+            .as_deref(),
             Some("https://fixture.trycloudflare.com")
         );
         std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
