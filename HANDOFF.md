@@ -1,3 +1,20 @@
+# Handoff 24 ottobre 2026: F1-05h — carico e concorrenza SQLite
+
+Agente `s50-f105h-codex`, task Diario `6f208d6d-d99b-4cb3-87f4-2e51820e0312`, branch
+`feature/f1-05h-sqlite-load-concurrency`, issue #559.
+
+- **Obiettivo**: dimostrare che SQLite regge 30 studenti simulati in contemporanea senza lock né perdita di dati.
+- **Modifiche**: commit/close espliciti nelle rotte chat, site_chat e voice_reader; budget e credenziali in sessioni
+  brevi; preferenza ChatGPT senza secondo writer, rinnovo in write session; benchmark offline in `scripts/benchmarks/`
+  con provider sintetico; `backend/tests/test_sqlite_load_concurrency.py`; doc `docs/operations/sqlite-load-concurrency.md`.
+- **Esito carico**: 300 turni, 1.800 salvataggi, picco 30 stream, zero errori/lock, integrità ok; turno p50/p95/p99
+  308/1920/2810 ms.
+- **Test eseguiti**: `TEST_DB=sqlite` Python 3.11.9 `test_sqlite_load_concurrency.py` 15 pass; `make guidance-check`
+  verde. Postgres e rebuild Docker non eseguiti. Nessun deploy, sudo o processo dev attivo.
+- **Note**: `ruff` F/E9 segnala sei F841 preesistenti in chat; `.metadata_never_index` non è nel commit.
+
+---
+
 # Handoff 24 ottobre 2026: Privacy Layer P6a-c — controlli sull'uscita di rete
 
 Agente `s52-p6ac-codex`, task Diario `4d2e0973-0b46-4c43-84df-527c4297d544`, branch `feature/privacy-p6ac-network-egress`, issue #558.
