@@ -3480,6 +3480,9 @@ SHA consultare i controlli di PR #523 (non riusare esiti di revisioni precedenti
 Difetti registrati nel Diario: `9f705b41` (snapshot PID dello smoke),
 `3c4f9dd8` (tunnel su mismatch/origine pubblica, local-only), `fa010972`
 (rewrite frontend fissato in build, residuo F1-03). Nessuna issue manuale.
+Registrati anche `1a977fa7` (stato smoke/origine reso atomico) e `296a9474`
+(CI Windows: percorso risorse verbatim incompatibile con l'entrypoint Node,
+normalizzato con `dunce`; regressione Windows con spazi e caratteri Unicode).
 Backend minimal senza lifespan e quick tunnel sono solo prove. F1-03,
 F1-06, F1-08, F1-09/F1-10 e F1-05* restano necessari prima dell'uso reale.
 Nessun merge, deploy, sudo, rebuild Docker o processo dev persistente.
