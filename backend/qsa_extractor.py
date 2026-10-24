@@ -11,8 +11,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 import requests
-from pdf2image import convert_from_path
 from PIL import Image, UnidentifiedImageError
+
+from .pdf_images import render_pdf_pages
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -81,7 +82,7 @@ def _jpeg_base64(image: Image.Image) -> str:
 
 def _encode_document_pages(path: Path) -> list[str]:
     if path.suffix.lower() == ".pdf":
-        images = convert_from_path(
+        images = render_pdf_pages(
             str(path),
             dpi=200,
             first_page=1,
