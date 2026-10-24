@@ -1,3 +1,28 @@
+# Handoff 24 ottobre 2026: Privacy Layer P3 — spike motore PII
+
+Agente `s46-p3-opus` (Claude Opus 5.5), task Diario
+`34e1ad39-47fa-4f15-a9ef-caf1cba26393`, branch `feature/privacy-p3-pii-engine-spike`, issue #548.
+
+- **Obiettivo**: misurare regole, regole + gazetteer, Ollama NER e GLiNER ONNX sul corpus P2 e scegliere il motore di P4.
+- **Modifiche**: `scripts/spikes/p3_pii_engines.py` (gazetteer generico e «roster», unione con regole autoritative,
+  adattatore Ollama con `probe()`), `p3_gliner_onnx.py` (GLiNER con solo onnxruntime + tokenizers, identico a
+  `gliner==0.2.29`), `p3_pii_benchmark.py` (sottoprocesso per motore: P/R/F1, copertura, «mascherati», latenza, RSS,
+  disco), `p3_holdout.py` (33 frasi a mano, nomi fuori dal generatore), `p3_onnx_freeze_probe.py` +
+  `.github/workflows/spike-pii-engine.yml` (PyInstaller su macOS arm64, Windows x64, Linux x64). Report
+  `docs/privacy/spikes/p3-pii-engine.md`.
+- **Esito**: regole + gazetteer 0,84 di richiamo sul corpus ma 0,31 sull'holdout (sovradattate). Con GLiNER
+  `gliner_multi_pii-v1` fp16 (568 MB, ~150 ms/frase su M1, RSS ~750 MB) persone mascherate 0,98 corpus / 1,00 holdout.
+  L'int8 pubblicato e la quantizzazione dinamica sono rotti (richiamo 0,01). `knowledgator/gliner-pii-base-v1.0`
+  (196 MB, 18 ms) come ripiego leggero. Mac solo Apple Silicon (decisione utente): onnxruntime 1.31 non ha ruote macOS
+  x86_64. Ollama non installato qui: saltato con motivo, banco pronto.
+- **Da fare (P4)**: export fp16 proprio dai pesi `urchade` (Apache-2.0; l'export `onnx-community` non ha licenza),
+  regola di unione da precisare in 02 §3.2, modello scaricato al primo uso con hash, togliere o separare la build
+  `macos-15-intel` di `desktop-teacher.yml`, estendere regole su telefono/CF.
+- **Test eseguiti**: `TEST_DB=sqlite` (Python 3.11.9) `test_privacy_p3_engine_spike.py` + `test_privacy_corpus_benchmark.py`
+  + `test_privacy_core.py` 198 pass, 3 skip (pesi reali); con `P3_MODELS_DIR` i 3 test sui pesi passano. Freeze PyInstaller
+  locale macOS arm64 ok. `make guidance-check` verde. Test indipendenti dal DB: Postgres non eseguito.
+  Nessun deploy, sudo, rebuild Docker o processo dev attivo.
+
 # Handoff 24 ottobre 2026: F1-03 frontend senza URL fissi al build
 
 Agente `s44-f103-opus` (Claude Opus 5.5), task Diario
