@@ -98,7 +98,6 @@ def test_render_without_graphviz_raises_a_dedicated_spec_error():
     assert raised.value.code == "diagram.errors.graphvizUnavailable"
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="le rotte importano fcntl (B1 dello spike F0-01)")
 def test_render_route_answers_503_with_code_without_graphviz():
     from backend.routes import diagram as diagram_routes
 
@@ -159,8 +158,6 @@ if __name__ == "__main__":
         if not name.startswith("test_") or not callable(fn):
             continue
         if name == "test_real_graphviz_draws_every_layout" and native_deps.find_program("dot") is None:
-            continue
-        if name == "test_render_route_answers_503_with_code_without_graphviz" and sys.platform == "win32":
             continue
         try:
             fn()
