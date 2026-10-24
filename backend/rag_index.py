@@ -7,7 +7,6 @@ No network is required for lexical collection, persistence or queries.
 from __future__ import annotations
 
 import copy
-import fcntl
 import hashlib
 import json
 import logging
@@ -23,7 +22,7 @@ from collections import Counter
 
 import numpy as np
 
-from . import embedding_service
+from . import embedding_service, file_lock
 from .ai_service import AIError
 
 logger = logging.getLogger(__name__)
@@ -997,7 +996,7 @@ _embedding_cooldown = _EmbeddingCooldown(EMBEDDING_FAILURE_COOLDOWN_SECONDS)
 
 class _BuildReservation:
     """At most one embedding build at a time: background builds and «Reindicizza
-    tutto» share it. A thread lock covers this process, a flock the other workers.
+    tutto» share it. A thread lock covers this process, a file lock the other workers.
     It may be released by a thread other than the one that acquired it."""
 
     def __init__(self):
@@ -1010,9 +1009,7 @@ class _BuildReservation:
         try:
             os.makedirs(INDEX_DIR, exist_ok=True)
             lockf = open(os.path.join(INDEX_DIR, ".embedding-build.lock"), "a")
-            try:
-                fcntl.flock(lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
+            if not file_lock.lock(lockf, blocking=False):
                 lockf.close()
                 self._lock.release()
                 return False
@@ -1308,8 +1305,8 @@ class SiteRagIndex:
         require_vectors = require_vectors and self._vectors_allowed(ai_service)
         with self._lock:
             os.makedirs(os.path.dirname(self.index_path) or ".", exist_ok=True)
-            with open(self.lock_path, "w") as lockf:
-                fcntl.flock(lockf, fcntl.LOCK_EX)
+            with open(self.lock_path, "a") as lockf:
+                file_lock.lock(lockf)
                 # Inspect another worker's committed state without replacing ours
                 # until validation/build succeeds.
                 candidate = copy.copy(self)
@@ -1515,9 +1512,7 @@ class SiteRagIndex:
             return False
         try:
             with open(self.lock_path, "r") as lockf:
-                try:
-                    fcntl.flock(lockf, fcntl.LOCK_SH | fcntl.LOCK_NB)
-                except BlockingIOError:
+                if file_lock.is_locked(lockf):
                     return True
         except OSError:
             pass
@@ -1532,9 +1527,7 @@ class SiteRagIndex:
         if not os.path.isdir(self.versions_dir):
             return 0
         with self._lock, open(self.lock_path, "a") as lockf:
-            try:
-                fcntl.flock(lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
+            if not file_lock.lock(lockf, blocking=False):
                 return 0
             try:
                 with open(self.index_path, encoding="utf-8") as f:
@@ -1980,7 +1973,7 @@ def delete_dynamic_collection(slug: str):
     index = get_dynamic_index(slug)
     os.makedirs(INDEX_DIR, exist_ok=True)
     with index._lock, open(index.lock_path, "a") as lockf:
-        fcntl.flock(lockf, fcntl.LOCK_EX)
+        file_lock.lock(lockf)
         shutil.rmtree(_dynamic_dir(slug))
         shutil.rmtree(index.versions_dir, ignore_errors=True)
         for path in (index.index_path, index.emb_path, index.cache_path):

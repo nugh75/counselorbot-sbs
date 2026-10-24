@@ -497,12 +497,12 @@ sicurezza o multipiattaforma (modello più capace + revisione). Stime in giorni 
 | F1-15 | CI release desktop | Workflow matrice (`macos-14`, `macos-15-intel`, `windows-latest`, `ubuntu-22.04`), asset nella Release, `latest.json`, smoke test `--smoke` + `/health`; firma condizionale ai segreti | 4 | F1-01, F1-02 | T3 |
 | F1-16 | Updater e backup pre-aggiornamento | Canali stabile/beta, backup automatico (F1-05j), rollback documentato | 2 | F1-15, F1-05j | T2 |
 | F1-17 | Documentazione e test (#213) | Guida docente in `docs/operations/`, `funzionalita-counselorbot.md`, privacy/DPIA modello, smoke test | 3 | tutti | T2 |
-| F1-18 ∥ | `fcntl` non portabile su Windows | modulo `backend/file_locks.py` con lock esclusivo/condiviso, bloccante e non bloccante (Unix `fcntl.flock`, Windows `msvcrt`/`LockFileEx`), usato in `rag_index.py` (`:10`, `:1014`, `:1312`, `:1519`, `:1536`, `:1983`) e `rag_reindex_job.py` (`:12`, `:39`, `:86`); test dei lock; import di `backend.main` su `windows-latest` in CI. Prerequisito di ogni build Windows | 1,5 | — | T2 |
+| F1-18 ✅ | Lock di file portabile nel backend (`fcntl` non portabile su Windows) | `backend/file_lock.py`: `flock` su POSIX (semantica invariata), lock **esclusivo** del primo byte con `msvcrt` su Windows (nessun lock condiviso); usato in `rag_index.py` e `rag_reindex_job.py`; test di esclusione e concorrenza (`backend/tests/test_file_lock.py`); job CI `backend-windows.yml` su `windows-latest` che importa il backend (#513) | 1 | F0-01 | T2 |
 
 **Cosa parte in parallelo dopo questo ADR**
 
 - **Subito, in parallelo** (file diversi): F1-02 (guscio, `desktop/`), F1-03 (frontend), F1-04 (dipendenze native),
-  F1-05a (test e CI), F1-05b (`database.py`), F1-05i (profilo), F1-11 (rotte SSE), F1-18 (lock dei file RAG).
+  F1-05a (test e CI), F1-05b (`database.py`), F1-05i (profilo), F1-11 (rotte SSE). F1-18 è già su `main` (#513).
 - **Dopo F1-05a + F1-05b**: F1-05c ∥ F1-05d ∥ F1-05e ∥ F1-06. F1-05f dopo F1-05e (stesso `models.py`).
 - **Poi**: F1-05g (dopo c, e), F1-05h (dopo d), F1-05j (dopo b e F1-02); F1-07 e F1-13 dopo F1-06.
 - **Percorsi critici**: sicurezza F1-05a → F1-06 → F1-13 → F1-07; guscio F1-02 → F1-09 → F1-13 → F1-15 → F1-16.

@@ -112,7 +112,7 @@ Legenda strategia: **P** = SQLAlchemy portabile (un solo codice), **D** = ramo p
 
 | Costrutto | Dove | Effetto | Compito |
 |---|---|---|---|
-| `import fcntl` | `rag_index.py:10` (uso a `:1014`, `:1312`, `:1519`, `:1536`, `:1983`), `rag_reindex_job.py:12` (uso a `:39`, `:86`) | su Windows `backend.main` non si importa (F0-01 B1) | **F1-18** |
+| `import fcntl` | `rag_index.py:10`, `rag_reindex_job.py:12` (misura a `b69e591a`) | su Windows `backend.main` non si importava (F0-01 B1) | **F1-18, fatto** (#513): `backend/file_lock.py`, lock esclusivo `msvcrt` su Windows |
 
 ### 2.6 Migrazioni legacy
 
@@ -193,7 +193,7 @@ Il `sqlite3` incluso da Python 3.12 nelle build PyInstaller soddisfa il requisit
 | `startup (sqlite)` | file nel runner | idem | avvio reale due volte sullo stesso file (idempotenza) e `GET /health` |
 | `portability` | — | idem | `check-sql-portability.py` |
 
-Niente esecuzioni su ogni push di `main`. La build Windows dell'import del backend resta nei workflow desktop (F1-15, F1-18).
+Niente esecuzioni su ogni push di `main`. L'import del backend su Windows ha già il suo workflow (`backend-windows.yml`, F1-18) e resta nei workflow desktop (F1-15).
 
 ### 5.3 In locale
 
