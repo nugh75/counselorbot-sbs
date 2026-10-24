@@ -1,3 +1,25 @@
+# Handoff 24 ottobre 2026: F1-05g compatibilità SQLite — aggiornamenti dello schema
+
+Agente `s45-f105g-opus` (Claude Opus 5.5), task Diario
+`39a7192c-f861-4529-8013-a79c9dad867e`, branch `feature/f1-05g-sqlite-schema-updates`.
+
+- Obiettivo: ADR-0003 §3.3-§3.4 — cambiare vincoli/nullabilità/tipi su un file
+  SQLite esistente e sincronizzare i CHECK all'avvio.
+- `backend/sqlite_schema.py`: `sqlite_rebuild_table` (Alembic `batch_alter_table`
+  come libreria, `foreign_keys` spente durante la copia, `foreign_key_check` prima
+  del commit, indici `index=True` ricreati con `copy_from`) e
+  `sync_sqlite_check_constraints`, chiamata da `main.py` dopo le migrazioni.
+  Colonne diverse dal modello ⇒ `RuntimeError` senza modifiche.
+- Dipendenza `alembic>=1.13,<2` (requirements, `--collect-submodules alembic`
+  nel build PyInstaller docente: non ricostruito qui).
+- Test: `backend/tests/test_sqlite_schema_updates.py` (fixture `previous_sqlite`
+  con CHECK vecchio di `class_path_steps`), 7 pass; con `TEST_DB=sqlite` anche
+  create_all/db_compat/runtime_sql/local_auth, 40 pass; doppio avvio uvicorn su
+  SQLite 200/200; SQL portability e guidance verdi. Postgres: CI dual-db.
+- Documentazione: `docs/operations/sqlite-schema-updates.md`, CONTEXT, funzionalità.
+- Limiti: indici di file pre-F1-05f cambiano solo se la tabella si ricostruisce
+  per un CHECK. Nessun rebuild Docker, deploy, sudo o processo dev.
+
 # Handoff 24 ottobre 2026: Privacy Layer P2 — corpus sintetico italiano e benchmark PII
 
 Agente `s43-p2-opus` (Claude Opus 5.5), task Diario
