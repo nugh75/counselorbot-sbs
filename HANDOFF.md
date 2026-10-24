@@ -1,3 +1,22 @@
+# Handoff 24 ottobre 2026: Privacy Layer P8 — subject PID e mappe cifrate dei segnaposto
+
+Agente `s57-p8-opus` (Claude Opus 5.5), task Diario `2f863b9b-8966-442f-a411-d5bce55965cc`,
+branch `feature/privacy-p8-subject-pid-maps`, issue #562.
+
+- **Obiettivo**: `subject_pid` dell'interessato e persistenza cifrata delle mappe di pseudonimizzazione (02 §3.3, §4.1).
+- **Modifiche**: `backend/privacy/subject.py` (`subject_pid` 128 bit base32 minuscolo, `is_subject_pid`, `blind_index`),
+  `crypto.subject_pid` portato al minuscolo, tabella `privacy_pseudonym_maps` (una riga per segnaposto, valore sigillato
+  con la DEK `mapping` e AAD `<tabella>.<colonna>:<id>:<subject_pid>`, più `locale` e `mapping_ref` per rileggere la mappa
+  dopo un riavvio), `backend/privacy/map_store.py` (`SqlAlchemyMapStore`), `ScopeMap.subject_pid` e
+  `PseudonymizationEngine(subject_pid_of=...)`: uno scope non mescola due interessati. Doc `docs/privacy/p8-subject-mappe.md`.
+- **Da fare**: collegamento al gateway con sessione per richiesta (P6); eventi `privacy_events` della riga P8 del piano.
+- **Test eseguiti**: `TEST_DB=sqlite` Python 3.11.9: `test_privacy_p8_subject_maps.py` 23 pass; con P5/P4/core 264 pass,
+  2 skip; db_compat/schema/UTC 15 pass, 1 skip. `ruff` F/E9 pulito sui file toccati (resta `DateTime` inutilizzato in
+  `models.py`, preesistente). `make guidance-check` verde. Postgres locale non eseguito (Docker spento); in CI `backend-db.yml` i test P8
+  passano su SQLite e Postgres (unica nuova rottura `test_sse_heartbeat`, temporale ed estranea). Nessun deploy, sudo, rebuild Docker o processo dev attivo.
+
+---
+
 # Handoff 24 ottobre 2026: Privacy Layer P13 — log e diagnostica senza PII
 
 Agente `s54-p13-codex` (completato da Claude Sonnet 5.5), task Diario `3cfe10bc-acdf-4ce9-805c-ce2abb5452fd`,
