@@ -1,7 +1,13 @@
 # Piano: app desktop per docente e studente
 
-Stato: **proposta da approvare** (nessun codice applicativo scritto). Data: 2026-10-23.
-Base analizzata: `main` @ `a92bb430`. Epic e milestone «Desktop apps» su GitHub.
+Stato: **Fase 0 chiusa, contratti congelati** negli ADR [0001](adr/0001-installation-profiles-and-desktop-packaging.md),
+[0002](adr/0002-desktop-phase-1-contracts.md), [0003](adr/0003-dual-database-postgres-sqlite.md) (F0-04, 2026-10-24).
+Prima stesura: 2026-10-23, `main` @ `a92bb430`. Epic #499 e milestone «Desktop apps» su GitHub.
+
+> **Decisione dell'utente del 24/10 — doppio database.** Server e portable restano su Postgres; le app desktop
+> (docente e studente) usano **SQLite**; il backend è compatibile con entrambi, con test su tutti e due in CI.
+> Sostituisce il Postgres incorporato (D4, §3.3): dettagli in [ADR-0003](adr/0003-dual-database-postgres-sqlite.md).
+> Le altre decisioni provvisorie dell'utente (firma, pilota, tunnel, pseudonimi, release, esclusioni, piattaforme) sono in §9.
 
 Le sezioni 1–2 sono pensate per chi non è tecnico; dalla 3 in poi il piano entra nei dettagli.
 
@@ -26,10 +32,10 @@ si collegano a quell'app attraverso un tunnel Cloudflare gratuito e un codice/QR
 
 | # | Tema | Raccomandazione | Alternative scartate (perché) |
 |---|------|-----------------|-------------------------------|
-| D1 | Contenitore dell'app | **Tauri v2** come guscio leggero che avvia dei *sidecar* (programmi inclusi): backend Python, server Next.js, Postgres, `cloudflared` | **Electron**: valido (Node incluso, utile a Next.js), ma +~100 MB per app e due motori da aggiornare; resta il piano B se WebKitGTK su Linux dà problemi. **Docker Desktop + launcher**: richiede installazione pesante, diritti di amministratore e virtualizzazione: contrario all'«un clic». |
+| D1 | Contenitore dell'app | **Tauri v2** come guscio leggero che avvia dei *sidecar* (programmi inclusi): backend Python, server Next.js, `cloudflared` (confermato da F0-01) | **Electron**: valido (Node incluso, utile a Next.js), ma +~100 MB per app e due motori da aggiornare; resta il piano B se WebKitGTK su Linux dà problemi. **Docker Desktop + launcher**: richiede installazione pesante, diritti di amministratore e virtualizzazione: contrario all'«un clic». |
 | D2 | Backend | Lo stesso FastAPI della madre, impacchettato con **PyInstaller** (modalità *onedir*) per ogni sistema, come già fatto per l'helper ChatGPT | Riscrivere il backend: fuori discussione. Nuitka: più lento da compilare, nessun vantaggio dimostrato qui. |
 | D3 | Frontend | Il build **standalone** di Next.js già prodotto oggi, eseguito da un runtime Node incluso | **Export statico** servito da FastAPI: elimina Node ma richiede di rifare 12 route dinamiche e 4 route API (vedi §3.2): da valutare dopo. |
-| D4 | Database | **Postgres incorporato** (binari Postgres avviati dall'app, dati nella cartella utente) | **SQLite**: oggi il backend usa costrutti Postgres in decine di punti (§3.3); la migrazione è possibile ma lunga e crea due varianti da mantenere. Si rivaluta solo per l'app studente (Fase 2), dove serve un DB piccolo e diverso. |
+| D4 | Database | **SQLite** nelle app desktop, **Postgres 15** su server e portable; backend unico compatibile con entrambi, CI su entrambi (decisione dell'utente del 24/10, [ADR-0003](adr/0003-dual-database-postgres-sqlite.md)) | **Postgres incorporato**: fattibile (spike F0-02), ma +22–110 MB per piattaforma e gestione di `initdb`/`pg_ctl`/`pg_upgrade`; scartato dall'utente. |
 | D5 | Tunnel | **Tunnel nominativo Cloudflare** (gratuito, con un account Cloudflare) come modalità consigliata; **quick tunnel** (`trycloudflare.com`) come modalità «prova subito» con limiti dichiarati | Solo quick tunnel: Cloudflare lo dichiara per test, senza garanzie e **senza Server-Sent Events**, che la chat usa per lo streaming (§3.4). ngrok/Tailscale Funnel: altri account e limiti, fuori dal vincolo «Cloudflare». |
 | D6 | Accesso studenti | **Codice di classe + QR** che contiene URL e **chiave di abbinamento**; ogni studente riceve poi un **token personale** revocabile; login locale gestito dall'app docente | Chiave unica condivisa per tutti: non revocabile per singolo studente. ai4auth: richiede la Console, che sul PC del docente non c'è. |
 | D7 | LLM locale | Un **provider «OpenAI-compatibile personalizzato»** (URL + chiave facoltativa) accanto a Ollama, con rilevamento automatico di Ollama (`:11434`) e LM Studio (`:1234`) | Un provider dedicato per ogni server locale: duplicazione inutile, LM Studio/vLLM/llama.cpp parlano tutti `/v1/chat/completions`. |
@@ -38,7 +44,7 @@ si collegano a quell'app attraverso un tunnel Cloudflare gratuito e un codice/QR
 | D10 | Firma | Partire **non firmati** con istruzioni (come già deciso per gli helper, #135); preparare la pipeline perché firmi **solo se** trova le credenziali; decisione su costi rinviata all'utente | Comprare subito certificati: decisione di spesa che spetta all'utente (#135 la blocca esplicitamente). |
 
 **Stima complessiva (indicativa, lavoro di agenti + revisione dell'utente):**
-Fase 0 (spike e contratti) ~1 settimana; **Fase 1 ~5–7 settimane**; **Fase 2 ~6–9 settimane**.
+Fase 0 (spike e contratti) ~1 settimana (chiusa); **Fase 1 ~6–8 settimane** (era 5–7: la compatibilità SQLite, F1-05a..j, vale ~19 giorni di lavoro in buona parte parallelo); **Fase 2 ~5–8 settimane** (F2-02 si riduce).
 Le stime sono larghe perché il packaging cross-platform si scopre solo provando sulle tre piattaforme.
 
 ---
@@ -51,7 +57,7 @@ Le stime sono larghe perché il packaging cross-platform si scopre solo provando
 
 | Pezzo | Dove | Cosa ci dice per il desktop |
 |------|------|------------------------------|
-| Postgres 15 | `docker-compose.portable.yml:6-23` | DB interno, un solo volume `postgres_data`: sul desktop diventa una cartella dati. |
+| Postgres 15 | `docker-compose.portable.yml:6-23` | DB interno, un solo volume `postgres_data`: sul desktop è **sostituito da SQLite** (ADR-0003). |
 | Piper (sintesi vocale) | `docker-compose.portable.yml:25-43` | Servizio separato, 2 GB di RAM massimi: in Fase 1 **opzionale** (l'audio ha già altri motori, es. `edge-tts` in `backend/requirements.txt`). |
 | Backend FastAPI | `docker-compose.portable.yml:45-103` | Un solo worker (`:51`), `OLLAMA_PRELOAD=false` (`:59`), `host.docker.internal` per raggiungere un Ollama sull'host (`:77`). Tutte le cartelle dati sono variabili d'ambiente (`:62-72`): basta puntarle alla cartella dati dell'app. |
 | Frontend Next.js | `docker-compose.portable.yml:105-137` | Build di produzione `standalone` (`frontend/next.config.ts:6`, `frontend/Dockerfile` stadio `runner`). |
@@ -95,7 +101,7 @@ di autenticazione intercambiabile prevista da #209.
 
 | Issue | Contenuto | Relazione con questo piano |
 |------|-----------|-----------------------------|
-| #207 | ADR dei tre profili (Console, PC docente, server di scuola) e packaging; cita i limiti del quick tunnel | **Assorbita** da questo documento per il profilo PC docente; restano da decidere i profili scuola |
+| #207 | ADR dei tre profili (Console, PC docente, server di scuola) e packaging; cita i limiti del quick tunnel | **Chiusa** da [ADR-0001](adr/0001-installation-profiles-and-desktop-packaging.md) (il server di scuola resta in #212) |
 | #208 | Ruoli admin per profilo (sul PC docente il docente è admin) | Prerequisito di F1 (compito F1-07) |
 | #209 | Auth intercambiabile: ai4auth / locale / istituto | Prerequisito di F1 (F1-06) |
 | #210 | Installer: `.env` locale, chiavi API locali, avvio, health check | Sostituita dall'app Tauri (F1-02, F1-08) |
@@ -126,7 +132,6 @@ PC del docente
 │ App Tauri (guscio, ~10 MB)                                    │
 │  pannello: Avvia/Ferma · stato · QR · chiavi API · LLM locale │
 │   │ avvia e sorveglia i sidecar (porte su 127.0.0.1)          │
-│   ├─ postgres  (cartella dati utente, porta casuale)          │
 │   ├─ backend   (PyInstaller, uvicorn 1 worker)                │
 │   ├─ frontend  (node + .next/standalone)                      │
 │   └─ cloudflared (quick o named tunnel → frontend)            │
@@ -137,7 +142,8 @@ PC del docente
 
 - Tutto ascolta solo su `127.0.0.1`; l'unica porta d'ingresso esterna è il tunnel (in uscita, nessuna porta aperta sul router).
 - Il docente usa l'app nella finestra Tauri o nel proprio browser (`http://127.0.0.1:<porta>`), già autenticato come admin locale.
-- Cartella dati: `~/Library/Application Support/CounselorBot`, `%APPDATA%\CounselorBot`, `~/.local/share/counselorbot` (percorsi standard forniti da Tauri). Lì: dati Postgres, memoria sessioni, indici RAG, upload, chiavi cifrate, log.
+- Database: **SQLite** in un file della cartella dati (ADR-0003); nessun sidecar Postgres.
+- Cartella dati: `app_local_data_dir()` di Tauri con identificatore `org.ai4educ.counselorbot.teacher` (macOS `~/Library/Application Support/…`, Windows `%LOCALAPPDATA%\…`, Linux `~/.local/share/…`). Lì: database SQLite, memoria sessioni, indici RAG, upload, chiavi cifrate, log, backup. Layout e variabili d'ambiente congelati in [ADR-0002 §1](adr/0002-desktop-phase-1-contracts.md).
 
 ### 3.2 Packaging cross-platform
 
@@ -172,36 +178,22 @@ in `frontend/next.config.ts` andrebbero tutti riportati in FastAPI.
 **Variabili di build.** Il frontend incorpora URL al momento del build (`frontend/Dockerfile`, `NEXT_PUBLIC_*`): per il desktop
 servono valori relativi (`NEXT_PUBLIC_API_URL=/api`) e un `NEXT_PUBLIC_APP_URL` letto a runtime, perché l'URL del tunnel cambia (F1-03).
 
-### 3.3 Database: Postgres incorporato o SQLite?
+### 3.3 Database: SQLite sul desktop, Postgres sui server
 
-Conteggio sul backend (esclusi i test), `main` @ `a92bb430`:
+**Decisione dell'utente (24/10): doppio database** — [ADR-0003](adr/0003-dual-database-postgres-sqlite.md).
+La prima stesura di questa sezione consigliava Postgres incorporato perché il backend usa costrutti Postgres
+in molti punti; lo spike [F0-02](spikes/f0-02-embedded-postgres.md) ne ha dimostrato la fattibilità, ma l'utente ha scelto SQLite.
 
-| Costrutto specifico Postgres | Occorrenze / file | Esempio | Su SQLite |
-|------------------------------|-------------------|---------|-----------|
-| `ALTER TABLE … ADD COLUMN IF NOT EXISTS` | 49 | `backend/main.py:644` | `IF NOT EXISTS` non supportato su `ADD COLUMN` |
-| `DROP/ADD CONSTRAINT` | 25 | `backend/migrations/20261009_institute_credentials.py` | non supportato (serve ricreare la tabella) |
-| `ALTER COLUMN` | 8 | migrazioni | non supportato |
-| `ALTER TABLE` totale | 104 in 27 file | 23 in `backend/main.py` | da riscrivere o proteggere |
-| `pg_advisory_(xact_)lock` | 39 in 38 file | `backend/timeline.py:101`, `backend/personal_api.py:63` | molti già protetti da `dialect.name == 'postgresql'` (41 controlli in 36 file, es. `backend/timeline.py:99`) |
-| `with_for_update` / `FOR UPDATE` | 58 in 31 file | | ignorato da SQLite (scritture serializzate comunque) |
-| `sqlalchemy.dialects.postgresql.insert` + `on_conflict_*` | 4 file | `backend/goals.py:360`, `backend/personal_api.py:6`, `backend/chatgpt_connections.py:20`, `backend/routes/forum.py:8` | esiste l'equivalente `sqlite.insert` |
-| cast `::text` / `::jsonb` | 7 in 4 file | `backend/main.py:558`, `backend/prompt_lab/provision.py:20` | da riscrivere con `CAST` |
-| `information_schema` | 1 | `backend/migrations/20260206_institution_code_password.py:14` | usare `PRAGMA`/`inspect` |
-| SQL testuale `text(...)` | 236 | | da rivedere caso per caso |
+Misure su `main` @ `b69e591a` (ADR-0003 §1–§2):
+- un database SQLite **nuovo** si crea già: `create_all` produce le 112 tabelle; il seed si ferma su 6 statement
+  `ADD COLUMN IF NOT EXISTS` in 3 file e, con quelli neutralizzati, completa in 5–8 s;
+- a runtime falliscono **5 advisory lock non protetti** e **1 `date_trunc`** (`routes/admin.py:659`);
+- semantica da correggere: `DateTime(timezone=True)` (161 colonne) torna senza fuso, chiavi esterne spente di default,
+  2 indici unici parziali senza `WHERE`, CHECK che cambiano tra versioni (aggiornamenti dei database esistenti);
+- la suite di test è oggi solo Postgres: va resa indipendente dal dialetto, con CI su entrambi.
 
-Segnali positivi: colonne `JSON` generiche, default SQLite in `database.py`, 22 file di test usano già SQLite in memoria,
-alcuni percorsi hanno ramo SQLite (`backend/chat_logic.py:168-175`).
-
-**Conclusione.** Migrare a SQLite è fattibile ma vale **settimane** e crea una seconda variante dello schema
-da tenere allineata a ogni nuova migrazione della madre (oggi una o più al giorno). Con Postgres incorporato
-il backend resta **identico** alla madre: stesse migrazioni, stessi test.
-
-Postgres incorporato: si includono i binari ufficiali (`postgres`, `initdb`, `pg_ctl`) per piattaforma
-(~30–60 MB compressi, da misurare), `initdb` al primo avvio nella cartella dati, porta casuale su `127.0.0.1`,
-password generata e salvata nel portachiavi di sistema. Rischi: aggiornamento di versione maggiore
-(serve `pg_upgrade` o dump/restore guidato), antivirus su Windows che rallentano i file del cluster.
-Backup: `pg_dump` dal pannello («Esporta backup») e prima di ogni aggiornamento dell'app.
-Esito dello spike F0-02 (fonti dei binari, dimensioni e tempi misurati): [spikes/f0-02-embedded-postgres.md](spikes/f0-02-embedded-postgres.md).
+Il lavoro è diviso nei blocchi **F1-05a..j** (§8). Backup: copia consistente del file con l'API di backup di SQLite
+(F1-05j), prima di ogni aggiornamento (F1-16).
 
 ### 3.4 Tunnel
 
@@ -232,15 +224,18 @@ per ricevere le intestazioni della risposta e chiusura degli stream silenziosi: 
 (da verificare in F0-03; non trovata documentazione ufficiale specifica per i tunnel).
 
 **Modello consigliato a due livelli:**
-1. **«Prova subito»** — quick tunnel, nessuna configurazione, avviso chiaro: link provvisorio e risposte
-   che arrivano tutte insieme (modalità senza streaming o a polling, F1-11).
+1. **«Prova subito»** — quick tunnel, nessuna configurazione, **solo per prove** (decisione dell'utente): link che cambia
+   a ogni avvio, nessuna garanzia, uso «di prova» secondo Cloudflare. Lo streaming funziona (F0-03), con heartbeat (F1-11).
 2. **«Classe stabile»** — tunnel nominativo: l'app guida il docente al login Cloudflare (`cloudflared tunnel login`)
-   e crea tunnel + record DNS. Serve un dominio: del docente, della scuola, o un sottodominio del progetto
-   (richiede un servizio centrale con un token Cloudflare: **domanda aperta Q3**).
+   e crea tunnel + record DNS sul **dominio Cloudflare del docente** (decisione dell'utente su Q3; per il proprietario `labform.net`).
+   Nessun servizio centrale del progetto.
 
 Alternative non Cloudflare (ngrok, Tailscale Funnel, Pinggy): escluse dal vincolo, citate solo come piano C.
 
 ### 3.5 Chiave e abbinamento
+
+Contratto congelato (API, tabelle, durate, limiti, codice personale per il rientro): [ADR-0002 §3–§4](adr/0002-desktop-phase-1-contracts.md).
+Questa sezione resta come sintesi.
 
 - **Codice di classe** = URL del tunnel + identificativo classe + **chiave di abbinamento** casuale (≥128 bit),
   mostrato come QR e come link `https://<tunnel>/unisciti#k=<chiave>` (la chiave nel frammento `#` non finisce nei log).
@@ -282,7 +277,7 @@ Alternative non Cloudflare (ngrok, Tailscale Funnel, Pinggy): escluse dal vincol
   Non include pannelli docente/admin.
 - Due possibilità per il motore locale:
   - **A (consigliata)**: stesso backend Python in modalità «studente», con **SQLite** e solo le tabelle dello studente.
-    Riusa prompt e logica di chat; richiede di separare il sottoinsieme di migrazioni compatibili SQLite (F2-02).
+    Riusa prompt e logica di chat; il backend è già compatibile SQLite dopo F1-05a..j (ADR-0003), F2-02 sceglie il sottoinsieme.
   - **B**: logica in TypeScript/Rust: riscrittura dei prompt e del flusso guidato → scartata.
 - Dati locali **cifrati** (SQLCipher o cifratura a livello di file con chiave nel portachiavi del sistema).
 
@@ -388,13 +383,13 @@ Workflow `desktop-release.yml`, attivato da **pubblicazione della Release** (o t
 | Runner | Target | Prodotti |
 |--------|--------|----------|
 | `macos-14` (arm64) | `aarch64-apple-darwin` | `.dmg`, `.app.tar.gz` (+ `.sig`) |
-| `macos-13` (x64) | `x86_64-apple-darwin` | idem (o binario universale) |
+| `macos-15-intel` (x64; `macos-13` è in dismissione, F0-01) | `x86_64-apple-darwin` | idem (o binario universale) |
 | `windows-latest` | `x86_64-pc-windows-msvc` | `.msi`/NSIS `.exe` (+ `.sig`) |
 | `ubuntu-22.04` | `x86_64-unknown-linux-gnu` | `.AppImage`, `.deb` (+ `.sig`) |
 
-Passi per ogni runner: build PyInstaller del backend → download binari Postgres, Node, `cloudflared` per il target
+Passi per ogni runner: build PyInstaller del backend → download binari Node e `cloudflared` per il target
 (versioni fissate con checksum) → `next build` → `tauri build` (azione ufficiale `tauri-action`, che carica
-gli asset e genera `latest.json` per l'updater). Smoke test: avvio headless, `GET /auth/me` sul backend, stop.
+gli asset e genera `latest.json` per l'updater). Smoke test: avvio headless (`--smoke`), `GET /health` sul backend (ADR-0002 §2.2), stop.
 Su PR: solo build Linux + smoke test, per contenere i minuti di CI.
 
 ### 6.3 Firma e notarizzazione
@@ -413,7 +408,7 @@ decisione su Apple e Windows insieme a #135.
 
 - Updater Tauri con `latest.json` sulle GitHub Releases. Canali: **stabile** (Release pubblicate) e **beta**
   (pre-release), scelti nel pannello.
-- Prima di applicare un aggiornamento: backup `pg_dump` automatico; le migrazioni della madre girano all'avvio come oggi.
+- Prima di applicare un aggiornamento: backup automatico del file SQLite (F1-05j); le migrazioni della madre girano all'avvio come oggi.
 - Docente e studenti devono restare compatibili: versione di protocollo di sync separata (§4.5).
 
 ---
@@ -448,9 +443,10 @@ decisione su Apple e Windows insieme a #135.
 
 ### 7.3 Rischi di progetto
 
-- **Pacchettizzazione su tre sistemi** (librerie native Python, Postgres, Node): rischio alto → spike F0-01/F0-02 prima di tutto.
+- **Pacchettizzazione su tre sistemi** (librerie native Python, Node): ridotto dagli spike F0-01/F0-02 (build verdi sui 4 runner).
+- **Doppio database**: ogni nuova migrazione o SQL della madre può rompere SQLite → CI su entrambi e controllo statico (ADR-0003 §5).
 - **Deriva dalla madre**: ogni nuova dipendenza nativa o servizio Compose rompe il desktop → smoke test desktop in CI.
-- **Peso dell'installer** (stima 300–500 MB): accettabile per il docente, pesante per lo studente → app studente senza Postgres né Piper.
+- **Peso dell'installer** (stima 300–500 MB): accettabile per il docente, pesante per lo studente → app studente senza Piper (nessuna delle due app include Postgres).
 - **Supporto utenti** su PC eterogenei per un solo sviluppatore: limitare le piattaforme ufficiali (macOS 13+, Windows 10/11 x64, Ubuntu 22.04+).
 
 ---
@@ -459,51 +455,68 @@ decisione su Apple e Windows insieme a #135.
 
 Legenda tier: **T1** = meccanico/piccolo (modello veloce), **T2** = implementazione standard, **T3** = architettura,
 sicurezza o multipiattaforma (modello più capace + revisione). Stime in giorni di lavoro effettivo.
-🔒 = richiede un contratto congelato prima di iniziare. ∥ = parallelizzabile con gli altri ∥ dello stesso blocco.
+🔒 = implementa un contratto congelato in un ADR (non si cambia senza un nuovo ADR). ∥ = parallelizzabile.
+✅ = fatto.
 
-### Fase 0 — Spike e contratti (~1 settimana)
+### Fase 0 — Spike e contratti (chiusa)
+
+| ID | Compito | Esito | Issue |
+|----|---------|-------|-------|
+| F0-01 ✅ | Spike Tauri + backend PyInstaller su mac/win/linux | [report](spikes/f0-01-tauri-pyinstaller.md): verde sui 4 runner; problemi `fcntl` (→ F1-18), percorsi (→ ADR-0002), processo orfano (→ ADR-0002 §2.4) | #509 |
+| F0-02 ✅ | Spike Postgres incorporato | [report](spikes/f0-02-embedded-postgres.md): fattibile; **superato** dalla decisione SQLite (ADR-0003) | #502 |
+| F0-03 ✅ | Spike tunnel e SSE | [report](spikes/f0-03-tunnel-sse.md): streaming `POST` ok sul quick tunnel, taglio a 60 s senza byte → heartbeat (F1-11). Resta aperta la misura sul tunnel nominativo (#505, serve il login del proprietario) | #505 |
+| F0-04 ✅ | ADR e contratti | [ADR-0001](adr/0001-installation-profiles-and-desktop-packaging.md) (chiude #207), [ADR-0002](adr/0002-desktop-phase-1-contracts.md), [ADR-0003](adr/0003-dual-database-postgres-sqlite.md) | #514 |
+
+### Fase 1 — App docente (~6–8 settimane)
 
 | ID | Compito | Definition of Done | Stima | Dipende da | Tier |
 |----|---------|--------------------|-------|------------|------|
-| F0-01 ∥ | Spike Tauri + backend PyInstaller su mac/win/linux | Un'app Tauri «hello» che avvia il backend impacchettato e mostra `/auth/me` sui 3 sistemi; elenco problemi librerie native | 3 | — | T3 |
-| F0-02 ∥ | Spike Postgres incorporato | `initdb` + avvio + migrazioni della madre su cartella utente nei 3 sistemi; misura dimensioni e tempo di primo avvio | 2 | — | T3 |
-| F0-03 ∥ | Spike tunnel e SSE | Misura con quick tunnel e tunnel nominativo: SSE della chat, richieste parallele per pagina, comportamento a 100 s; report | 1 | — | T2 |
-| F0-04 | ADR e contratti | ADR che chiude #207 per il profilo teacher-pc; contratti congelati: identità locale (#209), abbinamento/token, layout cartella dati, interfaccia guscio↔sidecar (porte, health, log) | 1 | F0-01..03 | T3 |
-
-### Fase 1 — App docente (~5–7 settimane)
-
-| ID | Compito | Definition of Done | Stima | Dipende da | Tier |
-|----|---------|--------------------|-------|------------|------|
-| F1-01 | Versione unica nel repo | File `VERSION`, script di propagazione, check CI di allineamento, primo tag | 1 | — | T1 |
-| F1-02 🔒 | Guscio Tauri: avvio/stop/sorveglianza sidecar | Avvio in un clic, riavvio sidecar caduti, log in cartella dati, chiusura pulita | 4 | F0-04 | T3 |
+| F1-01 ✅ | Versione unica nel repo | File `VERSION`, script di propagazione, check CI (#501) | 1 | — | T1 |
+| F1-02 🔒 | Guscio Tauri: avvio/stop/sorveglianza sidecar | ADR-0002 §1–§2: cartella dati e `layout.json`, porte, `GET /health` nel backend, log su file con rotazione, pipe di vita su stdin (backend e `server-wrapper.js`), Job Object su Windows, lifeline `--lifeline` per `cloudflared` su macOS/Linux, pulizia PID al riavvio, codici di uscita, `/internal/*` protetto. Test: uccidere il guscio con SIGKILL / «Termina processo» non lascia processi sui 3 sistemi, `cloudflared` compreso (CI) | 5 | F0-04 | T3 |
 | F1-03 ∥ | Frontend senza URL fissi al build | `NEXT_PUBLIC_APP_URL` e affini letti a runtime; build standalone identica per Docker e desktop; test | 2 | F0-04 | T2 |
-| F1-04 ∥ | Dipendenze native | `dot`, `pdftoppm`, `tesseract` inclusi o disattivati con messaggio; matrice per piattaforma | 3 | F0-01 | T2 |
-| F1-05 ∥ | Gestore Postgres incorporato | Primo avvio, password nel portachiavi, backup `pg_dump`, ripristino; test | 3 | F0-02, F1-02 | T2 |
-| F1-06 🔒 | Fornitore di identità locale (parte di #209) | Docente-admin locale; studenti con token; ai4auth invariato per Console; test per fornitore | 4 | F0-04 | T3 |
+| F1-04 ✅ | Dipendenze native | `pdf2image`/Poppler sostituiti da PyMuPDF; `dot` rilevato a runtime (`backend/native_deps.py`, `NATIVE_BIN_DIR`, `GET /capabilities`); matrice per piattaforma in [`desktop-native-deps.md`](desktop-native-deps.md) (#516) | 3 | F0-01 | T2 |
+| F1-05a 🔒 ∥ | Compatibilità SQLite — fixture e CI a doppio DB | ADR-0003 §5: `artifact_database.py` indipendente dal dialetto (`TEST_DB=postgres|sqlite`, SQLite su file con i PRAGMA desktop), marcatore `postgres_only`, cricchetto `sqlite_known_failures.txt`, `scripts/check-sql-portability.py` con eccezioni, workflow `backend-db.yml` (solo PR su `backend/**` e manuale), regola test aggiornata in `CONTEXT.md`. Report del numero di test verdi su SQLite al punto di partenza | 3 | F0-04 | T3 |
+| F1-05b ∥ | Compatibilità SQLite — motore | `backend/database.py`: WAL, `busy_timeout=5000`, `foreign_keys=ON`, `synchronous=NORMAL`; controllo SQLite ≥ 3.35 (uscita 3); `is_sqlite()`/`is_postgres()` in `backend/db_compat.py`; transazioni aperte dall'evento `begin`, **`BEGIN IMMEDIATE`** per le sessioni di scrittura (`get_db` su POST/PUT/PATCH/DELETE, `write_session()`) e deferred per le letture (ADR-0003 §4.3). Test: PRAGMA attivi, cascata `ondelete` su SQLite, versione, due scritture concorrenti read-then-write senza `SQLITE_BUSY` | 1,5 | F0-04 | T2 |
+| F1-05c | Compatibilità SQLite — colonne idempotenti | `add_column_if_missing` in `db_compat.py`; sostituite le 49 righe `ADD COLUMN IF NOT EXISTS` (24 file), obbligatori i 6 punti dell'avvio (`personal_api.py:194`, `:196`; `counselor_identity.py:696-698`; `main.py:659`); default senza `::json`. Test: avvio su SQLite nuovo **due volte** sullo stesso file e su Postgres, zero errori non inghiottiti | 2 | F1-05a, F1-05b | T2 |
+| F1-05d | Compatibilità SQLite — lock | `xact_lock(db, *parti)` (ADR-0003 §4.2): advisory lock con chiave `blake2b` su Postgres, lock in processo rilasciato a fine transazione su SQLite, rifiuto di SQLite con più worker; sostituite le 39 chiamate (38 file), inclusi i 5 punti non protetti e `hashtext`. Test di concorrenza a thread su entrambi i DB per assegnazioni, istituti, privacy esterna | 2 | F1-05a, F1-05b | T3 |
+| F1-05e | Compatibilità SQLite — date e ore UTC | `UTCDateTime` (`TypeDecorator`, `impl = DateTime(timezone=True)`) al posto delle 161 `DateTime(timezone=True)` in `models.py`; test di andata e ritorno aware su entrambi e confronto con `datetime.now(timezone.utc)`; test che la DDL compilata per Postgres è identica a prima (`TIMESTAMP WITH TIME ZONE`, nessuna migrazione) | 1,5 | F1-05a | T2 |
+| F1-05f | Compatibilità SQLite — SQL a runtime | ramo `strftime` per `routes/admin.py:659`; `sqlite_where` sugli indici parziali `models.py:2086`, `:2088`; `dialect_insert` per i 4 file con upsert. Test: costi per periodo su SQLite, riprenotazione di uno slot dopo l'annullamento, upsert concorrenti | 1,5 | F1-05a, F1-05e (stesso `models.py`) | T2 |
+| F1-05g | Compatibilità SQLite — aggiornamenti dello schema | ADR-0003 §3: regola «migrazione doppia» in `CONTEXT.md`; `alembic` come libreria per `batch_alter_table` su SQLite; sincronizzazione dei CHECK all'avvio. Test: database SQLite creato con lo schema di una versione precedente (fixture) e aggiornato; CHECK di `class_path_steps` allineato dopo l'aggiornamento | 3 | F1-05c, F1-05e | T3 |
+| F1-05h | Compatibilità SQLite — concorrenza e carico | script di carico (30 studenti simulati con chat in streaming + cicli di pulizia); nessun `database is locked`; nessuna transazione `BEGIN IMMEDIATE` aperta durante una chiamata a un modello (commit prima della chiamata, sessioni brevi per salvare il risultato) nelle rotte di chat, site-chat, TTS e nei job; report | 2 | F1-05d | T3 |
+| F1-05i ∥ | Compatibilità SQLite — funzioni escluse dal profilo | `COUNSELORBOT_PROFILE=teacher-pc` disattiva Prompt Lab, Telegram, OpenCode, Console sync, helper ChatGPT, Piper (rotte 404, nessun avvio di worker); test per profilo | 1 | F0-04 | T2 |
+| F1-05j | Compatibilità SQLite — backup e ripristino | backup consistente con l'API di backup di SQLite in `backups/`, `PRAGMA integrity_check`, ripristino guidato, conservazione degli ultimi N; test | 1,5 | F1-05b, F1-02 | T2 |
+| F1-19 🔒 ∥ | Origine della richiesta (tunnel o locale) nel frontend | ADR-0002 §2.7: helper unico che decide `tunnel`/`local` dalle intestazioni `cf-*`, cancella le `X-CounselorBot-*` in arrivo e imposta origine, IP del client e segreto; usato in `frontend/src/proxy.ts` (rewrite `/api`), `stream-proxy.ts` e rotta TTS; backend fail-closed (assente o segreto errato ⇒ `tunnel`). Test: richiesta con `cf-connecting-ip` ⇒ `tunnel`; intestazioni contraffatte scartate; streaming e rewrite portano la stessa origine | 1,5 | F0-04 | T3 |
+| F1-06 🔒 | Fornitore di identità locale (parte di #209) | ADR-0002 §3: `AUTH_PROVIDER`, `local_sessions`, link monouso del docente, sessione docente rifiutata dal tunnel; ai4auth invariato. Test per fornitore su entrambi i DB | 4 | F0-04, F1-05a, F1-19 | T3 |
 | F1-07 | Ruoli profilo teacher-pc (#208) | Docente = admin, funzioni laboratorio nascoste, rotte admin solo locali; test 403 da tunnel | 2 | F1-06 | T2 |
-| F1-08 ∥ | Pannello chiavi API e portachiavi | Inserimento/verifica chiavi, salvataggio sicuro, passaggio al backend come env; nessun segreto su disco | 2 | F1-02 | T2 |
-| F1-09 | Quick tunnel automatico (#211) | Avvio/stop `cloudflared`, lettura URL, QR e messaggio da condividere | 2 | F1-02 | T2 |
-| F1-10 | Tunnel nominativo guidato (#214) | Login Cloudflare, creazione tunnel e DNS, URL stabile salvato | 3 | F1-09, Q3 | T2 |
-| F1-11 | Chat senza SSE quando serve | Se F0-03 conferma il limite: trasporto a polling/non-streaming selezionato in automatico sul quick tunnel; heartbeat SSE sul nominativo | 3 | F0-03 | T3 |
-| F1-12 ∥ | LLM locale: provider OpenAI-compatibile con chiave + rilevamento | Chiave configurabile per `llamacpp`, rilevamento Ollama/LM Studio, controllo raggiungibilità, test | 2 | — | T2 |
-| F1-13 🔒 | Abbinamento studenti | QR/link, scambio chiave→token, elenco dispositivi, rotazione, revoca, rate limit; test di sicurezza | 4 | F1-06, F1-09 | T3 |
+| F1-08 | Pannello chiavi API e portachiavi | Inserimento/verifica chiavi, salvataggio sicuro, passaggio al backend come env; nessun segreto su disco | 2 | F1-02 | T2 |
+| F1-09 | Quick tunnel automatico (#211) | Avvio/stop `cloudflared`, lettura URL, QR e messaggio «solo prove»; conteggio richieste per pagina (HAR, da F0-03) | 2 | F1-02 | T2 |
+| F1-10 | Tunnel nominativo guidato (#214) | Login Cloudflare del docente, creazione tunnel e DNS sul suo dominio (`labform.net` per il proprietario), URL stabile salvato; misura di F0-03 §3 | 3 | F1-09 | T2 |
+| F1-11 ∥ | Heartbeat SSE e test di regressione del tunnel | `: ping` ogni 15 s su `chat`, `site_chat`, `voice_reader`; intestazioni prima della chiamata al modello; job manuale contro un quick tunnel (F0-03 §5) | 1,5 | F0-03 | T2 |
+| F1-12 ✅ | LLM locale: chiave facoltativa + rilevamento | (#504) | 2 | — | T2 |
+| F1-13 🔒 | Abbinamento studenti | ADR-0002 §4: codici di classe, `pair`/`recover`, codice personale, pseudonimi senza enumerazione, approvazione, revoca, limiti; test di sicurezza su entrambi i DB | 4 | F1-06, F1-09 | T3 |
 | F1-14 | Anti-sospensione e stato «docente offline» | Inibizione sospensione a lezione attiva sui 3 sistemi; pagina offline per gli studenti | 2 | F1-02 | T2 |
-| F1-15 | CI release desktop | Workflow matrice, asset nella Release, `latest.json`, smoke test; firma condizionale ai segreti | 4 | F1-01, F1-02 | T3 |
-| F1-16 | Updater e backup pre-aggiornamento | Canali stabile/beta, backup automatico, rollback documentato | 2 | F1-15, F1-05 | T2 |
+| F1-15 | CI release desktop | Workflow matrice (`macos-14`, `macos-15-intel`, `windows-latest`, `ubuntu-22.04`), asset nella Release, `latest.json`, smoke test `--smoke` + `/health`; firma condizionale ai segreti | 4 | F1-01, F1-02 | T3 |
+| F1-16 | Updater e backup pre-aggiornamento | Canali stabile/beta, backup automatico (F1-05j), rollback documentato | 2 | F1-15, F1-05j | T2 |
 | F1-17 | Documentazione e test (#213) | Guida docente in `docs/operations/`, `funzionalita-counselorbot.md`, privacy/DPIA modello, smoke test | 3 | tutti | T2 |
-| F1-18 | Lock di file portabile nel backend | `fcntl` sostituito da un lock comune (`flock` su POSIX, `msvcrt` su Windows) in `rag_index.py` e `rag_reindex_job.py`; test di esclusione e concorrenza; job CI `windows-latest` che importa il backend | 1 | F0-01 | T2 |
+| F1-18 ✅ | Lock di file portabile nel backend (`fcntl` non portabile su Windows) | `backend/file_lock.py`: `flock` su POSIX (semantica invariata), lock **esclusivo** del primo byte con `msvcrt` su Windows (nessun lock condiviso); usato in `rag_index.py` e `rag_reindex_job.py`; test di esclusione e concorrenza (`backend/tests/test_file_lock.py`); job CI `backend-windows.yml` su `windows-latest` che importa il backend (#513) | 1 | F0-01 | T2 |
 
-Parallelismo: dopo F0-04, **F1-03, F1-04, F1-08, F1-12** possono procedere insieme; F1-06 e F1-13 sono sul percorso
-critico della sicurezza e vanno in sequenza. F1-12 è indipendente e utile anche all'installazione attuale.
+**Cosa parte in parallelo dopo questo ADR**
 
-### Fase 2 — App studente (~6–9 settimane)
+- **Subito, in parallelo** (file diversi): F1-02 (guscio, `desktop/`), F1-03 (frontend),
+  F1-05a (test e CI), F1-05b (`database.py`), F1-05i (profilo), F1-11 (rotte SSE), F1-19 (origine della richiesta, frontend). F1-04 (#516) e F1-18 (#513) sono già su `main`.
+- **Dopo F1-05a + F1-05b**: F1-05c ∥ F1-05d ∥ F1-05e ∥ F1-06. F1-05f dopo F1-05e (stesso `models.py`).
+- **Poi**: F1-05g (dopo c, e), F1-05h (dopo d), F1-05j (dopo b e F1-02); F1-07 e F1-13 dopo F1-06.
+- **Percorsi critici**: sicurezza F1-05a + F1-19 → F1-06 → F1-13 → F1-07; guscio F1-02 → F1-09 → F1-13 → F1-15 → F1-16.
+- Regola per tutti i compiti che toccano `backend/` da qui in avanti: ADR-0003 §6 (codice portabile, CI su entrambi i DB).
+
+### Fase 2 — App studente (~5–8 settimane)
 
 | ID | Compito | Definition of Done | Stima | Dipende da | Tier |
 |----|---------|--------------------|-------|------------|------|
 | F2-01 🔒 | Contratto di sincronizzazione | Documento + schema eventi, cursori, errori, versione di protocollo, regole di conflitto; revisione utente | 3 | Fase 1 | T3 |
-| F2-02 | Sottoinsieme backend «studente» su SQLite | Tabelle e migrazioni dello studente compatibili SQLite; test di parità sulle stesse rotte | 8 | F2-01 | T3 |
+| F2-02 | Sottoinsieme backend «studente» su SQLite | Modalità studente del backend (già compatibile SQLite dopo F1-05): solo tabelle e rotte dello studente; test di parità sulle stesse rotte | 4 | F2-01, F1-05a..j | T3 |
 | F2-03 ∥ | Endpoint di sync sull'app docente | `push`/`pull` idempotenti, autorizzazione per token studente, test conflitti | 5 | F2-01 | T3 |
-| F2-04 ∥ | Guscio Tauri studente + UI ridotta | Abbinamento tramite QR, chat, questionari, taccuino, tavolo | 6 | F2-01 | T2 |
+| F2-04 ∥ | Guscio Tauri studente + UI ridotta | Abbinamento tramite QR, chat, questionari, taccuino, tavolo; identificatore `org.ai4educ.counselorbot.student` (ADR-0002 §1) | 6 | F2-01 | T2 |
 | F2-05 | Motore di sync client | Coda offline, ritentativi, indicatore stato, risoluzione conflitti visibile | 5 | F2-02, F2-03 | T3 |
 | F2-06 ∥ | Cifratura dati locali | DB cifrato, chiave nel portachiavi, test di non leggibilità | 3 | F2-02 | T3 |
 | F2-07 ∥ | LLM locale lato studente | Rilevamento, scelta modello, livello di contesto Minimo, fallback all'app docente | 3 | F2-04, F1-12 | T2 |
@@ -514,22 +527,32 @@ critico della sicurezza e vanno in sequenza. F1-12 è indipendente e utile anche
 
 ## 9. Domande aperte per l'utente
 
-1. **Q1 — Chi usa la Fase 1?** Un docente pilota (te) o docenti esterni senza competenze tecniche? Cambia quanto investire su firma, supporto e installer.
-2. **Q2 — Firma delle app**: confermi «non firmate» all'inizio (come #135)? Chi pagherebbe Apple (99 USD/anno) e un certificato Windows (Artifact Signing richiede un'organizzazione UE, es. l'università)?
-3. **Q3 — Dominio per il tunnel stabile**: ogni docente usa il proprio account/dominio Cloudflare, oppure il progetto offre sottodomini (es. `<docente>.labform.net`) tramite un piccolo servizio centrale con token Cloudflare?
-4. **Q4 — Quick tunnel per lezioni reali**: accetti che sia solo «prova» (senza streaming) oppure è il caso d'uso principale? In quel caso F1-11 diventa prioritario.
-5. **Q5 — Account studenti**: pseudonimi creati dallo studente, oppure elenco classe pre-caricato dal docente? Serve recupero se lo studente cambia dispositivo?
-6. **Q6 — Ritmo delle release della madre**: oggi non ci sono tag pubblicati. Una release a settimana? Solo su tua richiesta? Ogni release produrrà le app.
-7. **Q7 — Funzioni escluse dal desktop**: Telegram, OpenCode, Prompt Lab, Piper, helper ChatGPT, Console sync: possiamo escluderle dalla Fase 1?
-8. **Q8 — Piattaforme minime**: va bene macOS 13+ (arm64 e x64), Windows 10/11 x64, Ubuntu 22.04+? Chromebook/tablet degli studenti restano «solo browser»?
-9. **Q9 — Dati sul PC del docente**: la scuola accetta che i dati degli studenti stiano sul PC personale del docente? Serve un parere del DPO prima del pilota.
-10. **Q10 — Fase 2: cosa vede il docente** delle conversazioni fatte offline dallo studente: tutto, solo i risultati, o ciò che lo studente decide di condividere?
+Decisioni **provvisorie** dell'utente (24/10), valide finché non dice altro:
+
+| Domanda | Decisione provvisoria |
+|---|---|
+| Q1 — Chi usa la Fase 1? | pilota = il proprietario stesso |
+| Q2 — Firma delle app | **non firmate** su Apple e Windows; firma condizionale a segreti futuri |
+| Q3 — Dominio per il tunnel stabile | account/dominio Cloudflare **del docente** (per il proprietario `labform.net`) |
+| Q4 — Quick tunnel per lezioni reali | **solo per prove** |
+| Q5 — Account studenti | **pseudonimi** (rientro con codice personale, ADR-0002 §4.2) |
+| Q6 — Ritmo delle release della madre | su richiesta del proprietario; ogni release produce anche le app |
+| Q7 — Funzioni escluse dal desktop | Telegram, OpenCode, Prompt Lab, Piper, helper ChatGPT, Console sync esclusi dalla Fase 1 |
+| Q8 — Piattaforme minime | macOS 13+ arm64/x64, Windows 10/11 x64, Ubuntu 22.04+ |
+| — Database | doppio: Postgres server/portable, SQLite desktop (ADR-0003) |
+| — LLM locale | Ollama, LM Studio o server OpenAI-compatibile, per docente e studente (studente: Fase 2) |
+| — Agenti di sviluppo | solo Anthropic/Claude Code |
+
+Ancora aperte:
+
+1. **Q9 — Dati sul PC del docente**: la scuola accetta che i dati degli studenti stiano sul PC personale del docente? Serve un parere del DPO prima di un pilota con classi reali.
+2. **Q10 — Fase 2: cosa vede il docente** delle conversazioni fatte offline dallo studente: tutto, solo i risultati, o ciò che lo studente decide di condividere?
 
 ---
 
 ## Verifiche e limiti di questo documento
 
-- Conteggi e riferimenti `file:riga` ricavati da `main` @ `a92bb430` con `grep`; i conteggi includono commenti e righe protette da controlli di dialetto, quindi sono una stima del lavoro, non un elenco di errori.
+- Conteggi e riferimenti `file:riga` delle sezioni 1–7 ricavati da `main` @ `a92bb430` con `grep`; quelli di §3.3 e §8 (F1-05a..j, F1-18) da `main` @ `b69e591a` (ADR-0003 §1); i conteggi includono commenti e righe protette da controlli di dialetto, quindi sono una stima del lavoro, non un elenco di errori.
 - Verificato su fonti ufficiali: limiti del quick tunnel (Cloudflare), limiti account tunnel (Cloudflare One), sidecar e updater Tauri, endpoint OpenAI-compatibili di Ollama e LM Studio, prezzo Apple Developer Program.
 - Da fonti giornalistiche (non ufficiali): prezzi e disponibilità geografica di Azure Artifact Signing.
-- **Non verificato**: comportamento reale di SSE su tunnel nominativo (solo fonti non ufficiali), condizioni d'uso Cloudflare per uso continuativo del quick tunnel, esenzioni Apple per enti educativi, prezzi dei certificati Windows OV/EV, dimensioni effettive dell'installer, requisiti hardware dei modelli locali su CounselorBot. Sono tutti obiettivi degli spike F0-01..F0-03.
+- **Non verificato**: comportamento reale di SSE su tunnel nominativo (solo fonti non ufficiali), condizioni d'uso Cloudflare per uso continuativo del quick tunnel, esenzioni Apple per enti educativi, prezzi dei certificati Windows OV/EV, dimensioni effettive dell'installer, requisiti hardware dei modelli locali su CounselorBot. Gli spike F0-01..F0-03 ne hanno chiuso una parte (vedi i report); restano aperti SSE sul tunnel nominativo (#505), ToS del quick tunnel, esenzioni Apple, prezzi OV/EV, requisiti hardware dei modelli locali.
