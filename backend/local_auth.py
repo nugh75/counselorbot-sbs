@@ -81,7 +81,20 @@ def create_session(db: Session, username: str, kind: str, device_label: Optional
     return token
 
 
-def _identity(row: models.LocalSession) -> dict:
+def set_session_cookie(response: Response, token: str, kind: str, is_local: bool) -> None:
+    response.set_cookie(
+        COOKIE_NAME,
+        token,
+        max_age=int(SESSION_TTL[kind].total_seconds()),
+        path="/",
+        httponly=True,
+        samesite="lax",
+        # Origine local = http://127.0.0.1; il tunnel e' sempre https.
+        secure=not is_local,
+    )
+
+
+def _identity(row: models.LocalSession, student: Optional[models.LocalStudent] = None) -> dict:
     if row.kind == "teacher":
         return {
             "email": "",
@@ -92,11 +105,10 @@ def _identity(row: models.LocalSession) -> dict:
             "is_researcher": False,
             "authenticated": True,
         }
-    # Pseudonimo e classe degli studenti arrivano con l'abbinamento (F1-13).
     return {
         "email": "",
         "username": row.username,
-        "name": row.username,
+        "name": student.pseudonym,
         "groups": ["studenti"],
         "is_admin": False,
         "is_researcher": False,
@@ -117,11 +129,17 @@ def identity_from_request(request: Request) -> Optional[dict]:
             return None
         if row.kind == "teacher" and not is_local:
             return None
+        student = None
+        if row.kind == "student":
+            # In attesa di approvazione (ADR-0002 §4.2) l'identita' esiste ma resta anonima.
+            student = db.query(models.LocalStudent).filter(models.LocalStudent.username == row.username).first()
+            if student is None or student.status != "active":
+                return None
         if now - row.last_seen_at >= LAST_SEEN_INTERVAL:
             row.last_seen_at = now
             row.expires_at = now + SESSION_TTL[row.kind]
             db.commit()
-        return _identity(row)
+        return _identity(row, student)
 
 
 def _require_local_provider():
@@ -154,14 +172,19 @@ def redeem(payload: RedeemRequest, request: Request, db: Session = Depends(datab
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_or_expired_token")
     token = create_session(db, TEACHER_USERNAME, "teacher")
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
-    response.set_cookie(
-        COOKIE_NAME,
-        token,
-        max_age=int(SESSION_TTL["teacher"].total_seconds()),
-        path="/",
-        httponly=True,
-        samesite="lax",
-        # Origine local = http://127.0.0.1; il tunnel e' sempre https.
-        secure=not origin.is_local,
-    )
+    set_session_cookie(response, token, "teacher", origin.is_local)
+    return response
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(request: Request, db: Session = Depends(database.get_db)):
+    """Revoca la sessione corrente (ADR-0002 §4.2); senza sessione valida non fa nulla."""
+    token = request.cookies.get(COOKIE_NAME)
+    if token:
+        row = db.query(models.LocalSession).filter(models.LocalSession.token_hash == _hash(token)).first()
+        if row is not None and row.revoked_at is None:
+            row.revoked_at = _now()
+            db.commit()
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    response.delete_cookie(COOKIE_NAME, path="/")
     return response
