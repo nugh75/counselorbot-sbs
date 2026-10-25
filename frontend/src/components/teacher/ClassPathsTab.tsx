@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { administrationStepText } from '@/lib/i18n-administration-steps';
@@ -43,7 +43,7 @@ import { PathDiscussionEditor } from './PathDiscussionEditor';
 import { StepKindPicker } from './StepKindPicker';
 import { ClassMeetingsManager } from './ClassMeetingsManager';
 import { classMeetingText } from '@/lib/i18n-class-meetings';
-import { meetingWhen } from '@/lib/class-meetings';
+import { meetingWhen, type ClassMeeting } from '@/lib/class-meetings';
 import { stepKindText, type StepKindTextKey } from '@/lib/i18n-step-kinds';
 import { ADMINISTRATION_QUESTIONNAIRES, guidedChatKeys, isLegacyQuestionnaireTool, isPersonalTool, type StepKind } from '@/lib/path-step-kinds';
 
@@ -160,6 +160,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     const [forumLoadError, setForumLoadError] = useState(false);
     const [selectedTopic, setSelectedTopic] = useState('');
     const [discussionEditor, setDiscussionEditor] = useState<{topicId: number | null} | null>(null);
+    const [meetingEditor, setMeetingEditor] = useState<{id: number | null; adding: boolean} | null>(null);
     const loadForumTopics = async (select?: number) => {
         try {
             const response = await apiFetch(`/api/groups/${path.group_id}/forum/topics?limit=100`);
@@ -180,6 +181,25 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     // A saved plan reads as a summary: «Modifica» reopens the plan details or one step.
     const [editingPlan, setEditingPlan] = useState(path.steps.length === 0);
     const [openSteps, setOpenSteps] = useState<ClassPathStep[]>([]);
+    // Refresh shared meeting metadata in both snapshots, preserving plan edits and open fields.
+    const meetingsChanged = useCallback((rows: ClassMeeting[]) => {
+        const meetings = new Map(rows.map(row => [row.id, row]));
+        const updates = new Map<ClassPathStep, ClassPathStep>();
+        const update = (step: ClassPathStep): ClassPathStep => {
+            const meeting = step.step_type === 'meeting' ? meetings.get(step.meeting_id ?? 0) : undefined;
+            if (!meeting) return step;
+            const cached = updates.get(step);
+            if (cached) return cached;
+            const updated = {...step, meeting_summary: meeting.status === 'cancelled' ? null : meeting,
+                availability_reason: meeting.status === 'cancelled' ? 'meeting_cancelled' : null};
+            updates.set(step, updated);
+            return updated;
+        };
+        setStepsState(current => current.map(update));
+        setCurrentPath(current => ({...current, steps: current.steps.map(update)}));
+        setOpenSteps(current => current.map(update));
+    }, []);
+
     // The step whose place the next added step takes, if any.
     const [replacing, setReplacing] = useState<number | null>(null);
     const addPanel = useRef<HTMLDivElement | null>(null);
@@ -259,7 +279,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         description !== (currentPath.description || '') ||
         JSON.stringify(steps) !== JSON.stringify(currentPath.steps);
 
-    useDraftGuard((dirty || busy) && !discussionEditor, l('discard'), { blocked: busy });
+    useDraftGuard((dirty || busy) && !discussionEditor && !meetingEditor, l('discard'), { blocked: busy });
 
     const handleMoveStep = (index: number, delta: number) => {
         const nextIndex = index + delta;
@@ -720,6 +740,11 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             )}
                                             {pending && <p className="mt-1 text-xs text-slate-600">{pathTemplateText(lang, 'pendingHelp')}</p>}
                                             {isLegacyQuestionnaireTool(step) && <p className="mt-1 text-xs text-slate-600">{k('legacyQuestionnaire')}</p>}
+                                            {step.step_type === 'meeting' && step.meeting_id && (
+                                                <Button variant="ghost" size="sm" disabled={busy} onClick={() => setMeetingEditor({id: step.meeting_id!, adding: false})}>
+                                                    {t('piano.builder.editMeeting')}
+                                                </Button>
+                                            )}
                                             {step.step_type === 'forum' && step.topic_id && (
                                                 <Button variant="ghost" size="sm" disabled={busy} onClick={() => setDiscussionEditor({topicId: step.topic_id!})}>
                                                     {t('piano.builder.editDiscussion')}
@@ -936,15 +961,9 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 </div>
                                 <p className="text-sm text-slate-600">{k('toolHelp')}</p>
                             </div>}
-                            {kind === 'meeting' && <ClassMeetingsManager lang={lang} groupId={path.group_id} addLabel={l('addStep')}
-                                usedIds={steps.flatMap(step => step.step_type === 'meeting' && step.meeting_id ? [step.meeting_id] : [])}
-                                onAdd={meeting => {
-                                    placeSteps([{position: 0, step_type: 'meeting', meeting_id: meeting.id,
-                                        meeting_summary: meeting, tool_key: '', auto_detect: true, can_self_mark: false, title: null,
-                                        instructions: null, due_date: null, scheduled_date: null}]);
-                                    setNotice(null);
-                                    closeAdd();
-                                }} />}
+                            {kind === 'meeting' && <Button variant="secondary" disabled={busy} onClick={() => setMeetingEditor({id: null, adding: true})}>
+                                {t('piano.builder.manageMeetings')}
+                            </Button>}
                             {kind === 'discussion' && <div className="space-y-3">
                             {forumLoadError && <Callout variant="danger">{f('loadError')} <Button variant="secondary" onClick={()=>void loadForumTopics()}>{f('retry')}</Button></Callout>}
                             {!forumLoadError && !forumTopics.length && <p className="text-sm text-slate-600">{f('empty')}</p>}
@@ -982,6 +1001,19 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                 planDirty={dirty} onClose={() => setDiscussionEditor(null)}>
                 {({onDraft, close}) => <PathDiscussionEditor groupId={path.group_id} topicId={discussionEditor.topicId}
                     onDraft={onDraft} onCancel={close} onSaved={id => {setDiscussionEditor(null); void loadForumTopics(id);}} />}
+            </PathResourceDialog>}
+
+            {meetingEditor && <PathResourceDialog title={t(meetingEditor.adding ? 'piano.builder.manageMeetings' : 'piano.builder.editMeeting')}
+                planDirty={dirty} onClose={() => setMeetingEditor(null)}>
+                {({onDraft}) => <ClassMeetingsManager lang={lang} groupId={path.group_id} initialMeetingId={meetingEditor.id ?? undefined}
+                    onDraft={onDraft} onMeetingsChanged={meetingsChanged} addLabel={l('addStep')}
+                    usedIds={steps.flatMap(step => step.step_type === 'meeting' && step.meeting_id ? [step.meeting_id] : [])}
+                    onAdd={meetingEditor.adding ? meeting => {
+                        placeSteps([{position: 0, step_type: 'meeting', meeting_id: meeting.id,
+                            meeting_summary: meeting, tool_key: '', auto_detect: true, can_self_mark: false}]);
+                        setNotice(null); setMeetingEditor(null); closeAdd();
+                        window.setTimeout(() => addPanel.current?.querySelector('button')?.focus(), 0);
+                    } : undefined} />}
             </PathResourceDialog>}
 
             <StickyActions>

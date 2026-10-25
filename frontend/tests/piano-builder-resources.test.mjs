@@ -4,12 +4,13 @@ import { chromium } from 'playwright';
 import { classPathText } from '../src/lib/i18n-class-paths.ts';
 import { pathForumText } from '../src/lib/i18n-path-forum.ts';
 import { stepKindText } from '../src/lib/i18n-step-kinds.ts';
+import { classMeetingText } from '../src/lib/i18n-class-meetings.ts';
 import { forumText } from '../src/lib/i18n-forum.ts';
 
 const origin = new URL(process.env.PIANO_BUILDER_BASE_URL || 'http://127.0.0.1:3176').origin;
 const labels = {
-    it: {'piano.builder.createDiscussion': 'Crea discussione', 'piano.builder.editDiscussion': 'Modifica discussione'},
-    sv: {'piano.builder.createDiscussion': 'Skapa diskussion', 'piano.builder.editDiscussion': 'Redigera diskussion'},
+    it: {'piano.builder.manageMeetings': 'Gestisci incontri', 'piano.builder.editMeeting': 'Modifica incontro', 'piano.builder.createDiscussion': 'Crea discussione', 'piano.builder.editDiscussion': 'Modifica discussione'},
+    sv: {'piano.builder.manageMeetings': 'Hantera möten', 'piano.builder.editMeeting': 'Redigera möte', 'piano.builder.createDiscussion': 'Skapa diskussion', 'piano.builder.editDiscussion': 'Redigera diskussion'},
 };
 let browser;
 before(async () => { browser = await chromium.launch({headless: true}); });
@@ -24,7 +25,7 @@ async function fixture(lang = 'it', width = 1280) {
     await page.addInitScript(lang => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', 'light'); }, lang);
     const group = {id: 11, name: 'Classe sintetica', code: 'S11-SYN', owner_username: 'teacher.test',
         is_active: true, members_count: 1, institution_id: null};
-    const state = {topics: [], creates: [], patches: [], saves: [], failCreate: 0, failPatch: 0, detailGroup: 11};
+    const state = {topics: [], creates: [], patches: [], saves: [], failCreate: 0, failPatch: 0, detailGroup: 11, meetings: [], meetingCreates: [], meetingUpdates: [], slotCreates: [], failMeetingCreate: 0, failMeetingUpdate: 0, failSlot: 0};
     let path = {id: 301, group_id: 11, title: 'Piano sintetico', mode: 'recommended', status: 'draft', revision: 1,
         steps_count: 1, steps: [{id: 1, position: 1, step_type: 'tool', tool_key: 'timeline', auto_detect: false}]};
     await page.route('**/*', async route => {
@@ -47,9 +48,40 @@ async function fixture(lang = 'it', width = 1280) {
         if (p === '/api/teacher/paths/301') {
             if (req.method() === 'PUT') {
                 const body = req.postDataJSON(); state.saves.push(body);
-                path = {...path, ...body, revision: path.revision + 1, steps: body.steps.map((step, index) => ({...step, id: step.id ?? 900 + index, position: index + 1}))};
+                path = {...path, ...body, revision: path.revision + 1, steps: body.steps.map((step, index) => ({...step, id: step.id ?? 900 + index, position: index + 1, target_summary: step.step_type === 'meeting' ? state.meetings.find(row => row.id === step.meeting_id) : step.step_type === 'forum' ? {id: step.topic_id, group_id: 11, locked: false} : undefined}))};
             }
             return json(path);
+        }
+        if (p === '/api/teacher/groups/11/meeting-referents') return json([]);
+        if (p === '/api/teacher/groups/11/meetings') {
+            if (req.method() === 'POST') {
+                const body = req.postDataJSON(); state.meetingCreates.push(body);
+                if (state.failMeetingCreate-- > 0) return json({detail: 'temporary'}, 500);
+                const row = {...body, id: 41 + state.meetings.length, group_id: 11, group_ids: [11], group_names: [group.name],
+                    host_kind: 'teacher', host_name: null, host_role: null, referral_id: null, status: 'scheduled', revision: 1,
+                    attendance_count: 0, slots: []};
+                state.meetings.push(row); return json(row, 201);
+            }
+            return json(state.meetings);
+        }
+        const meetingId = p.match(/^\/api\/teacher\/meetings\/(\d+)$/)?.[1];
+        if (meetingId && req.method() === 'PUT') {
+            const body = req.postDataJSON(); state.meetingUpdates.push(body);
+            const row = state.meetings.find(item => item.id === Number(meetingId));
+            if (state.failMeetingUpdate-- > 0) {
+                row.revision += 1; row.title = 'Versione remota';
+                return json({detail: 'meeting_revision_mismatch'}, 409);
+            }
+            if (body.revision !== row.revision) return json({detail: 'meeting_revision_mismatch'}, 409);
+            Object.assign(row, body, {revision: row.revision + 1, group_ids: [11]}); return json(row);
+        }
+        const slotMeeting = p.match(/^\/api\/teacher\/meetings\/(\d+)\/slots$/)?.[1];
+        if (slotMeeting && req.method() === 'POST') {
+            const body = req.postDataJSON(); state.slotCreates.push(body);
+            if (state.failSlot-- > 0) return json({detail: 'temporary'}, 500);
+            const row = state.meetings.find(item => item.id === Number(slotMeeting));
+            row.slots.push({...body, id: 501, status: 'open', revision: 1, booking: null});
+            row.revision += 1; return json(row, 201);
         }
         if (p === '/api/groups/11/forum/topics') {
             if (req.method() === 'POST') {
@@ -147,6 +179,105 @@ for (const [lang, width] of [['it', 1280], ['sv', 390]]) {
             assert.equal(state.saves.length, 1);
             assert.equal(state.saves[0].title, 'Piano ancora da salvare');
             assert.deepEqual(state.saves[0].steps.filter(row => row.step_type === 'forum').map(row => row.topic_id), [12]);
+            assert.deepEqual(errors, []);
+        } finally { await context.close(); }
+    });
+}
+
+
+for (const [lang, width, kind] of [['it', 1280, 'group'], ['sv', 390, 'individual']]) {
+    test(`meetings stay in the builder with current metadata and revisions (${lang}, ${kind})`, {timeout: 240000}, async () => {
+        const {context, page, state, errors, tr} = await fixture(lang, width);
+        const m = key => classMeetingText(lang, key);
+        try {
+            await page.getByRole('button', {name: classPathText(lang, 'editPlan'), exact: true}).click();
+            await page.locator('#path-title').fill('Bozza con incontro');
+            const add = page.locator('[data-testid="add-step"]');
+            await add.getByRole('button', {name: stepKindText(lang, 'addStep'), exact: true}).click();
+            await add.getByRole('radio', {name: stepKindText(lang, 'meeting'), exact: true}).check();
+            await add.getByRole('button', {name: tr('piano.builder.manageMeetings'), exact: true}).click();
+            const modal = page.getByRole('dialog');
+            await modal.getByRole('button', {name: m('newMeeting'), exact: true}).click();
+            if (kind === 'individual') await modal.getByRole('radio', {name: m('individual'), exact: true}).check();
+            const title = modal.getByRole('textbox', {name: m('topic'), exact: true});
+            await title.fill('Incontro del piano');
+            await modal.getByRole('textbox', {name: m('place'), exact: true}).fill('Aula 7');
+            if (kind === 'group') await modal.locator('input[type="datetime-local"]').fill('2030-11-01T10:00');
+            state.failMeetingCreate = 1;
+            await modal.getByRole('button', {name: m('save'), exact: true}).click();
+            await modal.getByRole('alert').getByText(m('error'), {exact: true}).waitFor();
+            assert.equal(await title.inputValue(), 'Incontro del piano');
+            await modal.getByRole('button', {name: m('save'), exact: true}).click();
+            await modal.getByRole('option', {name: /Incontro del piano/}).waitFor({state: 'attached'});
+            if (kind === 'individual') {
+                const slots = modal.locator('[data-testid="meeting-slots"]');
+                await slots.locator('input[type="datetime-local"]').fill('2030-11-02T09:00');
+                state.failSlot = 1;
+                await slots.getByRole('button', {name: m('addSlot'), exact: true}).click();
+                await modal.getByRole('alert').getByText(m('error'), {exact: true}).waitFor();
+                assert.equal(await slots.locator('input[type="datetime-local"]').inputValue(), '2030-11-02T09:00');
+                await slots.getByRole('button', {name: m('addSlot'), exact: true}).click();
+                await slots.getByRole('listitem').waitFor();
+                assert.equal(state.meetings[0].slots.length, 1);
+            }
+            await modal.getByRole('button', {name: classPathText(lang, 'addStep'), exact: true}).click();
+            await modal.waitFor({state: 'hidden'});
+            const card = page.locator('[data-testid="path-step-card"]').nth(1);
+            assert.equal(await page.locator('[data-testid="path-step-card"]').count(), 2);
+            await card.getByText(new RegExp('^' + m('meeting') + ' · Incontro del piano')).first().waitFor();
+            await card.getByRole('button', {name: tr('piano.builder.editMeeting'), exact: true}).click();
+            await title.fill('Incontro aggiornato');
+            await modal.getByRole('textbox', {name: m('description'), exact: true}).fill('Descrizione aggiornata');
+            if (kind === 'group') await modal.locator('input[type="datetime-local"]').fill('2030-11-03T11:30');
+            state.failMeetingUpdate = 1;
+            await modal.getByRole('button', {name: m('save'), exact: true}).click();
+            await modal.getByRole('alert').getByText(m('conflict'), {exact: true}).waitFor();
+            assert.equal(await title.inputValue(), 'Incontro aggiornato');
+            page.once('dialog', dialog => void dialog.dismiss());
+            await modal.getByRole('button', {name: classPathText(lang, 'reload'), exact: true}).click();
+            assert.equal(await title.inputValue(), 'Incontro aggiornato');
+            page.once('dialog', dialog => void dialog.accept());
+            await modal.getByRole('button', {name: classPathText(lang, 'reload'), exact: true}).click();
+            await page.waitForFunction(() => document.querySelector('[role="dialog"] input[maxlength="200"]')?.value === 'Versione remota');
+            await title.fill('Incontro aggiornato');
+            if (kind === 'group') await modal.locator('input[type="datetime-local"]').fill('2030-11-03T11:30');
+            await modal.getByRole('button', {name: m('save'), exact: true}).click();
+            await title.waitFor({state: 'hidden'});
+            await modal.getByRole('button', {name: stepKindText(lang, 'close'), exact: true}).click();
+            await modal.waitFor({state: 'hidden'});
+            await card.getByText(new RegExp('^' + m('meeting') + ' · Incontro aggiornato')).first().waitFor();
+            assert.equal(state.meetingUpdates[1].revision, state.meetingUpdates[0].revision + 1);
+            assert.equal(await page.locator('#path-title').inputValue(), 'Bozza con incontro');
+            assert.equal(state.saves.length, 0);
+            assert.equal(page.url(), `${origin}/docente/piani-operativi`);
+            if (kind === 'group') assert.equal(new Date(state.meetings[0].starts_at).getDate(), 3);
+            await page.getByRole('button', {name: classPathText(lang, 'saveDraft'), exact: true}).click();
+            await page.locator('[data-testid="path-summary"]').waitFor();
+            assert.deepEqual(state.saves[0].steps.map(row => row.step_type), ['tool', 'meeting']);
+            assert.equal(state.saves[0].steps[1].meeting_id, 41);
+            assert.ok(!('follows' in state.saves[0].steps[1]));
+            const savePlan = page.getByRole('button', {name: classPathText(lang, 'saveDraft'), exact: true});
+            assert.equal(await savePlan.isDisabled(), true);
+            // Editing a shared resource refreshes the card without dirtying an already saved plan.
+            await card.getByRole('button', {name: tr('piano.builder.editMeeting'), exact: true}).click();
+            await title.fill('Titolo finale');
+            await modal.getByRole('button', {name: m('save'), exact: true}).click();
+            await title.waitFor({state: 'hidden'});
+            if (kind === 'individual') {
+                const slots = modal.locator('[data-testid="meeting-slots"]');
+                await slots.locator('input[type="datetime-local"]').fill('2030-11-04T10:00');
+                page.once('dialog', dialog => void dialog.dismiss());
+                await page.keyboard.press('Escape');
+                assert.equal(await modal.isVisible(), true);
+                page.once('dialog', dialog => void dialog.accept());
+                await page.keyboard.press('Escape');
+            } else await modal.getByRole('button', {name: stepKindText(lang, 'close'), exact: true}).click();
+            await modal.waitFor({state: 'hidden'});
+            await card.getByText(new RegExp('^' + m('meeting') + ' · Titolo finale')).first().waitFor();
+            assert.equal(await savePlan.isDisabled(), true);
+            assert.equal(state.saves.length, 1);
+            assert.equal(state.meetings[0].slots.length, kind === 'individual' ? 1 : 0);
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             assert.deepEqual(errors, []);
         } finally { await context.close(); }
     });

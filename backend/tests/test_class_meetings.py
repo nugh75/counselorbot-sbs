@@ -581,3 +581,27 @@ def test_teacher_chooses_who_confirms_attendance(api):
     refused = client.put(f"{register}/alice", json={"attended": True})
     assert refused.status_code == 409 and refused.json()["detail"] == "attendance_by_student"
     assert db.query(models.ClassMeetingAttendance).count() == 0
+
+
+def test_builder_meeting_edits_preserve_plan_and_attendance_and_require_revision(api):
+    client, db, identity, group, other = api
+    created = plan(client, group, starts_at=when(hours=-2)).json()
+    path = path_with(client, group, created['id']).json()
+    assert client.post(f"/teacher/paths/{path['id']}/publish").status_code == 200
+    revision = client.get(f"/teacher/paths/{path['id']}").json()['revision']
+    as_user(identity, who('alice'))
+    assert client.post(f"/user/meetings/{created['id']}/attendance").status_code == 200
+    as_user(identity, TEACHER)
+    changes = {'revision': created['revision'], 'title': 'New builder meeting title', 'description': 'Updated in page',
+               'starts_at': when(days=3), 'mode': 'in_person', 'place': 'Aula 9'}
+    updated = client.put(f"/teacher/meetings/{created['id']}", json=changes)
+    assert updated.status_code == 200, updated.text
+    assert updated.json()['revision'] == created['revision'] + 1
+    current = client.get(f"/teacher/paths/{path['id']}").json()
+    assert current['revision'] == revision
+    assert current['steps'][0]['meeting_id'] == created['id']
+    assert current['steps'][0]['target_summary']['title'] == changes['title']
+    assert db.query(models.ClassMeetingAttendance).filter_by(meeting_id=created['id']).count() == 1
+    assert client.put(f"/teacher/meetings/{created['id']}", json=changes).status_code == 409
+    as_user(identity, dict(TEACHER, username='colleague'))
+    assert client.put(f"/teacher/meetings/{created['id']}", json={**changes, 'revision': updated.json()['revision']}).status_code == 404

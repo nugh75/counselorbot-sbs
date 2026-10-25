@@ -31,3 +31,23 @@ mantiene la propria bozza e si salva separatamente. La discussione appena creata
 annullare o premere Esc chiede conferma se ci sono modifiche alla discussione.
 Durante l'invio non si può chiudere la modale. Le risposte di altre classi non
 sono editabili nel builder. Nessun nuovo endpoint o campo nel database.
+
+
+## Incontri nel builder (c8a79b2b)
+
+Nel tipo «Partecipa a un incontro», «Gestisci incontri» apre il gestore esistente
+in una modale: si sceglie un incontro, se ne crea uno di gruppo o individuale,
+si preparano le fasce, oppure si modifica un incontro già presente. Ogni passo
+incontro offre anche «Modifica incontro», che apre direttamente il suo form.
+Le API restano `/teacher/groups/{id}/meetings`, `/teacher/meetings/{id}` e quelle
+esistenti di fasce, prenotazioni e presenze.
+
+Titolo e data aggiornati sono subito visibili nel passo. Il salvataggio
+dell'incontro non cancella la bozza del piano e non rende modificato un piano
+altrimenti già salvato: sono aggiornati solo i metadati della risorsa condivisa.
+Le presenze restano registrate anche se si sposta la data.
+
+Le modifiche non salvate, comprese le nuove fasce individuali, sono protette
+anche premendo rapidamente Esc. Un errore conserva i campi; un conflitto di
+revisione offre «Ricarica», con conferma prima di sostituire il form con i dati
+correnti. Si può poi modificare e salvare con la revisione aggiornata.
