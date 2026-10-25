@@ -75,9 +75,22 @@ fn shell_status(shell: State<'_, Shell>) -> Status {
     shell.supervisor.snapshot()
 }
 
+// «Apri nel browser»: il guscio chiede al backend locale un link monouso
+// (60 s, un solo uso) e apre `/accesso-locale#t=<token>`. La pagina lo riscatta
+// e riceve il cookie `cb_session` del docente: nessun passaggio da ai4auth.
 #[tauri::command]
-fn open_in_browser(app: AppHandle, shell: State<'_, Shell>) -> Result<(), String> {
-    let url = shell.supervisor.snapshot().frontend_url.ok_or("CounselorBot non e' ancora pronto")?;
+async fn open_in_browser(app: AppHandle, shell: State<'_, Shell>) -> Result<(), String> {
+    let supervisor = Arc::clone(&shell.supervisor);
+    let url = tauri::async_runtime::spawn_blocking(move || {
+        let frontend_url = supervisor
+            .snapshot()
+            .frontend_url
+            .ok_or("CounselorBot non e' ancora pronto")?;
+        let token = supervisor.teacher_link()?;
+        Ok::<String, String>(format!("{frontend_url}/accesso-locale#t={token}"))
+    })
+    .await
+    .map_err(|_| "Operazione di accesso non completata.".to_string())??;
     app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
 }
 

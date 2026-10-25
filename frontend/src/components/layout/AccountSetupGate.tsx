@@ -33,7 +33,7 @@ export function AccountSetupGate({ children }: { children: React.ReactNode }) {
                 const resuming = pathname === '/' && Boolean(params.get('frozen') || params.get('resume') || params.get('session_id'));
                 // A resumed conversation restores its own counselor in the page.
                 if (!resuming) setSelectedCounselorId(prefs.counselor_ready ? prefs.counselor_id : null);
-                const exempt = ['/inizia', '/counselor', '/profilo', '/admin', '/docente', '/guide', '/login', '/register', '/telegram-link', '/questionario'].some(p => pathname === p || pathname.startsWith(`${p}/`));
+                const exempt = ['/inizia', '/counselor', '/profilo', '/admin', '/docente', '/guide', '/login', '/logout', '/accesso-locale', '/register', '/telegram-link', '/questionario'].some(p => pathname === p || pathname.startsWith(`${p}/`));
                 const intro = pathname === '/' && !params.get('view') && !params.get('start');
                 if (!exempt && !intro && !resuming && (!prefs.counselor_ready || !prefs.notebook_ready)) {
                     router.replace(`${prefs.notebook_ready ? "/counselor" : "/inizia"}?next=${encodeURIComponent(pathname + window.location.search)}`);

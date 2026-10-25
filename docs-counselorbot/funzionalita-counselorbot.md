@@ -8,10 +8,11 @@ un elenco di azioni che l’assistente può eseguire al posto della persona.
 È in sviluppo un'app desktop docente sperimentale: il guscio avvia e sorveglia
 i processi locali, mostra lo stato ed esporta diagnostica senza database o
 credenziali. Con tunnel e server attivi impedisce la sospensione del PC (macOS e Windows). Se il docente va offline, gli studenti che avevano già aperto l'app vedono «Il docente è offline» con nuovo controllo ogni 10 secondi, invece dell'errore 502. Non è ancora disponibile per lezioni o dati reali: il backend
-completo viene verificato su SQLite in CI; il quick tunnel serve soltanto alle prove tecniche. Il backend
-prevede già un accesso locale del docente (link monouso aperto dal guscio,
-sessione valida 30 giorni solo dal PC, mai dal tunnel), ma la pagina di accesso
-non è ancora collegata. Il backend prevede anche l'abbinamento degli studenti
+completo viene verificato su SQLite in CI; il quick tunnel serve soltanto alle prove
+tecniche. L'accesso locale del docente è collegato: il guscio chiede al backend
+locale un link monouso, lo apre nel browser su `/accesso-locale` e il riscatto
+crea una sessione valida 30 giorni solo dal PC, mai dal tunnel; in locale
+«Accedi» porta a `/login` e «Esci» a `/logout`, senza uscire dall'host. Il backend prevede anche l'abbinamento degli studenti
 alle classi del docente: un codice di classe valido 7 giorni (un nuovo codice
 annulla il precedente, chi è già dentro resta), uno pseudonimo scelto dallo
 studente senza email né nome reale (se già usato nella classe riceve un numero,
@@ -23,7 +24,7 @@ Sul PC il docente è amministratore; l'amministrazione
 risponde solo dal PC, mai dal tunnel (i controlli del profilo docente sono
 caricati solo quando servono, così il forum resta isolato). Prompt Lab, Telegram, OpenCode, l'assistente
 ChatGPT, le voci Piper e la sincronizzazione con Console non sono disponibili
-nell'app. Restano da completare i percorsi grafici di accesso e abbinamento
+nell'app. Restano da completare i percorsi grafici di abbinamento
 e la pubblicazione degli asset di rilascio.
 Le chiamate API generali del frontend ora scelgono il backend a ogni richiesta,
 tramite un handler dinamico: lo stesso bundle raggiunge la porta assegnata dal
@@ -53,11 +54,12 @@ con canale stabile/beta e backup SQLite verificato prima dell'update. Gli snapsh
 non includono tutti i file e le chiavi. La CI produce installer e manifest come
 artifact: la pubblicazione nelle Release resta da completare prima di usare
 l'updater. Il token del tunnel è conservato localmente, distinto dal portachiavi
-API. Il modello locale richiede un server separato; la configurazione via web
-resta subordinata al collegamento dell'accesso docente. La checklist distingue
+API. Il modello locale richiede un server separato; la configurazione via web è
+raggiungibile dopo l'accesso locale del docente. La checklist distingue
 smoke automatizzati e percorsi manuali ancora bloccati; il modello DPIA docente-PC
-è una bozza **[DA VALIDARE]** dal Titolare/DPO. Nessuna nuova schermata web o modifica
-alla Guida interfaccia nelle sei lingue e ai relativi screenshot è introdotta qui.
+è una bozza **[DA VALIDARE]** dal Titolare/DPO. Le pagine `/accesso-locale` e
+`/logout` esistono solo con il fornitore locale e non modificano la Guida
+interfaccia nelle sei lingue né i relativi screenshot.
 
 È disponibile il nucleo tecnico P1 del Privacy Layer: definisce tipi, errori
 senza contenuti personali e regole conservative per finalità, consenso e invio
@@ -284,7 +286,10 @@ leggibile; con lo schermo touch i comandi della barra e le lingue hanno bersagli
 da 44 px.
 
 L’accesso personale usa l’account della Console ai4educ collegata all’installazione.
-Login, uscita e collegamenti a Portale, Console e Segreti seguono i domini
+Nell'app desktop con fornitore locale non si passa da ai4educ: il guscio apre
+`/accesso-locale` con un link monouso, il riscatto imposta la sessione del docente
+e «Esci» da `/logout` la revoca tornando alla home. In produzione web login,
+uscita e collegamenti a Portale, Console e Segreti seguono i domini
 configurati per quella installazione, letti all’avvio del server e non fissati
 nella build (la stessa build serve installazioni web e app desktop); dopo il login si torna alla pagina richiesta
 di CounselorBot. Nell’installazione `counselorbot.labform.net` l’account è quello
@@ -1999,6 +2004,8 @@ Per le app desktop è integrato il modulo di backup SQLite pre-aggiornamento: il
 Le operazioni concorrenti sulla stessa risorsa (per esempio salvataggi della timeline, obiettivi e impostazioni AI personali o del recupero documenti) usano ora lock di transazione anche su SQLite: il lock si libera alla conclusione della transazione. Poiché questi lock SQLite funzionano dentro un solo processo, il backend rifiuta configurazioni note con più worker. Il contratto tecnico e i controlli sono descritti in `docs/operations/transaction-locks.md`; l’integrazione desktop completa resta in sviluppo.
 
 Per le future app desktop il frontend stabilisce l'origine di ogni richiesta verso il server: «tunnel» se arriva da Internet attraverso Cloudflare (studenti), «locale» se arriva dal PC del docente. Il server la accetta solo se è firmata con il segreto che l'app genera a ogni avvio; senza firma valida la tratta sempre come «tunnel», cioè con le restrizioni più severe. Intestazioni di origine inviate da un browser vengono scartate. Nelle installazioni server attuali (Docker) il segreto non esiste: nessuna funzione, dato o permesso cambia. Contratto in `docs/architecture/adr/0002-desktop-phase-1-contracts.md` §2.7.
+
+**Accesso locale dell'app desktop (PR #591).** Con `COUNSELORBOT_AUTH_PROVIDER=local` il guscio chiede al backend locale un link monouso e apre `/accesso-locale`: il token viaggia nel frammento e non arriva al server, il riscatto imposta il cookie `cb_session` (30 giorni, solo dal PC) e porta a `/docente`. Messaggi localizzati per token assente, scaduto o già usato ed errore in italiano, inglese, spagnolo, francese, tedesco e svedese; `/accesso-locale` e `/logout` sono esclusi dai cancelli di configurazione e orientamento. In assenza della variabile o con un valore diverso resta l'accesso ai4auth di sempre: web e produzione non cambiano. La Guida interfaccia (`/guide`) e gli screenshot restano invariati perché le due pagine esistono solo nell'app desktop.
 
 ### Sezioni della configurazione
 

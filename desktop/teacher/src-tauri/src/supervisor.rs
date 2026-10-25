@@ -86,6 +86,7 @@ enum Command {
     SaveNamedTunnelConfig { custom_domain: String, token: Option<String>, reply: Sender<Result<(), String>> },
     GetTunnelSettings(Sender<TunnelSettings>),
     BackupDb(Sender<Result<String, String>>),
+    TeacherLink(Sender<Result<String, String>>),
 }
 
 pub struct Handle {
@@ -149,6 +150,14 @@ impl Handle {
         let (reply, done) = mpsc::channel();
         self.commands.send(Command::BackupDb(reply)).map_err(|e| format!("invio comando backup: {e}"))?;
         done.recv_timeout(Duration::from_secs(90)).map_err(|e| format!("attesa backup: {e}"))?
+    }
+
+    /// Link monouso del docente (ADR-0002 §3.3): il guscio lo ottiene dal
+    /// backend locale con il segreto shell, poi apre `/accesso-locale#t=...`.
+    pub fn teacher_link(&self) -> Result<String, String> {
+        let (reply, done) = mpsc::channel();
+        self.commands.send(Command::TeacherLink(reply)).map_err(|e| format!("invio comando accesso: {e}"))?;
+        done.recv_timeout(Duration::from_secs(15)).map_err(|e| format!("attesa link di accesso: {e}"))?
     }
 
     pub fn snapshot(&self) -> Status {
@@ -291,6 +300,10 @@ impl Supervisor {
                     let res = self.handle_backup_db();
                     let _ = reply.send(res);
                 }
+                Ok(Command::TeacherLink(reply)) => {
+                    let res = self.handle_teacher_link();
+                    let _ = reply.send(res);
+                }
                 Err(RecvTimeoutError::Timeout) => self.watch(),
                 Err(RecvTimeoutError::Disconnected) => {
                     self.stop_all();
@@ -344,6 +357,9 @@ impl Supervisor {
                 | Command::StartNamedTunnel(reply)
                 | Command::SaveNamedTunnelConfig { reply, .. },
             ) => {
+                let _ = reply.send(Err("Preparazione in corso. Attendi e riprova.".into()));
+            }
+            Ok(Command::TeacherLink(reply)) => {
                 let _ = reply.send(Err("Preparazione in corso. Attendi e riprova.".into()));
             }
             Ok(Command::GetTunnelSettings(reply)) => {
@@ -526,6 +542,9 @@ impl Supervisor {
                 ("PORT".into(), port.to_string()),
                 ("BACKEND_ORIGIN".into(), format!("http://127.0.0.1:{backend_port}")),
                 ("COUNSELORBOT_FRONTEND_SECRET".into(), self.frontend_secret.clone()),
+                // Pubblico in /runtime-config.js: la UI resta su /login e non
+                // rimanda mai ad ai4auth quando l'identita' e' locale (F1-06).
+                ("COUNSELORBOT_AUTH_PROVIDER".into(), "local".into()),
             ],
             cwd: frontend_dir,
             log_file: "frontend.log",
@@ -765,6 +784,27 @@ impl Supervisor {
             self.restart_after_backend();
         }
         Ok(())
+    }
+
+    pub fn handle_teacher_link(&self) -> Result<String, String> {
+        let backend = self.backend.as_ref().ok_or("Backend non ancora pronto")?;
+        let port = backend.port.ok_or_else(|| "Porta backend non disponibile".to_string())?;
+        let (status, body) = health::post(
+            port,
+            "/internal/local-auth/teacher-link",
+            &[("X-CounselorBot-Shell-Secret", &self.shell_secret)],
+            b"",
+        )?;
+        if status != 200 {
+            return Err(format!("Generazione del link di accesso fallita (HTTP {status}): {body}"));
+        }
+        #[derive(Deserialize)]
+        struct LinkResp {
+            token: String,
+        }
+        let resp: LinkResp = serde_json::from_str(&body)
+            .map_err(|e| format!("Risposta del link di accesso non valida ({e}): {body}"))?;
+        Ok(resp.token)
     }
 
     pub fn handle_backup_db(&self) -> Result<String, String> {
@@ -1152,6 +1192,13 @@ mod tests {
                 "Preparazione in corso. Attendi e riprova."
             );
         }
+        let (link_reply, link_done) = mpsc::channel();
+        sender.send(Command::TeacherLink(link_reply)).unwrap();
+        assert!(!supervisor.stop_requested_while_waiting());
+        assert_eq!(
+            link_done.recv_timeout(Duration::from_secs(1)).unwrap().unwrap_err(),
+            "Preparazione in corso. Attendi e riprova."
+        );
         let (reply, _done) = mpsc::channel();
         sender.send(Command::Stop(reply)).unwrap();
         assert!(supervisor.stop_requested_while_waiting());
