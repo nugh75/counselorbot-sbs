@@ -135,6 +135,20 @@ code=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$frontend_p
 if $full; then
     code=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$frontend_port/api/health")
     [ "$code" = 200 ] && ok "/api/health verso backend a porta dinamica" || fail "/api/health: $code"
+    # A URL in cloudflared's log alone does not prove the public route works.
+    # Allow time for Cloudflare to connect the origin; reject HTML/error pages.
+    tunnel_health_ok() {
+        curl -sf -m 5 "$(field r.tunnel_url)/api/health" | node -e '
+            let body = "";
+            process.stdin.on("data", chunk => body += chunk);
+            process.stdin.on("end", () => {
+                try {
+                    const h = JSON.parse(body);
+                    process.exit(h.status === "ok" && h.desktop_contract === 1 && h.db === "sqlite" ? 0 : 1);
+                } catch { process.exit(1); }
+            });'
+    }
+    wait_for 90 tunnel_health_ok && ok "health pubblico attraverso il quick tunnel" || fail "health pubblico del tunnel"
     code=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$backend_port/telegram/bot-info")
     [ "$code" = 404 ] && ok "Telegram escluso da teacher-pc" || fail "Telegram: $code"
 fi

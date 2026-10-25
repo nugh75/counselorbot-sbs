@@ -8,7 +8,7 @@ Task `a8f4b202-cc7b-42de-ae42-1eef04bdbc22`.
 ## Fatto
 - Guida docente IT: bundle/sha256, pannello, tunnel, LLM, backup/rollback e problemi.
 - DPIA L2 collegata a P16 e P6/P7/P11, con [DA VALIDARE]; checklist manuale.
-- Lifecycle `--full`: lifespan reale, schema/seed/FK/integrità e API health.
+- Lifecycle `--full`: lifespan reale, schema/seed/FK/integrità, health locale/pubblico.
 - CI quattro OS in modalità completa; regressioni auth/pairing/profilo/backup Linux.
 - F1-17 completato; F1-16 confermato; F1-15 packaging completo, Release ancora parziale.
 
@@ -16,7 +16,8 @@ Task `a8f4b202-cc7b-42de-ae42-1eef04bdbc22`.
 - Python 3.11.9 + TEST_DB=sqlite: 173 passati, nessun nuovo fallimento.
 - Node: 14/14; Bash, YAML e link Markdown validi; diff senza whitespace errati.
 - Commit `a4e3c821` test(desktop): controllore dati e lifecycle completo.
-- Preparato commit ci(desktop): lifecycle completo sui quattro runner e regressioni.
+- CI aggiornata: lifecycle completo sui quattro runner e regressioni.
+- Aggiunta health JSON attraverso tunnel: non basta l’URL nei log; Bash verificato.
 - Primo lancio Python 3.9 non supportato: ripetuto con ambiente corretto.
 - Guida sei lingue/screenshot rivisti: nessun controllo web modificato.
 - guidance-refresh/check in corso; installer nativi da verificare con CI.
