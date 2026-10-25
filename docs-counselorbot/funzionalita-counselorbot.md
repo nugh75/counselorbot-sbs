@@ -134,10 +134,20 @@ e la risposta torna in chiaro solo a chi può vederla. Il filtro esterno non si
 può più disattivare dalla configurazione; anche la vecchia lettura vocale della
 chat ora è filtrata. Un Ollama su un host non dichiarato fidato non riceve più
 testi privati per la ricerca nei documenti. Finché finalità, consensi e
-autorizzazioni (blocchi P7-P9) non esistono, il gateway li verifica senza
+autorizzazioni non sono configurati o la base resta indefinita (blocchi P7-P9), il gateway li verifica senza
 bloccare e usa il filtro attuale (regole e modello NER locale); l'operatore
 potrà attivare il controllo completo con `PRIVACY_GATEWAY_MODE=strict` quando
 quei blocchi saranno pronti. Non cambiano schermate né percorsi. Nessuna garanzia di anonimizzazione o conformità GDPR.
+
+Il backend P9 aggiunge documenti versionati, finalità e scelte privacy separate
+con revoca immediata. Le finalità iniziali restano inattive con base `undefined`;
+le informative e le decisioni del titolare/DPO sono **[DA VALIDARE]**. La UI
+privacy P10 resta da realizzare. Un consenso specifico alla condivisione del
+taccuino autorizza soltanto il docente e la classe scelti; la revoca non toglie
+l'accesso ai risultati autorizzato per la classe. Gli invii dai vecchi moduli di
+gradimento/somministrazione generano osservazioni privacy senza cambiare il
+flusso né abilitarne automaticamente le finalità. Contratto e limiti in
+[Privacy P9](../docs/privacy/p9-consensi.md).
 
 Il blocco P7 introduce il livello autorizzativo granulare tra docente, studente e
 amministratore (matrice §5.2 e §5.3 del Privacy Layer):

@@ -2494,6 +2494,7 @@ class PrivacyEventRecord(Base):
     event_type = Column(String(32), nullable=False, index=True)
     document_kind = Column(String(64), nullable=True)
     document_version = Column(String(32), nullable=True)
+    document_locale = Column(String(16), nullable=True)
     purpose = Column(String(64), nullable=False)
     choice = Column(String(32), nullable=True)
     target = Column(String(128), nullable=True)
@@ -2502,3 +2503,40 @@ class PrivacyEventRecord(Base):
     device_ref = Column(String(64), nullable=True)
     created_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
 
+
+class PrivacyDocument(Base):
+    """Versioned notice metadata; publication is append-only (P9)."""
+    __tablename__ = "privacy_documents"
+    __table_args__ = (
+        UniqueConstraint("kind", "version", "locale", name="uq_privacy_document_version"),
+        CheckConstraint(
+            "kind IN ('notice_student', 'notice_teacher', 'notice_ai', 'terms', 'consent_sharing', 'consent_research')",
+            name="ck_privacy_document_kind",
+        ),
+    )
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    kind = Column(String(64), nullable=False)
+    version = Column(String(32), nullable=False)
+    locale = Column(String(16), nullable=False)
+    content_hash = Column(String(64), nullable=False)
+    body_ref = Column(Text, nullable=False)
+    published_at = Column(UTCDateTime, nullable=False)
+    requires_new_consent = Column(Boolean, nullable=False, default=False)
+
+
+class PrivacyPurpose(Base):
+    """Controller-managed purposes, disabled until their basis is defined (P9)."""
+    __tablename__ = "privacy_purposes"
+    __table_args__ = (
+        CheckConstraint(
+            "legal_basis IN ('undefined', 'consent', 'legal_obligation', 'public_task', 'contract', 'vital_interests', 'legitimate_interests')",
+            name="ck_privacy_purpose_basis",
+        ),
+    )
+    key = Column(String(64), primary_key=True)
+    description_i18n = Column(JSON, nullable=False)
+    legal_basis = Column(String(32), nullable=False, default="undefined")
+    requires_consent = Column(Boolean, nullable=False, default=True)
+    active = Column(Boolean, nullable=False, default=False)
+    retention_policy_key = Column(String(64), nullable=True)
+    document_kind = Column(String(64), nullable=True)

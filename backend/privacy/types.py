@@ -208,6 +208,11 @@ class PrivacyEvent(_SafeRepresentation):
     purpose: str
     target: str = ""                                            # ai_transmission: provider
     categories_count: Mapping[str, int] = field(default_factory=dict)  # counts only, never values
+    document_kind: str | None = None
+    document_version: str | None = None
+    document_locale: str | None = None
+    choice: str | None = None
+    valid_until: datetime | None = None
 
 
 @dataclass(frozen=True, repr=False)

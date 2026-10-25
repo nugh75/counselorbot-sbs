@@ -123,28 +123,36 @@ def get_active_break_glass(db: Session, admin_username: str, subject_username: s
 
 
 def get_active_grant(db: Session, teacher_username: str, student_username: str, group_id: int,
-                     at_time: datetime | None = None) -> models.TeacherStudentGrant | None:
+                     at_time: datetime | None = None, *, category: str | None = None,
+                     purpose: str | None = None) -> models.TeacherStudentGrant | None:
     """Find an active TeacherStudentGrant, auto-syncing from group_memberships if not yet backfilled."""
     from .. import models
 
     now = at_time or datetime.now(timezone.utc)
-    grant = db.query(models.TeacherStudentGrant).filter(
+    query = db.query(models.TeacherStudentGrant).filter(
         models.TeacherStudentGrant.teacher_username == teacher_username,
         models.TeacherStudentGrant.student_username == student_username,
         models.TeacherStudentGrant.group_id == group_id,
-    ).first()
-
-    if grant is not None:
-        # Immediate revocation check
-        if grant.revoked_at is not None:
-            return None
-        # Expiration check
-        if grant.valid_until is not None and now > grant.valid_until:
-            return None
-        # Validity period check
+    )
+    grants = query.order_by(models.TeacherStudentGrant.id.desc()).all()
+    for grant in grants:
+        if grant.revoked_at is not None or (grant.valid_until is not None and now > grant.valid_until):
+            continue
         if grant.valid_from is not None and at_time and at_time < grant.valid_from:
-            return None
+            continue
+        if category is not None and category not in (grant.categories or []):
+            continue
+        if purpose is not None and purpose not in (grant.purposes or []):
+            continue
+        if grant.basis in ("consent", "student_share"):
+            from .consent import grant_has_consent
+            if not grant_has_consent(db, grant):
+                continue
         return grant
+    # Never recreate revoked institutional authorization. A consent-only row
+    # must not suppress the legacy membership backfill for independent data.
+    if any(g.basis in ("institutional_assignment", "organizational_authorization") for g in grants):
+        return None
 
     # Grant row does not exist yet: check if valid membership exists and auto-create
     membership = db.query(models.GroupMembership).filter(
@@ -222,6 +230,7 @@ def sync_grants_for_membership(db: Session, group_id: int, student_username: str
             models.TeacherStudentGrant.teacher_username == teacher,
             models.TeacherStudentGrant.student_username == student_username,
             models.TeacherStudentGrant.group_id == group_id,
+            models.TeacherStudentGrant.basis == "institutional_assignment",
         ).first()
 
         if grant is None:
@@ -265,6 +274,7 @@ def sync_grants_for_share(db: Session, group_id: int, teacher_username: str) -> 
             models.TeacherStudentGrant.teacher_username == teacher_username,
             models.TeacherStudentGrant.student_username == m.username,
             models.TeacherStudentGrant.group_id == group_id,
+            models.TeacherStudentGrant.basis == "institutional_assignment",
         ).first()
 
         if grant is None:
@@ -426,7 +436,8 @@ def authorize_data_access(principal: Principal, action: DataAction,
                     return Decision(allowed=False, reason_code="privacy.authz.institution_mismatch")
 
             # Active grant check
-            grant = get_active_grant(session, principal.username, resource.subject, gid, at_time=resource.created_at)
+            grant = get_active_grant(session, principal.username, resource.subject, gid, at_time=resource.created_at,
+                                     category=resource.kind, purpose=purpose)
             if not grant:
                 return Decision(allowed=False, reason_code="privacy.authz.no_grant")
 

@@ -26,7 +26,9 @@ Task `a8f4b202-cc7b-42de-ae42-1eef04bdbc22`, issue #213; base `2220ef99`.
 ## Prossimi passi
 - Harness CI verificato nel container: 11+11 passati, processi ripuliti.
 - Commit fix `e77b9400`, CI `7e069511`; harness e container ripuliti.
-- Push gruppo fix/ci/docs e attesa check PR #584; nessun merge agente.
+- Main P9 `f6073230` integrato: conflitti documentali risolti conservando entrambi.
+- DPIA aggiornata a P9; post-merge 173 test Python e guidance verdi.
+- Nessun cambiamento frontend da main: immagine/test Docker restano validi.
 - Commit atomici fix/ci/docs, push; aggiornare PR e chiudere task solo con verifiche verdi.
 
 ## Blocchi e rischi

@@ -75,7 +75,7 @@ Probabilità e gravità sono stime **[DA VALIDARE]**: la colonna «Stima tecnica
 | R4 | Amministratore tecnico che legge i contenuti | amministrazione tecnica e controllo del PC | vista pseudonimizzata e break-glass P7 su L1; docente-admin L2 con controllo del PC | misure organizzative L2 | residuo [DA VALIDARE] | **[DA VALIDARE]** | **[DA VALIDARE]** |
 | R5 | Furto di database, PC o backup | contenuti in chiaro | cifratura del disco non imposta; P11 facoltativo e parziale | migrazione storico e copertura dei campi mancanti; vedere allegato L2 | media L1, alta L2 | **[DA VALIDARE]** | **[DA VALIDARE]** |
 | R6 | Dati personali nei log | testi nei log | redazione fail-closed con regole e gazetteer (P13) | modello ML anche nei log | media | **[DA VALIDARE]** | **[DA VALIDARE]** |
-| R7 | Consensi non dimostrabili | consensi solo lato client | nessuna | eventi versionati (P9) | alta (G10) | **[DA VALIDARE]** | **[DA VALIDARE]** |
+| R7 | Consensi non dimostrabili | documenti non pubblicati e UI P10 assente | P9: scelte/revoche versionate; osservazioni legacy non abilitanti | pubblicazione documenti approvati, basi/finalità P0 e UI P10 | residuo [DA VALIDARE] | **[DA VALIDARE]** | **[DA VALIDARE]** |
 | R8 | Conservazione eccessiva | solo `logs` ha un termine | 90 giorni sui log | job P14 | media (G13) | **[DA VALIDARE]** | **[DA VALIDARE]** |
 | R9 | Reidentificazione nei dati di ricerca | tabella dei codici in chiaro | nessuna | HMAC con chiave separata (04-D13) | media | **[DA VALIDARE]** | **[DA VALIDARE]** |
 | R10 | Cloudflare vede il traffico | tunnel su L2 | TLS fino all'edge | informativa, tunnel nominativo | strutturale | **[DA VALIDARE]** | **[DA VALIDARE]** |

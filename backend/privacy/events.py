@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Session
@@ -21,13 +22,18 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def record_privacy_event(event: PrivacyEvent, db: Session | None = None) -> None:
+def record_privacy_event(event: PrivacyEvent, db: Session | None = None, *,
+                         commit: bool = True) -> models.PrivacyEventRecord:
     """Persist a privacy audit event fail-closed.
 
     If db is not provided, a new session is created from backend.database.SessionLocal.
-    Any failure raises AuditUnavailable.
+    Any failure raises AuditUnavailable. With commit=False the caller owns the
+    transaction and receives the flushed event row (including its id).
     """
     from .. import database, models
+
+    if not commit and db is None:
+        raise AuditUnavailable()
 
     session = db
     should_close = False
@@ -39,6 +45,7 @@ def record_privacy_event(event: PrivacyEvent, db: Session | None = None) -> None
         actor_role = event.actor_role if isinstance(event.actor_role, str) else event.actor_role.value
         record = models.PrivacyEventRecord(
             id=str(uuid.uuid4()),
+            created_at=datetime.now(timezone.utc),
             subject_pid=event.subject_pid,
             actor_pid=event.actor_pid,
             actor_role=actor_role,
@@ -46,17 +53,24 @@ def record_privacy_event(event: PrivacyEvent, db: Session | None = None) -> None
             purpose=event.purpose,
             target=getattr(event, "target", "") or None,
             categories_count=dict(event.categories_count) if event.categories_count else None,
+            document_kind=event.document_kind, document_version=event.document_version,
+            document_locale=event.document_locale,
+            choice=event.choice, valid_until=event.valid_until,
         )
         session.add(record)
-        session.commit()
-    except Exception as exc:
+        if commit:
+            session.commit()
+        else:
+            session.flush()
+        return record
+    except Exception:
         if session is not None:
             try:
                 session.rollback()
             except Exception:
                 pass
-        logger.error("Failed to record privacy event: %s", exc)
-        raise AuditUnavailable() from exc
+        logger.error("Failed to record privacy event")
+        raise AuditUnavailable() from None
     finally:
         if should_close and session is not None:
             session.close()

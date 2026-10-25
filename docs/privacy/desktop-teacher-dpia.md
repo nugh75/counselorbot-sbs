@@ -38,6 +38,12 @@ e [accettazione manuale](../operations/desktop-teacher-tests.md).
 | Diagnostica e log | Redazione fail-closed; ZIP offline senza DB, credenziali e testo libero. Log locali e copie storiche richiedono comunque conservazione e controllo | [P13](p13-logs-diagnostica.md) |
 | Backup e disponibilità | Snapshot SQLite prima dell'update, integrità verificata, conservazione degli ultimi sette; file/chiavi separati. App, PC e rete devono restare disponibili | [backup](../operations/sqlite-backups.md), F1-14/F1-16 |
 
+Dopo l'integrazione P9, il backend conserva scelte e revoche versionate e le
+rilegge per i grant del taccuino. Le finalità iniziali restano `undefined`/inattive,
+i documenti non sono pubblicati automaticamente e manca la UI P10: occorrono
+configurazione del Titolare e testi approvati **[DA VALIDARE]**. Le osservazioni dei
+vecchi moduli non abilitano finalità. Riferimento: [P9](p9-consensi.md).
+
 Telegram, OpenCode, Prompt Lab, helper ChatGPT, Piper e Console sync sono esclusi
 da `teacher-pc`. Non includerli come servizi attivi nella descrizione L2.
 Un modello locale non esclude altre uscite (Cloudflare, Edge TTS, provider scelti).
