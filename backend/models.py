@@ -2415,3 +2415,90 @@ def _index_log_email(mapper, connection, log):
     from .privacy import field_crypto
     if log.email and field_crypto.enabled():
         log.email_idx = field_crypto.blind_index("logs.email", log.email)
+
+
+class TeacherStudentGrant(Base):
+    """Teacher authorization to access student data in a class (P7, docs/privacy/02-progettazione.md §5.1).
+
+    Replaces the legacy inference 'class member => everything visible' (G5).
+    Scoped by group and enrollment period; categories define accessible data kinds.
+    """
+    __tablename__ = "teacher_student_grants"
+    __table_args__ = (
+        CheckConstraint(
+            "basis IN ('institutional_assignment', 'organizational_authorization', 'consent', 'student_share')",
+            name="ck_teacher_student_grant_basis",
+        ),
+        Index("ix_teacher_student_grants_lookup", "teacher_username", "student_username", "group_id"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    teacher_username = Column(String(255), nullable=False, index=True)
+    student_username = Column(String(255), nullable=False, index=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), nullable=False, index=True)
+    basis = Column(String(64), nullable=False)
+    categories = Column(JSON, nullable=False, default=lambda: ["result", "conversation"])
+    purposes = Column(JSON, nullable=False, default=lambda: ["teaching", "orientation"])
+    valid_from = Column(UTCDateTime, nullable=False)
+    valid_until = Column(UTCDateTime, nullable=True)
+    revoked_at = Column(UTCDateTime, nullable=True)
+    revoked_by = Column(String(255), nullable=True)
+    consent_event_id = Column(String(64), nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
+
+
+class PrivacyBreakGlass(Base):
+    """Emergency break-glass access for technical administrator on L1 (P7, 02 §5.3).
+
+    Grants temporary, audited read_clear access to a specific resource or subject.
+    Must always be accompanied by a recorded privacy event (event_type='break_glass').
+    """
+    __tablename__ = "privacy_break_glass"
+    __table_args__ = (
+        Index("ix_privacy_break_glass_active", "admin_username", "subject_username", "resource_kind"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    admin_username = Column(String(255), nullable=False, index=True)
+    resource_kind = Column(String(32), nullable=False)
+    resource_id = Column(String(128), nullable=False)
+    subject_username = Column(String(255), nullable=False, index=True)
+    reason = Column(Text, nullable=False)
+    valid_from = Column(UTCDateTime, nullable=False)
+    valid_until = Column(UTCDateTime, nullable=False)
+    revoked_at = Column(UTCDateTime, nullable=True)
+    revoked_by = Column(String(255), nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
+
+
+class PrivacyEventRecord(Base):
+    """Audit log of privacy-relevant operations (P8 / P7 break-glass, 02 §7.1).
+
+    Stores actor and subject pseudonyms (subject_pid), event types, purposes and metadata.
+    Contains no cleartext PII, free text, or unpseudonymized usernames.
+    """
+    __tablename__ = "privacy_events"
+    __table_args__ = (
+        CheckConstraint(
+            "event_type IN ('notice_viewed', 'consent_given', 'consent_refused', 'consent_withdrawn', "
+            "'grant_created', 'grant_revoked', 'data_accessed', 'ai_transmission', 'break_glass', 'export', 'erasure')",
+            name="ck_privacy_event_type",
+        ),
+        Index("ix_privacy_events_subject", "subject_pid", "event_type"),
+    )
+
+    id = Column(String(36), primary_key=True)
+    subject_pid = Column(String(32), nullable=False, index=True)
+    actor_pid = Column(String(32), nullable=False, index=True)
+    actor_role = Column(String(32), nullable=False)
+    event_type = Column(String(32), nullable=False, index=True)
+    document_kind = Column(String(64), nullable=True)
+    document_version = Column(String(32), nullable=True)
+    purpose = Column(String(64), nullable=False)
+    choice = Column(String(32), nullable=True)
+    target = Column(String(128), nullable=True)
+    categories_count = Column(JSON, nullable=True)
+    valid_until = Column(UTCDateTime, nullable=True)
+    device_ref = Column(String(64), nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
+

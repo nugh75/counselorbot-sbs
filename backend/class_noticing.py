@@ -31,13 +31,21 @@ def _session_key(group_id: int) -> str:
 
 
 def class_results(db, group, instrument: str | None, days: int | None):
+    from .privacy.authz import is_resource_in_group_scope
+    from .privacy.types import ResourceRef
     members = [row.username for row in db.query(models.GroupMembership).filter_by(group_id=group.id)]
     query = db.query(models.QuestionnaireResult).filter(models.QuestionnaireResult.username.in_(members))
     if instrument:
         query = query.filter(models.QuestionnaireResult.questionnaire_type == instrument)
     if days:
         query = query.filter(models.QuestionnaireResult.submitted_at >= datetime.now(timezone.utc) - timedelta(days=days))
-    return query.order_by(models.QuestionnaireResult.submitted_at.desc(), models.QuestionnaireResult.id.desc()).all()
+    candidates = query.order_by(models.QuestionnaireResult.submitted_at.desc(), models.QuestionnaireResult.id.desc()).all()
+    results = []
+    for row in candidates:
+        res_ref = ResourceRef(kind="result", subject=row.username, owner_group=str(group.id), created_at=row.submitted_at)
+        if is_resource_in_group_scope(db, res_ref, group.id, result_obj=row):
+            results.append(row)
+    return results
 
 
 def _prompt(items: list[dict], lang_name: str) -> str:

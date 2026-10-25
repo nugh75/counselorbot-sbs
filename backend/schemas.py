@@ -2244,3 +2244,24 @@ class AdministrationGuidedEntryInput(BaseModel):
     scores: Optional[Dict[str, StrictInt]] = None
     result_id: Optional[int] = Field(default=None, gt=0)
     institution_grant: str = Field(min_length=1, max_length=256)
+
+
+class BreakGlassRequest(BaseModel):
+    model_config = {"extra": "forbid"}
+    subject_username: str = Field(min_length=1, max_length=255)
+    resource_kind: str = Field(default="*", max_length=32)
+    resource_id: str = Field(default="*", max_length=128)
+    reason: str = Field(min_length=10, max_length=1000)
+    duration_hours: float = Field(default=1.0, ge=0.1, le=24.0)
+
+
+class BreakGlassResponse(BaseModel):
+    ok: bool = True
+    break_glass_id: int
+    admin_username: str
+    subject_username: str
+    resource_kind: str
+    resource_id: str
+    valid_from: str
+    valid_until: str
+

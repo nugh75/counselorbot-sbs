@@ -4,7 +4,7 @@ import json
 import os
 import time
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
@@ -298,9 +298,25 @@ def _attach_log_feedback(db: Session, logs: list[models.Log]) -> list[models.Log
     return logs
 
 
-def _prepare_log_response(db: Session, logs: list[models.Log]) -> list[models.Log]:
+def _prepare_log_response(db: Session, logs: list[models.Log], current_user: Optional[Any] = None) -> list[models.Log]:
     _attach_log_feedback(db, logs)
-    return _normalize_logs_metadata(logs)
+    _normalize_logs_metadata(logs)
+
+    from ..privacy.authz import is_l1, get_active_break_glass, safe_subject_pid
+    if is_l1() and current_user:
+        admin_username = str(current_user.get("username") if isinstance(current_user, dict) else getattr(current_user, "username", "") or "").strip()
+        for log in logs:
+            if not log.username:
+                continue
+            bg = get_active_break_glass(db, admin_username, log.username, "log", str(log.id))
+            if bg is None:
+                try:
+                    db.expunge(log)
+                except Exception:
+                    pass
+                log.username = safe_subject_pid(db, log.username)
+                log.email = None
+    return logs
 
 
 def _log_retention_days(db: Session) -> int:
@@ -435,7 +451,7 @@ async def read_logs(
     )
     order_col = models.Log.timestamp.asc() if (sort or "desc").lower() == "asc" else models.Log.timestamp.desc()
     logs = query.order_by(order_col).offset(skip).limit(min(limit, 500)).all()
-    return _prepare_log_response(db, logs)
+    return _prepare_log_response(db, logs, current_user=current_user)
 
 
 @router.get("/admin/logs/count")
@@ -489,7 +505,7 @@ async def read_session_logs(
         .order_by(models.Log.timestamp.asc())
         .all()
     )
-    return _prepare_log_response(db, logs)
+    return _prepare_log_response(db, logs, current_user=current_user)
 
 
 @router.get("/admin/logs/conversation/{conversation_id}", response_model=List[schemas.LogResponse])
@@ -513,7 +529,7 @@ async def read_conversation_logs(
         .order_by(models.Log.timestamp.asc())
         .all()
     )
-    return _prepare_log_response(db, logs)
+    return _prepare_log_response(db, logs, current_user=current_user)
 
 
 @router.get("/admin/logs/stats")
@@ -1082,7 +1098,7 @@ async def export_logs(
     )
     order_col = models.Log.timestamp.asc() if (sort or "desc").lower() == "asc" else models.Log.timestamp.desc()
     logs = query.order_by(order_col).limit(10000).all()
-    _prepare_log_response(db, logs)
+    _prepare_log_response(db, logs, current_user=current_user)
 
     fmt = (format or "csv").lower()
     payload = [

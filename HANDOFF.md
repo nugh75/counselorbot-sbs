@@ -16,6 +16,7 @@ Agente `s70-f1-16-updater` (subagente per Timoniere), task `168a1a90-9467-4cfd-9
   - `desktop/teacher/src/index.html` & `panel.js`: interfaccia utente nel pannello di controllo con selettore canale, pulsanti di verifica e aggiornamento e log di stato con feedback di backup riuscito.
   - `desktop/teacher/scripts/generate-update-manifest.py`: script Python per generare i file `latest.json` e `latest-beta.json` da caricare nelle Release GitHub.
   - `desktop/teacher/scripts/test_generate_update_manifest.py`: unit test pytest per la generazione dei manifest.
+  - `desktop/teacher/sidecar/test_server.py`: reso il controllo del percorso di backup indipendente dai separatori di path (supporto Windows).
   - `.github/workflows/desktop-teacher.yml`: firma Minisign condizionale (warning su segreto mancante, disabilitazione artefatti updater per evitare fallimento build) e nuovo job `manifest` per generare i manifest e allegarli alla release / artifact.
   - `docs/operations/desktop-teacher-shell.md`: documentazione operativa completa di canali, chiavi Minisign e procedura di rollback e ripristino passo-passo.
   - `docs/architecture/desktop-apps-plan.md`: segnato F1-16 come completato (✅).
@@ -27,6 +28,27 @@ Agente `s70-f1-16-updater` (subagente per Timoniere), task `168a1a90-9467-4cfd-9
   - `cargo test --manifest-path desktop/teacher/src-tauri/Cargo.toml`: 41 test passati, 0 falliti
   - `make guidance-refresh` e `make guidance-check`: eseguiti
 - **Note operative**: nessun deploy o comando sudo. La build degli installer e la firma avvengono in CI.
+
+---
+
+# Handoff 25 ottobre 2026: Privacy Layer P7 — autorizzazioni docente-studente e admin
+
+Agente `s69-p7-authz` (Gemini 3.8 Flash High), branch `feature/privacy-p7-authz`.
+
+- **Obiettivo**: autorizzazioni granulari docente-studente (`TeacherStudentGrant`), ambito per classe e periodo, risoluzione G5 (taccuino privato escluso per default) e G6 (vista pseudonimizzata per admin tecnico su L1 con break-glass eccezionale e audit fail-closed P8).
+- **Modifiche**:
+  - `backend/models.py`: aggiunte in coda tabelle `teacher_student_grants`, `privacy_break_glass`, `privacy_events`.
+  - `backend/migrations/20261025_teacher_student_grants.py`: DDL portabile (Postgres lock `2026102501`, indici, SQLite via `create_all`) e funzione `backfill_grants` da `group_memberships`.
+  - `backend/privacy/authz.py`: matrice §5.2 (`authorize_data_access`), helper `check_teacher_student_access` con risposta 404 fuori ambito/non autorizzato (IDOR protection), sincronizzazione/revoca dinamica grant, isolamento istituti (`InstitutionTeacher`).
+  - `backend/privacy/events.py`: `record_privacy_event` audit fail-closed con PIDs deterministici (nessuna PII o username in chiaro).
+  - `backend/routes/privacy.py`: endpoint `POST /privacy/break-glass` e `POST /privacy/break-glass/{id}/revoke`.
+  - `backend/routes/groups.py`: mascheramento `learner_profile` a `None` in `get_group_students` (G5), scope classe/periodo e controlli IDOR e istituto su tutte le rotte 731-854 e note/condivisioni.
+  - `backend/routes/admin.py` e `backend/routes/survey.py`: vista pseudonimizzata su L1 per risultati questionario e log salvo break-glass attivo.
+  - Documentazione: `docs/privacy/p7-autorizzazioni.md` e `docs/handoff/feature-privacy-p7-authz.md`.
+- **Test eseguiti**:
+  - `test_privacy_p7_authz.py`: 8 test passati (backfill, self-access, valid/revoked grant, isolamento istituto, mascheramento G5, condivisione e revoca IDOR, uscita studente, ciclo break-glass).
+  - Test esistenti correlati: `test_teacher_class_compilations.py`, `test_teacher_result_detail.py`, `test_teacher_noticing.py` (35 pass), `test_privacy_core.py` e `test_sqlite_create_all.py` (171 pass), `test_privacy_p8_subject_maps.py` (23 pass).
+  - Zero nuove regressioni introdotte rispetto alla baseline.
 
 ---
 

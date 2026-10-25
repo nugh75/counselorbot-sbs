@@ -547,11 +547,38 @@ async def get_questionnaire_results(
     current_user: dict = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
-    """Recupera i risultati dei questionari (solo admin)."""
+    """Recupera i risultati dei questionari (solo admin). Pseudonimizzati su L1 salvo break-glass."""
     q = db.query(models.QuestionnaireResult)
     if questionnaire_type:
         q = q.filter(models.QuestionnaireResult.questionnaire_type == questionnaire_type)
     results = q.order_by(models.QuestionnaireResult.submitted_at.desc()).offset(skip).limit(limit).all()
+
+    from ..privacy.authz import is_l1, get_active_break_glass, safe_subject_pid
+    if is_l1():
+        admin_username = str(current_user.get("username") or "").strip()
+        output = []
+        for r in results:
+            bg = get_active_break_glass(db, admin_username, r.username or "", "result", str(r.id))
+            if bg is not None:
+                output.append(r)
+            else:
+                output.append(schemas.QuestionnaireResultResponse(
+                    id=r.id,
+                    session_id=r.session_id,
+                    questionnaire_type=r.questionnaire_type,
+                    scores=r.scores,
+                    username=safe_subject_pid(db, r.username or "") if r.username else None,
+                    submitted_at=r.submitted_at,
+                    administration_plan_id=r.administration_plan_id,
+                    research_contact_id=r.research_contact_id,
+                    source=r.source,
+                    capture_method=r.capture_method,
+                    source_system=r.source_system,
+                    source_record_id=r.source_record_id,
+                    locale=r.locale,
+                ))
+        return output
+
     return results
 
 

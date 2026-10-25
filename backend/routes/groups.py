@@ -65,6 +65,16 @@ def _require_visible_group(db: Session, identity, group_id: int) -> models.Stude
     return group
 
 
+def _require_institution_membership(db: Session, identity, group: models.StudentGroup) -> None:
+    """Isolate groups tied to an institution: require active teacher membership (or return 404)."""
+    if group.institution_id is not None:
+        from ..institution_access import require_institution_teacher
+        try:
+            require_institution_teacher(db, identity, group.institution_id)
+        except HTTPException:
+            raise HTTPException(status_code=404, detail="Classe non trovata")
+
+
 def _members_count(db: Session, group_id: int) -> int:
     return db.query(models.GroupMembership).filter(models.GroupMembership.group_id == group_id).count()
 
@@ -125,9 +135,14 @@ def ensure_membership(db: Session, group_id: int, username: str, joined_via: str
         .first()
     )
     if membership:
+        from ..privacy.authz import sync_grants_for_membership
+        sync_grants_for_membership(db, group_id, username, created_at=membership.created_at)
         return membership
     membership = models.GroupMembership(group_id=group_id, username=username, joined_via=joined_via)
     db.add(membership)
+    db.flush()
+    from ..privacy.authz import sync_grants_for_membership
+    sync_grants_for_membership(db, group_id, username, created_at=membership.created_at)
     return membership
 
 
@@ -703,6 +718,9 @@ async def create_group_share(
     db.add(share)
     db.commit()
     db.refresh(share)
+    from ..privacy.authz import sync_grants_for_share
+    sync_grants_for_share(db, group.id, shared_with)
+    db.commit()
     return share
 
 
@@ -721,6 +739,8 @@ async def delete_group_share(
     username = _username(current_user)
     if not _is_admin(current_user) and group.owner_username != username and share.granted_by_username != username:
         raise HTTPException(status_code=403, detail="Solo il proprietario, il condividitore o un admin puo' rimuovere la condivisione")
+    from ..privacy.authz import revoke_grants_for_share
+    revoke_grants_for_share(db, group.id, share.shared_with_username, revoked_by=_username(current_user) or "system")
     db.delete(share)
     db.commit()
     return {"ok": True, "deleted": share_id}
@@ -730,10 +750,33 @@ async def delete_group_share(
 
 def _require_student_result(db, current_user, group_id, username, **result_filter):
     group = _require_visible_group(db, current_user, group_id)
+    _require_institution_membership(db, current_user, group)
     _require_group_member(db, group, username)
     result = db.query(models.QuestionnaireResult).filter_by(username=username, **result_filter).first()
     if result is None:
         raise HTTPException(status_code=404, detail="Sessione non trovata per questo studente")
+
+    from ..privacy.authz import (
+        authorize_data_access,
+        is_resource_in_group_scope,
+        principal_from_identity,
+    )
+    from ..privacy.types import ResourceRef
+
+    res_ref = ResourceRef(
+        kind="result",
+        subject=username,
+        owner_group=str(group_id),
+        created_at=result.submitted_at,
+    )
+    if not is_resource_in_group_scope(db, res_ref, group_id, result_obj=result):
+        raise HTTPException(status_code=404, detail="Sessione non trovata per questo studente")
+
+    principal = principal_from_identity(current_user)
+    decision = authorize_data_access(principal, "read_clear", res_ref, purpose="teaching", db=db)
+    if not decision.allowed:
+        raise HTTPException(status_code=404, detail="Sessione non trovata per questo studente")
+
     return result
 
 
@@ -751,6 +794,7 @@ async def get_class_noticing(group_id: int, lang: str = "it", instrument: Option
                              current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
     from ..class_noticing import class_noticing
     group = _require_visible_group(db, current_user, group_id)
+    _require_institution_membership(db, current_user, group)
     return class_noticing(db, group, lang, instrument=instrument, days=days)
 
 
@@ -760,6 +804,7 @@ async def generate_class_noticing(group_id: int, lang: str = "it", instrument: O
                                   current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
     from ..class_noticing import class_noticing
     group = _require_visible_group(db, current_user, group_id)
+    _require_institution_membership(db, current_user, group)
     return class_noticing(db, group, lang, instrument=instrument, days=days, generate=True,
                           username=_username(current_user))
 
@@ -795,8 +840,17 @@ async def get_group_students(
 ):
     """Membri della classe con tutti i loro risultati, learner model e link Telegram."""
     from .learner_profile import _latest_revision
+    from ..privacy.authz import (
+        authorize_data_access,
+        is_resource_in_group_scope,
+        principal_from_identity,
+    )
+    from ..privacy.types import ResourceRef
 
     group = _require_visible_group(db, current_user, group_id)
+    _require_institution_membership(db, current_user, group)
+
+    principal = principal_from_identity(current_user)
     members = (
         db.query(models.GroupMembership)
         .filter(models.GroupMembership.group_id == group.id)
@@ -805,12 +859,25 @@ async def get_group_students(
     )
     students = []
     for member in members:
-        results = (
+        all_results = (
             db.query(models.QuestionnaireResult)
             .filter(models.QuestionnaireResult.username == member.username)
             .order_by(models.QuestionnaireResult.submitted_at.desc())
             .all()
         )
+        authorized_results = []
+        for row in all_results:
+            res_ref = ResourceRef(
+                kind="result",
+                subject=member.username,
+                owner_group=str(group.id),
+                created_at=row.submitted_at,
+            )
+            if is_resource_in_group_scope(db, res_ref, group.id, result_obj=row):
+                dec = authorize_data_access(principal, "read_clear", res_ref, purpose="teaching", db=db)
+                if dec.allowed:
+                    authorized_results.append(row)
+
         telegram_link = (
             db.query(models.TelegramAccountLink)
             .filter(
@@ -820,11 +887,20 @@ async def get_group_students(
             .first()
         )
         profile = _latest_revision(db, member.username)
+
+        # G5 fix: learner_profile is not exposed to teacher unless notebook category is granted
+        notebook_dec = authorize_data_access(
+            principal, "read_clear",
+            ResourceRef(kind="notebook", subject=member.username, owner_group=str(group.id)),
+            purpose="teaching", db=db
+        )
+        learner_profile_data = profile.data if (profile and notebook_dec.allowed) else None
+
         students.append({
             "username": member.username,
             "joined_via": member.joined_via,
             "telegram_linked": bool(telegram_link),
-            "learner_profile": profile.data if profile else None,
+            "learner_profile": learner_profile_data,
             "results": [
                 {
                     "id": row.id,
@@ -833,7 +909,7 @@ async def get_group_students(
                     "scores": row.scores,
                     "submitted_at": row.submitted_at.isoformat() if row.submitted_at else None,
                 }
-                for row in results
+                for row in authorized_results
             ],
         })
     return {"group_id": group.id, "students": students}
@@ -849,8 +925,20 @@ async def get_group_student_conversation(
 ):
     """Transcript di una sessione di uno studente della classe (informativa nell'invito)."""
     from .survey import _session_conversation_messages
+    from ..privacy.authz import authorize_data_access, principal_from_identity
+    from ..privacy.types import ResourceRef
 
-    _require_student_result(db, current_user, group_id, username, session_id=session_id)
+    result = _require_student_result(db, current_user, group_id, username, session_id=session_id)
+    principal = principal_from_identity(current_user)
+    conv_ref = ResourceRef(
+        kind="conversation",
+        subject=username,
+        owner_group=str(group_id),
+        created_at=result.submitted_at,
+    )
+    decision = authorize_data_access(principal, "read_clear", conv_ref, purpose="teaching", db=db)
+    if not decision.allowed:
+        raise HTTPException(status_code=404, detail="Sessione non trovata per questo studente")
     return _session_conversation_messages(db, session_id)
 
 
@@ -862,6 +950,7 @@ async def list_teacher_notes(
     db: Session = Depends(get_db),
 ):
     group = _require_visible_group(db, current_user, group_id)
+    _require_institution_membership(db, current_user, group)
     query = db.query(models.TeacherNote).filter(models.TeacherNote.group_id == group.id)
     if username:
         query = query.filter(models.TeacherNote.username == username)
@@ -877,6 +966,7 @@ async def create_teacher_note(
     db: Session = Depends(get_db),
 ):
     group = _require_visible_group(db, current_user, group_id)
+    _require_institution_membership(db, current_user, group)
     text = (payload.text or "").strip()
     if not text:
         raise HTTPException(status_code=400, detail="Testo nota obbligatorio")
@@ -905,7 +995,8 @@ async def delete_teacher_note(
     if not note:
         raise HTTPException(status_code=404, detail="Nota non trovata")
     if note.group_id:
-        _require_visible_group(db, current_user, note.group_id)
+        group = _require_visible_group(db, current_user, note.group_id)
+        _require_institution_membership(db, current_user, group)
     if not _is_admin(current_user) and note.author_username != _username(current_user):
         raise HTTPException(status_code=403, detail="Solo l'autore o un admin puo' eliminare la nota")
     db.delete(note)
@@ -925,6 +1016,7 @@ async def send_teacher_message(
     from .. import telegram_bot, telegram_state
 
     group = _require_visible_group(db, current_user, group_id)
+    _require_institution_membership(db, current_user, group)
     text = (payload.text or "").strip()
     if not text:
         raise HTTPException(status_code=400, detail="Testo messaggio obbligatorio")
@@ -1061,6 +1153,8 @@ async def leave_group(
     )
     if not membership:
         raise HTTPException(status_code=404, detail="Iscrizione non trovata")
+    from ..privacy.authz import revoke_grants_for_membership
+    revoke_grants_for_membership(db, membership.group_id, membership.username, revoked_by=current_user["username"])
     db.delete(membership)
     db.commit()
     return {"ok": True, "left": membership_id}
