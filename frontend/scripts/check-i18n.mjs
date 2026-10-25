@@ -179,6 +179,11 @@ const allowedVisibleAttributes = new Set([
 const localeSpecificFiles = new Set([
     'components/administration/QuestionnaireRunner.tsx',
 ]);
+// These state values are dictionary keys rendered through l(error), not visible text.
+const translatedFeedbackKeys = new Map([
+    ['components/council/ClassCouncilView.tsx', new Set(['networkError'])],
+    ['components/teacher/ClassCouncilTab.tsx', new Set(['createError', 'ownerOnly'])],
+]);
 const visibleAttributes = new Set(['placeholder', 'title', 'aria-label', 'alt']);
 
 function sourceFiles(directory) {
@@ -214,7 +219,7 @@ for (const file of sourceFiles(sourceRoot)) {
                 const argument = node.arguments[0];
                 if (argument && (ts.isStringLiteral(argument) || ts.isNoSubstitutionTemplateLiteral(argument))) {
                     const text = normalized(argument.text);
-                    if (text && /[A-Za-zÀ-ÿ]/.test(text)) {
+                    if (text && /[A-Za-zÀ-ÿ]/.test(text) && !translatedFeedbackKeys.get(relative)?.has(text)) {
                         errors.push(`${relative}:${lineOf(source, node)} hard-coded user feedback: ${text}`);
                     }
                 }
