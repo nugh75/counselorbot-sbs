@@ -6,7 +6,7 @@ import ts from 'typescript';
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const sourceRoot = path.join(frontendRoot, 'src');
 const languages = ['it', 'en', 'es', 'fr', 'de', 'sv'];
-const i18nModules = ['i18n.ts', 'i18n-admin.ts', 'i18n-factors.ts', 'i18n-survey.ts', 'i18n-readings.ts', 'i18n-orientation.ts', 'i18n-referrals.ts', 'i18n-voice.ts', 'i18n-tavolo.ts', 'i18n-prompt-alignment.ts', 'i18n-prompt-map.ts', 'i18n-skills.ts', 'i18n-chatgpt.ts'];
+const i18nModules = ['i18n.ts', 'i18n-admin.ts', 'i18n-factors.ts', 'i18n-survey.ts', 'i18n-readings.ts', 'i18n-orientation.ts', 'i18n-referrals.ts', 'i18n-voice.ts', 'i18n-tavolo.ts', 'i18n-prompt-alignment.ts', 'i18n-prompt-map.ts', 'i18n-skills.ts', 'i18n-chatgpt.ts', 'i18n-privacy.ts'];
 const modules = new Map();
 
 function sourceFile(file, kind = ts.ScriptKind.TS) {
@@ -68,16 +68,19 @@ function objectValues(moduleName, declarationName, seen = new Set()) {
 function containerValues(moduleName, declarationName, language) {
     const { declarations } = modules.get(moduleName);
     const container = declarations.get(declarationName);
-    const property = container?.properties.find(
-        (candidate) => ts.isPropertyAssignment(candidate) && propertyName(candidate.name) === language,
-    );
+    const property = container?.properties.find((candidate) => (
+        ts.isShorthandPropertyAssignment(candidate)
+            ? candidate.name.text === language
+            : ts.isPropertyAssignment(candidate) && propertyName(candidate.name) === language
+    ));
     const values = new Map();
     if (!property) return values;
-    // `it: uiIt` invece di `it: { ...it }`: il container rimanda a un altro
-    // oggetto dichiarato nello stesso modulo, come in i18n-tavolo.ts.
-    if (ts.isIdentifier(property.initializer)) {
-        return objectValues(moduleName, property.initializer.text);
-    }
+    // `it: uiIt` oppure `{ it, ... }`: il container rimanda a un altro oggetto
+    // dichiarato nello stesso modulo, come in i18n-tavolo.ts e i18n-privacy.ts.
+    const reference = ts.isShorthandPropertyAssignment(property)
+        ? property.name.text
+        : ts.isIdentifier(property.initializer) ? property.initializer.text : null;
+    if (reference) return objectValues(moduleName, reference);
     if (!ts.isObjectLiteralExpression(property.initializer)) return values;
     for (const entry of property.initializer.properties) {
         if (ts.isSpreadAssignment(entry) && ts.isIdentifier(entry.expression)) {
@@ -106,6 +109,7 @@ const dictionaries = Object.fromEntries(languages.map((language) => [
         ...containerValues('i18n-referrals.ts', 'REFERRAL_DICTS', language),
         ...containerValues('i18n-voice.ts', 'VOICE_DICTS', language),
         ...containerValues('i18n-tavolo.ts', 'UI', language),
+        ...containerValues('i18n-privacy.ts', 'PRIVACY_DICTS', language),
     ]),
 ]));
 const allKeys = new Set(languages.flatMap((language) => [...dictionaries[language].keys()]));

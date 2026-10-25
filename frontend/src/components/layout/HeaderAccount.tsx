@@ -1,7 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { ChevronDown, LayoutGrid, LogIn, LogOut, User } from 'lucide-react';
+import Link from 'next/link';
+import { ChevronDown, LayoutGrid, LogIn, LogOut, ShieldCheck, User } from 'lucide-react';
 import { VoiceReaderMenuEntry } from '@/components/voice-reader/VoiceReader';
 import { ai4authLoginUrl } from '@/lib/auth';
 import { LANGUAGES } from '@/lib/i18n';
@@ -88,6 +89,10 @@ export function AccountItems({ account, servicesHref, servicesLabel, logoutHref,
                     <span className="truncate">{servicesLabel}</span>
                 </a>
             )}
+            <Link href="/privacy" className={cn(ROW, 'border-b border-slate-100')} onClick={onNavigate}>
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                <span className="truncate">{t('privacy.title')}</span>
+            </Link>
             <div role="group" aria-label={t('header.preferences')}>
                 {account && (
                     <div className="px-3 pb-1 pt-2 text-2xs font-semibold uppercase tracking-wide text-slate-500" aria-hidden="true">
