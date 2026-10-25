@@ -12,7 +12,9 @@ modifiche dal browser del Mac, **senza toccare i container di produzione**
 con hot reload su `127.0.0.1:3176`, backend inutilizzabile `127.0.0.1:9`.
 I test browser intercettano le API con dati sintetici: nessun DB, SSO o provider.
 Da `frontend/`: `CLASS_PATH_ADD_STEP_BASE_URL=http://127.0.0.1:3176 node --test
-tests/class-path-add-step.test.mjs`. Stop con Ctrl-C sul processo avviato.
+tests/class-path-add-step.test.mjs`. Per le risorse in pagina (Node 22):
+`PIANO_BUILDER_BASE_URL=http://127.0.0.1:3176 node --test --experimental-strip-types
+tests/piano-builder-resources.test.mjs`. Stop con Ctrl-C sul processo avviato.
 Tunnel: `ssh -N -L 3176:127.0.0.1:3176 <utente>@<server>`, poi
 `http://localhost:3176/docente/piani-operativi`. Fuori dalle fixture non c'è
 un backend applicativo utilizzabile. Pytest usa database temporanei separati.

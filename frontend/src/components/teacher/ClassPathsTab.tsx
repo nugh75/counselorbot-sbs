@@ -38,6 +38,8 @@ import { lifecycleRequest, parsePublicationProblems, publishRevision, unavailabl
 import { pathPublicationText, unavailableActionText } from '@/lib/i18n-path-publication';
 import { pathTemplateText } from '@/lib/i18n-path-templates';
 import { PathTemplateUpdate } from './PathTemplateUpdate';
+import { PathResourceDialog } from './PathResourceDialog';
+import { PathDiscussionEditor } from './PathDiscussionEditor';
 import { StepKindPicker } from './StepKindPicker';
 import { ClassMeetingsManager } from './ClassMeetingsManager';
 import { classMeetingText } from '@/lib/i18n-class-meetings';
@@ -157,17 +159,19 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     const [forumTopics, setForumTopics] = useState<PathForumTopic[]>([]);
     const [forumLoadError, setForumLoadError] = useState(false);
     const [selectedTopic, setSelectedTopic] = useState('');
-    const loadForumTopics = async () => {
+    const [discussionEditor, setDiscussionEditor] = useState<{topicId: number | null} | null>(null);
+    const loadForumTopics = async (select?: number) => {
         try {
             const response = await apiFetch(`/api/groups/${path.group_id}/forum/topics?limit=100`);
             if (!response.ok) throw new Error('forum topics');
             setForumTopics(pathForumTopics(parseForumList(await response.json()).topics));
             setForumLoadError(false);
+            if (select !== undefined) setSelectedTopic(steps.some(step => step.step_type === 'forum' && step.topic_id === select) ? '' : String(select));
         } catch {setForumLoadError(true);}
     };
     useEffect(() => {void loadForumTopics();}, []); // eslint-disable-line react-hooks/exhaustive-deps
     const addForumStep = () => {
-        const target = forumTopics.find(row => row.id === Number(selectedTopic));
+        const target = selectablePathForumTopics(forumTopics, steps).find(row => row.id === Number(selectedTopic));
         if (!target) return;
         placeSteps([forumStepInput(target, path.group_id, 0)]);
         setSelectedTopic(''); setNotice(null);
@@ -255,7 +259,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         description !== (currentPath.description || '') ||
         JSON.stringify(steps) !== JSON.stringify(currentPath.steps);
 
-    useDraftGuard(dirty || busy, l('discard'), { blocked: busy });
+    useDraftGuard((dirty || busy) && !discussionEditor, l('discard'), { blocked: busy });
 
     const handleMoveStep = (index: number, delta: number) => {
         const nextIndex = index + delta;
@@ -716,6 +720,11 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             )}
                                             {pending && <p className="mt-1 text-xs text-slate-600">{pathTemplateText(lang, 'pendingHelp')}</p>}
                                             {isLegacyQuestionnaireTool(step) && <p className="mt-1 text-xs text-slate-600">{k('legacyQuestionnaire')}</p>}
+                                            {step.step_type === 'forum' && step.topic_id && (
+                                                <Button variant="ghost" size="sm" disabled={busy} onClick={() => setDiscussionEditor({topicId: step.topic_id!})}>
+                                                    {t('piano.builder.editDiscussion')}
+                                                </Button>
+                                            )}
                                             {step.step_type === 'questionnaire_administration' && step.administration_plan_id && (
                                                 // Classroom and research views edit the same administration row.
                                                 <Link href={`/docente/somministrazioni#plan-${step.administration_plan_id}`}
@@ -945,6 +954,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                     {selectablePathForumTopics(forumTopics, steps).map(row=><option key={row.id} value={row.id}>{row.locked ? `${row.title} · ${f('locked')}` : row.title}</option>)}
                                 </select></label>
                                 <Button variant="secondary" disabled={busy || !selectedTopic} onClick={() => {addForumStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
+                                <Button variant="secondary" disabled={busy} onClick={() => setDiscussionEditor({topicId: null})}>{t('piano.builder.createDiscussion')}</Button>
+                                <Button variant="secondary" disabled={busy || !selectedTopic} onClick={() => setDiscussionEditor({topicId: Number(selectedTopic)})}>{t('piano.builder.editDiscussion')}</Button>
                             </div>
                             <details className="text-sm text-slate-600">
                                 <summary className="cursor-pointer font-medium text-slate-700">{a('howDone')}</summary>
@@ -966,6 +977,12 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     toolName={key => toolLabel(key, classSettings.tools, lang)}
                 />
             )}
+
+            {discussionEditor && <PathResourceDialog title={t(discussionEditor.topicId === null ? 'piano.builder.createDiscussion' : 'piano.builder.editDiscussion')}
+                planDirty={dirty} onClose={() => setDiscussionEditor(null)}>
+                {({onDraft, close}) => <PathDiscussionEditor groupId={path.group_id} topicId={discussionEditor.topicId}
+                    onDraft={onDraft} onCancel={close} onSaved={id => {setDiscussionEditor(null); void loadForumTopics(id);}} />}
+            </PathResourceDialog>}
 
             <StickyActions>
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">

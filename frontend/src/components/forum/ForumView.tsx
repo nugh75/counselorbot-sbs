@@ -61,7 +61,8 @@ function EditForm({ initial, busy, onSave, onCancel }: { initial: string; busy: 
     </form>;
 }
 
-function TopicForm({ initial, busy, onSave, onCancel }: {
+export function TopicForm({ initial, busy, onSave, onCancel, onDraft, guard = true }: {
+    onDraft?: (dirty: boolean, busy: boolean) => void; guard?: boolean;
     initial: { title: string; body: string }; busy: boolean; onSave: (changes: { title?: string; body?: string }) => void; onCancel: () => void;
 }) {
     const { lang } = useI18n(); const l = (key: TextKey) => forumText(lang, key);
@@ -69,7 +70,8 @@ function TopicForm({ initial, busy, onSave, onCancel }: {
     const dirty = title !== initial.title || body !== initial.body;
     const valid = forumDraftValid(body, title);
     const changes = forumTopicChanges(initial, { title, body });
-    useDraftGuard(dirty, l('discard'), { blocked: busy });
+    useDraftGuard(guard && dirty, l('discard'), { blocked: busy });
+    useEffect(() => { onDraft?.(dirty, busy); }, [dirty, busy, onDraft]);
     return <form className="space-y-2" onSubmit={event => { event.preventDefault(); if (valid && changes) onSave(changes); }}>
         <label className="block text-sm font-semibold text-slate-700">{l('title')}
             <input value={title} maxLength={160} disabled={busy} onChange={event => setTitle(event.target.value)}
@@ -84,7 +86,7 @@ function TopicForm({ initial, busy, onSave, onCancel }: {
         <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={busy || !valid || !changes}>{l('save')}</Button>
             <Button type="button" variant="secondary" disabled={busy}
-                onClick={() => { if (!dirty || window.confirm(l('discard'))) onCancel(); }}>{l('cancel')}</Button>
+                onClick={() => { if (!guard || !dirty || window.confirm(l('discard'))) onCancel(); }}>{l('cancel')}</Button>
         </div>
     </form>;
 }
@@ -167,9 +169,9 @@ function ForumLinkPicker({ groupId, value, busy, onChange }: { groupId: number; 
     </div>;
 }
 
-function ForumComposer({ path, topic, linkGroupId, onPublished, onForbidden, onDraft, onCancel }: {
+export function ForumComposer({ path, topic, linkGroupId, onPublished, onForbidden, onDraft, onCancel, guard = true }: {
     path: string; topic: boolean; onPublished: (id: number) => void; onForbidden: () => void;
-    onDraft: (dirty: boolean, busy: boolean) => void; onCancel?: () => void; linkGroupId?: number;
+    onDraft: (dirty: boolean, busy: boolean) => void; onCancel?: () => void; linkGroupId?: number; guard?: boolean;
 }) {
     const { lang } = useI18n(); const l = (key: TextKey) => forumText(lang, key);
     const [body, setBody] = useState(''); const [title, setTitle] = useState('');
@@ -178,7 +180,7 @@ function ForumComposer({ path, topic, linkGroupId, onPublished, onForbidden, onD
     const pending = useRef<AbortController | null>(null); const active = useRef(false);
     const account = useRef(getViewAsAccount()?.username);
     const dirty = body.length > 0 || title.length > 0 || link.length > 0;
-    useDraftGuard(dirty || busy, l('discard'), { blocked: busy });
+    useDraftGuard(guard && (dirty || busy), l('discard'), { blocked: busy });
     useEffect(() => { onDraft(dirty, busy); }, [dirty, busy, onDraft]);
     useEffect(() => {
         active.current = true;

@@ -15,3 +15,19 @@ Nei piani storici `results_step_id` identifica la fonte dei dati del questionari
 non impone più un ordine tra passi e la rimozione logica della fonte non cancella
 il questionario o i risultati. Le normali autorizzazioni e la necessità di una
 compilazione da analizzare restano applicate.
+
+
+## Discussioni nel builder (eb537b45)
+
+Nel tipo «Partecipa a una discussione» si può creare una discussione oppure
+modificare quella selezionata. Ogni passo forum già inserito offre «Modifica
+discussione». Titolo e testo si modificano in una modale, senza cambiare pagina.
+Si riusano i form del forum e le API `POST /groups/{id}/forum/topics`,
+`GET /forum/topics/{id}`, `PATCH /forum/topics/{id}` con gli stessi permessi.
+
+Il salvataggio riguarda subito la discussione nel forum della classe; il piano
+mantiene la propria bozza e si salva separatamente. La discussione appena creata
+è selezionata per poterla aggiungere al piano. Un errore conserva il testo;
+annullare o premere Esc chiede conferma se ci sono modifiche alla discussione.
+Durante l'invio non si può chiudere la modale. Le risposte di altre classi non
+sono editabili nel builder. Nessun nuovo endpoint o campo nel database.
