@@ -28,13 +28,14 @@ const path = { id: 301, group_id: 11, title: 'Metodo di studio', description: nu
     ] };
 
 async function prepare(page, saved = []) {
-    page.setDefaultTimeout(20000);
+    page.setDefaultTimeout(Number(process.env.UI_TEST_TIMEOUT || 20000));
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(() => { localStorage.setItem('cb_lang', 'it'); localStorage.setItem('cb_theme', 'light'); });
     await page.route('**/*', async route => {
         const url = new URL(route.request().url());
         if (url.origin !== origin) return route.abort();
+        if (url.pathname === '/runtime-config.js') return route.fulfill({status: 200, contentType: 'text/javascript', body: `window.__COUNSELORBOT_CONFIG__=${JSON.stringify({appUrl: origin, authBase: origin, portalUrl: origin, managerUrl: origin})};`});
         if (!url.pathname.startsWith('/api/')) return route.continue();
         const json = data => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
         const p = url.pathname;
@@ -65,7 +66,7 @@ async function prepare(page, saved = []) {
 }
 
 async function openEditor(page) {
-    await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded', timeout: Number(process.env.UI_NAVIGATION_TIMEOUT || 120000) });
     await page.getByRole('button', { name: 'Apri' }).click();
     await page.locator('[data-testid="path-step-card"]').first().waitFor();
 }
@@ -113,7 +114,7 @@ async function openEditor(page) {
     await chats.selectOption('SAVICKAS');
     await add.getByRole('button', { name: 'Aggiungi passo', exact: true }).click();
     assert.equal(await cards.count(), 4);
-    await cards.nth(3).getByText('Intervista Savickas').waitFor();
+    await cards.nth(3).getByText('Chat guidata · Intervista Savickas', {exact: true}).waitFor();
     await open('Fa una chat guidata');
     await chats.selectOption('EVENTO_STUDIO');
     await add.getByRole('button', { name: 'Aggiungi passo', exact: true }).click();
@@ -168,7 +169,8 @@ async function openEditor(page) {
     await summary.getByRole('button', { name: 'Modifica piano' }).click();
     await page.locator('#path-title').fill('Metodo di studio 2');
     await cards.nth(1).getByRole('button', { name: 'Modifica #2' }).click();
-    await cards.nth(1).getByPlaceholder(/titolo/i).fill('Compilazione in aula');
+    await cards.nth(1).getByRole('button', {name: /Personalizza/}).click();
+    await cards.nth(1).getByRole('textbox', {name: 'Titolo del passo', exact: true}).fill('Compilazione in aula');
 
     await cards.nth(0).getByRole('button', { name: 'Sostituisci #1' }).click();
     const add = page.locator('[data-testid="add-step"]');
@@ -177,7 +179,7 @@ async function openEditor(page) {
     await add.getByRole('combobox', { name: 'Scegli uno strumento abilitato…' }).selectOption('tavolo');
     await add.getByRole('button', { name: 'Aggiungi passo', exact: true }).click();
     assert.equal(await cards.count(), 2);
-    await cards.nth(0).getByText('Tavolo').waitFor();
+    await cards.nth(0).getByText('Tavolo', {exact: true}).waitFor();
 
     await page.getByRole('button', { name: 'Salva bozza' }).click();
     await page.getByText('Metodo di studio 2').first().waitFor();
@@ -189,7 +191,7 @@ async function openEditor(page) {
     // Back to the summary: no open fields left.
     assert.equal(await page.locator('#path-title').count(), 0);
     assert.equal(await cards.getByRole('textbox').count(), 0);
-    await cards.nth(1).getByText('Compilazione in aula').waitFor();
+    await cards.nth(1).getByText('Compilazione in aula', {exact: true}).waitFor();
     assert.deepEqual(errors, []);
     await page.close();
 }
@@ -208,6 +210,35 @@ async function openEditor(page) {
     assert.ok(form.y > list.y, 'the form follows the step list');
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(errors, []);
+    await page.close();
+}
+
+{
+    const page = await browser.newPage({viewport: {width: 1280, height: 950}});
+    const saved = [];
+    await prepare(page, saved);
+    await openEditor(page);
+    const card = page.locator('[data-testid="path-step-card"]').nth(1);
+    await card.getByRole('button', {name: 'Sostituisci #2'}).click();
+    const add = page.locator('[data-testid="add-step"]');
+    await add.getByRole('radio', {name: 'Compila un questionario'}).check();
+    await add.getByRole('combobox').first().selectOption('6');
+    page.once('dialog', dialog => dialog.dismiss());
+    await add.getByRole('button', {name: 'Aggiungi passo', exact: true}).click();
+    assert.equal(saved.length, 0);
+    await card.getByText(/AB12/).waitFor();
+    await card.getByRole('button', {name: 'Sostituisci #2'}).click();
+    await add.getByRole('radio', {name: 'Compila un questionario'}).check();
+    await add.getByRole('combobox').first().selectOption('6');
+    page.once('dialog', dialog => dialog.accept());
+    await add.getByRole('button', {name: 'Aggiungi passo', exact: true}).click();
+    await card.getByText(/CD34/).waitFor();
+    await page.getByRole('button', {name: 'Salva bozza'}).click();
+    await page.locator('[data-testid="path-summary"]').waitFor();
+    assert.equal(saved.length, 1);
+    assert.equal(saved[0].steps[1].replaces_step_id, 2);
+    assert.equal(saved[0].steps[1].administration_plan_id, 6);
+    assert.equal(saved[0].steps[1].id, undefined);
     await page.close();
 }
 

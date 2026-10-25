@@ -540,6 +540,8 @@ Stop frontend con Ctrl-C nel terminale dedicato; stop PG con
 
 ## Somministrazioni: archiviazione e sostituzione (s12)
 
+Usare Node 22 o successivo per i test TypeScript diretti.
+
 Verificare `lsof -nP -iTCP:3162 -sTCP:LISTEN` (Linux: `ss -ltn`), poi
 `bash scripts/dev-somministrazioni-tests.sh`. Frontend con hot reload su
 `127.0.0.1:3162`, backend inutilizzabile `127.0.0.1:9`. Le suite Node
@@ -548,3 +550,15 @@ fixture sintetiche; nessun database o provider viene usato. Test: da frontend,
 `ADMINISTRATIONS_BASE_URL=http://127.0.0.1:3162 node --test tests/administration-lifecycle.test.mjs`.
 Arresto: Ctrl-C. Tunnel: `ssh -N -L 3162:127.0.0.1:3162 <utente>@<server>`,
 URL `http://localhost:3162`. Fuori dalla suite non è un ambiente applicativo completo.
+
+Per il flusso dentro i piani operativi, da `frontend/`:
+`CLASS_PATH_ADD_STEP_BASE_URL=http://127.0.0.1:3162 node --test tests/class-path-add-step.test.mjs`.
+Le fixture forniscono anche `/runtime-config.js` e bloccano le richieste esterne.
+Su macchine sotto carico si può impostare `UI_TEST_TIMEOUT=60000`.
+
+Verifica opzionale della build isolata, dopo aver fermato Next dev sulla stessa porta:
+`docker build -t counselorbot-s12-frontend --build-arg BACKEND_ORIGIN=http://127.0.0.1:9 frontend`,
+poi `docker run --name counselorbot-s12-frontend-test -e BACKEND_ORIGIN=http://127.0.0.1:9 -p 127.0.0.1:3162:3000 -d counselorbot-s12-frontend`.
+Usare le stesse suite con API simulate; nessun volume o DB applicativo collegato.
+Arresto: `docker stop counselorbot-s12-frontend-test`. Il tag e il container sono
+riservati alle verifiche e non sostituiscono i servizi di produzione.

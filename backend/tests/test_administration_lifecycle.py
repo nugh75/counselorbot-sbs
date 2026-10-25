@@ -69,3 +69,65 @@ def test_archive_permissions_and_revision_conflicts(api):
     stale = client.put(path, json=body)
     assert stale.status_code == 409
     assert stale.json()['detail'] == 'administration_revision_conflict'
+
+
+def test_replacement_is_atomic_clean_and_preserves_source_results(api, monkeypatch):
+    client, db, _ = api
+    old = create(client, status='active', researchers=[{'external_name': 'Synthetic colleague'}])
+    row = result(db, old['id'])
+    url = f"/admin/administration-plans/{old['id']}/replace"
+    body = {'revision': old['revision'], 'replacement': {'title': 'New questionnaire', 'instrument_code': 'ZTPI', 'status': 'active'}}
+    # A failure after the new row was flushed must roll back creation and archive together.
+    original = administration_plans._replace_researchers
+    def fail_after_flush(*args):
+        raise HTTPException(422, 'synthetic_validation_failure')
+    monkeypatch.setattr(administration_plans, '_replace_researchers', fail_after_flush)
+    failed = client.post(url, json=body)
+    assert failed.status_code == 422
+    assert db.query(models.AdministrationPlan).count() == 1
+    assert db.get(models.AdministrationPlan, old['id']).status == 'active'
+    monkeypatch.setattr(administration_plans, '_replace_researchers', original)
+    replacement = client.post(url, json=body)
+    assert replacement.status_code == 200, replacement.text
+    new = replacement.json()
+    assert new['id'] != old['id'] and new['code'] != old['code']
+    assert new['instrument_code'] == 'ZTPI' and new['status'] == 'active'
+    assert new['responses_count'] == 0 and new['revision'] == 1
+    source = db.get(models.AdministrationPlan, old['id'])
+    assert source.status == 'archived' and source.revision == old['revision'] + 1
+    assert db.get(models.QuestionnaireResult, row.id).administration_plan_id == old['id']
+    assert client.get(f"/admin/administration-plans/{old['id']}/responses").json()['plan']['responses_count'] == 1
+    # A duplicate/stale request cannot create a second new administration.
+    assert client.post(url, json=body).status_code == 409
+    assert db.query(models.AdministrationPlan).count() == 2
+
+
+def test_replacement_permissions_validation_and_archived_state(api):
+    client, db, identity = api
+    old = create(client, status='active')
+    url = f"/admin/administration-plans/{old['id']}/replace"
+    body = {'revision': old['revision'], 'replacement': {'title': 'Replacement'}}
+    identity['username'] = 'outsider'
+    assert client.post(url, json=body).status_code == 404
+    identity.update(username='teacher', groups=['studenti'])
+    assert client.post(url, json=body).status_code == 403
+    identity.update(username='admin', groups=['admins'], is_admin=True)
+    for replacement in ({'title': ''}, {'title': 'New', 'status': 'archived'}, {'title': 'New', 'code': old['code']}):
+        assert client.post(url, json={**body, 'replacement': replacement}).status_code in (400, 409, 422)
+        assert db.get(models.AdministrationPlan, old['id']).status == 'active'
+        assert db.query(models.AdministrationPlan).count() == 1
+    archived = client.put(f"/admin/administration-plans/{old['id']}", json={'revision': old['revision'], 'status': 'archived'}).json()
+    response = client.post(url, json={**body, 'revision': archived['revision']})
+    assert response.status_code == 409 and response.json()['detail'] == 'administration_already_archived'
+
+
+def test_used_plan_cannot_retarget_existing_results(api):
+    client, db, _ = api
+    old = create(client)
+    result(db, old['id'])
+    response = client.put(f"/admin/administration-plans/{old['id']}", json={'revision': old['revision'], 'instrument_code': 'ZTPI'})
+    assert response.status_code == 409 and response.json()['detail'] == 'administration_has_results_replace_required'
+    assert db.get(models.AdministrationPlan, old['id']).instrument_code == 'QSA'
+    # Metadata is still editable without replacing the collection.
+    response = client.put(f"/admin/administration-plans/{old['id']}", json={'revision': old['revision'], 'title': 'Edited title'})
+    assert response.status_code == 200

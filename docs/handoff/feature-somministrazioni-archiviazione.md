@@ -1,23 +1,29 @@
 # Somministrazioni: archiviazione e sostituzione
 
 ## Stato
-Task 10c7f497 completato (test API e flusso Node verdi). Task f683d85a successivo.
+Entrambi i task completati e segnati fatto nel diario: 10c7f497 e f683d85a (CLI con UUID completi). Branch `feature/somministrazioni-archiviazione`, unica PR verso main. Nessun merge o deploy.
 
 ## Fatto
-- Archivia/Ripristina visibili nelle schede e nel modulo di modifica, condivisi da docente e admin.
-- Conferma esplicita, controllo revisione, ripristino come pianificata; risultati consultabili e conservati.
-- Le somministrazioni archiviate rifiutano verifiche istituto e nuove scritture di risultati.
-- Test API su database temporaneo e test Node del flusso conferma/annulla/conflitto/ripristino.
+- Archivia/Ripristina visibili nelle schede e nel modulo di modifica condivisi da docente e admin; conferma anche per cambio stato dal selettore.
+- Archiviazione reversibile come pianificata, con risultati consultabili. Verifiche istituto e nuove scritture rifiutano piani archiviati.
+- Sostituisci apre il nuovo modulo: creazione con nuovo codice/zero risposte e archiviazione precedente nella stessa transazione, protetta dalla revisione. Contesto classe/istituto e lingue validati.
+- Sostituzione nei piani operativi: `replaces_step_id` richiede una nuova somministrazione mai usata; archivia la precedente e rimuove logicamente il vecchio passo senza spostare risultati, attestazioni o completamenti.
+- i18n in sei lingue, documentazione di prodotto/API e guida operativa aggiornate.
+- Correzione separata del checker i18n: tre chiavi del Consiglio già tradotte erano interpretate come testi visibili. Nessun cambiamento a quel flusso.
 
 ## Verifiche
-- pytest mirato SQLite: 4 passati.
-- node --test administration-plans.test.ts: 5 passati.
-- ESLint mirato: zero errori, un avviso preesistente su window.location.
-- Browser: compilazione Next oltre 120 s, azioni non raggiunte; da ripetere.
-- i18n globale: corretti tre falsi positivi preesistenti del Consiglio; riesecuzione in corso.
+- pytest: **80 passati su PostgreSQL**, includendo lifecycle/sostituzione, publication e class_paths; **11 passati su SQLite** nelle due suite nuove.
+- Node: **43 test pertinenti passati** (administration-plans, administration-entry, class-paths, path-step-kinds).
+- Browser sulla build standalone con sole API simulate: **3 test passati** per docente/admin, archivia/ripristina, annulla, sostituisci e conflitto con aggiornamento revisione senza perdere la bozza. **Suite class-path-add-step passata**, incluso nuovo scenario di sostituzione con conferma/annullamento e `replaces_step_id` nel salvataggio.
+- TypeScript `tsc --noEmit --incremental false`, i18n (**3523 chiavi / 6 lingue**), guidance-check con base origin/main e SQL portability: passati.
+- ESLint mirato: zero errori; un avviso preesistente su `window.location.href` nel pannello. Fixture browser adeguate ai titoli e campi già presenti nell'interfaccia.
+- Docker: immagini isolate `counselorbot-s12-backend` e `counselorbot-s12-frontend` ricostruite; build Next completa. **10 test passati nell'immagine backend**. Frontend standalone avviato, HTTP 200 e log regolari, usato per i test browser e poi fermato.
+- Prime prove browser su Next dev rallentate dalla pressione di memoria; ripetizione sulla build standalone interamente verde. La prima SQLite estesa aveva 13 fallimenti già noti di publication/forum (`statement_timestamp`), riconosciuti dal ratchet; le corrispondenti verifiche PostgreSQL sono verdi.
 
 ## Prossimi passi
-- Completare sostituzione guidata e verifiche finali, aprire PR unica verso main.
+Revisione e merge dell'utente dalla PR unica; deploy ordinario dopo il merge. Nessuna migrazione, variabile nuova o comando sudo richiesto. Per sostituzioni dalla vista ricerca, aggiungere la nuova somministrazione ai percorsi interessati; il flusso Piani operativi sostituisce direttamente il passo.
 
 ## Blocchi
-Mac sotto pressione di memoria; controlli statici lenti e browser sospeso. Nessun deploy. Frontend dev arrestato.
+Nessuno. Nessun container di produzione riavviato. Frontend dev e container di test arrestati; porta 3162 libera. Il Postgres effimero `counselorbot-s12-postgres` (127.0.0.1:18632, tmpfs) è fermo; anche `counselorbot-s12-frontend-test` è fermo.
+
+Dipendenze frontend locali: `frontend/node_modules` è un symlink alla cache `/tmp/counselorbot-403-deps/node_modules` (Next 16.3.8); installazione interrotta conservata in `node_modules/s12-incomplete-dependencies`, ignorata da Git. Test Node eseguiti con Node 22.23.3. Le build Docker hanno usato le dipendenze Linux della relativa immagine, senza `.env` nel contesto frontend.

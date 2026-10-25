@@ -52,3 +52,27 @@ test('archive flow asks confirmation, cancels without writes, and restores as pl
     assert.equal(await changePlanArchive(plan, () => true, async () => new Response('{}', {status: 409})), 'conflict');
     await assert.rejects(changePlanArchive(plan, () => true, async () => new Response('{}', {status: 403})));
 });
+
+// @ts-expect-error -- Node runs TypeScript files directly.
+import { replacePlan } from './administration-plans.ts';
+
+test('replacement confirmation sends a single atomic request and keeps the chosen draft on failures', async () => {
+    const source = {id: 7, revision: 3, status: 'active'};
+    const replacement = {title: 'New plan', instrument_code: 'ZTPI', status: 'active'};
+    let calls = 0;
+    const request = async (url: string, init: RequestInit) => {
+        calls++;
+        assert.equal(url, '/api/admin/administration-plans/7/replace');
+        assert.equal(init.method, 'POST');
+        assert.deepEqual(JSON.parse(String(init.body)), {revision: 3, replacement});
+        return new Response('{}', {status: 409});
+    };
+    assert.equal(await replacePlan(source, replacement, () => false, request), null);
+    assert.equal(calls, 0);
+    const response = await replacePlan(source, replacement, () => true, request);
+    assert.equal(response?.status, 409);
+    assert.equal(calls, 1);
+    assert.equal(source.status, 'active');
+    assert.equal(replacement.title, 'New plan');
+    await assert.rejects(replacePlan(source, replacement, () => true, async () => {throw new Error('offline');}));
+});

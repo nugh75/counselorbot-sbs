@@ -45,3 +45,18 @@ export async function changePlanArchive(
     if (!response.ok) throw new Error('plan archive failed');
     return 'saved';
 }
+
+// Confirmation follows choosing the new plan. The server owns the atomic archive
+// and creation; neither request failure nor cancellation archives the source here.
+export async function replacePlan(
+    source: PlanLifecycleState,
+    replacement: Record<string, unknown>,
+    confirm: () => boolean,
+    request: (url: string, init: RequestInit) => Promise<Response>,
+): Promise<Response | null> {
+    if (!confirm()) return null;
+    return request(`/api/admin/administration-plans/${source.id}/replace`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ revision: source.revision, replacement }),
+    });
+}
