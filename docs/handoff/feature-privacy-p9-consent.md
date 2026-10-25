@@ -1,7 +1,8 @@
 # P9 — s71-p9-consent
 - Task: bb0808ff-975f-4966-96b2-d2a985c60b7d
-- Stato: implementazione e verifiche funzionali complete sul branch feature/privacy-p9-consent; build Docker isolata in corso.
-- Commit: feat(privacy) in preparazione (documenti/finalità/scelte, audit atomico e grant P7).
+- Stato: implementazione e verifiche funzionali complete sul branch feature/privacy-p9-consent; build Docker isolata riuscita; test P9 nell’immagine Python 3.10 in corso.
+- Commit: 41b5a29b feat(privacy) (documenti/finalità/scelte, audit atomico e grant P7).
+- Commit test(privacy) in preparazione: 25 test P9 e fixture P6 adattata al resolver persistente.
 - Fatto: lette specifiche P7/P8/P9/P16 e regole del Timoniere; worktree inizialmente pulito.
 - Decisioni: finalità iniziali undefined/inattive; nessuna pubblicazione automatica delle bozze.
 - Decisioni: grant taccuino separati da quelli istituzionali; eventi e grant nella stessa transazione.
