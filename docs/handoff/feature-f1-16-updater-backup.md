@@ -13,6 +13,8 @@ Pronto per la revisione e merge — test locali passati, PR aperta.
 - GUI: card "Aggiornamenti software" nel pannello di controllo con selettore canale, verifica e applicazione con feedback backup.
 - CI: script `desktop/teacher/scripts/generate-update-manifest.py` per assemblare `latest.json` e `latest-beta.json`.
 - CI workflow `desktop-teacher.yml`: firma Minisign condizionale con warning su segreto mancante e job `manifest` di pubblicazione manifest.
+- Fix CI Windows: reso il controllo del percorso di backup in `test_server.py` indipendente dal separatore di path.
+- Merge con `origin/main` (#579 P7): handoff e stato guidance integrati senza conflitti.
 - Documentazione: aggiornata `docs/operations/desktop-teacher-shell.md` con canali, chiavi Minisign e procedura dettagliata di rollback e ripristino; aggiornato piano F1-16 ✅.
 
 ## Verifiche
