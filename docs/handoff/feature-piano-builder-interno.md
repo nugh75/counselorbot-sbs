@@ -1,73 +1,50 @@
 # s11-builder — builder dei piani operativi
 
 ## Stato
-Tutti e tre i task sono `fatto` nel diario Counselorbot:
-- 2014148c — passi autonomi, commit `014a72d4`.
-- eb537b45 — forum in pagina, commit `e5603d11`.
-- c8a79b2b — incontri in pagina, commit `ab83a87e`.
-
-Branch: `feature/piano-builder-interno`. PR unica: [#595](https://github.com/nugh75/counselorbot-sbs/pull/595),
-da revisionare e unire dal proprietario. Allineato con `origin/main` (`e793de23`):
-conservate le correzioni di baseline/auth e la sostituzione con archiviazione
-delle somministrazioni. Un secondo commit di integrazione è stato necessario
-perché main è avanzato durante la pubblicazione della PR.
+PR unica [#595](https://github.com/nugh75/counselorbot-sbs/pull/595), branch
+`feature/piano-builder-interno`, senza conflitti (`MERGEABLE`). I tre task feature
+sono `fatto` e non vanno riaperti: 2014148c (passi autonomi), eb537b45 (forum in
+pagina), c8a79b2b (incontri in pagina). Questo handoff copre la sola chiusura
+CI/consegna (task f0802d7a). Revisione del proprietario e merge restano suoi.
 
 ## Fatto
-- Passi autonomi anche nei piani storici strict; ordine solo visivo, nessun
-  abbinamento chat/incontro. Nuove analisi con scelta della compilazione;
-  fonti storiche conservate senza vincolare ordine/rimozione dei passi.
-- Creazione e modifica titolo/testo delle discussioni in modale, con i form,
-  endpoint e permessi del forum esistenti. Bozza del piano preservata.
-- Gestore incontri riusato in modale: gruppo, colloqui individuali, fasce,
-  prenotazioni e presenze; accesso diretto da ogni passo. Metadati aggiornati
-  senza perdere o sporcare la bozza del piano, revisioni e ricaricamento con conferma.
-- Protezione delle bozze anche per una fascia appena digitata e chiusura rapida;
-  focus nella modale, ripristino del focus e blocco della chiusura durante invii.
-- Etichette nelle sei lingue; API/dependenze/variabili di configurazione nuove assenti.
+- Passi autonomi anche nei piani storici strict; ordine solo visivo. Riferimenti
+  storici delle analisi conservati come dati, senza vincolare ordine o rimozione.
+- Discussioni e incontri creati e modificati in finestra nel builder, con le API e
+  i permessi esistenti; bozza del piano preservata sugli errori.
+- Chiusura CI: riscritti i quattro casi che asserivano ancora il blocco sequenziale
+  (`test_legacy_strict_*`). Baseline SQLite riallineata da 385 a 355 voci
+  (−30 che ora passano) e una voce rinominata sul nuovo nome del caso misto.
+- Allineamento a `origin/main` 0.1.1 incluso; `platform-guidance-state.json`
+  rigenerato dopo il merge. Baseline PostgreSQL invariata (53 voci, tutte ancora
+  fallenti: nessuna voce stantia). Nessuna modifica a `backend/sse.py` o al test SSE.
 
 ## Verifiche
-- Dopo l'allineamento: **142 test SQLite verdi**, 4 casi di migrazione/concorrenza
-  esclusi da questa esecuzione SQLite; ratchet senza nuove eccezioni.
-- PostgreSQL: suite modelli/inserimento risultati (51 verdi), regressioni sulle
-  fonti dei risultati, quattro casi forum e nuovo caso incontri verdi. Dopo
-  l’ultimo merge: sei regressioni su sostituzione/archiviazione e fonti verdi.
-- **99 test Node verdi**, incluse compatibilità auth/runtime del main aggiornato.
-- UI: quattro scenari risorse (forum desktop IT/mobile SV, incontri gruppo IT e
-  individuale SV) più suite aggiunta/sostituzione passi, tutti verdi dopo il merge.
-- Typecheck, lint mirato, `check-i18n.mjs` verdi: **3535 chiavi, sei lingue**.
-- Docker ricostruito sul codice allineato: `counselorbot-s11-backend:builder` e
-  `counselorbot-s11-frontend:builder`. Import backend senza rete OK; frontend
-  avviato in container isolato, HTTP 200 sul builder e log di avvio corretti.
-- Runner Next 3176, PostgreSQL temporaneo 18676 e smoke frontend 3177 **fermi**.
-  Nessun deploy o riavvio dei servizi di produzione.
-- **Chiusura CI (25 ottobre, dopo il merge di main 0.1.1)**: quattro casi che
-  asserivano ancora il blocco sequenziale sono stati riscritti sul contratto dei
-  passi autonomi (`test_legacy_strict_*`). La baseline SQLite è stata riallineata:
-  due voci rinominate, 28 casi che ora passano rimossi (14 in
-  `test_inapp_administration.py`, 14 in `test_plan_questionnaire_chats.py`).
-  I quattro casi riscritti sono verdi su PostgreSQL. `make guidance-check`,
-  `--check --base origin/main`, `make version-check`, unittest dello script
-  guidance, typecheck, ESLint mirato, `check-i18n.mjs` e i **697 test Node** di
-  `src/lib` sono verdi; le due suite browser del builder passano sul runner 3176.
-  CI del branch: `documentation`, `portability`, `startup (sqlite)` e
-  `tests (sqlite)` verdi; `tests (postgres)` verde tranne il flake già noto di
-  `test_sse_heartbeat.py::test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next`
-  (escluso di proposito dalla baseline, come documenta il commento del file).
-
-Runner riproducibile: `scripts/dev-piano-builder-tests.sh`; comandi, tunnel e
-limiti in `docs/operations/live-dev-environment.md`. Contratto del builder in
-`docs/operations/independent-plan-steps.md`. Cache e dipendenze di verifica
-sono temporanee; nessun file .env o dato di produzione modificato.
+- CI sullo SHA `754629a5` (run `40227302878`): `documentation`, `portability`,
+  `startup (sqlite)` e `tests (sqlite)` verdi; `tests (postgres)` 5865 verdi,
+  53 censiti e **un solo inatteso**:
+  `test_sse_heartbeat.py::test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next`.
+  Confronto integrale artefatto `postgres-failures` vs baseline: nessun altro scarto.
+- Prova di indipendenza dal branch: la suite `test_sse_heartbeat.py` eseguita isolata
+  su SQLite ha fatto passare quel caso e fallire con `TimeoutError` un altro caso
+  (`…flush_headers_and_first_frame_before_slow_work[voice_reader]`) sotto carico.
+  È instabilità di timing del trasporto SSE, non regressione del builder; diagnosi
+  e fix spettano a S15.
+- Locali verdi nello stesso giro: `make guidance-check` e `--check --base`, `make
+  version-check`, unittest dello script guidance, typecheck, ESLint mirato,
+  `check-i18n.mjs` (3535 chiavi, 6 lingue), 697 test Node di `src/lib` e le due
+  suite browser del builder sul runner 3176.
+- Nota d'ambiente: il checker `check-platform-guidance.py` va in timeout quando
+  `git ls-files` è conteso dagli altri agenti; non è un errore del repo.
 
 ## Prossimi passi
-Revisione e merge della PR unica dal proprietario; eventuale deploy separato.
-Nessuna migrazione dati o nuova variabile richiesta.
+PR pronta per la revisione e il merge dal proprietario. Nessun deploy, tag, release,
+migrazione dati o variabile nuova richiesta.
 
-## Blocchi
-Nessun blocco per la PR. Limite preesistente e già censito nella baseline:
-le scritture forum usano `statement_timestamp` e non funzionano nelle suite
-SQLite storiche; le operazioni forum sono verificate su PostgreSQL. Non è
-stato ampliato questo filone a una correzione della portabilità del forum.
-
-Le chiusure del diario sono registrate. Il CLI segnala il canale mobile
-non configurato (`NTFY_TOPIC` assente); nessun agente è stato lanciato.
+## Blocchi e rischi
+Resta rosso il solo job PostgreSQL per il flake SSE, comune e già censito nel
+commento della baseline: S15 è l'unico responsabile della diagnosi. Non allargare
+ratchet né toccare il runtime SSE per forzare il verde. Limite preesistente:
+le scritture forum usano `statement_timestamp` e restano fuori dalle suite SQLite
+storiche; il forum è verificato su PostgreSQL. Runner 3176, PostgreSQL temporaneo
+e processi di prova sono fermi; nessun dato o servizio di produzione toccato.
