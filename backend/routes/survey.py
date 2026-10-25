@@ -23,6 +23,7 @@ from ..ai_service import AIService
 from .. import scoring_service, recommendation_service
 from .. import content_version_service, i18n_fields
 from ..dynamic_registry import DynamicInstrumentSet
+from ..privacy.consent import record_legacy_choice
 
 router = APIRouter()
 get_db = database.get_personal_ai_db
@@ -170,6 +171,7 @@ async def submit_survey(survey: schemas.SurveyCreate, db: Session = Depends(get_
     """Submit an anonymous survey response (public endpoint)"""
     db_survey = models.SurveyResponse(**survey.model_dump())
     db.add(db_survey)
+    record_legacy_choice(db, source="survey_feedback")
     db.commit()
     db.refresh(db_survey)
     return db_survey
@@ -391,6 +393,8 @@ async def score_instrument(
                 research_contact_id=research_contact_id,
                 duration_seconds=payload.duration_seconds,
             ))
+        record_legacy_choice(db, source="administration_validation", subject=username,
+                             choice=(payload.response_metadata or {}).get("consent"))
         db.commit()
 
     return profile

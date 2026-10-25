@@ -1,0 +1,12 @@
+# P9 — s71-p9-consent
+- Task: bb0808ff-975f-4966-96b2-d2a985c60b7d
+- Stato: implementazione e verifiche funzionali complete sul branch feature/privacy-p9-consent; build Docker isolata in corso.
+- Commit: feat(privacy) in preparazione (documenti/finalità/scelte, audit atomico e grant P7).
+- Fatto: lette specifiche P7/P8/P9/P16 e regole del Timoniere; worktree inizialmente pulito.
+- Decisioni: finalità iniziali undefined/inattive; nessuna pubblicazione automatica delle bozze.
+- Decisioni: grant taccuino separati da quelli istituzionali; eventi e grant nella stessa transazione.
+- Verifiche: primo giro interrotto per lock SQLite; corretto usando connessione esistente; 303 test SQLite P9/P7/P6/core/egress passati. 33 test P9/P7 Postgres passati; SQL portability e guidance-refresh/check verdi.
+- Bug registrato nel Diario: 8ea6215b-4410-4fe0-a85f-ba0b12ed15b3, xact_lock dopo flush cambia writer SQLite; aggirato localmente in P9 (nessuna modifica globale).
+- Fatto: API scelte/documenti, migrazione, resolver P6, integrazione P7 e osservazioni legacy; issue #582/milestone Privacy Layer.
+- Prossimi passi: Postgres mirato, guida/guidance, build Docker isolata, commit atomici, push e PR con issue/milestone.
+- Blocchi e rischi: P0/testi [DA VALIDARE]; UI P10 fuori ambito; nessun deploy previsto.
