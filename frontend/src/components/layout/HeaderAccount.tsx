@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ChevronDown, LayoutGrid, LogIn, LogOut, ShieldCheck, User } from 'lucide-react';
 import { VoiceReaderMenuEntry } from '@/components/voice-reader/VoiceReader';
-import { ai4authLoginUrl } from '@/lib/auth';
+import { loginHref } from '@/lib/auth';
 import { LANGUAGES } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n-context';
 import { useDisclosure } from '@/lib/use-disclosure';
@@ -135,17 +135,18 @@ export function AccountItems({ account, servicesHref, servicesLabel, logoutHref,
     );
 }
 
-// «Accedi» per chi non ha fatto l'accesso: ai4auth riporta alla pagina
-// corrente (solo percorsi di questa app, vedi `createAuthUrls`). L'accesso
-// amministrativo esplicito resta /login, che torna a /admin, o «Accedi» da /admin.
-// `row` è la variante del menu mobile, in fondo come «Esci».
+// «Accedi» per chi non ha fatto l'accesso. In produzione ai4auth riporta alla
+// pagina corrente (solo percorsi di questa app, vedi `createAuthUrls`); con il
+// fornitore locale resta su /login e non lascia mai questo host.
+// L'accesso amministrativo esplicito resta /login, che torna a /admin, o
+// «Accedi» da /admin. `row` è la variante del menu mobile, in fondo come «Esci».
 export function SignInLink({ pathname, row = false }: { pathname: string; row?: boolean }) {
     const { t } = useI18n();
     return (
         <a
-            href={ai4authLoginUrl(pathname)}
+            href={loginHref(pathname)}
             // La query (es. /admin?tab=logs) non passa da usePathname: si legge al click.
-            onClick={(event) => { event.currentTarget.href = ai4authLoginUrl(`${location.pathname}${location.search}${location.hash}`); }}
+            onClick={(event) => { event.currentTarget.href = loginHref(`${location.pathname}${location.search}${location.hash}`); }}
             className={row ? cn(ROW, 'border-t border-slate-100 font-semibold text-indigo-700') : 'console-topbar-action shrink-0 font-semibold text-indigo-700'}
         >
             <LogIn className="h-4 w-4 shrink-0" />
