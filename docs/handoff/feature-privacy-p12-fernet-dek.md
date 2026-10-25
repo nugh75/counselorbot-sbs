@@ -17,8 +17,8 @@ Implementazione verificata; issue #583, base iniziale uguale a origin/main.
 - Postgres: 104 + 3 pass, zero nuove regressioni; tutte le chiavi Fernet perse coperte.
 - Container test condiviso :18650; nessun servizio production toccato.
 - Docker: immagine counselorbot-privacy-p12:local ricompilata; 34 P12 SQLite passati, rete disabilitata.
-- SQL portability OK (19 occorrenze note, zero nuove); guidance in verifica finale.
+- SQL portability OK (19 occorrenze note, zero nuove); guidance-refresh/check OK.
 ## Prossimi passi
-Commit atomici feat/test/docs, push e PR con milestone e progetto CounselorBot.
+Implementazione committata (c8af7ce0); test in commit separato, poi documentazione, push e PR.
 ## Blocchi e rischi
 Conservare vecchie chiavi per i record Fernet; migrazione non attiva automaticamente.
