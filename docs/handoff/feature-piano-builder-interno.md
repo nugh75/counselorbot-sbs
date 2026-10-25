@@ -20,30 +20,31 @@ CI/consegna (task f0802d7a). Revisione del proprietario e merge restano suoi.
   fallenti: nessuna voce stantia). Nessuna modifica a `backend/sse.py` o al test SSE.
 
 ## Verifiche
-- CI sullo SHA `754629a5` (run `40227302878`): `documentation`, `portability`,
-  `startup (sqlite)` e `tests (sqlite)` verdi; `tests (postgres)` 5865 verdi,
-  53 censiti e **un solo inatteso**:
+- CI sullo SHA di consegna `857a9cf3` (run `40232418743`): `documentation`,
+  `portability`, `startup (sqlite)` e `tests (sqlite)` verdi; `tests (postgres)`
+  5865 verdi, 53 censiti e **un solo fallimento fuori baseline**:
   `test_sse_heartbeat.py::test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next`.
-  Confronto integrale artefatto `postgres-failures` vs baseline: nessun altro scarto.
+  Confronto artefatto `postgres-failures` vs baseline: 54 osservati = 53 censiti
+  + 1; nessuna voce stantia, nessun altro scarto.
+- Il caso SSE è tracciato in [#599](https://github.com/nugh75/counselorbot-sbs/issues/599)
+  e affidato a S15; fuori dal perimetro del builder. Non sono stati toccati
+  `backend/sse.py`, `test_sse_heartbeat.py` né il ratchet.
 - Prova di indipendenza dal branch: la suite `test_sse_heartbeat.py` eseguita isolata
   su SQLite ha fatto passare quel caso e fallire con `TimeoutError` un altro caso
-  (`…flush_headers_and_first_frame_before_slow_work[voice_reader]`) sotto carico.
-  È instabilità di timing del trasporto SSE, non regressione del builder; diagnosi
-  e fix spettano a S15.
-- Locali verdi nello stesso giro: `make guidance-check` e `--check --base`, `make
-  version-check`, unittest dello script guidance, typecheck, ESLint mirato,
-  `check-i18n.mjs` (3535 chiavi, 6 lingue), 697 test Node di `src/lib` e le due
-  suite browser del builder sul runner 3176.
-- Nota d'ambiente: il checker `check-platform-guidance.py` va in timeout quando
-  `git ls-files` è conteso dagli altri agenti; non è un errore del repo.
+  (`…flush_headers_and_first_frame_before_slow_work[voice_reader]`) sotto carico:
+  instabilità di timing del trasporto, non regressione del builder.
+- Locali verdi nello stesso giro: guidance (`--check` e `--base`), `version-check`,
+  unittest dello script guidance, typecheck, ESLint mirato, `check-i18n.mjs`
+  (3535 chiavi, 6 lingue), 697 test Node di `src/lib` e le due suite browser del
+  builder sul runner 3176.
 
 ## Prossimi passi
 PR pronta per la revisione e il merge dal proprietario. Nessun deploy, tag, release,
 migrazione dati o variabile nuova richiesta.
 
 ## Blocchi e rischi
-Resta rosso il solo job PostgreSQL per il flake SSE, comune e già censito nel
-commento della baseline: S15 è l'unico responsabile della diagnosi. Non allargare
+Resta rosso il solo job PostgreSQL per il flake SSE, ora tracciato in #599 e
+affidato a S15, che è l'unico responsabile della diagnosi. Non allargare
 ratchet né toccare il runtime SSE per forzare il verde. Limite preesistente:
 le scritture forum usano `statement_timestamp` e restano fuori dalle suite SQLite
 storiche; il forum è verificato su PostgreSQL. Runner 3176, PostgreSQL temporaneo
