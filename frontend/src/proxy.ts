@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { isShellInternalPath } from './lib/shell-internal';
+import { backendOrigin } from './lib/backend-origin';
 
 import { applyRequestOrigin } from '@/lib/request-origin';
 
@@ -25,6 +26,12 @@ export default function proxy(request: NextRequest) {
         headers.set('Remote-Email', `${user}@dev.local`);
         headers.set('Remote-Name', process.env.DEV_AUTH_NAME || user);
         headers.set('Remote-Groups', process.env.DEV_AUTH_GROUPS || 'studenti');
+    }
+    // Upgrades must reach the backend before the API catch-all filesystem
+    // route matches: Next cannot upgrade a connection handled by an app route.
+    if (request.headers.get('upgrade')?.toLowerCase() === 'websocket') {
+        const upstream = `${backendOrigin()}${request.nextUrl.pathname.slice(4)}${request.nextUrl.search}`;
+        return NextResponse.rewrite(new URL(upstream), { request: { headers } });
     }
     return NextResponse.next({ request: { headers } });
 }

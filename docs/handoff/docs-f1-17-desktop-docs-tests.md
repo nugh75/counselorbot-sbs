@@ -1,38 +1,36 @@
 # F1-17 — s73-f1-17-docs
 
 ## Stato
-PR aperta e push eseguito: https://github.com/nugh75/counselorbot-sbs/pull/584
-Branch `docs/f1-17-desktop-docs-tests`, milestone installazione e board CounselorBot.
-Base `2220ef99` = origin/main alla partenza; issue #213.
-Task `a8f4b202-cc7b-42de-ae42-1eef04bdbc22`.
+Fix API runtime verificato localmente; PR https://github.com/nugh75/counselorbot-sbs/pull/584
+Branch `docs/f1-17-desktop-docs-tests`; milestone installazione, board CounselorBot.
+Task `a8f4b202-cc7b-42de-ae42-1eef04bdbc22`, issue #213; base `2220ef99`.
 
 ## Fatto
-- Guida docente IT: bundle/sha256, pannello, tunnel, LLM, backup/rollback e problemi.
-- DPIA L2 collegata a P16 e P6/P7/P11, con [DA VALIDARE]; checklist manuale.
-- Lifecycle `--full`: lifespan reale, schema/seed/FK/integrità, health locale/pubblico.
-- CI quattro OS in modalità completa; regressioni auth/pairing/profilo/backup Linux.
-- F1-17 completato; F1-16 confermato; F1-15 packaging completo, Release ancora parziale.
+- Guida docente IT (bundle/SHA-256, chiavi, tunnel, LLM, backup/rollback), checklist.
+- DPIA L2 collegata a P16 e P6/P7/P11, [DA VALIDARE]; documentazione aggiornata.
+- Lifecycle `--full`: lifespan, schema/seed/FK/integrità, health locale/pubblico.
+- CI quattro runner e regressioni SQLite Linux; nuovo check HTTP/SSE/WS standalone.
+- Fix API catch-all runtime con corpi/risposte streaming, cookie e firma origine;
+  upgrade WebSocket nel proxy prima della route per preservare il terminale web.
 
 ## Verifiche
-- Python 3.11.9 + TEST_DB=sqlite: 173 passati, nessun nuovo fallimento.
-- Node: 14/14; Bash, YAML e link Markdown validi; diff senza whitespace errati.
-- Commit `a4e3c821` test(desktop): controllore dati e lifecycle completo.
-- Commit `110d6a7a` ci(desktop): lifecycle completo e regressioni.
-- Commit `398d0d0c` test(desktop): health pubblico JSON del tunnel, Bash valido.
-- Primo lancio Python 3.9 non supportato: ripetuto con ambiente corretto.
-- Guida sei lingue/screenshot rivisti: nessun controllo web modificato.
-- make guidance-refresh/check verdi; Platform guidance GitHub verde.
-- Check nativi in corso: stato autorevole nella PR #584 (quattro runner).
-- Commit docs `ff419ec6`; consegna registrata con questo aggiornamento finale.
+- Python 3.11.9 + SQLite: 173 passati, nessun nuovo fallimento; Node desktop 14/14.
+- API/origine/stream Node 22: 21 passati; lint, Bash e YAML verdi.
+- Docker runner build + TypeScript verdi; HTTP/SSE/WS reali: 11+11 passati.
+- Primo giro CI: backend/SQLite OK, Mac ARM /api/health 500 e tunnel health KO:
+  causa rewrite Next congelato al build. Run 40170449319 annullata dopo diagnosi.
+- Bug confermato LOCAL `2055bf26-39ff-4beb-ace0-50c6679206e8`, sync not-linked.
+- Immagine `counselorbot-f117-frontend:check` ricostruita; produzione intatta.
+- make guidance-refresh/check verdi; nessun controllo UI cambiato.
 
 ## Prossimi passi
-- Controllare esito CI dalla PR, poi revisione/merge del proprietario; nessun merge agente.
-- Notifica PR accodata nel Diario: recipient_working; consegna non confermata.
-  Canale mobile disattivato (NTFY_TOPIC assente).
+- Harness CI verificato nel container: 11+11 passati, processi ripuliti.
+- Commit fix/ci/docs e nuovo giro CI sui bundle.
+- Commit atomici fix/ci/docs, push; aggiornare PR e chiudere task solo con verifiche verdi.
 
 ## Blocchi e rischi
-- Fase 1 aperta: UI docente/pairing/dispositivi e pubblicazione Release mancanti;
-  portachiavi reali, tunnel nominativo e prove OS richiedono checklist manuale.
-- Bug registrato LOCAL `302912bf-1be6-4bd7-85b4-bf22a7e65d00`, sospetto,
-  sync not-linked; non è una issue GitHub. Nessun bug NOT_REGISTERED.
-- Nessun Docker rebuild necessario (solo documenti/test/CI), deploy o dev avviato.
+- Fase 1 aperta: GUI docente/pairing/dispositivi, Release e prove OS manuali mancanti.
+- F1-16 implementato; F1-15 packaging completo, distribuzione Release parziale.
+- Altro bug LOCAL `302912bf-1be6-4bd7-85b4-bf22a7e65d00`, sospetto, sync not-linked.
+- Notifica PR accodata: recipient_working, consegna non confermata; mobile disattivato.
+- Nessun deploy o dev avviato; nessun bug NOT_REGISTERED.

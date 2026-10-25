@@ -25,6 +25,12 @@ caricati solo quando servono, così il forum resta isolato). Prompt Lab, Telegra
 ChatGPT, le voci Piper e la sincronizzazione con Console non sono disponibili
 nell'app. Restano da completare i percorsi grafici di accesso e abbinamento
 e la pubblicazione degli asset di rilascio.
+Le chiamate API generali del frontend ora scelgono il backend a ogni richiesta,
+tramite un handler dinamico: lo stesso bundle raggiunge la porta assegnata dal
+guscio, anche dopo un riavvio. Restano la firma dell'origine e il blocco delle
+rotte interne; i percorsi specifici per lo streaming mantengono i propri handler.
+L'upgrade WebSocket passa al backend prima del fallback API (OpenCode rimane
+escluso dal desktop).
 Le funzioni web descritte qui continuano a riferirsi all'installazione corrente.
 
 Il guscio desktop ha un pannello **Chiavi API**: inserimento mascherato,
