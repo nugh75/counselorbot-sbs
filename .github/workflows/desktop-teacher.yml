@@ -12,7 +12,9 @@ on:
       - desktop/**
       - .github/workflows/desktop-teacher.yml
       - backend/shell_internal.py
+      - backend/sqlite_backup.py
       - backend/tests/test_shell_contract.py
+      - backend/tests/test_sqlite_backup.py
       - frontend/src/proxy.ts
       - frontend/src/lib/shell-internal*
 
@@ -107,9 +109,18 @@ jobs:
 
       - name: Build Tauri app
         working-directory: desktop/teacher
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           npm ci --no-audit --no-fund
-          npx tauri build --bundles ${{ matrix.bundles }}
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "Chiave privata trovata: abilitazione firma e artefatti updater."
+            npx tauri build --bundles ${{ matrix.bundles }} -c '{"bundle":{"createUpdaterArtifacts":true}}'
+          else
+            echo "::warning::TAURI_SIGNING_PRIVATE_KEY non configurata tra i secrets di repository: firma e artefatti updater saltati."
+            npx tauri build --bundles ${{ matrix.bundles }} -c '{"bundle":{"createUpdaterArtifacts":false}}'
+          fi
 
       - name: SHA-256 checksums of the installers
         working-directory: desktop/teacher/src-tauri/target/release/bundle
@@ -167,6 +178,47 @@ jobs:
             desktop/teacher/src-tauri/target/release/bundle/nsis/*.sha256
             desktop/teacher/src-tauri/target/release/bundle/deb/*.deb
             desktop/teacher/src-tauri/target/release/bundle/deb/*.sha256
+            desktop/teacher/src-tauri/target/release/bundle/*/*.tar.gz
+            desktop/teacher/src-tauri/target/release/bundle/*/*.tar.gz.sig
+            desktop/teacher/src-tauri/target/release/bundle/*/*.zip
+            desktop/teacher/src-tauri/target/release/bundle/*/*.zip.sig
             ${{ runner.temp }}/cb-lifecycle.*/teacher-*.json
           retention-days: 3
           if-no-files-found: ignore
+
+  manifest:
+    name: Generate update manifests
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Test update manifest generator
+        run: python -m pytest -q desktop/teacher/scripts/test_generate_update_manifest.py
+
+      - name: Generate stable and beta update manifests
+        run: |
+          mkdir -p dist
+          python desktop/teacher/scripts/generate-update-manifest.py --artifacts-dir artifacts --channel stable --output dist/latest.json
+          python desktop/teacher/scripts/generate-update-manifest.py --artifacts-dir artifacts --channel beta --output dist/latest-beta.json
+          echo "=== latest.json ==="
+          cat dist/latest.json
+          echo "=== latest-beta.json ==="
+          cat dist/latest-beta.json
+
+      - name: Upload manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: update-manifests
+          path: dist/*.json
+          retention-days: 7
