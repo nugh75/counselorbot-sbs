@@ -379,6 +379,76 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   };
 }
 
+async function initUpdater() {
+  if (!invoke) return;
+  const channelSelect = $('updater-channel-select');
+  const checkBtn = $('check-updates-btn');
+  const applyBtn = $('apply-update-btn');
+  const notice = $('updater-notice');
+  const details = $('update-details');
+  const versionText = $('update-version-text');
+  const notesText = $('update-notes-text');
+
+  if (!channelSelect || !checkBtn) return;
+
+  try {
+    const channel = await invoke('get_updater_channel');
+    if (channel) channelSelect.value = channel;
+  } catch (err) {
+    console.warn('Errore lettura canale aggiornamento:', err);
+  }
+
+  channelSelect.onchange = async () => {
+    try {
+      await invoke('set_updater_channel', { channel: channelSelect.value });
+      notice.textContent = `Canale aggiornato a: ${channelSelect.value}`;
+    } catch (err) {
+      notice.textContent = 'Errore salvataggio canale: ' + err;
+    }
+  };
+
+  checkBtn.onclick = async () => {
+    checkBtn.disabled = true;
+    checkBtn.textContent = 'Verifica in corso…';
+    notice.textContent = '';
+    applyBtn.style.display = 'none';
+    details.style.display = 'none';
+
+    try {
+      const info = await invoke('check_for_updates');
+      if (info && info.available) {
+        notice.textContent = 'Aggiornamento disponibile!';
+        versionText.textContent = `Versione ${info.version} (attuale: ${info.current_version})`;
+        notesText.textContent = info.body || '';
+        details.style.display = 'block';
+        applyBtn.style.display = 'inline-block';
+      } else {
+        notice.textContent = `CounselorBot è già aggiornato (versione ${info ? info.current_version : ''}).`;
+      }
+    } catch (err) {
+      notice.textContent = 'Errore verifica aggiornamenti: ' + err;
+    } finally {
+      checkBtn.disabled = false;
+      checkBtn.textContent = 'Verifica aggiornamenti';
+    }
+  };
+
+  applyBtn.onclick = async () => {
+    applyBtn.disabled = true;
+    applyBtn.textContent = 'Aggiornamento in corso…';
+    notice.textContent = 'Esecuzione backup di sicurezza SQLite e applicazione aggiornamento…';
+
+    try {
+      const res = await invoke('apply_update');
+      notice.textContent = res;
+    } catch (err) {
+      notice.textContent = 'Errore aggiornamento: ' + err;
+      applyBtn.disabled = false;
+      applyBtn.textContent = 'Aggiorna ora (con backup preventivo)';
+    }
+  };
+}
+
 // Export validation functions for Node unit tests
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
@@ -390,4 +460,5 @@ if (typeof module !== 'undefined' && module.exports) {
 if (typeof window !== 'undefined' && window.__TAURI__) {
   refresh();
   setInterval(refresh, 1000);
+  initUpdater();
 }

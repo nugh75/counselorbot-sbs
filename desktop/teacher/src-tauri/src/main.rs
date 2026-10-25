@@ -22,6 +22,7 @@ mod platform;
 mod sidecar;
 mod sleep;
 mod supervisor;
+mod updater;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();

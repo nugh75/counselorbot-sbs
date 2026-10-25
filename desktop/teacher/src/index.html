@@ -96,6 +96,28 @@
     </div>
   </section>
 
+  <!-- Sezione Aggiornamenti (F1-16) -->
+  <details class="card" id="updater-card">
+    <summary id="updater-title">Aggiornamenti applicazione</summary>
+    <p>Verifica la presenza di nuove versioni dell'app docente CounselorBot.</p>
+    <div class="form-group">
+      <label for="updater-channel-select">Canale di aggiornamento:</label>
+      <select id="updater-channel-select">
+        <option value="stable">Stabile (consigliato)</option>
+        <option value="beta">Beta (sperimentale)</option>
+      </select>
+    </div>
+    <div class="actions">
+      <button id="check-updates-btn" type="button">Verifica aggiornamenti</button>
+      <button id="apply-update-btn" type="button" style="display: none;">Aggiorna ora (con backup preventivo)</button>
+    </div>
+    <p id="updater-notice" role="status" aria-live="polite" class="muted"></p>
+    <div id="update-details" style="display: none;">
+      <p id="update-version-text"></p>
+      <div id="update-notes-text" class="field-hint"></div>
+    </div>
+  </details>
+
   <div class="muted" id="folder"></div>
   <div class="actions">
     <button id="open" disabled>Apri nel browser</button>

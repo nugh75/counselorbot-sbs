@@ -49,6 +49,23 @@ def test_internal_answers_the_shell(shell_secret):
     assert response.json() == {"status": "ok"}
 
 
+def test_internal_backup_triggers_sqlite_backup(shell_secret, monkeypatch, tmp_path):
+    backup_file = tmp_path / "sqlite-backup.sqlite3"
+    monkeypatch.setattr("backend.sqlite_backup.create_backup", lambda: backup_file)
+    response = _client().post("/internal/backup", headers={"X-CounselorBot-Shell-Secret": shell_secret})
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "path": str(backup_file)}
+
+
+def test_internal_backup_returns_500_on_error(shell_secret, monkeypatch):
+    def _fail():
+        raise RuntimeError("Disk full")
+    monkeypatch.setattr("backend.sqlite_backup.create_backup", _fail)
+    response = _client().post("/internal/backup", headers={"X-CounselorBot-Shell-Secret": shell_secret})
+    assert response.status_code == 500
+    assert response.json() == {"status": "error", "detail": "Disk full"}
+
+
 def test_internal_answers_loopback_ipv6(shell_secret):
     response = _client(("::1", 50000)).get("/internal/ping", headers={"X-CounselorBot-Shell-Secret": shell_secret})
     assert response.status_code == 200

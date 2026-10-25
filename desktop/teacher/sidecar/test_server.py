@@ -26,6 +26,27 @@ def test_defaults_are_loopback_and_lifeline_is_explicit(monkeypatch):
     args = server.parse_args([])
     assert (args.host, args.port, args.lifeline, args.minimal) == ("127.0.0.1", 8000, False, False)
     assert server.parse_args(["--lifeline", "--minimal"]).lifeline
+    assert server.parse_args(["--backup"]).backup
+
+
+def test_main_backup_success(monkeypatch, capsys):
+    monkeypatch.setattr("backend.sqlite_backup.create_backup", lambda: Path("/tmp/fake.sqlite3"))
+    with pytest.raises(SystemExit) as exit_info:
+        server.main(["--backup"])
+    assert exit_info.value.code == 0
+    captured = capsys.readouterr()
+    assert "/tmp/fake.sqlite3" in captured.out
+
+
+def test_main_backup_failure(monkeypatch, capsys):
+    def _fail():
+        raise RuntimeError("backup failure test")
+    monkeypatch.setattr("backend.sqlite_backup.create_backup", _fail)
+    with pytest.raises(SystemExit) as exit_info:
+        server.main(["--backup"])
+    assert exit_info.value.code == 1
+    captured = capsys.readouterr()
+    assert "backup fallito: backup failure test" in captured.err
 
 
 def test_socket_reserves_only_loopback_and_does_not_listen():

@@ -31,6 +31,17 @@ def ping():
     return {"status": "ok"}
 
 
+@router.post("/backup")
+def backup():
+    """Effettua un backup verificato a caldo di SQLite per il guscio (F1-05j, F1-16)."""
+    from .sqlite_backup import create_backup
+    try:
+        path = create_backup()
+        return {"status": "ok", "path": str(path) if path else None}
+    except Exception as exc:
+        return JSONResponse({"status": "error", "detail": str(exc)}, status_code=500)
+
+
 def _is_internal_path(path: str) -> bool:
     return path == "/internal" or path.startswith("/internal/")
 

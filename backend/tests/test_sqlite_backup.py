@@ -393,3 +393,13 @@ def test_default_engine_and_data_dir_are_from_database_module(desktop, monkeypat
     path = backups.create_backup()
     assert path.parent == desktop.directory
     assert values(path) == [(1, "original")]
+
+
+def test_counselorbot_backup_dir_env_overrides_data_dir(desktop, monkeypatch, tmp_path):
+    from backend import database
+    custom_backup_dir = tmp_path / "custom_backups"
+    monkeypatch.setattr(database, "engine", desktop.engine)
+    monkeypatch.setenv("COUNSELORBOT_BACKUP_DIR", str(custom_backup_dir))
+    path = backups.create_backup()
+    assert path.parent == custom_backup_dir
+    assert values(path) == [(1, "original")]

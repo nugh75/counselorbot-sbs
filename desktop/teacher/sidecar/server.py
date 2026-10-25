@@ -32,6 +32,7 @@ DIR_VARIABLES = (
     "DATA_DIR", "PORTFOLIO_STORAGE_DIR", "TAVOLO_STORAGE_DIR", "TAVOLO_IMAGES_STORAGE_DIR",
     "IDEA_SOURCES_STORAGE_DIR", "QSA_PDF_STORAGE_DIR", "PQBL_STORAGE_DIR", "RAG_INDEX_DIR",
     "RAG_DYNAMIC_COLLECTIONS_DIR", "SESSION_MEMORY_DIR", "PERSONAL_API_CREDENTIALS_DIR",
+    "COUNSELORBOT_BACKUP_DIR",
 )
 
 
@@ -41,6 +42,7 @@ def parse_args(argv=None):
     parser.add_argument("--port", type=int, default=int(os.getenv("PORT", "8000")))
     parser.add_argument("--lifeline", action="store_true", help="fermati quando stdin si chiude")
     parser.add_argument("--minimal", action="store_true", help="senza lifespan (solo smoke test)")
+    parser.add_argument("--backup", action="store_true", help="effettua un backup di SQLite ed esci")
     return parser.parse_args(argv)
 
 
@@ -106,6 +108,16 @@ def watch_stdin(server, stdin=None, grace=STOP_GRACE_SECONDS, exit_now=os._exit)
 
 def main(argv=None):
     args = parse_args(argv)
+    if args.backup:
+        from backend.sqlite_backup import create_backup
+        try:
+            path = create_backup()
+            print(f"backup: {path}", flush=True)
+            sys.exit(0)
+        except Exception as exc:
+            print(f"backup fallito: {exc}", file=sys.stderr, flush=True)
+            sys.exit(1)
+
     sock = bind(args.host, args.port)
     check_data_dirs()
 
