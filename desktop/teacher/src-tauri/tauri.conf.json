@@ -31,7 +31,8 @@
       "cloudflared/": "cloudflared/"
     },
     "macOS": {
-      "minimumSystemVersion": "13.0"
+      "minimumSystemVersion": "13.0",
+      "dmg": {}
     },
     "windows": {
       "nsis": {
