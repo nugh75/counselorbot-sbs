@@ -17,6 +17,10 @@ on:
       - backend/tests/test_sqlite_backup.py
       - frontend/src/proxy.ts
       - frontend/src/lib/shell-internal*
+      - frontend/src/lib/api-proxy*
+      - frontend/src/lib/backend-origin.ts
+      - frontend/src/app/api/**
+      - frontend/tests/request-origin.test.mjs
 
 permissions:
   contents: read
@@ -87,12 +91,24 @@ jobs:
         env:
           PYTHON_DOTENV_DISABLED: "1"
           DATABASE_URL: sqlite:///${{ runner.temp }}/shell-contract.sqlite3
-        run: python -m pytest -q desktop/teacher/sidecar/test_server.py backend/tests/test_shell_contract.py backend/tests/test_request_origin.py
+        run: python -m pytest -q desktop/teacher/sidecar/test_server.py backend/tests/test_shell_contract.py backend/tests/test_request_origin.py desktop/teacher/scripts/test_check_teacher_data.py
+
+      - name: Desktop auth, pairing, profile and backup regressions (SQLite)
+        if: startsWith(matrix.runner, 'ubuntu')
+        env:
+          PYTHON_DOTENV_DISABLED: "1"
+          TEST_DB: sqlite
+        run: |
+          python -m pytest -q backend/tests/test_local_auth.py backend/tests/test_local_pairing.py backend/tests/test_teacher_profile.py backend/tests/test_sqlite_backup.py
 
       - name: Build frontend (Next standalone) and stage node
         run: |
           bash desktop/teacher/scripts/build-frontend.sh > "$RUNNER_TEMP/frontend.txt" 2>&1 || { tail -80 "$RUNNER_TEMP/frontend.txt"; exit 1; }
           grep -E "seconds|_mb" "$RUNNER_TEMP/frontend.txt"
+
+      - name: Standalone runtime API, stream and WebSocket routing
+        if: startsWith(matrix.runner, 'ubuntu')
+        run: bash desktop/teacher/scripts/check-api-routing.sh desktop/teacher/src-tauri/frontend
 
       - name: Fetch cloudflared
         run: bash desktop/teacher/scripts/fetch-cloudflared.sh ${{ matrix.platform }} desktop/teacher/src-tauri/cloudflared
@@ -100,8 +116,8 @@ jobs:
       - name: Frontend boundary and origin tests
         working-directory: frontend
         run: |
-          node --test --experimental-strip-types src/lib/shell-internal.test.ts src/lib/request-origin.test.ts
-          npx eslint src/proxy.ts src/lib/shell-internal.ts src/lib/shell-internal.test.ts
+          node --test --experimental-strip-types src/lib/shell-internal.test.ts src/lib/request-origin.test.ts src/lib/api-proxy.test.ts src/lib/stream-proxy.test.ts
+          npx eslint src/proxy.ts src/lib/shell-internal.ts src/lib/shell-internal.test.ts src/lib/api-proxy.ts src/lib/api-proxy.test.ts 'src/app/api/[...path]/route.ts'
 
       - name: Shell unit tests (Rust)
         working-directory: desktop/teacher/src-tauri
@@ -150,7 +166,7 @@ jobs:
         run: |
           app=$(find desktop/teacher/src-tauri/target/release/bundle/macos -maxdepth 1 -name '*.app' | head -1)
           cp -R "$app" "$RUNNER_TEMP/"
-          bash desktop/teacher/scripts/check-lifecycle.sh "$RUNNER_TEMP/$(basename "$app")/Contents/MacOS/counselorbot-teacher"
+          bash desktop/teacher/scripts/check-lifecycle.sh --full "$RUNNER_TEMP/$(basename "$app")/Contents/MacOS/counselorbot-teacher"
 
       - name: Lifecycle test (Windows, NSIS per-user install)
         if: startsWith(matrix.runner, 'windows')
@@ -159,13 +175,13 @@ jobs:
           "$installer" //S
           exe="$LOCALAPPDATA/CounselorBot Docente/counselorbot-teacher.exe"
           ls -la "$(dirname "$exe")"
-          bash desktop/teacher/scripts/check-lifecycle.sh "$exe"
+          bash desktop/teacher/scripts/check-lifecycle.sh --full "$exe"
 
       - name: Lifecycle test (Linux, .deb)
         if: startsWith(matrix.runner, 'ubuntu')
         run: |
           sudo apt-get install -y ./desktop/teacher/src-tauri/target/release/bundle/deb/*.deb
-          bash desktop/teacher/scripts/check-lifecycle.sh /usr/bin/counselorbot-teacher xvfb-run -a
+          bash desktop/teacher/scripts/check-lifecycle.sh --full /usr/bin/counselorbot-teacher xvfb-run -a
 
       - uses: actions/upload-artifact@v4
         if: always()

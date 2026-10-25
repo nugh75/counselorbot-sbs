@@ -25,6 +25,31 @@ Agente `s71-p9-consent`, task `bb0808ff-975f-4966-96b2-d2a985c60b7d`, branch `fe
 
 ---
 
+# Handoff 25 ottobre 2026: F1-17 — documentazione e smoke desktop (#213)
+
+Agente `s73-f1-17-docs`, task `a8f4b202-cc7b-42de-ae42-1eef04bdbc22`,
+branch `docs/f1-17-desktop-docs-tests`, PR https://github.com/nugh75/counselorbot-sbs/pull/584
+(milestone installazione, board CounselorBot).
+
+- Guida italiana: `docs/operations/desktop-teacher-guide.md`; installazione dai
+  bundle CI con SHA-256, chiavi, tunnel, abbinamento (limiti GUI), LLM, backup e rollback.
+- Checklist: `desktop-teacher-tests.md`; DPIA L2 `docs/privacy/desktop-teacher-dpia.md`
+  collegata a P16/P6/P7/P11, [DA VALIDARE]. Aggiornati piano, funzionalità e `.env.example`.
+- Smoke lifecycle `--full`: lifespan vero, schema/seed/integrità/FK SQLite,
+  `/api/health` e profilo; CI sui quattro runner, regressioni SQLite su Linux.
+- Verifiche locali: 173 Python (3.11.9, SQLite), 14 Node; Bash/YAML/link validi.
+  Il primo tentativo con Python 3.9 è stato ripetuto nell'ambiente corretto.
+- `make guidance-refresh` e `make guidance-check` passati; stato manifest aggiornato.
+- F1-17 consegnato, F1-16 implementato. F1-15 packaging completato ma asset
+  Release non pubblicati; **Fase 1 ancora aperta** per UI accesso/abbinamento,
+  pubblicazione e accettazione manuale. Non dichiarata pronta per dati reali.
+- Bug limiti integrazione registrato solo LOCAL nel Diario (sync not-linked).
+- Il primo smoke bundle ha esposto `/api/health` 500 (rewrite congelato al build):
+  fix API runtime verificato con 21 unit test e 11+11 prove HTTP/SSE/WS Docker;
+  bug LOCAL confermato, immagine frontend isolata ricostruita con TypeScript verde.
+- Nessun deploy/dev; container di prova effimeri, produzione intatta. Handoff vivo in
+  `docs/handoff/docs-f1-17-desktop-docs-tests.md`.
+
 # Handoff 25 ottobre 2026: F1-16 — Updater desktop e backup SQLite pre-aggiornamento
 
 Agente `s70-f1-16-updater` (subagente per Timoniere), task `168a1a90-9467-4cfd-9020-2933889107c5`, branch `feature/f1-16-updater-backup`, issue #580.

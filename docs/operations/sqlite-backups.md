@@ -3,8 +3,8 @@
 `backend/sqlite_backup.py` implementa il contratto di F1-05j del
 [piano desktop](../architecture/desktop-apps-plan.md), con
 `sqlite3.Connection.backup` (API nativa `sqlite3_backup`). Non aggiunge dipendenze,
-rotte HTTP, pianificazioni o pulsanti. L'integrazione automatica con l'updater
-resta F1-16. Su PostgreSQL entrambi gli helper restituiscono `None`, senza
+rotte HTTP, pianificazioni o pulsanti. L'integrazione automatica con l'updater è implementata in F1-16
+([guida docente](desktop-teacher-guide.md#7-aggiornamenti-copia-di-sicurezza-e-ritorno-alla-versione-precedente)). Su PostgreSQL entrambi gli helper restituiscono `None`, senza
 connessioni SQLite, verifica dei parametri o accessi alla cartella dei backup.
 
 ## Creazione online
@@ -24,11 +24,11 @@ Sono supportati URL SQLite su file ordinari; database in memoria e URL `file:`
 vengono rifiutati. Il file deve già esistere ed essere non vuoto: un percorso
 errato non genera un database vuoto.
 
-La destinazione di questo modulo è **`DATA_DIR/backups/`**, come richiesto dal
-task. Il guscio docente attualmente imposta `DATA_DIR=<radice>/uploads`: quindi
-qui i backup finiscono in `<radice>/uploads/backups/`. L'eventuale collegamento
-con `<radice>/backups/` del layout ADR-0002 appartiene all'integrazione F1-16;
-il modulo non interpreta la radice del guscio né cambia le sue variabili.
+La destinazione predefinita è **`DATA_DIR/backups/`**. Con F1-16 il guscio
+imposta `COUNSELORBOT_BACKUP_DIR=<radice>/backups`, che ha precedenza sul
+default (mentre `DATA_DIR=<radice>/uploads`). Una chiamata con `data_dir=`
+esplicito usa invece `<data_dir>/backups/`. Per manutenzione sul profilo
+desktop conservare lo stesso `DATABASE_URL` e `COUNSELORBOT_BACKUP_DIR`.
 
 La copia usa una connessione di lettura indipendente, include i commit ancora
 nel WAL ed esclude le transazioni non confermate. Le altre connessioni possono

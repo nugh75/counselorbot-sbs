@@ -20,6 +20,11 @@ codice; le valutazioni (§3, §5, §6) sono del Titolare.
 - Profili di installazione valutati: [ ] L1 server ai4educ/portable [ ] L1 server di scuola [ ] L2 PC del docente [ ] L3 app studente (Fase 2)
 - Versione del software: **[DA COMPILARE: commit o release]**
 
+Per la casella **L2 PC del docente**, compilare anche l'[allegato desktop
+teacher-pc](../desktop-teacher-dpia.md), aggiornato a F1-17 con flussi, P6/P7/P11,
+backup e limiti della GUI. Le valutazioni e la decisione restano **[DA VALIDARE]**.
+I dati generali sotto coprono più profili e non descrivono automaticamente L2.
+
 ## 1. Serve una DPIA?
 
 Criteri presenti (indicativi, da confermare **[DA VALIDARE 04-D11]**):
@@ -64,13 +69,13 @@ Probabilità e gravità sono stime **[DA VALIDARE]**: la colonna «Stima tecnica
 
 | # | Rischio per gli interessati | Origine | Misure oggi | Misure progettate | Stima tecnica | Probabilità | Gravità |
 |---|---|---|---|---|---|---|---|
-| R1 | Identità o dati personali rivelati a un provider di AI | filtro non completo, nomi non riconosciuti | regole + NER via Ollama, immagini bloccate (P6a), Edge filtrato (P6c), host locali per indirizzo (P6b) | motore P4 collegato dal gateway P6, verifica dei residui | alta | **[DA VALIDARE]** | **[DA VALIDARE]** |
+| R1 | Identità o dati personali rivelati a un provider di AI | filtro non completo, nomi non riconosciuti | regole + NER via Ollama, immagini bloccate (P6a), Edge filtrato (P6c), host locali per indirizzo (P6b) | P6 già operativo in transizione; strict richiede configurazione e prerequisiti (vedere allegato L2) | alta | **[DA VALIDARE]** | **[DA VALIDARE]** |
 | R2 | Dati sulla salute ai provider | testi liberi | sostituzione di alcuni termini sanitari | blocco art. 9 (04-D4) | alta | **[DA VALIDARE]** | **[DA VALIDARE]** |
-| R3 | Docente che vede più del necessario | regola «membro della classe ⇒ tutto», taccuino visibile | nessuna | grant per classe e periodo (P7) | alta (G5) | **[DA VALIDARE]** | **[DA VALIDARE]** |
-| R4 | Amministratore tecnico che legge i contenuti | nessuna separazione | nessuna | vista pseudonimizzata e break-glass (P7) | media (G6) | **[DA VALIDARE]** | **[DA VALIDARE]** |
-| R5 | Furto di database, PC o backup | contenuti in chiaro | cifratura del disco del sistema operativo (non imposta) | cifratura per campo (P5 pronto, P11 da fare) | media L1, alta L2 | **[DA VALIDARE]** | **[DA VALIDARE]** |
+| R3 | Docente che vede più del necessario | accesso oltre ambito di classe/periodo/categorie | grant P7 per classe, periodo e categorie; taccuino escluso dal default | verifica del perimetro applicato | residuo [DA VALIDARE] | **[DA VALIDARE]** | **[DA VALIDARE]** |
+| R4 | Amministratore tecnico che legge i contenuti | amministrazione tecnica e controllo del PC | vista pseudonimizzata e break-glass P7 su L1; docente-admin L2 con controllo del PC | misure organizzative L2 | residuo [DA VALIDARE] | **[DA VALIDARE]** | **[DA VALIDARE]** |
+| R5 | Furto di database, PC o backup | contenuti in chiaro | cifratura del disco non imposta; P11 facoltativo e parziale | migrazione storico e copertura dei campi mancanti; vedere allegato L2 | media L1, alta L2 | **[DA VALIDARE]** | **[DA VALIDARE]** |
 | R6 | Dati personali nei log | testi nei log | redazione fail-closed con regole e gazetteer (P13) | modello ML anche nei log | media | **[DA VALIDARE]** | **[DA VALIDARE]** |
-| R7 | Consensi non dimostrabili | consensi solo lato client | nessuna | eventi versionati (P9) | alta (G10) | **[DA VALIDARE]** | **[DA VALIDARE]** |
+| R7 | Consensi non dimostrabili | documenti non pubblicati e UI P10 assente | P9: scelte/revoche versionate; osservazioni legacy non abilitanti | pubblicazione documenti approvati, basi/finalità P0 e UI P10 | residuo [DA VALIDARE] | **[DA VALIDARE]** | **[DA VALIDARE]** |
 | R8 | Conservazione eccessiva | solo `logs` ha un termine | 90 giorni sui log | job P14 | media (G13) | **[DA VALIDARE]** | **[DA VALIDARE]** |
 | R9 | Reidentificazione nei dati di ricerca | tabella dei codici in chiaro | nessuna | HMAC con chiave separata (04-D13) | media | **[DA VALIDARE]** | **[DA VALIDARE]** |
 | R10 | Cloudflare vede il traffico | tunnel su L2 | TLS fino all'edge | informativa, tunnel nominativo | strutturale | **[DA VALIDARE]** | **[DA VALIDARE]** |
