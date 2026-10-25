@@ -2,10 +2,13 @@
 # Excludes three runner dependency failures fixed by installing OCR languages and Inter.
 # Provenance, repeated CI and Postgres contract extension: docs/operations/dual-db-ci.md.
 # Only remove entries as they are fixed; never refresh from a newly failing run.
-# Realign: 8 node IDs observed in run 40201355383 (PR #589) after the P6 egress
-# commit b398e6f2 landed; the same failures reproduce on main without the PR.
-# test_sse_heartbeat::test_sync_disconnect... also failed in run 40199013418 but
-# passed in 40201355383: flaky here, so it stays out of this list and visible.
+# Realign: 9 node IDs observed in runs 40201355383 (PR #589) and 40204675021
+# (this branch) after the P6 egress commit b398e6f2 landed; the PR only edits
+# this list, so its CI run reproduces the main baseline.
+# test_sse_heartbeat::test_sync_disconnect... is intermittent here (failed in
+# 40199013418 and 40204675021, passed in 40201355383): it stays listed because
+# it fails more often than not, so a sporadic "listed but no longer failing"
+# red points at that flake, not at the rest of the baseline.
 backend/tests/test_admin_sandbox.py::test_admin_sandbox_ephemeral_no_logs
 backend/tests/test_chat_preparation.py::test_all_steps_and_languages_use_identical_runtime_and_audit_preparation
 backend/tests/test_chat_preparation.py::test_live_audit_fallback_receives_original_history
@@ -58,4 +61,5 @@ backend/tests/test_sqlite_load_concurrency.py::test_routes_commit_and_release_be
 backend/tests/test_sqlite_load_concurrency.py::test_routes_commit_and_release_before_provider_and_never_reopen_request_db[error-site_chat]
 backend/tests/test_sqlite_load_concurrency.py::test_routes_commit_and_release_before_provider_and_never_reopen_request_db[success-chat]
 backend/tests/test_sqlite_load_concurrency.py::test_routes_commit_and_release_before_provider_and_never_reopen_request_db[success-site_chat]
+backend/tests/test_sse_heartbeat.py::test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next
 backend/tests/test_thinking_directive_split.py::test_ollama_keeps_native_and_markdown_reasoning_separate_from_answer
