@@ -132,6 +132,7 @@ impl DataDir {
         vec![
             ("DATABASE_URL".into(), self.database_url()),
             ("DATA_DIR".into(), p("uploads")),
+            ("COUNSELORBOT_BACKUP_DIR".into(), p("backups")),
             ("PORTFOLIO_STORAGE_DIR".into(), p("uploads/portfolio")),
             ("TAVOLO_STORAGE_DIR".into(), p("uploads/tavolo")),
             ("TAVOLO_IMAGES_STORAGE_DIR".into(), p("uploads/tavolo-images")),

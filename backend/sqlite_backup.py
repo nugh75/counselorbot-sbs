@@ -60,11 +60,16 @@ def _settings(engine, data_dir):
     name = engine.url.database
     if not name or name == ":memory:" or name.startswith("file:"):
         raise ValueError("SQLite backup requires a regular file database URL")
-    if data_dir is None:
-        from .database import DATA_DIR
-        data_dir = DATA_DIR
     database = Path(name).resolve()
-    directory = Path(data_dir).resolve() / "backups"
+    if data_dir is None:
+        backup_dir = os.getenv("COUNSELORBOT_BACKUP_DIR")
+        if backup_dir:
+            directory = Path(backup_dir).resolve()
+        else:
+            from .database import DATA_DIR
+            directory = Path(DATA_DIR).resolve() / "backups"
+    else:
+        directory = Path(data_dir).resolve() / "backups"
     # Keep retention independent if several database files share DATA_DIR.
     identity = hashlib.sha256(os.fsencode(database)).hexdigest()[:16]
     return engine, database, directory, f"sqlite-{identity}-"

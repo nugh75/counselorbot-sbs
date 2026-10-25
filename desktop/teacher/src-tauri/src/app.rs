@@ -163,6 +163,7 @@ fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> 
         report_file: std::env::var_os("COUNSELORBOT_REPORT_FILE").map(PathBuf::from),
     };
     let handle = Arc::new(supervisor::start(config));
+    app.manage(Arc::clone(&handle));
     app.manage(Shell {
         credentials,
         supervisor: Arc::clone(&handle),
@@ -206,7 +207,9 @@ fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> 
 }
 
 pub fn run(mode: Mode) {
-    let mut builder = tauri::Builder::default().plugin(tauri_plugin_opener::init());
+    let mut builder = tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build());
     if mode == Mode::Window {
         // Focus the open window instead of starting a second shell. Not in the test
         // modes: on Linux the plugin needs a D-Bus session, absent on CI runners.
@@ -234,6 +237,10 @@ pub fn run(mode: Mode) {
             save_named_tunnel_config,
             get_tunnel_settings,
             open_tunnel_in_browser,
+            crate::updater::get_updater_channel,
+            crate::updater::set_updater_channel,
+            crate::updater::check_for_updates,
+            crate::updater::apply_update,
         ])
         .setup(move |app| {
             setup(app.handle(), mode).map_err(|error| {

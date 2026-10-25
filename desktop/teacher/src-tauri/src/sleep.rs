@@ -25,6 +25,7 @@ impl<I: Inhibitor> SleepGuard<I> {
         SleepGuard { inhibitor, held: false }
     }
 
+    #[allow(dead_code)]
     pub fn is_held(&self) -> bool {
         self.held
     }

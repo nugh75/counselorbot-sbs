@@ -36,6 +36,32 @@ pub fn get(port: u16, path: &str, headers: &[(&str, &str)]) -> Result<(u16, Stri
     Ok((status, body.to_string()))
 }
 
+/// Minimal HTTP/1.0 POST: enough for local supervisor actions like backups.
+pub fn post(port: u16, path: &str, headers: &[(&str, &str)], body: &[u8]) -> Result<(u16, String), String> {
+    let address = std::net::SocketAddr::from(([127, 0, 0, 1], port));
+    let mut stream = TcpStream::connect_timeout(&address, Duration::from_secs(2)).map_err(|e| e.to_string())?;
+    stream.set_read_timeout(Some(Duration::from_secs(60))).ok();
+    let mut request = format!("POST {path} HTTP/1.0\r\nHost: 127.0.0.1:{port}\r\nContent-Length: {}\r\n", body.len());
+    for (name, value) in headers {
+        request.push_str(&format!("{name}: {value}\r\n"));
+    }
+    request.push_str("\r\n");
+    stream.write_all(request.as_bytes()).map_err(|e| e.to_string())?;
+    if !body.is_empty() {
+        stream.write_all(body).map_err(|e| e.to_string())?;
+    }
+    let mut raw = Vec::new();
+    stream.read_to_end(&mut raw).map_err(|e| e.to_string())?;
+    let raw = String::from_utf8_lossy(&raw);
+    let (head, body) = raw.split_once("\r\n\r\n").unwrap_or((&raw, ""));
+    let status = head
+        .split_whitespace()
+        .nth(1)
+        .and_then(|code| code.parse().ok())
+        .ok_or_else(|| "risposta HTTP non valida".to_string())?;
+    Ok((status, body.to_string()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -58,5 +84,25 @@ mod tests {
         assert_eq!(status, 200);
         assert_eq!(body, "{\"status\":\"ok\"}");
         assert!(server.join().unwrap().contains("X-Test: 1\r\n"));
+    }
+
+    #[test]
+    fn post_sends_payload_and_reads_response() {
+        let port = free_port().unwrap();
+        let listener = TcpListener::bind(("127.0.0.1", port)).unwrap();
+        let server = std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut buffer = [0u8; 1024];
+            let read = stream.read(&mut buffer).unwrap();
+            let request = String::from_utf8_lossy(&buffer[..read]).to_string();
+            stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{\"status\":\"ok\"}").unwrap();
+            request
+        });
+        let (status, body) = post(port, "/internal/backup", &[("X-Test", "backup")], b"").unwrap();
+        assert_eq!(status, 200);
+        assert_eq!(body, "{\"status\":\"ok\"}");
+        let request = server.join().unwrap();
+        assert!(request.contains("POST /internal/backup HTTP/1.0\r\n"));
+        assert!(request.contains("X-Test: backup\r\n"));
     }
 }

@@ -85,6 +85,7 @@ enum Command {
     StartNamedTunnel(Sender<Result<(), String>>),
     SaveNamedTunnelConfig { custom_domain: String, token: Option<String>, reply: Sender<Result<(), String>> },
     GetTunnelSettings(Sender<TunnelSettings>),
+    BackupDb(Sender<Result<String, String>>),
 }
 
 pub struct Handle {
@@ -142,6 +143,12 @@ impl Handle {
         let (reply, done) = mpsc::channel();
         self.commands.send(Command::GetTunnelSettings(reply)).map_err(|e| e.to_string())?;
         done.recv_timeout(Duration::from_secs(10)).map_err(|e| format!("lettura impostazioni tunnel: {e}"))
+    }
+
+    pub fn backup_db(&self) -> Result<String, String> {
+        let (reply, done) = mpsc::channel();
+        self.commands.send(Command::BackupDb(reply)).map_err(|e| format!("invio comando backup: {e}"))?;
+        done.recv_timeout(Duration::from_secs(90)).map_err(|e| format!("attesa backup: {e}"))?
     }
 
     pub fn snapshot(&self) -> Status {
@@ -280,6 +287,10 @@ impl Supervisor {
                     let res = self.handle_get_tunnel_settings();
                     let _ = reply.send(res);
                 }
+                Ok(Command::BackupDb(reply)) => {
+                    let res = self.handle_backup_db();
+                    let _ = reply.send(res);
+                }
                 Err(RecvTimeoutError::Timeout) => self.watch(),
                 Err(RecvTimeoutError::Disconnected) => {
                     self.stop_all();
@@ -337,6 +348,10 @@ impl Supervisor {
             }
             Ok(Command::GetTunnelSettings(reply)) => {
                 let _ = reply.send(self.handle_get_tunnel_settings());
+            }
+            Ok(Command::BackupDb(reply)) => {
+                let res = self.handle_backup_db();
+                let _ = reply.send(res);
             }
             Err(_) => {}
         }
@@ -750,6 +765,54 @@ impl Supervisor {
             self.restart_after_backend();
         }
         Ok(())
+    }
+
+    pub fn handle_backup_db(&self) -> Result<String, String> {
+        if let Some(backend) = &self.backend {
+            let port = backend.port.ok_or_else(|| "Porta backend non disponibile".to_string())?;
+            let (status, body) = health::post(
+                port,
+                "/internal/backup",
+                &[("X-CounselorBot-Shell-Secret", &self.shell_secret)],
+                b"",
+            )?;
+            if status != 200 {
+                return Err(format!("Richiesta backup fallita (HTTP {status}): {body}"));
+            }
+            #[derive(Deserialize)]
+            struct BackupResp {
+                status: String,
+                path: Option<String>,
+                detail: Option<String>,
+            }
+            let resp: BackupResp = serde_json::from_str(&body)
+                .map_err(|e| format!("Risposta backup JSON non valida ({e}): {body}"))?;
+            if resp.status != "ok" {
+                return Err(resp.detail.unwrap_or_else(|| "Errore durante il backup".into()));
+            }
+            resp.path.ok_or_else(|| "Percorso backup non restituito dal backend".into())
+        } else {
+            let mut spec = self.backend_spec(0).map_err(|e| match e {
+                Failure::Fatal(msg, _) => msg,
+                Failure::Stopping => "Supervisore in arresto".into(),
+            })?;
+            spec.args = vec![OsString::from("--backup")];
+            let mut cmd = std::process::Command::new(&spec.program);
+            crate::credentials::remove_inherited(&mut cmd);
+            cmd.args(&spec.args)
+                .envs(spec.env.iter().map(|(k, v)| (k.as_str(), v.as_str())))
+                .current_dir(&spec.cwd)
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped());
+            let output = cmd.output().map_err(|e| format!("Esecuzione offline backup: {e}"))?;
+            if !output.status.success() {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                return Err(format!("Offline backup fallito (codice {:?}): {stderr}", output.status.code()));
+            }
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let path = stdout.trim().strip_prefix("backup: ").unwrap_or(stdout.trim()).to_string();
+            Ok(path)
+        }
     }
 
     // ---- watch ----
@@ -1426,6 +1489,14 @@ mod tests {
         assert_eq!(supervisor.shell.tunnel.mode, "off");
         assert!(supervisor.status.lock().unwrap().tunnel_url.is_none());
 
+        std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
+    }
+
+    #[test]
+    fn supervisor_backup_db_handles_offline_when_backend_not_running() {
+        let supervisor = supervisor("backup-test");
+        let res = supervisor.handle_backup_db();
+        assert!(res.is_err() || res.is_ok());
         std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
     }
 }

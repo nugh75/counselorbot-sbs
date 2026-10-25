@@ -21,6 +21,7 @@ dist/
 
 # Legacy SQLite dev DB (prod uses Postgres)
 counselorbot.db
+counselorbot.db-*
 *.db
 
 # Runtime data with student PII — never commit

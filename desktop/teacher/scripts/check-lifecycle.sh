@@ -66,7 +66,9 @@ wait_for() {  # wait_for <seconds> <condition command...>
 }
 
 phase_is() { [ "$(field r.phase)" = "$1" ]; }
-ready_with_tunnel() { phase_is ready && [ -n "$(field r.cloudflared_pid)" ] && [ -n "$(field r.tunnel_url)" ]; }
+ready_with_tunnel() {
+    [ "$(field "r.phase === 'ready' && Boolean(r.cloudflared_pid) && Boolean(r.tunnel_url) && r.sidecars.every(s => s.state === 'running')")" = "true" ]
+}
 pid_of() { field "r.sidecars.find(s => s.name === '$1').pid"; }
 port_of() { field "r.sidecars.find(s => s.name === '$1').port"; }
 
@@ -126,7 +128,9 @@ fi
 # ---- 3. a crashed backend is restarted ----
 old_backend=$(pid_of backend)
 kill_hard "$old_backend"
-restarted() { local pid; pid=$(pid_of backend); phase_is ready && [ -n "$pid" ] && [ "$pid" != "$old_backend" ]; }
+restarted() {
+    [ "$(field "r.phase === 'ready' && Boolean(r.sidecars.find(s => s.name === 'backend')?.pid) && String(r.sidecars.find(s => s.name === 'backend')?.pid) !== '$old_backend'")" = "true" ]
+}
 if wait_for 180 restarted; then
     ok "backend riavviato: $old_backend -> $(pid_of backend), riavvii $(field "r.sidecars[0].restarts")"
 else
