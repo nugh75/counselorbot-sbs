@@ -5,10 +5,14 @@ Includes audited break-glass access for technical administrators on L1.
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
 from .. import auth, database, models, schemas
-from ..privacy.authz import safe_subject_pid
+from ..privacy import consent
+from ..privacy.authz import principal_from_identity, safe_subject_pid
+from ..privacy.errors import AuditUnavailable, PrivacyError
 from ..privacy.events import record_privacy_event
 from ..privacy.types import PrivacyEvent, PrivacyRole
 
@@ -124,3 +128,133 @@ async def revoke_break_glass(
 
     db.commit()
     return {"ok": True, "revoked": break_glass_id}
+
+
+# P9: self-service choices; administrative/view-as identities cannot choose for others.
+
+def _privacy_identity(identity: dict = Depends(auth.get_identity)):
+    if not identity.get("authenticated") or not identity.get("username"):
+        raise HTTPException(status_code=401, detail="privacy.errors.authentication_required")
+    return identity
+
+
+class PrivacyChoiceRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    document_id: int = Field(gt=0)
+    granted: StrictBool
+    teacher_username: str | None = Field(default=None, min_length=1, max_length=255)
+    group_id: int | None = Field(default=None, gt=0)
+    valid_until: datetime | None = None
+
+
+class PrivacyWithdrawalRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    teacher_username: str | None = Field(default=None, min_length=1, max_length=255)
+    group_id: int | None = Field(default=None, gt=0)
+
+
+class PrivacyNoticeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    document_id: int = Field(gt=0)
+
+
+def _privacy_error(db, exc):
+    db.rollback()
+    return HTTPException(status_code=503 if isinstance(exc, AuditUnavailable) else 403, detail=exc.code)
+
+
+def _choice_response(event):
+    return {
+        "id": event.id, "purpose": event.purpose, "event_type": event.event_type,
+        "choice": event.choice, "document_kind": event.document_kind,
+        "document_version": event.document_version, "document_locale": event.document_locale, "target": event.target,
+        "valid_until": event.valid_until, "created_at": event.created_at,
+    }
+
+
+@router.get("/privacy/documents")
+async def privacy_documents(locale: str = "it", db: Session = Depends(database.get_db)):
+    return {"documents": [{
+        "id": d.id, "kind": d.kind, "version": d.version, "locale": d.locale,
+        "content_hash": d.content_hash, "body_ref": d.body_ref,
+        "published_at": d.published_at, "requires_new_consent": d.requires_new_consent,
+    } for d in consent.current_documents(db, locale)], "validation_status": "[DA VALIDARE]"}
+
+
+@router.get("/privacy/purposes")
+async def privacy_purposes(db: Session = Depends(database.get_db)):
+    return {"purposes": [{
+        "key": p.key, "description_i18n": p.description_i18n,
+        "legal_basis": p.legal_basis, "requires_consent": p.requires_consent,
+        "active": p.active and p.legal_basis != "undefined",
+        "retention_policy_key": p.retention_policy_key, "document_kind": p.document_kind,
+    } for p in db.query(models.PrivacyPurpose).order_by(models.PrivacyPurpose.key).all()]}
+
+
+@router.get("/privacy/choices")
+async def privacy_choices(current_user: dict = Depends(_privacy_identity),
+                          db: Session = Depends(database.get_db)):
+    pid = safe_subject_pid(db, current_user["username"])
+    rows = db.query(models.PrivacyEventRecord).filter(
+        models.PrivacyEventRecord.subject_pid == pid,
+        models.PrivacyEventRecord.event_type.in_((*consent.CHOICE_EVENTS, "notice_viewed")),
+    ).order_by(models.PrivacyEventRecord.created_at.desc(), models.PrivacyEventRecord.id.desc()).all()
+    current = {}
+    for row in rows:
+        if row.event_type in consent.CHOICE_EVENTS:
+            key = (row.purpose, row.target or "")
+            if key not in current:
+                current[key] = {"purpose": row.purpose, "target": row.target,
+                                "granted": consent.has_consent(db, pid, *key),
+                                "choice": row.choice, "event_id": row.id}
+    return {"choices": list(current.values()), "history": [_choice_response(row) for row in rows]}
+
+
+@router.post("/privacy/notices")
+async def privacy_notice(payload: PrivacyNoticeRequest,
+                         current_user: dict = Depends(_privacy_identity),
+                         db: Session = Depends(database.get_db)):
+    try:
+        event = consent.record_notice(db, principal_from_identity(current_user), payload.document_id)
+        db.commit()
+    except PrivacyError as exc:
+        raise _privacy_error(db, exc) from None
+    except SQLAlchemyError:
+        raise _privacy_error(db, AuditUnavailable()) from None
+    return _choice_response(event)
+
+
+@router.post("/privacy/choices/{purpose}")
+async def privacy_choose(purpose: str, payload: PrivacyChoiceRequest,
+                         current_user: dict = Depends(_privacy_identity),
+                         db: Session = Depends(database.get_db)):
+    try:
+        event = consent.record_choice(
+            db, principal_from_identity(current_user), purpose,
+            "given" if payload.granted else "refused", document_id=payload.document_id,
+            teacher_username=payload.teacher_username, group_id=payload.group_id,
+            valid_until=payload.valid_until,
+        )
+        db.commit()
+    except PrivacyError as exc:
+        raise _privacy_error(db, exc) from None
+    except SQLAlchemyError:
+        raise _privacy_error(db, AuditUnavailable()) from None
+    return _choice_response(event)
+
+
+@router.post("/privacy/choices/{purpose}/revoke")
+async def privacy_withdraw(purpose: str, payload: PrivacyWithdrawalRequest,
+                           current_user: dict = Depends(_privacy_identity),
+                           db: Session = Depends(database.get_db)):
+    try:
+        event = consent.record_choice(
+            db, principal_from_identity(current_user), purpose, "withdrawn",
+            teacher_username=payload.teacher_username, group_id=payload.group_id,
+        )
+        db.commit()
+    except PrivacyError as exc:
+        raise _privacy_error(db, exc) from None
+    except SQLAlchemyError:
+        raise _privacy_error(db, AuditUnavailable()) from None
+    return _choice_response(event)

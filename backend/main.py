@@ -246,6 +246,7 @@ import_module("backend.migrations.20261022_class_path_planned_day").migrate(data
 import_module("backend.migrations.20261024_log_email_blind_index").migrate(database.engine)
 import_module("backend.migrations.20261025_teacher_student_grants").migrate(database.engine)
 import_module("backend.migrations.20261025_credential_deks").migrate(database.engine)
+import_module("backend.migrations.20261025_privacy_consent").migrate(database.engine)
 # SQLite: i CHECK di un file creato da una versione precedente seguono il modello (ADR-0003 §3.4).
 from .sqlite_schema import sync_sqlite_check_constraints
 sync_sqlite_check_constraints(database.engine, models.Base.metadata)

@@ -1,0 +1,17 @@
+# P9 — s71-p9-consent
+- Task: bb0808ff-975f-4966-96b2-d2a985c60b7d
+- Stato: implementazione, verifiche e documentazione complete sul branch feature/privacy-p9-consent.
+- PR: https://github.com/nugh75/counselorbot-sbs/pull/585 (issue #582, milestone Privacy Layer, progetto CounselorBot).
+- Commit: 41b5a29b feat(privacy) (documenti/finalità/scelte, audit atomico e grant P7).
+- Commit: be769d1f test(privacy), 25 test P9 e fixture P6 adattata al resolver persistente.
+- Fatto: lette specifiche P7/P8/P9/P16 e regole del Timoniere; worktree inizialmente pulito.
+- Decisioni: finalità iniziali undefined/inattive; nessuna pubblicazione automatica delle bozze.
+- Decisioni: grant taccuino separati da quelli istituzionali; eventi e grant nella stessa transazione.
+- Verifiche: primo giro interrotto per lock SQLite; corretto usando connessione esistente; 303 test SQLite P9/P7/P6/core/egress passati. 33 test P9/P7 Postgres passati; SQL portability e guidance-refresh/check verdi.
+- Bug registrato nel Diario: 8ea6215b-4410-4fe0-a85f-ba0b12ed15b3, xact_lock dopo flush cambia writer SQLite; aggirato localmente in P9 (nessuna modifica globale).
+- Fatto: API scelte/documenti, migrazione, resolver P6, integrazione P7 e osservazioni legacy; issue #582/milestone Privacy Layer.
+- Verifiche Docker: build counselorbot-p9-backend:test e 25 test P9 Python 3.10 passati.
+- Prossimi passi: revisione/merge dell’utente; P0 e P10 restano compiti separati.
+- Processi: nessun dev avviato; container temporanei P9 fermati, produzione invariata.
+- Notifica PR inviata best-effort: accodata, no-timoniere; notifiche mobile disattivate.
+- Blocchi e rischi: P0/testi [DA VALIDARE]; UI P10 fuori ambito; nessun deploy previsto.
