@@ -133,3 +133,9 @@ IBAN/IP/URL/social 1,00, codice fiscale R 0,73 (manca il minuscolo/spaziato),
 telefono R 0,63, salute R 0,55; persona, scuola, città, indirizzo, data di
 nascita, art. 9 R 0; copertura complessiva 0,22; latenza media ≈ 0,06 ms/frase.
 I test fissano questi valori come soglie minime di non regressione.
+
+## App desktop docente (L2)
+
+[Allegato DPIA teacher-pc](desktop-teacher-dpia.md): flussi, misure e rischi
+specifici del PC, collegati allo schema P16. Bozza **[DA VALIDARE]** dal Titolare/DPO;
+non attesta conformità né disponibilità per dati reali.

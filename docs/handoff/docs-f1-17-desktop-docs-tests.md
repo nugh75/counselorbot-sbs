@@ -16,14 +16,14 @@ Task `a8f4b202-cc7b-42de-ae42-1eef04bdbc22`.
 - Python 3.11.9 + TEST_DB=sqlite: 173 passati, nessun nuovo fallimento.
 - Node: 14/14; Bash, YAML e link Markdown validi; diff senza whitespace errati.
 - Commit `a4e3c821` test(desktop): controllore dati e lifecycle completo.
-- CI aggiornata: lifecycle completo sui quattro runner e regressioni.
-- Aggiunta health JSON attraverso tunnel: non basta l’URL nei log; Bash verificato.
+- Commit `110d6a7a` ci(desktop): lifecycle completo e regressioni.
+- Commit `398d0d0c` test(desktop): health pubblico JSON del tunnel, Bash valido.
 - Primo lancio Python 3.9 non supportato: ripetuto con ambiente corretto.
 - Guida sei lingue/screenshot rivisti: nessun controllo web modificato.
-- guidance-refresh/check in corso; installer nativi da verificare con CI.
+- make guidance-refresh e guidance-check verdi; installer nativi da verificare con CI.
 
 ## Prossimi passi
-- Commit separati docs/test/ci, push, PR con milestone e board CounselorBot.
+- Commit documentazione finale, push, PR con milestone e board CounselorBot.
 - Leggere check PR e notificare Timoniere; nessun merge.
 
 ## Blocchi e rischi

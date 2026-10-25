@@ -1,6 +1,6 @@
 # CounselorBot: funzionalità e interfaccia attuali
 
-Aggiornato: 24 ottobre 2026. Questo è il riferimento operativo dell’Assistente
+Aggiornato: 25 ottobre 2026. Questo è il riferimento operativo dell’Assistente
 CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
@@ -8,7 +8,7 @@ un elenco di azioni che l’assistente può eseguire al posto della persona.
 È in sviluppo un'app desktop docente sperimentale: il guscio avvia e sorveglia
 i processi locali, mostra lo stato ed esporta diagnostica senza database o
 credenziali. Con tunnel e server attivi impedisce la sospensione del PC (macOS e Windows). Se il docente va offline, gli studenti che avevano già aperto l'app vedono «Il docente è offline» con nuovo controllo ogni 10 secondi, invece dell'errore 502. Non è ancora disponibile per lezioni o dati reali: il backend
-minimal e il quick tunnel servono soltanto alle prove tecniche. Il backend
+completo viene verificato su SQLite in CI; il quick tunnel serve soltanto alle prove tecniche. Il backend
 prevede già un accesso locale del docente (link monouso aperto dal guscio,
 sessione valida 30 giorni solo dal PC, mai dal tunnel), ma la pagina di accesso
 non è ancora collegata. Il backend prevede anche l'abbinamento degli studenti
@@ -23,8 +23,8 @@ Sul PC il docente è amministratore; l'amministrazione
 risponde solo dal PC, mai dal tunnel (i controlli del profilo docente sono
 caricati solo quando servono, così il forum resta isolato). Prompt Lab, Telegram, OpenCode, l'assistente
 ChatGPT, le voci Piper e la sincronizzazione con Console non sono disponibili
-nell'app; integrazione completa SQLite e configurazione operativa
-restano da completare.
+nell'app. Restano da completare i percorsi grafici di accesso e abbinamento
+e la pubblicazione degli asset di rilascio.
 Le funzioni web descritte qui continuano a riferirsi all'installazione corrente.
 
 Il guscio desktop ha un pannello **Chiavi API**: inserimento mascherato,
@@ -38,6 +38,20 @@ non attivano le rispettive funzioni. **Applica e riavvia servizi** rende effetti
 le modifiche interrompendo le richieste locali in corso. Le chiavi passano al
 backend in memoria, senza file `.env`; le prove automatiche non accedono al
 portachiavi reale. Restano i limiti sperimentali dell'app descritti sopra.
+
+La [guida desktop docente](../docs/operations/desktop-teacher-guide.md) spiega
+come scaricare i bundle CI Mac Apple Silicon/Intel, Windows x64 e Linux deb,
+verificare SHA-256 e installare. Il pannello offre quick tunnel con link/QR
+(solo prove), tunnel nominativo con dominio/token e **Aggiornamenti applicazione**
+con canale stabile/beta e backup SQLite verificato prima dell'update. Gli snapshot
+non includono tutti i file e le chiavi. La CI produce installer e manifest come
+artifact: la pubblicazione nelle Release resta da completare prima di usare
+l'updater. Il token del tunnel è conservato localmente, distinto dal portachiavi
+API. Il modello locale richiede un server separato; la configurazione via web
+resta subordinata al collegamento dell'accesso docente. La checklist distingue
+smoke automatizzati e percorsi manuali ancora bloccati; il modello DPIA docente-PC
+è una bozza **[DA VALIDARE]** dal Titolare/DPO. Nessuna nuova schermata web o modifica
+alla Guida interfaccia nelle sei lingue e ai relativi screenshot è introdotta qui.
 
 È disponibile il nucleo tecnico P1 del Privacy Layer: definisce tipi, errori
 senza contenuti personali e regole conservative per finalità, consenso e invio

@@ -1,9 +1,11 @@
 # Guscio desktop docente — F1-02
 
 Il guscio in `desktop/teacher` implementa il ciclo di vita previsto da
-ADR-0002 §1–§2.6. Non è ancora un'app docente utilizzabile con dati reali:
-profilo SQLite completo, autenticazione locale, API personali,
-frontend a origine backend dinamica e tunnel per lezioni sono compiti distinti.
+ADR-0002 §1–§2.6. Per installazione e uso del pannello vedere la [guida docente](desktop-teacher-guide.md);
+per prove e limiti la [checklist F1-17](desktop-teacher-tests.md).
+Non è ancora utilizzabile con dati reali: mancano il collegamento del link
+monouso docente e le pagine di accesso/abbinamento. SQLite, origine backend
+dinamica, portachiavi e tunnel sono implementati e verificati separatamente.
 Identificatore immutabile: `org.ai4educ.counselorbot.teacher`.
 
 Il pannello chiavi API e il portachiavi di sistema (F1-08) sono descritti in
@@ -52,8 +54,7 @@ cloudflared può sopravvivere fino al lancio successivo. Il backend/frontend
 sono comunque fermati dalla chiusura di stdin.
 
 Codice backend 3: errore dati e indicazione di ripristino; 4: altra porta;
-crash: fino a tre riavvii per sidecar in cinque minuti. Il ripristino effettivo
-dei backup è F1-05j. stdout/stderr vanno direttamente nei file; rotazione
+crash: fino a tre riavvii per sidecar in cinque minuti. Il ripristino dei backup è descritto in [sqlite-backups.md](sqlite-backups.md). stdout/stderr vanno direttamente nei file; rotazione
 all'apertura sopra 10 MB, cinque file. L'esportazione diagnostica comprende
 log sanitizzati, layout e versione, escludendo DB, credenziali e registri runtime.
 Con P13 il testo libero viene omesso anche nei log storici: lo ZIP conserva
@@ -93,9 +94,12 @@ degli artefatti sono gestiti dall'updater F1-16.
 python -m pytest -q desktop/teacher/sidecar/test_server.py backend/tests/test_shell_contract.py desktop/teacher/scripts/test_generate_update_manifest.py
 node --test desktop/teacher/sidecar/server-wrapper.test.js
 cargo test --locked --manifest-path desktop/teacher/src-tauri/Cargo.toml
-bash desktop/teacher/scripts/check-lifecycle.sh /percorso/counselorbot-teacher
+bash desktop/teacher/scripts/check-lifecycle.sh --full /percorso/counselorbot-teacher
 ```
 
+Con `--full` il lifecycle esegue il lifespan reale e controlla schema, seed e
+integrità SQLite a primo avvio e dopo i riavvii; senza flag usa il backend
+minimale per isolare il solo guscio. La CI esegue `--full` sui quattro runner.
 Il lifecycle script crea una cartella temporanea distinta e imposta
 `COUNSELORBOT_TEST_DATA_DIR`, ammessa solo con `--headless`/`--smoke`.
 Le porte sono scelte libere dal guscio, nessun dato di produzione coinvolto.
@@ -121,9 +125,8 @@ usare i PID del report e il lancio successivo sulla stessa cartella di prova.
   (`CLOUDFLARE_TUNNEL_TOKEN` o salvato in `credentials/cloudflared_token`).
   Se il token nominativo non è impostato, il sistema ripiega in automatico
   e trasparentemente sul quick tunnel automatico (F1-09).
-- Il rewrite generale Next congela ancora il backend durante la build:
-  F1-03 deve renderlo dinamico prima di dichiarare l'app utilizzabile. La
-  firma F1-19 e il blocco interno sono già integrati.
+- Il frontend usa l'origine backend a runtime (F1-03); la prova completa
+  controlla anche `/api/health`. Firma F1-19 e blocco interno sono integrati.
 - Il pannello apre l'URL locale senza link docente monouso: il backend F1-06
   espone `POST /internal/local-auth/teacher-link` e `/local-auth/redeem`, ma
   la chiamata del guscio e la pagina `/accesso-locale` restano da collegare.
@@ -155,7 +158,7 @@ npx @tauri-apps/cli signer generate -w ~/.tauri/counselorbot.key
 - **Chiave pubblica**: inserita nella configurazione `plugins.updater.pubkey` in `desktop/teacher/src-tauri/tauri.conf.json`.
 - **Chiave privata**: deve essere conservata esclusivamente tra i **GitHub Secrets** del repository come `TAURI_SIGNING_PRIVATE_KEY` (ed eventuale password `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`). **Non committare mai la chiave privata nel repository**.
 - **Comportamento CI**: Se il secret `TAURI_SIGNING_PRIVATE_KEY` non è presente nel repository, la CI stampa un avviso chiaro nel log del job (`::warning::TAURI_SIGNING_PRIVATE_KEY non configurata...`) e compila gli installer saltando la firma e la generazione degli archivi dell'updater, senza fallire silenziosamente né bloccare la pipeline.
-- **Manifest CI**: Il job `manifest` nella workflow `.github/workflows/desktop-teacher.yml` esegue `desktop/teacher/scripts/generate-update-manifest.py` raccogliendo i bundle firmati e generando `latest.json` e `latest-beta.json`.
+- **Manifest CI**: Il job `manifest` nel workflow `.github/workflows/desktop-teacher.yml` esegue `desktop/teacher/scripts/generate-update-manifest.py` raccogliendo i bundle firmati e generando `latest.json` e `latest-beta.json` come artifact. Il workflow non pubblica gli asset nelle Release: serve ancora il passaggio del responsabile del rilascio, insieme agli installer e agli archivi firmati. I soli artifact non rendono operativo l'updater.
 
 ### Backup automatico preventivo del database SQLite
 
@@ -184,8 +187,5 @@ In caso di problemi con una nuova versione dell'applicazione:
      from backend.sqlite_backup import restore_backup
      restore_backup("/percorso/.../backups/sqlite-....sqlite3", database_stopped=True)
      ```
-   - In alternativa (ripristino manuale a freddo): verificare con `sqlite3 file "PRAGMA integrity_check"` che lo snapshot restituisca `ok`, quindi copiare il file sovrascrivendo `db/counselorbot.sqlite3` e rimuovere eventuali file residui `db/counselorbot.sqlite3-wal` e `db/counselorbot.sqlite3-shm`.
+   - Impostare `DATABASE_URL` sul database del profilo e `COUNSELORBOT_BACKUP_DIR` sulla sua cartella `backups/`. Conservare anche file caricati e chiavi separatamente; non cancellare manualmente WAL/SHM.
    - Riavviare CounselorBot Docente.
-
-La PR resta in bozza: revisione coordinata dal Timoniere obbligatoria dopo
-l'ultimo codice. Una revisione precedente non copre le modifiche successive.

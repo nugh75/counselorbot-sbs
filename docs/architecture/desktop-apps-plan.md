@@ -107,7 +107,7 @@ di autenticazione intercambiabile prevista da #209.
 | #210 | Installer: `.env` locale, chiavi API locali, avvio, health check | Sostituita dall'app Tauri (F1-02, F1-08) |
 | #211 | `cloudflared` automatico, URL pubblico, messaggio da condividere | F1-09 |
 | #212 | Server di scuola senza Console | Fuori da questo piano, ma riusa auth e Postgres |
-| #213 | Documentazione e test dell'app docente | F1-14 |
+| #213 | Documentazione e test dell'app docente | F1-17 |
 | #214 | Dominio personalizzato per link stabile | F1-10 (tunnel nominativo) |
 | #135 | Firma degli helper Windows/macOS, **bloccata su decisione dell'utente** | Stessa decisione vale per le app (§6.3) |
 
@@ -472,6 +472,16 @@ sicurezza o multipiattaforma (modello più capace + revisione). Stime in giorni 
 
 ### Fase 1 — App docente (~6–8 settimane)
 
+Stato al 25 ottobre 2026 (F1-17): **Fase 1 ancora aperta**. La
+[guida docente](../operations/desktop-teacher-guide.md), la
+[checklist e smoke completo](../operations/desktop-teacher-tests.md) e il
+[modello DPIA L2](../privacy/desktop-teacher-dpia.md) sono disponibili.
+Le etichette storiche sotto non certificano il percorso completo: restano il
+collegamento guscio → link docente e pagina `/accesso-locale`, `/unisciti` e
+gestione dispositivi, la pubblicazione degli artifact nelle Release e le prove
+manuali sui sistemi target/tunnel nominativo. F1-15 packaging e F1-16 codice
+updater sono integrati; F1-15 distribuzione Release non è ancora conclusa.
+
 | ID | Compito | Definition of Done | Stima | Dipende da | Tier |
 |----|---------|--------------------|-------|------------|------|
 | F1-01 ✅ | Versione unica nel repo | File `VERSION`, script di propagazione, check CI (#501) | 1 | — | T1 |
@@ -498,9 +508,9 @@ sicurezza o multipiattaforma (modello più capace + revisione). Stime in giorni 
 | F1-12 ✅ | LLM locale: chiave facoltativa + rilevamento | (#504) | 2 | — | T2 |
 | F1-13 🔒 | Abbinamento studenti | ADR-0002 §4: codici di classe, `pair`/`recover`, codice personale, pseudonimi senza enumerazione, approvazione, revoca, limiti; test di sicurezza su entrambi i DB | 4 | F1-06, F1-09 | T3 |
 | F1-14 ✅ | Anti-sospensione e stato «docente offline» | Inibizione sospensione a lezione attiva (macOS IOKit, Windows `SetThreadExecutionState`; Linux non inibito in Fase 1); `offline.html` servita da un service worker agli studenti che hanno già aperto l'app, con nuovo controllo ogni 10 s (`desktop/teacher/src-tauri/src/sleep.rs`, `frontend/public/offline.*`). Chi apre il link per la prima volta mentre il tunnel è senza origine vede ancora l'errore Cloudflare | 2 | F1-02 | T2 |
-| F1-15 🟡 | CI release desktop | Fatto: matrice `desktop-teacher` su 4 runner (`macos-14` DMG ARM64, `macos-15-intel` DMG x64, `windows-latest` NSIS .exe, `ubuntu-22.04` .deb), checksum SHA-256 negli artifact della build. Da fare: asset nella Release, `latest.json`, firma condizionale ai segreti | 4 | F1-01, F1-02 | T3 |
+| F1-15 🟡 | CI release desktop | Packaging completato: matrice `desktop-teacher` su 4 runner, DMG ARM64/x64, NSIS .exe e deb con SHA-256. F1-16 aggiunge firma condizionale e `latest.json`/`latest-beta.json` negli artifact. F1-17 esegue lifecycle con lifespan completo e controlli SQLite. Resta la pubblicazione installer/archivi firmati/manifest nelle Release: stato complessivo parziale | 4 | F1-01, F1-02 | T3 |
 | F1-16 ✅ | Updater e backup pre-aggiornamento | Canali stabile/beta configurabili da GUI/env, `tauri-plugin-updater` v2, backup SQLite automatico e verificato (online via `/internal/backup` o offline con `--backup`) prima di qualsiasi aggiornamento; manifest generator CI (`generate-update-manifest.py`), firma Minisign con fallback a warning se segreto mancante, procedura di rollback e ripristino documentata in `docs/operations/desktop-teacher-shell.md` | 2 | F1-15, F1-05j | T2 |
-| F1-17 | Documentazione e test (#213) | Guida docente in `docs/operations/`, `funzionalita-counselorbot.md`, privacy/DPIA modello, smoke test | 3 | tutti | T2 |
+| F1-17 ✅ | Documentazione e test (#213) | [Guida docente](../operations/desktop-teacher-guide.md) in italiano, funzionalità e `.env.example`, [DPIA L2](../privacy/desktop-teacher-dpia.md) [DA VALIDARE], [smoke completo e checklist](../operations/desktop-teacher-tests.md). Limiti di integrazione espliciti: non chiude la Fase 1 | 3 | tutti | T2 |
 | F1-18 ✅ | Lock di file portabile nel backend (`fcntl` non portabile su Windows) | `backend/file_lock.py`: `flock` su POSIX (semantica invariata), lock **esclusivo** del primo byte con `msvcrt` su Windows (nessun lock condiviso); usato in `rag_index.py` e `rag_reindex_job.py`; test di esclusione e concorrenza (`backend/tests/test_file_lock.py`); job CI `backend-windows.yml` su `windows-latest` che importa il backend (#513) | 1 | F0-01 | T2 |
 
 **Cosa parte in parallelo dopo questo ADR**
