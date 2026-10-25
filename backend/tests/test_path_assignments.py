@@ -347,17 +347,19 @@ def test_membership_changes_follow_the_current_class(api):
     assert completion_evidence(db, db.get(models.ClassPath, path["id"]), step, "carol") is None
 
 
-def test_strict_order_locks_later_assignment_and_target_is_immutable(api):
+def test_legacy_strict_order_keeps_later_assignment_available_and_target_is_immutable(api):
     client, db, identity, group, _other, sources = api
     created = assign(client, group, sources)
     second = assign(client, group, sources, request_id="request-153-b")
     path = new_path(client, group, [{"step_type": "tool", "tool_key": "timeline"}, assignment_step(created)],
                     mode="strict")
+    assert path["mode"] == "recommended"
     as_user(identity, "alice")
     submit(client, created)
     row = client.get("/user/paths").json()[0]
-    assert [step["state"] for step in row["steps"]] == ["not_done", "locked"]
-    assert client.post(f"/user/paths/{path['id']}/steps/{path['steps'][1]['id']}/launch").status_code == 409
+    # The submission completes its own step; the earlier tool step stays open.
+    assert [step["state"] for step in row["steps"]] == ["not_done", "done"]
+    assert client.post(f"/user/paths/{path['id']}/steps/{path['steps'][1]['id']}/launch").status_code == 200
     # Standalone use is never banned by path ordering.
     assert client.get(f"/user/assignments/{created['id']}/work").status_code == 200
     assert client.post(f"/user/paths/{path['id']}/steps/{path['steps'][0]['id']}/done").status_code == 200
