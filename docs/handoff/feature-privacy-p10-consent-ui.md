@@ -69,6 +69,11 @@
   (privacy_p6ac_egress), migrazioni SQLite (`no such function:
   statement_timestamp`, `error in index ix_counselors_owner_username after drop
   column`), drift dei testi dei prompt (`test_smoke`, `test_practice_notebooks`).
+- Re-run dopo il commit `43c80a48` (run [40199013418](https://github.com/nugh75/counselorbot-sbs/actions/runs/40199013418)):
+  i due check `documentation` sono **verdi**; `tests (postgres)` e `tests (sqlite)`
+  riportano **esattamente gli stessi numeri e la stessa lista di NEW FAILURE**
+  del run precedente (54/217 failed, 9/4 unexpected, 45/440 known still failing),
+  quindi nessuna regressione P10 introdotta dagli ultimi commit.
 - **Non corretto fuori scope**: il ratchet va riallineato in un task dedicato
   (baseline `63afde17` e nuove prove), non dentro la PR P10. Finché non si
   aggiornano `backend/tests/postgres_known_failures.txt` e
