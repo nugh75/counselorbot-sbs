@@ -16,7 +16,7 @@ bash desktop/teacher/scripts/check-lifecycle.sh --full /percorso/counselorbot-te
 bash desktop/teacher/scripts/check-lifecycle.sh --full /usr/bin/counselorbot-teacher xvfb-run -a
 ```
 
-Richiede Bash (Git Bash su Windows), Node, Python e curl; Linux richiede le
+Richiede Bash (Git Bash su Windows), Node 22, Python e curl; Linux richiede le
 librerie Tauri e un display o Xvfb. `--full` rimuove il backend minimale ed esegue
 il lifespan reale con SQLite. Senza `--full` resta la prova rapida del solo guscio.
 Il quick tunnel richiede accesso alla rete Cloudflare; un errore di rete fa fallire
@@ -53,6 +53,13 @@ cargo test --locked -j 1 --manifest-path desktop/teacher/src-tauri/Cargo.toml
 make guidance-refresh
 make guidance-check
 ```
+
+Il check `check-api-routing.sh` avvia il frontend standalone con un backend
+sintetico su una porta diversa da quella di build, senza segreto e con segreto
+sintetico. Riusa `frontend/tests/request-origin.test.mjs` per API, SSE e handshake
+WebSocket; nessun DB o servizio AI. La CI lo esegue su Linux dopo la build frontend.
+I test unitari `api-proxy.test.ts` verificano cambio porta, upload/cookie/origine,
+streaming, blocco interno, errori sanitizzati, decompressione, HEAD e risposte 204.
 
 Le suite auth/pairing/profilo/backup riusano le regressioni esistenti. I test del
 controllo dati coprono profilo valido, schema/seed mancanti, DB assente/corrotto,

@@ -17,7 +17,10 @@ branch `docs/f1-17-desktop-docs-tests`, PR https://github.com/nugh75/counselorbo
   Release non pubblicati; **Fase 1 ancora aperta** per UI accesso/abbinamento,
   pubblicazione e accettazione manuale. Non dichiarata pronta per dati reali.
 - Bug limiti integrazione registrato solo LOCAL nel Diario (sync not-linked).
-- Nessun deploy/Docker/dev avviato; handoff vivo e aggiornamenti PR/check in
+- Il primo smoke bundle ha esposto `/api/health` 500 (rewrite congelato al build):
+  fix API runtime verificato con 21 unit test e 11+11 prove HTTP/SSE/WS Docker;
+  bug LOCAL confermato, immagine frontend isolata ricostruita con TypeScript verde.
+- Nessun deploy/dev; container di prova effimeri, produzione intatta. Handoff vivo in
   `docs/handoff/docs-f1-17-desktop-docs-tests.md`.
 
 # Handoff 25 ottobre 2026: F1-16 — Updater desktop e backup SQLite pre-aggiornamento

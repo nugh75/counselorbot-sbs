@@ -125,8 +125,11 @@ usare i PID del report e il lancio successivo sulla stessa cartella di prova.
   (`CLOUDFLARE_TUNNEL_TOKEN` o salvato in `credentials/cloudflared_token`).
   Se il token nominativo non è impostato, il sistema ripiega in automatico
   e trasparentemente sul quick tunnel automatico (F1-09).
-- Il frontend usa l'origine backend a runtime (F1-03); la prova completa
-  controlla anche `/api/health`. Firma F1-19 e blocco interno sono integrati.
+- Il frontend usa l'origine backend a runtime (F1-03): F1-17 aggiunge il
+  catch-all API Node per evitare il rewrite congelato nel manifest standalone.
+  Gli handler specifici di streaming restano prioritari; gli upgrade WebSocket
+  passano dal proxy prima del catch-all. La prova completa controlla `/api/health`
+  e la raggiungibilità pubblica. Firma F1-19 e blocco interno sono integrati.
 - Il pannello apre l'URL locale senza link docente monouso: il backend F1-06
   espone `POST /internal/local-auth/teacher-link` e `/local-auth/redeem`, ma
   la chiamata del guscio e la pagina `/accesso-locale` restano da collegare.

@@ -25,8 +25,8 @@ Task `a8f4b202-cc7b-42de-ae42-1eef04bdbc22`, issue #213; base `2220ef99`.
 
 ## Prossimi passi
 - Harness CI verificato nel container: 11+11 passati, processi ripuliti.
-- Fix commit `e77b9400`; CI/standalone harness verificati, in commit.
-- Push del gruppo fix/ci/docs e nuovo giro CI sui bundle.
+- Commit fix `e77b9400`, CI `7e069511`; harness e container ripuliti.
+- Push gruppo fix/ci/docs e attesa check PR #584; nessun merge agente.
 - Commit atomici fix/ci/docs, push; aggiornare PR e chiudere task solo con verifiche verdi.
 
 ## Blocchi e rischi
