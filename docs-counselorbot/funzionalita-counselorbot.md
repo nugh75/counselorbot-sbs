@@ -119,6 +119,23 @@ bloccare e usa il filtro attuale (regole e modello NER locale); l'operatore
 potrà attivare il controllo completo con `PRIVACY_GATEWAY_MODE=strict` quando
 quei blocchi saranno pronti. Non cambiano schermate né percorsi. Nessuna garanzia di anonimizzazione o conformità GDPR.
 
+Il blocco P7 introduce il livello autorizzativo granulare tra docente, studente e
+amministratore (matrice §5.2 e §5.3 del Privacy Layer):
+- Il docente titolare e i co-docenti autorizzati possono consultare risultati, conversazioni
+  e note esclusivamente per gli studenti iscritti alla loro classe e limitatamente al periodo
+  di iscrizione (`TeacherStudentGrant`). I tentativi di accesso a dati fuori ambito, a compilazioni
+  svolte in altre classi o da docenti di altri istituti restituiscono `404 Not Found` per prevenire
+  l'esposizione dell'esistenza di risorse altrui (protezione IDOR).
+- Risoluzione della lacuna G5: nell'elenco studenti della classe, il taccuino personale e il
+  modello del discente (`learner_profile`) sono ora protetti e non vengono più mostrati al docente
+  senza un titolo autorizzativo specifico per la categoria taccuino.
+- All'eliminazione della condivisione con un co-docente o all'uscita dello studente dalla classe,
+  tutte le relative autorizzazioni decadono con effetto immediato.
+- Risoluzione della lacuna G6: sul server di produzione (L1), l'amministratore tecnico accede a
+  log e risultati questionario con nomi ed email pseudonimizzati. L'accesso in chiaro richiede la
+  procedura straordinaria di break-glass (`POST /privacy/break-glass`), con motivazione formale,
+  scadenza oraria e registrazione obbligatoria e fail-closed di un evento di audit privacy.
+
 ## Lettura dei questionari e approfondimento
 
 Nelle chat guidate di QSA, QSAr, ZTPI, QPCS, QPCC e QAP, la descrizione dei
