@@ -1,39 +1,37 @@
 # P10 — recupero PR #589
 
 ## Stato
-- Responsabile: s15-fix-589-codex; modello richiesto Codex gpt-6.1-sol, T1, effort medium.
-- Stessa sessione riavviata con `--yolo` su autorizzazione esplicita utente, pane `wS:p4G`; limiti del mandato invariati.
-- Task recupero: `2666f647-d62e-478c-ab60-51fa0d693ec5`; task P10 originale: `e9d44ca2-e19b-419b-b925-09744e9add34`.
-- Worktree `feature-privacy-p10-consent-ui`, branch `feature/privacy-p10-consent-ui`.
-- PR esistente: https://github.com/nugh75/counselorbot-sbs/pull/589 (aperta, nessun merge/deploy autorizzato).
-- Ripresa da s14: merge `e72cf3fa` in `77e21b14`, poi nuovo main `e793de23` in `4467b2b5`, entrambi pushati; zero file unmerged.
+- s15-fix-589-codex; GPT-6.1-Sol medium, T1; stessa sessione Full Access/`--yolo` autorizzata, pane `wS:p4G`.
+- Task `2666f647-d62e-478c-ab60-51fa0d693ec5` aperto; Timoniere `t-copilota-codex`, pane `wS:p46`.
+- Solo worktree/branch `feature/privacy-p10-consent-ui`; PR https://github.com/nugh75/counselorbot-sbs/pull/589.
+- Ripresa da head GitHub `fe891bb4` con Postgres rosso; nuovo merge `3cad87218973454d14e2840f67dfea1aeaf88eb7` integra main `586d01b8` (#596/#597); GitHub/CI da riverificare dopo push.
+- v0.1.1 già pubblicata: nessuna nuova release/deploy da eseguire.
 
 ## Fatto
-- Verificati status, log, MERGE_HEAD, diff e indice; preservate tutte le modifiche importate dalle PR #590–593.
-- Manifest rigenerato e committato per il prodotto combinato P10 + accesso locale #591; il precedente indice era obsoleto.
-- Guida e menu account conservano entrambi i lavori; backend P9/P10 non modificato dal merge.
-- P10: pagina `/privacy`, documenti/finalità/scelte/condivisione/cronologia, sei lingue; API scelte espone docente/classe solo al soggetto.
-- Nuovo main `e793de23` (#594) entrato durante la CI: merge aggiuntivo; conflitti limitati a manifest e checker i18n, risolti preservando il dizionario P10 e le eccezioni puntuali di main.
-- Backup s14 in `/tmp/counselorbot-opencode-handoff-20261025`, non applicato.
+- Recuperato merge s14 di `e72cf3fa` in `77e21b14`; integrata #594 `e793de23` in `4467b2b5`; handoff in `e90c807d`/`fe891bb4`, tutti pushati.
+- Preservati P10 e lavori #590–594, integrata la release già pubblicata #596/#597; manifest combinato rigenerato; checker conserva dizionario privacy e proprietà abbreviate P10, eccezioni puntuali di main.
+- P10: documenti/finalità/scelte/condivisione/cronologia in sei lingue; docente/classe esposti solo nelle scelte del soggetto.
+- Backup s14 `/tmp/counselorbot-opencode-handoff-20261025` non applicato; nessun runtime SSE o ratchet modificato.
 
 ## Verifiche
-- `make guidance-refresh`, `make guidance-check`, checker `--check --base e72cf3fa` e poi `e793de23`: pass.
-- `python3 -m unittest discover -s scripts/tests -p 'test_platform_guidance_check.py'`: 3 pass.
-- Diff e diff staged senza errori whitespace; dopo #594, Node 22: 24 test privacy/auth/runtime-config/administration-plans pass; i18n: 3647 chiavi, sei lingue.
-- CI `77e21b14`: guidance push `40209575491` e PR `40209579957`, Release Drafter, portability e startup SQLite verdi.
-- Backend run `40209579980`: SQLite verde (444 noti, 0 inattesi, 0 listed-passing); Postgres rosso (53 noti, 1 inatteso, 0 listed-passing).
-- Unico inatteso Postgres: `test_sse_heartbeat.py::test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next`, asserzione finale su `_closing`.
-- Stesso file SSE/test di main; flakiness preesistente documentata da `3050d8b8` e nei run precedenti. Nessuna modifica al ratchet o fix fuori scope.
-- Precedente CI rossa su head `45091d7e`/run `40199013418`: baseline nota, riallineata da #593; non vale come verifica del nuovo head.
-- Precedenti prove P10: 11 unit frontend, 26 test P9 SQLite verdi; browser navbar/personal-area non eseguiti (Next dev non Ready).
+- Ultima CI esaminata: run `40212637918`, head `fe891bb4`, job Postgres `121227044687`: 53 noti, **1 inatteso**, 0 listed-passing; 54 failed/5862 passed/15 skipped.
+- Unico inatteso: `test_sse_heartbeat.py::test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next`, riga 168: `_closing` contiene un task già terminato dopo `gather`.
+- SQLite stesso SHA: verde, 444 noti/0 inattesi/0 listed-passing, 4997 passed; documentation push/PR, startup SQLite, portability e Release Drafter verdi.
+- SSE/test identici a main `586d01b8` (diff vuoto); stessa anomalia documentata da `3050d8b8` e run `40209579980` su `77e21b14`.
+- Avviso whitespace ereditato: riga finale vuota in `docs/handoff/chore-release-0.1.1.md`, identico a main; preservato.
+- Prima del nuovo main: guidance-refresh/check anche con base `e793de23`, 3 test checker, 24 test Node mirati, i18n 3647 chiavi/6 lingue verdi.
+- Prove P10 storiche: 26 test P9 SQLite verdi; browser navbar/personal-area non eseguiti (Next dev non Ready).
 
 ## Prossimi passi
-- Ultimo merge `4467b2b5738a515fb19bac59e6d8934b186fb0c3` verificato su GitHub; PR OPEN/MERGEABLE; codice applicativo stabile dopo questo SHA.
-- Questo aggiornamento finale riguarda solo handoff; monitorare i check sul suo SHA (non riusare il verde di un vecchio head). Chiudere Diario solo a CI pertinente verde, altrimenti task aperto.
-- Revisione cross-modello prima del merge PR (deroga P10 b23782fc già esistente); il merge resta all’utente.
+- Merge main `586d01b8` completato: solo conflitto manifest risolto; v0.1.1 allineata, 7 test sync-version e 3 test checker verdi con Python 3.12.
+- CLI guida locale interrotto in attesa I/O; manifest rigenerato con lo stesso algoritmo sui 1411 blob prodotto dell’indice e guida staged, da confermare in CI sul nuovo SHA.
+- Rerun manuali usati in questa ripresa: **0**; massimo un rerun del solo job Postgres fallito sulla head corrente, nessuna aggiunta al ratchet.
+- Diagnosi comune pronta (s19 monitora #595): coordinare proposta solo test; rimuovere voce SQLite soltanto dopo fix verificato, in perimetro/revisione dedicati; runtime SSE invariato, nessuna nuova PR.
+- Task fatto solo dopo recupero completo/verificato; revisione/merge all’utente, deroga `b23782fc` solo P10. Nessun agente/unblocked da lanciare.
 
 ## Blocchi e rischi
-- Documenti/basi giuridiche `[DA VALIDARE]`, nessuna pubblicazione automatica; revoca disabilitata se docente non risolto.
-- Prove browser/breakpoint e validazione legale restano attività P10 originarie da coordinare col Timoniere.
-- Bug SSE registrato e confermato nel Diario: `5218df41-50eb-4164-bd04-22ffafe84a8c` (prova CI job `121217747071`, sync not-linked); nessuna issue manuale.
-- Nessun rebuild richiesto per manifest/handoff; nessun deploy, sudo, processo avviato/arrestato o dato modificato.
+- Bug SSE Diario `5218df41-50eb-4164-bd04-22ffafe84a8c` aggiornato con CI finale e riproduzione (95/100 fail; variante solo memoria 200/200 pass).
+- Diagnosi/proposta solo test, non applicata: `docs/operations/sse-disconnect-flake.md`; nessun cambiamento funzionale SSE o deroga estesa.
+- Consensi/documenti `[DA VALIDARE]`; revoca disabilitata se docente non risolto; prove browser/legali restano da coordinare.
+- Attesa locale lettura PNG 1129 byte durante checker: bug sospetto Diario `aa54680f-b8de-4f3a-aa45-089028cb6ede`; causa ambientale non confermata, file intatto.
+- Nessun deploy/sudo/segreto/.env/dato produzione o processo/container altrui toccato; fermati solo i miei checker, nessun dev avviato.
