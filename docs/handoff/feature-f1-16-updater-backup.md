@@ -14,6 +14,7 @@ Pronto per la revisione e merge — test locali passati, PR aperta.
 - CI: script `desktop/teacher/scripts/generate-update-manifest.py` per assemblare `latest.json` e `latest-beta.json`.
 - CI workflow `desktop-teacher.yml`: firma Minisign condizionale con warning su segreto mancante e job `manifest` di pubblicazione manifest.
 - Fix CI Windows: reso il controllo del percorso di backup in `test_server.py` indipendente dal separatore di path.
+- Fix CI macOS: eliminata race condition TOCTOU in `check-lifecycle.sh` con verifica atomica dello snapshot JSON.
 - Merge con `origin/main` (#579 P7): handoff e stato guidance integrati senza conflitti.
 - Documentazione: aggiornata `docs/operations/desktop-teacher-shell.md` con canali, chiavi Minisign e procedura dettagliata di rollback e ripristino; aggiornato piano F1-16 ✅.
 

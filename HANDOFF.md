@@ -17,6 +17,7 @@ Agente `s70-f1-16-updater` (subagente per Timoniere), task `168a1a90-9467-4cfd-9
   - `desktop/teacher/scripts/generate-update-manifest.py`: script Python per generare i file `latest.json` e `latest-beta.json` da caricare nelle Release GitHub.
   - `desktop/teacher/scripts/test_generate_update_manifest.py`: unit test pytest per la generazione dei manifest.
   - `desktop/teacher/sidecar/test_server.py`: reso il controllo del percorso di backup indipendente dai separatori di path (supporto Windows).
+  - `desktop/teacher/scripts/check-lifecycle.sh`: resa atomica la verifica di prontezza e sidecar attivi con tunnel nel report per eliminare race condition TOCTOU sui runner macOS lente (Intel).
   - `.github/workflows/desktop-teacher.yml`: firma Minisign condizionale (warning su segreto mancante, disabilitazione artefatti updater per evitare fallimento build) e nuovo job `manifest` per generare i manifest e allegarli alla release / artifact.
   - `docs/operations/desktop-teacher-shell.md`: documentazione operativa completa di canali, chiavi Minisign e procedura di rollback e ripristino passo-passo.
   - `docs/architecture/desktop-apps-plan.md`: segnato F1-16 come completato (✅).
