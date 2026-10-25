@@ -447,6 +447,11 @@ async def _update_plan_after_access(plan_id, payload, current_user, db):
     if linked_step and any(key in updates and updates[key] != getattr(plan, key)
                            for key in ("instrument_code", "locale", "group_id", "institution_id")):
         raise HTTPException(409, "activated_administration_target_immutable")
+    if _responses_count(db, plan.id) and any(
+        key in updates and updates[key] != getattr(plan, key)
+        for key in ("instrument_code", "locale", "group_id", "institution_id")
+    ):
+        raise HTTPException(409, "administration_has_results_replace_required")
     if "title" in updates:
         title = _clean(updates["title"])
         if not title:
@@ -488,6 +493,44 @@ async def _update_plan_after_access(plan_id, payload, current_user, db):
     db.commit()
     db.refresh(plan)
     return _serialize_plan(db, plan)
+
+
+@router.post("/admin/administration-plans/{plan_id}/replace", response_model=schemas.AdministrationPlanResponse)
+async def replace_administration_plan(
+    plan_id: int,
+    payload: schemas.AdministrationPlanReplace,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Archive the source and create a clean collection in a single transaction.
+
+    Existing results, grants and path steps keep their original administration ID.
+    A stale retry cannot create a second replacement because revision is mandatory.
+    """
+    _require_visible_plan(db, current_user, plan_id)
+    plan = (db.query(models.AdministrationPlan).filter_by(id=plan_id)
+            .populate_existing().with_for_update().one())
+    if plan.revision != payload.revision:
+        raise HTTPException(409, "administration_revision_conflict")
+    if plan.status == "archived":
+        raise HTTPException(409, "administration_already_archived")
+    if _normalize_status(payload.replacement.status) not in {"planned", "active"}:
+        raise HTTPException(422, "administration_replacement_status_invalid")
+    if plan.group_id and (payload.replacement.group_id != plan.group_id
+                          or payload.replacement.institution_id != plan.institution_id):
+        raise HTTPException(422, "administration_class_context_mismatch")
+    if plan.group_id:
+        _require_class_locale(db, payload.replacement.instrument_code, payload.replacement.locale)
+    try:
+        replacement = _build_plan(db, payload.replacement, current_user)
+        plan.status = "archived"
+        plan.revision += 1
+        db.commit()
+        db.refresh(replacement)
+    except Exception:
+        db.rollback()
+        raise
+    return _serialize_plan(db, replacement)
 
 
 @router.delete("/admin/administration-plans/{plan_id}")

@@ -6,10 +6,11 @@ Tutti e tre i task sono `fatto` nel diario Counselorbot:
 - eb537b45 — forum in pagina, commit `e5603d11`.
 - c8a79b2b — incontri in pagina, commit `ab83a87e`.
 
-Branch: `feature/piano-builder-interno`. Allineamento finale con `origin/main`
-(`e72cf3fa`), con risoluzione della sola baseline SQLite: conservate le
-correzioni di main, rimosse le eccezioni delle due suite ora verdi.
-Una sola PR verso main, da revisionare e unire dal proprietario.
+Branch: `feature/piano-builder-interno`. PR unica: [#595](https://github.com/nugh75/counselorbot-sbs/pull/595),
+da revisionare e unire dal proprietario. Allineato con `origin/main` (`e793de23`):
+conservate le correzioni di baseline/auth e la sostituzione con archiviazione
+delle somministrazioni. Un secondo commit di integrazione è stato necessario
+perché main è avanzato durante la pubblicazione della PR.
 
 ## Fatto
 - Passi autonomi anche nei piani storici strict; ordine solo visivo, nessun
@@ -25,14 +26,15 @@ Una sola PR verso main, da revisionare e unire dal proprietario.
 - Etichette nelle sei lingue; API/dependenze/variabili di configurazione nuove assenti.
 
 ## Verifiche
-- Dopo l'allineamento: **131 test SQLite verdi**, 4 casi di migrazione/concorrenza
+- Dopo l'allineamento: **142 test SQLite verdi**, 4 casi di migrazione/concorrenza
   esclusi da questa esecuzione SQLite; ratchet senza nuove eccezioni.
 - PostgreSQL: suite modelli/inserimento risultati (51 verdi), regressioni sulle
-  fonti dei risultati, quattro casi forum e nuovo caso incontri verdi.
-- **93 test Node verdi**, incluse compatibilità auth/runtime del main aggiornato.
+  fonti dei risultati, quattro casi forum e nuovo caso incontri verdi. Dopo
+  l’ultimo merge: sei regressioni su sostituzione/archiviazione e fonti verdi.
+- **99 test Node verdi**, incluse compatibilità auth/runtime del main aggiornato.
 - UI: quattro scenari risorse (forum desktop IT/mobile SV, incontri gruppo IT e
   individuale SV) più suite aggiunta/sostituzione passi, tutti verdi dopo il merge.
-- Typecheck, lint mirato, `check-i18n.mjs` verdi: **3521 chiavi, sei lingue**.
+- Typecheck, lint mirato, `check-i18n.mjs` verdi: **3535 chiavi, sei lingue**.
 - Docker ricostruito sul codice allineato: `counselorbot-s11-backend:builder` e
   `counselorbot-s11-frontend:builder`. Import backend senza rete OK; frontend
   avviato in container isolato, HTTP 200 sul builder e log di avvio corretti.

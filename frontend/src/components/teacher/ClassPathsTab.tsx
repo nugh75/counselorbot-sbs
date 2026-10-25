@@ -88,6 +88,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     const [servedLocales, setServedLocales] = useState<Record<string,string[]>>({});
     const [administrationLocale,setAdministrationLocale] = useState('it');
     const [administrationError,setAdministrationError] = useState(false);
+    const [replacementError, setReplacementError] = useState(false);
     const [selectedAdministration,setSelectedAdministration] = useState('');
     const [administrationTitle,setAdministrationTitle] = useState('');
     const [administrationInstrument,setAdministrationInstrument] = useState('QSA');
@@ -106,7 +107,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             .catch(()=>setAdministrationError(true));
     }, []);
     const localeOptions = (code: string) => ['it', ...(servedLocales[code] || []).filter(locale=>locale!=='it')];
-    const offered = (row: {locale:string;instrument_code:string}) => localeOptions(row.instrument_code).includes(row.locale);
+    const offered = (row: {locale:string;instrument_code:string;status?:string}) => row.status !== 'archived' && row.status !== 'completed' && localeOptions(row.instrument_code).includes(row.locale);
     const createAdministration = async () => {
         if (busy || !administrationTitle.trim()) return;
         if (account.current !== getViewAsAccount()?.username) {setForbidden(true);return;}
@@ -125,7 +126,11 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     const addAdministrationStep = () => {
         const target=administrations.find(row=>row.id===Number(selectedAdministration));
         if (!target) return;
-        placeSteps([{position:0,step_type:'questionnaire_administration',
+        const previous = replacing === null ? null : steps[replacing];
+        if (previous?.step_type === 'questionnaire_administration' && (previous.id || previous.replaces_step_id)
+            && !window.confirm(t('admin.ap.confirmReplace', {title: previous.title || previous.target_summary?.title || previous.target_summary?.code || ''}))) return;
+        placeSteps([{...(previous?.step_type === 'questionnaire_administration' && (previous.id || previous.replaces_step_id)
+            ? {replaces_step_id: previous.replaces_step_id || previous.id} : {}),position:0,step_type:'questionnaire_administration',
             administration_plan_id:target.id,tool_key:'',client_key:crypto.randomUUID(),auto_detect:true,can_self_mark:false,
             target_summary:{...target,institution_name:''}}]);
         setSelectedAdministration('');setNotice(null);
@@ -356,6 +361,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         pending.current = controller;
         setBusy(true);
         setNotice(null);
+        setReplacementError(false);
 
         const isCurrent = () => mounted.current && !controller.signal.aborted;
 
@@ -371,7 +377,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     // Pending steps travel by id only: publication creates their targets.
                     ...(s.step_type === 'pending' ? {}
                         : s.step_type === 'questionnaire_administration'
-                        ? {administration_plan_id:s.administration_plan_id}
+                        ? {administration_plan_id:s.administration_plan_id, ...(s.replaces_step_id ? {replaces_step_id:s.replaces_step_id} : {})}
                         : s.step_type === 'guided_results_chat' ? {...resultsSourcePayload(s, steps), ...(s.tool_key ? {tool_key: s.tool_key} : {})}
                             : s.step_type === 'assignment' ? {assignment_id:s.assignment_id}
                                 : s.step_type === 'forum' ? {topic_id:s.topic_id}
@@ -399,7 +405,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                 // Deep-dive reference errors keep the draft editable; revision conflicts need a reload.
                 const detail = (await response.json().catch(() => null))?.detail;
                 if (!isCurrent()) return false;
-                if (detail === 'results_step_referenced') setNotice('deep_dive_referenced');
+                if (detail === 'administration_replacement_not_clean') setReplacementError(true);
+                else if (detail === 'results_step_referenced') setNotice('deep_dive_referenced');
                 else if (['results_step_invalid', 'results_step_order', 'duplicate_results_chat'].includes(detail)) setNotice('deep_dive_invalid');
                 else if (assignmentSaveError(detail)) setNotice('assignment_invalid');
                 else if (forumSaveError(detail)) setNotice('forum_invalid');
@@ -878,6 +885,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 <ExternalLink className="h-4 w-4" aria-hidden />{a('research')}</Link>
                             {institutionId == null && <Callout variant="warning">{pub('noInstitute')}{' '}
                                 <Link href="/docente/istituti" className="font-semibold text-indigo-700 underline">{pub('goToInstitutes')}</Link></Callout>}
+                            {replacing !== null && steps[replacing]?.step_type === 'questionnaire_administration' && <Callout>{t('admin.ap.pathReplaceHint')}</Callout>}
+                            {replacementError && <Callout variant="danger">{t('admin.ap.error.cleanReplacement')}</Callout>}
                             {administrationError && <Callout variant="danger">{a('error')} <Button variant="secondary" onClick={()=>void loadAdministrations()}>{a('retry')}</Button></Callout>}
                             <div className="flex flex-wrap items-end gap-2">
                                 <label className="block w-full text-sm sm:w-auto">{a('existing')}<select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">

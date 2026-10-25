@@ -179,8 +179,7 @@ const allowedVisibleAttributes = new Set([
 const localeSpecificFiles = new Set([
     'components/administration/QuestionnaireRunner.tsx',
 ]);
-// These existing state values are translation keys rendered by classCouncilText,
-// never literal feedback. Keep exceptions scoped to the component and exact key.
+// These state values are dictionary keys rendered through l(error), not visible text.
 const translatedFeedbackKeys = new Map([
     ['components/council/ClassCouncilView.tsx', new Set(['networkError'])],
     ['components/teacher/ClassCouncilTab.tsx', new Set(['createError', 'ownerOnly'])],

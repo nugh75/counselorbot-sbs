@@ -23,6 +23,20 @@ export const LANG_STORAGE_KEY = 'cb_lang';
 type Dict = Record<string, string>;
 
 const it: Dict = {
+    'admin.ap.pathReplaceHint': "Scegli o crea una somministrazione nuova e senza risposte. Al salvataggio la precedente sarà archiviata anche negli altri percorsi che la usano. Risultati e completamenti già raccolti resteranno nello storico; il nuovo passo partirà vuoto.",
+    'admin.ap.error.cleanReplacement': "Per sostituire un passo scegli una somministrazione nuova, senza risposte e mai aggiunta a un percorso. Puoi crearla qui e riprovare.",
+    'admin.ap.action.replace': "Sostituisci",
+    'admin.ap.action.confirmReplace': "Archivia e avvia la nuova",
+    'admin.ap.replaceHint': "Scegli il nuovo piano per sostituire «{title}». Al salvataggio la precedente sarà archiviata. I dati e i passi dei percorsi resteranno legati alla precedente; la nuova avrà un codice distinto e nessuna risposta. Aggiungila ai percorsi che devono usarla.",
+    'admin.ap.confirmReplace': "Archiviare «{title}» e avviare una nuova somministrazione vuota? I dati raccolti resteranno consultabili nella precedente. I percorsi esistenti conserveranno il riferimento storico.",
+    'admin.ap.replaced': "Precedente archiviata. Nuova somministrazione creata: {code}, senza risposte.",
+    'admin.ap.error.usedPlan': "Questo piano ha già risultati. Usa Sostituisci per cambiare strumento, lingua, classe o istituto conservando i dati.",
+    'admin.ap.error.alreadyArchived': "La somministrazione è già archiviata. Aggiorna la lista prima di proseguire.",
+    'admin.ap.action.archive': "Archivia",
+    'admin.ap.action.restore': "Ripristina",
+    'admin.ap.confirmArchive': "Archiviare «{title}»? I dati raccolti resteranno consultabili. La raccolta sarà sospesa; potrai ripristinarla come pianificata.",
+    'admin.ap.confirmRestore': "Ripristinare «{title}» come pianificata? I dati raccolti saranno conservati.",
+    'admin.ap.error.archive': "Impossibile cambiare lo stato della somministrazione.",
     // Compact introduction
     'app.intro.compact.privacy.back': "Torna alla presentazione",
     'app.intro.compact.privacy.access.body': "Gli accessi dipendono dal gruppo e dai permessi. Chi gestisce il gruppo può consultare Taccuino, risultati e relative conversazioni secondo le autorizzazioni previste. La condivisione del riepilogo di un obiettivo personale e quella di una restituzione sono scelte separate ed esplicite, revocabili. Le bozze non condivise delle assegnazioni restano personali. Lavorare in autonomia non equivale a una garanzia generale di riservatezza.",
@@ -1372,6 +1386,20 @@ const it: Dict = {
 };
 
 const en: Dict = {
+    'admin.ap.pathReplaceHint': "Choose or create a new administration with no responses. Saving will archive the previous one, including in other paths using it. Existing results and completions will remain in history; the new step will start empty.",
+    'admin.ap.error.cleanReplacement': "To replace a step, choose a new administration with no responses that has never been added to a path. You can create one here and retry.",
+    'admin.ap.action.replace': "Replace",
+    'admin.ap.action.confirmReplace': "Archive and start new",
+    'admin.ap.replaceHint': "Choose the new plan to replace “{title}”. Saving will archive the previous administration. Its data and path steps will stay linked to it; the new one will have a distinct code and no responses. Add it to the paths that should use it.",
+    'admin.ap.confirmReplace': "Archive “{title}” and start an empty administration? Collected data will remain available in the previous one. Existing paths will keep their historical reference.",
+    'admin.ap.replaced': "Previous administration archived. New administration created: {code}, with no responses.",
+    'admin.ap.error.usedPlan': "This plan already has results. Use Replace to change instrument, language, class or institute while preserving data.",
+    'admin.ap.error.alreadyArchived': "This administration is already archived. Refresh the list before continuing.",
+    'admin.ap.action.archive': "Archive",
+    'admin.ap.action.restore': "Restore",
+    'admin.ap.confirmArchive': "Archive “{title}”? Collected data will remain available. Collection will stop; you can restore it as planned.",
+    'admin.ap.confirmRestore': "Restore “{title}” as planned? Collected data will be preserved.",
+    'admin.ap.error.archive': "Unable to change the administration status.",
     // Compact introduction
     'app.intro.compact.privacy.back': "Back to the introduction",
     'app.intro.compact.privacy.access.body': "Access depends on groups and permissions. Group managers can access the Notebook, results and related conversations according to their authorisations. Sharing a personal goal summary and sharing an activity response are separate, explicit and revocable choices. Unshared assignment drafts remain personal. Working independently does not imply a general guarantee of privacy.",
@@ -2702,6 +2730,20 @@ const en: Dict = {
 };
 
 const es: Dict = {
+    'admin.ap.pathReplaceHint': "Elige o crea una administración nueva sin respuestas. Al guardar se archivará la anterior, también en otros itinerarios que la usen. Los resultados y finalizaciones existentes se conservarán en el historial; el nuevo paso empezará vacío.",
+    'admin.ap.error.cleanReplacement': "Para sustituir un paso, elige una administración nueva, sin respuestas y nunca añadida a un itinerario. Puedes crearla aquí y reintentarlo.",
+    'admin.ap.action.replace': "Sustituir",
+    'admin.ap.action.confirmReplace': "Archivar e iniciar la nueva",
+    'admin.ap.replaceHint': "Elige el nuevo plan para sustituir «{title}». Al guardar se archivará la administración anterior. Sus datos y pasos seguirán vinculados a ella; la nueva tendrá un código distinto y ninguna respuesta. Añádela a los itinerarios que deban usarla.",
+    'admin.ap.confirmReplace': "¿Archivar «{title}» e iniciar una administración vacía? Los datos recogidos seguirán disponibles en la anterior. Los itinerarios existentes conservarán su referencia histórica.",
+    'admin.ap.replaced': "Administración anterior archivada. Nueva administración creada: {code}, sin respuestas.",
+    'admin.ap.error.usedPlan': "Este plan ya tiene resultados. Usa Sustituir para cambiar instrumento, idioma, clase o institución conservando los datos.",
+    'admin.ap.error.alreadyArchived': "Esta administración ya está archivada. Actualiza la lista antes de continuar.",
+    'admin.ap.action.archive': "Archivar",
+    'admin.ap.action.restore': "Restaurar",
+    'admin.ap.confirmArchive': "¿Archivar «{title}»? Los datos recogidos seguirán disponibles. Se suspenderá la recogida; podrás restaurarla como planificada.",
+    'admin.ap.confirmRestore': "¿Restaurar «{title}» como planificada? Se conservarán los datos recogidos.",
+    'admin.ap.error.archive': "No se pudo cambiar el estado de la administración.",
     // Compact introduction
     'app.intro.compact.privacy.back': "Volver a la presentación",
     'app.intro.compact.privacy.access.body': "El acceso depende del grupo y de los permisos. Los responsables del grupo pueden consultar el Cuaderno, los resultados y las conversaciones relacionadas según sus autorizaciones. Compartir el resumen de un objetivo personal y una entrega son decisiones separadas, explícitas y revocables. Los borradores no compartidos de las actividades asignadas siguen siendo personales. Trabajar de forma autónoma no implica una garantía general de privacidad.",
@@ -4031,6 +4073,20 @@ const es: Dict = {
 };
 
 const fr: Dict = {
+    'admin.ap.pathReplaceHint': "Choisissez ou créez une nouvelle passation sans réponses. L’enregistrement archivera la précédente, y compris dans les autres parcours qui l’utilisent. Les résultats et validations existants resteront dans l’historique ; la nouvelle étape démarrera vide.",
+    'admin.ap.error.cleanReplacement': "Pour remplacer une étape, choisissez une nouvelle passation sans réponses et jamais ajoutée à un parcours. Vous pouvez la créer ici puis réessayer.",
+    'admin.ap.action.replace': "Remplacer",
+    'admin.ap.action.confirmReplace': "Archiver et démarrer la nouvelle",
+    'admin.ap.replaceHint': "Choisissez le nouveau plan pour remplacer « {title} ». L’enregistrement archivera la passation précédente. Ses données et étapes resteront liées à celle-ci ; la nouvelle aura un code distinct et aucune réponse. Ajoutez-la aux parcours qui doivent l’utiliser.",
+    'admin.ap.confirmReplace': "Archiver « {title} » et démarrer une passation vide ? Les données recueillies resteront consultables dans la précédente. Les parcours existants conserveront leur référence historique.",
+    'admin.ap.replaced': "Passation précédente archivée. Nouvelle passation créée : {code}, sans réponses.",
+    'admin.ap.error.usedPlan': "Ce plan possède déjà des résultats. Utilisez Remplacer pour changer l’instrument, la langue, la classe ou l’établissement en conservant les données.",
+    'admin.ap.error.alreadyArchived': "Cette passation est déjà archivée. Actualisez la liste avant de continuer.",
+    'admin.ap.action.archive': "Archiver",
+    'admin.ap.action.restore': "Restaurer",
+    'admin.ap.confirmArchive': "Archiver « {title} » ? Les données recueillies resteront consultables. La collecte sera suspendue ; vous pourrez la restaurer comme planifiée.",
+    'admin.ap.confirmRestore': "Restaurer « {title} » comme planifiée ? Les données recueillies seront conservées.",
+    'admin.ap.error.archive': "Impossible de modifier le statut de la passation.",
     // Compact introduction
     'app.intro.compact.privacy.back': "Retour à la présentation",
     'app.intro.compact.privacy.access.body': "L’accès dépend du groupe et des autorisations. Les responsables du groupe peuvent consulter le Carnet, les résultats et les conversations associées selon leurs permissions. Le partage du bilan d’un objectif personnel et celui d’un travail sont des choix distincts, explicites et révocables. Les brouillons non partagés des activités attribuées restent personnels. Travailler en autonomie n’implique pas une garantie générale de confidentialité.",
@@ -5360,6 +5416,20 @@ const fr: Dict = {
 };
 
 const de: Dict = {
+    'admin.ap.pathReplaceHint': "Wählen oder erstellen Sie eine neue Erhebung ohne Antworten. Beim Speichern wird die bisherige auch in anderen Pfaden archiviert. Bisherige Ergebnisse und Abschlüsse bleiben im Verlauf; der neue Schritt startet leer.",
+    'admin.ap.error.cleanReplacement': "Wählen Sie zum Ersetzen eines Schritts eine neue Erhebung ohne Antworten, die noch keinem Pfad hinzugefügt wurde. Sie können sie hier erstellen und es erneut versuchen.",
+    'admin.ap.action.replace': "Ersetzen",
+    'admin.ap.action.confirmReplace': "Archivieren und neu starten",
+    'admin.ap.replaceHint': "Wählen Sie den neuen Plan als Ersatz für „{title}“. Beim Speichern wird die bisherige Erhebung archiviert. Ihre Daten und Pfadschritte bleiben damit verknüpft; die neue erhält einen eigenen Code ohne Antworten. Fügen Sie sie den gewünschten Pfaden hinzu.",
+    'admin.ap.confirmReplace': "„{title}“ archivieren und eine leere Erhebung starten? Erfasste Daten bleiben in der bisherigen Erhebung einsehbar. Bestehende Pfade behalten ihren historischen Verweis.",
+    'admin.ap.replaced': "Bisherige Erhebung archiviert. Neue Erhebung erstellt: {code}, ohne Antworten.",
+    'admin.ap.error.usedPlan': "Dieser Plan hat bereits Ergebnisse. Nutzen Sie Ersetzen, um Instrument, Sprache, Klasse oder Einrichtung unter Erhalt der Daten zu ändern.",
+    'admin.ap.error.alreadyArchived': "Diese Erhebung ist bereits archiviert. Aktualisieren Sie zuerst die Liste.",
+    'admin.ap.action.archive': "Archivieren",
+    'admin.ap.action.restore': "Wiederherstellen",
+    'admin.ap.confirmArchive': "„{title}“ archivieren? Erfasste Daten bleiben einsehbar. Die Erhebung wird angehalten; sie kann als geplant wiederhergestellt werden.",
+    'admin.ap.confirmRestore': "„{title}“ als geplant wiederherstellen? Erfasste Daten bleiben erhalten.",
+    'admin.ap.error.archive': "Der Status der Erhebung konnte nicht geändert werden.",
     // Compact introduction
     'app.intro.compact.privacy.back': "Zurück zur Einführung",
     'app.intro.compact.privacy.access.body': "Der Zugriff hängt von Gruppe und Berechtigungen ab. Gruppenverantwortliche können entsprechend ihren Rechten Notizbuch, Ergebnisse und zugehörige Gespräche einsehen. Das Teilen einer persönlichen Zielzusammenfassung und einer Abgabe sind getrennte, ausdrückliche und widerrufbare Entscheidungen. Nicht geteilte Entwürfe zu Aufgaben bleiben persönlich. Selbstständiges Arbeiten bedeutet keine allgemeine Vertraulichkeitsgarantie.",
@@ -6689,6 +6759,20 @@ const de: Dict = {
 };
 
 const sv: Dict = {
+    'admin.ap.pathReplaceHint': "Välj eller skapa ett nytt genomförande utan svar. När du sparar arkiveras det tidigare även i andra studieplaner som använder det. Befintliga resultat och slutföranden bevaras i historiken; det nya steget börjar tomt.",
+    'admin.ap.error.cleanReplacement': "För att ersätta ett steg väljer du ett nytt genomförande utan svar som aldrig lagts till i en studieplan. Du kan skapa ett här och försöka igen.",
+    'admin.ap.action.replace': "Ersätt",
+    'admin.ap.action.confirmReplace': "Arkivera och starta nytt",
+    'admin.ap.replaceHint': "Välj den nya planen som ska ersätta ”{title}”. När du sparar arkiveras det tidigare genomförandet. Dess data och steg behåller sin koppling; det nya får en egen kod utan svar. Lägg till det i de studieplaner som ska använda det.",
+    'admin.ap.confirmReplace': "Arkivera ”{title}” och starta ett tomt genomförande? Insamlade data förblir tillgängliga i det tidigare. Befintliga studieplaner behåller sin historiska koppling.",
+    'admin.ap.replaced': "Tidigare genomförande arkiverat. Nytt genomförande skapat: {code}, utan svar.",
+    'admin.ap.error.usedPlan': "Den här planen har redan resultat. Använd Ersätt för att ändra instrument, språk, klass eller lärosäte och bevara data.",
+    'admin.ap.error.alreadyArchived': "Genomförandet är redan arkiverat. Uppdatera listan innan du fortsätter.",
+    'admin.ap.action.archive': "Arkivera",
+    'admin.ap.action.restore': "Återställ",
+    'admin.ap.confirmArchive': "Arkivera ”{title}”? Insamlade data förblir tillgängliga. Insamlingen stoppas; du kan återställa den som planerad.",
+    'admin.ap.confirmRestore': "Återställ ”{title}” som planerad? Insamlade data bevaras.",
+    'admin.ap.error.archive': "Det gick inte att ändra genomförandets status.",
     // Compact introduction
     'app.intro.compact.privacy.back': "Tillbaka till presentationen",
     'app.intro.compact.privacy.access.body': "Åtkomst beror på grupp och behörigheter. Gruppansvariga kan se Anteckningsboken, resultat och tillhörande samtal enligt sina behörigheter. Att dela en sammanfattning av ett personligt mål och att dela en redovisning är separata, uttryckliga val som kan återkallas. Odelade utkast till tilldelade aktiviteter förblir personliga. Självständigt arbete innebär inte en allmän garanti för integritet.",

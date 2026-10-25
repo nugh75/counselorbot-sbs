@@ -93,6 +93,7 @@ function typedTarget(raw: Record<string, unknown>, stepType: ClassPathStepType) 
 }
 
 export interface ClassPathStep {
+    replaces_step_id?: number;
     id?: number;
     /** Editor only: links an unsaved follow-up meeting to its unsaved chat (#177). */
     client_key?: string;

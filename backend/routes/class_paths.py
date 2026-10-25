@@ -385,6 +385,46 @@ async def update_class_path(
     existing_by_id = {s.id: s for s in existing_steps}
     submitted_ids = {s.id for s in payload.steps if s.id is not None}
 
+    # A deliberate questionnaire replacement keeps the source step/results as
+    # history, but closes its collection. Validate every replacement before writes.
+    replacements = []
+    seen_sources = set()
+    for value in payload.steps:
+        source_id = getattr(value, "replaces_step_id", None)
+        if source_id is None:
+            continue
+        source = existing_by_id.get(source_id)
+        if (value.id is not None or source is None or source_id in submitted_ids or source_id in seen_sources
+                or source.step_type != "questionnaire_administration"
+                or source.administration_plan_id == value.administration_plan_id):
+            raise HTTPException(422, "administration_replacement_invalid")
+        seen_sources.add(source_id)
+        replacements.append((source, value.administration_plan_id))
+    locked_plans = {}
+    if replacements:
+        from .administration_plans import _responses_count
+        plan_ids = {source.administration_plan_id for source, _ in replacements} | {target for _, target in replacements}
+        locked_plans = {row.id: row for row in db.query(models.AdministrationPlan).filter(
+            models.AdministrationPlan.id.in_(plan_ids)).order_by(models.AdministrationPlan.id)
+            .populate_existing().with_for_update().all()}
+        for source, target_id in replacements:
+            previous = locked_plans.get(source.administration_plan_id)
+            target = locked_plans.get(target_id)
+            if not previous or previous.group_id != path.group_id or previous.status == "archived":
+                raise HTTPException(409, "administration_revision_conflict")
+            if (not target or target.group_id != path.group_id or target.status not in {"planned", "active"}
+                    or _responses_count(db, target_id)
+                    or db.query(models.ClassPathStep.id).filter_by(administration_plan_id=target_id).first()):
+                raise HTTPException(409, "administration_replacement_not_clean")
+        if len({target for _, target in replacements}) != len(replacements):
+            raise HTTPException(422, "administration_replacement_invalid")
+        if {source.administration_plan_id for source, _ in replacements} & {target for _, target in replacements}:
+            raise HTTPException(422, "administration_replacement_invalid")
+    for source, _ in replacements:
+        previous = locked_plans[source.administration_plan_id]
+        previous.status = "archived"
+        previous.revision += 1
+
     # A not-yet-created questionnaire may be removed independently of its
     # pending analysis: keep the instrument and let the student choose a result.
     for value in payload.steps:

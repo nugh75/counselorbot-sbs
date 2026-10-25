@@ -56,6 +56,8 @@ def _error(status: int, code: str, **extra):
 
 def require_institution_backed(db: Session, plan: models.AdministrationPlan) -> models.Institution:
     """Plan state checks shared by verification and writers (string detail for the verifier)."""
+    if plan.status == "archived":
+        raise HTTPException(status_code=409, detail="administration_inactive")
     if plan.institution_link_state == "needs_reconciliation":
         raise HTTPException(status_code=409, detail="administration_needs_reconciliation")
     if plan.institution_id is None:
@@ -110,6 +112,8 @@ def require_result_context(db: Session, plan_id: int | None, username: str | Non
     plan = db.get(models.AdministrationPlan, plan_id)
     if plan is None:
         raise _error(404, "administration_not_found")
+    if plan.status == "archived":
+        raise _error(409, "administration_inactive")
     if plan.institution_link_state == "needs_reconciliation":
         raise _error(409, "administration_needs_reconciliation")
     if plan.institution_id is None:

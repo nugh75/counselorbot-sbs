@@ -488,6 +488,11 @@ class AdministrationPlanUpdate(BaseModel):
     institution_password: Any = None
 
 
+class AdministrationPlanReplace(BaseModel):
+    revision: int = Field(ge=1)
+    replacement: AdministrationPlanCreate
+
+
 class AdministrationPlanResponse(BaseModel):
     id: int
     code: str
@@ -2018,6 +2023,8 @@ class GuidedChatPathStepInput(PathStepFields):
 class AdministrationPathStepInput(PathStepFields):
     step_type: Literal["questionnaire_administration"]
     administration_plan_id: int = Field(gt=0)
+    # Explicit replacement archives the omitted source administration on save.
+    replaces_step_id: Optional[int] = Field(default=None, gt=0)
 
 
 class GuidedResultsChatStepInput(PathStepFields):

@@ -28,13 +28,14 @@ const path = { id: 301, group_id: 11, title: 'Metodo di studio', description: nu
     ] };
 
 async function prepare(page, saved = []) {
-    page.setDefaultTimeout(60000);
+    page.setDefaultTimeout(Number(process.env.UI_TEST_TIMEOUT || 60000));
     const errors = [];
     page.on('pageerror', error => { errors.push(error.message); console.error('Page error:', error.message); });
     await page.addInitScript(() => { localStorage.setItem('cb_lang', 'it'); localStorage.setItem('cb_theme', 'light'); });
     await page.route('**/*', async route => {
         const url = new URL(route.request().url());
         if (url.origin !== origin) return route.abort();
+        if (url.pathname === '/runtime-config.js') return route.fulfill({status: 200, contentType: 'text/javascript', body: `window.__COUNSELORBOT_CONFIG__=${JSON.stringify({appUrl: origin, authBase: origin, portalUrl: origin, managerUrl: origin})};`});
         if (!url.pathname.startsWith('/api/')) return route.continue();
         const json = data => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
         const p = url.pathname;
@@ -65,7 +66,7 @@ async function prepare(page, saved = []) {
 }
 
 async function openEditor(page) {
-    await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded', timeout: Number(process.env.UI_NAVIGATION_TIMEOUT || 120000) });
     await page.getByRole('button', { name: 'Apri' }).click().catch(async error => {
         console.error('Editor did not load:', await page.locator('body').innerText());
         throw error;
@@ -197,7 +198,7 @@ async function openEditor(page) {
     // Back to the summary: no open fields left.
     assert.equal(await page.locator('#path-title').count(), 0);
     assert.equal(await cards.getByRole('textbox').count(), 0);
-    await cards.nth(1).getByText('Compilazione in aula').waitFor();
+    await cards.nth(1).getByText('Compilazione in aula', {exact: true}).waitFor();
     assert.deepEqual(errors, []);
     await page.close();
 }
@@ -216,6 +217,35 @@ async function openEditor(page) {
     assert.ok(form.y > list.y, 'the form follows the step list');
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(errors, []);
+    await page.close();
+}
+
+{
+    const page = await browser.newPage({viewport: {width: 1280, height: 950}});
+    const saved = [];
+    await prepare(page, saved);
+    await openEditor(page);
+    const card = page.locator('[data-testid="path-step-card"]').nth(1);
+    await card.getByRole('button', {name: 'Sostituisci #2'}).click();
+    const add = page.locator('[data-testid="add-step"]');
+    await add.getByRole('radio', {name: 'Compila un questionario'}).check();
+    await add.getByRole('combobox').first().selectOption('6');
+    page.once('dialog', dialog => dialog.dismiss());
+    await add.getByRole('button', {name: 'Aggiungi passo', exact: true}).click();
+    assert.equal(saved.length, 0);
+    await card.getByText(/AB12/).waitFor();
+    await card.getByRole('button', {name: 'Sostituisci #2'}).click();
+    await add.getByRole('radio', {name: 'Compila un questionario'}).check();
+    await add.getByRole('combobox').first().selectOption('6');
+    page.once('dialog', dialog => dialog.accept());
+    await add.getByRole('button', {name: 'Aggiungi passo', exact: true}).click();
+    await card.getByText(/CD34/).waitFor();
+    await page.getByRole('button', {name: 'Salva bozza'}).click();
+    await page.locator('[data-testid="path-summary"]').waitFor();
+    assert.equal(saved.length, 1);
+    assert.equal(saved[0].steps[1].replaces_step_id, 2);
+    assert.equal(saved[0].steps[1].administration_plan_id, 6);
+    assert.equal(saved[0].steps[1].id, undefined);
     await page.close();
 }
 
