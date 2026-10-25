@@ -50,3 +50,9 @@ test('a value cannot close the script tag', () => {
 test('without the script (server render) the upstream defaults apply', () => {
     assert.deepEqual(getRuntimeConfig(), {});
 });
+
+test('only the desktop local provider is published, never a typo', () => {
+    assert.deepEqual(runtimeConfigFromEnv({ COUNSELORBOT_AUTH_PROVIDER: ' local ' }), { authProvider: 'local' });
+    assert.deepEqual(runtimeConfigFromEnv({ COUNSELORBOT_AUTH_PROVIDER: 'ai4auth' }), {});
+    assert.deepEqual(runtimeConfigFromEnv({ COUNSELORBOT_AUTH_PROVIDER: 'bogus' }), {});
+});
