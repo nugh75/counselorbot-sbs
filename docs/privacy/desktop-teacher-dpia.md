@@ -44,6 +44,12 @@ i documenti non sono pubblicati automaticamente e manca la UI P10: occorrono
 configurazione del Titolare e testi approvati **[DA VALIDARE]**. Le osservazioni dei
 vecchi moduli non abilitano finalità. Riferimento: [P9](p9-consensi.md).
 
+P12 aggiunge tre DEK separate per le credenziali persistite del backend, con
+`PRIVACY_CREDENTIAL_ENCRYPTION=on` e KEK predisposta: il default resta Fernet.
+Non sostituisce il portachiavi OS delle chiavi provider del pannello desktop.
+Prima di attivarlo occorrono custodia e recupero verificati **[DA VALIDARE]**;
+conservare le vecchie chiavi finché servono righe o backup legacy. Vedere [P12](p12-chiavi-fernet.md).
+
 Telegram, OpenCode, Prompt Lab, helper ChatGPT, Piper e Console sync sono esclusi
 da `teacher-pc`. Non includerli come servizi attivi nella descrizione L2.
 Un modello locale non esclude altre uscite (Cloudflare, Edge TTS, provider scelti).

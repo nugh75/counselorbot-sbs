@@ -2374,10 +2374,12 @@ class PrivacyKey(Base):
 
     `content`/`mapping`/`credentials`/`research` are the per-purpose DEKs (02 §4.2); `pid` and `index`
     are the HMAC roots of `subject_pid` and blind indexes (02 §4.4), never rotated.
+    P12 separates credentials into `cred_api`, `cred_chatgpt`, `cred_institute`.
     """
     __tablename__ = "privacy_keys"
     __table_args__ = (
-        CheckConstraint("purpose IN ('content', 'mapping', 'credentials', 'research', 'pid', 'index')",
+        CheckConstraint("purpose IN ('content', 'mapping', 'credentials', 'research', 'pid', 'index', "
+                        "'cred_api', 'cred_chatgpt', 'cred_institute')",
                         name="ck_privacy_key_purpose"),
     )
     key_id = Column(String(64), primary_key=True)

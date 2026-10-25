@@ -26,7 +26,8 @@ from .errors import IntegrityError, KeyUnavailable
 from .types import FieldRef, SealedValue
 
 KEK_VARIABLE = "PRIVACY_KEK"
-DATA_PURPOSES = ("content", "mapping", "credentials", "research")
+CREDENTIAL_PURPOSES = ("cred_api", "cred_chatgpt", "cred_institute")
+DATA_PURPOSES = ("content", "mapping", "credentials", "research") + CREDENTIAL_PURPOSES
 # HMAC roots: rotating them would change every subject_pid and blind index, so they have a fixed id.
 ROOT_PURPOSES = ("pid", "index")
 # Recovery kit KDF (RFC 9106 second recommendation, also above the OWASP minimum).
@@ -109,12 +110,14 @@ class KeyRing:
                 .filter(models.PrivacyKey.purpose == purpose, models.PrivacyKey.retired_at.is_(None))
                 .order_by(models.PrivacyKey.created_at.desc(), models.PrivacyKey.key_id.desc()).first())
 
-    def active(self, purpose: str) -> tuple[str, bytes]:
-        """Current key of a purpose, created on first use."""
+    def active(self, purpose: str, *, create: bool = True) -> tuple[str, bytes]:
+        """Current key of a purpose; ``create=False`` refuses missing keys after bootstrap."""
         if purpose not in DATA_PURPOSES + ROOT_PURPOSES:
             raise KeyUnavailable() from None
         row = self._active_row(purpose)
         if row is None:
+            if not create:
+                raise KeyUnavailable() from None
             key_id = purpose if purpose in ROOT_PURPOSES else f"{purpose}-{secrets.token_hex(8)}"
             self._create(purpose, key_id)
             row = self._active_row(purpose)

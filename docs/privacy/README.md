@@ -16,6 +16,7 @@ Le misure descritte non rendono da sole il trattamento conforme al GDPR.
 | [spikes/p3-pii-engine.md](spikes/p3-pii-engine.md) | spike P3: regole, gazetteer, Ollama NER e GLiNER ONNX misurati sul corpus P2 e su un holdout; PyInstaller; licenze; raccomandazione (regole + gazetteer di contesto + GLiNER multi PII fp16) |
 | [p5-crittografia-chiavi.md](p5-crittografia-chiavi.md) | P5: AES-256-GCM con AAD per campo, KEK da ambiente/portachiavi, DEK per finalità in `privacy_keys`, `subject_pid`, indici ciechi, rotazione, kit di recupero, parametri Argon2id |
 | [p8-subject-mappe.md](p8-subject-mappe.md) | P8: `subject_pid` base32 minuscolo, indici ciechi, tabella `privacy_pseudonym_maps` cifrata con la DEK `mapping` e `SqlAlchemyMapStore` |
+| [p12-chiavi-fernet.md](p12-chiavi-fernet.md) | P12: tre DEK per credenziali, compatibilità Fernet, switch di attivazione, ricifratura idempotente, rotazioni e recupero |
 | [p11-cifratura-db.md](p11-cifratura-db.md) | P11: tipi `EncryptedText`/`EncryptedLogDetails` con la DEK `content`, interruttore `PRIVACY_DB_ENCRYPTION`, lettura trasparente dei record in chiaro, indice cieco di `logs.email`, memoria di sessione cifrata |
 | [bozze/](bozze/README.md) | P16: dieci bozze GDPR (informative studente/docente/AI, consensi condivisione e ricerca, conservazione, data breach, schema DPIA, registro art. 30, misure art. 32) con campi `[DA VALIDARE]`; nessuna dichiarazione di conformità |
 

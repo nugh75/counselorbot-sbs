@@ -57,6 +57,7 @@ def managed_key_path():
 
 def cipher():
     try:
+        storage.check_ready()
         return storage.cipher()
     except CredentialStorageError as exc:
         raise ChatGPTError(exc.code) from None
@@ -127,13 +128,18 @@ def _credentials(row):
     if not row or not row.encrypted_credentials:
         raise ChatGPTError("reconnect")
     try:
-        return json.loads(cipher().decrypt(row.encrypted_credentials.encode()))
+        return json.loads(storage.cipher().decrypt(row.encrypted_credentials.encode()))
+    except CredentialStorageError as exc:
+        raise ChatGPTError(exc.code) from None
     except (InvalidToken, ValueError, TypeError):
         raise ChatGPTError("notConfigured") from None
 
 
 def _seal(data):
-    return cipher().encrypt(json.dumps(data, separators=(",", ":")).encode()).decode()
+    try:
+        return storage.cipher().encrypt(json.dumps(data, separators=(",", ":")).encode()).decode()
+    except CredentialStorageError as exc:
+        raise ChatGPTError(exc.code) from None
 
 
 def _keys(force=False):
