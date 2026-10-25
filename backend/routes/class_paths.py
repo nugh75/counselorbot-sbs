@@ -151,7 +151,7 @@ def _serialize_step(db: Session, step: models.ClassPathStep) -> dict:
         "assignment_id": step.assignment_id,
         "topic_id": step.topic_id,
         "meeting_id": step.meeting_id,
-        "follows_step_id": step.follows_step_id,
+        "follows_step_id": None,
         "active_from": step.active_from,
         "target_summary": descriptor["target_summary"],
         "availability_reason": descriptor["availability_reason"],
@@ -185,7 +185,7 @@ def _serialize_path(db: Session, path: models.ClassPath, *, include_steps: bool 
         "group_id": path.group_id,
         "title": path.title,
         "description": path.description,
-        "mode": path.mode,
+        "mode": "recommended",
         "status": path.status,
         "published_at": path.published_at.isoformat() if path.published_at else None,
         "created_by": path.created_by,
@@ -270,17 +270,6 @@ def _resolve_cells(
     available_cells = [c for c in cells if c["state"] != "unavailable"]
     next_step_id = next((c["step"].id for c in available_cells if c["state"] != "done"), None)
 
-    # Strict mode: a step counts only once every earlier step is done, so
-    # every step after the first undone one renders locked (path only:
-    # tool access is unchanged).
-    if path.mode == "strict" and next_step_id is not None:
-        found_next = False
-        for c in available_cells:
-            if found_next:
-                c["state"], c["source"], c["mark"] = "locked", None, None
-            if c["step"].id == next_step_id:
-                found_next = True
-
     done = sum(1 for c in available_cells if c["state"] == "done")
     return cells, done, len(available_cells), next_step_id
 
@@ -325,7 +314,7 @@ async def create_class_path(
         group_id=group_id,
         title=title,
         description=(payload.description or "").strip() or None,
-        mode=mode,
+        mode="recommended",
         status="draft",
         created_by=_username(current_user) or "",
         revision=1,
@@ -396,20 +385,48 @@ async def update_class_path(
     existing_by_id = {s.id: s for s in existing_steps}
     submitted_ids = {s.id for s in payload.steps if s.id is not None}
 
+    # A not-yet-created questionnaire may be removed independently of its
+    # pending analysis: keep the instrument and let the student choose a result.
+    for value in payload.steps:
+        if value.step_type != "pending":
+            continue
+        step = existing_by_id.get(value.id)
+        config = step.pending_config or {} if step else {}
+        source_id = config.get("results_step_id")
+        if config.get("kind") == "guided_results_chat" and source_id and source_id not in submitted_ids:
+            source = db.get(models.ClassPathStep, source_id)
+            if source.step_type == "pending":
+                code = (source.pending_config or {})["instrument_code"]
+            else:
+                code = db.get(models.AdministrationPlan, source.administration_plan_id).instrument_code
+            step.pending_config = {"kind": "guided_results_chat", "tool_key": code}
+
     # Soft-remove omitted steps
     for s in existing_steps:
         if s.id not in submitted_ids:
             s.removed_at = func.now()
 
-    # Update or insert steps in the provided order
+    # Allocate questionnaire steps first so a legacy result reference may point
+    # either way in the display order, including within one save.
+    new_sources = {}
+    for index, value in enumerate(payload.steps):
+        if value.step_type == "questionnaire_administration" and value.id is None:
+            source = models.ClassPathStep(path_id=path.id, position=index + 1,
+                step_type=value.step_type, administration_plan_id=value.administration_plan_id,
+                active_from=datetime.now(timezone.utc) if path.status == "published" else None)
+            db.add(source)
+            db.flush()
+            new_sources[index] = source
+
     placed = []
     for position, step_input in enumerate(payload.steps, start=1):
         if step_input.step_type == "guided_results_chat" and step_input.results_from is not None:
-            # Composition was validated before writes. Earlier new steps now get IDs
-            # inside this same transaction, never through an intermediate client save.
-            db.flush()
-            step_input = step_input.model_copy(update={"results_step_id": placed[step_input.results_from].id,
-                                                       "results_from": None})
+            source_input = payload.steps[step_input.results_from]
+            source_id = source_input.id or new_sources[step_input.results_from].id
+            step_input = step_input.model_copy(update={"results_step_id": source_id, "results_from": None})
+        if position - 1 in new_sources:
+            step_input = step_input.model_copy(update={"id": new_sources[position - 1].id})
+            existing_by_id[step_input.id] = new_sources[position - 1]
         step_title = (step_input.title or "").strip() or None
         step_instructions = (step_input.instructions or "").strip() or None
         if step_input.id is not None and step_input.id in existing_by_id:
@@ -461,17 +478,13 @@ async def update_class_path(
             db.add(new_step)
             placed.append(new_step)
 
-    # #177: a follow-up meeting points at the chat placed at its `follows` position;
-    # removing either step leaves the other as an ordinary step.
-    db.flush()
-    for step_input, step in zip(payload.steps, placed):
-        if step.step_type == "meeting":
-            follows = getattr(step_input, "follows", None)
-            step.follows_step_id = placed[follows].id if follows is not None else None
+    # Retire historical follow-up links when saving. Display order is independent.
+    for step in placed:
+        step.follows_step_id = None
 
     path.title = title
     path.description = (payload.description or "").strip() or None
-    path.mode = mode
+    path.mode = "recommended"
     path.revision += 1
     db.commit()
     db.refresh(path)
@@ -668,7 +681,7 @@ async def get_class_path_progress(
         "path_id": path.id,
         "group_id": path.group_id,
         "title": path.title,
-        "mode": path.mode,
+        "mode": "recommended",
         "status": path.status,
         "published_at": path.published_at.isoformat() if path.published_at else None,
         "steps": [
@@ -805,7 +818,7 @@ async def list_student_class_paths(
             "group_name": group_map.get(path.group_id, ""),
             "title": path.title,
             "description": path.description,
-            "mode": path.mode,
+            "mode": "recommended",
             "steps": [
                 {
                     **_serialize_step(db, cell["step"]),
@@ -955,7 +968,7 @@ async def unmark_step_done(
 
 
 def require_step_launch(db, identity, path_id, step_id, *, for_update=False):
-    """Authorization/order seam shared by launch and administration entry writers."""
+    """Authorization seam shared by independent step launches and entry writers."""
     username = _username(identity)
     query = db.query(models.ClassPath).filter_by(id=path_id, status="published")
     if for_update:
@@ -966,7 +979,7 @@ def require_step_launch(db, identity, path_id, step_id, *, for_update=False):
     group = db.get(models.StudentGroup, path.group_id)
     if not group or not group.is_active or not db.query(models.GroupMembership.id).filter_by(group_id=group.id, username=username).first():
         raise HTTPException(403, "class_path_access_denied")
-    steps, available, auto, marks = _path_context(db, path, [username])
+    steps, available, _auto, _marks = _path_context(db, path, [username])
     step = next((row for row in steps if row.id == step_id), None)
     if not step:
         raise HTTPException(404, "class_path_step_not_found")
@@ -977,9 +990,6 @@ def require_step_launch(db, identity, path_id, step_id, *, for_update=False):
         # The forum descriptor already applied this class's own forum setting.
         from ..class_access import require_tool
         require_tool(db, identity, descriptor["instrument_code"])
-    cells, *_ = _resolve_cells(db, path, steps, username, available=available, auto=auto, marks=marks)
-    if next(cell for cell in cells if cell["step"].id == step_id)["state"] == "locked":
-        raise HTTPException(409, "class_path_step_locked")
     return path, step, descriptor
 
 

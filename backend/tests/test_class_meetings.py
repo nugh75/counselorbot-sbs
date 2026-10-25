@@ -429,48 +429,36 @@ def test_individual_upgrade_keeps_group_meetings_on_second_run(templates_schema)
                 connection.execute(text(statement))
 
 
-def test_guided_chat_step_with_a_follow_up_meeting(api):
+def test_guided_chat_and_meeting_steps_are_independent(api):
     client, db, identity, group, _other = api
     meeting = plan(client, group, starts_at=when(hours=-1)).json()
     path = client.post(f"/teacher/groups/{group.id}/paths", json={"title": "Racconto"}).json()
-    body = lambda steps, revision: {"revision": revision, "title": "Racconto", "mode": "recommended", "steps": steps}
-    # A questionnaire or a personal tool is not a guided chat.
-    for key in ("QSA", "tavolo"):
-        refused = client.put(f"/teacher/paths/{path['id']}", json=body([{"step_type": "guided_chat", "tool_key": key}], path["revision"]))
-        assert refused.status_code == 422, key
-    # The follow-up must come after a guided chat of the same save.
-    assert client.put(f"/teacher/paths/{path['id']}", json=body([
-        {"step_type": "meeting", "meeting_id": meeting["id"], "follows": 0}], path["revision"])).status_code == 422
-    saved = client.put(f"/teacher/paths/{path['id']}", json=body([
+    endpoint = f"/teacher/paths/{path['id']}"
+    def body(steps, revision):
+        return {"revision": revision, "title": "Racconto", "steps": steps}
+    # The API no longer accepts concatenation, including from older clients.
+    refused = client.put(endpoint, json=body([
         {"step_type": "guided_chat", "tool_key": "SAVICKAS"},
-        {"step_type": "meeting", "meeting_id": meeting["id"], "follows": 0}], path["revision"]))
+        {"step_type": "meeting", "meeting_id": meeting["id"], "follows": 0}], 1))
+    assert refused.status_code == 422
+    saved = client.put(endpoint, json=body([
+        {"step_type": "guided_chat", "tool_key": "SAVICKAS"},
+        {"step_type": "meeting", "meeting_id": meeting["id"]}], 1))
     assert saved.status_code == 200, saved.text
     chat, follow = saved.json()["steps"]
-    assert chat["step_type"] == "guided_chat" and chat["auto_detect"] is True
-    assert follow["follows_step_id"] == chat["id"]
-    # Saving as a template refuses meetings for now.
-    refused = client.post(f"/teacher/paths/{path['id']}/save-as-template")
-    assert refused.status_code == 409 and refused.json()["detail"]["code"] == "template_meeting_unavailable"
-    assert client.post(f"/teacher/paths/{path['id']}/publish").status_code == 200
-    # The student sees chat then follow-up; the chat completes on its guided chat marker.
-    as_user(identity, who("alice"))
-    steps = client.get("/user/paths").json()[0]["steps"]
-    assert [s["step_type"] for s in steps] == ["guided_chat", "meeting"] and steps[1]["follows_step_id"] == steps[0]["id"]
-    assert steps[0]["start_href"] == "/?start=SAVICKAS"
-    db.add(models.Log(session_id="synthetic-177", action="guided_chat_completed", username="alice",
-                      questionnaire_type="SAVICKAS", timestamp=datetime.now(timezone.utc) + timedelta(seconds=1)))
+    # Historical follow-up links do not leak into the API or constrain saving.
+    db.get(models.ClassPathStep, follow["id"]).follows_step_id = chat["id"]
     db.commit()
-    assert client.get("/user/paths").json()[0]["steps"][0]["state"] == "done"
-    # The teacher sees who completed the chat in progress, next to the follow-up.
-    as_user(identity, TEACHER)
-    progress = client.get(f"/teacher/paths/{path['id']}/progress").json()
-    assert [s["done_count"] for s in progress["steps"]] == [1, 0]
-    assert progress["steps"][1]["follows_step_id"] == progress["steps"][0]["id"]
-    # Removing the chat keeps the meeting as an ordinary step.
-    current = client.get(f"/teacher/paths/{path['id']}").json()
-    kept = client.put(f"/teacher/paths/{path['id']}", json=body([
-        {"id": current["steps"][1]["id"], "step_type": "meeting", "meeting_id": meeting["id"]}], current["revision"]))
-    assert kept.status_code == 200 and kept.json()["steps"][0]["follows_step_id"] is None
+    assert client.get(endpoint).json()["steps"][1]["follows_step_id"] is None
+    reordered = client.put(endpoint, json=body([
+        {"id": follow["id"], "step_type": "meeting", "meeting_id": meeting["id"]},
+        {"id": chat["id"], "step_type": "guided_chat", "tool_key": "SAVICKAS"}], 2))
+    assert reordered.status_code == 200, reordered.text
+    assert [step["id"] for step in reordered.json()["steps"]] == [follow["id"], chat["id"]]
+    assert db.get(models.ClassPathStep, follow["id"]).follows_step_id is None
+    kept = client.put(endpoint, json=body([
+        {"id": follow["id"], "step_type": "meeting", "meeting_id": meeting["id"]}], 3))
+    assert kept.status_code == 200 and len(kept.json()["steps"]) == 1
 
 
 def test_guided_chat_upgrade_accepts_chats_and_follow_ups_on_second_run(templates_schema):

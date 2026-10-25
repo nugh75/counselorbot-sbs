@@ -13,7 +13,7 @@ import { resolveStepPresentation } from '@/lib/class-path-presentation';
 import { StepPresentationFields } from './StepPresentationFields';
 import { plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
 import { resultsChatText } from '@/lib/i18n-results-chats';
-import { deepDiveSources, pathStepKey, resultsSourcePayload } from '@/lib/results-deep-dive';
+import { pathStepKey, resultsSourcePayload } from '@/lib/results-deep-dive';
 import { assignmentSaveError, assignmentStepInput, parsePathAssignments, selectablePathAssignments } from '@/lib/path-assignments';
 import { pathAssignmentText } from '@/lib/i18n-path-assignments';
 import type { AssignmentStepSummary } from '@/lib/class-paths';
@@ -41,7 +41,7 @@ import { PathTemplateUpdate } from './PathTemplateUpdate';
 import { StepKindPicker } from './StepKindPicker';
 import { ClassMeetingsManager } from './ClassMeetingsManager';
 import { classMeetingText } from '@/lib/i18n-class-meetings';
-import { meetingWhen, type ClassMeeting } from '@/lib/class-meetings';
+import { meetingWhen } from '@/lib/class-meetings';
 import { stepKindText, type StepKindTextKey } from '@/lib/i18n-step-kinds';
 import { ADMINISTRATION_QUESTIONNAIRES, guidedChatKeys, isLegacyQuestionnaireTool, isPersonalTool, type StepKind } from '@/lib/path-step-kinds';
 
@@ -68,7 +68,7 @@ interface PathEditorProps {
 }
 
 function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated, onDeleted }: PathEditorProps) {
-    const { lang } = useI18n();
+    const { lang, t } = useI18n();
     const l = (key: PathTextKey) => classPathText(lang, key);
     const pub = (key: Parameters<typeof pathPublicationText>[1]) => pathPublicationText(lang, key);
     const discussions = useTeacherResource('/api/user/forum/links', parseForumDiscussionLinks);
@@ -76,7 +76,6 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     const [currentPath, setCurrentPath] = useState<ClassPath>(path);
     const [title, setTitle] = useState(path.title);
     const [description, setDescription] = useState(path.description || '');
-    const [mode, setMode] = useState<'recommended' | 'strict'>(path.mode);
     const [steps, setStepsState] = useState<ClassPathStep[]>(path.steps);
     const setSteps = (action: ClassPathStep[] | ((current: ClassPathStep[]) => ClassPathStep[])) => {
         setStepsState(current => (typeof action === 'function' ? action(current) : action).map(step =>
@@ -130,7 +129,6 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         setSelectedAdministration('');setNotice(null);
     };
     // Link a saved, new or pending questionnaire; resolve new IDs atomically on save.
-    const [selectedResultsStep,setSelectedResultsStep] = useState('');
     const [selectedAnalysisKey, setSelectedAnalysisKey] = useState('');
     // TF6: a whole-class goal assignment of this class, existing or created here.
     const p = (key: Parameters<typeof pathAssignmentText>[1]) => pathAssignmentText(lang, key);
@@ -242,32 +240,19 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         setKind(null);
         setReplacing(null);
     };
-    // #177: a guided chat (on a questionnaire's results, or standalone) and its optional follow-up meeting.
-    const [followUp, setFollowUp] = useState<'none' | 'group' | 'individual'>('none');
-    const chatReady = Boolean(selectedResultsStep || selectedAnalysisKey || selectedChatKey);
-    const addChat = (meeting?: ClassMeeting) => {
-        const source = selectedResultsStep ? steps.find(step => pathStepKey(step) === selectedResultsStep) : undefined;
-        if (selectedResultsStep && !source) return;
-        const key = crypto.randomUUID();
-        const chat: ClassPathStep = source
-            ? {position: 0, step_type: 'guided_results_chat', results_step_id: source.id,
-                results_key: source.id === undefined ? pathStepKey(source) : undefined, tool_key: '', auto_detect: true,
-                can_self_mark: false, target_summary: source.target_summary, client_key: key}
-            : selectedAnalysisKey ? {position: 0, step_type: 'guided_results_chat', tool_key: selectedAnalysisKey,
-                auto_detect: true, can_self_mark: false, client_key: key}
-            : {position: 0, step_type: 'guided_chat', tool_key: selectedChatKey, auto_detect: true, can_self_mark: false,
-                title: null, instructions: null, due_date: null, scheduled_date: null, client_key: key};
-        const added: ClassPathStep[] = [chat, ...(meeting ? [{position: 0, step_type: 'meeting' as const, meeting_id: meeting.id,
-            meeting_summary: meeting, follows_key: key, tool_key: '', auto_detect: true, can_self_mark: false,
-            title: null, instructions: null, due_date: null, scheduled_date: null}] : [])];
-        placeSteps(added);
-        setSelectedResultsStep(''); setSelectedAnalysisKey(''); setSelectedChatKey(''); setFollowUp('none'); setNotice(null);
+    const chatReady = Boolean(selectedAnalysisKey || selectedChatKey);
+    const addChat = () => {
+        const chat: ClassPathStep = selectedAnalysisKey
+            ? {position: 0, step_type: 'guided_results_chat', tool_key: selectedAnalysisKey,
+                auto_detect: true, can_self_mark: false}
+            : {position: 0, step_type: 'guided_chat', tool_key: selectedChatKey, auto_detect: true, can_self_mark: false};
+        placeSteps([chat]);
+        setSelectedAnalysisKey(''); setSelectedChatKey(''); setNotice(null);
     };
 
     const dirty =
         title !== currentPath.title ||
         description !== (currentPath.description || '') ||
-        mode !== currentPath.mode ||
         JSON.stringify(steps) !== JSON.stringify(currentPath.steps);
 
     useDraftGuard(dirty || busy, l('discard'), { blocked: busy });
@@ -296,16 +281,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         if (notice === 'saved' || notice === 'published') setNotice(null);
     };
 
-    // A questionnaire analysed by a later chat step stays while that chat is there.
-    const referenced = (source: ClassPathStep) => steps.some(step => (step.results_key && step.results_key === pathStepKey(source))
-        || (source.id != null && (step.results_step_id === source.id
-            || (step.pending_config?.kind === 'guided_results_chat' && step.pending_config.results_step_id === source.id))));
-
     const handleRemoveStep = (index: number) => {
-        if (referenced(steps[index])) {
-            setNotice('deep_dive_referenced');
-            return;
-        }
         const nextSteps = steps.filter((_, i) => i !== index);
         nextSteps.forEach((s, i) => {
             s.position = i + 1;
@@ -315,10 +291,6 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     };
 
     const startReplace = (index: number) => {
-        if (referenced(steps[index])) {
-            setNotice('deep_dive_referenced');
-            return;
-        }
         setReplacing(index);
         setKind(null);
         setAdding(true);
@@ -348,13 +320,6 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         if (notice === 'saved' || notice === 'published') setNotice(null);
     };
 
-    // A follow-up names its chat by position in the saved list: a saved chat by id, a new one by its editor key.
-    const followsIndex = (meeting: ClassPathStep) => {
-        const index = steps.findIndex(step => (meeting.follows_step_id != null && step.id === meeting.follows_step_id)
-            || (meeting.follows_key !== undefined && step.client_key === meeting.follows_key));
-        return index >= 0 ? {follows: index} : {};
-    };
-
     const handleSave = async (): Promise<ClassPath | boolean> => {
         if (pending.current || notice === 'conflict') return false;
         if (!dirty) return true;
@@ -375,7 +340,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                 revision: currentPath.revision,
                 title: title.trim(),
                 description: description.trim() || null,
-                mode,
+                mode: 'recommended',
                 steps: steps.map(s => ({
                     id: s.id,
                     step_type: s.step_type || 'tool',
@@ -386,7 +351,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                         : s.step_type === 'guided_results_chat' ? {...resultsSourcePayload(s, steps), ...(s.tool_key ? {tool_key: s.tool_key} : {})}
                             : s.step_type === 'assignment' ? {assignment_id:s.assignment_id}
                                 : s.step_type === 'forum' ? {topic_id:s.topic_id}
-                                    : s.step_type === 'meeting' ? {meeting_id:s.meeting_id, ...followsIndex(s)} : {tool_key:s.tool_key}),
+                                    : s.step_type === 'meeting' ? {meeting_id:s.meeting_id} : {tool_key:s.tool_key}),
                     title: s.title ? s.title.trim() : null,
                     instructions: s.instructions ? s.instructions.trim() : null,
                     due_date: s.due_date || null,
@@ -423,7 +388,6 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             setCurrentPath(next);
             setTitle(next.title);
             setDescription(next.description || '');
-            setMode(next.mode);
             setSteps(next.steps);
             setEditingPlan(false);
             setOpenSteps([]);
@@ -647,39 +611,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                         />
                     </div>
 
-                    <div>
-                        <span className="block text-sm font-semibold text-slate-800">{l('orderLabel')}</span>
-                        <div className="mt-2 space-y-2">
-                            <label className="flex items-start gap-2 text-sm text-slate-700">
-                                <input
-                                    type="radio"
-                                    name="path-mode"
-                                    value="recommended"
-                                    checked={mode === 'recommended'}
-                                    onChange={() => {
-                                        setMode('recommended');
-                                        if (notice === 'saved' || notice === 'published') setNotice(null);
-                                    }}
-                                    className="mt-1 h-4 w-4 accent-indigo-600"
-                                />
-                                <span>{l('orderRecommended')}</span>
-                            </label>
-                            <label className="flex items-start gap-2 text-sm text-slate-700">
-                                <input
-                                    type="radio"
-                                    name="path-mode"
-                                    value="strict"
-                                    checked={mode === 'strict'}
-                                    onChange={() => {
-                                        setMode('strict');
-                                        if (notice === 'saved' || notice === 'published') setNotice(null);
-                                    }}
-                                    className="mt-1 h-4 w-4 accent-indigo-600"
-                                />
-                                <span>{l('orderStrict')}</span>
-                            </label>
-                        </div>
-                    </div>
+                    <p className="text-sm text-slate-600">{t('piano.builder.independentSteps')}</p>
                     {currentPath.steps.length > 0 && (
                         <Button variant="secondary" onClick={() => setEditingPlan(false)}>{l('doneEditing')}</Button>
                     )}
@@ -689,7 +621,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     <div className="min-w-0 flex-1 space-y-1">
                         <h2 className="break-words text-lg font-semibold text-slate-800">{title}</h2>
                         {description && <p className="whitespace-pre-wrap text-sm text-slate-600">{description}</p>}
-                        <p className="text-xs text-slate-500">{`${l('orderLabel')}: ${mode === 'strict' ? l('orderStrict') : l('orderRecommended')}`}</p>
+                        <p className="text-xs text-slate-500">{t('piano.builder.independentSteps')}</p>
                     </div>
                     <Button variant="secondary" disabled={busy} onClick={() => setEditingPlan(true)}>{l('editPlan')}</Button>
                 </Card>
@@ -739,10 +671,6 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 toolName: key => toolLabel(key, classSettings.tools, lang),
                                 ...(step.step_type === 'pending' ? {fallbackTitle: name} : {}),
                             });
-                            // #177: a follow-up names the chat it follows, saved or just added.
-                            const followed = step.step_type === 'meeting' ? steps.find(row =>
-                                (step.follows_step_id != null && row.id === step.follows_step_id)
-                                || (step.follows_key !== undefined && row.client_key === step.follows_key)) : undefined;
                             // Students see this step as not available: say so here too.
                             const unavailable = (['tool', 'guided_chat'].includes(step.step_type ?? 'tool') && !usableKeys.has(step.tool_key))
                                 // A saved assignment step loses its summary once revoked or otherwise unavailable.
@@ -788,7 +716,6 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             )}
                                             {pending && <p className="mt-1 text-xs text-slate-600">{pathTemplateText(lang, 'pendingHelp')}</p>}
                                             {isLegacyQuestionnaireTool(step) && <p className="mt-1 text-xs text-slate-600">{k('legacyQuestionnaire')}</p>}
-                                            {followed && <p className="mt-1 text-xs text-slate-600">{`${k('followsChat')} #${followed.position}`}</p>}
                                             {step.step_type === 'questionnaire_administration' && step.administration_plan_id && (
                                                 // Classroom and research views edit the same administration row.
                                                 <Link href={`/docente/somministrazioni#plan-${step.administration_plan_id}`}
@@ -943,16 +870,9 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             </details>
                             </div>}
                             {kind === 'guided_chat' && <div className="space-y-3">
-                                <h4 className="text-sm font-semibold">{k('chatOnResults')}</h4>
-                                <label className="block w-full text-sm sm:w-auto">{a('deepDiveFrom')}<select value={selectedResultsStep} onChange={event=>{setSelectedResultsStep(event.target.value);if (event.target.value) {setSelectedChatKey('');setSelectedAnalysisKey('');}}} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
-                                    <option value="">{r('chooseSourceStep')}</option>
-                                    {deepDiveSources(steps).map(step=><option key={pathStepKey(step)} value={pathStepKey(step)}>{`#${step.position} · ${step.target_summary?.instrument_code || step.pending_config?.instrument_code || ''} · ${step.target_summary?.code || step.pending_config?.plan_title || step.administration_plan_id || ''}`}</option>)}
-                                </select></label>
-                                {deepDiveSources(steps).length === 0 && <p className="text-sm text-slate-600">{r('noQuestionnaireSteps')}</p>}
-                                <p className="text-sm text-slate-600">{r('planResultsHelp')}</p>
                                 <h4 className="text-sm font-semibold">{r('personalResults')}</h4>
                                 <label className="block text-sm">{r('analyzeQuestionnaire')}<select value={selectedAnalysisKey}
-                                    onChange={event => {setSelectedAnalysisKey(event.target.value);if (event.target.value) {setSelectedResultsStep('');setSelectedChatKey('');}}}
+                                    onChange={event => {setSelectedAnalysisKey(event.target.value);if (event.target.value) {setSelectedChatKey('');}}}
                                     className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     <option value="">{r('chooseQuestionnaire')}</option>
                                     {enabledTools.filter(tool => ADMINISTRATION_QUESTIONNAIRES.includes(tool.key)).map(tool => <option key={tool.key} value={tool.key}>{`${r('analyzeQuestionnaire')} · ${tool.key}`}</option>)}
@@ -960,27 +880,12 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 <p className="text-sm text-slate-600">{r('personalResultsHelp')}</p>
                                 <h4 className="text-sm font-semibold">{k('chatStandalone')}</h4>
                                 {chatKeys.length === 0 ? <p className="text-sm text-slate-600">{k('noChats')}</p> : (
-                                    <label className="block w-full text-sm sm:w-auto"><span className="sr-only">{k('chatStandalone')}</span><select value={selectedChatKey} onChange={event=>{setSelectedChatKey(event.target.value);if (event.target.value) {setSelectedResultsStep('');setSelectedAnalysisKey('');}}} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                    <label className="block w-full text-sm sm:w-auto"><span className="sr-only">{k('chatStandalone')}</span><select value={selectedChatKey} onChange={event=>{setSelectedChatKey(event.target.value);if (event.target.value) {setSelectedAnalysisKey('');}}} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                         <option value="">{k('chooseGuidedPath')}</option>
                                         {chatKeys.map(key => <option key={key} value={key}>{toolLabel(key, classSettings.tools, lang)}</option>)}
                                     </select></label>
                                 )}
-                                {/* #177: an optional follow-up meeting, inserted right after the chat. */}
-                                <fieldset className="space-y-1 text-sm">
-                                    <legend className="font-semibold">{k('followUp')}</legend>
-                                    <div className="flex flex-wrap gap-x-4">
-                                        {(['none', 'group', 'individual'] as const).map(value => <label key={value} className="flex min-h-[44px] items-center gap-2">
-                                            <input type="radio" name="chat-follow-up" checked={followUp === value} onChange={() => setFollowUp(value)} className="h-4 w-4 accent-indigo-600" />
-                                            {k(value === 'none' ? 'followNone' : value === 'group' ? 'followGroup' : 'followIndividual')}</label>)}
-                                    </div>
-                                </fieldset>
-                                {followUp === 'none'
-                                    ? <Button variant="secondary" disabled={busy || !chatReady} onClick={() => {addChat();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
-                                    : chatReady
-                                    ? <ClassMeetingsManager lang={lang} groupId={path.group_id} kindFilter={followUp} addLabel={k('addChatAndMeeting')}
-                                        usedIds={steps.flatMap(step => step.step_type === 'meeting' && step.meeting_id ? [step.meeting_id] : [])}
-                                        onAdd={meeting => {addChat(meeting);closeAdd();}} />
-                                    : <p className="text-sm text-slate-600">{k('chooseChatFirst')}</p>}
+                                <Button variant="secondary" disabled={busy || !chatReady} onClick={() => {addChat();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
                             </div>}
                             {kind === 'activity' && <div className="space-y-3">
                             {assignmentLoadError && <Callout variant="danger">{p('loadError')} <Button variant="secondary" onClick={()=>void loadPathAssignments()}>{p('retry')}</Button></Callout>}
@@ -1236,7 +1141,7 @@ export function ClassPathsTab({ groupId, classSettings, institutionId = null }: 
                                 <div>
                                     <h3 className="text-base font-semibold text-slate-800">{p.title}</h3>
                                     <p className="text-xs text-slate-500">
-                                        {`${p.status === 'published' ? l('publishedBadge') : l('draftBadge')} · ${p.steps_count} ${l(p.steps_count === 1 ? 'stepCountOne' : 'stepsCount')} · ${p.mode === 'strict' ? l('orderStrict') : l('orderRecommended')}`}
+                                        {`${p.status === 'published' ? l('publishedBadge') : l('draftBadge')} · ${p.steps_count} ${l(p.steps_count === 1 ? 'stepCountOne' : 'stepsCount')}`}
                                     </p>
                                 </div>
                             </div>

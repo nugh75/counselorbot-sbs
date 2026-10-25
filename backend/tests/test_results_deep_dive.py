@@ -210,16 +210,14 @@ def test_teacher_may_omit_or_link_the_deep_dive(api):
 @pytest.mark.parametrize(
     "case, status, detail",
     [
-        ("before", 422, "results_step_order"),
         ("tool", 422, "results_step_invalid"),
         ("missing", 422, "results_step_invalid"),
         ("unsaved", 422, "results_step_invalid"),
         ("other-path", 422, "results_step_invalid"),
         ("duplicate", 422, "duplicate_results_chat"),
-        ("remove-administration", 409, "results_step_referenced"),
     ],
 )
-def test_reference_must_be_a_preceding_administration_of_this_path(
+def test_reference_must_be_an_administration_of_this_path(
     api, case, status, detail
 ):
     client, db, group, identity = api
@@ -437,18 +435,47 @@ def test_teacher_override_without_result_cannot_launch(api):
     )
 
 
-def test_strict_order_locks_the_deep_dive_until_the_administration(api):
+def test_legacy_strict_analysis_needs_results_but_no_step_prerequisite(api):
     client, db, group, identity = api
     plan, path = deep_dive_path(client, group, mode="strict")
+    # Exercise a row created before strict mode was retired.
+    db.get(models.ClassPath, path["id"]).mode = "strict"
+    db.commit()
     identity.update(STUDENT)
-    assert student_row(client)["steps"][1]["state"] == "locked"
+    assert student_row(client)["steps"][1]["state"] == "not_done"
     response = start(client, path)
-    assert (response.status_code, response.json()["detail"]) == (
-        409,
-        "class_path_step_locked",
-    )
+    assert (response.status_code, response.json()["detail"]) == (409, "results_step_incomplete")
     enter_scores(client, plan, path)
     assert start(client, path).status_code == 200
+
+
+@pytest.mark.parametrize("keep_source", [True, False])
+def test_legacy_results_source_survives_reorder_and_removal(api, keep_source):
+    client, db, group, identity = api
+    plan, path = deep_dive_path(client, group, publish=False)
+    source, analysis = path["steps"]
+    reordered = save(client, path, [
+        {"id": analysis["id"], "step_type": "guided_results_chat", "results_step_id": source["id"]},
+        *([admin_input(plan, source["id"])] if keep_source else []),
+    ])
+    assert reordered.status_code == 200, reordered.text
+    assert reordered.json()["steps"][0]["id"] == analysis["id"]
+    assert reordered.json()["steps"][0]["availability_reason"] is None
+    published = client.post(f"/teacher/paths/{path['id']}/publish")
+    assert published.status_code == 200, published.text
+
+
+def test_legacy_results_from_allows_a_later_new_source(api):
+    client, db, group, identity = api
+    plan = create_plan(client, group)
+    path = client.post(f"/teacher/groups/{group.id}/paths", json={"title": "Display order"}).json()
+    saved = save(client, path, [
+        {"step_type": "guided_results_chat", "results_from": 1}, admin_input(plan),
+    ])
+    assert saved.status_code == 200, saved.text
+    analysis, source = saved.json()["steps"]
+    assert analysis["results_step_id"] == source["id"]
+    assert (analysis["position"], source["position"]) == (1, 2)
 
 
 def test_removing_the_deep_dive_keeps_the_administration_done(api):

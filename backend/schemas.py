@@ -2023,7 +2023,7 @@ class AdministrationPathStepInput(PathStepFields):
 class GuidedResultsChatStepInput(PathStepFields):
     step_type: Literal["guided_results_chat"]
     results_step_id: Optional[int] = Field(default=None, gt=0)
-    # A preceding questionnaire in this save, including a newly added step.
+    # A questionnaire data source in this save; position does not impose execution order.
     results_from: Optional[int] = Field(default=None, ge=0)
     # Without a plan questionnaire: the student explicitly chooses their result.
     tool_key: Optional[Literal["QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP"]] = None
@@ -2054,8 +2054,6 @@ class MeetingPathStepInput(PathStepFields):
     """A class or group meeting of the same class (#175)."""
     step_type: Literal["meeting"]
     meeting_id: int = Field(gt=0)
-    # #177: position (0-based) in this payload of the guided chat it follows up.
-    follows: Optional[int] = Field(default=None, ge=0)
 
 
 class PendingPathStepInput(PathStepFields):
@@ -2104,7 +2102,7 @@ class ClassPathCreate(BaseModel):
 
     title: str
     description: Optional[str] = None
-    mode: str = "recommended"  # recommended | strict
+    mode: str = "recommended"  # strict accepted for compatibility, normalized to recommended
 
 
 class ClassPathLifecycle(BaseModel):
