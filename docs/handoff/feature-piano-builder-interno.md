@@ -40,6 +40,17 @@ perché main è avanzato durante la pubblicazione della PR.
   avviato in container isolato, HTTP 200 sul builder e log di avvio corretti.
 - Runner Next 3176, PostgreSQL temporaneo 18676 e smoke frontend 3177 **fermi**.
   Nessun deploy o riavvio dei servizi di produzione.
+- **Chiusura CI (25 ottobre, dopo il merge di main 0.1.1)**: quattro casi che
+  asserivano ancora il blocco sequenziale sono stati riscritti sul contratto dei
+  passi autonomi (`test_legacy_strict_*`), con i relativi nomi nella baseline
+  SQLite; due voci SQLite ora passanti sono state rimosse. Verificati verdi su
+  PostgreSQL uno per uno. `make guidance-check`, `--base origin/main`,
+  `version-check`, unittest dello script guidance, typecheck, ESLint mirato,
+  `check-i18n.mjs` e i **697 test Node** di `src/lib` sono verdi; le due suite
+  browser del builder passano sul runner 3176. Suite SQLite completa locale:
+  stesso profilo della CI (223 falliti, 135 errori) senza nuove eccezioni; la
+  suite PostgreSQL completa resta affidata alla CI perché in locale il guard di
+  `artifact_database` pretende il database `counselorbot_test` sulla 18650.
 
 Runner riproducibile: `scripts/dev-piano-builder-tests.sh`; comandi, tunnel e
 limiti in `docs/operations/live-dev-environment.md`. Contratto del builder in
