@@ -30,12 +30,13 @@ def test_defaults_are_loopback_and_lifeline_is_explicit(monkeypatch):
 
 
 def test_main_backup_success(monkeypatch, capsys):
-    monkeypatch.setattr("backend.sqlite_backup.create_backup", lambda: Path("/tmp/fake.sqlite3"))
+    fake_path = Path("/tmp/fake.sqlite3")
+    monkeypatch.setattr("backend.sqlite_backup.create_backup", lambda: fake_path)
     with pytest.raises(SystemExit) as exit_info:
         server.main(["--backup"])
     assert exit_info.value.code == 0
     captured = capsys.readouterr()
-    assert "/tmp/fake.sqlite3" in captured.out
+    assert str(fake_path) in captured.out
 
 
 def test_main_backup_failure(monkeypatch, capsys):
