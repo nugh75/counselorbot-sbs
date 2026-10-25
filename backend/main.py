@@ -79,6 +79,7 @@ from .routes import memory as memory_routes
 from .routes import site_chat as site_chat_routes
 from .routes import learner_profile as learner_profile_routes
 from .routes import external_privacy as external_privacy_routes
+from .routes import privacy as privacy_routes
 from .routes import document_retrieval as document_retrieval_routes
 from .routes import local_llm as local_llm_routes
 from .routes import personal_api as personal_api_routes
@@ -242,6 +243,7 @@ import_module("backend.migrations.20261022_institution_password_display").migrat
 import_module("backend.migrations.20261022_meeting_attendance_mode").migrate(database.engine)
 import_module("backend.migrations.20261022_class_path_planned_day").migrate(database.engine)
 import_module("backend.migrations.20261024_log_email_blind_index").migrate(database.engine)
+import_module("backend.migrations.20261025_teacher_student_grants").migrate(database.engine)
 # SQLite: i CHECK di un file creato da una versione precedente seguono il modello (ADR-0003 §3.4).
 from .sqlite_schema import sync_sqlite_check_constraints
 sync_sqlite_check_constraints(database.engine, models.Base.metadata)
@@ -2099,6 +2101,7 @@ app.include_router(memory_routes.router)
 app.include_router(site_chat_routes.router)
 app.include_router(learner_profile_routes.router)
 app.include_router(external_privacy_routes.router)
+app.include_router(privacy_routes.router)
 app.include_router(document_retrieval_routes.router)
 app.include_router(local_llm_routes.router)
 app.include_router(personal_api_routes.router)
