@@ -1,7 +1,7 @@
 #!/bin/bash
 # Test del ciclo di vita del guscio installato (F1-02, ADR-0002 §2.4), per la CI.
 #
-# Uso: check-lifecycle.sh <eseguibile del guscio> [lanciatore...]   (es. xvfb-run -a)
+# Uso: check-lifecycle.sh [--full] <eseguibile del guscio> [lanciatore...]   (es. xvfb-run -a)
 #
 # 1. --smoke: avvio completo (backend, frontend, cloudflared quick), arresto pulito,
 #    nessun processo rimasto.
@@ -13,14 +13,23 @@
 #    il cloudflared rimasto (pulizia PID).
 # Serve node nel PATH (per leggere il report JSON). Funziona in Git Bash su Windows.
 set -uo pipefail
+full=false
+if [ "${1:-}" = "--full" ]; then full=true; shift; fi
+[ "$#" -ge 1 ] || { echo "Uso: $0 [--full] <eseguibile> [lanciatore...]" >&2; exit 2; }
+script_dir=$(cd "$(dirname "$0")" && pwd)
 exe="$1"
 shift
 launcher=("$@")
 tmp=$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/cb-lifecycle.XXXXXX")
 report="$tmp/teacher-report.json"
 export COUNSELORBOT_REPORT_FILE="$report"
-# Until the SQLite work (F1-05*) lands the backend runs without its lifespan.
-export COUNSELORBOT_BACKEND_MINIMAL=1
+# Fast shell-only probe remains available; release CI runs the full lifespan.
+if $full; then
+    unset COUNSELORBOT_BACKEND_MINIMAL
+    export PYTHON_DOTENV_DISABLED=1
+else
+    export COUNSELORBOT_BACKEND_MINIMAL=1
+fi
 
 windows=false
 case "$(uname -s)" in
@@ -107,6 +116,10 @@ if alive "$pid"; then fail "cloudflared reale ($pid) vivo dopo l'arresto normale
 report="$stopped_report"
 [ -f "$data/layout.json" ] && ok "layout.json: $(cat "$data/layout.json")" || fail "layout.json assente"
 
+if $full; then
+    python "$script_dir/check-teacher-data.py" "$data" || fail "schema/seed SQLite dopo il primo avvio"
+fi
+
 # ---- 2. headless: health and protected internal routes ----
 start_headless || { show_logs; exit 1; }
 backend_port=$(port_of backend)
@@ -119,6 +132,12 @@ code=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$backend_po
 [ "$code" = 404 ] && ok "/internal senza segreto: 404" || fail "/internal senza segreto: $code"
 code=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$frontend_port/api/internal/ping")
 [ "$code" = 404 ] && ok "/api/internal dal frontend: 404" || fail "/api/internal dal frontend: $code"
+if $full; then
+    code=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$frontend_port/api/health")
+    [ "$code" = 200 ] && ok "/api/health verso backend a porta dinamica" || fail "/api/health: $code"
+    code=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$backend_port/telegram/bot-info")
+    [ "$code" = 404 ] && ok "Telegram escluso da teacher-pc" || fail "Telegram: $code"
+fi
 echo "tunnel: $(field r.tunnel_url)"
 # The shell and each sidecar bind only loopback (also checked by wrapper tests).
 if command -v lsof >/dev/null; then
@@ -164,6 +183,9 @@ if ! $windows; then
     wait 2>/dev/null
 fi
 
+if $full; then
+    python "$script_dir/check-teacher-data.py" "$data" || fail "schema/seed SQLite dopo riavvii e recupero"
+fi
 show_logs
 echo "failures=$failures"
 [ "$failures" = 0 ]
