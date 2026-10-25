@@ -17,6 +17,10 @@ on:
       - backend/tests/test_sqlite_backup.py
       - frontend/src/proxy.ts
       - frontend/src/lib/shell-internal*
+      - frontend/src/lib/api-proxy*
+      - frontend/src/lib/backend-origin.ts
+      - frontend/src/app/api/**
+      - frontend/tests/request-origin.test.mjs
 
 permissions:
   contents: read
@@ -102,14 +106,18 @@ jobs:
           bash desktop/teacher/scripts/build-frontend.sh > "$RUNNER_TEMP/frontend.txt" 2>&1 || { tail -80 "$RUNNER_TEMP/frontend.txt"; exit 1; }
           grep -E "seconds|_mb" "$RUNNER_TEMP/frontend.txt"
 
+      - name: Standalone runtime API, stream and WebSocket routing
+        if: startsWith(matrix.runner, 'ubuntu')
+        run: bash desktop/teacher/scripts/check-api-routing.sh desktop/teacher/src-tauri/frontend
+
       - name: Fetch cloudflared
         run: bash desktop/teacher/scripts/fetch-cloudflared.sh ${{ matrix.platform }} desktop/teacher/src-tauri/cloudflared
 
       - name: Frontend boundary and origin tests
         working-directory: frontend
         run: |
-          node --test --experimental-strip-types src/lib/shell-internal.test.ts src/lib/request-origin.test.ts
-          npx eslint src/proxy.ts src/lib/shell-internal.ts src/lib/shell-internal.test.ts
+          node --test --experimental-strip-types src/lib/shell-internal.test.ts src/lib/request-origin.test.ts src/lib/api-proxy.test.ts src/lib/stream-proxy.test.ts
+          npx eslint src/proxy.ts src/lib/shell-internal.ts src/lib/shell-internal.test.ts src/lib/api-proxy.ts src/lib/api-proxy.test.ts 'src/app/api/[...path]/route.ts'
 
       - name: Shell unit tests (Rust)
         working-directory: desktop/teacher/src-tauri
