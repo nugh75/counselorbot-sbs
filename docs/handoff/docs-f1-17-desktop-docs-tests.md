@@ -15,7 +15,8 @@ Task `a8f4b202-cc7b-42de-ae42-1eef04bdbc22`.
 ## Verifiche
 - Python 3.11.9 + TEST_DB=sqlite: 173 passati, nessun nuovo fallimento.
 - Node: 14/14; Bash, YAML e link Markdown validi; diff senza whitespace errati.
-- Preparato commit test(desktop): controllore dati e lifecycle completo.
+- Commit `a4e3c821` test(desktop): controllore dati e lifecycle completo.
+- Preparato commit ci(desktop): lifecycle completo sui quattro runner e regressioni.
 - Primo lancio Python 3.9 non supportato: ripetuto con ambiente corretto.
 - Guida sei lingue/screenshot rivisti: nessun controllo web modificato.
 - guidance-refresh/check in corso; installer nativi da verificare con CI.
