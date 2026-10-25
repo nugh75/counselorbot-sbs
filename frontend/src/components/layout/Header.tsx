@@ -14,7 +14,7 @@ import { HeaderMenu } from './HeaderMenu';
 import { HeaderResume } from './HeaderResume';
 import { TooltipProvider } from '@/components/ui/Tooltip';
 import { cn } from '@/lib/utils';
-import { getAuthUrls, getIdentity, type Identity } from '@/lib/auth';
+import { getAuthUrls, getIdentity, logoutHref, type Identity } from '@/lib/auth';
 import { currentHeaderLink, headerNavigation, type HeaderLinkKey } from '@/lib/header-navigation';
 import { useUserAccess } from '@/lib/use-user-access';
 import { useI18n } from '@/lib/i18n-context';
@@ -52,7 +52,7 @@ export function Header() {
     const current = currentHeaderLink(nav.links, pathname);
     const authUrls = getAuthUrls();
     const servicesHref = nav.services === 'manager' ? authUrls.managerUrl : nav.services === 'portal' ? authUrls.portalUrl : undefined;
-    const logoutHref = nav.authenticated ? authUrls.logoutUrl : undefined;
+    const logoutUrl = nav.authenticated ? logoutHref() : undefined;
 
     // Barra desktop (P4): prima l'ingresso alle aree, poi gli strumenti di
     // supporto, con etichette visibili e mai tagliate. Se lo spazio manca si
@@ -123,7 +123,7 @@ export function Header() {
                                         account={nav.account}
                                         servicesHref={servicesHref}
                                         servicesLabel={t('header.services')}
-                                        logoutHref={logoutHref}
+                                        logoutHref={logoutUrl}
                                     />
                                     {!nav.authenticated && <SignInLink pathname={pathname} />}
                                 </div>
@@ -140,7 +140,7 @@ export function Header() {
                                         classView={nav.classView}
                                         servicesHref={servicesHref}
                                         servicesLabel={t('header.services')}
-                                        logoutHref={logoutHref}
+                                        logoutHref={logoutUrl}
                                         icons={LINK_ICONS}
                                     />
                                 </div>

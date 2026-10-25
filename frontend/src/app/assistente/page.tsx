@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm';
 import type { LucideIcon } from 'lucide-react';
 import { Send, Square, GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
-import { ai4authLoginUrl, getIdentity, getViewAsAccount, type Identity } from '@/lib/auth';
+import { getIdentity, getViewAsAccount, loginHref, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
 import { useUserAccess } from '@/lib/use-user-access';
@@ -392,7 +392,7 @@ export default function AssistentePage() {
                         <h1 className="text-2xl font-bold text-slate-900">{t('assistant.authTitle')}</h1>
                         <p className="mt-2 text-sm text-slate-600">{t('assistant.authBody')}</p>
                     </div>
-                    <a href={ai4authLoginUrl('/assistente')} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700">
+                    <a href={loginHref('/assistente')} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700">
                         <LogIn className="h-4 w-4" />
                         {t('assistant.authLogin')}
                     </a>
