@@ -1,7 +1,7 @@
 # Diagnosi e correzione del flake di disconnessione SSE
 
 Responsabile: S15 (sostituto); bug Diario `5218df41-50eb-4164-bd04-22ffafe84a8c`; issue #599.
-Correzione applicata in PR #601, solo test: runtime SSE e builder #595 invariati.
+Correzione applicata in PR #601, solo test: runtime SSE e builder #595 invariati. CI `backend-db` verde su SQLite e PostgreSQL.
 
 ## Evidenze
 
@@ -11,7 +11,8 @@ Correzione applicata in PR #601, solo test: runtime SSE e builder #595 invariati
 - `backend/sse.py` e il test sono identici a main `586d01b8`; medesimo fallimento sui precedenti head. La variabilità era già annotata in `3050d8b8`.
 - Python 3.12.9, test originale estratto via AST, senza DB/provider: 80/100 fallimenti alla riga 168 (95/100 in una prova precedente). Variante esclusivamente in memoria con un turno del loop prima dell’asserzione: 200/200 pass.
 - Pytest reale, 20 processi separati sullo stesso Python: 17 exit 0, 3 exit 1, sempre `AssertionError` alla riga 168. Il controllo negativo in memoria (callback `discard` che non rimuove il task) fa fallire anche la variante.
-- Dopo la correzione: 100/100 run singoli, poi 50/50 con le dipendenze backend complete e 10/10 esecuzioni dell’intero `test_sse_heartbeat.py` (16 passed); gate finale `FULL_FILE_EXIT=0`, `SINGLE_EXIT=0`, `DIFF_CHECK_EXIT=0`. La matrice CI `backend-db` di PR #601 è la verifica autorevole su SQLite e PostgreSQL.
+- Dopo la correzione: 100/100 run singoli, poi 50/50 con le dipendenze backend complete e 10/10 esecuzioni dell’intero `test_sse_heartbeat.py` (16 passed); gate finale `FULL_FILE_EXIT=0`, `SINGLE_EXIT=0`, `DIFF_CHECK_EXIT=0`.
+- CI PR #601, [run 40234732483](https://github.com/nugh75/counselorbot-sbs/actions/runs/40234732483): [Postgres 121293746069](https://github.com/nugh75/counselorbot-sbs/actions/runs/40234732483/job/121293746069) 53 noti/0 inattesi/0 listed-passing, 53 failed/5862 passed/15 skipped; [SQLite 121293746213](https://github.com/nugh75/counselorbot-sbs/actions/runs/40234732483/job/121293746213) 443 noti (uno rimosso)/0 inattesi/0 listed-passing, 216 failed/4997 passed/20 skipped/227 errors. Documentation, portability, startup (sqlite) e Release Drafter verdi.
 
 ## Riproduzione senza dipendenze applicative
 
