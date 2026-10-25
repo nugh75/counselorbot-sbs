@@ -32,3 +32,23 @@ test('classroom links address one plan of the research view by hash', () => {
     assert.equal(planIdFromHash('#plan-12x'), null);
     assert.equal(planIdFromHash(''), null);
 });
+
+// @ts-expect-error -- Node runs TypeScript files directly.
+import { changePlanArchive } from './administration-plans.ts';
+
+test('archive flow asks confirmation, cancels without writes, and restores as planned', async () => {
+    const calls: {url: string; body: unknown}[] = [];
+    const request = async (url: string, init: RequestInit) => {
+        calls.push({url, body: JSON.parse(String(init.body))});
+        return new Response('{}');
+    };
+    const plan = {id: 7, revision: 3, status: 'active'};
+    assert.equal(await changePlanArchive(plan, () => false, request), 'cancelled');
+    assert.equal(calls.length, 0);
+    assert.equal(await changePlanArchive(plan, () => true, request), 'saved');
+    assert.deepEqual(calls[0], {url: '/api/admin/administration-plans/7', body: {revision: 3, status: 'archived'}});
+    await changePlanArchive({...plan, status: 'archived', revision: 4}, () => true, request);
+    assert.deepEqual(calls[1].body, {revision: 4, status: 'planned'});
+    assert.equal(await changePlanArchive(plan, () => true, async () => new Response('{}', {status: 409})), 'conflict');
+    await assert.rejects(changePlanArchive(plan, () => true, async () => new Response('{}', {status: 403})));
+});

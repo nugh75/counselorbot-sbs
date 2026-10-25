@@ -23,6 +23,11 @@ export const LANG_STORAGE_KEY = 'cb_lang';
 type Dict = Record<string, string>;
 
 const it: Dict = {
+    'admin.ap.action.archive': "Archivia",
+    'admin.ap.action.restore': "Ripristina",
+    'admin.ap.confirmArchive': "Archiviare «{title}»? I dati raccolti resteranno consultabili. La raccolta sarà sospesa; potrai ripristinarla come pianificata.",
+    'admin.ap.confirmRestore': "Ripristinare «{title}» come pianificata? I dati raccolti saranno conservati.",
+    'admin.ap.error.archive': "Impossibile cambiare lo stato della somministrazione.",
     // Compact introduction
     'app.intro.compact.privacy.back': "Torna alla presentazione",
     'app.intro.compact.privacy.access.body': "Gli accessi dipendono dal gruppo e dai permessi. Chi gestisce il gruppo può consultare Taccuino, risultati e relative conversazioni secondo le autorizzazioni previste. La condivisione del riepilogo di un obiettivo personale e quella di una restituzione sono scelte separate ed esplicite, revocabili. Le bozze non condivise delle assegnazioni restano personali. Lavorare in autonomia non equivale a una garanzia generale di riservatezza.",
@@ -1360,6 +1365,11 @@ const it: Dict = {
 };
 
 const en: Dict = {
+    'admin.ap.action.archive': "Archive",
+    'admin.ap.action.restore': "Restore",
+    'admin.ap.confirmArchive': "Archive “{title}”? Collected data will remain available. Collection will stop; you can restore it as planned.",
+    'admin.ap.confirmRestore': "Restore “{title}” as planned? Collected data will be preserved.",
+    'admin.ap.error.archive': "Unable to change the administration status.",
     // Compact introduction
     'app.intro.compact.privacy.back': "Back to the introduction",
     'app.intro.compact.privacy.access.body': "Access depends on groups and permissions. Group managers can access the Notebook, results and related conversations according to their authorisations. Sharing a personal goal summary and sharing an activity response are separate, explicit and revocable choices. Unshared assignment drafts remain personal. Working independently does not imply a general guarantee of privacy.",
@@ -2678,6 +2688,11 @@ const en: Dict = {
 };
 
 const es: Dict = {
+    'admin.ap.action.archive': "Archivar",
+    'admin.ap.action.restore': "Restaurar",
+    'admin.ap.confirmArchive': "¿Archivar «{title}»? Los datos recogidos seguirán disponibles. Se suspenderá la recogida; podrás restaurarla como planificada.",
+    'admin.ap.confirmRestore': "¿Restaurar «{title}» como planificada? Se conservarán los datos recogidos.",
+    'admin.ap.error.archive': "No se pudo cambiar el estado de la administración.",
     // Compact introduction
     'app.intro.compact.privacy.back': "Volver a la presentación",
     'app.intro.compact.privacy.access.body': "El acceso depende del grupo y de los permisos. Los responsables del grupo pueden consultar el Cuaderno, los resultados y las conversaciones relacionadas según sus autorizaciones. Compartir el resumen de un objetivo personal y una entrega son decisiones separadas, explícitas y revocables. Los borradores no compartidos de las actividades asignadas siguen siendo personales. Trabajar de forma autónoma no implica una garantía general de privacidad.",
@@ -3995,6 +4010,11 @@ const es: Dict = {
 };
 
 const fr: Dict = {
+    'admin.ap.action.archive': "Archiver",
+    'admin.ap.action.restore': "Restaurer",
+    'admin.ap.confirmArchive': "Archiver « {title} » ? Les données recueillies resteront consultables. La collecte sera suspendue ; vous pourrez la restaurer comme planifiée.",
+    'admin.ap.confirmRestore': "Restaurer « {title} » comme planifiée ? Les données recueillies seront conservées.",
+    'admin.ap.error.archive': "Impossible de modifier le statut de la passation.",
     // Compact introduction
     'app.intro.compact.privacy.back': "Retour à la présentation",
     'app.intro.compact.privacy.access.body': "L’accès dépend du groupe et des autorisations. Les responsables du groupe peuvent consulter le Carnet, les résultats et les conversations associées selon leurs permissions. Le partage du bilan d’un objectif personnel et celui d’un travail sont des choix distincts, explicites et révocables. Les brouillons non partagés des activités attribuées restent personnels. Travailler en autonomie n’implique pas une garantie générale de confidentialité.",
@@ -5312,6 +5332,11 @@ const fr: Dict = {
 };
 
 const de: Dict = {
+    'admin.ap.action.archive': "Archivieren",
+    'admin.ap.action.restore': "Wiederherstellen",
+    'admin.ap.confirmArchive': "„{title}“ archivieren? Erfasste Daten bleiben einsehbar. Die Erhebung wird angehalten; sie kann als geplant wiederhergestellt werden.",
+    'admin.ap.confirmRestore': "„{title}“ als geplant wiederherstellen? Erfasste Daten bleiben erhalten.",
+    'admin.ap.error.archive': "Der Status der Erhebung konnte nicht geändert werden.",
     // Compact introduction
     'app.intro.compact.privacy.back': "Zurück zur Einführung",
     'app.intro.compact.privacy.access.body': "Der Zugriff hängt von Gruppe und Berechtigungen ab. Gruppenverantwortliche können entsprechend ihren Rechten Notizbuch, Ergebnisse und zugehörige Gespräche einsehen. Das Teilen einer persönlichen Zielzusammenfassung und einer Abgabe sind getrennte, ausdrückliche und widerrufbare Entscheidungen. Nicht geteilte Entwürfe zu Aufgaben bleiben persönlich. Selbstständiges Arbeiten bedeutet keine allgemeine Vertraulichkeitsgarantie.",
@@ -6629,6 +6654,11 @@ const de: Dict = {
 };
 
 const sv: Dict = {
+    'admin.ap.action.archive': "Arkivera",
+    'admin.ap.action.restore': "Återställ",
+    'admin.ap.confirmArchive': "Arkivera ”{title}”? Insamlade data förblir tillgängliga. Insamlingen stoppas; du kan återställa den som planerad.",
+    'admin.ap.confirmRestore': "Återställ ”{title}” som planerad? Insamlade data bevaras.",
+    'admin.ap.error.archive': "Det gick inte att ändra genomförandets status.",
     // Compact introduction
     'app.intro.compact.privacy.back': "Tillbaka till presentationen",
     'app.intro.compact.privacy.access.body': "Åtkomst beror på grupp och behörigheter. Gruppansvariga kan se Anteckningsboken, resultat och tillhörande samtal enligt sina behörigheter. Att dela en sammanfattning av ett personligt mål och att dela en redovisning är separata, uttryckliga val som kan återkallas. Odelade utkast till tilldelade aktiviteter förblir personliga. Självständigt arbete innebär inte en allmän garanti för integritet.",

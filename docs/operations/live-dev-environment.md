@@ -537,3 +537,14 @@ Da SSH: `ssh -N -L 3161:127.0.0.1:3161 <utente>@<server>`, poi
 http://localhost:3161 (le API simulate esistono solo nei test, non nel browser libero).
 Stop frontend con Ctrl-C nel terminale dedicato; stop PG con
 `docker stop counselorbot-oc3-pg`. Nessun collegamento a produzione.
+
+## Somministrazioni: archiviazione e sostituzione (s12)
+
+Verificare `lsof -nP -iTCP:3162 -sTCP:LISTEN` (Linux: `ss -ltn`), poi
+`bash scripts/dev-somministrazioni-tests.sh`. Frontend con hot reload su
+`127.0.0.1:3162`, backend inutilizzabile `127.0.0.1:9`. Le suite Node
+`frontend/tests/administration-lifecycle.test.mjs` intercettano tutte le API con
+fixture sintetiche; nessun database o provider viene usato. Test: da frontend,
+`ADMINISTRATIONS_BASE_URL=http://127.0.0.1:3162 node --test tests/administration-lifecycle.test.mjs`.
+Arresto: Ctrl-C. Tunnel: `ssh -N -L 3162:127.0.0.1:3162 <utente>@<server>`,
+URL `http://localhost:3162`. Fuori dalla suite non è un ambiente applicativo completo.

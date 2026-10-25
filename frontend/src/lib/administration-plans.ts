@@ -26,3 +26,22 @@ export function planIdFromHash(hash: string): number | null {
     const match = /^#plan-(\d+)$/.exec(hash);
     return match ? Number(match[1]) : null;
 }
+
+export interface PlanLifecycleState { id: number; revision: number; status: string }
+
+// Used by both archive and restore: cancel never sends a request, stale revisions
+// are left to the server, and callers refresh only after success.
+export async function changePlanArchive(
+    plan: PlanLifecycleState,
+    confirm: () => boolean,
+    request: (url: string, init: RequestInit) => Promise<Response>,
+): Promise<'cancelled' | 'saved' | 'conflict'> {
+    if (!confirm()) return 'cancelled';
+    const response = await request(`/api/admin/administration-plans/${plan.id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ revision: plan.revision, status: plan.status === 'archived' ? 'planned' : 'archived' }),
+    });
+    if (response.status === 409) return 'conflict';
+    if (!response.ok) throw new Error('plan archive failed');
+    return 'saved';
+}

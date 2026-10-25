@@ -3,6 +3,8 @@
 <!-- ai4educ:context-template v1.0 -->
 
 ## Quick Reference
+- **Ciclo somministrazioni (s12)**: azioni Archivia/Ripristina condivise da docente e admin; contratto e conservazione dati in `docs/operations/administration-lifecycle.md`, runner frontend isolato su 3162 in `docs/operations/live-dev-environment.md`.
+
 - **Privacy P12 — credenziali**: `PRIVACY_CREDENTIAL_ENCRYPTION=on` abilita DEK KeyRing distinte `cred_api`, `cred_chatgpt`, `cred_institute`; default Fernet compatibile senza nuove variabili, lettura duale anche dopo switch off, errori espliciti su chiavi mancanti. Job offline idempotente: `python -m backend.privacy.credential_migration --apply`. Procedura, rotazioni e rollback: `docs/privacy/p12-chiavi-fernet.md`.
 - **Privacy P9 — documenti e consensi**: `backend/privacy/consent.py`, API in `routes/privacy.py`, migrazione portabile `20261025_privacy_consent`. Documenti versionati e finalità iniziali `undefined`/inattive; scelte e revoche atomiche con audit P8; grant P7 separati per il taccuino, limitati a docente/classe, riverificati a ogni lettura. Resolver P6 persistente (default transitional invariato). I vecchi moduli registrano osservazioni senza abilitarne le finalità. Documenti non pubblicati automaticamente, contenuti **[DA VALIDARE]**, UI P10 da fare. Contratto: `docs/privacy/p9-consensi.md`.
 

@@ -1,11 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Check, Copy, FileText, Link2, MapPin, Pencil, Plus, QrCode, RefreshCw, Search, Trash2, Users, X } from 'lucide-react';
+import { Archive, ArchiveRestore, CalendarDays, Check, Copy, FileText, Link2, MapPin, Pencil, Plus, QrCode, RefreshCw, Search, Trash2, Users, X } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getAuthUrls } from '@/lib/auth';
-import { parsePlanInstitutionOptions, planIdFromHash, planInstitutionField, type PlanInstitutionOption } from '@/lib/administration-plans';
+import { changePlanArchive, parsePlanInstitutionOptions, planIdFromHash, planInstitutionField, type PlanInstitutionOption } from '@/lib/administration-plans';
 import Link from 'next/link';
 import { credentialText, type CredentialTextKey } from '@/lib/i18n-institution-credentials';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
@@ -319,6 +319,8 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
             setMessage(t('admin.ap.error.titleRequired'));
             return;
         }
+        if (editingPlan && form.status !== editingPlan.status && (form.status === 'archived' || editingPlan.status === 'archived')
+            && !window.confirm(t(form.status === 'archived' ? 'admin.ap.confirmArchive' : 'admin.ap.confirmRestore', { title: editingPlan.title }))) return;
         setSaving(true);
         setMessage('');
         const external = form.external_researchers
@@ -366,6 +368,28 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
             setSaving(false);
         }
     };
+
+    const archive = async (plan: AdministrationPlan) => {
+        if (saving) return;
+        setSaving(true);
+        setMessage('');
+        try {
+            const outcome = await changePlanArchive(plan,
+                () => window.confirm(t(plan.status === 'archived' ? 'admin.ap.confirmRestore' : 'admin.ap.confirmArchive', { title: plan.title })),
+                apiFetch);
+            if (outcome === 'conflict') setMessage(c('revisionConflict'));
+            if (outcome === 'saved') { cancel(); await refresh(); }
+        } catch { setMessage(t('admin.ap.error.archive')); }
+        finally { setSaving(false); }
+    };
+
+    const archiveButton = (plan: AdministrationPlan) => (
+        <button type="button" disabled={saving} onClick={() => void archive(plan)}
+            className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+            {plan.status === 'archived' ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+            {t(plan.status === 'archived' ? 'admin.ap.action.restore' : 'admin.ap.action.archive')}
+        </button>
+    );
 
     const remove = async (plan: AdministrationPlan) => {
         if (!window.confirm(t('admin.ap.confirmDelete', { title: plan.title }))) return;
@@ -616,6 +640,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
+                {editingPlan && archiveButton(editingPlan)}
                 <button
                     type="button"
                     disabled={saving}
@@ -741,7 +766,8 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                                         <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">{c('needsReconciliation')}</span>
                                     )}
                                 </div>
-                                <div className="flex gap-1">
+                                <div className="flex flex-wrap gap-1">
+                                    {archiveButton(plan)}
                                     <button type="button" onClick={() => startEdit(plan)} className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900" title={t('admin.ap.action.edit')}>
                                         <Pencil className="h-4 w-4" />
                                     </button>
