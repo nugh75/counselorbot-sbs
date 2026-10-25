@@ -1,34 +1,58 @@
 # s11-builder — builder dei piani operativi
 
 ## Stato
-Task 2014148c completato (014a72d4, diario fatto); eb537b45 completato (e5603d11, diario fatto); c8a79b2b completato, chiusura in corso.
-Branch: feature/piano-builder-interno. Una sola PR verso main.
+Tutti e tre i task sono `fatto` nel diario Counselorbot:
+- 2014148c — passi autonomi, commit `014a72d4`.
+- eb537b45 — forum in pagina, commit `e5603d11`.
+- c8a79b2b — incontri in pagina, commit `ab83a87e`.
+
+Branch: `feature/piano-builder-interno`. Allineamento finale con `origin/main`
+(`e72cf3fa`), con risoluzione della sola baseline SQLite: conservate le
+correzioni di main, rimosse le eccezioni delle due suite ora verdi.
+Una sola PR verso main, da revisionare e unire dal proprietario.
 
 ## Fatto
-- Passi autonomi anche per i piani storici strict; ordine solo visivo.
-- Rimosso abbinamento chat/incontro; nuove analisi con scelta della compilazione.
-- Riferimenti storici ai risultati conservati senza vincolare ordine/rimozione.
-
-- Forum: creazione e modifica titolo/testo dentro una modale del builder, con i form e gli endpoint esistenti.
-- Bozza del piano preservata; protezioni per uscita, tastiera, salvataggi in corso e permessi del forum.
-
-- Incontri: gestore riusato in modale per incontri di gruppo, colloqui e fasce; apertura diretta da ogni passo.
-- Titolo/data aggiornati senza perdere o sporcare la bozza del piano; gestione revisioni e conferma per ricaricare un form modificato.
-- La chiusura rapida protegge anche una fascia individuale appena digitata.
+- Passi autonomi anche nei piani storici strict; ordine solo visivo, nessun
+  abbinamento chat/incontro. Nuove analisi con scelta della compilazione;
+  fonti storiche conservate senza vincolare ordine/rimozione dei passi.
+- Creazione e modifica titolo/testo delle discussioni in modale, con i form,
+  endpoint e permessi del forum esistenti. Bozza del piano preservata.
+- Gestore incontri riusato in modale: gruppo, colloqui individuali, fasce,
+  prenotazioni e presenze; accesso diretto da ogni passo. Metadati aggiornati
+  senza perdere o sporcare la bozza del piano, revisioni e ricaricamento con conferma.
+- Protezione delle bozze anche per una fascia appena digitata e chiusura rapida;
+  focus nella modale, ripristino del focus e blocco della chiusura durante invii.
+- Etichette nelle sei lingue; API/dependenze/variabili di configurazione nuove assenti.
 
 ## Verifiche
-- SQLite: 120 test verdi (piani, chat guidate, inserimento risultati, approfondimenti), ratchet senza eccezioni per queste suite.
-- Node: 59 test verdi; UI aggiunta/sostituzione step su desktop e telefono verde.
-- Typecheck verde; i18n: 3510 chiavi in sei lingue. Lint: nessun errore (import inutilizzato rimosso).
-- PostgreSQL task 1: 117 test passati nella suite principale; vecchia aspettativa di blocco aggiornata e verificata nella suite aggiuntiva (51 verdi), più 2 regressioni mirate verdi.
-- Task 2: 17 test Node, 4 casi API PostgreSQL mirati, UI desktop IT e mobile SV verdi; i18n 3512 chiavi, lint e typecheck verdi.
-- Task 3: 11 casi API SQLite, 24 test Node, quattro scenari UI complessivi verdi (forum desktop IT/mobile SV, incontri gruppo IT/individuale SV).
-- Typecheck e lint verdi; i18n 3514 chiavi in sei lingue. Nuovo test API incontri anche su PostgreSQL verde.
-- Backend Docker ricostruito come counselorbot-s11-backend:builder; smoke import senza rete verde. Frontend Docker in costruzione; nessun deploy.
-- Il checker i18n riconosce tre chiavi di feedback del consiglio già tradotte, senza cambiare quei componenti.
+- Dopo l'allineamento: **131 test SQLite verdi**, 4 casi di migrazione/concorrenza
+  esclusi da questa esecuzione SQLite; ratchet senza nuove eccezioni.
+- PostgreSQL: suite modelli/inserimento risultati (51 verdi), regressioni sulle
+  fonti dei risultati, quattro casi forum e nuovo caso incontri verdi.
+- **93 test Node verdi**, incluse compatibilità auth/runtime del main aggiornato.
+- UI: quattro scenari risorse (forum desktop IT/mobile SV, incontri gruppo IT e
+  individuale SV) più suite aggiunta/sostituzione passi, tutti verdi dopo il merge.
+- Typecheck, lint mirato, `check-i18n.mjs` verdi: **3521 chiavi, sei lingue**.
+- Docker ricostruito sul codice allineato: `counselorbot-s11-backend:builder` e
+  `counselorbot-s11-frontend:builder`. Import backend senza rete OK; frontend
+  avviato in container isolato, HTTP 200 sul builder e log di avvio corretti.
+- Runner Next 3176, PostgreSQL temporaneo 18676 e smoke frontend 3177 **fermi**.
+  Nessun deploy o riavvio dei servizi di produzione.
+
+Runner riproducibile: `scripts/dev-piano-builder-tests.sh`; comandi, tunnel e
+limiti in `docs/operations/live-dev-environment.md`. Contratto del builder in
+`docs/operations/independent-plan-steps.md`. Cache e dipendenze di verifica
+sono temporanee; nessun file .env o dato di produzione modificato.
 
 ## Prossimi passi
-Concludere verifica packaging, arrestare i soli processi di prova, push e PR unica; revisione/merge a cura del proprietario.
+Revisione e merge della PR unica dal proprietario; eventuale deploy separato.
+Nessuna migrazione dati o nuova variabile richiesta.
 
 ## Blocchi
-Nessun blocco funzionale. Limite già censito: le scritture forum usano statement_timestamp e le suite forum storiche falliscono su SQLite; verifiche forum su PostgreSQL. Dati e servizi di produzione non utilizzati.
+Nessun blocco per la PR. Limite preesistente e già censito nella baseline:
+le scritture forum usano `statement_timestamp` e non funzionano nelle suite
+SQLite storiche; le operazioni forum sono verificate su PostgreSQL. Non è
+stato ampliato questo filone a una correzione della portabilità del forum.
+
+Le chiusure del diario sono registrate. Il CLI segnala il canale mobile
+non configurato (`NTFY_TOPIC` assente); nessun agente è stato lanciato.

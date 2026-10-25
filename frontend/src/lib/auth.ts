@@ -149,3 +149,22 @@ export function getAuthUrls() {
 export function ai4authLoginUrl(returnPath: string = '/admin'): string {
     return getAuthUrls().login(returnPath, typeof window !== 'undefined' ? window.location.origin : undefined);
 }
+
+// Fornitore di identita' dell'installazione (F1-06): il guscio desktop passa
+// COUNSELORBOT_AUTH_PROVIDER=local a Next, che lo pubblica in
+// /runtime-config.js. Senza configurazione resta ai4auth, come in produzione.
+export function isLocalAuth(): boolean {
+    return getRuntimeConfig().authProvider === 'local';
+}
+
+// Destinazione del pulsante Accedi/Login. In locale non si esce mai da questo
+// host: /login usa la sessione `cb_session` e, se manca, spiega come aprirla.
+export function loginHref(returnPath: string = '/admin'): string {
+    return isLocalAuth() ? '/login' : ai4authLoginUrl(returnPath);
+}
+
+// Uscita: in locale revoca la sessione sul backend e torna alla home; in
+// produzione resta il logout ai4auth che distrugge il cookie di dominio.
+export function logoutHref(): string {
+    return isLocalAuth() ? '/logout' : getAuthUrls().logoutUrl;
+}

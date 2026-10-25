@@ -45,7 +45,7 @@ import { canUseTeacherAssistant } from '@/lib/roles';
 import { readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId } from '@/lib/notebook-context';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 import { practiceResultChatHref } from '@/lib/practice-notebooks';
-import { apiFetch, ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
+import { apiFetch, getIdentity, loginHref, type Identity } from '@/lib/auth';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, setActiveSessionCounselorId } from '@/lib/counselor';
 import { experiencePrefForInstrument, getExperiencePref, getInputMethodPref, getReasoningPref, getResponseLengthPref, setExperiencePref, setInputMethodPref, setReasoningPref, setResponseLengthPref } from '@/lib/session-prefs';
 import type { ResponseFormat } from '@/lib/chat-preferences';
@@ -918,7 +918,7 @@ export default function Home() {
                         </p>
                     </div>
                     <a
-                        href={ai4authLoginUrl('/')}
+                        href={loginHref('/')}
                         className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
                     >
                         <LogIn className="h-4 w-4" />

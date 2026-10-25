@@ -12,7 +12,7 @@ import {
     type RulesUnavailable,
 } from '@/lib/instruments-api';
 import { addCompletedProfile } from '@/lib/profile-tracker';
-import { apiFetch, ai4authLoginUrl } from '@/lib/auth';
+import { apiFetch, loginHref as authLoginHref } from '@/lib/auth';
 import { AGE_BANDS } from '@/lib/age-bands';
 import {
     clearAdministrationDraft,
@@ -163,7 +163,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
 
     useEffect(() => {
         let cancelled = false;
-        setLoginHref(ai4authLoginUrl(`${window.location.pathname}${window.location.search}`));
+        setLoginHref(authLoginHref(`${window.location.pathname}${window.location.search}`));
         fetchAnonymousResearchCode().then(({ code: serverCode, authenticated }) => {
             if (cancelled) return;
             setCodeRequiresLogin(!authenticated);
