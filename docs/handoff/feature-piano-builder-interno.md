@@ -42,15 +42,17 @@ perché main è avanzato durante la pubblicazione della PR.
   Nessun deploy o riavvio dei servizi di produzione.
 - **Chiusura CI (25 ottobre, dopo il merge di main 0.1.1)**: quattro casi che
   asserivano ancora il blocco sequenziale sono stati riscritti sul contratto dei
-  passi autonomi (`test_legacy_strict_*`), con i relativi nomi nella baseline
-  SQLite; due voci SQLite ora passanti sono state rimosse. Verificati verdi su
-  PostgreSQL uno per uno. `make guidance-check`, `--base origin/main`,
-  `version-check`, unittest dello script guidance, typecheck, ESLint mirato,
-  `check-i18n.mjs` e i **697 test Node** di `src/lib` sono verdi; le due suite
-  browser del builder passano sul runner 3176. Suite SQLite completa locale:
-  stesso profilo della CI (223 falliti, 135 errori) senza nuove eccezioni; la
-  suite PostgreSQL completa resta affidata alla CI perché in locale il guard di
-  `artifact_database` pretende il database `counselorbot_test` sulla 18650.
+  passi autonomi (`test_legacy_strict_*`). La baseline SQLite è stata riallineata:
+  due voci rinominate, 28 casi che ora passano rimossi (14 in
+  `test_inapp_administration.py`, 14 in `test_plan_questionnaire_chats.py`).
+  I quattro casi riscritti sono verdi su PostgreSQL. `make guidance-check`,
+  `--check --base origin/main`, `make version-check`, unittest dello script
+  guidance, typecheck, ESLint mirato, `check-i18n.mjs` e i **697 test Node** di
+  `src/lib` sono verdi; le due suite browser del builder passano sul runner 3176.
+  CI del branch: `documentation`, `portability`, `startup (sqlite)` e
+  `tests (sqlite)` verdi; `tests (postgres)` verde tranne il flake già noto di
+  `test_sse_heartbeat.py::test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next`
+  (escluso di proposito dalla baseline, come documenta il commento del file).
 
 Runner riproducibile: `scripts/dev-piano-builder-tests.sh`; comandi, tunnel e
 limiti in `docs/operations/live-dev-environment.md`. Contratto del builder in
