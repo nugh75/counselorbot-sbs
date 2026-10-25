@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { classCouncilText, type ClassCouncilTextKey } from '@/lib/i18n-class-council';
 import { councilPath, parseCouncilLinks, type CouncilLink } from '@/lib/class-council';
+import { publicOrigin } from '@/lib/runtime-config';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
@@ -35,7 +36,7 @@ export function ClassCouncilTab({ groupId }: { groupId: number }) {
     const [error, setError] = useState<'' | 'createError' | 'ownerOnly'>('');
     const [created, setCreated] = useState<CouncilLink | null>(null);
     const date = (value: string) => new Date(value).toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' });
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const origin = publicOrigin();
 
     const create = async () => {
         setBusy(true); setError(''); setCreated(null);

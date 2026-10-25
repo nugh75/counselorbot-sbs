@@ -12,6 +12,7 @@ export interface RuntimeConfig {
     managerUrl?: string;
     projectId?: string;
     authProvider?: AuthProvider;
+    publicOrigin?: string;
 }
 
 const ENV_KEYS: Record<Exclude<keyof RuntimeConfig, 'authProvider'>, string> = {
@@ -20,6 +21,7 @@ const ENV_KEYS: Record<Exclude<keyof RuntimeConfig, 'authProvider'>, string> = {
     portalUrl: 'COUNSELORBOT_PORTAL_URL',
     managerUrl: 'COUNSELORBOT_MANAGER_URL',
     projectId: 'COUNSELORBOT_PROJECT_ID',
+    publicOrigin: 'COUNSELORBOT_PUBLIC_ORIGIN',
 };
 
 const GLOBAL_KEY = '__COUNSELORBOT_CONFIG__';
@@ -45,4 +47,15 @@ export function runtimeConfigScript(config: RuntimeConfig): string {
 export function getRuntimeConfig(): RuntimeConfig {
     if (typeof window === 'undefined') return {};
     return (window as unknown as Record<string, RuntimeConfig | undefined>)[GLOBAL_KEY] ?? {};
+}
+
+// Origine che GLI STUDENTI devono aprire dai link e dai QR condivisi dal
+// docente. Nel guscio desktop il supervisore passa COUNSELORBOT_PUBLIC_ORIGIN
+// (URL del tunnel) a backend e frontend: la stessa build standalone fuori dal
+// guscio non la riceve e resta l'origine del browser, come in produzione e
+// portable, dove l'app gira su un solo host pubblico.
+export function publicOrigin(): string {
+    const configured = getRuntimeConfig().publicOrigin?.replace(/\/+$/, '');
+    if (configured) return configured;
+    return typeof window === 'undefined' ? '' : window.location.origin;
 }

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import vm from 'node:vm';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { getRuntimeConfig, runtimeConfigFromEnv, runtimeConfigScript } from './runtime-config.ts';
+import { getRuntimeConfig, publicOrigin, runtimeConfigFromEnv, runtimeConfigScript } from './runtime-config.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { createAuthUrls } from './auth-urls.ts';
 
@@ -55,4 +55,33 @@ test('only the desktop local provider is published, never a typo', () => {
     assert.deepEqual(runtimeConfigFromEnv({ COUNSELORBOT_AUTH_PROVIDER: ' local ' }), { authProvider: 'local' });
     assert.deepEqual(runtimeConfigFromEnv({ COUNSELORBOT_AUTH_PROVIDER: 'ai4auth' }), {});
     assert.deepEqual(runtimeConfigFromEnv({ COUNSELORBOT_AUTH_PROVIDER: 'bogus' }), {});
+});
+
+test('the public tunnel origin is read and trimmed from the environment', () => {
+    assert.deepEqual(
+        runtimeConfigFromEnv({ COUNSELORBOT_PUBLIC_ORIGIN: ' https://counselor-labform.net ' }),
+        { publicOrigin: 'https://counselor-labform.net' },
+    );
+    assert.deepEqual(runtimeConfigFromEnv({ COUNSELORBOT_PUBLIC_ORIGIN: '   ' }), {});
+});
+
+test('publicOrigin decides shared links: window absent, tunnel, then browser origin', () => {
+    const previous = (globalThis as Record<string, unknown>).window;
+    try {
+        // Server render (nessuna window): niente origine calcolabile.
+        assert.equal(publicOrigin(), '');
+        (globalThis as Record<string, unknown>).window = {
+            __COUNSELORBOT_CONFIG__: { publicOrigin: 'https://counselor-labform.net/',
+                appUrl: 'http://127.0.0.1:9999' } as unknown,
+        };
+        assert.equal(publicOrigin(), 'https://counselor-labform.net');
+        (globalThis as Record<string, unknown>).window = {
+            location: { origin: 'http://127.0.0.1:32102' },
+        };
+        // Senza tunnel (o fuori dal guscio) la condivisione resta sull'origine
+        // del browser: comportamento invariato in produzione e portable.
+        assert.equal(publicOrigin(), 'http://127.0.0.1:32102');
+    } finally {
+        (globalThis as Record<string, unknown>).window = previous;
+    }
 });
