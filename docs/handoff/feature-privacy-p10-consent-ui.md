@@ -21,6 +21,60 @@
 - `eslint` sui file toccati: 0 errori.
 - Suite browser `navbar-visibility` e `personal-area-header` (contract aggiornati) **non eseguite**: `next dev` 16.3.8 non arriva a «Ready» in questo ambiente (nessun output, main thread idle) → riprovare con `scripts/dev-navbar-tests.sh` e `personal-area-preview.mjs`.
 
+### Allineamento della Guida (2026-10-25, s9-fix-p10)
+
+- `make guidance-refresh` falliva con «Il prodotto è cambiato ma il Markdown no»:
+  il codice P10 era nella PR ma `docs-counselorbot/funzionalita-counselorbot.md`
+  diceva ancora «La UI privacy P10 resta da realizzare».
+- Aggiunta la descrizione della pagina `/privacy` e dei suoi controlli (documenti
+  versionati con badge `[DA VALIDARE]`, finalità separate partite spente, revoca
+  self-service della condivisione, cronologia senza testo libero, i18n a sei
+  lingue, link solo relativi o http(s)).
+- `make guidance-refresh` → «Funzionalità CounselorBot: documentazione allineata»;
+  `python3 scripts/check-platform-guidance.py --check` → allineata;
+  `python3 -m unittest discover -s scripts/tests -p 'test_platform_guidance_check.py'`
+  → 3 test OK.
+
+### CI della PR #589: diagnosi dei test backend (2026-10-25, s9-fix-p10)
+
+- Run [40193357452](https://github.com/nugh75/counselorbot-sbs/actions/runs/40193357452),
+  head `45091d7e`, base `63afde17` (l'attuale `origin/main`):
+  - `tests (postgres)`: 54 failed, 5851 passed, 15 skipped; ratchet: 45 known
+    still failing, **9 unexpected failures**, 0 listed-but-passing.
+  - `tests (sqlite)`: 217 failed, 4986 passed, 20 skipped, 227 errors; ratchet:
+    440 known still failing, **4 unexpected failures**, 2 listed-but-passing.
+- Failures / NEW FAILURE: `test_practice_notebooks.py::test_practice_turns_are_logged_with_the_resolved_notebook`,
+  `test_privacy_p6ac_egress.py::test_default_engine_prefers_available_local_piper[True-piper|False-edge]`,
+  `test_sqlite_load_concurrency.py::test_routes_commit_and_release_before_provider_and_never_reopen_request_db[...]`,
+  `test_sse_heartbeat.py::test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next`;
+  su SQLite anche i 2 «NOW PASSING» (`test_guided_explorations`, `test_server_side_step_closure`)
+  che rendono il ratchet non stretto.
+- **Nessuna di queste prove tocca i file P10** (`backend/routes/privacy.py` nella
+  sola funzione `_sharing_revoke_fields`, `frontend/src/app/privacy/`,
+  `frontend/src/components/privacy/`) e `backend/tests/test_privacy_p9_consent.py`
+  (26 test, compreso quello nuovo P10) passa in entrambi i job.
+- Baseline riprodotta su un worktree separato a `63afde17` (Python 3.12,
+  `TEST_DB=sqlite`, venv dedicata):
+  - `test_forum.py` + `test_forum_privacy.py::test_forum_metadata_reader_…` +
+    `test_practice_notebooks.py::test_practice_notebook_enters_…`: **main 38
+    failed / 11 passed**, **branch 38 failed / 11 passed** (stessi identici ID).
+  - `test_class_orientation.py`, `test_diagram_generation.py`,
+    `test_privacy_p6ac_egress.py`: **main 14 failed / 83 passed** (idem sul branch).
+  - I 4 NEW FAILURE riproducibili (notebook log, Piper x2, SSE heartbeat)
+    falliscono anche su `63afde17`; `test_sqlite_load_concurrency.py` passa in
+    locale su entrambi i rami (dipendente dall'ambiente/ordine nel job CI).
+- Cause tipiche, tutte preesistenti: `TypeError: 'Mock' object is not subscriptable`
+  (class_orientation), `AttributeError: 'NoneType' object has no attribute 'info'`
+  (diagram_generation), `'SimpleNamespace' object has no attribute 'commit'`
+  (privacy_p6ac_egress), migrazioni SQLite (`no such function:
+  statement_timestamp`, `error in index ix_counselors_owner_username after drop
+  column`), drift dei testi dei prompt (`test_smoke`, `test_practice_notebooks`).
+- **Non corretto fuori scope**: il ratchet va riallineato in un task dedicato
+  (baseline `63afde17` e nuove prove), non dentro la PR P10. Finché non si
+  aggiornano `backend/tests/postgres_known_failures.txt` e
+  `backend/tests/sqlite_known_failures.txt`, i due check `tests` restano rossi
+  per cause non imputabili a questa PR.
+
 ## Prossimi passi
 - Rilanciare le due suite browser e riverificare i breakpoint 320/390/844/1440 con la voce privacy.
 - P16/P11: testi legali definitivi e pubblicazione dei documenti da parte del titolare; sostituire l'username digitato con la scelta del docente della classe.
