@@ -5,6 +5,8 @@ Scansiona la cartella degli artefatti per individuare pacchetti (.tar.gz, .zip)
 e le rispettive firme Minisign (.sig), assemblando il manifest JSON atteso
 da tauri-plugin-updater (ADR-0002, F1-16).
 """
+from __future__ import annotations
+
 import argparse
 from datetime import datetime, timezone
 import json

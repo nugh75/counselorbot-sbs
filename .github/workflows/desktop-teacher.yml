@@ -203,6 +203,9 @@ jobs:
         with:
           path: artifacts
 
+      - name: Install test dependencies
+        run: pip install pytest
+
       - name: Test update manifest generator
         run: python -m pytest -q desktop/teacher/scripts/test_generate_update_manifest.py
 
