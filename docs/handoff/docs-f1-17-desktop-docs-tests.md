@@ -1,7 +1,8 @@
 # F1-17 — s73-f1-17-docs
 
 ## Stato
-Consegna verificata localmente; branch `docs/f1-17-desktop-docs-tests`.
+PR aperta e push eseguito: https://github.com/nugh75/counselorbot-sbs/pull/584
+Branch `docs/f1-17-desktop-docs-tests`, milestone installazione e board CounselorBot.
 Base `2220ef99` = origin/main alla partenza; issue #213.
 Task `a8f4b202-cc7b-42de-ae42-1eef04bdbc22`.
 
@@ -20,11 +21,14 @@ Task `a8f4b202-cc7b-42de-ae42-1eef04bdbc22`.
 - Commit `398d0d0c` test(desktop): health pubblico JSON del tunnel, Bash valido.
 - Primo lancio Python 3.9 non supportato: ripetuto con ambiente corretto.
 - Guida sei lingue/screenshot rivisti: nessun controllo web modificato.
-- make guidance-refresh e guidance-check verdi; installer nativi da verificare con CI.
+- make guidance-refresh/check verdi; Platform guidance GitHub verde.
+- Check nativi in corso: stato autorevole nella PR #584 (quattro runner).
+- Commit docs `ff419ec6`; consegna registrata con questo aggiornamento finale.
 
 ## Prossimi passi
-- Commit documentazione finale, push, PR con milestone e board CounselorBot.
-- Leggere check PR e notificare Timoniere; nessun merge.
+- Controllare esito CI dalla PR, poi revisione/merge del proprietario; nessun merge agente.
+- Notifica PR accodata nel Diario: recipient_working; consegna non confermata.
+  Canale mobile disattivato (NTFY_TOPIC assente).
 
 ## Blocchi e rischi
 - Fase 1 aperta: UI docente/pairing/dispositivi e pubblicazione Release mancanti;

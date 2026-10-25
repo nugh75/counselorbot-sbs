@@ -1,7 +1,8 @@
 # Handoff 25 ottobre 2026: F1-17 — documentazione e smoke desktop (#213)
 
 Agente `s73-f1-17-docs`, task `a8f4b202-cc7b-42de-ae42-1eef04bdbc22`,
-branch `docs/f1-17-desktop-docs-tests`.
+branch `docs/f1-17-desktop-docs-tests`, PR https://github.com/nugh75/counselorbot-sbs/pull/584
+(milestone installazione, board CounselorBot).
 
 - Guida italiana: `docs/operations/desktop-teacher-guide.md`; installazione dai
   bundle CI con SHA-256, chiavi, tunnel, abbinamento (limiti GUI), LLM, backup e rollback.
