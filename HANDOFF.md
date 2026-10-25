@@ -1,3 +1,15 @@
+# Handoff 25 ottobre 2026: Privacy P12 — migrazione chiavi Fernet
+
+Agente `s72-p12-fernet`, task `a62aae25-ef78-4af6-b0a2-369de174421a`, branch `feature/privacy-p12-fernet-dek`, issue #583.
+
+- **Modifiche**: tre DEK KeyRing (`cred_api`, `cred_chatgpt`, `cred_institute`), lettura duale Fernet/AES-GCM, nuove scritture DEK con `PRIVACY_CREDENTIAL_ENCRYPTION=on`, default Fernet compatibile. Nessuna ricreazione silenziosa di DEK perse; errore istituto 503 con solo codice. Vincolo `privacy_keys` aggiornato su entrambi i DB.
+- **Migrazione**: `python -m backend.privacy.credential_migration --apply --batch-size 100`, offline, idempotente, commit per lotto, nessun segreto in output. Rotazione indipendente e rewrap KEK P5.
+- **Verifiche**: SQLite 98 test correlati + 5 aggiuntivi; Postgres 104 + 3 passati; immagine Docker ricompilata e 34 test P12 SQLite passati con rete disabilitata. Zero nuove regressioni. SQL portability OK; guidance aggiornata.
+- **Procedura**: [P12](docs/privacy/p12-chiavi-fernet.md); [handoff vivo](docs/handoff/feature-privacy-p12-fernet-dek.md). Prima dell'attivazione servono KEK protetta, kit di recupero verificato e backup delle vecchie chiavi. Non rimuoverle finché servono a righe o backup trattenuti.
+- **Operazioni**: nessun deploy, sudo o processo dev avviato; produzione invariata. Per questa versione basta lo switch off per tornare a scrivere Fernet; il rollback al codice precedente richiede backup pre-migrazione coerenti.
+
+---
+
 # Handoff 25 ottobre 2026: F1-16 — Updater desktop e backup SQLite pre-aggiornamento
 
 Agente `s70-f1-16-updater` (subagente per Timoniere), task `168a1a90-9467-4cfd-9020-2933889107c5`, branch `feature/f1-16-updater-backup`, issue #580.

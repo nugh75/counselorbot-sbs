@@ -3,7 +3,7 @@ Task: a62aae25-ef78-4af6-b0a2-369de174421a
 Branch: feature/privacy-p12-fernet-dek
 
 ## Stato
-Implementazione verificata; issue #583, base iniziale uguale a origin/main.
+Implementazione e verifiche complete; issue #583, milestone Privacy Layer (GDPR).
 ## Fatto
 - Letti prompt, regole Timoniere, KeyRing P5 e cifratura P11.
 - Decisione: switch esplicito PRIVACY_CREDENTIAL_ENCRYPTION, default Fernet compatibile.
@@ -19,6 +19,7 @@ Implementazione verificata; issue #583, base iniziale uguale a origin/main.
 - Docker: immagine counselorbot-privacy-p12:local ricompilata; 34 P12 SQLite passati, rete disabilitata.
 - SQL portability OK (19 occorrenze note, zero nuove); guidance-refresh/check OK.
 ## Prossimi passi
-Implementazione committata (c8af7ce0); test in commit separato, poi documentazione, push e PR.
+Commit feat c8af7ce0 e test 439068cf; documentazione separata, quindi push e PR.
 ## Blocchi e rischi
-Conservare vecchie chiavi per i record Fernet; migrazione non attiva automaticamente.
+Conservare vecchie chiavi per righe e backup; migrazione non attiva automaticamente.
+Nessun deploy, sudo o dev avviato; container P12 di verifica terminato.
