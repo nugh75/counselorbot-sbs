@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Timer launchd del bollettino periodico Counselorbot.
+
+  launchd NON espande $HOME: sostituire __HOME__ con il percorso reale
+  dell'utente (es. /Users/nome) prima di copiare il file in
+  ~/Library/LaunchAgents/. Vedi docs/operations/bollettino-periodico-timer.md.
+
+  Caricare con:
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/org.consoleplatform.bollettino.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>org.consoleplatform.bollettino</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>-lc</string>
+        <string>__HOME__/.local/bin/bollettino-counselorbot.sh</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Minute</key>
+            <integer>30</integer>
+        </dict>
+    </array>
+    <key>StandardOutPath</key>
+    <string>__HOME__/.local/state/bollettino/out.log</string>
+    <key>StandardErrorPath</key>
+    <string>__HOME__/.local/state/bollettino/err.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+</dict>
+</plist>
