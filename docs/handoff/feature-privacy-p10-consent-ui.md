@@ -13,12 +13,13 @@
 - Manifest rigenerato e committato per il prodotto combinato P10 + accesso locale #591; il precedente indice era obsoleto.
 - Guida e menu account conservano entrambi i lavori; backend P9/P10 non modificato dal merge.
 - P10: pagina `/privacy`, documenti/finalità/scelte/condivisione/cronologia, sei lingue; API scelte espone docente/classe solo al soggetto.
+- Nuovo main `e793de23` (#594) entrato durante la CI: merge aggiuntivo; conflitti limitati a manifest e checker i18n, risolti preservando il dizionario P10 e le eccezioni puntuali di main.
 - Backup s14 in `/tmp/counselorbot-opencode-handoff-20261025`, non applicato.
 
 ## Verifiche
 - `make guidance-refresh`, `make guidance-check`, checker `--check --base e72cf3fa`: pass.
 - `python3 -m unittest discover -s scripts/tests -p 'test_platform_guidance_check.py'`: 3 pass.
-- Diff e diff staged senza errori whitespace; Node 22: 18 test privacy/auth-provider/runtime-config pass; i18n: 3633 chiavi, sei lingue.
+- Diff e diff staged senza errori whitespace; Dopo #594, Node 22: 24 test privacy/auth/runtime-config/administration-plans pass; i18n: 3647 chiavi, sei lingue.
 - CI `77e21b14`: guidance push `40209575491` e PR `40209579957`, Release Drafter, portability e startup SQLite verdi.
 - Backend run `40209579980`: SQLite verde (444 noti, 0 inattesi, 0 listed-passing); Postgres rosso (53 noti, 1 inatteso, 0 listed-passing).
 - Unico inatteso Postgres: `test_sse_heartbeat.py::test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next`, asserzione finale su `_closing`.
@@ -28,7 +29,7 @@
 
 ## Prossimi passi
 - Merge commit `77e21b14a0fbce230eb046433b5323406719848c` pushato e verificato su GitHub; PR OPEN/MERGEABLE.
-- Pubblicare questo solo aggiornamento handoff e verificare i check del nuovo head; chiusura Diario solo a CI pertinente verde, altrimenti task aperto.
+- Merge di #594 risolto e verificato localmente; push e monitoraggio check del nuovo head; chiusura Diario solo a CI pertinente verde, altrimenti task aperto.
 - Revisione cross-modello prima del merge PR (deroga P10 b23782fc già esistente); il merge resta all’utente.
 
 ## Blocchi e rischi

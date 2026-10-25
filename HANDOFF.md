@@ -4290,3 +4290,6 @@ F1-06, F1-08, F1-09/F1-10 e F1-05* restano necessari prima dell'uso reale.
 Nessun merge, deploy, sudo, rebuild Docker o processo dev persistente.
 Revisione del Timoniere richiesta prima di qualsiasi merge; PR da mantenere
 in bozza fino al gate applicabile. Non sono stati avviati altri agenti.
+
+## s12 — Somministrazioni
+Stato e verifiche del ramo: [handoff dedicato](docs/handoff/feature-somministrazioni-archiviazione.md).

@@ -1,11 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Check, Copy, FileText, Link2, MapPin, Pencil, Plus, QrCode, RefreshCw, Search, Trash2, Users, X } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowRightLeft, CalendarDays, Check, Copy, FileText, Link2, MapPin, Pencil, Plus, QrCode, RefreshCw, Search, Trash2, Users, X } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getAuthUrls } from '@/lib/auth';
-import { parsePlanInstitutionOptions, planIdFromHash, planInstitutionField, type PlanInstitutionOption } from '@/lib/administration-plans';
+import { replacePlan, changePlanArchive, parsePlanInstitutionOptions, planIdFromHash, planInstitutionField, type PlanInstitutionOption } from '@/lib/administration-plans';
 import Link from 'next/link';
 import { credentialText, type CredentialTextKey } from '@/lib/i18n-institution-credentials';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
@@ -167,10 +167,14 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
     const [message, setMessage] = useState('');
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
     const [query, setQuery] = useState('');
+    const [replacementCode, setReplacementCode] = useState('');
+    const [replacementSource, setReplacementSource] = useState<AdministrationPlan | null>(null);
+    const replacingPlan = replacementSource ? plans.find(plan => plan.id === replacementSource.id) ?? replacementSource : null;
 
     const refresh = useCallback(async () => {
         setLoading(true);
         setMessage('');
+        setReplacementCode('');
         try {
             const [plansRes, contactsRes] = await Promise.all([
                 apiFetch('/api/admin/administration-plans'),
@@ -267,12 +271,16 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
     const [studentsOpenId, setStudentsOpenId] = useState<number | null>(null);
 
     const startNew = () => {
+        setReplacementSource(null);
+        setReplacementCode('');
         setForm(EMPTY);
         setEditingId('new');
         setMessage('');
     };
 
     const startEdit = (plan: AdministrationPlan) => {
+        setReplacementSource(null);
+        setReplacementCode('');
         setForm({
             title: plan.title,
             instrument_code: plan.instrument_code,
@@ -297,7 +305,16 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
         setMessage('');
     };
 
+    const startReplacement = (plan: AdministrationPlan) => {
+        startEdit(plan);
+        setEditingId('new');
+        setReplacementSource(plan);
+        setForm(previous => ({...previous, status: 'active', scheduled_at: ''}));
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    };
+
     const cancel = () => {
+        setReplacementSource(null);
         setEditingId(null);
         setForm(EMPTY);
         setMessage('');
@@ -319,6 +336,8 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
             setMessage(t('admin.ap.error.titleRequired'));
             return;
         }
+        if (editingPlan && form.status !== editingPlan.status && (form.status === 'archived' || editingPlan.status === 'archived')
+            && !window.confirm(t(form.status === 'archived' ? 'admin.ap.confirmArchive' : 'admin.ap.confirmRestore', { title: editingPlan.title }))) return;
         setSaving(true);
         setMessage('');
         const external = form.external_researchers
@@ -345,20 +364,27 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
         try {
             const url = editingId === 'new' ? '/api/admin/administration-plans' : `/api/admin/administration-plans/${editingId}`;
             const method = editingId === 'new' ? 'POST' : 'PUT';
-            const res = await apiFetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
+            const res = replacingPlan
+                ? await replacePlan(replacingPlan, body, () => window.confirm(t('admin.ap.confirmReplace', {title: replacingPlan.title})), apiFetch)
+                : await apiFetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+            if (!res) return;
             if (!res.ok) {
                 // Keep the draft in the form: 409/403/422 are recoverable without retyping.
                 const detail = (await res.json().catch(() => null))?.detail;
                 const key = typeof detail === 'string' ? PLAN_ERRORS[detail] : undefined;
                 if (key) { setMessage(c(key)); return; }
+                if (detail === 'administration_has_results_replace_required') { setMessage(t('admin.ap.error.usedPlan')); return; }
+                if (detail === 'administration_already_archived') { setMessage(t('admin.ap.error.alreadyArchived')); return; }
                 throw new Error(`plan save failed: ${res.status}`);
             }
+            const replacement = replacingPlan ? await res.json() : null;
             cancel();
             await refresh();
+            if (replacement) setReplacementCode(replacement.code);
         } catch (e) {
             console.error('Failed to save administration plan', e);
             setMessage(t('admin.ap.error.save'));
@@ -366,6 +392,28 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
             setSaving(false);
         }
     };
+
+    const archive = async (plan: AdministrationPlan) => {
+        if (saving) return;
+        setSaving(true);
+        setMessage('');
+        try {
+            const outcome = await changePlanArchive(plan,
+                () => window.confirm(t(plan.status === 'archived' ? 'admin.ap.confirmRestore' : 'admin.ap.confirmArchive', { title: plan.title })),
+                apiFetch);
+            if (outcome === 'conflict') setMessage(c('revisionConflict'));
+            if (outcome === 'saved') { cancel(); await refresh(); }
+        } catch { setMessage(t('admin.ap.error.archive')); }
+        finally { setSaving(false); }
+    };
+
+    const archiveButton = (plan: AdministrationPlan) => (
+        <button type="button" disabled={saving} onClick={() => void archive(plan)}
+            className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+            {plan.status === 'archived' ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+            {t(plan.status === 'archived' ? 'admin.ap.action.restore' : 'admin.ap.action.archive')}
+        </button>
+    );
 
     const remove = async (plan: AdministrationPlan) => {
         if (!window.confirm(t('admin.ap.confirmDelete', { title: plan.title }))) return;
@@ -467,6 +515,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
     const renderForm = () => (
         <section className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
             <div className="space-y-4">
+                {replacingPlan && <p role="status" className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{t('admin.ap.replaceHint', {title: replacingPlan.title})}</p>}
                 <label className="block text-xs font-semibold uppercase text-slate-500">
                     {t('admin.ap.form.title')}
                     <input
@@ -487,7 +536,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                         </label>
                         <label className="text-xs font-semibold uppercase text-slate-500">
                             {t('admin.ap.class')}
-                            <select className={inputCls} value={form.group_id} onChange={(event) => setForm({ ...form, group_id: event.target.value })}>
+                            <select className={inputCls} disabled={Boolean(replacingPlan?.group_id)} value={form.group_id} onChange={(event) => setForm({ ...form, group_id: event.target.value })}>
                                 <option value="">{t('admin.ap.noClass')}</option>
                                 {groups.map((group) => <option key={group.id} value={String(group.id)}>{group.name} ({group.code})</option>)}
                             </select>
@@ -511,7 +560,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                         <label className="text-xs font-semibold uppercase text-slate-500">
                             {t('admin.ap.status')}
                             <select className={inputCls} value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>
-                                {STATUSES.map((status) => <option key={status} value={status}>{t(`admin.ap.status.${status}`)}</option>)}
+                                {STATUSES.filter(status => !replacingPlan || status === 'planned' || status === 'active').map((status) => <option key={status} value={status}>{t(`admin.ap.status.${status}`)}</option>)}
                             </select>
                         </label>
                     </div>
@@ -543,7 +592,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                     )}
                     <label className="mt-3 block text-xs font-semibold uppercase text-slate-500">
                         {c('planInstitute')}
-                        <select className={inputCls} value={form.institution_id} disabled={institutes === null && !institutesFailed}
+                        <select className={inputCls} value={form.institution_id} disabled={Boolean(replacingPlan?.group_id) || (institutes === null && !institutesFailed)}
                             onChange={(event) => setForm({ ...form, institution_id: event.target.value })}>
                             <option value="">{c('noInstitute')}</option>
                             {editingPlan?.institution_id && !institutes?.some((row) => row.id === editingPlan.institution_id) && (
@@ -616,6 +665,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
+                {editingPlan && archiveButton(editingPlan)}
                 <button
                     type="button"
                     disabled={saving}
@@ -623,7 +673,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                     className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
                     <Check className="h-4 w-4" />
-                    {t('admin.ap.save')}
+                    {t(replacingPlan ? 'admin.ap.action.confirmReplace' : 'admin.ap.save')}
                 </button>
                 <button
                     type="button"
@@ -683,7 +733,8 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
             </section>
 
             {editingId === 'new' && renderForm()}
-            {message && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p>}
+            {replacementCode && <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{t('admin.ap.replaced', {code: replacementCode})}</p>}
+            {message && <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p>}
 
             {!loading && plans.length > 0 && (
                 <div className="relative">
@@ -741,7 +792,12 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                                         <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">{c('needsReconciliation')}</span>
                                     )}
                                 </div>
-                                <div className="flex gap-1">
+                                <div className="flex flex-wrap gap-1">
+                                    {archiveButton(plan)}
+                                    {plan.status !== 'archived' && <button type="button" disabled={saving} onClick={() => startReplacement(plan)}
+                                        className="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50">
+                                        <ArrowRightLeft className="h-4 w-4" />{t('admin.ap.action.replace')}
+                                    </button>}
                                     <button type="button" onClick={() => startEdit(plan)} className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900" title={t('admin.ap.action.edit')}>
                                         <Pencil className="h-4 w-4" />
                                     </button>
