@@ -8,7 +8,8 @@ members can read it in the external administration step. Teacher list and
 detail responses never include it: a member teacher can reveal it on request
 from the institute page. Administrator responses never return it.
 
-The copy is encrypted with the installation Fernet key. The existing
+With PRIVACY_CREDENTIAL_ENCRYPTION=on, the copy uses the dedicated cred_institute
+DEK in KeyRing. Otherwise it uses the installation Fernet key. The existing
 ``personal_api_credentials`` volume is reused deliberately: no new deployment
 volume is required, and the managed key file is the one already used for personal
 API credentials. ``INSTITUTION_CREDENTIAL_KEY`` (or ``_FILE``) can override it
@@ -19,7 +20,7 @@ import os
 
 from cryptography.fernet import InvalidToken
 
-from .credential_storage import CredentialStorageError, CredentialStore
+from .credential_storage import CredentialStorageError, CredentialStore, dek_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -32,14 +33,15 @@ storage = CredentialStore("INSTITUTION", _directory)
 def remember(password: str, *, has_stored: bool) -> str | None:
     """Encrypt the display copy; ``None`` only when the installation key is unusable.
 
-    Saving the verifier is never blocked by this helper: the teacher keeps the
-    working credential flow, and the student page falls back to asking the
-    teacher when no readable display copy exists.
+    The legacy mode retains the display-copy fallback. With DEKs enabled,
+    an unusable key raises CredentialStorageError and aborts the save.
     """
     try:
         storage.prepare(lambda: has_stored)
         return storage.cipher().encrypt(password.encode("utf-8")).decode("ascii")
     except (CredentialStorageError, OSError, ValueError) as exc:
+        if dek_enabled():
+            raise CredentialStorageError(getattr(exc, "code", "notConfigured")) from None
         logger.warning(
             "Institute password display copy unavailable (%s)", type(exc).__name__
         )
@@ -58,6 +60,8 @@ def reveal(sealed: str | None) -> str | None:
         UnicodeDecodeError,
         ValueError,
     ) as exc:
+        if dek_enabled() or sealed.startswith("v1."):
+            raise CredentialStorageError(getattr(exc, "code", "notConfigured")) from None
         logger.warning(
             "Institute password display copy unreadable (%s)", type(exc).__name__
         )

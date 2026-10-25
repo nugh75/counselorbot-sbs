@@ -2861,3 +2861,12 @@ each administration step in the builder links to
 and in the teacher research view a plan linked to a class links back to
 `/docente/classi/{class}?tab=paths`. Breadcrumbs in the institute and class pages
 use lucide icons instead of text arrows. No schema change is needed.
+
+### Protezione delle credenziali delle connessioni
+
+L'installazione può attivare chiavi separate per API personali, connessione ChatGPT e copia
+visualizzabile della password istituto. Le connessioni salvate in precedenza restano leggibili.
+Senza attivazione resta valida la configurazione esistente; se una chiave della nuova protezione
+non è disponibile, l'operazione si interrompe e richiede il ripristino della chiave;
+una chiave perduta non viene rigenerata automaticamente per le credenziali già migrate.
+La procedura tecnica è in [P12](../docs/privacy/p12-chiavi-fernet.md).

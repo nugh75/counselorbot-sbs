@@ -1,3 +1,16 @@
+# Handoff 25 ottobre 2026: Privacy P12 — migrazione chiavi Fernet
+
+Agente `s72-p12-fernet`, task `a62aae25-ef78-4af6-b0a2-369de174421a`, branch `feature/privacy-p12-fernet-dek`, issue #583, [PR #586](https://github.com/nugh75/counselorbot-sbs/pull/586).
+
+- **Modifiche**: tre DEK KeyRing (`cred_api`, `cred_chatgpt`, `cred_institute`), lettura duale Fernet/AES-GCM, nuove scritture DEK con `PRIVACY_CREDENTIAL_ENCRYPTION=on`, default Fernet compatibile. Nessuna ricreazione silenziosa di DEK perse; errore istituto 503 con solo codice. Vincolo `privacy_keys` aggiornato su entrambi i DB.
+- **Migrazione**: `python -m backend.privacy.credential_migration --apply --batch-size 100`, offline, idempotente, commit per lotto, nessun segreto in output. Rotazione indipendente e rewrap KEK P5.
+- **Verifiche**: SQLite 98 test correlati + 5 aggiuntivi; Postgres 104 + 3 passati; immagine Docker ricompilata e 34 test P12 SQLite passati con rete disabilitata. Zero nuove regressioni. SQL portability OK; guidance aggiornata.
+- **Integrazione P9 (#585)**: merge di `origin/main`, mantenute entrambe le sezioni P9/P12 e le migrazioni in `backend/main.py`; 59 test P12/P9 passati su ciascuno dei due database e altri 59 nell’immagine Docker ricompilata; guidance e portabilità SQL OK.
+- **Procedura**: [P12](docs/privacy/p12-chiavi-fernet.md); [handoff vivo](docs/handoff/feature-privacy-p12-fernet-dek.md). Prima dell'attivazione servono KEK protetta, kit di recupero verificato e backup delle vecchie chiavi. Non rimuoverle finché servono a righe o backup trattenuti.
+- **Operazioni**: nessun deploy, sudo o processo dev avviato; produzione invariata. Per questa versione basta lo switch off per tornare a scrivere Fernet; il rollback al codice precedente richiede backup pre-migrazione coerenti.
+
+---
+
 # Handoff 25 ottobre 2026: Privacy P9 — documenti, finalità e consensi backend
 
 Agente `s71-p9-consent`, task `bb0808ff-975f-4966-96b2-d2a985c60b7d`, branch `feature/privacy-p9-consent`, issue #582, milestone Privacy Layer (GDPR), [PR #585](https://github.com/nugh75/counselorbot-sbs/pull/585).

@@ -1,7 +1,7 @@
 """Account-owned AI connections, separate from environment-owned system keys."""
 import json
 
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.fernet import InvalidToken
 from sqlalchemy import text
 
 from . import models
@@ -27,8 +27,9 @@ class PersonalAPIError(ValueError):
         super().__init__(message)
 
 
-def cipher() -> Fernet:
+def cipher():
     try:
+        storage.check_ready()
         return storage.cipher()
     except CredentialStorageError as exc:
         raise PersonalAPIError("Personal API credential storage is unavailable", exc.code) from None
@@ -83,12 +84,15 @@ def encrypt_key(username: str, provider: str, key: str, connection_id: str | Non
     if connection_id:
         data["connection_id"] = connection_id
     payload = json.dumps(data)
-    return cipher().encrypt(payload.encode()).decode()
+    try:
+        return storage.cipher().encrypt(payload.encode()).decode()
+    except CredentialStorageError as exc:
+        raise PersonalAPIError("Personal API credential storage is unavailable", exc.code) from None
 
 
 def decrypt_key(row) -> str:
     try:
-        payload = json.loads(cipher().decrypt(row.encrypted_key.encode()))
+        payload = json.loads(storage.cipher().decrypt(row.encrypted_key.encode()))
         if payload["username"] != row.username or payload["provider"] != row.provider:
             raise ValueError("Credential owner mismatch")
         if "connection_id" in payload and payload["connection_id"] != getattr(row, "id", None):
@@ -97,8 +101,10 @@ def decrypt_key(row) -> str:
         if not isinstance(key, str) or not key:
             raise ValueError("Empty credential")
         return key
-    except (InvalidToken, ValueError, KeyError, TypeError) as exc:
-        raise PersonalAPIError("Personal API credential cannot be read; save the key again") from exc
+    except CredentialStorageError as exc:
+        raise PersonalAPIError("Personal API credential storage is unavailable", exc.code) from None
+    except (InvalidToken, ValueError, KeyError, TypeError):
+        raise PersonalAPIError("Personal API credential cannot be read; save the key again") from None
 
 
 def class_allows(db, username):

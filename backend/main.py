@@ -12,7 +12,8 @@ from .log_privacy import install_log_redaction
 
 install_log_redaction()
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import models, auth, database
@@ -244,6 +245,7 @@ import_module("backend.migrations.20261022_meeting_attendance_mode").migrate(dat
 import_module("backend.migrations.20261022_class_path_planned_day").migrate(database.engine)
 import_module("backend.migrations.20261024_log_email_blind_index").migrate(database.engine)
 import_module("backend.migrations.20261025_teacher_student_grants").migrate(database.engine)
+import_module("backend.migrations.20261025_credential_deks").migrate(database.engine)
 import_module("backend.migrations.20261025_privacy_consent").migrate(database.engine)
 # SQLite: i CHECK di un file creato da una versione precedente seguono il modello (ADR-0003 §3.4).
 from .sqlite_schema import sync_sqlite_check_constraints
@@ -264,6 +266,8 @@ async def lifespan(app: FastAPI):
     if _field_crypto.enabled():
         # P11: keys are created now, outside any write transaction (SQLite would lock on first use).
         _field_crypto.ensure_keys()
+    from .credential_storage import ensure_keys as _ensure_credential_keys
+    _ensure_credential_keys()
     asyncio.create_task(_memory_cleanup_loop())
     asyncio.create_task(_log_retention_loop())
     # Carica i flag PII dalla config (default attivi).
@@ -2142,6 +2146,15 @@ app.include_router(assignments_routes.router)
 app.include_router(assignment_work_routes.router)
 app.include_router(frozen_sessions_routes.router)
 app.include_router(class_access_routes.router)
+from .credential_storage import CredentialStorageError
+
+
+@app.exception_handler(CredentialStorageError)
+async def credential_storage_error_handler(request: Request, exc: CredentialStorageError):
+    return JSONResponse(status_code=503, content={"detail": "privacy.errors.credential_" + exc.code},
+                        headers={"Cache-Control": "no-store"})
+
+
 app.add_exception_handler(ToolAccessDenied, tool_access_denied_handler)
 app.add_exception_handler(CounselorAccessDenied, counselor_access_denied_handler)
 app.include_router(idea_map_routes.router)

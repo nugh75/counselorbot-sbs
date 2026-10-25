@@ -144,8 +144,8 @@ def test_purposes_use_separate_keys_and_cannot_be_swapped():
     with artifact_session() as db:
         ring = keys.KeyRing(db, crypto.generate_key())
         ids = {purpose: ring.active(purpose)[0] for purpose in keys.DATA_PURPOSES + keys.ROOT_PURPOSES}
-        assert len(set(ids.values())) == 6 and ids["pid"] == "pid" and ids["index"] == "index"
-        assert len({ring.active(purpose)[1] for purpose in ids}) == 6
+        assert len(set(ids.values())) == len(keys.DATA_PURPOSES + keys.ROOT_PURPOSES) and ids["pid"] == "pid" and ids["index"] == "index"
+        assert len({ring.active(purpose)[1] for purpose in ids}) == len(ids)
         sealed = ring.encrypt(b"x", FIELD, purpose="mapping")
         with pytest.raises(IntegrityError):
             ring.decrypt(sealed, FIELD, purpose="content")
