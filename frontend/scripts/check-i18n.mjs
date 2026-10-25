@@ -199,6 +199,10 @@ function normalized(text) {
     return text.replace(/\s+/g, ' ').trim();
 }
 
+// `setError('networkError')` salva un codice di stato, non un testo: la frase
+// visibile arriva dal dizionario del componente (`i18n-class-council.ts`).
+const STATE_CODE = /^[a-z][a-z0-9]*(?:[A-Z][A-Za-z0-9]*)+$/;
+
 for (const file of sourceFiles(sourceRoot)) {
     const relative = path.relative(sourceRoot, file);
     const source = sourceFile(file, file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
@@ -218,7 +222,7 @@ for (const file of sourceFiles(sourceRoot)) {
                 const argument = node.arguments[0];
                 if (argument && (ts.isStringLiteral(argument) || ts.isNoSubstitutionTemplateLiteral(argument))) {
                     const text = normalized(argument.text);
-                    if (text && /[A-Za-zÀ-ÿ]/.test(text)) {
+                    if (text && /[A-Za-zÀ-ÿ]/.test(text) && !STATE_CODE.test(text)) {
                         errors.push(`${relative}:${lineOf(source, node)} hard-coded user feedback: ${text}`);
                     }
                 }
