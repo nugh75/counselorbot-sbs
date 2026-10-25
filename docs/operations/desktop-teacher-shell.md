@@ -85,12 +85,12 @@ esegue il packaging degli installer su una matrice a 4 runner:
 - Linux `.deb` (`ubuntu-22.04`)
 
 Per ogni installer vengono calcolati i checksum SHA-256 (`.sha256`) e caricati
-insieme ai bundle negli artifact della build (`teacher-<platform>`). Gli installer
-sono sperimentali e non firmati. Pubblicazione nella Release, `latest.json` e
-firma restano da fare (resto di F1-15, updater F1-16).
+insieme ai bundle negli artifact della build (`teacher-<platform>`).
+Gli aggiornamenti automatici (`latest.json` e `latest-beta.json`) e la firma
+degli artefatti sono gestiti dall'updater F1-16.
 
 ```sh
-python -m pytest -q desktop/teacher/sidecar/test_server.py backend/tests/test_shell_contract.py
+python -m pytest -q desktop/teacher/sidecar/test_server.py backend/tests/test_shell_contract.py desktop/teacher/scripts/test_generate_update_manifest.py
 node --test desktop/teacher/sidecar/server-wrapper.test.js
 cargo test --locked --manifest-path desktop/teacher/src-tauri/Cargo.toml
 bash desktop/teacher/scripts/check-lifecycle.sh /percorso/counselorbot-teacher
@@ -127,8 +127,65 @@ usare i PID del report e il lancio successivo sulla stessa cartella di prova.
 - Il pannello apre l'URL locale senza link docente monouso: il backend F1-06
   espone `POST /internal/local-auth/teacher-link` e `/local-auth/redeem`, ma
   la chiamata del guscio e la pagina `/accesso-locale` restano da collegare.
-  F1-08 gestisce il portachiavi e F1-15 la matrice CI di packaging DMG/NSIS/deb
-  con checksum SHA-256; Release, firma e updater (F1-16) restano separati.
+  F1-08 gestisce il portachiavi, F1-15 la matrice CI di packaging DMG/NSIS/deb
+  con checksum SHA-256 e F1-16 l'updater con backup preventivo SQLite.
+
+## Aggiornamenti automatici e backup SQLite preventivo (F1-16)
+
+Il guscio desktop integra `tauri-plugin-updater` per la verifica e l'applicazione
+degli aggiornamenti dell'applicazione docente.
+
+### Canali di rilascio
+
+Sono supportati due canali (memorizzati in `config/shell.json` alla voce `updater_channel`):
+- `stable` (predefinito): punta a `https://github.com/nugh75/counselorbot-sbs/releases/latest/download/latest.json`.
+- `beta`: punta a `https://github.com/nugh75/counselorbot-sbs/releases/download/beta/latest-beta.json`.
+
+L'URL dell'endpoint può essere forzato a runtime tramite la variabile d'ambiente `COUNSELORBOT_UPDATER_URL`.
+
+### Firma degli aggiornamenti e configurazione CI
+
+Gli aggiornamenti distribuiti tramite l'updater richiedono la firma digitale Minisign.
+Per generare la coppia di chiavi:
+
+```sh
+npx @tauri-apps/cli signer generate -w ~/.tauri/counselorbot.key
+```
+
+- **Chiave pubblica**: inserita nella configurazione `plugins.updater.pubkey` in `desktop/teacher/src-tauri/tauri.conf.json`.
+- **Chiave privata**: deve essere conservata esclusivamente tra i **GitHub Secrets** del repository come `TAURI_SIGNING_PRIVATE_KEY` (ed eventuale password `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`). **Non committare mai la chiave privata nel repository**.
+- **Comportamento CI**: Se il secret `TAURI_SIGNING_PRIVATE_KEY` non è presente nel repository, la CI stampa un avviso chiaro nel log del job (`::warning::TAURI_SIGNING_PRIVATE_KEY non configurata...`) e compila gli installer saltando la firma e la generazione degli archivi dell'updater, senza fallire silenziosamente né bloccare la pipeline.
+- **Manifest CI**: Il job `manifest` nella workflow `.github/workflows/desktop-teacher.yml` esegue `desktop/teacher/scripts/generate-update-manifest.py` raccogliendo i bundle firmati e generando `latest.json` e `latest-beta.json`.
+
+### Backup automatico preventivo del database SQLite
+
+Prima di scaricare o applicare qualsiasi aggiornamento, il guscio invoca `POST /internal/backup` verso il backend (oppure avvia il processo sidecar con `--backup` se il backend è fermo):
+- Utilizza il meccanismo di snapshot online consistente e verificato con `PRAGMA integrity_check` definito in `backend/sqlite_backup.py` (F1-05j).
+- Il backup viene salvato nella cartella `backups/` della cartella dati utente (`layout.json`).
+- **Se il backup fallisce per qualsiasi motivo (es. disco pieno, fallimento integrity check), l'aggiornamento viene abortito immediatamente e non viene applicato alcun pacchetto.**
+
+### Procedura di Rollback e Ripristino
+
+In caso di problemi con una nuova versione dell'applicazione:
+
+1. **Rollback dell'eseguibile dell'app**:
+   - Scaricare l'installer della versione precedente dalle GitHub Releases (file `.dmg` su macOS, installer `.exe` su Windows, pacchetto `.deb` su Linux).
+   - Reinstallare la versione precedente dell'applicazione sovrascrivendo l'applicazione corrente.
+
+2. **Ripristino del database SQLite (se migrato o corrotto)**:
+   - Chiudere completamente l'applicazione CounselorBot Docente.
+   - Individuare l'ultimo backup valido nella cartella `backups/` del profilo utente:
+     - Linux: `~/.local/share/org.ai4educ.counselorbot.teacher/backups/`
+     - macOS: `~/Library/Application Support/org.ai4educ.counselorbot.teacher/backups/`
+     - Windows: `%LOCALAPPDATA%\org.ai4educ.counselorbot.teacher\backups\`
+   - I file di backup hanno formato `sqlite-<identificatore>-<dataUTC>-<uuid>.sqlite3`.
+   - Utilizzare la procedura di ripristino verificata offline descritta in [`sqlite-backups.md`](sqlite-backups.md):
+     ```python
+     from backend.sqlite_backup import restore_backup
+     restore_backup("/percorso/.../backups/sqlite-....sqlite3", database_stopped=True)
+     ```
+   - In alternativa (ripristino manuale a freddo): verificare con `sqlite3 file "PRAGMA integrity_check"` che lo snapshot restituisca `ok`, quindi copiare il file sovrascrivendo `db/counselorbot.sqlite3` e rimuovere eventuali file residui `db/counselorbot.sqlite3-wal` e `db/counselorbot.sqlite3-shm`.
+   - Riavviare CounselorBot Docente.
 
 La PR resta in bozza: revisione coordinata dal Timoniere obbligatoria dopo
 l'ultimo codice. Una revisione precedente non copre le modifiche successive.

@@ -1,3 +1,35 @@
+# Handoff 25 ottobre 2026: F1-16 — Updater desktop e backup SQLite pre-aggiornamento
+
+Agente `s70-f1-16-updater` (subagente per Timoniere), task `168a1a90-9467-4cfd-9020-2933889107c5`, branch `feature/f1-16-updater-backup`, issue #580.
+
+- **Obiettivo**: integrazione del plugin di auto-update Tauri v2 (`tauri-plugin-updater`) con canali `stable` e `beta`, backup SQLite verificato automatico (online e offline) obbligatorio prima di applicare qualsiasi aggiornamento, generazione manifest CI (`latest.json` e `latest-beta.json`), firma condizionale con fallback a warning su segreto mancante e documentazione della procedura di rollback e ripristino.
+- **Modifiche principali**:
+  - `desktop/teacher/src-tauri/Cargo.toml`: aggiunta dipendenza `tauri-plugin-updater = "2"`.
+  - `desktop/teacher/src-tauri/tauri.conf.json`: configurato plugin updater con endpoint predefinito e chiave pubblica Minisign.
+  - `desktop/teacher/src-tauri/capabilities/default.json`: aggiunta capability `updater:default`.
+  - `backend/sqlite_backup.py`: supporto per `COUNSELORBOT_BACKUP_DIR` per reindirizzare la cartella backup se specificata (mantenendo default `<DATA_DIR>/backups`).
+  - `backend/shell_internal.py`: aggiunta rotta `POST /internal/backup` protetta da header `X-CounselorBot-Shell-Secret`.
+  - `desktop/teacher/sidecar/server.py`: aggiunto flag CLI `--backup` per eseguire backup offline coerente via sidecar e terminare con exit code 0.
+  - `desktop/teacher/src-tauri/src/supervisor.rs`: implementato comando `BackupDb` su `supervisor::Handle`, che delega alla rotta `/internal/backup` se il backend è attivo o al processo sidecar `--backup` se il backend è fermo.
+  - `desktop/teacher/src-tauri/src/updater.rs`: nuovo modulo per gestione canali (`stable`/`beta`), verifica aggiornamenti (`check_for_updates`) e installazione aggiornamenti (`apply_update`). Tassativo: esecuzione preliminare di `supervisor.backup_db()`; in caso di errore, l'aggiornamento viene abortito senza scaricare né installare nulla.
+  - `desktop/teacher/src-tauri/src/app.rs`: registrazione plugin updater e comandi IPC (`get_updater_channel`, `set_updater_channel`, `check_for_updates`, `apply_update`).
+  - `desktop/teacher/src/index.html` & `panel.js`: interfaccia utente nel pannello di controllo con selettore canale, pulsanti di verifica e aggiornamento e log di stato con feedback di backup riuscito.
+  - `desktop/teacher/scripts/generate-update-manifest.py`: script Python per generare i file `latest.json` e `latest-beta.json` da caricare nelle Release GitHub.
+  - `desktop/teacher/scripts/test_generate_update_manifest.py`: unit test pytest per la generazione dei manifest.
+  - `.github/workflows/desktop-teacher.yml`: firma Minisign condizionale (warning su segreto mancante, disabilitazione artefatti updater per evitare fallimento build) e nuovo job `manifest` per generare i manifest e allegarli alla release / artifact.
+  - `docs/operations/desktop-teacher-shell.md`: documentazione operativa completa di canali, chiavi Minisign e procedura di rollback e ripristino passo-passo.
+  - `docs/architecture/desktop-apps-plan.md`: segnato F1-16 come completato (✅).
+- **Test eseguiti**:
+  - `pytest`: 68 test passati (`test_sqlite_backup.py`, `test_shell_contract.py`, `sidecar/test_server.py`)
+  - `pytest`: 3 test passati (`desktop/teacher/scripts/test_generate_update_manifest.py`)
+  - `node --test desktop/teacher/sidecar/server-wrapper.test.js`: 4 test passati
+  - `cargo check --manifest-path desktop/teacher/src-tauri/Cargo.toml`: exit 0
+  - `cargo test --manifest-path desktop/teacher/src-tauri/Cargo.toml`: 41 test passati, 0 falliti
+  - `make guidance-refresh` e `make guidance-check`: eseguiti
+- **Note operative**: nessun deploy o comando sudo. La build degli installer e la firma avvengono in CI.
+
+---
+
 # Handoff 24 ottobre 2026: F1-15 — Matrice CI build e packaging desktop (DMG ARM64/Intel, Windows NSIS, Linux deb)
 
 Agenti `s65-f115-agy` (Gemini, interrotto per quota) e `s67-f1-15-ci-matrix` (Claude), task `a3711ce4-4f3b-404e-85fa-91adc4794c9a`, branch `feature/f1-15-ci-desktop-matrix`.
