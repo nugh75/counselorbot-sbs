@@ -9,6 +9,7 @@ Le misure descritte non rendono da sole il trattamento conforme al GDPR.
 | [02-progettazione.md](02-progettazione.md) | confini di fiducia, contratti del Privacy Layer, motore PII locale, pseudonimi/HMAC/AES-256-GCM/Argon2id, chiavi, autorizzazioni e matrice ruoli, gateway AI fail-closed, informative e consensi versionati, threat model, migrazione reversibile |
 | [03-piano-blocchi.md](03-piano-blocchi.md) | blocchi P0–P17 con Definition of Done, dipendenze, aree toccate, tier, parallelismo e collisioni con i compiti desktop |
 | [04-decisioni-titolare-dpo.md](04-decisioni-titolare-dpo.md) | decisioni D1–D14 per titolare/DPO/consulente, documenti da produrre, fonti normative e stato della verifica |
+| [p9-consensi.md](p9-consensi.md) | P9: documenti versionati, finalità disattivate con base undefined, API scelte e revoca, grant taccuino P7, eventi legacy non verificati e limiti P0/P10 |
 | [p13-logs-diagnostica.md](p13-logs-diagnostica.md) | redazione distruttiva fail-closed, gazetteer nei log, download backend risanitizzati e ZIP desktop offline senza testo libero |
 | [p6ac-network-egress.md](p6ac-network-egress.md) | correzioni P6a-c operative: immagini solo su host fidati, classificazione URL, lettura Edge filtrata e preferenza API per Piper locale |
 | [p6-gateway.md](p6-gateway.md) | P6: `AIGateway` unico a 7 passi fail-closed, modalità `strict`/`transitional`, migrazione dei punti di uscita per `kind`, rimozione di `external_pii_redact=false`, test statico anti-bypass ed E2E su trasporto HTTP simulato |

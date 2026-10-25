@@ -98,8 +98,9 @@ def is_local(target: Target) -> bool:
     return policy.is_trusted_local(host)
 
 
-def _no_purposes(ctx: PrivacyContext) -> tuple[PurposePolicy | None, bool]:
-    return None, False  # P9: no configured purpose yet, the legal basis is undefined
+def _resolve_purposes(ctx: PrivacyContext) -> tuple[PurposePolicy | None, bool]:
+    from .consent import resolve_context_policy
+    return resolve_context_policy(ctx)
 
 
 def _no_pid(subject: str) -> str:
@@ -168,7 +169,7 @@ class AIGateway:
         self.text_filter = text_filter
         self.public_content = public_content is True
         self.mode = mode if mode in MODES else globals()["mode"]()
-        self.purposes = purposes or _no_purposes
+        self.purposes = purposes or _resolve_purposes
         self.authorize = authorize or policy.authorize_data_access
         self.audit = audit or policy.record_privacy_event
         self.pid_of = pid_of or _no_pid

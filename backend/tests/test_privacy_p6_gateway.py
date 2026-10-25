@@ -61,7 +61,7 @@ def strict(monkeypatch):
     """Every step configured and allowed; events captured."""
     events = []
     monkeypatch.setenv("PRIVACY_GATEWAY_MODE", "strict")
-    monkeypatch.setattr(gw, "_no_purposes", lambda ctx: (ACTIVE, False))
+    monkeypatch.setattr(gw, "_resolve_purposes", lambda ctx: (ACTIVE, False))
     monkeypatch.setattr(gw, "_no_pid", lambda subject: "pid-" + str(len(subject)))
     monkeypatch.setattr(policy, "authorize_data_access", lambda *a: t.Decision(True, "ok"))
     monkeypatch.setattr(policy, "record_privacy_event", events.append)
@@ -72,6 +72,7 @@ def strict(monkeypatch):
 
 @pytest.fixture
 def transitional(monkeypatch):
+    monkeypatch.setattr(gw, "_resolve_purposes", lambda ctx: (None, False))
     monkeypatch.setenv("PRIVACY_GATEWAY_MODE", "transitional")
     policy.configure_engine(None)
     return {"pii_ner_enabled": "false"}
