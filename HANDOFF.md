@@ -1,3 +1,17 @@
+# Handoff 25 ottobre 2026: Privacy P9 — documenti, finalità e consensi backend
+
+Agente `s71-p9-consent`, task `bb0808ff-975f-4966-96b2-d2a985c60b7d`, branch `feature/privacy-p9-consent`, issue #582, milestone Privacy Layer (GDPR), [PR #585](https://github.com/nugh75/counselorbot-sbs/pull/585).
+
+- **Modifiche**: `privacy_documents` e `privacy_purposes`, migrazione SQLite/Postgres idempotente, lingua documento negli eventi P8, `backend/privacy/consent.py`, estensione del router privacy esistente. Scelte/versioni/scadenze, prese visione distinte, revoche atomiche e cronologia propria; nessun testo libero negli eventi.
+- **P7/P6**: grant `consent` separato per taccuino/docente/classe, revoca immediata, controllo della versione a ogni lettura, sync istituzionali che non riattivano consensi; resolver P9 nel gateway P6, default transitional invariato.
+- **Legacy**: `survey.py` cambia solo per registrare osservazioni delle vecchie caselle. Il gradimento non invia il booleano: evento esplicitamente non verificato/unversioned con PID casuale; nessuna osservazione legacy abilita P9.
+- **Limiti**: finalità iniziali `undefined`/inattive, documenti non pubblicati automaticamente, testi **[DA VALIDARE]**, nessuna dichiarazione di conformità. P0 e UI P10 restano necessari. API e procedura operatore in `docs/privacy/p9-consensi.md`.
+- **Verifiche**: 303 test SQLite (P9/P7/P6/core/egress), 33 Postgres (P9/P7), portabilità SQL, compilazione Python e guidance-refresh/check passati. Build Docker isolata `counselorbot-p9-backend:test` e 25 test P9 nell’immagine Python 3.10 passati.
+- **Bug registrato**: Diario `8ea6215b-4410-4fe0-a85f-ba0b12ed15b3` (confermato, sync non collegato): `xact_lock(Session)` dopo una scrittura può aprire un secondo writer SQLite. P9 usa la connessione corrente; helper globale non modificato.
+- **Operazioni**: nessun deploy, sudo o processo dev avviato; database/container di prova isolati da produzione e fermati dopo le verifiche.
+
+---
+
 # Handoff 25 ottobre 2026: F1-16 — Updater desktop e backup SQLite pre-aggiornamento
 
 Agente `s70-f1-16-updater` (subagente per Timoniere), task `168a1a90-9467-4cfd-9020-2933889107c5`, branch `feature/f1-16-updater-backup`, issue #580.
