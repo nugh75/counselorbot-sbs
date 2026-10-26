@@ -165,6 +165,9 @@ def test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next():
         assert await asyncio.to_thread(closed.wait, 1)
         await asyncio.gather(*sse._closing)
         assert advances == [1]
+        # gather returns at once for a task that already finished; its discard
+        # callback is still queued and runs on the next loop turn.
+        await asyncio.sleep(0)
         assert not sse._closing
     asyncio.run(asyncio.wait_for(check(), 3))
 
