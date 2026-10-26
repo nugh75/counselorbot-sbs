@@ -531,7 +531,7 @@ impl Supervisor {
 
     fn frontend_spec(&self, port: u16, backend_port: u16) -> Spec {
         let frontend_dir = self.config.resources.join("frontend");
-        Spec {
+        let mut spec = Spec {
             name: "frontend",
             program: self.config.resources.join("node").join(format!("node{EXE_SUFFIX}")),
             args: vec![frontend_dir.join("server-wrapper.js").into_os_string(), "--lifeline".into()],
@@ -549,7 +549,14 @@ impl Supervisor {
             cwd: frontend_dir,
             log_file: "frontend.log",
             lifeline: true,
+        };
+        // L'origine pubblica arriva anche al frontend: i link e i QR condivisi
+        // con gli studenti (iscrizione, consiglio, raccolte) la pubblicano in
+        // /runtime-config.js e non restano sull'indirizzo locale del PC.
+        if let Some(origin) = &self.status.lock().unwrap().tunnel_url {
+            spec.env.push(("COUNSELORBOT_PUBLIC_ORIGIN".into(), origin.clone()));
         }
+        spec
     }
 
     /// Saved port if free (a stable bookmark for the teacher), else a new one, saved.
@@ -1319,6 +1326,27 @@ mod tests {
             .as_deref(),
             Some("https://fixture.trycloudflare.com")
         );
+        // Il frontend pubblica a sua volta l'origine del tunnel: i link condivisi
+        // con gli studenti (iscrizione, consiglio) non usano l'indirizzo locale.
+        let frontend = supervisor.frontend_spec(32104, 32103);
+        assert_eq!(
+            env(&frontend, "COUNSELORBOT_PUBLIC_ORIGIN").as_deref(),
+            Some("https://fixture.trycloudflare.com")
+        );
+        assert_eq!(env(&frontend, "COUNSELORBOT_AUTH_PROVIDER").as_deref(), Some("local"));
+        // Riavvio del tunnel con nuovo URL: l'ambiente del successivo riavvio
+        // dei sidecar porta l'origine aggiornata, mai quella precedente.
+        supervisor.status.lock().unwrap().tunnel_url = Some("https://brave-lion-example.trycloudflare.com".into());
+        assert_eq!(
+            env(
+                &supervisor.frontend_spec(32104, 32103),
+                "COUNSELORBOT_PUBLIC_ORIGIN"
+            )
+            .as_deref(),
+            Some("https://brave-lion-example.trycloudflare.com")
+        );
+        supervisor.status.lock().unwrap().tunnel_url = None;
+        assert!(env(&supervisor.frontend_spec(32104, 32103), "COUNSELORBOT_PUBLIC_ORIGIN").is_none());
         std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
     }
 

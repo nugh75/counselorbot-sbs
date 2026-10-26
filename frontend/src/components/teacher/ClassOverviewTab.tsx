@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
+import { publicOrigin } from '@/lib/runtime-config';
 import { classSettingsText, type classSettingsTexts } from '@/lib/i18n-class-settings';
 import { teacherAreaText } from '@/lib/i18n-teacher-area';
 import { learningText } from '@/lib/i18n-assignment-work';
@@ -73,7 +74,6 @@ export function ClassOverviewTab({
     const l = (key: TextKey) => classSettingsText(lang, key);
 
     // Clipboard and platform info
-    const [origin, setOrigin] = useState('');
     const [botUsername, setBotUsername] = useState('');
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -106,13 +106,7 @@ export function ClassOverviewTab({
     const [deleteError, setDeleteError] = useState('');
     const deleteDialogRef = useRef<HTMLDialogElement>(null);
 
-    // Initial setup: origin, bot info, institutions, shares, users
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            setOrigin(window.location.origin);
-        }
-    }, []);
-
+    // Initial setup: bot info, institutions, shares, users
     useEffect(() => {
         let active = true;
         apiFetch('/api/telegram/bot-info')
@@ -372,7 +366,8 @@ export function ClassOverviewTab({
         tool => tool.admin_enabled && !settings.disabled_tool_keys.includes(tool.key)
     ).length;
 
-    const webLink = origin ? `${origin}/gruppo?g=${group.code}` : '';
+    const shareOrigin = publicOrigin();
+    const webLink = shareOrigin ? `${shareOrigin}/gruppo?g=${group.code}` : '';
     const telegramLink = botUsername ? `https://t.me/${botUsername}?start=g_${group.code}` : '';
 
     return (
@@ -501,7 +496,7 @@ export function ClassOverviewTab({
 
                     {/* Link di iscrizione Web & Telegram */}
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {origin && (
+                        {webLink && (
                             <div className="space-y-1.5">
                                 <label htmlFor="overview-weblink" className="text-xs font-semibold text-slate-700">
                                     {l('webLink')}
