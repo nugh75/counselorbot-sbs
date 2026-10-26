@@ -256,12 +256,15 @@ class SQLiteToPostgresConverter:
 
                 columns = [desc[0] for desc in sqlite_conn.execute(f'SELECT * FROM "{table}" LIMIT 0').description]
 
-                # Inserisci in PostgreSQL (batch)
-                placeholders = ", ".join(["%s"] * len(columns))
+                # Inserisci in PostgreSQL con parametri nominati SQLAlchemy.
+                placeholders = ", ".join(f":value_{index}" for index in range(len(columns)))
                 insert_sql = f'INSERT INTO "{table}" ({", ".join(columns)}) VALUES ({placeholders})'
 
                 for row in rows:
-                    values = [self._convert_value(v) for v in row]
+                    values = {
+                        f"value_{index}": self._convert_value(value)
+                        for index, value in enumerate(row)
+                    }
                     conn.execute(text(insert_sql), values)
 
                 copied += len(rows)
@@ -285,14 +288,20 @@ class SQLiteToPostgresConverter:
             "checks": [],
         }
 
-        for table in inspector.get_table_names():
-            # Conta righe sorgente
-            try:
-                src_count = sqlite_conn.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
-            except sqlite3.OperationalError:
-                src_count = 0
+        pg_tables = set(inspector.get_table_names())
+        source_tables = [
+            row[0]
+            for row in sqlite_conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+            )
+        ]
+        for table in source_tables:
+            if table not in pg_tables:
+                continue
+            # Conta righe sorgente e destinazione delle sole tabelle migrate:
+            # seed o receipt tecnici già presenti nel target non fanno parte del confronto.
+            src_count = sqlite_conn.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
 
-            # Conta righe destinazione
             with self.target_engine.connect() as conn:
                 tgt_count = conn.execute(text(f'SELECT COUNT(*) FROM "{table}"')).scalar()
 

@@ -89,11 +89,14 @@ def postgres_engine():
                 group_id INTEGER REFERENCES groups(id)
             )
         """))
+        conn.execute(text("CREATE TABLE target_only_seed (id INTEGER PRIMARY KEY, name TEXT)"))
+        conn.execute(text("INSERT INTO target_only_seed (id, name) VALUES (1, 'seed')"))
 
     yield engine
 
     # Cleanup
     with engine.begin() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS target_only_seed CASCADE"))
         conn.execute(text("DROP TABLE IF EXISTS memberships CASCADE"))
         conn.execute(text("DROP TABLE IF EXISTS groups CASCADE"))
         conn.execute(text("DROP TABLE IF EXISTS users CASCADE"))
