@@ -2048,7 +2048,10 @@ Le build desktop in preparazione per `2.0.0` includono PostgreSQL 15.12
 incorporato (distribuzione 15.12.1), senza richiedere un server installato a
 parte. Le nuove cartelle dati hanno layout 2 e health con contratto 2; i vecchi
 profili SQLite sono bloccati finché non sarà integrato l’upgrade assistito,
-per conservare i dati esistenti. macOS richiede la versione 15 o successiva.
+per conservare i dati esistenti. Il converter legacy è verificato separatamente
+su import e ripresa, confrontando i conteggi delle sole tabelle migrate senza
+confondere seed e receipt tecnici; non costituisce ancora un upgrade guidato.
+macOS richiede la versione 15 o successiva.
 La finestra usa il portachiavi del sistema; i soli test headless usano profili
 isolati e credenziali sintetiche. Le build riutilizzano il backend e il frontend
 dell’applicazione web e verificano anche schema, seed, riavvio e arresto del

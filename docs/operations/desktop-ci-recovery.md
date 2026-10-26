@@ -23,6 +23,12 @@
 - Il gestore Rust non compilava, non creava ruolo/database applicativo e
   passava a initdb una PGDATA contenente il file password. Manifest, bootstrap,
   file temporaneo privato e conversioni degli errori sono stati corretti.
+  Sui runner Windows elevati le prove native usano il token ristretto di un
+  utente normale e ACL temporanee sulle sole cartelle di test: `postgres`
+  rifiuta correttamente il token amministrativo, mentre l'app reale resta non
+  elevata e continua ad avviarlo direttamente come figlio sorvegliato.
+- Il converter SQLite → PostgreSQL passa ora dizionari di parametri nominati a
+  SQLAlchemy, invece di liste posizionali non accettate da `TextClause`.
 - L'ambiente del backend sovrascriveva l'URL PostgreSQL con quello SQLite.
   Il guscio ora applica l'URL effettivo dopo le variabili della cartella dati.
 - I controlli lifecycle richiedevano ancora contratto 1/SQLite; ora verificano
