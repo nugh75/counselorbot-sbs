@@ -4324,3 +4324,10 @@ Stato e verifiche del ramo: [handoff dedicato](docs/handoff/feature-somministraz
 ## s11 — Builder dei piani operativi
 Passi autonomi, forum e incontri dentro il builder; PR [#595](https://github.com/nugh75/counselorbot-sbs/pull/595).
 Stato e verifiche del ramo: [handoff dedicato](docs/handoff/feature-piano-builder-interno.md).
+
+## Release v2.0.2 — preparazione 27 ottobre 2026
+
+Richiesta del proprietario: attendere i check e pubblicare la patch desktop.
+Versione allineata in tutti i metadati, senza aggiornare dipendenze; correzioni
+della PR #621 richieste nella build ufficiale. [Procedura e stato](docs/handoff/chore-release-2.0.2.md),
+[note di rilascio](docs/releases/v2.0.2.md). Nessun deploy di produzione.

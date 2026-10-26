@@ -3,6 +3,7 @@
 <!-- ai4educ:context-template v1.0 -->
 
 ## Quick Reference
+- **Patch desktop v2.0.2 (27/10/2026)**: versione allineata tra shell/backend/frontend, gestione degli errori di setup senza abort e inviti locali dalla sola sezione di abbinamento. Note e limiti: `docs/releases/v2.0.2.md`; procedura: `docs/operations/release.md`. La migrazione automatica SQLite non è inclusa.
 - **PostgreSQL desktop / ripristino CI (26/10/2026)**: runtime e converter sono su `main`; correzioni CI/runtime in `docs/operations/desktop-ci-recovery.md`. Nuove installazioni layout 2/contratto 2; pin PostgreSQL 15.12.1 (server 15.12), macOS minimo 15, Linux compilato su Ubuntu 22.04. Desktop/CI usano Python 3.12; Docker portable e relativa auth Console restano esclusi dal deploy. Upgrade assistito layout 1 e backup/restore PostgreSQL nell’updater restano da integrare: nessuna release per dati reali finché i gate di `docs/operations/postgresql-desktop-upgrade.md` non sono completi.
 - **Ciclo somministrazioni (s12)**: azioni Archivia/Ripristina e sostituzione atomica con nuova raccolta vuota, condivise da docente e admin; sostituzione del passo nei piani operativi con storico conservato; contratto e conservazione dati in `docs/operations/administration-lifecycle.md`, runner frontend isolato su 3162 in `docs/operations/live-dev-environment.md`.
 
