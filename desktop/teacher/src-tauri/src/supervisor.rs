@@ -414,9 +414,10 @@ impl Supervisor {
         env.extend(self.config.credentials.backend_env().map_err(|message| Failure::Fatal(message, None))?);
         // Bundled desktop startup must not load operator .env files.
         env.push(("PYTHON_DOTENV_DISABLED".into(), "1".into()));
-        if let Some(origin) = &self.status.lock().unwrap().tunnel_url {
-            env.push(("COUNSELORBOT_PUBLIC_ORIGIN".into(), origin.clone()));
-        }
+        // Se il tunnel non e' attivo, impostiamo una stringa vuota per evitare
+        // che il backend cada su valori locali.
+        let origin = self.status.lock().unwrap().tunnel_url.clone().unwrap_or_default();
+        env.push(("COUNSELORBOT_PUBLIC_ORIGIN".into(), origin));
         let native = self.config.resources.join("native").join("bin");
         if native.is_dir() {
             env.push(("NATIVE_BIN_DIR".into(), native.to_string_lossy().into_owned()));
@@ -553,9 +554,10 @@ impl Supervisor {
         // L'origine pubblica arriva anche al frontend: i link e i QR condivisi
         // con gli studenti (iscrizione, consiglio, raccolte) la pubblicano in
         // /runtime-config.js e non restano sull'indirizzo locale del PC.
-        if let Some(origin) = &self.status.lock().unwrap().tunnel_url {
-            spec.env.push(("COUNSELORBOT_PUBLIC_ORIGIN".into(), origin.clone()));
-        }
+        // Se il tunnel non e' attivo, impostiamo una stringa vuota per evitare
+        // che il frontend cada su window.location.origin (127.0.0.1).
+        let origin = self.status.lock().unwrap().tunnel_url.clone().unwrap_or_default();
+        spec.env.push(("COUNSELORBOT_PUBLIC_ORIGIN".into(), origin));
         spec
     }
 
