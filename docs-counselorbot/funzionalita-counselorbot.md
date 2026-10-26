@@ -143,13 +143,32 @@ quei blocchi saranno pronti. Non cambiano schermate né percorsi. Nessuna garanz
 
 Il backend P9 aggiunge documenti versionati, finalità e scelte privacy separate
 con revoca immediata. Le finalità iniziali restano inattive con base `undefined`;
-le informative e le decisioni del titolare/DPO sono **[DA VALIDARE]**. La UI
-privacy P10 resta da realizzare. Un consenso specifico alla condivisione del
-taccuino autorizza soltanto il docente e la classe scelti; la revoca non toglie
-l'accesso ai risultati autorizzato per la classe. Gli invii dai vecchi moduli di
-gradimento/somministrazione generano osservazioni privacy senza cambiare il
-flusso né abilitarne automaticamente le finalità. Contratto e limiti in
-[Privacy P9](../docs/privacy/p9-consensi.md).
+le informative e le decisioni del titolare/DPO sono **[DA VALIDARE]**. Un consenso
+specifico alla condivisione del taccuino autorizza soltanto il docente e la classe
+scelti; la revoca non toglie l'accesso ai risultati autorizzato per la classe. Gli
+invii dai vecchi moduli di gradimento/somministrazione generano osservazioni
+privacy senza cambiare il flusso né abilitarne automaticamente le finalità.
+Contratto e limiti in [Privacy P9](../docs/privacy/p9-consensi.md).
+
+La UI privacy P10 è disponibile alla pagina `/privacy`, raggiungibile dalla voce
+«Privacy e consensi» del menu account (anche per gli ospiti) e dall'intestazione
+delle aree personali:
+- ogni informativa versionata mostra titolo, versione, data, hash e il badge
+  **[DA VALIDARE]** in una finestra accessibile; nessun documento viene
+  pubblicato automaticamente;
+- le finalità sono interruttori separati che partono spenti: si può acconsentire,
+  rifiutare o revocare ogni scelta singolarmente, con l'esito riportato subito;
+- la condivisione del taccuino si concede per la classe e il docente scelti e si
+  revoca dalla stessa pagina; l'API restituisce il docente solo nelle scelte del
+  soggetto interessato, mentre la cronologia di audit conserva il solo target
+  pseudonimo `share:{classe}:{pseudonimo}`;
+- la cronologia personale elenca data, finalità, bersaglio e tipo di scelta, senza
+  testo libero digitato dal client;
+- testi, errori e stati sono tradotti nelle sei lingue attive
+  (`frontend/src/lib/i18n-privacy.ts`); i codici di errore dell'API diventano
+  messaggi comprensibili e i link dei documenti sono solo relativi o http(s).
+
+Il lavoro è descritto in [P10 — handoff](../docs/handoff/feature-privacy-p10-consent-ui.md).
 
 Il blocco P7 introduce il livello autorizzativo granulare tra docente, studente e
 amministratore (matrice §5.2 e §5.3 del Privacy Layer):

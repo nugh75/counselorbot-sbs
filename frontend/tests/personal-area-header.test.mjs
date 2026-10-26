@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
 import { personalAreaName, personalAreaText } from '../src/lib/i18n-personal-area.ts';
+import { PRIVACY_DICTS } from '../src/lib/i18n-privacy.ts';
 
 const origin = process.env.PERSONAL_HEADER_BASE_URL || 'http://127.0.0.1:3109';
 let browser;
@@ -25,7 +26,9 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
             assert.equal(await root.getAttribute('href'), '/profilo');
             assert.equal(await header.getByRole('button').count(), 0);
             assert.equal(await header.getByRole('navigation').count(), 0);
-            assert.equal(await header.getByRole('link').count(), 1);
+            assert.equal(await header.getByRole('link').count(), 2);
+            const privacy = header.getByRole('link', { name: PRIVACY_DICTS[lang]['privacy.title'], exact: true });
+            assert.equal(await privacy.getAttribute('href'), '/privacy');
             await root.focus();
             assert.equal(await root.evaluate(el => el === document.activeElement), true);
             for (const [width, height] of [[320, 740], [390, 740], [1440, 900], [844, 390]]) {

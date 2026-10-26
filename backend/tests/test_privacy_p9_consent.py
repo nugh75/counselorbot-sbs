@@ -285,6 +285,32 @@ def test_atomic_rollback_covers_event_and_grant():
         assert db.query(models.PrivacyEventRecord).count() == 0
 
 
+def test_api_sharing_choices_expose_teacher_for_self_service_revocation():
+    with artifact_session() as db:
+        doc, group = sharing(db)
+        choose_share(db, doc, group)
+        db.commit()
+        group_id = group.id
+        with client_for(db) as client:
+            choice = client.get("/privacy/choices").json()["choices"][0]
+            assert choice["purpose"] == "teacher_sharing"
+            assert choice["granted"] is True
+            assert choice["teacher_username"] == TEACHER.username
+            assert choice["group_id"] == group_id
+            assert choice["target"].startswith(f"share:{group_id}:")
+            assert TEACHER.username not in choice["target"]
+            response = client.post("/privacy/choices/teacher_sharing/revoke", json={
+                "teacher_username": choice["teacher_username"], "group_id": choice["group_id"]})
+            assert response.status_code == 200
+            after = client.get("/privacy/choices").json()
+            assert after["choices"][0]["granted"] is False
+            assert after["choices"][0]["teacher_username"] == TEACHER.username
+            assert after["choices"][0]["group_id"] == group_id
+            # The audit history keeps the pseudonymous target only.
+            assert "teacher_username" not in after["history"][0]
+            assert TEACHER.username not in str(after["history"][0])
+
+
 def test_api_current_documents_choices_withdrawal_and_no_client_text():
     with artifact_session() as db:
         purpose(db)
