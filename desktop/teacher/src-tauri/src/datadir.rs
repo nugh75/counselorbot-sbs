@@ -10,10 +10,14 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 pub const LAYOUT: u32 = 1;
+/// ADR-0004: layout 2 (PostgreSQL incorporato).
+pub const LAYOUT_POSTGRES: u32 = 2;
 pub const APP: &str = "teacher";
 
 const DIRS: &[&str] = &[
     "db",
+    "db/postgresql",      // ADR-0004 §3: PGDATA cluster proprietario
+    "migration",           // ADR-0004 §3: stato converter SQLite→PostgreSQL
     "uploads/portfolio",
     "uploads/tavolo",
     "uploads/tavolo-images",
@@ -26,6 +30,7 @@ const DIRS: &[&str] = &[
     "credentials",
     "logs",
     "backups",
+    "backups/postgresql",  // ADR-0004 §3: dump PostgreSQL
     "run",
     "config",
 ];

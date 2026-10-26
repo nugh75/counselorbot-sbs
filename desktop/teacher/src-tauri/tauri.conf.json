@@ -36,7 +36,8 @@
       "backend/": "backend/",
       "frontend/": "frontend/",
       "node/": "node/",
-      "cloudflared/": "cloudflared/"
+      "cloudflared/": "cloudflared/",
+      "postgresql/": "postgresql/"
     },
     "macOS": {
       "minimumSystemVersion": "13.0",

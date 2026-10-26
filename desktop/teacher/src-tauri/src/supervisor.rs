@@ -21,7 +21,10 @@ use crate::sidecar::{self, Exit, Proc, Spec};
 use crate::sleep::{SleepGuard, System};
 use crate::{health, logs, pids, platform};
 
-pub const DESKTOP_CONTRACT: u64 = 1;
+/// ADR-0002/ADR-0004: contratto guscio ↔ sidecar.
+/// 1 = SQLite (layout 1), 2 = PostgreSQL (layout 2).
+pub const DESKTOP_CONTRACT_LEGACY: u64 = 1;
+pub const DESKTOP_CONTRACT_POSTGRES: u64 = 2;
 const POLL: Duration = Duration::from_millis(250);
 const FIRST_START_TIMEOUT: Duration = Duration::from_secs(180);
 const START_TIMEOUT: Duration = Duration::from_secs(60);
@@ -39,6 +42,19 @@ pub struct Config {
     /// Backend without lifespan, only until the SQLite work (F1-05*) lands.
     pub minimal_backend: bool,
     pub report_file: Option<PathBuf>,
+    /// ADR-0004: modalità PostgreSQL incorporato (layout 2).
+    pub postgres_enabled: bool,
+}
+
+impl Config {
+    /// ADR-0004 §5.3: contratto desktop (2 per PostgreSQL, 1 per SQLite legacy).
+    pub fn desktop_contract(&self) -> u64 {
+        if self.postgres_enabled {
+            DESKTOP_CONTRACT_POSTGRES
+        } else {
+            DESKTOP_CONTRACT_LEGACY
+        }
+    }
 }
 
 #[derive(Serialize, Clone, Default)]
@@ -220,11 +236,25 @@ struct Supervisor {
     crashes: HashMap<&'static str, Vec<Instant>>,
     version_error: Option<String>,
     sleep: SleepGuard<System>,
+    /// ADR-0004: gestore cluster PostgreSQL (layout 2).
+    postgres: Option<crate::postgres_cluster::PostgresClusterManager>,
+    /// ADR-0004: cluster PostgreSQL in esecuzione.
+    postgres_running: Option<crate::postgres_cluster::RunningCluster>,
+    /// ADR-0004: DATABASE_URL del cluster PostgreSQL.
+    postgres_database_url: Option<String>,
 }
 
 impl Supervisor {
     fn new(config: Config, status: Arc<Mutex<Status>>, commands: Receiver<Command>) -> Supervisor {
         let shell = config.data.load_config();
+        // ADR-0004: crea il gestore PostgreSQL se abilitato
+        let postgres = if config.postgres_enabled {
+            let resources = config.resources.clone();
+            let credentials = config.credentials.clone();
+            Some(crate::postgres_cluster::PostgresClusterManager::new(resources, credentials))
+        } else {
+            None
+        };
         Supervisor {
             config,
             shell,
@@ -242,6 +272,9 @@ impl Supervisor {
             crashes: HashMap::new(),
             version_error: None,
             sleep: SleepGuard::new(System::default()),
+            postgres,
+            postgres_running: None,
+            postgres_database_url: None,
         }
     }
 
@@ -316,12 +349,84 @@ impl Supervisor {
     // ---- start ----
 
     fn start_all(&mut self) -> Result<(), Failure> {
+        // ADR-0004 §5.3: ordine avvio PostgreSQL → backend → frontend → tunnel
+        if self.config.postgres_enabled {
+            self.start_postgres()?;
+        }
         self.start_backend()?;
         self.ensure_frontend()?;
         if self.version_error.is_none() {
             self.start_tunnel()?;
         }
         Ok(())
+    }
+
+    /// ADR-0004 §5: avvia il cluster PostgreSQL proprietario.
+    fn start_postgres(&mut self) -> Result<(), Failure> {
+        let Some(ref mut manager) = self.postgres else {
+            return Ok(());
+        };
+        let data_root = self.config.data.root.clone();
+        let version = self.config.version.clone();
+        let bundle_id = "org.ai4educ.counselorbot.teacher".to_string();
+
+        // Leggi o crea l'identità del cluster
+        let identity_path = data_root.join("run/postgresql.json");
+        let identity = if identity_path.exists() {
+            let text = std::fs::read_to_string(&identity_path)
+                .map_err(|e| Failure::Fatal(format!("lettura identità PostgreSQL: {e}"), Some("diagnostics")))?;
+            serde_json::from_str(&text)
+                .map_err(|e| Failure::Fatal(format!("identità PostgreSQL non valida: {e}"), Some("diagnostics")))?
+        } else {
+            // Nuovo cluster
+            manager
+                .prepare_new(&data_root, &version, &bundle_id)
+                .map_err(|e| Failure::Fatal(format!("preparazione PostgreSQL: {e}"), Some("diagnostics")))?
+        };
+
+        // Avvia il cluster
+        let running = manager
+            .start(&identity)
+            .map_err(|e| Failure::Fatal(format!("avvio PostgreSQL: {e}"), Some("diagnostics")))?;
+
+        // Verifica health
+        let health = manager
+            .probe(&running)
+            .map_err(|e| Failure::Fatal(format!("verifica PostgreSQL: {e}"), Some("diagnostics")))?;
+
+        if !health.ready {
+            return Err(Failure::Fatal("PostgreSQL non pronto dopo l'avvio.".into(), Some("diagnostics")));
+        }
+
+        // Costruisci DATABASE_URL per il backend
+        let database_url = manager
+            .database_url(&running)
+            .map_err(|e| Failure::Fatal(format!("costruzione DATABASE_URL: {e}"), Some("diagnostics")))?;
+
+        logs::log(format!(
+            "PostgreSQL pronto: major={} db={} port={}",
+            health.major, health.database, running.port
+        ));
+
+        self.postgres_running = Some(running);
+        self.postgres_database_url = Some(database_url);
+        Ok(())
+    }
+
+    /// ADR-0004 §5.3: ferma il cluster PostgreSQL (fast shutdown).
+    fn stop_postgres(&mut self) {
+        if let (Some(ref mut manager), Some(ref mut running)) = (&mut self.postgres, &mut self.postgres_running) {
+            match manager.stop(running, crate::postgres_cluster::StopMode::Fast) {
+                Ok(result) => {
+                    logs::log(format!("PostgreSQL fermato in {} ms", result.duration_ms));
+                }
+                Err(e) => {
+                    logs::log(format!("errore stop PostgreSQL: {e}"));
+                }
+            }
+        }
+        self.postgres_running = None;
+        self.postgres_database_url = None;
     }
 
     fn timeout(&self) -> Duration {
@@ -398,6 +503,9 @@ impl Supervisor {
         let backend_dir = self.config.resources.join("backend");
         let bundled = backend_dir.join("_internal");
         let docs = bundled.join("docs-counselorbot").to_string_lossy().into_owned();
+        // ADR-0004: usa DATABASE_URL di PostgreSQL se disponibile, altrimenti SQLite
+        let database_url = self.postgres_database_url.clone()
+            .unwrap_or_else(|| self.config.data.database_url());
         let mut env = vec![
             ("COUNSELORBOT_PROFILE".to_string(), "teacher-pc".to_string()),
             ("AUTH_PROVIDER".into(), "local".into()),
@@ -409,6 +517,7 @@ impl Supervisor {
             ("COUNSELORBOT_DOCS_DIR".into(), docs.clone()),
             ("RAG_DOCS_DIR".into(), docs),
             ("PYTHONUNBUFFERED".into(), "1".into()),
+            ("DATABASE_URL".into(), database_url),
         ];
         env.extend(self.config.data.backend_env());
         env.extend(self.config.credentials.backend_env().map_err(|message| Failure::Fatal(message, None))?);
@@ -510,9 +619,10 @@ impl Supervisor {
         let health: serde_json::Value = serde_json::from_str(body).unwrap_or_default();
         let version = health["version"].as_str().unwrap_or("?");
         let contract = health["desktop_contract"].as_u64().unwrap_or(0);
-        if version != self.config.version || contract != DESKTOP_CONTRACT {
+        let expected_contract = self.config.desktop_contract();
+        if version != self.config.version || contract != expected_contract {
             let message = format!(
-                "Backend {version} (contratto {contract}) diverso dal guscio {} (contratto {DESKTOP_CONTRACT}): tunnel non pubblicato.",
+                "Backend {version} (contratto {contract}) diverso dal guscio {} (contratto {expected_contract}): tunnel non pubblicato.",
                 self.config.version
             );
             logs::log(&message);
@@ -995,8 +1105,13 @@ impl Supervisor {
 
     fn stop_all(&mut self) {
         logs::log("arresto dei sidecar");
+        // ADR-0004 §5.3: ordine stop tunnel → frontend → backend → PostgreSQL
         for proc in [self.tunnel.take(), self.frontend.take(), self.backend.take()].into_iter().flatten() {
             proc.stop();
+        }
+        // Ferma PostgreSQL dopo il backend
+        if self.config.postgres_enabled {
+            self.stop_postgres();
         }
         let _ = std::fs::remove_file(self.config.data.run().join(pids::SIDECARS_FILE));
         self.set_phase("stopped", None, None);
@@ -1006,6 +1121,10 @@ impl Supervisor {
         logs::log(format!("errore: {message}"));
         for proc in [self.tunnel.take(), self.frontend.take(), self.backend.take()].into_iter().flatten() {
             proc.stop();
+        }
+        // Ferma PostgreSQL anche in caso di errore
+        if self.config.postgres_enabled {
+            self.stop_postgres();
         }
         self.set_phase("error", Some(message), hint);
     }
