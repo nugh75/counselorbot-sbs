@@ -4,7 +4,36 @@
 **Issue**: #598  
 **Branch**: fix/desktop-class-share-url-598  
 **PR**: #615  
-**Stato**: COMPLETATO - Fix implementati, PR aperta
+**Stato**: COMPLETATO - Fix implementati, PR aperta, push eseguito
+
+## Riepilogo finale
+
+### Commit creati (6 totali)
+1. `ea55783f` - fix(desktop): always set COUNSELORBOT_PUBLIC_ORIGIN in supervisor
+2. `f8feb797` - fix(desktop): publicOrigin never falls back to localhost
+3. `b8355f56` - test(desktop): add tests for publicOrigin fix
+4. `4dd9a530` - fix(desktop): hide share links when tunnel not active
+5. `e2dab7eb` - docs: add handoff document for issue #598 fix
+6. `d7f8fc83` - docs: update handoff with PR link #615
+
+### File modificati
+- `desktop/teacher/src-tauri/src/supervisor.rs` (2 modifiche: backend e frontend)
+- `frontend/src/lib/runtime-config.ts` (1 modifica: publicOrigin logic)
+- `frontend/src/lib/runtime-config.test.ts` (2 modifiche: test aggiornati e nuovi)
+- `frontend/src/components/teacher/ClassOverviewTab.tsx` (2 modifiche: condizione e messaggio)
+- `frontend/src/components/teacher/ClassCouncilTab.tsx` (2 modifiche: condizione e variabile)
+- `docs/handoff/fix-desktop-class-share-url-598.md` (creato)
+
+### Verifiche da fare
+- [ ] Test Node: `npm test -- --testNamePattern="publicOrigin"`
+- [ ] Test Rust: `cargo test --test supervisor`
+- [ ] Test manuale desktop con build v0.1.1 o successiva
+- [ ] Verificare CI desktop su 4 runner
+
+### Link
+- **Issue**: https://github.com/nugh75/counselorbot-sbs/issues/598
+- **PR**: https://github.com/nugh75/counselorbot-sbs/pull/615
+- **Branch**: https://github.com/nugh75/counselorbot-sbs/tree/fix/desktop-class-share-url-598
 
 ## Fatto
 
