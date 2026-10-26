@@ -100,7 +100,7 @@ mod tests {
     use super::*;
     use std::process::{Command, Stdio};
 
-    fn sleeper() -> std::process::Child {
+    fn sleeper() -> (std::process::Child, Record) {
         #[cfg(windows)]
         let mut command = {
             let mut c = Command::new("powershell");
@@ -113,7 +113,25 @@ mod tests {
             c.arg("60");
             c
         };
-        command.stdin(Stdio::null()).stdout(Stdio::null()).spawn().unwrap()
+        let mut child = command.stdin(Stdio::null()).stdout(Stdio::null()).spawn().unwrap();
+        let expected = if cfg!(windows) { "powershell.exe" } else { "sleep" };
+        let deadline = Instant::now() + Duration::from_secs(5);
+        // On Linux, the first process-table read after spawn can still report
+        // the pre-exec name. The fixture must be the sleeper before recording
+        // its identity; otherwise cleanup correctly refuses the changed name.
+        loop {
+            if let Some(record) = record("backend", child.id()) {
+                if record.exe.eq_ignore_ascii_case(expected) {
+                    return (child, record);
+                }
+            }
+            if Instant::now() >= deadline || child.try_wait().unwrap().is_some() {
+                let _ = child.kill();
+                let _ = child.wait();
+                panic!("sleeper process did not become {expected}");
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
     }
 
     fn temp(name: &str) -> std::path::PathBuf {
@@ -126,10 +144,14 @@ mod tests {
     #[test]
     fn cleanup_stops_a_matching_leftover() {
         let dir = temp("match");
-        let mut child = sleeper();
-        let record = record("backend", child.id()).unwrap();
+        let (mut child, record) = sleeper();
         write(&dir, SIDECARS_FILE, &[record.clone()]).unwrap();
-        assert_eq!(cleanup(&dir), vec!["backend".to_string()]);
+        assert_eq!(
+            cleanup(&dir),
+            vec!["backend".to_string()],
+            "saved: {record:?}, current: {:?}",
+            super::record("backend", child.id())
+        );
         let deadline = Instant::now() + Duration::from_secs(10);
         while child.try_wait().unwrap().is_none() && Instant::now() < deadline {
             std::thread::sleep(Duration::from_millis(50));
@@ -142,8 +164,7 @@ mod tests {
     #[test]
     fn cleanup_spares_a_recycled_pid() {
         let dir = temp("recycled");
-        let mut child = sleeper();
-        let mut record = record("backend", child.id()).unwrap();
+        let (mut child, mut record) = sleeper();
         // Same PID, different start time: another program now owns it.
         record.started -= 3600;
         write(&dir, SIDECARS_FILE, &[record.clone()]).unwrap();

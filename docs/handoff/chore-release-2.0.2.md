@@ -16,3 +16,7 @@
 - Verifiche di preparazione: 7 test del sincronizzatore e `version-check`,
   `guidance-refresh/check`, diff pulito; immagini Docker backend e frontend
   ricostruite senza riavviare produzione, frontend con build TypeScript completa.
+- CI Linux: la fixture dei test PID attende il nome effettivo di `sleep` prima
+  di registrarne l'identità, evitando la lettura transitoria del nome pre-exec.
+  I controlli di sicurezza della pulizia runtime restano invariati.
+  Verifica locale: 51 test Rust e 50 ripetizioni dei due test PID passati.
