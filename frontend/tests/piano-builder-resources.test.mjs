@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import test, { before, after } from 'node:test';
 import { chromium } from 'playwright';
-import { classPathText } from '../src/lib/i18n-class-paths.ts';
-import { pathForumText } from '../src/lib/i18n-path-forum.ts';
-import { stepKindText } from '../src/lib/i18n-step-kinds.ts';
-import { classMeetingText } from '../src/lib/i18n-class-meetings.ts';
-import { forumText } from '../src/lib/i18n-forum.ts';
+import { classPathText } from '../src/lib/i18n-class-paths.js';
+import { pathForumText } from '../src/lib/i18n-path-forum.js';
+import { stepKindText } from '../src/lib/i18n-step-kinds.js';
+import { classMeetingText } from '../src/lib/i18n-class-meetings.js';
+import { forumText } from '../src/lib/i18n-forum.js';
 
 const origin = new URL(process.env.PIANO_BUILDER_BASE_URL || 'http://127.0.0.1:3176').origin;
 const labels = {

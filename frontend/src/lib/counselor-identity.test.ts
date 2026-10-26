@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node direct typescript execution requires extension
-import { filterCounselorsByCategories, getCounselorTagline, type PublicCounselor } from './counselor.ts';
+import { filterCounselorsByCategories, getCounselorTagline, type PublicCounselor } from './counselor.js';
 // @ts-expect-error -- Node direct typescript execution requires extension
-import { formatCategoryLabel } from './i18n-counselor-identity.ts';
+import { formatCategoryLabel } from './i18n-counselor-identity.js';
 
 const counselorSelectorSource = () =>
     readFileSync(new URL('../components/questionnaire/CounselorSelector.tsx', import.meta.url), 'utf8');

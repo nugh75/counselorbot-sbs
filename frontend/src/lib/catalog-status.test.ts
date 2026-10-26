@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node direct typescript execution requires extension
-import { latestPausedByTool, suggestTools } from './catalog-status.ts';
+import { latestPausedByTool, suggestTools } from './catalog-status.js';
 
 test('each tool keeps its most recent paused session', () => {
     const paused = latestPausedByTool([

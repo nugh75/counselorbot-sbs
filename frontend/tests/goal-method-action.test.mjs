@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { goalText } from '../src/lib/i18n-goals.ts';
+import { goalText } from '../src/lib/i18n-goals.js';
 
 // Browser UI + API boundary only; no backend or database is contacted.
 const origin = process.env.GOALS_BASE_URL || 'http://127.0.0.1:3112';

@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { QUESTIONNAIRES, factorTranslationKey, isReusableProfile } from './questionnaires.ts';
+import { QUESTIONNAIRES, factorTranslationKey, isReusableProfile } from './questionnaires.js';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { FACTOR_DICTS } from './i18n-factors.ts';
+import { FACTOR_DICTS } from './i18n-factors.js';
 import factors from './qpcc-schema.json' with { type: 'json' };
 
 const codes = ['A1','A2','A3','V1','V2','C1','C2','M1','M2','M3'];

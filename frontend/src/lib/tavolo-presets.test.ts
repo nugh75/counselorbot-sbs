@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { PRESET_IDS, composeBody, type TavoloPresetId } from './tavolo.ts';
+import { PRESET_IDS, composeBody, type TavoloPresetId } from './tavolo.js';
 
 test('the five genre ids are the ones the server knows', () => {
     assert.deepEqual(PRESET_IDS, ['workflow', 'causal', 'concept', 'argument', 'algorithm']);

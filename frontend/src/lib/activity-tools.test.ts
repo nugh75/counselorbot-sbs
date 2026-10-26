@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { activityToolHref, parseActivityTools } from './activity-tools.ts';
+import { activityToolHref, parseActivityTools } from './activity-tools.js';
 
 test('activity tools open their page, embedded inside the popup', () => {
     assert.equal(activityToolHref('goals'), '/profilo/obiettivi');

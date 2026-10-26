@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { orientationGateBypass, orientationToolHref, safeOrientationNext } from './tool-catalog.ts';
+import { orientationGateBypass, orientationToolHref, safeOrientationNext } from './tool-catalog.js';
 
 test('Bussola links only to tools in the shared catalog', () => {
     assert.equal(orientationToolHref('QSA'), '/?start=QSA');

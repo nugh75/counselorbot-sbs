@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { personalAreaGroups, personalAreaImages } from '../src/lib/personal-area.ts';
-import { personalAreaName, personalAreaText, personalAreaDescription } from '../src/lib/i18n-personal-area.ts';
-import { personalToolAccessText } from '../src/lib/personal-tool-access.ts';
+import { personalAreaGroups, personalAreaImages } from '../src/lib/personal-area.js';
+import { personalAreaName, personalAreaText, personalAreaDescription } from '../src/lib/i18n-personal-area.js';
+import { personalToolAccessText } from '../src/lib/personal-tool-access.js';
 
 const origin = process.env.PERSONAL_AREA_BASE_URL || 'http://127.0.0.1:3000';
 let browser;

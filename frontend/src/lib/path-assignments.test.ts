@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { parseClassPathStep, parseStudentClassPathStep } from './class-paths.ts';
+import { parseClassPathStep, parseStudentClassPathStep } from './class-paths.js';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { pathAssignmentTexts } from './i18n-path-assignments.ts';
+import { pathAssignmentTexts } from './i18n-path-assignments.js';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { assignmentSaveError, assignmentStepInput, parsePathAssignments, selectablePathAssignments } from './path-assignments.ts';
+import { assignmentSaveError, assignmentStepInput, parsePathAssignments, selectablePathAssignments } from './path-assignments.js';
 
 const summary = {id: 7, title: 'Plan the study week', attachments: [{kind: 'strategy', title: 'Spaced review'}],
     intent: 'requested', due_date: '2026-10-20'};

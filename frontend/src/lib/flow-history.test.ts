@@ -5,7 +5,7 @@ import test from 'node:test';
 // Node's built-in TypeScript runner requires the explicit extension; the app's
 // bundler configuration intentionally does not enable TS extension imports.
 // @ts-expect-error -- executed directly by `node --test`.
-import { enterStep, startTrail, stepAtDepth } from './flow-history.ts';
+import { enterStep, startTrail, stepAtDepth } from './flow-history.js';
 
 test('the trail opens on the step the page entered from', () => {
     assert.deepEqual(startTrail('intro'), { steps: ['intro'], depth: 1 });

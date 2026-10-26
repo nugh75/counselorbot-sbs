@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { isToolAllowed, isCounselorAllowed, resumeCounselor, fetchUserAccess, getCachedUserAccess, clearUserAccessCache, type UserAccess } from './user-access.ts';
+import { isToolAllowed, isCounselorAllowed, resumeCounselor, fetchUserAccess, getCachedUserAccess, clearUserAccessCache, type UserAccess } from './user-access.js';
 
 function withStorage(impl: Record<string, unknown> | undefined, run: () => void | Promise<void>) {
     const kept = (globalThis as { sessionStorage?: unknown }).sessionStorage;

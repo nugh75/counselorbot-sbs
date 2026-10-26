@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { independentTemplateSteps, moveTemplateStep, newTemplateStep, parsePathTemplateList, parseTemplateUpdate, templateStepPayload, templateStepsValid } from './path-templates.ts';
+import { independentTemplateSteps, moveTemplateStep, newTemplateStep, parsePathTemplateList, parseTemplateUpdate, templateStepPayload, templateStepsValid } from './path-templates.js';
 
 const questionnaire = { ...newTemplateStep('questionnaire_administration'), id: 1 };
 const chat = { ...newTemplateStep('guided_results_chat'), tool_key: '', results_position: 1 };

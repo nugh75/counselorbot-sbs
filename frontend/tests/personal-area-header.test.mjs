@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { personalAreaName, personalAreaText } from '../src/lib/i18n-personal-area.ts';
-import { PRIVACY_DICTS } from '../src/lib/i18n-privacy.ts';
+import { personalAreaName, personalAreaText } from '../src/lib/i18n-personal-area.js';
+import { PRIVACY_DICTS } from '../src/lib/i18n-privacy.js';
 
 const origin = process.env.PERSONAL_HEADER_BASE_URL || 'http://127.0.0.1:3109';
 let browser;
