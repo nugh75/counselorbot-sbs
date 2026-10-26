@@ -20,7 +20,7 @@ import {
     Users,
     Wrench,
 } from 'lucide-react';
-import { apiFetch } from '@/lib/auth';
+import { apiFetch, isLocalAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { publicOrigin } from '@/lib/runtime-config';
 import { classSettingsText, type classSettingsTexts } from '@/lib/i18n-class-settings';
@@ -31,6 +31,7 @@ import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { getClassCoverUrl } from '@/lib/class-cover-presets';
 import { ClassImageModal } from './ClassImageModal';
+import { ClassPairingSection } from './ClassPairingSection';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import type { StudentGroup } from './class-group-types';
@@ -563,6 +564,8 @@ export function ClassOverviewTab({
                     </p>
                 </section>
             </Card>
+
+            {isLocalAuth() && <ClassPairingSection groupId={group.id} />}
 
             {/* 3. Condivisione con Colleghi */}
             <Card>

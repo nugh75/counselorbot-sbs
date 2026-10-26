@@ -17,9 +17,10 @@ le informative restano le [bozze P16](bozze/README.md).
 - Versione di informative e basi giuridiche adottate per ciascuna finalità:
   **[DA VALIDARE]**. Il codice di abbinamento non è una prova di consenso.
 
-**Limite operativo:** nel commit di riferimento F1-17 mancano le pagine per
-accesso docente locale, abbinamento e dispositivi; la CI non pubblica ancora
-installer/manifest nelle Release. Le prove tecniche non autorizzano l'impiego
+**Limite operativo:** le pagine di accesso docente locale, abbinamento
+(`/unisciti`) e dispositivi docente sono collegate (#602); la CI non pubblica
+ancora installer/manifest nelle Release e il flusso su dispositivo reale con
+tunnel attivo resta da validare. Le prove tecniche non autorizzano l'impiego
 con minori o dati reali. Vedere [guida](../operations/desktop-teacher-guide.md)
 e [accettazione manuale](../operations/desktop-teacher-tests.md).
 
@@ -34,9 +35,9 @@ rischi e non è ancora disponibile.
 | Tratto | Profilo docente-PC e limiti | Evidenza |
 |---|---|---|
 | Dispositivo → servizi | Backend e frontend su loopback, porte dinamiche, dati del proprio utente; SQLite locale, un solo backend worker | [guscio](../operations/desktop-teacher-shell.md), ADR-0002 |
-| Identità docente | Sessione locale, link monouso tecnico; identità docente rifiutata dal tunnel; collegamento della GUI ancora assente | `backend/local_auth.py`, test locali |
+| Identità docente | Sessione locale, link monouso tecnico; identità docente rifiutata dal tunnel; collegamento della GUI operativo (PR #591) | `backend/local_auth.py`, test locali |
 | Studente → Cloudflare → PC | HTTPS pubblico e tunnel; Cloudflare termina TLS e può trattare traffico/metadati. Quick tunnel temporaneo, nominativo con hostname stabile | F1-09/F1-10, [piano](../architecture/desktop-apps-plan.md) |
-| Abbinamento | Pseudonimo, codice classe a scadenza, codice personale, sessione e possibile approvazione; hash dei codici nel DB. Pseudonimizzazione, non anonimato | `backend/local_pairing.py` |
+| Abbinamento | Pseudonimo, codice classe a scadenza, codice personale, sessione e possibile approvazione; hash dei codici nel DB. UI `/unisciti` e dispositivi docente (#602); il codice personale è mostrato una sola volta. Pseudonimizzazione, non anonimato | `backend/local_pairing.py` |
 | PC → AI e servizi | Il gateway P6 filtra il testo esterno e blocca immagini/audio esterni; in `transitional` finalità, grant ed eventi non bloccano tutte le uscite. «Modello locale» richiede host fidato | [P6](p6-gateway.md), [P6a-c](p6ac-network-egress.md) |
 | Docente → dati studente | P7 usa grant per classe, periodo e categorie, esclude il taccuino dal grant predefinito. La vista tecnica pseudonimizzata/break-glass L1 non va attribuita automaticamente al docente-admin L2 | [P7](p7-autorizzazioni.md), `backend/tests/test_teacher_profile.py` |
 | Dati a riposo | SQLite, allegati, memorie, indici, backup e credenziali locali nella cartella utente. P11 è facoltativo (`PRIVACY_DB_ENCRYPTION=on`), non cifra tutto né converte lo storico | [P11](p11-cifratura-db.md) |
