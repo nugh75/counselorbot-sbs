@@ -99,6 +99,10 @@ sessioni aperte restano). I messaggi sono nelle sei lingue; un codice
 inesistente, scaduto, revocato o esaurito dà sempre lo stesso messaggio, e i
 limiti ai tentativi mostrano solo l'attesa. Le rotte restano solo `local`: in
 produzione o portable la sezione non compare e le pagine segnalano l'errore.
+Nel desktop questa sezione sostituisce «Invito studenti»: non viene proposto
+il codice/link web `/gruppo?g=…`, che richiede una sessione della piattaforma e
+non crea l'identità locale dello studente. Con ai4auth resta l'invito web della
+classe; i due percorsi non vengono mostrati insieme.
 
 È disponibile il nucleo tecnico P1 del Privacy Layer: definisce tipi, errori
 senza contenuti personali e regole conservative per finalità, consenso e invio

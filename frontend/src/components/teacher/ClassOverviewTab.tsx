@@ -467,7 +467,7 @@ export function ClassOverviewTab({
             </section>
 
             {/* 2. Invito Studenti */}
-            <Card>
+            {isLocalAuth() ? <ClassPairingSection groupId={group.id} /> : <Card>
                 <section aria-labelledby="class-invitation-heading" className="space-y-4">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                         <div>
@@ -562,9 +562,7 @@ export function ClassOverviewTab({
                         {learningText(lang, 'groupVisibility')}
                     </p>
                 </section>
-            </Card>
-
-            {isLocalAuth() && <ClassPairingSection groupId={group.id} />}
+            </Card>}
 
             {/* 3. Condivisione con Colleghi */}
             <Card>
