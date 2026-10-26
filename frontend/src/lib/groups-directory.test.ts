@@ -1,11 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { parseClassGroups, type StudentGroup } from '../components/teacher/class-group-types.js';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { classSettingsText, classSettingsTexts } from './i18n-class-settings.js';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { classGroupTexts } from '../components/teacher/class-group-texts.js';
+import { parseClassGroups, type StudentGroup } from '../components/teacher/class-group-types.ts';
+import { classSettingsText, classSettingsTexts } from './i18n-class-settings.ts';
+import { classGroupTexts } from '../components/teacher/class-group-texts.ts';
 
 const languages = ['it', 'en', 'es', 'fr', 'de', 'sv'] as const;
 

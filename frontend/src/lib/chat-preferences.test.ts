@@ -1,9 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { chatPreferenceLabel, essentialAdvancesOnSignal, essentialPhasesFor, essentialReplyPhase, essentialSignalAdvances, essentialSteps } from './chat-preferences.js';
+import { chatPreferenceLabel, essentialAdvancesOnSignal, essentialPhasesFor, essentialReplyPhase, essentialSignalAdvances, essentialSteps } from './chat-preferences.ts';
 
 const LANGS = ['it', 'en', 'es', 'fr', 'de', 'sv'] as const;
 const completed = { completed: true, marker: true, entry: false };

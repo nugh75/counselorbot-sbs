@@ -1,9 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, cardsInDeck, deckTypeColumns, DEFAULT_DECK_ID } from './visual-tools.js';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { visualLabel } from './i18n-visual-tools.js';
+import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, cardsInDeck, deckTypeColumns, DEFAULT_DECK_ID } from './visual-tools.ts';
+import { visualLabel } from './i18n-visual-tools.ts';
 
 test('removing a chosen alternative removes its notes and choice without mutating history', () => {
     const w = emptyWorkspace();
@@ -40,7 +38,6 @@ test('the chat handoff attributes student choices and preserves reflection and s
 });
 
 test('timeline order preserves uncertain periods and selected handoff follows live action state', async () => {
-    // @ts-expect-error -- Node runs TypeScript files directly.
     const { moveTimelineEvent, timelineText } = await import('./visual-tools.ts');
     const w = emptyWorkspace();
     w.actions = [{ id: 'a', title: 'Prepare slides', stage: 'doing', detail: '', reflection: '', source: '' }];
@@ -88,7 +85,6 @@ test('card columns follow presets and student text, and cards outside them retur
 });
 
 test('removing an unsaved action unlinks it without deleting its milestone or Portfolio work', async () => {
-    // @ts-expect-error -- Node runs TypeScript files directly.
     const { removeAction } = await import('./visual-tools.ts');
     const w = emptyWorkspace();
     w.actions = [{ id: 'new', title: 'Read', kind: 'book', stage: 'todo', detail: '', reflection: '', source: '' }];

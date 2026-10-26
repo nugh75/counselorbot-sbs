@@ -2,10 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import type { PromptMap, PromptMapEntry } from './prompt-map';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { badgeFor, booleanFlags, componentsValue, entryText, findEntry, levelCounts, levelSection, moveItem, needsSharedConfirm, normalizeStepId, saveRequest, sectionDefaultOpen, sectionsForEntry, skillConditionParts, sortOrderChanges, stepSection, stepsByInstrument } from './prompt-map.js';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { PROMPT_MAP_DICTS } from './i18n-prompt-map.js';
+import { badgeFor, booleanFlags, componentsValue, entryText, findEntry, levelCounts, levelSection, moveItem, needsSharedConfirm, normalizeStepId, saveRequest, sectionDefaultOpen, sectionsForEntry, skillConditionParts, sortOrderChanges, stepSection, stepsByInstrument } from './prompt-map.ts';
+import { PROMPT_MAP_DICTS } from './i18n-prompt-map.ts';
 
 function entry(overrides: Partial<PromptMapEntry>): PromptMapEntry {
     return {

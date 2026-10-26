@@ -3,11 +3,8 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { instrumentLabel } from './instrument-label.js';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { personalAreaText } from './i18n-personal-area.js';
+import { instrumentLabel } from './instrument-label.ts';
+import { personalAreaText } from './i18n-personal-area.ts';
 
 // Navbar wording (audit-navbar P1). Expected strings are written by hand, so a
 // copy change shows up in this diff instead of passing by reading the renderer's

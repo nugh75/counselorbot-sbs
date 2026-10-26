@@ -1,11 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { docenzaClassesInContext, initialDocenzaGroupIds } from './docenza-groups.js';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { autoFreezeSignature } from './auto-freeze.js';
+import { docenzaClassesInContext, initialDocenzaGroupIds } from './docenza-groups.ts';
+import { autoFreezeSignature } from './auto-freeze.ts';
 
 const stored = () => [41, 42];
 

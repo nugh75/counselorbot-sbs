@@ -1,12 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { parseClassPathStep, parseStudentClassPathStep } from './class-paths.js';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { pathPublicationTexts, unavailableActionText } from './i18n-path-publication.js';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { lifecycleRequest, parsePublicationProblems, publishRevision, unavailableAction } from './path-publication.js';
+import { parseClassPathStep, parseStudentClassPathStep } from './class-paths.ts';
+import { pathPublicationTexts, unavailableActionText } from './i18n-path-publication.ts';
+import { lifecycleRequest, parsePublicationProblems, publishRevision, unavailableAction } from './path-publication.ts';
 
 test('a blocked publication lists every step to fix, in path order', () => {
     const detail = {code: 'path_publication_blocked', problems: [

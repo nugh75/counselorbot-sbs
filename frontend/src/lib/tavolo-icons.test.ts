@@ -1,8 +1,7 @@
 // La ricerca del selettore d'icona: cento voci si trovano per parola, non a occhio.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { iconUrl, matchIcons } from './tavolo-icons.js';
+import { iconUrl, matchIcons } from './tavolo-icons.ts';
 
 const icons = [
     { id: 'brain', meaning: 'memory or reasoning', label: 'Memoria e ragionamento' },

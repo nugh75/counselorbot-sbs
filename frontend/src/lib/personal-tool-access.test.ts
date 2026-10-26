@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { enabledResumeItems, parseUserAccess, personalSlugEnabled, personalToolAccessTexts, personalToolBySlug } from './personal-tool-access.js';
+import { enabledResumeItems, parseUserAccess, personalSlugEnabled, personalToolAccessTexts, personalToolBySlug } from './personal-tool-access.ts';
 
 const restricted = { restricted: true, tool_keys: ['goals', 'notebook', 'pqbl'] };
 

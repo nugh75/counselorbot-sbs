@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { allowedResumeEntries } from './resume-access.js';
+import { allowedResumeEntries } from './resume-access.ts';
 import type { UserAccess } from './user-access';
 
 const restricted = (tool_keys: string[]): UserAccess => ({

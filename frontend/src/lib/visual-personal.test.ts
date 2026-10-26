@@ -1,9 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { emptyWorkspace } from './visual-tools.js';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { annotationEntries, importAnnotation, visualEntries, type ImportTarget } from './visual-personal.js';
+import { emptyWorkspace } from './visual-tools.ts';
+import { annotationEntries, importAnnotation, visualEntries, type ImportTarget } from './visual-personal.ts';
 const entry = { id: 'notebook_goal', label: 'Obiettivo', text: 'Studiare meglio', source: 'Taccuino · Obiettivo' };
 for (const target of ['cards', 'actions', 'comparison'] as ImportTarget[]) {
     test(`explicit import to ${target} preserves source, original work and prevents retry duplicates`, () => {

@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { personalResumeItems } from './personal-area.js';
+import { personalResumeItems } from './personal-area.ts';
 import type { PersonalGoal } from './goals';
 
 const goal = (id: number, values: Partial<PersonalGoal> = {}) => ({ id, title: `Goal ${id}`, status: 'active', review_date: null, links: [], ...values } as PersonalGoal);

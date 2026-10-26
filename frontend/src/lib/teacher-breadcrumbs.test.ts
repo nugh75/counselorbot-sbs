@@ -1,10 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { getClassBreadcrumbs, getTeacherBreadcrumbsForSlug } from './teacher-breadcrumbs.js';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { teacherAreaSlugs } from './teacher-area.js';
-import type { Lang } from './i18n.js';
+import { getClassBreadcrumbs, getTeacherBreadcrumbsForSlug } from './teacher-breadcrumbs.ts';
+import { teacherAreaSlugs } from './teacher-area.ts';
+import type { Lang } from './i18n.ts';
 
 const languages: readonly Lang[] = ['it', 'en', 'es', 'fr', 'de', 'sv'];
 
@@ -73,7 +71,6 @@ test('catalogo-obiettivi and percorsi produce direct 2-level breadcrumbs', () =>
 });
 
 test('computeClassSwitchUrl preserves active tabs and handles overview properly', async () => {
-    // @ts-expect-error -- Node runs TypeScript files directly.
     const { computeClassSwitchUrl, getActiveSwitchGroups } = await import('./teacher-quick-switcher.ts');
 
     assert.equal(computeClassSwitchUrl(42), '/docente/classi/42');

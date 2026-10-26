@@ -1,8 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { datePeriod, eventDates, sortedTimeline, validTimelineDates } from './timeline-dates.js';
-import type { TimelineEvent } from './visual-tools.js';
+import { datePeriod, eventDates, sortedTimeline, validTimelineDates } from './timeline-dates.ts';
+import type { TimelineEvent } from './visual-tools.ts';
 
 test('calendar accepts all four date forms and rejects impossible or inverted dates', () => {
     for (const value of [

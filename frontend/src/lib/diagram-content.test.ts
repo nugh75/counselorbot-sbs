@@ -1,9 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { DIAGRAM_ICONS, parseDiagramSpec, splitDiagramContent } from './diagram-content.js';
+import { DIAGRAM_ICONS, parseDiagramSpec, splitDiagramContent } from './diagram-content.ts';
 
 const CYCLE = {
     type: 'cycle',

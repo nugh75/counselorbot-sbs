@@ -1,10 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import vm from 'node:vm';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { getRuntimeConfig, publicOrigin, runtimeConfigFromEnv, runtimeConfigScript } from './runtime-config.js';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { createAuthUrls } from './auth-urls.js';
+import { getRuntimeConfig, publicOrigin, runtimeConfigFromEnv, runtimeConfigScript } from './runtime-config.ts';
+import { createAuthUrls } from './auth-urls.ts';
 
 test('reads only the configured, non-empty startup variables', () => {
     assert.deepEqual(runtimeConfigFromEnv({}), {});

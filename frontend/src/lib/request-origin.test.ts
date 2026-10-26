@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { applyRequestOrigin, originHeaders, requestOrigin } from './request-origin.js';
+import { applyRequestOrigin, originHeaders, requestOrigin } from './request-origin.ts';
 
 const secret = { COUNSELORBOT_FRONTEND_SECRET: 'fixture-frontend-secret' };
 const spoofed = {

@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { contextFailure, credentialDraftError, credentialPayload, parseInstitutePassword, parseVerificationGrant, verificationRequest, verifyFailure, withInstitutionGrant } from './institution-credentials.js';
+import { contextFailure, credentialDraftError, credentialPayload, parseInstitutePassword, parseVerificationGrant, verificationRequest, verifyFailure, withInstitutionGrant } from './institution-credentials.ts';
 
 const SECRET = ' Synthetic-Pass 149 ';
 

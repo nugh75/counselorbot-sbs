@@ -1,11 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { headerNavigation } from './header-navigation.js';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { classViewOptions } from './class-view.js';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { classViewText } from './i18n-class-view.js';
+import { headerNavigation } from './header-navigation.ts';
+import { classViewOptions } from './class-view.ts';
+import { classViewText } from './i18n-class-view.ts';
 import { LABELS, PROFILES as FIXTURES, VIEWPORTS, band, expectedNavbar } from '../../tests/fixtures/navbar-contract.mjs';
 import type { Identity } from './auth';
 import type { UserAccess } from './user-access';

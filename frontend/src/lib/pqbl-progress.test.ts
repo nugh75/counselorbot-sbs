@@ -1,8 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { clearPqblProgress, hasPqblProgress, loadPqblProgress, savePqblProgress } from './pqbl-progress.js';
+import { clearPqblProgress, hasPqblProgress, loadPqblProgress, savePqblProgress } from './pqbl-progress.ts';
 
 class MemoryStorage {
     private values = new Map<string, string>();

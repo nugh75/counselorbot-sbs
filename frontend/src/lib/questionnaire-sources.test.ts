@@ -4,7 +4,7 @@ import test from 'node:test';
 // Node's built-in TypeScript runner requires the explicit extension; the app's
 // bundler configuration intentionally does not enable TS extension imports.
 // @ts-expect-error -- executed directly by `node --test`.
-import { questionnaireSource } from './questionnaire-sources.js';
+import { questionnaireSource } from './questionnaire-sources.ts';
 
 test('Italian sends the student to the external site, with the site credentials', () => {
     const source = questionnaireSource('QSA', 'it');

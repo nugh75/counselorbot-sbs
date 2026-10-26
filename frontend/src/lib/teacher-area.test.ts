@@ -1,10 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { teacherAreaSlugs, teacherAreaGroups, teacherAreaImages } from './teacher-area.js';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { teacherAreaName, teacherAreaDescription } from './i18n-teacher-area.js';
-import type { Lang } from './i18n.js';
+import { teacherAreaSlugs, teacherAreaGroups, teacherAreaImages } from './teacher-area.ts';
+import { teacherAreaName, teacherAreaDescription } from './i18n-teacher-area.ts';
+import type { Lang } from './i18n.ts';
 
 const languages: readonly Lang[] = ['it', 'en', 'es', 'fr', 'de', 'sv'];
 
@@ -35,7 +33,6 @@ test('every teacher area slug has localized name and description across all 6 la
 });
 
 test('didactic design hero and workflow labels are fully localized across all 6 languages', async () => {
-    // @ts-expect-error -- Node runs TypeScript files directly.
     const { teacherAreaText } = await import('./i18n-teacher-area.ts');
     const didacticKeys = [
         'didacticDesign',
@@ -63,7 +60,6 @@ test('didactic design hero and workflow labels are fully localized across all 6 
 });
 
 test('my classes dashboard section labels are fully localized across all 6 languages', async () => {
-    // @ts-expect-error -- Node runs TypeScript files directly.
     const { teacherAreaText } = await import('./i18n-teacher-area.ts');
     const myClassesKeys = [
         'myClassesTitle',
@@ -97,7 +93,6 @@ test('resources group contains the unified library slug', () => {
 });
 
 test('resources library and hub labels are fully localized across all 6 languages', async () => {
-    // @ts-expect-error -- Node runs TypeScript files directly.
     const { teacherAreaText } = await import('./i18n-teacher-area.ts');
     const resourceKeys = [
         'resources',
@@ -119,7 +114,6 @@ test('resources library and hub labels are fully localized across all 6 language
 });
 
 test('practice gym and teacher profile labels are fully localized across all 6 languages', async () => {
-    // @ts-expect-error -- Node runs TypeScript files directly.
     const { teacherAreaText } = await import('./i18n-teacher-area.ts');
     const gymKeys = [
         'practiceGymTitle',
@@ -144,7 +138,6 @@ test('practice gym and teacher profile labels are fully localized across all 6 l
 });
 
 test('breadcrumbs and quick class switcher labels are fully localized across all 6 languages', async () => {
-    // @ts-expect-error -- Node runs TypeScript files directly.
     const { teacherAreaText } = await import('./i18n-teacher-area.ts');
     const breadcrumbKeys = [
         'breadcrumbsAriaLabel',

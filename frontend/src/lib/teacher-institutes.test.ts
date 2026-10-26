@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { parseTeacherInstitutes, parseInstituteChoices } from './teacher-institutes.js';
+import { parseTeacherInstitutes, parseInstituteChoices } from './teacher-institutes.ts';
 
 test('unavailable or malformed institute responses cannot become a successful empty list', () => {
     for (const response of [null, {}, { detail: 'unavailable' }, [null], [{ id: '51', name: 'School', revision: 1 }]]) {

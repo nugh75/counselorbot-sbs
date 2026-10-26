@@ -1,10 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { canRecordNewChoice, currentChoice, documentForPurpose, documentHref, documentKindLabelKey, formatPrivacyDate, historyEventLabelKey, historyTarget, initialSwitchState, legalBasisLabelKey, parseSharingTarget, privacyErrorKey, purposeDescription, purposeLabelKey, purposeState, sharingRows, shortHash } from './privacy.js';
+import { canRecordNewChoice, currentChoice, documentForPurpose, documentHref, documentKindLabelKey, formatPrivacyDate, historyEventLabelKey, historyTarget, initialSwitchState, legalBasisLabelKey, parseSharingTarget, privacyErrorKey, purposeDescription, purposeLabelKey, purposeState, sharingRows, shortHash } from './privacy.ts';
 // Type-only imports are erased, so tsc accepts the extension the Node runner needs.
-import type { PrivacyChoice, PrivacyDocument, PrivacyGroup, PrivacyPurpose } from './privacy.js';
+import type { PrivacyChoice, PrivacyDocument, PrivacyGroup, PrivacyPurpose } from './privacy.ts';
 
 const purpose: PrivacyPurpose = {
     key: 'teacher_sharing',

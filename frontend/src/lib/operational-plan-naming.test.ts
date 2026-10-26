@@ -3,21 +3,13 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { legacyRouteRedirects } from './legacy-routes.js';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { classPathText } from './i18n-class-paths.js';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { teacherAreaName, teacherAreaText } from './i18n-teacher-area.js';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { personalAreaName } from './i18n-personal-area.js';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { classSettingsText } from './i18n-class-settings.js';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { teacherAreaSlugs } from './teacher-area.js';
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { personalAreaGroups } from './personal-area.js';
+import { legacyRouteRedirects } from './legacy-routes.ts';
+import { classPathText } from './i18n-class-paths.ts';
+import { teacherAreaName, teacherAreaText } from './i18n-teacher-area.ts';
+import { personalAreaName } from './i18n-personal-area.ts';
+import { classSettingsText } from './i18n-class-settings.ts';
+import { teacherAreaSlugs } from './teacher-area.ts';
+import { personalAreaGroups } from './personal-area.ts';
 
 // «Percorsi di classe» became «Piano operativo»: the guided paths of the
 // instruments keep their name, the feature never shows the old one again.

@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { parsePlanInstitutionOptions, planIdFromHash, planInstitutionField } from './administration-plans.js';
+import { parsePlanInstitutionOptions, planIdFromHash, planInstitutionField } from './administration-plans.ts';
 
 test('institution options must carry identity and readiness, never credentials', () => {
     assert.throws(() => parsePlanInstitutionOptions({ detail: 'forbidden' }));
@@ -32,9 +31,7 @@ test('classroom links address one plan of the research view by hash', () => {
     assert.equal(planIdFromHash('#plan-12x'), null);
     assert.equal(planIdFromHash(''), null);
 });
-
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { changePlanArchive } from './administration-plans.js';
+import { changePlanArchive } from './administration-plans.ts';
 
 test('archive flow asks confirmation, cancels without writes, and restores as planned', async () => {
     const calls: {url: string; body: unknown}[] = [];
@@ -52,9 +49,7 @@ test('archive flow asks confirmation, cancels without writes, and restores as pl
     assert.equal(await changePlanArchive(plan, () => true, async () => new Response('{}', {status: 409})), 'conflict');
     await assert.rejects(changePlanArchive(plan, () => true, async () => new Response('{}', {status: 403})));
 });
-
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { replacePlan } from './administration-plans.js';
+import { replacePlan } from './administration-plans.ts';
 
 test('replacement confirmation sends a single atomic request and keeps the chosen draft on failures', async () => {
     const source = {id: 7, revision: 3, status: 'active'};

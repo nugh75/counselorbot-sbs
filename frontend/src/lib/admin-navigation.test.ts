@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { ADMIN_CLASSES_HREF, adminTabUrl, parseAdminTab } from './admin-navigation.js';
+import { ADMIN_CLASSES_HREF, adminTabUrl, parseAdminTab } from './admin-navigation.ts';
 
 test('admin classes link deep-links the groups and classes tab', () => {
     const url = new URL(ADMIN_CLASSES_HREF, 'https://example.test');

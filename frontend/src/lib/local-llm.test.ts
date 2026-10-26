@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { canUseServer, localLlmText, modelsSummary, serverStatusText } from './local-llm.js';
+import { canUseServer, localLlmText, modelsSummary, serverStatusText } from './local-llm.ts';
 import type { LocalServer, LocalServerStatus } from './local-llm';
 import type { Lang } from './i18n';
 
