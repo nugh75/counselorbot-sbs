@@ -121,6 +121,15 @@ mantiene le autorizzazioni di una registrazione già esistente e rifiuta
 di sovrascrivere virtual host non gestiti dallo script. La nuova voce
 usa i gruppi `admins`, `studenti`, `viewer` presenti nella Console.
 
+Il virtual host generato dallo script limita i timeout della sotto-richiesta
+di verifica (`auth_request`: connect/send 15s, read 90s) e, se ai4auth non
+risponde o risponde 5xx, risponde 503 con `Retry-After` e messaggio leggibile
+invece della pagina 500 interna di nginx (issue #254). La location di fallback
+non ha `auth_request`, quindi non può entrare in loop, e il recupero è
+automatico al ritorno di ai4auth. Dopo un aggiornamento del template basta
+rieseguire la registrazione: lo script valida la configurazione nginx prima
+del reload.
+
 La pubblicazione usa il tunnel wildcard Console esistente; lo script
 non modifica DNS e non crea tunnel. Verificare DNS e TLS pubblici dopo
 la registrazione. Non servono modifiche nginx sull'host né `sudo`.

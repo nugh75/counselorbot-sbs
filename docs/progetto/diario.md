@@ -6,6 +6,12 @@ Questo file raccoglie la cronologia dettagliata delle attività svolte per il pr
 
 ## Versione Italiana (Cronologica)
 
+### 26 Ottobre 2026 - Hardening di auth_request nel proxy portable
+* **Fix #254 (relativa #256)**: il template del virtual host portable (`infrastructure/portable/nginx-counselorbot.conf.template`) limita ora i timeout della sotto-richiesta `auth_request` (connect/send 15s, read 90s) e mappa ogni fallimento di autenticazione (ai4auth irraggiungibile, timeout o 5xx) a un 503 leggibile con `Retry-After` invece della pagina 500 interna di nginx. La location di fallback non ha `auth_request`, quindi nessun loop; il recupero è automatico al ritorno di ai4auth. Redirect 401/403 invariati.
+* **Verifica**: test live con Docker (nginx + mock ai4auth/frontend): timeout simulato -> 503 con `Retry-After` dopo ~90s (valori reali) e ~3s (variante rápida); 401/403 -> redirect login/portal conservati; 200 -> proxy con header identità del client rimossi; recupero automatico senza reload; endpoint pairing senza SSO funzionanti con ai4auth giù. `nginx -t` OK; guardia statica `node --test scripts/nginx-portable-template.test.mjs` 4/4.
+* **Da fare (operatore)**: rieseguire `node scripts/register-portable-console.mjs --hostname counselorbot.labform.net --frontend counselorbot-portable-frontend` nella Console portabile per applicare il nuovo vhost; aumentare la memoria della VM Docker Desktop (causa radice: saturazione, load ~15).
+* **Git**: branch `fix/portable-proxy-auth-timeout-254`, PR #616.
+
 ### 13 Ottobre 2026 - Errore 500 intermittente del proxy portable
 * **Sintomo**: il 13 ottobre 2026, tra le 22:00 e le 22:20, tutti i siti dietro il proxy portable (`manager.labform.net`, `herder.labform.net`, `counselorbot.labform.net`) hanno risposto 500 per circa 2-3 minuti, con recupero spontaneo e senza riavvii di container.
 * **Diagnosi**: i 500 sono generati da nginx (pagina interna di 177 byte), non dall'applicazione. I log mostrano il timeout della sotto-richiesta `auth_request` verso `ai4auth:9091/api/verify` (504) e, nella stessa finestra, il timeout del backend del manager (`console:4000`). Causa: saturazione dell'host / VM di Docker Desktop (~4 GB di RAM, load average ~15) durante catture Chrome headless e container di validazione concorrenti.
@@ -71,6 +77,12 @@ Questo file raccoglie la cronologia dettagliata delle attività svolte per il pr
 ---
 
 ## English Version (Chronological)
+
+### October 26, 2026 - auth_request hardening in the portable proxy
+* **Fix #254 (related #256)**: the portable vhost template (`infrastructure/portable/nginx-counselorbot.conf.template`) now bounds the `auth_request` subrequest timeouts (connect/send 15s, read 90s) and maps any authentication failure (ai4auth unreachable, timed out or answering 5xx) to a readable 503 with `Retry-After` instead of nginx's built-in 500 page. The fallback location has no `auth_request`, so it cannot loop; recovery is automatic once ai4auth is back. 401/403 redirects unchanged.
+* **Validation**: live Docker test (nginx + mock ai4auth/frontend): simulated timeout -> 503 with `Retry-After` after ~90s (real values) and ~3s (fast variant); 401/403 -> login/portal redirects preserved; 200 -> proxy with client identity headers stripped; automatic recovery without reload; SSO-free pairing endpoints working even with ai4auth down. `nginx -t` OK; static guard `node --test scripts/nginx-portable-template.test.mjs` 4/4.
+* **To do (operator)**: re-run `node scripts/register-portable-console.mjs --hostname counselorbot.labform.net --frontend counselorbot-portable-frontend` in the portable Console to apply the new vhost; increase the Docker Desktop VM memory (root cause: saturation, load ~15).
+* **Git**: branch `fix/portable-proxy-auth-timeout-254`, PR #616.
 
 ### October 13, 2026 - Intermittent 500 from the portable proxy
 * **Symptom**: on October 13, 2026, between 22:00 and 22:20, every site behind the portable proxy (`manager.labform.net`, `herder.labform.net`, `counselorbot.labform.net`) returned 500 for about 2-3 minutes, then recovered by itself with no container restarts.
