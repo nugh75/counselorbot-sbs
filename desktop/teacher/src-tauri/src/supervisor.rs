@@ -32,6 +32,7 @@ const PORT_ATTEMPTS: usize = 3;
 const MAX_RESTARTS: usize = 3;
 const RESTART_WINDOW: Duration = Duration::from_secs(300);
 const EXE_SUFFIX: &str = std::env::consts::EXE_SUFFIX;
+const NAMED_TUNNELS_ENABLED: bool = false;
 
 pub struct Config {
     pub credentials: Arc<crate::credentials::Credentials>,
@@ -249,7 +250,12 @@ struct Supervisor {
 
 impl Supervisor {
     fn new(config: Config, status: Arc<Mutex<Status>>, commands: Receiver<Command>) -> Supervisor {
-        let shell = config.data.load_config();
+        let mut shell = config.data.load_config();
+        // Keep preparatory domain/token settings, but never activate them in
+        // the Quick-Tunnel-only release, including profiles from earlier builds.
+        if !NAMED_TUNNELS_ENABLED && shell.tunnel.mode == "named" {
+            shell.tunnel.mode = "off".into();
+        }
         // ADR-0004: crea il gestore PostgreSQL se abilitato
         let postgres = if config.postgres_enabled {
             let resources = config.resources.clone();
@@ -835,6 +841,9 @@ impl Supervisor {
     }
 
     pub fn handle_start_named_tunnel(&mut self) -> Result<(), String> {
+        if !NAMED_TUNNELS_ENABLED {
+            return Err("Questa versione usa il link temporaneo Cloudflare Quick Tunnel.".into());
+        }
         if let Some(err) = &self.version_error {
             return Err(format!("Versione non compatibile: {err}"));
         }
@@ -1674,6 +1683,21 @@ mod tests {
         assert!(validate_tunnel_token("").is_err());
         assert!(validate_tunnel_token("too-short").is_err());
         assert!(validate_tunnel_token("invalid characters with spaces in between!!").is_err());
+    }
+
+    #[test]
+    fn saved_domain_configuration_stays_inactive_in_the_quick_tunnel_release() {
+        let first = supervisor("named-inactive");
+        let mut saved = first.config.data.load_config();
+        saved.tunnel.mode = "named".into();
+        saved.tunnel.custom_domain = Some("https://future.example.test".into());
+        first.config.data.save_config(&saved).unwrap();
+        let mut reopened = supervisor("named-inactive");
+        assert_eq!(reopened.shell.tunnel.mode, "off");
+        assert_eq!(reopened.shell.tunnel.custom_domain.as_deref(), Some("https://future.example.test"));
+        assert!(reopened.handle_start_named_tunnel().unwrap_err().contains("temporaneo"));
+        assert_eq!(reopened.config.data.load_config().tunnel.mode, "named");
+        std::fs::remove_dir_all(&reopened.config.data.root).unwrap();
     }
 
     #[test]

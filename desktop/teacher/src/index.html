@@ -39,16 +39,16 @@
         <input type="radio" name="tunnel-mode-choice" value="quick" id="mode-quick" checked>
         <span>Tunnel temporaneo rapido</span>
       </label>
-      <label class="radio-label">
-        <input type="radio" name="tunnel-mode-choice" value="named" id="mode-named">
+      <label class="radio-label" id="named-mode-option" style="display: none;">
+        <input type="radio" name="tunnel-mode-choice" value="named" id="mode-named" disabled>
         <span>Tunnel stabile nominativo</span>
       </label>
     </div>
 
     <!-- Banner Quick Tunnel («Prova subito») -->
     <div class="banner warning" id="tunnel-warning" style="display: none;">
-      <strong>⚠️ Solo per prove («Prova subito»)</strong>
-      <p>Il Quick Tunnel è temporaneo e rate-limitato da Cloudflare. Non usarlo per le lezioni con gli studenti: l'indirizzo cambia ad ogni avvio e la connessione può essere interrotta.</p>
+      <strong>Link temporaneo per gli studenti</strong>
+      <p>Apri la classe nell'applicazione, genera il link di abbinamento e condividilo con gli studenti. Approva i nuovi dispositivi dalla classe. Il tunnel deve restare aperto: il suo indirizzo cambia quando viene riavviato. Non serve un dominio o un account Console portable.</p>
     </div>
 
     <!-- Banner Tunnel Nominativo («Lezioni / Classe») -->
@@ -91,7 +91,7 @@
       </div>
       <div class="qr-box">
         <div id="qrcode"></div>
-        <div class="qr-caption" id="qr-caption">Inquadra con smartphone o tablet per accedere alle prove</div>
+        <div class="qr-caption" id="qr-caption">Indirizzo del tunnel. Il link di invito agli studenti si genera dalla classe.</div>
       </div>
     </div>
   </section>

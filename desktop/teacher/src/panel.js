@@ -1,4 +1,6 @@
 const invoke = typeof window !== 'undefined' && window.__TAURI__ ? window.__TAURI__.core.invoke : null;
+// Domain-based tunnels remain preparatory; this release uses Quick Tunnel.
+const NAMED_TUNNELS_ENABLED = false;
 const phases = { preparing: 'Preparazione…', ready: 'Pronto', error: 'Errore', stopped: 'Fermato' };
 const states = { running: 'attivo', stopped: 'fermo' };
 const hints = {
@@ -53,7 +55,7 @@ async function loadInitialSettings() {
         hasSavedToken = true;
         $('token-status-hint').textContent = '✅ Token Cloudflare configurato e salvato in sicurezza.';
       }
-      if (settings.mode === 'named') {
+      if (NAMED_TUNNELS_ENABLED && settings.mode === 'named') {
         selectedMode = 'named';
         $('mode-named').checked = true;
       } else {
@@ -69,6 +71,9 @@ async function loadInitialSettings() {
 }
 
 function updateModeView() {
+  if (!NAMED_TUNNELS_ENABLED) selectedMode = 'quick';
+  $('named-mode-option').style.display = NAMED_TUNNELS_ENABLED ? 'flex' : 'none';
+  $('mode-named').disabled = !NAMED_TUNNELS_ENABLED;
   const isNamed = selectedMode === 'named';
   $('named-config-panel').style.display = isNamed ? 'block' : 'none';
   if (isNamed) {
@@ -104,7 +109,7 @@ function render(status) {
   const cf = status.sidecars.find((s) => s.name === 'cloudflared');
   const isTunnelRunning = cf && cf.state === 'running';
   const activeMode = status.tunnel_mode || selectedMode;
-  const isNamedMode = activeMode === 'named';
+  const isNamedMode = NAMED_TUNNELS_ENABLED && activeMode === 'named';
   const tunnelUrl = status.tunnel_url;
   currentTunnelUrl = tunnelUrl;
 
@@ -143,7 +148,7 @@ function render(status) {
     } else {
       warning.style.display = 'block';
       namedInfo.style.display = 'none';
-      if (qrCaption) qrCaption.textContent = 'Inquadra con smartphone o tablet per accedere alle prove';
+      if (qrCaption) qrCaption.textContent = 'Indirizzo del tunnel. Il link di invito agli studenti si genera dalla classe.';
     }
 
     content.style.display = 'block';

@@ -69,7 +69,9 @@ separate. Il lavoro prosegue in un worktree fuori dai mount del portable.
 Le app desktop usano invece `AUTH_PROVIDER=local`: il docente entra dal guscio,
 condivide un link Cloudflare Quick Tunnel temporaneo e approva gli studenti.
 Non occorrono Console portable, account ai4educ o domini personalizzati.
-La predisposizione ai tunnel con dominio non deve diventare un prerequisito.
+La predisposizione ai tunnel con dominio è inattiva nel pannello e nel
+comando di avvio, anche riaprendo una vecchia configurazione nominativa.
+L’approvazione del docente è selezionata inizialmente nella creazione del link.
 
 ## Limiti per la release
 

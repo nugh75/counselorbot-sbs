@@ -56,8 +56,9 @@ portachiavi reale. Restano i limiti sperimentali dell'app descritti sopra.
 
 La [guida desktop docente](../docs/operations/desktop-teacher-guide.md) spiega
 come scaricare i bundle CI Mac Apple Silicon/Intel, Windows x64 e Linux deb,
-verificare SHA-256 e installare. Il pannello offre quick tunnel con link/QR
-(solo prove), tunnel nominativo con dominio/token e **Aggiornamenti applicazione**
+verificare SHA-256 e installare. Il pannello offre il Quick Tunnel temporaneo
+con link/QR, senza dominio o Console portable. La predisposizione al tunnel
+nominativo resta inattiva. Sono presenti **Aggiornamenti applicazione**
 con canale stabile/beta e backup SQLite verificato prima dell'update. Gli snapshot
 non includono tutti i file e le chiavi. La CI produce installer e manifest come
 artifact: la pubblicazione nelle Release resta da completare prima di usare
@@ -81,7 +82,8 @@ interfaccia nelle sei lingue né i relativi screenshot.
 **Abbinamento studenti dall'interfaccia (#602).** Con il fornitore locale, la
 panoramica di ogni classe («Classi → Apri classe → Panoramica») contiene la
 sezione **Accesso dal tunnel docente**: il docente genera il link
-`/unisciti#k=…` con approvazione facoltativa e numero massimo di utilizzi, e
+`/unisciti#k=…` con approvazione del docente selezionata inizialmente
+(modificabile) e numero massimo di utilizzi, e
 nella stessa sezione vede i dispositivi della classe. Lo studente apre il link:
 il codice è precompilato dal frammento e rimosso dalla cronologia del browser,
 sceglie uno pseudonimo e riceve il codice personale di 12 caratteri mostrato
