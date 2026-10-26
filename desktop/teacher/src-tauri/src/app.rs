@@ -29,6 +29,13 @@ struct Shell {
     _lock: File,
 }
 
+struct StartupError(String);
+
+#[tauri::command]
+fn startup_error(error: State<'_, StartupError>) -> String {
+    error.inner().0.clone()
+}
+
 // Blocking OS APIs and HTTP probes run away from the webview event loop.
 async fn credential_job<T: Send + 'static>(
     job: impl FnOnce() -> Result<T, String> + Send + 'static,
@@ -226,6 +233,41 @@ fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> 
     Ok(())
 }
 
+// Returning an error from Tauri's setup hook panics inside the native event
+// loop (SIGABRT on macOS). Expected startup failures must stay recoverable.
+fn show_startup_error(app: &AppHandle, mode: Mode, error: &dyn std::fmt::Display) {
+    let message = format!("avvio non riuscito: {error}");
+    logs::log(&message);
+    if let Some(supervisor) = app.try_state::<Arc<Handle>>() {
+        supervisor.stop();
+    }
+    if let Some(report) = std::env::var_os("COUNSELORBOT_REPORT_FILE") {
+        let status = Status {
+            phase: "error".into(),
+            message: Some(message.clone()),
+            version: app.package_info().version.to_string(),
+            shell_pid: std::process::id(),
+            ..Status::default()
+        };
+        if let Ok(bytes) = serde_json::to_vec_pretty(&status) {
+            let _ = std::fs::write(report, bytes);
+        }
+    }
+    if mode != Mode::Window {
+        app.exit(1);
+        return;
+    }
+    app.manage(StartupError(message));
+    if let Err(error) = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("startup-error.html".into()))
+        .title("CounselorBot Docente — Avvio non riuscito")
+        .inner_size(580.0, 400.0)
+        .build()
+    {
+        logs::log(format!("impossibile mostrare l'errore di avvio: {error}"));
+        app.exit(1);
+    }
+}
+
 pub fn run(mode: Mode) {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
@@ -242,6 +284,7 @@ pub fn run(mode: Mode) {
     }
     let app = builder
         .invoke_handler(tauri::generate_handler![
+            startup_error,
             shell_status,
             credential_status,
             save_credential,
@@ -263,10 +306,10 @@ pub fn run(mode: Mode) {
             crate::updater::apply_update,
         ])
         .setup(move |app| {
-            setup(app.handle(), mode).map_err(|error| {
-                logs::log(format!("avvio non riuscito: {error}"));
-                error
-            })
+            if let Err(error) = setup(app.handle(), mode) {
+                show_startup_error(app.handle(), mode, error.as_ref());
+            }
+            Ok(())
         })
         .build(tauri::generate_context!())
         .expect("errore nella creazione dell'app");

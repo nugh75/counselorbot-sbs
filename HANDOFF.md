@@ -1,3 +1,30 @@
+# Handoff 26–27 ottobre 2026: avvio desktop e inviti studenti
+
+- Branch: `fix/desktop-macos-startup`, da `origin/main` aggiornato.
+- Causa confermata dall'output Terminale: il profilo layout 1 viene rifiutato dalla
+  build PostgreSQL; il ritorno `Err` dall'hook setup di Tauri provoca panic e
+  `SIGABRT` nel ciclo eventi macOS. La migrazione automatica non è collegata.
+- Il guscio intercetta gli errori di setup e mostra una finestra con messaggio
+  testuale ed Esci; ferma l'eventuale supervisore già avviato. Le modalità di test
+  scrivono il report d'errore ed escono con codice 1 senza panic.
+- Test di regressione sui bundle: sei profili sintetici (legacy, futuro,
+  corrotto × headless/smoke), conservazione dei file e nessun cluster preparato.
+  Collegati alla CI macOS ARM64/Intel, Windows e Linux; test Node del pannello.
+- Guida aggiornata con diagnosi e avvio su profilo nuovo conservando quello vecchio,
+  solo per chi rinuncia a usare i vecchi dati nel nuovo profilo. Nessuna modifica
+  manuale del layout o conversione automatica introdotta.
+- Inviti desktop: il pannello locale sostituisce l'invito web `/gruppo?g=…`,
+  che richiede già una sessione e causava «Invito non valido o scaduto». Commit
+  `0bc051fa`; [dettagli e verifiche](docs/handoff/fix-desktop-local-invitations.md).
+- Verifiche: 51 test Rust e `cargo build --locked`, 6 avvii in errore su Mac
+  ARM64, 18 test Node del pannello/sidecar, rustfmt, YAML, compilazione Python e
+  guidance passati. Cache Rust spostata in `/private/tmp` per evitare la lentezza
+  del volume USB. Restano CI sugli altri target e checklist manuale della finestra.
+- Operazioni: build Docker frontend isolata e 9 test browser passati; server dev
+  e container di prova fermati. Nessun deploy o sudo; dati utente intatti.
+
+---
+
 # Handoff 25 ottobre 2026: Privacy P12 — migrazione chiavi Fernet
 
 Agente `s72-p12-fernet`, task `a62aae25-ef78-4af6-b0a2-369de174421a`, branch `feature/privacy-p12-fernet-dek`, issue #583, [PR #586](https://github.com/nugh75/counselorbot-sbs/pull/586).

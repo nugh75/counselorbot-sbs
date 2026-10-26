@@ -110,7 +110,7 @@ impl DataDir {
             }
             if layout.layout < requested_layout {
                 return Err(
-                    "Profilo SQLite legacy: completare la conversione PostgreSQL prima di aprirlo con questa versione"
+                    "Questo profilo usa SQLite. Questa versione richiede PostgreSQL e non include ancora la migrazione automatica dei dati. Per riaprire il profilo esistente usa la versione precedente dell'app; per trasferirlo richiedi assistenza."
                         .into(),
                 );
             }

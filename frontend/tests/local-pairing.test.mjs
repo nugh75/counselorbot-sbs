@@ -218,18 +218,22 @@ test('the class overview offers pairing only with the local provider', async () 
         await local.page.getByRole('heading', { name: 'Accesso dal tunnel docente' }).waitFor();
         await local.page.getByRole('button', { name: 'Genera nuovo link' }).waitFor();
         assert.equal(await local.page.getByRole('checkbox', { name: 'Richiedi l’approvazione del docente' }).isChecked(), true);
+        assert.equal(await local.page.getByRole('heading', { name: 'Invito studenti' }).count(), 0);
+        assert.equal(await local.page.locator('#overview-weblink').count(), 0);
+        assert.equal(await local.page.getByRole('button', { name: 'Copia codice', exact: true }).count(), 0);
         assert.deepEqual(local.errors, []);
     } finally { await local.context.close(); }
 
     const production = await openPage(browser, {
         path: '/docente/classi/88',
         identity: { ...TEACHER, auth_provider: 'ai4auth' },
-        runtime: { authProvider: 'ai4auth' },
+        runtime: { authProvider: 'ai4auth', publicOrigin: 'https://school.example.test' },
         handlers: base,
     });
     try {
         await production.page.getByRole('heading', { name: 'Invito studenti' }).waitFor();
         assert.equal(await production.page.getByRole('heading', { name: 'Accesso dal tunnel docente' }).count(), 0);
+        assert.equal(await production.page.locator('#overview-weblink').inputValue(), 'https://school.example.test/gruppo?g=GR-PAIR88');
         assert.deepEqual(production.errors, []);
     } finally { await production.context.close(); }
 });
@@ -257,6 +261,8 @@ test('the pairing link warns when the tunnel is not configured', async () => {
         await page.getByRole('heading', { name: 'Accesso dal tunnel docente' }).waitFor();
         await page.getByRole('button', { name: 'Genera nuovo link' }).click();
         await page.getByRole('textbox', { name: 'Link di abbinamento', exact: true }).waitFor();
+        assert.equal(await page.getByRole('textbox', { name: 'Link di abbinamento', exact: true }).inputValue(), link);
+        assert.equal(await page.locator('#overview-weblink').count(), 0);
         assert.equal(await page.getByText('Il link non contiene un indirizzo pubblico', { exact: false }).count(), 0);
         link = '/unisciti#k=NO-TUNNEL';
         await page.getByRole('button', { name: 'Genera nuovo link' }).click();
