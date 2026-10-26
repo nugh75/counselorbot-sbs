@@ -1,33 +1,38 @@
 {
   "major": 15,
-  "minor": "15.19",
+  "minor": "15.12",
   "distribution": "postgresql-binaries",
-  "version": "15.19.1",
+  "version": "15.12.1",
+  "source": "theseus-rs/postgresql-binaries",
   "targets": {
     "macos-arm64": {
       "source": "theseus-rs/postgresql-binaries",
-      "asset": "postgresql-15.19.1-aarch64-apple-darwin.tar.gz",
+      "tag": "15.12.1",
+      "asset": "postgresql-15.12.1-aarch64-apple-darwin.tar.gz",
       "sha256": "",
       "size_mb_approx": 108
     },
     "macos-x64": {
       "source": "theseus-rs/postgresql-binaries",
-      "asset": "postgresql-15.19.1-x86_64-apple-darwin.tar.gz",
+      "tag": "15.12.1",
+      "asset": "postgresql-15.12.1-x86_64-apple-darwin.tar.gz",
       "sha256": "",
       "size_mb_approx": 104
     },
     "windows-x64": {
       "source": "theseus-rs/postgresql-binaries",
-      "asset": "postgresql-15.19.1-x86_64-pc-windows-msvc.tar.gz",
+      "tag": "15.12.1",
+      "asset": "postgresql-15.12.1-x86_64-pc-windows-msvc.tar.gz",
       "sha256": "",
       "size_mb_approx": 110
     },
     "linux-x64": {
-      "source": "build-from-source",
-      "asset": "postgresql-15.19-linux-x64.tar.gz",
+      "source": "theseus-rs/postgresql-binaries",
+      "tag": "15.12.1",
+      "asset": "postgresql-15.12.1-x86_64-unknown-linux-gnu.tar.gz",
       "sha256": "",
-      "size_mb_approx": 22,
-      "build_options": ["--without-icu", "--without-readline"]
+      "size_mb_approx": 28,
+      "note": "glibc build, compatibile Ubuntu 22.04+"
     }
   },
   "binaries": [
@@ -41,7 +46,7 @@
   ],
   "libraries": [
     "libpq",
-    "libicu (macOS/Windows)",
+    "libicu (macOS/Windows/Linux)",
     "libssl",
     "libcrypto",
     "libxml2",
@@ -66,9 +71,10 @@
     "share": "share/"
   },
   "notes": [
+    "Versione 15.12.1: ultima release theseus-rs per PostgreSQL 15 (26/10/2026)",
     "I binari sono scaricati/verificati in CI (ADR-0004 §2.2)",
     "SHA-256 viene popolato dallo script di download",
-    "Linux: build dai sorgenti su ubuntu-22.04 con rpath $ORIGIN",
+    "Linux: binari precompilati glibc (compatibile Ubuntu 22.04+)",
     "Esclusi: include/, symbols/, .a statiche, PL/Python, documentazione"
   ]
 }

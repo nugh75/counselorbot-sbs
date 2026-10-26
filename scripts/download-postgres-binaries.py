@@ -26,16 +26,19 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
-PG_VERSION = "15.19"
-PG_DIST_VERSION = "15.19.1"
+PG_VERSION = "15.12"
+PG_DIST_VERSION = "15.12.1"
 THESEUS_REPO = "theseus-rs/postgresql-binaries"
-THESEUS_BASE_URL = f"https://github.com/{THESEUS_REPO}/releases/download/v{PG_DIST_VERSION}"
+# Tag della release su GitHub (formato: X.Y.Z, es. 15.12.1)
+THESEUS_TAG = PG_DIST_VERSION
+THESEUS_BASE_URL = f"https://github.com/{THESEUS_REPO}/releases/download/{THESEUS_TAG}"
 
-# Mapping target -> asset name
+# Mapping target -> asset name (formato theseus-rs)
 TARGET_ASSETS = {
     "macos-arm64": f"postgresql-{PG_DIST_VERSION}-aarch64-apple-darwin.tar.gz",
     "macos-x64": f"postgresql-{PG_DIST_VERSION}-x86_64-apple-darwin.tar.gz",
     "windows-x64": f"postgresql-{PG_DIST_VERSION}-x86_64-pc-windows-msvc.tar.gz",
+    "linux-x64": f"postgresql-{PG_DIST_VERSION}-x86_64-unknown-linux-gnu.tar.gz",
 }
 
 # File da escludere (ADR-0004 §2.2)
@@ -90,19 +93,62 @@ def should_exclude(name: str) -> bool:
 
 
 def extract_filtered(archive: Path, dest: Path):
-    """Estrae solo i file necessari dall'archivio."""
+    """Estrae solo i file necessari dall'archivio.
+
+    L'archivio theseus-rs ha una cartella radice (es. postgresql-15.12.1-aarch64-apple-darwin/)
+    che contiene bin/, lib/, share/. Estraiamo solo quelle sottocartelle.
+    """
     log(f"estrazione filtrata: {archive} -> {dest}")
     dest.mkdir(parents=True, exist_ok=True)
 
-    with tarfile.open(archive, "r:gz") as tar:
-        for member in tar.getmembers():
-            # Salta file esclusi
-            if should_exclude(member.name):
-                continue
-            # Estrai solo bin/, lib/, share/
-            if not any(member.name.startswith(p) for p in ["bin/", "lib/", "share/"]):
-                continue
-            tar.extract(member, dest)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        with tarfile.open(archive, "r:gz") as tar:
+            tar.extractall(tmp_path)
+
+        # Trova la cartella radice (quella che contiene bin/)
+        root = None
+        for item in tmp_path.iterdir():
+            if item.is_dir() and (item / "bin").exists():
+                root = item
+                break
+
+        if root is None:
+            # Fallback: cerca bin/ direttamente
+            if (tmp_path / "bin").exists():
+                root = tmp_path
+            else:
+                log(f"ERRORE: cartella radice con bin/ non trovata in {tmp_path}")
+                sys.exit(1)
+
+        log(f"cartella radice: {root.name}")
+
+        # Copia solo bin/, lib/, share/ (escludendo include/, doc, etc.)
+        for subdir in ["bin", "lib", "share"]:
+            src = root / subdir
+            dst = dest / subdir
+            if src.exists():
+                if dst.exists():
+                    shutil.rmtree(dst)
+                shutil.copytree(src, dst)
+                # Conta file copiati
+                count = sum(1 for _ in dst.rglob("*") if _.is_file())
+                log(f"  copiato {subdir}/ ({count} file)")
+            else:
+                log(f"  ATTENZIONE: {subdir}/ non trovato in {root}")
+
+        # Copia anche LICENSE e notice se presenti
+        for extra in ["LICENSE", "COPYRIGHT", "dependency-notices"]:
+            src = root / extra
+            if src.exists():
+                dst = dest / extra
+                if src.is_dir():
+                    if dst.exists():
+                        shutil.rmtree(dst)
+                    shutil.copytree(src, dst)
+                else:
+                    shutil.copy2(src, dst)
+                log(f"  copiato {extra}")
 
 
 def build_linux_from_source(output: Path):
@@ -209,14 +255,14 @@ def main():
 
     log(f"target={target} output={output}")
 
-    if args.build_from_source or target == "linux-x64":
+    if args.build_from_source:
+        # Build dai sorgenti (solo Linux, per versioni specifiche non in theseus-rs)
         if platform.system() != "Linux":
             log("ERROR: build-from-source richiede Linux (ubuntu-22.04)")
             sys.exit(1)
         build_linux_from_source(output)
-        # Per Linux, l'hash viene calcolato sull'archivio risultante
-        # (da implementare se serve archiviazione)
     else:
+        # Download binari precompilati da theseus-rs (tutti i target)
         sha256 = download_theseus(target, output)
         update_manifest(output, target, sha256)
 

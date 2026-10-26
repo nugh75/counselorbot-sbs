@@ -117,18 +117,11 @@ jobs:
 
       - name: Download PostgreSQL binaries (ADR-0004)
         run: |
-          # ADR-0004 §2: binari PostgreSQL 15.19 per il target corrente
+          # ADR-0004 §2: binari PostgreSQL 15.12.1 da theseus-rs per il target corrente
           mkdir -p desktop/teacher/src-tauri/postgresql
-          if [ "${{ matrix.platform }}" = "linux-x64" ]; then
-            python3 scripts/download-postgres-binaries.py \
-              --target linux-x64 \
-              --output desktop/teacher/src-tauri/postgresql/current \
-              --build-from-source
-          else
-            python3 scripts/download-postgres-binaries.py \
-              --target ${{ matrix.platform }} \
-              --output desktop/teacher/src-tauri/postgresql/current
-          fi
+          python3 scripts/download-postgres-binaries.py \
+            --target ${{ matrix.platform }} \
+            --output desktop/teacher/src-tauri/postgresql/current
           # Copia bin/, lib/, share/ nella struttura attesa da Tauri
           cp -r desktop/teacher/src-tauri/postgresql/current/bin desktop/teacher/src-tauri/postgresql/ || true
           cp -r desktop/teacher/src-tauri/postgresql/current/lib desktop/teacher/src-tauri/postgresql/ || true

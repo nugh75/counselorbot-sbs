@@ -18,7 +18,7 @@ use crate::logs;
 
 /// Versione PostgreSQL inclusa nel bundle (ADR-0004 §2.1).
 pub const PG_MAJOR: u32 = 15;
-pub const PG_MINOR: &str = "15.19";
+pub const PG_MINOR: &str = "15.12";
 
 /// Timeout di avvio del cluster (ADR-0004 §5.3: 180s primo avvio, 60s successivi).
 pub const FIRST_START_TIMEOUT: Duration = Duration::from_secs(180);

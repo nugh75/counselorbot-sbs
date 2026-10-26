@@ -51,13 +51,12 @@ jobs:
             --target ${{ matrix.target }} \
             --output resources/postgresql/${{ matrix.target }}
 
-      - name: Build PostgreSQL from source (Linux)
+      - name: Download PostgreSQL binaries (Linux)
         if: matrix.target == 'linux-x64'
         run: |
           python scripts/download-postgres-binaries.py \
             --target linux-x64 \
-            --output resources/postgresql/linux-x64 \
-            --build-from-source
+            --output resources/postgresql/linux-x64
 
       - name: Verify binaries exist
         run: |
