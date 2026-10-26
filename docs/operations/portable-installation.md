@@ -379,7 +379,7 @@ tramite `mirror.gcr.io` è riuscito. Gli override opzionali permettono di
 usarlo come rimedio temporaneo, conservando i default del repository:
 
 ```dotenv
-COUNSELORBOT_PYTHON_BASE_IMAGE=mirror.gcr.io/library/python:3.10-slim
+COUNSELORBOT_PYTHON_BASE_IMAGE=mirror.gcr.io/library/python:3.12-slim
 COUNSELORBOT_NODE_BASE_IMAGE=mirror.gcr.io/library/node:22-alpine
 COUNSELORBOT_POSTGRES_IMAGE=mirror.gcr.io/library/postgres:15
 ```

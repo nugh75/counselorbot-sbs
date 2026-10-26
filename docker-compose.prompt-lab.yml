@@ -13,7 +13,7 @@ services:
         condition: service_completed_successfully
 
   prompt-lab-bootstrap:
-    image: python:3.10-slim
+    image: python:3.12-slim
     network_mode: none
     command: [python, /bootstrap.py]
     volumes:
