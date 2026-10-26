@@ -251,7 +251,7 @@ impl Credentials {
             return Ok(password);
         }
         let password = generate_secure_password();
-        self.0.lock().map_err(|_| STORE_ERROR)?.set(&id, &password).map_err(|_| STORE_ERROR.into())?;
+        self.0.lock().map_err(|_| STORE_ERROR)?.set(&id, &password).map_err(|_| STORE_ERROR.to_string())?;
         Ok(password)
     }
 
