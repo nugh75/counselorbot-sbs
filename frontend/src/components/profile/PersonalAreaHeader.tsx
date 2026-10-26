@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { personalAreaDescription, personalAreaName, personalAreaText } from '@/lib/i18n-personal-area';
 import { personalAreaImages, type PersonalAreaSlug } from '@/lib/personal-area';
@@ -13,7 +13,7 @@ import { Callout } from '@/components/ui/Callout';
 
 // Used by Orientamento and Obiettivi. Editable pages need their exit guards before adoption.
 export function PersonalAreaHeader({ slug }: { slug: PersonalAreaSlug }) {
-    const { lang } = useI18n();
+    const { lang, t } = useI18n();
     const heading = useRef<HTMLHeadingElement>(null);
     const access = usePersonalToolAccess();
     const l = (key: Parameters<typeof personalAreaText>[1]) => personalAreaText(lang, key);
@@ -23,8 +23,9 @@ export function PersonalAreaHeader({ slug }: { slug: PersonalAreaSlug }) {
 
     return (
         <header data-personal-area-header className="space-y-5">
-            <div className="flex items-center">
+            <div className="flex flex-wrap items-center justify-between gap-2">
                 <Link href="/profilo" className={control}><ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />{l('title')}</Link>
+                <Link href="/privacy" className={control}><ShieldCheck className="h-4 w-4 shrink-0" aria-hidden />{t('privacy.title')}</Link>
             </div>
             <div className="grid grid-cols-[4rem_1fr] items-center gap-x-4 gap-y-3 sm:grid-cols-[4.5rem_1fr]">
                 <Image src={personalAreaImages[slug]} alt="" width={72} height={72} className="h-16 w-16 object-contain sm:row-span-2 sm:h-18 sm:w-18" />
