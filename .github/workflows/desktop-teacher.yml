@@ -186,8 +186,8 @@ jobs:
           "$installer" //S
           exe="$LOCALAPPDATA/CounselorBot Docente/counselorbot-teacher.exe"
           ls -la "$(dirname "$exe")"
-          icacls "$(dirname "$exe")" /grant '*S-1-5-32-545:(OI)(CI)F' /T /Q
-          icacls "$RUNNER_TEMP" /grant '*S-1-5-32-545:(OI)(CI)F' /T /Q
+          MSYS2_ARG_CONV_EXCL='*' icacls "$(dirname "$exe")" /grant '*S-1-5-32-545:(OI)(CI)F' /T /Q
+          MSYS2_ARG_CONV_EXCL='*' icacls "$RUNNER_TEMP" /grant '*S-1-5-32-545:(OI)(CI)F' /T /Q
           bash desktop/teacher/scripts/check-lifecycle.sh --full "$exe" \
             bash desktop/teacher/scripts/run-windows-restricted.sh
 
