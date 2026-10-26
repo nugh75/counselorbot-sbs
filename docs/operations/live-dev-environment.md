@@ -552,9 +552,28 @@ http://localhost:3161 (le API simulate esistono solo nei test, non nel browser l
 Stop frontend con Ctrl-C nel terminale dedicato; stop PG con
 `docker stop counselorbot-oc3-pg`. Nessun collegamento a produzione.
 
-## Somministrazioni: archiviazione e sostituzione (s12)
+## Fixture del pairing studente (#602)
 
-Usare Node 22 o successivo per i test TypeScript diretti.
+`scripts/dev-local-pairing-tests.sh` avvia Next con hot reload su
+`127.0.0.1:3170` (verificare prima `lsof -nP -iTCP:3170 -sTCP:LISTEN`), backend
+inutilizzabile `127.0.0.1:9`, provider locale e origine pubblica sintetica.
+Nessun database o provider: le API sono intercettate dalla suite browser.
+
+```sh
+cd frontend
+LOCAL_PAIRING_BASE_URL=http://127.0.0.1:3170 node --test tests/local-pairing.test.mjs
+```
+
+La suite copre `/unisciti` (frammento rimosso dalla cronologia, pair, codice
+personale una sola volta, pending, errori 401/429 localizzati, recupero),
+`/docente/dispositivi` (approva, rigenera, revoca con conferma) e la sezione
+pairing nella panoramica classe, assente con `ai4auth`. Non verifica le API
+reali (`backend/tests/test_local_pairing.py`) né un tunnel reale. In dev la
+prima compilazione è lenta: preriscaldare `/`, `/unisciti` e
+`/docente/classi/88` con `curl` prima della suite, che usa timeout di 30s. Stop: Ctrl-C
+nel terminale di avvio. Tunnel: `ssh -N -L 3170:127.0.0.1:3170 <utente>@<server>`.
+
+## Somministrazioni: archiviazione e sostituzione (s12)Usare Node 22 o successivo per i test TypeScript diretti.
 
 Verificare `lsof -nP -iTCP:3162 -sTCP:LISTEN` (Linux: `ss -ltn`), poi
 `bash scripts/dev-somministrazioni-tests.sh`. Frontend con hot reload su
