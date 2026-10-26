@@ -35,15 +35,15 @@ passaggi e la [checklist di accettazione](desktop-teacher-tests.md).
 
    Mac (Terminale):
    ```sh
-   shasum -a 256 -c "CounselorBot Docente_0.1.0_aarch64.dmg.sha256"
+   shasum -a 256 -c "CounselorBot Docente_0.1.1_aarch64.dmg.sha256"
    ```
    Linux (Terminale):
    ```sh
-   sha256sum -c "CounselorBot Docente_0.1.0_amd64.deb.sha256"
+   sha256sum -c "CounselorBot Docente_0.1.1_amd64.deb.sha256"
    ```
    Windows (PowerShell):
    ```powershell
-   $installer = "CounselorBot Docente_0.1.0_x64-setup.exe"
+   $installer = "CounselorBot Docente_0.1.1_x64-setup.exe"
    $expected = ((Get-Content -LiteralPath "$installer.sha256" -Raw).Trim() -split '\s+')[0]
    $actual = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
    if ($actual -ine $expected) { throw "Checksum diverso: non installare" }
