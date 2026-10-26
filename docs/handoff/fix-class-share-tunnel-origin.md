@@ -24,6 +24,7 @@ Task Diario `bef7d9ec`; bug `b9292408`; issue [#598](https://github.com/nugh75/c
 
 ## Prossimi passi
 - PR #600 PRONTA per il merge dell'utente (rilascio cross-modello escluso per decisione utente 8b4de3e3). Dopo il merge: runbook `docs/operations/release.md` — build `workflow_dispatch` su `main`, prerelease **v0.1.2 (Desktop Beta)** con note in `/tmp/counselorbot-release-012-notes.md`, tag v0.1.1 e asset NON toccati.
+- **Audit finale richiesto dal Timoniere (run 40239758339, job 121308832184, head 4f799632)**: NESSUN fallimento nuovo inatteso per #600 — i 54 test rossi del job postgres sono esattamente la baseline preesistente su main (diff vuoto contro il run precedente). Tra questi, l'unica voce con un fix reale è il test SSE `test_sse_heartbeat::test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next`, corretto in **PR #601** (verde: `tests (postgres)` pass, con riallineamento di `sqlite_known_failures.txt`). Dipendenza reale all'utente: **unire prima #601** e poi #600; gli altri 53 restano le note rosse legacy fuori dal ratchet (piper, diagram, practice_notebooks, forum…), già accettate dal Timoniere nelle release precedenti.
 - Successivo (non in questo task): abbinamento studenti via tunnel (pagine `/unisciti` + dispositivi docente, ADR-0002 §4, F1-13) — issue dedicata.
 
 ## Blocchi e rischi
