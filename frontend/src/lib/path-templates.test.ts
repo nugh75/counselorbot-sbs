@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { moveTemplateStep, newTemplateStep, parsePathTemplateList, parseTemplateUpdate, templateStepPayload, templateStepsValid } from './path-templates.ts';
+import { independentTemplateSteps, moveTemplateStep, newTemplateStep, parsePathTemplateList, parseTemplateUpdate, templateStepPayload, templateStepsValid } from './path-templates.ts';
 
 const questionnaire = { ...newTemplateStep('questionnaire_administration'), id: 1 };
-const chat = { ...newTemplateStep('guided_results_chat'), results_position: 1 };
+const chat = { ...newTemplateStep('guided_results_chat'), tool_key: '', results_position: 1 };
 const tool = { ...newTemplateStep('tool'), tool_key: 'tavolo' };
 
 test('moving steps keeps each results chat on its questionnaire', () => {
@@ -52,4 +52,19 @@ test('personal questionnaire analyses need no administration and retain their so
         assert.equal(moveTemplateStep([tool, personal], 0, 1)[0].tool_key, tool_key);
     }
     assert.equal(templateStepsValid([{...newTemplateStep('guided_results_chat'), tool_key: 'SAVICKAS'}]), false);
+});
+
+
+test('legacy template analyses become independent and retain their questionnaire type', () => {
+    const original = [
+        {step_type: 'questionnaire_administration' as const, instrument_code: 'ZTPI'},
+        {step_type: 'guided_results_chat' as const, results_position: 1},
+    ];
+    const detached = independentTemplateSteps(original);
+    assert.equal(detached[1].tool_key, 'ZTPI');
+    assert.equal(detached[1].results_position, undefined);
+    assert.equal(original[1].results_position, 1);
+    assert.equal(moveTemplateStep(detached, 1, 0)[0].tool_key, 'ZTPI');
+    assert.equal(moveTemplateStep(detached, 0, null)[0].tool_key, 'ZTPI');
+    assert.equal(newTemplateStep('guided_results_chat').tool_key, 'QSA');
 });

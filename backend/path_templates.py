@@ -167,7 +167,7 @@ def apply_template(db: Session, template: models.PathTemplate, group: models.Stu
     if disabled:
         raise HTTPException(409, {"code": "template_tool_disabled_for_class", "group_id": group.id, "positions": disabled})
     path = models.ClassPath(group_id=group.id, title=template.title, description=template.description,
-                            mode=template.mode, status="draft", created_by=username, revision=1,
+                            mode="recommended", status="draft", created_by=username, revision=1,
                             template_id=template.id, template_revision=template.revision)
     db.add(path)
     db.flush()
@@ -320,7 +320,8 @@ def materialize_pending(db: Session, path: models.ClassPath, steps: list[models.
     from .routes.forum import create_path_topic
     group = db.get(models.StudentGroup, path.group_id)
     problems = []
-    for step in steps:
+    # Preparation order is an implementation detail, never the display order.
+    for step in sorted(steps, key=lambda row: (row.pending_config or {}).get("kind") != "questionnaire_administration"):
         if step.step_type != "pending":
             continue
         config = step.pending_config or {}
@@ -338,7 +339,7 @@ def materialize_pending(db: Session, path: models.ClassPath, steps: list[models.
                 step.tool_key = config["tool_key"]
             elif kind == "guided_results_chat":
                 source = db.get(models.ClassPathStep, config.get("results_step_id"))
-                if (not source or source.path_id != path.id or source.removed_at is not None
+                if (not source or source.path_id != path.id
                         or source.step_type != "questionnaire_administration"):
                     raise HTTPException(409, "results_step_unavailable")
                 step.results_step_id = source.id

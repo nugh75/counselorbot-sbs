@@ -383,8 +383,8 @@ def test_strict_order_target_immutability_and_membership(api):
     tool, step = path["steps"]
     as_user(identity, "alice")
     reply(client, discussion)
-    assert [row["state"] for row in client.get("/user/paths").json()[0]["steps"]] == ["not_done", "locked"]
-    assert client.post(f"/user/paths/{path['id']}/steps/{step['id']}/launch").status_code == 409
+    assert [row["state"] for row in client.get("/user/paths").json()[0]["steps"]] == ["not_done", "done"]
+    assert client.post(f"/user/paths/{path['id']}/steps/{step['id']}/launch").status_code == 200
     assert client.post(f"/user/paths/{path['id']}/steps/{tool['id']}/done").status_code == 200
     assert [row["state"] for row in client.get("/user/paths").json()[0]["steps"]] == ["done", "done"]
     as_user(identity, "teacher")
@@ -444,3 +444,26 @@ def test_path_reads_never_select_forum_text_columns(api):
     for column in ("body", "title", "hidden_reason", "author_display_name", "reason"):
         assert not any(f".{column}" in sql for sql in forum_reads), column
     assert not any("forum_reads" in sql or "forum_moderation_log" in sql for sql in forum_reads)
+
+
+@pytest.mark.postgres_only  # Existing forum writes use PostgreSQL statement_timestamp (known SQLite baseline).
+def test_builder_can_create_and_edit_its_discussion_without_saving_the_plan(api):
+    client, db, identity, group, other = api
+    created = topic(client, group, 'Builder')
+    path = new_path(client, group, [forum_step(created)], publish=False)
+    edited = client.patch(f"/forum/topics/{created['id']}", json={
+        'title': 'Updated builder discussion', 'body': f'{MARKER}updated body',
+    })
+    assert edited.status_code == 200, edited.text
+    assert edited.json()['id'] == created['id']
+    current = client.get(f"/teacher/paths/{path['id']}").json()
+    assert current['revision'] == path['revision']
+    assert current['steps'][0]['topic_id'] == created['id']
+    assert f'{MARKER}updated body' not in str(current)
+    assert db.query(models.ForumTopic).count() == 1
+    # Existing forum ownership/moderation still governs edits from the builder.
+    as_user(identity, 'bob')
+    denied = client.patch(f"/forum/topics/{created['id']}", json={'title': 'Not mine'})
+    assert denied.status_code == 403
+    as_user(identity, "teacher")
+    assert client.get(f"/forum/topics/{created['id']}").json()['topic']['title'] == 'Updated builder discussion'

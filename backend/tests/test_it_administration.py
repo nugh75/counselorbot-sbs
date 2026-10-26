@@ -1,6 +1,7 @@
 """Italian typed administration APIs on synthetic PostgreSQL only."""
 
 import os
+from urllib.parse import urlsplit
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -19,7 +20,9 @@ def test_external_link_is_the_questionnaire_chosen_in_the_administration():
 
 @pytest.fixture
 def api():
-    assert os.environ["DATABASE_URL"] == "postgresql://c5_test@127.0.0.1:18650/counselorbot_test"
+    # artifact_session isolates both supported engines; never use an application DB.
+    url = os.environ["DATABASE_URL"]
+    assert url.startswith("sqlite:") or urlsplit(url).path == "/counselorbot_test"
     with artifact_session() as db:
         school = models.Institution(
             slug="synthetic-it",
@@ -393,7 +396,7 @@ def test_failed_commit_rolls_back_all_entry_rows_and_retry_succeeds(api, monkeyp
     )
 
 
-def test_strict_launch_and_write_do_not_bypass_predecessor(api):
+def test_legacy_strict_launch_and_write_are_independent_of_earlier_steps(api):
     client, db, group, identity = api
     plan = create_plan(client, group)
     path = client.post(
@@ -417,21 +420,16 @@ def test_strict_launch_and_write_do_not_bypass_predecessor(api):
     path = client.post(f"/teacher/paths/{path['id']}/publish").json()
     step = path["steps"][1]
     identity.update(username="student", groups=[])
-    assert (
-        client.post(f"/user/paths/{path['id']}/steps/{step['id']}/launch").status_code
-        == 409
-    )
-    response = client.post(
-        f"/user/paths/{path['id']}/steps/{step['id']}/guided-entry",
-        json={
-            "session_id": "locked",
-            "request_id": "locked",
-            "scores": {"C1": 5, "C2": 7},
-            "institution_grant": "unused",
-        },
-    )
-    assert response.status_code == 409
-    assert db.query(models.QuestionnaireResult).count() == 0
+    assert client.post(f"/user/paths/{path['id']}/steps/{step['id']}/launch").status_code == 200
+    grant = client.post(f"/user/administrations/{plan['id']}/verify-institution",
+        json={"institution_code": "SYN-150", "password": "Invented-150"}).json()["grant"]
+    response = client.post(f"/user/paths/{path['id']}/steps/{step['id']}/guided-entry", json={
+        "session_id": "independent", "request_id": "independent", "scores": {"C1": 5, "C2": 7},
+        "institution_grant": grant,
+    })
+    assert response.status_code == 200, response.text
+    progress = client.get("/user/paths").json()[0]
+    assert [row["state"] for row in progress["steps"]] == ["not_done", "done"]
 
 
 def test_class_and_research_edits_share_revision_without_granting_research_reads(api):

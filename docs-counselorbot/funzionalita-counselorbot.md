@@ -151,13 +151,32 @@ quei blocchi saranno pronti. Non cambiano schermate né percorsi. Nessuna garanz
 
 Il backend P9 aggiunge documenti versionati, finalità e scelte privacy separate
 con revoca immediata. Le finalità iniziali restano inattive con base `undefined`;
-le informative e le decisioni del titolare/DPO sono **[DA VALIDARE]**. La UI
-privacy P10 resta da realizzare. Un consenso specifico alla condivisione del
-taccuino autorizza soltanto il docente e la classe scelti; la revoca non toglie
-l'accesso ai risultati autorizzato per la classe. Gli invii dai vecchi moduli di
-gradimento/somministrazione generano osservazioni privacy senza cambiare il
-flusso né abilitarne automaticamente le finalità. Contratto e limiti in
-[Privacy P9](../docs/privacy/p9-consensi.md).
+le informative e le decisioni del titolare/DPO sono **[DA VALIDARE]**. Un consenso
+specifico alla condivisione del taccuino autorizza soltanto il docente e la classe
+scelti; la revoca non toglie l'accesso ai risultati autorizzato per la classe. Gli
+invii dai vecchi moduli di gradimento/somministrazione generano osservazioni
+privacy senza cambiare il flusso né abilitarne automaticamente le finalità.
+Contratto e limiti in [Privacy P9](../docs/privacy/p9-consensi.md).
+
+La UI privacy P10 è disponibile alla pagina `/privacy`, raggiungibile dalla voce
+«Privacy e consensi» del menu account (anche per gli ospiti) e dall'intestazione
+delle aree personali:
+- ogni informativa versionata mostra titolo, versione, data, hash e il badge
+  **[DA VALIDARE]** in una finestra accessibile; nessun documento viene
+  pubblicato automaticamente;
+- le finalità sono interruttori separati che partono spenti: si può acconsentire,
+  rifiutare o revocare ogni scelta singolarmente, con l'esito riportato subito;
+- la condivisione del taccuino si concede per la classe e il docente scelti e si
+  revoca dalla stessa pagina; l'API restituisce il docente solo nelle scelte del
+  soggetto interessato, mentre la cronologia di audit conserva il solo target
+  pseudonimo `share:{classe}:{pseudonimo}`;
+- la cronologia personale elenca data, finalità, bersaglio e tipo di scelta, senza
+  testo libero digitato dal client;
+- testi, errori e stati sono tradotti nelle sei lingue attive
+  (`frontend/src/lib/i18n-privacy.ts`); i codici di errore dell'API diventano
+  messaggi comprensibili e i link dei documenti sono solo relativi o http(s).
+
+Il lavoro è descritto in [P10 — handoff](../docs/handoff/feature-privacy-p10-consent-ui.md).
 
 Il blocco P7 introduce il livello autorizzativo granulare tra docente, studente e
 amministratore (matrice §5.2 e §5.3 del Privacy Layer):
@@ -1049,7 +1068,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. Nel quadro dei risultati con più aree, i pulsanti «Tutte le aree» e il nome di ciascuna area permettono di leggere un’area alla volta con gli stessi dati; «Tutte le aree» riporta alla visione completa. Le fasce usano colore, simbolo ed etichetta, spiegati dalla legenda. |
 | Analisi combinata dei profili | `/profilo/analisi-combinata` | Generare una lettura integrata di almeno due strumenti tra QSA, QSAr e ZTPI. Si apre dal gruppo Conoscermi e riflettere e non compare più sotto i singoli risultati. |
 | Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. Lista breve con filtri (gruppo, tipo, finalità richiesta/proposta, stato) e un solo dettaglio aperto alla volta; pianificazione con spiegazione del lavoro personale; anteprima di restituzione con destinatario esplicito e copia fissa. Se l’attività indica degli strumenti, nel dettaglio ognuno si apre con «Apri qui» in una finestra dentro l’attività (Esc o «Chiudi e torna all’attività» riportano al punto di partenza) oppure con «Apri a pagina intera»; uno strumento disattivato dopo l’invio per la classe o il gruppo resta elencato come non disponibile. La revoca conferma in linea sulla scheda. |
-| Piani operativi | `/profilo/piani-operativi` | Seguire i piani operativi (fino a ottobre 2026 «Percorsi di classe»: sequenze ordinate di attività) pubblicati dai docenti per la propria classe; il vecchio indirizzo /profilo/percorsi (anche con i sottopercorsi) reindirizza qui in modo permanente; un passo di somministrazione si apre in `/profilo/piani-operativi/{pathId}/{stepId}` e il suo approfondimento guidato in `/profilo/piani-operativi/{pathId}/{stepId}/approfondimento`; alla fine della chat guidata di questi passi «Continua alle scelte finali» resta nel passo e mostra lo stesso riepilogo con il resoconto PDF della chat avviata dalla home, più «Torna ai piani operativi»; la chat conclusa non resta in «Riprendi» e un approfondimento concluso si riapre sul riepilogo; la sintesi del percorso essenziale (QSA e Obiettivi) completa il passo come la sintesi del percorso completo; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. La card mostra, quando presenti, il **giorno previsto** e la **scadenza**: il giorno previsto è solo informativo e non limita l’accesso. Un passo incontro mostra data, ora, luogo o link; il passo risulta fatto quando la presenza è confermata, come ha scelto il docente: dall’inizio dell’incontro lo studente preme «Ho partecipato» (e può annullarlo); se conferma il docente, lo studente legge «La presenza la conferma il docente» e poi «Presenza confermata dal docente», che solo il docente può togliere dal registro. La Guida (sezione dei piani operativi) spiega allo studente entrambe le possibilità. In cima alla panoramica dell'Area studente (`/profilo`) e alla home compaiono tutti i piani operativi pubblicati per lo studente, uno per card: il prioritario (prima i piani non completati, poi la scadenza più vicina) è aperto, gli altri sono chiusi e mostrano titolo, classe e avanzamento; il titolo apre o chiude la card e sotto resta «Vedi tutti i piani operativi (N)». La pagina `/profilo/piani-operativi` usa le stesse card (un link del forum a un passo apre il piano che lo contiene). In ogni card un passo incontro mostra dettagli e «Ho partecipato», un passo forum o compito la sua regola e i link alla discussione; un passo già fatto si apre con «Riapri». Una chat guidata avviata da un passo (`/?start=…&from=plan`) offre a fine percorso, accanto al riepilogo, «Torna ai piani operativi». Il catalogo strumenti sotto resta collassato. |
+| Piani operativi | `/profilo/piani-operativi` | Seguire i piani operativi (fino a ottobre 2026 «Percorsi di classe»: sequenze ordinate di attività) pubblicati dai docenti per la propria classe; il vecchio indirizzo /profilo/percorsi (anche con i sottopercorsi) reindirizza qui in modo permanente; un passo di somministrazione si apre in `/profilo/piani-operativi/{pathId}/{stepId}` e il suo approfondimento guidato in `/profilo/piani-operativi/{pathId}/{stepId}/approfondimento`; alla fine della chat guidata di questi passi «Continua alle scelte finali» resta nel passo e mostra lo stesso riepilogo con il resoconto PDF della chat avviata dalla home, più «Torna ai piani operativi»; la chat conclusa non resta in «Riprendi» e un approfondimento concluso si riapre sul riepilogo; la sintesi del percorso essenziale (QSA e Obiettivi) completa il passo come la sintesi del percorso completo; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e passi autonomi, senza blocchi sequenziali anche nei piani storici vincolanti. La card mostra, quando presenti, il **giorno previsto** e la **scadenza**: il giorno previsto è solo informativo e non limita l’accesso. Un passo incontro mostra data, ora, luogo o link; il passo risulta fatto quando la presenza è confermata, come ha scelto il docente: dall’inizio dell’incontro lo studente preme «Ho partecipato» (e può annullarlo); se conferma il docente, lo studente legge «La presenza la conferma il docente» e poi «Presenza confermata dal docente», che solo il docente può togliere dal registro. La Guida (sezione dei piani operativi) spiega allo studente entrambe le possibilità. In cima alla panoramica dell'Area studente (`/profilo`) e alla home compaiono tutti i piani operativi pubblicati per lo studente, uno per card: il prioritario (prima i piani non completati, poi la scadenza più vicina) è aperto, gli altri sono chiusi e mostrano titolo, classe e avanzamento; il titolo apre o chiude la card e sotto resta «Vedi tutti i piani operativi (N)». La pagina `/profilo/piani-operativi` usa le stesse card (un link del forum a un passo apre il piano che lo contiene). In ogni card un passo incontro mostra dettagli e «Ho partecipato», un passo forum o compito la sua regola e i link alla discussione; un passo già fatto si apre con «Riapri». Una chat guidata avviata da un passo (`/?start=…&from=plan`) offre a fine percorso, accanto al riepilogo, «Torna ai piani operativi». Il catalogo strumenti sotto resta collassato. |
 | Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito (dopo l’adesione, o aprendo un link `/gruppo?g=...`, compare un riquadro verde «Sei nel gruppo» con il nome del gruppo, anche su telefono; se si faceva già parte del gruppo lo dice, e un codice non valido o un errore di rete hanno messaggi distinti dal caricamento); collegamenti contestuali alle assegnazioni del gruppo; messaggi generali del docente leggibili direttamente nella pagina; uscire da un gruppo richiede una conferma che nomina il gruppo e le conseguenze. |
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot, con guida a tre passi (Apri il bot, Conferma, Verifica collegamento), scadenza del codice visibile e verifica automatica al ritorno nella scheda. |
@@ -1322,16 +1341,15 @@ laurea, uguale per docenti, ricercatori e amministrazione: nel selettore «Area�
 1024 px, nel gruppo «Area» del pannello Menu sotto.
 
 La Guida interfaccia (`/guide`) ha una sezione «Piani operativi e incontri» sia per il
-docente (con lo screenshot dell’editor del piano operativo: passi, chat guidata e incontro di
-seguito) sia per lo studente (con lo screenshot della pagina Piani operativi), nelle sei
+docente (con lo screenshot dell’editor del piano operativo: passi, chat guidata e incontro) sia per lo studente (con lo screenshot della pagina Piani operativi), nelle sei
 lingue; gli screenshot si rigenerano con `GUIDE_SCREENS=class-paths` in
 `frontend/scripts/capture-guide.mjs`.
 
-Per **analizzare un questionario nel piano operativo**, il docente può collegare
-un passo questionario precedente (anche appena aggiunto o ancora «Da preparare»
-da un modello) oppure scegliere una **compilazione personale** per uno dei sei
-questionari QSA, QSAr, ZTPI, QPCS, QPCC, QAP. Nel piano della classe questionario e
-analisi si salvano insieme: il salvataggio intermedio non è più necessario. Il
+Per **analizzare un questionario nel piano operativo**, il docente sceglie il tipo
+di questionario QSA, QSAr, ZTPI, QPCS, QPCC o QAP. L’analisi è autonoma e usa una
+**compilazione personale** scelta dallo studente all’avvio. Le analisi storiche
+conservano la propria fonte anche quando il passo questionario viene rimosso
+o spostato; questa relazione di dati non impone un ordine tra i passi. Il
 piano e il modello si preparano prima delle compilazioni e il piano si pubblica
 senza risultati; la sola analisi personale non richiede una somministrazione né
 un istituto. Ogni studente sceglie esplicitamente una propria compilazione valida
@@ -1365,23 +1383,17 @@ mostra solo il modulo del tipo scelto. Un piano già salvato si apre come **riep
 titolo, descrizione e ordine con «Modifica piano», e per ogni passo «Modifica» (titolo,
 istruzioni, date, spostamento e rimozione) e **«Sostituisci»**, che riapre lo stesso
 pannello di aggiunta e mette il passo scelto al posto di quello attuale (in un piano
-pubblicato il passo sostituito viene tolto e i progressi su di esso non contano più; un
-questionario analizzato da una chat del piano non si sostituisce finché c’è la chat);
+pubblicato il passo sostituito viene tolto e i progressi su di esso non contano più; i riferimenti storici delle analisi restano consultabili anche sostituendo il questionario);
 dopo ogni salvataggio il piano torna al riepilogo. Ogni passo può avere una **scadenza facoltativa**;
 questionario e chat guidata mostrano anche un **giorno previsto** (per il questionario è
 la data del piano di somministrazione, per la chat si imposta nel passo). Giorno previsto
 e scadenza possono convivere e sono solo informativi: non limitano l’accesso né il
 completamento. Il passo può consistere nel compilare un questionario (sempre tramite
-somministrazione), fare una chat guidata (sui risultati di un questionario del piano operativo, su una compilazione personale scelta dallo studente all’avvio, oppure un
+somministrazione), fare una chat guidata (su una compilazione personale scelta dallo studente all’avvio, oppure un
 percorso guidato per riflettere su un’esperienza o una scelta: Savickas, Evento di
 studio, Evento professionale, Obiettivo di studio, Idea; quelli integrati senza voce nel
 catalogo sono sempre disponibili, anche per gli studenti delle classi, e il passo si
-completa da solo alla fine della chat; ogni chat guidata può avere un **seguito**:
-nessuno, un debriefing con la classe o il gruppo oppure un colloquio individuale, scelto
-tra gli incontri di quel tipo o creato al momento, che viene inserito subito dopo la
-chat come passo «Seguito della chat guidata #n»; nell’avanzamento il docente vede
-accanto all’incontro chi ha completato la chat; se toglie la chat o l’incontro, l’altro
-passo resta valido; salvare come modello un piano operativo con incontri non è ancora possibile), svolgere un’attività (assegnazione), usare uno strumento (solo
+completa da solo alla fine della chat; chat e incontri sono passi separati e autonomi, senza abbinamento o prerequisiti; salvare come modello un piano operativo con incontri non è ancora possibile), svolgere un’attività (assegnazione), usare uno strumento (solo
 strumenti personali: Tavolo, obiettivi, azioni, linea del tempo, Portfolio, flashcard,
 carte, confronto, Bussola, assistente), partecipare a un incontro (incontri della classe o
 del gruppo: argomento, data e ora, durata, in presenza con luogo oppure online con link;
@@ -1559,7 +1571,7 @@ read-only API fixtures in Italian, English, Spanish, French, German and Swedish
 (`frontend/public/guide/{it,en,es,fr,de,sv}/`). Regenerate the eight affected
 screens per language with `GUIDE_SCREENS=class-settings` and
 `frontend/scripts/capture-guide.mjs`. Operational plans are distinct from the guided
-path inside one instrument: a strict step lock does not disable its catalog tool.
+path inside one instrument. Plan steps are independent; their display order does not restrict catalog access.
 
 **Class council link (#422).** The **Class council** tab on `/docente/classi/{id}` lets the
 class owner (or an administrator) create a read-only link to `/consiglio/{token}` with a
@@ -1576,10 +1588,10 @@ conversations, private workspaces and unshared goals are never shown. Each view 
 (`class_council_view`) and the page is excluded from search engines.
 
 **Operational plans builder (P1, #96).** The **Operational plans** tab on `/docente/classi/{id}`
-provides the teacher-side builder for sequenced operational plans (`class_paths`
+provides the teacher-side builder for independent operational-plan steps (`class_paths`
 and `class_path_steps`). The class owner, co-teachers and administrators can create
-draft plans, define title and description, choose the progression mode (`recommended`
-suggested sequence vs `strict` linear prerequisite order), and assemble steps. Each
+draft plans, define title and description, and assemble independent steps. The
+order is for display only; historical `strict` plans also have no sequential locks. Each
 step references an instrument key enabled for the class (excluding always-on tools
 and administrator-disabled instruments; invalid tools are rejected with HTTP 422),
 with optional step title overrides, student instructions and due dates. A step whose
@@ -1596,11 +1608,11 @@ archived, restored, or deleted. Plan authorization fails closed with HTTP 403
 existence oracles. All interfaces and messages are translated across
 the 6 platform languages.
 
-**Operational plans publishing and student view (P2, #97).** Teachers can publish plans via a sticky `[Publish]` button on `/docente/classi/{id}` (calling `POST /teacher/paths/{path_id}/publish`), which sets status to `published` and marks `published_at` on first publication. Teachers can also archive and restore plans. Students enrolled in active classes view published plans at `/profilo/piani-operativi` (accessible from the first group «Conoscermi e riflettere» in the student area, `/profilo`). The layout strictly follows identity guidelines: ochre is used only for the current step's play icon and `Button variant="accent"` for `[Inizia]` (the current step container and badge are petrol), with petrol for primary structure and slate for neutrals. Each published plan card displays class name, title, description, and overall progress count and progress bar (`done of total done`). In strict mode (`strict`), future steps are locked (displaying a lock icon with «Si sblocca dopo il passo {n}») until preceding steps are finished. Steps whose tool is disabled for the student's class are displayed as unavailable and excluded from both total and done counts. For tools without automatic detection, students can mark and unmark steps as completed (`POST / DELETE /user/paths/{path_id}/steps/{step_id}/done`). Attempts to self-mark unavailable or auto-detect tools are rejected with HTTP 422. Progress resolution guarantees teacher precedence over student self-marks. Non-members receive HTTP 403 without existence oracles. All interfaces and notices are fully translated into the 6 platform languages.
+**Operational plans publishing and student view (P2, #97).** Teachers can publish plans via a sticky `[Publish]` button on `/docente/classi/{id}` (calling `POST /teacher/paths/{path_id}/publish`), which sets status to `published` and marks `published_at` on first publication. Teachers can also archive and restore plans. Students enrolled in active classes view published plans at `/profilo/piani-operativi` (accessible from the first group «Conoscermi e riflettere» in the student area, `/profilo`). The layout strictly follows identity guidelines: ochre is used only for the current step's play icon and `Button variant="accent"` for `[Inizia]` (the current step container and badge are petrol), with petrol for primary structure and slate for neutrals. Each published plan card displays class name, title, description, and overall progress count and progress bar (`done of total done`). Each available step can be opened independently, including in historical strict plans. Steps whose tool is disabled for the student's class are displayed as unavailable and excluded from both total and done counts. For tools without automatic detection, students can mark and unmark steps as completed (`POST / DELETE /user/paths/{path_id}/steps/{step_id}/done`). Attempts to self-mark unavailable or auto-detect tools are rejected with HTTP 422. Progress resolution guarantees teacher precedence over student self-marks. Non-members receive HTTP 403 without existence oracles. All interfaces and notices are fully translated into the 6 platform languages.
 
-**Automatic step completion and strict mode (P3, #98).** Step completion is computed on read (`GET /user/paths`), never stored, from evidence the student created at or after the plan's `published_at`: a questionnaire result of that type for scored instruments (`tool_category=assessment`); a completed Bussola session (`completed_at`); a saved Tavolo (`saved_at`); a new personal goal; a completed pQBL learning session (`pqbl_session_completed` log); an Idea map revision with a branch to work on (the `idea_map` focus rule); and, for guided chats (Savickas, Evento, Obiettivo di studio, dynamic guided instruments), a new server-side `guided_chat_completed` log written when a `/chat` or `/chat/stream` turn on the instrument's last guided step completes, or when the chat reaches its conclusion (`/memory/event` with phase `conclusion`, also after jumping there from the phase index) once the student has had at least one turn in that session. The marker is written once per session, instrument and student: further turns or a resumed session add nothing, and admin preview turns write none. Evidence created before `published_at` is ignored. The state of each step follows teacher mark > student mark > automatic evidence > not done; automatic completions show «rilevato automaticamente» (6 languages). In strict mode a step counts as done only when every earlier available step is done: all steps after the current one render locked (`🔒 Si sblocca dopo il passo {n}`, where {n} is the current step) and are excluded from the done count, even if they already have evidence or a self-mark; they count again as soon as the earlier steps are completed. Unavailable steps are skipped by the ordering. The lock affects the operational plan only: tool access, the catalog and the chat guards are unchanged.
+**Automatic step completion (P3, #98).** Step completion is computed on read (`GET /user/paths`), never stored, from evidence the student created at or after the plan's `published_at`: a questionnaire result of that type for scored instruments (`tool_category=assessment`); a completed Bussola session (`completed_at`); a saved Tavolo (`saved_at`); a new personal goal; a completed pQBL learning session (`pqbl_session_completed` log); an Idea map revision with a branch to work on (the `idea_map` focus rule); and, for guided chats (Savickas, Evento, Obiettivo di studio, dynamic guided instruments), a new server-side `guided_chat_completed` log written when a `/chat` or `/chat/stream` turn on the instrument's last guided step completes, or when the chat reaches its conclusion (`/memory/event` with phase `conclusion`, also after jumping there from the phase index) once the student has had at least one turn in that session. The marker is written once per session, instrument and student: further turns or a resumed session add nothing, and admin preview turns write none. Evidence created before `published_at` is ignored. The state of each step follows teacher mark > student mark > automatic evidence > not done; automatic completions show «rilevato automaticamente» (6 languages). Each available step counts independently of earlier steps. Unavailable steps stay excluded from completion ratios.
 
-**Teacher progress view and overrides (P4, #99).** Once an operational plan is published, the plan editor in the **Operational plans** tab shows a **Progressi** section: a students × steps matrix (`GET /teacher/paths/{path_id}/progress`, owner, co-teachers and admins; drafts get 422). Only current members of the class are listed: students who left keep their marks but disappear from the matrix. Each cell shows a check icon (done) or `·` (not done) followed by the source — `a` automatic, `s` student, `t` teacher — or a lock icon (locked by strict order) and `—` (tool no longer available, excluded from the counts). Each row ends with the student's done count and a footer row gives the done count per step. Filters: all, late (an available step past its due date and not done) and not started (nothing done yet). Cells are buttons, so the matrix works with the keyboard; on phones it becomes a per-student list with an expandable row. Selecting a cell opens a panel where the teacher can **mark done**, **mark not done** (optional reason, up to 500 characters) or **clear the teacher mark** (`PUT /teacher/paths/{path_id}/steps/{step_id}/progress/{username}` with `state` `done`, `not_done` or `clear`). The mark is stored with author and time and wins over the student's mark and the automatic evidence, in the teacher matrix and in the student's own view (which shows «fonte: docente»); clearing it falls back to the student mark, then to automatic evidence. In strict order a teacher mark on a later step is kept and shown in the panel, but the step stays locked until the earlier steps are done. Steps whose tool is unavailable accept only `clear` (422 otherwise); unknown students or steps outside the plan get 404. All labels exist in the 6 platform languages.
+**Teacher progress view and overrides (P4, #99).** Once an operational plan is published, the plan editor in the **Operational plans** tab shows a **Progressi** section: a students × steps matrix (`GET /teacher/paths/{path_id}/progress`, owner, co-teachers and admins; drafts get 422). Only current members of the class are listed: students who left keep their marks but disappear from the matrix. Each cell shows a check icon (done) or `·` (not done) followed by the source — `a` automatic, `s` student, `t` teacher — or `—` (tool no longer available, excluded from the counts). Each row ends with the student's done count and a footer row gives the done count per step. Filters: all, late (an available step past its due date and not done) and not started (nothing done yet). Cells are buttons, so the matrix works with the keyboard; on phones it becomes a per-student list with an expandable row. Selecting a cell opens a panel where the teacher can **mark done**, **mark not done** (optional reason, up to 500 characters) or **clear the teacher mark** (`PUT /teacher/paths/{path_id}/steps/{step_id}/progress/{username}` with `state` `done`, `not_done` or `clear`). The mark is stored with author and time and wins over the student's mark and the automatic evidence, in the teacher matrix and in the student's own view (which shows «fonte: docente»); clearing it falls back to the student mark, then to automatic evidence. Teacher marks apply independently of the step’s display position. Steps whose tool is unavailable accept only `clear` (422 otherwise); unknown students or steps outside the plan get 404. All labels exist in the 6 platform languages.
 
 **Operational plan placement on home and student area (P5, #100).** When a student belongs to a class with an active published operational plan, the plan is prioritized as the first hero element (`ClassPathHeroCard`) on both the student home (`/` and `/?view=home`) and the student area overview (`/profilo`). The general tool catalog (or personal tools catalog on `/profilo`) is collapsed below with an accessible toggle button («Mostra catalogo strumenti» / «Nascondi catalogo strumenti») and explanatory subtitle in all 6 languages, remembering open/closed state in `localStorage` per browser. The hero card displays class name, title, description, progress count and progress bar, highlighting the current active step in petrol (petrol border and badge) with ochre kept only for the play icon and `Button variant="accent"` for `[Inizia]`; the card itself uses the standard petrol border, no ochre surfaces with self-marking support where applicable. When multiple plans exist, the one with the nearest upcoming due date (or incomplete step due date) is selected, with a link to all operational plans (`/profilo/piani-operativi`). For students without active operational plans (or without a class), the experience is completely unchanged and the catalog opens normally without collapse.
 
@@ -2907,3 +2919,24 @@ Senza attivazione resta valida la configurazione esistente; se una chiave della 
 non è disponibile, l'operazione si interrompe e richiede il ripristino della chiave;
 una chiave perduta non viene rigenerata automaticamente per le credenziali già migrate.
 La procedura tecnica è in [P12](../docs/privacy/p12-chiavi-fernet.md).
+
+### Builder dei piani: passi autonomi e risorse in pagina
+
+Ogni passo è autonomo: spostamento, rimozione e completamento non impongono
+prerequisiti agli altri passi. L’ordine resta solo di visualizzazione; chat e incontri
+si aggiungono separatamente. I riferimenti delle analisi storiche sono conservati
+come relazione ai dati, senza obbligare a mantenere il passo sorgente nel piano.
+
+Nel builder, **Crea discussione** e **Modifica discussione** aprono una finestra
+con i form del forum della classe: titolo e testo si salvano con gli stessi permessi
+del forum. La discussione creata si può selezionare come passo e una già collegata
+si modifica direttamente dal passo. Errori di salvataggio conservano la bozza.
+
+**Gestisci incontri** e **Modifica incontro** aprono nella stessa pagina il gestore
+esistente: incontri di gruppo, colloqui individuali, fasce, prenotazioni e presenze.
+La modifica aggiorna i dettagli del passo e conserva le altre modifiche al piano;
+il salvataggio della risorsa non segna come modificato un piano già salvato.
+Le finestre proteggono le bozze alla chiusura, mantengono il focus e chiedono
+conferma prima di scartare modifiche o ricaricare una revisione in conflitto.
+La Guida interfaccia descrive questo comportamento nelle sei lingue. Contratto
+e verifiche: `docs/operations/independent-plan-steps.md`.

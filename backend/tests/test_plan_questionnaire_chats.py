@@ -198,7 +198,7 @@ def test_personal_results_constraint_migration_is_replay_safe(api):
                             f"VALUES ({path['id']},1,'guided_results_chat',{target})"))
 
 
-def test_strict_order_also_locks_personal_results(api):
+def test_legacy_strict_order_leaves_personal_results_available(api):
     client, db, group, identity = api
     row = result(db)
     path = empty_path(client, group, mode='strict')
@@ -206,8 +206,12 @@ def test_strict_order_also_locks_personal_results(api):
                                  {'step_type': 'guided_results_chat', 'tool_key': 'QSA'}], mode='strict')
     assert response.status_code == 200, response.text
     path = response.json()
+    assert path["mode"] == "recommended"
     assert client.post(f"/teacher/paths/{path['id']}/publish").status_code == 200
     identity.update(STUDENT)
-    for response in (client.get(endpoint(path)), client.post(endpoint(path), json={'result_id': row.id})):
-        assert response.status_code == 409 and response.json()['detail'] == 'class_path_step_locked'
-    assert db.query(models.ClassPathDeepDiveSession).count() == 0
+    options = client.get(endpoint(path))
+    assert options.status_code == 200, options.text
+    assert options.json()["ready"] is True and options.json()["personal"] is True
+    started = client.post(endpoint(path), json={'result_id': row.id})
+    assert started.status_code == 200, started.text
+    assert db.query(models.ClassPathDeepDiveSession).count() == 1

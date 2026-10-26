@@ -1,13 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
+import { classPathText } from '@/lib/i18n-class-paths';
+import type { ResourceDraft } from './PathResourceDialog';
 import { classMeetingText, type ClassMeetingTextKey } from '@/lib/i18n-class-meetings';
 import { fromLocalInput, meetingHost, meetingWhen, parseMeeting, parseMeetings, toLocalInput, type AttendanceMode, type ClassMeeting, type MeetingSlot } from '@/lib/class-meetings';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { TeacherLoading } from './TeacherAccess';
 import { parseClassGroups } from './class-group-types';
 
 const input = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white p-2 text-sm';
@@ -43,12 +46,15 @@ function draftOf(meeting: ClassMeeting): Draft {
  * cancels them here, manages the slots and bookings of individual meetings and
  * picks one as a path step.
  */
-export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, kindFilter }: {
+export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, kindFilter, initialMeetingId, onMeetingsChanged, onDraft }: {
     lang: string; groupId: number; usedIds?: number[];
     /** Absent on the dedicated meetings page (#195): there is no path to add a step to. */
     onAdd?: (meeting: ClassMeeting) => void; addLabel?: string;
     /** #177: a follow-up offers only class debriefings or only individual appointments. */
     kindFilter?: ClassMeeting['kind'];
+    initialMeetingId?: number;
+    onMeetingsChanged?: (meetings: ClassMeeting[]) => void;
+    onDraft?: ResourceDraft;
 }) {
     const m = (key: ClassMeetingTextKey) => classMeetingText(lang, key);
     const [meetings, setMeetings] = useState<ClassMeeting[]>([]);
@@ -62,6 +68,30 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
     const [failure, setFailure] = useState<'error' | 'conflict' | 'slotTaken' | null>(null);
     const [confirmCancel, setConfirmCancel] = useState<number | null>(null);
     const [registerOf, setRegisterOf] = useState<number | null>(null);
+    const [loaded, setLoaded] = useState(false);
+    const initialOpened = useRef(false);
+    const [slotDrafts, setSlotDrafts] = useState<Record<number, boolean>>({});
+    const liveForm = useRef({dirty: false, busy: false});
+    const liveSlots = useRef<Record<number, boolean>>({});
+    const reportSlotDraft = useCallback((id: number, dirty: boolean) => {
+        liveSlots.current = {...liveSlots.current, [id]: dirty};
+        onDraft?.(liveForm.current.dirty || Object.values(liveSlots.current).some(Boolean), liveForm.current.busy);
+        setSlotDrafts(previous => Boolean(previous[id]) === dirty ? previous : {...previous, [id]: dirty});
+    }, [onDraft]);
+    const original = editing === 'new' ? {...emptyDraft, kind: kindFilter ?? 'group'} : editing ? draftOf(editing) : null;
+    const formDirty = original !== null && JSON.stringify(draft) !== JSON.stringify(original);
+    const resourceDirty = formDirty || Object.values(slotDrafts).some(Boolean);
+    useEffect(() => {
+        liveForm.current = {dirty: formDirty, busy};
+        onDraft?.(resourceDirty, busy);
+    }, [formDirty, resourceDirty, busy, onDraft]);
+    const changeDraft = (next: Draft) => {
+        const dirty = original !== null && JSON.stringify(next) !== JSON.stringify(original);
+        liveForm.current = {dirty, busy};
+        onDraft?.(dirty || Object.values(liveSlots.current).some(Boolean), busy);
+        setDraft(next);
+    };
+
 
     const load = useCallback(async () => {
         try {
@@ -71,20 +101,45 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                 apiFetch('/api/admin/groups'),
             ]);
             if (!response.ok) throw new Error('meetings');
-            setMeetings(parseMeetings(await response.json()));
+            const rows = parseMeetings(await response.json());
+            setMeetings(rows);
+            onMeetingsChanged?.(rows);
+            if (initialMeetingId !== undefined && !initialOpened.current) {
+                const target = rows.find(row => row.id === initialMeetingId && row.status === 'scheduled');
+                if (target) {
+                    initialOpened.current = true;
+                    setEditing(target); setDraft(draftOf(target)); setFailure(null);
+                }
+            }
             if (people.ok) setReferents(await people.json() as Referent[]);
             // Other active classes or groups the teacher manages can share a meeting (#190).
             if (groups.ok) setOtherGroups(parseClassGroups(await groups.json())
                 .filter(row => row.is_active && row.id !== groupId).map(row => ({ id: row.id, name: row.name })));
             setLoadFailed(false);
-        } catch { setLoadFailed(true); }
-    }, [groupId]);
+            return rows;
+        } catch { setLoadFailed(true); } finally { setLoaded(true); }
+    }, [groupId, initialMeetingId, onMeetingsChanged]);
     useEffect(() => { void load(); }, [load]);
 
-    const open = (target: ClassMeeting | 'new') => {
+    const open = useCallback((target: ClassMeeting | 'new') => {
+        if (onDraft && formDirty && !window.confirm(classPathText(lang, 'discard'))) return;
         setEditing(target);
         setDraft(target === 'new' ? { ...emptyDraft, kind: kindFilter ?? 'group' } : draftOf(target));
         setFailure(null);
+    }, [formDirty, kindFilter, lang, onDraft]);
+
+    const reloadEditing = async () => {
+        if (formDirty && !window.confirm(classPathText(lang, 'discard'))) return;
+        setBusy(true);
+        try {
+            const rows = await load();
+            if (!rows) return;
+            if (editing && editing !== 'new') {
+                const latest = rows.find(row => row.id === editing.id);
+                if (latest) { setEditing(latest); setDraft(draftOf(latest)); }
+            }
+            setFailure(null);
+        } finally { setBusy(false); }
     };
 
     // Every write returns the meeting; failures keep the form open with a message.
@@ -129,7 +184,10 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
     const selectable = meetings.filter(row => row.status === 'scheduled' && !(usedIds ?? []).includes(row.id)
         && (!kindFilter || row.kind === kindFilter));
     const label = (row: ClassMeeting) => row.kind === 'individual' ? `${row.title} · ${m('individual')}` : `${row.title} · ${meetingWhen(row, lang)}`;
+    if (initialMeetingId !== undefined && !loaded) return <TeacherLoading />;
     return <div className="space-y-3" data-testid="class-meetings">
+        {initialMeetingId !== undefined && loaded && !meetings.some(row => row.id === initialMeetingId && row.status === 'scheduled')
+            && <Callout variant="warning">{m('loadError')}</Callout>}
         {loadFailed && <Callout variant="danger">{m('loadError')} <Button variant="secondary" onClick={() => void load()}>{m('retry')}</Button></Callout>}
         {!loadFailed && !meetings.length && <p className="text-sm text-slate-600">{m('empty')}</p>}
         <div className="flex flex-wrap items-end gap-2">
@@ -140,8 +198,8 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                     {selectable.map(row => <option key={row.id} value={row.id}>{label(row)}</option>)}
                 </select>
             </label>
-            <Button variant="secondary" disabled={busy || !selected} onClick={() => {
-                const meeting = meetings.find(row => row.id === Number(selected));
+            <Button variant="secondary" disabled={busy || resourceDirty || !selectable.some(row => row.id === Number(selected))} onClick={() => {
+                const meeting = selectable.find(row => row.id === Number(selected));
                 if (meeting) onAdd(meeting);
                 setSelected('');
             }}><Plus className="h-4 w-4" aria-hidden />{addLabel}</Button>
@@ -153,58 +211,58 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
         {editing && <fieldset disabled={busy} className="space-y-2 rounded-md border border-slate-200 bg-white p-3">
             <legend className="px-1 text-sm font-semibold">{editing === 'new' ? m('newMeeting') : `${m('edit')} · ${editing.title}`}</legend>
             <label className="block text-sm">{m('topic')}
-                <input className={input} maxLength={200} value={draft.title} onChange={event => setDraft({ ...draft, title: event.target.value })} /></label>
+                <input className={input} maxLength={200} value={draft.title} onChange={event => changeDraft({ ...draft, title: event.target.value })} /></label>
             {/* The kind is chosen once: group meetings have a date, individual ones slots. */}
             {editing === 'new' && !kindFilter && <fieldset className="flex flex-wrap gap-4 text-sm">
                 <legend className="mb-1">{m('kind')}</legend>
                 {(['group', 'individual'] as const).map(kind => <label key={kind} className="flex min-h-[44px] items-center gap-2">
-                    <input type="radio" name={`meeting-kind-${groupId}`} checked={draft.kind === kind} onChange={() => setDraft({ ...draft, kind })}
+                    <input type="radio" name={`meeting-kind-${groupId}`} checked={draft.kind === kind} onChange={() => changeDraft({ ...draft, kind })}
                         className="h-4 w-4 accent-indigo-600" />{m(kind)}</label>)}
             </fieldset>}
             <fieldset className="space-y-1 text-sm">
                 <legend className="mb-1">{m('host')}</legend>
                 <div className="flex flex-wrap gap-4">
                     {(['teacher', 'referent', 'expert'] as const).map(host => <label key={host} className="flex min-h-[44px] items-center gap-2">
-                        <input type="radio" name={`meeting-host-${groupId}`} checked={draft.hostKind === host} onChange={() => setDraft({ ...draft, hostKind: host })}
+                        <input type="radio" name={`meeting-host-${groupId}`} checked={draft.hostKind === host} onChange={() => changeDraft({ ...draft, hostKind: host })}
                             className="h-4 w-4 accent-indigo-600" />{m(host)}</label>)}
                 </div>
                 {draft.hostKind === 'referent' && (referents.length === 0 ? <p className="text-slate-600">{m('noReferents')}</p>
                     : <label className="block">{m('referent')}
-                        <select className={select} value={draft.referralId} onChange={event => setDraft({ ...draft, referralId: event.target.value })}>
+                        <select className={select} value={draft.referralId} onChange={event => changeDraft({ ...draft, referralId: event.target.value })}>
                             <option value="">{m('chooseReferent')}</option>
                             {referents.map(row => <option key={row.id} value={row.id}>{row.name ? `${row.role} · ${row.name}` : row.role}</option>)}
                         </select></label>)}
                 {draft.hostKind === 'expert' && <div className="grid gap-2 sm:grid-cols-2">
                     <label className="block">{m('expertName')}
-                        <input className={input} maxLength={200} value={draft.hostName} onChange={event => setDraft({ ...draft, hostName: event.target.value })} /></label>
+                        <input className={input} maxLength={200} value={draft.hostName} onChange={event => changeDraft({ ...draft, hostName: event.target.value })} /></label>
                     <label className="block">{m('expertRole')}
-                        <input className={input} maxLength={200} value={draft.hostRole} onChange={event => setDraft({ ...draft, hostRole: event.target.value })} /></label>
+                        <input className={input} maxLength={200} value={draft.hostRole} onChange={event => changeDraft({ ...draft, hostRole: event.target.value })} /></label>
                 </div>}
                 {draft.hostKind !== 'teacher' && <p className="text-xs text-slate-600">{m('inviteNote')}</p>}
             </fieldset>
             {draft.kind === 'group' && <div className="grid gap-2 sm:grid-cols-2">
                 <label className="block text-sm">{m('startsAt')}
-                    <input type="datetime-local" className={input} value={draft.startsAt} onChange={event => setDraft({ ...draft, startsAt: event.target.value })} /></label>
+                    <input type="datetime-local" className={input} value={draft.startsAt} onChange={event => changeDraft({ ...draft, startsAt: event.target.value })} /></label>
                 <label className="block text-sm">{m('duration')}
-                    <input type="number" min={5} max={600} className={input} value={draft.duration} onChange={event => setDraft({ ...draft, duration: event.target.value })} /></label>
+                    <input type="number" min={5} max={600} className={input} value={draft.duration} onChange={event => changeDraft({ ...draft, duration: event.target.value })} /></label>
             </div>}
             <fieldset className="flex flex-wrap gap-4 text-sm">
                 <legend className="mb-1">{m('mode')}</legend>
                 {(['in_person', 'online'] as const).map(mode => <label key={mode} className="flex min-h-[44px] items-center gap-2">
-                    <input type="radio" name={`meeting-mode-${groupId}`} checked={draft.mode === mode} onChange={() => setDraft({ ...draft, mode })}
+                    <input type="radio" name={`meeting-mode-${groupId}`} checked={draft.mode === mode} onChange={() => changeDraft({ ...draft, mode })}
                         className="h-4 w-4 accent-indigo-600" />{m(mode)}</label>)}
             </fieldset>
             {draft.mode === 'in_person'
                 ? <label className="block text-sm">{m('place')}
-                    <input className={input} maxLength={300} value={draft.place} onChange={event => setDraft({ ...draft, place: event.target.value })} /></label>
+                    <input className={input} maxLength={300} value={draft.place} onChange={event => changeDraft({ ...draft, place: event.target.value })} /></label>
                 : <label className="block text-sm">{m('link')}
-                    <input type="url" className={input} maxLength={500} placeholder="https://" value={draft.link} onChange={event => setDraft({ ...draft, link: event.target.value })} /></label>}
+                    <input type="url" className={input} maxLength={500} placeholder="https://" value={draft.link} onChange={event => changeDraft({ ...draft, link: event.target.value })} /></label>}
             {otherGroups.length > 0 && <fieldset className="space-y-1 text-sm">
                 <legend className="mb-1">{m('alsoFor')}</legend>
                 <div className="grid gap-x-4 sm:grid-cols-2">
                     {otherGroups.map(other => <label key={other.id} className="flex min-h-[44px] items-center gap-2">
                         <input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={draft.groupIds.includes(other.id)}
-                            onChange={event => setDraft({ ...draft, groupIds: event.target.checked ? [...draft.groupIds, other.id]
+                            onChange={event => changeDraft({ ...draft, groupIds: event.target.checked ? [...draft.groupIds, other.id]
                                 : draft.groupIds.filter(id => id !== other.id) })} />{other.name}</label>)}
                 </div>
             </fieldset>}
@@ -212,19 +270,24 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                 <legend className="mb-1">{m('attendanceBy')}</legend>
                 {(['student', 'teacher', 'both'] as const).map(mode => <label key={mode} className="flex min-h-[44px] items-center gap-2">
                     <input type="radio" name={`meeting-attendance-${groupId}`} checked={draft.attendanceMode === mode}
-                        onChange={() => setDraft({ ...draft, attendanceMode: mode })} className="h-4 w-4 accent-indigo-600" />{m(`attendance_${mode}`)}</label>)}
+                        onChange={() => changeDraft({ ...draft, attendanceMode: mode })} className="h-4 w-4 accent-indigo-600" />{m(`attendance_${mode}`)}</label>)}
             </fieldset>
             <label className="flex min-h-[44px] items-center gap-2 text-sm">
-                <input type="checkbox" checked={draft.showOnTimeline} onChange={event => setDraft({ ...draft, showOnTimeline: event.target.checked })}
+                <input type="checkbox" checked={draft.showOnTimeline} onChange={event => changeDraft({ ...draft, showOnTimeline: event.target.checked })}
                     className="h-4 w-4 accent-indigo-600" />{m('showOnTimeline')}</label>
             <label className="block text-sm">{m('description')}
-                <textarea className={input} rows={2} maxLength={3000} value={draft.description} onChange={event => setDraft({ ...draft, description: event.target.value })} /></label>
+                <textarea className={input} rows={2} maxLength={3000} value={draft.description} onChange={event => changeDraft({ ...draft, description: event.target.value })} /></label>
             <div className="flex flex-wrap gap-2">
                 <Button disabled={!ready} onClick={() => void save()}>{m('save')}</Button>
-                <Button variant="ghost" onClick={() => setEditing(null)}>{m('discard')}</Button>
+                <Button variant="ghost" onClick={() => {
+                    if (!onDraft || !formDirty || window.confirm(classPathText(lang, 'discard'))) setEditing(null);
+                }}>{m('discard')}</Button>
             </div>
         </fieldset>}
-        {failure && <p role="alert" className="text-sm font-medium text-red-600">{m(failure)}</p>}
+        {failure && <div role="alert" className="space-y-2 text-sm font-medium text-red-600">
+            <p>{m(failure)}</p>
+            {onDraft && failure === 'conflict' && <Button variant="secondary" disabled={busy} onClick={() => void reloadEditing()}>{classPathText(lang, 'reload')}</Button>}
+        </div>}
 
         {meetings.length > 0 && <ul className="space-y-2">
             {meetings.map(row => <li key={row.id} className="space-y-1 rounded-md border border-slate-200 bg-white p-2 text-sm">
@@ -249,9 +312,9 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                 {(row.group_names?.length ?? 0) > 1 && <p className="text-xs text-slate-600">{`${m('forGroups')}: ${row.group_names!.join(', ')}`}</p>}
                 <p className="text-xs text-slate-600">{`${m('attendanceBy')}: ${m(`attendance_${row.attendance_mode}`)}`}</p>
                 {registerOf === row.id && row.status === 'scheduled' && row.attendance_mode !== 'student'
-                    && <AttendanceRegister lang={lang} meeting={row} onChanged={load} />}
+                    && <AttendanceRegister lang={lang} meeting={row} onChanged={async () => { await load(); }} />}
                 {row.kind === 'individual' && row.status === 'scheduled'
-                    && <SlotsEditor lang={lang} meeting={row} busy={busy} send={send} />}
+                    && <SlotsEditor lang={lang} meeting={row} busy={busy} send={send} onDraftChange={onDraft ? reportSlotDraft : undefined} />}
                 {confirmCancel === row.id && <ConfirmInline question={m('cancelConfirm')} busy={busy}
                     onConfirm={() => void send(`/api/teacher/meetings/${row.id}/cancel`, 'POST', { revision: row.revision }).then(done => { if (done) setConfirmCancel(null); })}
                     onCancel={() => setConfirmCancel(null)} />}
@@ -304,12 +367,14 @@ function AttendanceRegister({ lang, meeting, onChanged }: { lang: string; meetin
 }
 
 /** #176: the slots of an individual meeting, with who booked each one. */
-function SlotsEditor({ lang, meeting, busy, send }: {
+function SlotsEditor({ lang, meeting, busy, send, onDraftChange }: {
     lang: string; meeting: ClassMeeting; busy: boolean; send: (path: string, method: string, body?: object) => Promise<boolean>;
+    onDraftChange?: (id: number, dirty: boolean) => void;
 }) {
     const m = (key: ClassMeetingTextKey) => classMeetingText(lang, key);
     const [startsAt, setStartsAt] = useState('');
     const [duration, setDuration] = useState('15');
+    useEffect(() => () => { onDraftChange?.(meeting.id, false); }, [meeting.id, onDraftChange]);
     const slots = (meeting.slots ?? []).filter(slot => slot.status !== 'cancelled');
     const free = (except: MeetingSlot) => slots.filter(slot => slot.id !== except.id && !slot.booking && new Date(slot.starts_at).getTime() > Date.now());
     return <div className="space-y-2 border-t border-slate-100 pt-2" data-testid="meeting-slots">
@@ -335,13 +400,13 @@ function SlotsEditor({ lang, meeting, busy, send }: {
         </ul>
         <div className="flex flex-wrap items-end gap-2">
             <label className="block text-xs">{m('startsAt')}
-                <input type="datetime-local" className={input} value={startsAt} onChange={event => setStartsAt(event.target.value)} /></label>
+                <input type="datetime-local" disabled={busy} className={input} value={startsAt} onChange={event => { setStartsAt(event.target.value); onDraftChange?.(meeting.id, Boolean(event.target.value)); }} /></label>
             <label className="block w-28 text-xs">{m('duration')}
-                <input type="number" min={5} max={600} className={input} value={duration} onChange={event => setDuration(event.target.value)} /></label>
+                <input type="number" disabled={busy} min={5} max={600} className={input} value={duration} onChange={event => setDuration(event.target.value)} /></label>
             <Button variant="secondary" size="sm" disabled={busy || !fromLocalInput(startsAt)} onClick={() => {
                 const start = fromLocalInput(startsAt);
                 if (start) void send(`/api/teacher/meetings/${meeting.id}/slots`, 'POST', { starts_at: start, duration_minutes: duration ? Number(duration) : null })
-                    .then(done => { if (done) setStartsAt(''); });
+                    .then(done => { if (done) { setStartsAt(''); onDraftChange?.(meeting.id, false); } });
             }}><Plus className="h-4 w-4" aria-hidden />{m('addSlot')}</Button>
         </div>
     </div>;

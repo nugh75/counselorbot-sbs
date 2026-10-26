@@ -107,6 +107,7 @@ export const LABELS = {
     student: 'Area studente',
     teacher: 'Area docente',
     admin: 'Area amministrazione',
+    privacy: 'Privacy e consensi',
     // Desktop «Area» selector outside the areas; inside one it names the area.
     area: 'Area',
     // Desktop account menu (P4): trigger, guest preferences, sign in and out.
@@ -205,6 +206,7 @@ export function expectedNavbar(profileKey, width, { resume = { rows: [], error: 
     // Account panel (P4), also the last group of the «Menu» panel (P5).
     const accountItems = [
         ...(expect.services ? [LABELS.services] : []),
+        LABELS.privacy,
         LABELS.darkRow, LABELS.motion, LABELS.reader, ...LABELS.languages,
         ...(auth ? [LABELS.signOut] : []),
     ];

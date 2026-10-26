@@ -7,3 +7,7 @@ chatgpt_credentials
 personal_api_credentials
 *.db
 *.pdf
+
+# Isolated development/test artifacts
+.tmp
+.tmp-*

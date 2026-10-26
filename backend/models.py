@@ -1936,7 +1936,7 @@ class ClassPath(Base):
     """Percorso di classe: sequenza ordinata di strumenti/attività per una classe.
 
     Stato: 'draft' (bozza), 'published' (pubblicato), 'archived' (archiviato).
-    Modalità di avanzamento: 'recommended' (consigliato, saltabile) o 'strict' (vincolante).
+    I passi sono autonomi; la modalità storica strict è mantenuta solo per compatibilità.
     """
 
     __tablename__ = "class_paths"
@@ -2056,7 +2056,7 @@ class ClassPathStep(Base):
     template_snapshot = Column(JSON, nullable=True)
     # Meeting step (#175): a class or group meeting of the same class (checked on save).
     meeting_id = Column(Integer, ForeignKey("class_meetings.id"), nullable=True)
-    # Follow-up (#177): a meeting step that follows a guided chat step of the same path.
+    # Legacy follow-up metadata, ignored at runtime and cleared on plan saves.
     follows_step_id = Column(Integer, ForeignKey("class_path_steps.id", ondelete="SET NULL"), nullable=True)
 
 

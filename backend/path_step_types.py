@@ -172,7 +172,7 @@ def validate_step_input(db, path, value):
 
 
 def validate_composition(db, path, steps):
-    """An analysis uses a preceding questionnaire of this path, at most once;
+    """An analysis uses questionnaire data from this path, at most once;
     an assignment or a discussion is a target of at most one step of the path."""
     positions = {value.id: index for index, value in enumerate(steps) if value.id}
     assignments = [value.assignment_id for value in steps if value.step_type == "assignment"]
@@ -184,11 +184,6 @@ def validate_composition(db, path, steps):
     meetings = [value.meeting_id for value in steps if value.step_type == "meeting"]
     if len(meetings) != len(set(meetings)):
         raise HTTPException(422, "duplicate_meeting_step")
-    # A follow-up meeting comes after the guided chat it follows, in this same save.
-    for index, value in enumerate(steps):
-        follows = getattr(value, "follows", None)
-        if follows is not None and (follows >= index or steps[follows].step_type not in ("guided_chat", "guided_results_chat")):
-            raise HTTPException(422, "follow_up_invalid")
     linked = set()
     for index, value in enumerate(steps):
         if value.step_type == "pending":
@@ -204,11 +199,16 @@ def validate_composition(db, path, steps):
             stored = db.query(models.ClassPathStep).filter_by(id=source_id, path_id=path.id).first()
             if stored is None:
                 raise HTTPException(422, "results_step_invalid")
+            # A historical result source is data, not a prerequisite step.
+            # Soft removal or visual reordering must not disable its analysis.
             if source_id not in positions:
-                raise HTTPException(409, "results_step_referenced")
+                if stored.step_type != "questionnaire_administration" and not (stored.step_type == "pending"
+                        and (stored.pending_config or {}).get("kind") == "questionnaire_administration"):
+                    raise HTTPException(422, "results_step_invalid")
+                continue
             source_index = positions[source_id]
-        if source_index >= index:
-            raise HTTPException(422, "results_step_order")
+        if source_index >= len(steps):
+            raise HTTPException(422, "results_step_invalid")
         source = steps[source_index]
         if source.step_type == "pending":
             stored = db.get(models.ClassPathStep, source.id)
@@ -280,12 +280,11 @@ def apply_step_target(step, value):
 
 
 def results_step(db, step):
-    """The deep dive's administration step while it is still active in its path."""
+    """Historical administration data source, including a soft-removed step."""
     source = db.get(models.ClassPathStep, step.results_step_id) if step.results_step_id else None
     if (
         source
         and source.path_id == step.path_id
-        and source.removed_at is None
         and source.step_type == "questionnaire_administration"
     ):
         return source

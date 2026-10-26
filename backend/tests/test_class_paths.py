@@ -98,7 +98,7 @@ def test_put_steps_reorder_and_soft_remove(class_paths_api):
     assert res.status_code == 200
     body = res.json()
     assert body["revision"] == 2
-    assert body["mode"] == "strict"
+    assert body["mode"] == "recommended"
     assert body["title"] == "Draft 1 (updated)"
     assert len(body["steps"]) == 3
     assert body["steps_count"] == 3
@@ -659,7 +659,7 @@ def test_student_self_mark_endpoints_and_restrictions(class_paths_api):
     assert t_step2["source"] is None
 
 
-def test_strict_mode_and_resolution_precedence(class_paths_api):
+def test_legacy_strict_mode_keeps_steps_independent_and_resolution_precedence(class_paths_api):
     client, db, group_id, identity = class_paths_api
 
     db.add(models.GroupMembership(group_id=group_id, username="student_sara"))
@@ -692,11 +692,11 @@ def test_strict_mode_and_resolution_precedence(class_paths_api):
     identity.update(username="student_sara", groups=[])
     paths = client.get("/user/paths").json()
     steps = paths[0]["steps"]
-    # In strict mode: step 1 is next_step_id; steps 2 and 3 are locked!
+    # Historical strict requests keep their visual order, without locking later steps.
     assert paths[0]["next_step_id"] == s1_id
     assert steps[0]["state"] == "not_done"
-    assert steps[1]["state"] == "locked"
-    assert steps[2]["state"] == "locked"
+    assert steps[1]["state"] == "not_done"
+    assert steps[2]["state"] == "not_done"
 
     # Teacher explicitly marks Step 1 as done in class_path_progress
     db.add(
@@ -710,14 +710,14 @@ def test_strict_mode_and_resolution_precedence(class_paths_api):
     )
     db.commit()
 
-    # Now step 1 is done, step 2 is unlocked (next_step_id), step 3 is locked
+    # Step 1 is done; both remaining steps are independently available.
     paths2 = client.get("/user/paths").json()
     steps2 = paths2[0]["steps"]
     assert paths2[0]["next_step_id"] == s2_id
     assert steps2[0]["state"] == "done"
     assert steps2[0]["source"] == "teacher"
     assert steps2[1]["state"] == "not_done"
-    assert steps2[2]["state"] == "locked"
+    assert steps2[2]["state"] == "not_done"
 
     # Teacher mark takes precedence over student mark (resolution rule §4.2):
     # Student marked not_done, but teacher marked done -> remains done
@@ -921,19 +921,21 @@ def test_teacher_mark_beats_student_mark_beats_automatic(class_paths_api):
     assert (step["state"], step["source"]) == ("not_done", "teacher")
 
 
-def test_strict_mode_counts_a_step_only_after_earlier_steps(class_paths_api):
+def test_legacy_strict_mode_counts_steps_without_earlier_steps(class_paths_api):
     client, db, group_id, identity = class_paths_api
     path_id, (s1, s2, s3) = _published_path(
         client, db, group_id, identity, ["timeline", "goals", "actions"], mode="strict")
+    db.get(models.ClassPath, path_id).mode = "strict"
+    db.commit()
     # Later steps have evidence / a self-mark, the first does not.
     db.add(_evidence("goals", AFTER))
     db.commit()
     assert client.post(f"/user/paths/{path_id}/steps/{s3}/done").status_code == 200
 
     path = _student_path(client, path_id)
-    assert [s["state"] for s in path["steps"]] == ["not_done", "locked", "locked"]
-    assert [s["source"] for s in path["steps"]] == [None, None, None]
-    assert (path["done"], path["total"], path["next_step_id"]) == (0, 3, s1)
+    assert [s["state"] for s in path["steps"]] == ["not_done", "done", "done"]
+    assert [s["source"] for s in path["steps"]] == [None, "automatic", "student"]
+    assert (path["done"], path["total"], path["next_step_id"]) == (2, 3, s1)
 
     assert client.post(f"/user/paths/{path_id}/steps/{s1}/done").status_code == 200
     path = _student_path(client, path_id)
@@ -968,10 +970,10 @@ def test_strict_mode_skips_unavailable_steps(class_paths_api):
     assert (path["done"], path["total"], path["next_step_id"]) == (1, 2, s3)
 
 
-def test_strict_lock_does_not_change_tool_access(class_paths_api):
+def test_legacy_strict_mode_does_not_change_tool_access(class_paths_api):
     client, db, group_id, identity = class_paths_api
     path_id, _ = _published_path(client, db, group_id, identity, ["timeline", "QSA"], mode="strict")
-    assert _student_path(client, path_id)["steps"][1]["state"] == "locked"
+    assert _student_path(client, path_id)["steps"][1]["state"] == "not_done"
 
     student = dict(identity)
     access = class_access.resolve_access(db, student)
@@ -1225,13 +1227,13 @@ def test_teacher_progress_marks_strict_and_unavailable_cells(class_paths_api):
     body = _progress(client, path_id)
     assert [s["available"] for s in body["steps"]] == [False, True, True]
     (row,) = body["students"]
-    assert [c["state"] for c in row["cells"]] == ["unavailable", "not_done", "locked"]
+    assert [c["state"] for c in row["cells"]] == ["unavailable", "not_done", "not_done"]
     assert (row["done"], row["total"]) == (0, 2)
 
-    # A teacher mark on a locked step is kept and shown, but still waits for step 2.
+    # A teacher mark counts immediately, independently of step 2.
     assert _override(client, path_id, action_step, STUDENT, "done", reason="Oral check").status_code == 200
     locked = _progress(client, path_id)["students"][0]["cells"][2]
-    assert (locked["state"], locked["source"], locked["teacher_state"]) == ("locked", None, "done")
+    assert (locked["state"], locked["source"], locked["teacher_state"]) == ("done", "teacher", "done")
     assert (locked["actor"], locked["reason"]) == ("owner", "Oral check")
 
 

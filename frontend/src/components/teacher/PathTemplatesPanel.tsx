@@ -1,5 +1,7 @@
 'use client';
 
+import { independentTemplateSteps } from '@/lib/path-templates';
+
 import { useEffect, useState } from 'react';
 import { ArrowDown, ArrowUp, Plus, X } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
@@ -176,8 +178,7 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
     const l = (key: PathTemplateTextKey) => pathTemplateText(lang, key);
     const [title, setTitle] = useState(template?.title ?? '');
     const [description, setDescription] = useState(template?.description ?? '');
-    const [mode, setMode] = useState<'recommended' | 'strict'>(template?.mode ?? 'recommended');
-    const [steps, setSteps] = useState<TemplateStep[]>(template?.steps ?? []);
+    const [steps, setSteps] = useState<TemplateStep[]>(independentTemplateSteps(template?.steps ?? []));
     const [adding, setAdding] = useState(false);
     const [kind, setKind] = useState<StepKind | null>(null);
     const [goals, setGoals] = useState<GoalOption[]>([]);
@@ -200,7 +201,7 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
     const save = async () => {
         setBusy(true);
         setFailure(null);
-        const body = {title: title.trim(), description: description.trim() || null, mode,
+        const body = {title: title.trim(), description: description.trim() || null, mode: 'recommended',
             steps: steps.map(templateStepPayload), ...(template ? {revision: template.revision} : {})};
         try {
             const response = await apiFetch(template ? `/api/teacher/path-templates/${template.id}` : '/api/teacher/path-templates', {
@@ -214,18 +215,11 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
         }
     };
 
-    const questionnairePositions = steps.map((step, index) => ({step, position: index + 1}))
-        .filter(row => row.step.step_type === 'questionnaire_administration');
-
     return <Card className="space-y-4" data-testid="path-template-editor">
         <label className="block text-sm font-medium text-slate-700">{l('title')}
             <input className={input} value={title} maxLength={200} onChange={event => setTitle(event.target.value)} /></label>
         <label className="block text-sm font-medium text-slate-700">{l('description')}
             <textarea className={input} rows={2} value={description} maxLength={3000} onChange={event => setDescription(event.target.value)} /></label>
-        <label className="block max-w-xs text-sm font-medium text-slate-700">{l('mode')}
-            <select className={input} value={mode} onChange={event => setMode(event.target.value === 'strict' ? 'strict' : 'recommended')}>
-                <option value="recommended">{l('recommended')}</option><option value="strict">{l('strict')}</option>
-            </select></label>
 
         <ol className="space-y-3">
             {steps.length === 0 && <li className="text-sm text-slate-500">{l('noSteps')}</li>}
@@ -242,7 +236,7 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
                             onClick={() => setSteps(current => moveTemplateStep(current, index, null))}><X className="h-4 w-4" aria-hidden /></Button>
                     </div>
                 </div>
-                <StepFields step={step} index={index} goals={goals} questionnaires={questionnairePositions.filter(row => row.position <= index)}
+                <StepFields step={step} index={index} goals={goals}
                     update={patch => update(index, patch)} />
                 <StepPresentationFields step={step} showDate={false} update={patch => update(index, patch)}
                     presentation={resolveStepPresentation(lang, {...step,
@@ -278,9 +272,9 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
     </Card>;
 }
 
-function StepFields({ step, index, goals, questionnaires, update }: {
+function StepFields({ step, index, goals, update }: {
     step: TemplateStep; index: number; goals: GoalOption[];
-    questionnaires: {step: TemplateStep; position: number}[]; update: (patch: Partial<TemplateStep>) => void;
+    update: (patch: Partial<TemplateStep>) => void;
 }) {
     const { lang } = useI18n();
     const l = (key: PathTemplateTextKey) => pathTemplateText(lang, key);
@@ -311,26 +305,11 @@ function StepFields({ step, index, goals, questionnaires, update }: {
             </div>;
         case 'guided_results_chat':
             return <div className="space-y-2">
-                <label className="block text-sm text-slate-700">{resultsChatText(lang, 'origin')}
-                    <select className={input} value={step.tool_key ? 'personal' : 'plan'}
-                        onChange={event => update({tool_key: event.target.value === 'personal' ? 'QSA' : '', results_position: undefined})}>
-                        <option value="plan">{resultsChatText(lang, 'sourcePlan')}</option>
-                        <option value="personal">{resultsChatText(lang, 'sourcePersonal')}</option>
+                <label className="block text-sm text-slate-700">{resultsChatText(lang, 'analyzeQuestionnaire')}
+                    <select className={input} value={step.tool_key || 'QSA'} onChange={event => update({tool_key: event.target.value})}>
+                        {TEMPLATE_QUESTIONNAIRES.map(code => <option key={code}>{code}</option>)}
                     </select></label>
-                {step.tool_key ? <>
-                    <label className="block text-sm text-slate-700">{resultsChatText(lang, 'analyzeQuestionnaire')}
-                        <select className={input} value={step.tool_key} onChange={event => update({tool_key: event.target.value})}>
-                            {TEMPLATE_QUESTIONNAIRES.map(code => <option key={code}>{code}</option>)}
-                        </select></label>
-                    <p className="text-sm text-slate-600">{resultsChatText(lang, 'personalResultsHelp')}</p>
-                </> : <>
-                    <label className="block text-sm text-slate-700">{l('resultsOf')}
-                        <select className={input} value={step.results_position ?? ''} onChange={event => update({results_position: Number(event.target.value) || undefined})}>
-                            <option value="">{l('choose')}</option>
-                            {questionnaires.map(row => <option key={row.position} value={row.position}>{`#${row.position} · ${row.step.instrument_code}`}</option>)}
-                        </select></label>
-                    <p className="text-sm text-slate-600">{resultsChatText(lang, questionnaires.length ? 'planResultsHelp' : 'noQuestionnaireSteps')}</p>
-                </>}
+                <p className="text-sm text-slate-600">{resultsChatText(lang, 'personalResultsHelp')}</p>
             </div>;
         case 'assignment': {
             const options = goals.some(goal => goal.id === step.goal_id) || !step.goal_id ? goals

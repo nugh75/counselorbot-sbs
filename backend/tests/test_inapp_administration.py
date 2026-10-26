@@ -189,19 +189,23 @@ def test_invalid_runner_submissions_write_nothing(inapp, case):
     assert db.query(models.ValidationResponse).count() == 0
 
 
-def test_strict_order_blocks_runner_before_predecessor(inapp):
+def test_legacy_strict_request_keeps_runner_available_before_predecessor(inapp):
     client, db, group, identity = inapp
     response = create_plan(client, group)
     plan = response.json()
     path = client.post(f"/teacher/groups/{group.id}/paths", json={"title": "Strict", "mode": "strict"}).json()
-    path = client.put(f"/teacher/paths/{path['id']}", json={
+    response = client.put(f"/teacher/paths/{path['id']}", json={
         "revision": 1, "title": "Strict", "mode": "strict",
         "steps": [{"tool_key": "timeline"},
-                  {"step_type": "questionnaire_administration", "administration_plan_id": plan["id"]}]}).json()
+                  {"step_type": "questionnaire_administration", "administration_plan_id": plan["id"]}]})
+    assert response.status_code == 200, response.text
+    # The retired sequential mode is stored as "recommended": no step waits for another.
+    path = response.json()
+    assert path["mode"] == "recommended"
     path = client.post(f"/teacher/paths/{path['id']}/publish").json()
     grant = student_grant(client, identity, plan)
-    assert score(client, path, path["steps"][1], grant).status_code == 409
-    assert db.query(models.QuestionnaireResult).count() == 0
+    assert score(client, path, path["steps"][1], grant).status_code == 200
+    assert db.query(models.QuestionnaireResult).count() == 1
 
 
 def test_confirmed_import_completes_in_app_step_without_chat_but_source_label_alone_does_not(inapp):

@@ -2,6 +2,7 @@
 
 Includes audited break-glass access for technical administrators on L1.
 """
+import re
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -158,6 +159,32 @@ class PrivacyNoticeRequest(BaseModel):
     document_id: int = Field(gt=0)
 
 
+_SHARING_TARGET = re.compile(r"^share:(\d+):([a-z2-7]{26})$")
+
+
+def _sharing_revoke_fields(db, username: str, row):
+    """Map the pseudonymous target back to its teacher for the subject's own share.
+
+    P9 stores only ``share:{group_id}:{teacher_pid}`` in the audit target. The
+    revocation API needs the username and group, so the identity is recovered
+    from this student's grants and returned only inside their own choices.
+    """
+    if row.purpose != consent.SHARING_PURPOSE or not row.target:
+        return {}
+    match = _SHARING_TARGET.match(row.target)
+    if not match:
+        return {}
+    group_id, teacher_pid = int(match.group(1)), match.group(2)
+    grants = db.query(models.TeacherStudentGrant).filter(
+        models.TeacherStudentGrant.student_username == username,
+        models.TeacherStudentGrant.group_id == group_id,
+    ).all()
+    for grant in grants:
+        if safe_subject_pid(db, grant.teacher_username) == teacher_pid:
+            return {"teacher_username": grant.teacher_username, "group_id": group_id}
+    return {}
+
+
 def _privacy_error(db, exc):
     db.rollback()
     return HTTPException(status_code=503 if isinstance(exc, AuditUnavailable) else 403, detail=exc.code)
@@ -206,7 +233,8 @@ async def privacy_choices(current_user: dict = Depends(_privacy_identity),
             if key not in current:
                 current[key] = {"purpose": row.purpose, "target": row.target,
                                 "granted": consent.has_consent(db, pid, *key),
-                                "choice": row.choice, "event_id": row.id}
+                                "choice": row.choice, "event_id": row.id,
+                                **_sharing_revoke_fields(db, current_user["username"], row)}
     return {"choices": list(current.values()), "history": [_choice_response(row) for row in rows]}
 
 

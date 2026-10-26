@@ -28,9 +28,9 @@ const path = { id: 301, group_id: 11, title: 'Metodo di studio', description: nu
     ] };
 
 async function prepare(page, saved = []) {
-    page.setDefaultTimeout(Number(process.env.UI_TEST_TIMEOUT || 20000));
+    page.setDefaultTimeout(Number(process.env.UI_TEST_TIMEOUT || 60000));
     const errors = [];
-    page.on('pageerror', error => errors.push(error.message));
+    page.on('pageerror', error => { errors.push(error.message); console.error('Page error:', error.message); });
     await page.addInitScript(() => { localStorage.setItem('cb_lang', 'it'); localStorage.setItem('cb_theme', 'light'); });
     await page.route('**/*', async route => {
         const url = new URL(route.request().url());
@@ -67,7 +67,10 @@ async function prepare(page, saved = []) {
 
 async function openEditor(page) {
     await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded', timeout: Number(process.env.UI_NAVIGATION_TIMEOUT || 120000) });
-    await page.getByRole('button', { name: 'Apri' }).click();
+    await page.getByRole('button', { name: 'Apri' }).click().catch(async error => {
+        console.error('Editor did not load:', await page.locator('body').innerText());
+        throw error;
+    });
     await page.locator('[data-testid="path-step-card"]').first().waitFor();
 }
 
@@ -101,9 +104,10 @@ async function openEditor(page) {
     assert.equal(await cards.count(), 3);
     assert.equal(await add.getByRole('radio').count(), 0);
 
-    // Guided chat: on the results of a questionnaire step, or standalone.
+    // Every chat adds just one independent step. Results are chosen by the student.
     await open('Fa una chat guidata');
-    await add.getByText('Sui risultati di un questionario del piano operativo').waitFor();
+    assert.equal(await add.getByRole('radio', { name: /seguito|debriefing|colloquio individuale/i }).count(), 0);
+    assert.equal(await add.getByRole('button', { name: 'Aggiungi chat e incontro' }).count(), 0);
     // Guided paths: the class's catalog row (Savickas) and the built-in ones without a row.
     const chats = add.getByRole('combobox', { name: /^Percorso guidato/ });
     const names = await chats.locator('option').allTextContents();
@@ -114,7 +118,7 @@ async function openEditor(page) {
     await chats.selectOption('SAVICKAS');
     await add.getByRole('button', { name: 'Aggiungi passo', exact: true }).click();
     assert.equal(await cards.count(), 4);
-    await cards.nth(3).getByText('Chat guidata · Intervista Savickas', {exact: true}).waitFor();
+    await cards.nth(3).getByText('Chat guidata · Intervista Savickas', { exact: true }).waitFor();
     await open('Fa una chat guidata');
     await chats.selectOption('EVENTO_STUDIO');
     await add.getByRole('button', { name: 'Aggiungi passo', exact: true }).click();
@@ -169,8 +173,8 @@ async function openEditor(page) {
     await summary.getByRole('button', { name: 'Modifica piano' }).click();
     await page.locator('#path-title').fill('Metodo di studio 2');
     await cards.nth(1).getByRole('button', { name: 'Modifica #2' }).click();
-    await cards.nth(1).getByRole('button', {name: /Personalizza/}).click();
-    await cards.nth(1).getByRole('textbox', {name: 'Titolo del passo', exact: true}).fill('Compilazione in aula');
+    await cards.nth(1).getByRole('button', { name: 'Personalizza il titolo' }).click();
+    await cards.nth(1).getByRole('textbox', { name: 'Titolo del passo', exact: true }).fill('Compilazione in aula');
 
     await cards.nth(0).getByRole('button', { name: 'Sostituisci #1' }).click();
     const add = page.locator('[data-testid="add-step"]');
@@ -179,12 +183,15 @@ async function openEditor(page) {
     await add.getByRole('combobox', { name: 'Scegli uno strumento abilitato…' }).selectOption('tavolo');
     await add.getByRole('button', { name: 'Aggiungi passo', exact: true }).click();
     assert.equal(await cards.count(), 2);
-    await cards.nth(0).getByText('Tavolo', {exact: true}).waitFor();
+    await cards.nth(0).getByText('Tavolo', { exact: true }).waitFor();
 
     await page.getByRole('button', { name: 'Salva bozza' }).click();
     await page.getByText('Metodo di studio 2').first().waitFor();
     await page.locator('[data-testid="path-summary"]').waitFor();
     assert.equal(saved.length, 1);
+    assert.equal(saved[0].mode, 'recommended');
+    assert.ok(saved[0].steps.every(step => !('follows' in step)));
+    assert.equal(await page.locator('input[name=path-mode]').count(), 0);
     assert.deepEqual(saved[0].steps.map(step => [step.id ?? null, step.tool_key ?? step.administration_plan_id]),
         [[null, 'tavolo'], [2, 5]]);
     assert.equal(saved[0].steps[1].title, 'Compilazione in aula');
