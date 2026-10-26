@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+
+// @ts-expect-error -- Node direct typescript execution requires extension
 import { filterCounselorsByCategories, getCounselorTagline, type PublicCounselor } from './counselor.ts';
+// @ts-expect-error -- Node direct typescript execution requires extension
 import { formatCategoryLabel } from './i18n-counselor-identity.ts';
 
 const counselorSelectorSource = () =>

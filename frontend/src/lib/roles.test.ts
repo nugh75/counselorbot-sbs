@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { canManageInstitutes } from './roles.ts';
 
 const identity = (extra: object) => ({ authenticated: true, is_admin: false, email: '', username: 'user', name: 'User', groups: [] as string[], ...extra });

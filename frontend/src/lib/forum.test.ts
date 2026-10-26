@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { forumDraftValid, forumLink, parseForumTopic, parseForumUnread, parseForumTargets, parseForumDiscussionLinks, forumTargetHref } from './forum.ts';
 
 test('linked resources produce local destinations only while available', () => {
@@ -57,6 +58,8 @@ test('parseForumUnread parses total and by_group counts', () => {
     assert.throws(() => parseForumUnread({ total: 'five', by_group: {} }));
     assert.throws(() => parseForumUnread({ total: 5, by_group: { '10': 'three' } }));
 });
+
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { forumTexts } from './i18n-forum.ts';
 
 test('every forum message has six nonempty language strings', () => {
@@ -65,6 +68,8 @@ test('every forum message has six nonempty language strings', () => {
         for (const value of values) assert.ok(value.trim().length > 0);
     }
 });
+
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { forumClosedNotice, forumPostActions, forumTopicChanges, forumTopicEditable, parseForumDetail, parseForumList, parseForumLog, parseForumMutes, parseForumPending, parseForumPost } from './forum.ts';
 
 const reply = { id: 1, author_display_name: 'Anna', body: 'Text', hidden: false, deleted: false,

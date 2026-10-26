@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { personalResumeItems } from './personal-area.ts';
 import type { PersonalGoal } from './goals';
 

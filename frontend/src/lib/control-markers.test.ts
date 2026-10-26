@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { CONTROL_MARKERS, extractControlSignals, stripControlMarkers, stripControlMarkersForDisplay } from './control-markers.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { streamChat } from './chat-stream.ts';
 
 const event = (data: object) => `data: ${JSON.stringify(data)}\n\n`;

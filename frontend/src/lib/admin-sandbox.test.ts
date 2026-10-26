@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { PROMPT_MAP_DICTS } from './i18n-prompt-map.ts';
 import type { Lang } from './i18n.ts';
 

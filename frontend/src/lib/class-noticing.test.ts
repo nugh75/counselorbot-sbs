@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { barPercent, classNoticingQuery, parseClassNoticing, pendingCompilations } from './class-noticing.ts';
 
 const payload = {

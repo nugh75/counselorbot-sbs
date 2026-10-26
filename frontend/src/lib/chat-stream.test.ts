@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { streamChat, IncompleteChatStreamError, ChatProviderError } from './chat-stream.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { chatErrorText } from './i18n-personal-api.ts';
 
 for (const [status, body, code] of [

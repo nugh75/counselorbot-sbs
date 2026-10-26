@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { backendOrigin } from './backend-origin.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { proxyChatStream } from './stream-proxy.ts';
 
 test('all proxies support host development and preserve the Docker/internal fallback', () => {

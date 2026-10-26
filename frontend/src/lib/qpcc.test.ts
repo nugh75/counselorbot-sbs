@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { QUESTIONNAIRES, factorTranslationKey, isReusableProfile } from './questionnaires.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { FACTOR_DICTS } from './i18n-factors.ts';
 import factors from './qpcc-schema.json' with { type: 'json' };
 

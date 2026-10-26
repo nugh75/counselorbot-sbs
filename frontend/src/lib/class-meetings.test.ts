@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { fromLocalInput, meetingHost, meetingWhen, parseMeeting, parseMeetings, toLocalInput } from './class-meetings.ts';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { parseClassPathStep } from './class-paths.ts';
 
 const meeting = { id: 4, group_id: 11, title: 'Debriefing', starts_at: '2026-10-12T08:00:00+00:00', duration_minutes: 60,

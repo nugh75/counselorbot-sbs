@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
+
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { notebookContextPayload, readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId } from './notebook-context.ts';
 
 // localStorage minimo (il modulo legge window.localStorage in modo difensivo).

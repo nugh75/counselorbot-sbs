@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { svgAspectRatio, diagramReadingWidth } from './diagram-svg.ts';
 
 // Le classi del diagramma vivono su due elementi diversi: `dg-svg` sul div che

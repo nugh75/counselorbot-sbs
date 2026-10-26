@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { noticingMessageId, parseNoticing } from './teacher-noticing.ts';
 
 test('noticing keeps only known kinds with valid quoted evidence', () => {

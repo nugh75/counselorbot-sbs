@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { datePeriod, eventDates, sortedTimeline, validTimelineDates } from './timeline-dates.ts';
 import type { TimelineEvent } from './visual-tools.ts';
 

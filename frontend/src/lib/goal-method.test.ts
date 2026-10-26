@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { methodRefs, pickerOptions, sameRef } from './goal-method.ts';
 
 test('methodRefs strips titles', () => {

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, toggleCounselorIds } from './class-settings.ts';
 
 test('forum options keep administrator lock flags and reject malformed values', () => {
@@ -11,6 +12,7 @@ test('forum options keep administrator lock flags and reject malformed values', 
         assert.throws(() => parseClassSettings({ ...base, forum: malformed }));
     }
 });
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { classSettingsText, classSettingsTexts } from './i18n-class-settings.ts';
 
 test('settings reads reject malformed responses instead of presenting enabled controls', () => {

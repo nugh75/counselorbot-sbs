@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { localPairingText, localPairingTexts } from './i18n-local-pairing.ts';
 
 test('local pairing labels are complete in all six languages', () => {

@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import type { PreviewResult, StepSkillEntry } from './skill-wizard';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { applyBindingChoice, bindingChoice, conditionsToForm, formToConditions, previewOutcome, slugify } from './skill-wizard.ts';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { SKILLS_DICTS } from './i18n-skills.ts';
 
 function row(overrides: Partial<StepSkillEntry>): StepSkillEntry {

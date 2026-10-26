@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { parseClassPathStep, parseStudentClassPathStep } from './class-paths.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { pathForumTexts } from './i18n-path-forum.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { typedStepTargetLabel } from './i18n-administration-steps.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { forumSaveError, forumStepInput, forumStepNotice, pathForumTopics, selectablePathForumTopics } from './path-forum.ts';
 
 const topic = (id: number, extra: Record<string, unknown> = {}) => ({

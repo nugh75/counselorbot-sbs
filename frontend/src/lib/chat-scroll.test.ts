@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { isNearBottom } from './chat-scroll.ts';
 
 test('a reader sitting at the bottom keeps following the stream', () => {

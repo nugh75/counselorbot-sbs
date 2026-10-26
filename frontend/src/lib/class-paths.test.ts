@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { filterProgressStudents, lockedStepUnlockNumber, pathStepTools, parseClassPath, parseClassPathProgress, progressCellCode, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths, selectCurrentClassPath, orderClassPaths, planStepHref } from './class-paths.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { plannedDayIso, plannedDayLocation, plannedDayText } from './class-path-schedule.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { classPathText, classPathsTexts } from './i18n-class-paths.ts';
 
 test('class-paths parser handles step auto-detect and self-marking', () => {

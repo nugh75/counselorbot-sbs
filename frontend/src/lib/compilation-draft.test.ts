@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { clearAdministrationDraft, loadAdministrationDraft, saveAdministrationDraft } from './compilation-draft.ts';
 
 class MemoryStorage {
@@ -94,6 +96,8 @@ test('the runner holds its submit while the scoring call is in flight', () => {
     // A pending institute verification also holds the submit (#149).
     assert.match(source, /disabled=\{submitting(?: \|\| verification !== null)?\}/);
 });
+
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { clearScoreDraft, loadScoreDraft, saveScoreDraft } from './compilation-draft.ts';
 
 test('manually entered scores come back for the instrument that wrote them', () => {

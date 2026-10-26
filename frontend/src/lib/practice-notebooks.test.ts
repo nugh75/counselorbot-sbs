@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { PRACTICE_NOTEBOOK_FIELDS, generatePracticeScores, parsePracticeNotebooks, parsePracticeResults, practiceNotebookBody, practiceResultChatHref } from './practice-notebooks.ts';
 
 test('i campi coincidono con quelli che il server porta nel prompt', () => {

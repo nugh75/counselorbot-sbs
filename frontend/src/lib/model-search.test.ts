@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { modelSearchOptions, validModelId } from './model-search.ts';
 
 test('search matches provider IDs and labels regardless of case or surrounding spaces', () => {

@@ -3,7 +3,10 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { instrumentLabel } from './instrument-label.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { personalAreaText } from './i18n-personal-area.ts';
 
 // Navbar wording (audit-navbar P1). Expected strings are written by hand, so a

@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { sanitizeInstrumentCode, validateInstrumentCode, buildInstrumentPayload, buildInitialSteps, counselorNeedsUpdate, updatedCounselorTypes, executeCreateInstrument, INITIAL_WIZARD_FORM } from './instrument-wizard.ts';
 
 test('sanitizeInstrumentCode trims, converts to uppercase and removes illegal chars', () => {

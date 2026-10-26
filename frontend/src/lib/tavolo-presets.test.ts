@@ -1,6 +1,7 @@
 // Il client dei generi: quello che si prova qui e' il contratto, non il disegno.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { PRESET_IDS, composeBody, type TavoloPresetId } from './tavolo.ts';
 
 test('the five genre ids are the ones the server knows', () => {

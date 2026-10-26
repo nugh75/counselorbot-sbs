@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { parseClassPathStep, parseStudentClassPathStep } from './class-paths.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { pathAssignmentTexts } from './i18n-path-assignments.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { assignmentSaveError, assignmentStepInput, parsePathAssignments, selectablePathAssignments } from './path-assignments.ts';
 
 const summary = {id: 7, title: 'Plan the study week', attachments: [{kind: 'strategy', title: 'Spaced review'}],
@@ -67,6 +71,7 @@ test('path assignment texts exist in six languages without glyph labels', () => 
 });
 
 test('progress and student views name an assignment step by its delivered goal', async () => {
+    // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
     const { typedStepTargetLabel } = await import('./i18n-administration-steps.ts');
     const step = parseStudentClassPathStep({id: 21, step_type: 'assignment', assignment_id: 7, target_summary: summary});
     assert.equal(typedStepTargetLabel('en', step), 'Assignment · Plan the study week');

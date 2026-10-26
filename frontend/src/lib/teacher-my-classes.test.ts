@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { parseClassGroups, type StudentGroup } from '../components/teacher/class-group-types.ts';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { teacherAreaText } from './i18n-teacher-area.ts';
 import type { Lang } from './i18n.ts';
 
