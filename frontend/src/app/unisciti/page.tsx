@@ -147,7 +147,6 @@ export default function JoinPage() {
             <main id="contenuto" className="page-narrow space-y-6 py-8">
                 <PageHeader
                     title={l(active ? 'activeTitle' : 'pendingTitle')}
-                    subtitle={l(active ? 'activeBody' : 'pendingBody', { pseudonym: result.pseudonym })}
                     icon={active
                         ? <UserRoundCheck className="h-7 w-7 text-indigo-600" aria-hidden />
                         : <ShieldCheck className="h-7 w-7 text-amber-700" aria-hidden />}

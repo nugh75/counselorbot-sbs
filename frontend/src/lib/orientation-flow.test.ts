@@ -29,6 +29,10 @@ test('required orientation does not interrupt recovery links', () => {
     assert.equal(orientationGateBypass('/profilo/pqbl'), true);
 });
 
+test('local student pairing is not interrupted by orientation', () => {
+    assert.equal(orientationGateBypass('/unisciti'), true);
+});
+
 test('the landing shows before the gate, and its only way forward is the compass', () => {
     // Chi entra per la prima volta -- anche come ospite, che per il cancello è
     // uno studente come gli altri -- veniva spedito alla Bussola senza aver
