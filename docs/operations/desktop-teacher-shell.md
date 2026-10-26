@@ -125,7 +125,13 @@ usare i PID del report e il lancio successivo sulla stessa cartella di prova.
 - Il tunnel è spento se non configurato. `{"tunnel":{"mode":"quick"}}` in
   `config/shell.json` lo abilita per prove immediate («Prova subito»). Quando
   arriva il nuovo URL il backend riparte con `COUNSELORBOT_PUBLIC_ORIGIN` e il
-  frontend con la nuova porta backend. La modalità nominativa con dominio
+  frontend con la nuova porta backend. Il frontend riceve a sua volta
+  `COUNSELORBOT_PUBLIC_ORIGIN` nel proprio ambiente e la pubblica in
+  `/runtime-config.js`: i link e i QR condivisi con gli studenti (iscrizione
+  classe, link consiglio, URL di raccolta) usano l'origine pubblica del tunnel,
+  non l'indirizzo locale del PC `127.0.0.1`. Fuori dal guscio la
+  configurazione non esiste e la condivisione resta sull'origine del browser
+  (produzione, portable). La modalità nominativa con dominio
   personalizzato (F1-10) consente di configurare un dominio stabile
   (es. `https://counselor.tuascuola.it`) e un token Cloudflare
   (`CLOUDFLARE_TUNNEL_TOKEN` o salvato in `credentials/cloudflared_token`).

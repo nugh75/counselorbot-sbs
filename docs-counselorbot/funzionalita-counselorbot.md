@@ -57,8 +57,16 @@ con canale stabile/beta e backup SQLite verificato prima dell'update. Gli snapsh
 non includono tutti i file e le chiavi. La CI produce installer e manifest come
 artifact: la pubblicazione nelle Release resta da completare prima di usare
 l'updater. Il token del tunnel è conservato localmente, distinto dal portachiavi
-API. Il modello locale richiede un server separato; la configurazione via web è
-raggiungibile dopo l'accesso locale del docente. La checklist distingue
+API. L'URL pubblico del tunnel viene distribuito anche al backend e al frontend
+(`COUNSELORBOT_PUBLIC_ORIGIN`, pubblicato in `/runtime-config.js`): i link e i
+QR che il docente condivide fuori dal pannello — iscrizione alla classe,
+consiglio, URL di raccolta — puntano all'origine pubblica del tunnel invece che
+all'indirizzo locale del PC; con il tunnel spento la condivisione resta
+dell'origine del browser, come in produzione e portable. Le sessioni studenti
+dal tunnel restano anonime finché l'abbinamento con codice personale (ADR-0002
+§4) non avrà la propria interfaccia. Il modello locale richiede un server
+separato; la configurazione via web è raggiungibile dopo l'accesso locale del
+docente. La checklist distingue
 smoke automatizzati e percorsi manuali ancora bloccati; il modello DPIA docente-PC
 è una bozza **[DA VALIDARE]** dal Titolare/DPO. Le pagine `/accesso-locale` e
 `/logout` esistono solo con il fornitore locale e non modificano la Guida

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Database, Download, Filter, RefreshCw } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { publicOrigin } from '@/lib/runtime-config';
 
 interface Instrument {
     code: string;
@@ -103,7 +104,8 @@ export function ValidationExportPanel() {
         // La lingua non sta piu' nell'URL: la sceglie l'interfaccia di chi compila.
         return `/somministrazione/${instrument}${qs ? `?${qs}` : ''}`;
     }, [instrument, version, study]);
-    const collectionUrl = typeof window === 'undefined' ? collectionPath : `${window.location.origin}${collectionPath}`;
+    const shareOrigin = typeof window === 'undefined' ? '' : publicOrigin();
+    const collectionUrl = shareOrigin ? `${shareOrigin}${collectionPath}` : collectionPath;
     // Nome nella lingua dell'interfaccia, dal campo JSON con ripiego sulle
     // colonne vecchie. Rispecchia backend/i18n_fields.py.
     const instrumentLabel = (item: Instrument) => {
