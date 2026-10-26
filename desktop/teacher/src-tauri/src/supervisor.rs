@@ -1492,7 +1492,8 @@ mod tests {
             Some("https://brave-lion-example.trycloudflare.com")
         );
         supervisor.status.lock().unwrap().tunnel_url = None;
-        assert!(env(&supervisor.frontend_spec(32104, 32103), "COUNSELORBOT_PUBLIC_ORIGIN").is_none());
+        // Explicitly clear an inherited URL when the temporary tunnel stops.
+        assert_eq!(env(&supervisor.frontend_spec(32104, 32103), "COUNSELORBOT_PUBLIC_ORIGIN").as_deref(), Some(""));
         std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
     }
 
