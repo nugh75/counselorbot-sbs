@@ -65,7 +65,7 @@ test('the public tunnel origin is read and trimmed from the environment', () => 
     assert.deepEqual(runtimeConfigFromEnv({ COUNSELORBOT_PUBLIC_ORIGIN: '   ' }), {});
 });
 
-test('publicOrigin decides shared links: window absent, tunnel, then browser origin', () => {
+test('publicOrigin decides shared links: window absent, tunnel, empty if not configured', () => {
     const previous = (globalThis as Record<string, unknown>).window;
     try {
         // Server render (nessuna window): niente origine calcolabile.
@@ -76,11 +76,28 @@ test('publicOrigin decides shared links: window absent, tunnel, then browser ori
         };
         assert.equal(publicOrigin(), 'https://counselor-labform.net');
         (globalThis as Record<string, unknown>).window = {
+            __COUNSELORBOT_CONFIG__: {},
             location: { origin: 'http://127.0.0.1:32102' },
         };
-        // Senza tunnel (o fuori dal guscio) la condivisione resta sull'origine
-        // del browser: comportamento invariato in produzione e portable.
-        assert.equal(publicOrigin(), 'http://127.0.0.1:32102');
+        // Fix issue #598: senza COUNSELORBOT_PUBLIC_ORIGIN, publicOrigin restituisce
+        // stringa vuota per evitare link/QR con indirizzo locale in desktop.
+        assert.equal(publicOrigin(), '');
+    } finally {
+        (globalThis as Record<string, unknown>).window = previous;
+    }
+});
+
+test('publicOrigin never falls back to localhost in desktop (issue #598)', () => {
+    const previous = (globalThis as Record<string, unknown>).window;
+    try {
+        (globalThis as Record<string, unknown>).window = {
+            __COUNSELORBOT_CONFIG__: {},
+            location: { origin: 'http://127.0.0.1:32102' },
+        };
+        // Non deve MAI restituire l'origine locale del browser in desktop.
+        const origin = publicOrigin();
+        assert.notEqual(origin, 'http://127.0.0.1:32102');
+        assert.equal(origin, '');
     } finally {
         (globalThis as Record<string, unknown>).window = previous;
     }
