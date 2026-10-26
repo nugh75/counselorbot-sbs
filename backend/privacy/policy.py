@@ -8,21 +8,42 @@ Detection and pseudonymization delegate to the engine installed with
 """
 from __future__ import annotations
 
-from ipaddress import ip_address
 import os
 import re
+from ipaddress import ip_address
 from typing import Sequence
 from urllib.parse import urlsplit
 
 from .errors import (
-    AccessDenied, AuditUnavailable, ConsentMissingError, EgressBlockedError,
-    KeyUnavailable, PIIDetectorUnavailable, PolicyBlocked, PurposeDisabledError,
+    AccessDenied,
+    AuditUnavailable,
+    ConsentMissingError,
+    EgressBlockedError,
+    KeyUnavailable,
+    PIIDetectorUnavailable,
+    PolicyBlocked,
+    PurposeDisabledError,
 )
 from .types import (
-    Action, AIRequest, CategoryPolicy, DataAction, Decision,
-    EgressRequirements, FieldRef, LegalBasis, PIICategory, PIISpan, Principal,
-    PrivacyContext, PrivacyEvent, PrivacyPurpose, PseudonymizedBatch,
-    PurposePolicy, ResourceRef, SealedValue, Target,
+    Action,
+    AIRequest,
+    CategoryPolicy,
+    DataAction,
+    Decision,
+    EgressRequirements,
+    FieldRef,
+    LegalBasis,
+    PIICategory,
+    PIISpan,
+    Principal,
+    PrivacyContext,
+    PrivacyEvent,
+    PrivacyPurpose,
+    PseudonymizedBatch,
+    PurposePolicy,
+    ResourceRef,
+    SealedValue,
+    Target,
 )
 
 

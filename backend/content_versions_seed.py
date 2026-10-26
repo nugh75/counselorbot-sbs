@@ -84,7 +84,7 @@ def _instrument_locales_with_items(db: Session, code: str) -> set[str]:
         db.query(models.QuestionnaireItem)
         .filter(
             models.QuestionnaireItem.instrument_code == code,
-            models.QuestionnaireItem.active == True,  # noqa: E712
+            models.QuestionnaireItem.active == True,
         )
         .all()
     )

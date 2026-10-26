@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
-import { classSettingsText } from '../src/lib/i18n-class-settings.ts';
+import { classSettingsText } from '../src/lib/i18n-class-settings.js';
 
 const origin = new URL(process.env.CLASS_SUPPORT_BASE_URL || 'http://127.0.0.1:3172').origin;
 let browser;

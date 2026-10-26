@@ -12,23 +12,27 @@ import os
 import re
 import secrets
 import string
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from types import SimpleNamespace
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 
-from ..institution_access import require_institution_teacher
 from .. import auth, database, models, schemas
+from ..class_access import FORUM_OPTIONS, forum_option
+from ..class_tools import ALWAYS_ON, tool_catalog
+from ..group_visibility import (
+    _is_admin,
+    _username,
+    _visible_group_query,
+    owned_or_shared_group_query,
+)
+from ..institution_access import require_institution_teacher
 from ..reading_audience import AUDIENCE_BANDS
 from ..user_names import store_user_display_name
-from ..class_tools import ALWAYS_ON, tool_catalog
-from ..class_access import FORUM_OPTIONS, forum_option
-from ..group_visibility import _is_admin, _username, _visible_group_query, owned_or_shared_group_query
 
 router = APIRouter()
 get_db = database.get_db
@@ -342,7 +346,7 @@ async def lock_class_setting(group_id: int, payload: schemas.ClassSettingsLock,
         db.flush()
     locks = dict(getattr(settings, column) or {})
     old = {value_key: _item_state(settings, payload.target_kind, payload.target_id), "locked": payload.target_id in locks}
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     locks[payload.target_id] = {value_key: payload.state, "locked_by": _username(current_user), "locked_at": now}
     setattr(settings, column, locks)
     if payload.target_kind in {"tool", "counselor"}:
@@ -618,7 +622,7 @@ async def upload_group_image(
     with open(dest_path, "wb") as fh:
         fh.write(contents)
 
-    version_ts = int(datetime.now(timezone.utc).timestamp())
+    version_ts = int(datetime.now(UTC).timestamp())
     group.image_url = f"/api/groups/{group_id}/image?v={version_ts}"
     db.commit()
     db.refresh(group)
@@ -839,13 +843,13 @@ async def get_group_students(
     db: Session = Depends(get_db),
 ):
     """Membri della classe con tutti i loro risultati, learner model e link Telegram."""
-    from .learner_profile import _latest_revision
     from ..privacy.authz import (
         authorize_data_access,
         is_resource_in_group_scope,
         principal_from_identity,
     )
     from ..privacy.types import ResourceRef
+    from .learner_profile import _latest_revision
 
     group = _require_visible_group(db, current_user, group_id)
     _require_institution_membership(db, current_user, group)
@@ -924,9 +928,9 @@ async def get_group_student_conversation(
     db: Session = Depends(get_db),
 ):
     """Transcript di una sessione di uno studente della classe (informativa nell'invito)."""
-    from .survey import _session_conversation_messages
     from ..privacy.authz import authorize_data_access, principal_from_identity
     from ..privacy.types import ResourceRef
+    from .survey import _session_conversation_messages
 
     result = _require_student_result(db, current_user, group_id, username, session_id=session_id)
     principal = principal_from_identity(current_user)

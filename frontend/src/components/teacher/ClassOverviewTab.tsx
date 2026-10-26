@@ -20,7 +20,7 @@ import {
     Users,
     Wrench,
 } from 'lucide-react';
-import { apiFetch } from '@/lib/auth';
+import { apiFetch, isLocalAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { publicOrigin } from '@/lib/runtime-config';
 import { classSettingsText, type classSettingsTexts } from '@/lib/i18n-class-settings';
@@ -31,6 +31,7 @@ import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { getClassCoverUrl } from '@/lib/class-cover-presets';
 import { ClassImageModal } from './ClassImageModal';
+import { ClassPairingSection } from './ClassPairingSection';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import type { StudentGroup } from './class-group-types';
@@ -367,8 +368,11 @@ export function ClassOverviewTab({
     ).length;
 
     const shareOrigin = publicOrigin();
+    // Nascondi il link web se non c'e' un'origine pubblica (tunnel non attivo in desktop).
+    // Telegram non dipende dal tunnel, quindi resta visibile se botUsername e' impostato.
     const webLink = shareOrigin ? `${shareOrigin}/gruppo?g=${group.code}` : '';
     const telegramLink = botUsername ? `https://t.me/${botUsername}?start=g_${group.code}` : '';
+    const showWebLink = !!webLink;
 
     return (
         <div className="space-y-6">
@@ -496,7 +500,7 @@ export function ClassOverviewTab({
 
                     {/* Link di iscrizione Web & Telegram */}
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {webLink && (
+                        {showWebLink ? (
                             <div className="space-y-1.5">
                                 <label htmlFor="overview-weblink" className="text-xs font-semibold text-slate-700">
                                     {l('webLink')}
@@ -521,6 +525,12 @@ export function ClassOverviewTab({
                                 </div>
                             </div>
                         )}
+                        : (
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-700">{l('webLink')}</label>
+                                <p className="text-xs text-amber-600">Tunnel non attivo: il link sar&agrave; visibile quando il tunnel &egrave; avviato</p>
+                            </div>
+                        )
 
                         {botUsername && (
                             <div className="space-y-1.5">
@@ -554,6 +564,8 @@ export function ClassOverviewTab({
                     </p>
                 </section>
             </Card>
+
+            {isLocalAuth() && <ClassPairingSection groupId={group.id} />}
 
             {/* 3. Condivisione con Colleghi */}
             <Card>

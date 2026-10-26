@@ -18,6 +18,14 @@ server {
         proxy_set_header X-Original-URL https://$http_host$request_uri;
         proxy_set_header X-Forwarded-Proto https;
         proxy_set_header Cookie $http_cookie;
+        # Bound the auth subrequest (issue #254): with the 60s defaults a hung
+        # ai4auth tied up one worker per request for a minute and then answered
+        # 500. A session verify is a fast local call: connect/send fail fast,
+        # while read tolerates a slow-but-alive ai4auth. When the subrequest
+        # still fails, `location /` maps the resulting 500 to a readable 503.
+        proxy_connect_timeout 15s;
+        proxy_send_timeout 15s;
+        proxy_read_timeout 90s;
     }
 
     location = /api/chatgpt/link/parameters {
@@ -102,6 +110,12 @@ server {
         auth_request /internal/ai4auth/verify;
         error_page 401 =302 https://{{AUTH_HOST}}/login?rd=https://$http_host$request_uri;
         error_page 403 =302 https://{{PORTAL_HOST}}/;
+        # Any other auth subrequest outcome (ai4auth unreachable, timed out or
+        # answering 5xx) is reported by the auth_request module as 500. Answer
+        # with a readable, retryable 503 instead; recovery is automatic as
+        # soon as ai4auth responds again (per-request timeouts, upstream DNS
+        # re-resolved every 30s).
+        error_page 500 = @auth_unavailable;
         # The backend independently verifies the session cookie with ai4auth.
         # Drop client-supplied identities and the optional shared-secret header.
         proxy_set_header Remote-User "";
@@ -127,5 +141,16 @@ server {
         proxy_buffers 4 256k;
         proxy_busy_buffers_size 256k;
         proxy_pass $counselorbot_upstream;
+    }
+
+    # Reached only through the error_page redirect above. It has no
+    # auth_request of its own, so answering an auth failure cannot loop.
+    location @auth_unavailable {
+        internal;
+        default_type text/plain;
+        charset utf-8;
+        add_header Retry-After 30 always;
+        add_header Cache-Control "no-store" always;
+        return 503 "Autenticazione temporaneamente non disponibile: riprova tra qualche istante.\nAuthentication temporarily unavailable: please retry in a few moments.\n";
     }
 }

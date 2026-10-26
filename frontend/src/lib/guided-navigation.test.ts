@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node direct TypeScript runner requires extension.
-import { canSelectPhase, emptyNavigation, explorationPayload } from './guided-navigation.ts';
+import { canSelectPhase, emptyNavigation, explorationPayload } from './guided-navigation.js';
 // @ts-expect-error -- Node direct TypeScript runner requires extension.
-import { navigationCopy } from './guided-navigation-copy.ts';
+import { navigationCopy } from './guided-navigation-copy.js';
 
 test('all future and visited phases are selectable only after the agreement', () => {
     const phases = ['intro', 'agreement', 'first', 'last'];
@@ -28,7 +28,7 @@ test('navigation and branch commands are available in every supported language',
 });
 
 // @ts-expect-error -- Node direct TypeScript runner requires extension.
-import { streamChat, IncompleteChatStreamError } from './chat-stream.ts';
+import { streamChat, IncompleteChatStreamError } from './chat-stream.js';
 
 test('only a completed stream returns branch transition metadata', async t => {
     const exploration = { id: 'a', title: 'Tema', origin_phase: 'p', action: 'open' };

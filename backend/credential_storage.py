@@ -1,7 +1,7 @@
 """Private, persistent encryption keys prepared by administrative activation."""
 import os
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 from cryptography.fernet import Fernet
 from sqlalchemy.exc import SQLAlchemyError
@@ -158,7 +158,7 @@ class CredentialStore:
 def ensure_keys():
     """Pre-create credential DEKs outside request write transactions (SQLite)."""
     if dek_enabled():
-        from . import personal_api, chatgpt_connections, institution_password
+        from . import chatgpt_connections, institution_password, personal_api
         for store in (personal_api.storage, chatgpt_connections.storage, institution_password.storage):
             def initialize(ring):
                 from . import models

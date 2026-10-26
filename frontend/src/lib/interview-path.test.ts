@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { acceptsAgreement, advanceButtons, advanceLabelKey, advancesOnSignal, autoAdvancesOnGenerate, currentGoalPhase, interviewQuickReplies, isAgreementStep, stepInstructionsMessage, userDecidesAdvance } from './interview-path.ts';
+import { acceptsAgreement, advanceButtons, advanceLabelKey, advancesOnSignal, autoAdvancesOnGenerate, currentGoalPhase, interviewQuickReplies, isAgreementStep, stepInstructionsMessage, userDecidesAdvance } from './interview-path.js';
 
 const idle = { analysisStep: true, suggestion: false, userMessages: 0 };
 

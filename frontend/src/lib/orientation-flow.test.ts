@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { orientationGateBypass, orientationToolHref, safeOrientationNext } from './tool-catalog.ts';
+import { orientationGateBypass, orientationToolHref, safeOrientationNext } from './tool-catalog.js';
 
 test('Bussola links only to tools in the shared catalog', () => {
     assert.equal(orientationToolHref('QSA'), '/?start=QSA');
@@ -27,6 +27,10 @@ test('required orientation does not interrupt recovery links', () => {
     assert.equal(orientationGateBypass('/bussola'), true);
     assert.equal(orientationGateBypass('/pqbl'), true);
     assert.equal(orientationGateBypass('/profilo/pqbl'), true);
+});
+
+test('local student pairing is not interrupted by orientation', () => {
+    assert.equal(orientationGateBypass('/unisciti'), true);
 });
 
 test('the landing shows before the gate, and its only way forward is the compass', () => {

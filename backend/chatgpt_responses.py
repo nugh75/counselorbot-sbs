@@ -1,8 +1,15 @@
 """The SIWC Responses transport, shared by dispatch and prompt inspection."""
-from openai import OpenAI, APIStatusError, APIConnectionError
-from .database import independent_read_session
+from openai import APIConnectionError, APIStatusError, OpenAI
 
-from .chatgpt_connections import ChatGPTError, RESOURCE, access_token, mark_reconnect, preference, require_ready
+from .chatgpt_connections import (
+    RESOURCE,
+    ChatGPTError,
+    access_token,
+    mark_reconnect,
+    preference,
+    require_ready,
+)
+from .database import independent_read_session
 
 
 def payload(model, message, instructions, history=None, effort=None):

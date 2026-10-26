@@ -5,8 +5,8 @@ from fastapi import HTTPException
 from pydantic import Field, StringConstraints
 from sqlalchemy.orm import Session
 
-from .db_compat import xact_lock
 from . import models, schemas
+from .db_compat import xact_lock
 from .message_diagrams import session_questionnaire
 from .routes.learner_profile import _latest_revision
 from .visual_tools import LABELS, StrictModel, load_workspace

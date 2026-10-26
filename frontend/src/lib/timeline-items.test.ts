@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { timelineItems, splitByToday, filterItems } from './timeline-items.ts';
-import type { TimelineItemKind } from './timeline-items.ts';
-import type { Action, TimelineEvent } from './visual-tools.ts';
-import type { PersonalGoal } from './goals.ts';
+import { timelineItems, splitByToday, filterItems } from './timeline-items.js';
+import type { TimelineItemKind } from './timeline-items.js';
+import type { Action, TimelineEvent } from './visual-tools.js';
+import type { PersonalGoal } from './goals.js';
 
 const baseEvent = { title: 'Event', period: '', tense: 'past' as const, symbol: 'milestone' as const, reflection: '', source: '', action_ids: [], portfolio: [] };
 const baseAction = { kind: 'activity' as const, detail: '', stage: 'todo' as const, reflection: '', source: '' };

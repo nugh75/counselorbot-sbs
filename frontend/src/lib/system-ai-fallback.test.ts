@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { Lang } from './i18n';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { systemAIText } from './i18n-system-ai.ts';
+import { systemAIText } from './i18n-system-ai.js';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { formatProbeDetail, formatSystemAIError, systemAIRoleLabel, type SystemAIProbeResult } from './system-ai-fallback.ts';
+import { formatProbeDetail, formatSystemAIError, systemAIRoleLabel, type SystemAIProbeResult } from './system-ai-fallback.js';
 
 const LANGUAGES: Lang[] = ['it', 'en', 'es', 'fr', 'de', 'sv'];
 

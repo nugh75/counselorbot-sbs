@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript directly.
-import { estimateTokens } from './context-tokens.ts';
+import { estimateTokens } from './context-tokens.js';
 
 test('UTF-8 estimate matches the backend for multilingual text and emoji', () => {
     assert.equal(estimateTokens('é🙂'), 10);

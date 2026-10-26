@@ -6,13 +6,14 @@ Log(action="personal_flashcards") row per save, scoped to the authenticated
 username, with a revision check against concurrent edits.
 """
 
+from typing import Annotated, Literal
+
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy.orm import Session
-from typing import Annotated, Literal
 
-from .db_compat import xact_lock
 from . import models, pii
+from .db_compat import xact_lock
 
 ACTION = 'personal_flashcards'
 DECK_LIMIT = 20

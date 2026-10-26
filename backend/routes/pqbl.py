@@ -16,40 +16,52 @@ Endpoint:
 - POST /pqbl/sessions/{sid}/final-test   → submit unico del test finale
 - GET  /pqbl/sessions/{sid}/summary      → metriche (primo tentativo, per skill, tempo)
 """
-from .. import personal_api
 import hashlib
 import logging
 import math
 import os
 import random
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+)
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from .. import auth, class_access, database, models
+from .. import auth, class_access, database, models, personal_api
+from ..ai_service import AIError, AIService
 from ..anonymous_codes import code_for_identity, get_or_create_anonymous_research_code
-from ..ai_service import AIService, AIError
-from ..api_models import PqblAnswerRequest, PqblFinalTestRequest, PqblQuestionUpdate, PqblSessionCreate
+from ..api_models import (
+    PqblAnswerRequest,
+    PqblFinalTestRequest,
+    PqblQuestionUpdate,
+    PqblSessionCreate,
+)
+from ..guided_text_i18n import resolve_text
 from ..pqbl_generator import (
     ALLOWED_SESSION_SIZES,
     PAGES_PER_SEGMENT,
     QUESTIONS_PER_CHUNK,
     OcrUnavailableError,
-    ocr_unavailable_message,
-    pdf_total_pages,
+    detect_language,
     extract_pdf_text_range,
     generate_batch_for_chunk,
+    ocr_unavailable_message,
+    pdf_total_pages,
     split_text_into_chunks,
-    detect_language,
 )
 from ..prompt_config import (
     DEFAULT_PQBL_ONBOARDING_TEXT,
     DEFAULT_PQBL_QUESTION_GENERATION_PROMPT,
 )
-from ..guided_text_i18n import resolve_text
 
 router = APIRouter()
 get_db = database.get_personal_ai_db
@@ -621,7 +633,7 @@ async def submit_pqbl_final_test(
             "feedback": (option.get("feedback") or "") if option else "",
         })
 
-    session.finished_at = datetime.now(timezone.utc)
+    session.finished_at = datetime.now(UTC)
     db.add(models.Log(
         session_id=session.id,
         action="pqbl_final_test_completed",
@@ -681,7 +693,7 @@ async def get_pqbl_session_summary(session_id: str, db: Session = Depends(get_db
     total = len(questions)
     all_answered = total > 0 and len(answered) >= total
     if session.mode == "learning" and all_answered and session.finished_at is None:
-        session.finished_at = datetime.now(timezone.utc)
+        session.finished_at = datetime.now(UTC)
         db.add(models.Log(
             session_id=session.id,
             action="pqbl_session_completed",

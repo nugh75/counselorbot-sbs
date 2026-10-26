@@ -20,7 +20,6 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy.orm import Session
 
 from . import models
-from .idea_lexicon import opening_question
 from .diagram_render import (
     FLAW_WORDS,
     MAX_TITLE,
@@ -35,6 +34,7 @@ from .diagram_render import (
     DiagramSpecError,
     parse_spec,
 )
+from .idea_lexicon import opening_question
 
 logger = logging.getLogger(__name__)
 

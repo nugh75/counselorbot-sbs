@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from .. import auth
-from ..ai_service import AIService, AIError
+from ..ai_service import AIError, AIService
 from ..cross_synthesis import (
     MIN_INSTRUMENTS,
     build_multi_instrument_block,

@@ -155,7 +155,7 @@ def refresh_instrument_status(db: Session, code: str, locales: List[str]) -> Non
         db.query(models.QuestionnaireItem)
         .filter(
             models.QuestionnaireItem.instrument_code == code,
-            models.QuestionnaireItem.active == True,  # noqa: E712
+            models.QuestionnaireItem.active == True,
         )
         .all()
     )
@@ -220,7 +220,7 @@ def translate_instrument(
         db.query(models.QuestionnaireItem)
         .filter(
             models.QuestionnaireItem.instrument_code == code,
-            models.QuestionnaireItem.active == True,  # noqa: E712
+            models.QuestionnaireItem.active == True,
         )
         .order_by(models.QuestionnaireItem.item_number)
         .all()

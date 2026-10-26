@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { focusLeaves } from './disclosure.ts';
+import { focusLeaves } from './disclosure.js';
 
 const inside = { id: 'inside' };
 const outside = { id: 'outside' };

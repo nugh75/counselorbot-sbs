@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+
 load_dotenv()
 
 import asyncio
@@ -13,134 +14,146 @@ from .log_privacy import install_log_redaction
 install_log_redaction()
 
 from fastapi import Depends, FastAPI, Request
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-from . import models, auth, database
-from . import install_profile, local_auth, local_pairing, shell_internal
-from .version import __version__
-from .native_deps import native_capabilities
-from .prompt_config import (
-    ALL_CONFIG_TEXT_DEFINITIONS,
-    DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR,
-    DEFAULT_SYSTEM_PROMPT_ZTPI_BTP,
-    DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTERVIEW,
-    DEFAULT_SYSTEM_PROMPT_SAVICKAS_SUMMARY,
-    FACTOR_INTERPLAY_SENTINEL,
-    DEFAULT_FACTOR_INTERPLAY_QSA,
-    DEFAULT_FACTOR_INTERPLAY_QSAR,
-    SECOND_LEVEL_METHOD_SENTINEL,
-    SECOND_LEVEL_METHOD_TEXT,
-    LEGACY_SECOND_LEVEL_METHOD,
-    DEFAULT_SECOND_LEVEL_METHOD,
-    SYNTHESIS_ADVICE_SENTINEL,
-    SYNTHESIS_ADVICE_DIRECTIVE,
-    QA_DEPTH_SENTINEL,
-    DEFAULT_QA_DEPTH_DIRECTIVE,
-    SL_MOTIVATION_SYMMETRY_NOTE,
-    SL_ATTRIBUTION_A6_NOTE,
-    DEFAULT_GUIDED_STEPS,
-    DEFAULT_QSAR_GUIDED_STEPS,
-    DEFAULT_ZTPI_GUIDED_STEPS,
-    DEFAULT_SAVICKAS_GUIDED_STEPS,
-    DEFAULT_QPCS_GUIDED_STEPS,
-    DEFAULT_QPCC_GUIDED_STEPS,
-    DEFAULT_QAP_GUIDED_STEPS,
-    DEFAULT_EVENTO_STUDIO_GUIDED_STEPS,
-    DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS,
-    DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS,
-    DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS,
-    META_ZTPI_TIME_PERSPECTIVE,
-    META_SAVICKAS_CAREER_CONSTRUCTION,
-    SYSTEM_PROMPT_DEFAULTS,
-    GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
-    INTRO_ALLOWED_QUESTIONS,
-    INTRO_ALLOWED_QUESTIONS_SENTINEL,
-    DEFAULT_SYSTEM_PROMPT_QPCC_INTRO,
-    MODE_TO_SYSTEM_PROMPT_KEY,
-    DEFAULT_SYSTEM_PROMPT_IDEA,
-    LEGACY_DEFAULT_SYSTEM_PROMPT_IDEA,
-    PRE_ORIENTATION_DEFAULT_SYSTEM_PROMPT_IDEA,
-    PREVIOUS_DEFAULT_SYSTEM_PROMPT_IDEA,
+from . import (
+    auth,
+    database,
+    install_profile,
+    local_auth,
+    local_pairing,
+    models,
+    prompt_revisions,
+    shell_internal,
 )
-from .questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS
-from .guided_text_i18n import seed_definitions as guided_text_seed_definitions
-from . import prompt_revisions
-
-# Logica/helper estratti (vedi chat_logic.py); router in routes/.
-from .chat_logic import _memory_cleanup_loop, _log_retention_loop
-from .routes import admin as admin_routes
-from .routes import prompt_experiments as prompt_experiments_routes
-from .routes import survey as survey_routes
-from .routes import chat as chat_routes
-from .routes import chatgpt as chatgpt_routes
-from .routes import voice_reader as voice_reader_routes
-from .routes import audio_input as audio_input_routes
-from .routes import memory as memory_routes
-from .routes import site_chat as site_chat_routes
-from .routes import learner_profile as learner_profile_routes
-from .routes import external_privacy as external_privacy_routes
-from .routes import privacy as privacy_routes
-from .routes import document_retrieval as document_retrieval_routes
-from .routes import local_llm as local_llm_routes
-from .routes import personal_api as personal_api_routes
-from .routes import teacher_profile as teacher_profile_routes
-from .routes import practice_notebooks as practice_notebook_routes
-from .routes import orientation as orientation_routes
-from .routes import cross_synthesis as cross_synthesis_routes
-from .routes import goals as goals_routes
-from .routes import readings as readings_routes
-from .routes import milestones as milestones_routes
-from .routes import personal_strategies as personal_strategies_routes
-from .routes import portfolio as portfolio_routes
-from .routes import pqbl as pqbl_routes
-from .routes import opencode as opencode_routes
-from .routes import presets as presets_routes
-from .routes import benchmark as benchmark_routes
-from .routes import prompt_audit as prompt_audit_routes
-from .routes import counselors as counselors_routes
-from .routes import approved_strategies as approved_strategies_routes
-from .routes import certified_readings as certified_readings_routes
-from .routes import certified_strategies as certified_strategies_routes
-from .routes import research_contacts as research_contacts_routes
-from .routes import administration_plans as administration_plans_routes
-from .routes import assistant_questions as assistant_questions_routes
-from .routes import rag_docs as rag_docs_routes
-from .routes import guided_step_questions as guided_step_questions_routes
-from .routes import telegram as telegram_routes
-from .routes import groups as groups_routes
-from .routes import forum as forum_routes
-from .routes import assignments as assignments_routes
-from .routes import assignment_work as assignment_work_routes
-from .routes import frozen_sessions as frozen_sessions_routes
-from .routes import class_access as class_access_routes
-from .class_access import CounselorAccessDenied, ToolAccessDenied, counselor_access_denied_handler, tool_access_denied_handler
-from .routes import idea_map as idea_map_routes
-from .routes import skills as skills_routes
-from .routes import diagram as diagram_routes
-from .routes import tavolo as tavolo_routes
-from .routes import tavolo_images as tavolo_images_routes
-from .routes import visual_tools as visual_tools_routes
-from .routes import flashcards as flashcards_routes
-from .routes import institutions as institutions_routes
-from .routes import institution_categories as institution_categories_routes
-from .routes import orientation_referrals as orientation_referrals_routes
-from .routes import class_paths as class_paths_routes
-from .routes import path_templates as path_templates_routes
-from .routes import class_meetings as class_meetings_routes
-from .routes import class_council as class_council_routes
-from .routes import thread_guard as thread_guard_routes
-
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
-from .ai_service import AIService, AIError  # noqa: F401
-from .chat_logic import (  # noqa: F401
+from .ai_service import AIError, AIService
+
+# Logica/helper estratti (vedi chat_logic.py); router in routes/.
+from .chat_logic import (
+    _clamp_max_tokens,
     _is_qsa,
     _is_strategy_questionnaire,
-    _clamp_max_tokens,
+    _log_retention_loop,
+    _memory_cleanup_loop,
     _should_sanitize_ztpi_text,
     strip_markdown,
 )
+from .class_access import (
+    CounselorAccessDenied,
+    ToolAccessDenied,
+    counselor_access_denied_handler,
+    tool_access_denied_handler,
+)
+from .guided_text_i18n import seed_definitions as guided_text_seed_definitions
+from .native_deps import native_capabilities
+from .prompt_config import (
+    ALL_CONFIG_TEXT_DEFINITIONS,
+    DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS,
+    DEFAULT_EVENTO_STUDIO_GUIDED_STEPS,
+    DEFAULT_FACTOR_INTERPLAY_QSA,
+    DEFAULT_FACTOR_INTERPLAY_QSAR,
+    DEFAULT_GUIDED_STEPS,
+    DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS,
+    DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS,
+    DEFAULT_QA_DEPTH_DIRECTIVE,
+    DEFAULT_QAP_GUIDED_STEPS,
+    DEFAULT_QPCC_GUIDED_STEPS,
+    DEFAULT_QPCS_GUIDED_STEPS,
+    DEFAULT_QSAR_GUIDED_STEPS,
+    DEFAULT_SAVICKAS_GUIDED_STEPS,
+    DEFAULT_SECOND_LEVEL_METHOD,
+    DEFAULT_SYSTEM_PROMPT_IDEA,
+    DEFAULT_SYSTEM_PROMPT_QPCC_INTRO,
+    DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTERVIEW,
+    DEFAULT_SYSTEM_PROMPT_SAVICKAS_SUMMARY,
+    DEFAULT_SYSTEM_PROMPT_ZTPI_BTP,
+    DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR,
+    DEFAULT_ZTPI_GUIDED_STEPS,
+    FACTOR_INTERPLAY_SENTINEL,
+    GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
+    INTRO_ALLOWED_QUESTIONS,
+    INTRO_ALLOWED_QUESTIONS_SENTINEL,
+    LEGACY_DEFAULT_SYSTEM_PROMPT_IDEA,
+    LEGACY_SECOND_LEVEL_METHOD,
+    META_SAVICKAS_CAREER_CONSTRUCTION,
+    META_ZTPI_TIME_PERSPECTIVE,
+    MODE_TO_SYSTEM_PROMPT_KEY,
+    PRE_ORIENTATION_DEFAULT_SYSTEM_PROMPT_IDEA,
+    PREVIOUS_DEFAULT_SYSTEM_PROMPT_IDEA,
+    QA_DEPTH_SENTINEL,
+    SECOND_LEVEL_METHOD_SENTINEL,
+    SECOND_LEVEL_METHOD_TEXT,
+    SL_ATTRIBUTION_A6_NOTE,
+    SL_MOTIVATION_SYMMETRY_NOTE,
+    SYNTHESIS_ADVICE_DIRECTIVE,
+    SYNTHESIS_ADVICE_SENTINEL,
+    SYSTEM_PROMPT_DEFAULTS,
+)
+from .questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS
+from .routes import admin as admin_routes
+from .routes import administration_plans as administration_plans_routes
+from .routes import approved_strategies as approved_strategies_routes
+from .routes import assignment_work as assignment_work_routes
+from .routes import assignments as assignments_routes
+from .routes import assistant_questions as assistant_questions_routes
+from .routes import audio_input as audio_input_routes
+from .routes import benchmark as benchmark_routes
+from .routes import certified_readings as certified_readings_routes
+from .routes import certified_strategies as certified_strategies_routes
+from .routes import chat as chat_routes
+from .routes import chatgpt as chatgpt_routes
+from .routes import class_access as class_access_routes
+from .routes import class_council as class_council_routes
+from .routes import class_meetings as class_meetings_routes
+from .routes import class_paths as class_paths_routes
+from .routes import counselors as counselors_routes
+from .routes import cross_synthesis as cross_synthesis_routes
+from .routes import diagram as diagram_routes
+from .routes import document_retrieval as document_retrieval_routes
+from .routes import external_privacy as external_privacy_routes
+from .routes import flashcards as flashcards_routes
+from .routes import forum as forum_routes
+from .routes import frozen_sessions as frozen_sessions_routes
+from .routes import goals as goals_routes
+from .routes import groups as groups_routes
+from .routes import guided_step_questions as guided_step_questions_routes
+from .routes import idea_map as idea_map_routes
+from .routes import institution_categories as institution_categories_routes
+from .routes import institutions as institutions_routes
+from .routes import learner_profile as learner_profile_routes
+from .routes import local_llm as local_llm_routes
+from .routes import memory as memory_routes
+from .routes import milestones as milestones_routes
+from .routes import opencode as opencode_routes
+from .routes import orientation as orientation_routes
+from .routes import orientation_referrals as orientation_referrals_routes
+from .routes import path_templates as path_templates_routes
+from .routes import personal_api as personal_api_routes
+from .routes import personal_strategies as personal_strategies_routes
+from .routes import portfolio as portfolio_routes
+from .routes import pqbl as pqbl_routes
+from .routes import practice_notebooks as practice_notebook_routes
+from .routes import presets as presets_routes
+from .routes import privacy as privacy_routes
+from .routes import prompt_audit as prompt_audit_routes
+from .routes import prompt_experiments as prompt_experiments_routes
+from .routes import rag_docs as rag_docs_routes
+from .routes import readings as readings_routes
+from .routes import research_contacts as research_contacts_routes
+from .routes import site_chat as site_chat_routes
+from .routes import skills as skills_routes
+from .routes import survey as survey_routes
+from .routes import tavolo as tavolo_routes
+from .routes import tavolo_images as tavolo_images_routes
+from .routes import teacher_profile as teacher_profile_routes
+from .routes import telegram as telegram_routes
+from .routes import thread_guard as thread_guard_routes
+from .routes import visual_tools as visual_tools_routes
+from .routes import voice_reader as voice_reader_routes
+from .version import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -221,6 +234,7 @@ except Exception as exc:  # pragma: no cover - dipende dalla concorrenza dei wor
 
 # Run before ORM reads: create_all cannot add columns/constraints to legacy tables.
 from importlib import import_module
+
 import_module("backend.migrations.20261009_teacher_institutes").migrate(database.engine)
 import_module("backend.migrations.20261009_institute_credentials").migrate(database.engine)
 import_module("backend.migrations.20261009_typed_administration_steps").migrate(database.engine)
@@ -249,6 +263,7 @@ import_module("backend.migrations.20261025_credential_deks").migrate(database.en
 import_module("backend.migrations.20261025_privacy_consent").migrate(database.engine)
 # SQLite: i CHECK di un file creato da una versione precedente seguono il modello (ADR-0003 §3.4).
 from .sqlite_schema import sync_sqlite_check_constraints
+
 sync_sqlite_check_constraints(database.engine, models.Base.metadata)
 
 
@@ -257,8 +272,8 @@ async def lifespan(app: FastAPI):
     # Sidecar uvicorn can configure new handlers after importing this module.
     install_log_redaction()
     # Precarica il modello Ollama in memoria all'avvio (evita cold start)
-    from .database import SessionLocal as _SessionLocal
     from .ai_service import AIService as _AIService
+    from .database import SessionLocal as _SessionLocal
 
     # Seeding/migrazioni idempotenti + background task pulizia memoria
     _seed_and_migrate()
@@ -959,7 +974,9 @@ def _run_seed_and_migrations():
             db.add(db_user)
             db.commit()
 
-        from .embedding_service import CONFIG_DEFINITIONS as EMBEDDING_CONFIG_DEFINITIONS
+        from .embedding_service import (
+            CONFIG_DEFINITIONS as EMBEDDING_CONFIG_DEFINITIONS,
+        )
         from .vision_service import CONFIG_DEFINITIONS as VISION_CONFIG_DEFINITIONS
 
         # Config operative per il logging: redazione PII e retention giorni.
@@ -997,20 +1014,20 @@ def _run_seed_and_migrations():
             from .skills_seed import (
                 apply_certified_advice_policy,
                 apply_diagram_edge_kinds_policy,
+                apply_diagram_factor_symbols_policy,
                 apply_diagram_icons_policy,
                 apply_diagram_node_mapping_policy,
+                apply_diagram_semantic_icons_policy,
                 apply_diagram_shapes_policy,
                 apply_diagram_symbol_policy,
-                apply_diagram_semantic_icons_policy,
-                apply_diagram_factor_symbols_policy,
                 apply_english_skill_instructions_policy,
-                apply_idea_focus_policy,
                 apply_event_paths_policy,
-                apply_obiettivo_engine_policy,
                 apply_idea_concept_policy,
+                apply_idea_focus_policy,
                 apply_idea_wayfinder_policy,
-                apply_skills_budget_policy,
+                apply_obiettivo_engine_policy,
                 apply_reading_and_translations_policy,
+                apply_skills_budget_policy,
                 apply_specialized_skills_policy,
                 seed_skill_configs,
                 seed_skills,
@@ -1437,7 +1454,10 @@ def _run_seed_and_migrations():
         # I counselor delle interviste narrative servono anche i due Evento
         # significativo e i due percorsi Obiettivo. Una tantum: una scelta
         # successiva dell'admin resta.
-        from .counselor_scope import extend_interview_counselors, extend_obiettivo_counselors
+        from .counselor_scope import (
+            extend_interview_counselors,
+            extend_obiettivo_counselors,
+        )
         extend_interview_counselors(db)
         extend_obiettivo_counselors(db)
 
@@ -1537,7 +1557,7 @@ def _run_seed_and_migrations():
     try:
         from .counselor_i18n import backfill_async
         backfill_async()
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.debug(f"counselor translation backfill not started: {e}")
 
     # Sincronizza gli admin del servizio (da access matrix ai4auth) come contatti
@@ -1545,7 +1565,7 @@ def _run_seed_and_migrations():
     try:
         from .admin_sync import sync_admins_async
         sync_admins_async()
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.debug(f"admin sync not started: {e}")
 
 

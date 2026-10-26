@@ -1,5 +1,5 @@
 """Institutional editorial labels, separate from the needs used in chat retrieval."""
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from . import models
 
@@ -13,7 +13,7 @@ def content_rows(db, kind, institution_id):
     model, _ = content_models(kind)
     query = db.query(model).filter(model.institution_id == institution_id, model.is_active.is_(True), model.status == "certified")
     if kind == "event":
-        return query.filter(model.ends_at >= datetime.now(timezone.utc)).order_by(model.starts_at, model.id)
+        return query.filter(model.ends_at >= datetime.now(UTC)).order_by(model.starts_at, model.id)
     return query.order_by(model.sort_order, model.id)
 
 

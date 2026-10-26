@@ -3,7 +3,6 @@
 Audio travels inside the requesting stream; no files, public audio URLs or
 student text are retained. Access follows the existing /tts edge-auth policy.
 """
-from .. import personal_api
 import asyncio
 import base64
 import json
@@ -20,14 +19,14 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from .. import database, install_profile, models
+from .. import database, install_profile, models, personal_api
+from ..api_models import TTSRequest
+from ..chat_logic import strip_markdown
+from ..diagram_blocks import strip_for_speech
 from ..privacy.errors import PrivacyError
 from ..privacy.gateway import AIGateway, context_for
 from ..privacy.policy import is_trusted_local
 from ..privacy.types import AIRequest, Target
-from ..api_models import TTSRequest
-from ..chat_logic import strip_markdown
-from ..diagram_blocks import strip_for_speech
 from ..sse import heartbeat
 from .chat import _split_text_for_tts
 

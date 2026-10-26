@@ -37,6 +37,7 @@ export function ClassCouncilTab({ groupId }: { groupId: number }) {
     const [created, setCreated] = useState<CouncilLink | null>(null);
     const date = (value: string) => new Date(value).toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' });
     const origin = publicOrigin();
+    const councilLink = origin ? `${origin}${councilPath(created?.token || '')}` : '';
 
     const create = async () => {
         setBusy(true); setError(''); setCreated(null);
@@ -80,10 +81,10 @@ export function ClassCouncilTab({ groupId }: { groupId: number }) {
                 <Button disabled={busy} onClick={() => void create()}>{l(busy ? 'creating' : 'create')}</Button>
             </div>
             {error && <p role="alert" className="text-sm text-red-600">{l(error)}</p>}
-            {created?.password && <div role="status" className="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+            {created?.password && councilLink && <div role="status" className="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
                 <p className="font-semibold text-emerald-800">{l('newLink')}</p>
                 <p className="text-sm text-emerald-800">{l('passwordOnce')}</p>
-                <CopyField label={l('link')} value={`${origin}${councilPath(created.token)}`} lang={lang} />
+                <CopyField label={l('link')} value={councilLink} lang={lang} />
                 <CopyField label={l('password')} value={created.password} lang={lang} />
             </div>}
         </Card>

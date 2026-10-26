@@ -3,27 +3,44 @@ import hashlib
 import json
 import logging
 from types import SimpleNamespace
-from typing import List, Optional, Literal
+from typing import List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from .. import administration_context, models, schemas, auth, class_access, database
-from ..anonymous_codes import get_or_create_anonymous_research_code
-from ..validation_export import build_validation_csv, validation_query, validation_summary
-from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
-from ..pdf_generator import generate_questionnaire_pdf
-from ..diagram_blocks import strip_for_speech
-from ..control_markers import strip_control_markers
-from ..message_diagrams import attach_message_diagrams
-from ..visual_tools import load_workspace
+from .. import (
+    administration_context,
+    auth,
+    class_access,
+    content_version_service,
+    database,
+    i18n_fields,
+    models,
+    recommendation_service,
+    schemas,
+    scoring_service,
+)
 from ..ai_service import AIService
-from .. import scoring_service, recommendation_service
-from .. import content_version_service, i18n_fields
+from ..anonymous_codes import get_or_create_anonymous_research_code
+from ..control_markers import strip_control_markers
+from ..diagram_blocks import strip_for_speech
 from ..dynamic_registry import DynamicInstrumentSet
+from ..message_diagrams import attach_message_diagrams
+from ..pdf_generator import generate_questionnaire_pdf
 from ..privacy.consent import record_legacy_choice
+from ..strategy_memory import (
+    APPROVED_STRATEGIES_CONFIG_KEY,
+    shared_response_memory,
+    strategy_memory,
+)
+from ..validation_export import (
+    build_validation_csv,
+    validation_query,
+    validation_summary,
+)
+from ..visual_tools import load_workspace
 
 router = APIRouter()
 get_db = database.get_personal_ai_db
@@ -289,7 +306,7 @@ async def list_instruments(
     is_admin = bool(identity.get("is_admin"))
     query = db.query(models.Instrument)
     if not is_admin:
-        query = query.filter(models.Instrument.is_active == True)  # noqa: E712
+        query = query.filter(models.Instrument.is_active == True)
 
     out = []
     for instrument in query.order_by(models.Instrument.code).all():
@@ -297,7 +314,7 @@ async def list_instruments(
             db.query(models.QuestionnaireItem)
             .filter(
                 models.QuestionnaireItem.instrument_code == instrument.code,
-                models.QuestionnaireItem.active == True,  # noqa: E712
+                models.QuestionnaireItem.active == True,
             )
             .count()
         )
@@ -557,7 +574,7 @@ async def get_questionnaire_results(
         q = q.filter(models.QuestionnaireResult.questionnaire_type == questionnaire_type)
     results = q.order_by(models.QuestionnaireResult.submitted_at.desc()).offset(skip).limit(limit).all()
 
-    from ..privacy.authz import is_l1, get_active_break_glass, safe_subject_pid
+    from ..privacy.authz import get_active_break_glass, is_l1, safe_subject_pid
     if is_l1():
         admin_username = str(current_user.get("username") or "").strip()
         output = []

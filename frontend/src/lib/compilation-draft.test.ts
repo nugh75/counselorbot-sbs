@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { clearAdministrationDraft, loadAdministrationDraft, saveAdministrationDraft } from './compilation-draft.ts';
+import { clearAdministrationDraft, loadAdministrationDraft, saveAdministrationDraft } from './compilation-draft.js';
 
 class MemoryStorage {
     private values = new Map<string, string>();
@@ -98,7 +98,7 @@ test('the runner holds its submit while the scoring call is in flight', () => {
 });
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { clearScoreDraft, loadScoreDraft, saveScoreDraft } from './compilation-draft.ts';
+import { clearScoreDraft, loadScoreDraft, saveScoreDraft } from './compilation-draft.js';
 
 test('manually entered scores come back for the instrument that wrote them', () => {
     const storage = new MemoryStorage() as Storage;

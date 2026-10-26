@@ -1,5 +1,6 @@
 """Assignment -> owned activity/diary -> explicit submission -> teacher feedback."""
-from datetime import date as Date, datetime, timezone
+from datetime import UTC, datetime, timezone
+from datetime import date as Date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import Field, model_validator
@@ -8,7 +9,7 @@ from sqlalchemy.orm import Session
 from .. import auth, database, models
 from ..goals import Strict, membership_ids, owned_goal
 from ..personal_timeline import ensure_personal_timeline
-from ..visual_tools import load_workspace, save_workspace, SavePersonalWorkspace
+from ..visual_tools import SavePersonalWorkspace, load_workspace, save_workspace
 from .assignments import _managed_group
 
 router = APIRouter()
@@ -177,14 +178,14 @@ def share(assignment_id: int, payload: ShareWrite, db: Session = Depends(databas
         if item is None:
             raise HTTPException(404, 'Portfolio item unavailable')
         stamp = item.updated_at or item.created_at
-        stamp = stamp if stamp.tzinfo else stamp.replace(tzinfo=timezone.utc)
-        if payload.portfolio_updated_at is None or stamp != payload.portfolio_updated_at.astimezone(timezone.utc):
+        stamp = stamp if stamp.tzinfo else stamp.replace(tzinfo=UTC)
+        if payload.portfolio_updated_at is None or stamp != payload.portfolio_updated_at.astimezone(UTC):
             raise HTTPException(409, 'Portfolio preview changed: reload')
         # Share only the text preview the student chose, never images or live private links.
         snapshot['portfolio'] = dict(title=item.title, description=item.description or '')
     if row.submission != snapshot:
         row.submission = snapshot
-        row.submitted_at = datetime.now(timezone.utc)
+        row.submitted_at = datetime.now(UTC)
         row.feedback = ''; row.feedback_at = None
         row.revision += 1
         db.commit()
@@ -228,6 +229,6 @@ def feedback(assignment_id: int, username: str, payload: FeedbackWrite,
     row = _edit(db, assignment_id, username, payload.revision)
     if row.submission is None:
         raise HTTPException(404, 'Submission withdrawn')
-    row.feedback = payload.text; row.feedback_at = datetime.now(timezone.utc); row.revision += 1
+    row.feedback = payload.text; row.feedback_at = datetime.now(UTC); row.revision += 1
     db.commit()
     return _shared(row)

@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
-
 API_KEY_ENV_MAP: dict[str, tuple[str, ...]] = {
     "openai": ("API_KEY_OPENAI",),
     "anthropic": ("API_KEY_ANTHROPIC",),

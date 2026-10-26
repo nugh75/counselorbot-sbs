@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { buildClassResultsMatrix, formatCompactScores, type PlanStudent } from './class-results-matrix.ts';
+import { buildClassResultsMatrix, formatCompactScores, type PlanStudent } from './class-results-matrix.js';
 
 test('buildClassResultsMatrix handles empty student list', () => {
     const matrix = buildClassResultsMatrix([]);

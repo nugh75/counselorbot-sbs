@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { teacherAreaName, teacherAreaText } from '../src/lib/i18n-teacher-area.ts';
-import { personalAreaName } from '../src/lib/i18n-personal-area.ts';
+import { teacherAreaName, teacherAreaText } from '../src/lib/i18n-teacher-area.js';
+import { personalAreaName } from '../src/lib/i18n-personal-area.js';
 
 // S16 route seam: anonymous localhost fixtures, no backend/SSO/database.
 const origin = new URL(process.env.TEACHER_PICKER_BASE_URL || 'http://127.0.0.1:3134').origin;

@@ -8,7 +8,7 @@ from __future__ import annotations
 import hashlib
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from sqlalchemy.orm import Session
 
@@ -17,7 +17,14 @@ from ..db_compat import xact_lock
 from . import events
 from .authz import safe_subject_pid
 from .errors import AccessDenied, ConsentMissingError, PolicyBlocked, PurposeDisabled
-from .types import LegalBasis, Principal, PrivacyContext, PrivacyEvent, PrivacyRole, PurposePolicy
+from .types import (
+    LegalBasis,
+    Principal,
+    PrivacyContext,
+    PrivacyEvent,
+    PrivacyRole,
+    PurposePolicy,
+)
 
 DOCUMENT_KINDS = frozenset({
     "notice_student", "notice_teacher", "notice_ai", "terms", "consent_sharing", "consent_research",
@@ -27,7 +34,7 @@ SHARING_PURPOSE = "teacher_sharing"
 
 
 def now():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def publish_document(db: Session, *, kind: str, version: str, locale: str,

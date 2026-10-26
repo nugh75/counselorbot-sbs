@@ -10,7 +10,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, auth, database
+from .. import auth, database, models, schemas
 from ..ai_service import AIService
 from ..reasoning_profiles import is_mandatory_reasoning
 

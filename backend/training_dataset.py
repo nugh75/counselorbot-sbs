@@ -15,7 +15,6 @@ from . import models
 from .chat_logic import _QSA_FACTOR_NAMES, _QSA_INVERTED_CODES
 from .prompt_config import DEFAULT_GUIDED_STEPS
 
-
 APPROVED_EXPORT_STATUSES = {"approved", "edited"}
 VALID_REVIEW_STATUSES = {"pending", "approved", "rejected", "edited"}
 

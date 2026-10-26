@@ -54,8 +54,12 @@ export function getRuntimeConfig(): RuntimeConfig {
 // (URL del tunnel) a backend e frontend: la stessa build standalone fuori dal
 // guscio non la riceve e resta l'origine del browser, come in produzione e
 // portable, dove l'app gira su un solo host pubblico.
+// Se COUNSELORBOT_PUBLIC_ORIGIN non e' impostato o e' vuoto, restituisce stringa vuota
+// per evitare che i link/QR puntino a localhost/127.0.0.1 (issue #598).
 export function publicOrigin(): string {
     const configured = getRuntimeConfig().publicOrigin?.replace(/\/+$/, '');
     if (configured) return configured;
-    return typeof window === 'undefined' ? '' : window.location.origin;
+    // Non cadere su window.location.origin: in desktop senza tunnel, i link
+    // di condivisione non devono essere visibili (issue #598).
+    return '';
 }

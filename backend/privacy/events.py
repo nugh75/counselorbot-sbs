@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Session
@@ -45,7 +45,7 @@ def record_privacy_event(event: PrivacyEvent, db: Session | None = None, *,
         actor_role = event.actor_role if isinstance(event.actor_role, str) else event.actor_role.value
         record = models.PrivacyEventRecord(
             id=str(uuid.uuid4()),
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             subject_pid=event.subject_pid,
             actor_pid=event.actor_pid,
             actor_role=actor_role,

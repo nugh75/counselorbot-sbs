@@ -3,12 +3,12 @@
 Accettano un Engine, una Connection o una Session: tutto cio' che espone il dialetto
 direttamente (`.dialect`) o tramite il bind (`.get_bind()`).
 """
-from datetime import datetime, timezone
 import hashlib
 import os
 import shlex
 import sys
 import threading
+from datetime import UTC, datetime, timezone
 from weakref import WeakValueDictionary
 
 from sqlalchemy import DateTime, event, inspect, text
@@ -43,8 +43,8 @@ class UTCDateTime(TypeDecorator):
                 return value
         if isinstance(value, datetime):
             if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
-                return value.replace(tzinfo=timezone.utc)
-            return value.astimezone(timezone.utc)
+                return value.replace(tzinfo=UTC)
+            return value.astimezone(UTC)
         return value
 
     def process_result_value(self, value, dialect):
@@ -57,8 +57,8 @@ class UTCDateTime(TypeDecorator):
                 return value
         if isinstance(value, datetime):
             if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
-                return value.replace(tzinfo=timezone.utc)
-            return value.astimezone(timezone.utc)
+                return value.replace(tzinfo=UTC)
+            return value.astimezone(UTC)
         return value
 
 

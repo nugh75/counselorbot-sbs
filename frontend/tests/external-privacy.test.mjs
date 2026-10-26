@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { externalPrivacyText } from '../src/lib/i18n-external-privacy.ts';
+import { externalPrivacyText } from '../src/lib/i18n-external-privacy.js';
 
 const origin = process.env.PRIVACY_BASE_URL || 'http://127.0.0.1:3135';
 let browser;

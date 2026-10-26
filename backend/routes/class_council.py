@@ -4,7 +4,7 @@ The teacher creates the link and sees the password once; any signed-in user
 with link and password reads the overview until it expires or is revoked.
 """
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -34,7 +34,7 @@ class CouncilView(BaseModel):
 
 
 def _now():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _state(link: models.ClassCouncilLink, now: datetime) -> str:

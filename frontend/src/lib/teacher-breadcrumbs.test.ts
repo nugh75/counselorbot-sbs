@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { getClassBreadcrumbs, getTeacherBreadcrumbsForSlug } from './teacher-breadcrumbs.ts';
+import { getClassBreadcrumbs, getTeacherBreadcrumbsForSlug } from './teacher-breadcrumbs.js';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { teacherAreaSlugs } from './teacher-area.ts';
-import type { Lang } from './i18n.ts';
+import { teacherAreaSlugs } from './teacher-area.js';
+import type { Lang } from './i18n.js';
 
 const languages: readonly Lang[] = ['it', 'en', 'es', 'fr', 'de', 'sv'];
 

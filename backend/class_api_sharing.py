@@ -4,7 +4,7 @@ A teacher ticks one flag on their "APIs and ChatGPT" page. Every counselor they 
 to one of their API connections then answers their students through that connection;
 students never see the key. ChatGPT subscriptions are never offered.
 """
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from sqlalchemy import func, or_
 
@@ -92,7 +92,7 @@ def record_error(db, teacher, code):
 
 def month_usage(db, teacher):
     """Requests and recorded cost of this month made by students through the teacher's counselors."""
-    start = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    start = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     count, cost = (db.query(func.count(models.Log.id), func.coalesce(func.sum(models.Log.cost_usd), 0.0))
                    .filter(models.Log.timestamp >= start,
                            models.Log.details["shared_owner"].as_string() == teacher).one())

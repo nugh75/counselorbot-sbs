@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import re
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List
 
@@ -13,7 +13,6 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .memory_embeddings import memory_embedder
-
 
 DEFAULT_PATH = Path("knowledge/approved_strategies.md")
 APPROVED_STRATEGIES_CONFIG_KEY = "approved_strategies_markdown"
@@ -176,7 +175,7 @@ class SharedResponseMemory:
         )
         if not questionnaire or not text:
             return None
-        stale_cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+        stale_cutoff = datetime.now(UTC) - timedelta(days=7)
         db.query(models.SharedChatResponse).filter(
             models.SharedChatResponse.helpful.is_(None),
             models.SharedChatResponse.created_at < stale_cutoff,
@@ -199,7 +198,7 @@ class SharedResponseMemory:
             return False
         if response.helpful is None:
             response.helpful = helpful
-            response.rated_at = datetime.now(timezone.utc)
+            response.rated_at = datetime.now(UTC)
         return True
 
     def retrieve(

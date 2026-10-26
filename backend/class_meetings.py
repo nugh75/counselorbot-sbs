@@ -4,7 +4,7 @@ A meeting belongs to one class or group. Students of that class see it; the
 student, the teacher from the register, or either marks attendance, as the
 teacher chose. The attendance is the step's completion evidence.
 """
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
@@ -87,7 +87,7 @@ def book_slot(db: Session, meeting: models.ClassMeeting, slot_id: int, username:
         raise HTTPException(409, "meeting_not_bookable")
     slot = (db.query(models.ClassMeetingSlot).filter_by(id=slot_id, meeting_id=meeting.id)
             .populate_existing().with_for_update().first())
-    if slot is None or slot.status != "open" or slot.starts_at <= datetime.now(timezone.utc):
+    if slot is None or slot.status != "open" or slot.starts_at <= datetime.now(UTC):
         raise HTTPException(409, "slot_unavailable")
     taken = db.query(models.ClassMeetingBooking).filter_by(slot_id=slot.id, status="active").first()
     if taken is not None and taken.username != username:
@@ -96,7 +96,7 @@ def book_slot(db: Session, meeting: models.ClassMeeting, slot_id: int, username:
     if booking is not None and booking.slot_id == slot.id:
         return booking
     if booking is not None:
-        booking.slot_id, booking.changed_at = slot.id, datetime.now(timezone.utc)
+        booking.slot_id, booking.changed_at = slot.id, datetime.now(UTC)
     else:
         booking = models.ClassMeetingBooking(meeting_id=meeting.id, slot_id=slot.id, username=username, status="active")
         db.add(booking)

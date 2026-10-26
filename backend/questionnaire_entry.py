@@ -1,10 +1,12 @@
 """Atomic guided score entry with scoped, immutable retry acknowledgements."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
+
 from fastapi import HTTPException
 from sqlalchemy import or_
-from . import models, administration_context, scoring_service
-from .path_step_types import valid_scores, administration_target
+
+from . import administration_context, models, scoring_service
+from .path_step_types import administration_target, valid_scores
 
 
 def result_payload(result):
@@ -129,7 +131,7 @@ def accept_guided_entry(db, identity, path_id, step_id, payload):
             session_id=payload.session_id,
             request_id=payload.request_id,
             step_id=step.id,
-            accepted_at=datetime.now(timezone.utc),
+            accepted_at=datetime.now(UTC),
         )
         db.add(entry)
         db.flush()

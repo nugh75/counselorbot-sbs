@@ -17,11 +17,12 @@ una sessione congelata viene ripresa.
 """
 from __future__ import annotations
 
-import logging
 import json
+import logging
 from typing import Iterable
 
 from sqlalchemy.orm import Session
+
 from . import models
 from .certified_reading_service import certified_reading_memory
 from .content_version_service import served_locale

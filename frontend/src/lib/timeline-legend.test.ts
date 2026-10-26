@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { timelineGlyph } from './timeline-legend.ts';
+import { timelineGlyph } from './timeline-legend.js';
 
 test('a goal review milestone glyphs as a diamond', () => {
     assert.equal(timelineGlyph({ kind: 'event', id: 'goal-review-3' }), 'goal-review');

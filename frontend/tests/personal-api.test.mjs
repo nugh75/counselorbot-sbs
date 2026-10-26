@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { personalAPIText } from '../src/lib/i18n-personal-api.ts';
-import { CHATGPT_DICTS } from '../src/lib/i18n-chatgpt.ts';
+import { personalAPIText } from '../src/lib/i18n-personal-api.js';
+import { CHATGPT_DICTS } from '../src/lib/i18n-chatgpt.js';
 const origin = process.env.PERSONAL_API_BASE_URL || 'http://127.0.0.1:3135';
 let browser;
 before(async () => { browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', headless: true }); });

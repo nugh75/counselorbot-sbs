@@ -11,11 +11,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models, schemas
+from ..institution_category_service import directory_groups
 from ..orientation_referral_service import orientation_referral_memory
 from ..reading_audience import resolve_audience_band
 from ..referral_needs import REFERRAL_NEEDS
 from ..referral_scope import institution_for, institution_ids_for
-from ..institution_category_service import directory_groups
 
 router = APIRouter()
 get_db = database.get_db

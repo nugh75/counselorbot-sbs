@@ -1466,8 +1466,9 @@ class SiteRagIndex:
                 self.build(ai_service, require_vectors=False)
             if not _build_reservation.acquire():
                 return False
-            from .ai_service import AIService
             from sqlalchemy.orm import Session
+
+            from .ai_service import AIService
 
             service = ai_service
             bind = None

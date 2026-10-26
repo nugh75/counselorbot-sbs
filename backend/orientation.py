@@ -6,30 +6,33 @@ provider non risponde o restituisce JSON invalido, un classificatore locale
 produce comunque un orientamento prudente.
 """
 from __future__ import annotations
-from . import personal_api
 
 import json
 import logging
 import re
 import unicodedata
-from dataclasses import dataclass
 from collections.abc import Collection
+from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
-from .chat_preferences import apply_response_format
-from . import models
+from . import models, personal_api
 from .ai_service import AIError, AIService
-from .student_context import student_context, latest_learner_profile
-from .practice_notebooks import practice_instruments_context, practice_notebook_context, simulation_notice
-from .prompt_contract import persona_context
-from .prompt_config import DEFAULT_COUNSELORBOT_CHAT_CONTEXT
+from .chat_preferences import apply_response_format
 from .platform_guidance import platform_guidance_context
+from .practice_notebooks import (
+    practice_instruments_context,
+    practice_notebook_context,
+    simulation_notice,
+)
+from .prompt_config import DEFAULT_COUNSELORBOT_CHAT_CONTEXT
+from .prompt_contract import persona_context
 from .questionnaire_sources import (
     STRATEGIC_COMPETENCES_CODE,
     STRATEGIC_COMPETENCES_PASSWORD,
     STRATEGIC_COMPETENCES_URLS,
 )
+from .student_context import latest_learner_profile, student_context
 
 logger = logging.getLogger(__name__)
 

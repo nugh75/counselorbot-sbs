@@ -7,7 +7,7 @@ l'utente autenticato via ai4auth; le route admin richiedono il gruppo admin.
 import asyncio
 import logging
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
@@ -90,7 +90,7 @@ async def telegram_unlink(
         .all()
     )
     for link in links:
-        link.revoked_at = datetime.now(timezone.utc)
+        link.revoked_at = datetime.now(UTC)
     db.commit()
     return {"revoked": len(links)}
 
@@ -131,6 +131,6 @@ async def admin_revoke_telegram_link(
     link = db.query(models.TelegramAccountLink).filter(models.TelegramAccountLink.id == link_id).first()
     if not link:
         raise HTTPException(status_code=404, detail="Link not found")
-    link.revoked_at = datetime.now(timezone.utc)
+    link.revoked_at = datetime.now(UTC)
     db.commit()
     return {"status": "revoked"}

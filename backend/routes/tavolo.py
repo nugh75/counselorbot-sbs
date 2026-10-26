@@ -19,7 +19,7 @@ import json
 import logging
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -27,7 +27,9 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 from sqlalchemy.orm import Session
 
 from .. import auth, class_access, database, models, personal_api
-from ..ai_service import AIService, AIError
+from ..ai_service import AIError, AIService
+from ..diagram_icon_catalog import ICON_SELECTION_PROMPT
+from ..diagram_render import NODE_FORMS
 from ..message_diagrams import session_owner
 from ..tavolo import (
     FEATURE_KEY,
@@ -50,10 +52,6 @@ from ..tavolo import (
     reject,
     rendition,
 )
-from .chat import _apply_counselor_overrides, _resolve_counselor
-from .diagram import _diagram_fallback, _json_object, ModelChoice
-from ..diagram_icon_catalog import ICON_SELECTION_PROMPT
-from ..diagram_render import NODE_FORMS
 from ..tavolo_presets import (
     PRESETS,
     conform,
@@ -62,6 +60,8 @@ from ..tavolo_presets import (
     preset_of,
     prompt_examples,
 )
+from .chat import _apply_counselor_overrides, _resolve_counselor
+from .diagram import ModelChoice, _diagram_fallback, _json_object
 
 logger = logging.getLogger(__name__)
 
@@ -733,7 +733,7 @@ def save_tavolo(
     tavolo = _mine(db, tavolo_id, identity)
     revision = _current(db, tavolo_id)
     tavolo.title = request.title
-    tavolo.saved_at = tavolo.saved_at or datetime.now(timezone.utc)
+    tavolo.saved_at = tavolo.saved_at or datetime.now(UTC)
     tavolo.rendition = rendition(_graph_of(revision), request.lang)
     db.commit()
     db.refresh(tavolo)

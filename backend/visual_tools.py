@@ -6,8 +6,8 @@ from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy.orm import Session
 
-from .db_compat import xact_lock
 from . import models, pii
+from .db_compat import xact_lock
 
 ACTION = 'visual_workspace'
 PERSONAL_ACTION = 'personal_timeline_workspace'

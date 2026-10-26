@@ -5,7 +5,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { legacyRouteRedirects } from './legacy-routes.ts';
+import { legacyRouteRedirects } from './legacy-routes.js';
 
 const app = path.join(path.dirname(fileURLToPath(import.meta.url)), '../app');
 

@@ -26,8 +26,8 @@ from .. import auth, database
 from ..ai_service import AIService
 from ..pdf_markdown import pdf_to_markdown, publish_markdown
 from ..rag_index import (
-    COLLECTION_COMPETENZE,
     _GUIDE_STEMS,
+    COLLECTION_COMPETENZE,
     collection_exists,
     create_dynamic_collection,
     delete_dynamic_collection,

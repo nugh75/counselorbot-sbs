@@ -20,7 +20,7 @@ Regole non negoziabili implementate qui:
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Iterable
 
 from sqlalchemy.orm import Session
@@ -104,7 +104,7 @@ class OrientationReferralMemory:
         limit: int = 2,
     ) -> list[dict]:
         wanted = {str(n) for n in needs}
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         rows = (
             db.query(models.OrientationEvent)
             .filter(models.OrientationEvent.status == "certified",

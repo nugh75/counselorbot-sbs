@@ -5,12 +5,13 @@ Questa guida riguarda l'app desktop **sperimentale** del docente, profilo
 il bundle. Servono un PC acceso e una connessione per il tunnel o i provider AI
 esterni. Il modello locale è un programma separato.
 
-**Stato della Fase 1:** i bundle CI servono alle prove. Il pulsante «Apri nel
-browser» apre il sito locale, ma non completa ancora l'accesso docente tramite
-link monouso. Mancano le pagine «Accesso locale», «Unisciti» e gestione dispositivi.
-L'abbinamento è implementato nelle API e nei test, non è ancora un percorso
-utilizzabile dal docente. Prima di lezioni o dati reali occorre completare questi
-passaggi e la [checklist di accettazione](desktop-teacher-tests.md).
+**Stato della Fase 1:** i bundle CI servono alle prove. L'accesso locale del
+docente è collegato (link monouso del guscio verso `/accesso-locale`) e le
+pagine di abbinamento sono operative: `/unisciti` per lo studente e la gestione
+dispositivi per il docente. Restano da validare il flusso su un dispositivo
+reale con tunnel attivo e la pubblicazione degli artifact nelle Release. Prima
+di lezioni o dati reali completare la [checklist di
+accettazione](desktop-teacher-tests.md).
 
 **Database attuale e futuro:** i bundle disponibili, inclusa `v0.1.1`, usano ancora SQLite e le
 procedure di questa guida. È stata decisa la migrazione a PostgreSQL 15 con conversione conservativa
@@ -83,9 +84,10 @@ spento finché non viene configurato/avviato. Le porte locali sono scelte dall'a
 non occorre aprire porte del router. Non avviare due istanze sullo stesso profilo.
 Usare **Esci** per arrestare tutti i servizi.
 
-**Apri nel browser** usa l'indirizzo locale `http://127.0.0.1:…`. Se compare un
-utente anonimo o manca l'accesso docente, è il limite di integrazione indicato
-all'inizio: non usare l'accesso server ai4auth né condividere credenziali per aggirarlo.
+**Apri nel browser** usa l'indirizzo locale `http://127.0.0.1:…` e l'accesso
+docente passa dal link monouso del guscio. Se compare un utente anonimo, usare
+**Apri nel browser** dal pannello per ottenere un nuovo link; non usare
+l'accesso server ai4auth né condividere credenziali.
 
 ## 3. Configurare le chiavi AI
 
@@ -135,20 +137,42 @@ Se manca il token, il codice ripiega sul tunnel rapido: controllare che l'URL
 pubblicato sia proprio il dominio stabile atteso. Il dominio da solo non basta.
 Cambiare token o configurazione può interrompere le connessioni.
 
-## 5. Abbinamento studenti: contratto disponibile, pagine ancora da completare
+## 5. Abbinamento studenti
 
-Il percorso previsto è: il docente crea una classe, genera il link di abbinamento
-`/unisciti#k=…`, lo studente sceglie uno pseudonimo e conserva il codice personale
-mostrato una sola volta. Non serve un'email. Il codice classe dura sette giorni;
-un nuovo codice revoca il precedente, senza espellere chi è già abbinato.
-Gli pseudonimi duplicati ricevono un numero. Il codice personale di 12 caratteri
-consente il recupero su un altro dispositivo; non va condiviso con la classe.
+Il percorso è: il docente crea una classe e genera il link di abbinamento
+`/unisciti#k=…`, lo studente sceglie uno pseudonimo e conserva il codice
+personale mostrato una sola volta. Non serve un'email. Il codice classe dura
+sette giorni; un nuovo codice revoca il precedente, senza espellere chi è già
+abbinato. Gli pseudonimi duplicati ricevono un numero. Il codice personale di
+12 caratteri consente il recupero su un altro dispositivo; non va condiviso con
+la classe.
 
-Il backend supporta approvazione facoltativa, revoca del dispositivo e rigenerazione
-del codice personale. Uno studente in attesa non ha accesso fino all'approvazione.
-Troppi tentativi sono bloccati temporaneamente. **Queste operazioni oggi si provano
-con i test delle API**, elencati nella [procedura di verifica](desktop-teacher-tests.md):
-la GUI docente e la pagina studente non sono ancora disponibili nei bundle.
+**Dove si genera il link (docente):** in **Classi → Apri classe → Panoramica**,
+sezione **Accesso dal tunnel docente**. Il link è utilizzabile solo con un
+tunnel attivo: se manca l'indirizzo pubblico, la pagina lo avvisa e va generato
+un nuovo link dopo l'avvio del tunnel. Opzioni facoltative: approvazione
+docente e numero massimo di utilizzi. La stessa sezione elenca i dispositivi
+della classe; **Gestisci tutti i dispositivi** apre `/docente/dispositivi`.
+
+**Cosa vede lo studente (`/unisciti`):** il link precompila il codice, che non
+rimane nella cronologia del browser; bastano pseudonimo e, facoltativo, il nome
+del dispositivo. Al successo la pagina mostra lo pseudonimo assegnato, lo stato
+(attivo o in attesa di approvazione) e il **codice personale**, visibile una
+sola volta con la conferma «Ho salvato il codice personale». Chi torna su
+`/unisciti` con una sessione attiva vede la sessione invece di un nuovo
+abbinamento. Con il codice personale si recupera la sessione, anche dopo un
+cambio di indirizzo del tunnel.
+
+**Dispositivi (docente):** per ogni classe, pseudonimo, dispositivo, stato,
+ultimo accesso; azioni **Approva** (per gli accessi in attesa), **Revoca
+dispositivo** (con conferma, effetto immediato) e **Rigenera codice personale**
+(il vecchio codice smette di valere, le sessioni aperte restano). Le rotte
+rispondono solo dal PC del docente: dal tunnel la pagina segnala l'errore.
+
+Errori e limiti: un codice inesistente, scaduto, revocato o esaurito dà sempre
+lo stesso messaggio, senza dettagli; troppi tentativi sono bloccati con l'attesa
+indicata. Se il tunnel è spento lo studente vede l'errore di rete e riprova
+quando il docente lo riavvia.
 
 ## 6. Usare un modello sul proprio PC
 
@@ -234,7 +258,7 @@ mostrare l'errore Cloudflare. Non è disponibile un'app studente offline in Fase
 | Preparazione troppo lunga / servizio in errore | Attendere il limite, usare **Esci**, riaprire una volta; controllare spazio disco, portachiavi e permessi della cartella. Esportare diagnostica se persiste. |
 | App già aperta / cartella bloccata | Cercare la finestra esistente; non eliminare file di lock mentre i servizi sono attivi. |
 | Versione backend diversa dal guscio | Il tunnel viene bloccato: reinstallare un bundle completo della stessa build, conservando i dati. |
-| Accesso docente o pagina Unisciti assenti | Limite attuale del bundle: attendere l'integrazione, senza aggirare l'autenticazione. |
+| Abbinamento o dispositivi non raggiungibili | La sezione pairing esiste solo con il fornitore locale (`AUTH_PROVIDER=local`) e le rotte docenti rispondono solo dal PC: verificare il profilo `teacher-pc` e aprire la pagina dal browser locale. |
 | Chiave rifiutata / limite richieste | Controllare provider e permessi; distinguere 401/403 da 429; aggiornare lo stato e applicare le modifiche. |
 | Dominio stabile non raggiungibile | Controllare token, DNS, servizio locale e porta con il referente; «Verifica parametri» non è una prova di rete. |
 | Modello locale non trovato | Avviare il server del modello, verificare URL/porta e modello scaricato; il bundle non installa il modello. |

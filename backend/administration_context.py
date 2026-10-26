@@ -9,7 +9,7 @@ in request bodies only, never URLs, and only their SHA-256 digest is stored.
 import hashlib
 import re
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException
 from sqlalchemy import func
@@ -72,7 +72,7 @@ def require_institution_backed(db: Session, plan: models.AdministrationPlan) -> 
 
 def issue_grant(db: Session, username: str, plan: models.AdministrationPlan, code, password) -> dict:
     institution = require_institution_backed(db, plan)
-    since = datetime.now(timezone.utc) - ATTEMPT_WINDOW
+    since = datetime.now(UTC) - ATTEMPT_WINDOW
     failures = db.query(models.InstitutionVerificationAttempt).filter(
         models.InstitutionVerificationAttempt.username == username,
         models.InstitutionVerificationAttempt.administration_plan_id == plan.id,
@@ -87,7 +87,7 @@ def issue_grant(db: Session, username: str, plan: models.AdministrationPlan, cod
         db.commit()
         raise HTTPException(status_code=403, detail="institution_verification_failed")
     token = secrets.token_urlsafe(32)
-    expires_at = datetime.now(timezone.utc) + GRANT_TTL
+    expires_at = datetime.now(UTC) + GRANT_TTL
     db.add(models.InstitutionVerificationGrant(
         token_hash=_digest(token), username=username, administration_plan_id=plan.id,
         institution_id=institution.id, credentials_revision=institution.credentials_revision, expires_at=expires_at,
@@ -136,7 +136,7 @@ def require_result_context(db: Session, plan_id: int | None, username: str | Non
     if (row.username != username or row.administration_plan_id != plan.id or row.institution_id != institution.id
             or row.credentials_revision != institution.credentials_revision):
         raise _error(403, "institution_grant_mismatch", administration_plan_id=plan.id)
-    if row.expires_at <= datetime.now(timezone.utc):
+    if row.expires_at <= datetime.now(UTC):
         raise _error(403, "institution_grant_expired", administration_plan_id=plan.id)
     return plan
 

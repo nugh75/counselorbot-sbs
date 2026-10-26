@@ -9,8 +9,8 @@ import hashlib
 import json
 from pathlib import Path
 
-from .db_compat import xact_lock
 from . import models, prompt_config, prompt_revisions
+from .db_compat import xact_lock
 from .qpcc import FACTORS
 
 FIELDS = {

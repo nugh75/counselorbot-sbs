@@ -9,7 +9,7 @@ deleted with the scope. Like ``KeyRing``, the store joins the caller's transacti
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from sqlalchemy.exc import IntegrityError as DatabaseIntegrityError
 from sqlalchemy.orm import Session
@@ -76,7 +76,7 @@ class SqlAlchemyMapStore:
         stored = {row.placeholder: row for row in self._rows(smap.scope_id)}
         if any(row.subject_pid != smap.subject_pid for row in stored.values()):
             raise PolicyBlocked() from None
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         savepoint = self.db.begin_nested()
         try:
             for placeholder, value in smap.reverse.items():

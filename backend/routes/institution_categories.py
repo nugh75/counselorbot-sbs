@@ -1,17 +1,21 @@
 """Teacher-owned institutional categories, separate from chat retrieval needs."""
 import uuid
-from typing import Literal, Optional
 from datetime import datetime
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.sql import func
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 
 from .. import auth, database, models
 from ..institution_access import require_institution_teacher
-from ..institution_category_service import content_models, content_rows, linked_categories
+from ..institution_category_service import (
+    content_models,
+    content_rows,
+    linked_categories,
+)
 from ..orientation_referral_service import _i18n
 
 router = APIRouter()

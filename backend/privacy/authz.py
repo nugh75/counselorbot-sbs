@@ -7,7 +7,7 @@ Provides technical admin pseudonymization on L1 with audited break-glass capabil
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import TYPE_CHECKING, Literal
 
 from fastapi import HTTPException
@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 def is_l1() -> bool:
     """Return True if running in L1 (server) mode, False on L2 (teacher-pc desktop) or dev/test."""
     import os
+
     from .. import install_profile
     if install_profile.teacher_pc():
         return False
@@ -98,9 +99,10 @@ def get_active_break_glass(db: Session, admin_username: str, subject_username: s
                            resource_kind: str, resource_id: str | None = None) -> models.PrivacyBreakGlass | None:
     """Query an active, non-expired, non-revoked break-glass grant for this admin and resource."""
     from sqlalchemy import or_
+
     from .. import models
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     query = db.query(models.PrivacyBreakGlass).filter(
         models.PrivacyBreakGlass.admin_username == admin_username,
         models.PrivacyBreakGlass.subject_username == subject_username,
@@ -128,7 +130,7 @@ def get_active_grant(db: Session, teacher_username: str, student_username: str, 
     """Find an active TeacherStudentGrant, auto-syncing from group_memberships if not yet backfilled."""
     from .. import models
 
-    now = at_time or datetime.now(timezone.utc)
+    now = at_time or datetime.now(UTC)
     query = db.query(models.TeacherStudentGrant).filter(
         models.TeacherStudentGrant.teacher_username == teacher_username,
         models.TeacherStudentGrant.student_username == student_username,
@@ -177,7 +179,7 @@ def get_active_grant(db: Session, teacher_username: str, student_username: str, 
         return None
 
     # Calculate valid_from: from enrollment date, bounded by earliest existing result for synthetic test compatibility
-    valid_from = membership.created_at or datetime.now(timezone.utc)
+    valid_from = membership.created_at or datetime.now(UTC)
     earliest_submitted = db.query(func.min(models.QuestionnaireResult.submitted_at)).filter(
         models.QuestionnaireResult.username == student_username
     ).scalar()
@@ -222,7 +224,7 @@ def sync_grants_for_membership(db: Session, group_id: int, student_username: str
         if teacher:
             teachers.add(teacher)
 
-    valid_from = created_at or datetime.now(timezone.utc)
+    valid_from = created_at or datetime.now(UTC)
     created_grants = []
 
     for teacher in teachers:
@@ -267,7 +269,7 @@ def sync_grants_for_share(db: Session, group_id: int, teacher_username: str) -> 
         models.GroupMembership.group_id == group_id
     ).all()
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     created = []
     for m in memberships:
         grant = db.query(models.TeacherStudentGrant).filter(
@@ -306,7 +308,7 @@ def revoke_grants_for_share(db: Session, group_id: int, teacher_username: str, r
     """Immediately revoke grants for a co-teacher when sharing is removed."""
     from .. import models
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     count = db.query(models.TeacherStudentGrant).filter(
         models.TeacherStudentGrant.teacher_username == teacher_username,
         models.TeacherStudentGrant.group_id == group_id,
@@ -323,7 +325,7 @@ def revoke_grants_for_membership(db: Session, group_id: int, student_username: s
     """Immediately revoke grants when a student leaves a group."""
     from .. import models
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     count = db.query(models.TeacherStudentGrant).filter(
         models.TeacherStudentGrant.student_username == student_username,
         models.TeacherStudentGrant.group_id == group_id,

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { compareCandidate } from '../src/components/admin/prompt-lab-comparison.ts';
+import { compareCandidate } from '../src/components/admin/prompt-lab-comparison.js';
 
 const metric = (variant_id, passed, extra = {}) => ({ variant_id, passed, total: 4, errors: 0, preset_id: 1, language: 'it', split: 'final', ...extra });
 test('keeps opposing model/language results separate instead of averaging them', () => {

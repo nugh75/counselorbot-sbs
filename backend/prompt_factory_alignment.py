@@ -12,7 +12,6 @@ from pathlib import Path
 from . import models, prompt_config, prompt_revisions
 from .prompt_updates import apply_plan, digest
 
-
 STEP_LIST_NAMES = (
     "DEFAULT_GUIDED_STEPS", "DEFAULT_QSAR_GUIDED_STEPS", "DEFAULT_ZTPI_GUIDED_STEPS",
     "DEFAULT_SAVICKAS_GUIDED_STEPS", "DEFAULT_IDEA_GUIDED_STEPS",

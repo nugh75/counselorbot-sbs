@@ -3,9 +3,9 @@ import test from 'node:test';
 
 import type { PreviewResult, StepSkillEntry } from './skill-wizard';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { applyBindingChoice, bindingChoice, conditionsToForm, formToConditions, previewOutcome, slugify } from './skill-wizard.ts';
+import { applyBindingChoice, bindingChoice, conditionsToForm, formToConditions, previewOutcome, slugify } from './skill-wizard.js';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { SKILLS_DICTS } from './i18n-skills.ts';
+import { SKILLS_DICTS } from './i18n-skills.js';
 
 function row(overrides: Partial<StepSkillEntry>): StepSkillEntry {
     return { questionnaire_type: 'QSA', step_id: '*', skill_id: 1, sort_order: 0, enabled: true, override_params: null, ...overrides };
