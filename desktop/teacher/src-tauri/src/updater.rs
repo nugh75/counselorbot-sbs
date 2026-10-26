@@ -15,10 +15,8 @@ use crate::datadir::DataDir;
 use crate::supervisor;
 
 pub const DEFAULT_CHANNEL: &str = "stable";
-pub const STABLE_ENDPOINT: &str =
-    "https://github.com/nugh75/counselorbot-sbs/releases/latest/download/latest.json";
-pub const BETA_ENDPOINT: &str =
-    "https://github.com/nugh75/counselorbot-sbs/releases/download/beta/latest-beta.json";
+pub const STABLE_ENDPOINT: &str = "https://github.com/nugh75/counselorbot-sbs/releases/latest/download/latest.json";
+pub const BETA_ENDPOINT: &str = "https://github.com/nugh75/counselorbot-sbs/releases/download/beta/latest-beta.json";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct UpdateInfo {
@@ -80,9 +78,7 @@ pub async fn check_for_updates(
     let channel = config.updater_channel.unwrap_or_else(|| DEFAULT_CHANNEL.to_string());
     let url_str = endpoint_url(&channel);
 
-    let url = url_str
-        .parse()
-        .map_err(|e| format!("URL endpoint aggiornamento non valido '{url_str}': {e}"))?;
+    let url = url_str.parse().map_err(|e| format!("URL endpoint aggiornamento non valido '{url_str}': {e}"))?;
 
     let updater = app
         .updater_builder()
@@ -104,14 +100,7 @@ pub async fn check_for_updates(
             channel,
         })
     } else {
-        Ok(UpdateInfo {
-            available: false,
-            current_version,
-            version: None,
-            date: None,
-            body: None,
-            channel,
-        })
+        Ok(UpdateInfo { available: false, current_version, version: None, date: None, body: None, channel })
     }
 }
 
@@ -122,18 +111,16 @@ pub async fn apply_update(
 ) -> Result<String, String> {
     // 1. REQUISITO OBBLIGATORIO: Backup automatico SQLite prima di aggiornare.
     // Se il backup fallisce, l'aggiornamento non parte.
-    let backup_path = state
-        .backup_db()
-        .map_err(|err| format!("Backup preventivo del database fallito ({err}). Aggiornamento annullato per sicurezza."))?;
+    let backup_path = state.backup_db().map_err(|err| {
+        format!("Backup preventivo del database fallito ({err}). Aggiornamento annullato per sicurezza.")
+    })?;
 
     // 2. Controllo e applicazione dell'aggiornamento
     let data = resolve_data_dir(&state);
     let config = data.load_config();
     let channel = config.updater_channel.unwrap_or_else(|| DEFAULT_CHANNEL.to_string());
     let url_str = endpoint_url(&channel);
-    let url = url_str
-        .parse()
-        .map_err(|e| format!("URL endpoint aggiornamento non valido '{url_str}': {e}"))?;
+    let url = url_str.parse().map_err(|e| format!("URL endpoint aggiornamento non valido '{url_str}': {e}"))?;
 
     let updater = app
         .updater_builder()
