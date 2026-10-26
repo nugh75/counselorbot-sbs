@@ -3,7 +3,8 @@
 **Task ID**: s25-share-url-598  
 **Issue**: #598  
 **Branch**: fix/desktop-class-share-url-598  
-**Stato**: IN CORSO - Fix implementati, test da verificare
+**PR**: #615  
+**Stato**: COMPLETATO - Fix implementati, PR aperta
 
 ## Fatto
 
