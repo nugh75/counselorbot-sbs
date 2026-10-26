@@ -41,12 +41,27 @@ from typing import Any, Callable, Iterable, Iterator, Mapping, Sequence
 
 from . import policy
 from .errors import (
-    AccessDenied, EgressBlockedError, KeyUnavailable, PIIDetectorUnavailable, PrivacyError,
+    AccessDenied,
+    EgressBlockedError,
+    KeyUnavailable,
+    PIIDetectorUnavailable,
+    PrivacyError,
     ResidualPII,
 )
 from .types import (
-    AIChunk, AIRequest, AIResponse, Decision, Principal, PrivacyContext, PrivacyEvent,
-    PrivacyPurpose, PrivacyRole, PurposePolicy, ResourceRef, Target, _SafeRepresentation,
+    AIChunk,
+    AIRequest,
+    AIResponse,
+    Decision,
+    Principal,
+    PrivacyContext,
+    PrivacyEvent,
+    PrivacyPurpose,
+    PrivacyRole,
+    PurposePolicy,
+    ResourceRef,
+    Target,
+    _SafeRepresentation,
 )
 
 logger = logging.getLogger(__name__)

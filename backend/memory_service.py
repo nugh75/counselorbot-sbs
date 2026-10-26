@@ -18,7 +18,6 @@ from typing import Dict, List
 from .memory_embeddings import memory_embedder
 from .privacy import field_crypto
 
-
 DEFAULT_TTL_SECONDS = 7200
 MAX_MEMORY_CHARS = 4000
 MAX_INJECTED_MEMORY_CHARS = 1800

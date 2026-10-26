@@ -3,7 +3,7 @@
 Allows teachers to create and manage class paths composed of ordered steps
 selected from the tools currently enabled for the class.
 """
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,10 +12,22 @@ from sqlalchemy.orm import Session
 
 from .. import auth, database, institution_password, models, schemas
 from ..class_access import class_enables, resolve_access
-from ..path_step_types import (step_descriptor, completion_evidence, validate_step_input, validate_composition,
-                               apply_step_target, administration_target, forum_student_state,
-                               publication_problems)
-from ..class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, builtin_guided_paths, tool_catalog
+from ..class_tools import (
+    ALWAYS_ON,
+    PERSONAL_TOOL_KEYS,
+    builtin_guided_paths,
+    tool_catalog,
+)
+from ..path_step_types import (
+    administration_target,
+    apply_step_target,
+    completion_evidence,
+    forum_student_state,
+    publication_problems,
+    step_descriptor,
+    validate_composition,
+    validate_step_input,
+)
 from .groups import _username, _visible_group_query
 
 router = APIRouter()
@@ -453,7 +465,7 @@ async def update_class_path(
         if value.step_type == "questionnaire_administration" and value.id is None:
             source = models.ClassPathStep(path_id=path.id, position=index + 1,
                 step_type=value.step_type, administration_plan_id=value.administration_plan_id,
-                active_from=datetime.now(timezone.utc) if path.status == "published" else None)
+                active_from=datetime.now(UTC) if path.status == "published" else None)
             db.add(source)
             db.flush()
             new_sources[index] = source
@@ -490,7 +502,7 @@ async def update_class_path(
                 archived_step.position = position
                 apply_step_target(archived_step, step_input)
                 if archived_step.active_from is None and path.status == "published":
-                    archived_step.active_from = datetime.now(timezone.utc)
+                    archived_step.active_from = datetime.now(UTC)
                 archived_step.title = step_title
                 archived_step.instructions = step_instructions
                 archived_step.due_date = step_input.due_date
@@ -509,7 +521,7 @@ async def update_class_path(
                 assignment_id=step_input.assignment_id if step_input.step_type == "assignment" else None,
                 topic_id=step_input.topic_id if step_input.step_type == "forum" else None,
                 meeting_id=step_input.meeting_id if step_input.step_type == "meeting" else None,
-                active_from=datetime.now(timezone.utc) if path.status == "published" else None,
+                active_from=datetime.now(UTC) if path.status == "published" else None,
                 title=step_title,
                 instructions=step_instructions,
                 due_date=step_input.due_date,
@@ -554,7 +566,7 @@ def _go_live(db: Session, path: models.ClassPath, identity) -> None:
         # Objects created for other pending steps must not survive a blocked publication.
         db.rollback()
         raise HTTPException(409, {"code": "path_publication_blocked", "problems": problems})
-    activation = datetime.now(timezone.utc)
+    activation = datetime.now(UTC)
     for step in steps:
         if step.active_from is None:
             step.active_from = activation

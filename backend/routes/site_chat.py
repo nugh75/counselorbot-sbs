@@ -8,8 +8,6 @@ Endpoint:
 - GET  /site-chat/status   → stato dell'indice RAG
 - POST /site-chat/reindex  → ricostruzione forzata dell'indice (solo admin)
 """
-from .. import personal_api
-from ..reasoning_profiles import plan_details
 import json as _json
 import logging
 import re
@@ -17,62 +15,63 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, StreamingResponse
-from starlette.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
-from ..chat_preferences import apply_response_format
-from ..class_access import require_tool
-from ..platform_guidance import GUIDE_DIRECTIVE, GUIDE_FILENAME, read_platform_guide
-from .. import auth, database, models, model_pricing
+from .. import auth, control_markers, database, model_pricing, models, personal_api, pii
+from ..ai_service import AIError, AIService, generation_details
+from ..api_models import SiteChatRequest
 from ..chat_continuation import continuation_message, merge_continuation
-from ..sse import heartbeat
-from ..prompt_contract import persona_context
-from ..ai_service import AIService, AIError, generation_details
 from ..chat_logic import (
     DEFAULT_NO_REASONING_DIRECTIVE,
     _apply_language_directive,
     _apply_reasoning_directive,
     _apply_response_length_directive,
+    _limit_visible_words,
+    _portfolio_context,
     _reasoning_disabled_for,
     _reasoning_suppressed_for,
-    _limit_visible_words,
     _response_length_max_tokens,
     _strip_generic_acknowledgement,
+    conversation_id_for,
+    log_error,
     reflective_empty_fallback,
     strip_thinking,
 )
-from .. import pii
-from .. import control_markers
-from ..api_models import SiteChatRequest
-from ..chat_logic import conversation_id_for, log_error, _portfolio_context
+from ..chat_preferences import apply_response_format
+from ..class_access import require_tool
 from ..memory_service import session_memory
-from ..strategy_memory import shared_response_memory
+from ..platform_guidance import GUIDE_DIRECTIVE, GUIDE_FILENAME, read_platform_guide
 from ..prompt_config import (
-    SITE_CHAT_MODE_TO_PROMPT_KEY,
     COUNSELORBOT_CHAT_MODE_TO_PROMPT_KEY,
-    DEFAULT_SYSTEM_PROMPT_SITE_STUDENTE,
-    DEFAULT_SYSTEM_PROMPT_SITE_DOCENTE,
-    DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_STUDENTE,
-    DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_DOCENTE,
-    DEFAULT_SITE_CHAT_PLATFORM_CONTEXT,
-    DEFAULT_SITE_CHAT_KNOWLEDGE_CARD,
     DEFAULT_COUNSELORBOT_CHAT_CONTEXT,
     DEFAULT_FRAMEWORK_CHAT_CONTEXT,
     DEFAULT_QUESTIONARI_CHAT_CONTEXT,
+    DEFAULT_SITE_CHAT_KNOWLEDGE_CARD,
+    DEFAULT_SITE_CHAT_PLATFORM_CONTEXT,
+    DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_DOCENTE,
+    DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_STUDENTE,
+    DEFAULT_SYSTEM_PROMPT_SITE_DOCENTE,
+    DEFAULT_SYSTEM_PROMPT_SITE_STUDENTE,
+    SITE_CHAT_MODE_TO_PROMPT_KEY,
 )
+from ..prompt_contract import persona_context
 from ..rag_index import (
-    get_index,
-    build_context,
-    get_document_preview,
-    collection_exists,
-    list_collections,
-    EmbeddingUnavailable,
-    DEFAULT_TOP_K,
     COLLECTION_COMPETENZE,
     COLLECTION_COUNSELORBOT,
     COLLECTION_FRAMEWORK,
     COLLECTION_QUESTIONARI,
+    DEFAULT_TOP_K,
+    EmbeddingUnavailable,
+    build_context,
+    collection_exists,
+    get_document_preview,
+    get_index,
+    list_collections,
 )
+from ..reasoning_profiles import plan_details
+from ..sse import heartbeat
+from ..strategy_memory import shared_response_memory
 
 router = APIRouter()
 get_db = database.get_personal_ai_db

@@ -8,7 +8,7 @@ Publication creates every described object in the same transaction, so students
 see nothing of a path until it goes live, and a blocked publication leaves no
 administration, assignment or discussion behind.
 """
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -278,7 +278,7 @@ def update_from_template(db: Session, path: models.ClassPath, template: models.P
             continue
         if change["change"] == "removed":
             step = db.get(models.ClassPathStep, change["step_id"])
-            step.removed_at = datetime.now(timezone.utc)
+            step.removed_at = datetime.now(UTC)
             order.remove(step)
             continue
         row = next(item for item in rows if item.id == change["template_step_id"])

@@ -14,20 +14,19 @@ from typing import Callable
 
 from sqlalchemy import func
 
-from .. import models
+from .. import models, web_lookup
+from ..certified_reading_service import certified_reading_memory
 from ..certified_strategy_service import (
     certified_strategy_memory,
     factor_tokens,
     score_bands,
 )
-from ..certified_reading_service import certified_reading_memory
 from ..orientation_referral_service import orientation_referral_memory
 from ..reading_frame import frame as reading_frame
 from ..reading_themes import themes_from_factors, themes_from_text
 from ..referral_frame import frame as referral_frame
 from ..referral_needs import needs_from_text
 from ..referral_scope import institution_ids_for
-from .. import web_lookup
 from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, strategy_memory
 from .context import SkillContext, SkillOutput
 

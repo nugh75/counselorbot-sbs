@@ -10,14 +10,28 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
 from fastapi.responses import FileResponse
+from sqlalchemy import String
+from sqlalchemy import cast as sa_cast
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, auth, database, prompt_revisions, personal_api, class_access
-from ..counselor_i18n import localized_description, localized_tagline, translate_counselor_async, translate_counselor_sync
+from .. import (
+    auth,
+    class_access,
+    database,
+    models,
+    personal_api,
+    prompt_revisions,
+    schemas,
+)
+from ..counselor_i18n import (
+    localized_description,
+    localized_tagline,
+    translate_counselor_async,
+    translate_counselor_sync,
+)
 from ..counselor_identity import get_all_approach_categories, recommend_counselor
 from ..counselor_scope import restricted_instruments, suits
 from ..reasoning_profiles import is_mandatory_reasoning, supports_reasoning
-from sqlalchemy import cast as sa_cast, String
 
 router = APIRouter()
 get_db = database.get_db

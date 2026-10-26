@@ -143,7 +143,11 @@ def freeze_models(snapshot):
 
 def visible_response(snapshot, case, response):
     from .. import recommendation_blocks
-    from ..chat_logic import _student_visible_response, _requires_complete_factor_output, _phase_factor_codes
+    from ..chat_logic import (
+        _phase_factor_codes,
+        _requires_complete_factor_output,
+        _student_visible_response,
+    )
     cleaned, _ = recommendation_blocks.extract(response)
     with isolated_database(snapshot['render_data']) as db:
         step = db.get(models.GuidedStep, snapshot['target_key'])

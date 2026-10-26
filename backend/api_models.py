@@ -1,16 +1,17 @@
 """Modelli Pydantic delle richieste API (estratti da main.py per evitare
 import circolari tra i router e la logica di chat)."""
 from typing import Literal, Optional
+
 from pydantic import Field, model_validator
 
-from .guided_explorations import Exploration
 from . import schemas
 from .chat_preferences import ResponseFormat
+from .guided_explorations import Exploration
 from .schemas import (
     InstrumentBase,
     InstrumentCreate,
-    InstrumentUpdate,
     InstrumentResponse,
+    InstrumentUpdate,
 )
 
 

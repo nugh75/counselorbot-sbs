@@ -14,7 +14,14 @@ import time
 from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
-from ..types import PIICategory, PIIDetector, PIISpan, Principal, PrivacyContext, PrivacyRole
+from ..types import (
+    PIICategory,
+    PIIDetector,
+    PIISpan,
+    Principal,
+    PrivacyContext,
+    PrivacyRole,
+)
 from .generator import CORPUS_PATH
 
 BENCH_CTX = PrivacyContext(
@@ -89,7 +96,7 @@ def _prf(tp: int, fp: int, fn: int) -> dict:
         f1 = None
     else:
         f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
-    rnd = lambda v: None if v is None else round(v, 4)  # noqa: E731
+    rnd = lambda v: None if v is None else round(v, 4)
     return {"tp": tp, "fp": fp, "fn": fn, "support": tp + fn,
             "precision": rnd(precision), "recall": rnd(recall), "f1": rnd(f1)}
 

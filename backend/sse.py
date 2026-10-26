@@ -1,8 +1,8 @@
 """Keep POST SSE responses alive while a provider/retrieval step is silent."""
 import asyncio
+import math
 from collections.abc import AsyncIterable, AsyncIterator, Iterable
 from contextlib import suppress
-import math
 
 HEARTBEAT_INTERVAL = 15.0
 PING = ": ping\n\n"

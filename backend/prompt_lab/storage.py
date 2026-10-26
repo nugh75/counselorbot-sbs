@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import os
 import threading
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
 from uuid import uuid4
@@ -50,7 +50,7 @@ class LabUnavailable(RuntimeError):
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _uuid() -> str:
@@ -223,7 +223,7 @@ def serializer(row: Any) -> dict:
         value = getattr(row, column.name, None)
         if isinstance(value, datetime):
             if value.tzinfo is None:
-                value = value.replace(tzinfo=timezone.utc)
+                value = value.replace(tzinfo=UTC)
             value = value.isoformat()
         out[column.name] = value
     return out

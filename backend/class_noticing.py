@@ -7,12 +7,11 @@ Conteggi e grafici sono calcolati qui, non dal modello.
 import hashlib
 import json
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 from . import models
 from .ai_service import AIService
 from .teacher_noticing import KINDS, ask_json, noticing
-
 
 CLASS_NOTICING_ACTION = "class_noticing"
 CLASS_NOTICING_PROMPT_VERSION = 1
@@ -38,7 +37,7 @@ def class_results(db, group, instrument: str | None, days: int | None):
     if instrument:
         query = query.filter(models.QuestionnaireResult.questionnaire_type == instrument)
     if days:
-        query = query.filter(models.QuestionnaireResult.submitted_at >= datetime.now(timezone.utc) - timedelta(days=days))
+        query = query.filter(models.QuestionnaireResult.submitted_at >= datetime.now(UTC) - timedelta(days=days))
     candidates = query.order_by(models.QuestionnaireResult.submitted_at.desc(), models.QuestionnaireResult.id.desc()).all()
     results = []
     for row in candidates:

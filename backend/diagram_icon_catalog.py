@@ -2,7 +2,6 @@
 import json
 from pathlib import Path
 
-
 ICON_CATALOG = json.loads(Path(__file__).with_suffix('.json').read_text(encoding='utf-8'))
 DIAGRAM_ICONS = tuple(entry['id'] for entry in ICON_CATALOG)
 

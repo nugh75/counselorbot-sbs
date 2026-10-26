@@ -1,16 +1,15 @@
 """API studente per la Bussola CounselorBot."""
 from __future__ import annotations
-from .. import personal_api
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 
-from .. import auth, models
+from .. import auth, models, personal_api
 from ..chat_preferences import ResponseFormat
 from ..class_access import is_staff, require_tool, resolve_access
 from ..database import get_personal_ai_db as get_db
@@ -303,7 +302,7 @@ def complete_orientation(
     if not row.recommendations:
         raise HTTPException(status_code=409, detail="Write at least one message before completing orientation")
     row.status = "completed"
-    row.completed_at = datetime.now(timezone.utc)
+    row.completed_at = datetime.now(UTC)
     db.commit()
     db.refresh(row)
     return _serialize(row)

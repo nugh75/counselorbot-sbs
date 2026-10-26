@@ -5,13 +5,19 @@ an explicit selection from the student's valid compilations. Retry and resume
 never silently switch the selected result or reuse an earlier chat's completion.
 """
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from . import models
-from .path_step_types import administration_evidence, deep_dive_evidence, personal_result_qualifies, results_step, step_descriptor
+from .path_step_types import (
+    administration_evidence,
+    deep_dive_evidence,
+    personal_result_qualifies,
+    results_step,
+    step_descriptor,
+)
 from .questionnaire_entry import result_payload
 
 
@@ -102,7 +108,7 @@ def start_results_deep_dive(db, identity, path_id, step_id, result_id=None):
         return payload(binding, result, step)
     binding = models.ClassPathDeepDiveSession(
         step_id=step.id, username=username, result_id=result.id,
-        session_id=str(uuid.uuid4()), started_at=datetime.now(timezone.utc),
+        session_id=str(uuid.uuid4()), started_at=datetime.now(UTC),
     )
     try:
         db.add(binding)

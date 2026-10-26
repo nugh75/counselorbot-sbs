@@ -7,7 +7,11 @@ from sqlalchemy.orm import Session
 
 from .. import auth, database, schemas
 from ..ai_service import AIService
-from ..prompt_audit import build_prompt_audit, prompt_audit_matrix, run_prompt_audit_live
+from ..prompt_audit import (
+    build_prompt_audit,
+    prompt_audit_matrix,
+    run_prompt_audit_live,
+)
 
 router = APIRouter()
 get_db = database.get_personal_ai_db

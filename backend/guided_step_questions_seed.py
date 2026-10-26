@@ -5,7 +5,11 @@ non viene sovrascritto. Lo step speciale ``questions`` rappresenta la fase
 fissa "Domande e Approfondimenti" dei percorsi non-Savickas.
 """
 
-from .questionnaire_description import is_description_phase, DESCRIPTION_STEPS, COMPREHENSION_SUGGESTIONS
+from .questionnaire_description import (
+    COMPREHENSION_SUGGESTIONS,
+    DESCRIPTION_STEPS,
+    is_description_phase,
+)
 
 FIXED_QUESTIONS_STEP_ID = "questions"
 
@@ -469,8 +473,8 @@ for _instrument, _steps in DEFAULT_GUIDED_STEP_QUESTIONS.items():
 def seed_guided_step_questions(db, models) -> None:
     """Inserisce le domande di default mancanti per questionario/step/lingua."""
 
-    import os
     import json
+    import os
     translations = {}
     json_path = os.path.join(os.path.dirname(__file__), "translations_seed.json")
     if os.path.exists(json_path):

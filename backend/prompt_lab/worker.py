@@ -19,15 +19,15 @@ Run as a service:
 """
 from __future__ import annotations
 
-import logging
-import json
 import hashlib
-from difflib import SequenceMatcher
+import json
+import logging
 import signal
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
+from difflib import SequenceMatcher
 from typing import Any, Callable, Iterator, Mapping, Sequence
 
 from . import contracts, evaluation, storage
@@ -65,7 +65,7 @@ class _Failed(Exception):
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _default_render() -> Callable[..., dict]:

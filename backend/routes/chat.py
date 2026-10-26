@@ -1,7 +1,5 @@
 """Endpoint di chat e QSA: /chat, /chat/stream, /chat/message,
 /qsa/guided-ui-texts, /qsa/audit, /qsa/upload, /tts."""
-from .. import personal_api
-from ..reasoning_profiles import plan_details
 import functools
 import io
 import logging
@@ -12,20 +10,83 @@ import uuid
 from typing import Literal
 
 import edge_tts
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+)
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from .. import auth, class_access, database, models, model_pricing
+from .. import (
+    auth,
+    class_access,
+    control_markers,
+    database,
+    event_booklet,
+    goal_draft,
+    model_pricing,
+    models,
+    personal_api,
+    pii,
+    recommendation_blocks,
+    thread_guard,
+)
+from .. import recommendation_service as _recommendation_service
+from ..ai_service import AIError, AIService, generation_details
 from ..anonymous_codes import code_for_identity
-from ..ai_service import AIService, AIError, generation_details
-from ..chat_continuation import continuation_message, merge_continuation
-from ..sse import heartbeat
-from .. import pii
 from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
+from ..certified_reading_service import certified_reading_memory
+from ..chat_continuation import continuation_message, merge_continuation
+from ..chat_logic import (
+    _VISIBLE_WORD_RE,
+    RESPONSE_LENGTH_PROFILES,
+    ThinkStreamSplitter,
+    _annotate_qsa_factor_codes,
+    _apply_global_directives,
+    _ensure_questionnaire_guided_steps,
+    _ensure_required_qsa_factor_codes,
+    _is_strategy_questionnaire,
+    _limit_visible_words,
+    _phase_factor_codes,
+    _reasoning_suppressed_for,
+    _render_qsa_factor_labels,
+    _requires_complete_factor_output,
+    _sanitize_ztpi_step_label,
+    _sanitize_ztpi_user_text,
+    _should_sanitize_ztpi_text,
+    _strip_generic_acknowledgement,
+    _student_visible_response,
+    _system_prompt_key,
+    _update_markdown_memory_background,
+    build_log_envelope,
+    conversation_id_for,
+    full_prompt_logging_enabled,
+    is_empty_response_error,
+    reflective_empty_fallback,
+    strip_markdown,
+    strip_thinking,
+)
+from ..chat_preparation import practice_notebook_id_for_turn, prepare_chat_turn
+from ..class_path_completion import record_guided_chat_completion
 from ..diagram_blocks import strip_for_speech
+from ..guided_explorations import restore_owned_snapshot
+from ..guided_explorations import transition as exploration_transition
+from ..guided_step_label_i18n import resolve_step_label, strip_step_ordinal
+from ..guided_step_questions_seed import FIXED_QUESTIONS_STEP_ID
+from ..guided_text_i18n import (
+    PHASE_WORD,
+    QUESTIONS_LABEL,
+    SECONDARY_LANGS,
+    resolve_text,
+)
+from ..i18n_fields import localized
 from ..idea_map import (
     IDEA_INSTRUMENT,
     IdeaMapError,
@@ -35,19 +96,33 @@ from ..idea_map import (
     strip_patch_for_display,
 )
 from ..memory_service import session_memory
-from ..reasoning_profiles import effort_overrides
-from ..chat_preparation import practice_notebook_id_for_turn, prepare_chat_turn
-from ..class_path_completion import record_guided_chat_completion
-from ..strategy_memory import shared_response_memory
-from .. import recommendation_blocks
-from .. import event_booklet
-from .. import goal_draft
-from .. import control_markers
-from ..guided_explorations import transition as exploration_transition, restore_owned_snapshot
-from .. import thread_guard
-from .. import recommendation_service as _recommendation_service
-from ..certified_reading_service import certified_reading_memory
-from ..i18n_fields import localized
+from ..obiettivo_layout import active_guided_steps
+from ..prompt_config import (
+    DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_EVENTO_STUDIO_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_EVENTO_STUDIO_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_OBBDOCENZA_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_OBBDOCENZA_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_OBBSTUDIO_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_OBBSTUDIO_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_QAP_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_QAP_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_QPCC_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_QPCC_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_QPCS_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_QPCS_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_QSAR_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO,
+    DEFAULT_SYSTEM_PROMPT_GENERIC,
+    GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS,
+    MODE_TO_SYSTEM_PROMPT_KEY,
+    SYSTEM_PROMPT_DEFAULTS,
+)
 from ..qsa_extractor import (
     DEFAULT_OCR_MODEL,
     DEFAULT_PARSER_MODEL,
@@ -55,65 +130,9 @@ from ..qsa_extractor import (
     VISION_UNAVAILABLE_CODE,
     extract_questionnaire_data,
 )
-from ..guided_text_i18n import SECONDARY_LANGS, resolve_text, QUESTIONS_LABEL, PHASE_WORD
-from ..guided_step_label_i18n import resolve_step_label, strip_step_ordinal
-from ..obiettivo_layout import active_guided_steps
-from ..guided_step_questions_seed import FIXED_QUESTIONS_STEP_ID
-from ..prompt_config import (
-    DEFAULT_SYSTEM_PROMPT_GENERIC,
-    DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO,
-    DEFAULT_GUIDED_TEXT_QSAR_CONCLUSION,
-    DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO,
-    DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION,
-    DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO,
-    DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION,
-    DEFAULT_GUIDED_TEXT_EVENTO_STUDIO_QUESTIONS_INTRO,
-    DEFAULT_GUIDED_TEXT_EVENTO_STUDIO_CONCLUSION,
-    DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_QUESTIONS_INTRO,
-    DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_CONCLUSION,
-    DEFAULT_GUIDED_TEXT_OBBSTUDIO_QUESTIONS_INTRO,
-    DEFAULT_GUIDED_TEXT_OBBSTUDIO_CONCLUSION,
-    DEFAULT_GUIDED_TEXT_OBBDOCENZA_QUESTIONS_INTRO,
-    DEFAULT_GUIDED_TEXT_OBBDOCENZA_CONCLUSION,
-    DEFAULT_GUIDED_TEXT_QPCS_QUESTIONS_INTRO,
-    DEFAULT_GUIDED_TEXT_QPCS_CONCLUSION,
-    DEFAULT_GUIDED_TEXT_QPCC_QUESTIONS_INTRO,
-    DEFAULT_GUIDED_TEXT_QPCC_CONCLUSION,
-    DEFAULT_GUIDED_TEXT_QAP_QUESTIONS_INTRO,
-    DEFAULT_GUIDED_TEXT_QAP_CONCLUSION,
-    GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS,
-    MODE_TO_SYSTEM_PROMPT_KEY,
-    SYSTEM_PROMPT_DEFAULTS,
-)
-from ..chat_logic import (
-    _annotate_qsa_factor_codes,
-    _reasoning_suppressed_for,
-    _apply_global_directives,
-    _ensure_questionnaire_guided_steps,
-    _ensure_required_qsa_factor_codes,
-    _render_qsa_factor_labels,
-    _limit_visible_words,
-    _is_strategy_questionnaire,
-    _phase_factor_codes,
-    _requires_complete_factor_output,
-    _sanitize_ztpi_step_label,
-    _sanitize_ztpi_user_text,
-    _should_sanitize_ztpi_text,
-    _system_prompt_key,
-    _strip_generic_acknowledgement,
-    _student_visible_response,
-    _update_markdown_memory_background,
-    build_log_envelope,
-    conversation_id_for,
-    full_prompt_logging_enabled,
-    is_empty_response_error,
-    reflective_empty_fallback,
-    strip_markdown,
-    strip_thinking,
-    RESPONSE_LENGTH_PROFILES,
-    _VISIBLE_WORD_RE,
-    ThinkStreamSplitter,
-)
+from ..reasoning_profiles import effort_overrides, plan_details
+from ..sse import heartbeat
+from ..strategy_memory import shared_response_memory
 
 router = APIRouter()
 get_db = database.get_personal_ai_db

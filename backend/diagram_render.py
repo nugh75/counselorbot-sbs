@@ -15,7 +15,15 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, ValidationInfo, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 from .diagram_icon_catalog import DIAGRAM_ICONS
 from .diagram_symbols import INSTRUMENTS, factor_id, resolve_symbol

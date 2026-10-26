@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 
 from . import models
 
-
 PERSONAL_TOOL_KEYS = {
     "tavolo": ("personal", "tavolo"),
     "goals": ("personal", "goals"),

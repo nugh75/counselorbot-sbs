@@ -19,7 +19,6 @@ from typing import List, Optional
 
 import numpy as np
 
-
 logger = logging.getLogger(__name__)
 
 # Sotto questa similarità coseno l'elemento è considerato non pertinente.

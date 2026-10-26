@@ -22,8 +22,8 @@ from __future__ import annotations
 import re
 
 from . import models, recommendation_service
-from .diagram_blocks import strip_for_speech
 from .control_markers import strip_control_markers
+from .diagram_blocks import strip_for_speech
 
 MAX_ANSWERS = 6
 KEEP_RECENT = 2

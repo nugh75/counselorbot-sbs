@@ -16,7 +16,7 @@ import re
 import unicodedata
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def _result(source: str, match, **extra) -> dict:
     return {
         "source": source,
         "match": match,
-        "checked_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "checked_at": datetime.now(UTC).isoformat(timespec="seconds"),
         **extra,
     }
 

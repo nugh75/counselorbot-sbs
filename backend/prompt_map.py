@@ -17,16 +17,14 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from . import models
-from .model_context import estimate_tokens
-from .prompt_variants import attach_variants
 from .chat_logic import (
     _default_certified_strategy_limit,
     _instrument_meta_system_prompt,
-    guided_step_follow_up_mode,
-    guided_step_system_prompt_key,
     _system_prompt_key,
     get_prompt_component_flags,
     get_prompt_component_options,
+    guided_step_follow_up_mode,
+    guided_step_system_prompt_key,
     prompt_component_config_key,
     prompt_meta_config_key,
 )
@@ -35,7 +33,9 @@ from .counselor_scope import restricted_instruments, suits
 from .guided_step_questions_seed import FIXED_QUESTIONS_STEP_ID
 from .guided_text_i18n import SECONDARY_LANGS
 from .idea_map import IDEA_INSTRUMENT
+from .model_context import estimate_tokens
 from .prompt_config import ALL_CONFIG_TEXT_DEFINITIONS, GLOBAL_DIRECTIVE_DEFINITIONS
+from .prompt_variants import attach_variants
 from .routes.chat import guided_phase_text_keys
 from .skills import engine as skills_engine
 from .skills.registry import COMPONENT_FLAG_BY_SLUG

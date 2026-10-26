@@ -1,7 +1,8 @@
 """Explicit owner-only schema setup and least-privilege worker grants."""
 from sqlalchemy import text
-from . import storage
+
 from ..db_compat import add_column_if_missing
+from . import storage
 
 
 def provision():

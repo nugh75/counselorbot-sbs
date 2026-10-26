@@ -3,12 +3,12 @@
 Includes audited break-glass access for technical administrators on L1.
 """
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from .. import auth, database, models, schemas
 from ..privacy import consent
@@ -42,7 +42,7 @@ async def create_break_glass(
     if payload.duration_hours > 24.0 or payload.duration_hours <= 0:
         raise HTTPException(status_code=400, detail="Durata massima del break-glass: 24 ore")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     valid_until = now + timedelta(hours=payload.duration_hours)
 
     # Fail-closed privacy event recording (P8 requirement)
@@ -108,7 +108,7 @@ async def revoke_break_glass(
     if bg.admin_username != admin_username and not current_user.get("is_admin"):
         raise HTTPException(status_code=403, detail="Non autorizzato a revocare questo break-glass")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     bg.revoked_at = now
     bg.revoked_by = admin_username
 

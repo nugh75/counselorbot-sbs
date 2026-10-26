@@ -9,7 +9,12 @@ from sqlalchemy.orm import Session
 from .. import auth, class_access, database
 from ..goals import Strict
 from ..personal_timeline import ensure_personal_timeline
-from ..visual_tools import EventReview, SavePersonalWorkspace, load_workspace, save_workspace
+from ..visual_tools import (
+    EventReview,
+    SavePersonalWorkspace,
+    load_workspace,
+    save_workspace,
+)
 
 router = APIRouter()
 

@@ -249,7 +249,7 @@ def refresh(api_key: Optional[str] = None, *, force: bool = False, timeout: floa
             _SOURCE = "catalog"
             logger.info("Catalogo OpenRouter aggiornato: %s modelli", len(parsed))
         return _CACHE
-    except Exception as exc:  # noqa: BLE001 - cache best-effort, la chat non dipende dalla rete
+    except Exception as exc:
         logger.warning("Catalogo OpenRouter non aggiornato (%s); uso la cache/fallback", type(exc).__name__)
         return _CACHE
 

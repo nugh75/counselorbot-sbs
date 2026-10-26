@@ -6,9 +6,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .. import auth, class_access, database, models
-from ..class_path_completion import CONCLUSION_PHASE, record_guided_chat_conclusion
 from ..api_models import MemoryEventRequest
-from ..dynamic_registry import DynamicInstrumentSet, HISTORIC_INSTRUMENT_CODES
+from ..class_path_completion import CONCLUSION_PHASE, record_guided_chat_conclusion
+from ..dynamic_registry import HISTORIC_INSTRUMENT_CODES, DynamicInstrumentSet
 from ..memory_service import session_memory
 
 router = APIRouter()

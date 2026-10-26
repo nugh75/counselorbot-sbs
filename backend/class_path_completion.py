@@ -5,7 +5,7 @@ after the path's `published_at`. The only new write is the
 `guided_chat_completed` marker, recorded when a chat turn on an instrument's
 last guided step completes.
 """
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -92,7 +92,7 @@ def _add_marker(db: Session, *, session_id: str, username: str, questionnaire_ty
         session_id=session_id,
         action=GUIDED_CHAT_COMPLETED,
         # Turn time, not transaction start: deep dives compare it with their binding.
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         username=username,
         questionnaire_type=questionnaire_type,
         phase=phase,

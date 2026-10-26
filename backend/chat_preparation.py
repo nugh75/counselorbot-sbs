@@ -6,65 +6,78 @@ Writing session memory and recording model output remain endpoint responsibiliti
 import re
 from dataclasses import dataclass
 from types import SimpleNamespace
-from .guided_explorations import directive as exploration_directive
-from .prompt_variants import level_config, variant_levels, variant_text
-from .chat_preferences import apply_response_format
-from .qsa_essential import validate_path, directive as essential_directive, is_essential_summary
-from .prompt_contract import QUESTIONNAIRE_DIALOGUES, objective_focus_stage, turn_contract
-from .event_booklet import is_event_instrument
-from .journey_context import SYNTHESIS_STEPS, journey_context, session_evidence
-from . import embedding_service, models, recommendation_blocks, session_ledger, thread_guard
-from . import recommendation_service as _recommendation_service
-from .i18n_fields import localized
-from .idea_map import IDEA_INSTRUMENT
-from .memory_service import session_memory
-from .prompt_config import SYSTEM_PROMPT_DEFAULTS, WELCOME_PHASE_IDS
-from .chat_logic import PROMPT_COMPONENT_DEFAULTS
-from .skills import engine as skills_engine
-from .skills import intents as skills_intents
+
 from sqlalchemy.orm import Session
+
+from . import (
+    embedding_service,
+    models,
+    recommendation_blocks,
+    session_ledger,
+    thread_guard,
+)
+from . import recommendation_service as _recommendation_service
 from .chat_logic import (
+    PROMPT_COMPONENT_DEFAULTS,
     _annotate_qsa_factor_codes,
-    apply_advice_retrieval_policy,
-    is_advice_follow_up,
-    _apply_global_directives,
-    _reasoning_disabled_for,
     _apply_advice_distribution_directive,
-    _apply_follow_up_advice_directive,
-    _apply_response_length_directive,
     _apply_certified_advice_directive,
     _apply_current_step_factor_scope_directive,
     _apply_current_step_score_profile_directive,
+    _apply_follow_up_advice_directive,
+    _apply_global_directives,
     _apply_qsa_factor_directive,
-    competence_factor_names,
+    _apply_response_length_directive,
     _conversational_retrieval_tail,
+    _instrument_meta_system_prompt,
     _is_conversational_mode,
     _is_intro_step_mode,
+    _is_strategy_questionnaire,
+    _phase_factor_codes,
+    _reasoning_disabled_for,
+    _resolve_system_prompt,
+    _resolve_user_message_for_chat,
+    _response_length_max_tokens,
+    _retrieved_context,
+    _sanitize_ztpi_step_label,
+    _sanitize_ztpi_user_text,
+    _scope_scores_to_codes,
+    _should_include_step_analysis_context,
+    _should_sanitize_ztpi_text,
+    _step_allows_practical_advice,
+    apply_advice_retrieval_policy,
+    build_context_envelope,
+    competence_factor_names,
+    conversation_id_for,
     extract_clean_student_message,
     filter_scores_by_components,
     format_step_continuation_prompt,
     get_prompt_component_flags,
     get_prompt_component_options,
+    instruction_parts,
+    is_advice_follow_up,
+    is_guided_chat,
     previous_certified_strategy_ids,
     step_has_improvement_target,
-    _is_strategy_questionnaire,
-    is_guided_chat,
-    _phase_factor_codes,
-    _resolve_system_prompt,
-    _response_length_max_tokens,
-    _scope_scores_to_codes,
-    _resolve_user_message_for_chat,
-    _retrieved_context,
-    _sanitize_ztpi_step_label,
-    _sanitize_ztpi_user_text,
-    _should_sanitize_ztpi_text,
-    _should_include_step_analysis_context,
-    _step_allows_practical_advice,
-    build_context_envelope,
-    instruction_parts,
-    _instrument_meta_system_prompt,
-    conversation_id_for,
 )
+from .chat_preferences import apply_response_format
+from .event_booklet import is_event_instrument
+from .guided_explorations import directive as exploration_directive
+from .i18n_fields import localized
+from .idea_map import IDEA_INSTRUMENT
+from .journey_context import SYNTHESIS_STEPS, journey_context, session_evidence
+from .memory_service import session_memory
+from .prompt_config import SYSTEM_PROMPT_DEFAULTS, WELCOME_PHASE_IDS
+from .prompt_contract import (
+    QUESTIONNAIRE_DIALOGUES,
+    objective_focus_stage,
+    turn_contract,
+)
+from .prompt_variants import level_config, variant_levels, variant_text
+from .qsa_essential import directive as essential_directive
+from .qsa_essential import is_essential_summary, validate_path
+from .skills import engine as skills_engine
+from .skills import intents as skills_intents
 
 IDEA_VARIANT_KEYS = {
     "student-path": "prompt_idea_variant_student_path",

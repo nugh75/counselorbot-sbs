@@ -10,16 +10,14 @@ import logging
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import JSONResponse, Response, FileResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
 from .. import auth, database, models, personal_api
-from ..ai_service import AIService, AIError
+from ..ai_service import AIError, AIService
 from ..diagram_icon_catalog import DIAGRAM_ICONS, ICON_CATALOG, ICON_SELECTION_PROMPT
-from ..diagram_symbols import factor_selection_prompt
-from ..message_diagrams import session_owner, session_questionnaire, save_diagram, list_diagrams
 from ..diagram_render import (
     DiagramSpec,
     DiagramSpecError,
@@ -28,6 +26,13 @@ from ..diagram_render import (
     parse_spec,
     render,
     spec_fingerprint,
+)
+from ..diagram_symbols import factor_selection_prompt
+from ..message_diagrams import (
+    list_diagrams,
+    save_diagram,
+    session_owner,
+    session_questionnaire,
 )
 from .chat import _apply_counselor_overrides, _resolve_counselor
 

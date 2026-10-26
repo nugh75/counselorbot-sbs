@@ -326,8 +326,8 @@ DEFAULT_ASSISTANT_QUESTIONS: dict[str, list[str]] = {
 
 def seed_assistant_questions(db, models) -> None:
     """Inserisce le domande di default (it) mancanti. Idempotente."""
-    import os
     import json
+    import os
     translations = {}
     json_path = os.path.join(os.path.dirname(__file__), "translations_seed.json")
     if os.path.exists(json_path):

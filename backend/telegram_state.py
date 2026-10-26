@@ -9,21 +9,21 @@ import hashlib
 import logging
 import re
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from . import administration_context, class_access, database, models
+from . import administration_context, class_access, database, models, telegram_bot
 from .api_models import ChatRequest
-from .control_markers import strip_control_markers
 from .chat_logic import _ensure_questionnaire_guided_steps, strip_markdown
+from .control_markers import strip_control_markers
 from .diagram_blocks import extract as extract_diagrams
-from .diagram_render import DiagramSpecError, render as render_diagram
+from .diagram_render import DiagramSpecError
+from .diagram_render import render as render_diagram
 from .guided_step_label_i18n import resolve_step_label
 from .qsa_extractor import QUESTIONNAIRE_FACTORS
-from . import telegram_bot
 
 logger = logging.getLogger(__name__)
 
@@ -397,7 +397,7 @@ def create_link_code(db: Session, username: str) -> str:
     db.add(models.TelegramLinkCode(
         username=username,
         code_hash=hash_link_code(code),
-        expires_at=datetime.now(timezone.utc) + timedelta(minutes=LINK_CODE_TTL_MINUTES),
+        expires_at=datetime.now(UTC) + timedelta(minutes=LINK_CODE_TTL_MINUTES),
     ))
     db.commit()
     return code
@@ -410,13 +410,13 @@ def consume_link_code(db: Session, code: str) -> str | None:
         .filter(
             models.TelegramLinkCode.code_hash == hash_link_code(code),
             models.TelegramLinkCode.used_at.is_(None),
-            models.TelegramLinkCode.expires_at > datetime.now(timezone.utc),
+            models.TelegramLinkCode.expires_at > datetime.now(UTC),
         )
         .first()
     )
     if not row:
         return None
-    row.used_at = datetime.now(timezone.utc)
+    row.used_at = datetime.now(UTC)
     db.commit()
     return row.username
 
@@ -1344,7 +1344,7 @@ async def _handle_message(db: Session, message: dict) -> None:
     state = _get_state(db, user_id, chat_id, link.username, language)
 
     if command == "/unlink":
-        link.revoked_at = datetime.now(timezone.utc)
+        link.revoked_at = datetime.now(UTC)
         _reset_state(state)
         db.commit()
         await telegram_bot.send_message(chat_id, _t("unlink_ok", language))

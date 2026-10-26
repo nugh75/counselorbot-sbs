@@ -9,7 +9,7 @@ import json
 from cryptography.fernet import InvalidToken
 from sqlalchemy.exc import SQLAlchemyError
 
-from .. import models, personal_api, chatgpt_connections, institution_password
+from .. import chatgpt_connections, institution_password, models, personal_api
 from ..credential_storage import CredentialStorageError, dek_enabled, ensure_keys
 from . import crypto
 

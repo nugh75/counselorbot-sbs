@@ -3,19 +3,31 @@
 L'elenco pubblico serve al select del taccuino. Espone solo nome, tipo e le
 pagine istituzionali: nulla che riguardi le persone.
 """
-from typing import List, Literal
 import re
 import unicodedata
 import uuid
+from typing import List, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
+from .. import (
+    administration_context,
+    auth,
+    database,
+    institution_password,
+    models,
+    schemas,
+)
 from ..db_compat import xact_lock
-from .. import administration_context, auth, database, institution_password, models, schemas
-from ..institution_access import require_institution_admin, teacher_institutions, require_teacher, require_institution_teacher
+from ..institution_access import (
+    require_institution_admin,
+    require_institution_teacher,
+    require_teacher,
+    teacher_institutions,
+)
 
 router = APIRouter()
 get_db = database.get_db

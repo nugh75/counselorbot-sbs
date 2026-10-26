@@ -246,7 +246,7 @@ def compute_profile(
         db.query(models.QuestionnaireItem)
         .filter(
             models.QuestionnaireItem.instrument_code == instrument_code,
-            models.QuestionnaireItem.active == True,  # noqa: E712
+            models.QuestionnaireItem.active == True,
         )
         .all()
     )

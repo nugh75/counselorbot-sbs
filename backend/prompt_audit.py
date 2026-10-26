@@ -1,32 +1,26 @@
 """Read-only prompt envelope audit for guided CounselorBot chats."""
 from __future__ import annotations
 
-from .reasoning_profiles import plan_details
-
 import logging
 import re
 import time
 import uuid
 from typing import Any, Callable
 
+from .reasoning_profiles import plan_details
+
 logger = logging.getLogger(__name__)
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from . import models, model_pricing, pii, schemas
+from . import model_pricing, models, pii, schemas
 from .ai_service import AIError, AIService
-from .chatgpt_responses import preview as chatgpt_preview
 from .anonymous_codes import code_for_identity
 from .api_models import ChatRequest
-from .chat_preparation import prepare_chat_turn
-from .qsa_essential import validate_path
 from .chat_logic import (
     _annotate_qsa_factor_codes,
     _ensure_required_qsa_factor_codes,
-    extract_clean_student_message,
-    prompt_component_config_key,
-    prompt_meta_config_key,
     _is_strategy_questionnaire,
     _limit_visible_words,
     _phase_factor_codes,
@@ -35,16 +29,21 @@ from .chat_logic import (
     _sanitize_ztpi_user_text,
     _strip_generic_acknowledgement,
     conversation_id_for,
+    extract_clean_student_message,
     full_prompt_logging_enabled,
+    prompt_component_config_key,
+    prompt_meta_config_key,
     split_thinking,
 )
+from .chat_preparation import prepare_chat_turn
+from .chatgpt_responses import preview as chatgpt_preview
 from .guided_text_i18n import SECONDARY_LANGS
 from .prompt_config import (
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
     MODE_TO_SYSTEM_PROMPT_KEY,
     SYSTEM_PROMPT_DEFAULTS,
 )
-
+from .qsa_essential import validate_path
 
 SUPPORTED_CHAT_LANGUAGES = {"it", *SECONDARY_LANGS}
 _FACTOR_TOKEN_RE = re.compile(r"\b([A-Z]{1,3}\d{1,2}r?)\b", re.IGNORECASE)
@@ -334,7 +333,12 @@ def build_prompt_audit(
     model = c_model or ai_service.config.get("model_name", "unknown")
     if getattr(ai_service, "chatgpt_model", None):
         provider, model = "openai_chatgpt", ai_service.chatgpt_model
-    from .model_context import ContextCapacityError, context_profile, fit_context, validate_output_capacity
+    from .model_context import (
+        ContextCapacityError,
+        context_profile,
+        fit_context,
+        validate_output_capacity,
+    )
     from .reasoning_profiles import resolve_plan
     plan = resolve_plan(model, disable_thinking=ai_service.disable_thinking,
                         requested_max_tokens=max_tokens, fallback_max_tokens=700,

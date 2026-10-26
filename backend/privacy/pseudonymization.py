@@ -30,8 +30,15 @@ from typing import Callable, Protocol, Sequence
 from .detect import LocalPIIDetector, uncovered
 from .errors import AccessDenied, PolicyBlocked, PrivacyError, ResidualPII
 from .types import (
-    CategoryPolicy, Decision, PIICategory, PIISpan, PrivacyContext, PseudonymizedBatch,
-    PseudonymMap, ResourceRef, _SafeRepresentation,
+    CategoryPolicy,
+    Decision,
+    PIICategory,
+    PIISpan,
+    PrivacyContext,
+    PseudonymizedBatch,
+    PseudonymMap,
+    ResourceRef,
+    _SafeRepresentation,
 )
 
 C = PIICategory

@@ -1,12 +1,12 @@
 """Persist message diagrams with the session, independently of browser snapshots."""
-import json
 import hashlib
+import json
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from . import models, pii
-from .diagram_render import DiagramSpec, parse_spec, DiagramSpecError
+from .diagram_render import DiagramSpec, DiagramSpecError, parse_spec
 
 ACTION = "message_diagram"
 

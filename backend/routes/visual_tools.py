@@ -5,11 +5,28 @@ from sqlalchemy.orm import Session
 
 from .. import auth, class_access, database
 from ..message_diagrams import session_owner
-from ..visual_tools import (LABELS, SaveWorkspace, SavePersonalWorkspace, load_workspace, redact_workspace_text,
-                            save_workspace, workspace_model)
-from ..personal_timeline import ensure_personal_timeline, imported_id, resolve_institution_events
+from ..personal_timeline import (
+    ensure_personal_timeline,
+    imported_id,
+    resolve_institution_events,
+)
+from ..timeline import (
+    SaveSnapshot,
+    SnapshotRequest,
+    portfolio_timeline_links,
+    save_snapshot,
+    snapshot_preview,
+)
 from ..visual_personal import PersonalTransfer, personal_context, transfer_to_personal
-from ..timeline import SnapshotRequest, SaveSnapshot, snapshot_preview, save_snapshot, portfolio_timeline_links
+from ..visual_tools import (
+    LABELS,
+    SavePersonalWorkspace,
+    SaveWorkspace,
+    load_workspace,
+    redact_workspace_text,
+    save_workspace,
+    workspace_model,
+)
 
 router = APIRouter()
 

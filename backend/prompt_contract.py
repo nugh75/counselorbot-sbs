@@ -1,11 +1,11 @@
 """Small, explicit turn rules shared by app and exported counselor prompts."""
 from __future__ import annotations
 
+from .event_booklet import DIRECTIVE as EVENT_BOOKLET_DIRECTIVE
+from .event_booklet import is_event_instrument
+from .goal_draft import DIRECTIVE as GOAL_DRAFT_DIRECTIVE
+from .goal_draft import is_goal_instrument
 from .questionnaire_description import CONTRACT as DESCRIPTION_CONTRACT
-
-from .event_booklet import DIRECTIVE as EVENT_BOOKLET_DIRECTIVE, is_event_instrument
-from .goal_draft import DIRECTIVE as GOAL_DRAFT_DIRECTIVE, is_goal_instrument
-
 
 QUESTIONNAIRE_DIALOGUES = frozenset({"QSA", "QSAR", "ZTPI", "QPCS", "QPCC", "QAP", "SAVICKAS"})
 
@@ -282,8 +282,8 @@ def platform_context(db, full: bool = True) -> str:
     (`intents.asks_about_platform`, intro, chat libera).
     """
     # This is the catalog used by Bussola and its validated recommendation IDs.
-    from .orientation import TOOL_GROUPS, TOOL_DESCRIPTIONS
     from . import models
+    from .orientation import TOOL_DESCRIPTIONS, TOOL_GROUPS
     feature = db.query(models.Config).filter(models.Config.key == "feature_idea_focus").first()
     idea_enabled = feature is not None and feature.value.lower() == "true"
     available_by_group = [

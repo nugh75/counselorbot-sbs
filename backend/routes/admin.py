@@ -3,33 +3,40 @@ import io
 import json
 import os
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
-from sqlalchemy import DateTime, cast, func, or_, text as sa_text
-from sqlalchemy.types import Text
+from sqlalchemy import DateTime, cast, func, or_
+from sqlalchemy import text as sa_text
 from sqlalchemy.orm import Session
+from sqlalchemy.types import Text
 from starlette.concurrency import run_in_threadpool
 
-from ..db_compat import is_sqlite, xact_lock
-from .. import models, schemas, auth, database, pii, pii_ner
-from .. import content_version_service
-from .. import openrouter_capabilities
-from .. import prompt_revisions
-from ..dynamic_registry import invalidate_instrument_cache
-from ..content_versions import CATALOG_CONTENT_TYPES, CONTENT_TYPES, ContentVersionError
+from .. import (
+    auth,
+    content_version_service,
+    database,
+    models,
+    openrouter_capabilities,
+    pii,
+    pii_ner,
+    prompt_revisions,
+    schemas,
+)
 from ..ai_service import AIService, configured_fallback_targets
-from ..local_llm import LLAMACPP_KEY_CONFIG
-from .chatgpt import browser_mutation
 from ..api_secrets import (
     API_KEY_ENV_MAP,
     provider_from_config_key,
     resolve_api_secret,
     resolve_api_secrets,
 )
+from ..content_versions import CATALOG_CONTENT_TYPES, CONTENT_TYPES, ContentVersionError
+from ..db_compat import is_sqlite, xact_lock
+from ..dynamic_registry import invalidate_instrument_cache
+from ..local_llm import LLAMACPP_KEY_CONFIG
 from ..training_dataset import (
     APPROVED_EXPORT_STATUSES,
     VALID_REVIEW_STATUSES,
@@ -38,6 +45,7 @@ from ..training_dataset import (
     training_query,
     training_summary,
 )
+from .chatgpt import browser_mutation
 
 router = APIRouter()
 get_db = database.get_db
@@ -302,7 +310,7 @@ def _prepare_log_response(db: Session, logs: list[models.Log], current_user: Opt
     _attach_log_feedback(db, logs)
     _normalize_logs_metadata(logs)
 
-    from ..privacy.authz import is_l1, get_active_break_glass, safe_subject_pid
+    from ..privacy.authz import get_active_break_glass, is_l1, safe_subject_pid
     if is_l1() and current_user:
         admin_username = str(current_user.get("username") if isinstance(current_user, dict) else getattr(current_user, "username", "") or "").strip()
         for log in logs:
@@ -910,7 +918,7 @@ async def cost_stats(
     by_month = _cost_period_aggregate(db, "month", period_filt)
     by_year = _cost_period_aggregate(db, "year", period_filt)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     bounds = _current_period_bounds(now)
     cost_by_label = {
         "week": {r["period"]: r["cost"] for r in by_week},
@@ -1774,7 +1782,7 @@ async def admin_export_guided_steps_md(
             raise HTTPException(status_code=404, detail=f"Nessuno step per lo strumento '{instrument}'")
         ordered_instruments = [instrument]
 
-    exported_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    exported_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
     lines: List[str] = [
         "# Prompt degli strumenti — CounselorBot",
         "",
@@ -1812,7 +1820,7 @@ async def admin_export_guided_steps_md(
 
     markdown = "\n".join(lines)
     slug = f"_{instrument}" if instrument else ""
-    filename = f"counselorbot_prompts{slug}_{datetime.now(timezone.utc).strftime('%Y%m%d')}.md"
+    filename = f"counselorbot_prompts{slug}_{datetime.now(UTC).strftime('%Y%m%d')}.md"
     return Response(
         content=markdown,
         media_type="text/markdown; charset=utf-8",

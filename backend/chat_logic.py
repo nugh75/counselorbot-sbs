@@ -3,59 +3,77 @@
 Nessun endpoint qui: solo funzioni di supporto (risoluzione prompt,
 sanitizzazione QSA/ZTPI, contesto recuperato, ecc.) e le costanti correlate.
 Importato dai router in backend/routes/."""
-import json
-import re
-import logging
 import asyncio
+import json
+import logging
+import re
 import uuid
 from typing import List, Optional
 
 from fastapi import HTTPException
-
-from . import models
-from .student_context import LEARNER_PROFILE_LABELS
-from .teacher_context import class_context_for_practice, class_context_for_student, teacher_groups_context, teacher_notebook_context
-from .practice_notebooks import is_plan_manager, practice_notebook_context, requested_practice_notebook, simulation_notice
-from . import database, prompt_config
-from .anonymous_codes import code_for_identity
-from .i18n_fields import localized
-from .ai_service import AIService
-from .reasoning_profiles import is_mandatory_reasoning, supports_reasoning
-from .memory_service import session_memory
-from .strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
-from .certified_strategy_service import certified_strategy_memory
-from .skills import engine as skills_engine
-from .skills import intents as skills_intents
-from . import recommendation_service as _recommendation_service
-from .guided_step_label_i18n import STEP_LABEL_I18N, resolve_step_label
-from .goal_draft import is_goal_instrument
-from .obiettivo_layout import active_guided_steps
 from sqlalchemy import func
 
+from . import database, models, prompt_config
+from . import recommendation_service as _recommendation_service
+from .ai_service import AIService
+from .anonymous_codes import code_for_identity
+from .api_models import ChatRequest
+from .certified_strategy_service import certified_strategy_memory
+from .goal_draft import is_goal_instrument
+from .guided_step_label_i18n import STEP_LABEL_I18N, resolve_step_label
+from .i18n_fields import localized
 from .idea_map import IDEA_INSTRUMENT, focused_branch, map_context_for
 from .idea_reference import reference_context_for
 from .idea_sources import context_for as idea_sources_context_for
-from .rag_index import site_rag_index, counselorbot_rag_index, questionari_rag_index, build_context as rag_build_context, EmbeddingUnavailable
-from .api_models import ChatRequest
+from .memory_service import session_memory
+from .obiettivo_layout import active_guided_steps
+from .practice_notebooks import (
+    is_plan_manager,
+    practice_notebook_context,
+    requested_practice_notebook,
+    simulation_notice,
+)
 from .prompt_config import (
-    DEFAULT_SYSTEM_PROMPT_GENERIC,
-    DEFAULT_GUIDED_STEPS,
-    DEFAULT_QSAR_GUIDED_STEPS,
-    DEFAULT_ZTPI_GUIDED_STEPS,
-    DEFAULT_SAVICKAS_GUIDED_STEPS,
-    DEFAULT_QPCS_GUIDED_STEPS,
-    DEFAULT_QPCC_GUIDED_STEPS,
-    DEFAULT_QAP_GUIDED_STEPS,
-    DEFAULT_IDEA_GUIDED_STEPS,
-    DEFAULT_EVENTO_STUDIO_GUIDED_STEPS,
     DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS,
-    DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS,
+    DEFAULT_EVENTO_STUDIO_GUIDED_STEPS,
+    DEFAULT_GUIDED_STEPS,
+    DEFAULT_IDEA_GUIDED_STEPS,
     DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS,
+    DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS,
+    DEFAULT_QAP_GUIDED_STEPS,
+    DEFAULT_QPCC_GUIDED_STEPS,
+    DEFAULT_QPCS_GUIDED_STEPS,
+    DEFAULT_QSAR_GUIDED_STEPS,
+    DEFAULT_SAVICKAS_GUIDED_STEPS,
+    DEFAULT_SYSTEM_PROMPT_GENERIC,
+    DEFAULT_ZTPI_GUIDED_STEPS,
     GUIDED_PHASE_ALIASES,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
-    WELCOME_PHASE_IDS,
     MODE_TO_SYSTEM_PROMPT_KEY,
     SYSTEM_PROMPT_DEFAULTS,
+    WELCOME_PHASE_IDS,
+)
+from .rag_index import (
+    EmbeddingUnavailable,
+    counselorbot_rag_index,
+    questionari_rag_index,
+    site_rag_index,
+)
+from .rag_index import build_context as rag_build_context
+from .reasoning_profiles import is_mandatory_reasoning, supports_reasoning
+from .skills import engine as skills_engine
+from .skills import intents as skills_intents
+from .strategy_memory import (
+    APPROVED_STRATEGIES_CONFIG_KEY,
+    shared_response_memory,
+    strategy_memory,
+)
+from .student_context import LEARNER_PROFILE_LABELS
+from .teacher_context import (
+    class_context_for_practice,
+    class_context_for_student,
+    teacher_groups_context,
+    teacher_notebook_context,
 )
 
 logger = logging.getLogger(__name__)
@@ -157,6 +175,7 @@ async def _log_retention_loop(interval_seconds: int = 3600):
     la retention è disattivata (nessuna cancellazione).
     """
     from sqlalchemy import text as sa_text
+
     from .database import write_session
     while True:
         await asyncio.sleep(interval_seconds)

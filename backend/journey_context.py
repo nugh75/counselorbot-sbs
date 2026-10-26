@@ -3,9 +3,8 @@ from __future__ import annotations
 
 from . import models
 from .ai_service import AIError
-from .diagram_blocks import strip_for_speech
 from .control_markers import strip_control_markers
-
+from .diagram_blocks import strip_for_speech
 
 SYNTHESIS_STEPS = {
     "sl-synthesis", "qsar-synthesis", "ztpi-btp", "savickas-final",

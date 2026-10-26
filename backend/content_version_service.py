@@ -1,7 +1,7 @@
 """Registro degli stati di certificazione per (contenuto, lingua)."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -88,7 +88,7 @@ def upsert_version(
         row.notes = notes
     if approved_by is not None:
         row.approved_by = approved_by
-        row.approved_at = datetime.now(timezone.utc)
+        row.approved_at = datetime.now(UTC)
     db.commit()
     db.refresh(row)
     return row
@@ -104,7 +104,7 @@ def promote(
     assert_transition(version.content_type, version.status, target_status)
     version.status = target_status
     version.approved_by = approved_by
-    version.approved_at = datetime.now(timezone.utc)
+    version.approved_at = datetime.now(UTC)
     db.commit()
     db.refresh(version)
     return version

@@ -1,8 +1,8 @@
-import os
-import logging
 import json
+import logging
+import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from functools import partial
 
 import anthropic
@@ -12,29 +12,36 @@ from openai import OpenAI
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from . import models
-from . import embedding_service
-from . import personal_api
-from . import vision_service
+from . import embedding_service, models, personal_api, vision_service
+from .api_secrets import API_KEY_ENV_MAP, config_key, resolve_api_secrets
+from .local_llm import (
+    LLAMACPP_DEFAULT_URL,
+    LLAMACPP_KEY_CONFIG,
+    llamacpp_api_key,
+    openai_base,
+)
+from .model_context import (
+    ContextCapacityError,
+    context_profile,
+    fit_context,
+    validate_output_capacity,
+)
+from .openrouter_capabilities import capability_for as openrouter_capability
 from .privacy.errors import PrivacyError
 from .privacy.gateway import AIGateway, context_for
 from .privacy.types import AIRequest, Target
-from .api_secrets import API_KEY_ENV_MAP, config_key, resolve_api_secrets
-from .local_llm import LLAMACPP_DEFAULT_URL, LLAMACPP_KEY_CONFIG, llamacpp_api_key, openai_base
-from .model_context import ContextCapacityError, context_profile, fit_context, validate_output_capacity
 from .reasoning_profiles import (
     DEEP_REASONING_BUDGET,
     DISABLED_PLAN,
     OPENROUTER_MANDATORY_REASONING_MODELS,
     REASONING_EFFORT_VALUES,
     ReasoningPlan,
-    is_reasoning_model,
     is_openrouter_mandatory_reasoning,
+    is_reasoning_model,
     mark_openrouter_mandatory_reasoning,
     plan_details,
     resolve_plan,
 )
-from .openrouter_capabilities import capability_for as openrouter_capability
 
 logger = logging.getLogger(__name__)
 
@@ -239,7 +246,7 @@ class AIService:
         self.personal_target = None
         self.personal_error = None
         self.personal_error_code = "personalAPI.errors.configuration"
-        from .chatgpt_connections import preference, owner
+        from .chatgpt_connections import owner, preference
         self.chatgpt_model = preference(db)
         account = owner(db) if "chatgpt_username" in getattr(db, "info", {}) else username
         try:
@@ -576,7 +583,7 @@ class AIService:
         if self._budget_locked_cache is not None:
             return self._budget_locked_cache
         try:
-            month_start = datetime.now(timezone.utc).replace(
+            month_start = datetime.now(UTC).replace(
                 day=1, hour=0, minute=0, second=0, microsecond=0
             )
             # Dispatch can run after the request session has closed. A lazy
@@ -1533,8 +1540,8 @@ class AIService:
 
     def _stream_chatgpt(self, user_message, system_prompt, model, max_tokens=None, history=None):
         from .chatgpt_connections import ChatGPTError
-        from .chatgpt_responses import stream
         from .chatgpt_i18n import error_message
+        from .chatgpt_responses import stream
         try:
             for item in stream(self.db, model, user_message, system_prompt, self._normalize_history(history),
                                timeout=self._int_config("ai_timeout_seconds", 120, 10, 600), effort=self._chatgpt_effort()):
@@ -1739,7 +1746,8 @@ class AIService:
 
     def preload_ollama_model(self):
         """Carica opzionalmente Ollama con contesto e durata di permanenza limitati."""
-        import urllib.request, json as _json
+        import json as _json
+        import urllib.request
         base_url = self._get_api_key('ollama_ip') or "http://localhost:11434"
         model = self.config.get('model_name', '')
         if not model:

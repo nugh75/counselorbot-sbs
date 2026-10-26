@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import os
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 from argon2.low_level import Type, hash_secret_raw
@@ -69,7 +69,7 @@ def _wrap_aad(key_id: str, purpose: str) -> bytes:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class KeyRing:

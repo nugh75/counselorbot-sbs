@@ -7,9 +7,16 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
-from ..db_compat import dialect_insert, is_sqlite
 from ..class_access import class_tool_enabled, forum_option, require_class_tool
-from ..forum_schemas import ForumHide, ForumMuteCreate, ForumPostCreate, ForumPostUpdate, ForumTopicCreate, ForumTopicUpdate
+from ..db_compat import dialect_insert, is_sqlite
+from ..forum_schemas import (
+    ForumHide,
+    ForumMuteCreate,
+    ForumPostCreate,
+    ForumPostUpdate,
+    ForumTopicCreate,
+    ForumTopicUpdate,
+)
 from ..group_visibility import _visible_group_query
 
 router = APIRouter()
