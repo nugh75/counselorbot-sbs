@@ -21,6 +21,8 @@ on:
       - frontend/src/lib/backend-origin.ts
       - frontend/src/app/api/**
       - frontend/tests/request-origin.test.mjs
+      - resources/postgresql/**
+      - scripts/download-postgres-binaries.py
 
 permissions:
   contents: read
@@ -112,6 +114,27 @@ jobs:
 
       - name: Fetch cloudflared
         run: bash desktop/teacher/scripts/fetch-cloudflared.sh ${{ matrix.platform }} desktop/teacher/src-tauri/cloudflared
+
+      - name: Download PostgreSQL binaries (ADR-0004)
+        run: |
+          # ADR-0004 §2: binari PostgreSQL 15.19 per il target corrente
+          mkdir -p desktop/teacher/src-tauri/postgresql
+          if [ "${{ matrix.platform }}" = "linux-x64" ]; then
+            python3 scripts/download-postgres-binaries.py \
+              --target linux-x64 \
+              --output desktop/teacher/src-tauri/postgresql/current \
+              --build-from-source
+          else
+            python3 scripts/download-postgres-binaries.py \
+              --target ${{ matrix.platform }} \
+              --output desktop/teacher/src-tauri/postgresql/current
+          fi
+          # Copia bin/, lib/, share/ nella struttura attesa da Tauri
+          cp -r desktop/teacher/src-tauri/postgresql/current/bin desktop/teacher/src-tauri/postgresql/ || true
+          cp -r desktop/teacher/src-tauri/postgresql/current/lib desktop/teacher/src-tauri/postgresql/ || true
+          cp -r desktop/teacher/src-tauri/postgresql/current/share desktop/teacher/src-tauri/postgresql/ || true
+          cp resources/postgresql/manifest.json desktop/teacher/src-tauri/postgresql/ || true
+          ls -la desktop/teacher/src-tauri/postgresql/bin/ | head -10
 
       - name: Frontend boundary and origin tests
         working-directory: frontend
