@@ -84,6 +84,10 @@ def _active_classes(db: Session, username: str) -> list[tuple[int, Optional[mode
 FULL_VIEW = "all"
 CLASS_VIEW = "classes"
 
+# Forum options available in class settings (ADR-0002, F1 forum moderation).
+# Each option maps to a `forum_<name>` column on ClassSettings.
+FORUM_OPTIONS = ["students_can_open", "premoderation"]
+
 
 def _scoped_classes(db: Session, username: str, classes) -> tuple[list[Any], Union[str, int]]:
     """Classes that filter access under the stored view, and the effective view.
