@@ -18,14 +18,13 @@ Task Diario `bef7d9ec`; bug `b9292408`; issue [#598](https://github.com/nugh75/c
 ## Verifiche
 - Node 22: runtime-config/auth-provider/auth-urls 13 pass; qr/credentials panel 10 pass.
 - `tsc --noEmit`: pulito. ESLint: `ESLINT_EXIT=0` (0 errori; 1 warning preesistente a HEAD).
-- `cargo test --profile dev supervisor::`: 15 pass con exit reale `CARGO_SUPERVISOR_EXIT=0` (env con tunnel attivo/cambiato/spento, lifecycle quick/nominativo). `cargo test --locked --release` intero non completabile qui (compilazione release >1h su volume esterno): gira in CI.
-- **CI PR #600 pre-integrazione**: `Version` ✅ 40234368927; `Platform guidance` ✅ 40234368941; `desktop-teacher` ✅ **40234368971** su 43d03aaf (4/4 build + `update-manifests`, artifact 0.1.2); `backend-db` 40234368931/40239758339: sqlite/startup/portability ✅, postgres rosso — ratchet: 53 known still failing + 1 UNEXPECTED (test SSE), risolto da #601 ora su main.
-- **Post-integrazione** (merge ce97449d): `version-check` tutto 0.1.2; `guidance-check` verde (exit 0). CI post-merge da verificare sul nuovo SHA: desktop 4 build + manifest; postgres ratchet atteso con 0 unexpected (e 53 known dichiarati).
-- Guidance refresh/check: verdi (exit 0).
+- `cargo test --profile dev supervisor::`: 15 pass con exit reale `CARGO_SUPERVISOR_EXIT=0` (env con tunnel attivo/cambiato/spento, lifecycle quick/nominativo). `cargo test --locked --release` intero non eseguito su questo volume esterno: coperto dalla CI.
+- **CI sul nuovo SHA `6f251b77` TUTTA VERDE**: `desktop-teacher` **40279959571** success (4/4 build + `Generate update manifests`, artifact 0.1.2); `backend-db` **40279959469** success — ratchet sqlite: `unexpected failures: 0`; ratchet postgres: **`known failures still failing: 53` + `unexpected failures: 0` + `listed but no longer failing: 0`** (distinzione esplicita, nessuna conclusione verde per baseline legacy: i 53 sono dichiarati, l'inatteso SSE è risolto da #601).
+- Pre-integrazione (storico): desktop-teacher ✅ 40234368971 su 43d03aaf; Version 40234368927 ✅; guidance 40234368941 ✅.
 
 ## Prossimi passi
-- Push del branch con l'integrazione e verifica della CI sul nuovo SHA: 4 build desktop+manifest, `tests (sqlite)`, `tests (postgres)`; dalla lettura del ratchet distinzione esplicita tra 53 known e 0 unexpected, senza dichiarare verde per baseline legacy.
-- Quando i gate sono tutti verdi: chiusura del task `bef7d9ec` + notify. Merge della PR #600 all'utente; release **v0.1.2 (Desktop Beta)** solo dopo merge + build dispatch su `main` verificata (runbook `docs/operations/release.md`; note in `/tmp/counselorbot-release-012-notes.md`; la v0.1.1 non viene toccata).
+- **PR [#600](https://github.com/nugh75/counselorbot-sbs/pull/600) PRONTA per il merge dell'utente** (nessuna review incrociata; nessun merge autonomo). 
+- Release **v0.1.2 (Desktop Beta)** solo DOPO il merge #600 e la build dispatch su `main` verificata (runbook `docs/operations/release.md`; note in `/tmp/counselorbot-release-012-notes.md`; v0.1.1 e tag intatti).
 - Successivo (non in questo task): abbinamento studenti via tunnel (pagine `/unisciti` + dispositivi docente, ADR-0002 §4, F1-13) — issue dedicata.
 
 ## Blocchi e rischi
