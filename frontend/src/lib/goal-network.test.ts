@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { buildForest, compareGoals, descendants, ancestors, wouldCycle, effectiveShares, progress, visibilityDelta, visibleGoals, orderBranches } from './goal-network.js';
+import { buildForest, compareGoals, descendants, ancestors, wouldCycle, effectiveShares, progress, visibilityDelta, visibleGoals, orderBranches } from './goal-network.ts';
 import type { PersonalGoal } from './goals';
 
 const g = (id: number, parent_ids: number[] = [], values: Partial<PersonalGoal> = {}) =>

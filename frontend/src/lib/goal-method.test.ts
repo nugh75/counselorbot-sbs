@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { methodRefs, pickerOptions, sameRef } from './goal-method.js';
+import { methodRefs, pickerOptions, sameRef } from './goal-method.ts';
 
 test('methodRefs strips titles', () => {
     assert.deepEqual(methodRefs([{ kind: 'own', id: 3, title: 'x', available: true }, { kind: 'certified', slug: 'a', title: 'A', available: true }]),

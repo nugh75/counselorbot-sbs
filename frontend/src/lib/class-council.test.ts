@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { councilErrorKey, councilPath, matchesStudent, parseCouncilLinks, submissionText } from './class-council.js';
+import { councilErrorKey, councilPath, matchesStudent, parseCouncilLinks, submissionText } from './class-council.ts';
 
 test('council links keep valid rows only and never expect a stored password', () => {
     const rows = parseCouncilLinks([

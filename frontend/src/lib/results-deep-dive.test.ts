@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 // prettier-ignore
 // @ts-expect-error -- Node's TypeScript runner requires the extension.
-import { deepDiveSources, pathStepKey, resultsSourcePayload, loadResultsDeepDiveOptions, parseResultsDeepDive, ResultsDeepDiveError, startResultsDeepDive } from "./results-deep-dive.js";
+import { deepDiveSources, pathStepKey, resultsSourcePayload, loadResultsDeepDiveOptions, parseResultsDeepDive, ResultsDeepDiveError, startResultsDeepDive } from "./results-deep-dive.ts";
 // prettier-ignore
 // @ts-expect-error -- Node's TypeScript runner requires the extension.
-import { administrationStepText, typedStepTargetLabel } from "./i18n-administration-steps.js";
+import { administrationStepText, typedStepTargetLabel } from "./i18n-administration-steps.ts";
 
 const session = {
   path_id: 1,

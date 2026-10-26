@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 // prettier-ignore
 // @ts-expect-error -- Node's TypeScript runner requires the extension.
-import { administrationDraftKey, commitAdministrationEntry, parseAdministrationLaunch, scoreAdministrationStep } from "./administration-entry.js";
+import { administrationDraftKey, commitAdministrationEntry, parseAdministrationLaunch, scoreAdministrationStep } from "./administration-entry.ts";
 // prettier-ignore
 // @ts-expect-error -- Node's TypeScript runner requires the extension.
-import { administrationStepText, administrationStepTexts, resultProvenanceText } from "./i18n-administration-steps.js";
+import { administrationStepText, administrationStepTexts, resultProvenanceText } from "./i18n-administration-steps.ts";
 
 test("launch preserves exact target and carries the class access password", () => {
   const launch = parseAdministrationLaunch({

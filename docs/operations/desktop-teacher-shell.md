@@ -131,12 +131,12 @@ usare i PID del report e il lancio successivo sulla stessa cartella di prova.
   classe, link consiglio, URL di raccolta) usano l'origine pubblica del tunnel,
   non l'indirizzo locale del PC `127.0.0.1`. Fuori dal guscio la
   configurazione non esiste e la condivisione resta sull'origine del browser
-  (produzione, portable). La modalità nominativa con dominio
-  personalizzato (F1-10) consente di configurare un dominio stabile
-  (es. `https://counselor.tuascuola.it`) e un token Cloudflare
-  (`CLOUDFLARE_TUNNEL_TOKEN` o salvato in `credentials/cloudflared_token`).
-  Se il token nominativo non è impostato, il sistema ripiega in automatico
-  e trasparentemente sul quick tunnel automatico (F1-09).
+  (produzione, portable). Questa release propone soltanto Quick Tunnel, con
+  auth locale indipendente dalla Console portable. Il docente genera dalla
+  classe il link di abbinamento e approva i nuovi studenti (opzione attiva
+  inizialmente). La predisposizione dominio/token F1-10 rimane inattiva: non
+  appare nel pannello e non parte da una configurazione nominativa precedente.
+
 - Il frontend usa l'origine backend a runtime (F1-03): F1-17 aggiunge il
   catch-all API Node per evitare il rewrite congelato nel manifest standalone.
   Gli handler specifici di streaming restano prioritari; gli upgrade WebSocket

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { loginHref, logoutHref } from './auth.js';
+import { loginHref, logoutHref } from './auth.ts';
 
 // La configurazione pubblica arriva da /runtime-config.js prima dell'idratazione.
 function withRuntimeConfig(config: Record<string, unknown>, run: () => void) {

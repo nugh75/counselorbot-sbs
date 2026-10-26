@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { forumDraftValid, forumLink, parseForumTopic, parseForumUnread, parseForumTargets, parseForumDiscussionLinks, forumTargetHref } from './forum.js';
+import { forumDraftValid, forumLink, parseForumTopic, parseForumUnread, parseForumTargets, parseForumDiscussionLinks, forumTargetHref } from './forum.ts';
 
 test('linked resources produce local destinations only while available', () => {
     const target = { kind: 'path_step' as const, id: 7, title: null, tool_key: 'QSA', path_title: 'Start' };
@@ -60,7 +60,7 @@ test('parseForumUnread parses total and by_group counts', () => {
 });
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { forumTexts } from './i18n-forum.js';
+import { forumTexts } from './i18n-forum.ts';
 
 test('every forum message has six nonempty language strings', () => {
     for (const values of Object.values(forumTexts)) {
@@ -70,7 +70,7 @@ test('every forum message has six nonempty language strings', () => {
 });
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { forumClosedNotice, forumPostActions, forumTopicChanges, forumTopicEditable, parseForumDetail, parseForumList, parseForumLog, parseForumMutes, parseForumPending, parseForumPost } from './forum.js';
+import { forumClosedNotice, forumPostActions, forumTopicChanges, forumTopicEditable, parseForumDetail, parseForumList, parseForumLog, parseForumMutes, parseForumPending, parseForumPost } from './forum.ts';
 
 const reply = { id: 1, author_display_name: 'Anna', body: 'Text', hidden: false, deleted: false,
     hidden_reason: null, own: false, created_at: '2026-10-08T10:00:00Z', edited_at: null };

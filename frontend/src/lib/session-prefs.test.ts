@@ -4,7 +4,7 @@ import test from 'node:test';
 // Node's built-in TypeScript runner requires the explicit extension; the app's
 // bundler configuration intentionally does not enable TS extension imports.
 // @ts-expect-error -- executed directly by `node --test`.
-import { experiencePrefForInstrument } from './session-prefs.js';
+import { experiencePrefForInstrument } from './session-prefs.ts';
 
 test('Idea always asks which interaction mode to use', () => {
     assert.equal(experiencePrefForInstrument('IDEA', 'opencode'), null);

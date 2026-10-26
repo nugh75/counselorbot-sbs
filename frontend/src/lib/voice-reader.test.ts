@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { VoiceReaderController, normalizeWords, readVoiceEvents } from './voice-reader.js';
+import { VoiceReaderController, normalizeWords, readVoiceEvents } from './voice-reader.ts';
 
 const saved = { fetch: globalThis.fetch, Audio: globalThis.Audio, raf: globalThis.requestAnimationFrame, cancel: globalThis.cancelAnimationFrame };
 class FakeAudio {

@@ -109,33 +109,21 @@ OpenCode e Privacy KEK sono riservate e non attivano queste funzioni. Dettagli:
 
 ## 4. Collegare il PC alla rete degli studenti
 
-### Prova rapida
+### Link temporaneo Cloudflare Quick Tunnel
 
-Selezionare **Tunnel temporaneo rapido → Avvia Quick Tunnel**. Attendere
-l'indirizzo `https://….trycloudflare.com`; usare **Copia link** o il QR del pannello
-per una prova con dati inventati. Alla chiusura il tunnel cade; al successivo
-avvio l'URL può cambiare. È un servizio temporaneo con limiti: il pannello avverte
-**Solo per prove**. Il QR del pannello apre il sito, non abbina lo studente a una classe.
-**Ferma Tunnel** interrompe l'accesso pubblico.
+Selezionare **Tunnel temporaneo rapido → Avvia Quick Tunnel** e attendere
+l’indirizzo `https://….trycloudflare.com`. L’app desktop usa autenticazione
+locale indipendente: non servono Console portable, account ai4educ o domini.
+Il PC e il tunnel devono restare accesi durante l’accesso degli studenti.
+L’indirizzo cambia quando il tunnel viene riavviato.
 
-### Indirizzo stabile per le lezioni, dopo il completamento del percorso locale
+Il QR e **Copia link** del pannello identificano il tunnel: il link che abbina
+uno studente si genera invece nella classe, come descritto sotto.
+**Ferma Tunnel** interrompe l’accesso pubblico. Le prove di questa release
+usano dati inventati finché i gate di accettazione non saranno completati.
 
-Occorrono un dominio gestito su Cloudflare e un tunnel nominativo del docente o
-della scuola. Il referente configura in Cloudflare Zero Trust il tunnel e il
-relativo hostname pubblico, diretto al frontend locale. La porta effettiva si
-legge nell'URL locale del pannello e va controllata dopo un'eventuale collisione.
-
-Selezionare **Tunnel stabile nominativo**, inserire dominio e token del tunnel,
-usare **Verifica parametri → Salva configurazione → Avvia Tunnel nominativo**.
-La verifica controlla il formato: non prova DNS, permessi o raggiungibilità.
-Verificare l'URL da un secondo dispositivo prima di distribuirlo.
-Il token Cloudflare è distinto dalle chiavi AI: il codice attuale lo salva tra
-le credenziali locali e nella configurazione del guscio; non è una voce del
-portachiavi API. Proteggere tutta la cartella dati e non inviarla all'assistenza.
-
-Se manca il token, il codice ripiega sul tunnel rapido: controllare che l'URL
-pubblicato sia proprio il dominio stabile atteso. Il dominio da solo non basta.
-Cambiare token o configurazione può interrompere le connessioni.
+La predisposizione ai tunnel con dominio/token resta nel codice ma è inattiva:
+il pannello non propone tale modalità e non la avvia da vecchie configurazioni.
 
 ## 5. Abbinamento studenti
 
@@ -150,8 +138,8 @@ la classe.
 **Dove si genera il link (docente):** in **Classi → Apri classe → Panoramica**,
 sezione **Accesso dal tunnel docente**. Il link è utilizzabile solo con un
 tunnel attivo: se manca l'indirizzo pubblico, la pagina lo avvisa e va generato
-un nuovo link dopo l'avvio del tunnel. Opzioni facoltative: approvazione
-docente e numero massimo di utilizzi. La stessa sezione elenca i dispositivi
+un nuovo link dopo l'avvio del tunnel. L’approvazione del docente è selezionata per impostazione predefinita;
+il docente può modificare questa scelta e il numero massimo di utilizzi. La stessa sezione elenca i dispositivi
 della classe; **Gestisci tutti i dispositivi** apre `/docente/dispositivi`.
 
 **Cosa vede lo studente (`/unisciti`):** il link precompila il codice, che non

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { draftFor, linesOf } from './review-lines.js';
+import { draftFor, linesOf } from './review-lines.ts';
 
 test('a list is one trimmed item per line, at most ten', () => {
     assert.deepEqual(linesOf(' Schema \n\n  Esempi concreti'), ['Schema', 'Esempi concreti']);

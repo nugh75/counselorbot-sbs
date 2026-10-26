@@ -524,13 +524,12 @@ export function ClassOverviewTab({
                                     </Button>
                                 </div>
                             </div>
-                        )}
-                        : (
+                        ) : (
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-slate-700">{l('webLink')}</label>
                                 <p className="text-xs text-amber-600">Tunnel non attivo: il link sar&agrave; visibile quando il tunnel &egrave; avviato</p>
                             </div>
-                        )
+                        )}
 
                         {botUsername && (
                             <div className="space-y-1.5">

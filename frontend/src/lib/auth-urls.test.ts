@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { createAuthUrls } from './auth-urls.js';
+import { createAuthUrls } from './auth-urls.ts';
 
 const urls = createAuthUrls({
     appUrl: 'https://counselorbot.labform.net/',

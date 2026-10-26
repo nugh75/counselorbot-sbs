@@ -171,20 +171,17 @@ jobs:
               [ "$code" = 200 ] && break
               sleep 2
             done
-            kill "$pid" 2>/dev/null || true
-            wait "$pid" 2>/dev/null || true
             echo "run $run: GET /health -> $code"
             if [ "$code" != 200 ]; then
               tail -n 60 "$data/pg-run$run.log"
+              kill "$pid" 2>/dev/null || true
+              wait "$pid" 2>/dev/null || true
               exit 1
             fi
-            # Verifica contratto 2 (ADR-0004 §5.3)
-            contract=$(curl --max-time 2 -s http://127.0.0.1:8766/health | python3 -c "import json,sys; print(json.load(sys.stdin).get('desktop_contract', 0))" 2>/dev/null || echo "0")
-            echo "run $run: desktop_contract -> $contract"
-            if [ "$run" = 1 ] && [ "$contract" != 2 ]; then
-              echo "ERRORE: contratto atteso 2, trovato $contract"
-              exit 1
-            fi
+            # Probe before stopping the server, on both starts.
+            curl --fail --max-time 5 -s http://127.0.0.1:8766/health | python3 -c 'import json,sys; h=json.load(sys.stdin); assert h["desktop_contract"] == 2 and h["db"] == "postgresql", h'
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
           done
       - name: Upload isolated PostgreSQL startup logs
         if: always()

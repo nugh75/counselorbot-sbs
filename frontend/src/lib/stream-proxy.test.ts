@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { backendOrigin } from './backend-origin.js';
+import { backendOrigin } from './backend-origin.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { proxyChatStream } from './stream-proxy.js';
+import { proxyChatStream } from './stream-proxy.ts';
 
 test('all proxies support host development and preserve the Docker/internal fallback', () => {
     assert.equal(backendOrigin({ BACKEND_ORIGIN: 'http://127.0.0.1:8002/', BACKEND_INTERNAL_URL: 'http://backend:8000' }), 'http://127.0.0.1:8002');

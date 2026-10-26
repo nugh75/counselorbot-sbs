@@ -56,8 +56,9 @@ portachiavi reale. Restano i limiti sperimentali dell'app descritti sopra.
 
 La [guida desktop docente](../docs/operations/desktop-teacher-guide.md) spiega
 come scaricare i bundle CI Mac Apple Silicon/Intel, Windows x64 e Linux deb,
-verificare SHA-256 e installare. Il pannello offre quick tunnel con link/QR
-(solo prove), tunnel nominativo con dominio/token e **Aggiornamenti applicazione**
+verificare SHA-256 e installare. Il pannello offre il Quick Tunnel temporaneo
+con link/QR, senza dominio o Console portable. La predisposizione al tunnel
+nominativo resta inattiva. Sono presenti **Aggiornamenti applicazione**
 con canale stabile/beta e backup SQLite verificato prima dell'update. Gli snapshot
 non includono tutti i file e le chiavi. La CI produce installer e manifest come
 artifact: la pubblicazione nelle Release resta da completare prima di usare
@@ -81,7 +82,8 @@ interfaccia nelle sei lingue né i relativi screenshot.
 **Abbinamento studenti dall'interfaccia (#602).** Con il fornitore locale, la
 panoramica di ogni classe («Classi → Apri classe → Panoramica») contiene la
 sezione **Accesso dal tunnel docente**: il docente genera il link
-`/unisciti#k=…` con approvazione facoltativa e numero massimo di utilizzi, e
+`/unisciti#k=…` con approvazione del docente selezionata inizialmente
+(modificabile) e numero massimo di utilizzi, e
 nella stessa sezione vede i dispositivi della classe. Lo studente apre il link:
 il codice è precompilato dal frammento e rimosso dalla cronologia del browser,
 sceglie uno pseudonimo e riceve il codice personale di 12 caratteri mostrato
@@ -2041,6 +2043,25 @@ Per l'istanza di prova è disponibile una modalità hot reload: `scripts/dev-tes
 La piattaforma ha una sola versione, scritta nel file `VERSION` alla radice del repository e propagata a tutto ciò che la porta: `frontend/package.json` e `frontend/package-lock.json`, `backend/version.py` (esposto da `GET /version` e nei metadati OpenAPI) e, per l'app desktop docente, `desktop/teacher/package.json` e `desktop/teacher/package-lock.json`, `desktop/teacher/src-tauri/tauri.conf.json`, la versione del pacchetto in `desktop/teacher/src-tauri/Cargo.toml` e la voce del crate `counselorbot-teacher` in `Cargo.lock`. `scripts/sync-version.py` aggiorna solo righe di versione, mai le versioni delle dipendenze, e `make version-check` più il workflow `version.yml` includono anche i metadati desktop nell'allineamento: l'installer e i manifest updater riportano la stessa versione. Non cambia funzioni, dati salvati o permessi. Procedura di rilascio in `docs/operations/release.md`.
 
 I bundle desktop correnti, inclusa `v0.1.1`, usano un database SQLite su file (ADR-0003, layout 1). Il successivo ADR-0004 decide PostgreSQL 15 unico come architettura target, con SQLite limitato all'import legacy, ma tale migrazione non è ancora consegnata. Su SQLite il backend attiva il giornale WAL, l'attesa fino a 5 secondi quando il file è occupato, le chiavi esterne (stesse cancellazioni a cascata di Postgres) e `synchronous=NORMAL`; le richieste che scrivono (`POST`, `PUT`, `PATCH`, `DELETE`) e i lavori in background prendono subito il lock di scrittura (`BEGIN IMMEDIATE`), le letture no. Con una versione di SQLite precedente alla 3.35 il backend non parte (codice di uscita 3). Le colonne che l'avvio aggiunge ai database già esistenti vengono create solo se mancano, con la stessa procedura condivisa su SQLite e Postgres: il backend parte su un file SQLite nuovo e riparte sullo stesso file senza errori. Tutte le date e gli orari memorizzati, comprese le sessioni dell'accesso locale, vengono gestiti con fuso orario UTC (`UTCDateTime`), garantendo calcoli e confronti temporali corretti sia su SQLite sia su Postgres senza modificare lo schema Postgres di produzione. Server e installazione portable restano su Postgres senza cambiamenti di funzioni, dati o permessi.
+
+Le build desktop in preparazione per `2.0.0` includono PostgreSQL 15.12
+incorporato (distribuzione 15.12.1), senza richiedere un server installato a
+parte. Le nuove cartelle dati hanno layout 2 e health con contratto 2; i vecchi
+profili SQLite sono bloccati finché non sarà integrato l’upgrade assistito,
+per conservare i dati esistenti. Il converter legacy è verificato separatamente
+su import e ripresa, confrontando i conteggi delle sole tabelle migrate senza
+confondere seed e receipt tecnici; non costituisce ancora un upgrade guidato.
+macOS richiede la versione 15 o successiva.
+La finestra usa il portachiavi del sistema; i soli test headless usano profili
+isolati e credenziali sintetiche. Le build riutilizzano il backend e il frontend
+dell’applicazione web e verificano anche schema, seed, riavvio e arresto del
+cluster PostgreSQL. L’app desktop ha accesso locale indipendente dalla Console portable: il
+docente condivide il link temporaneo Cloudflare Quick Tunnel e approva gli
+studenti dalla propria applicazione, senza bisogno di un dominio. Nessuna modifica a pagine,
+permessi o dati del server è applicata automaticamente dalla build desktop.
+La guida interfaccia nelle sei lingue è stata rivista senza cambiamenti di
+navigazione; procedure e limiti: `docs/operations/desktop-ci-recovery.md`.
+
 
 Chat, Assistente e lettura vocale rilasciano esplicitamente la transazione della richiesta prima di iniziare lo stream; i log finali e i salvataggi usano transazioni brevi. Anche le verifiche del budget e delle credenziali ChatGPT chiudono la propria sessione prima della risposta del provider. Un benchmark ripetibile simula 30 studenti con stream sintetici, salvataggi concorrenti e attività in background, verificando l'assenza di errori di lock, l'avanzamento delle letture e l'integrità dei dati. Misure e limiti della simulazione sono in `docs/operations/sqlite-load-concurrency.md`: non misurano la velocità di un provider LLM reale. Guida interfaccia e screenshot nelle sei lingue rivisti, senza nuovi controlli o testi utente.
 

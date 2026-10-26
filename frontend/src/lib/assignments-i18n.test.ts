@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { assignmentText } from './i18n-assignments.js';
+import { assignmentText } from './i18n-assignments.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { teacherAreaName } from './i18n-teacher-area.js';
+import { teacherAreaName } from './i18n-teacher-area.ts';
 
 const languages = ['it', 'en', 'es', 'fr', 'de', 'sv'] as const;
 

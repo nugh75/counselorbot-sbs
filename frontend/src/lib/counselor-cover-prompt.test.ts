@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { COUNSELOR_METAPHOR_PRESETS, composeCounselorCoverAIPrompt } from './counselor-cover-prompt.js';
+import { COUNSELOR_METAPHOR_PRESETS, composeCounselorCoverAIPrompt } from './counselor-cover-prompt.ts';
 
 test('COUNSELOR_METAPHOR_PRESETS defines rich thematic visual metaphors for counselors', () => {
     assert.ok(COUNSELOR_METAPHOR_PRESETS.length >= 10);

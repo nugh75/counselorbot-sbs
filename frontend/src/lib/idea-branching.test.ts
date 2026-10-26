@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { branchCommands } from './idea-branching.js';
+import { branchCommands } from './idea-branching.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { EDITABLE_ROLES } from './idea-roles.js';
+import { EDITABLE_ROLES } from './idea-roles.ts';
 import type { IdeaBranch } from './idea-map';
 
 const chat = () => readFileSync(new URL('../components/qsa/GuidedChatInterface.tsx', import.meta.url), 'utf8');

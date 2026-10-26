@@ -142,6 +142,27 @@ impl CredentialStore for MemoryStore {
 
 pub struct Credentials(Mutex<Box<dyn CredentialStore>>);
 
+/// Explicit smoke/headless modes use disposable profiles and never the OS
+/// keychain. Stable synthetic DB credentials allow restarting that test profile.
+#[derive(Default)]
+pub struct HeadlessStore(MemoryStore);
+
+impl CredentialStore for HeadlessStore {
+    fn get(&self, id: &str) -> Result<Option<String>, String> {
+        if id.starts_with("postgresql-app:") || id.starts_with("postgresql-admin:") {
+            Ok(Some("isolated-headless-test-only".into()))
+        } else {
+            self.0.get(id)
+        }
+    }
+    fn set(&mut self, id: &str, value: &str) -> Result<(), String> {
+        self.0.set(id, value)
+    }
+    fn remove(&mut self, id: &str) -> Result<(), String> {
+        self.0.remove(id)
+    }
+}
+
 #[derive(Serialize)]
 pub struct CredentialStatus {
     pub id: &'static str,
@@ -226,12 +247,11 @@ impl Credentials {
     /// Restituisce la password generata (32 byte base64url).
     pub fn generate_postgres_password(&self, account: &str, cluster_uuid: &str) -> Result<String, String> {
         let id = format!("{account}:{cluster_uuid}");
+        if let Some(password) = self.0.lock().map_err(|_| STORE_ERROR)?.get(&id)? {
+            return Ok(password);
+        }
         let password = generate_secure_password();
-        self.0
-            .lock()
-            .map_err(|_| STORE_ERROR)?
-            .set(&id, &password)
-            .map_err(|_| STORE_ERROR.into())?;
+        self.0.lock().map_err(|_| STORE_ERROR)?.set(&id, &password).map_err(|_| STORE_ERROR.to_string())?;
         Ok(password)
     }
 
@@ -248,7 +268,7 @@ impl Credentials {
 
     /// ADR-0004 §4: rimuove le password PostgreSQL di un cluster.
     pub fn remove_postgres_passwords(&self, cluster_uuid: &str) -> Result<(), String> {
-        let store = self.0.lock().map_err(|_| STORE_ERROR)?;
+        let mut store = self.0.lock().map_err(|_| STORE_ERROR)?;
         for account in ["postgresql-app", "postgresql-admin"] {
             let id = format!("{account}:{cluster_uuid}");
             let _ = store.remove(&id); // ignora se non esiste
@@ -445,5 +465,30 @@ mod tests {
             assert!(request.headers()[name].is_sensitive());
             assert!(!format!("{:?}", request.headers()).contains(SENTINEL));
         }
+    }
+}
+
+#[cfg(test)]
+mod postgres_tests {
+    use super::*;
+
+    #[test]
+    fn cluster_passwords_are_preserved_on_repeated_calls() {
+        let credentials = Credentials::new(MemoryStore::default());
+        let app = credentials.generate_postgres_password("postgresql-app", "uuid").unwrap();
+        assert_eq!(credentials.generate_postgres_password("postgresql-app", "uuid").unwrap(), app);
+        let admin = credentials.generate_postgres_password("postgresql-admin", "uuid").unwrap();
+        assert_ne!(app, admin);
+        credentials.remove_postgres_passwords("uuid").unwrap();
+        assert!(credentials.get_postgres_password("postgresql-app", "uuid").is_err());
+    }
+
+    #[test]
+    fn disposable_profiles_reopen_without_using_the_os_store() {
+        let first = Credentials::new(HeadlessStore::default());
+        let password = first.generate_postgres_password("postgresql-app", "uuid").unwrap();
+        let second = Credentials::new(HeadlessStore::default());
+        assert_eq!(second.get_postgres_password("postgresql-app", "uuid").unwrap(), password);
+        assert!(second.status().unwrap().iter().all(|provider| !provider.configured));
     }
 }

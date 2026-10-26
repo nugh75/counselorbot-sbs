@@ -217,6 +217,7 @@ test('the class overview offers pairing only with the local provider', async () 
     try {
         await local.page.getByRole('heading', { name: 'Accesso dal tunnel docente' }).waitFor();
         await local.page.getByRole('button', { name: 'Genera nuovo link' }).waitFor();
+        assert.equal(await local.page.getByRole('checkbox', { name: 'Richiedi l’approvazione del docente' }).isChecked(), true);
         assert.deepEqual(local.errors, []);
     } finally { await local.context.close(); }
 
@@ -246,7 +247,10 @@ test('the pairing link warns when the tunnel is not configured', async () => {
             '/admin/users-summary': async route => route.fulfill({ json: { users: [] } }),
             '/teacher/institutions': async route => route.fulfill({ json: [] }),
             '/local-auth/devices': async route => route.fulfill({ json: { classes: [] } }),
-            'POST /local-auth/classes/88/pairing-code': async route => route.fulfill({ json: { link, expires_at: '2026-11-02T08:00:00Z' } }),
+            'POST /local-auth/classes/88/pairing-code': async route => {
+                assert.equal(route.request().postDataJSON().requires_approval, true);
+                return route.fulfill({ json: { link, expires_at: '2026-11-02T08:00:00Z' } });
+            },
         },
     });
     try {

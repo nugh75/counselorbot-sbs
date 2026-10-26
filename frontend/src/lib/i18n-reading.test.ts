@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { readingText } from './i18n-reading.js';
+import { readingText } from './i18n-reading.ts';
 
 test('the reading card has a complete six-language label set', () => {
     const languages = ['it', 'en', 'es', 'fr', 'de', 'sv'];

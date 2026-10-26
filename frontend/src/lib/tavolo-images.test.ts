@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { parseAdminTavoloImages } from './tavolo-images.js';
+import { parseAdminTavoloImages } from './tavolo-images.ts';
 
 const image = { id: 'a', name: 'Studio', usage: 'Scrivania', original_name: 'a.png', created_by: 'admin', url: '/x' };
 

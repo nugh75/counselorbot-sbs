@@ -64,12 +64,8 @@ mod system {
 
     #[link(name = "IOKit", kind = "framework")]
     extern "C" {
-        fn IOPMAssertionCreateWithName(
-            assertion_type: CFStringRef,
-            level: u32,
-            name: CFStringRef,
-            id: *mut u32,
-        ) -> i32;
+        fn IOPMAssertionCreateWithName(assertion_type: CFStringRef, level: u32, name: CFStringRef, id: *mut u32)
+            -> i32;
         fn IOPMAssertionRelease(id: u32) -> i32;
     }
 

@@ -1,12 +1,10 @@
-from __future__ import annotations
-
 """Resolved class access: what a user may use now (plan §5.1, #89).
 
 One resolver backs every guard. The admin platform layer comes first
 (instrument active, student audience). Students with an active membership in
 an active class then get the union of their classes' settings: a tool is
-enabled if at least one class enables it. Staff and users with no class get
-the admin layer only. Reads of existing data are never guarded (decision 8).
+enabled if at least one class enables it. Staff and users with no class get the
+admin layer only. Reads of existing data are never guarded (decision 8).
 
 A student with classes picks the active view (#146): the class view (default,
 the union above), one class only, or the full view, which drops the class layer
@@ -14,7 +12,6 @@ from every guard. The choice lives in `AccountPreferences.class_view`.
 """
 import re
 from types import SimpleNamespace
-from typing import Any, Optional, Tuple, Union
 
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
@@ -22,12 +19,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import auth, models
-from .class_tools import (
-    ALWAYS_ON,
-    GUIDED_PATH_KEYS,
-    PERSONAL_TOOL_KEYS,
-    builtin_guided_paths,
-)
+from .class_tools import ALWAYS_ON, GUIDED_PATH_KEYS, PERSONAL_TOOL_KEYS, builtin_guided_paths
 
 
 class ToolAccessDenied(HTTPException):
@@ -63,7 +55,7 @@ def is_staff(identity) -> bool:
                 or auth.is_teacher(identity.get("groups")))
 
 
-def _active_classes(db: Session, username: str) -> list[tuple[int, Optional[models.ClassSettings]]]:
+def _active_classes(db: Session, username: str) -> list[tuple[int, models.ClassSettings | None]]:
     """Active classes of the user, most recently joined first."""
     if not username:
         return []
@@ -75,9 +67,11 @@ def _active_classes(db: Session, username: str) -> list[tuple[int, Optional[mode
         .order_by(models.GroupMembership.created_at.desc(), models.GroupMembership.id.desc())
         .all()
     )
-    classes = []
+    seen, classes = set(), []
     for group_id, settings in rows:
-        classes.append((group_id, settings))
+        if group_id not in seen:
+            seen.add(group_id)
+            classes.append((group_id, settings))
     return classes
 
 
@@ -85,7 +79,7 @@ FULL_VIEW = "all"
 CLASS_VIEW = "classes"
 
 
-def _scoped_classes(db: Session, username: str, classes) -> tuple[list[Any], Union[str, int]]:
+def _scoped_classes(db: Session, username: str, classes) -> tuple[list, str | int]:
     """Classes that filter access under the stored view, and the effective view.
 
     A stale choice (class left or deactivated) falls back to the class view.
@@ -97,23 +91,39 @@ def _scoped_classes(db: Session, username: str, classes) -> tuple[list[Any], Uni
     if stored.isdigit():
         chosen = [item for item in classes if item[0] == int(stored)]
         if chosen:
-            return chosen, int(stored)
+            return chosen, chosen[0][0]
     return classes, CLASS_VIEW
 
 
-def save_view(db: Session, identity, view: Union[str, int]) -> None:
+def _view_classes(db: Session, identity) -> list:
+    """Classes that filter `identity` right now; empty means no class layer."""
+    if is_staff(identity):
+        return []
     username = _username(identity)
-    if not username:
-        return
-    db.execute(
-        models.AccountPreferences.__table__.update()
-        .where(models.AccountPreferences.username == username)
-        .values(class_view=view)
-    )
+    return _scoped_classes(db, username, _active_classes(db, username))[0]
+
+
+def save_view(db: Session, identity, view: str | int) -> None:
+    """Store the active view; only a student with an active class may choose one."""
+    username = _username(identity)
+    classes = [] if is_staff(identity) else _active_classes(db, username)
+    if not classes:
+        raise HTTPException(status_code=400, detail="no_class")
+    if isinstance(view, int) and view not in {group_id for group_id, _ in classes}:
+        raise HTTPException(status_code=400, detail="class_not_joined")
+    prefs = db.get(models.AccountPreferences, username) or models.AccountPreferences(username=username)
+    prefs.class_view = None if view == CLASS_VIEW else str(view)
+    db.add(prefs)
     db.commit()
 
 
-def class_enables(settings: Optional[models.ClassSettings], key: str) -> bool:
+def class_names(db: Session, group_ids: list[int]) -> list[dict]:
+    names = dict(db.query(models.StudentGroup.id, models.StudentGroup.name)
+                 .filter(models.StudentGroup.id.in_(group_ids))) if group_ids else {}
+    return [{"id": group_id, "name": names.get(group_id, "")} for group_id in group_ids]
+
+
+def class_enables(settings: models.ClassSettings | None, key: str) -> bool:
     """Admin lock first (decision 21), then the teacher's deny-list."""
     if settings is None:
         return True
@@ -123,7 +133,7 @@ def class_enables(settings: Optional[models.ClassSettings], key: str) -> bool:
     return key not in (settings.disabled_tool_keys or [])
 
 
-def _class_enables_counselor(settings: Optional[models.ClassSettings], counselor_id: int) -> bool:
+def _class_enables_counselor(settings: models.ClassSettings | None, counselor_id: int) -> bool:
     """Same precedence as tools; lock keys are counselor ids as strings."""
     if settings is None:
         return True
@@ -133,9 +143,236 @@ def _class_enables_counselor(settings: Optional[models.ClassSettings], counselor
     return counselor_id not in (settings.disabled_counselor_ids or [])
 
 
-def forum_option(settings: Optional[models.ClassSettings], name: str) -> tuple[bool, bool]:
+def _counselor_access(db: Session, username: str, classes) -> tuple[list[int], int | None]:
+    """Allowed counselor ids (institutional union, then own private ones) and the class default.
+
+    Admin-inactive counselors are never allowed (decision 5). The default is the
+    one of the most recently joined class whose default is in the union
+    (decision 6); private counselors are never a class default (decision 7).
+    """
+    active = models.Counselor.is_active.is_(True)
+    order = (models.Counselor.sort_order, models.Counselor.id)
+    institutional = [cid for (cid,) in db.query(models.Counselor.id).filter(
+        models.Counselor.owner_username.is_(None), active).order_by(*order)
+        if any(_class_enables_counselor(settings, cid) for _, settings in classes)]
+    allowed = set(institutional)
+    default = next((settings.default_counselor_id for _, settings in classes
+                    if settings is not None and settings.default_counselor_id in allowed), None)
+    private = [cid for (cid,) in db.query(models.Counselor.id).filter(
+        models.Counselor.owner_username == username, active).order_by(*order)] if username else []
+    # Counselors a teacher of these classes offers with their API key are allowed too.
+    from .class_api_sharing import offered_private_counselors
+    offered = [cid for cid in offered_private_counselors(db, username) if cid not in private] if username else []
+    return institutional + private + offered, default
+
+
+def _admin_tool_keys(db: Session) -> list[str]:
+    reserved = [*PERSONAL_TOOL_KEYS, *ALWAYS_ON]
+    codes = [code for (code,) in db.query(models.Instrument.code).filter(
+        models.Instrument.is_active.is_(True),
+        models.Instrument.target_audience == "student",
+        models.Instrument.code.notin_(reserved),
+    ).order_by(models.Instrument.code)]
+    return codes + builtin_guided_paths(db) + list(PERSONAL_TOOL_KEYS) + sorted(ALWAYS_ON)
+
+
+def resolve_access(db: Session, identity) -> dict:
+    """GET /user/access payload; counselor fields are null when not restricted."""
+    admin_keys = _admin_tool_keys(db)
+    username = _username(identity)
+    memberships = [] if is_staff(identity) else _active_classes(db, username)
+    classes, view = _scoped_classes(db, username, memberships)
+    counselor_ids, default_counselor_id = None, None
+    if classes:
+        tool_keys = [key for key in admin_keys
+                     if key in ALWAYS_ON or any(class_enables(settings, key) for _, settings in classes)]
+        counselor_ids, default_counselor_id = _counselor_access(db, username, classes)
+    else:
+        tool_keys = admin_keys
+    return {
+        "restricted": bool(classes),
+        "tool_keys": tool_keys,
+        "counselor_ids": counselor_ids,
+        "default_counselor_id": default_counselor_id,
+        # Every active class, whatever the view: class path and forum follow membership.
+        "class_ids": [group_id for group_id, _ in memberships],
+        "view": view,
+        "classes": class_names(db, [group_id for group_id, _ in memberships]),
+    }
+
+
+def require_tool(db: Session, identity, tool_key: str | None, *, preview: bool = False) -> None:
+    """Guard for every start/write entry point of a tool.
+
+    Keys that are neither instruments, built-in guided paths nor personal tools
+    (generic chat, legacy types) are not toggleable and pass. Instrument codes match case-insensitively
+    so a client cannot dodge the guard by changing case. The global disable binds
+    admins too, except in the admin sandbox preview (decisions 5/21, C4), which
+    the chat routes already restrict to admins.
+    """
+    key = (tool_key or "").strip()
+    if not key or key in ALWAYS_ON:
+        return
+    if key in PERSONAL_TOOL_KEYS:
+        canonical = key
+    else:
+        rows = db.query(models.Instrument).filter(func.lower(models.Instrument.code) == key.lower()).all()
+        rows = [row for row in rows if row.code == key] or rows
+        if not rows:
+            if key.upper() not in GUIDED_PATH_KEYS:
+                return
+            # A built-in guided path without a row: only the class layer applies.
+            rows, canonical = [], key.upper()
+        else:
+            canonical = rows[0].code
+        if preview and identity.get("is_admin"):
+            return
+        for row in rows:
+            if not row.is_active or (row.target_audience != "student" and not is_staff(identity)):
+                raise ToolAccessDenied("tool_unavailable", row.code)
+    if is_staff(identity):
+        return
+    classes = _view_classes(db, identity)
+    if classes and not any(class_enables(settings, canonical) for _, settings in classes):
+        raise ToolAccessDenied("tool_disabled_for_class", canonical)
+
+
+def can_access_tool(db: Session, identity, tool_key: str | None, *, preview: bool = False) -> bool:
+    """Return True if require_tool succeeds, False if ToolAccessDenied is raised."""
+    try:
+        require_tool(db, identity, tool_key, preview=preview)
+        return True
+    except ToolAccessDenied:
+        return False
+
+
+def require_class_tool(db: Session, identity, group_id: int, tool_key: str) -> None:
+    """Guard for a tool that lives inside one class (the forum, F3 #104).
+
+    Unlike `require_tool`, only that class's own setting counts: another class
+    enabling its forum must not open this one (no union).
+    """
+    if not class_tool_enabled(db, identity, group_id, tool_key):
+        raise ToolAccessDenied("tool_disabled_for_class", tool_key)
+
+
+def class_tool_enabled(db: Session, identity, group_id: int, tool_key: str) -> bool:
+    return is_staff(identity) or class_enables(db.get(models.ClassSettings, group_id), tool_key)
+
+
+FORUM_OPTIONS = ("students_can_open", "premoderation")
+
+
+def forum_option(settings: models.ClassSettings | None, name: str) -> tuple[bool, bool]:
     """(effective value, locked) of a forum option; an admin lock wins (decision 21)."""
     lock = (settings.locked_forum_options or {}).get(name) if settings is not None else None
     if isinstance(lock, dict) and "value" in lock:
         return bool(lock["value"]), True
     return bool(getattr(settings, f"forum_{name}", False)) if settings is not None else False, False
+
+
+def counselor_access(db: Session, identity) -> tuple[set[int] | None, int | None]:
+    """(allowed counselor ids, class default); (None, None) means not filtered."""
+    classes = _view_classes(db, identity)
+    if not classes:
+        return None, None
+    ids, default = _counselor_access(db, _username(identity), classes)
+    return set(ids), default
+
+
+def allowed_counselor_ids(db: Session, identity) -> set[int] | None:
+    return counselor_access(db, identity)[0]
+
+
+def require_counselor(db: Session, identity, counselor_id: int | None) -> None:
+    """Guard for chat routes: a restricted student may only talk to an allowed counselor.
+
+    No counselor means the generic assistant and always passes.
+    """
+    if counselor_id is None:
+        return
+    allowed = allowed_counselor_ids(db, identity)
+    if allowed is not None and counselor_id not in allowed:
+        raise CounselorAccessDenied(counselor_id)
+
+
+# Generic prompts are not instrument prompts: they never name an owner.
+GENERIC_PROMPT_KEYS = frozenset({"prompt_generic"})
+
+
+def _default_steps():
+    from . import prompt_config
+    for name, value in vars(prompt_config).items():
+        if name.startswith("DEFAULT_") and name.endswith("GUIDED_STEPS"):
+            for step in value:
+                yield SimpleNamespace(id=step.get("id"), system_prompt_mode=step.get("system_prompt_mode"),
+                                      questionnaire_type=step.get("questionnaire_type"))
+
+
+def prompt_owners(db: Session, prompt_key: str | None) -> set[str]:
+    """Instruments whose guided flow uses `prompt_key` as its system prompt.
+
+    Owners come from the default and stored guided steps (entry prompt and the
+    follow-up prompt of the step mode) and from the per-instrument config keys
+    (`prompt_meta_<CODE>`, `prompt_components_<CODE>_…`, `prompt_guidance_<CODE>_…`).
+    """
+    from .chat_logic import FOLLOW_UP_MODE_BY_STEP_MODE, MODE_TO_SYSTEM_PROMPT_KEY, guided_step_system_prompt_key
+    from .prompt_variants import base_key
+    # A stored variant is the same instrument prompt at another context level.
+    key = base_key((prompt_key or "").strip())
+    if not key or key in GENERIC_PROMPT_KEYS:
+        return set()
+    owners = set()
+    for step in [*_default_steps(), *db.query(models.GuidedStep).all()]:
+        if not step.questionnaire_type:
+            continue
+        follow_up = MODE_TO_SYSTEM_PROMPT_KEY.get(FOLLOW_UP_MODE_BY_STEP_MODE.get(step.system_prompt_mode))
+        if key in (guided_step_system_prompt_key(step), follow_up):
+            owners.add(step.questionnaire_type)
+    upper = key.upper()
+    for (code,) in db.query(models.Instrument.code):
+        q = re.sub(r"[^A-Za-z0-9_-]+", "-", code.strip().upper())
+        for base in (f"PROMPT_META_{q}", f"PROMPT_COMPONENTS_{q}", f"PROMPT_GUIDANCE_{q}"):
+            if upper == base or upper.startswith(base + "_"):
+                owners.add(code)
+    return {owner for owner in owners if owner.strip().upper() != "GENERIC"}
+
+
+def _ownerless_prompt_keys(db: Session) -> set[str]:
+    """Prompts the server selects without an instrument: generic, known modes, guided phases, steps."""
+    from .chat_logic import GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS, MODE_TO_SYSTEM_PROMPT_KEY, guided_step_system_prompt_key
+    keys = {*GENERIC_PROMPT_KEYS, *MODE_TO_SYSTEM_PROMPT_KEY.values()}
+    keys.update(definition["key"] for definition in GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS.values())
+    keys.update(guided_step_system_prompt_key(step) for step in [*_default_steps(), *db.query(models.GuidedStep).all()])
+    return keys
+
+
+def require_chat_turn(db: Session, identity, instrument: str | None, prompt_key: str | None,
+                      *, preview: bool = False, mode: str | None = None) -> None:
+    """Guard a model turn by its instrument and by the prompt the server selected.
+
+    The client's `questionnaire_type` and `mode` are claims: an omitted, unknown
+    or mismatched instrument must not reach a disabled instrument prompt. When
+    the prompt belongs to the turn's instrument, the instrument guard suffices;
+    otherwise at least one owner of the prompt must be allowed. A raw `prompt_*`
+    `mode` whose owner cannot be resolved fails closed for students.
+    """
+    from .prompt_variants import base_key
+    require_tool(db, identity, instrument, preview=preview)
+    owners = prompt_owners(db, prompt_key)
+    claimed = (instrument or "").strip().lower()
+    key = (prompt_key or "").strip()
+    raw = key.startswith("prompt_") and key == (mode or "").strip()
+    if not owners and raw and not is_staff(identity) and not (preview and identity.get("is_admin")) \
+            and base_key(key) not in _ownerless_prompt_keys(db):
+        raise ToolAccessDenied("tool_unavailable", key)
+    if not owners or claimed in {owner.lower() for owner in owners}:
+        return
+    denied = None
+    for owner in sorted(owners):
+        try:
+            require_tool(db, identity, owner, preview=preview)
+            return
+        except ToolAccessDenied as exc:
+            denied = denied or exc
+    raise denied

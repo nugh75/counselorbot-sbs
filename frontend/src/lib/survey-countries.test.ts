@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { surveyCountries } from './survey-countries.js';
+import { surveyCountries } from './survey-countries.ts';
 
 test('all languages offer every country with translated and sorted labels', () => {
     const expected = surveyCountries('it').map(country => country.value).sort();

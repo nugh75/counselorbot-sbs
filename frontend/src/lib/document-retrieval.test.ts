@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node direct typescript execution requires extension
-import { collectionStatus, errorText, formatUsd, jobCollectionText, jobPercent, STATUS_TEXT } from './document-retrieval.js';
+import { collectionStatus, errorText, formatUsd, jobCollectionText, jobPercent, STATUS_TEXT } from './document-retrieval.ts';
 // @ts-expect-error -- Node direct typescript execution requires extension
-import { documentRetrievalText } from './i18n-document-retrieval.js';
+import { documentRetrievalText } from './i18n-document-retrieval.ts';
 
 const base = { id: 'c', label: 'C', builtin: true, api_publishable: true, vectors_allowed: true,
     vectors_match: true, building: false, last_build_error: null, n_chunks: 3 };

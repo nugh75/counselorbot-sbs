@@ -14,7 +14,7 @@ import { localPairingText, type LocalPairingTextKey } from '@/lib/i18n-local-pai
 export function ClassPairingSection({ groupId }: { groupId: number }) {
     const { lang } = useI18n();
     const l = (key: LocalPairingTextKey, vars?: Record<string, string | number>) => localPairingText(lang, key, vars);
-    const [requiresApproval, setRequiresApproval] = useState(false);
+    const [requiresApproval, setRequiresApproval] = useState(true);
     const [maxUses, setMaxUses] = useState('');
     const [link, setLink] = useState('');
     const [expiresAt, setExpiresAt] = useState('');

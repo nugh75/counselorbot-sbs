@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { TEMPLATE_STEP_KINDS, STEP_KINDS, guidedChatKeys, isLegacyQuestionnaireTool, isPersonalTool, isStandaloneGuidedChat } from './path-step-kinds.js';
+import { TEMPLATE_STEP_KINDS, STEP_KINDS, guidedChatKeys, isLegacyQuestionnaireTool, isPersonalTool, isStandaloneGuidedChat } from './path-step-kinds.ts';
 
 const row = (key: string, kind: 'instrument' | 'personal', category: string) => ({ key, kind, category });
 

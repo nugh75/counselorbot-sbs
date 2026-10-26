@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { isShellInternalPath } from './shell-internal.js';
+import { isShellInternalPath } from './shell-internal.ts';
 
 test('blocks the backend shell-only routes behind the /api rewrite', () => {
     for (const path of ['/api/internal', '/api/internal/', '/api/internal/ping', '/API/Internal/ping', '//api//internal/x', '/api/%69nternal/ping']) {

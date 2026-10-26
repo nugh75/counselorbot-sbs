@@ -5,9 +5,8 @@
 //! `postgres` è il figlio diretto, sorvegliato dalla lifeline e dal Job Object.
 
 use std::collections::HashMap;
-use std::ffi::OsString;
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command, Stdio};
+use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -18,7 +17,7 @@ use crate::logs;
 
 /// Versione PostgreSQL inclusa nel bundle (ADR-0004 §2.1).
 pub const PG_MAJOR: u32 = 15;
-pub const PG_MINOR: &str = "15.19";
+pub const PG_MINOR: &str = "15.12";
 
 /// Timeout di avvio del cluster (ADR-0004 §5.3: 180s primo avvio, 60s successivi).
 pub const FIRST_START_TIMEOUT: Duration = Duration::from_secs(180);
@@ -57,6 +56,28 @@ pub struct RunningCluster {
     pub log_path: PathBuf,
     /// Handle del processo figlio (per stop).
     process: Option<Child>,
+    lifeline: Option<ChildStdin>,
+    _job: crate::platform::Job,
+}
+
+impl Drop for RunningCluster {
+    fn drop(&mut self) {
+        // EOF asks the Unix lifeline to stop PostgreSQL, including error paths.
+        self.lifeline.take();
+        if let Some(child) = &mut self.process {
+            let deadline = Instant::now() + Duration::from_secs(7);
+            while Instant::now() < deadline {
+                if matches!(child.try_wait(), Ok(Some(_))) {
+                    return;
+                }
+                #[cfg(windows)]
+                let _ = child.kill();
+                std::thread::sleep(Duration::from_millis(100));
+            }
+            let _ = child.kill();
+            let _ = child.wait();
+        }
+    }
 }
 
 /// Stato di salute del cluster (nessun segreto, ADR-0004 §5.1).
@@ -144,12 +165,14 @@ impl std::error::Error for PgError {}
 /// Manifest dei binari PostgreSQL (ADR-0004 §2.2).
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PostgresManifest {
+    #[serde(default)]
+    pub target: String,
     pub major: u32,
     pub minor: String,
     pub distribution: String,
     pub version: String,
     /// SHA-256 dell'archivio sorgente per ogni target.
-    pub sha256: HashMap<String, String>,
+    pub targets: HashMap<String, serde_json::Value>,
     /// Elenco dei binari inclusi.
     pub binaries: Vec<String>,
     /// Riferimenti a licenza e notice.
@@ -180,13 +203,30 @@ impl PostgresClusterManager {
         let manifest_path = self.resources.join("postgresql/manifest.json");
         let text = std::fs::read_to_string(&manifest_path)
             .map_err(|e| PgError::ManifestMissing(format!("{}: {e}", manifest_path.display())))?;
-        let manifest: PostgresManifest = serde_json::from_str(&text)
-            .map_err(|e| PgError::ManifestMissing(format!("JSON non valido: {e}")))?;
+        let manifest: PostgresManifest =
+            serde_json::from_str(&text).map_err(|e| PgError::ManifestMissing(format!("JSON non valido: {e}")))?;
         if manifest.major != PG_MAJOR {
-            return Err(PgError::VersionMismatch {
-                expected: PG_MAJOR,
-                found: manifest.version.clone(),
-            });
+            return Err(PgError::VersionMismatch { expected: PG_MAJOR, found: manifest.version.clone() });
+        }
+        if manifest.minor != PG_MINOR || manifest.targets.is_empty() {
+            return Err(PgError::ManifestMissing("versione/pin del bundle non valido".into()));
+        }
+        let target = if cfg!(target_os = "windows") {
+            "windows-x64"
+        } else if cfg!(target_os = "linux") {
+            "linux-x64"
+        } else if cfg!(target_arch = "aarch64") {
+            "macos-arm64"
+        } else {
+            "macos-x64"
+        };
+        if manifest.target != target
+            || manifest.targets.get(target).and_then(|spec| spec["sha256"].as_str()).map(str::len) != Some(64)
+        {
+            return Err(PgError::ManifestMissing("target/checksum del bundle non valido".into()));
+        }
+        for binary in &manifest.binaries {
+            self.binary_path(binary)?;
         }
         self.manifest = Some(manifest);
         Ok(self.manifest.as_ref().unwrap())
@@ -219,9 +259,7 @@ impl PostgresClusterManager {
         // Verifica che PGDATA sia vuota (ADR-0004 §5.2: mai initdb su cartella non vuota)
         if pgdata.exists() {
             let has_pg_version = pgdata.join("PG_VERSION").exists();
-            let is_empty = std::fs::read_dir(&pgdata)
-                .map(|mut d| d.next().is_none())
-                .unwrap_or(false);
+            let is_empty = std::fs::read_dir(&pgdata).map(|mut d| d.next().is_none()).unwrap_or(false);
             if has_pg_version || !is_empty {
                 return Err(PgError::DataDirNotEmpty(pgdata));
             }
@@ -246,13 +284,31 @@ impl PostgresClusterManager {
         };
 
         // Genera credenziali nel portachiavi OS (ADR-0004 §4)
-        let app_password = self.credentials.generate_postgres_password("postgresql-app", &cluster_uuid)?;
-        let admin_password = self.credentials.generate_postgres_password("postgresql-admin", &cluster_uuid)?;
+        self.credentials
+            .generate_postgres_password("postgresql-app", &cluster_uuid)
+            .map_err(PgError::KeyringUnavailable)?;
+        let admin_password = self
+            .credentials
+            .generate_postgres_password("postgresql-admin", &cluster_uuid)
+            .map_err(PgError::KeyringUnavailable)?;
 
         // initdb con password da file temporaneo (ADR-0004 §5.2)
         let initdb = self.binary_path("initdb")?;
-        let pwfile = pgdata.join(".initdb.pw");
-        std::fs::write(&pwfile, &admin_password).map_err(|e| PgError::Io(format!("scrittura pwfile: {e}")))?;
+        // initdb requires an empty PGDATA, including hidden files.
+        let pwfile = data_root.join("run/initdb.pw");
+        std::fs::create_dir_all(data_root.join("run")).map_err(|e| PgError::Io(e.to_string()))?;
+        let mut options = std::fs::OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        use std::io::Write;
+        options
+            .open(&pwfile)
+            .and_then(|mut file| file.write_all(admin_password.as_bytes()))
+            .map_err(|e| PgError::Io(format!("scrittura pwfile: {e}")))?;
 
         let output = Command::new(&initdb)
             .arg(format!("--pgdata={}", pgdata.display()))
@@ -265,11 +321,11 @@ impl PostgresClusterManager {
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .output()
-            .map_err(|e| PgError::InitDbFailed(format!("esecuzione initdb: {e}")))?;
+            .output();
 
         // Elimina il file temporaneo con la password
         let _ = std::fs::remove_file(&pwfile);
+        let output = output.map_err(|e| PgError::InitDbFailed(format!("esecuzione initdb: {e}")))?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
@@ -280,7 +336,8 @@ impl PostgresClusterManager {
         let run_dir = data_root.join("run");
         std::fs::create_dir_all(&run_dir).map_err(|e| PgError::Io(format!("creazione run/: {e}")))?;
         let identity_path = run_dir.join("postgresql.json");
-        let text = serde_json::to_string_pretty(&identity).map_err(|e| PgError::Io(format!("serialize identity: {e}")))?;
+        let text =
+            serde_json::to_string_pretty(&identity).map_err(|e| PgError::Io(format!("serialize identity: {e}")))?;
         std::fs::write(&identity_path, text).map_err(|e| PgError::Io(format!("scrittura identity: {e}")))?;
 
         logs::log(format!("cluster PostgreSQL preparato: uuid={cluster_uuid}"));
@@ -291,8 +348,10 @@ impl PostgresClusterManager {
     pub fn start(&mut self, identity: &ClusterIdentity) -> Result<RunningCluster, PgError> {
         self.load_manifest()?;
         let postgres = self.binary_path("postgres")?;
-        let log_path = identity.pgdata_path
+        let log_path = identity
+            .pgdata_path
             .parent()
+            .and_then(|p| p.parent())
             .and_then(|p| p.parent())
             .map(|p| p.join("logs/postgresql.log"))
             .unwrap_or_else(|| PathBuf::from("logs/postgresql.log"));
@@ -309,7 +368,16 @@ impl PostgresClusterManager {
         let port = find_free_port()?;
 
         // Avvia postgres direttamente come figlio (ADR-0004 §5.2: mai pg_ctl start)
-        let mut child = Command::new(&postgres)
+        let mut command = if cfg!(unix) {
+            let mut wrapper = Command::new(std::env::current_exe().map_err(|e| PgError::Io(e.to_string()))?);
+            wrapper.arg("--lifeline").arg("--postgres").arg("--").arg(&postgres);
+            wrapper
+        } else {
+            Command::new(&postgres)
+        };
+        crate::platform::prepare(&mut command);
+        let job = crate::platform::Job::new().map_err(|e| PgError::Io(e.to_string()))?;
+        let mut child = command
             .arg(format!("-D{}", identity.pgdata_path.display()))
             .arg(format!("-p{port}"))
             .arg("-c")
@@ -326,24 +394,23 @@ impl PostgresClusterManager {
             .arg("full_page_writes=on")
             .arg("-c")
             .arg("synchronous_commit=on")
-            .stdin(Stdio::null())
+            .stdin(Stdio::piped())
             .stdout(Stdio::from(log_file.try_clone().map_err(|e| PgError::Io(format!("clone log: {e}")))?))
             .stderr(Stdio::from(log_file))
             .spawn()
             .map_err(|e| PgError::StartFailed(format!("spawn postgres: {e}")))?;
+        job.assign(&child).map_err(|e| PgError::StartFailed(e.to_string()))?;
+        let lifeline = child.stdin.take();
 
         let postmaster_pid = child.id();
         let startup_fingerprint = format!(
             "{}:{}:{}",
             postgres.display(),
             identity.pgdata_path.display(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.as_millis())
-                .unwrap_or(0)
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0)
         );
 
-        let running = RunningCluster {
+        let mut running = RunningCluster {
             identity: identity.clone(),
             postmaster_pid,
             executable: postgres.clone(),
@@ -351,6 +418,8 @@ impl PostgresClusterManager {
             port,
             log_path: log_path.clone(),
             process: Some(child),
+            lifeline,
+            _job: job,
         };
 
         // Attendi che sia pronto (pg_isready)
@@ -358,7 +427,11 @@ impl PostgresClusterManager {
         let deadline = Instant::now() + FIRST_START_TIMEOUT;
         loop {
             if Instant::now() > deadline {
+                let _ = self.stop(&mut running, StopMode::Immediate);
                 return Err(PgError::StartTimeout);
+            }
+            if running.process.as_mut().and_then(|child| child.try_wait().ok()).flatten().is_some() {
+                return Err(PgError::StartFailed("postgres terminato prima di essere pronto".into()));
             }
             let output = Command::new(&pg_isready)
                 .arg("-h")
@@ -377,29 +450,91 @@ impl PostgresClusterManager {
             }
         }
 
+        running.postmaster_pid = std::fs::read_to_string(identity.pgdata_path.join("postmaster.pid"))
+            .ok()
+            .and_then(|text| text.lines().next()?.parse().ok())
+            .ok_or_else(|| PgError::StartFailed("postmaster.pid mancante".into()))?;
+        // initdb only creates the administrator. Bootstrap the non-superuser
+        // application role/database before probing with the application credentials.
+        if let Err(error) = self.bootstrap(&running) {
+            let _ = self.stop(&mut running, StopMode::Fast);
+            return Err(error);
+        }
+
         logs::log(format!("cluster PostgreSQL avviato: pid={postmaster_pid} port={port}"));
         Ok(running)
     }
 
+    fn bootstrap(&self, running: &RunningCluster) -> Result<(), PgError> {
+        let admin_password = self
+            .credentials
+            .get_postgres_password("postgresql-admin", &running.identity.cluster_uuid)
+            .map_err(PgError::KeyringUnavailable)?;
+        let app_password = self
+            .credentials
+            .get_postgres_password("postgresql-app", &running.identity.cluster_uuid)
+            .map_err(PgError::KeyringUnavailable)?;
+        let psql = self.binary_path("psql")?;
+        let sql = format!(
+            "SELECT format('CREATE ROLE counselorbot_app LOGIN PASSWORD %L', '{}') WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'counselorbot_app')\\gexec\nSELECT 'CREATE DATABASE counselorbot OWNER counselorbot_app' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'counselorbot')\\gexec\n",
+            app_password.replace('\'', "''")
+        );
+        let mut child = Command::new(psql)
+            .args([
+                "-X",
+                "-w",
+                "-h",
+                "127.0.0.1",
+                "-p",
+                &running.port.to_string(),
+                "-U",
+                "counselorbot_admin",
+                "-d",
+                "postgres",
+                "-v",
+                "ON_ERROR_STOP=1",
+            ])
+            .env("PGPASSWORD", admin_password)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| PgError::ProbeFailed(e.to_string()))?;
+        use std::io::Write;
+        child.stdin.take().unwrap().write_all(sql.as_bytes()).map_err(|e| PgError::ProbeFailed(e.to_string()))?;
+        if !child.wait_with_output().map_err(|e| PgError::ProbeFailed(e.to_string()))?.status.success() {
+            return Err(PgError::ProbeFailed("creazione ruolo/database fallita".into()));
+        }
+        Ok(())
+    }
+
     /// Verifica lo stato di salute del cluster (ADR-0004 §5.1).
     pub fn probe(&self, running: &RunningCluster) -> Result<ClusterHealth, PgError> {
-        let app_password = self.credentials.get_postgres_password("postgresql-app", &running.identity.cluster_uuid)?;
+        let app_password = self
+            .credentials
+            .get_postgres_password("postgresql-app", &running.identity.cluster_uuid)
+            .map_err(PgError::KeyringUnavailable)?;
         let psql = self.binary_path("psql")?;
 
         // Connessione come counselorbot_app e verifica (ADR-0004 §5.2 step 5)
-        let database_url = format!(
-            "postgresql://counselorbot_app:{}@127.0.0.1:{}/counselorbot",
-            urlencode(&app_password),
-            running.port
-        );
-
         let output = Command::new(&psql)
-            .arg(&database_url)
+            .args([
+                "-X",
+                "-w",
+                "-h",
+                "127.0.0.1",
+                "-p",
+                &running.port.to_string(),
+                "-U",
+                "counselorbot_app",
+                "-d",
+                "counselorbot",
+            ])
             .arg("-t")
             .arg("-A")
             .arg("-c")
             .arg("SELECT version(), current_database(), current_user;")
-            .env("PGPASSWORD", "") // mai in argv
+            .env("PGPASSWORD", app_password)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -407,8 +542,7 @@ impl PostgresClusterManager {
             .map_err(|e| PgError::ProbeFailed(format!("esecuzione psql: {e}")))?;
 
         if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(PgError::ProbeFailed(stderr.trim().to_string()));
+            return Err(PgError::ProbeFailed("connessione applicativa fallita".into()));
         }
 
         let stdout = String::from_utf8_lossy(&output.stdout);
@@ -468,6 +602,7 @@ impl PostgresClusterManager {
         }
 
         // Aspetta che il processo figlio termini
+        running.lifeline.take();
         if let Some(ref mut child) = running.process {
             let _ = child.wait();
         }
@@ -482,7 +617,10 @@ impl PostgresClusterManager {
 
     /// Costruisce DATABASE_URL per il backend (ADR-0004 §4).
     pub fn database_url(&self, running: &RunningCluster) -> Result<String, PgError> {
-        let app_password = self.credentials.get_postgres_password("postgresql-app", &running.identity.cluster_uuid)?;
+        let app_password = self
+            .credentials
+            .get_postgres_password("postgresql-app", &running.identity.cluster_uuid)
+            .map_err(PgError::KeyringUnavailable)?;
         Ok(format!(
             "postgresql://counselorbot_app:{}@127.0.0.1:{}/counselorbot",
             urlencode(&app_password),
@@ -491,9 +629,32 @@ impl PostgresClusterManager {
     }
 }
 
+/// Native integration gate: fresh initdb, application-role SQL authentication,
+/// fast shutdown, then a second start with the same cluster and credentials.
+pub fn smoke(resources: PathBuf, root: PathBuf) -> Result<(), String> {
+    let data =
+        crate::datadir::DataDir::prepare_with_layout(root, env!("CARGO_PKG_VERSION"), crate::datadir::LAYOUT_POSTGRES)?;
+    let credentials = Arc::new(Credentials::new(crate::credentials::HeadlessStore::default()));
+    let mut manager = PostgresClusterManager::new(resources, credentials);
+    let identity = manager
+        .prepare_new(&data.root, env!("CARGO_PKG_VERSION"), "org.ai4educ.counselorbot.teacher")
+        .map_err(|e| e.to_string())?;
+    for run in 1..=2 {
+        let mut running = manager.start(&identity).map_err(|e| e.to_string())?;
+        let probe = manager.probe(&running);
+        let stopped = manager.stop(&mut running, StopMode::Fast);
+        let health = probe.map_err(|e| e.to_string())?;
+        stopped.map_err(|e| e.to_string())?;
+        if health.database != "counselorbot" || health.role != "counselorbot_app" {
+            return Err("Ruolo/database applicativo inatteso".into());
+        }
+        println!("ok: PostgreSQL {PG_MINOR}, avvio {run}, ruolo applicativo e arresto");
+    }
+    Ok(())
+}
+
 /// Genera un UUID v4.
 fn uuid_v4() -> String {
-    use getrandom::Rng;
     let mut bytes = [0u8; 16];
     getrandom::fill(&mut bytes).expect("system random generator");
     // Imposta versione 4 e variante RFC 4122
@@ -501,22 +662,30 @@ fn uuid_v4() -> String {
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
     format!(
         "{:02x}{:02x}{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}",
-        bytes[0], bytes[1], bytes[2], bytes[3],
-        bytes[4], bytes[5],
-        bytes[6], bytes[7],
-        bytes[8], bytes[9],
-        bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]
+        bytes[0],
+        bytes[1],
+        bytes[2],
+        bytes[3],
+        bytes[4],
+        bytes[5],
+        bytes[6],
+        bytes[7],
+        bytes[8],
+        bytes[9],
+        bytes[10],
+        bytes[11],
+        bytes[12],
+        bytes[13],
+        bytes[14],
+        bytes[15]
     )
 }
 
 /// Trova una porta TCP libera su 127.0.0.1.
 fn find_free_port() -> Result<u16, PgError> {
     use std::net::TcpListener;
-    let listener = TcpListener::bind("127.0.0.1:0")
-        .map_err(|e| PgError::Io(format!("bind porta libera: {e}")))?;
-    let port = listener.local_addr()
-        .map_err(|e| PgError::Io(format!("porta libera: {e}")))?
-        .port();
+    let listener = TcpListener::bind("127.0.0.1:0").map_err(|e| PgError::Io(format!("bind porta libera: {e}")))?;
+    let port = listener.local_addr().map_err(|e| PgError::Io(format!("porta libera: {e}")))?.port();
     drop(listener);
     Ok(port)
 }
@@ -540,6 +709,16 @@ fn urlencode(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn released_pin_uses_the_runtime_manifest_schema() {
+        let manifest: PostgresManifest =
+            serde_json::from_str(include_str!("../../../../resources/postgresql/manifest.json")).unwrap();
+        assert_eq!(manifest.major, PG_MAJOR);
+        assert_eq!(manifest.minor, PG_MINOR);
+        assert!(manifest.binaries.contains(&"pg_restore".into()));
+        assert_eq!(manifest.targets.len(), 4);
+    }
 
     #[test]
     fn test_urlencode() {

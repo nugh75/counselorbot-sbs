@@ -5,19 +5,19 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { legacyRouteRedirects } from './legacy-routes.js';
+import { legacyRouteRedirects } from './legacy-routes.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { classPathText } from './i18n-class-paths.js';
+import { classPathText } from './i18n-class-paths.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { teacherAreaName, teacherAreaText } from './i18n-teacher-area.js';
+import { teacherAreaName, teacherAreaText } from './i18n-teacher-area.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { personalAreaName } from './i18n-personal-area.js';
+import { personalAreaName } from './i18n-personal-area.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { classSettingsText } from './i18n-class-settings.js';
+import { classSettingsText } from './i18n-class-settings.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { teacherAreaSlugs } from './teacher-area.js';
+import { teacherAreaSlugs } from './teacher-area.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { personalAreaGroups } from './personal-area.js';
+import { personalAreaGroups } from './personal-area.ts';
 
 // «Percorsi di classe» became «Piano operativo»: the guided paths of the
 // instruments keep their name, the feature never shows the old one again.

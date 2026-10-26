@@ -90,9 +90,10 @@ non spuntare una voce basandosi sul solo test API.
   admin locale; dal tunnel la sessione docente non consente amministrazione.
 - [ ] Quick tunnel con dati inventati: link e QR, streaming POST oltre 60 s con
   pausa del provider e heartbeat, stop/restart e URL aggiornato.
-- [ ] Tunnel nominativo con dominio di prova: DNS e porta frontend, token valido,
-  URL stabile dopo riavvio, token mancante/errato riconosciuto; non accettare il
-  ripiego quick come esito nominativo. Serve l'account del proprietario del tunnel.
+- [ ] Nessuna dipendenza da dominio o Console portable: pannello solo Quick
+  Tunnel; vecchia configurazione nominativa conservata ma inattiva. Aprire
+  l’app senza sessione Console e generare dalla classe il link per gli studenti.
+
 - [ ] Classe con due studenti sintetici: link di abbinamento, pseudonimi duplicati,
   codice personale mostrato una volta, recupero su altro browser, pending/approvazione,
   revoca, codice classe scaduto/rigenerato e limiti ai tentativi. Le pagine
