@@ -2,7 +2,6 @@
 .venv
 session_memory
 frontend
-desktop
 uploads
 chatgpt_credentials
 personal_api_credentials
