@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { autoFreezeSignature, phasesAlreadyOpened, shouldAutoFreeze } from './auto-freeze.ts';
+import { autoFreezeSignature, phasesAlreadyOpened, shouldAutoFreeze } from './auto-freeze.js';
 
 const base = { sessionId: 'session-1', messageCount: 4, isLoading: false, completed: false };
 

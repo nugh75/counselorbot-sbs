@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
-import { promptLabContextCopy } from '../src/components/admin/prompt-lab-context-copy.ts';
-import { promptLabCopy } from '../src/components/admin/prompt-lab-copy.ts';
+import { promptLabContextCopy } from '../src/components/admin/prompt-lab-context-copy.js';
+import { promptLabCopy } from '../src/components/admin/prompt-lab-copy.js';
 
 const origin = process.env.PROMPT_LAB_BASE_URL || 'http://127.0.0.1:3000';
 const base = '/api/admin/prompt-experiments';

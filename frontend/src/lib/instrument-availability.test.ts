@@ -4,7 +4,7 @@ import test from 'node:test';
 // Node's built-in TypeScript runner requires the explicit extension; the app's
 // bundler configuration intentionally does not enable TS extension imports.
 // @ts-expect-error -- executed directly by `node --test`.
-import { instrumentAvailableInLocale } from './instrument-availability.ts';
+import { instrumentAvailableInLocale } from './instrument-availability.js';
 
 const instruments = [
     { code: 'QSA', available_locales: ['it', 'en'] },

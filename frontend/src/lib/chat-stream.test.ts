@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { streamChat, IncompleteChatStreamError, ChatProviderError } from './chat-stream.ts';
+import { streamChat, IncompleteChatStreamError, ChatProviderError } from './chat-stream.js';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { chatErrorText } from './i18n-personal-api.ts';
+import { chatErrorText } from './i18n-personal-api.js';
 
 for (const [status, body, code] of [
     [502, { detail: { error_code: 'personalAPI.errors.privacy' }, private: 'Private provider details' }, 'personalAPI.errors.privacy'],

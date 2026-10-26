@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { classCompilationsText as copy } from '../src/lib/i18n-class-compilations.ts';
-import { guideAudienceText } from '../src/lib/i18n-guide-audiences.ts';
+import { classCompilationsText as copy } from '../src/lib/i18n-class-compilations.js';
+import { guideAudienceText } from '../src/lib/i18n-guide-audiences.js';
 
 const origin = new URL(process.env.TEACHER_COMPILATIONS_BASE_URL || 'http://127.0.0.1:3143').origin;
 let browser;

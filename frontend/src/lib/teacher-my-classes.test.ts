@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { parseClassGroups, type StudentGroup } from '../components/teacher/class-group-types.ts';
+import { parseClassGroups, type StudentGroup } from '../components/teacher/class-group-types.js';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { teacherAreaText } from './i18n-teacher-area.ts';
-import type { Lang } from './i18n.ts';
+import { teacherAreaText } from './i18n-teacher-area.js';
+import type { Lang } from './i18n.js';
 
 const languages: readonly Lang[] = ['it', 'en', 'es', 'fr', 'de', 'sv'];
 

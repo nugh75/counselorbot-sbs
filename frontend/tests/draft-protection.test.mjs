@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { learningText } from '../src/lib/i18n-assignment-work.ts';
-import { readingText } from '../src/lib/i18n-reading.ts';
+import { learningText } from '../src/lib/i18n-assignment-work.js';
+import { readingText } from '../src/lib/i18n-reading.js';
 
 // Browser controls and HTTP contracts; anonymous, in-memory fixtures only.
 const origin = process.env.DRAFTS_BASE_URL || 'http://127.0.0.1:3112';

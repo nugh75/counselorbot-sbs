@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { CLASS_COVER_PRESETS, getClassCoverUrl, composeClassCoverAIPrompt } from './class-cover-presets.ts';
+import { CLASS_COVER_PRESETS, getClassCoverUrl, composeClassCoverAIPrompt } from './class-cover-presets.js';
 
 test('CLASS_COVER_PRESETS defines all 10 counselor-style class covers', () => {
     assert.equal(CLASS_COVER_PRESETS.length, 10);

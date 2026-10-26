@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { linkedSegments, normalizeRecommendationCatalog, provenanceKind, recommendationPatchUrl, safeHttpUrl } from './recommendations.ts';
+import { linkedSegments, normalizeRecommendationCatalog, provenanceKind, recommendationPatchUrl, safeHttpUrl } from './recommendations.js';
 
 test('normalizeRecommendationCatalog keeps valid items and deduplicates slugs', () => {
     const result = normalizeRecommendationCatalog({

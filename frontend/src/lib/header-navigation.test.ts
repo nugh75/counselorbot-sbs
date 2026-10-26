@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { currentHeaderLink, HEADER_LINKS, headerNavigation, matchesHref } from './header-navigation.ts';
+import { currentHeaderLink, HEADER_LINKS, headerNavigation, matchesHref } from './header-navigation.js';
 import { ENTRY_HREFS, LABELS, PROFILES as FIXTURES, VIEWPORTS, band, expectedNavbar } from '../../tests/fixtures/navbar-contract.mjs';
 import type { Identity } from './auth';
 import type { HeaderLink, HeaderNavigation } from './header-navigation';

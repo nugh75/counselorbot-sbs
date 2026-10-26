@@ -2,13 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { parseClassPathStep, parseStudentClassPathStep } from './class-paths.ts';
+import { parseClassPathStep, parseStudentClassPathStep } from './class-paths.js';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { pathForumTexts } from './i18n-path-forum.ts';
+import { pathForumTexts } from './i18n-path-forum.js';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { typedStepTargetLabel } from './i18n-administration-steps.ts';
+import { typedStepTargetLabel } from './i18n-administration-steps.js';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { forumSaveError, forumStepInput, forumStepNotice, pathForumTopics, selectablePathForumTopics } from './path-forum.ts';
+import { forumSaveError, forumStepInput, forumStepNotice, pathForumTopics, selectablePathForumTopics } from './path-forum.js';
 
 const topic = (id: number, extra: Record<string, unknown> = {}) => ({
     id, group_id: 4, title: `Discussion ${id}`, body: null, author_display_name: 'Teacher', hidden: false, deleted: false,

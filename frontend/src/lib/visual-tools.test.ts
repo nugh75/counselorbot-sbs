@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, cardsInDeck, deckTypeColumns, DEFAULT_DECK_ID } from './visual-tools.ts';
+import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, cardsInDeck, deckTypeColumns, DEFAULT_DECK_ID } from './visual-tools.js';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { visualLabel } from './i18n-visual-tools.ts';
+import { visualLabel } from './i18n-visual-tools.js';
 
 test('removing a chosen alternative removes its notes and choice without mutating history', () => {
     const w = emptyWorkspace();

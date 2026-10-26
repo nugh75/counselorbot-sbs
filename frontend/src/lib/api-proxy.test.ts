@@ -4,7 +4,7 @@ import http from 'node:http';
 import { test } from 'node:test';
 import { gzipSync } from 'node:zlib';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { proxyAPI } from './api-proxy.ts';
+import { proxyAPI } from './api-proxy.js';
 
 async function backend(t: { after: (fn: () => Promise<void>) => void }, handler: http.RequestListener) {
     const server = http.createServer(handler);

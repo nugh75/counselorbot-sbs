@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { formFromDraft, isEventInstrument, milestoneFromForm } from './event-booklet.ts';
+import { formFromDraft, isEventInstrument, milestoneFromForm } from './event-booklet.js';
 
 test('only the two significant-event paths offer the booklet draft', () => {
     assert.equal(isEventInstrument('EVENTO_STUDIO'), true);

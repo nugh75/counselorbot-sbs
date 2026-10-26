@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { categoryText } from '../src/lib/i18n-institution-categories.ts';
+import { categoryText } from '../src/lib/i18n-institution-categories.js';
 
 const origin = process.env.CATEGORIES_BASE_URL || 'http://127.0.0.1:3108';
 let browser;

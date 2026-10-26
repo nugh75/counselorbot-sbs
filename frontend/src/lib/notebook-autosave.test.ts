@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { NotebookAutosave, type NotebookData } from './notebook-autosave.ts';
+import { NotebookAutosave, type NotebookData } from './notebook-autosave.js';
 
 const revision = (data: NotebookData, id = 1) => ({ id, data, source: 'manual', created_at: '2026-09-09' });
 function storage() {

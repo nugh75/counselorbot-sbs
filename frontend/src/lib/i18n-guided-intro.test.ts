@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { guidedIntroText, guideSectionFor } from './i18n-guided-intro.ts';
+import { guidedIntroText, guideSectionFor } from './i18n-guided-intro.js';
 
 test('the guided intro has a complete six-language label set', () => {
     const keys = ['title', 'purpose', 'duration', 'todo', 'buttonsDesktop', 'buttonsMobile', 'close', 'openGuide', 'fullGuide', 'closeGuide', 'dismiss'] as const;

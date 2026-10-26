@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test, before, after } from 'node:test';
 import { chromium } from 'playwright';
-import { CHATGPT_DICTS } from '../src/lib/i18n-chatgpt.ts';
+import { CHATGPT_DICTS } from '../src/lib/i18n-chatgpt.js';
 
 const origin = process.env.CHATGPT_TEST_BASE_URL || 'http://127.0.0.1:3107';
 let browser;

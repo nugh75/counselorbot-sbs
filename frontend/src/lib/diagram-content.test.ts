@@ -3,7 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { DIAGRAM_ICONS, parseDiagramSpec, splitDiagramContent } from './diagram-content.ts';
+import { DIAGRAM_ICONS, parseDiagramSpec, splitDiagramContent } from './diagram-content.js';
 
 const CYCLE = {
     type: 'cycle',

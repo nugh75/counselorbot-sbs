@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
-import { classPickerText } from '../src/lib/i18n-class-picker.ts';
-import { classGroupTexts } from '../src/components/teacher/class-group-texts.ts';
-import { notebookLinkText } from '../src/lib/teacher-notebook-links.ts';
+import { classPickerText } from '../src/lib/i18n-class-picker.js';
+import { classGroupTexts } from '../src/components/teacher/class-group-texts.js';
+import { notebookLinkText } from '../src/lib/teacher-notebook-links.js';
 
 const origin = new URL(process.env.TEACHER_PICKER_BASE_URL || 'http://127.0.0.1:3134').origin;
 let browser;

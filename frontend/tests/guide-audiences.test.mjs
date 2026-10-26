@@ -3,9 +3,9 @@ import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { guideAudienceText } from '../src/lib/i18n-guide-audiences.ts';
-import { forumText } from '../src/lib/i18n-forum.ts';
-import { classSettingsText } from '../src/lib/i18n-class-settings.ts';
+import { guideAudienceText } from '../src/lib/i18n-guide-audiences.js';
+import { forumText } from '../src/lib/i18n-forum.js';
+import { classSettingsText } from '../src/lib/i18n-class-settings.js';
 
 const origin = new URL(process.env.GUIDE_BASE_URL || 'http://127.0.0.1:3000').origin;
 const evidenceDir = fileURLToPath(new URL('../.next/guide-audiences/', import.meta.url));

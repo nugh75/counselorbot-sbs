@@ -1,6 +1,6 @@
-import { chatLayoutLabel } from '../src/lib/i18n-chat-layout.ts';
-import { chatPreferenceLabel } from '../src/lib/chat-preferences.ts';
-import { visualLabel } from '../src/lib/i18n-visual-tools.ts';
+import { chatLayoutLabel } from '../src/lib/i18n-chat-layout.js';
+import { chatPreferenceLabel } from '../src/lib/chat-preferences.js';
+import { visualLabel } from '../src/lib/i18n-visual-tools.js';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';

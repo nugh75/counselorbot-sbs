@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
-import { classPathText as text } from '../src/lib/i18n-class-paths.ts';
+import { classPathText as text } from '../src/lib/i18n-class-paths.js';
 
 const origin = new URL(process.env.CLASS_PATH_PRESENTATION_BASE_URL || 'http://127.0.0.1:3161').origin;
 const browser = await chromium.launch({headless: true});
