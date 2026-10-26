@@ -82,7 +82,7 @@ pid_of() { field "r.sidecars.find(s => s.name === '$1').pid"; }
 port_of() { field "r.sidecars.find(s => s.name === '$1').port"; }
 
 show_logs() {
-    for log in shell backend frontend cloudflared; do
+    for log in shell backend frontend cloudflared postgresql; do
         echo "----- $log.log (fine)"
         tail -25 "$data/logs/$log.log" 2>/dev/null
     done
@@ -113,12 +113,11 @@ for name in backend frontend cloudflared; do
 done
 pid=$(field r.cloudflared_pid)
 if alive "$pid"; then fail "cloudflared reale ($pid) vivo dopo l'arresto normale"; fi
+pid=$(field r.postgresql_pid)
+if alive "$pid"; then fail "PostgreSQL ($pid) vivo dopo arresto normale"; fi
 report="$stopped_report"
 [ -f "$data/layout.json" ] && ok "layout.json: $(cat "$data/layout.json")" || fail "layout.json assente"
 
-if $full; then
-    python "$script_dir/check-teacher-data.py" "$data" || fail "schema/seed SQLite dopo il primo avvio"
-fi
 
 # ---- 2. headless: health and protected internal routes ----
 start_headless || { show_logs; exit 1; }
@@ -126,13 +125,14 @@ backend_port=$(port_of backend)
 frontend_port=$(port_of frontend)
 health=$(curl -sf -m 5 "http://127.0.0.1:$backend_port/health")
 echo "health: $health"
-echo "$health" | grep -q '"desktop_contract":1' && echo "$health" | grep -q '"db":"sqlite"' \
+echo "$health" | grep -q '"desktop_contract":2' && echo "$health" | grep -q '"db":"postgresql"' \
     && ok "/health" || fail "/health inatteso"
 code=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$backend_port/internal/ping")
 [ "$code" = 404 ] && ok "/internal senza segreto: 404" || fail "/internal senza segreto: $code"
 code=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$frontend_port/api/internal/ping")
 [ "$code" = 404 ] && ok "/api/internal dal frontend: 404" || fail "/api/internal dal frontend: $code"
 if $full; then
+    python "$script_dir/check-teacher-data.py" "$data" --postgres-report "$report" || fail "schema/seed PostgreSQL dopo riavvio"
     code=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$frontend_port/api/health")
     [ "$code" = 200 ] && ok "/api/health verso backend a porta dinamica" || fail "/api/health: $code"
     # A URL in cloudflared's log alone does not prove the public route works.
@@ -144,7 +144,7 @@ if $full; then
             process.stdin.on("end", () => {
                 try {
                     const h = JSON.parse(body);
-                    process.exit(h.status === "ok" && h.desktop_contract === 1 && h.db === "sqlite" ? 0 : 1);
+                    process.exit(h.status === "ok" && h.desktop_contract === 2 && h.db === "postgresql" ? 0 : 1);
                 } catch { process.exit(1); }
             });'
     }
@@ -169,10 +169,13 @@ if wait_for 180 restarted; then
 else
     fail "backend non riavviato"; cat "$report"
 fi
+if $full; then
+    python "$script_dir/check-teacher-data.py" "$data" --postgres-report "$report" || fail "schema/seed PostgreSQL dopo crash backend"
+fi
 
 # ---- 4. killing the shell leaves nothing behind ----
 shell=$(field r.shell_pid)
-pids=("$(pid_of backend)" "$(pid_of frontend)" "$(pid_of cloudflared)" "$(field r.cloudflared_pid)")
+pids=("$(pid_of backend)" "$(pid_of frontend)" "$(pid_of cloudflared)" "$(field r.cloudflared_pid)" "$(field r.postgresql_pid)")
 echo "guscio $shell, sidecar ${pids[*]}"
 kill_hard "$shell"
 sleep 10
@@ -197,9 +200,7 @@ if ! $windows; then
     wait 2>/dev/null
 fi
 
-if $full; then
-    python "$script_dir/check-teacher-data.py" "$data" || fail "schema/seed SQLite dopo riavvii e recupero"
-fi
+
 show_logs
 echo "failures=$failures"
 [ "$failures" = 0 ]

@@ -90,6 +90,9 @@ pub struct Status {
     pub custom_domain: Option<String>,
     pub has_tunnel_token: bool,
     pub cloudflared_pid: Option<u32>,
+    pub postgresql_pid: Option<u32>,
+    pub postgresql_port: Option<u16>,
+    pub postgresql_bin_dir: Option<String>,
     pub sidecars: Vec<SidecarStatus>,
 }
 
@@ -385,14 +388,18 @@ impl Supervisor {
         };
 
         // Avvia il cluster
-        let running = manager
+        let mut running = manager
             .start(&identity)
             .map_err(|e| Failure::Fatal(format!("avvio PostgreSQL: {e}"), Some("diagnostics")))?;
 
         // Verifica health
-        let health = manager
-            .probe(&running)
-            .map_err(|e| Failure::Fatal(format!("verifica PostgreSQL: {e}"), Some("diagnostics")))?;
+        let health = match manager.probe(&running) {
+            Ok(health) => health,
+            Err(error) => {
+                let _ = manager.stop(&mut running, crate::postgres_cluster::StopMode::Fast);
+                return Err(Failure::Fatal(format!("verifica PostgreSQL: {error}"), Some("diagnostics")));
+            }
+        };
 
         if !health.ready {
             return Err(Failure::Fatal("PostgreSQL non pronto dopo l'avvio.".into(), Some("diagnostics")));
@@ -403,13 +410,14 @@ impl Supervisor {
             .database_url(&running)
             .map_err(|e| Failure::Fatal(format!("costruzione DATABASE_URL: {e}"), Some("diagnostics")))?;
 
-        logs::log(format!(
-            "PostgreSQL pronto: major={} db={} port={}",
-            health.major, health.database, running.port
-        ));
+        logs::log(format!("PostgreSQL pronto: major={} db={} port={}", health.major, health.database, running.port));
 
         self.postgres_running = Some(running);
         self.postgres_database_url = Some(database_url);
+        self.status.lock().unwrap().postgresql_pid = self.postgres_running.as_ref().map(|pg| pg.postmaster_pid);
+        self.status.lock().unwrap().postgresql_port = self.postgres_running.as_ref().map(|pg| pg.port);
+        self.status.lock().unwrap().postgresql_bin_dir =
+            Some(self.config.resources.join("postgresql/bin").to_string_lossy().into_owned());
         Ok(())
     }
 
@@ -427,6 +435,8 @@ impl Supervisor {
         }
         self.postgres_running = None;
         self.postgres_database_url = None;
+        self.status.lock().unwrap().postgresql_pid = None;
+        self.status.lock().unwrap().postgresql_port = None;
     }
 
     fn timeout(&self) -> Duration {
@@ -504,8 +514,7 @@ impl Supervisor {
         let bundled = backend_dir.join("_internal");
         let docs = bundled.join("docs-counselorbot").to_string_lossy().into_owned();
         // ADR-0004: usa DATABASE_URL di PostgreSQL se disponibile, altrimenti SQLite
-        let database_url = self.postgres_database_url.clone()
-            .unwrap_or_else(|| self.config.data.database_url());
+        let database_url = self.postgres_database_url.clone().unwrap_or_else(|| self.config.data.database_url());
         let mut env = vec![
             ("COUNSELORBOT_PROFILE".to_string(), "teacher-pc".to_string()),
             ("AUTH_PROVIDER".into(), "local".into()),
@@ -517,9 +526,10 @@ impl Supervisor {
             ("COUNSELORBOT_DOCS_DIR".into(), docs.clone()),
             ("RAG_DOCS_DIR".into(), docs),
             ("PYTHONUNBUFFERED".into(), "1".into()),
-            ("DATABASE_URL".into(), database_url),
         ];
         env.extend(self.config.data.backend_env());
+        // Override the legacy data-directory URL after adding its path variables.
+        env.push(("DATABASE_URL".into(), database_url));
         env.extend(self.config.credentials.backend_env().map_err(|message| Failure::Fatal(message, None))?);
         // Bundled desktop startup must not load operator .env files.
         env.push(("PYTHON_DOTENV_DISABLED".into(), "1".into()));
@@ -929,12 +939,8 @@ impl Supervisor {
     pub fn handle_backup_db(&self) -> Result<String, String> {
         if let Some(backend) = &self.backend {
             let port = backend.port.ok_or_else(|| "Porta backend non disponibile".to_string())?;
-            let (status, body) = health::post(
-                port,
-                "/internal/backup",
-                &[("X-CounselorBot-Shell-Secret", &self.shell_secret)],
-                b"",
-            )?;
+            let (status, body) =
+                health::post(port, "/internal/backup", &[("X-CounselorBot-Shell-Secret", &self.shell_secret)], b"")?;
             if status != 200 {
                 return Err(format!("Richiesta backup fallita (HTTP {status}): {body}"));
             }
@@ -944,8 +950,8 @@ impl Supervisor {
                 path: Option<String>,
                 detail: Option<String>,
             }
-            let resp: BackupResp = serde_json::from_str(&body)
-                .map_err(|e| format!("Risposta backup JSON non valida ({e}): {body}"))?;
+            let resp: BackupResp =
+                serde_json::from_str(&body).map_err(|e| format!("Risposta backup JSON non valida ({e}): {body}"))?;
             if resp.status != "ok" {
                 return Err(resp.detail.unwrap_or_else(|| "Errore durante il backup".into()));
             }
@@ -1142,12 +1148,17 @@ impl Supervisor {
     }
 
     fn write_pids(&self, starting: Option<&Proc>) {
-        let records: Vec<pids::Record> =
+        let mut records: Vec<pids::Record> =
             [self.backend.as_ref(), self.frontend.as_ref(), self.tunnel.as_ref(), starting]
                 .into_iter()
                 .flatten()
                 .filter_map(|p| p.record.clone())
                 .collect();
+        if let Some(record) =
+            self.postgres_running.as_ref().and_then(|pg| pids::record("postgresql", pg.postmaster_pid))
+        {
+            records.push(record);
+        }
         if let Err(error) = pids::write(&self.config.data.run(), pids::SIDECARS_FILE, &records) {
             logs::log(format!("run/sidecars.json non scritto: {error}"));
         }
@@ -1416,10 +1427,22 @@ mod tests {
                 version: "1.2.3".into(),
                 minimal_backend: true,
                 report_file: None,
+                postgres_enabled: false,
             },
             Arc::new(Mutex::new(Status::default())),
             receiver,
         )
+    }
+
+    #[test]
+    fn postgres_url_overrides_the_legacy_data_directory_default() {
+        let mut supervisor = supervisor("postgres-url");
+        let url = "postgresql://app:synthetic@127.0.0.1:54321/counselorbot";
+        supervisor.postgres_database_url = Some(url.into());
+        let spec = supervisor.backend_spec(32101).unwrap_or_else(|_| panic!("backend spec"));
+        let urls: Vec<_> = spec.env.iter().filter(|(name, _)| name == "DATABASE_URL").collect();
+        assert_eq!(urls.last().unwrap().1, url);
+        std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
     }
 
     #[test]
@@ -1450,20 +1473,13 @@ mod tests {
         // Il frontend pubblica a sua volta l'origine del tunnel: i link condivisi
         // con gli studenti (iscrizione, consiglio) non usano l'indirizzo locale.
         let frontend = supervisor.frontend_spec(32104, 32103);
-        assert_eq!(
-            env(&frontend, "COUNSELORBOT_PUBLIC_ORIGIN").as_deref(),
-            Some("https://fixture.trycloudflare.com")
-        );
+        assert_eq!(env(&frontend, "COUNSELORBOT_PUBLIC_ORIGIN").as_deref(), Some("https://fixture.trycloudflare.com"));
         assert_eq!(env(&frontend, "COUNSELORBOT_AUTH_PROVIDER").as_deref(), Some("local"));
         // Riavvio del tunnel con nuovo URL: l'ambiente del successivo riavvio
         // dei sidecar porta l'origine aggiornata, mai quella precedente.
         supervisor.status.lock().unwrap().tunnel_url = Some("https://brave-lion-example.trycloudflare.com".into());
         assert_eq!(
-            env(
-                &supervisor.frontend_spec(32104, 32103),
-                "COUNSELORBOT_PUBLIC_ORIGIN"
-            )
-            .as_deref(),
+            env(&supervisor.frontend_spec(32104, 32103), "COUNSELORBOT_PUBLIC_ORIGIN").as_deref(),
             Some("https://brave-lion-example.trycloudflare.com")
         );
         supervisor.status.lock().unwrap().tunnel_url = None;

@@ -1,33 +1,36 @@
 {
   "major": 15,
-  "minor": "15.19",
+  "minor": "15.12",
   "distribution": "postgresql-binaries",
-  "version": "15.19.1",
+  "version": "15.12.1",
   "targets": {
     "macos-arm64": {
       "source": "theseus-rs/postgresql-binaries",
-      "asset": "postgresql-15.19.1-aarch64-apple-darwin.tar.gz",
-      "sha256": "",
+      "asset": "postgresql-15.12.1-aarch64-apple-darwin.tar.gz",
+      "sha256": "85087c218e32758aa9a96b83370296aa9cdb13b2aa9771876dfa770b56dad942",
       "size_mb_approx": 108
     },
     "macos-x64": {
       "source": "theseus-rs/postgresql-binaries",
-      "asset": "postgresql-15.19.1-x86_64-apple-darwin.tar.gz",
-      "sha256": "",
+      "asset": "postgresql-15.12.1-x86_64-apple-darwin.tar.gz",
+      "sha256": "c73f729a6694577469dafd8e89f0954ff032675d3217fa428f15693ad8b54ca6",
       "size_mb_approx": 104
     },
     "windows-x64": {
       "source": "theseus-rs/postgresql-binaries",
-      "asset": "postgresql-15.19.1-x86_64-pc-windows-msvc.tar.gz",
-      "sha256": "",
+      "asset": "postgresql-15.12.1-x86_64-pc-windows-msvc.tar.gz",
+      "sha256": "8ebf1920edd91dcf0ba4653016e7b7b38d98b99b91109dff5fe7bfff4c83b326",
       "size_mb_approx": 110
     },
     "linux-x64": {
       "source": "build-from-source",
-      "asset": "postgresql-15.19-linux-x64.tar.gz",
-      "sha256": "",
+      "asset": "postgresql-15.12.tar.gz",
+      "sha256": "ccbf87a0e89b369a47f65874a493454b6a30d00bc471b9694da09ad87e6c3117",
       "size_mb_approx": 22,
-      "build_options": ["--without-icu", "--without-readline"]
+      "build_options": [
+        "--without-icu",
+        "--without-readline"
+      ]
     }
   },
   "binaries": [
@@ -66,9 +69,8 @@
     "share": "share/"
   },
   "notes": [
-    "I binari sono scaricati/verificati in CI (ADR-0004 §2.2)",
-    "SHA-256 viene popolato dallo script di download",
-    "Linux: build dai sorgenti su ubuntu-22.04 con rpath $ORIGIN",
-    "Esclusi: include/, symbols/, .a statiche, PL/Python, documentazione"
+    "Archivi verificati prima dell’estrazione con SHA-256 versionati.",
+    "Linux: build PostgreSQL 15.12 su ubuntu-22.04; macOS: minimo 15.0.",
+    "Licenze e notice conservate nel bundle."
   ]
 }

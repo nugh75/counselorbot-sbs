@@ -30,6 +30,18 @@ fn main() {
     if args.get(1).map(String::as_str) == Some("--lifeline") {
         std::process::exit(lifeline::run(&args[2..]));
     }
+    if args.get(1).map(String::as_str) == Some("--postgres-smoke") {
+        let result = args
+            .get(2)
+            .zip(args.get(3))
+            .ok_or_else(|| "Uso: --postgres-smoke <resources> <data-dir-isolata>".to_string())
+            .and_then(|(resources, data)| postgres_cluster::smoke(resources.into(), data.into()));
+        if let Err(error) = result {
+            eprintln!("PostgreSQL smoke: {error}");
+            std::process::exit(1);
+        }
+        return;
+    }
     let mode = if args.iter().any(|a| a == "--smoke") {
         app::Mode::Smoke
     } else if args.iter().any(|a| a == "--headless") {

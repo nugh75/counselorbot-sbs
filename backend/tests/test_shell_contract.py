@@ -37,7 +37,7 @@ def test_health_reports_version_contract_and_dialect():
     assert response.json() == {
         "status": "ok",
         "version": __version__,
-        "desktop_contract": 1,
+        "desktop_contract": 2 if database.engine.dialect.name == "postgresql" else 1,
         "db": database.engine.dialect.name,
     }
     assert response.json()["db"] in ("sqlite", "postgresql")

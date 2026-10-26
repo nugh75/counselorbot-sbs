@@ -10,6 +10,9 @@ on:
   pull_request:
     paths:
       - desktop/**
+      - backend/**
+      - frontend/**
+      - VERSION
       - .github/workflows/desktop-teacher.yml
       - backend/shell_internal.py
       - backend/sqlite_backup.py
@@ -21,6 +24,8 @@ on:
       - frontend/src/lib/backend-origin.ts
       - frontend/src/app/api/**
       - frontend/tests/request-origin.test.mjs
+      - resources/postgresql/**
+      - scripts/download-postgres-binaries.py
 
 permissions:
   contents: read
@@ -37,7 +42,7 @@ jobs:
         include:
           # app,dmg: with dmg alone Tauri deletes bundle/macos/*.app, which the
           # lifecycle test runs.
-          - runner: macos-14
+          - runner: macos-15
             platform: macos-arm64
             bundles: app,dmg
           - runner: macos-15-intel
@@ -112,6 +117,12 @@ jobs:
 
       - name: Fetch cloudflared
         run: bash desktop/teacher/scripts/fetch-cloudflared.sh ${{ matrix.platform }} desktop/teacher/src-tauri/cloudflared
+
+      - name: Download PostgreSQL binaries (ADR-0004)
+        run: |
+          python3 scripts/download-postgres-binaries.py \
+            --target ${{ matrix.platform }} \
+            --output desktop/teacher/src-tauri/postgresql
 
       - name: Frontend boundary and origin tests
         working-directory: frontend

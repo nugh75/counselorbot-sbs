@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scarica e verifica i binari PostgreSQL 15.19 per tutti i target (ADR-0004 §2).
+"""Scarica e verifica i binari PostgreSQL 15.12 per tutti i target (ADR-0004 §2).
 
 Uso (CI):
     python scripts/download-postgres-binaries.py --target macos-arm64 --output resources/postgresql
@@ -8,9 +8,9 @@ Uso (CI):
 Lo script:
 1. Scarica i binari precompilati da theseus-rs/postgresql-binaries (macOS/Windows)
    o compila dai sorgenti (Linux)
-2. Verifica gli SHA-256
+2. Verifica gli SHA-256 versionati prima dell'estrazione
 3. Estrae solo bin/, lib/, share/ (esclude include/, symbols/, .a, PL/Python, doc)
-4. Aggiorna manifest.json con gli hash effettivi
+4. Scrive il manifest nel bundle, senza modificare il pin sorgente
 """
 
 import argparse
@@ -26,16 +26,21 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
-PG_VERSION = "15.19"
-PG_DIST_VERSION = "15.19.1"
+PIN_PATH = Path(__file__).resolve().parents[1] / "resources/postgresql/manifest.json"
+PIN = json.loads(PIN_PATH.read_text(encoding="utf-8"))
+PG_VERSION = PIN["minor"]
+PG_DIST_VERSION = PIN["version"]
 THESEUS_REPO = "theseus-rs/postgresql-binaries"
-THESEUS_BASE_URL = f"https://github.com/{THESEUS_REPO}/releases/download/v{PG_DIST_VERSION}"
+# Tag della release su GitHub (formato: X.Y.Z, es. 15.12.1)
+THESEUS_TAG = PG_DIST_VERSION
+THESEUS_BASE_URL = f"https://github.com/{THESEUS_REPO}/releases/download/{THESEUS_TAG}"
 
-# Mapping target -> asset name
+# Mapping target -> asset name (formato theseus-rs)
 TARGET_ASSETS = {
     "macos-arm64": f"postgresql-{PG_DIST_VERSION}-aarch64-apple-darwin.tar.gz",
     "macos-x64": f"postgresql-{PG_DIST_VERSION}-x86_64-apple-darwin.tar.gz",
     "windows-x64": f"postgresql-{PG_DIST_VERSION}-x86_64-pc-windows-msvc.tar.gz",
+    "linux-x64": f"postgresql-{PG_DIST_VERSION}-x86_64-unknown-linux-gnu.tar.gz",
 }
 
 # File da escludere (ADR-0004 §2.2)
@@ -74,7 +79,7 @@ def download_file(url: str, dest: Path) -> Path:
 def verify_sha256(path: Path, expected: str) -> bool:
     """Verifica SHA-256 di un file."""
     actual = sha256_file(path)
-    if expected and actual != expected:
+    if len(expected) != 64 or actual != expected:
         log(f"SHA-256 mismatch: expected {expected}, got {actual}")
         return False
     log(f"SHA-256 OK: {actual}")
@@ -89,25 +94,83 @@ def should_exclude(name: str) -> bool:
     return False
 
 
+def prune_files(directory, names):
+    return [name for name in names if name in {"doc", "man", "include", "symbols", "python", "pgxs"}
+            or name.endswith((".a", ".pdb")) or name.startswith("plpython")]
+
+
+def validate_bundle(output: Path, target: str):
+    suffix = ".exe" if target.startswith("windows") else ""
+    for name in PIN["binaries"]:
+        if not (output / "bin" / (name + suffix)).is_file():
+            raise ValueError(f"Binario PostgreSQL mancante: {name}")
+    for name in ("lib", "share"):
+        if not (output / name).is_dir():
+            raise ValueError(f"Directory PostgreSQL mancante: {name}")
+
+
 def extract_filtered(archive: Path, dest: Path):
-    """Estrae solo i file necessari dall'archivio."""
+    """Estrae solo i file necessari dall'archivio.
+
+    L'archivio theseus-rs ha una cartella radice (es. postgresql-15.12.1-aarch64-apple-darwin/)
+    che contiene bin/, lib/, share/. Estraiamo solo quelle sottocartelle.
+    """
     log(f"estrazione filtrata: {archive} -> {dest}")
     dest.mkdir(parents=True, exist_ok=True)
 
-    with tarfile.open(archive, "r:gz") as tar:
-        for member in tar.getmembers():
-            # Salta file esclusi
-            if should_exclude(member.name):
-                continue
-            # Estrai solo bin/, lib/, share/
-            if not any(member.name.startswith(p) for p in ["bin/", "lib/", "share/"]):
-                continue
-            tar.extract(member, dest)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        with tarfile.open(archive, "r:gz") as tar:
+            tar.extractall(tmp_path, filter="data")
+
+        # Trova la cartella radice (quella che contiene bin/)
+        root = None
+        for item in tmp_path.iterdir():
+            if item.is_dir() and (item / "bin").exists():
+                root = item
+                break
+
+        if root is None:
+            # Fallback: cerca bin/ direttamente
+            if (tmp_path / "bin").exists():
+                root = tmp_path
+            else:
+                log(f"ERRORE: cartella radice con bin/ non trovata in {tmp_path}")
+                sys.exit(1)
+
+        log(f"cartella radice: {root.name}")
+
+        # Copia solo bin/, lib/, share/ (escludendo include/, doc, etc.)
+        for subdir in ["bin", "lib", "share"]:
+            src = root / subdir
+            dst = dest / subdir
+            if src.exists():
+                if dst.exists():
+                    shutil.rmtree(dst)
+                shutil.copytree(src, dst, symlinks=True, ignore=prune_files)
+                # Conta file copiati
+                count = sum(1 for _ in dst.rglob("*") if _.is_file())
+                log(f"  copiato {subdir}/ ({count} file)")
+            else:
+                log(f"  ATTENZIONE: {subdir}/ non trovato in {root}")
+
+        # Copia anche LICENSE e notice se presenti
+        for extra in ["LICENSE", "COPYRIGHT", "dependency-notices"]:
+            src = root / extra
+            if src.exists():
+                dst = dest / extra
+                if src.is_dir():
+                    if dst.exists():
+                        shutil.rmtree(dst)
+                    shutil.copytree(src, dst, symlinks=True, ignore=prune_files)
+                else:
+                    shutil.copy2(src, dst)
+                log(f"  copiato {extra}")
 
 
 def build_linux_from_source(output: Path):
     """Compila PostgreSQL dai sorgenti su Linux (ADR-0004 §2.1)."""
-    log("build Linux dai sorgenti PostgreSQL 15.19")
+    log("build Linux dai sorgenti PostgreSQL 15.12")
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -117,9 +180,12 @@ def build_linux_from_source(output: Path):
         # Download sorgenti
         download_file(src_url, src_archive)
 
+        if not verify_sha256(src_archive, PIN["targets"]["linux-x64"]["sha256"]):
+            raise ValueError("Checksum sorgenti PostgreSQL non valido")
+
         # Estrai
         with tarfile.open(src_archive, "r:gz") as tar:
-            tar.extractall(tmp_path)
+            tar.extractall(tmp_path, filter="data")
 
         src_dir = tmp_path / f"postgresql-{PG_VERSION}"
 
@@ -131,8 +197,6 @@ def build_linux_from_source(output: Path):
                 "--without-icu",
                 "--without-readline",
                 f"--prefix={tmp_path}/install",
-                "--libdir=lib",
-                "LDFLAGS=-Wl,-rpath,$ORIGIN/../lib",
             ],
             cwd=src_dir,
             check=True,
@@ -154,8 +218,21 @@ def build_linux_from_source(output: Path):
             if src.exists():
                 if dst.exists():
                     shutil.rmtree(dst)
-                shutil.copytree(src, dst)
+                shutil.copytree(src, dst, symlinks=True, ignore=prune_files)
                 log(f"copiato {subdir}/")
+        shutil.copy2(src_dir / "COPYRIGHT", output / "COPYRIGHT")
+        # The build prefix is temporary. Make the installed ELF binaries and
+        # libraries find libpq after relocation into a .deb or Tauri resource.
+        patched = set()
+        for directory in (output / "bin", output / "lib"):
+            for path in directory.rglob("*"):
+                if not path.is_file() or path.resolve() in patched:
+                    continue
+                with path.open("rb") as stream:
+                    elf = stream.read(4) == b"\x7fELF"
+                if elf:
+                    subprocess.run(["patchelf", "--set-rpath", "$ORIGIN/../lib", str(path)], check=True)
+                    patched.add(path.resolve())
 
 
 def download_theseus(target: str, output: Path) -> str:
@@ -170,7 +247,8 @@ def download_theseus(target: str, output: Path) -> str:
         # Download
         download_file(url, archive)
 
-        # Verifica (hash sarà aggiornato dopo)
+        if not verify_sha256(archive, PIN["targets"][target]["sha256"]):
+            raise ValueError("Checksum archivio PostgreSQL non valido")
         actual_hash = sha256_file(archive)
 
         # Estrai
@@ -182,13 +260,8 @@ def download_theseus(target: str, output: Path) -> str:
 def update_manifest(output: Path, target: str, sha256: str):
     """Aggiorna manifest.json con l'hash effettivo."""
     manifest_path = output / "manifest.json"
-    if not manifest_path.exists():
-        log(f"manifest non trovato: {manifest_path}")
-        return
-
-    with open(manifest_path) as f:
-        manifest = json.load(f)
-
+    manifest = json.loads(PIN_PATH.read_text(encoding="utf-8"))
+    manifest["target"] = target
     if target in manifest.get("targets", {}):
         manifest["targets"][target]["sha256"] = sha256
         log(f"manifest aggiornato: {target} sha256={sha256[:16]}...")
@@ -198,7 +271,7 @@ def update_manifest(output: Path, target: str, sha256: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Scarica binari PostgreSQL 15.19")
+    parser = argparse.ArgumentParser(description="Scarica binari PostgreSQL 15.12")
     parser.add_argument("--target", required=True, choices=list(TARGET_ASSETS.keys()) + ["linux-x64"])
     parser.add_argument("--output", required=True, help="Directory di output (resources/postgresql)")
     parser.add_argument("--build-from-source", action="store_true", help="Compila dai sorgenti (Linux)")
@@ -209,17 +282,19 @@ def main():
 
     log(f"target={target} output={output}")
 
-    if args.build_from_source or target == "linux-x64":
+    if args.build_from_source or PIN["targets"][target]["source"] == "build-from-source":
+        # Build dai sorgenti (solo Linux, per versioni specifiche non in theseus-rs)
         if platform.system() != "Linux":
             log("ERROR: build-from-source richiede Linux (ubuntu-22.04)")
             sys.exit(1)
         build_linux_from_source(output)
-        # Per Linux, l'hash viene calcolato sull'archivio risultante
-        # (da implementare se serve archiviazione)
+        update_manifest(output, target, PIN["targets"][target]["sha256"])
     else:
+        # Download binari precompilati da theseus-rs (tutti i target)
         sha256 = download_theseus(target, output)
         update_manifest(output, target, sha256)
 
+    validate_bundle(output, target)
     log("completato")
 
 

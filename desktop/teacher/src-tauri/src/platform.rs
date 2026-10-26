@@ -34,6 +34,7 @@ mod tests {
 }
 
 #[cfg(windows)]
+#[derive(Debug)]
 pub struct Job(windows_sys::Win32::Foundation::HANDLE);
 
 #[cfg(windows)]
@@ -81,6 +82,7 @@ impl Job {
 }
 
 #[cfg(not(windows))]
+#[derive(Debug)]
 pub struct Job;
 
 #[cfg(not(windows))]

@@ -68,6 +68,45 @@ def test_foreign_key_violation_fails(profile):
 
 
 def test_unknown_layout_fails(profile):
-    (profile / "layout.json").write_text('{"layout": 2, "app": "teacher"}')
+    (profile / "layout.json").write_text('{"layout": 99, "app": "teacher"}')
     with pytest.raises(ValueError, match="layout"):
         checker.check_profile(profile)
+
+
+@pytest.fixture
+def postgres_profile(tmp_path):
+    (tmp_path / "layout.json").write_text('{"layout": 2, "app": "teacher"}')
+    (tmp_path / "run").mkdir()
+    (tmp_path / "run/postgresql.json").write_text(json.dumps({"pgdata_path": str(tmp_path / "db/postgresql")}))
+    report = tmp_path / "report.json"
+    report.write_text(json.dumps({"data_dir": str(tmp_path), "postgresql_port": 54321, "postgresql_bin_dir": str(tmp_path / "bin")}))
+    return tmp_path, report
+
+
+def test_postgres_schema_and_seed_are_checked_without_password_in_argv(postgres_profile, monkeypatch):
+    from types import SimpleNamespace
+    root, report = postgres_profile
+    def run(args, **kwargs):
+        assert not any("isolated-headless-test-only" in arg for arg in args)
+        assert kwargs["env"]["PGPASSWORD"] == "isolated-headless-test-only"
+        assert kwargs["check"] and kwargs["timeout"] == 15
+        return SimpleNamespace(stdout="configs\ninstruments\nlocal_sessions\nclass_pairing_codes\nlocal_students\n12\n6\n")
+    monkeypatch.setattr(checker.subprocess, "run", run)
+    checker.check_profile(root, report)
+
+
+def test_postgres_profile_refuses_report_for_other_data(postgres_profile):
+    root, report = postgres_profile
+    payload = json.loads(report.read_text())
+    payload["data_dir"] = str(root / "other")
+    report.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="different profile"):
+        checker.check_profile(root, report)
+
+
+def test_postgres_empty_seed_fails(postgres_profile, monkeypatch):
+    from types import SimpleNamespace
+    root, report = postgres_profile
+    monkeypatch.setattr(checker.subprocess, "run", lambda *a, **k: SimpleNamespace(stdout="configs\ninstruments\nlocal_sessions\nclass_pairing_codes\nlocal_students\n12\n0\n"))
+    with pytest.raises(ValueError, match="seed missing"):
+        checker.check_profile(root, report)

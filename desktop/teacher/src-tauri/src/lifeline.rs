@@ -16,9 +16,14 @@ pub fn run(args: &[String]) -> i32 {
     use std::time::{Duration, Instant};
 
     let mut pid_file: Option<PathBuf> = None;
+    let mut postgres = false;
     let mut rest = args;
     while let Some(first) = rest.first() {
         match first.as_str() {
+            "--postgres" => {
+                postgres = true;
+                rest = &rest[1..];
+            }
             "--pid-file" if rest.len() > 1 => {
                 pid_file = Some(PathBuf::from(&rest[1]));
                 rest = &rest[2..];
@@ -83,7 +88,7 @@ pub fn run(args: &[String]) -> i32 {
         std::thread::sleep(Duration::from_millis(100));
     }
     unsafe {
-        libc::kill(child.id() as libc::pid_t, libc::SIGTERM);
+        libc::kill(child.id() as libc::pid_t, if postgres { libc::SIGINT } else { libc::SIGTERM });
     }
     let deadline = Instant::now() + Duration::from_secs(5);
     while Instant::now() < deadline {

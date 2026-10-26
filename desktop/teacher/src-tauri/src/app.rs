@@ -8,7 +8,7 @@ use std::time::Duration;
 use tauri::{AppHandle, Manager, RunEvent, State, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_opener::OpenerExt;
 
-use crate::credentials::{CredentialStatus, Credentials, MemoryStore, OsStore, ProbeResult};
+use crate::credentials::{CredentialStatus, Credentials, OsStore, ProbeResult};
 use crate::datadir::DataDir;
 use crate::supervisor::{self, Handle, Status};
 use crate::{diagnostics, logs, platform};
@@ -82,10 +82,7 @@ fn shell_status(shell: State<'_, Shell>) -> Status {
 async fn open_in_browser(app: AppHandle, shell: State<'_, Shell>) -> Result<(), String> {
     let supervisor = Arc::clone(&shell.supervisor);
     let url = tauri::async_runtime::spawn_blocking(move || {
-        let frontend_url = supervisor
-            .snapshot()
-            .frontend_url
-            .ok_or("CounselorBot non e' ancora pronto")?;
+        let frontend_url = supervisor.snapshot().frontend_url.ok_or("CounselorBot non e' ancora pronto")?;
         let token = supervisor.teacher_link()?;
         Ok::<String, String>(format!("{frontend_url}/accesso-locale#t={token}"))
     })
@@ -157,14 +154,22 @@ fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> 
     // never touch the teacher's installed app data.
     let root =
         if mode != Mode::Window { std::env::var_os("COUNSELORBOT_TEST_DATA_DIR").map(PathBuf::from) } else { None };
-    let data = DataDir::prepare(root.unwrap_or(app.path().app_local_data_dir()?), &version)?;
+    let postgres_enabled = std::env::var("COUNSELORBOT_POSTGRES_DISABLED").as_deref() != Ok("1");
+    if mode != Mode::Window && postgres_enabled && root.is_none() {
+        return Err("I test PostgreSQL richiedono COUNSELORBOT_TEST_DATA_DIR isolata".into());
+    }
+    let data = DataDir::prepare_with_layout(
+        root.unwrap_or(app.path().app_local_data_dir()?),
+        &version,
+        if postgres_enabled { crate::datadir::LAYOUT_POSTGRES } else { crate::datadir::LAYOUT },
+    )?;
     logs::init_shell_log(&data.logs())?;
     let lock = lock_instance(&data)?;
     logs::log(format!("guscio {version} avviato, cartella dati {}", data.root.display()));
     let credentials = Arc::new(if mode == Mode::Window {
         Credentials::new(OsStore)
     } else {
-        Credentials::new(MemoryStore::default())
+        Credentials::new(crate::credentials::HeadlessStore::default())
     });
     let config = supervisor::Config {
         credentials: Arc::clone(&credentials),
@@ -175,7 +180,7 @@ fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> 
         minimal_backend: std::env::var("COUNSELORBOT_BACKEND_MINIMAL").as_deref() == Ok("1"),
         report_file: std::env::var_os("COUNSELORBOT_REPORT_FILE").map(PathBuf::from),
         // ADR-0004: PostgreSQL incorporato abilitato di default (layout 2)
-        postgres_enabled: std::env::var("COUNSELORBOT_POSTGRES_DISABLED").as_deref() != Ok("1"),
+        postgres_enabled,
     };
     let handle = Arc::new(supervisor::start(config));
     app.manage(Arc::clone(&handle));

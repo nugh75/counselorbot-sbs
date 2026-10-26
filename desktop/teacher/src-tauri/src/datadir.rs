@@ -16,8 +16,8 @@ pub const APP: &str = "teacher";
 
 const DIRS: &[&str] = &[
     "db",
-    "db/postgresql",      // ADR-0004 §3: PGDATA cluster proprietario
-    "migration",           // ADR-0004 §3: stato converter SQLite→PostgreSQL
+    "db/postgresql", // ADR-0004 §3: PGDATA cluster proprietario
+    "migration",     // ADR-0004 §3: stato converter SQLite→PostgreSQL
     "uploads/portfolio",
     "uploads/tavolo",
     "uploads/tavolo-images",
@@ -30,7 +30,7 @@ const DIRS: &[&str] = &[
     "credentials",
     "logs",
     "backups",
-    "backups/postgresql",  // ADR-0004 §3: dump PostgreSQL
+    "backups/postgresql", // ADR-0004 §3: dump PostgreSQL
     "run",
     "config",
 ];
@@ -82,13 +82,17 @@ fn user_only(_path: &Path) -> std::io::Result<()> {
 
 impl DataDir {
     pub fn prepare(root: PathBuf, version: &str) -> Result<DataDir, String> {
+        Self::prepare_with_layout(root, version, LAYOUT)
+    }
+
+    pub fn prepare_with_layout(root: PathBuf, version: &str, requested_layout: u32) -> Result<DataDir, String> {
         let describe = |what: &str, path: &Path, e: std::io::Error| format!("{what} {}: {e}", path.display());
         std::fs::create_dir_all(&root).map_err(|e| describe("cartella dati", &root, e))?;
         user_only(&root).map_err(|e| describe("permessi", &root, e))?;
         let layout_path = root.join("layout.json");
         let first_run = !layout_path.exists();
         if first_run {
-            let layout = LayoutFile { layout: LAYOUT, app: APP.into(), created_with: version.into() };
+            let layout = LayoutFile { layout: requested_layout, app: APP.into(), created_with: version.into() };
             let text = serde_json::to_string(&layout).unwrap_or_default();
             std::fs::write(&layout_path, text).map_err(|e| describe("scrittura", &layout_path, e))?;
         } else {
@@ -98,11 +102,17 @@ impl DataDir {
             if layout.app != APP {
                 return Err(format!("{}: cartella di un'altra app ({})", root.display(), layout.app));
             }
-            if layout.layout > LAYOUT {
+            if layout.layout > requested_layout {
                 return Err(format!(
                     "la cartella dati usa il layout {} (creata da una versione piu' recente, {}): aggiorna l'app",
                     layout.layout, layout.created_with
                 ));
+            }
+            if layout.layout < requested_layout {
+                return Err(
+                    "Profilo SQLite legacy: completare la conversione PostgreSQL prima di aprirlo con questa versione"
+                        .into(),
+                );
             }
         }
         for dir in DIRS {

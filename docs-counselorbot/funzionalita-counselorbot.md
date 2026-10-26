@@ -2042,6 +2042,22 @@ La piattaforma ha una sola versione, scritta nel file `VERSION` alla radice del 
 
 I bundle desktop correnti, inclusa `v0.1.1`, usano un database SQLite su file (ADR-0003, layout 1). Il successivo ADR-0004 decide PostgreSQL 15 unico come architettura target, con SQLite limitato all'import legacy, ma tale migrazione non è ancora consegnata. Su SQLite il backend attiva il giornale WAL, l'attesa fino a 5 secondi quando il file è occupato, le chiavi esterne (stesse cancellazioni a cascata di Postgres) e `synchronous=NORMAL`; le richieste che scrivono (`POST`, `PUT`, `PATCH`, `DELETE`) e i lavori in background prendono subito il lock di scrittura (`BEGIN IMMEDIATE`), le letture no. Con una versione di SQLite precedente alla 3.35 il backend non parte (codice di uscita 3). Le colonne che l'avvio aggiunge ai database già esistenti vengono create solo se mancano, con la stessa procedura condivisa su SQLite e Postgres: il backend parte su un file SQLite nuovo e riparte sullo stesso file senza errori. Tutte le date e gli orari memorizzati, comprese le sessioni dell'accesso locale, vengono gestiti con fuso orario UTC (`UTCDateTime`), garantendo calcoli e confronti temporali corretti sia su SQLite sia su Postgres senza modificare lo schema Postgres di produzione. Server e installazione portable restano su Postgres senza cambiamenti di funzioni, dati o permessi.
 
+Le build desktop in preparazione per `2.0.0` includono PostgreSQL 15.12
+incorporato (distribuzione 15.12.1), senza richiedere un server installato a
+parte. Le nuove cartelle dati hanno layout 2 e health con contratto 2; i vecchi
+profili SQLite sono bloccati finché non sarà integrato l’upgrade assistito,
+per conservare i dati esistenti. macOS richiede la versione 15 o successiva.
+La finestra usa il portachiavi del sistema; i soli test headless usano profili
+isolati e credenziali sintetiche. Le build riutilizzano il backend e il frontend
+dell’applicazione web e verificano anche schema, seed, riavvio e arresto del
+cluster PostgreSQL. L’app desktop ha accesso locale indipendente dalla Console portable: il
+docente condivide il link temporaneo Cloudflare Quick Tunnel e approva gli
+studenti dalla propria applicazione, senza bisogno di un dominio. Nessuna modifica a pagine,
+permessi o dati del server è applicata automaticamente dalla build desktop.
+La guida interfaccia nelle sei lingue è stata rivista senza cambiamenti di
+navigazione; procedure e limiti: `docs/operations/desktop-ci-recovery.md`.
+
+
 Chat, Assistente e lettura vocale rilasciano esplicitamente la transazione della richiesta prima di iniziare lo stream; i log finali e i salvataggi usano transazioni brevi. Anche le verifiche del budget e delle credenziali ChatGPT chiudono la propria sessione prima della risposta del provider. Un benchmark ripetibile simula 30 studenti con stream sintetici, salvataggi concorrenti e attività in background, verificando l'assenza di errori di lock, l'avanzamento delle letture e l'integrità dei dati. Misure e limiti della simulazione sono in `docs/operations/sqlite-load-concurrency.md`: non misurano la velocità di un provider LLM reale. Guida interfaccia e screenshot nelle sei lingue rivisti, senza nuovi controlli o testi utente.
 
 Le statistiche dei costi settimanali, mensili e annuali funzionano anche su SQLite, con le stesse settimane ISO e gli stessi filtri per provider e modello di Postgres. L'inizializzazione degli obiettivi, le impostazioni API personali, i collegamenti ChatGPT e i segnalibri di lettura del forum gestiscono inserimenti ripetuti senza duplicati su entrambi i motori. Nei nuovi database SQLite, le prenotazioni incontro cancellate non impediscono una nuova prenotazione; solo quelle attive restano univoche. Contratto tecnico e limiti: `docs/operations/runtime-sql-compatibility.md`. Nessuna modifica ai controlli della Guida interfaccia.

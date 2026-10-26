@@ -40,7 +40,7 @@
       "postgresql/": "postgresql/"
     },
     "macOS": {
-      "minimumSystemVersion": "13.0",
+      "minimumSystemVersion": "15.0",
       "dmg": {}
     },
     "windows": {
