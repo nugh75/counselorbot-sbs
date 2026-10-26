@@ -5,7 +5,9 @@ Task Diario `bef7d9ec`; bug `b9292408`; issue [#598](https://github.com/nugh75/c
 ## Stato
 - Riallineamento utente: NESSUNA revisione cross-modello (decisione Diario 8b4de3e3); merge della PR resta all'utente.
 - **PR [#600](https://github.com/nugh75/counselorbot-sbs/pull/600) aperta; PR #601 MERGED (39d72182)**: integrata nel branch con merge ce97449d senza conflitti; versione 0.1.2 conservata, fix link/QR intatti; `version-check` e `guidance-check` verdi dopo il merge. In attesa della CI sul nuovo SHA per tutti i gate (vedi Verifiche).
-- Release v0.1.1 già pubblicata (run 40217531497 su f7fdb03a): nessun tocco a tag/asset; v0.1.2 solo preparata in questo branch, pubblicazione dopo il merge di #600 e il runbook su `main`.
+- **Release v0.1.1 (Desktop Beta) pubblicata e intatta** (tag e asset, run 40217531497 su f7fdb03a): nessun tocco.
+- **Riallineamento finale (26/10)**: integrato `origin/main` con P10 (1b5270d5), piano builder (147bb356) e SSE (39d72182): merge `eda245ec` (dopo amend del messaggio), nessun conflitto di contenuti — solo il manifest generato, rigenerato dall'albero combinato (`guidance-check` exit 0). P10/builder/fix-link-QR convivono; versione rimasta 0.1.2.
+- **Pubblicazione SQLite 0.1.2 SOSPESA** (decisione utente 26/10: PostgreSQL unico DB, anche desktop — nuovi incarichi dedicati): niente prerelease anche con #600 verde; note/asset della v0.1.1 preservati. Nessuna migrazione PostgreSQL inclusa nel branch.
 
 ## Fatto
 - Guscio Tauri (`supervisor.rs`): `frontend_spec` riceve `COUNSELORBOT_PUBLIC_ORIGIN` quando `tunnel_url` è attivo (quick e nominativo), insieme a backend: i sidecar ripartono a ogni cambio URL (read_tunnel_url/restart); test env esteso: origine presente, cambiata, e assente con tunnel spento.
@@ -23,9 +25,9 @@ Task Diario `bef7d9ec`; bug `b9292408`; issue [#598](https://github.com/nugh75/c
 - Pre-integrazione (storico): desktop-teacher ✅ 40234368971 su 43d03aaf; Version 40234368927 ✅; guidance 40234368941 ✅.
 
 ## Prossimi passi
-- **PR [#600](https://github.com/nugh75/counselorbot-sbs/pull/600) PRONTA per il merge dell'utente** (nessuna review incrociata; nessun merge autonomo). 
-- Release **v0.1.2 (Desktop Beta)** solo DOPO il merge #600 e la build dispatch su `main` verificata (runbook `docs/operations/release.md`; note in `/tmp/counselorbot-release-012-notes.md`; v0.1.1 e tag intatti).
-- Successivo (non in questo task): abbinamento studenti via tunnel (pagine `/unisciti` + dispositivi docente, ADR-0002 §4, F1-13) — issue dedicata.
+- **Push unico del riallineamento** e verifica `MERGEABLE` + CI sull'SHA esatto fino al verde (4 build desktop + manifest, PG/SQLite con distinzione 53 known / 0 unexpected). Niente commit aggiuntivi solo per registrare esiti CI: prove nel Diario/notify.
+- Merge della PR #600 all'utente. **Pubblicazione sospesa**: la v0.1.2 SQLite non esce; segue il nuovo piano PostgreSQL unico (contratti, runtime incorporato, upgrade dati, CI unificata) con incarichi dedicati su worktree propri.
+- Successivo (non in questo task): abbinamento studenti via tunnel (pagine `/unisciti` + dispositivi docente, ADR-0002 §4, F1-13) — issue dedicata da coordinare col piano PG.
 
 ## Blocchi e rischi
 - ESLint bloccato su volume esterno: escludo l'evidenza locale, la CI non lintè questi file; rischi limitati perche' tsc e test Node passano.
