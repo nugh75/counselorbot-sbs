@@ -20,3 +20,6 @@
   di registrarne l'identità, evitando la lettura transitoria del nome pre-exec.
   I controlli di sicurezza della pulizia runtime restano invariati.
   Verifica locale: 51 test Rust e 50 ripetizioni dei due test PID passati.
+- CI Windows: le verifiche del tunnel attendono al massimo 5 secondi che il
+  processo già terminato scompaia dalla tabella OS, senza allentare il controllo
+  finale. Un tunnel rimasto attivo continua a far fallire il test.
