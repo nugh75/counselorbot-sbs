@@ -110,8 +110,17 @@ jobs:
           cargo test --locked
       - name: First start, application-role SQL, stop and second start
         run: |
-          cargo run --locked --manifest-path desktop/teacher/src-tauri/Cargo.toml -- \
-            --postgres-smoke "$GITHUB_WORKSPACE/desktop/teacher/src-tauri" "$RUNNER_TEMP/cb-postgres-smoke"
+          cargo build --locked --manifest-path desktop/teacher/src-tauri/Cargo.toml
+          exe="desktop/teacher/src-tauri/target/debug/counselorbot-teacher"
+          if [ "${{ matrix.os }}" = windows-latest ]; then
+            exe="$exe.exe"
+            icacls "$GITHUB_WORKSPACE/desktop/teacher/src-tauri" /grant '*S-1-5-32-545:(OI)(CI)F' /T /Q
+            icacls "$RUNNER_TEMP" /grant '*S-1-5-32-545:(OI)(CI)F' /T /Q
+            bash desktop/teacher/scripts/run-windows-restricted.sh "$exe" \
+              --postgres-smoke "$GITHUB_WORKSPACE/desktop/teacher/src-tauri" "$RUNNER_TEMP/cb-postgres-smoke"
+          else
+            "$exe" --postgres-smoke "$GITHUB_WORKSPACE/desktop/teacher/src-tauri" "$RUNNER_TEMP/cb-postgres-smoke"
+          fi
 
   summary:
     name: Riepilogo PostgreSQL
