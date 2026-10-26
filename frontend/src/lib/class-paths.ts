@@ -82,7 +82,7 @@ function typedTarget(raw: Record<string, unknown>, stepType: ClassPathStepType) 
     const meeting = stepType === 'meeting';
     return {
         meeting_id: meeting && raw.meeting_id != null ? Number(raw.meeting_id) : null,
-        follows_step_id: meeting && raw.follows_step_id != null ? Number(raw.follows_step_id) : null,
+        follows_step_id: null,
         meeting_summary: meeting ? parseMeeting(raw.target_summary) : null,
         assignment_id: assignment && raw.assignment_id != null ? Number(raw.assignment_id) : null,
         assignment_summary: assignment ? parseAssignmentSummary(raw.target_summary) : null,
@@ -191,7 +191,7 @@ export function parseClassPath(input: unknown): ClassPath {
         group_id: Number(raw.group_id),
         title: String(raw.title || ''),
         description: raw.description ? String(raw.description) : null,
-        mode: raw.mode === 'strict' ? 'strict' : 'recommended',
+        mode: 'recommended',
         status: raw.status === 'published' ? 'published' : raw.status === 'archived' ? 'archived' : 'draft',
         published_at: raw.published_at ? String(raw.published_at) : null,
         created_by: String(raw.created_by || ''),
@@ -294,7 +294,7 @@ export function parseStudentClassPath(input: unknown): StudentClassPath {
         group_name: String(raw.group_name || ''),
         title: String(raw.title || ''),
         description: raw.description ? String(raw.description) : null,
-        mode: raw.mode === 'strict' ? 'strict' : 'recommended',
+        mode: 'recommended',
         steps,
         next_step_id: raw.next_step_id != null ? Number(raw.next_step_id) : null,
         done: Number(raw.done || 0),
@@ -377,7 +377,7 @@ export function parseClassPathProgress(input: unknown): ClassPathProgress {
     const students = Array.isArray(raw.students) ? raw.students : [];
     return {
         path_id: Number(raw.path_id),
-        mode: raw.mode === 'strict' ? 'strict' : 'recommended',
+        mode: 'recommended',
         steps: steps.map(step => {
             const record = step as Record<string, unknown>;
             return {

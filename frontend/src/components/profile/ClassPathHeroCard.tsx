@@ -22,7 +22,6 @@ import { pathAssignmentText } from '@/lib/i18n-path-assignments';
 import { pathForumText } from '@/lib/i18n-path-forum';
 import { forumStepNotice } from '@/lib/path-forum';
 import { classMeetingText } from '@/lib/i18n-class-meetings';
-import { stepKindText } from '@/lib/i18n-step-kinds';
 import type { ForumDiscussionLink } from '@/lib/forum';
 import type { ClassMeeting } from '@/lib/class-meetings';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
@@ -42,7 +41,7 @@ interface Props {
 }
 
 export function ClassPathHeroCard({ path, onReload, collapsible = false, defaultOpen = true, discussionLinks = [], meetings = null, onMeetingsChanged }: Props) {
-    const { lang } = useI18n();
+    const { lang, t } = useI18n();
     const l = (key: PathTextKey) => classPathText(lang, key);
     const [actionStepId, setActionStepId] = useState<number | null>(null);
     const [open, setOpen] = useState(defaultOpen);
@@ -84,23 +83,15 @@ export function ClassPathHeroCard({ path, onReload, collapsible = false, default
             data-testid="class-path-hero-card"
             className="space-y-6 border-indigo-200 shadow-sm dark:border-indigo-800"
         >
-            {/* Header: Class label, Mode, Title, Progress */}
+            {/* Header: class, title and independent progress. */}
             <div className={`space-y-3 ${expanded ? 'border-b border-slate-200/80 pb-4 dark:border-slate-800' : ''}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
                         {`${l('yourClassPath')} · ${path.group_name}`}
                     </span>
-                    <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            path.mode === 'strict'
-                                ? 'border border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300'
-                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-                        }`}
-                    >
-                        {path.mode === 'strict' ? l('strictBadge') : l('recommendedBadge')}
-                    </span>
                 </div>
 
+                <p className="text-sm text-slate-600 dark:text-slate-300">{t('piano.builder.independentSteps')}</p>
                 <div>
                     <h2 className="font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl dark:text-white">
                         {collapsible ? (
@@ -258,10 +249,6 @@ export function ClassPathHeroCard({ path, onReload, collapsible = false, default
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">{pathForumText(lang, 'studentRule')}</p>
                                                 {notice && <p role="status" className="text-xs font-medium text-slate-700 dark:text-slate-300">{pathForumText(lang, `notice_${notice}`)}</p>}
                                             </>);
-                                        })()}
-                                        {step.step_type === 'meeting' && step.follows_step_id != null && (() => {
-                                            const chatIndex = path.steps.findIndex(row => row.id === step.follows_step_id);
-                                            return chatIndex >= 0 && <p className="text-xs text-slate-500 dark:text-slate-400">{`${stepKindText(lang, 'followsChat')} [${chatIndex + 1}]`}</p>;
                                         })()}
                                         {step.step_type === 'meeting' && step.meeting_summary && !isUnavailable && (() => {
                                             // The student's own view of the meeting carries slots and booking (#176).

@@ -185,10 +185,10 @@ def test_applied_path_is_a_copy_and_pending_steps_survive_saves(api):
         "revision": current["revision"], "title": current["title"], "mode": "recommended", "steps": body})
     assert saved.status_code == 200, saved.text
     assert [s["step_type"] for s in saved.json()["steps"]] == ["tool"] + ["pending"] * 4
-    # A deep dive cannot move before its questionnaire, nor point at another path.
+    # A deep dive may precede its data source; foreign-path references remain invalid.
     swapped = body[:1] + [body[2], body[1]] + body[3:]
     assert client.put(f"/teacher/paths/{path['id']}", json={
-        "revision": saved.json()["revision"], "title": "x", "mode": "recommended", "steps": swapped}).status_code == 422
+        "revision": saved.json()["revision"], "title": "x", "mode": "recommended", "steps": swapped}).status_code == 200
     other = client.post(f"/teacher/groups/{data['group'].id}/paths", json={"title": "Other"}).json()
     assert client.put(f"/teacher/paths/{other['id']}", json={
         "revision": other["revision"], "title": "Other", "mode": "recommended",
@@ -456,3 +456,21 @@ def test_save_as_template_copies_only_explicit_presentation_not_derived_names(ap
     steps = saved.json()["steps"]
     assert [step["title"] for step in steps] == [None, None]
     assert steps[0]["instructions"] == "Class note" and steps[1]["plan_title"] == "Real plan"
+
+
+def test_pending_analysis_survives_removing_its_questionnaire_step(api):
+    client, db, identity, data = api
+    template = create(client, data["goal"])
+    path = apply(client, template, data["group"]).json()[0]
+    source, analysis = path["steps"][1:3]
+    saved = client.put(f"/teacher/paths/{path['id']}", json={
+        "revision": path["revision"], "title": path["title"], "steps": [
+            {"step_type": "pending", "id": analysis["id"]},
+        ]})
+    assert saved.status_code == 200, saved.text
+    (step,) = saved.json()["steps"]
+    assert step["pending_config"] == {"kind": "guided_results_chat", "tool_key": "QSA"}
+    assert db.get(models.ClassPathStep, source["id"]).removed_at is not None
+    published = client.post(f"/teacher/paths/{path['id']}/publish")
+    assert published.status_code == 200, published.text
+    assert published.json()["steps"][0]["tool_key"] == "QSA"

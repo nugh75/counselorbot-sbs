@@ -56,7 +56,7 @@ test('class-paths parser handles array of paths', () => {
         { id: 2, group_id: 5, title: 'Path 2', status: 'archived' },
     ]);
     assert.equal(paths.length, 2);
-    assert.equal(paths[0].mode, 'strict');
+    assert.equal(paths[0].mode, 'recommended');
     assert.equal(paths[0].status, 'published');
     assert.equal(paths[1].status, 'archived');
 });
@@ -116,7 +116,7 @@ test('student class-paths parser handles full path payload and array', () => {
     const path = parseStudentClassPath(raw);
     assert.equal(path.id, 2);
     assert.equal(path.group_name, '3B');
-    assert.equal(path.mode, 'strict');
+    assert.equal(path.mode, 'recommended');
     assert.equal(path.next_step_id, 12);
     assert.equal(path.done, 1);
     assert.equal(path.total, 2);
@@ -217,7 +217,7 @@ const progressPayload = {
 
 test('teacher progress parser keeps sources, overrides and unknown values safe', () => {
     const progress = parseClassPathProgress(progressPayload);
-    assert.equal(progress.mode, 'strict');
+    assert.equal(progress.mode, 'recommended');
     assert.deepEqual(progress.steps.map(s => [s.id, s.available, s.done_count]), [[1, true, 1], [2, true, 1], [3, false, 0]]);
     const [anna, marco] = progress.students;
     assert.equal(anna.cells[1].source, 'teacher');
@@ -423,4 +423,15 @@ test('planStepHref marks only chat starts as coming from a plan', () => {
     assert.equal(planStepHref('/?start=OBIETTIVO_STUDIO'), '/?start=OBIETTIVO_STUDIO&from=plan');
     assert.equal(planStepHref('/profilo/timeline'), '/profilo/timeline');
     assert.equal(planStepHref('/profilo/piani-operativi/1/2/approfondimento'), '/profilo/piani-operativi/1/2/approfondimento');
+});
+
+
+test('legacy follow-up metadata never couples displayed meeting steps to a chat', () => {
+    const path = parseClassPath({id: 8, group_id: 1, title: 'Legacy', mode: 'strict', steps: [
+        {id: 2, position: 1, step_type: 'meeting', meeting_id: 10, follows_step_id: 1},
+        {id: 1, position: 2, step_type: 'guided_chat', tool_key: 'SAVICKAS'},
+    ]});
+    assert.equal(path.mode, 'recommended');
+    assert.equal(path.steps[0].follows_step_id, null);
+    assert.deepEqual(path.steps.map(step => step.id), [2, 1]);
 });

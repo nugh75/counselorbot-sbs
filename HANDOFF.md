@@ -4293,3 +4293,7 @@ in bozza fino al gate applicabile. Non sono stati avviati altri agenti.
 
 ## s12 — Somministrazioni
 Stato e verifiche del ramo: [handoff dedicato](docs/handoff/feature-somministrazioni-archiviazione.md).
+
+## s11 — Builder dei piani operativi
+Passi autonomi, forum e incontri dentro il builder; PR [#595](https://github.com/nugh75/counselorbot-sbs/pull/595).
+Stato e verifiche del ramo: [handoff dedicato](docs/handoff/feature-piano-builder-interno.md).

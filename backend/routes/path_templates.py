@@ -153,7 +153,7 @@ def _step(db: Session, row: models.PathTemplateStep) -> dict:
 
 def _serialize(db: Session, row: models.PathTemplate, identity) -> dict:
     owner_name = db.query(models.UserDisplayName.display_name).filter_by(username=row.owner_username).scalar()
-    return {"id": row.id, "title": row.title, "description": row.description, "mode": row.mode,
+    return {"id": row.id, "title": row.title, "description": row.description, "mode": "recommended",
             "owner_username": row.owner_username, "owner_name": owner_name or row.owner_username,
             "is_owner": row.owner_username == _username(identity), "shared": row.shared_at is not None,
             "shared_at": row.shared_at.isoformat() if row.shared_at else None, "revision": row.revision,
@@ -165,7 +165,7 @@ def _create(db: Session, identity, payload: TemplateWrite | dict, values: list[d
     data = payload if isinstance(payload, dict) else payload.model_dump(include={"title", "description", "mode"})
     row = models.PathTemplate(owner_username=_username(identity) or "", title=data["title"],
                               description=(data.get("description") or "").strip() or None,
-                              mode=data["mode"], revision=1)
+                              mode="recommended", revision=1)
     db.add(row)
     db.flush()
     replace_template_steps(db, row, values)
@@ -200,7 +200,7 @@ def update_template(template_id: int, payload: TemplateUpdate, identity=Depends(
     if payload.revision != row.revision:
         raise HTTPException(409, "template_revision_conflict")
     values = step_config(db, payload.steps)
-    row.title, row.mode = payload.title, payload.mode
+    row.title, row.mode = payload.title, "recommended"
     row.description = (payload.description or "").strip() or None
     replace_template_steps(db, row, values)
     row.revision += 1

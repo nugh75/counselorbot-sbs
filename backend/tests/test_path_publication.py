@@ -363,17 +363,21 @@ def test_unauthorized_contexts_cannot_manage_the_path(api):
     assert client.get(f"/teacher/paths/{path['id']}").json()["status"] == "draft"
 
 
-def test_strict_mixed_path_unlocks_in_order(api):
+def test_legacy_strict_mixed_path_keeps_every_step_available(api):
     client, db, identity, group, other, goal = api
     path, plan, assignment, topic = mixed_path(client, group, goal, mode="strict")
     published = publish(client, path).json()
+    assert published["mode"] == "recommended"
     as_user(identity, "alice")
     steps = client.get("/user/paths").json()[0]["steps"]
-    assert [step["state"] for step in steps] == ["not_done", "locked", "locked", "locked", "locked"]
+    assert [step["state"] for step in steps] == ["not_done"] * 5
     forum = published["steps"][3]
-    assert client.post(f"/user/paths/{path['id']}/steps/{forum['id']}/launch").status_code == 409
-    # A reply posted while locked counts once the earlier steps are done.
+    assert client.post(f"/user/paths/{path['id']}/steps/{forum['id']}/launch").status_code == 200
+    # A reply completes its own step without waiting for the earlier ones.
     assert client.post(f"/forum/topics/{topic['id']}/posts", json={"body": "Early"}).status_code == 201
+    steps = client.get("/user/paths").json()[0]["steps"]
+    assert [step["state"] for step in steps] == ["not_done", "not_done", "not_done", "done", "not_done"]
+    assert steps[3]["source"] == "automatic"
     as_user(identity, "teacher")
     for step in published["steps"][:3]:
         response = client.put(f"/teacher/paths/{path['id']}/steps/{step['id']}/progress/alice",
@@ -382,7 +386,6 @@ def test_strict_mixed_path_unlocks_in_order(api):
     as_user(identity, "alice")
     steps = client.get("/user/paths").json()[0]["steps"]
     assert [step["state"] for step in steps] == ["done", "done", "done", "done", "not_done"]
-    assert steps[3]["source"] == "automatic"
 
 
 def test_class_view_selection_keeps_path_rules_and_explains_hidden_tools(api):

@@ -78,7 +78,7 @@ export function parsePathTemplate(input: unknown): PathTemplate {
         id: Number(raw.id),
         title: text(raw.title),
         description: raw.description ? String(raw.description) : null,
-        mode: raw.mode === 'strict' ? 'strict' : 'recommended',
+        mode: 'recommended',
         owner_username: text(raw.owner_username),
         owner_name: text(raw.owner_name) || text(raw.owner_username),
         is_owner: Boolean(raw.is_owner),
@@ -95,7 +95,15 @@ export function parsePathTemplateList(input: unknown): {mine: PathTemplate[]; sh
 }
 
 export function newTemplateStep(type: TemplateStepType): TemplateStep {
-    return parseStep({step_type: type});
+    return parseStep({step_type: type, ...(type === 'guided_results_chat' ? {tool_key: 'QSA'} : {})});
+}
+
+/** Editing a legacy template detaches analyses from other steps without losing
+ * the questionnaire type. Applied plans and saved sessions are unaffected. */
+export function independentTemplateSteps(steps: TemplateStep[]): TemplateStep[] {
+    return steps.map(step => step.step_type === 'guided_results_chat' && !step.tool_key
+        ? {...step, tool_key: steps[(step.results_position ?? 0) - 1]?.instrument_code || 'QSA', results_position: undefined}
+        : step);
 }
 
 /** Moving or removing steps keeps every results chat on the same questionnaire step. */
