@@ -1,6 +1,7 @@
 # ADR-0003 — Doppio database: Postgres per server e portable, SQLite per le app desktop
 
-- Stato: **Accettato** (2026-10-24). Decisione dell'utente del 24/10.
+- Stato: **Sostituito da [ADR-0004](0004-postgresql-only-runtime-and-desktop-layout-2.md)** (2026-10-26).
+  La decisione del 24/10 e le misure restano come storia e descrivono i bundle layout 1, inclusa `v0.1.1`.
 - Sostituisce: decisione D4 del piano (Postgres incorporato) e lo spike [F0-02](../spikes/f0-02-embedded-postgres.md) come scelta per il desktop.
 - Collegati: [ADR-0001](0001-installation-profiles-and-desktop-packaging.md), [ADR-0002](0002-desktop-phase-1-contracts.md); compiti F1-05a..j del piano.
 

@@ -23,6 +23,12 @@ installer/manifest nelle Release. Le prove tecniche non autorizzano l'impiego
 con minori o dati reali. Vedere [guida](../operations/desktop-teacher-guide.md)
 e [accettazione manuale](../operations/desktop-teacher-tests.md).
 
+**Target PostgreSQL non consegnato:** ADR-0004 prevede un cluster PostgreSQL 15 locale, credenziali
+SCRAM nel portachiavi e conversione/backup verificati. Le misure sotto restano quelle dei bundle
+SQLite layout 1. Prima di un'attivazione reale occorre riesaminare questo allegato e i gate del
+[contratto di upgrade](../operations/postgresql-desktop-upgrade.md); il target non riduce da solo i
+rischi e non è ancora disponibile.
+
 ## Flussi e misure verificabili nel codice
 
 | Tratto | Profilo docente-PC e limiti | Evidenza |

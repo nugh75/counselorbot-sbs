@@ -8,6 +8,12 @@ monouso docente e le pagine di accesso/abbinamento. SQLite, origine backend
 dinamica, portachiavi e tunnel sono implementati e verificati separatamente.
 Identificatore immutabile: `org.ai4educ.counselorbot.teacher`.
 
+> **Target non ancora consegnato.** ADR-0004 definisce layout/contratto 2 con PostgreSQL 15
+> incorporato, import legacy e backup/restore. Questa pagina descrive sotto il codice corrente
+> SQLite/layout 1; il contratto di migrazione e i gate sono in
+> [Upgrade desktop a PostgreSQL](postgresql-desktop-upgrade.md). Non è ancora possibile usare il
+> target o pubblicare una release PostgreSQL.
+
 Il pannello chiavi API e il portachiavi di sistema (F1-08) sono descritti in
 `desktop-api-keys.md`: nessun valore nei file, accesso solo dal pannello nativo,
 passaggio al solo backend attraverso l'ambiente del processo.

@@ -1,13 +1,17 @@
 # Piano: app desktop per docente e studente
 
-Stato: **Fase 0 chiusa, contratti congelati** negli ADR [0001](adr/0001-installation-profiles-and-desktop-packaging.md),
-[0002](adr/0002-desktop-phase-1-contracts.md), [0003](adr/0003-dual-database-postgres-sqlite.md) (F0-04, 2026-10-24).
+Stato: **Fase 0 chiusa; contratto PostgreSQL target definito, migrazione non consegnata**. ADR
+[0001](adr/0001-installation-profiles-and-desktop-packaging.md),
+[0002](adr/0002-desktop-phase-1-contracts.md), [0003](adr/0003-dual-database-postgres-sqlite.md)
+(storico) e [0004](adr/0004-postgresql-only-runtime-and-desktop-layout-2.md) (target, 2026-10-26).
 Prima stesura: 2026-10-23, `main` @ `a92bb430`. Epic #499 e milestone «Desktop apps» su GitHub.
 
-> **Decisione dell'utente del 24/10 — doppio database.** Server e portable restano su Postgres; le app desktop
-> (docente e studente) usano **SQLite**; il backend è compatibile con entrambi, con test su tutti e due in CI.
-> Sostituisce il Postgres incorporato (D4, §3.3): dettagli in [ADR-0003](adr/0003-dual-database-postgres-sqlite.md).
-> Le altre decisioni provvisorie dell'utente (firma, pilota, tunnel, pseudonimi, release, esclusioni, piattaforme) sono in §9.
+> **Decisione dell'utente del 26/10 — PostgreSQL unico.** Server, portable, desktop docente e futura
+> app studente usano PostgreSQL 15; sviluppo e CI business convergono sullo stesso motore. SQLite
+> resta solo sorgente legacy e formato dei test del converter. Il contratto esecutivo è ADR-0004:
+> layout 2, cluster incluso, credenziali OS, import transazionale e backup/restore.
+> **I bundle `v0.1.1` restano SQLite/layout 1/contratto 1; nessuna release PostgreSQL è ancora disponibile.**
+> Le altre decisioni provvisorie (firma, pilota, tunnel, pseudonimi, release, esclusioni, piattaforme) sono in §9.
 
 Le sezioni 1–2 sono pensate per chi non è tecnico; dalla 3 in poi il piano entra nei dettagli.
 
@@ -35,17 +39,19 @@ si collegano a quell'app attraverso un tunnel Cloudflare gratuito e un codice/QR
 | D1 | Contenitore dell'app | **Tauri v2** come guscio leggero che avvia dei *sidecar* (programmi inclusi): backend Python, server Next.js, `cloudflared` (confermato da F0-01) | **Electron**: valido (Node incluso, utile a Next.js), ma +~100 MB per app e due motori da aggiornare; resta il piano B se WebKitGTK su Linux dà problemi. **Docker Desktop + launcher**: richiede installazione pesante, diritti di amministratore e virtualizzazione: contrario all'«un clic». |
 | D2 | Backend | Lo stesso FastAPI della madre, impacchettato con **PyInstaller** (modalità *onedir*) per ogni sistema, come già fatto per l'helper ChatGPT | Riscrivere il backend: fuori discussione. Nuitka: più lento da compilare, nessun vantaggio dimostrato qui. |
 | D3 | Frontend | Il build **standalone** di Next.js già prodotto oggi, eseguito da un runtime Node incluso | **Export statico** servito da FastAPI: elimina Node ma richiede di rifare 12 route dinamiche e 4 route API (vedi §3.2): da valutare dopo. |
-| D4 | Database | **SQLite** nelle app desktop, **Postgres 15** su server e portable; backend unico compatibile con entrambi, CI su entrambi (decisione dell'utente del 24/10, [ADR-0003](adr/0003-dual-database-postgres-sqlite.md)) | **Postgres incorporato**: fattibile (spike F0-02), ma +22–110 MB per piattaforma e gestione di `initdb`/`pg_ctl`/`pg_upgrade`; scartato dall'utente. |
+| D4 | Database | **PostgreSQL 15 ovunque**, incorporato nelle app desktop; SQLite solo per import legacy/test (decisione del 26/10, [ADR-0004](adr/0004-postgresql-only-runtime-and-desktop-layout-2.md)) | **Doppio runtime**: scelto il 24/10 e usato in `v0.1.1`, superato per uniformare sviluppo e semantica; misure conservate in ADR-0003. |
 | D5 | Tunnel | **Tunnel nominativo Cloudflare** (gratuito, con un account Cloudflare) come modalità consigliata; **quick tunnel** (`trycloudflare.com`) come modalità «prova subito» con limiti dichiarati | Solo quick tunnel: Cloudflare lo dichiara per test, senza garanzie e **senza Server-Sent Events**, che la chat usa per lo streaming (§3.4). ngrok/Tailscale Funnel: altri account e limiti, fuori dal vincolo «Cloudflare». |
 | D6 | Accesso studenti | **Codice di classe + QR** che contiene URL e **chiave di abbinamento**; ogni studente riceve poi un **token personale** revocabile; login locale gestito dall'app docente | Chiave unica condivisa per tutti: non revocabile per singolo studente. ai4auth: richiede la Console, che sul PC del docente non c'è. |
 | D7 | LLM locale | Un **provider «OpenAI-compatibile personalizzato»** (URL + chiave facoltativa) accanto a Ollama, con rilevamento automatico di Ollama (`:11434`) e LM Studio (`:1234`) | Un provider dedicato per ogni server locale: duplicazione inutile, LM Studio/vLLM/llama.cpp parlano tutti `/v1/chat/completions`. |
-| D8 | App studente (Fase 2) | **Tauri v2** con UI ridotta e **SQLite locale cifrato**; sincronizzazione a **registro di eventi** (append-only) verso l'app docente | Copia completa dell'app docente sul PC studente: espone prompt, dati di altri studenti e chiavi. |
+| D8 | App studente (Fase 2) | **Tauri v2** con UI ridotta e **PostgreSQL locale layout 2**; sincronizzazione a **registro di eventi** (append-only) verso l'app docente; cifratura disco OS da validare in F2-06 | Copia completa dell'app docente sul PC studente: espone prompt, dati di altri studenti e chiavi. |
 | D9 | Release | **Stesso tag** della madre (`vX.Y.Z`) → workflow GitHub Actions con matrice mac/win/linux → asset nella stessa GitHub Release; aggiornamento con l'updater firmato di Tauri | Repository separato per le app: rompe il legame di versione richiesto. |
 | D10 | Firma | Partire **non firmati** con istruzioni (come già deciso per gli helper, #135); preparare la pipeline perché firmi **solo se** trova le credenziali; decisione su costi rinviata all'utente | Comprare subito certificati: decisione di spesa che spetta all'utente (#135 la blocca esplicitamente). |
 
 **Stima complessiva (indicativa, lavoro di agenti + revisione dell'utente):**
-Fase 0 (spike e contratti) ~1 settimana (chiusa); **Fase 1 ~6–8 settimane** (era 5–7: la compatibilità SQLite, F1-05a..j, vale ~19 giorni di lavoro in buona parte parallelo); **Fase 2 ~5–8 settimane** (F2-02 si riduce).
-Le stime sono larghe perché il packaging cross-platform si scopre solo provando sulle tre piattaforme.
+Fase 0 (spike e contratti) ~1 settimana (chiusa); la stima storica della Fase 1 era **6–8 settimane**,
+inclusa la compatibilità SQLite F1-05a..j; la Fase 2 era stimata **5–8 settimane**. La migrazione
+PG-01..03 non è compresa in tali stime e va misurata sulle implementazioni. Le stime restano larghe
+perché il packaging cross-platform si scopre solo provando sulle piattaforme.
 
 ---
 
@@ -57,7 +63,7 @@ Le stime sono larghe perché il packaging cross-platform si scopre solo provando
 
 | Pezzo | Dove | Cosa ci dice per il desktop |
 |------|------|------------------------------|
-| Postgres 15 | `docker-compose.portable.yml:6-23` | DB interno, un solo volume `postgres_data`: sul desktop è **sostituito da SQLite** (ADR-0003). |
+| Postgres 15 | `docker-compose.portable.yml:6-23` | DB interno, un solo volume `postgres_data`: sul desktop la target architecture usa la stessa major con binari inclusi e cluster nella cartella utente (ADR-0004). |
 | Piper (sintesi vocale) | `docker-compose.portable.yml:25-43` | Servizio separato, 2 GB di RAM massimi: in Fase 1 **opzionale** (l'audio ha già altri motori, es. `edge-tts` in `backend/requirements.txt`). |
 | Backend FastAPI | `docker-compose.portable.yml:45-103` | Un solo worker (`:51`), `OLLAMA_PRELOAD=false` (`:59`), `host.docker.internal` per raggiungere un Ollama sull'host (`:77`). Tutte le cartelle dati sono variabili d'ambiente (`:62-72`): basta puntarle alla cartella dati dell'app. |
 | Frontend Next.js | `docker-compose.portable.yml:105-137` | Build di produzione `standalone` (`frontend/next.config.ts:6`, `frontend/Dockerfile` stadio `runner`). |
@@ -132,6 +138,7 @@ PC del docente
 │ App Tauri (guscio, ~10 MB)                                    │
 │  pannello: Avvia/Ferma · stato · QR · chiavi API · LLM locale │
 │   │ avvia e sorveglia i sidecar (porte su 127.0.0.1)          │
+│   ├─ PostgreSQL 15 (cluster privato nella cartella dati)      │
 │   ├─ backend   (PyInstaller, uvicorn 1 worker)                │
 │   ├─ frontend  (node + .next/standalone)                      │
 │   └─ cloudflared (quick o named tunnel → frontend)            │
@@ -142,8 +149,9 @@ PC del docente
 
 - Tutto ascolta solo su `127.0.0.1`; l'unica porta d'ingresso esterna è il tunnel (in uscita, nessuna porta aperta sul router).
 - Il docente usa l'app nella finestra Tauri o nel proprio browser (`http://127.0.0.1:<porta>`), già autenticato come admin locale.
-- Database: **SQLite** in un file della cartella dati (ADR-0003); nessun sidecar Postgres.
-- Cartella dati: `app_local_data_dir()` di Tauri con identificatore `org.ai4educ.counselorbot.teacher` (macOS `~/Library/Application Support/…`, Windows `%LOCALAPPDATA%\…`, Linux `~/.local/share/…`). Lì: database SQLite, memoria sessioni, indici RAG, upload, chiavi cifrate, log, backup. Layout e variabili d'ambiente congelati in [ADR-0002 §1](adr/0002-desktop-phase-1-contracts.md).
+- Database target: **PostgreSQL 15** nel cluster privato `db/postgresql/`, avviato prima del backend;
+  credenziali SCRAM nel portachiavi OS e nessuna rete esterna. Nei bundle correnti resta SQLite layout 1.
+- Cartella dati: `app_local_data_dir()` di Tauri con identificatore immutato `org.ai4educ.counselorbot.teacher` (macOS `~/Library/Application Support/…`, Windows `%LOCALAPPDATA%\…`, Linux `~/.local/share/…`). Lì: cluster, eventuale SQLite legacy conservato, memoria sessioni, indici RAG, upload, chiavi cifrate, log, backup e stato import. Layout 1 storico in [ADR-0002 §1](adr/0002-desktop-phase-1-contracts.md), layout 2 e transizione in ADR-0004 §3.
 
 ### 3.2 Packaging cross-platform
 
@@ -181,22 +189,28 @@ all'avvio del server Next e arrivano al browser da `/runtime-config.js` (`fronte
 prima dell'idratazione; le chiamate API erano già relative (`/api`). La stessa build standalone serve Docker e desktop:
 il guscio passa le variabili all'avvio del sidecar frontend (o le omette: valgono i default ai4educ).
 
-### 3.3 Database: SQLite sul desktop, Postgres sui server
+### 3.3 Database target: PostgreSQL unico, SQLite solo legacy
 
-**Decisione dell'utente (24/10): doppio database** — [ADR-0003](adr/0003-dual-database-postgres-sqlite.md).
-La prima stesura di questa sezione consigliava Postgres incorporato perché il backend usa costrutti Postgres
-in molti punti; lo spike [F0-02](spikes/f0-02-embedded-postgres.md) ne ha dimostrato la fattibilità, ma l'utente ha scelto SQLite.
+**Decisione dell'utente (26/10): PostgreSQL ovunque** — [ADR-0004](adr/0004-postgresql-only-runtime-and-desktop-layout-2.md).
+Lo spike [F0-02](spikes/f0-02-embedded-postgres.md) ha già verificato `initdb`, avvio, migrazioni,
+`pg_dump` e riavvio con PostgreSQL 15.19 sui quattro target; le misure SQLite di ADR-0003 restano la
+descrizione storica dei bundle layout 1 e del formato sorgente del converter.
 
-Misure su `main` @ `b69e591a` (ADR-0003 §1–§2):
-- un database SQLite **nuovo** si crea già: `create_all` produce le 112 tabelle; il seed si ferma su 6 statement
-  `ADD COLUMN IF NOT EXISTS` in 3 file e, con quelli neutralizzati, completa in 5–8 s;
-- a runtime falliscono **5 advisory lock non protetti** e **1 `date_trunc`** (`routes/admin.py:659`);
-- semantica da correggere: `DateTime(timezone=True)` (161 colonne) torna senza fuso, chiavi esterne spente di default,
-  2 indici unici parziali senza `WHERE`, CHECK che cambiano tra versioni (aggiornamenti dei database esistenti);
-- la suite di test è oggi solo Postgres: va resa indipendente dal dialetto, con CI su entrambi.
+La sequenza è vincolante: runtime del cluster e risorse → converter e backup/restore → unificazione
+runtime/sviluppo/CI e validazione finale. Una build contratto 2 non può essere offerta senza tutti i
+componenti di protezione dei dati. Dettagli normativi in ADR-0004:
 
-Il lavoro è diviso nei blocchi **F1-05a..j** (§8). Backup: copia consistente del file con l'API di backup di SQLite
-(F1-05j), prima di ogni aggiornamento (F1-16).
+- layout 2 nella stessa cartella e bundle ID; nessuna nuova cartella che nasconda una vecchia installazione;
+- risorse versionate 15.19 con manifest SHA-256, avvio offline senza admin/Docker/PostgreSQL preinstallato;
+- avvio PostgreSQL → health → backend → frontend → tunnel, stop inverso e processo proprietario verificato;
+- credenziali SCRAM nel portachiavi OS e `DATABASE_URL` soltanto nel backend/converter;
+- snapshot SQLite consistente, import in una transazione, conteggi/PK/FK/sequence/UTC/binari/cifrati/file,
+  ricevuta committata e marcatura layout 2 solo dopo dump PostgreSQL con restore di prova;
+- nessun fallback SQLite o seed vuoto; sorgente conservata, retry idempotente e rollback documentato.
+
+Fino al completamento di questi gate la versione corrente continua a usare SQLite, backup SQLite e
+`desktop_contract = 1`. Le sezioni F1-05a..j di §8 sono quindi storia implementata del layout 1, non
+una decisione di mantenere due motori nel runtime target.
 
 ### 3.4 Tunnel
 
@@ -279,10 +293,11 @@ Questa sezione resta come sintesi.
 - **Tauri v2** (stesso guscio, altra configurazione), UI ridotta: chat guidata, questionari, taccuino, tavolo, obiettivi.
   Non include pannelli docente/admin.
 - Due possibilità per il motore locale:
-  - **A (consigliata)**: stesso backend Python in modalità «studente», con **SQLite** e solo le tabelle dello studente.
-    Riusa prompt e logica di chat; il backend è già compatibile SQLite dopo F1-05a..j (ADR-0003), F2-02 sceglie il sottoinsieme.
+  - **A (consigliata)**: stesso backend Python in modalità «studente», con **PostgreSQL layout 2** e solo le tabelle dello studente.
+    Riusa prompt e logica di chat; F2-02 sceglie il sottoinsieme e il perimetro del cluster secondo ADR-0004.
   - **B**: logica in TypeScript/Rust: riscrittura dei prompt e del flusso guidato → scartata.
-- Dati locali **cifrati** (SQLCipher o cifratura a livello di file con chiave nel portachiavi del sistema).
+- Protezione dei dati locali con cifratura disco OS (FileVault/BitLocker/LUKS) e portachiavi;
+  un'eventuale cifratura applicativa aggiuntiva è da decidere in F2-06 senza assumere SQLCipher.
 
 ### 4.2 Cosa resta dove
 
@@ -390,10 +405,12 @@ Workflow `desktop-release.yml`, attivato da **pubblicazione della Release** (o t
 | `windows-latest` | `x86_64-pc-windows-msvc` | `.msi`/NSIS `.exe` (+ `.sig`) |
 | `ubuntu-22.04` | `x86_64-unknown-linux-gnu` | `.AppImage`, `.deb` (+ `.sig`) |
 
-Passi per ogni runner: build PyInstaller del backend → download binari Node e `cloudflared` per il target
-(versioni fissate con checksum) → `next build` → `tauri build` (azione ufficiale `tauri-action`, che carica
-gli asset e genera `latest.json` per l'updater). Smoke test: avvio headless (`--smoke`), `GET /health` sul backend (ADR-0002 §2.2), stop.
-Su PR: solo build Linux + smoke test, per contenere i minuti di CI.
+Passi per ogni runner: build PyInstaller del backend → preparazione e verifica SHA-256 dei binari Node,
+`cloudflared` e PostgreSQL 15.19 per il target (ADR-0004 §2) → `next build` → `tauri build` (azione ufficiale
+`tauri-action`, che carica gli asset e genera `latest.json` per l'updater). Smoke test: avvio headless
+(`--smoke`), health del cluster, `GET /health` con `db=postgresql` e `desktop_contract=2`, stop senza orfani.
+Su PR: solo build Linux + smoke test, per contenere i minuti di CI; la validazione finale della migrazione
+usa tutti e quattro i target.
 
 ### 6.3 Firma e notarizzazione
 
@@ -411,7 +428,9 @@ decisione su Apple e Windows insieme a #135.
 
 - Updater Tauri con `latest.json` sulle GitHub Releases. Canali: **stabile** (Release pubblicate) e **beta**
   (pre-release), scelti nel pannello.
-- Prima di applicare un aggiornamento: backup automatico del file SQLite (F1-05j); le migrazioni della madre girano all'avvio come oggi.
+- Prima di applicare un aggiornamento: layout 1 conserva lo snapshot SQLite F1-05j; layout 2 richiede
+  `pg_dump` e restore di prova (ADR-0004 §6). Il salto a contratto 2 richiede converter e backup già
+  inclusi nella build; le migrazioni PostgreSQL girano solo dopo i gate dati.
 - Docente e studenti devono restare compatibili: versione di protocollo di sync separata (§4.5).
 
 ---
@@ -447,9 +466,11 @@ decisione su Apple e Windows insieme a #135.
 ### 7.3 Rischi di progetto
 
 - **Pacchettizzazione su tre sistemi** (librerie native Python, Node): ridotto dagli spike F0-01/F0-02 (build verdi sui 4 runner).
-- **Doppio database**: ogni nuova migrazione o SQL della madre può rompere SQLite → CI su entrambi e controllo statico (ADR-0003 §5).
+- **Migrazione dati e processi PostgreSQL**: mitigati da import transazionale, restore di prova,
+  rollback e lifecycle su quattro target; nessun rilascio prima dei gate ADR-0004 §9.
 - **Deriva dalla madre**: ogni nuova dipendenza nativa o servizio Compose rompe il desktop → smoke test desktop in CI.
-- **Peso dell'installer** (stima 300–500 MB): accettabile per il docente, pesante per lo studente → app studente senza Piper (nessuna delle due app include Postgres).
+- **Peso dell'installer** (stima 300–500 MB più PostgreSQL potato): accettabile per il docente, pesante
+  per lo studente → app studente senza Piper; le misure effettive vanno rifatte sui bundle finali.
 - **Supporto utenti** su PC eterogenei per un solo sviluppatore: limitare le piattaforme ufficiali (macOS 13+, Windows 10/11 x64, Ubuntu 22.04+).
 
 ---
@@ -466,7 +487,7 @@ sicurezza o multipiattaforma (modello più capace + revisione). Stime in giorni 
 | ID | Compito | Esito | Issue |
 |----|---------|-------|-------|
 | F0-01 ✅ | Spike Tauri + backend PyInstaller su mac/win/linux | [report](spikes/f0-01-tauri-pyinstaller.md): verde sui 4 runner; problemi `fcntl` (→ F1-18), percorsi (→ ADR-0002), processo orfano (→ ADR-0002 §2.4) | #509 |
-| F0-02 ✅ | Spike Postgres incorporato | [report](spikes/f0-02-embedded-postgres.md): fattibile; **superato** dalla decisione SQLite (ADR-0003) | #502 |
+| F0-02 ✅ | Spike Postgres incorporato | [report](spikes/f0-02-embedded-postgres.md): fattibile sui 4 target con 15.19; era superato da ADR-0003, ora è la baseline di ADR-0004 | #502 |
 | F0-03 ✅ | Spike tunnel e SSE | [report](spikes/f0-03-tunnel-sse.md): streaming `POST` ok sul quick tunnel, taglio a 60 s senza byte → heartbeat (F1-11). Resta aperta la misura sul tunnel nominativo (#505, serve il login del proprietario) | #505 |
 | F0-04 ✅ | ADR e contratti | [ADR-0001](adr/0001-installation-profiles-and-desktop-packaging.md) (chiude #207), [ADR-0002](adr/0002-desktop-phase-1-contracts.md), [ADR-0003](adr/0003-dual-database-postgres-sqlite.md) | #514 |
 
@@ -513,25 +534,37 @@ updater sono integrati; F1-15 distribuzione Release non è ancora conclusa.
 | F1-17 ✅ | Documentazione e test (#213) | [Guida docente](../operations/desktop-teacher-guide.md) in italiano, funzionalità e `.env.example`, [DPIA L2](../privacy/desktop-teacher-dpia.md) [DA VALIDARE], [smoke completo e checklist](../operations/desktop-teacher-tests.md). Limiti di integrazione espliciti: non chiude la Fase 1 | 3 | tutti | T2 |
 | F1-18 ✅ | Lock di file portabile nel backend (`fcntl` non portabile su Windows) | `backend/file_lock.py`: `flock` su POSIX (semantica invariata), lock **esclusivo** del primo byte con `msvcrt` su Windows (nessun lock condiviso); usato in `rag_index.py` e `rag_reindex_job.py`; test di esclusione e concorrenza (`backend/tests/test_file_lock.py`); job CI `backend-windows.yml` su `windows-latest` che importa il backend (#513) | 1 | F0-01 | T2 |
 
-**Cosa parte in parallelo dopo questo ADR**
+Le righe F1-05 descrivono il lavoro layout 1 già svolto e il formato sorgente legacy. Non avviano
+nuovo lavoro dual-engine. La migrazione autorizzata il 26/10 segue invece questa sequenza; ogni riga
+richiede il merge della precedente e i criteri completi sono in ADR-0004 §9:
+
+| ID | Compito | Esito richiesto | Dipende da | Stato |
+|----|---------|-----------------|------------|-------|
+| PG-00 | Contratto PostgreSQL unico | ADR-0004, layout/contratto 2, aggiornamento piano e guide senza dichiarare il target consegnato | #595 in `main` | ✅ docs |
+| PG-01 | Runtime PostgreSQL incorporato | Binari/manifest/hash/licenze, cluster proprietario, credenziali OS, lifecycle e health sui 4 target | PG-00 merged | da avviare |
+| PG-02 | Converter e backup ripristinabili | Snapshot SQLite, import transazionale/ripetibile, verifiche complete, dump/restore e rollback | PG-01 merged | da avviare |
+| PG-03 | Unificazione runtime/sviluppo/CI | PostgreSQL solo business, SQLite solo converter, validazione upgrade e lifecycle finale sui 4 target | PG-02 merged | da avviare |
+
+**Sequenza storica originaria dopo ADR-0003 (non più il piano target)**
 
 - **Subito, in parallelo** (file diversi): F1-02 (guscio, `desktop/`), F1-03 (frontend),
   F1-05a (test e CI), F1-05b (`database.py`), F1-05i (profilo), F1-11 (rotte SSE), F1-19 (origine della richiesta, frontend). F1-04 (#516) e F1-18 (#513) sono già su `main`.
 - **Dopo F1-05a + F1-05b**: F1-05c ∥ F1-05d ∥ F1-05e ∥ F1-06. F1-05f dopo F1-05e (stesso `models.py`).
 - **Poi**: F1-05g (dopo c, e), F1-05h (dopo d), F1-05j (dopo b e F1-02); F1-07 e F1-13 dopo F1-06.
 - **Percorsi critici**: sicurezza F1-05a + F1-19 → F1-06 → F1-13 → F1-07; guscio F1-02 → F1-09 → F1-13 → F1-15 → F1-16.
-- Regola per tutti i compiti che toccano `backend/` da qui in avanti: ADR-0003 §6 (codice portabile, CI su entrambi i DB).
+- Regola storica dei compiti layout 1: ADR-0003 §6. Per PG-01..03 valgono invece i gate e il confine
+  PostgreSQL business/SQLite legacy di ADR-0004; non si avviano filoni dipendenti prima dei merge.
 
 ### Fase 2 — App studente (~5–8 settimane)
 
 | ID | Compito | Definition of Done | Stima | Dipende da | Tier |
 |----|---------|--------------------|-------|------------|------|
 | F2-01 🔒 | Contratto di sincronizzazione | Documento + schema eventi, cursori, errori, versione di protocollo, regole di conflitto; revisione utente | 3 | Fase 1 | T3 |
-| F2-02 | Sottoinsieme backend «studente» su SQLite | Modalità studente del backend (già compatibile SQLite dopo F1-05): solo tabelle e rotte dello studente; test di parità sulle stesse rotte | 4 | F2-01, F1-05a..j | T3 |
+| F2-02 | Sottoinsieme backend «studente» su PostgreSQL | Modalità studente del backend e cluster layout 2: solo tabelle e rotte dello studente; test di parità sulle stesse rotte e lifecycle offline | 4 | F2-01, PG-03 | T3 |
 | F2-03 ∥ | Endpoint di sync sull'app docente | `push`/`pull` idempotenti, autorizzazione per token studente, test conflitti | 5 | F2-01 | T3 |
 | F2-04 ∥ | Guscio Tauri studente + UI ridotta | Abbinamento tramite QR, chat, questionari, taccuino, tavolo; identificatore `org.ai4educ.counselorbot.student` (ADR-0002 §1) | 6 | F2-01 | T2 |
 | F2-05 | Motore di sync client | Coda offline, ritentativi, indicatore stato, risoluzione conflitti visibile | 5 | F2-02, F2-03 | T3 |
-| F2-06 ∥ | Cifratura dati locali | DB cifrato, chiave nel portachiavi, test di non leggibilità | 3 | F2-02 | T3 |
+| F2-06 ∥ | Protezione dati locali | Verifica cifratura disco OS e portachiavi; eventuale cifratura applicativa PostgreSQL decisa e testata senza assumere SQLCipher | 3 | F2-02 | T3 |
 | F2-07 ∥ | LLM locale lato studente | Rilevamento, scelta modello, livello di contesto Minimo, fallback all'app docente | 3 | F2-04, F1-12 | T2 |
 | F2-08 | Release e compatibilità di versione | App studente nella stessa matrice CI; rifiuto sync con versioni incompatibili | 2 | F1-15, F2-05 | T2 |
 | F2-09 | Documentazione e prove con una classe pilota | Guida studente, prova offline→online, report | 3 | tutti | T2 |
@@ -552,7 +585,7 @@ Decisioni **provvisorie** dell'utente (24/10), valide finché non dice altro:
 | Q6 — Ritmo delle release della madre | su richiesta del proprietario; ogni release produce anche le app |
 | Q7 — Funzioni escluse dal desktop | Telegram, OpenCode, Prompt Lab, Piper, helper ChatGPT, Console sync esclusi dalla Fase 1 |
 | Q8 — Piattaforme minime | macOS 13+ arm64/x64, Windows 10/11 x64, Ubuntu 22.04+ |
-| — Database | doppio: Postgres server/portable, SQLite desktop (ADR-0003) |
+| — Database | decisione 26/10: PostgreSQL 15 unico; SQLite solo legacy/converter (ADR-0004) |
 | — LLM locale | Ollama, LM Studio o server OpenAI-compatibile, per docente e studente (studente: Fase 2) |
 | — Agenti di sviluppo | solo Anthropic/Claude Code |
 

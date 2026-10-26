@@ -5,6 +5,12 @@ commit, sistema/architettura, build Actions, installer, esito SHA-256, data ed
 esito di ogni voce. La [guida docente](desktop-teacher-guide.md) descrive i limiti
 attuali. Una build verde non certifica il percorso didattico completo.
 
+Le prove sotto riguardano i bundle correnti SQLite/layout 1. La futura build PostgreSQL deve inoltre
+superare tutti i [gate di upgrade ADR-0004](postgresql-desktop-upgrade.md#accettazione-obbligatoria-prima-di-una-release):
+binari offline, lifecycle del solo cluster proprietario, import transazionale/ripresa, verifica dati,
+dump/restore e rollback sui quattro target. Quei controlli non sono ancora disponibili e non vanno
+spuntati sulla base del lifecycle SQLite.
+
 ## Smoke automatizzato
 
 Il workflow `.github/workflows/desktop-teacher.yml` costruisce DMG ARM64 e Intel,

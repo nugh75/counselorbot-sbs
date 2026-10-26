@@ -2,6 +2,10 @@
 
 Stato: **bozza tecnica** (2026-10-24), `main` @ `2d47a5e6`. Riferimenti `file:riga` verificati su quel commit.
 Questo documento descrive il codice: **non** è una valutazione di conformità al GDPR (vedi [04](04-decisioni-titolare-dpo.md)).
+Nota 2026-10-26: i riferimenti SQLite descrivono il layout 1 analizzato e i bundle correnti. Il target
+ADR-0004 porta PostgreSQL 15 su L2/L3 con credenziali nel portachiavi e cluster su loopback, ma non è
+ancora implementato; SQLite resterà solo nel converter legacy. Il DPIA dovrà riesaminare il flusso al
+momento dell'attivazione, senza assumere che il target sia già una misura disponibile.
 
 Indice: [1 Livelli](#1-i-quattro-livelli-reali) · [2 Stack](#2-stack) · [3 Dati personali](#3-dove-stanno-i-dati-personali) ·
 [4 Autenticazione e autorizzazione](#4-autenticazione-e-autorizzazione) · [5 Chiamate ai modelli](#5-tutte-le-uscite-verso-modelli-e-servizi-esterni) ·
