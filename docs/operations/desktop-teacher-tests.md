@@ -88,7 +88,6 @@ non spuntare una voce basandosi sul solo test API.
   Non includere il valore nelle evidenze. Provider senza test devono indicarlo.
 - [ ] Apri nel browser: docente autenticato con link monouso, replay rifiutato,
   admin locale; dal tunnel la sessione docente non consente amministrazione.
-  **Bloccato oggi: collegamento guscio e pagina accesso locale assenti.**
 - [ ] Quick tunnel con dati inventati: link e QR, streaming POST oltre 60 s con
   pausa del provider e heartbeat, stop/restart e URL aggiornato.
 - [ ] Tunnel nominativo con dominio di prova: DNS e porta frontend, token valido,
@@ -96,8 +95,11 @@ non spuntare una voce basandosi sul solo test API.
   ripiego quick come esito nominativo. Serve l'account del proprietario del tunnel.
 - [ ] Classe con due studenti sintetici: link di abbinamento, pseudonimi duplicati,
   codice personale mostrato una volta, recupero su altro browser, pending/approvazione,
-  revoca, codice classe scaduto/rigenerato e limiti ai tentativi.
-  **Bloccato oggi: pagine Unisciti e dispositivi assenti.**
+  revoca, codice classe scaduto/rigenerato e limiti ai tentativi. Le pagine
+  `/unisciti`, la sezione «Accesso dal tunnel docente» e `/docente/dispositivi`
+  rendono il percorso verificabile dall'interfaccia; la suite browser è in
+  `frontend/tests/local-pairing.test.mjs` (API simulate, comandi in
+  [live-dev-environment](live-dev-environment.md#fixture-del-pairing-studente-602)).
 - [ ] Modello locale separato: rilevamento Ollama/compatibile OpenAI, modello selezionato,
   risposta e server spento; nessuna chiave per server senza autenticazione.
   **Accesso alla configurazione dalla GUI bloccato dall'accesso docente mancante.**

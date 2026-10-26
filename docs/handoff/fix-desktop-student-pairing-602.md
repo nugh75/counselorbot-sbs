@@ -2,25 +2,28 @@
 
 ## Stato
 - Branch `fix/desktop-student-pairing-602`; agente `s29-pairing-602-kimi`.
-- STEP 1–3 pushati (ultimo `cd5301ad`); STEP 4 verificato, commit/push in corso.
-- Modifica preesistente `opencode.json` preservata e mai inclusa nei commit.
+- STEP 1–5 completati: i18n, `/unisciti`, `/docente/dispositivi`, sezione pairing in panoramica, test e documentazione.
+- Modifica preesistente `opencode.json` mai inclusa nei commit.
 
 ## Fatto
-- Letti CONTEXT, ADR-0002 §4, issue #602, backend e test F1-13.
-- Aggiunto dizionario pairing in IT/EN/ES/FR/DE/SV con test di completezza.
-- `/unisciti`: chiave dal frammento, pair/recover, codice personale monouso, stati active/pending.
-- La chiave è rimossa dalla cronologia; errori API uniformi e localizzati; sessione attiva riconosciuta.
-- `/docente/dispositivi` e pannello condiviso: lista per classe, approva, revoca, rigenera/copia codice.
-- Panoramica classe solo con auth locale: nuovo link, approvazione/limite usi, tunnel assente, dispositivi filtrati.
+- `frontend/src/lib/i18n-local-pairing.ts`: dizionario pairing IT/EN/ES/FR/DE/SV con test di completezza.
+- `/unisciti`: chiave dal frammento `#k=` (rimossa dalla cronologia), pair/recover, codice personale mostrato una sola volta con conferma di salvataggio, stati active/pending, errori 401/400/429 localizzati, sessione attiva riconosciuta al ritorno.
+- `/docente/dispositivi` e `TeacherDevicesPanel`: dispositivi per classe, approva, revoca con conferma, rigenera/copia codice personale.
+- `ClassPairingSection` nella panoramica classe (solo `AUTH_PROVIDER=local`): nuovo link con approvazione/max usi, avviso tunnel assente, pannello dispositivi filtrato.
+- `/unisciti` escluso da AccountSetupGate e OrientationGate (con test); sottotitolo duplicato rimosso dalla schermata risultato.
+- Suite browser `frontend/tests/local-pairing.test.mjs` (9 test) + runner `scripts/dev-local-pairing-tests.sh` (:3170, API simulate).
+- Documentazione aggiornata: guida docente, checklist F1-17, DPIA L2, `docs-counselorbot`, CONTEXT, live-dev-environment, handoff; manifest guidance rigenerato.
 
 ## Verifiche
-- 3 test Node e checker i18n (3652 chiavi × 6 lingue) verdi; ESLint dei file nuovi verde.
-- `tsc --noEmit`: solo errori preesistenti per screenshot guida assenti; nessuno nei file nuovi.
-- `git diff --check` e guardia dark-theme docente verdi; browser completo nello STEP 5.
+- 16 test Node verdi (i18n, pairing, orientamento); `npm run i18n:check` 3652 chiavi × 6 lingue.
+- Browser: 9/9 su Next dev :3170 con API simulate (pair, pending, 401/429, recover, dispositivi, sezione classe locale/ai4auth, tunnel assente).
+- ESLint sui file nuovi/modificati, `git diff --check`, `make guidance-refresh` + `guidance-check`: verdi.
+- `tsc --noEmit`: solo errori preesistenti (screenshot `public/guide` assenti nel worktree); nessuno nei file toccati.
+- Backend F1-13 non modificato: suite `test_local_pairing.py` rieseguita dalla CI, non in locale (nessun venv nel worktree).
 
 ## Prossimi passi
-- STEP 5: test browser/API, guide, privacy, documentazione prodotto, guidance e PR.
+- Revisione e merge della PR da parte dell'utente; verifica su dispositivo reale con tunnel attivo (checklist F1-17).
 
 ## Blocchi e rischi
-- Verifica su tunnel desktop reale richiede un ambiente docente attivo.
-- Nessun segreto, `.env`, dato di produzione o container toccato.
+- Nessun blocco. La verifica con tunnel reale richiede l'ambiente docente e resta manuale.
+- Nessun segreto, `.env`, dato di produzione o container toccato; nessun processo lasciato attivo.

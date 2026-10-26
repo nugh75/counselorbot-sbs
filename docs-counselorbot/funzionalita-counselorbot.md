@@ -18,14 +18,19 @@ annulla il precedente, chi è già dentro resta), uno pseudonimo scelto dallo
 studente senza email né nome reale (se già usato nella classe riceve un numero,
 mai un errore), un codice personale di 12 caratteri mostrato una volta per
 rientrare da un altro dispositivo, l'approvazione facoltativa del docente, la
-revoca immediata di un dispositivo e limiti ai tentativi. Le pagine «Unisciti»
-per lo studente e dei dispositivi per il docente non sono ancora collegate.
+revoca immediata di un dispositivo e limiti ai tentativi. Le pagine sono
+collegate: lo studente si abbina su `/unisciti` (link `…/unisciti#k=…`, codice
+personale mostrato una sola volta con conferma di salvataggio, recupero con il
+codice personale, stato attivo o in attesa di approvazione); il docente genera
+il link dalla panoramica della classe (sezione «Accesso dal tunnel docente»,
+solo con il fornitore locale) e gestisce dispositivi, approvazioni, revoche e
+rigenerazione del codice personale in `/docente/dispositivi`. Se il tunnel non
+ha un indirizzo pubblico, il link generato viene segnalato e va rigenerato.
 Sul PC il docente è amministratore; l'amministrazione
 risponde solo dal PC, mai dal tunnel (i controlli del profilo docente sono
 caricati solo quando servono, così il forum resta isolato). Prompt Lab, Telegram, OpenCode, l'assistente
 ChatGPT, le voci Piper e la sincronizzazione con Console non sono disponibili
-nell'app. Restano da completare i percorsi grafici di abbinamento
-e la pubblicazione degli asset di rilascio.
+nell'app. Resta da completare la pubblicazione degli asset di rilascio.
 Le chiamate API generali del frontend ora scelgono il backend a ogni richiesta,
 tramite un handler dinamico: lo stesso bundle raggiunge la porta assegnata dal
 guscio, anche dopo un riavvio. Restano la firma dell'origine e il blocco delle
@@ -63,14 +68,35 @@ QR che il docente condivide fuori dal pannello — iscrizione alla classe,
 consiglio, URL di raccolta — puntano all'origine pubblica del tunnel invece che
 all'indirizzo locale del PC; con il tunnel spento la condivisione resta
 dell'origine del browser, come in produzione e portable. Le sessioni studenti
-dal tunnel restano anonime finché l'abbinamento con codice personale (ADR-0002
-§4) non avrà la propria interfaccia. Il modello locale richiede un server
+dal tunnel restano anonime finché il docente non completa l'abbinamento con
+codice personale (ADR-0002 §4) dalle pagine collegate descritte sopra. Il
+modello locale richiede un server
 separato; la configurazione via web è raggiungibile dopo l'accesso locale del
 docente. La checklist distingue
 smoke automatizzati e percorsi manuali ancora bloccati; il modello DPIA docente-PC
 è una bozza **[DA VALIDARE]** dal Titolare/DPO. Le pagine `/accesso-locale` e
 `/logout` esistono solo con il fornitore locale e non modificano la Guida
 interfaccia nelle sei lingue né i relativi screenshot.
+
+**Abbinamento studenti dall'interfaccia (#602).** Con il fornitore locale, la
+panoramica di ogni classe («Classi → Apri classe → Panoramica») contiene la
+sezione **Accesso dal tunnel docente**: il docente genera il link
+`/unisciti#k=…` con approvazione facoltativa e numero massimo di utilizzi, e
+nella stessa sezione vede i dispositivi della classe. Lo studente apre il link:
+il codice è precompilato dal frammento e rimosso dalla cronologia del browser,
+sceglie uno pseudonimo e riceve il codice personale di 12 caratteri mostrato
+una sola volta, con la conferma «Ho salvato il codice personale» prima di
+proseguire; con il codice personale recupera la sessione, anche su un altro
+dispositivo o dopo un cambio di indirizzo del tunnel. Uno studente in attesa di
+approvazione vede il proprio stato e resta anonimo finché il docente non
+approva; uno studente con sessione attiva che riapre `/unisciti` vede la
+sessione invece di un nuovo abbinamento. In `/docente/dispositivi` il docente
+approva gli accessi in attesa, revoca un dispositivo (con conferma, effetto
+immediato) e rigenera il codice personale (il vecchio smette di valere, le
+sessioni aperte restano). I messaggi sono nelle sei lingue; un codice
+inesistente, scaduto, revocato o esaurito dà sempre lo stesso messaggio, e i
+limiti ai tentativi mostrano solo l'attesa. Le rotte restano solo `local`: in
+produzione o portable la sezione non compare e le pagine segnalano l'errore.
 
 È disponibile il nucleo tecnico P1 del Privacy Layer: definisce tipi, errori
 senza contenuti personali e regole conservative per finalità, consenso e invio
