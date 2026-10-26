@@ -43,6 +43,21 @@ hanno artifact separati. Il test termina i processi; se interrotto, individuare
 solo i PID della prova nei report e rilanciare il controllo sulla macchina di test.
 Non applicare comandi di pulizia a processi della lezione.
 
+Regressione degli errori prima dell'avvio dei servizi (anche offline):
+
+```sh
+python3 desktop/teacher/scripts/check-startup-errors.py /percorso/counselorbot-teacher
+# Linux senza display:
+python3 desktop/teacher/scripts/check-startup-errors.py /usr/bin/counselorbot-teacher xvfb-run -a
+```
+
+La CI la esegue sui quattro target del bundle. Per `--headless` e `--smoke`
+prova layout SQLite legacy, layout più recente e JSON corrotto. Richiede uscita
+ordinata con codice 1, report JSON in errore, nessun panic, nessun cluster creato
+e file del profilo identici byte per byte. Usa sei profili temporanei e non
+avvia backend, frontend o tunnel. I test Node coprono il messaggio testuale e
+il pulsante Esci della finestra dedicata, disponibile anche senza stato `Shell`.
+
 Regressioni mirate, dal repository con un ambiente Python dedicato (CI: 3.12),
 dipendenze backend installate e comando `python` riferito a quell’ambiente:
 
@@ -81,6 +96,9 @@ non spuntare una voce basandosi sul solo test API.
   una copia alterata deve fallire il confronto senza essere installata.
 - [ ] Installare e aprire DMG ARM64, DMG Intel, NSIS o deb sul relativo sistema;
   annotare eventuali richieste di autorizzazione/signature del sistema.
+- [ ] Con un profilo SQLite sintetico, aprire la build PostgreSQL: finestra
+  **Avvio non riuscito** con motivo leggibile e **Esci**, senza crash di sistema.
+  Conservare il profilo; un nuovo profilo separato deve poter partire normalmente.
 - [ ] Primo avvio: stato Pronto, dati fuori dalla cartella installazione, servizi
   su loopback; chiudere con Esci, riaprire senza perdita dei dati; seconda istanza gestita.
 - [ ] Portachiavi reale: salvare una chiave di prova, riavviare, verificare persistenza;

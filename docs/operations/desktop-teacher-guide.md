@@ -256,6 +256,41 @@ mostrare l'errore Cloudflare. Non è disponibile un'app studente offline in Fase
 **Esporta diagnostica** funziona anche a backend fermo: lo ZIP esclude database,
 credenziali e testo libero dei log. Controllare comunque il file prima di inviarlo;
 non allegare il profilo completo. Vedere [P13](../privacy/p13-logs-diagnostica.md).
+
+### Avvio bloccato dal vecchio profilo SQLite
+
+La build PostgreSQL rifiuta un profilo SQLite/layout 1: la migrazione automatica
+non è ancora collegata all'avvio. Il profilo resta intatto. Il guscio mostra
+**Avvio non riuscito** con il motivo e il pulsante **Esci**; gli errori di
+preparazione non devono produrre il crash macOS `SIGABRT`. Nei vecchi bundle
+il report può mostrare soltanto `abort() called`: il comando seguente nel
+Terminale mostra il messaggio originale:
+
+```zsh
+"/Applications/CounselorBot Docente.app/Contents/MacOS/counselorbot-teacher" 2>&1 | tail -80
+```
+
+Se servono classi, conversazioni o allegati esistenti, conservare il profilo e
+usare il bundle precedente compatibile; il [contratto di migrazione](postgresql-desktop-upgrade.md)
+non è ancora una procedura di import consegnata. Non cambiare manualmente
+`layout.json`: il numero non converte il database.
+
+Solo se si sceglie di iniziare con dati nuovi, a **app e servizi chiusi**, su
+macOS spostare l'intero profilo in una cartella di conservazione, senza eliminarlo:
+
+```zsh
+profilo="$HOME/Library/Application Support/org.ai4educ.counselorbot.teacher"
+copia="${profilo}.backup-$(date +%Y%m%d-%H%M%S)"
+mv -n "$profilo" "$copia" &&
+open "/Applications/CounselorBot Docente.app"
+```
+
+L'app crea un nuovo profilo PostgreSQL. Il vecchio profilo rimane nella cartella
+`.backup-…`, con database, allegati, memoria e configurazione; non viene importato
+nel nuovo. Il portachiavi OS resta separato. Per riusare il vecchio profilo,
+chiudere app e servizi, conservare separatamente anche il nuovo profilo, rimettere
+quello vecchio nel percorso originale e usare il bundle precedente compatibile.
+
 Prompt Lab, Telegram, OpenCode, helper ChatGPT, Piper e sincronizzazione Console
 sono esclusi dal profilo docente. Le funzioni della piattaforma web non sono tutte
 presenti nel desktop. Riferimenti tecnici: [guscio](desktop-teacher-shell.md),
