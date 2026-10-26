@@ -1,6 +1,6 @@
 # ADR-0001 — Profili di installazione e packaging dell'app desktop
 
-- Stato: **Accettato** (2026-10-24)
+- Stato: **Accettato** (2026-10-24); database e packaging PostgreSQL **integrati da ADR-0004** (2026-10-26).
 - Chiude: #207 (ADR dei profili e del packaging)
 - Collegati: #208, #209, #210, #211, #212, #214, #135; epic #499
 - Fonti: spike [F0-01](../spikes/f0-01-tauri-pyinstaller.md), [F0-02](../spikes/f0-02-embedded-postgres.md),
@@ -12,6 +12,14 @@
 del quick tunnel. Il piano desktop (§1, §3) proponeva Tauri + sidecar e Postgres incorporato; gli spike F0-01..03
 hanno misurato la fattibilità sui tre sistemi. Il 24/10 l'utente ha deciso che le app desktop usano **SQLite**
 al posto del Postgres incorporato.
+
+## Nota di integrazione — 2026-10-26
+
+La tabella e le conseguenze sotto conservano la decisione SQLite del 24/10, applicabile ai bundle
+layout 1 già pubblicati. Nella target architecture di [ADR-0004](0004-postgresql-only-runtime-and-desktop-layout-2.md)
+tutti i profili usano PostgreSQL 15, le app desktop includono i binari nelle risorse e SQLite resta
+solo sorgente legacy/test del converter. Bundle ID, piattaforme, Tauri, identità e release restano
+quelli qui decisi.
 
 ## Decisione
 

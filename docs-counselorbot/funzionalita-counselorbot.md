@@ -1,6 +1,6 @@
 # CounselorBot: funzionalità e interfaccia attuali
 
-Aggiornato: 25 ottobre 2026. Questo è il riferimento operativo dell’Assistente
+Aggiornato: 26 ottobre 2026. Questo è il riferimento operativo dell’Assistente
 CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
@@ -33,6 +33,9 @@ rotte interne; i percorsi specifici per lo streaming mantengono i propri handler
 L'upgrade WebSocket passa al backend prima del fallback API (OpenCode rimane
 escluso dal desktop).
 Le funzioni web descritte qui continuano a riferirsi all'installazione corrente.
+Per le app desktop è stata decisa una migrazione futura a PostgreSQL 15, con import dei dati SQLite
+e backup ripristinabili, ma non è ancora consegnata: i bundle disponibili, inclusa `v0.1.1`, usano
+ancora SQLite. Non presentare PostgreSQL desktop come una funzione già utilizzabile.
 
 Il guscio desktop ha un pannello **Chiavi API**: inserimento mascherato,
 stato configurata/mancante, salvataggio nel portachiavi del sistema e rimozione.
@@ -2003,7 +2006,7 @@ Per l'istanza di prova è disponibile una modalità hot reload: `scripts/dev-tes
 
 La piattaforma ha una sola versione, scritta nel file `VERSION` alla radice del repository e propagata a tutto ciò che la porta: `frontend/package.json` e `frontend/package-lock.json`, `backend/version.py` (esposto da `GET /version` e nei metadati OpenAPI) e, per l'app desktop docente, `desktop/teacher/package.json` e `desktop/teacher/package-lock.json`, `desktop/teacher/src-tauri/tauri.conf.json`, la versione del pacchetto in `desktop/teacher/src-tauri/Cargo.toml` e la voce del crate `counselorbot-teacher` in `Cargo.lock`. `scripts/sync-version.py` aggiorna solo righe di versione, mai le versioni delle dipendenze, e `make version-check` più il workflow `version.yml` includono anche i metadati desktop nell'allineamento: l'installer e i manifest updater riportano la stessa versione. Non cambia funzioni, dati salvati o permessi. Procedura di rilascio in `docs/operations/release.md`.
 
-Le future app desktop useranno un database SQLite su file al posto di Postgres (ADR-0003). Su SQLite il backend attiva il giornale WAL, l'attesa fino a 5 secondi quando il file è occupato, le chiavi esterne (stesse cancellazioni a cascata di Postgres) e `synchronous=NORMAL`; le richieste che scrivono (`POST`, `PUT`, `PATCH`, `DELETE`) e i lavori in background prendono subito il lock di scrittura (`BEGIN IMMEDIATE`), le letture no. Con una versione di SQLite precedente alla 3.35 il backend non parte (codice di uscita 3). Le colonne che l'avvio aggiunge ai database già esistenti vengono create solo se mancano, con la stessa procedura condivisa su SQLite e Postgres: il backend parte su un file SQLite nuovo e riparte sullo stesso file senza errori. Tutte le date e gli orari memorizzati, comprese le sessioni dell'accesso locale, vengono gestiti con fuso orario UTC (`UTCDateTime`), garantendo calcoli e confronti temporali corretti sia su SQLite sia su Postgres senza modificare lo schema Postgres di produzione. Server e installazione portable restano su Postgres senza cambiamenti di funzioni, dati o permessi.
+I bundle desktop correnti, inclusa `v0.1.1`, usano un database SQLite su file (ADR-0003, layout 1). Il successivo ADR-0004 decide PostgreSQL 15 unico come architettura target, con SQLite limitato all'import legacy, ma tale migrazione non è ancora consegnata. Su SQLite il backend attiva il giornale WAL, l'attesa fino a 5 secondi quando il file è occupato, le chiavi esterne (stesse cancellazioni a cascata di Postgres) e `synchronous=NORMAL`; le richieste che scrivono (`POST`, `PUT`, `PATCH`, `DELETE`) e i lavori in background prendono subito il lock di scrittura (`BEGIN IMMEDIATE`), le letture no. Con una versione di SQLite precedente alla 3.35 il backend non parte (codice di uscita 3). Le colonne che l'avvio aggiunge ai database già esistenti vengono create solo se mancano, con la stessa procedura condivisa su SQLite e Postgres: il backend parte su un file SQLite nuovo e riparte sullo stesso file senza errori. Tutte le date e gli orari memorizzati, comprese le sessioni dell'accesso locale, vengono gestiti con fuso orario UTC (`UTCDateTime`), garantendo calcoli e confronti temporali corretti sia su SQLite sia su Postgres senza modificare lo schema Postgres di produzione. Server e installazione portable restano su Postgres senza cambiamenti di funzioni, dati o permessi.
 
 Chat, Assistente e lettura vocale rilasciano esplicitamente la transazione della richiesta prima di iniziare lo stream; i log finali e i salvataggi usano transazioni brevi. Anche le verifiche del budget e delle credenziali ChatGPT chiudono la propria sessione prima della risposta del provider. Un benchmark ripetibile simula 30 studenti con stream sintetici, salvataggi concorrenti e attività in background, verificando l'assenza di errori di lock, l'avanzamento delle letture e l'integrità dei dati. Misure e limiti della simulazione sono in `docs/operations/sqlite-load-concurrency.md`: non misurano la velocità di un provider LLM reale. Guida interfaccia e screenshot nelle sei lingue rivisti, senza nuovi controlli o testi utente.
 

@@ -4,7 +4,13 @@
   li implementano così come sono; una modifica richiede un nuovo ADR.
 - Collegati: #209 (auth intercambiabile), #208 (ruoli), #211, #214; [ADR-0001](0001-installation-profiles-and-desktop-packaging.md),
   [ADR-0003](0003-dual-database-postgres-sqlite.md)
-- Versione dei contratti: **`desktop_contract = 1`**
+- Versione dei contratti: **`desktop_contract = 1`** (layout 1 corrente); target **`desktop_contract = 2`**
+  e layout 2 definiti da [ADR-0004](0004-postgresql-only-runtime-and-desktop-layout-2.md).
+
+> **Integrazione 2026-10-26.** Per database, risorse PostgreSQL, ordine del ciclo di vita,
+> health e backup prevale ADR-0004. Identità locale, origine richiesta, abbinamento, permessi
+> e tunnel di questo ADR restano validi. I bundle `v0.1.1` implementano ancora contratto 1:
+> il target non è ancora consegnato.
 
 ## Contesto
 

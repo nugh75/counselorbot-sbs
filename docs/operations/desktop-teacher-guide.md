@@ -12,6 +12,11 @@ L'abbinamento è implementato nelle API e nei test, non è ancora un percorso
 utilizzabile dal docente. Prima di lezioni o dati reali occorre completare questi
 passaggi e la [checklist di accettazione](desktop-teacher-tests.md).
 
+**Database attuale e futuro:** i bundle disponibili, inclusa `v0.1.1`, usano ancora SQLite e le
+procedure di questa guida. È stata decisa la migrazione a PostgreSQL 15 con conversione conservativa
+e backup ripristinabili, ma **non è ancora inclusa in un installer**. Non esiste ancora un pulsante
+o un comando da eseguire; il contratto target è in [Upgrade desktop a PostgreSQL](postgresql-desktop-upgrade.md).
+
 ## 1. Scaricare e verificare l'installer
 
 1. Aprire il repository [CounselorBot](https://github.com/nugh75/counselorbot-sbs),
