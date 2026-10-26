@@ -351,8 +351,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan, version=__version__)
 
 
-# Versione del contratto guscio <-> sidecar delle app desktop (ADR-0002).
-DESKTOP_CONTRACT = 1
+def _desktop_contract() -> int:
+    """ADR-0004 §5.3: contratto 2 per PostgreSQL, 1 per SQLite (legacy)."""
+    dialect = database.engine.dialect.name
+    return 2 if dialect == "postgresql" else 1
+
+
+# Versione del contratto guscio <-> sidecar delle app desktop (ADR-0002/ADR-0004).
+# 1 = SQLite (layout 1), 2 = PostgreSQL (layout 2).
+DESKTOP_CONTRACT = _desktop_contract()
 
 
 @app.get("/version")
@@ -362,8 +369,12 @@ def get_version():
 
 @app.get("/health")
 def get_health():
-    """Pronto a servire (ADR-0002 §2.2): uvicorn risponde solo dopo il lifespan.
-    Nessun dato personale e nessuna autenticazione."""
+    """Pronto a servire (ADR-0002 §2.2, ADR-0004 §5.3): uvicorn risponde solo dopo
+    il lifespan. Nessun dato personale e nessuna autenticazione.
+
+    Contratto 2 (ADR-0004 §5.3):
+        {"status":"ok","version":"X.Y.Z","desktop_contract":2,"db":"postgresql"}
+    """
     return {
         "status": "ok",
         "version": __version__,

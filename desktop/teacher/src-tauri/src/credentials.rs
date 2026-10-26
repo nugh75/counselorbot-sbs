@@ -217,6 +217,52 @@ impl Credentials {
         }
         Ok(env)
     }
+
+    /// ADR-0004 §4: genera e salva una password PostgreSQL nel portachiavi OS.
+    ///
+    /// - `account`: "postgresql-app" o "postgresql-admin"
+    /// - `cluster_uuid`: UUID del cluster per isolare le voci
+    ///
+    /// Restituisce la password generata (32 byte base64url).
+    pub fn generate_postgres_password(&self, account: &str, cluster_uuid: &str) -> Result<String, String> {
+        let id = format!("{account}:{cluster_uuid}");
+        let password = generate_secure_password();
+        self.0
+            .lock()
+            .map_err(|_| STORE_ERROR)?
+            .set(&id, &password)
+            .map_err(|_| STORE_ERROR.into())?;
+        Ok(password)
+    }
+
+    /// ADR-0004 §4: legge una password PostgreSQL dal portachiavi OS.
+    pub fn get_postgres_password(&self, account: &str, cluster_uuid: &str) -> Result<String, String> {
+        let id = format!("{account}:{cluster_uuid}");
+        self.0
+            .lock()
+            .map_err(|_| STORE_ERROR)?
+            .get(&id)
+            .map_err(|_| STORE_ERROR)?
+            .ok_or_else(|| format!("Password PostgreSQL mancante per {account}"))
+    }
+
+    /// ADR-0004 §4: rimuove le password PostgreSQL di un cluster.
+    pub fn remove_postgres_passwords(&self, cluster_uuid: &str) -> Result<(), String> {
+        let store = self.0.lock().map_err(|_| STORE_ERROR)?;
+        for account in ["postgresql-app", "postgresql-admin"] {
+            let id = format!("{account}:{cluster_uuid}");
+            let _ = store.remove(&id); // ignora se non esiste
+        }
+        Ok(())
+    }
+}
+
+/// Genera una password sicura: 32 byte casuali, base64url senza padding.
+fn generate_secure_password() -> String {
+    use base64::Engine;
+    let mut bytes = [0u8; 32];
+    getrandom::fill(&mut bytes).expect("system random generator");
+    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes)
 }
 
 fn check_remote(p: &Provider, value: &str) -> Result<ProbeResult, String> {

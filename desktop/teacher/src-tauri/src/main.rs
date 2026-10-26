@@ -19,6 +19,7 @@ mod lifeline;
 mod logs;
 mod pids;
 mod platform;
+mod postgres_cluster;
 mod sidecar;
 mod sleep;
 mod supervisor;

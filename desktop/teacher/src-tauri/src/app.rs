@@ -174,6 +174,8 @@ fn setup(app: &AppHandle, mode: Mode) -> Result<(), Box<dyn std::error::Error>> 
         version: version.clone(),
         minimal_backend: std::env::var("COUNSELORBOT_BACKEND_MINIMAL").as_deref() == Ok("1"),
         report_file: std::env::var_os("COUNSELORBOT_REPORT_FILE").map(PathBuf::from),
+        // ADR-0004: PostgreSQL incorporato abilitato di default (layout 2)
+        postgres_enabled: std::env::var("COUNSELORBOT_POSTGRES_DISABLED").as_deref() != Ok("1"),
     };
     let handle = Arc::new(supervisor::start(config));
     app.manage(Arc::clone(&handle));
