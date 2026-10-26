@@ -11,10 +11,10 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, auth, database
+from .. import auth, database, models, schemas
 from ..certified_translation import translate_strategies
-from ..content_versions_seed import derive_strategy_versions
 from ..content_version_service import publish_catalog_source
+from ..content_versions_seed import derive_strategy_versions
 from ..translation_provider import TranslationUnavailable
 
 router = APIRouter()
@@ -120,7 +120,7 @@ async def translate_certified_strategy(
         translated = translate_strategies(db, content_key=strategy.slug)
     except TranslationUnavailable as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
-    except Exception as e:  # noqa: BLE001 - best-effort, il provider puo' non essere raggiungibile
+    except Exception as e:
         raise HTTPException(status_code=502, detail=f"Traduzione non disponibile: {e}")
     if not translated and not any(
         (getattr(strategy, f"{field}_it", None) or "").strip()

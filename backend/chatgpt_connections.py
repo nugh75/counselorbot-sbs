@@ -3,8 +3,6 @@
 Endpoints and issuer are fixed. Nothing here accepts a provider URL or a user
 identity from the local helper. Credentials never leave the backend in a reply.
 """
-from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 import math
@@ -13,15 +11,17 @@ import secrets
 import threading
 import time
 import uuid
+from contextlib import contextmanager
+from datetime import UTC, datetime, timedelta, timezone
 
-from cryptography.fernet import InvalidToken
 import httpx
-from jose import jwt, JWTError
+from cryptography.fernet import InvalidToken
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from . import models
+from .credential_storage import CredentialStorageError, CredentialStore
 from .db_compat import dialect_insert
-from .credential_storage import CredentialStore, CredentialStorageError
 
 ISSUER = "https://auth.openai.com"
 RESOURCE = "https://api.openai.com/v1"
@@ -212,7 +212,7 @@ def validate_credentials(data, client_id, *, nonce=None, subject=None):
 
 def start_link(db, username):
     require_ready(db)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     # A single stable host identifier survives restarts; concurrent workers agree.
     db.execute(dialect_insert(db, models.Config).values(key="chatgpt_host_id", value="urn:uuid:" + str(uuid.uuid4()),
                  description="Opaque SIWC host identifier").on_conflict_do_nothing(index_elements=["key"]))
@@ -235,7 +235,7 @@ def read_link(db, token, *, lock=False):
         raise ChatGPTError("linkExpired")
     query = db.query(models.ChatGPTLink).filter_by(token_hash=hashlib.sha256(token.encode()).hexdigest())
     row = (query.with_for_update() if lock else query).first()
-    if row is None or row.expires_at <= datetime.now(timezone.utc):
+    if row is None or row.expires_at <= datetime.now(UTC):
         raise ChatGPTError("linkExpired")
     return row
 
@@ -296,8 +296,8 @@ def preference(db):
         setting = db.query(models.Config).filter_by(key="chatgpt_enabled").first()
     if setting is not None and setting.value != "true":
         return None  # An explicit administrator decision selects installation AI.
-    from .personal_api import chosen_source
     from .personal_ai_audience import allowed
+    from .personal_api import chosen_source
     if not allowed(db, "chatgpt", owner(db)):
         return None  # The administrator turned ChatGPT off for this person's role.
     # #200: the model chosen for this counselor, or the person's default source.
@@ -469,9 +469,9 @@ def status(db, username):
     row = db.query(models.ChatGPTConnection).filter_by(username=username).first()
     in_use = usage(db, username)
     pending = db.query(models.ChatGPTLink).filter(models.ChatGPTLink.username == username,
-                  models.ChatGPTLink.expires_at > datetime.now(timezone.utc)).first() is not None
-    from .personal_api import class_allows
+                  models.ChatGPTLink.expires_at > datetime.now(UTC)).first() is not None
     from .personal_ai_audience import allowed
+    from .personal_api import class_allows
     blocked = not class_allows(db, username)  # #217: the class does not allow own subscriptions
     return {"available": ready, "enabled": enabled(db) and not blocked and allowed(db, "chatgpt", username), "class_blocked": blocked, "personal_api_enabled": feature_enabled(db), "reason": reason, "connected": bool(row and row.encrypted_credentials),
             "email": row.email if row else None, "use_subscription": bool(row and in_use), "pending_link": pending,

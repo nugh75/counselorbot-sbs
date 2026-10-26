@@ -12,8 +12,9 @@ import logging
 import re
 from typing import Dict, List, Optional, Set, Tuple
 
+from sqlalchemy import String
+from sqlalchemy import cast as sa_cast
 from sqlalchemy.orm import Session
-from sqlalchemy import cast as sa_cast, String
 
 from . import models, schemas
 from .counselor_i18n import localized_description, localized_tagline

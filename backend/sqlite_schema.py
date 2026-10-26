@@ -4,9 +4,9 @@ SQLite non sa `ALTER COLUMN` ne' `ADD/DROP CONSTRAINT`: vincoli, nullabilita' e 
 si cambiano ricostruendo la tabella. Qui si usa `batch_alter_table` di Alembic come
 libreria, senza catena di revisioni: tabella nuova, copia dei dati, rinomina.
 """
-from contextlib import contextmanager
 import logging
 import re
+from contextlib import contextmanager
 
 from sqlalchemy import CheckConstraint, inspect
 

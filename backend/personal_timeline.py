@@ -1,17 +1,25 @@
 """Student-owned timeline, with a one-time, lossless extraction of legacy work."""
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from fastapi import HTTPException
 from sqlalchemy import func
 
-from .db_compat import xact_lock
 from . import models
+from .db_compat import xact_lock
 from .orientation_referral_service import _i18n, _matches, _scoped
 from .reading_audience import resolve_audience_band
 from .referral_scope import institution_ids_for
-from .visual_tools import (ACTION, PERSONAL_ACTION, Action, PersonalWorkspace, SavePersonalWorkspace, Workspace,
-                           load_workspace, save_workspace)
+from .visual_tools import (
+    ACTION,
+    PERSONAL_ACTION,
+    Action,
+    PersonalWorkspace,
+    SavePersonalWorkspace,
+    Workspace,
+    load_workspace,
+    save_workspace,
+)
 
 IMPORT_ACTION = 'personal_timeline_import'
 MIGRATION_ACTION = 'activities_timeline_migration'
@@ -225,9 +233,9 @@ def resolve_institution_events(db, username, workspace, language='it'):
                          period='—', source='')
             continue
         date = row.registration_deadline if event.get('institution_date') == 'deadline' else row.starts_at
-        start = date.replace(tzinfo=timezone.utc) if date.tzinfo is None else date
+        start = date.replace(tzinfo=UTC) if date.tzinfo is None else date
         event.update(title=_i18n(row.title_i18n, language)[:160], period=start.isoformat(),
-                     tense='past' if start < datetime.now(timezone.utc) else 'future', source='')
+                     tense='past' if start < datetime.now(UTC) else 'future', source='')
     workspace['timeline']['events'].sort(key=lambda event: (
         event['period'][:10] if event.get('institution_event') else
         event.get('start_date') or event.get('end_date') or '9999-99-99'))

@@ -7,8 +7,8 @@ from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import or_
 
-from .db_compat import dialect_insert, xact_lock
 from . import models
+from .db_compat import dialect_insert, xact_lock
 from .visual_tools import SavePersonalWorkspace, load_workspace, save_workspace
 
 ResourceKind = Literal['action', 'event', 'portfolio', 'tavolo', 'notebook', 'card', 'comparison', 'reading', 'session']

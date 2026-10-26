@@ -5,9 +5,9 @@ from cryptography.fernet import InvalidToken
 from sqlalchemy import text
 
 from . import models
-from .db_compat import add_column_if_missing, dialect_insert, xact_lock
 from .api_secrets import API_KEY_ENV_MAP
-from .credential_storage import CredentialStore, CredentialStorageError
+from .credential_storage import CredentialStorageError, CredentialStore
+from .db_compat import add_column_if_missing, dialect_insert, xact_lock
 
 POLICY_KEY = "personal_api_enabled"
 # #202: levels a person can choose for a source; the database check matches.

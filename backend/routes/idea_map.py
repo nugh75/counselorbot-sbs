@@ -7,21 +7,55 @@ import logging
 import os
 import uuid
 from datetime import date
+from typing import Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response, StreamingResponse
-from typing import Literal
-
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
 from .. import auth, class_access, database, idea_sources, models
-from ..diagram_render import DiagramSpecError, describe, render, spec_fingerprint
-from ..idea_synthesis import synthesis_for
-from ..pdf_generator import generate_idea_map_pdf
-from .portfolio import PORTFOLIO_STORAGE_DIR
+from ..diagram_render import (
+    ROLE_WORDS,
+    DiagramSpecError,
+    describe,
+    parse_spec,
+    render,
+    spec_fingerprint,
+)
 from ..idea_lexicon import flaw_word, register_for_variant, status_word, task_label
+from ..idea_map import (
+    FEATURE_KEY,
+    IDEA_INSTRUMENT,
+    PACE_STOPS,
+    IdeaMapError,
+    add_node,
+    apply_and_store,
+    arrange_branch,
+    branches,
+    chosen_focus,
+    closure_ready,
+    create_manual_branch,
+    current_focus,
+    current_map,
+    current_revision,
+    delete_branch,
+    edit_node,
+    effective_title,
+    history,
+    manual_branch_ids,
+    missing_roles,
+    next_move,
+    outline,
+    owning_task,
+    parse_patch,
+    pivot_question,
+    reopen,
+    revision_map,
+    set_focus,
+    wants_plan,
+)
 from ..idea_reference import (
     MAX_REFERENCE_BYTES,
     IdeaReferenceError,
@@ -29,38 +63,9 @@ from ..idea_reference import (
     extract_reference_text,
     safe_reference_filename,
 )
-from ..idea_map import (
-    FEATURE_KEY,
-    IDEA_INSTRUMENT,
-    add_node,
-    arrange_branch,
-    branches,
-    chosen_focus,
-    closure_ready,
-    create_manual_branch,
-    current_focus,
-    delete_branch,
-    edit_node,
-    next_move,
-    outline,
-    PACE_STOPS,
-    effective_title,
-    pivot_question,
-    reopen,
-    set_focus,
-    wants_plan,
-    IdeaMapError,
-    apply_and_store,
-    current_map,
-    current_revision,
-    history,
-    revision_map,
-    manual_branch_ids,
-    missing_roles,
-    owning_task,
-    parse_patch,
-)
-from ..diagram_render import ROLE_WORDS, parse_spec
+from ..idea_synthesis import synthesis_for
+from ..pdf_generator import generate_idea_map_pdf
+from .portfolio import PORTFOLIO_STORAGE_DIR
 
 logger = logging.getLogger(__name__)
 

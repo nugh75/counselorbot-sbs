@@ -1,5 +1,5 @@
 """Path templates (#172): private to their author until shared as presets for every teacher."""
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Annotated, Literal, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -10,10 +10,23 @@ from sqlalchemy.orm import Session
 from .. import auth, database, models
 from ..class_tools import ACTIVITY_TOOL_KEYS
 from ..path_step_types import ADMINISTRATION_QUESTIONNAIRES
-from ..path_templates import (apply_template, from_class_path, replace_template_steps, step_config,
-                              template_changes, template_goal_available, template_steps, template_tool_available,
-                              update_from_template)
-from .class_paths import _go_live, _require_visible_group, _require_visible_path, _serialize_path
+from ..path_templates import (
+    apply_template,
+    from_class_path,
+    replace_template_steps,
+    step_config,
+    template_changes,
+    template_goal_available,
+    template_steps,
+    template_tool_available,
+    update_from_template,
+)
+from .class_paths import (
+    _go_live,
+    _require_visible_group,
+    _require_visible_path,
+    _serialize_path,
+)
 from .groups import _username
 
 router = APIRouter()
@@ -215,7 +228,7 @@ def share_template(template_id: int, payload: TemplateShare, identity=Depends(au
     if payload.revision != row.revision:
         raise HTTPException(409, "template_revision_conflict")
     # Shared presets are immediately available to every teacher (no admin review).
-    row.shared_at = (row.shared_at or datetime.now(timezone.utc)) if payload.shared else None
+    row.shared_at = (row.shared_at or datetime.now(UTC)) if payload.shared else None
     row.revision += 1
     db.commit()
     return _serialize(db, row, identity)

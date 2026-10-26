@@ -13,7 +13,6 @@ viene mai sovrascritto.
 """
 from __future__ import annotations
 
-
 TOOL_BRIEFS: dict[str, str] = {
     "QSA": (
         "WHAT IT LOOKS AT — Fourteen factors covering how the student actually studies, on two "

@@ -9,9 +9,9 @@ all'LLM resta integro).
 La redazione e' controllata dal flag di config `log_pii_redact` (default:
 attiva). Quando disattivata, `redact()` restituisce il testo invariato.
 """
+import re
 from contextlib import contextmanager
 from contextvars import ContextVar
-import re
 from typing import Optional
 
 REDACTION_ERROR = "[ERRORE_REDAZIONE]"

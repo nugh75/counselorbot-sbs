@@ -28,7 +28,7 @@ import unicodedata
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from html.parser import HTMLParser
 from urllib.parse import urlsplit
 
@@ -349,7 +349,7 @@ def _allowed(source: str, url: str) -> bool:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 # --- rete --------------------------------------------------------------------
@@ -799,10 +799,10 @@ def cached_lookup(
             .filter(models.WebLookupCache.cache_key == key)
             .first()
         )
-        fresh_after = datetime.now(timezone.utc) - timedelta(days=ttl_days)
+        fresh_after = datetime.now(UTC) - timedelta(days=ttl_days)
         fetched_at = getattr(row, "fetched_at", None)
         if fetched_at is not None and fetched_at.tzinfo is None:
-            fetched_at = fetched_at.replace(tzinfo=timezone.utc)
+            fetched_at = fetched_at.replace(tzinfo=UTC)
         if row is not None and fetched_at is not None and fetched_at >= fresh_after:
             return [LookupResult(**item) for item in (row.payload or [])][:limit]
 
@@ -812,7 +812,7 @@ def cached_lookup(
             db.merge(models.WebLookupCache(
                 cache_key=key, query=query, language=lang,
                 sources=list(wanted), payload=[r.as_dict() for r in results],
-                fetched_at=datetime.now(timezone.utc),
+                fetched_at=datetime.now(UTC),
             ))
             db.commit()
         except Exception as exc:  # la cache che non scrive non rompe il turno

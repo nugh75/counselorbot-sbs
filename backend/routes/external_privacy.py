@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
-from ..db_compat import xact_lock
 from .. import models
 from ..database import get_db
+from ..db_compat import xact_lock
 from .chatgpt import browser_mutation
 from .personal_api import PrivateRoute, require_admin
 

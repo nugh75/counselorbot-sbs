@@ -31,13 +31,15 @@ from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisco
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
-from ..chat_preferences import apply_response_format
 from .. import auth, class_access, control_markers, database, models, pii
-from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService
+from ..anonymous_codes import code_for_identity
 from ..api_models import ChatRequest, OpencodeChatRequest, OpencodeWorkspaceRequest
-from ..chat_continuation import continuation_message, continuation_prefix, merge_continuation
-from ..sse import heartbeat
+from ..chat_continuation import (
+    continuation_message,
+    continuation_prefix,
+    merge_continuation,
+)
 from ..chat_logic import (
     _apply_language_directive,
     _apply_qsa_factor_directive,
@@ -47,7 +49,9 @@ from ..chat_logic import (
     _resolve_system_prompt,
     _retrieved_context,
 )
+from ..chat_preferences import apply_response_format
 from ..memory_service import session_memory
+from ..sse import heartbeat
 from ..strategy_memory import shared_response_memory
 
 logger = logging.getLogger(__name__)
@@ -443,8 +447,10 @@ def _guided_prompt_markdown(
 ) -> str:
     """Esporta la guida effettiva usata dalla chat guidata per lo strumento."""
     from ..chat_logic import (
-        _apply_global_directives, _instrument_meta_system_prompt,
-        _reasoning_disabled_for, _step_allows_practical_advice,
+        _apply_global_directives,
+        _instrument_meta_system_prompt,
+        _reasoning_disabled_for,
+        _step_allows_practical_advice,
     )
     from ..prompt_contract import turn_contract
     _ensure_questionnaire_guided_steps(db, questionnaire_type)

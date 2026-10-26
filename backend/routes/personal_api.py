@@ -1,14 +1,15 @@
 """Authenticated self-service settings and administrator-only feature policy."""
+from uuid import uuid4
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 from sqlalchemy.orm import Session
-from uuid import uuid4
 
-from .. import personal_ai_audience as audience
 from .. import auth, models, personal_api
+from .. import personal_ai_audience as audience
 from ..ai_service import AIService
 from ..database import get_db
 from .chatgpt import browser_mutation

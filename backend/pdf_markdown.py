@@ -3,17 +3,17 @@
 Text-retention guard follows ai4educ-shared-config/scripts/pdf2md.py at c262bf7.
 Only the resulting Markdown is published to a collection; PDF input is temporary.
 """
-from collections import Counter
 import contextlib
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
 import tempfile
 import unicodedata
+from collections import Counter
+from pathlib import Path
 
 
 def _retention(native: str, markdown: str) -> float:

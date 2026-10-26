@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 OTTONE_QSA_SOURCE = (
     "Schede sui fattori del QSA (E. Ottone, APPRENDO, 2017; QSA di M. Pellerey, "
     "LAS 1996); testo integrale: "

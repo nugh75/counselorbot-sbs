@@ -11,13 +11,13 @@ from typing import Optional
 
 from . import models
 from .chat_logic import (
+    _ZTPI_FACTOR_NAMES,
+    _ZTPI_ZONE_LABELS,
     _qsa_assessment_labels,
     _qsa_band_for_score,
     _qsa_factor_names,
     _ztpi_lang,
     _ztpi_zone_for_score,
-    _ZTPI_FACTOR_NAMES,
-    _ZTPI_ZONE_LABELS,
 )
 
 # Strumenti a punteggio con bande risolvibili per fattore. SAVICKAS (narrativo,

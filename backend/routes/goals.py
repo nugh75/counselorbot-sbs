@@ -1,20 +1,38 @@
 """Catalog authoring, voluntary adoption and links to owned personal resources."""
-from sqlalchemy import and_, or_
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
-from ..db_compat import xact_lock
 from .. import auth, class_access, database, models
-from ..goals import (ActionCreate, CatalogWrite, GoalCreate, GoalWrite, LinkWrite, ParentWrite, ReviewWrite,
-                     catalog_dict, catalog_visible, goal_dict, membership_ids, owned_goal,
-                     resources, validate_share, lock_network, descendant_ids,
-                     add_review_milestone, ALLOWED_ROLES, default_role, validate_origin, validate_method,
-                     method_view)
+from ..db_compat import xact_lock
+from ..goals import (
+    ALLOWED_ROLES,
+    ActionCreate,
+    CatalogWrite,
+    GoalCreate,
+    GoalWrite,
+    LinkWrite,
+    ParentWrite,
+    ReviewWrite,
+    add_review_milestone,
+    catalog_dict,
+    catalog_visible,
+    default_role,
+    descendant_ids,
+    goal_dict,
+    lock_network,
+    membership_ids,
+    method_view,
+    owned_goal,
+    resources,
+    validate_method,
+    validate_origin,
+    validate_share,
+)
 from ..pdf_generator import generate_goal_path_pdf
 from ..personal_timeline import ensure_personal_timeline
-from ..visual_tools import load_workspace, save_workspace, SavePersonalWorkspace
+from ..visual_tools import SavePersonalWorkspace, load_workspace, save_workspace
 from .groups import _require_visible_group, _visible_group_query
 
 router = APIRouter()

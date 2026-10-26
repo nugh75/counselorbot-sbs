@@ -11,7 +11,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, auth, database, benchmark_service
+from .. import auth, benchmark_service, database, models, schemas
 
 router = APIRouter()
 get_db = database.get_db

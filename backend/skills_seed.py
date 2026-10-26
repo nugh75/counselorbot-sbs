@@ -11,8 +11,8 @@ import hashlib
 import json
 import logging
 
-from .diagram_icon_catalog import ICON_SELECTION_PROMPT
 from . import models
+from .diagram_icon_catalog import ICON_SELECTION_PROMPT
 from .skills.engine import DEFAULT_TOTAL_MAX_CHARS
 
 logger = logging.getLogger(__name__)

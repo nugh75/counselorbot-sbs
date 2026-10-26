@@ -8,7 +8,7 @@ al numero di taccuini.
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -96,7 +96,7 @@ async def update_practice_notebook(
         notebook.group_ids = _visible_group_ids(db, current_user["username"], payload.group_ids)
     if payload.archived is not None:
         if payload.archived and notebook.archived_at is None:
-            notebook.archived_at = datetime.now(timezone.utc)
+            notebook.archived_at = datetime.now(UTC)
         elif not payload.archived:
             notebook.archived_at = None
     db.commit()

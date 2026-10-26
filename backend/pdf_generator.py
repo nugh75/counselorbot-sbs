@@ -1,9 +1,9 @@
 """Generazione PDF dei risultati questionario con identita' visiva CounselorBot."""
+import logging
+import re
 from datetime import datetime
 from io import BytesIO
-import logging
 from pathlib import Path
-import re
 
 from fpdf import FPDF
 from fpdf.enums import MethodReturnValue
@@ -11,7 +11,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 from .control_markers import strip_control_markers
 from .diagram_blocks import segments as diagram_segments
-from .diagram_render import DiagramSpec, DiagramSpecError, describe, render as render_diagram
+from .diagram_render import DiagramSpec, DiagramSpecError, describe
+from .diagram_render import render as render_diagram
 from .reading_frame import frame as reading_labels
 
 logger = logging.getLogger(__name__)

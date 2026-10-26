@@ -1,14 +1,21 @@
 """Explicit timeline exports and immutable Portfolio copies; no model calls."""
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from fastapi import HTTPException
 from pydantic import Field
 
-from .db_compat import xact_lock
 from . import models, pii
+from .db_compat import xact_lock
 from .schemas import PORTFOLIO_MAX_TEXT_CHARS
-from .visual_tools import LABELS, Identifier, StrictModel, Workspace, workspace_model, load_workspace
+from .visual_tools import (
+    LABELS,
+    Identifier,
+    StrictModel,
+    Workspace,
+    load_workspace,
+    workspace_model,
+)
 
 TIMELINE_LABELS = {
     'it': ['Linea del tempo', 'Passato', 'Futuro', 'Lavori del Portfolio', 'Non disponibile', 'Versione del', 'Riflessione'],
@@ -109,7 +116,7 @@ def save_snapshot(db, session_id, username, update):
     if preview['preview_hash'] != update.preview_hash:
         raise HTTPException(409, 'Linked work changed; review again')
     item = models.PortfolioItem(username=username, title=preview['title'], description=preview['description'],
-        category=TIMELINE_LABELS[update.language][0], item_date=datetime.now(timezone.utc).date().isoformat(), images=[])
+        category=TIMELINE_LABELS[update.language][0], item_date=datetime.now(UTC).date().isoformat(), images=[])
     db.add(item)
     db.flush()
     db.add(models.Log(username=username, session_id=session_id, action='timeline_snapshot', details={

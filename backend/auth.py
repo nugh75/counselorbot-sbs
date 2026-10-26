@@ -9,9 +9,10 @@ ai4auth prima di leggere l'identita'.
 """
 import os
 import secrets
+
 import httpx
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, Request, status
+from passlib.context import CryptContext
 from starlette.concurrency import run_in_threadpool
 
 # `institute` (#212) non esiste ancora: un valore sconosciuto blocca l'avvio

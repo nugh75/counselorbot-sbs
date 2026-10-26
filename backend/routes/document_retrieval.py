@@ -12,12 +12,18 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from ..db_compat import xact_lock
 from .. import embedding_service, models, rag_reindex_job
 from ..ai_service import AIError, AIService
 from ..api_secrets import API_KEY_ENV_MAP, environment_secret
 from ..database import get_db
-from ..rag_index import _embedding_cooldown, _embedding_key, collection_exists, get_index, list_collections
+from ..db_compat import xact_lock
+from ..rag_index import (
+    _embedding_cooldown,
+    _embedding_key,
+    collection_exists,
+    get_index,
+    list_collections,
+)
 from . import external_privacy
 from .chatgpt import browser_mutation
 from .personal_api import PrivateRoute, require_admin

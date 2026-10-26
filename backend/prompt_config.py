@@ -1,8 +1,9 @@
-from .qpcc import directive as qpcc_directive
-from .obiettivo_layout import step_labels as obiettivo_step_labels
 import json
 from pathlib import Path
 from typing import Dict, List
+
+from .obiettivo_layout import step_labels as obiettivo_step_labels
+from .qpcc import directive as qpcc_directive
 
 # I testi dei prompt stanno in `backend/prompts/`, un file per prompt: una
 # modifica si legge come diff di testo invece che come stringa dentro una

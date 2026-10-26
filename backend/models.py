@@ -1,11 +1,27 @@
-from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, Date, DateTime, JSON, UniqueConstraint, ForeignKey, CheckConstraint, Index, text
-from sqlalchemy import event
+import bcrypt
+from sqlalchemy import (
+    JSON,
+    BigInteger,
+    Boolean,
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    event,
+    text,
+)
 from sqlalchemy.sql import func
+
 from .database import Base
 from .db_compat import UTCDateTime
 from .privacy.encrypted_types import EncryptedLogDetails, EncryptedText
-
-import bcrypt
 
 # bcrypt directly: passlib 1.7.4 cannot initialise its bcrypt backend with bcrypt>=4.1.
 BCRYPT_MAX_BYTES = 72

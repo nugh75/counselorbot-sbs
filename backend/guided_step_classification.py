@@ -1,7 +1,6 @@
 """Repair the three factory introductions previously seeded with QSA ownership."""
 from . import models
 
-
 INTRO_OWNERS = {
     "qsar-intro": "QSAr",
     "ztpi-intro": "ZTPI",

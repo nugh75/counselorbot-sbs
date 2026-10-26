@@ -1,8 +1,8 @@
 """Resolve diagram symbols from stable factor identities and exact dictionary terms."""
 import json
-from pathlib import Path
 import re
 import unicodedata
+from pathlib import Path
 
 from .diagram_icon_catalog import ICON_CATALOG
 

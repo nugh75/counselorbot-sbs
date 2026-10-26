@@ -5,7 +5,7 @@ held by an institute referent or an external expert (invited by the teacher
 outside the platform). Students book a slot; attendance is marked by the
 student, by the teacher from the register, or by either, as the teacher chose.
 """
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -14,8 +14,18 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
-from ..class_meetings import (STUDENT_MARKS, TEACHER_MARKS, active_bookings, attendance, book_slot,
-                              meeting_group_ids, meeting_summary, meetings_for_groups, my_booking, slots)
+from ..class_meetings import (
+    STUDENT_MARKS,
+    TEACHER_MARKS,
+    active_bookings,
+    attendance,
+    book_slot,
+    meeting_group_ids,
+    meeting_summary,
+    meetings_for_groups,
+    my_booking,
+    slots,
+)
 from ..goals import membership_ids
 from .groups import _require_visible_group, _username
 
@@ -257,7 +267,7 @@ def cancel_meeting(meeting_id: int, payload: RevisionOnly, identity=Depends(auth
     if payload.revision != row.revision:
         raise HTTPException(409, "meeting_revision_conflict")
     if row.status != "cancelled":
-        row.status, row.cancelled_at = "cancelled", datetime.now(timezone.utc)
+        row.status, row.cancelled_at = "cancelled", datetime.now(UTC)
         row.revision += 1
     db.commit()
     return _teacher_record(db, row)
@@ -351,7 +361,7 @@ def cancel_slot(slot_id: int, payload: RevisionOnly, identity=Depends(auth.get_c
         slot.revision += 1
         # The student sees the cancellation and can book another slot.
         db.query(models.ClassMeetingBooking).filter_by(slot_id=slot.id, status="active").update(
-            {"status": "cancelled_by_teacher", "changed_at": datetime.now(timezone.utc)})
+            {"status": "cancelled_by_teacher", "changed_at": datetime.now(UTC)})
     db.commit()
     return _teacher_record(db, row)
 
@@ -379,7 +389,7 @@ def move_booking(booking_id: int, payload: BookingMove, identity=Depends(auth.ge
 @router.post("/teacher/bookings/{booking_id}/cancel")
 def cancel_booking(booking_id: int, identity=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
     row, booking = _teacher_booking(db, identity, booking_id)
-    booking.status, booking.changed_at = "cancelled_by_teacher", datetime.now(timezone.utc)
+    booking.status, booking.changed_at = "cancelled_by_teacher", datetime.now(UTC)
     db.commit()
     return _teacher_record(db, row)
 
@@ -412,11 +422,11 @@ def _student_record(db: Session, row: models.ClassMeeting, username: str, names:
             "attended_at": mark.marked_at.isoformat() if mark else None,
             "marked_by_teacher": bool(mark and mark.marked_by),
             "can_mark": row.attendance_mode in STUDENT_MARKS and row.status == "scheduled"
-            and start is not None and start <= datetime.now(timezone.utc)}
+            and start is not None and start <= datetime.now(UTC)}
     if row.kind == "individual":
         booking = my_booking(db, row.id, username)
         taken = active_bookings(db, row.id)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         # Free future slots and the student's own; who booked the others stays private.
         data["slots"] = [{"id": slot.id, "starts_at": slot.starts_at.isoformat(), "duration_minutes": slot.duration_minutes,
                           "mine": booking is not None and booking.slot_id == slot.id}
@@ -469,7 +479,7 @@ def mark_attendance(meeting_id: int, identity=Depends(auth.get_current_user), db
     start = _attendable_from(db, row, username)
     if start is None:
         raise HTTPException(409, "meeting_not_booked")
-    if start > datetime.now(timezone.utc):
+    if start > datetime.now(UTC):
         raise HTTPException(409, "meeting_not_started")
     if attendance(db, row.id, username) is None:
         db.add(models.ClassMeetingAttendance(meeting_id=row.id, username=username))

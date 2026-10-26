@@ -4,22 +4,21 @@ No application startup, scheduler or HTTP routes are installed by this module.
 The desktop updater can call these helpers; PostgreSQL returns None immediately.
 """
 
-from contextlib import closing
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import hashlib
 import math
 import os
-from pathlib import Path
 import re
 import sqlite3
 import tempfile
 import threading
 import time
+from contextlib import closing
+from dataclasses import dataclass
+from datetime import UTC, datetime, timezone
+from pathlib import Path
 from uuid import uuid4
 
 from .db_compat import is_postgres, is_sqlite
-
 
 DEFAULT_RETENTION = 7
 DEFAULT_TIMEOUT = 30.0
@@ -144,7 +143,7 @@ def _verified_copy(source_path, directory, timeout):
 
 def _publish_backup(database, directory, prefix, timeout):
     temporary = _verified_copy(database, directory, timeout)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
     destination = directory / f"{prefix}{stamp}-{uuid4().hex}.sqlite3"
     try:
         temporary.replace(destination)

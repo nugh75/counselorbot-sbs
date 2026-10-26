@@ -11,10 +11,11 @@ together with their strict input target and database constraint.
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from . import models, administration_context, forum_completion, scoring_service
+
+from . import administration_context, forum_completion, models, scoring_service
 from .class_access import class_enables
-from .class_path_completion import GUIDED_CHAT_COMPLETED, has_automatic_evidence
 from .class_meetings import attendance, meeting_summary, meeting_target
+from .class_path_completion import GUIDED_CHAT_COMPLETED, has_automatic_evidence
 
 ADMINISTRATION_QUESTIONNAIRES = frozenset({"QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP"})
 
@@ -293,9 +294,9 @@ def results_step(db, step):
 
 def step_descriptor(db, path, step):
     from .routes.class_paths import (
+        get_tool_start_href,
         is_auto_detect_tool,
         is_tool_available_for_class,
-        get_tool_start_href,
     )
 
     if step.step_type in ("tool", "guided_chat"):

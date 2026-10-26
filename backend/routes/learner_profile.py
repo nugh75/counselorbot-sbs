@@ -7,14 +7,14 @@ Lo studente vede, modifica e cancella il proprio modello (trasparenza).
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
-from .. import auth, class_access, models, schemas, personal_api
+from .. import auth, class_access, models, personal_api, schemas
 from ..database import get_db
 from ..memory_service import session_memory
 
@@ -136,7 +136,7 @@ async def save_learner_profile(
             revision.data = data
             revision.session_id = payload.session_id
             # created_at determina il taccuino corrente in tutto il backend.
-            revision.created_at = datetime.now(timezone.utc)
+            revision.created_at = datetime.now(UTC)
         else:
             revision = models.LearnerProfileRevision(
                 username=username,
@@ -155,7 +155,7 @@ async def save_learner_profile(
             _delete_drafts(db, username, keep_id=latest.id)
             latest.source = payload.source
             latest.session_id = payload.session_id
-            latest.created_at = datetime.now(timezone.utc)
+            latest.created_at = datetime.now(UTC)
             db.commit()
             db.refresh(latest)
         else:

@@ -21,9 +21,9 @@ import threading
 import httpx
 from sqlalchemy.orm import Session
 
-from . import models, database
-from .install_profile import teacher_pc
+from . import database, models
 from .auth import ADMIN_GROUPS
+from .install_profile import teacher_pc
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ def sync_admins_sync(db: Session) -> None:
     """Upsert dei contatti admin + deattivazione di quelli che non sono piu' admin. Best-effort."""
     try:
         admins = fetch_service_admins()
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.warning("Admin sync fetch failed: %s", e)
         return
 
@@ -116,7 +116,7 @@ def sync_admins_sync(db: Session) -> None:
     # Deattiva (non eliminare) i contatti sincronizzati che non sono piu' admin.
     stale = (
         db.query(models.ResearchContact)
-        .filter(models.ResearchContact.source == SOURCE, models.ResearchContact.is_active == True)  # noqa: E712
+        .filter(models.ResearchContact.source == SOURCE, models.ResearchContact.is_active == True)
         .all()
     )
     for c in stale:
@@ -139,7 +139,7 @@ def sync_admins_async() -> None:
                 sync_admins_sync(db)
             finally:
                 db.close()
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.warning("Admin sync thread failed: %s", e)
 
     threading.Thread(target=_run, daemon=True).start()

@@ -145,7 +145,11 @@ def _latest(db, session_id: str, lang: str):
 
 def noticing(db, result, lang: str, *, generate: bool = False) -> dict:
     """Stato e elementi del quadro; genera solo se richiesto, mai alla semplice apertura."""
-    from .routes.survey import _PDF_SUMMARY_LANG_NAME, _pdf_language, _session_conversation_messages
+    from .routes.survey import (
+        _PDF_SUMMARY_LANG_NAME,
+        _pdf_language,
+        _session_conversation_messages,
+    )
 
     lang = _pdf_language(lang)
     messages = _session_conversation_messages(db, result.session_id)

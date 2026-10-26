@@ -13,7 +13,9 @@ admin-customised translations are never overwritten.
 import re
 from typing import Dict
 
-from .obiettivo_layout import PREFIXES as OBIETTIVO_PREFIXES, current_label, step_labels as obiettivo_step_labels
+from .obiettivo_layout import PREFIXES as OBIETTIVO_PREFIXES
+from .obiettivo_layout import current_label
+from .obiettivo_layout import step_labels as obiettivo_step_labels
 
 SECONDARY_LANGS = ["en", "es", "fr", "de", "sv"]
 

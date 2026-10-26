@@ -10,12 +10,11 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import auth, database, models, schemas
+from .. import auth, database, models, schemas, web_lookup
+from ..content_version_service import publish_catalog_source
+from ..content_versions_seed import derive_reading_versions
 from ..reading_themes import READING_THEMES
 from ..reading_verification import verify_reading
-from .. import web_lookup
-from ..content_versions_seed import derive_reading_versions
-from ..content_version_service import publish_catalog_source
 
 router = APIRouter()
 get_db = database.get_db

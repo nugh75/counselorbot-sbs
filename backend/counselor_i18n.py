@@ -16,7 +16,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from . import models, database
+from . import database, models
 from .translation_provider import resolve_target, translate_payload
 
 logger = logging.getLogger(__name__)
@@ -149,7 +149,7 @@ def translate_counselor_sync(db: Session, counselor_id: int, force: bool = False
         return
     try:
         translations = generate_translations(db, counselor.description.strip())
-    except Exception as e:  # noqa: BLE001 - best-effort
+    except Exception as e:
         logger.warning("Counselor %s translation failed: %s", counselor_id, e)
         return
     if not translations:
@@ -177,7 +177,7 @@ def translate_counselor_async(counselor_id: int, force: bool = False) -> None:
                 translate_counselor_sync(db, counselor_id, force=force)
             finally:
                 db.close()
-        except Exception as e:  # noqa: BLE001 - best-effort, non deve mai propagare
+        except Exception as e:
             logger.warning("Counselor %s async translation failed: %s", counselor_id, e)
 
     threading.Thread(target=_run, daemon=True).start()
@@ -195,7 +195,7 @@ def backfill_async() -> None:
             pending = [c.id for c in rows if _needs_translation(c)]
             for cid in pending:
                 translate_counselor_sync(db, cid)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.warning("Counselor translation backfill failed: %s", e)
         finally:
             db.close()

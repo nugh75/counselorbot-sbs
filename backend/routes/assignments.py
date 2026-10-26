@@ -2,7 +2,7 @@
 import hashlib
 import json
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -10,10 +10,10 @@ from pydantic import Field
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from ..db_compat import xact_lock
 from .. import auth, database, models
 from ..class_access import class_enables
 from ..class_tools import ACTIVITY_TOOL_KEYS
+from ..db_compat import xact_lock
 from ..goals import Strict, membership_ids
 from .groups import _require_visible_group, _visible_group_query
 
@@ -207,7 +207,7 @@ def revoke(assignment_id: int, db: Session = Depends(database.get_db), user=Depe
     if row is None:
         raise HTTPException(404, 'Assignment unavailable')
     _managed_group(db, user, row.group_id)
-    row.revoked_at = row.revoked_at or datetime.now(timezone.utc)
+    row.revoked_at = row.revoked_at or datetime.now(UTC)
     db.commit()
     return {'revoked': True}
 

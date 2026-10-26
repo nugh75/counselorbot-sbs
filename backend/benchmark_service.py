@@ -12,16 +12,16 @@ loggato nei `logs` (action `benchmark_inapp`).
 import logging
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
-from . import database, models, pii, model_pricing
-from .ai_service import AIService, AIError, generation_details
+from . import database, model_pricing, models, pii
+from .ai_service import AIError, AIService, generation_details
 from .tests.test_ollama_qsa_benchmark import (
+    FOLLOWUP_QUESTIONS,
     QSA_PROFILE,
     QSA_STEPS,
-    FOLLOWUP_QUESTIONS,
-    build_messages,
     assess_quality,
+    build_messages,
 )
 
 logger = logging.getLogger(__name__)
@@ -175,14 +175,14 @@ def run_benchmark(run_id: str, presets: list[dict], language: str) -> None:
         if row:
             row.summary = summary
             row.status = "done"
-            row.finished_at = datetime.now(timezone.utc)
+            row.finished_at = datetime.now(UTC)
             db.commit()
     except Exception as e:
         logger.error(f"benchmark {run_id} errore fatale: {e}")
         if row:
             row.status = "error"
             row.error = str(e)
-            row.finished_at = datetime.now(timezone.utc)
+            row.finished_at = datetime.now(UTC)
             db.commit()
     finally:
         db.close()
