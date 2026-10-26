@@ -4,7 +4,7 @@ Task Diario `bef7d9ec`; bug `b9292408`; issue [#598](https://github.com/nugh75/c
 
 ## Stato
 - Riallineamento utente: NESSUNA revisione cross-modello (decisione Diario 8b4de3e3); merge della PR resta all'utente.
-- **PR [#600](https://github.com/nugh75/counselorbot-sbs/pull/600) aperta e CI completa**: desktop-teacher ✅ su 4 runner (run 40234368971 su 43d03aaf), Version ✅, guidance ✅, backend-db sqlite ✅ + postgres rosso SOLO baseline 54 identica (niente regressioni). Pronta per il merge dell'utente.
+- **PR [#600](https://github.com/nugh75/counselorbot-sbs/pull/600) aperta, CI desktop completa**: desktop-teacher ✅ su 4 runner (run 40234368971 su 43d03aaf), Version ✅, guidance ✅, backend-db sqlite ✅. Il job postgres è rosso con **1 fallimento inatteso** (test SSE, correzione in PR #601) + 53 legacy: la PR NON è pronta con tutti i gate verdi; dipendenza di merge da #601.
 - Release v0.1.1 già pubblicata (run 40217531497 su f7fdb03a): nessun tocco a tag/asset; v0.1.2 soltanto PREPARATA in questo branch (bump eseguito), pubblicazione dopo il merge.
 
 ## Fatto
@@ -19,12 +19,12 @@ Task Diario `bef7d9ec`; bug `b9292408`; issue [#598](https://github.com/nugh75/c
 - Node 22: runtime-config/auth-provider/auth-urls 13 pass; qr/credentials panel 10 pass.
 - `tsc --noEmit`: pulito. ESLint: `ESLINT_EXIT=0` (0 errori; 1 warning preesistente a HEAD).
 - `cargo test --profile dev supervisor::`: 15 pass con exit reale `CARGO_SUPERVISOR_EXIT=0` (env con tunnel attivo/cambiato/spento, lifecycle quick/nominativo). `cargo test --locked --release` intero non completabile qui (compilazione release >1h su volume esterno): gira in CI.
-- **CI PR #600**: `Version` ✅ 40234368927; `Platform guidance` ✅ 40234368941; `desktop-teacher` ✅ **40234368971** su 43d03aaf (4/4 build + `update-manifests`, artifact 0.1.2); `backend-db` 40234368931: sqlite/startup/portability ✅, postgres rosso con set di 54 fallimenti **identico alla baseline accettata** (niente regressioni).
+- **CI PR #600**: `Version` ✅ 40234368927; `Platform guidance` ✅ 40234368941; `desktop-teacher` ✅ **40234368971** su 43d03aaf (4/4 build + `update-manifests`, artifact 0.1.2); `backend-db` 40234368931 e 40239758339: sqlite/startup/portability ✅, postgres rosso — ratchet: 53 known still failing + 1 UNEXPECTED (test SSE, vedi audit sotto).
 - Guidance refresh/check: verdi (exit 0).
 
 ## Prossimi passi
-- PR #600 PRONTA per il merge dell'utente (rilascio cross-modello escluso per decisione utente 8b4de3e3). Dopo il merge: runbook `docs/operations/release.md` — build `workflow_dispatch` su `main`, prerelease **v0.1.2 (Desktop Beta)** con note in `/tmp/counselorbot-release-012-notes.md`, tag v0.1.1 e asset NON toccati.
-- **Audit finale richiesto dal Timoniere (run 40239758339, job 121308832184, head 4f799632)**: NESSUN fallimento nuovo inatteso per #600 — i 54 test rossi del job postgres sono esattamente la baseline preesistente su main (diff vuoto contro il run precedente). Tra questi, l'unica voce con un fix reale è il test SSE `test_sse_heartbeat::test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next`, corretto in **PR #601** (verde: `tests (postgres)` pass, con riallineamento di `sqlite_known_failures.txt`). Dipendenza reale all'utente: **unire prima #601** e poi #600; gli altri 53 restano le note rosse legacy fuori dal ratchet (piper, diagram, practice_notebooks, forum…), già accettate dal Timoniere nelle release precedenti.
+- **Merge dell'utente nell'ordine: PRIMA #601 (verde a tutto tondo), POI #600** — solo allora tutti i gate di #600 sono verdi (il rilascio cross-modello resta escluso per decisione utente 8b4de3e3). Dopo il merge di #600: runbook `docs/operations/release.md` — build `workflow_dispatch` su `main`, prerelease **v0.1.2 (Desktop Beta)** con note in `/tmp/counselorbot-release-012-notes.md`, tag v0.1.1 e asset NON toccati.
+- **Audit del run 40239758339, job 121308832184 (head 4f799632) — CORRETTO dai dati API del ratchet**: `known failures still failing: 53` + **`unexpected failures: 1` = NEW FAILURE `backend/tests/test_sse_heartbeat.py::test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next`**. I 53 restanti sono le note rosse legacy fuori ratchet (piper, diagram, practice_notebooks, forum…) già presenti su main; il test SSE è la **unica regressione inattesa** del job e la PR #600 NON è pronta con tutti i gate verdi finché quella voce resta. **Dipendenza reale: unire PRIMA #601** (fix del test SSE + riallineamento liste, verde a tutto tondo), poi #600 e la CI relativi; nessuna deroga implicita alla baseline.
 - Successivo (non in questo task): abbinamento studenti via tunnel (pagine `/unisciti` + dispositivi docente, ADR-0002 §4, F1-13) — issue dedicata.
 
 ## Blocchi e rischi
