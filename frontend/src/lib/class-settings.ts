@@ -59,6 +59,7 @@ export interface ClassSettings {
     students_personal_ai?: boolean;  // #217: students may use their own APIs and ChatGPT
     response_format?: "standard" | "bullets" | "table" | null;
     response_length?: "short" | "medium" | "long" | null;
+    response_reasoning?: "off" | "standard" | "deep" | null;
 }
 
 function validLock(row: ClassItemLock): boolean {
