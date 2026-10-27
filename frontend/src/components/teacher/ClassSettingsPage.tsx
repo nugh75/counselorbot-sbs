@@ -312,28 +312,28 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
             <h2 className="text-lg font-bold text-slate-800">Formato e lunghezza risposte</h2>
             <p className="text-sm text-slate-600">Impostazione del docente per la classe: se valorizzata, sostituisce la scelta dello studente in chat.</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">Formato
+                <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">{l('responseFormatLabel')}
                     <select className="min-h-[44px] rounded-md border border-slate-300 bg-white px-2" value={responseFormat ?? ''} disabled={busy}
                         onChange={event => { if (!pending.current) { setResponseFormat((event.target.value || null) as ResponseFormat | null); setNotice(null); } }}>
-                        <option value="">Predefinito studente</option>
+                        <option value="">{l('studentDefault')}</option>
                         <option value="standard">Discorsivo</option>
                         <option value="bullets">Per punti</option>
                         <option value="table">Tabella</option>
                     </select>
                 </label>
-                <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">Lunghezza
+                <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">{l('responseLengthLabel')}
                     <select className="min-h-[44px] rounded-md border border-slate-300 bg-white px-2" value={responseLength ?? ''} disabled={busy}
                         onChange={event => { if (!pending.current) { setResponseLength((event.target.value || null) as "short" | "medium" | "long" | null); setNotice(null); } }}>
-                        <option value="">Predefinito studente</option>
+                        <option value="">{l('studentDefault')}</option>
                         <option value="short">Breve</option>
                         <option value="medium">Media</option>
                         <option value="long">Lunga</option>
                     </select>
                 </label>
-                <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">Ragionamento
+                <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">{l('reasoningLabel')}
                     <select className="min-h-[44px] rounded-md border border-slate-300 bg-white px-2" value={responseReasoning ?? ''} disabled={busy}
                         onChange={event => { if (!pending.current) { setResponseReasoning((event.target.value || null) as "off" | "standard" | "deep" | null); setNotice(null); } }}>
-                        <option value="">Predefinito studente</option>
+                        <option value="">{l('studentDefault')}</option>
                         <option value="off">Off</option>
                         <option value="standard">Standard</option>
                         <option value="deep">Deep</option>
@@ -344,17 +344,17 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                 <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
                     <input type="checkbox" className="h-5 w-5 accent-indigo-600" checked={allowFmt} disabled={busy}
                         onChange={event => { if (!pending.current) { setAllowFmt(event.target.checked); setNotice(null); } }} />
-                    Studente può modificare il formato
+{l('studentCanModifyFormat')}
                 </label>
                 <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
                     <input type="checkbox" className="h-5 w-5 accent-indigo-600" checked={allowLen} disabled={busy}
                         onChange={event => { if (!pending.current) { setAllowLen(event.target.checked); setNotice(null); } }} />
-                    Studente può modificare la lunghezza
+{l('studentCanModifyLength')}
                 </label>
                 <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
                     <input type="checkbox" className="h-5 w-5 accent-indigo-600" checked={allowRsn} disabled={busy}
                         onChange={event => { if (!pending.current) { setAllowRsn(event.target.checked); setNotice(null); } }} />
-                    Studente può modificare il ragionamento
+{l('studentCanModifyReasoning')}
                 </label>
             </div>
         </Card>

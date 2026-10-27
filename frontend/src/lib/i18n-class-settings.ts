@@ -179,6 +179,15 @@ export const classSettingsTexts = {
     shared: ['Condivisa', 'Shared', 'Compartida', 'Partagée', 'Geteilt', 'Delad'],
     council: ['Consiglio di classe', 'Class council', 'Consejo de clase', 'Conseil de classe', 'Klassenkonferenz', 'Klasskonferens'],
     noticing: ['Noticing', 'Noticing', 'Noticing', 'Noticing', 'Noticing', 'Noticing'],
+    responseFormatTitle: ["Formato, lunghezza e analisi", "Format, length and reasoning", "Formato, longitud y razonamiento", "Format, longueur et raisonnement", "Format, Länge und Begründung", "Format, längd och resonemang"],
+    responseFormatHelp: ["Impostazione del docente per la classe: se valorizzata, sostituisce la scelta dello studente in chat.", "Teacher setting for the class: if set, it overrides the student's choice in chat.", "Configuración del docente para la clase: si se establece, sustituye la elección del estudiante en el chat.", "Réglage de l'enseignant pour la classe : s'il est défini, il remplace le choix de l'élève dans le chat.", "Lehrereinstellung für die Klasse: wenn gesetzt, überschreibt sie die Auswahl des Schülers im Chat.", "Lärarinställning för klassen: om satt, åsidosätter den elevens val i chatten."],
+    responseFormatLabel: ["Formato", "Format", "Formato", "Format", "Format", "Format"],
+    responseLengthLabel: ["Lunghezza", "Length", "Longitud", "Longueur", "Länge", "Längd"],
+    reasoningLabel: ["Analisi", "Reasoning", "Razonamiento", "Raisonnement", "Begründung", "Resonemang"],
+    studentDefault: ["Predefinito studente", "Student default", "Predeterminado del estudiante", "Par défaut de l'élève", "Schülerstandard", "Elevstandard"],
+    studentCanModifyFormat: ["Lo studente può modificare il formato", "Student can modify format", "El estudiante puede modificar el formato", "L'élève peut modifier le format", "Schüler kann das Format ändern", "Eleven kan ändra formatet"],
+    studentCanModifyLength: ["Lo studente può modificare la lunghezza", "Student can modify length", "El estudiante puede modificar la longitud", "L'élève peut modifier la longueur", "Schüler kann die Länge ändern", "Eleven kan ändra längden"],
+    studentCanModifyReasoning: ["Lo studente può modificare l'analisi", "Student can modify reasoning", "El estudiante puede modificar el razonamiento", "L'élève peut modifier le raisonnement", "Schüler kann die Begründung ändern", "Eleven kan ändra resonemanget"],
 } as const satisfies Record<string, readonly [string, string, string, string, string, string]>;
 
 export function classSettingsText(lang: string, key: keyof typeof classSettingsTexts): string {
