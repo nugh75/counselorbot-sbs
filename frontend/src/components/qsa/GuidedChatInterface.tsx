@@ -401,10 +401,12 @@ function omitMarkdownNode<T extends { node?: unknown }>(props: T): Omit<T, 'node
 
 const markdownComponents: Components = {
     table: (props) => (
+        <div className="my-2 min-w-0 max-w-full overflow-x-auto" tabIndex={0}>
         <table
             className="w-full min-w-[760px] border-separate border-spacing-0 text-sm text-slate-800"
             {...omitMarkdownNode(props)}
         />
+        </div>
     ),
     thead: (props) => <thead className="bg-slate-50" {...omitMarkdownNode(props)} />,
     tbody: (props) => <tbody className="[&_tr:nth-child(even)]:bg-slate-50/40" {...omitMarkdownNode(props)} />,
@@ -437,7 +439,7 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
                 <span>{errorMessage}</span>
             </div>
         ) : (
-            <div key={`markdown-${index}`} className="min-w-0 max-w-full overflow-x-auto">
+            <div key={`markdown-${index}`} className="min-w-0 max-w-full [overflow-wrap:anywhere]">
                 <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={markdownComponents}
@@ -2045,7 +2047,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                 <div className={cn("flex min-w-0 max-w-full flex-col gap-1 lg:max-w-[90%]", msg.role === 'user' ? "items-end" : "items-start")}>
                                     <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'} className="px-3 py-2 sm:px-3 sm:py-2 lg:px-5 lg:py-3.5">
                                         {msg.role === 'assistant' ? (
-                                            <div className="space-y-2">
+                                            <div className="min-w-0 max-w-full space-y-2">
                                                 {msg.reasoning && effortForPhase(msg.phaseId || currentPhase) !== 'off' && (
                                                     <div className="rounded-md bg-slate-50 border border-slate-200 px-3 py-2">
                                                         <button

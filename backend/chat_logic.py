@@ -1934,7 +1934,8 @@ def _student_visible_response(
     sanitize_ztpi: bool,
     required_codes: Optional[set[str]] = None,
 ) -> str:
-    text = strip_thinking(text)
+    from .chat_markdown import normalize_chat_markdown
+    text = normalize_chat_markdown(strip_thinking(text))
     text = _strip_generic_acknowledgement(text)
     if sanitize_ztpi:
         return _sanitize_ztpi_user_text(text, language)
