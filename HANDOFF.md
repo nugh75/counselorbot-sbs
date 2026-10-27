@@ -1,3 +1,16 @@
+# Handoff 27 ottobre 2026: icone della barra di navigazione
+
+- Branch `fix/navbar-support-icons`, da `origin/main`; worktree isolato.
+- Nella barra desktop Attività e percorsi, Bussola, Assistente e Guida sono
+  icone con tooltip tradotti, nomi accessibili e bersaglio da 44 px. Il menu
+  mobile conserva i nomi testuali e le destinazioni restano invariate.
+- Verifiche: 722 unitari, tre test browser, TypeScript, ESLint mirato e
+  guidance superati; build dell'immagine frontend isolata riuscita. Il lint
+  generale segnala testi non tradotti preesistenti nelle pagine docente.
+- Nessun server di sviluppo avviato e nessun deploy di produzione.
+
+---
+
 # Handoff 27 ottobre 2026: ripresa chat e vista studente per il personale
 
 - Branch `fix/student-home-resume-admin`, da `origin/main`; worktree isolato

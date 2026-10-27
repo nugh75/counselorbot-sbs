@@ -12,7 +12,7 @@ import { HeaderCounselor } from './HeaderCounselor';
 import { HeaderInstrument } from './HeaderInstrument';
 import { HeaderMenu } from './HeaderMenu';
 import { HeaderResume } from './HeaderResume';
-import { TooltipProvider } from '@/components/ui/Tooltip';
+import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
 import { cn } from '@/lib/utils';
 import { getAuthUrls, getIdentity, logoutHref, type Identity } from '@/lib/auth';
 import { currentHeaderLink, headerNavigation, type HeaderLinkKey } from '@/lib/header-navigation';
@@ -54,29 +54,28 @@ export function Header() {
     const servicesHref = nav.services === 'manager' ? authUrls.managerUrl : nav.services === 'portal' ? authUrls.portalUrl : undefined;
     const logoutUrl = nav.authenticated ? logoutHref() : undefined;
 
-    // Barra desktop (P4): prima l'ingresso alle aree, poi gli strumenti di
-    // supporto, con etichette visibili e mai tagliate. Se lo spazio manca si
-    // accorciano vista classe, counselor e nome dell'account, a destra.
+    // Barra desktop: prima l'ingresso alle aree, poi le icone di supporto.
     const workInline = (
         <nav aria-label={t('header.navigation')} className="hidden shrink-0 items-center gap-1 lg:flex">
             <HeaderAreas areas={nav.links.filter(link => link.group === 'area')} current={current} icons={LINK_ICONS} />
             {nav.links.filter(link => link.group === 'support').map((link) => {
                 const Icon = LINK_ICONS[link.key];
                 return (
-                    <Link
-                        key={link.key}
-                        href={link.href}
-                        className="console-topbar-action shrink-0"
-                        aria-current={link.key === current ? 'page' : undefined}
-                        onClick={() => {
-                            if (link.key === 'instruments' && pathname === '/') {
-                                window.dispatchEvent(new CustomEvent('cb-navigate-home'));
-                            }
-                        }}
-                    >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        <span className="whitespace-nowrap">{t(link.labelKey)}</span>
-                    </Link>
+                    <Tooltip key={link.key} content={t(link.labelKey)}>
+                        <Link
+                            href={link.href}
+                            className="console-topbar-icon console-topbar-icon--lg shrink-0"
+                            aria-label={t(link.labelKey)}
+                            aria-current={link.key === current ? 'page' : undefined}
+                            onClick={() => {
+                                if (link.key === 'instruments' && pathname === '/') {
+                                    window.dispatchEvent(new CustomEvent('cb-navigate-home'));
+                                }
+                            }}
+                        >
+                            <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        </Link>
+                    </Tooltip>
                 );
             })}
         </nav>

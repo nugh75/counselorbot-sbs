@@ -309,12 +309,14 @@ personale, accanto alle Flashcard. Il catalogo non contiene più il riquadro
 “Counselor · Come procediamo” né “Rivedi la presentazione iniziale”. Il comando
 indietro e la navigazione permettono di tornare alle pagine precedenti.
 
-Da 1024 px la testata mostra gli ingressi con etichette visibili. Per primo
-l’ingresso alle aree: chi ha solo l’Area studente vede il link **Area studente**;
+Da 1024 px la testata mostra per primo l’ingresso alle aree con etichetta visibile:
+chi ha solo l’Area studente vede il link **Area studente**;
 docenti, ricercatori e admin vedono il selettore **Area**, che apre **Area
 studente**, **Area docente** e, per ricercatori e admin, **Area amministrazione**.
 Il selettore mostra il nome dell’area in cui ci si trova (per esempio «Area
-docente» dentro `/docente`). Seguono **Bussola**, **Assistente** e **Guida**.
+docente» dentro `/docente`). Seguono le icone di **Attività e percorsi**,
+**Bussola**, **Assistente** e **Guida**: il nome appare come suggerimento al
+passaggio del puntatore o al focus ed è disponibile agli screen reader.
 A destra, separato, il gruppo della conversazione (strumento scelto, counselor,
 **Riprendi un’attività** quando ci sono attività da riprendere) e il menu
 dell’account sotto il nome: il nome e l’email non sono un link (l’unico ingresso a
@@ -326,7 +328,7 @@ trova lo stesso pannello come **Preferenze** e il pulsante **Accedi**, che dopo 
 login riporta alla pagina da cui è partito (da `/admin` torna a `/admin`; `/login`
 resta l’accesso amministrativo esplicito). Se lo spazio non basta (1024 px, nomi
 lunghi, tedesco o francese) si accorciano vista classe, nome del counselor e nome
-dell’account, mai le voci di navigazione.
+dell’account.
 Sotto 1024 px (telefono e tablet in verticale) la barra mostra il marchio e il
 pulsante **Menu** con l’icona a tre righe. Il pannello si apre sotto la barra, a
 tutta larghezza sul telefono, e raccoglie le stesse funzioni del desktop in
