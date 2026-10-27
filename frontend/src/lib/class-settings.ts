@@ -60,6 +60,9 @@ export interface ClassSettings {
     response_format?: "standard" | "bullets" | "table" | null;
     response_length?: "short" | "medium" | "long" | null;
     response_reasoning?: "off" | "standard" | "deep" | null;
+    allow_student_response_format?: boolean;
+    allow_student_response_length?: boolean;
+    allow_student_response_reasoning?: boolean;
 }
 
 function validLock(row: ClassItemLock): boolean {

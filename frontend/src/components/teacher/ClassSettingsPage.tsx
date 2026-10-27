@@ -124,6 +124,9 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
     const [responseFormat, setResponseFormat] = useState<ResponseFormat | null>(initial.response_format ?? null);
     const [responseLength, setResponseLength] = useState<"short" | "medium" | "long" | null>(initial.response_length ?? null);
     const [responseReasoning, setResponseReasoning] = useState<"off" | "standard" | "deep" | null>(initial.response_reasoning ?? null);
+    const [allowFmt, setAllowFmt] = useState<boolean>(initial.allow_student_response_format ?? true);
+    const [allowLen, setAllowLen] = useState<boolean>(initial.allow_student_response_length ?? true);
+    const [allowRsn, setAllowRsn] = useState<boolean>(initial.allow_student_response_reasoning ?? true);
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<'saved' | 'error' | 'conflict' | 'invalid' | 'lockedError' | null>(null);
     const [forbidden, setForbidden] = useState(false);
@@ -143,7 +146,10 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
         || personalAI !== (settings.students_personal_ai ?? true)
         || responseFormat !== (settings.response_format ?? null)
         || responseLength !== (settings.response_length ?? null)
-        || responseReasoning !== (settings.response_reasoning ?? null);
+        || responseReasoning !== (settings.response_reasoning ?? null)
+        || allowFmt !== (settings.allow_student_response_format ?? true)
+        || allowLen !== (settings.allow_student_response_length ?? true)
+        || allowRsn !== (settings.allow_student_response_reasoning ?? true);
     useDraftGuard(dirty || busy, l('discard'), { blocked: busy });
     const tools = settings.tools.filter(tool => !tool.always_on);
     const isEnabled = (tool: ClassTool) => tool.admin_enabled && !disabled.includes(tool.key);
@@ -198,6 +204,9 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                     response_format: responseFormat,
                     response_length: responseLength,
                     response_reasoning: responseReasoning,
+                    allow_student_response_format: allowFmt,
+                    allow_student_response_length: allowLen,
+                    allow_student_response_reasoning: allowRsn,
                     ...(reason.trim() ? { reason: reason.trim() } : {}),
                 }),
             });
@@ -217,6 +226,9 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                 setResponseFormat(next.response_format ?? null);
                 setResponseLength(next.response_length ?? null);
                 setResponseReasoning(next.response_reasoning ?? null);
+                setAllowFmt(next.allow_student_response_format ?? true);
+                setAllowLen(next.allow_student_response_length ?? true);
+                setAllowRsn(next.allow_student_response_reasoning ?? true);
                 setNotice('saved'); setReason('');
             }
         } catch {
@@ -326,6 +338,23 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                         <option value="standard">Standard</option>
                         <option value="deep">Deep</option>
                     </select>
+                </label>
+            </div>
+            <div className="space-y-2">
+                <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
+                    <input type="checkbox" className="h-5 w-5 accent-indigo-600" checked={allowFmt} disabled={busy}
+                        onChange={event => { if (!pending.current) { setAllowFmt(event.target.checked); setNotice(null); } }} />
+                    Studente può modificare il formato
+                </label>
+                <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
+                    <input type="checkbox" className="h-5 w-5 accent-indigo-600" checked={allowLen} disabled={busy}
+                        onChange={event => { if (!pending.current) { setAllowLen(event.target.checked); setNotice(null); } }} />
+                    Studente può modificare la lunghezza
+                </label>
+                <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
+                    <input type="checkbox" className="h-5 w-5 accent-indigo-600" checked={allowRsn} disabled={busy}
+                        onChange={event => { if (!pending.current) { setAllowRsn(event.target.checked); setNotice(null); } }} />
+                    Studente può modificare il ragionamento
                 </label>
             </div>
         </Card>
