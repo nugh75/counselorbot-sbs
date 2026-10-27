@@ -5,10 +5,16 @@ CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
 
+La patch desktop `v2.0.2` allinea la versione del bundle, del backend e del
+frontend: gli errori iniziali vengono mostrati senza crash e gli inviti locali
+usano il pannello di abbinamento. Un profilo SQLite richiede ancora una
+migrazione assistita oppure un profilo nuovo separato; non viene convertito
+automaticamente.
+
 È in sviluppo un'app desktop docente sperimentale: il guscio avvia e sorveglia
 i processi locali, mostra lo stato ed esporta diagnostica senza database o
 credenziali. Con tunnel e server attivi impedisce la sospensione del PC (macOS e Windows). Se il docente va offline, gli studenti che avevano già aperto l'app vedono «Il docente è offline» con nuovo controllo ogni 10 secondi, invece dell'errore 502. Non è ancora disponibile per lezioni o dati reali: il backend
-completo viene verificato su SQLite in CI; il quick tunnel serve soltanto alle prove
+completo viene verificato su PostgreSQL incorporato in CI; il quick tunnel serve soltanto alle prove
 tecniche. L'accesso locale del docente è collegato: il guscio chiede al backend
 locale un link monouso, lo apre nel browser su `/accesso-locale` e il riscatto
 crea una sessione valida 30 giorni solo dal PC, mai dal tunnel; in locale
@@ -30,7 +36,7 @@ Sul PC il docente è amministratore; l'amministrazione
 risponde solo dal PC, mai dal tunnel (i controlli del profilo docente sono
 caricati solo quando servono, così il forum resta isolato). Prompt Lab, Telegram, OpenCode, l'assistente
 ChatGPT, le voci Piper e la sincronizzazione con Console non sono disponibili
-nell'app. Resta da completare la pubblicazione degli asset di rilascio.
+nell'app. Gli installer desktop vengono distribuiti nelle Release GitHub.
 Le chiamate API generali del frontend ora scelgono il backend a ogni richiesta,
 tramite un handler dinamico: lo stesso bundle raggiunge la porta assegnata dal
 guscio, anche dopo un riavvio. Restano la firma dell'origine e il blocco delle
@@ -38,9 +44,10 @@ rotte interne; i percorsi specifici per lo streaming mantengono i propri handler
 L'upgrade WebSocket passa al backend prima del fallback API (OpenCode rimane
 escluso dal desktop).
 Le funzioni web descritte qui continuano a riferirsi all'installazione corrente.
-Per le app desktop è stata decisa una migrazione futura a PostgreSQL 15, con import dei dati SQLite
-e backup ripristinabili, ma non è ancora consegnata: i bundle disponibili, inclusa `v0.1.1`, usano
-ancora SQLite. Non presentare PostgreSQL desktop come una funzione già utilizzabile.
+I bundle desktop `v2.0.x` usano PostgreSQL 15 incorporato per le nuove installazioni
+(layout 2, contratto 2); `v0.1.1` resta SQLite/layout 1. L'import automatico dei
+profili SQLite e il backup/restore PostgreSQL nell'updater restano da integrare:
+la disponibilità del runtime non completa i gate per l'uso con dati reali.
 
 Il guscio desktop ha un pannello **Chiavi API**: inserimento mascherato,
 stato configurata/mancante, salvataggio nel portachiavi del sistema e rimozione.

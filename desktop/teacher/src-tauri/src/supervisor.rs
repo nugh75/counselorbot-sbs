@@ -1548,6 +1548,15 @@ mod tests {
         record
     }
 
+    fn assert_tunnel_stopped(record: &pids::Record) {
+        // Process-table visibility can lag behind Child::wait on Windows.
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while pids::alive(record) && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        assert!(!pids::alive(record), "tunnel process still visible: {record:?}");
+    }
+
     #[test]
     fn mismatch_stops_an_already_running_tunnel() {
         let mut supervisor = supervisor("running-mismatch");
@@ -1555,7 +1564,7 @@ mod tests {
         assert!(pids::alive(&record));
         supervisor.check_version(r#"{"version":"9.0.0","desktop_contract":1}"#);
         assert!(supervisor.tunnel.is_none());
-        assert!(!pids::alive(&record));
+        assert_tunnel_stopped(&record);
         std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
     }
 
@@ -1614,7 +1623,7 @@ mod tests {
         assert!(supervisor.handle_stop_quick_tunnel().is_ok());
         assert_eq!(supervisor.shell.tunnel.mode, "off");
         assert!(supervisor.tunnel.is_none());
-        assert!(!pids::alive(&record));
+        assert_tunnel_stopped(&record);
         assert!(supervisor.status.lock().unwrap().tunnel_url.is_none());
 
         // Repeated stop is a no-op Ok

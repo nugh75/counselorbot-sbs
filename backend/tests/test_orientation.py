@@ -1,6 +1,8 @@
 """Bussola: catalogo chiuso, sessioni private e nessuna scrittura su Taccuino o Libretto."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -263,10 +265,11 @@ def test_the_compass_knows_what_the_student_has_already_done():
     """
     db = _Session()
     username = "context.student"
+    submitted_at = datetime(2026, 10, 27, tzinfo=timezone.utc)
     try:
         db.add(models.QuestionnaireResult(
             session_id="s-1", questionnaire_type="QSA", username=username,
-            scores={"C1": 7, "A1": 3},
+            scores={"C1": 7, "A1": 3}, submitted_at=submitted_at,
         ))
         db.add(models.FrozenSession(username=username, session_id="s-2", questionnaire_type="ZTPI", data={}))
         db.add(models.LearnerProfileRevision(
@@ -285,13 +288,15 @@ def test_the_compass_knows_what_the_student_has_already_done():
         db.close()
 
     assert "Instruments already completed" in block and "- QSA" in block
+    assert submitted_at.date().isoformat() in block
     assert "Interrupted sessions that can be resumed" in block and "- ZTPI" in block
     assert "Organizzare lo studio" in block and "Mi distraggo" in block
     assert "Tesina di storia" in block
 
     # I punteggi non entrano mai: la Bussola non li produce e non li interpreta.
     assert "C1" not in block
-    assert "7" not in block
+    # The completion date can legitimately contain the same digit as a score.
+    assert "7" not in block.replace(submitted_at.date().isoformat(), "")
 
 
 def test_a_new_student_adds_no_context_block():
