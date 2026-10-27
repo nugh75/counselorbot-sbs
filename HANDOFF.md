@@ -1,3 +1,39 @@
+# Handoff 27 ottobre 2026: continuità studente e politiche chat di classe
+
+- Branch `fix/student-class-chat-continuity`, da `origin/main` aggiornato.
+- Resolver unico delle iscrizioni attive: niente bypass tramite `group_ids`,
+  valori dei blocchi presi dalla classe che li impone, priorità stabile tra
+  blocchi discordanti e fallback espliciti. Analisi applicata prima del provider.
+  Reset `null`, audit, controlli di avvio/ripresa e testi nelle sei lingue corretti.
+- `/profilo/compilazioni` riunisce conversazioni e azioni in corso, compilazioni,
+  risultati e dialoghi. Gli account docenti possono essere partecipanti di altre
+  classi senza ottenere permessi di gestione o lettura dei dati altrui.
+- La ripresa verificata dal server torna al passo corrente del piano. Fase,
+  messaggi e bozza conservati anche senza etichette di fase storiche; nessuna
+  introduzione rigenerata. Scritture ordinate, cancellazione dopo i salvataggi e
+  firma comprensiva di contenuti, analisi e navigazione. Nuovo inserimento separato.
+- Verifiche: 723 unitari frontend; 171 PostgreSQL (6 casi non applicabili saltati);
+  60 SQLite nell'immagine senza rete, più 18 mirati sull'immagine backend finale.
+  49 scenari browser verificati sull'immagine frontend ottimizzata, inclusi due
+  selettori di test riallineati alla regione della chat e al layout mobile.
+  Screenshot della sezione studente e docente partecipante controllati.
+- TypeScript, i18n (3652 chiavi in sei lingue), ESLint mirato, portabilità SQL e
+  Ruff F sui nuovi moduli superati. Nove segnalazioni Ruff F dei moduli storici
+  confrontate con la base e invariate; i warning ESLint delle pagine storiche sono
+  preesistenti. Nessun nuovo fallimento della ratchet.
+- Docker: `counselorbot-continuity-frontend:test` ricostruita dal Dockerfile del
+  progetto (build e TypeScript passati); `counselorbot-continuity-backend:test`
+  ricostruita dalla base portable con le stesse dipendenze e tutti i moduli/test
+  aggiornati. Backend sul solo DB sintetico: `/health` 200; frontend di verifica
+  :3173 healthy. Nessun volume o dato operativo utilizzato.
+- Runner dev :3172 e istanze Docker di verifica fermati a fine sessione. Nessun
+  deploy/sudo, modifica nginx o release desktop. Il merge e il deploy rimangono
+  al proprietario. Le release desktop restano sospese.
+- Contratto: `docs/operations/student-class-chat-continuity.md`; start/stop e
+  isolamento in `docs/operations/live-dev-environment.md`.
+
+---
+
 # Handoff 27 ottobre 2026: formattazione della chat QPCC
 
 - Branch `fix/qpcc-chat-formatting`, da `origin/main` aggiornato; checkout

@@ -621,3 +621,18 @@ poi `docker run --name counselorbot-s12-frontend-test -e BACKEND_ORIGIN=http://1
 Usare le stesse suite con API simulate; nessun volume o DB applicativo collegato.
 Arresto: `docker stop counselorbot-s12-frontend-test`. Il tag e il container sono
 riservati alle verifiche e non sostituiscono i servizi di produzione.
+# Continuità studente e controlli di classe (3172)
+
+`bash scripts/dev-student-continuity-tests.sh` avvia Next in hot reload su
+`127.0.0.1:3172`, verificando prima che la porta sia libera. Backend impostato
+su `127.0.0.1:9`: le prove browser intercettano tutte le API e usano dati
+sintetici; nessun database o provider operativo è raggiunto.
+
+Da `frontend/`: `STUDENT_CONTINUITY_BASE_URL=http://127.0.0.1:3172 node --test
+tests/student-continuity.test.mjs`. Le altre suite usano `CLASS_SETTINGS_BASE_URL`,
+`PLAN_QUESTIONNAIRE_BASE_URL`, `ACTIVE_ACTIONS_BASE_URL` e `QPCC_FORMAT_BASE_URL`
+con lo stesso URL. Arresto: Ctrl-C nel terminale del runner. La pagina senza
+intercettazioni serve solo il guscio dell'app, non un account sintetico.
+
+Da un'altra macchina: `ssh -N -L 3172:127.0.0.1:3172 <utente>@<server>`, poi
+`http://localhost:3172`. Non serve cambiare nginx o riavviare la produzione.

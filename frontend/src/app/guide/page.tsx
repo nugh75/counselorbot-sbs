@@ -70,7 +70,7 @@ function GuideContent() {
     const sections = Array.from({ length: teacher ? 9 : 17 }, (_, i) => i + 1);
     const sectionId = (n: number) => `guide-${teacher ? 'teacher-' : ''}section-${n}`;
     const sectionTitle = (n: number) => teacher ? l(`teacher${n}Title` as GuideAudienceKey) : t(`guide.section${n}.title`);
-    const sectionBody = (n: number) => (teacher ? l(`teacher${n}Body` as GuideAudienceKey) : n === 15 ? l('personalGroups') : t(`guide.section${n}.body`) + (n === 1 ? ` ${classSettingsText(lang, 'studentSupportGuide')}` : '') + (n === 12 ? ` ${categoryText(lang, 'guideDirectory')}` : '')) + ((teacher && n === 8) || (!teacher && n === 16) ? ` ${forumText(lang, 'guideLinks')}` : '');
+    const sectionBody = (n: number) => (teacher ? l(`teacher${n}Body` as GuideAudienceKey) : n === 15 ? l('personalGroups') : t(`guide.section${n}.body`) + (n === 1 ? ` ${classSettingsText(lang, 'studentSupportGuide')}` : '') + (n === 12 ? ` ${categoryText(lang, 'guideDirectory')}` : '')) + (!teacher && n === 3 ? ` ${classSettingsText(lang, 'progressGuide')} ${classSettingsText(lang, 'teacherLearnerGuide')}` : '') + ((teacher && n === 8) || (!teacher && n === 16) ? ` ${forumText(lang, 'guideLinks')}` : '');
     const images = guideImages[lang];
     const spotIllustrations: Record<number, string> = teacher ? {
         1: '/images/platform/feedback-docente.png',
@@ -341,6 +341,8 @@ function GuideContent() {
                             <h3 className="font-semibold text-slate-900">{classSettingsText(lang, 'toolsTab')}</h3>
                             <p className="mt-1.5">{l('classSettingsTeacher')}</p>
                             <p className="mt-1.5">{classSettingsText(lang, 'supportGuide')}</p>
+                            <p className="mt-1.5">{classSettingsText(lang, 'classChatGuide')}</p>
+                            <p className="mt-1.5">{classSettingsText(lang, 'teacherLearnerGuide')}</p>
                             <p className="mt-1.5">{l('classSettingsAccess')}</p>
                             <p className="mt-1.5">{l('classViewSwitch')}</p>
                             <p className="mt-1.5">{l('classSettingsCounselors')}</p>

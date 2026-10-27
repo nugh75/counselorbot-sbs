@@ -3039,3 +3039,26 @@ Le finestre proteggono le bozze alla chiusura, mantengono il focus e chiedono
 conferma prima di scartare modifiche o ricaricare una revisione in conflitto.
 La Guida interfaccia descrive questo comportamento nelle sei lingue. Contratto
 e verifiche: `docs/operations/independent-plan-steps.md`.
+# Continuità del lavoro studente e controlli chat di classe (27 ottobre 2026)
+
+L'area studente riunisce **In corso, compilazioni e risultati** nella pagina
+`/profilo/compilazioni`: conversazioni e azioni da riprendere, compilazioni,
+risultati e dialoghi collegati. Le conversazioni dei piani tornano direttamente
+al proprio passo con fase, messaggi e bozza salvati, senza ripetere l'apertura;
+il nuovo inserimento dei dati resta separato. Un errore del riepilogo lascia
+disponibili i risultati e permette di riprovare.
+
+Il docente configura formato, lunghezza, analisi e permessi nella scheda
+**Strumenti e counselor**, poi salva. I vincoli sono applicati sul server anche
+alle chat riprese; le iscrizioni inattive e i gruppi dichiarati dal client non
+alterano la politica. Ogni valore può essere ripristinato al default studente.
+In presenza di più classi il valore di un blocco proviene dalla classe che lo
+impone; tra blocchi discordanti prevale la classe creata per prima. Le etichette
+e la guida sono disponibili nelle sei lingue.
+
+Un docente può partecipare come studente a un'altra classe, ritrovare il proprio
+lavoro e conservare l'area docente. La partecipazione non attribuisce permessi
+di gestione né accesso ai dati altrui. Le prove coprono anche proprietari e
+docenti condivisi che leggono gli iscritti di una classe legata a un istituto.
+
+Contratto e limiti: `docs/operations/student-class-chat-continuity.md`.

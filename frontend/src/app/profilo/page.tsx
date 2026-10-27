@@ -19,6 +19,7 @@ import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { ResultReadingCard } from '@/components/profile/ResultReadingCard';
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import { PersonalAreaHome } from '@/components/profile/PersonalAreaHome';
+import { InProgressChats } from '@/components/profile/InProgressChats';
 import { ActiveActionsCard } from '@/components/profile/ActiveActionsCard';
 import { personalAreaText, personalAreaName, personalAreaDescription } from '@/lib/i18n-personal-area';
 import { TavoloList } from '@/components/tavolo/TavoloList';
@@ -453,10 +454,7 @@ export default function ProfilePage() {
                 subtitle={personalAreaText(lang, 'intro')}
             />}
 
-            {!activeArea && <>
-                <ActiveActionsCard />
-                <PersonalAreaHome />
-            </>}
+            {!activeArea && <PersonalAreaHome />}
 
             {activeSection && ['notebook', 'sessions'].includes(activeSection) && <p className="rounded-lg border border-slate-200 p-3 text-sm text-slate-600">{learningText(lang, 'groupVisibility')}</p>}
             {activeSection === 'notebook' && (
@@ -477,6 +475,7 @@ export default function ProfilePage() {
 
             {activeSection === 'sessions' && (
             <>
+            <InProgressChats />
             <ActiveActionsCard />
             <section className="glass-panel p-5 space-y-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
