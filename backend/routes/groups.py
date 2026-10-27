@@ -70,8 +70,21 @@ def _require_visible_group(db: Session, identity, group_id: int) -> models.Stude
 
 
 def _require_institution_membership(db: Session, identity, group: models.StudentGroup) -> None:
-    """Isolate groups tied to an institution: require active teacher membership (or return 404)."""
-    if group.institution_id is not None:
+    """Isolate groups tied to an institution: require active teacher membership (or return 404).
+
+    Il proprietario della classe vede sempre i propri iscritti, anche se non è
+    (ancora) registrato come docente dell'istituto: evita che una classe con
+    docenti iscritti come studenti risulti vuota per il docente proprietario.
+    """
+    username = identity.get("username") if isinstance(identity, dict) else getattr(identity, "username", None)
+    is_owner = group.owner_username == username
+    is_shared = False
+    if not is_owner and username:
+        is_shared = db.query(models.GroupShare).filter(
+            models.GroupShare.group_id == group.id,
+            models.GroupShare.shared_with_username == str(username).lower(),
+        ).first() is not None
+    if group.institution_id is not None and not (is_owner or is_shared):
         from ..institution_access import require_institution_teacher
         try:
             require_institution_teacher(db, identity, group.institution_id)
