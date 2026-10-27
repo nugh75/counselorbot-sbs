@@ -170,3 +170,23 @@ test('older plan snapshots without phase tags resume without regenerating the op
         assert.deepEqual(f.state.errors, []);
     } finally { await f.context.close(); }
 });
+
+for (const width of [390, 1440]) test(`resume activity appears immediately after operational plans on the student home at ${width}px`, async () => {
+    const f = await fixture({ width });
+    await f.page.route('**/api/user/paths', route => route.fulfill({ json: [{
+        id: 301, group_id: 11, group_name: 'Classe sintetica', title: 'Piano operativo personale', mode: 'recommended', done: 0, total: 1, next_step_id: 20,
+        steps: [{ id: 20, path_id: 301, position: 1, tool_key: 'QSA', title: 'Prima analisi', state: 'not_done', start_href: '/?start=QSA', can_self_mark: false }],
+    }] }));
+    try {
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
+        const home = f.page.locator('[data-personal-area-home]');
+        const plans = home.locator('section[aria-labelledby="profile-class-path-title"]');
+        const resume = home.getByRole('region', { name: 'Riprendi un’attività', exact: true });
+        await resume.getByRole('link', { name: /Azione personale in corso/ }).waitFor();
+        await plans.getByText('Piano operativo personale', { exact: true }).waitFor();
+        assert.ok(await plans.evaluate(node => node.nextElementSibling?.getAttribute('aria-labelledby') === 'active-actions-title'));
+        assert.equal(await resume.getByRole('link', { name: /Azione personale in corso/ }).getAttribute('href'), '/profilo/azioni#action-one');
+        await f.page.screenshot({ path: new URL(`../../output/playwright/student-home-resume-${width}.png`, import.meta.url).pathname });
+        assert.deepEqual(f.state.errors, []);
+    } finally { await f.context.close(); }
+});

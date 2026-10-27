@@ -109,6 +109,7 @@ async function createFixture({
     // Stable relation to the fixture deadlines, independent of the calendar date.
     await page.clock.install({ time: new Date('2026-10-01T12:00:00Z') });
     page.setDefaultTimeout(12000);
+    page.setDefaultNavigationTimeout(180000);
     const errors = [];
     const doneCalls = [];
 
@@ -244,8 +245,8 @@ async function createFixture({
     return { context, page, errors, doneCalls };
 }
 
-test('Home with active class path: hero card shown first, ochre current step, catalog collapsed with toggle', async () => {
-    const f = await createFixture({ paths: [samplePath1], lang: 'it' });
+for (const width of [390, 1440]) test(`Home at ${width}px: page title precedes a visible plans section and catalog stays available`, async () => {
+    const f = await createFixture({ paths: [samplePath1], lang: 'it', width });
     try {
         await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
 
@@ -270,28 +271,15 @@ test('Home with active class path: hero card shown first, ochre current step, ca
         // Progress indicates 1 of 3
         assert.ok((await heroCard.innerText()).includes('1 di 3 completati'));
 
-        // Catalog toggle button is visible and collapsed
-        const toggleBtn = f.page.locator('[data-testid="toggle-catalog-btn"]');
-        await toggleBtn.waitFor({ state: 'visible' });
-        assert.equal(await toggleBtn.getAttribute('aria-expanded'), 'false');
-
-        // Catalog section is hidden
-        const catalogSection = f.page.locator('#home-catalog-section');
-        assert.equal(await catalogSection.getAttribute('hidden'), '');
-
-        // Click toggle button expands catalog
-        await toggleBtn.click();
-        assert.equal(await toggleBtn.getAttribute('aria-expanded'), 'true');
-        assert.equal(await catalogSection.getAttribute('hidden'), null);
-
-        // Verify localStorage remembered state
-        const stored = await f.page.evaluate(() => localStorage.getItem('cb_home_catalog_open'));
-        assert.equal(stored, 'true');
-
-        // Toggle back collapses catalog
-        await toggleBtn.click();
-        assert.equal(await toggleBtn.getAttribute('aria-expanded'), 'false');
-        assert.equal(await catalogSection.getAttribute('hidden'), '');
+        const heading = f.page.getByRole('heading', { level: 1, name: 'Attività e percorsi', exact: true });
+        const plansHeading = f.page.getByRole('heading', { level: 2, name: 'Piani operativi', exact: true });
+        await heading.waitFor(); await plansHeading.waitFor();
+        assert.ok(await heading.evaluate((node) => Boolean(node.compareDocumentPosition(document.getElementById('home-class-path-title')) & Node.DOCUMENT_POSITION_FOLLOWING)));
+        assert.equal(await f.page.locator('[data-testid="toggle-catalog-btn"]').count(), 0);
+        await f.page.locator('#home-catalog-section').waitFor({ state: 'visible' });
+        assert.equal(await f.page.locator('#home-catalog-section').getAttribute('hidden'), null);
+        assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        await f.page.screenshot({ path: new URL(`../../output/playwright/activities-home-${width}.png`, import.meta.url).pathname });
 
         assert.deepEqual(f.errors, []);
     } finally {
@@ -385,7 +373,7 @@ test('Self-marking on hero card calls API and updates step state', async () => {
     }
 });
 
-test('Student area (/profilo): hero card displayed first when path active, tools collapsible', async () => {
+test('Student area (/profilo): plans are a named section below the page title, tools remain visible', async () => {
     const f = await createFixture({ paths: [samplePath1], lang: 'it' });
     try {
         await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
@@ -395,19 +383,12 @@ test('Student area (/profilo): hero card displayed first when path active, tools
         await heroCard.waitFor({ state: 'visible' });
         assert.ok((await heroCard.innerText()).includes('Inizio anno'));
 
-        // Toggle profile tools button is present and collapsed
-        const toggleBtn = f.page.locator('[data-testid="toggle-profile-catalog-btn"]');
-        await toggleBtn.waitFor({ state: 'visible' });
-        assert.equal(await toggleBtn.getAttribute('aria-expanded'), 'false');
-
-        // Personal tools section is hidden
-        const toolsSection = f.page.locator('#personal-catalog-section');
-        assert.equal(await toolsSection.getAttribute('hidden'), '');
-
-        // Click to expand
-        await toggleBtn.click();
-        assert.equal(await toggleBtn.getAttribute('aria-expanded'), 'true');
-        assert.equal(await toolsSection.getAttribute('hidden'), null);
+        const heading = f.page.getByRole('heading', { level: 1 });
+        await f.page.getByRole('heading', { level: 2, name: 'Piani operativi', exact: true }).waitFor();
+        assert.ok(await heading.evaluate((node) => Boolean(node.compareDocumentPosition(document.getElementById('profile-class-path-title')) & Node.DOCUMENT_POSITION_FOLLOWING)));
+        assert.equal(await f.page.locator('[data-testid="toggle-profile-catalog-btn"]').count(), 0);
+        await f.page.locator('#personal-catalog-section').waitFor({ state: 'visible' });
+        assert.equal(await f.page.locator('#personal-catalog-section').getAttribute('hidden'), null);
 
         assert.deepEqual(f.errors, []);
     } finally {
@@ -429,4 +410,22 @@ test('Student area (/profilo) on a phone: every plan listed and folded except th
     } finally {
         await f.context.close();
     }
+});
+
+
+test('home resume entries follow plans and precede the tools', async () => {
+    const f = await createFixture({ paths: [samplePath1], width: 390 });
+    await f.page.route('**/api/session/frozen', route => route.fulfill({ json: [{
+        session_id: 'saved-class-path', questionnaire_type: 'QSA', label: 'Analisi in corso',
+        updated_at: '2026-10-01T12:00:00Z', resume_href: '/profilo/piani-operativi/1/102/approfondimento?resume=1',
+    }] }));
+    try {
+        await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
+        const resume = f.page.getByTestId('home-resume');
+        await resume.getByRole('link', { name: 'Analisi in corso', exact: true }).waitFor();
+        assert.ok(await f.page.locator('section[aria-labelledby="home-class-path-title"]').evaluate(node => node.nextElementSibling?.getAttribute('data-testid') === 'home-resume'));
+        assert.ok(await resume.evaluate(node => node.nextElementSibling?.id === 'home-catalog-section'));
+        assert.equal(await resume.getByRole('link', { name: 'Analisi in corso', exact: true }).getAttribute('href'), '/profilo/piani-operativi/1/102/approfondimento?resume=1');
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
 });

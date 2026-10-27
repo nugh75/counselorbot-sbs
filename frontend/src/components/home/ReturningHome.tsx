@@ -1,7 +1,7 @@
 'use client';
 
-// «Attività e percorsi»: catalogo e strumenti personali precedono le attività
-// da riprendere. Qui è confluito l'ex catalogo strumenti (avviso dopo il fiocco,
+// «Attività e percorsi»: titolo, piani, attività da riprendere e catalogo.
+// Qui è confluito l'ex catalogo strumenti (avviso dopo il fiocco,
 // chat in pausa, consigli, compilazione sul sito, strumenti in arrivo).
 // Le aree personali restano nella pagina personale, non in questa home.
 
@@ -13,7 +13,7 @@ import { resumeLabel } from '@/lib/resume-label';
 import { PersonalAreaEntry } from '@/components/home/PersonalAreaEntry';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
-import { AlertTriangle, ArrowLeft, BookOpen, ChevronRight, ExternalLink, RotateCcw, Snowflake, Sparkles, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BookOpen, ExternalLink, RotateCcw, Snowflake, Sparkles, X } from 'lucide-react';
 import { QUESTIONNAIRE_LIST, QuestionnaireConfig, QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
@@ -29,7 +29,6 @@ import { useUserAccess } from '@/lib/use-user-access';
 import { ClassPathHeroList } from '@/components/profile/ClassPathHeroList';
 import { parseStudentClassPaths, selectCurrentClassPath, type StudentClassPath } from '@/lib/class-paths';
 import { classPathText } from '@/lib/i18n-class-paths';
-import { useCollapsedCatalog } from '@/lib/use-collapsed-catalog';
 import { apiFetch } from '@/lib/auth';
 
 interface Props {
@@ -63,10 +62,7 @@ export function ReturningHome({
     const [internalPaths, setInternalPaths] = useState<StudentClassPath[] | null>(paths ?? null);
 
     useEffect(() => {
-        if (paths !== undefined) {
-            setInternalPaths(paths);
-            return;
-        }
+        if (paths !== undefined) return;
         let alive = true;
         apiFetch('/api/user/paths')
             .then((res) => (res.ok ? res.json() : []))
@@ -95,10 +91,8 @@ export function ReturningHome({
         }
     };
 
-    const activePaths = internalPaths ?? paths ?? [];
-    const currentPath = useMemo(() => selectCurrentClassPath(activePaths), [activePaths]);
-    const hasActivePath = Boolean(currentPath);
-    const { isOpen: catalogOpen, toggle: toggleCatalog, isCollapsible } = useCollapsedCatalog('cb_home_catalog_open', hasActivePath);
+    const activePaths = paths ?? internalPaths ?? [];
+    const currentPath = selectCurrentClassPath(activePaths);
 
     const activeTools = useMemo(() => {
         return resolveActiveStudentTools(instrumentCatalog, lang, access);
@@ -147,7 +141,21 @@ export function ReturningHome({
     const isAdministrationLang = instrumentCatalog?.some((row) => row.available_locales.includes(lang)) ?? false;
     const isUnavailableQuestionnaireLang = lang !== 'it' && instrumentCatalog !== null && !isAdministrationLang;
     return (
-        <div className="flex flex-col gap-5 py-2">
+        <div className="flex flex-col gap-6 py-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={onOpenIntro}
+                        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-indigo-300 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        <span>{t('base.backToIntro')}</span>
+                    </button>
+                    <h1 className="font-display text-3xl font-bold text-slate-900">{t('base.instruments.title')}</h1>
+                </div>
+            </div>
+
             {pausedChat && (
                 <section className="flex items-start gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3" role="status">
                     <Snowflake className="mt-0.5 h-5 w-5 shrink-0 text-indigo-700" aria-hidden="true" />
@@ -179,61 +187,62 @@ export function ReturningHome({
 
             {currentPath && (
                 <section aria-labelledby="home-class-path-title">
-                    <h2 id="home-class-path-title" className="sr-only">
-                        {classPathText(lang, 'yourClassPath')}
+                    <h2 id="home-class-path-title" className="mb-3 border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">
+                        {classPathText(lang, 'pathsTitle')}
                     </h2>
                     <ClassPathHeroList paths={activePaths} onReload={handleReloadPaths} />
                 </section>
             )}
 
-            {isCollapsible && (
-                <button
-                    type="button"
-                    onClick={toggleCatalog}
-                    aria-expanded={catalogOpen}
-                    aria-controls="home-catalog-section"
-                    data-testid="toggle-catalog-btn"
-                    className="group flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white p-4 text-left transition-colors hover:border-indigo-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 dark:border-slate-800 dark:bg-slate-900"
-                >
-                    <div className="flex min-w-0 items-center gap-3">
-                        <ChevronRight
-                            className={cn("h-5 w-5 shrink-0 text-slate-500 transition-transform dark:text-slate-400", catalogOpen && "rotate-90")}
-                            aria-hidden
-                        />
-                        <div className="flex min-w-0 flex-wrap items-baseline gap-2">
-                            <span className="font-bold text-slate-900 group-hover:text-indigo-700 dark:text-white dark:group-hover:text-indigo-400">
-                                {classPathText(lang, 'allTools')}
-                            </span>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                                {classPathText(lang, 'allToolsCollapsedHelp')}
-                            </span>
+            {(resumeCount > 0 || resumeEntries.error) && (
+                <section data-testid="home-resume">
+                    <div className="flex items-center gap-3.5">
+                        <div className="relative h-14 w-14 shrink-0">
+                            <Image src="/images/cards/critical_puzzle.png" alt="" width={56} height={56} className="h-full w-full object-contain" />
                         </div>
+                        <h2 className="text-lg font-bold text-slate-900">{t('frozen.resumeTitle')}</h2>
                     </div>
-                    <span className="shrink-0 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                        {catalogOpen ? classPathText(lang, 'hideCatalog') : classPathText(lang, 'showCatalog')}
-                    </span>
-                </button>
+                    <ResumeLoadError entries={resumeEntries} />
+                    <div className="mt-3 space-y-2">
+                        {frozen.map((row) => (
+                            <ResumeEntry key={row.session_id} target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
+                                <a
+                                    href={resumeHref(row)}
+                                    className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
+                                >
+                                    <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
+                                    <span className="truncate">{resumeLabel(row.questionnaire_type, row.label, tf)}</span>
+                                </a>
+                            </ResumeEntry>
+                        ))}
+                        {localResume && (
+                            <ResumeEntry target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${resumeLabel(localResume.instrument, null, tf)}`}>
+                                <a
+                                    href={LOCAL_RESUME_HREF}
+                                    className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
+                                >
+                                    <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
+                                    <span className="truncate">{t('header.resume')} · {resumeLabel(localResume.instrument, null, tf)}</span>
+                                </a>
+                            </ResumeEntry>
+                        )}
+                        {pqblResume && (
+                            <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
+                                <a
+                                    href={PQBL_RESUME_HREF}
+                                    className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
+                                >
+                                    <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
+                                    <span className="truncate">{t('header.resume')} · {t('pqbl.card.title')}</span>
+                                </a>
+                            </ResumeEntry>
+                        )}
+                    </div>
+                </section>
             )}
 
-            <div
-                id="home-catalog-section"
-                hidden={isCollapsible && !catalogOpen}
-                className="flex flex-col gap-5"
-            >
+            <div id="home-catalog-section" className="flex flex-col gap-5">
             <section className="order-1">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={onOpenIntro}
-                            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-indigo-300 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                        >
-                            <ArrowLeft className="h-4 w-4" />
-                            <span>{t('base.backToIntro')}</span>
-                        </button>
-                        <h1 className="font-display text-3xl font-bold text-slate-900">{t('base.instruments.title')}</h1>
-                    </div>
-                </div>
                 <div className="mt-5"><CompassEntry /></div>
                 {suggestions.length > 0 && !isUnavailableQuestionnaireLang && (
                     <section className="mt-5" aria-labelledby="home-suggested-title">
@@ -390,53 +399,6 @@ export function ReturningHome({
             </section>
             <div className="order-2 space-y-5">
             <PersonalAreaEntry />
-            {(resumeCount > 0 || resumeEntries.error) && (
-                <section data-testid="home-resume">
-                    <div className="flex items-center gap-3.5">
-                        <div className="relative h-14 w-14 shrink-0">
-                            <Image src="/images/cards/critical_puzzle.png" alt="" width={56} height={56} className="h-full w-full object-contain" />
-                        </div>
-                        <h2 className="text-lg font-bold text-slate-900">{t('frozen.resumeTitle')}</h2>
-                    </div>
-                    <ResumeLoadError entries={resumeEntries} />
-                    <div className="mt-3 space-y-2">
-                        {frozen.map((row) => (
-                            <ResumeEntry key={row.session_id} target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
-                                <a
-                                    href={resumeHref(row)}
-                                    className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
-                                >
-                                    <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
-                                    <span className="truncate">{resumeLabel(row.questionnaire_type, row.label, tf)}</span>
-                                </a>
-                            </ResumeEntry>
-                        ))}
-                        {localResume && (
-                            <ResumeEntry target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${resumeLabel(localResume.instrument, null, tf)}`}>
-                                <a
-                                    href={LOCAL_RESUME_HREF}
-                                    className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
-                                >
-                                    <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
-                                    <span className="truncate">{t('header.resume')} · {resumeLabel(localResume.instrument, null, tf)}</span>
-                                </a>
-                            </ResumeEntry>
-                        )}
-                        {pqblResume && (
-                            <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
-                                <a
-                                    href={PQBL_RESUME_HREF}
-                                    className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
-                                >
-                                    <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
-                                    <span className="truncate">{t('header.resume')} · {t('pqbl.card.title')}</span>
-                                </a>
-                            </ResumeEntry>
-                        )}
-                    </div>
-                </section>
-            )}
-
             {!isUnavailableQuestionnaireLang && upcoming.length > 0 && (
                 <section className="flex flex-col gap-4 rounded-xl border border-dashed border-slate-200 bg-white/60 px-5 py-4 lg:flex-row lg:items-center">
                     <div className="shrink-0 lg:w-52">

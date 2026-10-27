@@ -1,3 +1,19 @@
+# Handoff 27 ottobre 2026: sezioni delle due home
+
+- Su `fix/student-class-chat-continuity`: titolo prima dei contenuti di Attività
+  e percorsi, sezione Piani operativi visibile in entrambe le home, attività da
+  riprendere subito dopo e cataloghi non più nascosti dalla presenza di piani.
+  I singoli piani conservano l’apertura/chiusura e i collegamenti ai passi.
+- L’area studente riporta «Riprendi un’attività» subito sotto i piani; etichetta
+  disponibile nelle sei lingue. Nessuna modifica al flusso Privacy in questa
+  consegna: lavoro sospeso su richiesta e conservato in `stash@{0}` con messaggio
+  `wip: privacy administration suspended at user request` (include file nuovi).
+- Verifiche e rebuild finali riportati nella PR. Runner :3172 fermato prima
+  del rebuild; nessun servizio dev da lasciare attivo. Le prove usano immagini
+  isolate senza dati operativi. Produzione e release desktop non modificate.
+
+---
+
 # Handoff 27 ottobre 2026: continuità studente e politiche chat di classe
 
 - Branch `fix/student-class-chat-continuity`, da `origin/main` aggiornato.

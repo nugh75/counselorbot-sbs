@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { PersonalAIConnections } from '@/components/profile/PersonalAIConnections';
 import Link from 'next/link';
-import { ArrowRight, ChevronRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { personalAreaDescription, personalAreaName, personalAreaText } from '@/lib/i18n-personal-area';
@@ -14,11 +14,10 @@ import type { PersonalGoal } from '@/lib/goals';
 import { enabledResumeItems, personalSlugEnabled, type UserAccess } from '@/lib/personal-tool-access';
 import { usePersonalToolAccess } from '@/lib/use-personal-tool-access';
 import { Button } from '@/components/ui/Button';
-import { cn } from '@/lib/utils';
 import { ClassPathHeroList } from '@/components/profile/ClassPathHeroList';
+import { ActiveActionsCard } from '@/components/profile/ActiveActionsCard';
 import { parseStudentClassPaths, selectCurrentClassPath, type StudentClassPath } from '@/lib/class-paths';
 import { classPathText } from '@/lib/i18n-class-paths';
-import { useCollapsedCatalog } from '@/lib/use-collapsed-catalog';
 
 function PersonalResume({ access }: { access: UserAccess | null }) {
     const { lang } = useI18n();
@@ -95,12 +94,16 @@ export function PersonalAreaHome() {
     }, []);
 
     useEffect(() => {
-        void loadPaths();
-    }, [loadPaths]);
+        const controller = new AbortController();
+        void apiFetch('/api/user/paths', { signal: controller.signal }).then(async response => {
+            if (!response.ok) return;
+            const data: unknown = await response.json();
+            if (!controller.signal.aborted) setPaths(parseStudentClassPaths(data));
+        }).catch(() => {});
+        return () => controller.abort();
+    }, []);
 
-    const currentPath = useMemo(() => selectCurrentClassPath(paths), [paths]);
-    const hasActivePath = Boolean(currentPath);
-    const { isOpen: catalogOpen, toggle: toggleCatalog, isCollapsible } = useCollapsedCatalog('cb_profile_catalog_open', hasActivePath);
+    const currentPath = selectCurrentClassPath(paths);
 
     useEffect(() => {
         let active = true;
@@ -118,49 +121,17 @@ export function PersonalAreaHome() {
         <div className="space-y-6" data-personal-area-home>
             {currentPath && (
                 <section aria-labelledby="profile-class-path-title">
-                    <h2 id="profile-class-path-title" className="sr-only">
-                        {classPathText(lang, 'yourClassPath')}
+                    <h2 id="profile-class-path-title" className="mb-3 border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">
+                        {classPathText(lang, 'pathsTitle')}
                     </h2>
                     <ClassPathHeroList paths={paths} onReload={loadPaths} />
                 </section>
             )}
 
+            <ActiveActionsCard resume />
             <PersonalResume access={access} />
 
-            {isCollapsible && (
-                <button
-                    type="button"
-                    onClick={toggleCatalog}
-                    aria-expanded={catalogOpen}
-                    aria-controls="personal-catalog-section"
-                    data-testid="toggle-profile-catalog-btn"
-                    className="group flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white p-4 text-left transition-colors hover:border-indigo-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 dark:border-slate-800 dark:bg-slate-900"
-                >
-                    <div className="flex min-w-0 items-center gap-3">
-                        <ChevronRight
-                            className={cn("h-5 w-5 shrink-0 text-slate-500 transition-transform dark:text-slate-400", catalogOpen && "rotate-90")}
-                            aria-hidden
-                        />
-                        <div className="flex min-w-0 flex-wrap items-baseline gap-2">
-                            <span className="font-bold text-slate-900 group-hover:text-indigo-700 dark:text-white dark:group-hover:text-indigo-400">
-                                {classPathText(lang, 'allPersonalTools')}
-                            </span>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                                {classPathText(lang, 'allToolsCollapsedHelp')}
-                            </span>
-                        </div>
-                    </div>
-                    <span className="shrink-0 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                        {catalogOpen ? classPathText(lang, 'hideCatalog') : classPathText(lang, 'showCatalog')}
-                    </span>
-                </button>
-            )}
-
-            <div
-                id="personal-catalog-section"
-                hidden={isCollapsible && !catalogOpen}
-                className="space-y-6"
-            >
+            <div id="personal-catalog-section" className="space-y-6">
                 {groups.map(group => <section key={group.id} aria-labelledby={`personal-group-${group.id}`}>
                     <h2 id={`personal-group-${group.id}`} className="border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">{personalAreaText(lang, group.id)}</h2>
                     <nav aria-labelledby={`personal-group-${group.id}`} className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">

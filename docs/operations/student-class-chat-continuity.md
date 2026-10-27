@@ -8,6 +8,11 @@ risultati e conversazioni associate. Gli errori del riepilogo non nascondono i
 risultati e consentono di riprovare. Le simulazioni dei taccuini di prova restano
 nell'area docente. La home mantiene il collegamento a questa sezione.
 
+In Attività e percorsi e nell’Area studente il titolo precede i contenuti.
+«Piani operativi» è una sezione visibile alla pari delle altre; subito dopo
+compaiono le attività da riprendere. La presenza di piani non nasconde il
+catalogo degli strumenti. I singoli piani restano richiudibili.
+
 ## Politica di classe
 
 `backend/class_chat_settings.py` è il resolver condiviso da chat sincrona,

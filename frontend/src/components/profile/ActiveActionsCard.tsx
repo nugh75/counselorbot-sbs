@@ -17,7 +17,7 @@ import { usePersonalToolAccess } from '@/lib/use-personal-tool-access';
 // separata dai risultati: un errore qui non nasconde questionari e dialoghi.
 const LIMIT = 5;
 
-export function ActiveActionsCard() {
+export function ActiveActionsCard({ resume = false }: { resume?: boolean }) {
     const { lang } = useI18n();
     const access = usePersonalToolAccess();
     const [items, setItems] = useState<InProgressAction[]>([]);
@@ -25,6 +25,7 @@ export function ActiveActionsCard() {
     const [loaded, setLoaded] = useState(false);
     const [attempt, setAttempt] = useState(0);
     const l = (key: Parameters<typeof activeActionsText>[1]) => activeActionsText(lang, key);
+    const title = l(resume ? 'resumeTitle' : 'title');
     // Strumento spento dalla classe: la lettura resta possibile, ma qui non
     // serve una scorciatoia verso una pagina che non accetta lavoro nuovo.
     const enabled = personalSlugEnabled(access, 'azioni');
@@ -52,7 +53,7 @@ export function ActiveActionsCard() {
 
     if (!enabled) return null;
     if (failed) return <section aria-labelledby="active-actions-title" className="glass-panel p-5 space-y-3">
-        <h2 id="active-actions-title" className="text-lg font-bold text-slate-800">{l('title')}</h2>
+        <h2 id="active-actions-title" className="text-lg font-bold text-slate-800">{title}</h2>
         <div role="alert" className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-slate-700">
             <p>{l('error')}</p>
             <Button variant="ghost" onClick={() => { setFailed(false); setLoaded(false); setAttempt(n => n + 1); }}>{l('retry')}</Button>
@@ -64,7 +65,7 @@ export function ActiveActionsCard() {
     const visible = items.slice(0, LIMIT);
     return <section aria-labelledby="active-actions-title" className="glass-panel p-5 space-y-3">
         <div>
-            <h2 id="active-actions-title" className="text-lg font-bold text-slate-800">{l('title')}</h2>
+            <h2 id="active-actions-title" className="text-lg font-bold text-slate-800">{title}</h2>
             <p className="mt-1 text-sm text-slate-500">{l('subtitle')}</p>
         </div>
         <ul className="divide-y divide-slate-200">

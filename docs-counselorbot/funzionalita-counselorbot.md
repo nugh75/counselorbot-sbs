@@ -1,6 +1,6 @@
 # CounselorBot: funzionalità e interfaccia attuali
 
-Aggiornato: 26 ottobre 2026. Questo è il riferimento operativo dell’Assistente
+Aggiornato: 27 ottobre 2026. Questo è il riferimento operativo dell’Assistente
 CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
@@ -273,11 +273,11 @@ questionario non è più nella barra di navigazione né nel pannello Menu.
 L’illustrazione del riquadro è decorativa: il titolo e la descrizione accanto ne
 portano il significato, anche per gli screen reader. Nel catalogo
 viene prima la Bussola, poi le analisi dei questionari, i percorsi guidati e l’Area
-personale e strumenti. Se lo studente appartiene a una classe con almeno un percorso
-di classe attivo pubblicato, la home (`/` e `/?view=home`) pone il percorso in cima
-come primo elemento in evidenza (hero card), mentre il catalogo degli strumenti è
-mostrato sotto collassato (con interruttore per espanderlo che ricorda la scelta nel
-browser). **Riprendi un’attività** è in fondo, con l’immagine del puzzle;
+personale e strumenti. Se lo studente appartiene a una classe con almeno un piano
+attivo pubblicato, la home (`/` e `/?view=home`) mostra il titolo della pagina e poi
+la sezione **Piani operativi**, con la stessa gerarchia delle altre sezioni.
+**Riprendi un’attività** segue subito i piani, prima del catalogo degli strumenti,
+che rimane visibile;
 le attività interrotte sono raggiungibili anche dalla navigazione.
 Il vecchio catalogo strumenti separato non c’è più: i suoi elementi sono in
 **Attività e percorsi** (`/?view=home`; anche i vecchi link `/?view=questionnaires`
@@ -3062,3 +3062,8 @@ di gestione né accesso ai dati altrui. Le prove coprono anche proprietari e
 docenti condivisi che leggono gli iscritti di una classe legata a un istituto.
 
 Contratto e limiti: `docs/operations/student-class-chat-continuity.md`.
+
+Attività e percorsi e Area studente mostrano il titolo prima dei contenuti e
+una sezione visibile «Piani operativi» alla pari delle altre. Le attività da
+riprendere seguono subito i piani; gli strumenti rimangono visibili anche con
+un piano attivo. I singoli piani restano richiudibili.

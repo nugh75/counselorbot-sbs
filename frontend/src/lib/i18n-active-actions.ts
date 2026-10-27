@@ -3,6 +3,7 @@ import type { Lang } from './i18n';
 type Localized = readonly [string, string, string, string, string, string];
 const languages: readonly Lang[] = ['it', 'en', 'es', 'fr', 'de', 'sv'];
 const texts = {
+    resumeTitle: ['Riprendi un’attività', 'Resume an activity', 'Retoma una actividad', 'Reprendre une activité', 'Eine Aktivität fortsetzen', 'Återuppta en aktivitet'],
     title: ['Attività in corso', 'Activities in progress', 'Actividades en curso', 'Activités en cours', 'Laufende Aktivitäten', 'Pågående aktiviteter'],
     subtitle: [
         'Quello che hai iniziato e puoi riprendere da dove l’hai lasciato.',

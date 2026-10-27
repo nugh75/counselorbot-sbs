@@ -636,3 +636,8 @@ intercettazioni serve solo il guscio dell'app, non un account sintetico.
 
 Da un'altra macchina: `ssh -N -L 3172:127.0.0.1:3172 <utente>@<server>`, poi
 `http://localhost:3172`. Non serve cambiare nginx o riavviare la produzione.
+
+Le verifiche dell’ordine delle sezioni usano
+`CLASS_PATH_BASE_URL=http://127.0.0.1:3172 node --test tests/class-path-placement.test.mjs`.
+Usare Node 22 o successivo. Preriscaldare le pagine sul server dev o eseguire
+le suite sulla build isolata per evitare timeout della prima compilazione.
