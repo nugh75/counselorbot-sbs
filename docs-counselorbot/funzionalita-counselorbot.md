@@ -1097,7 +1097,8 @@ massimo di tre attività collegate a obiettivi attivi, obiettivi
 senza attività aperte o assegnazioni. Le date disponibili precedono gli elementi
 senza data; un feedback è indicato come disponibile, non come non letto.
 Il riepilogo porta al lavoro preciso, conserva i dati precedenti in caso di errore
-e offre Riprova; il caricamento non blocca i collegamenti agli strumenti.
+e offre Riprova; gli errori di caricamento delle chat restano separati dagli altri
+lavori e il caricamento non blocca i collegamenti agli strumenti.
 
 Seguono cinque gruppi sempre aperti: **Conoscermi e riflettere**, **Il mio percorso**,
 **Studiare e ragionare**, **I miei lavori**, **Persone e supporto**. Le 17 destinazioni
