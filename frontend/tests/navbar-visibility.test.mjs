@@ -142,6 +142,30 @@ function assertDestinations(rows, profile) {
     }
 }
 
+test('desktop support navigation uses labelled icons with tooltips', async () => {
+    for (const locale of ['it', 'en']) {
+        const { page, context, errors } = await fixture({ profile: 'M', width: 1280, locale });
+        try {
+            await page.goto(`${origin}/guide`);
+            const nav = header(page).getByRole('navigation', { name: locale === 'it' ? 'Navigazione principale' : 'Main navigation' });
+            for (const key of ['instruments', 'bussola', 'assistant', 'guide']) {
+                const label = LOCALIZED[locale][key];
+                const link = nav.getByRole('link', { name: label, exact: true });
+                await link.waitFor();
+                assert.equal((await link.textContent()).trim(), '');
+                assert.equal(await link.locator('svg').count(), 1);
+                const box = await link.boundingBox();
+                assert.ok(box.width >= 44 && box.height >= 44);
+                await link.focus();
+                await page.getByRole('tooltip').getByText(label, { exact: true }).first().waitFor();
+                await page.keyboard.press('Escape');
+            }
+            assert.equal(await nav.getByRole('link', { name: LOCALIZED[locale].guide, exact: true }).getAttribute('aria-current'), 'page');
+            assert.deepEqual(errors, []);
+        } finally { await context.close(); }
+    }
+});
+
 async function noHorizontalScroll(page) {
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'no horizontal scroll');
 }
