@@ -20,7 +20,8 @@ import {
 } from "@/lib/questionnaires";
 import { fetchInstruments } from "@/lib/instruments-api";
 import { getSelectedCounselorId } from "@/lib/counselor";
-import { deleteFrozenSession } from "@/lib/frozen-session";
+import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from "@/lib/frozen-session";
+import { resultsChatText } from "@/lib/i18n-results-chats";
 import { ScoreInputForm } from "@/components/qsa/ScoreInputForm";
 import { GuidedChatInterface } from "@/components/qsa/GuidedChatInterface";
 import { InAppAdministrationRunner } from "@/components/administration/InAppAdministrationRunner";
@@ -57,6 +58,8 @@ export function AdministrationStepFlow({
   const [saved, setSaved] = useState<AdministrationResult | null>(null);
   const runnerSession = useRef<string | null>(null);
   const [ack, setAck] = useState<AdministrationEntryAck | null>(null);
+  const [snapshot, setSnapshot] = useState<FrozenSessionDetail | null>(null);
+  const [resumeError, setResumeError] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [reload, setReload] = useState(0);
   const owner = useRef<string | null>(null);
@@ -115,6 +118,16 @@ export function AdministrationStepFlow({
           throw new Error("launch");
         }
         const target = parseAdministrationLaunch(await response.json());
+        let frozen: FrozenSessionDetail | null = null;
+        let resumeFailed = false;
+        try {
+          frozen = target.latest_entry ? await getFrozenSession(target.latest_entry.session_id) : null;
+          if (frozen && (frozen.session_id !== target.latest_entry?.session_id || frozen.questionnaire_type !== target.instrument_code))
+            throw new Error("snapshot mismatch");
+        } catch {
+          frozen = null;
+          resumeFailed = true;
+        }
         const rows = await fetchInstruments();
         const instrument = rows.find(
           (row) => row.code === target.instrument_code,
@@ -151,6 +164,8 @@ export function AdministrationStepFlow({
             if (stored?.retryIds) retryIds.current = stored.retryIds;
           } catch {}
           setLaunch(target);
+          setSnapshot(frozen);
+          setResumeError(resumeFailed);
           setQuestionnaire(config);
           setInstitutionCode(target.institution.institution_code ?? "");
           setError(false);
@@ -228,7 +243,12 @@ export function AdministrationStepFlow({
         ...body,
         institution_grant: grant,
       });
+      const frozen = await getFrozenSession(committed.session_id);
+      if (frozen && (frozen.session_id !== committed.session_id || frozen.questionnaire_type !== committed.result.questionnaire_type))
+        throw new Error("snapshot mismatch");
       if (await accountMatches()) {
+        setSnapshot(frozen);
+        setLaunch(current => current ? { ...current, latest_entry: committed } : current);
         setAck(committed);
         if (draftKey.current) sessionStorage.removeItem(draftKey.current);
       }
@@ -305,26 +325,41 @@ export function AdministrationStepFlow({
       )}
     </div>
   );
+  const reenter = () => {
+    setAck(null); setCompleted(false); setScores(null); setAnswers({}); setSaved(null);
+    retryIds.current = null; runnerSession.current = null;
+    if (draftKey.current) sessionStorage.removeItem(draftKey.current);
+    setReload(value => value + 1);
+  };
+  const reenterButton = <Button variant="secondary" onClick={reenter}>{resultsChatText(lang, "reenterData")}</Button>;
   if (ack && questionnaire && completed)
-    return <PlanChatCompleted sessionId={ack.session_id} questionnaireType={questionnaire.id} />;
+    return <div className="space-y-4">{reenterButton}<PlanChatCompleted sessionId={ack.session_id} questionnaireType={questionnaire.id} /></div>;
   if (ack && questionnaire)
     return (
-      <GuidedChatInterface
+      <div className="space-y-4">{reenterButton}<GuidedChatInterface
         scores={ack.result.scores}
         questionnaireType={questionnaire.id}
         sessionId={ack.session_id}
-        counselorId={getSelectedCounselorId()}
-        locale={lang}
+        counselorId={snapshot?.counselor_id ?? getSelectedCounselorId()}
+        locale={snapshot?.locale || lang}
+        frozenSnapshot={snapshot}
+        onFrozen={() => { setAck(null); setReload(value => value + 1); }}
         onComplete={() => {
           setCompleted(true);
           void deleteFrozenSession(ack.session_id).catch(() => {});
         }}
-      />
+      /></div>
     );
   return (
     <div className="space-y-4">
       <Link href="/profilo/piani-operativi">{l("back")}</Link>
       <h1 className="text-xl font-semibold">{l("administration")}</h1>
+      {launch?.latest_entry && snapshot && !error && <Button onClick={() => setAck(launch.latest_entry!)}>
+        {resultsChatText(lang, "resumeChat")}
+      </Button>}
+      {resumeError && <Callout variant="warning">{l("error")}{" "}
+        <Button variant="secondary" onClick={() => setReload(value => value + 1)}>{l("retry")}</Button>
+      </Callout>}
       {localeUnavailable && (
         <Callout variant="danger">{l("localeUnavailable")}</Callout>
       )}

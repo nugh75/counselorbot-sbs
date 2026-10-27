@@ -15,6 +15,7 @@ from .path_step_types import (
     administration_evidence,
     deep_dive_evidence,
     personal_result_qualifies,
+    valid_scores,
     results_step,
     step_descriptor,
 )
@@ -44,7 +45,14 @@ def existing_binding(db, step, username, result=None):
         if result is None:
             return None
         query = query.filter_by(result_id=result.id)
-    return query.order_by(models.ClassPathDeepDiveSession.id).first()
+    for binding in query.order_by(models.ClassPathDeepDiveSession.id):
+        bound = db.get(models.QuestionnaireResult, binding.result_id)
+        # Obsolete QPCC profiles remain historical records; a new canonical
+        # compilation can start its own analysis without replacing that history.
+        if bound and bound.questionnaire_type == "QPCC" and not valid_scores(db, "QPCC", bound.scores):
+            continue
+        return binding
+    return None
 
 
 def deep_dive_options(db, identity, path_id, step_id):
@@ -68,7 +76,14 @@ def deep_dive_options(db, identity, path_id, step_id):
         candidates = [{"id": row.id, "submitted_at": row.submitted_at.isoformat(), "locale": row.locale or ""}
                       for row in rows if personal_result_qualifies(db, step, username, row)]
     source = results_step(db, step)
+    legacy_profile = False
+    for previous in db.query(models.ClassPathDeepDiveSession).filter_by(step_id=step.id, username=username):
+        previous_result = db.get(models.QuestionnaireResult, previous.result_id)
+        if previous_result and previous_result.questionnaire_type == "QPCC" and not valid_scores(db, "QPCC", previous_result.scores):
+            legacy_profile = True
+            break
     return {
+        "legacy_profile": legacy_profile and not binding,
         "personal": bool(step.tool_key),
         "results": candidates,
         "session": payload(binding, result, step) if binding and result else None,

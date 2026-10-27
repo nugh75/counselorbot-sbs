@@ -1062,6 +1062,7 @@ async def launch_step(path_id: int, step_id: int, current_user=Depends(auth.get_
         return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id,
                 "topic_id":step.topic_id, "group_id":path.group_id, "start_href":descriptor["start_href"]}
     from ..questionnaire_sources import external_questionnaire_href
+    from ..questionnaire_entry import latest_guided_entry
     plan, institution = administration_target(db, path.group_id, step.administration_plan_id)
     # The external password is a class access code: only members of the class
     # reach this endpoint, and it is shown only for the external delivery.
@@ -1070,12 +1071,21 @@ async def launch_step(path_id: int, step_id: int, current_user=Depends(auth.get_
         if plan.delivery_mode == "external_it"
         else None
     )
+    if plan.instrument_code == "QPCC":
+        from ..qpcc import FACTORS
+        score_factors = [{"code": factor["code"], "label_i18n": factor["labels"],
+                          "label_it": factor["labels"]["it"], "label_en": factor["labels"]["en"]}
+                         for factor in FACTORS]
+    else:
+        score_factors = [{"code": factor.code, "label_i18n": factor.label_i18n or {},
+                          "label_it": factor.label_it, "label_en": factor.label_en}
+                         for factor in db.query(models.Factor).filter_by(instrument_code=plan.instrument_code)
+                         .order_by(models.Factor.sort_order, models.Factor.id)]
     return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id, "administration_plan_id":plan.id,
+            "latest_entry": latest_guided_entry(db, step, current_user["username"]),
             "instrument_code":plan.instrument_code, "locale":plan.locale, "delivery_mode":plan.delivery_mode,
             "external_href":external_questionnaire_href(plan.instrument_code) if plan.delivery_mode == "external_it" else None,
-            "score_factors":[{"code":factor.code, "label_i18n":factor.label_i18n or {}, "label_it":factor.label_it,
-                              "label_en":factor.label_en} for factor in db.query(models.Factor).filter_by(
-                                  instrument_code=plan.instrument_code).order_by(models.Factor.sort_order, models.Factor.id)],
+            "score_factors": score_factors,
             "institution":{"id":institution.id, "name":institution.name, "institution_code":institution.institution_code,
                            "institution_password":display_password}}
 

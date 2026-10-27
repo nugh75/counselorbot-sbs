@@ -500,5 +500,5 @@ export function orderClassPaths(paths: StudentClassPath[]): StudentClassPath[] {
 
 // A guided chat opened from a plan step remembers the way back to the plans.
 export function planStepHref(href: string): string {
-    return href.startsWith('/?start=') ? `${href}&from=plan` : href;
+    return href.startsWith('/?start=') || href.startsWith('/?frozen=') ? `${href}&from=plan` : href;
 }

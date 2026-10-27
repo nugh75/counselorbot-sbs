@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from sqlalchemy import or_
 
 from . import administration_context, models, scoring_service
-from .path_step_types import administration_target, valid_scores
+from .path_step_types import administration_evidence, administration_target, valid_scores
 
 
 def result_payload(result):
@@ -35,6 +35,20 @@ def acknowledgement(db, entry):
         "session_id": entry.session_id,
         "accepted_at": entry.accepted_at.isoformat(),
     }
+
+
+def latest_guided_entry(db, step, username):
+    """Resume only this student's valid entry for this exact plan step."""
+    results = [row["result_id"] for row in administration_evidence(db, step, username)
+               if row["kind"] == "guided_entry"]
+    if not results:
+        return None
+    entry = (db.query(models.QuestionnaireGuidedEntry)
+             .filter_by(step_id=step.id, username=username)
+             .filter(models.QuestionnaireGuidedEntry.result_id.in_(results))
+             .order_by(models.QuestionnaireGuidedEntry.accepted_at.desc(),
+                       models.QuestionnaireGuidedEntry.id.desc()).first())
+    return acknowledgement(db, entry) if entry else None
 
 
 def accept_guided_entry(db, identity, path_id, step_id, payload):

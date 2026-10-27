@@ -1,3 +1,36 @@
+# Handoff 27 ottobre 2026: ripresa chat dei piani e nuovo inserimento QPCC
+
+- Branch: `fix/plan-guided-chat-resume`, da `origin/main` aggiornato.
+- Diagnosi in sola lettura: pausa e risultato QPCC storici K1–K5; GET della
+  sessione rispondeva `409 qpcc_legacy_profile`, mascherato da errore generico.
+- Modulo/validazione dei piani usano i dieci fattori canonici anche con catalogo
+  storico. I legami QPCC obsoleti non bloccano una nuova compilazione/analisi;
+  risultati, conversazioni e legami precedenti sono conservati.
+- «Reinserisci i dati» disponibile durante l'analisi, dopo il completamento e
+  quando la pausa fallisce. Somministrazioni: ultima sessione valida dello
+  stesso studente/passo; chat autonome: ripresa separata dal nuovo avvio.
+- Nessuna conversione K1–K5: la vecchia conversazione richiede un nuovo profilo
+  per una nuova analisi. Nessuna migrazione né modifica ai dati operativi.
+- Verifiche: 92 test PostgreSQL; 91 SQLite correlati più 3 mirati; 718 unitari
+  frontend; TypeScript, ESLint mirato, portabilità SQL e guidance passati.
+- Browser: 13 passati, inclusi i 6 nuovi a 390/1440 px. Quattro vecchi scenari
+  dell'editor cercano controlli già assenti su main («Risultati del passo»,
+  «Origine dei risultati»): editor invariato. Il lint generale resta bloccato
+  dall'i18n preesistente di `ClassOverviewTab.tsx:530`; Ruff F mirato esclude i
+  tre import `timezone` inutilizzati già presenti nei moduli toccati.
+- Docker: immagini isolate `counselorbot-plan-resume-backend:test` (Python 3.12,
+  3 nuovi test SQLite passati senza rete) e `counselorbot-plan-resume-frontend:test`
+  ricostruite. Frontend: build ottimizzata e TypeScript passati; smoke HTTP 200
+  su piani, modulo, approfondimento e runtime-config, senza rete esterna.
+- Operazioni: dev :3159/:3160, PostgreSQL sintetico :18651 e smoke arrestati;
+  nessun deploy, sudo o riavvio dei servizi operativi. La prima build frontend
+  è stata annullata per eseguire i controlli con risorse sufficienti, poi
+  ricostruita integralmente con il codice finale.
+- Contratto: `docs/operations/operational-plan-questionnaire-chats.md`;
+  fixture su :3159 in `docs/operations/live-dev-environment.md`.
+
+---
+
 # Handoff 27 ottobre 2026: ripresa attività e conferma cestino (#608, #609)
 
 - Branch: `feature/active-actions-confirm-delete`, creato da `origin/main`
