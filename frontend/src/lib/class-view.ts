@@ -13,7 +13,7 @@ export interface ClassViewOption {
 }
 
 // With one class the class view is that class, so it is listed once by name.
-// Students with no class and staff get no options (no selector).
+// Any enrolled account can select a class, including staff participating as students.
 export function classViewOptions(access: UserAccess | null | undefined): ClassViewOption[] {
     const classes = access?.classes ?? [];
     if (classes.length === 0) return [];

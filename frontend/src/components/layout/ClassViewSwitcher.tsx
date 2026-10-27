@@ -9,7 +9,7 @@ import type { UserAccess } from '@/lib/user-access';
 import { cn } from '@/lib/utils';
 
 // Student view switcher (#146): full view or a class view, stored server side.
-// Renders nothing for students with no class and for staff. `access` comes from
+// Renders nothing for accounts without a class. `access` comes from
 // the Header: opening the menu does not read /api/user/access again.
 export function ClassViewSwitcher({ access, labelled = false, className }: { access: UserAccess | null; labelled?: boolean; className?: string }) {
     const { lang } = useI18n();

@@ -11,6 +11,7 @@ from backend.tests.artifact_database import artifact_session
 
 STUDENT = {"username": "anna", "groups": ["studenti"], "is_admin": False, "is_researcher": False, "authenticated": True}
 TEACHER = {"username": "prof", "groups": ["docenti"], "is_admin": False, "is_researcher": False, "authenticated": True}
+ADMIN = {"username": "root", "groups": ["admins"], "is_admin": True, "is_researcher": False, "authenticated": True}
 
 CLIO, GIULIO = 1, 2
 
@@ -127,13 +128,14 @@ def test_stale_class_choice_falls_back_to_the_class_view(db):
     assert "QSA" not in access["tool_keys"] and "SAVICKAS" in access["tool_keys"]
 
 
-def test_no_class_and_staff_have_no_selector(db):
+def test_no_class_has_no_selector_and_enrolled_staff_start_in_full_view(db):
     _set_view(db, "all")
     access = class_access.resolve_access(db, STUDENT)
     assert access["classes"] == [] and access["view"] == "classes" and access["restricted"] is False
-    _group(db, "a", disabled=["QSA"], members=["prof"])
+    group = _group(db, "a", disabled=["QSA"], members=["prof"])
     staff = class_access.resolve_access(db, TEACHER)
-    assert staff["classes"] == [] and staff["restricted"] is False
+    assert staff["classes"] == [{"id": group.id, "name": "a"}]
+    assert staff["view"] == "all" and staff["restricted"] is False
 
 
 # --- PUT /user/access/view --------------------------------------------------
@@ -169,9 +171,26 @@ def test_put_view_needs_a_class(db):
         response = client.put("/user/access/view", json={"view": "all"})
     assert response.status_code == 400
     assert response.json()["detail"] == "no_class"
-    _group(db, "a", members=["prof"])
-    with _client(db, TEACHER) as client:
-        assert client.put("/user/access/view", json={"view": "all"}).status_code == 400
+
+
+@pytest.mark.parametrize("identity", [TEACHER, ADMIN], ids=["teacher", "admin"])
+def test_enrolled_staff_can_choose_student_view_without_losing_full_view(db, identity):
+    group = _group(db, "a", disabled=["QSA"], members=[identity["username"]])
+    other = _group(db, "other", members=["someone-else"])
+    with _client(db, identity) as client:
+        assert client.put("/user/access/view", json={"view": other.id}).status_code == 400
+        selected = client.put("/user/access/view", json={"view": "classes"}).json()
+        assert selected["restricted"] and selected["class_ids"] == [group.id]
+        assert selected["view"] == "classes" and "QSA" not in selected["tool_keys"]
+        with pytest.raises(class_access.ToolAccessDenied):
+            class_access.require_tool(db, identity, "QSA")
+        full = client.put("/user/access/view", json={"view": "all"}).json()
+        assert not full["restricted"] and full["class_ids"] == [group.id]
+        class_access.require_tool(db, identity, "QSA")
+        client.put("/user/access/view", json={"view": group.id})
+        db.query(models.GroupMembership).filter_by(group_id=group.id, username=identity["username"]).delete()
+        db.commit()
+        assert class_access.resolve_access(db, identity)["view"] == "all"
 
 
 # --- Telegram (#94) -----------------------------------------------------------

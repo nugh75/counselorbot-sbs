@@ -1092,11 +1092,13 @@ nasconde il filtro senza cancellare i contenuti o i collegamenti; ripristinarla
 rende nuovamente disponibili le associazioni. Queste funzioni sono state distribuite in produzione il 23 settembre 2026.
 
 L’Area studente (`/profilo`) apre con **Da riprendere**, solo quando ci sono
-lavori pertinenti: al massimo tre attività collegate a obiettivi attivi, obiettivi
+lavori pertinenti: chat guidate e analisi dei questionari sospese, oltre a un
+massimo di tre attività collegate a obiettivi attivi, obiettivi
 senza attività aperte o assegnazioni. Le date disponibili precedono gli elementi
 senza data; un feedback è indicato come disponibile, non come non letto.
 Il riepilogo porta al lavoro preciso, conserva i dati precedenti in caso di errore
-e offre Riprova; il caricamento non blocca i collegamenti agli strumenti.
+e offre Riprova; gli errori di caricamento delle chat restano separati dagli altri
+lavori e il caricamento non blocca i collegamenti agli strumenti.
 
 Seguono cinque gruppi sempre aperti: **Conoscermi e riflettere**, **Il mio percorso**,
 **Studiare e ragionare**, **I miei lavori**, **Persone e supporto**. Le 17 destinazioni
@@ -1607,7 +1609,8 @@ a concurrent save requires Reload with discard confirmation. New classes and too
 enabled. Notebook, completed questionnaires, Classes and Assignments remain
 available. Effective student access is the union of active classes, with global
 disables taking precedence; no active class means the platform catalog applies.
-Staff are exempt from class filtering. Previously saved work stays readable;
+Staff start without class filtering and may explicitly choose a class view when
+enrolled. Previously saved work stays readable;
 new work and frozen-session resume are blocked for disabled tools.
 
 **Student view switcher (#146).** Class settings are a recommended view, not a
@@ -1618,12 +1621,14 @@ students (global disables and teacher-only tools still apply); the class view is
 the default — with one class it is that class, with several **My classes** keeps
 the union above and each class can be chosen alone (only its settings count).
 The choice is stored server side in `account_preferences.class_view` (`NULL` =
-class view, `all`, or a class id; added by an idempotent startup migration), so it
+class view for students, `classes` for participating staff, `all`, or a class id), so it
 follows the account across devices and Telegram, and every server guard
 (`/user/access`, tool and counselor checks) applies it. A class left or
-deactivated falls back to the class view. `PUT /api/user/access/view` with
+deactivated falls back to the class view for students and full view for staff. `PUT /api/user/access/view` with
 `{"view": "all" | "classes" | <class id>}` saves it. Students without a class and
-staff see no selector. Operational plans and the class forum always follow their own
+staff without an active enrollment see no selector. An enrolled administrator or teacher
+starts in the full view and can choose a class view without losing their role; published
+plans are shown according to their own enrollments. Operational plans and the class forum follow their own
 class settings, whichever view is active.
 
 Institutional counselors can be enabled individually with a class default.

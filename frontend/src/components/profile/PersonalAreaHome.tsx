@@ -19,9 +19,13 @@ import { ClassPathHeroList } from '@/components/profile/ClassPathHeroList';
 import { parseStudentClassPaths, selectCurrentClassPath, type StudentClassPath } from '@/lib/class-paths';
 import { classPathText } from '@/lib/i18n-class-paths';
 import { useCollapsedCatalog } from '@/lib/use-collapsed-catalog';
+import { LOCAL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
+import { resumeLabel } from '@/lib/resume-label';
+import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 
 function PersonalResume({ access }: { access: UserAccess | null }) {
-    const { lang } = useI18n();
+    const { lang, tf, t } = useI18n();
+    const resume = useResumeEntries();
     const [goals, setGoals] = useState<PersonalGoal[]>([]);
     const [assignments, setAssignments] = useState<ResumeAssignment[]>([]);
     const [loading, setLoading] = useState(true);
@@ -50,15 +54,31 @@ function PersonalResume({ access }: { access: UserAccess | null }) {
     }, [attempt]);
 
     const items = enabledResumeItems(personalResumeItems(goals, assignments), access);
-    if (!loading && !failed && !items.length) return null;
+    const frozen = resume.frozen.filter(row => !row.practice_notebook_id);
+    const local = resume.localResume && !resume.frozen.some(row => row.session_id === resume.localResume?.sessionId)
+        ? resume.localResume : null;
+    if (!loading && !failed && !items.length && !frozen.length && !local && !resume.error && !resume.loading) return null;
     return <section aria-labelledby="personal-resume-title" className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
         <h2 id="personal-resume-title" className="font-bold text-slate-900">{l('resume')}</h2>
+        <ResumeLoadError entries={resume} />
         {loading && <p role="status" className="min-h-11 py-3 text-sm text-slate-600">{l('loading')}</p>}
         {failed && <div role="alert" className="flex flex-wrap items-center gap-x-3 text-sm text-slate-700">
             <p>{l('error')}{items.length > 0 && <> {l('stale')}</>}</p>
             <Button variant="ghost" disabled={loading} onClick={() => { setLoading(true); setAttempt(n => n + 1); }}>{l('retry')}</Button>
         </div>}
-        {items.length > 0 && <ul className="mt-1 divide-y divide-indigo-200">
+        {(items.length > 0 || frozen.length > 0 || local) && <ul className="mt-1 divide-y divide-indigo-200">
+            {frozen.map(row => <li key={`session-${row.session_id}`}>
+                <a href={resumeHref(row)} className="flex min-h-11 items-center gap-3 rounded-md py-2 text-sm text-indigo-700">
+                    <span className="min-w-0 flex-1 break-words font-semibold">{resumeLabel(row.questionnaire_type, row.label, tf)}</span>
+                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                </a>
+            </li>)}
+            {local && <li>
+                <a href={LOCAL_RESUME_HREF} className="flex min-h-11 items-center gap-3 rounded-md py-2 text-sm text-indigo-700">
+                    <span className="min-w-0 flex-1 break-words font-semibold">{t('header.resume')} · {resumeLabel(local.instrument, null, tf)}</span>
+                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                </a>
+            </li>}
             {items.map(item => <li key={item.id}>
                 <Link href={item.href} className="flex min-h-11 items-center gap-3 rounded-md py-2 text-sm text-indigo-700">
                     <span className="min-w-0 flex-1 break-words">
@@ -95,8 +115,14 @@ export function PersonalAreaHome() {
     }, []);
 
     useEffect(() => {
-        void loadPaths();
-    }, [loadPaths]);
+        const controller = new AbortController();
+        void apiFetch('/api/user/paths', { signal: controller.signal }).then(async response => {
+            if (!response.ok) return;
+            const data: unknown = await response.json();
+            if (!controller.signal.aborted) setPaths(parseStudentClassPaths(data));
+        }).catch(() => {});
+        return () => controller.abort();
+    }, []);
 
     const currentPath = useMemo(() => selectCurrentClassPath(paths), [paths]);
     const hasActivePath = Boolean(currentPath);

@@ -1,3 +1,19 @@
+# Handoff 27 ottobre 2026: ripresa chat e vista studente per il personale
+
+- Branch `fix/student-home-resume-admin`, da `origin/main`; worktree isolato
+  `/private/tmp/counselorbot-student-home` per non toccare il runtime portable.
+- `Da riprendere` nella home studente include chat guidate e analisi sospese,
+  senza duplicare la ripresa locale né mostrare simulazioni del docente.
+- Il personale iscritto vede i propri piani; parte in vista completa e può
+  selezionare una vista studente, con filtri di strumenti e counselor. Uscendo
+  dalla classe o scegliendo la vista completa conserva il ruolo amministrativo.
+- Test: 722 unitari frontend; regressioni backend SQLite (139 passati, un
+  test SQL PostgreSQL già censito nella ratchet) e 16 PostgreSQL mirati;
+  TypeScript, ESLint mirato, portabilità SQL e guidance superati. Il lint
+  generale segnala testi non tradotti preesistenti nelle pagine docente.
+
+---
+
 # Handoff 27 ottobre 2026: categorie del catalogo attività
 
 - Branch `fix/questionnaire-catalog-sections`, da `origin/main` aggiornato.
