@@ -412,6 +412,38 @@ def _forum_settings_log(previous, settings, previous_tools) -> list[str]:
     return changes
 
 
+@router.get("/student/class-chat-settings")
+async def get_student_class_chat_settings(
+    current_user=Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    username = current_user.get("username") or current_user.get("sub")
+    if not username:
+        return {"group_ids": [], "allow_student_response_format": True,
+                "allow_student_response_length": True, "allow_student_response_reasoning": True,
+                "response_format": None, "response_length": None, "response_reasoning": None}
+    memberships = db.query(models.GroupMembership.group_id).filter(models.GroupMembership.username == username).all()
+    group_ids = [row[0] for row in memberships]
+    if not group_ids:
+        return {"group_ids": [], "allow_student_response_format": True,
+                "allow_student_response_length": True, "allow_student_response_reasoning": True,
+                "response_format": None, "response_length": None, "response_reasoning": None}
+    rows = db.query(models.ClassSettings).filter(models.ClassSettings.group_id.in_(group_ids)).all()
+    if not rows:
+        return {"group_ids": group_ids, "allow_student_response_format": True,
+                "allow_student_response_length": True, "allow_student_response_reasoning": True,
+                "response_format": None, "response_length": None, "response_reasoning": None}
+    return {
+        "group_ids": group_ids,
+        "allow_student_response_format": all(getattr(r, "allow_student_response_format", True) for r in rows),
+        "allow_student_response_length": all(getattr(r, "allow_student_response_length", True) for r in rows),
+        "allow_student_response_reasoning": all(getattr(r, "allow_student_response_reasoning", True) for r in rows),
+        "response_format": next((r.response_format for r in rows if getattr(r, "response_format", None)), None),
+        "response_length": next((r.response_length for r in rows if getattr(r, "response_length", None)), None),
+        "response_reasoning": next((r.response_reasoning for r in rows if getattr(r, "response_reasoning", None)), None),
+    }
+
+
 @router.get("/teacher/groups/{group_id}/settings")
 async def get_class_settings(
     group_id: int,
