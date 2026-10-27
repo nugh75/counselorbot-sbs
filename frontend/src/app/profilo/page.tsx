@@ -453,7 +453,10 @@ export default function ProfilePage() {
                 subtitle={personalAreaText(lang, 'intro')}
             />}
 
-            {!activeArea && <PersonalAreaHome />}
+            {!activeArea && <>
+                <ActiveActionsCard />
+                <PersonalAreaHome />
+            </>}
 
             {activeSection && ['notebook', 'sessions'].includes(activeSection) && <p className="rounded-lg border border-slate-200 p-3 text-sm text-slate-600">{learningText(lang, 'groupVisibility')}</p>}
             {activeSection === 'notebook' && (
