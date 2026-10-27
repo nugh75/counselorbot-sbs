@@ -357,7 +357,10 @@ da 44 px.
 L’accesso personale usa l’account della Console ai4educ collegata all’installazione.
 Nell'app desktop con fornitore locale non si passa da ai4educ: il guscio apre
 `/accesso-locale` con un link monouso, il riscatto imposta la sessione del docente
-e «Esci» da `/logout` la revoca tornando alla home. In produzione web login,
+e «Esci» da `/logout` la revoca tornando alla home. I due accessi restano separati
+e non si scambiano: l’account ai4educ del sito web non apre l’app desktop e il
+link locale del guscio non vale sul server web, anche quando convivono sullo
+stesso computer. In produzione web login,
 uscita e collegamenti a Portale, Console e Segreti seguono i domini
 configurati per quella installazione, letti all’avvio del server e non fissati
 nella build (la stessa build serve installazioni web e app desktop); dopo il login si torna alla pagina richiesta
