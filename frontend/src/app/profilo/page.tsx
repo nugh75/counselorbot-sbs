@@ -19,6 +19,7 @@ import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { ResultReadingCard } from '@/components/profile/ResultReadingCard';
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import { PersonalAreaHome } from '@/components/profile/PersonalAreaHome';
+import { ActiveActionsCard } from '@/components/profile/ActiveActionsCard';
 import { personalAreaText, personalAreaName, personalAreaDescription } from '@/lib/i18n-personal-area';
 import { TavoloList } from '@/components/tavolo/TavoloList';
 import { CrossSynthesisCard } from '@/components/profile/CrossSynthesisCard';
@@ -473,6 +474,7 @@ export default function ProfilePage() {
 
             {activeSection === 'sessions' && (
             <>
+            <ActiveActionsCard />
             <section className="glass-panel p-5 space-y-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>

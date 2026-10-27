@@ -12,6 +12,7 @@ import { normalizeRecommendationCatalog, type RecommendationCatalog } from '@/li
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { NewDeckDialog } from './NewDeckDialog';
 import { InlineRename } from '@/components/ui/InlineRename';
+import { ConfirmActionDialog } from './ConfirmActionDialog';
 import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, cardColumnsOf, cardColumnLabel, renameCardColumn, removeCardColumn, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, cardsInDeck, type ActionStage, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
 import { validTimelineDates } from '@/lib/timeline-dates';
 import { BUILTIN_CARD_IMAGES, tavoloImageUrl } from '@/lib/tavolo-images';
@@ -72,6 +73,8 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [renamingColumnId, setRenamingColumnId] = useState<string | null>(null);
     // F21 (lotto 4): scheda leggibile per default, modifica esplicita per card.
     const [editingActionId, setEditingActionId] = useState<string | null>(null);
+    // Il cestino apre la conferma; solo la conferma modifica la bozza (#609).
+    const [confirmActionId, setConfirmActionId] = useState<string | null>(null);
     const [history, setHistory] = useState<VisualWorkspace[]>([]);
     const [loaded, setLoaded] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -266,8 +269,17 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
         }}><option value="">{l('chooseSource')}</option>{sources.map(item => <option key={item.key} value={item.key}>{item.title}</option>)}</select>
     </label>;
     const removeButton = (label: string, remove: () => void) => <Tooltip content={`${l('remove')}: ${label}`}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('remove')}: ${label}`} onClick={remove}><Trash2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>;
-
     return <>
+        {confirmActionId && <ConfirmActionDialog
+            locale={locale}
+            title={work.actions.find(action => action.id === confirmActionId)?.title || ''}
+            onCancel={() => setConfirmActionId(null)}
+            onConfirm={() => {
+                edit(removeAction(work, confirmActionId));
+                setConfirmActionId(null);
+                window.requestAnimationFrame(() => document.getElementById(`${id}-panel`)?.focus());
+            }}
+        />}
         {!hideTrigger && <Tooltip content={l('openHelp')}>
             <Button type="button" variant="secondary" className={buttonClass} onClick={launch} aria-label={l('open')}>
                 <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{dirty && <span aria-label={l('unsaved')}>•</span>}
@@ -301,7 +313,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                     </div>
                     </details>}
                 </header>
-                <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4" id={`${id}-panel`} role={fixedTab ? 'region' : 'tabpanel'} aria-labelledby={fixedTab ? `${id}-title` : `${id}-${tab}`}>
+                <div tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4" id={`${id}-panel`} role={fixedTab ? 'region' : 'tabpanel'} aria-labelledby={fixedTab ? `${id}-title` : `${id}-${tab}`}>
                     {issue && <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
                         <p>{l(issue)}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
@@ -358,7 +370,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                         <p className="mt-1 text-xs text-slate-500">{l(action.stage)}{action.kind && action.kind !== 'activity' ? ` · ${l(action.kind)}` : ''}</p>
                                         <div className="mt-2 flex flex-wrap items-center gap-2">
                                             <Tooltip content={l('editAction')}><Button type="button" variant="secondary" className={buttonClass} aria-label={`${l('editAction')}: ${action.title}`} onClick={() => setEditingActionId(action.id)}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                                            {removeButton(action.title, () => edit(removeAction(work, action.id)))}
+                                            {removeButton(action.title, () => setConfirmActionId(action.id))}
                                         </div>
                                     </> : <>
                                     <label className="block text-sm">{action.kind === 'check' && <Clock className="mr-1 inline h-4 w-4 align-text-bottom" aria-hidden="true" />}{l('titleField')}<input data-workspace-field required maxLength={160} value={action.title} className={`${inputClass} mt-1 font-semibold`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, title: e.target.value } : a) })} /></label>
@@ -377,7 +389,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                     </details>
                                     {personal && <div className="mt-2 flex flex-wrap items-center gap-2"><Button type="button" variant="secondary" className="min-h-11 gap-2 px-3" onClick={() => setEditingActionId(null)}>{l('close')}</Button></div>}
                                     </>}
-                                    {!personal && removeButton(action.title, () => edit(removeAction(work, action.id)))}
+                                    {!personal && removeButton(action.title, () => setConfirmActionId(action.id))}
                                 </article>; })}</div>
                             </section>)}</div>
                         </>}

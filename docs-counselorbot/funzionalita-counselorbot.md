@@ -1128,6 +1128,24 @@ i vecchi piani pubblicati restano leggibili. I modelli mostrano anche le note:
 «Aggiorna da modello» confronta il testo della classe con quello proposto e
 conserva i passi con titolo o nota personalizzati, comprese cancellazioni esplicite.
 
+In Risultati e conversazioni compare anche «Attività in corso»: fino a cinque
+attività personali nello stato «In corso», con titolo, stato e data se presente.
+La scadenza (o la data iniziale, se manca la scadenza) determina l’ordine; le
+attività senza data vengono dopo. Ogni collegamento apre e porta il focus sulla
+scheda corretta in Azioni; «Vedi tutte le attività» apre la bacheca completa.
+L’elenco vuoto resta nascosto e un errore offre «Riprova», senza nascondere i
+risultati o i dialoghi. La descrizione all’ingresso resta «Ritrova i risultati dei
+questionari e i dialoghi collegati.». La scorciatoia alle attività non compare
+quando lo strumento Azioni risulta disattivato dalla classe.
+
+Il cestino delle attività, personali o di sessione, apre una finestra con la
+domanda «Sei sicuro di voler eliminare questa attività?» e il titolo selezionato.
+Il focus parte da «Annulla»; Tab e Maiusc+Tab scorrono solo i due comandi della
+finestra. Esc annulla e riporta il focus al cestino. «Rimuovi» toglie soltanto
+l’attività selezionata dalla bozza;
+il salvataggio della pagina resta esplicito. Se il salvataggio fallisce, la bozza
+rimane disponibile con «Riprova» e il dato persistente resta quello precedente.
+
 In Risultati e conversazioni, «Risultato della compilazione» è aperto inizialmente e si può richiudere o riaprire premendo il titolo, anche da tastiera con Invio o Spazio. La chiusura nasconde sintesi, grafici, dettagli e conversazione con il counselor; i contenuti non vengono cancellati e «La mia lettura» resta accessibile subito sotto.
 
 «La mia lettura» si salva esplicitamente per la compilazione selezionata. Se il

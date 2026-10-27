@@ -1,3 +1,31 @@
+# Handoff 27 ottobre 2026: ripresa attività e conferma cestino (#608, #609)
+
+- Branch: `feature/active-actions-confirm-delete`, creato da `origin/main`
+  aggiornato; lavoro separato dalla PR #623 sul deploy portabile.
+- `/profilo/compilazioni`: fino a cinque attività personali `doing`, con data,
+  stato e collegamento che porta il focus alla scheda corretta in Azioni.
+  Descrizione italiana d’ingresso invariata, risultati e dialoghi conservati;
+  errore/riprova separati e nessuna scorciatoia per Azioni disattivate.
+- Cestini personale/sessione: conferma con testo italiano richiesto e titolo
+  dell’attività, focus iniziale su Annulla, ciclo Tab/Maiusc+Tab ed Esc.
+  Confermare rimuove solo la scheda scelta dalla bozza; il salvataggio resta
+  esplicito e un errore conserva la bozza per riprovare.
+- Verifiche: 718 test unitari, 7 nuovi test browser e 3 di navigazione esistenti
+  passati; TypeScript, ESLint sui file modificati e guidance passati.
+  Screenshot a 390/1280 px verificati in `output/playwright/` (non versionati).
+- Limite preesistente: `npm run lint` si ferma sul testo non tradotto di
+  `ClassOverviewTab.tsx:530`, presente anche su `origin/main`; non modificato.
+- Guida nelle sei lingue, documento funzionale, stato guidance e procedura live
+  aggiornati. Runner sintetico `scripts/dev-active-actions-tests.sh`, porta 3171,
+  nessun database/backend reale. Server dev fermato a fine verifica.
+- Docker: immagine frontend isolata ricostruita, build ottimizzata/TypeScript
+  passati; smoke HTTP 200 su compilazioni, azioni e runtime-config, con rete
+  disabilitata. Container di prova fermato e rimosso. Preferenza DNS IPv4 solo
+  nel comando del builder temporaneo; Dockerfile del progetto invariato.
+- Nessun deploy, comando sudo o modifica a configurazione nginx/dati reali.
+
+---
+
 # Handoff 26–27 ottobre 2026: avvio desktop e inviti studenti
 
 - Branch: `fix/desktop-macos-startup`, da `origin/main` aggiornato.

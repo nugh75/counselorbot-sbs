@@ -6,6 +6,16 @@ modifiche dal browser del Mac, **senza toccare i container di produzione**
 
 ## Comandi
 
+### Attività in corso e conferma cestino (#608, #609)
+
+`bash scripts/dev-active-actions-tests.sh` controlla la porta e avvia Next con
+hot reload su `127.0.0.1:3171`. Backend su porta inutilizzabile `127.0.0.1:9`;
+`frontend/tests/active-actions.test.mjs` intercetta le API con dati sintetici:
+nessun database, SSO o provider. Da `frontend/`: `node --test
+tests/active-actions.test.mjs`. Arresto: Ctrl+C nel terminale del runner.
+Da SSH: `ssh -N -L 3171:127.0.0.1:3171 <utente>@<server>`, URL
+`http://localhost:3171`; i dati dimostrativi sono disponibili solo nei test.
+
 ### Builder piani operativi (s11)
 
 `bash scripts/dev-piano-builder-tests.sh` controlla la porta e avvia Next dev
