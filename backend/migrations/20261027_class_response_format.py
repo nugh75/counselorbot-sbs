@@ -12,3 +12,6 @@ def migrate(engine):
         add_column_if_missing(connection, "class_settings", "response_format", "VARCHAR", default=None)
         add_column_if_missing(connection, "class_settings", "response_length", "VARCHAR", default=None)
         add_column_if_missing(connection, "class_settings", "response_reasoning", "VARCHAR", default=None)
+        add_column_if_missing(connection, "class_settings", "allow_student_response_format", "BOOLEAN NOT NULL", default="TRUE")
+        add_column_if_missing(connection, "class_settings", "allow_student_response_length", "BOOLEAN NOT NULL", default="TRUE")
+        add_column_if_missing(connection, "class_settings", "allow_student_response_reasoning", "BOOLEAN NOT NULL", default="TRUE")

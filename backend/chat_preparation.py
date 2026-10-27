@@ -261,14 +261,21 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     if group_ids:
         try:
             from .models import ClassSettings as _CS
-            _cs = db.query(_CS).filter(_CS.group_id.in_(group_ids)).first()
-            if _cs is not None:
-                if getattr(_cs, "response_format", None):
-                    request = request.model_copy(update={"response_format": _cs.response_format})
-                if getattr(_cs, "response_length", None):
-                    effective_response_length = _cs.response_length
-                if getattr(_cs, "response_reasoning", None):
-                    request = request.model_copy(update={"reasoning_effort": _cs.response_reasoning})
+            rows = db.query(_CS).filter(_CS.group_id.in_(group_ids)).all()
+            if rows:
+                # Precedenza restrittiva: se una classe blocca, blocca; valori: primo non nullo.
+                allow_fmt = all(getattr(r, "allow_student_response_format", True) for r in rows)
+                allow_len = all(getattr(r, "allow_student_response_length", True) for r in rows)
+                allow_rsn = all(getattr(r, "allow_student_response_reasoning", True) for r in rows)
+                fmt = next((r.response_format for r in rows if getattr(r, "response_format", None)), None)
+                length = next((r.response_length for r in rows if getattr(r, "response_length", None)), None)
+                reasoning = next((r.response_reasoning for r in rows if getattr(r, "response_reasoning", None)), None)
+                if not allow_fmt and fmt:
+                    request = request.model_copy(update={"response_format": fmt})
+                if not allow_len and length:
+                    effective_response_length = length
+                if not allow_rsn and reasoning:
+                    request = request.model_copy(update={"reasoning_effort": reasoning})
         except Exception:
             pass
     max_tokens = _response_length_max_tokens(effective_response_length, request.max_tokens)

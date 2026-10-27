@@ -1401,6 +1401,9 @@ class ClassSettings(Base):
     response_format = Column(String, nullable=True)
     response_length = Column(String, nullable=True)
     response_reasoning = Column(String, nullable=True)
+    allow_student_response_format = Column(Boolean, nullable=False, default=True, server_default=text("true"))
+    allow_student_response_length = Column(Boolean, nullable=False, default=True, server_default=text("true"))
+    allow_student_response_reasoning = Column(Boolean, nullable=False, default=True, server_default=text("true"))
     # Admin locks (#109): {key: {"enabled"|"value": bool, "locked_by", "locked_at"}}.
     locked_tool_keys = Column(JSON, nullable=False, default=dict)
     locked_counselor_ids = Column(JSON, nullable=False, default=dict)

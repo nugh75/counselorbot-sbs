@@ -1703,6 +1703,9 @@ class ClassSettingsUpdate(ClassSettingsReason):
     response_format: Optional[ResponseFormat] = None
     response_length: Optional[Literal["short", "medium", "long"]] = None
     response_reasoning: Optional[Literal["off", "standard", "deep"]] = None
+    allow_student_response_format: Optional[StrictBool] = None
+    allow_student_response_length: Optional[StrictBool] = None
+    allow_student_response_reasoning: Optional[StrictBool] = None
 
 
 class ClassSettingsLockTarget(ClassSettingsReason):

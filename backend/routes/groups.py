@@ -208,6 +208,9 @@ def _serialize_settings(db: Session, group_id: int, settings) -> dict:
         "response_format": settings.response_format if settings else None,
         "response_length": settings.response_length if settings else None,
         "response_reasoning": settings.response_reasoning if settings else None,
+        "allow_student_response_format": settings.allow_student_response_format if settings else True,
+        "allow_student_response_length": settings.allow_student_response_length if settings else True,
+        "allow_student_response_reasoning": settings.allow_student_response_reasoning if settings else True,
     }
     latest = {}
     for row in db.query(models.ClassSettingsAuditLog).filter_by(group_id=group_id).order_by(models.ClassSettingsAuditLog.id.desc()):
@@ -501,6 +504,12 @@ async def put_class_settings(
         _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "response_reasoning",
                        {"value": settings.response_reasoning}, {"value": payload.response_reasoning}, payload.reason)
         settings.response_reasoning = payload.response_reasoning
+    for field in ("allow_student_response_format", "allow_student_response_length", "allow_student_response_reasoning"):
+        value = getattr(payload, field, None)
+        if value is not None and value != getattr(settings, field):
+            _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", field,
+                           {"value": getattr(settings, field)}, {"value": value}, payload.reason)
+            setattr(settings, field, value)
     settings.disabled_tool_keys = sorted(set(payload.disabled_tool_keys))
     settings.disabled_counselor_ids = sorted(set(disabled_counselors))
     settings.default_counselor_id = default_id
