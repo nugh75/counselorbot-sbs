@@ -255,6 +255,20 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
             raise HTTPException(409, 'qpcc_legacy_profile')
         request = request.copy(update={'scores_context': score_context(request.scores_context, request.language)})
     effective_response_length = request.response_length
+    # Docente: se la chat avviene dentro una classe, il formato/lunghezza impostati
+    # dal docente hanno precedenza sulle scelte dello studente.
+    group_ids = getattr(request, "group_ids", None)
+    if group_ids:
+        try:
+            from .models import ClassSettings as _CS
+            _cs = db.query(_CS).filter(_CS.group_id.in_(group_ids)).first()
+            if _cs is not None:
+                if getattr(_cs, "response_format", None):
+                    request = request.model_copy(update={"response_format": _cs.response_format})
+                if getattr(_cs, "response_length", None):
+                    effective_response_length = _cs.response_length
+        except Exception:
+            pass
     max_tokens = _response_length_max_tokens(effective_response_length, request.max_tokens)
     reasoning_disabled = _reasoning_disabled_for(ai_service, model, provider)
     is_profile_step = (
