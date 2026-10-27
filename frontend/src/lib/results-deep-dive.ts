@@ -10,7 +10,7 @@ export interface ResultsDeepDiveSession {
   result: AdministrationResult;
 }
 
-export type ResultsDeepDiveFailure = "incomplete" | "locked" | "error";
+export type ResultsDeepDiveFailure = "incomplete" | "locked" | "legacy" | "error";
 
 export class ResultsDeepDiveError extends Error {
   readonly reason: ResultsDeepDiveFailure;
@@ -110,6 +110,7 @@ export interface ResultsDeepDiveOptions {
   session: ResultsDeepDiveSession | null;
   /** The bound session already reached its final guided turn. */
   completed: boolean;
+  legacy_profile?: boolean;
 }
 
 export async function loadResultsDeepDiveOptions(

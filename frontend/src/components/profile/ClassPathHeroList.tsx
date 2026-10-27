@@ -9,6 +9,8 @@ import { parseForumDiscussionLinks } from '@/lib/forum';
 import { useTeacherResource } from '@/components/teacher/useTeacherResource';
 import { ClassPathHeroCard } from '@/components/profile/ClassPathHeroCard';
 import { useStudentMeetings } from './MeetingDetails';
+import { useResumeEntries } from '@/lib/use-resume-entries';
+import { latestPausedByTool } from '@/lib/catalog-status';
 
 // Every published plan of the student: the priority one open, the others folded.
 // A forum link to a step (#class-step-N) opens the plan holding it.
@@ -20,14 +22,20 @@ export function ClassPathHeroList({ paths, onReload, showAllLink = true }: {
     const { lang } = useI18n();
     const discussions = useTeacherResource('/api/user/forum/links', parseForumDiscussionLinks);
     const meetings = useStudentMeetings();
+    const resume = useResumeEntries();
+    const paused = latestPausedByTool(resume.frozen.filter(row => !row.practice_notebook_id));
     const ordered = orderClassPaths(paths);
     const hash = typeof window === 'undefined' ? '' : window.location.hash;
     return (
         <div data-testid="class-path-hero-list" className="space-y-3">
+            {resume.error && <button type="button" className="min-h-11 text-sm text-indigo-700 underline" onClick={resume.retry}>
+                {classPathText(lang, 'reload')}
+            </button>}
             {ordered.map((path, index) => (
                 <ClassPathHeroCard
                     key={path.id}
                     path={path}
+                    pausedChats={paused}
                     onReload={onReload}
                     collapsible={ordered.length > 1}
                     defaultOpen={index === 0 || path.steps.some(step => hash === `#class-step-${step.id}`)}

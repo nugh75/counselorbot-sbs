@@ -602,6 +602,13 @@ def personal_result_qualifies(db, step, username, result):
 
 
 def valid_scores(db, instrument_code, scores):
+    if instrument_code == "QPCC":
+        from .qpcc import validate_scores
+        try:
+            validate_scores(scores)
+            return True
+        except ValueError:
+            return False
     factors = {
         row.code
         for row in db.query(models.Factor).filter_by(instrument_code=instrument_code)

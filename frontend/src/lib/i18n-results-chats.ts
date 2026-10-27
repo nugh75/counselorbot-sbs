@@ -1,6 +1,8 @@
 // Questionnaire analysis in operational plans: configuration before results exist (#249).
 type Localized = readonly [string, string, string, string, string, string];
 const texts = {
+    resumeChat: ['Riprendi chat', 'Resume chat', 'Reanudar chat', 'Reprendre la discussion', 'Chat fortsetzen', 'Fortsätt chatten'],
+    reenterData: ['Reinserisci i dati', 'Enter data again', 'Volver a introducir los datos', 'Saisir à nouveau les données', 'Daten erneut eingeben', 'Ange uppgifterna igen'],
     analyzeQuestionnaire: ['Analizza un questionario', 'Analyze a questionnaire', 'Analizar un cuestionario', 'Analyser un questionnaire', 'Einen Fragebogen auswerten', 'Analysera en enkät'],
     personalResults: ['Da una compilazione personale', 'From a personal result', 'Desde un resultado personal', 'Depuis un résultat personnel', 'Aus einem persönlichen Ergebnis', 'Från ett personligt resultat'],
     personalResultsHelp: [

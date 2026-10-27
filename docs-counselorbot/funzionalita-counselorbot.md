@@ -1115,6 +1115,17 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot, con guida a tre passi (Apri il bot, Conferma, Verifica collegamento), scadenza del codice visibile e verifica automatica al ritorno nella scheda. |
 
+Nei piani operativi «Reinserisci i dati» rimane disponibile durante l'analisi,
+nelle scelte finali e se il caricamento della chat salvata fallisce. Le
+somministrazioni mantengono utilizzabile il modulo anche se la lettura della
+pausa restituisce un errore temporaneo. Le
+somministrazioni offrono la ripresa della propria ultima sessione valida;
+le chat autonome mostrano «Riprendi chat» accanto al nuovo avvio. La fase e i
+messaggi salvati sono conservati. I vecchi profili QPCC K1–K5 richiedono un nuovo
+inserimento con dieci stanine: il piano spiega il motivo e apre il modulo corretto
+anche con un catalogo storico. La nuova compilazione e la sua analisi conservano
+i risultati e le conversazioni precedenti, senza convertire i cinque valori.
+
 Nei passi dei piani operativi titolo e data vengono dall’oggetto collegato:
 il piano di somministrazione usa il proprio titolo e la data programmata,
 l’assegnazione la propria scadenza e l’incontro il giorno nel fuso locale.

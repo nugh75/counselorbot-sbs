@@ -550,6 +550,15 @@ uso con dati reali. PostgreSQL sintetico separato: container temporaneo
 `counselorbot_test`, dati in tmpfs. I test API usano il network del container e
 le fixture con transazione/schema isolati. Non avviare i test sul database reale.
 
+Le regressioni della ripresa (27/10/2026) coprono anche QPCC canonico a 390/1440 px,
+il recupero da K1–K5, la pausa della somministrazione e il reinserimento senza
+cancellazioni. `PLAN_QUESTIONNAIRE_BASE_URL` permette di puntare la suite a un
+container frontend di sola verifica su una porta loopback libera. Anche in quel
+caso tutte le API sono intercettate. Per la verifica PostgreSQL è stato usato
+`counselorbot-plan-resume-postgres`, porta 18651, database `counselorbot_test`,
+utente sintetico `cb_test`, dati in tmpfs; nessun volume operativo.
+
+
 ## Presentazione dei passi OC3
 
 `scripts/dev-class-path-presentation-tests.sh` avvia Next in hot reload su

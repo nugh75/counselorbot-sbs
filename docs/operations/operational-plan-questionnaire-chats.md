@@ -14,6 +14,29 @@ Il selettore precedente ammetteva soltanto somministrazioni salvate; escludeva i
 - Il server verifica accesso al piano/classe/strumento, proprietà, strumento e punteggi canonici. La scelta esplicita crea la sessione una sola volta; riaperture e retry la riusano, e un diverso risultato non la sostituisce. Risultati antecedenti al piano sono utilizzabili nella modalità personale; il completamento richiede comunque l’ultimo turno della nuova sessione dopo l’attivazione del passo.
 - Piani e sessioni esistenti conservano ID, progressi e collegamenti. La migrazione amplia solo il vincolo sui target ed è ripetibile.
 
+## Ripresa e nuovo inserimento (27 ottobre 2026)
+
+- «Reinserisci i dati» resta disponibile durante l'analisi, nelle scelte finali e
+  quando il caricamento della pausa fallisce. La somministrazione offre la ripresa
+  della propria ultima sessione valida, senza richiedere un'altra compilazione.
+- Una chat autonoma del piano offre «Riprendi chat» accanto al nuovo avvio;
+  la ripresa conserva anche il ritorno al piano. Le sessioni di prova del docente
+  sono escluse da questa scorciatoia.
+- I vecchi profili QPCC K1–K5 non sono convertiti né riutilizzati. Il piano spiega
+  il blocco e apre il modulo con i dieci fattori canonici, anche se il catalogo
+  storico del database contiene ancora le cinque scale obsolete. Le nuove
+  scritture verificano sempre il contratto canonico QPCC.
+- Dopo il nuovo inserimento canonico, l'approfondimento usa una nuova sessione;
+  risultati, legami e conversazione storici restano conservati. Questo vale anche
+  per l'origine personale: il vincolo a un risultato valido resta immutabile,
+  mentre un legame al profilo QPCC obsoleto non impedisce una nuova scelta.
+- Nessuna migrazione o correzione automatica dei dati personali. Una conversazione
+  legata a K1–K5 resta storica e non può proseguire con l'interpretazione attuale.
+- Regressioni sintetiche: `backend/tests/test_plan_chat_resume.py` su entrambi i
+  database e scenari QPCC di `frontend/tests/plan-questionnaire-chats.test.mjs` a
+  390/1440 px. Il caso reale è stato diagnosticato leggendo solo metadati e schema
+  dei punteggi; nessuna modifica ai dati operativi.
+
 ## Fine della chat e completamento
 
 - Nei passi somministrazione e analisi, «Continua alle scelte finali» resta nel passo e mostra `PlanChatCompleted`: titolo, `SessionReport` (sintesi e PDF completo) e «Torna ai piani operativi». Prima rimandava subito al piano senza scelte finali.

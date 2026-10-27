@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { apiFetch, getIdentity } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n-context";
 import { administrationStepText } from "@/lib/i18n-administration-steps";
@@ -9,7 +10,7 @@ import {
   ResultsDeepDiveError, loadResultsDeepDiveOptions, startResultsDeepDive,
   type ResultsDeepDiveFailure, type ResultsDeepDiveOptions, type ResultsDeepDiveSession,
 } from "@/lib/results-deep-dive";
-import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
+import { deleteFrozenSession, getFrozenSession, FrozenSessionAccessError, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { getSelectedCounselorId } from "@/lib/counselor";
 import { GuidedChatInterface } from "@/components/qsa/GuidedChatInterface";
 import { PlanChatCompleted } from "@/components/administration/PlanChatCompleted";
@@ -18,7 +19,8 @@ import { Card } from "@/components/ui/Card";
 import { Callout } from "@/components/ui/Callout";
 
 export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId: number }) {
-  const { lang } = useI18n();
+  const router = useRouter();
+  const { lang, t } = useI18n();
   const l = (key: Parameters<typeof administrationStepText>[1]) => administrationStepText(lang, key);
   const r = (key: Parameters<typeof resultsChatText>[1]) => resultsChatText(lang, key);
   const [session, setSession] = useState<ResultsDeepDiveSession | null>(null);
@@ -42,12 +44,14 @@ export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId
         owner.current ??= identity.username;
         if (owner.current !== identity.username) throw new ResultsDeepDiveError('error');
         const next = await loadResultsDeepDiveOptions(apiFetch, pathId, stepId);
+        // Keep the source action available even when loading the saved chat fails.
+        if (active && owner.current === (await getIdentity())?.username) setOptions(next);
         const frozen = next.session ? await getFrozenSession(next.session.session_id) : null;
         if (frozen && (frozen.session_id !== next.session?.session_id || frozen.questionnaire_type !== next.session.result.questionnaire_type)) throw new ResultsDeepDiveError('error');
         if (active && owner.current === (await getIdentity())?.username) {
           setOptions(next); setSnapshot(frozen); setSession(next.session);
         }
-      } catch { if (active) setFailure('error'); }
+      } catch (error) { if (active) setFailure(error instanceof FrozenSessionAccessError && error.detail === 'qpcc_legacy_profile' ? 'legacy' : 'error'); }
       finally { if (active) setLoading(false); }
     })();
     return () => { active = false; };
@@ -62,24 +66,31 @@ export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId
       if (frozen && (frozen.session_id !== started.session_id || frozen.questionnaire_type !== started.result.questionnaire_type)) throw new ResultsDeepDiveError('error');
       if (owner.current === (await getIdentity())?.username) {setSnapshot(frozen);setSession(started);}
     } catch (error) {
-      setFailure(error instanceof ResultsDeepDiveError ? error.reason : 'error');
+      setFailure(error instanceof FrozenSessionAccessError && error.detail === 'qpcc_legacy_profile' ? 'legacy'
+        : error instanceof ResultsDeepDiveError ? error.reason : 'error');
     } finally { pending.current = false; setBusy(false); }
   };
+  const dataEntry = options && <Link className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline" href={options.source_href}>
+    {r('reenterData')}
+  </Link>;
   // Finished and no pause left to resume: the step reopens on its final choices.
-  if (session && (completed || (options?.completed && !snapshot))) return <PlanChatCompleted sessionId={session.session_id} questionnaireType={session.result.questionnaire_type} />;
-  if (session) return <GuidedChatInterface
+  if (session && (completed || (options?.completed && !snapshot))) return <div className="space-y-4">{dataEntry}<PlanChatCompleted sessionId={session.session_id} questionnaireType={session.result.questionnaire_type} /></div>;
+  if (session) return <div className="space-y-4">{dataEntry}<GuidedChatInterface
     scores={session.result.scores} questionnaireType={session.result.questionnaire_type}
     sessionId={session.session_id} counselorId={snapshot?.counselor_id ?? getSelectedCounselorId()} locale={snapshot?.locale || lang}
     frozenSnapshot={snapshot}
-    onComplete={() => { setCompleted(true); void deleteFrozenSession(session.session_id).catch(() => {}); }} />;
+    onFrozen={() => router.push('/profilo/piani-operativi')}
+    onComplete={() => { setCompleted(true); void deleteFrozenSession(session.session_id).catch(() => {}); }} /></div>;
   return <div className="space-y-4">
     <Link href="/profilo/piani-operativi">{l('back')}</Link>
     <h1 className="text-xl font-semibold">{l('deepDive')}</h1>
     {loading && <p role="status">{r('loading')}</p>}
     {failure === 'incomplete' && <Callout variant="warning">{r('missingPlan')}</Callout>}
-    {failure && failure !== 'incomplete' && <Callout variant="danger">{l('error')}{' '}
+    {(failure === 'legacy' || options?.legacy_profile) && <Callout variant="warning">{t('q.QPCC.legacyProfile')}</Callout>}
+    {failure && failure !== 'incomplete' && failure !== 'legacy' && <Callout variant="danger">{l('error')}{' '}
       <Button variant="secondary" onClick={() => setReload(value => value + 1)}>{l('retry')}</Button></Callout>}
     {options && <Card className="space-y-3 p-4">
+      {dataEntry}
       <p>{r('intro')}</p>
       {!options.ready ? <>
         <Callout variant="warning">{r(options.personal ? 'missingPersonal' : 'missingPlan')}</Callout>
@@ -94,7 +105,7 @@ export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId
               {[new Date(result.submitted_at).toLocaleString(lang), result.locale.toUpperCase(), `#${result.id}`].filter(Boolean).join(' · ')}
             </option>)}
           </select></label>}
-        <Button disabled={busy || (options.personal && !resultId)} onClick={() => void start()}>{l('deepDiveStart')}</Button>
+        {failure !== 'legacy' && <Button disabled={busy || (options.personal && !resultId)} onClick={() => void start()}>{l('deepDiveStart')}</Button>}
       </>}
     </Card>}
   </div>;

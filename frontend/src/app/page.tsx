@@ -410,6 +410,7 @@ export default function Home() {
         const frozenParam = params.get('frozen');
         if (frozenParam) {
             entryClaimed.current = true;
+            setFromPlan(params.get('from') === 'plan');
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
             void (async () => {
                 try {

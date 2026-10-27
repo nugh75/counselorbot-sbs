@@ -27,9 +27,13 @@ import type { ClassMeeting } from '@/lib/class-meetings';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
 import { MeetingDetails } from './MeetingDetails';
 import { resolveStepPresentation } from '@/lib/class-path-presentation';
+import type { FrozenSessionSummary } from '@/lib/frozen-session';
+import { resumeHref } from '@/lib/use-resume-entries';
+import { resultsChatText } from '@/lib/i18n-results-chats';
 
 interface Props {
     path: StudentClassPath;
+    pausedChats?: Map<string, FrozenSessionSummary>;
     onReload?: () => Promise<void> | void;
     /** With several plans each card folds to its header and progress. */
     collapsible?: boolean;
@@ -40,7 +44,7 @@ interface Props {
     onMeetingsChanged?: () => Promise<void> | void;
 }
 
-export function ClassPathHeroCard({ path, onReload, collapsible = false, defaultOpen = true, discussionLinks = [], meetings = null, onMeetingsChanged }: Props) {
+export function ClassPathHeroCard({ path, pausedChats, onReload, collapsible = false, defaultOpen = true, discussionLinks = [], meetings = null, onMeetingsChanged }: Props) {
     const { lang, t } = useI18n();
     const l = (key: PathTextKey) => classPathText(lang, key);
     const [actionStepId, setActionStepId] = useState<number | null>(null);
@@ -147,6 +151,10 @@ export function ClassPathHeroCard({ path, onReload, collapsible = false, default
                     const isActionBusy = actionStepId === step.id;
                     const planned = plannedDayText(step, lang);
                     const plannedLocation = plannedDayLocation(step);
+                    // Standalone chats share the instrument's saved activity. Analysis
+                    // and administration pages resolve their exact bound session themselves.
+                    const paused = step.start_href?.startsWith('/?start=') && step.tool_key
+                        ? pausedChats?.get(step.tool_key) : undefined;
 
                     const containerClasses = isCurrent
                         ? 'border-indigo-300 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-200 dark:border-indigo-800 dark:bg-indigo-950/30 dark:ring-indigo-900'
@@ -298,6 +306,10 @@ export function ClassPathHeroCard({ path, onReload, collapsible = false, default
 
                                 {/* Right side: actions */}
                                 <div className="flex flex-wrap items-center gap-2 pt-2 sm:shrink-0 sm:justify-end sm:pt-0">
+                                    {paused && !isLocked && !isUnavailable && <a
+                                        href={planStepHref(resumeHref(paused))}
+                                        className="inline-flex min-h-11 items-center rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700"
+                                    >{resultsChatText(lang, 'resumeChat')}</a>}
                                     {step.start_href && !isLocked && !isUnavailable && (
                                         <Link href={planStepHref(step.start_href)}>
                                             <Button

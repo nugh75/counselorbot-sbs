@@ -6,6 +6,7 @@ export interface AdministrationLaunch {
   locale: string;
   delivery_mode: "external_it" | "in_app";
   external_href: string | null;
+  latest_entry?: AdministrationEntryAck | null;
   score_factors?: {
     code: string;
     label_i18n: Record<string, string>;
@@ -101,6 +102,7 @@ export function parseAdministrationLaunch(
     locale: row.locale,
     delivery_mode: delivery as AdministrationLaunch["delivery_mode"],
     external_href: row.external_href,
+    latest_entry: row.latest_entry ?? null,
     score_factors: row.score_factors,
     institution: {
       id: row.institution.id,
