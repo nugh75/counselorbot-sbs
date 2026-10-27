@@ -207,6 +207,7 @@ def _serialize_settings(db: Session, group_id: int, settings) -> dict:
         "students_personal_ai": settings.students_personal_ai if settings else True,
         "response_format": settings.response_format if settings else None,
         "response_length": settings.response_length if settings else None,
+        "response_reasoning": settings.response_reasoning if settings else None,
     }
     latest = {}
     for row in db.query(models.ClassSettingsAuditLog).filter_by(group_id=group_id).order_by(models.ClassSettingsAuditLog.id.desc()):
@@ -496,6 +497,10 @@ async def put_class_settings(
         _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "response_length",
                        {"value": settings.response_length}, {"value": payload.response_length}, payload.reason)
         settings.response_length = payload.response_length
+    if payload.response_reasoning is not None and payload.response_reasoning != settings.response_reasoning:
+        _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "response_reasoning",
+                       {"value": settings.response_reasoning}, {"value": payload.response_reasoning}, payload.reason)
+        settings.response_reasoning = payload.response_reasoning
     settings.disabled_tool_keys = sorted(set(payload.disabled_tool_keys))
     settings.disabled_counselor_ids = sorted(set(disabled_counselors))
     settings.default_counselor_id = default_id
