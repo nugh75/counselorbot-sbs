@@ -34,7 +34,7 @@ export function ResponseFormatSelector({ value, onChange, disabled = false, comp
         <select aria-label={chatPreferenceLabel(lang, 'format')} value={value} disabled={disabled}
             onChange={event => onChange(event.target.value as ResponseFormat)}
             className="min-h-11 max-w-full rounded-md border border-slate-300 bg-white px-2 text-slate-800 disabled:opacity-50">
-            {(['standard', 'bullets'] as const).map(option => <option key={option} value={option}>{chatPreferenceLabel(lang, option)}</option>)}
+            {(['standard', 'bullets', 'table'] as const).map(option => <option key={option} value={option}>{chatPreferenceLabel(lang, option)}</option>)}
         </select>
     </label>;
 }

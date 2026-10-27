@@ -65,6 +65,7 @@ import {
     type IdeaReference,
     type IdeaVariant,
 } from '@/lib/idea-map';
+import { useClassChatSettings } from '@/lib/use-class-chat-settings';
 import { freezeSession, type FrozenSessionDetail, type FrozenSessionSnapshot } from '@/lib/frozen-session';
 import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, phasesAlreadyOpened, shouldAutoFreeze } from '@/lib/auto-freeze';
 import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-content';
@@ -466,10 +467,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [guidedPath, setGuidedPath] = useState<GuidedPath>(pathChoiceAvailable ? frozenSnapshot?.guided_path ?? 'complete' : 'complete');
     const [pathStarted, setPathStarted] = useState(!pathChoiceAvailable || Boolean(frozenSnapshot?.session_id === sessionId));
     const essential = pathChoiceAvailable && guidedPath === 'essential';
-    const [responseFormat, setResponseFormat] = useState<ResponseFormat>(frozenSnapshot?.response_format ?? initialResponseFormat ?? 'standard');
-    const [classAllowsFormat, setClassAllowsFormat] = useState(true);
-    const [classAllowsLength, setClassAllowsLength] = useState(true);
-    const [classAllowsReasoning, setClassAllowsReasoning] = useState(true);
+    const [chosenFormat, setResponseFormat] = useState<ResponseFormat>(frozenSnapshot?.response_format ?? initialResponseFormat ?? 'standard');
+    const classSettings = useClassChatSettings(questionnaireType !== 'OBIETTIVO_DOCENZA' && !preview);
+    const { policy, allowsFormat: classAllowsFormat, allowsLength: classAllowsLength, allowsReasoning: classAllowsReasoning } = classSettings;
+    const responseFormat = policy?.allow_student_response_format === false ? policy.response_format ?? 'standard' : chosenFormat;
     const [steps, setSteps] = useState<StepDef[]>([]);
     const [phases, setPhases] = useState<string[]>([]);
     // Strumento Idea: la variante decide di che materia si parla, la versione
@@ -587,25 +588,16 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     })();
 
     const hiddenMessages = messages.length - visibleMessages.length;
-    const [responseLength, setResponseLength] = useState<ResponseLength>(initialResponseLength ?? 'medium');
-    const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(initialReasoningEffort ?? 'standard');
+    const [chosenLength, setResponseLength] = useState<ResponseLength>(frozenSnapshot?.response_length ?? initialResponseLength ?? 'medium');
+    const responseLength = policy?.allow_student_response_length === false ? policy.response_length ?? 'medium' : chosenLength;
+    const [chosenReasoning, setReasoningEffort] = useState<ReasoningEffort>(frozenSnapshot?.reasoning_effort ?? initialReasoningEffort ?? 'standard');
+    const reasoningEffort = policy?.allow_student_response_reasoning === false ? policy.response_reasoning ?? 'standard' : chosenReasoning;
     useEffect(() => {
-        let cancelled = false;
-        apiFetch('/api/student/class-chat-settings').then(async (res) => {
-            if (!res.ok || cancelled) return;
-            const data = await res.json();
-            if (cancelled) return;
-            setClassAllowsFormat(data.allow_student_response_format !== false);
-            setClassAllowsLength(data.allow_student_response_length !== false);
-            setClassAllowsReasoning(data.allow_student_response_reasoning !== false);
-            if (!frozenSnapshot) {
-                if (data.response_format) setResponseFormat(data.response_format);
-                if (data.response_length) setResponseLength(data.response_length);
-                if (data.response_reasoning) setReasoningEffort(data.response_reasoning);
-            }
-        }).catch(() => {});
-        return () => { cancelled = true; };
-    }, []);
+        if (!policy || frozenSnapshot) return;
+        if (policy.response_format && !initialResponseFormat) setResponseFormat(policy.response_format);
+        if (policy.response_length && !initialResponseLength) setResponseLength(policy.response_length);
+        if (policy.response_reasoning && !initialReasoningEffort) setReasoningEffort(policy.response_reasoning);
+    }, [policy, frozenSnapshot, initialResponseFormat, initialResponseLength, initialReasoningEffort]);
     useEffect(() => {
         if (reasoningMandatory && reasoningEffort === 'off') setReasoningEffort('standard');
     }, [reasoningMandatory, reasoningEffort]);
@@ -1804,6 +1796,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const renderConversationOptions = (openPanel: (panel?: 'path' | 'scores' | 'resources') => void) => (
         <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'options')}>
             {close => <div className="divide-y divide-slate-200">
+                {classSettings.error && <div role="alert" className="p-2 text-sm text-slate-700">{t('toast.error')}
+                    <Button variant="ghost" onClick={classSettings.retry}>{t('lp.retry')}</Button></div>}
                 <div className="space-y-1 pb-2">
                 <button type="button" className={messageActionClass} disabled={isLoading || !!activeExploration || agreementLocked || !currentPhase || currentPhase === FIXED_CONCLUSION_ID} onClick={() => { close(); setShowExplorationForm(true); }}>
                     <GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" />{navCopy.open}

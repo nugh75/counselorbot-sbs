@@ -430,31 +430,8 @@ async def get_student_class_chat_settings(
     current_user=Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
-    username = current_user.get("username") or current_user.get("sub")
-    if not username:
-        return {"group_ids": [], "allow_student_response_format": True,
-                "allow_student_response_length": True, "allow_student_response_reasoning": True,
-                "response_format": None, "response_length": None, "response_reasoning": None}
-    memberships = db.query(models.GroupMembership.group_id).filter(models.GroupMembership.username == username).all()
-    group_ids = [row[0] for row in memberships]
-    if not group_ids:
-        return {"group_ids": [], "allow_student_response_format": True,
-                "allow_student_response_length": True, "allow_student_response_reasoning": True,
-                "response_format": None, "response_length": None, "response_reasoning": None}
-    rows = db.query(models.ClassSettings).filter(models.ClassSettings.group_id.in_(group_ids)).all()
-    if not rows:
-        return {"group_ids": group_ids, "allow_student_response_format": True,
-                "allow_student_response_length": True, "allow_student_response_reasoning": True,
-                "response_format": None, "response_length": None, "response_reasoning": None}
-    return {
-        "group_ids": group_ids,
-        "allow_student_response_format": all(getattr(r, "allow_student_response_format", True) for r in rows),
-        "allow_student_response_length": all(getattr(r, "allow_student_response_length", True) for r in rows),
-        "allow_student_response_reasoning": all(getattr(r, "allow_student_response_reasoning", True) for r in rows),
-        "response_format": next((r.response_format for r in rows if getattr(r, "response_format", None)), None),
-        "response_length": next((r.response_length for r in rows if getattr(r, "response_length", None)), None),
-        "response_reasoning": next((r.response_reasoning for r in rows if getattr(r, "response_reasoning", None)), None),
-    }
+    from ..class_chat_settings import resolve_class_chat_settings
+    return resolve_class_chat_settings(db, current_user)
 
 
 @router.get("/teacher/groups/{group_id}/settings")
@@ -537,15 +514,15 @@ async def put_class_settings(
         _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "students_personal_ai",
                        {"value": settings.students_personal_ai}, {"value": payload.students_personal_ai}, payload.reason)
         settings.students_personal_ai = payload.students_personal_ai
-    if payload.response_format is not None and payload.response_format != settings.response_format:
+    if "response_format" in payload.model_fields_set and payload.response_format != settings.response_format:
         _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "response_format",
                        {"value": settings.response_format}, {"value": payload.response_format}, payload.reason)
         settings.response_format = payload.response_format
-    if payload.response_length is not None and payload.response_length != settings.response_length:
+    if "response_length" in payload.model_fields_set and payload.response_length != settings.response_length:
         _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "response_length",
                        {"value": settings.response_length}, {"value": payload.response_length}, payload.reason)
         settings.response_length = payload.response_length
-    if payload.response_reasoning is not None and payload.response_reasoning != settings.response_reasoning:
+    if "response_reasoning" in payload.model_fields_set and payload.response_reasoning != settings.response_reasoning:
         _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "response_reasoning",
                        {"value": settings.response_reasoning}, {"value": payload.response_reasoning}, payload.reason)
         settings.response_reasoning = payload.response_reasoning

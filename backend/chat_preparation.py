@@ -254,44 +254,9 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
             from fastapi import HTTPException
             raise HTTPException(409, 'qpcc_legacy_profile')
         request = request.copy(update={'scores_context': score_context(request.scores_context, request.language)})
+    from .class_chat_settings import apply_class_chat_settings
+    request = apply_class_chat_settings(db, identity, request)
     effective_response_length = request.response_length
-    # Docente: se la chat avviene dentro una classe, il formato/lunghezza impostati
-    # dal docente hanno precedenza sulle scelte dello studente.
-    group_ids = getattr(request, "group_ids", None)
-    if not group_ids:
-        try:
-            username = None
-            if isinstance(identity, dict):
-                username = identity.get("username") or identity.get("sub")
-            elif hasattr(identity, "get"):
-                username = identity.get("username")
-            if username:
-                memberships = db.query(models.GroupMembership.group_id).filter(models.GroupMembership.username == username).all()
-                group_ids = [row[0] for row in memberships] if memberships else None
-                if group_ids:
-                    request = request.model_copy(update={"group_ids": group_ids})
-        except Exception:
-            group_ids = getattr(request, "group_ids", None)
-    if group_ids:
-        try:
-            from .models import ClassSettings as _CS
-            rows = db.query(_CS).filter(_CS.group_id.in_(group_ids)).all()
-            if rows:
-                # Precedenza restrittiva: se una classe blocca, blocca; valori: primo non nullo.
-                allow_fmt = all(getattr(r, "allow_student_response_format", True) for r in rows)
-                allow_len = all(getattr(r, "allow_student_response_length", True) for r in rows)
-                allow_rsn = all(getattr(r, "allow_student_response_reasoning", True) for r in rows)
-                fmt = next((r.response_format for r in rows if getattr(r, "response_format", None)), None)
-                length = next((r.response_length for r in rows if getattr(r, "response_length", None)), None)
-                reasoning = next((r.response_reasoning for r in rows if getattr(r, "response_reasoning", None)), None)
-                if not allow_fmt and fmt:
-                    request = request.model_copy(update={"response_format": fmt})
-                if not allow_len and length:
-                    effective_response_length = length
-                if not allow_rsn and reasoning:
-                    request = request.model_copy(update={"reasoning_effort": reasoning})
-        except Exception:
-            pass
     max_tokens = _response_length_max_tokens(effective_response_length, request.max_tokens)
     reasoning_disabled = _reasoning_disabled_for(ai_service, model, provider)
     is_profile_step = (

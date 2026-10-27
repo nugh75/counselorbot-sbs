@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ChevronRight, Lock } from 'lucide-react';
 import { apiFetch, getIdentity, getViewAsAccount } from '@/lib/auth';
 import { defaultForumOptions, effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, toggleCounselorIds, type ClassCounselor, type ClassSettings, type ClassTool, type ClassLockKind } from '@/lib/class-settings';
-import type { ResponseFormat } from '@/lib/chat-preferences';
+import { chatPreferenceLabel, type ResponseFormat } from '@/lib/chat-preferences';
 import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
 import { CounselorDetailsDialog } from './CounselorDetailsDialog';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
@@ -309,34 +309,34 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
             <p className="text-sm text-slate-600">{l('personalAIHelp')}</p>
         </Card>
         <Card>
-            <h2 className="text-lg font-bold text-slate-800">Formato e lunghezza risposte</h2>
-            <p className="text-sm text-slate-600">Impostazione del docente per la classe: se valorizzata, sostituisce la scelta dello studente in chat.</p>
+            <h2 className="text-lg font-bold text-slate-800">{l('responseFormatTitle')}</h2>
+            <p className="text-sm text-slate-600">{l('responseFormatHelp')}</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">{l('responseFormatLabel')}
                     <select className="min-h-[44px] rounded-md border border-slate-300 bg-white px-2" value={responseFormat ?? ''} disabled={busy}
                         onChange={event => { if (!pending.current) { setResponseFormat((event.target.value || null) as ResponseFormat | null); setNotice(null); } }}>
                         <option value="">{l('studentDefault')}</option>
-                        <option value="standard">Discorsivo</option>
-                        <option value="bullets">Per punti</option>
-                        <option value="table">Tabella</option>
+                        <option value="standard">{chatPreferenceLabel(lang, "standard")}</option>
+                        <option value="bullets">{chatPreferenceLabel(lang, "bullets")}</option>
+                        <option value="table">{chatPreferenceLabel(lang, "table")}</option>
                     </select>
                 </label>
                 <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">{l('responseLengthLabel')}
                     <select className="min-h-[44px] rounded-md border border-slate-300 bg-white px-2" value={responseLength ?? ''} disabled={busy}
                         onChange={event => { if (!pending.current) { setResponseLength((event.target.value || null) as "short" | "medium" | "long" | null); setNotice(null); } }}>
                         <option value="">{l('studentDefault')}</option>
-                        <option value="short">Breve</option>
-                        <option value="medium">Media</option>
-                        <option value="long">Lunga</option>
+                        <option value="short">{l('responseLengthShort')}</option>
+                        <option value="medium">{l('responseLengthMedium')}</option>
+                        <option value="long">{l('responseLengthLong')}</option>
                     </select>
                 </label>
                 <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">{l('reasoningLabel')}
                     <select className="min-h-[44px] rounded-md border border-slate-300 bg-white px-2" value={responseReasoning ?? ''} disabled={busy}
                         onChange={event => { if (!pending.current) { setResponseReasoning((event.target.value || null) as "off" | "standard" | "deep" | null); setNotice(null); } }}>
                         <option value="">{l('studentDefault')}</option>
-                        <option value="off">Off</option>
-                        <option value="standard">Standard</option>
-                        <option value="deep">Deep</option>
+                        <option value="off">{l('reasoningOff')}</option>
+                        <option value="standard">{l('reasoningStandard')}</option>
+                        <option value="deep">{l('reasoningDeep')}</option>
                     </select>
                 </label>
             </div>

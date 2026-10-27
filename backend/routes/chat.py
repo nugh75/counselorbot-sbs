@@ -646,6 +646,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
     c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget, c_reasoning_effort = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget, c_reasoning_effort)
+    from ..class_chat_settings import apply_class_chat_settings
+    request = apply_class_chat_settings(db, identity, request)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
     # Same instrument and prompt prepare_chat_turn uses: the step wins over the
@@ -946,6 +948,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
     c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget, c_reasoning_effort = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget, c_reasoning_effort)
+    from ..class_chat_settings import apply_class_chat_settings
+    request = apply_class_chat_settings(db, identity, request)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
     # Same instrument and prompt prepare_chat_turn uses: the step wins over the

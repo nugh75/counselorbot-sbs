@@ -1062,6 +1062,7 @@ export default function Home() {
                         ha già le sue regole. */}
                     {step === 'chat-settings' && scores && selectedQuestionnaire && (
                         <ChatSettingsCard
+                            classPolicyEnabled={selectedQuestionnaire.id !== 'OBIETTIVO_DOCENZA'}
                             reasoningCapable={reasoningCapable}
                             reasoningMandatory={reasoningMandatory}
                             starting={starting}

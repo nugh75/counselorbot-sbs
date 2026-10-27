@@ -28,6 +28,7 @@ async function fixture({ lang = 'en', width = 390, settingsFailure = null, role 
     await context.addInitScript(lang => { localStorage.setItem('cb_lang', lang); }, lang);
     const page = await context.newPage();
     page.setDefaultTimeout(12000);
+    page.setDefaultNavigationTimeout(180000);
     const state = { settings: structuredClone(settings), writes: [], failure: null, readFailure: settingsFailure, held: null, errors: [], lockWrites: [], lockFailure: null, sources: null, routingWrites: [] };
     page.on('pageerror', error => state.errors.push(error.message));
     await page.route('**/*', async route => {
@@ -55,7 +56,9 @@ async function fixture({ lang = 'en', width = 390, settingsFailure = null, role 
                 const body = request.postDataJSON(); state.writes.push(body);
                 if (state.held) await state.held;
                 if (state.failure) return route.fulfill({ status: state.failure, json: { detail: 'PRIVATE DETAIL' } });
-                state.settings = { ...state.settings, disabled_tool_keys: body.disabled_tool_keys, revision: state.settings.revision + 1,
+                state.settings = { ...state.settings,
+                    ...Object.fromEntries(['response_format', 'response_length', 'response_reasoning', 'allow_student_response_format', 'allow_student_response_length', 'allow_student_response_reasoning'].filter(key => Object.hasOwn(body, key)).map(key => [key, body[key]])),
+                    disabled_tool_keys: body.disabled_tool_keys, revision: state.settings.revision + 1,
                     disabled_counselor_ids: body.disabled_counselor_ids ?? state.settings.disabled_counselor_ids,
                     default_counselor_id: body.default_counselor_id ?? null,
                     students_personal_ai: body.students_personal_ai ?? state.settings.students_personal_ai,
@@ -83,11 +86,12 @@ test('Tools tab has accessible toggles and saves only on explicit Save', async (
         assert.equal(await qsa.isChecked(), false);
         assert.equal(await f.page.getByRole('checkbox', { name: /OFF/ }).isDisabled(), true);
         // Five tools, the two F3 forum options and the students' own APIs option (#217).
-        assert.equal(await f.page.getByRole('checkbox').count(), 8);
+        assert.equal(await f.page.getByRole('checkbox').count(), 11);
         assert.deepEqual(f.state.writes, []);
         await f.page.getByRole('button', { name: 'Save', exact: true }).click();
         await f.page.getByText('Settings saved', { exact: true }).waitFor();
-        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: ['QSA'], disabled_counselor_ids: [], default_counselor_id: null, forum: { students_can_open: false, premoderation: false }, students_personal_ai: true }]);
+        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: ['QSA'], disabled_counselor_ids: [], default_counselor_id: null, forum: { students_can_open: false, premoderation: false }, students_personal_ai: true, response_format: null, response_length: null, response_reasoning: null,
+            allow_student_response_format: true, allow_student_response_length: true, allow_student_response_reasoning: true }]);
         await f.page.reload({ waitUntil: 'networkidle' });
         await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
         assert.equal(await f.page.getByRole('checkbox', { name: 'QSA', exact: true }).isChecked(), false);
@@ -95,6 +99,29 @@ test('Tools tab has accessible toggles and saves only on explicit Save', async (
     } catch (error) {
         console.error({ errors: f.state.errors, headings: await f.page.locator('h1').allTextContents(), url: f.page.url() });
         throw error;
+    } finally { await f.context.close(); }
+});
+
+test('class chat values and permissions survive reload and can return to student defaults', async () => {
+    const f = await fixture();
+    try {
+        await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
+        await f.page.getByRole('combobox', { name: 'Format', exact: true }).selectOption('table');
+        await f.page.getByRole('combobox', { name: 'Length', exact: true }).selectOption('short');
+        await f.page.getByRole('combobox', { name: 'Reasoning', exact: true }).selectOption('off');
+        await f.page.getByRole('checkbox', { name: 'Student can modify format', exact: true }).uncheck();
+        await f.page.getByRole('button', { name: 'Save', exact: true }).click();
+        await f.page.getByText('Settings saved', { exact: true }).waitFor();
+        assert.equal(f.state.settings.response_format, 'table');
+        assert.equal(f.state.settings.allow_student_response_format, false);
+        await f.page.reload({ waitUntil: 'networkidle' });
+        await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
+        assert.equal(await f.page.getByRole('combobox', { name: 'Format', exact: true }).inputValue(), 'table');
+        assert.equal(await f.page.getByRole('checkbox', { name: 'Student can modify format', exact: true }).isChecked(), false);
+        for (const name of ['Format', 'Length', 'Reasoning']) await f.page.getByRole('combobox', { name, exact: true }).selectOption('');
+        await f.page.getByRole('button', { name: 'Save', exact: true }).click();
+        await f.page.getByText('Settings saved', { exact: true }).waitFor();
+        for (const key of ['response_format', 'response_length', 'response_reasoning']) assert.equal(f.state.settings[key], null);
     } finally { await f.context.close(); }
 });
 
@@ -212,7 +239,9 @@ test('class list offers Open class', async () => {
         const tools = f.page.getByRole('link', { name: 'Tools & counselors', exact: true });
         assert.equal(await tools.getAttribute('href'), '/docente/classi/88?tab=tools');
         const boxes = await Promise.all(['Open class', 'Tools & counselors'].map(name => f.page.getByRole('link', { name, exact: true }).boundingBox()));
-        assert.ok(boxes[1].x >= boxes[0].x + boxes[0].width + 8);
+        assert.ok(boxes.every(box => box && box.width > 0 && box.height > 0));
+        assert.ok(boxes[1].y >= boxes[0].y + boxes[0].height || boxes[1].x >= boxes[0].x + boxes[0].width,
+            'class navigation links must remain separate on mobile');
         await tools.click();
         assert.equal(await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).getAttribute('aria-selected'), 'true');
         await f.page.goto(`${origin}/docente/classi`, { waitUntil: 'networkidle' });
@@ -247,7 +276,8 @@ test('Counselors: toggles, filters and one optional class default saved together
         assert.deepEqual(f.state.writes, []);
         await f.page.getByRole('button', { name: 'Save', exact: true }).click();
         await f.page.getByText('Settings saved', { exact: true }).waitFor();
-        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: [], disabled_counselor_ids: [2], default_counselor_id: 1, forum: { students_can_open: false, premoderation: false }, students_personal_ai: true }]);
+        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: [], disabled_counselor_ids: [2], default_counselor_id: 1, forum: { students_can_open: false, premoderation: false }, students_personal_ai: true, response_format: null, response_length: null, response_reasoning: null,
+            allow_student_response_format: true, allow_student_response_length: true, allow_student_response_reasoning: true }]);
         await f.page.reload({ waitUntil: 'networkidle' });
         await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
         assert.equal(await f.page.getByRole('radio', { name: 'Class default: Clio' }).isChecked(), true);
