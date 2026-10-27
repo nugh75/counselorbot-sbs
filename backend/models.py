@@ -1397,6 +1397,9 @@ class ClassSettings(Base):
     forum_premoderation = Column(Boolean, nullable=False, default=False)
     # #217: students of the class may use their own APIs and ChatGPT.
     students_personal_ai = Column(Boolean, nullable=False, default=True, server_default=text("true"))
+    # Docente: formato e lunghezza predefiniti delle risposte in classe (override delle scelte studente).
+    response_format = Column(String, nullable=True)
+    response_length = Column(String, nullable=True)
     # Admin locks (#109): {key: {"enabled"|"value": bool, "locked_by", "locked_at"}}.
     locked_tool_keys = Column(JSON, nullable=False, default=dict)
     locked_counselor_ids = Column(JSON, nullable=False, default=dict)

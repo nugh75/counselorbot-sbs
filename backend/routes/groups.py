@@ -205,6 +205,8 @@ def _serialize_settings(db: Session, group_id: int, settings) -> dict:
                        ).order_by(models.Counselor.sort_order, models.Counselor.id).all()],
         "forum": _serialize_forum_options(settings),
         "students_personal_ai": settings.students_personal_ai if settings else True,
+        "response_format": settings.response_format if settings else None,
+        "response_length": settings.response_length if settings else None,
     }
     latest = {}
     for row in db.query(models.ClassSettingsAuditLog).filter_by(group_id=group_id).order_by(models.ClassSettingsAuditLog.id.desc()):
@@ -486,6 +488,14 @@ async def put_class_settings(
         _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "students_personal_ai",
                        {"value": settings.students_personal_ai}, {"value": payload.students_personal_ai}, payload.reason)
         settings.students_personal_ai = payload.students_personal_ai
+    if payload.response_format is not None and payload.response_format != settings.response_format:
+        _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "response_format",
+                       {"value": settings.response_format}, {"value": payload.response_format}, payload.reason)
+        settings.response_format = payload.response_format
+    if payload.response_length is not None and payload.response_length != settings.response_length:
+        _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "response_length",
+                       {"value": settings.response_length}, {"value": payload.response_length}, payload.reason)
+        settings.response_length = payload.response_length
     settings.disabled_tool_keys = sorted(set(payload.disabled_tool_keys))
     settings.disabled_counselor_ids = sorted(set(disabled_counselors))
     settings.default_counselor_id = default_id

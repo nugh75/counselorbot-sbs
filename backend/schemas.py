@@ -1699,6 +1699,9 @@ class ClassSettingsUpdate(ClassSettingsReason):
     default_counselor_id: Optional[int] = Field(default=None, strict=True)
     forum: Optional[ClassForumOptions] = None
     students_personal_ai: Optional[StrictBool] = None  # #217
+    # Docente: formato e lunghezza predefiniti delle risposte in classe (#docente-format).
+    response_format: Optional[ResponseFormat] = None
+    response_length: Optional[Literal["short", "medium", "long"]] = None
 
 
 class ClassSettingsLockTarget(ClassSettingsReason):
