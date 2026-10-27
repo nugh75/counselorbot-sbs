@@ -23,3 +23,9 @@
 - CI Windows: le verifiche del tunnel attendono al massimo 5 secondi che il
   processo già terminato scompaia dalla tabella OS, senza allentare il controllo
   finale. Un tunnel rimasto attivo continua a far fallire il test.
+- CI PostgreSQL: la prova del contesto studente usa una data esplicita contenente
+  la cifra 7 e la esclude soltanto dal controllo dei punteggi. Non confonde più
+  il giorno 27 con il punteggio QSA; il controllo di riservatezza resta attivo.
+  Test mirato passato su PostgreSQL e SQLite, con container Python 3.12 e database
+  temporaneo isolato; il Docker portable predefinito Python 3.10 non è stato usato
+  per eseguire la suite desktop, che richiede Python 3.12.
