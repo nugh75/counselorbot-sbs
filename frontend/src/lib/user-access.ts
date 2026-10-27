@@ -2,7 +2,7 @@
 import { apiFetch } from './auth.ts';
 
 // GET /user/access (plan §5.1, #89): the single source for what a student may
-// start. `restricted=false` means no class filter (no class, or staff role).
+// start. `restricted=false` means no class filter (no class or full view).
 export interface UserAccess {
     restricted: boolean;
     tool_keys: string[];

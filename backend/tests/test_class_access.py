@@ -103,9 +103,9 @@ def test_inactive_class_is_ignored(db):
 
 @pytest.mark.parametrize("identity", [TEACHER, RESEARCHER, ADMIN], ids=["teacher", "researcher", "admin"])
 def test_staff_is_never_filtered(db, identity):
-    _group(db, "a", disabled=["QSA", "tavolo"], members=[identity["username"]])
+    group = _group(db, "a", disabled=["QSA", "tavolo"], members=[identity["username"]])
     access = class_access.resolve_access(db, identity)
-    assert access["restricted"] is False and access["class_ids"] == []
+    assert access["restricted"] is False and access["class_ids"] == [group.id]
     assert {"QSA", "tavolo"} <= set(access["tool_keys"])
 
 

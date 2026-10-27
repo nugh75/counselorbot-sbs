@@ -99,6 +99,9 @@ async function createFixture({
     lang = 'it',
     initialStorage = {},
     width = 1280,
+    admin = false,
+    frozen = [],
+    goals = [],
 } = {}) {
     const context = await browser.newContext({
         viewport: { width, height: 900 },
@@ -126,6 +129,7 @@ async function createFixture({
     );
 
     let currentPaths = JSON.parse(JSON.stringify(paths));
+    let currentView = admin ? 'all' : 'classes';
 
     await page.route('**/api/**', (route) => {
         const request = route.request();
@@ -136,23 +140,33 @@ async function createFixture({
             return route.fulfill({
                 json: {
                     authenticated: true,
-                    is_admin: false,
+                    is_admin: admin,
                     username: 'student.fixture',
                     name: 'Mario Rossi',
-                    groups: ['studenti'],
+                    groups: [admin ? 'admins' : 'studenti'],
                 },
             });
         }
         if (url.pathname === '/api/user/access') {
             return route.fulfill({
                 json: {
-                    restricted: false,
-                    tool_keys: ['QSA', 'SAVICKAS', 'timeline', 'goals', 'bussola'],
+                    restricted: admin && currentView !== 'all',
+                    tool_keys: ['QSA', 'SAVICKAS', 'timeline', ...(admin && currentView !== 'all' ? [] : ['goals']), 'bussola'],
                     counselor_ids: null,
                     default_counselor_id: null,
                     class_ids: [10],
+                    classes: [{ id: 10, name: '3B Liceo' }],
+                    view: currentView,
                 },
             });
+        }
+        if (url.pathname === '/api/user/access/view' && request.method() === 'PUT') {
+            currentView = request.postDataJSON().view;
+            return route.fulfill({ json: {
+                restricted: currentView !== 'all', tool_keys: ['QSA', 'SAVICKAS', 'timeline', 'bussola'],
+                counselor_ids: null, default_counselor_id: null, class_ids: [10],
+                classes: [{ id: 10, name: '3B Liceo' }], view: currentView,
+            } });
         }
         if (url.pathname === '/api/user/account-preferences') {
             return route.fulfill({
@@ -186,7 +200,7 @@ async function createFixture({
             return route.fulfill({ json: [] });
         }
         if (url.pathname === '/api/session/frozen') {
-            return route.fulfill({ json: [] });
+            return route.fulfill({ json: frozen });
         }
         if (url.pathname === '/api/user/questionnaire-results') {
             return route.fulfill({ json: [] });
@@ -198,7 +212,7 @@ async function createFixture({
             return route.fulfill({ json: { total: 0, by_group: {} } });
         }
         if (url.pathname === '/api/user/goals') {
-            return route.fulfill({ json: [] });
+            return route.fulfill({ json: goals });
         }
         if (url.pathname === '/api/user/assignments') {
             return route.fulfill({ json: [] });
@@ -243,6 +257,60 @@ async function createFixture({
 
     return { context, page, errors, doneCalls };
 }
+
+test('student home resumes questionnaire and guided chats alongside personal work', async () => {
+    const frozen = [
+        { session_id: 'qsa-1', questionnaire_type: 'QSA', label: 'QSA — Profilo', current_phase: 'intro' },
+        { session_id: 'sav-1', questionnaire_type: 'SAVICKAS', label: 'SAVICKAS — Storia', current_phase: 'intro' },
+        { session_id: 'practice-1', questionnaire_type: 'SAVICKAS', label: 'Simulazione', practice_notebook_id: 8, current_phase: 'intro' },
+    ];
+    const f = await createFixture({ paths: [], frozen, goals: [{ id: 2, title: 'Organizzare lo studio', status: 'active', links: [], review_date: null }],
+        initialStorage: { counselorbot_resume: JSON.stringify({ instrument: 'QSA', sessionId: 'qsa-1', experience: 'standard', counselorId: 1 }) } });
+    try {
+        await f.page.goto(`${origin}/profilo`);
+        const section = f.page.locator('section[aria-labelledby="personal-resume-title"]');
+        await section.getByText('SAVICKAS — Storia').waitFor();
+        assert.equal(await section.getByRole('link', { name: 'QSA — Profilo' }).getAttribute('href'), '/?frozen=qsa-1');
+        assert.equal(await section.getByRole('link', { name: 'SAVICKAS — Storia' }).getAttribute('href'), '/?frozen=sav-1');
+        assert.equal(await section.getByText('Simulazione').count(), 0);
+        assert.equal(await section.getByText('QSA — Profilo').count(), 1);
+        assert.equal(await section.getByText('Organizzare lo studio').count(), 1);
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('an administrator enrolled in a class sees the student plan and class selector', async () => {
+    const f = await createFixture({ admin: true });
+    try {
+        await f.page.goto(`${origin}/profilo`);
+        const hero = f.page.locator('[data-testid="class-path-hero-card"]');
+        await hero.waitFor();
+        assert.match(await hero.innerText(), /Inizio anno/);
+        const selector = f.page.locator('header select').first();
+        await selector.waitFor();
+        assert.equal(await selector.inputValue(), 'all');
+        assert.match(await selector.innerText(), /3B Liceo/);
+        await selector.selectOption('classes');
+        await f.page.waitForFunction(() => document.querySelector('header select')?.value === 'classes');
+        await f.page.locator('[data-testid="toggle-profile-catalog-btn"]').click();
+        assert.equal(await f.page.locator('#personal-catalog-section a[href="/profilo/obiettivi"]').count(), 0);
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('student home includes a locally interrupted chat when no saved copy exists', async () => {
+    const f = await createFixture({ paths: [], initialStorage: {
+        counselorbot_resume: JSON.stringify({ instrument: 'QSA', sessionId: 'local-1', experience: 'standard', counselorId: 1 }),
+    } });
+    try {
+        await f.page.goto(`${origin}/profilo`);
+        const section = f.page.locator('section[aria-labelledby="personal-resume-title"]');
+        const link = section.locator('a[href="/?resume=1"]');
+        await link.waitFor();
+        assert.match(await link.innerText(), /QSA/);
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
 
 test('Home with active class path: hero card shown first, ochre current step, catalog collapsed with toggle', async () => {
     const f = await createFixture({ paths: [samplePath1], lang: 'it' });

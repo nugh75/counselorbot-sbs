@@ -782,6 +782,22 @@ def _student_path(client, path_id):
     return next(p for p in client.get("/user/paths").json() if p["id"] == path_id)
 
 
+def test_administrator_joined_as_student_sees_and_completes_class_plan(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    path_id, (step_id,) = _published_path(client, db, group_id, identity, ["timeline"])
+    identity.update(username="admin-participant", groups=["admins"], is_admin=True, is_researcher=False)
+    assert client.get("/user/paths").json() == []
+    joined = client.post("/groups/join", json={"code": "GR-PATH01"})
+    assert joined.status_code == 200
+    assert _student_path(client, path_id)["group_id"] == group_id
+    assert client.post(f"/user/paths/{path_id}/steps/{step_id}/done").status_code == 200
+    assert _student_path(client, path_id)["steps"][0]["state"] == "done"
+    membership = db.query(models.GroupMembership).filter_by(group_id=group_id, username="admin-participant").one()
+    assert client.delete(f"/user/groups/{membership.id}").status_code == 200
+    assert client.get("/user/paths").json() == []
+    assert client.post(f"/user/paths/{path_id}/steps/{step_id}/done").status_code == 403
+
+
 def _focused_spec():
     return DiagramSpec(
         type="mindmap", title="Open a study group",

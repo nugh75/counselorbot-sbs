@@ -3,8 +3,9 @@
 One resolver backs every guard. The admin platform layer comes first
 (instrument active, student audience). Students with an active membership in
 an active class then get the union of their classes' settings: a tool is
-enabled if at least one class enables it. Staff and users with no class get the
-admin layer only. Reads of existing data are never guarded (decision 8).
+enabled if at least one class enables it. Staff start with the admin layer and
+may explicitly select a class in which they participate. Reads of existing data
+are never guarded (decision 8).
 
 A student with classes picks the active view (#146): the class view (default,
 the union above), one class only, or the full view, which drops the class layer
@@ -79,40 +80,39 @@ FULL_VIEW = "all"
 CLASS_VIEW = "classes"
 
 
-def _scoped_classes(db: Session, username: str, classes) -> tuple[list, str | int]:
-    """Classes that filter access under the stored view, and the effective view.
-
-    A stale choice (class left or deactivated) falls back to the class view.
-    """
+def _scoped_classes(db: Session, username: str, classes, *, staff: bool = False) -> tuple[list, str | int]:
+    """Resolve the saved view; staff default to full access, students to classes."""
     prefs = db.get(models.AccountPreferences, username) if classes else None
     stored = (prefs.class_view or "") if prefs else ""
+    # Staff keep their existing unrestricted view until they explicitly choose
+    # a student class view. A stale class choice returns them to full access.
+    if staff and stored not in (CLASS_VIEW,) and not stored.isdigit():
+        return [], FULL_VIEW
     if stored == FULL_VIEW:
         return [], FULL_VIEW
     if stored.isdigit():
         chosen = [item for item in classes if item[0] == int(stored)]
         if chosen:
             return chosen, chosen[0][0]
-    return classes, CLASS_VIEW
+    return ([], FULL_VIEW) if staff and stored.isdigit() else (classes, CLASS_VIEW)
 
 
 def _view_classes(db: Session, identity) -> list:
     """Classes that filter `identity` right now; empty means no class layer."""
-    if is_staff(identity):
-        return []
     username = _username(identity)
-    return _scoped_classes(db, username, _active_classes(db, username))[0]
+    return _scoped_classes(db, username, _active_classes(db, username), staff=is_staff(identity))[0]
 
 
 def save_view(db: Session, identity, view: str | int) -> None:
     """Store the active view; only a student with an active class may choose one."""
     username = _username(identity)
-    classes = [] if is_staff(identity) else _active_classes(db, username)
+    classes = _active_classes(db, username)
     if not classes:
         raise HTTPException(status_code=400, detail="no_class")
     if isinstance(view, int) and view not in {group_id for group_id, _ in classes}:
         raise HTTPException(status_code=400, detail="class_not_joined")
     prefs = db.get(models.AccountPreferences, username) or models.AccountPreferences(username=username)
-    prefs.class_view = None if view == CLASS_VIEW else str(view)
+    prefs.class_view = CLASS_VIEW if view == CLASS_VIEW and is_staff(identity) else (None if view == CLASS_VIEW else str(view))
     db.add(prefs)
     db.commit()
 
@@ -180,8 +180,8 @@ def resolve_access(db: Session, identity) -> dict:
     """GET /user/access payload; counselor fields are null when not restricted."""
     admin_keys = _admin_tool_keys(db)
     username = _username(identity)
-    memberships = [] if is_staff(identity) else _active_classes(db, username)
-    classes, view = _scoped_classes(db, username, memberships)
+    memberships = _active_classes(db, username)
+    classes, view = _scoped_classes(db, username, memberships, staff=is_staff(identity))
     counselor_ids, default_counselor_id = None, None
     if classes:
         tool_keys = [key for key in admin_keys
@@ -230,8 +230,6 @@ def require_tool(db: Session, identity, tool_key: str | None, *, preview: bool =
         for row in rows:
             if not row.is_active or (row.target_audience != "student" and not is_staff(identity)):
                 raise ToolAccessDenied("tool_unavailable", row.code)
-    if is_staff(identity):
-        return
     classes = _view_classes(db, identity)
     if classes and not any(class_enables(settings, canonical) for _, settings in classes):
         raise ToolAccessDenied("tool_disabled_for_class", canonical)
