@@ -267,6 +267,8 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
                     request = request.model_copy(update={"response_format": _cs.response_format})
                 if getattr(_cs, "response_length", None):
                     effective_response_length = _cs.response_length
+                if getattr(_cs, "response_reasoning", None):
+                    request = request.model_copy(update={"reasoning_effort": _cs.response_reasoning})
         except Exception:
             pass
     max_tokens = _response_length_max_tokens(effective_response_length, request.max_tokens)

@@ -1400,6 +1400,7 @@ class ClassSettings(Base):
     # Docente: formato e lunghezza predefiniti delle risposte in classe (override delle scelte studente).
     response_format = Column(String, nullable=True)
     response_length = Column(String, nullable=True)
+    response_reasoning = Column(String, nullable=True)
     # Admin locks (#109): {key: {"enabled"|"value": bool, "locked_by", "locked_at"}}.
     locked_tool_keys = Column(JSON, nullable=False, default=dict)
     locked_counselor_ids = Column(JSON, nullable=False, default=dict)

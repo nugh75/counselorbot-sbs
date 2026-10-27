@@ -123,6 +123,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
     const [personalAI, setPersonalAI] = useState(initial.students_personal_ai ?? true);
     const [responseFormat, setResponseFormat] = useState<ResponseFormat | null>(initial.response_format ?? null);
     const [responseLength, setResponseLength] = useState<"short" | "medium" | "long" | null>(initial.response_length ?? null);
+    const [responseReasoning, setResponseReasoning] = useState<"off" | "standard" | "deep" | null>(initial.response_reasoning ?? null);
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<'saved' | 'error' | 'conflict' | 'invalid' | 'lockedError' | null>(null);
     const [forbidden, setForbidden] = useState(false);
@@ -141,7 +142,8 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
         || forum.premoderation !== (settings.forum ?? defaultForumOptions).premoderation
         || personalAI !== (settings.students_personal_ai ?? true)
         || responseFormat !== (settings.response_format ?? null)
-        || responseLength !== (settings.response_length ?? null);
+        || responseLength !== (settings.response_length ?? null)
+        || responseReasoning !== (settings.response_reasoning ?? null);
     useDraftGuard(dirty || busy, l('discard'), { blocked: busy });
     const tools = settings.tools.filter(tool => !tool.always_on);
     const isEnabled = (tool: ClassTool) => tool.admin_enabled && !disabled.includes(tool.key);
@@ -195,6 +197,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                     students_personal_ai: personalAI,
                     response_format: responseFormat,
                     response_length: responseLength,
+                    response_reasoning: responseReasoning,
                     ...(reason.trim() ? { reason: reason.trim() } : {}),
                 }),
             });
@@ -213,6 +216,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                 setForum(next.forum ?? defaultForumOptions); setPersonalAI(next.students_personal_ai ?? true);
                 setResponseFormat(next.response_format ?? null);
                 setResponseLength(next.response_length ?? null);
+                setResponseReasoning(next.response_reasoning ?? null);
                 setNotice('saved'); setReason('');
             }
         } catch {
@@ -312,6 +316,15 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                         <option value="short">Breve</option>
                         <option value="medium">Media</option>
                         <option value="long">Lunga</option>
+                    </select>
+                </label>
+                <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">Ragionamento
+                    <select className="min-h-[44px] rounded-md border border-slate-300 bg-white px-2" value={responseReasoning ?? ''} disabled={busy}
+                        onChange={event => { if (!pending.current) { setResponseReasoning((event.target.value || null) as "off" | "standard" | "deep" | null); setNotice(null); } }}>
+                        <option value="">Predefinito studente</option>
+                        <option value="off">Off</option>
+                        <option value="standard">Standard</option>
+                        <option value="deep">Deep</option>
                     </select>
                 </label>
             </div>
