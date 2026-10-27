@@ -17,6 +17,28 @@ test('every active questionnaire appears in exactly one home category, or is the
     }
 });
 
+test('built-in questionnaires and guided paths keep their categories with legacy catalog values', () => {
+    const catalog: InstrumentSummary[] = [
+        ...TOOL_CATEGORIES.flatMap((group) => group.questionnaireIds.map((code) => ({
+            code, name_i18n: { it: code }, status: 'certified', report_scale_type: 'stanine',
+            item_count: 0, locales: {}, available_locales: ['it'], is_active: true,
+            tool_category: group.id === 'assessment' ? 'guided' : 'assessment',
+        }))),
+        { code: 'CUSTOM_ASSESSMENT', name_i18n: { it: 'Custom' }, status: 'certified', report_scale_type: 'stanine',
+            item_count: 5, locales: {}, available_locales: ['it'], is_active: true, tool_category: 'assessment' },
+        { code: 'CUSTOM_GUIDED', name_i18n: { it: 'Custom' }, status: 'certified', report_scale_type: 'stanine',
+            item_count: 0, locales: {}, available_locales: ['it'], is_active: true, tool_category: 'guided' },
+    ];
+    const categories = getDynamicToolCategories(resolveActiveStudentTools(catalog), catalog);
+    for (const group of TOOL_CATEGORIES) {
+        const ids = categories.find((category) => category.id === group.id)!.questionnaireIds;
+        assert.deepEqual([...ids].sort(), [...group.questionnaireIds, group.id === 'assessment' ? 'CUSTOM_ASSESSMENT' : 'CUSTOM_GUIDED'].sort());
+    }
+    for (const group of getDynamicToolCategories(resolveActiveStudentTools(null), null)) {
+        assert.deepEqual([...group.questionnaireIds].sort(), [...TOOL_CATEGORIES.find((item) => item.id === group.id)!.questionnaireIds].sort());
+    }
+});
+
 test('deep-link validation uses the shared active catalog and dynamic instruments', () => {
     assert.equal(isStartableQuestionnaireId('QSA'), true);
     assert.equal(isStartableQuestionnaireId('UNKNOWN'), false);

@@ -1,3 +1,17 @@
+# Handoff 27 ottobre 2026: categorie del catalogo attività
+
+- Branch `fix/questionnaire-catalog-sections`, da `origin/main` aggiornato.
+- Le categorie degli strumenti standard nella home seguono l'elenco canonico:
+  QSA, QSAr, ZTPI, QPCS, QPCC e QAP restano nelle analisi anche se il catalogo
+  storico li indica come guidati. Gli strumenti dinamici seguono il catalogo.
+- Verifiche: 722 test unitari, TypeScript, ESLint mirato e guidance passati.
+  Il lint generale segnala testi non tradotti preesistenti nelle pagine docente.
+- Immagine frontend isolata ricostruita: build e test browser con catalogo
+  storico simulato superati; container temporaneo fermato a fine verifica.
+- Nessuna modifica ai dati del database o ai container operativi.
+
+---
+
 # Handoff 27 ottobre 2026: formattazione della chat QPCC
 
 - Branch `fix/qpcc-chat-formatting`, da `origin/main` aggiornato; checkout

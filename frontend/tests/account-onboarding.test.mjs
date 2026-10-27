@@ -6,7 +6,7 @@ let browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser.close(); });
 const ready = () => ({ counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true });
-async function fixture({ prefs = ready(), width = 1440, required = false, incompatible = false, noHistory = false, locale = 'it', dark = false, groups = ['studenti'], admin = false } = {}) {
+async function fixture({ prefs = ready(), width = 1440, required = false, incompatible = false, noHistory = false, locale = 'it', dark = false, groups = ['studenti'], admin = false, instruments = [] } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
     const page = await context.newPage();
     page.setDefaultTimeout(60000);
@@ -24,6 +24,7 @@ async function fixture({ prefs = ready(), width = 1440, required = false, incomp
         let data = [];
         if (request.method() !== 'GET') writes.push({ path: url.pathname, body: request.postDataJSON() });
         if (url.pathname === '/api/auth/me') data = { authenticated: true, is_admin: admin, username: 'account-fixture', name: 'Test', groups };
+        else if (url.pathname === '/api/instruments') data = instruments;
         else if (url.pathname === '/api/user/account-preferences') {
             if (request.method() === 'PUT') Object.assign(prefs, { counselor_id: request.postDataJSON().counselor_id ?? prefs.counselor_id, counselor_ready: true, setup_completed: prefs.notebook_ready });
             data = prefs;
@@ -40,6 +41,30 @@ async function fixture({ prefs = ready(), width = 1440, required = false, incomp
     });
     return { page, context, prefs, writes, errors };
 }
+
+test('catalog places questionnaires and guided paths under their own headings with legacy categories', async () => {
+    const instruments = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP'].map(code => ({
+        code, name_i18n: { it: code }, status: 'certified', report_scale_type: 'stanine',
+        item_count: 0, locales: {}, available_locales: ['it'], is_active: true, tool_category: 'guided',
+    }));
+    instruments.push({ code: 'CUSTOM_GUIDED', name_i18n: { it: 'Percorso personalizzato' }, status: 'certified',
+        report_scale_type: 'stanine', item_count: 0, locales: {}, available_locales: ['it'], is_active: true, tool_category: 'guided' });
+    const { page, context, errors } = await fixture({ instruments, noHistory: true });
+    try {
+        const catalogResponse = page.waitForResponse(response => response.url().endsWith('/api/instruments'));
+        await page.goto(`${origin}/?view=home`);
+        await catalogResponse;
+        const assessment = page.locator('#tools-assessment');
+        const guided = page.locator('#tools-guided');
+        await guided.getByText('Percorso personalizzato', { exact: true }).first().waitFor();
+        for (const code of ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP']) {
+            assert.equal(await assessment.getByText(code, { exact: true }).count(), 1);
+            assert.equal(await guided.getByText(code, { exact: true }).count(), 0);
+        }
+        assert.equal(await guided.getByText('SAVICKAS', { exact: true }).count(), 1);
+        assert.deepEqual(errors, []);
+    } finally { await context.close(); }
+});
 // Real navigation labels are asserted independently of the production dictionaries.
 const firstUseCopy = {
     it: { area: 'Area studente', notebook: 'Taccuino', menu: 'Menu', choose: 'Scegli il counselor', next: 'Continua', context: 'Parlaci del luogo dove studi / lavori', save: 'Salva versione', edit: 'Modifica', counselor: 'Potrai cambiare counselor in seguito', reopen: 'Potrai riaprire e modificare il taccuino' },

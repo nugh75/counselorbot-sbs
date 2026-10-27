@@ -116,7 +116,10 @@ export function getDynamicToolCategories(
 
     for (const tool of activeTools) {
         const row = catalogByCode?.get(tool.id);
-        const category = row?.tool_category ?? (tool.agentOnly ? 'guided' : 'assessment');
+        // Built-in tools have a fixed role even when a legacy catalog row has
+        // the old default category. Dynamic tools retain their configured role.
+        const builtInCategory = TOOL_CATEGORIES.find((group) => group.questionnaireIds.includes(tool.id));
+        const category = builtInCategory?.id ?? row?.tool_category ?? (tool.agentOnly ? 'guided' : 'assessment');
         if (category === 'assessment') {
             assessmentIds.push(tool.id);
         } else {
