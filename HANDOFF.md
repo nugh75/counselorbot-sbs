@@ -1,3 +1,34 @@
+# Handoff 27 ottobre 2026: formattazione della chat QPCC
+
+- Branch `fix/qpcc-chat-formatting`, da `origin/main` aggiornato; checkout
+  `/private/tmp/counselorbot-qpcc-formatting` separato dal backend portable.
+- Causa osservata in sola lettura: riga Markdown con oltre 53.000 trattini,
+  `</small>` nella separatrice e JSON privato con radice `recommendations`.
+- Normalizzazione prima del rendering, anche per i messaggi già salvati e la
+  voce; lato server anche prima del salvataggio delle nuove risposte. Bolle
+  contenute e scroll limitato alle tabelle. Codice, valori e storico conservati.
+- Verifiche: 721 unitari frontend, 26 backend SQLite e 5 nuove prove browser
+  a 390/1024/1440/2048 px più 10 regressioni della ripresa passati. ESLint dei
+  file modificati, Ruff F, TypeScript, portabilità SQL e guidance superati.
+- Docker: `counselorbot-qpcc-format-frontend:test` ricostruita con build ottimizzata
+  e TypeScript; tutte le 5 nuove prove browser passate anche sull'immagine.
+  `counselorbot-qpcc-format-backend:test` derivata dalla base portable già
+  validata, con moduli e test aggiornati: 13 test finali passati senza rete
+  (26 nell'immagine prima dell'ultimo affinamento dei blocchi XML parziali).
+- Replay in sola lettura sulla risposta reale: 63.879 → 9.316 caratteri, tutte
+  le 14 righe Markdown conservate e record originale immutato.
+- Dev :3159 fermato, container di verifica :3160 fermato e rimosso. Il checkout
+  principale e i container portable restano al commit unito della PR #625.
+- Il tentativo di includere `test_session_notes_chat.py` su SQLite incontra la
+  collection failure già censita; il comando pertinente pulito esclude quel
+  modulo. Nessuna nuova regressione della ratchet.
+- Nessun deploy o modifica ai dati operativi. Nessuna release desktop: attendere
+  la stabilità dell'applicazione, come richiesto dall'utente.
+- Dettagli: `docs/operations/qpcc-chat-formatting.md`; runner :3159 documentato
+  in `docs/operations/live-dev-environment.md`.
+
+---
+
 # Handoff 27 ottobre 2026: ripresa chat dei piani e nuovo inserimento QPCC
 
 - Branch: `fix/plan-guided-chat-resume`, da `origin/main` aggiornato.

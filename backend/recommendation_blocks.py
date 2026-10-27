@@ -20,7 +20,7 @@ import hashlib
 import json
 import logging
 import re
-from typing import Mapping
+from typing import Iterable, Mapping
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +32,9 @@ _OPEN_BLOCK_RE = re.compile(r"```recommendations\b[^\n]*(?:\n|$)", re.IGNORECASE
 _PARTIAL_FENCE_RE = re.compile(r"(?:^|\n)`{1,3}([A-Za-z]+)[ \t]*$")
 _BLOCK_NAME = "recommendations"
 _JSON_BLOCK_RE = re.compile(r"```json[ \t]*\r?\n(.*?)```", re.DOTALL | re.IGNORECASE)
+_TAG_BLOCK_RE = re.compile(r"<recommendations(?:\s[^>]*)?>(.*?)</recommendations\s*>", re.DOTALL | re.IGNORECASE)
+_TAG_OPEN_RE = re.compile(r"<recommendations(?:\s[^>]*)?>", re.IGNORECASE)
+_PARTIAL_TAG_RE = re.compile(r"(?:^|\n)<([A-Za-z]*)$")
 _JSON_OPEN_RE = re.compile(r"```json[ \t]*\r?\n", re.IGNORECASE)
 
 
@@ -40,6 +43,8 @@ def _private_json(raw: str) -> bool:
         data = json.loads(raw)
     except ValueError:
         return False
+    if isinstance(data, dict) and set(data) == {"recommendations"}:
+        data = data["recommendations"]
     return bool(isinstance(data, dict) and data and set(data) <= {"reading", "strategy", "notes"}
                 and ("notes" in data or {"reading", "strategy"} <= set(data))
                 and all(isinstance(value, list) for value in data.values()))
@@ -94,12 +99,13 @@ def apply_directive(
 
 def strip_for_display(text: str) -> str:
     """Nasconde il blocco completo, aperto o ancora in streaming."""
-    if not text or "`" not in text:
+    if not text:
         return text
     cleaned, payloads = _remove_blocks(text)
     if payloads:
         cleaned = cleaned.strip()
-    open_match = _OPEN_BLOCK_RE.search(cleaned)
+    open_match = min((match for pattern in (_OPEN_BLOCK_RE, _TAG_OPEN_RE)
+                      if (match := pattern.search(cleaned))), key=lambda match: match.start(), default=None)
     if open_match:
         return cleaned[: open_match.start()].rstrip()
     # Some models label private metadata as JSON. Buffer an unfinished JSON
@@ -113,6 +119,9 @@ def strip_for_display(text: str) -> str:
     partial = _PARTIAL_FENCE_RE.search(cleaned)
     if partial and any(name.startswith(partial.group(1).lower()) for name in (_BLOCK_NAME, "json")):
         return cleaned[: partial.start()].rstrip()
+    partial_tag = _PARTIAL_TAG_RE.search(cleaned)
+    if partial_tag and "recommendations".startswith(partial_tag.group(1).lower()):
+        return cleaned[:partial_tag.start()].rstrip()
     return cleaned
 
 
@@ -133,7 +142,8 @@ def extract(
         return "", _selection([], [])
 
     cleaned, payloads = _remove_blocks(text)
-    open_match = _OPEN_BLOCK_RE.search(cleaned)
+    open_match = min((match for pattern in (_OPEN_BLOCK_RE, _TAG_OPEN_RE)
+                      if (match := pattern.search(cleaned))), key=lambda match: match.start(), default=None)
     if open_match:
         # Blocco troncato a fine risposta: se il JSON e' arrivato intero si legge
         # lo stesso, altrimenti sparisce e basta.
@@ -188,7 +198,7 @@ def _remove_blocks(text: str) -> tuple[str, list[str]]:
             return ""
         return match.group(0)
 
-    cleaned = BLOCK_RE.sub(_take, text)
+    cleaned = _TAG_BLOCK_RE.sub(_take, BLOCK_RE.sub(_take, text))
     return _JSON_BLOCK_RE.sub(_take_json, cleaned), payloads
 
 
@@ -199,6 +209,8 @@ def _first_valid(payloads: list[str]) -> dict | None:
         except ValueError:
             continue
         if isinstance(data, dict):
+            if set(data) == {"recommendations"} and _private_json(raw):
+                return data["recommendations"]
             return data
     return None
 

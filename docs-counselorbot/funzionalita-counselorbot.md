@@ -813,6 +813,15 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
 
 ## Chat, voce e ripresa
 
+Le risposte con tabelle mantengono il testo entro la larghezza della chat:
+solo la tabella scorre orizzontalmente quando serve. Le righe separatrici anomale
+prodotte dal modello e i tag di presentazione `small` sono normalizzati senza
+cambiare i punteggi. I metadati interni di raccomandazioni e note restano nascosti
+anche se il modello li racchiude in un JSON diverso da quello richiesto. La
+protezione vale per le nuove risposte, i messaggi già salvati e la lettura vocale;
+lo storico originale è conservato. La protezione copre anche i blocchi privati
+parziali durante lo streaming.
+
 Nella chat guidata si scrive sotto la conversazione. La barra dei passi mantiene
 i comandi indietro e avanti sempre visibili e raggiungibili: indietro è attivo se
 esiste un passo precedente (disattivato al primo passo), avanti passa alla fase

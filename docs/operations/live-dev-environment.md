@@ -531,6 +531,13 @@ o riavviato, nessun dato persistente, deploy o sudo richiesto.
 
 ## Fixture delle analisi questionario nei piani (#249)
 
+Lo stesso runner :3159 serve `frontend/tests/qpcc-chat-formatting.test.mjs`:
+risposte QPCC sintetiche con separatore di oltre 53.000 trattini e metadati
+privati, su quattro larghezze e in streaming. `QPCC_FORMAT_BASE_URL` consente
+una porta loopback diversa. Le API sono tutte intercettate, i messaggi personali
+non vengono usati nelle fixture. Avviare il runner da un worktree separato dal
+mount del backend portable per non attivarne l'hot reload durante lo sviluppo.
+
 `scripts/dev-plan-questionnaire-tests.sh` avvia Next con hot reload su
 `127.0.0.1:3159`, dopo aver verificato che la porta sia libera. Le suite browser
 intercettano tutte le API e bloccano il traffico esterno; il backend del dev punta

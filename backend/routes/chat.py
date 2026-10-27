@@ -718,7 +718,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
 
     # I blocchi privati escono subito: non devono raggiungere lo studente, il
     # transcript, il log o il PDF. Per primi i segnali di controllo, in ogni chat.
-    response_content = strip_thinking(response_content)
+    from ..chat_markdown import normalize_chat_markdown
+    response_content = normalize_chat_markdown(strip_thinking(response_content))
     response_content, control_signals = control_markers.extract(response_content)
     booklet_draft = None
     goal_draft_value = None

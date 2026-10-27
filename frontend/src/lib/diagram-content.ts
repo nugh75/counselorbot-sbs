@@ -1,3 +1,6 @@
+// @ts-expect-error -- Node's TypeScript runner requires the extension.
+import { normalizeChatMarkdown } from './chat-markdown.ts';
+
 export type DiagramType = 'flow' | 'relation' | 'cycle' | 'hierarchy';
 
 // Tipo di relazione dell'arco: decide il tratto con cui il backend lo disegna.
@@ -195,7 +198,7 @@ export function stripIdeaPatches(content: string): string {
 }
 
 export function splitDiagramContent(rawContent: string): DiagramContentSegment[] {
-    const content = stripIdeaPatches(rawContent);
+    const content = stripIdeaPatches(normalizeChatMarkdown(rawContent));
     const segments: DiagramContentSegment[] = [];
     let cursor = 0;
 
