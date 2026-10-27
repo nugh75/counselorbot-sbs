@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ChevronRight, Lock } from 'lucide-react';
 import { apiFetch, getIdentity, getViewAsAccount } from '@/lib/auth';
 import { defaultForumOptions, effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, toggleCounselorIds, type ClassCounselor, type ClassSettings, type ClassTool, type ClassLockKind } from '@/lib/class-settings';
+import type { ResponseFormat } from '@/lib/chat-preferences';
 import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
 import { CounselorDetailsDialog } from './CounselorDetailsDialog';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
@@ -120,6 +121,8 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
     const [defaultCounselor, setDefaultCounselor] = useState(effectiveDefaultCounselor(initial));
     const [forum, setForum] = useState(initial.forum ?? defaultForumOptions);
     const [personalAI, setPersonalAI] = useState(initial.students_personal_ai ?? true);
+    const [responseFormat, setResponseFormat] = useState<ResponseFormat | null>(initial.response_format ?? null);
+    const [responseLength, setResponseLength] = useState<"short" | "medium" | "long" | null>(initial.response_length ?? null);
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<'saved' | 'error' | 'conflict' | 'invalid' | 'lockedError' | null>(null);
     const [forbidden, setForbidden] = useState(false);
@@ -136,7 +139,9 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
         || defaultCounselor !== effectiveDefaultCounselor(settings)
         || forum.students_can_open !== (settings.forum ?? defaultForumOptions).students_can_open
         || forum.premoderation !== (settings.forum ?? defaultForumOptions).premoderation
-        || personalAI !== (settings.students_personal_ai ?? true);
+        || personalAI !== (settings.students_personal_ai ?? true)
+        || responseFormat !== (settings.response_format ?? null)
+        || responseLength !== (settings.response_length ?? null);
     useDraftGuard(dirty || busy, l('discard'), { blocked: busy });
     const tools = settings.tools.filter(tool => !tool.always_on);
     const isEnabled = (tool: ClassTool) => tool.admin_enabled && !disabled.includes(tool.key);
@@ -188,6 +193,8 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                     disabled_counselor_ids: disabledCounselors, default_counselor_id: defaultCounselor,
                     forum: { students_can_open: forum.students_can_open, premoderation: forum.premoderation },
                     students_personal_ai: personalAI,
+                    response_format: responseFormat,
+                    response_length: responseLength,
                     ...(reason.trim() ? { reason: reason.trim() } : {}),
                 }),
             });
@@ -204,6 +211,8 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                 setSettings(next); setDisabled(next.disabled_tool_keys);
                 setDisabledCounselors(next.disabled_counselor_ids); setDefaultCounselor(effectiveDefaultCounselor(next));
                 setForum(next.forum ?? defaultForumOptions); setPersonalAI(next.students_personal_ai ?? true);
+                setResponseFormat(next.response_format ?? null);
+                setResponseLength(next.response_length ?? null);
                 setNotice('saved'); setReason('');
             }
         } catch {
@@ -282,6 +291,30 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                 {l('personalAIToggle')}
             </label>
             <p className="text-sm text-slate-600">{l('personalAIHelp')}</p>
+        </Card>
+        <Card>
+            <h2 className="text-lg font-bold text-slate-800">Formato e lunghezza risposte</h2>
+            <p className="text-sm text-slate-600">Impostazione del docente per la classe: se valorizzata, sostituisce la scelta dello studente in chat.</p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">Formato
+                    <select className="min-h-[44px] rounded-md border border-slate-300 bg-white px-2" value={responseFormat ?? ''} disabled={busy}
+                        onChange={event => { if (!pending.current) { setResponseFormat((event.target.value || null) as ResponseFormat | null); setNotice(null); } }}>
+                        <option value="">Predefinito studente</option>
+                        <option value="standard">Discorsivo</option>
+                        <option value="bullets">Per punti</option>
+                        <option value="table">Tabella</option>
+                    </select>
+                </label>
+                <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">Lunghezza
+                    <select className="min-h-[44px] rounded-md border border-slate-300 bg-white px-2" value={responseLength ?? ''} disabled={busy}
+                        onChange={event => { if (!pending.current) { setResponseLength((event.target.value || null) as "short" | "medium" | "long" | null); setNotice(null); } }}>
+                        <option value="">Predefinito studente</option>
+                        <option value="short">Breve</option>
+                        <option value="medium">Media</option>
+                        <option value="long">Lunga</option>
+                    </select>
+                </label>
+            </div>
         </Card>
         <Card>
             <h2 className="text-lg font-bold text-slate-800">{forumText(lang, 'options')}</h2>
