@@ -15,7 +15,35 @@ router = APIRouter()
 get_db = database.get_db
 
 
-def _summary(row: models.FrozenSession) -> schemas.FrozenSessionSummary:
+def _plan_resume_href(db, row):
+    """Only the current owned binding may send a learner back into a plan."""
+    from ..questionnaire_entry import latest_guided_entry
+    from ..results_deep_dive import deep_dive_options
+    for model in (models.ClassPathDeepDiveSession, models.QuestionnaireGuidedEntry):
+        binding = db.query(model).filter_by(username=row.username, session_id=row.session_id).first()
+        if not binding or not binding.step_id:
+            continue
+        step = db.get(models.ClassPathStep, binding.step_id)
+        if not step:
+            continue
+        from .class_paths import require_step_launch
+        identity = {"username": row.username, "authenticated": True, "groups": []}
+        try:
+            require_step_launch(db, identity, step.path_id, step.id)
+            if model is models.ClassPathDeepDiveSession:
+                current = deep_dive_options(db, identity, step.path_id, step.id)["session"]
+                suffix = "/approfondimento"
+            else:
+                current = latest_guided_entry(db, step, row.username)
+                suffix = ""
+            if current and current["session_id"] == row.session_id:
+                return f"/profilo/piani-operativi/{step.path_id}/{step.id}{suffix}?resume=1"
+        except HTTPException:
+            continue
+    return None
+
+
+def _summary(row: models.FrozenSession, db=None) -> schemas.FrozenSessionSummary:
     data = row.data or {}
     return schemas.FrozenSessionSummary(
         session_id=row.session_id,
@@ -24,6 +52,7 @@ def _summary(row: models.FrozenSession) -> schemas.FrozenSessionSummary:
         current_phase=data.get("current_phase") or "",
         experience=data.get("experience"),
         updated_at=row.updated_at,
+        resume_href=_plan_resume_href(db, row) if db is not None else None,
         practice_notebook_id=data.get("practice_notebook_id") if data.get("notebook_context") == "practice" else None,
     )
 
@@ -111,7 +140,7 @@ async def freeze_session(
         db.add(row)
     db.commit()
     db.refresh(row)
-    return _summary(row)
+    return _summary(row, db)
 
 
 @router.get("/session/frozen", response_model=List[schemas.FrozenSessionSummary])
@@ -126,7 +155,7 @@ async def list_frozen_sessions(
         .order_by(models.FrozenSession.updated_at.desc())
         .all()
     )
-    return [_summary(row) for row in rows]
+    return [_summary(row, db) for row in rows]
 
 
 @router.get(

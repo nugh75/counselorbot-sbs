@@ -8,6 +8,40 @@ from backend.tests.test_it_administration import api as api, typed_path
 from backend.tests.test_results_deep_dive import deep_dive_path
 
 
+@pytest.mark.parametrize("teacher_learner", [False, True])
+def test_resume_list_returns_exact_plan_step_for_owned_current_session(api, teacher_learner):
+    import asyncio
+    from backend.routes.frozen_sessions import list_frozen_sessions
+    client, db, group, identity = api
+    plan, path = deep_dive_path(client, group)
+    source, analysis = path["steps"]
+    identity.update(username="student", groups=["docenti"] if teacher_learner else [])
+    grant = client.post(f"/user/administrations/{plan['id']}/verify-institution",
+                        json={"institution_code": "SYN-150", "password": "Invented-150"}).json()["grant"]
+    entered = client.post(f"/user/paths/{path['id']}/steps/{source['id']}/guided-entry",
+                         json={"session_id": "entry-resume", "request_id": "entry-resume",
+                               "scores": {"C1": 5, "C2": 7}, "institution_grant": grant})
+    assert entered.status_code == 200, entered.text
+    started = client.post(f"/user/paths/{path['id']}/steps/{analysis['id']}/deep-dive")
+    assert started.status_code == 200, started.text
+    analysis_session = started.json()["session_id"]
+    db.add_all([models.FrozenSession(username="student", session_id=sid, questionnaire_type="QSA",
+                                    data={"current_phase": "qsa-focus", "messages": [{"role": "assistant", "content": "Exact saved reply"}]})
+                for sid in ("entry-resume", analysis_session)])
+    db.commit()
+    rows = {row.session_id: row for row in asyncio.run(list_frozen_sessions(current_user=identity, db=db))}
+    base = f"/profilo/piani-operativi/{path['id']}"
+    assert rows["entry-resume"].resume_href == f"{base}/{source['id']}?resume=1"
+    assert rows[analysis_session].resume_href == f"{base}/{analysis['id']}/approfondimento?resume=1"
+    # The same teacher identity can learn in this class, but cannot manage it.
+    assert client.get("/user/paths").status_code == 200
+    assert client.get(f"/teacher/paths/{path['id']}").status_code in (403, 404)
+    membership = db.query(models.GroupMembership).filter_by(group_id=group.id, username="student").one()
+    db.delete(membership)
+    db.commit()
+    assert all(row.resume_href is None for row in asyncio.run(list_frozen_sessions(current_user=identity, db=db)))
+
+
 @pytest.mark.parametrize("personal", [False, True])
 def test_qpcc_legacy_plan_can_collect_canonical_data_and_resume_new_analysis(api, personal):
     client, db, group, identity = api

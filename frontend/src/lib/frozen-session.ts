@@ -20,6 +20,7 @@ export interface FrozenSessionMessage {
 }
 
 export interface FrozenSessionSummary {
+    resume_href?: string | null;
     session_id: string;
     questionnaire_type: string;
     label?: string | null;
@@ -96,15 +97,24 @@ export interface FreezeOptions {
     keepalive?: boolean;
 }
 
+const pendingWrites = new Map<string, Promise<void>>();
+
 export async function freezeSession(snapshot: FrozenSessionSnapshot, options: FreezeOptions = {}): Promise<void> {
-    const res = await apiFetch('/api/session/freeze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(snapshot),
-        keepalive: options.keepalive,
+    // Serialize saves of this session: a slow older turn must not overwrite
+    // the newer checkpoint saved while navigating away.
+    const write = (pendingWrites.get(snapshot.session_id) ?? Promise.resolve()).catch(() => {}).then(async () => {
+        const res = await apiFetch('/api/session/freeze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(snapshot),
+            keepalive: options.keepalive,
+        });
+        if (!res.ok) throw new Error(`Freeze fallito (${res.status})`);
+        notifyFrozenSessionsChanged();
     });
-    if (!res.ok) throw new Error(`Freeze fallito (${res.status})`);
-    notifyFrozenSessionsChanged();
+    pendingWrites.set(snapshot.session_id, write);
+    try { await write; }
+    finally { if (pendingWrites.get(snapshot.session_id) === write) pendingWrites.delete(snapshot.session_id); }
 }
 
 export class FrozenSessionAccessError extends Error {
@@ -148,6 +158,7 @@ export async function getFrozenSession(sessionId: string): Promise<FrozenSession
 }
 
 export async function deleteFrozenSession(sessionId: string): Promise<boolean> {
+    await pendingWrites.get(sessionId)?.catch(() => {});
     const res = await apiFetch(`/api/session/frozen/${encodeURIComponent(sessionId)}`, { method: 'DELETE', signal: AbortSignal.timeout(15000) });
     const deleted = res.ok || res.status === 404;
     if (deleted) notifyFrozenSessionsChanged();

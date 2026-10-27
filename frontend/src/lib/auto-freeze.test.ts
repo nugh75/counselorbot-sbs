@@ -11,6 +11,14 @@ test('a started conversation is frozen automatically', () => {
     assert.equal(shouldAutoFreeze(base), true);
 });
 
+test('same-length edits and reasoning changes are saved at the exact checkpoint', () => {
+    const original = { messages: [{ content: 'first' }], currentPhase: 'focus', responseLength: 'medium', reasoningEffort: 'off' };
+    const signature = autoFreezeSignature(original);
+    assert.notEqual(signature, autoFreezeSignature({ ...original, messages: [{ content: 'other' }] }));
+    assert.notEqual(signature, autoFreezeSignature({ ...original, reasoningEffort: 'deep' }));
+    assert.notEqual(signature, autoFreezeSignature({ ...original, navigation: { draft: 'unsent draft' } }));
+});
+
 test('the guards keep empty, busy and finished sessions out', () => {
     assert.equal(shouldAutoFreeze({ ...base, sessionId: '' }), false);
     assert.equal(shouldAutoFreeze({ ...base, messageCount: 1 }), false);

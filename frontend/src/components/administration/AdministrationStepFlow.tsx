@@ -63,6 +63,7 @@ export function AdministrationStepFlow({
   const [completed, setCompleted] = useState(false);
   const [reload, setReload] = useState(0);
   const owner = useRef<string | null>(null);
+  const autoResume = useRef(true);
   const draftKey = useRef<string | null>(null);
   const retryIds = useRef<{ session_id: string; request_id: string } | null>(
     null,
@@ -165,6 +166,9 @@ export function AdministrationStepFlow({
           } catch {}
           setLaunch(target);
           setSnapshot(frozen);
+          if (frozen && target.latest_entry && autoResume.current && new URL(window.location.href).searchParams.get('resume') === '1') {
+            setAck(target.latest_entry);
+          }
           setResumeError(resumeFailed);
           setQuestionnaire(config);
           setInstitutionCode(target.institution.institution_code ?? "");
@@ -326,6 +330,10 @@ export function AdministrationStepFlow({
     </div>
   );
   const reenter = () => {
+    autoResume.current = false;
+    const location = new URL(window.location.href);
+    location.searchParams.delete('resume');
+    window.history.replaceState(window.history.state, '', location.pathname + location.search);
     setAck(null); setCompleted(false); setScores(null); setAnswers({}); setSaved(null);
     retryIds.current = null; runnerSession.current = null;
     if (draftKey.current) sessionStorage.removeItem(draftKey.current);

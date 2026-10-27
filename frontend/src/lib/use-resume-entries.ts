@@ -85,9 +85,7 @@ export function useResumeEntries(enabled = true): ResumeEntries {
 
 // Riprendere ricarica la pagina: la home legge lo snapshot dai query param al
 // mount, una navigazione client-side non lo rileggerebbe.
-export function resumeHref(entry: { session_id: string }): string {
-    return `/?frozen=${encodeURIComponent(entry.session_id)}`;
-}
+export { resumeHref } from './resume-href';
 
 export const LOCAL_RESUME_HREF = '/?resume=1';
 

@@ -33,21 +33,13 @@ export function autoFreezeSignature(input: {
     responseFormat?: string;
     guidedPath?: string;
     notebookContext?: string;
+    reasoningEffort?: string;
+    counselorId?: number | null;
+    locale?: string;
     groupIds?: number[];
     navigation?: unknown;
 }): string {
-    const last = input.messages[input.messages.length - 1];
-    return [
-        input.messages.length,
-        input.currentPhase,
-        input.responseLength,
-        input.responseFormat ?? "standard",
-        input.guidedPath ?? "complete",
-        input.notebookContext ?? "default",
-        (input.groupIds ?? []).join(','),
-        last ? last.content.length : 0,
-        JSON.stringify(input.navigation ?? null),
-    ].join('|');
+    return JSON.stringify(input);
 }
 
 // Riprendendo una sessione congelata la trascrizione torna intera, ma il

@@ -32,6 +32,7 @@ async function fixture({width = 1440, teacher = true, pending = false, options =
         if (p === '/api/user/account' || p === '/api/user/account-preferences') return json({setup_complete: true, notebook_completed: true, setup_completed: true, counselor_id: 1, counselor_ready: true, notebook_ready: true});
         if (p === '/api/orientation/status') return json({required: false, completed: true});
         if (p === '/api/user/access') return json({restricted: false, tool_keys: codes, counselor_ids: null, class_ids: [11]});
+        if (p === '/api/student/class-chat-settings') return json({allow_student_response_format:true, allow_student_response_length:true, allow_student_response_reasoning:true});
         if (p === '/api/user/paths') return json(state.studentPaths);
         if (p.endsWith('/launch')) return json(state.launch);
         if (p === '/api/session/frozen') return json(state.snapshot ? [state.snapshot] : []);
@@ -165,7 +166,7 @@ test('explicit result choice reopens the same frozen session', async () => {
         assert.deepEqual(state.requests.filter(row => row.p.endsWith('/deep-dive') && row.method === 'POST').map(row => row.body), [{result_id: 8}]);
         state.snapshot = {session_id: 'bound-249', questionnaire_type: 'QSA', current_phase: 'qsa-focus', scores: result(8).scores,
             counselor_id: 1, locale: 'it', guided_path: 'complete', messages: [{role: 'assistant', content: 'Riflessione conservata sul risultato otto'}]};
-        await page.reload({waitUntil: 'domcontentloaded'});await page.getByText('Riflessione conservata sul risultato otto', {exact: true}).waitFor();
+        await page.reload({waitUntil: 'domcontentloaded'});await page.getByRole('log').getByText('Riflessione conservata sul risultato otto', {exact: true}).waitFor();
         assert.equal(state.requests.filter(row => row.p.endsWith('/deep-dive') && row.method === 'POST').length, 1);
         assert.equal(await page.getByRole('combobox', {name: 'Scegli la compilazione'}).count(), 0);assert.deepEqual(state.errors, []);
     } finally {await context.close();}
@@ -285,6 +286,36 @@ test('an administration resumes its exact snapshot and can return to data entry'
     try {
         await page.goto(`${origin}/profilo/piani-operativi/301/10`, {waitUntil: 'domcontentloaded'});
         await page.getByRole('button', {name: 'Riprendi chat', exact: true}).click();
+        await page.getByRole('log').getByText('Conversazione della somministrazione conservata', {exact: true}).waitFor();
+        assert.equal(state.requests.filter(row => row.p === '/api/chat/stream').length, 0);
+        await page.getByRole('button', {name: 'Reinserisci i dati', exact: true}).click();
+        await page.locator('input[name="scores.C1"]').waitFor();
+        assert.equal(await page.locator('input[name="scores.C1"]').inputValue(), '');
+        state.snapshotStatus = 500;
+        await page.reload({waitUntil: 'domcontentloaded'});
+        await page.locator('input[name="scores.C1"]').waitFor();
+        assert.equal(await page.getByRole('button', {name: 'Riprendi chat', exact: true}).count(), 0);
+        assert.equal(state.requests.filter(row => row.p.endsWith('/guided-entry')).length, 0);
+        assert.equal(state.requests.filter(row => row.method === 'DELETE').length, 0);
+        assert.deepEqual(state.errors, []);
+    } catch (error) {
+        error.message += `\nPage: ${await page.locator('body').innerText()}\nRequests: ${JSON.stringify(state.requests.map(row => [row.method, row.p]))}`;
+        throw error;
+    } finally {await context.close();}
+});
+
+test('a progress-section resume link directly opens the exact administration checkpoint', async () => {
+    const {context, page, state} = await fixture({teacher: false});
+    state.launch = {path_id: 301, step_id: 10, administration_plan_id: 5, instrument_code: 'QSA', locale: 'it', delivery_mode: 'external_it',
+        external_href: 'https://www.competenzestrategiche.it/QSA/',
+        latest_entry: {session_id: 'bound-249', guided_entry_id: 1, evidence_id: 1, accepted_at: '2026-10-21T12:00:00Z', result: result(8)},
+        score_factors: ['C1','C2'].map(code => ({code, label_i18n: {it: `Scala ${code}`}})),
+        institution: {id: 5, name: 'Istituto sintetico', institution_code: 'SYN', institution_password: null}};
+    state.snapshot = {session_id: 'bound-249', questionnaire_type: 'QSA', current_phase: 'qsa-focus', scores: result(8).scores,
+        counselor_id: 1, locale: 'it', messages: [{role: 'system', content: '--- Il mio metodo ---'},
+            {role: 'assistant', content: 'Conversazione della somministrazione conservata'}]};
+    try {
+        await page.goto(`${origin}/profilo/piani-operativi/301/10?resume=1`, {waitUntil: 'domcontentloaded'});
         await page.getByRole('log').getByText('Conversazione della somministrazione conservata', {exact: true}).waitFor();
         assert.equal(state.requests.filter(row => row.p === '/api/chat/stream').length, 0);
         await page.getByRole('button', {name: 'Reinserisci i dati', exact: true}).click();

@@ -1266,6 +1266,7 @@ class FrozenSessionSummary(BaseModel):
     questionnaire_type: str
     label: Optional[str] = None
     current_phase: str = ""
+    resume_href: Optional[str] = None
     experience: Optional[str] = None
     updated_at: Optional[datetime] = None
     # Taccuino di prova della sessione (solo in prova): l'area docente elenca

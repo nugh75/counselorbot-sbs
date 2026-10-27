@@ -846,9 +846,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     }
                     setResponseFormat(frozenSnapshot.response_format ?? "standard");
                     setConversationId(frozenSnapshot.conversation_id ?? undefined);
-                    // Negli Obiettivi le etichette sono cambiate: il separatore salvato
-                    // non basta a dire che la fase ripresa era gia' aperta.
-                    if (essential || (isGoalInstrument(questionnaireType) && restoredMessages.length > 0)) processedPhases.current.add(frozenPhase);
+                    // A saved conversation resumes without another opening, including
+                    // older snapshots without phase tags or with translated labels.
+                    if (essential || restoredMessages.some(message => message.role === 'assistant')) processedPhases.current.add(frozenPhase);
                     if (frozenSnapshot.response_length) {
                         setResponseLength(frozenSnapshot.response_length);
                     }
@@ -1622,7 +1622,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             const snapshot = buildSnapshot();
             await freezeSession(snapshot);
             pendingSnapshotRef.current = null;
-            savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext: notebookSignature, groupIds: docenzaGroupIds, navigation: { ...navigation, input } });
+            savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, reasoningEffort, counselorId, locale: activeLocale, notebookContext: notebookSignature, groupIds: docenzaGroupIds, navigation: { ...navigation, input } });
             toast.success(t('frozen.frozen'));
             onFrozen?.();
         } catch {
@@ -1648,7 +1648,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             isLoading,
             completed: completedRef.current,
         })) return;
-        const signature = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext: notebookSignature, groupIds: docenzaGroupIds, navigation: { ...navigation, input } });
+        const signature = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, reasoningEffort, counselorId, locale: activeLocale, notebookContext: notebookSignature, groupIds: docenzaGroupIds, navigation: { ...navigation, input } });
         if (signature === savedSignatureRef.current) return;
         pendingSnapshotRef.current = { snapshot: buildSnapshot(), signature };
         const timer = window.setTimeout(() => { void flushAutoFreeze(); }, AUTO_FREEZE_DELAY_MS);
@@ -1656,7 +1656,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         // buildSnapshot legge lo stato corrente a ogni render: le dipendenze qui
         // sono quello che rende lo snapshot diverso dal precedente.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, notebookSignature, docenzaGroupIds, navigation, input, isLoading, sessionId, preview]);
+    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, reasoningEffort, counselorId, activeLocale, notebookSignature, docenzaGroupIds, navigation, input, isLoading, sessionId, preview]);
 
     // Uscita dallo strumento con un turno ancora in attesa: `pagehide` copre tab
     // chiusa, ricarica e link che lasciano la pagina (il logo dell'header è un
