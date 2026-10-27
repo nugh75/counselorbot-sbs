@@ -273,7 +273,10 @@ questionario non è più nella barra di navigazione né nel pannello Menu.
 L’illustrazione del riquadro è decorativa: il titolo e la descrizione accanto ne
 portano il significato, anche per gli screen reader. Nel catalogo
 viene prima la Bussola, poi le analisi dei questionari, i percorsi guidati e l’Area
-personale e strumenti. Se lo studente appartiene a una classe con almeno un percorso
+personale e strumenti. QSA, QSAr, ZTPI, QPCS, QPCC e QAP restano nelle analisi
+anche con categorie storiche errate; i percorsi standard restano tra i percorsi
+guidati e gli strumenti personalizzati seguono la categoria configurata.
+Se lo studente appartiene a una classe con almeno un percorso
 di classe attivo pubblicato, la home (`/` e `/?view=home`) pone il percorso in cima
 come primo elemento in evidenza (hero card), mentre il catalogo degli strumenti è
 mostrato sotto collassato (con interruttore per espanderlo che ricorda la scelta nel
