@@ -47,12 +47,17 @@ services:
       context: .
       dockerfile: backend/Dockerfile
       args:
-        PYTHON_BASE_IMAGE: ${COUNSELORBOT_PYTHON_BASE_IMAGE:-python:3.10-slim}
+        PYTHON_BASE_IMAGE: ${COUNSELORBOT_PYTHON_BASE_IMAGE:-python:3.12-slim}
     command: [uvicorn, backend.main:app, --host, 0.0.0.0, --port, "8000", --workers, "1"]
     restart: unless-stopped
     env_file: .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@counselorbot-portable-postgres:5432/${POSTGRES_DB}
+      # Login del server web (ai4auth/SSO) esplicito: il profilo `teacher-pc`
+      # del guscio desktop usa AUTH_PROVIDER=local e non deve mai propagarsi
+      # qui tramite il .env condiviso (ADR-0002 §3).
+      AUTH_PROVIDER: ai4auth
+      COUNSELORBOT_PROFILE: ""
       AI4AUTH_VERIFY_URL: http://ai4auth:9091/api/verify
       AI4AUTH_PUBLIC_HOST: ${COUNSELORBOT_HOSTNAME:-counselorbot.labform.net}
       ADMIN_GROUPS: ${ADMIN_GROUPS:-admins}

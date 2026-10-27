@@ -1,4 +1,6 @@
-ARG PYTHON_BASE_IMAGE=python:3.10-slim
+# Python 3.12 come CI e bundle desktop: il backend usa `datetime.UTC` (3.11+)
+# e un'immagine 3.10 non riesce nemmeno a importare `backend.main`.
+ARG PYTHON_BASE_IMAGE=python:3.12-slim
 FROM ${PYTHON_BASE_IMAGE}
 
 WORKDIR /app

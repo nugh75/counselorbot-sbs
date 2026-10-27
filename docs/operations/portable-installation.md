@@ -85,6 +85,16 @@ del DB. Il backend lo raggiunge mediante l'alias privato dedicato
 che può risolvere al database della Console sulla rete condivisa.
 Il backend usa un worker per la prima installazione. Il codice
 viene copiato nelle immagini: le modifiche richiedono una nuova build.
+L'immagine backend è **Python 3.12** (`backend/Dockerfile`, build arg
+`PYTHON_BASE_IMAGE`), come CI e bundle desktop: il codice importa
+`datetime.UTC` (Python ≥ 3.11), quindi un'immagine 3.10 non riesce nemmeno a
+importare `backend.main` e il container entra in crash-loop (il frontend
+risponde `ECONNREFUSED` e il sito sembra scollegato dal login). Un
+`COUNSELORBOT_PYTHON_BASE_IMAGE` che punta a 3.10 nel `.env` prevale sul
+default: correggerlo e ricostruire. Anche l'istanza con hot reload
+(`docker-compose.portable.dev.yml`) monta il codice nel container: se il
+checkout richiede una versione di Python più recente dell'immagine, la build
+va rifatta.
 Il frontend copia anche `public` con proprietario `nextjs`, per rendere
 leggibili guide e immagini quando il checkout macOS ha permessi `0700`/`0600`.
 Gli URL pubblici (`COUNSELORBOT_HOSTNAME`, `COUNSELORBOT_AUTH_URL`,
@@ -119,7 +129,17 @@ verifica readiness, crea il virtual host per
 e ricarica nginx nella Console. Conserva backup prima delle modifiche,
 mantiene le autorizzazioni di una registrazione già esistente e rifiuta
 di sovrascrivere virtual host non gestiti dallo script. La nuova voce
+nessuna registrazione già esistente e rifiuta
+di sovrascrivere virtual host non gestiti dallo script. La nuova voce
 usa i gruppi `admins`, `studenti`, `viewer` presenti nella Console.
+
+Il login del server web è il SSO ai4auth: `docker-compose.portable.yml` fissa
+`AUTH_PROVIDER: ai4auth` e `COUNSELORBOT_PROFILE` vuoto, quindi un `.env`
+ereditato dall'app desktop non può trasformare l'installazione in login locale
+(sarebbe senza ai4auth, con un'unica identità docente creata dal guscio).
+L'app desktop usa per scelta `AUTH_PROVIDER=local` (ADR-0002 §3): i due login
+sono distinti e non condivisibili; cambiare il fornitore del server richiede
+una modifica esplicita al Compose e un nuovo deploy verificato.
 
 Il virtual host generato dallo script limita i timeout della sotto-richiesta
 di verifica (`auth_request`: connect/send 15s, read 90s) e, se ai4auth non
@@ -379,7 +399,7 @@ tramite `mirror.gcr.io` è riuscito. Gli override opzionali permettono di
 usarlo come rimedio temporaneo, conservando i default del repository:
 
 ```dotenv
-COUNSELORBOT_PYTHON_BASE_IMAGE=mirror.gcr.io/library/python:3.10-slim
+COUNSELORBOT_PYTHON_BASE_IMAGE=mirror.gcr.io/library/python:3.12-slim
 COUNSELORBOT_NODE_BASE_IMAGE=mirror.gcr.io/library/node:22-alpine
 COUNSELORBOT_POSTGRES_IMAGE=mirror.gcr.io/library/postgres:15
 ```
