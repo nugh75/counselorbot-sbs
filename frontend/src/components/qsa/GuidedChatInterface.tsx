@@ -467,6 +467,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [pathStarted, setPathStarted] = useState(!pathChoiceAvailable || Boolean(frozenSnapshot?.session_id === sessionId));
     const essential = pathChoiceAvailable && guidedPath === 'essential';
     const [responseFormat, setResponseFormat] = useState<ResponseFormat>(frozenSnapshot?.response_format ?? initialResponseFormat ?? 'standard');
+    const [classAllowsFormat, setClassAllowsFormat] = useState(true);
+    const [classAllowsLength, setClassAllowsLength] = useState(true);
+    const [classAllowsReasoning, setClassAllowsReasoning] = useState(true);
     const [steps, setSteps] = useState<StepDef[]>([]);
     const [phases, setPhases] = useState<string[]>([]);
     // Strumento Idea: la variante decide di che materia si parla, la versione
@@ -586,6 +589,23 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const hiddenMessages = messages.length - visibleMessages.length;
     const [responseLength, setResponseLength] = useState<ResponseLength>(initialResponseLength ?? 'medium');
     const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(initialReasoningEffort ?? 'standard');
+    useEffect(() => {
+        let cancelled = false;
+        apiFetch('/api/student/class-chat-settings').then(async (res) => {
+            if (!res.ok || cancelled) return;
+            const data = await res.json();
+            if (cancelled) return;
+            setClassAllowsFormat(data.allow_student_response_format !== false);
+            setClassAllowsLength(data.allow_student_response_length !== false);
+            setClassAllowsReasoning(data.allow_student_response_reasoning !== false);
+            if (!frozenSnapshot) {
+                if (data.response_format) setResponseFormat(data.response_format);
+                if (data.response_length) setResponseLength(data.response_length);
+                if (data.response_reasoning) setReasoningEffort(data.response_reasoning);
+            }
+        }).catch(() => {});
+        return () => { cancelled = true; };
+    }, []);
     useEffect(() => {
         if (reasoningMandatory && reasoningEffort === 'off') setReasoningEffort('standard');
     }, [reasoningMandatory, reasoningEffort]);
@@ -1810,12 +1830,12 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
                             <AlignLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
                             <span className="min-w-0 flex-1">{chatPreferenceLabel(activeLocale, 'format')}</span>
-                            <ResponseFormatSelector compact value={responseFormat} onChange={setResponseFormat} disabled={isLoading} />
+                            <ResponseFormatSelector compact value={responseFormat} onChange={setResponseFormat} disabled={isLoading || !classAllowsFormat} />
                         </div>
                         <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
                             <Rows3 className="h-4 w-4 shrink-0" aria-hidden="true" />
                             <span className="min-w-0 flex-1">{t('responseLength.shortLabel')}</span>
-                            <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
+                            <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading || !classAllowsLength} />
                         </div>
                         {isTeacherUser && <div className="space-y-1 px-2 pb-1 text-sm text-slate-600">
                             <div className="flex min-h-[44px] items-center gap-2">
@@ -1829,7 +1849,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             <div className="flex min-h-[44px] items-center gap-2">
                                 <Brain className="h-4 w-4 shrink-0" aria-hidden="true" />
                                 <span className="min-w-0 flex-1">{t('reasoning.shortLabel')}</span>
-                                <ReasoningSelector value={reasoningEffort} onChange={setReasoningEffort} disabled={isLoading} mandatory={reasoningMandatory} />
+                                <ReasoningSelector value={reasoningEffort} onChange={setReasoningEffort} disabled={isLoading || !classAllowsReasoning} mandatory={reasoningMandatory} />
                             </div>
                             {reasoningMandatory && <p className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-900">{t('reasoning.mandatory')}</p>}
                         </div>}

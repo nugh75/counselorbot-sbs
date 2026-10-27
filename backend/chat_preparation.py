@@ -258,6 +258,20 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     # Docente: se la chat avviene dentro una classe, il formato/lunghezza impostati
     # dal docente hanno precedenza sulle scelte dello studente.
     group_ids = getattr(request, "group_ids", None)
+    if not group_ids:
+        try:
+            username = None
+            if isinstance(identity, dict):
+                username = identity.get("username") or identity.get("sub")
+            elif hasattr(identity, "get"):
+                username = identity.get("username")
+            if username:
+                memberships = db.query(models.GroupMembership.group_id).filter(models.GroupMembership.username == username).all()
+                group_ids = [row[0] for row in memberships] if memberships else None
+                if group_ids:
+                    request = request.model_copy(update={"group_ids": group_ids})
+        except Exception:
+            group_ids = getattr(request, "group_ids", None)
     if group_ids:
         try:
             from .models import ClassSettings as _CS
