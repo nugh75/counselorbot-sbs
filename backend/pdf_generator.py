@@ -1442,3 +1442,77 @@ def generate_idea_map_pdf(
     pdf.output(pdf_bytes)
     pdf_bytes.seek(0)
     return pdf_bytes
+
+
+ORIENTATION_PDF_TEXT = {
+    "it": {
+        "title": "Consiglio orientativo",
+        "page": "Pagina",
+        "class": "Classe",
+        "student": "Studente",
+        "updated": "Ultima modifica",
+        "finalized": "Chiuso",
+        "draft": "Bozza — documento di lavoro interno al consiglio di classe",
+        "final": "Documento del consiglio di classe",
+        "body": "Testo del consiglio orientativo",
+        "privacy": "Documento interno del consiglio di classe. Non è visibile allo studente né fuori dalla classe; contiene valutazioni complessive e dati pseudonimizzati.",
+    },
+    "en": {
+        "title": "Guidance recommendation",
+        "page": "Page",
+        "class": "Class",
+        "student": "Student",
+        "updated": "Last change",
+        "finalized": "Closed",
+        "draft": "Draft — internal working document of the class council",
+        "final": "Document of the class council",
+        "body": "Text of the guidance recommendation",
+        "privacy": "Internal document of the class council. Not visible to the student nor outside the class; it contains overall evaluations and pseudonymised data.",
+    },
+}
+
+
+def generate_orientation_pdf(*, group_name: str, student_name: str, content: str, status: str,
+                             updated_by: str = None, updated_at: str | None = None,
+                             final_at: str | None = None, lang: str = "it"):
+    """Il consiglio orientativo di uno studente, come documento cartaceo del consiglio."""
+    t = ORIENTATION_PDF_TEXT.get(_normalize_lang(lang)) or ORIENTATION_PDF_TEXT["it"]
+    pdf = ResultPDF(title=f"CounselorBot - {t['title']}", page_label=t["page"])
+    pdf.alias_nb_pages()
+    pdf.set_auto_page_break(auto=True, margin=18)
+    pdf.add_page()
+    content_w = pdf.w - pdf.l_margin - pdf.r_margin
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.set_text_color(*APP_PRIMARY)
+    pdf.multi_cell(content_w, 8, _latin1(t["title"]), new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(*APP_TEXT)
+    updated_day = str(updated_at or "")[:10]
+    closed_day = str(final_at or "")[:10]
+    period = " - ".join(filter(None, [updated_day, f"{t['finalized']}: {closed_day}" if closed_day else ""]))
+    for label, value in ((t["class"], group_name), (t["student"], student_name), (t["updated"], period)):
+        if value:
+            pdf.cell(0, 6, _latin1(f"{label}: {value}"), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_text_color(*(APP_TEXT_MUTED if (status or "draft") != "final" else APP_PRIMARY))
+    pdf.multi_cell(content_w, 6, _latin1(t["draft"] if (status or "draft") != "final" else t["final"]),
+                   new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(4)
+
+    _section_heading(pdf, t["body"], content_w)
+    _text_card(pdf, content, content_w, fill=APP_SURFACE, border=APP_BORDER)
+    pdf.ln(6)
+    _text_card(
+        pdf,
+        t["privacy"],
+        content_w,
+        fill=APP_PRIMARY_SOFT,
+        border=APP_PRIMARY_BORDER,
+        text_color=APP_TEXT,
+    )
+    pdf_bytes = BytesIO()
+    pdf.output(pdf_bytes)
+    pdf_bytes.seek(0)
+    return pdf_bytes

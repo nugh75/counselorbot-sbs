@@ -1279,6 +1279,36 @@ class ClassCouncilLink(Base):
     last_viewed_at = Column(UTCDateTime, nullable=True)
 
 
+class OrientationRecommendation(Base):
+    """Consiglio orientativo del consiglio di classe: un documento per studente.
+
+    Documento interno alla classe: i docenti autorizzati (proprietario, co-docenti,
+    amministratori) redigono il testo, con eventuale bozza assistita generata dai dati
+    già raccolti. Non viene mai mostrato allo studente né al link del consiglio di
+    classe; esce solo nei PDF espliciti.
+    """
+
+    __tablename__ = "orientation_recommendations"
+    __table_args__ = (
+        UniqueConstraint("group_id", "username", name="uq_orientation_group_user"),
+        CheckConstraint("status IN ('draft', 'final')", name="orientation_status_check"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), index=True, nullable=False)
+    username = Column(String, nullable=False, index=True)
+    content = Column(Text, nullable=False, default="")
+    status = Column(String, nullable=False, default="draft")  # draft | final
+    ai_draft_used = Column(Boolean, nullable=False, default=False)
+    revision = Column(Integer, nullable=False, default=1)
+    created_by = Column(String, nullable=False)
+    updated_by = Column(String, nullable=True)
+    final_at = Column(UTCDateTime, nullable=True)
+    final_by = Column(String, nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
+    updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
+
+
 class TelegramAccountLink(Base):
     """Mapping verificato telegram_user_id -> username CounselorBot."""
 

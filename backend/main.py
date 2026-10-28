@@ -109,6 +109,7 @@ from .routes import class_access as class_access_routes
 from .routes import class_council as class_council_routes
 from .routes import class_meetings as class_meetings_routes
 from .routes import class_paths as class_paths_routes
+from .routes import orientation_recommendation as orientation_recommendation_routes
 from .routes import counselors as counselors_routes
 from .routes import cross_synthesis as cross_synthesis_routes
 from .routes import diagram as diagram_routes
@@ -2198,5 +2199,6 @@ app.include_router(class_paths_routes.router)
 app.include_router(path_templates_routes.router)
 app.include_router(class_meetings_routes.router)
 app.include_router(class_council_routes.router)
+app.include_router(orientation_recommendation_routes.router)
 app.include_router(thread_guard_routes.router)
 
