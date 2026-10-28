@@ -28,6 +28,7 @@ from backend.chat_logic import (
     split_thinking,
 )
 from backend.ai_service import AIService
+from backend.reasoning_profiles import ReasoningPlan
 
 
 def _reconstruct(items):
@@ -174,6 +175,7 @@ def test_english_heading_and_answer_without_newline():
 def test_ollama_keeps_native_and_markdown_reasoning_separate_from_answer():
     with patch.object(AIService, "_load_config", return_value={}):
         service = AIService(None)
+    service._reasoning_plan = ReasoningPlan(enabled=True, reasoning_budget=1024, max_tokens=2048)
     response = MagicMock()
     response.json.return_value = {"message": {"thinking": "Native reasoning.", "content": IRIDE_CONTENT}}
     system = _apply_thinking_directive("System", "it")
@@ -198,7 +200,7 @@ def test_ollama_keeps_native_and_markdown_reasoning_separate_from_answer():
     assert service.last_thinking == reasoning
 
 
-def test_native_thinking_directive_preserves_other_instructions_and_no_think():
+def test_native_thinking_directive_preserves_other_instructions_without_model_specific_token():
     with patch.object(AIService, "_load_config", return_value={}):
         service = AIService(None)
     for separator in ("\n\n", "\n"):
@@ -209,8 +211,8 @@ def test_native_thinking_directive_preserves_other_instructions_and_no_think():
         assert "<think>" not in result
     service.disable_thinking = True
     result = service._apply_ollama_thinking_directive(system)
-    assert result.endswith("/no_think")
-    assert service._apply_ollama_thinking_directive("JSON only") == "JSON only\n\n/no_think"
+    assert result.endswith(separator + "[REGISTER] Keep informal.")
+    assert service._apply_ollama_thinking_directive("JSON only") == "JSON only"
 
 
 def _run_all():

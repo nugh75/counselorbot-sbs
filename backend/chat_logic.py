@@ -759,11 +759,11 @@ def _apply_thinking_directive(system_prompt: str, language: Optional[str] = None
 # --- Separazione del ragionamento dal testo visibile (canale «sto pensando») ---
 # Blocchi di pensiero tollerati: <think>, <thinking>, <sto_pensando> (case-insensitive).
 _THINK_BLOCK_RE = re.compile(
-    r"<\s*(think|thinking|sto_pensando)\s*>(.*?)</\s*\1\s*>",
+    r"<\s*(think|thinking|sto_pensando|analysis)\s*>(.*?)</\s*\1\s*>",
     re.IGNORECASE | re.DOTALL,
 )
 _THINK_OPEN_RE = re.compile(
-    r"<\s*(?:think|thinking|sto_pensando)\s*>(.*)$",
+    r"<\s*(?:think|thinking|sto_pensando|analysis)\s*>(.*)$",
     re.IGNORECASE | re.DOTALL,
 )
 # Una chiusura senza apertura. I blocchi accoppiati sono gia' stati tolti quando
@@ -771,11 +771,11 @@ _THINK_OPEN_RE = re.compile(
 # reasoning perche' nessun tag l'ha aperta: un `</think>` ancora presente qui e'
 # orfano per costruzione, e cio' che lo precede era il ragionamento del modello.
 _THINK_CLOSE_ORPHAN_RE = re.compile(
-    r"\A(.*?)</\s*(?:think|thinking|sto_pensando)\s*>",
+    r"\A(.*?)</\s*(?:think|thinking|sto_pensando|analysis)\s*>",
     re.IGNORECASE | re.DOTALL,
 )
 _THINK_TAG_ANY_RE = re.compile(
-    r"</?\s*(?:think|thinking|sto_pensando)\b[^>]*>",
+    r"</?\s*(?:think|thinking|sto_pensando|analysis)\b[^>]*>",
     re.IGNORECASE,
 )
 
@@ -915,8 +915,8 @@ class ThinkStreamSplitter:
     potrebbero essere l'inizio di un tag. `feed(delta)` e `flush()` ritornano una
     lista di dict `{"type": "reasoning"|"content", "text": ...}`."""
 
-    _OPEN = ("<think>", "<thinking>", "<sto_pensando>")
-    _CLOSE = ("</think>", "</thinking>", "</sto_pensando>")
+    _OPEN = ("<think>", "<thinking>", "<sto_pensando>", "<analysis>")
+    _CLOSE = ("</think>", "</thinking>", "</sto_pensando>", "</analysis>")
 
     def __init__(self) -> None:
         self._buf = ""
