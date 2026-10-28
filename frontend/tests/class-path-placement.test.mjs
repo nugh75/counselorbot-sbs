@@ -264,8 +264,26 @@ async function createFixture({
         return route.fulfill({ json: [] });
     });
 
-    return { context, page, errors, doneCalls };
+    return { context, page, errors, doneCalls, setPaths: paths => { currentPaths = JSON.parse(JSON.stringify(paths)); } };
 }
+
+test('returning to the home refreshes a started plan chat', async () => {
+    const step = {id: 106, path_id: 1, position: 1, step_type: 'guided_results_chat', tool_key: '',
+        title: 'Analisi QPCC', state: 'not_done', start_href: '/profilo/piani-operativi/1/106/approfondimento', can_self_mark: false};
+    const path = {...samplePath1, steps: [step], next_step_id: 106, done: 0, total: 1};
+    const f = await createFixture({paths: [path]});
+    try {
+        await f.page.goto(`${origin}/?view=home`, {waitUntil: 'domcontentloaded'});
+        const card = f.page.getByTestId('class-path-hero-card');
+        await card.getByRole('button', {name: 'Inizio anno'}).click();
+        await card.getByRole('link', {name: 'Inizia'}).waitFor();
+        f.setPaths([{...path, steps: [{...step, attempt_state: 'in_progress'}]}]);
+        await f.page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
+        await card.getByRole('link', {name: 'Riprendi'}).waitFor();
+        assert.equal(await card.getByRole('link', {name: 'Rifai'}).getAttribute('href'), '/profilo/piani-operativi/1/106/approfondimento?attempt=new');
+        assert.deepEqual(f.errors, []);
+    } finally {await f.context.close();}
+});
 
 test('forum completion is explicitly checked and can be cleared', async () => {
     const forum = {id: 105, path_id: 1, position: 1, step_type: 'forum', tool_key: '', title: 'Discussione',
