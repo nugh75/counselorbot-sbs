@@ -292,7 +292,7 @@ test('an administrator enrolled in a class sees the student plan and class selec
         assert.match(await selector.innerText(), /3B Liceo/);
         await selector.selectOption('classes');
         await f.page.waitForFunction(() => document.querySelector('header select')?.value === 'classes');
-        await f.page.locator('[data-testid="toggle-profile-catalog-btn"]').click();
+        await f.page.locator('#personal-catalog-section').waitFor({ state: 'visible' });
         assert.equal(await f.page.locator('#personal-catalog-section a[href="/profilo/obiettivi"]').count(), 0);
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
@@ -427,6 +427,7 @@ test('Self-marking on hero card calls API and updates step state', async () => {
 
         const heroCard = f.page.locator('[data-testid="class-path-hero-card"]');
         await heroCard.waitFor({ state: 'visible' });
+        await heroCard.getByRole('button', { name: 'Inizio anno', exact: true }).click();
 
         // Step 103 (timeline) has can_self_mark = true and state not_done
         const markDoneBtn = heroCard.getByRole('button', { name: 'Segna come completato' });
@@ -444,30 +445,29 @@ test('Self-marking on hero card calls API and updates step state', async () => {
     }
 });
 
-test('Student area (/profilo): hero card displayed first when path active, tools collapsible', async () => {
-    const f = await createFixture({ paths: [samplePath1], lang: 'it' });
+for (const { name, paths, width, initialStorage } of [
+    { name: 'active plan', paths: [samplePath1], width: 1280, initialStorage: {} },
+    { name: 'active plan and old closed preference on a phone', paths: [samplePath1], width: 390, initialStorage: { cb_profile_catalog_open: 'false' } },
+    { name: 'no active plan', paths: [], width: 1280, initialStorage: { cb_profile_catalog_open: 'false' } },
+]) test(`Student area: personal tools stay visible with ${name}`, async () => {
+    const f = await createFixture({ paths, lang: 'it', width, initialStorage });
     try {
         await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
 
-        // Hero card is visible at the top
         const heroCard = f.page.locator('[data-testid="class-path-hero-card"]');
-        await heroCard.waitFor({ state: 'visible' });
-        assert.ok((await heroCard.innerText()).includes('Inizio anno'));
-
-        // Toggle profile tools button is present and collapsed
-        const toggleBtn = f.page.locator('[data-testid="toggle-profile-catalog-btn"]');
-        await toggleBtn.waitFor({ state: 'visible' });
-        assert.equal(await toggleBtn.getAttribute('aria-expanded'), 'false');
-
-        // Personal tools section is hidden
         const toolsSection = f.page.locator('#personal-catalog-section');
-        assert.equal(await toolsSection.getAttribute('hidden'), '');
-
-        // Click to expand
-        await toggleBtn.click();
-        assert.equal(await toggleBtn.getAttribute('aria-expanded'), 'true');
+        await toolsSection.waitFor({ state: 'visible' });
+        await toolsSection.locator('a[href="/profilo/timeline"]').waitFor({ state: 'visible' });
+        if (paths.length) {
+            await heroCard.waitFor({ state: 'visible' });
+            assert.ok((await heroCard.innerText()).includes('Inizio anno'));
+            assert.ok((await heroCard.boundingBox()).y < (await toolsSection.boundingBox()).y);
+        } else {
+            assert.equal(await heroCard.count(), 0);
+        }
+        assert.equal(await f.page.locator('[data-testid="toggle-profile-catalog-btn"]').count(), 0);
         assert.equal(await toolsSection.getAttribute('hidden'), null);
-
+        assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
         assert.deepEqual(f.errors, []);
     } finally {
         await f.context.close();
