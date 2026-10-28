@@ -690,9 +690,10 @@ class AIService:
             value = default
         return max(minimum, min(value, maximum))
 
-    def _apply_no_think(self, system_prompt: str) -> str:
-        """Aggiunge la direttiva /no_think al system prompt (convenzione qwen3/llama.cpp/ollama)."""
-        if self.disable_thinking and not self.reasoning_enabled and "/no_think" not in system_prompt:
+    def _apply_no_think(self, system_prompt: str, model: str = "") -> str:
+        """Qwen3 soft switch for llama.cpp; other models must not receive it."""
+        if (self.reasoning_suppressed and re.search(r"(?:^|[/_-])qwen3(?:[.:-]|$)", model.lower())
+                and "/no_think" not in system_prompt):
             return f"{system_prompt}\n\n/no_think"
         return system_prompt
 
@@ -710,7 +711,7 @@ class AIService:
             r"\[THINKING\].*?(?=\n\s*\n|\n\[[A-Z_ ]+\]|$)",
             lambda _: directive, system_prompt, flags=re.DOTALL,
         )
-        return self._apply_no_think(system_prompt)
+        return system_prompt
 
     def _ollama_base(self) -> str:
         return (self.config.get('ollama_ip') or 'http://localhost:11434').rstrip('/')
@@ -1367,7 +1368,7 @@ class AIService:
     def _call_llamacpp(self, user_message, system_prompt, model, max_tokens: int = 8000, history=None):
         """llama.cpp / llama-server / llama-swap: endpoint OpenAI-compatibile su /v1."""
         client = self._llamacpp_client(httpx.Timeout(self._int_config("ai_timeout_seconds", 120, 10, 600), connect=10.0))
-        system_prompt = self._apply_no_think(system_prompt)
+        system_prompt = self._apply_no_think(system_prompt, model or "")
         nak = self._normalize_history(history)
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(nak)
@@ -1409,12 +1410,14 @@ class AIService:
         for selected_provider, selected_model in self._targets(provider, model):
             content_seen = False
             reasoning_seen = False
+            buffered_content = []
             attempt = {"provider": selected_provider, "model": selected_model, "status": "failed"}
             self.last_attempts.append(attempt)
             try:
                 entry, mt, msg, sys, hist, prepared = self._attempt_input(
                     selected_provider, selected_model, user_message, system_prompt, history, max_tokens, True)
                 restorer = prepared.stream_restorer()
+                suppress_reasoning = self.reasoning_suppressed
                 if entry['stream']:
                     output = entry['stream'](msg, sys, selected_model, max_tokens=mt, history=hist)
                 else:
@@ -1424,21 +1427,37 @@ class AIService:
                         continue
                     item = item if isinstance(item, dict) else {"type": "content", "text": item}
                     if item.get("text"):
-                        content_seen = content_seen or (item.get("type") == "content" and bool(item["text"].strip()))
                         reasoning_seen = reasoning_seen or item.get("type") == "reasoning"
                         if restorer and item.get("type") == "content":
                             item = {**item, "text": restorer.feed(item["text"])}
                         else:
                             item = {**item, "text": prepared.restore(item["text"])}
+                    if suppress_reasoning and item.get("type") == "reasoning":
+                        continue
+                    if item.get("type") == "content":
+                        if suppress_reasoning:
+                            buffered_content.append(item.get("text", ""))
+                            continue
+                        content_seen = content_seen or bool(item.get("text", "").strip())
                     yield item
+                if restorer:
+                    tail = restorer.flush()
+                    if tail:
+                        if suppress_reasoning:
+                            buffered_content.append(tail)
+                        else:
+                            content_seen = content_seen or bool(tail.strip())
+                            yield {"type": "content", "text": tail}
+                if suppress_reasoning:
+                    from .chat_logic import strip_thinking
+                    visible = strip_thinking("".join(buffered_content))
+                    content_seen = bool(visible.strip())
+                    if content_seen:
+                        yield {"type": "content", "text": visible}
                 if self.last_completion is None:
                     self._record_completion(None, content_seen, reasoning_seen or bool(self.last_thinking))
                 if not content_seen:
                     raise AIError("Il modello ha terminato senza contenuto")
-                if restorer:
-                    tail = restorer.flush()
-                    if tail:
-                        yield {"type": "content", "text": tail}
                 attempt["status"] = "succeeded"
                 self._attempt_report(attempt)
                 return
@@ -1673,7 +1692,7 @@ class AIService:
 
     def _stream_llamacpp(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         client = self._llamacpp_client(httpx.Timeout(self._int_config("ai_timeout_seconds", 120, 10, 600), connect=10.0))
-        system_prompt = self._apply_no_think(system_prompt)
+        system_prompt = self._apply_no_think(system_prompt, model or "")
         yield from self._iter_chat_stream(client, model or "default", system_prompt, user_message, max_tokens=max_tokens, history=history)
 
     def _stream_openai_compatible(self, provider, user_message, system_prompt, model, max_tokens: int = None, history=None):

@@ -22,6 +22,7 @@ from backend.reasoning_profiles import (
     mark_openrouter_mandatory_reasoning,
 )
 from backend.ai_service import AIService
+from types import SimpleNamespace
 
 
 class _AI:
@@ -95,6 +96,80 @@ def test_stream_keeps_reasoning_when_it_is_on():
     chunks = [_chunk(reasoning="native secret"), _chunk(content="visible answer", finish_reason="stop")]
     items = list(ai._iter_chat_stream(_client(chunks), "test-model", "system", "user"))
     assert [item["text"] for item in items if item["type"] == "reasoning"] == ["native secret"]
+
+
+def test_no_think_token_is_only_sent_to_qwen3_llama_cpp():
+    ai = _bare_ai()
+    ai._disable_thinking = True
+    assert ai._apply_no_think("system", "qwen3.8:latest") == "system\n\n/no_think"
+    assert ai._apply_no_think("system", "mistral") == "system"
+    assert ai._apply_ollama_thinking_directive("system") == "system"
+    ai._disable_thinking = False
+    assert ai._apply_no_think("system", "qwen3.8:latest") == "system"
+
+
+def _stream_service(chunks, disabled=True):
+    ai = _bare_ai()
+    ai._disable_thinking = disabled
+    ai.personal_target = None
+    ai.chatgpt_model = None
+    ai.last_completion = None
+    ai._targets = lambda *args: [("test", "model")]
+    prepared = SimpleNamespace(stream_restorer=lambda: None, restore=lambda value: value)
+    ai._attempt_input = lambda *args: ({"stream": lambda *a, **kw: iter(chunks)}, None, "user", "system", None, prepared)
+    ai._attempt_report = lambda attempt: None
+    ai._record_completion = lambda *args: None
+    return ai
+
+
+def test_reasoning_off_buffers_orphan_tags_before_they_can_reach_chat():
+    consumed = []
+    def provider():
+        for part in ["English internal instructions", "</thi", "nk>", "Risposta italiana."]:
+            consumed.append(part)
+            yield {"type": "content", "text": part}
+    ai = _stream_service(provider())
+    stream = ai.stream_response("user", "system", "generic")
+    first = next(stream)
+    assert len(consumed) == 4
+    assert first == {"type": "content", "text": "Risposta italiana."}
+    assert list(stream) == []
+
+
+def test_reasoning_off_strips_analysis_and_preserves_ordinary_prose():
+    for parts, expected in [
+        (["<analysis>private", " thought</analysis>", "Risposta."], "Risposta."),
+        (["Una risposta", " normale."], "Una risposta normale."),
+    ]:
+        ai = _stream_service({"type": "content", "text": part} for part in parts)
+        assert ''.join(item['text'] for item in ai.stream_response('u', 's', 'generic')) == expected
+
+
+def test_reasoning_on_keeps_incremental_content():
+    consumed = []
+    def provider():
+        for part in ['prima ', 'dopo']:
+            consumed.append(part)
+            yield {'type': 'content', 'text': part}
+    stream = _stream_service(provider(), disabled=False).stream_response('u', 's', 'generic')
+    assert next(stream)['text'] == 'prima '
+    assert consumed == ['prima ']
+    assert next(stream)['text'] == 'dopo'
+
+
+def test_interrupted_hidden_output_does_not_escape_and_can_use_fallback():
+    def interrupted(*args, **kwargs):
+        yield {'type': 'content', 'text': 'Unfinished private thought'}
+        raise RuntimeError('interrupted')
+    def fallback(*args, **kwargs):
+        yield {'type': 'content', 'text': 'Risposta di riserva'}
+    ai = _stream_service([])
+    ai._targets = lambda *args: [('first', 'one'), ('second', 'two')]
+    prepared = SimpleNamespace(stream_restorer=lambda: None, restore=lambda value: value)
+    ai._attempt_input = lambda provider, *args: ({'stream': interrupted if provider == 'first' else fallback}, None, 'u', 's', None, prepared)
+    items = list(ai.stream_response('u', 's', 'generic'))
+    assert items == [{'type': 'content', 'text': 'Risposta di riserva'}]
+    assert [attempt['status'] for attempt in ai.last_attempts] == ['failed', 'succeeded']
 
 
 def _bare_ai():

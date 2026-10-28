@@ -1,3 +1,17 @@
+# Handoff 28 ottobre 2026: reasoning disattivato in chat
+
+- `fix/reasoning-chat-universale`: gli stream con ragionamento disattivato
+  vengono filtrati prima della visualizzazione; tag analysis, chiusure orfane
+  e canali nativi restano separati. La risposta può arrivare tutta insieme.
+- `/no_think` è riservato a Qwen3 su llama.cpp; Ollama usa il parametro nativo.
+  Testi interni senza marcatori non si possono distinguere con certezza.
+- 162 test su SQLite, PostgreSQL e immagine Docker di produzione; guidance
+  allineata e immagine backend di produzione ricostruita. Il deploy portable
+  non richiede `sudo ./update_nginx.sh`.
+
+
+---
+
 # Handoff 28 ottobre 2026: finalizzazione consiglio orientativo
 
 - PR #648: risposta di salvataggio completa, blocco delle revisioni concorrenti,
