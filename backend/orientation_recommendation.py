@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from .ai_service import AIService
 from . import models
 from .class_council import _summaries, council_overview
+from .privacy.types import Principal, PrivacyContext, PrivacyPurpose, PrivacyRole
 
 # Niente documenti word-of-mouth: il contesto entra compatto e tagliato dal fondo.
 MAX_CONTEXT_CHARS = 9000
@@ -78,12 +79,21 @@ def draft_prompt(group_name: str, display_name: str, material: str) -> str:
 
 
 def generate_draft(db: Session, group, username: str, display_name: str,
-                   teacher_username: str) -> str | None:
+                   teacher_username: str, *, actor_role: PrivacyRole = PrivacyRole.TEACHER,
+                   auth_provider: str = "backend", origin: str = "tunnel") -> str | None:
     """Bozza assistita dal provider attivo; None se il modello non risponde."""
     material = _student_material(db, group, username)
     if not material:
         return None
     ai = AIService(db, username=teacher_username or None)
+    # The request is initiated by the teacher but its data belongs to the
+    # student: purpose checks and audit must refer to that student, not the
+    # teacher's own guided-chat consent.
+    ctx = PrivacyContext(
+        Principal(teacher_username, actor_role, auth_provider, origin),
+        username, PrivacyPurpose.ORIENTATION.value, f"orientation:{group.id}:{username}", "it",
+    )
+    ai.privacy_context = lambda: ctx
     prompt = draft_prompt(group.name, display_name, material)
     try:
         answer = ai.get_response(prompt, DRAFT_SYSTEM_PROMPT, "generic", max_tokens=MAX_DRAFT_TOKENS)

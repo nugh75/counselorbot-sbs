@@ -8,12 +8,14 @@ salvataggio esplicito. Mai visibile allo studente o al link del consiglio.
 from datetime import UTC, datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from .. import auth, database, db_compat, models, orientation_recommendation, pdf_generator
 from ..group_visibility import _username
+from ..privacy.types import PrivacyRole
+from ..request_origin import request_origin
 from .groups import _require_visible_group
 
 router = APIRouter()
@@ -190,15 +192,19 @@ def put_recommendation(group_id: int, username: str, payload: RecommendationUpda
 
 
 @router.post("/teacher/groups/{group_id}/orientation-recommendations/{username}/ai-draft")
-async def create_ai_draft(group_id: int, username: str,
+async def create_ai_draft(group_id: int, username: str, request: Request,
                           current_user=Depends(auth.get_current_plan_manager),
                           db: Session = Depends(get_db)):
     """Bozza proposta dal modello: non viene mai salvata da sola."""
     group = _require_visible_group(db, current_user, group_id)
     _find_member_row(db, group_id, username.strip())
     display_name = _display_names(db, [username]).get(username) or username
+    role = PrivacyRole.ADMIN if current_user.get("is_admin") else (
+        PrivacyRole.RESEARCHER if current_user.get("is_researcher") else PrivacyRole.TEACHER)
     draft = orientation_recommendation.generate_draft(
-        db, group, username.strip(), display_name, _username(current_user) or "")
+        db, group, username.strip(), display_name, _username(current_user) or "",
+        actor_role=role, auth_provider=current_user.get("auth_provider") or "proxy",
+        origin=request_origin(request.headers).origin)
     if draft is None:
         raise HTTPException(status_code=502, detail="orientation_draft_unavailable")
     return {"draft": draft}

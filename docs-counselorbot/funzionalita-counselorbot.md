@@ -1692,8 +1692,10 @@ the only output is the PDF a teacher downloads explicitly («Scarica PDF»). The
 button asks the model for a proposal built ONLY from data the teacher already sees in
 the council view — questionnaire results and their report summaries from this class,
 operational-plan progress, assignments with shared submissions and teacher feedback,
-and class-shared goals (the personal notebook and results from other classes are excluded) — with a prompt that forbids invented data and family
-references; the proposal is shown for review, «Use draft» copies it into the editable
+and class-shared goals (the personal notebook and results from other classes are excluded).
+The privacy gateway identifies the student as the data subject and the teacher as the
+requesting actor, with the orientation purpose; strict policy can block generation.
+The prompt forbids invented data and family references; the proposal is shown for review, «Use draft» copies it into the editable
 text, and saving remains an explicit action that the teacher flags as born from an AI
 draft. Saves take the current revision: a stale save answers 409 so the teacher can reload; switching students warns about
 unsaved edits or proposals, including before leaving the tab. Documents for former members remain readable and downloadable but cannot

@@ -51,8 +51,10 @@ Tutte sotto `/api/teacher/groups/{group_id}/orientation-recommendations`:
   alle somministrazioni collegate alla classe; il taccuino personale e i
   risultati di altre classi non sono inclusi. Contesto massimo: 9000 caratteri.
 - Chiamata: `AIService.get_response` (percorso ordinario del gateway P6),
-  prompt di sistema dedicato che vieta dati inventati e riferimenti alla
-  famiglia; output in italiano, entro ~350 parole.
+  con docente come autore, studente come soggetto e finalità `orientation`.
+  In modalità strict la policy può bloccare la generazione. Il prompt di
+  sistema vieta dati inventati e riferimenti alla famiglia; output in italiano,
+  entro ~350 parole.
 - La bozza entra nel documento solo con «Usa bozza» nella scheda, che copia il
   testo nell'editor in revisione del docente; il salvataggio resta esplicito.
 

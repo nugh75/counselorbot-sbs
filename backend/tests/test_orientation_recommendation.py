@@ -172,6 +172,9 @@ def test_ai_draft_proposes_but_never_saves(api):
     draft = answer.json()["draft"]
     assert "Bozza proposta" in draft
     assert ai.return_value.get_response.call_count == 1
+    context = ai.return_value.privacy_context()
+    assert context.principal.username == "teacher" and context.principal.role.value == "teacher"
+    assert context.principal.origin == "tunnel" and context.subject == "alice" and context.purpose == "orientation"
     prompt, system = ai.return_value.get_response.call_args[0][:2]
     # Il materiale arriva dalle stesse fonti del pannello del docente.
     assert "RISULTATI QUESTIONARI" in prompt and "QSAr" in prompt
