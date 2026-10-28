@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { orientationRecText, type OrientationRecTextKey } from '@/lib/i18n-orientation-rec';
+import { useDraftGuard } from '@/lib/use-draft-guard';
 import {
     parseDraft, parseRecommendationDoc, parseRecommendationList,
     type RecommendationDoc, type RecommendationSummary,
@@ -43,10 +44,33 @@ export function OrientationTab({ groupId }: { groupId: number }) {
     const [draft, setDraft] = useState('');
     const [notice, setNotice] = useState<'' | 'saved' | 'saveError' | 'conflict' | 'detailLoadError' | 'generateError' | 'downloadError'>('');
     const pending = useRef<AbortController | null>(null);
+    const dirty = !!doc && (content !== doc.content || status !== doc.status || draftUsed !== doc.ai_draft_used || !!draft);
+    useDraftGuard(dirty || busy || draftBusy, l('discardChanges'), { blocked: busy || draftBusy });
 
     useEffect(() => () => pending.current?.abort(), []);
+    useEffect(() => {
+        if (!dirty && !busy && !draftBusy) return;
+        const guardTab = (event: MouseEvent) => {
+            const tab = event.target instanceof Element ? event.target.closest('[id^="class-tab-"][aria-selected="false"]') : null;
+            if (tab && (busy || draftBusy || !window.confirm(orientationRecText(lang, 'discardChanges')))) {
+                event.preventDefault(); event.stopPropagation();
+            }
+        };
+        const guardTabKeys = (event: KeyboardEvent) => {
+            if (!(event.target instanceof Element) || !event.target.closest('#class-tab-orientation')
+                || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            if (busy || draftBusy || !window.confirm(orientationRecText(lang, 'discardChanges'))) {
+                event.preventDefault(); event.stopPropagation();
+            }
+        };
+        document.addEventListener('click', guardTab, true);
+        document.addEventListener('keydown', guardTabKeys, true);
+        return () => { document.removeEventListener('click', guardTab, true); document.removeEventListener('keydown', guardTabKeys, true); };
+    }, [dirty, busy, draftBusy, lang]);
 
     const openStudent = async (student: RecommendationSummary) => {
+        if (busy || draftBusy) return;
+        if (dirty && !window.confirm(l('discardChanges'))) return;
         pending.current?.abort();
         const controller = new AbortController();
         pending.current = controller;
@@ -69,7 +93,7 @@ export function OrientationTab({ groupId }: { groupId: number }) {
     };
 
     const save = async (nextStatus: RecommendationDoc['status'] | null) => {
-        if (!username || busy) return;
+        if (!username || busy || draftBusy || !doc?.is_member) return;
         setBusy(true); setNotice('');
         try {
             const res = await apiFetch(`/api/teacher/groups/${groupId}/orientation-recommendations/${encodeURIComponent(username)}`, {
@@ -91,7 +115,7 @@ export function OrientationTab({ groupId }: { groupId: number }) {
     };
 
     const generate = async () => {
-        if (!username || draftBusy) return;
+        if (!username || draftBusy || busy || !doc?.is_member) return;
         if ((content || '').trim() && !window.confirm(l('generateConfirm'))) return;
         setDraftBusy(true); setNotice(''); setDraft('');
         try {
@@ -155,7 +179,7 @@ export function OrientationTab({ groupId }: { groupId: number }) {
                 {list.length === 0 && students.data.length > 0 && <p className="text-sm text-slate-500">{l('search')}</p>}
                 {list.length > 0 && <ul className="divide-y divide-slate-100">
                     {list.map(row => <li key={row.username}>
-                        <button type="button" onClick={() => void openStudent(row)}
+                        <button type="button" disabled={busy || draftBusy} onClick={() => void openStudent(row)}
                             aria-pressed={username === row.username}
                             className={`min-h-[44px] w-full space-y-1 rounded-md px-2 py-2 text-left text-sm ${username === row.username ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}>
                             <span className="block font-medium text-slate-800">{row.display_name}</span>
@@ -193,7 +217,8 @@ export function OrientationTab({ groupId }: { groupId: number }) {
                             {draftUsed && <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">{l('aiDrag')}</span>}
                         </div>
                     </div>
-                    <Button variant="secondary" disabled={draftBusy} onClick={() => void generate()}>
+                    {!doc?.is_member && <p className="text-sm text-slate-600">{l('historical')}</p>}
+                    <Button variant="secondary" disabled={draftBusy || busy || !doc?.is_member} onClick={() => void generate()}>
                         {l(draftBusy ? 'generating' : 'generate')}
                     </Button>
                     {draft && <div role="status" className="space-y-2 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
@@ -201,13 +226,13 @@ export function OrientationTab({ groupId }: { groupId: number }) {
                         <p className="whitespace-pre-wrap rounded-md bg-white p-3 text-sm text-slate-700">{draft}</p>
                         <p className="text-xs text-indigo-700">{l('draftReady')}</p>
                         <div className="flex flex-wrap gap-2">
-                            <Button onClick={() => { setContent(draft); setDraftUsed(true); setDraft(''); }}>{l('useIt')}</Button>
-                            <Button variant="secondary" onClick={() => setDraft('')}>{l('discard')}</Button>
+                            <Button disabled={busy} onClick={() => { setContent(draft); setDraftUsed(true); setDraft(''); }}>{l('useIt')}</Button>
+                            <Button variant="secondary" disabled={busy} onClick={() => setDraft('')}>{l('discard')}</Button>
                         </div>
                     </div>}
                     <label className="block space-y-1">
                         <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{l('content')}</span>
-                        <textarea value={content} onChange={event => setContent(event.target.value)}
+                        <textarea value={content} disabled={busy || !doc?.is_member} onChange={event => setContent(event.target.value)}
                             rows={14} placeholder={l('contentPlaceholder')}
                             className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm leading-6" />
                     </label>
@@ -220,16 +245,16 @@ export function OrientationTab({ groupId }: { groupId: number }) {
                         {notice === 'downloadError' && l('downloadError')}
                     </p>}
                     <div className="flex flex-wrap items-center gap-2">
-                        <Button disabled={busy || (doc !== null && content === doc.content && status === doc.status && draftUsed === doc.ai_draft_used)}
+                        <Button disabled={busy || draftBusy || !doc?.is_member || !content.trim() || (doc !== null && content === doc.content && status === doc.status && draftUsed === doc.ai_draft_used)}
                             onClick={() => void save(status ?? 'draft')}>
                             {l(busy ? 'saving' : 'save')}
                         </Button>
                         {status === 'final'
-                            ? <Button variant="secondary" disabled={busy || !content.trim()} onClick={() => void save('draft')}>{l('backToDraft')}</Button>
-                            : <Button variant="secondary" disabled={busy || !content.trim()}
+                            ? <Button variant="secondary" disabled={busy || draftBusy || !doc?.is_member || !content.trim()} onClick={() => void save('draft')}>{l('backToDraft')}</Button>
+                            : <Button variant="secondary" disabled={busy || draftBusy || !doc?.is_member || !content.trim()}
                                 onClick={() => { if (window.confirm(l('finalizeConfirm'))) void save('final'); }}>
                                 {l('finalize')}</Button>}
-                        <Button variant="secondary" disabled={!content.trim()} onClick={() => void download()}>{l('download')}</Button>
+                        <Button variant="secondary" disabled={!doc?.content.trim()} onClick={() => void download()}>{l('download')}</Button>
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{l('internalBadge')}</span>
                     </div>
                 </div>}

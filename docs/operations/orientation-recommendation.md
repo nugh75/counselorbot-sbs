@@ -26,9 +26,10 @@ Contratto runtime del 28/10/2026, branch `feature/consiglio-orientativo`.
 - Visibilità della classe: `_require_visible_group` (`routes/groups.py`) —
   proprietario, co-docenti (`GroupShare`) e amministratori; chi non la vede
   risponde 404, come ogni altra rotta di classe.
-- Studente: solo membri attivi (`GroupMembership`, 404
+- Scrittura e generazione: solo membri attivi (`GroupMembership`, 404
   `orientation_student_not_found` per un nome fuori classe). Nell'elenco conta
-  l'unione di iscritti e righe: chi ha lasciato la classe resta leggibile.
+  l'unione di iscritti e righe: il documento di chi ha lasciato la classe resta
+  leggibile ed esportabile, senza modifiche o generazione AI. `is_member` distingue i casi.
 
 ## API
 
@@ -46,9 +47,9 @@ Tutte sotto `/api/teacher/groups/{group_id}/orientation-recommendations`:
 
 - Contesto: `backend/orientation_recommendation.py` costruisce il materiale
   dalla stessa base dati del pannello del docente — `council_overview` (#422)
-  per risultati/sintesi, piani, assegnazioni e obiettivi condivisi, più
-  l'ultima revisione del taccuino (`student_context.latest_learner_profile`),
-  compattato a 9000 caratteri.
+  per piani, assegnazioni e obiettivi condivisi. Risultati e sintesi sono limitati
+  alle somministrazioni collegate alla classe; il taccuino personale e i
+  risultati di altre classi non sono inclusi. Contesto massimo: 9000 caratteri.
 - Chiamata: `AIService.get_response` (percorso ordinario del gateway P6),
   prompt di sistema dedicato che vieta dati inventati e riferimenti alla
   famiglia; output in italiano, entro ~350 parole.
@@ -80,5 +81,5 @@ Tutte sotto `/api/teacher/groups/{group_id}/orientation-recommendations`:
   consiglio (#422), nei PDF delle letture, in nessun esportato di classe.
 - `ai_draft_used` è dichiarativo (lo afferma la docenza); non ripercorre la
   fonte del testo.
-- Nessun confronto tra classi, nessun modello dati aggregato, nessun
-  consenso: il documento usa solo dati già visibili alla stessa docenza.
+- Nessun confronto tra classi o modello dati aggregato. Il documento usa solo
+  dati della classe e non richiede accesso al taccuino personale.

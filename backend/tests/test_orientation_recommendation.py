@@ -30,12 +30,19 @@ def api(monkeypatch):
         other = models.StudentGroup(name="Other class", code="SYN-ORT-OT", owner_username="colleague")
         db.add_all([group, other])
         db.flush()
+        plan = models.AdministrationPlan(code="SYN-ORT-PLAN", title="Classe", instrument_code="QSAr", group_id=group.id)
+        other_plan = models.AdministrationPlan(code="SYN-ORT-OTHER", title="Altra classe", instrument_code="QSA", group_id=other.id)
+        db.add_all([plan, other_plan])
+        db.flush()
         db.add_all([
             models.GroupMembership(group_id=group.id, username="alice"),
             models.GroupMembership(group_id=group.id, username="bob"),
             models.GroupMembership(group_id=other.id, username="carol"),
             models.QuestionnaireResult(session_id="s-alice", questionnaire_type="QSAr", username="alice",
-                                       scores={"C1": 7}),
+                                       scores={"C1": 7}, administration_plan_id=plan.id),
+            models.QuestionnaireResult(session_id="s-private", questionnaire_type="PRIVATE_OTHER_CLASS", username="alice",
+                                       scores={"private": 99}, administration_plan_id=other_plan.id),
+            models.LearnerProfileRevision(username="alice", data={"goal": "PRIVATE_NOTEBOOK_MARKER"}, source="manual"),
         ])
         db.commit()
         identity = dict(TEACHER)
@@ -82,6 +89,7 @@ def test_first_save_creates_the_document_and_grows_the_revision(api):
     body = created.json()
     assert body["revision"] == 1 and body["status"] == "draft"
     assert body["ai_draft_used"] is True and body["created_by"] == "teacher"
+    assert body["group_name"] == group.name and body["display_name"] == "alice" and body["is_member"] is True
     rows = db.query(models.OrientationRecommendation).filter_by(group_id=group.id).all()
     assert len(rows) == 1 and rows[0].username == "alice"
     saved = client.get(f"/teacher/groups/{group.id}/orientation-recommendations/alice").json()
@@ -106,6 +114,28 @@ def test_stale_revision_conflicts_and_is_never_lost(api):
     })
     assert ok.json()["revision"] == first["revision"] + 1
     assert ok.json()["content"] == "Versione seconda docente"
+
+
+def test_new_document_rejects_nonzero_revision(api):
+    client, db, _identity, _ai, group, _other = api
+    response = client.put(f"/teacher/groups/{group.id}/orientation-recommendations/alice", json={"content": "Testo", "revision": 9})
+    assert response.status_code == 409
+    assert db.query(models.OrientationRecommendation).filter_by(group_id=group.id).count() == 0
+
+
+def test_former_member_document_is_read_only_and_exportable(api):
+    client, db, _identity, _ai, group, _other = api
+    url = f"/teacher/groups/{group.id}/orientation-recommendations/alice"
+    assert client.put(url, json={"content": "Documento storico", "revision": 0}).status_code == 200
+    db.query(models.GroupMembership).filter_by(group_id=group.id, username="alice").delete()
+    db.commit()
+    listed = client.get(f"/teacher/groups/{group.id}/orientation-recommendations").json()
+    assert next(row for row in listed if row["username"] == "alice")["is_member"] is False
+    read = client.get(url)
+    assert read.status_code == 200 and read.json()["content"] == "Documento storico" and read.json()["is_member"] is False
+    assert client.get(url + "/pdf").status_code == 200
+    assert client.put(url, json={"content": "Modifica", "revision": 1}).status_code == 404
+    assert client.post(url + "/ai-draft").status_code == 404
 
 
 def test_status_moves_final_and_back_with_its_stamp(api):
@@ -145,7 +175,9 @@ def test_ai_draft_proposes_but_never_saves(api):
     prompt, system = ai.return_value.get_response.call_args[0][:2]
     # Il materiale arriva dalle stesse fonti del pannello del docente.
     assert "RISULTATI QUESTIONARI" in prompt and "QSAr" in prompt
-    assert "TACCUINO DELLO STUDENTE" not in prompt  # nessun taccuino nel fixture
+    assert "TACCUINO DELLO STUDENTE" not in prompt and "PRIVATE_NOTEBOOK_MARKER" not in prompt
+    assert "PRIVATE_OTHER_CLASS" not in prompt and "private" not in prompt
+    assert "PRIVATE_NOTEBOOK_MARKER" not in answer.text and "PRIVATE_OTHER_CLASS" not in answer.text
     assert db.query(models.OrientationRecommendation).filter_by(group_id=group.id).first() is None
     # Nessun testo dal modello: 502, il documento resta intatto.
     ai.return_value.get_response.return_value = ""

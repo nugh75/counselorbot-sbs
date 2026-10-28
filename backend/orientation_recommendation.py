@@ -2,14 +2,14 @@
 
 La bozza non inventa nulla: costruisce il materiale dalla stessa base di dati che
 il docente già vede (sintesi dei questionari, piani, assegnazioni, obiettivi
-condivisi con la classe, taccuino), sempre tramite il gateway privacy. Il testo
+condivisi con la classe), sempre tramite il gateway privacy. Il testo
 generato resta una proposta: entra nel documento solo se la docenza lo salva.
 """
 from sqlalchemy.orm import Session
 
 from .ai_service import AIService
-from .class_council import council_overview
-from .student_context import latest_learner_profile
+from . import models
+from .class_council import _summaries, council_overview
 
 # Niente documenti word-of-mouth: il contesto entra compatto e tagliato dal fondo.
 MAX_CONTEXT_CHARS = 9000
@@ -29,16 +29,6 @@ DRAFT_SYSTEM_PROMPT = (
 )
 
 
-def _notes(db: Session, username: str) -> str:
-    profile = latest_learner_profile(db, username)
-    if not (profile and isinstance(profile.data, dict)):
-        return ""
-    value = " - ".join(
-        f"{key}: {item}" for key, item in profile.data.items() if str(item or "").strip()
-    )
-    return value[:1200]
-
-
 def _section(header: str, lines: list[str], empty: str) -> str:
     return header + "\n" + "\n".join(lines) if lines else header + "\n- " + empty
 
@@ -49,11 +39,18 @@ def _student_material(db: Session, group, username: str) -> str:
     student = next((s for s in overview["students"] if s["username"] == username), None)
     if student is None:
         return ""
+    # council_overview also contains historical results from other contexts.
+    # A recommendation may only send this class's administrations to the AI.
+    results = (db.query(models.QuestionnaireResult)
+        .join(models.AdministrationPlan, models.QuestionnaireResult.administration_plan_id == models.AdministrationPlan.id)
+        .filter(models.QuestionnaireResult.username == username, models.AdministrationPlan.group_id == group.id)
+        .order_by(models.QuestionnaireResult.submitted_at.desc()).all())
+    summaries = _summaries(db, [result.session_id for result in results])
     sections = [
         _section("[RISULTATI QUESTIONARI]", [
-            f"- {r['questionnaire_type']} ({r['submitted_at'] or 'senza data'}): "
-            f"{r['summary'] or ('punteggi ' + str(r['scores']) if r['scores'] else 'nessun dato')}"
-            for r in student["results"]
+            f"- {r.questionnaire_type} ({r.submitted_at or 'senza data'}): "
+            f"{summaries.get(r.session_id) or ('punteggi ' + str(r.scores) if r.scores else 'nessun dato')}"
+            for r in results
         ], "nessun risultato"),
         _section("[PIANI OPERATIVI]", [
             f"- {p['title']}: {p['done']}/{p['total']} passi svolti" for p in student["plans"]
@@ -67,9 +64,6 @@ def _student_material(db: Session, group, username: str) -> str:
             f"- {g['title']} ({g['status']}, criteri: {g['criteria'] or '—'})" for g in student["goals"]
         ], "nessun obiettivo"),
     ]
-    notes = _notes(db, username)
-    if notes:
-        sections.insert(0, f"[TACCUINO DELLO STUDENTE]\n- {notes}")
     material = "\n\n".join(sections)
     return material[:MAX_CONTEXT_CHARS]
 

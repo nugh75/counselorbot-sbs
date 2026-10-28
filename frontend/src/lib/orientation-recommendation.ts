@@ -9,6 +9,7 @@ export interface RecommendationSummary {
     status: RecommendationStatus | null;
     revision: number;
     ai_draft_used: boolean;
+    is_member: boolean;
 }
 
 export interface RecommendationDoc extends RecommendationSummary {

@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from .. import auth, database, models, orientation_recommendation, pdf_generator
+from .. import auth, database, db_compat, models, orientation_recommendation, pdf_generator
 from ..group_visibility import _username
 from .groups import _require_visible_group
 
@@ -64,16 +64,14 @@ def _members(db: Session, group_id: int) -> list:
     ]
 
 
-def _find_member_row(db: Session, group_id: int, username: str) -> models.OrientationRecommendation | None:
-    """La riga del documento, se esiste; il membro deve esistere comunque."""
+def _find_member_row(db: Session, group_id: int, username: str, *, allow_historical: bool = False) -> models.OrientationRecommendation | None:
+    """I documenti storici restano leggibili, ma solo gli iscritti sono modificabili."""
     member = (
         db.query(models.GroupMembership.username)
         .filter(models.GroupMembership.group_id == group_id, models.GroupMembership.username == username)
         .first()
     )
-    if member is None:
-        raise HTTPException(status_code=404, detail="orientation_student_not_found")
-    return (
+    row = (
         db.query(models.OrientationRecommendation)
         .filter(
             models.OrientationRecommendation.group_id == group_id,
@@ -81,11 +79,14 @@ def _find_member_row(db: Session, group_id: int, username: str) -> models.Orient
         )
         .first()
     )
+    if member is None and (not allow_historical or row is None):
+        raise HTTPException(status_code=404, detail="orientation_student_not_found")
+    return row
 
 
 def _load(db: Session, identity, group_id: int, username: str) -> tuple:
     group = _require_visible_group(db, identity, group_id)
-    row = _find_member_row(db, group_id, username)
+    row = _find_member_row(db, group_id, username, allow_historical=True)
     if row is None:
         raise HTTPException(status_code=404, detail="orientation_not_found")
     return group, row
@@ -103,13 +104,13 @@ async def list_recommendations(group_id: int, current_user=Depends(auth.get_curr
                                db: Session = Depends(get_db)):
     _require_visible_group(db, current_user, group_id)
     members = _members(db, group_id)
-    names = _display_names(db, members)
     rows = (
         db.query(models.OrientationRecommendation)
         .filter(models.OrientationRecommendation.group_id == group_id)
         .all()
     )
     by_username = {row.username: _serialize_summary(row) for row in rows}
+    names = _display_names(db, list(set(members) | set(by_username)))
     # Unione di iscritti e righe: una riga orfana non sparisce dal tab del docente.
     usernames = sorted(set(members) | set(by_username),
                        key=lambda user: (names.get(user) or user).lower())
@@ -117,6 +118,7 @@ async def list_recommendations(group_id: int, current_user=Depends(auth.get_curr
         {
             "username": username,
             "display_name": names.get(username) or username,
+            "is_member": username in members,
             **(by_username.get(username) or {"status": None, "revision": 0, "ai_draft_used": False}),
         }
         for username in usernames
@@ -128,7 +130,7 @@ async def get_recommendation(group_id: int, username: str,
                              current_user=Depends(auth.get_current_plan_manager),
                              db: Session = Depends(get_db)):
     group = _require_visible_group(db, current_user, group_id)
-    row = _find_member_row(db, group_id, username)
+    row = _find_member_row(db, group_id, username, allow_historical=True)
     payload = _serialize(row) if row else {
         "group_id": group_id, "username": username, "content": "", "status": None,
         "ai_draft_used": False, "revision": 0, "updated_by": None, "final_at": None,
@@ -136,20 +138,24 @@ async def get_recommendation(group_id: int, username: str,
     }
     payload["display_name"] = _display_names(db, [username]).get(username) or username
     payload["group_name"] = group.name
+    payload["is_member"] = username in _members(db, group_id)
     return payload
 
 
 @router.put("/teacher/groups/{group_id}/orientation-recommendations/{username}")
-async def put_recommendation(group_id: int, username: str, payload: RecommendationUpdate,
+def put_recommendation(group_id: int, username: str, payload: RecommendationUpdate,
                              current_user=Depends(auth.get_current_plan_manager),
                              db: Session = Depends(get_db)):
     if payload.status is not None and payload.status not in VALID_STATUSES:
         raise HTTPException(status_code=422, detail="orientation_status_invalid")
     username = username.strip()
-    _require_visible_group(db, current_user, group_id)
+    db_compat.xact_lock(db, "orientation_recommendation", group_id, username)
+    group = _require_visible_group(db, current_user, group_id)
     existing = _find_member_row(db, group_id, username)
     actor = _username(current_user) or ""
     if existing is None:
+        if payload.revision != 0:
+            raise HTTPException(status_code=409, detail="orientation_conflict")
         row = models.OrientationRecommendation(
             group_id=group_id, username=username, content="", status="draft",
             created_by=actor, updated_by=actor, revision=1,
@@ -176,7 +182,11 @@ async def put_recommendation(group_id: int, username: str, payload: Recommendati
         row.final_by = None
     db.commit()
     db.refresh(row)
-    return _serialize(row)
+    return _serialize(row) | {
+        "display_name": _display_names(db, [username]).get(username) or username,
+        "group_name": group.name,
+        "is_member": True,
+    }
 
 
 @router.post("/teacher/groups/{group_id}/orientation-recommendations/{username}/ai-draft")

@@ -12,7 +12,7 @@ const texts = {
         'Internt dokument för klasskonferensen: en bedömning per elev, skriven av lärarna och exportbar som PDF. Den syns aldrig för eleven eller via konferenslänken.',
     ],
     privacy: [
-        'La bozza generata dal modello parla dei dati raccolti nel pianale e resta una proposta: entra nel documento solo quando la docenza la salva.',
+        'La bozza usa i dati della classe e resta una proposta: entra nel documento solo quando la docenza la salva.',
         'The model-generated draft only works on the data already collected and remains a proposal: it enters the document only when the teachers save it.',
         'El borrador generado por el modelo trabaja solo con los datos ya recogidos y sigue siendo una propuesta: entra en el documento solo cuando lo guarda el profesorado.',
         'La trame générée par le modèle ne s’appuie que sur les données déjà recueillies et reste une proposition : elle entre dans le document seulement si les enseignants l’enregistrent.',
@@ -29,6 +29,8 @@ const texts = {
     statusFinal: ['Documento chiuso', 'Closed document', 'Documento cerrado', 'Document clôturé', 'Abgeschlossenes Dokument', 'Avslutat dokument'],
     aiDrag: ['bozza AI riveduta', 'reviewed AI draft', 'borrador de IA revisado', 'proposition IA révisée', 'überarbeiteter KI-Entwurf', 'granskat AI-utkast'],
     selectHint: ['Scegli uno studente per scrivere o leggere il suo consiglio orientativo.', 'Choose a student to write or read their guidance recommendation.', 'Elige un estudiante para escribir o leer su consejo orientador.', 'Choisissez un élève pour rédiger ou lire sa recommandation d’orientation.', 'Wählen Sie eine/n Lernende/n, um die Orientierungsempfehlung zu schreiben oder zu lesen.', 'Välj en elev för att skriva eller läsa den studievägledande rekommendationen.'],
+    discardChanges: ['Ci sono modifiche o una proposta non salvate. Cambiare studente e perderle?', 'There are unsaved changes or a draft. Change student and discard them?', 'Hay cambios o un borrador sin guardar. ¿Cambiar de estudiante y descartarlos?', 'Des modifications ou une proposition ne sont pas enregistrées. Changer d’élève et les abandonner ?', 'Es gibt ungespeicherte Änderungen oder einen Entwurf. Lernende wechseln und verwerfen?', 'Det finns osparade ändringar eller ett utkast. Byta elev och förkasta dem?'],
+    historical: ['Studente non più iscritto: documento consultabile e scaricabile, ma non modificabile.', 'Former student: this document can be read and downloaded, but not edited.', 'Estudiante ya no inscrito: el documento se puede consultar y descargar, pero no modificar.', 'Ancien élève : le document peut être consulté et téléchargé, mais pas modifié.', 'Ehemalige Lernende: Das Dokument kann gelesen und heruntergeladen, aber nicht bearbeitet werden.', 'Tidigare elev: dokumentet kan läsas och laddas ned, men inte ändras.'],
     notFound: ['Documento non trovato. Riprova.', 'Document not found. Try again.', 'Documento no encontrado. Inténtalo de nuevo.', 'Document introuvable. Réessayez.', 'Dokument nicht gefunden. Versuchen Sie es erneut.', 'Dokumentet hittades inte. Försök igen.'],
     generate: ['Genera bozza', 'Generate draft', 'Generar borrador', 'Générer une trame', 'Entwurf erstellen', 'Skapa utkast'],
     generating: ['Generazione…', 'Generating…', 'Generando…', 'Génération…', 'Wird erstellt…', 'Skapar…'],
@@ -47,7 +49,7 @@ const texts = {
     discard: ['Ignora', 'Discard', 'Descartar', 'Ignorer', 'Verwerfen', 'Förkasta'],
     content: ['Testo del consiglio', 'Text of the recommendation', 'Texto del consejo', 'Texte de la recommandation', 'Text der Empfehlung', 'Text till rekommendationen'],
     contentPlaceholder: [
-        'Scrivi le valutazioni del consiglio di classe per questo studente: attitudini, scioglimento corretto dei metodi di studio, situazioni puntuali e orientamento per il prossimo anno.',
+        'Scrivi la valutazione del consiglio di classe: attitudini, punti di forza, metodo di studio, aspetti da migliorare e orientamento per il prossimo anno.',
         'Write the class council’s evaluation for this student: attitudes, strengths and growth areas, concrete notes and the orientation for next year.',
         'Escriba la valoración del consejo de clase para este estudiante: actitudes, puntos fuertes y de crecimiento, notas concretas y orientación para el próximo año.',
         'Rédigez l’évaluation du conseil de classe pour cet élève : attitudes, points forts et à consolider, notes concrètes et orientation pour l’année suivante.',
