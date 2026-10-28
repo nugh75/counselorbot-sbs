@@ -267,6 +267,65 @@ async function createFixture({
     return { context, page, errors, doneCalls };
 }
 
+test('forum completion is explicitly checked and can be cleared', async () => {
+    const forum = {id: 105, path_id: 1, position: 1, step_type: 'forum', tool_key: '', title: 'Discussione',
+        topic_id: 22, state: 'not_done', start_href: '/profilo/classi/10/forum?topic=22', can_self_mark: true};
+    const path = {...samplePath1, steps: [forum], next_step_id: 105, done: 0, total: 1};
+    const f = await createFixture({paths: [path]});
+    try {
+        await f.page.goto(`${origin}/profilo/piani-operativi`, {waitUntil: 'domcontentloaded'});
+        const checkbox = f.page.getByRole('checkbox', {name: 'Intervento concluso'});
+        await checkbox.click();
+        await checkbox.waitFor({state: 'visible'});
+        await f.page.waitForFunction(() => [...document.querySelectorAll('input[type=checkbox]')].some(input => input.checked));
+        await checkbox.click();
+        await f.page.waitForFunction(() => ![...document.querySelectorAll('input[type=checkbox]')].some(input => input.checked));
+        assert.deepEqual(f.doneCalls.map(call => call.method), ['POST', 'DELETE']);
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('a local questionnaire draft offers resume and a separate new attempt', async () => {
+    const step = {id: 106, path_id: 1, position: 1, step_type: 'questionnaire_administration', tool_key: '',
+        title: 'Questionario', state: 'not_done', start_href: '/profilo/piani-operativi/1/106', can_self_mark: false};
+    const f = await createFixture({paths: [{...samplePath1, steps: [step], next_step_id: 106, done: 0, total: 1}]});
+    const attempt = 'ab12ab12-ab12-ab12-ab12-ab12ab12ab12';
+    await f.page.addInitScript(id => sessionStorage.setItem(`counselorbot-it-step:student.fixture:1:106:attempt:${id}`,
+        JSON.stringify({answers: {1: 2}, updatedAt: 10})), attempt);
+    try {
+        await f.page.goto(`${origin}/profilo/piani-operativi`, {waitUntil: 'domcontentloaded'});
+        const card = f.page.getByTestId('class-path-hero-card');
+        await card.getByRole('link', {name: 'Riprendi'}).waitFor();
+        assert.equal(await card.getByRole('link', {name: 'Riprendi'}).getAttribute('href'), `/profilo/piani-operativi/1/106?attempt=${attempt}`);
+        assert.equal(await card.getByRole('link', {name: 'Rifai'}).getAttribute('href'), '/profilo/piani-operativi/1/106?attempt=new');
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('completed assignment opens a blank new attempt without withdrawing the shared one', async () => {
+    const step = {id: 107, path_id: 1, position: 1, step_type: 'assignment', tool_key: '', title: 'Attività',
+        assignment_id: 9, state: 'done', start_href: '/profilo/assegnazioni#assignment-9', can_self_mark: false};
+    const assignment = {id: 9, author_name: 'Docente', group_name: 'Classe', source_kind: 'goal', instructions: '',
+        created_at: '2026-10-01T10:00:00Z', revoked_at: null, snapshot: {title: 'Attività', description: '', details: ''}};
+    const work = {revision: 2, workspace_revision: 1, planned: true, action: {id: 'a', title: 'Attività', stage: 'todo', reflection: ''},
+        event: null, linked_goals: [], submission: {text: 'Consegna attuale'}, submitted_at: '2026-10-01T10:00:00Z', feedback: '', feedback_at: null,
+        history: [{id: 1, submission: {text: 'Consegna precedente'}, submitted_at: '2026-09-01T10:00:00Z', feedback: 'Vecchio riscontro'}]};
+    const f = await createFixture({paths: [{...samplePath1, steps: [step], next_step_id: null, done: 1, total: 1}], assignments: [assignment]});
+    await f.page.route('**/api/user/assignments/9/work', route => route.fulfill({json: work}));
+    try {
+        await f.page.goto(`${origin}/profilo/piani-operativi`, {waitUntil: 'domcontentloaded'});
+        const link = f.page.getByRole('link', {name: 'Rifai'});
+        assert.equal(await link.getAttribute('href'), '/profilo/assegnazioni?attempt=new#assignment-9');
+        await link.click();
+        await f.page.getByText('Consegna attuale', {exact: true}).waitFor();
+        assert.equal(await f.page.getByLabel('Testo da condividere').inputValue(), '');
+        await f.page.getByText('Restituzioni precedenti').click();
+        await f.page.getByText('Consegna precedente', {exact: true}).waitFor();
+        assert.ok(await f.page.getByText('Vecchio riscontro', {exact: true}).isVisible());
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
 test('student home resumes questionnaire and guided chats alongside personal work', async () => {
     const frozen = [
         { session_id: 'qsa-1', questionnaire_type: 'QSA', label: 'QSA — Profilo', current_phase: 'intro' },
@@ -404,10 +463,10 @@ test('Home with active class path: heading first, folded plan, catalog always vi
         await planToggle.click();
         assert.equal(await planToggle.getAttribute('aria-expanded'), 'true');
         assert.equal(await heroCard.getByRole('link', { name: 'Riapri' }).getAttribute('href'), '/bussola');
-        assert.equal(await heroCard.getByRole('link', { name: 'Inizia' }).first().getAttribute('href'), '/?start=QSA&from=plan');
+        assert.equal(await heroCard.getByRole('link', { name: 'Inizia' }).first().getAttribute('href'), '/?start=QSA&from=plan&path_id=1&path_step_id=102');
         const currentStep = heroCard.getByText('Compilazione QSA');
         await currentStep.waitFor({ state: 'visible' });
-        const currentBadge = heroCard.getByText('In corso');
+        const currentBadge = heroCard.getByText('Prossimo passo');
         await currentBadge.waitFor({ state: 'visible' });
 
         // The rest of the page is never folded: no catalog toggle, catalog visible.

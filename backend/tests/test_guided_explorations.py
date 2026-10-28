@@ -146,9 +146,11 @@ def test_owned_freeze_roundtrip_restores_active_branch_and_drafts(tmp_path):
                     dict(role='assistant', content='Branch answer', explorationId='branch-one'),
                     dict(role='user', content='Later root')]
         payload = schemas.FrozenSessionCreate(session_id='branch-frozen', questionnaire_type='QSA',
-                    current_phase='test-final', messages=messages, guided_navigation=nav)
-        asyncio.run(freeze_session(payload, {'username': 'owner'}, db))
+                    current_phase='test-final', messages=messages, guided_navigation=nav, path_id=10, path_step_id=20)
+        summary = asyncio.run(freeze_session(payload, {'username': 'owner'}, db))
+        assert (summary.path_id, summary.path_step_id) == (10, 20)
         saved = asyncio.run(get_frozen_session(payload.session_id, {'username': 'owner'}, db))
+        assert (saved.path_id, saved.path_step_id) == (10, 20)
         assert saved.guided_navigation.checkpoints['test-final'].draft == 'Bozza padre'
         assert saved.guided_navigation.explorations[0].checkpoint.draft == 'Bozza ramo'
         assert saved.messages[2].explorationId == 'branch-one'

@@ -1,5 +1,31 @@
 # Analisi dei questionari nei piani operativi — #249
 
+## Tentativi e stato (28 ottobre 2026)
+
+- «Inizia», «Riprendi» e «Rifai» distinguono un passo nuovo, una sessione
+  sospesa e un nuovo tentativo. Le sessioni sospese autonome sono collegate al
+  piano e al passo esatti: quelle precedenti senza questa informazione restano
+  riprendibili dall'elenco generale, senza attribuzioni per solo strumento.
+- L'analisi può avere più sessioni per lo stesso risultato. `POST .../deep-dive`
+  accetta `attempt_id` UUID: ripetere la stessa richiesta restituisce lo stesso
+  tentativo; un UUID nuovo crea una nuova sessione. GET espone lo storico e il
+  completamento dell'ultima sessione. Un precedente completamento resta valido
+  per il progresso del piano anche quando il nuovo tentativo è in corso.
+- Prima di iniziare un nuovo tentativo da una chat aperta, la chat corrente viene
+  salvata; se il salvataggio fallisce il nuovo tentativo non parte. Le nuove
+  compilazioni usano una bozza separata. I messaggi e i risultati non vengono
+  sovrascritti; gli incontri conservano i propri dettagli.
+- La migrazione rimuove il vincolo che impediva più analisi dello stesso risultato:
+  su SQLite ricostruisce la tabella conservando righe e chiavi, su PostgreSQL
+  rimuove il vincolo. È ripetibile. Effettuare un backup prima del deploy: dopo
+  la creazione di più tentativi, una versione precedente non supporta il nuovo
+  modello; ripristinare il backup se serve tornare indietro.
+- Le restituzioni dei compiti precedenti e i relativi riscontri vengono conservati nello storico personale dello studente, anche dopo il ritiro; il docente continua a vedere soltanto la restituzione attualmente condivisa. Il nuovo tentativo apre un modulo vuoto senza ritirare automaticamente la consegna attuale. La nuova tabella è creata all’avvio; i contenuti sovrascritti prima di questo aggiornamento non sono recuperabili.
+- Le bozze dei questionari non ancora inviate sono riprendibili nella stessa scheda del browser in cui sono state compilate; le sessioni salvate sul server si riprendono anche da altri dispositivi.
+- Gli strumenti personali condivisi, come Linea del tempo, Azioni e Portfolio, riaprono gli stessi contenuti senza duplicarli.
+- Il forum usa una spunta esplicita dello studente, indipendente dalla moderazione;
+  vedere `path-forum-validation.md` per il passaggio dai vecchi stati automatici.
+
 ## Diagnosi e comportamento atteso
 
 Il selettore precedente ammetteva soltanto somministrazioni salvate; escludeva i passi appena aggiunti e i questionari pending dei modelli. Il menu delle chat autonome esclude correttamente i questionari, ma non offriva un ingresso indipendente per analizzarne una compilazione personale. Il risultato deve esistere all’avvio dello studente, non alla progettazione o pubblicazione del piano.
@@ -19,7 +45,7 @@ Il selettore precedente ammetteva soltanto somministrazioni salvate; escludeva i
 - «Reinserisci i dati» resta disponibile durante l'analisi, nelle scelte finali e
   quando il caricamento della pausa fallisce. La somministrazione offre la ripresa
   della propria ultima sessione valida, senza richiedere un'altra compilazione.
-- Una chat autonoma del piano offre «Riprendi chat» accanto al nuovo avvio;
+- Una chat autonoma del piano offre «Riprendi» accanto a «Rifai»;
   la ripresa conserva anche il ritorno al piano. Le sessioni di prova del docente
   sono escluse da questa scorciatoia.
 - I vecchi profili QPCC K1–K5 non sono convertiti né riutilizzati. Il piano spiega

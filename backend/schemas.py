@@ -1,6 +1,7 @@
 import json
 import re
 from datetime import date, datetime
+from uuid import UUID
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, StrictBool, StrictInt, model_validator, validator
@@ -1203,6 +1204,8 @@ class FrozenSessionMessage(BaseModel):
 class FrozenSessionCreate(BaseModel):
     guided_navigation: Optional[GuidedNavigation] = None
     session_id: str
+    path_id: Optional[int] = Field(default=None, gt=0)
+    path_step_id: Optional[int] = Field(default=None, gt=0)
     questionnaire_type: str
     messages: List[FrozenSessionMessage] = Field(default_factory=list)
     current_phase: str = Field(default="", max_length=200)
@@ -1263,6 +1266,8 @@ class FrozenSessionCreate(BaseModel):
 
 class FrozenSessionSummary(BaseModel):
     session_id: str
+    path_id: Optional[int] = None
+    path_step_id: Optional[int] = None
     questionnaire_type: str
     label: Optional[str] = None
     current_phase: str = ""
@@ -2054,7 +2059,8 @@ class GuidedResultsChatStepInput(PathStepFields):
 
 class ResultsChatStartInput(BaseModel):
     model_config = {"extra": "forbid"}
-    result_id: int = Field(gt=0)
+    result_id: Optional[int] = Field(default=None, gt=0)
+    attempt_id: Optional[UUID] = None
 
 
 class AssignmentPathStepInput(PathStepFields):
@@ -2183,6 +2189,7 @@ class ClassPathSummary(BaseModel):
 
 
 class StudentClassPathStep(BaseModel):
+    attempt_state: Optional[Literal["in_progress", "completed"]] = None
     id: int
     tool_key: Optional[str] = None
     step_type: str = "tool"

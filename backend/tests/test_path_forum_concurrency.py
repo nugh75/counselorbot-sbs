@@ -112,7 +112,7 @@ def test_hiding_waits_for_a_concurrent_path_save(monkeypatch):
         drop(engine, schema)
 
 
-def test_concurrent_replies_and_approval_settle_on_one_completion():
+def test_concurrent_replies_and_approval_wait_for_student_mark():
     assert os.environ["DATABASE_URL"] == "postgresql://c5_test@127.0.0.1:18650/counselorbot_test"
     schema = "tf154a_" + uuid.uuid4().hex
     engine, factory, make_app, group_id = committed_app(schema)
@@ -126,7 +126,7 @@ def test_concurrent_replies_and_approval_settle_on_one_completion():
             path = client.post(f"/teacher/groups/{group_id}/paths", json={"title": "Busy"}).json()
             path = client.put(f"/teacher/paths/{path['id']}", json={
                 "revision": path["revision"], "title": "Busy",
-                "steps": [{"step_type": "forum", "topic_id": topic["id"]}]}).json()
+                "steps": [{"step_type": "forum", "topic_id": topic["id"], "title": "Busy"}]}).json()
             assert client.post(f"/teacher/paths/{path['id']}/publish").status_code == 200
 
         def post(index):
@@ -149,9 +149,9 @@ def test_concurrent_replies_and_approval_settle_on_one_completion():
         assert [row.status_code for row in approvals] == [200] * 4
         with TestClient(student_app) as client:
             step = client.get("/user/paths").json()[0]["steps"][0]
-        assert step["state"] == "done" and step["completion_kind"] == "forum_reply"
-        with factory() as db:
-            first = min(row.created_at for row in db.query(models.ForumPost).all())
-        assert step["completion_at"].startswith(first.isoformat()[:19])
+            assert step["state"] == "not_done"
+            assert client.post(f"/user/paths/{path['id']}/steps/{step['id']}/done").status_code == 200
+            step = client.get("/user/paths").json()[0]["steps"][0]
+        assert step["state"] == "done" and step["source"] == "student"
     finally:
         drop(engine, schema)

@@ -183,3 +183,21 @@ export function administrationDraftKey(
 ): string {
   return `counselorbot-it-step:${encodeURIComponent(owner)}:${pathId}:${stepId}`;
 }
+
+/** A draft is local to this browser tab; completed entries live on the server. */
+export function latestAdministrationDraft(storage: Storage, owner: string, pathId: number, stepId: number): string | null {
+  const base = administrationDraftKey(owner, pathId, stepId);
+  let latest: { key: string; at: number } | null = null;
+  for (let index = 0; index < storage.length; index++) {
+    const key = storage.key(index);
+    if (!key || (key !== base && (!key.startsWith(`${base}:attempt:`)
+      || !/^[0-9a-f-]{36}$/i.test(key.slice(`${base}:attempt:`.length))))) continue;
+    try {
+      const row = JSON.parse(storage.getItem(key) || 'null');
+      if (!row || !(row.scores || row.saved || Object.keys(row.answers || {}).length)) continue;
+      const at = typeof row.updatedAt === 'number' ? row.updatedAt : 0;
+      if (!latest || at > latest.at) latest = {key, at};
+    } catch { /* Ignore malformed local drafts. */ }
+  }
+  return latest ? latest.key === base ? '' : latest.key.slice(`${base}:attempt:`.length) : null;
+}

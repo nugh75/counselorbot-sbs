@@ -91,6 +91,11 @@ def student_step(client, index=0):
     return client.get("/user/paths").json()[0]["steps"][index]
 
 
+def mark_forum(client, path, index=0):
+    response = client.post(f"/user/paths/{path['id']}/steps/{path['steps'][index]['id']}/done")
+    assert response.status_code == 200, response.text
+
+
 def teacher_cell(client, path, username="alice", index=0):
     progress = client.get(f"/teacher/paths/{path['id']}/progress").json()
     return next(row for row in progress["students"] if row["username"] == username)["cells"][index]
@@ -110,13 +115,13 @@ def settings(db, group, **values):
     db.commit()
 
 
-def test_published_reply_in_the_exact_discussion_completes_the_step(api):
+def test_student_marks_the_forum_step_manually(api):
     client, db, identity, group, _other = api
     discussion = topic(client, group)
     path = new_path(client, group, [forum_step(discussion)])
     step = path["steps"][0]
     assert step["step_type"] == "forum" and step["topic_id"] == discussion["id"]
-    assert step["tool_key"] is None and step["auto_detect"] is True and step["can_self_mark"] is False
+    assert step["tool_key"] is None and step["auto_detect"] is False
     assert step["target_summary"] == {"id": discussion["id"], "group_id": group.id, "locked": False}
     href = f"/profilo/classi/{group.id}/forum?topic={discussion['id']}"
     as_user(identity, "alice")
@@ -132,16 +137,37 @@ def test_published_reply_in_the_exact_discussion_completes_the_step(api):
     assert student_step(client)["state"] == "not_done"
     reply(client, discussion)
     row = student_step(client)
-    assert row["state"] == "done" and row["source"] == "automatic"
-    assert row["completion_kind"] == "forum_reply" and row["completion_at"]
+    assert row["state"] == "not_done" and row["can_self_mark"] is True
+    mark_forum(client, path)
+    row = student_step(client)
+    assert row["state"] == "done" and row["source"] == "student"
     paths = client.get("/user/paths").text
     as_user(identity, "teacher")
     progress = client.get(f"/teacher/paths/{path['id']}/progress").text
     builder = client.get(f"/teacher/paths/{path['id']}").text
     # Path responses carry identifiers and completion metadata, never forum text.
     assert MARKER not in paths + progress + builder
-    assert teacher_cell(client, path)["completion_kind"] == "forum_reply"
+    assert teacher_cell(client, path)["source"] == "student"
     assert teacher_cell(client, path, "bob")["state"] == "not_done"
+
+
+def test_student_can_reconsider_forum_without_removing_posts(api):
+    client, db, identity, group, _other = api
+    discussion = topic(client, group)
+    path = new_path(client, group, [forum_step(discussion)])
+    step_id = path["steps"][0]["id"]
+    url = f"/user/paths/{path['id']}/steps/{step_id}/done"
+    as_user(identity, "alice")
+    assert student_step(client)["state"] == "not_done"
+    post = reply(client, discussion)
+    assert student_step(client)["state"] == "not_done"
+    assert client.post(url).status_code == 200
+    assert client.delete(url).status_code == 200
+    assert student_step(client)["state"] == "not_done"
+    assert student_step(client)["can_self_mark"] is True
+    assert db.get(models.ForumPost, post["id"]).deleted_at is None
+    assert client.post(url).status_code == 200
+    assert student_step(client)["state"] == "done"
 
 
 def test_targets_must_be_published_discussions_of_the_same_class(api):
@@ -176,7 +202,7 @@ def test_targets_must_be_published_discussions_of_the_same_class(api):
     assert current["revision"] == path["revision"] and current["steps"] == []
 
 
-def test_only_the_students_own_reply_in_that_thread_after_activation_counts(api):
+def test_posts_do_not_mark_the_step_on_the_students_behalf(api):
     client, db, identity, group, _other = api
     discussion = topic(client, group)
     elsewhere = topic(client, group, "elsewhere")
@@ -193,6 +219,8 @@ def test_only_the_students_own_reply_in_that_thread_after_activation_counts(api)
     as_user(identity, "alice")
     assert student_step(client)["state"] == "not_done"
     reply(client, discussion, "after activation")
+    assert student_step(client)["state"] == "not_done"
+    mark_forum(client, path)
     assert student_step(client)["state"] == "done"
     as_user(identity, "teacher")
     assert teacher_cell(client, path, "bob")["state"] == "not_done"
@@ -212,19 +240,20 @@ def test_pending_approval_hide_restore_and_delete(api):
     moderate(client, "posts", post["id"], "approve")
     as_user(identity, "alice")
     row = student_step(client)
-    assert row["state"] == "done" and row["forum_state"]["pending"] is False
+    assert row["state"] == "not_done" and row["forum_state"]["pending"] is False
+    mark_forum(client, path)
     as_user(identity, "teacher")
     moderate(client, "posts", post["id"], "hide", "Synthetic reason")
     as_user(identity, "alice")
     row = student_step(client)
-    assert row["state"] == "not_done" and row["forum_state"]["hidden"] is True
+    assert row["state"] == "done" and row["forum_state"]["hidden"] is True
     as_user(identity, "teacher")
     moderate(client, "posts", post["id"], "restore")
     as_user(identity, "alice")
     assert student_step(client)["state"] == "done"
     assert client.delete(f"/forum/posts/{post['id']}").status_code == 200
     row = student_step(client)
-    assert row["state"] == "not_done" and row["forum_state"]["hidden"] is False
+    assert row["state"] == "done" and row["forum_state"]["hidden"] is False
     # An author edit under premoderation returns the reply to pending.
     second = reply(client, discussion, "second")
     as_user(identity, "teacher")
@@ -232,28 +261,28 @@ def test_pending_approval_hide_restore_and_delete(api):
     as_user(identity, "alice")
     assert student_step(client)["state"] == "done"
     assert client.patch(f"/forum/posts/{second['id']}", json={"body": f"{MARKER}edited"}).status_code == 200
-    assert student_step(client)["state"] == "not_done"
+    assert student_step(client)["state"] == "done"
     as_user(identity, "teacher")
     moderate(client, "posts", second["id"], "reject", "Synthetic reason")
     as_user(identity, "alice")
     assert student_step(client)["forum_state"]["hidden"] is True
 
 
-def test_a_second_qualifying_reply_keeps_the_step_done(api):
+def test_moderation_does_not_change_the_student_mark(api):
     client, db, identity, group, _other = api
     discussion = topic(client, group)
     path = new_path(client, group, [forum_step(discussion)])
     as_user(identity, "alice")
     first = reply(client, discussion, "first")
     second = reply(client, discussion, "second")
-    first_at = student_step(client)["completion_at"]
+    mark_forum(client, path)
     as_user(identity, "teacher")
     moderate(client, "posts", first["id"], "hide", "Synthetic reason")
     as_user(identity, "alice")
     row = student_step(client)
-    assert row["state"] == "done" and row["completion_at"] != first_at
+    assert row["state"] == "done"
     assert client.delete(f"/forum/posts/{second['id']}").status_code == 200
-    assert student_step(client)["state"] == "not_done"
+    assert student_step(client)["state"] == "done"
 
 
 def test_locked_discussion_keeps_evidence_and_muted_student_is_told(api):
@@ -262,6 +291,7 @@ def test_locked_discussion_keeps_evidence_and_muted_student_is_told(api):
     path = new_path(client, group, [forum_step(discussion)])
     as_user(identity, "alice")
     reply(client, discussion)
+    mark_forum(client, path)
     as_user(identity, "teacher")
     response = client.post(f"/teacher/forum/topics/{discussion['id']}/lock")
     assert response.status_code == 200, response.text
@@ -288,7 +318,7 @@ def test_locked_discussion_keeps_evidence_and_muted_student_is_told(api):
     as_user(identity, "bob")
     assert student_step(client)["forum_state"]["muted"] is False
     reply(client, discussion)
-    assert student_step(client)["state"] == "done"
+    assert student_step(client)["state"] == "not_done"
 
 
 def test_hidden_discussion_makes_the_step_unavailable_until_restored(api):
@@ -298,6 +328,7 @@ def test_hidden_discussion_makes_the_step_unavailable_until_restored(api):
     step_id = path["steps"][0]["id"]
     as_user(identity, "alice")
     reply(client, discussion)
+    mark_forum(client, path)
     as_user(identity, "teacher")
     moderate(client, "topics", discussion["id"], "hide", "Synthetic reason")
     step = client.get(f"/teacher/paths/{path['id']}").json()["steps"][0]
@@ -322,6 +353,7 @@ def test_class_archive_and_restore(api):
     path = new_path(client, group, [forum_step(discussion)])
     as_user(identity, "alice")
     reply(client, discussion)
+    mark_forum(client, path)
     group.is_active = False
     db.commit()
     assert client.get("/user/paths").json() == []
@@ -369,9 +401,9 @@ def test_unauthorized_contexts(api):
     response = client.put(f"/teacher/paths/{path['id']}", json={
         "revision": path["revision"], "title": "x", "steps": [forum_step(discussion)]})
     assert response.status_code == 403
-    # A forum step never accepts a student self-mark.
+    # A member can mark their own forum step.
     as_user(identity, "alice")
-    assert client.post(f"/user/paths/{path['id']}/steps/{step_id}/done").status_code == 422
+    assert client.post(f"/user/paths/{path['id']}/steps/{step_id}/done").status_code == 200
 
 
 def test_strict_order_target_immutability_and_membership(api):
@@ -383,6 +415,7 @@ def test_strict_order_target_immutability_and_membership(api):
     tool, step = path["steps"]
     as_user(identity, "alice")
     reply(client, discussion)
+    mark_forum(client, path, 1)
     assert [row["state"] for row in client.get("/user/paths").json()[0]["steps"]] == ["not_done", "done"]
     assert client.post(f"/user/paths/{path['id']}/steps/{step['id']}/launch").status_code == 200
     assert client.post(f"/user/paths/{path['id']}/steps/{tool['id']}/done").status_code == 200
@@ -412,9 +445,12 @@ def test_late_added_step_uses_its_own_activation(api):
     response = save(client, path, [{"step_type": "tool", "tool_key": "timeline", "id": tool["id"]},
                                    forum_step(discussion)])
     assert response.status_code == 200, response.text
+    path = response.json()
     as_user(identity, "alice")
     assert student_step(client, 1)["state"] == "not_done"
     reply(client, discussion, "later")
+    assert student_step(client, 1)["state"] == "not_done"
+    mark_forum(client, path, 1)
     assert student_step(client, 1)["state"] == "done"
 
 
@@ -424,6 +460,7 @@ def test_path_reads_never_select_forum_text_columns(api):
     path = new_path(client, group, [forum_step(discussion)])
     as_user(identity, "alice")
     reply(client, discussion)
+    mark_forum(client, path)
     statements = []
     connection = db.get_bind()
 

@@ -21,6 +21,8 @@ export interface FrozenSessionMessage {
 
 export interface FrozenSessionSummary {
     session_id: string;
+    path_id?: number | null;
+    path_step_id?: number | null;
     questionnaire_type: string;
     label?: string | null;
     current_phase: string;
@@ -50,6 +52,8 @@ export interface FrozenSessionDetail extends FrozenSessionSummary {
 export interface FrozenSessionSnapshot {
     guided_navigation?: GuidedNavigation;
     session_id: string;
+    path_id?: number | null;
+    path_step_id?: number | null;
     questionnaire_type: string;
     messages: FrozenSessionMessage[];
     current_phase: string;

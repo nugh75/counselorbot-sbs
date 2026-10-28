@@ -7,6 +7,7 @@ steps. Chat turns use patched AI calls; no provider or network is reached.
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 from fastapi import FastAPI
@@ -355,6 +356,32 @@ def test_start_is_idempotent_and_resumes_the_same_session(api):
     assert start(client, path).json() == first
     assert db.query(models.ClassPathDeepDiveSession).count() == 1
     assert student_row(client)["done"] == 1
+
+
+def test_new_attempt_preserves_history_and_retry_is_idempotent(api):
+    client, db, group, identity = api
+    plan, path = deep_dive_path(client, group)
+    identity.update(STUDENT)
+    enter_scores(client, plan, path)
+    first = start(client, path).json()
+    marker(db, first["session_id"])
+    url = f"/user/paths/{path['id']}/steps/{path['steps'][1]['id']}/deep-dive"
+    token = str(uuid4())
+    second = client.post(url, json={"attempt_id": token})
+    assert second.status_code == 200, second.text
+    assert second.json()["session_id"] == token != first["session_id"]
+    assert client.post(url, json={"attempt_id": token}).json() == second.json()
+    assert start(client, path).json() == second.json()
+    options = client.get(url).json()
+    assert options["session"]["session_id"] == token
+    assert options["completed"] is False
+    assert [(item["session_id"], item["completed"]) for item in options["attempts"]] == [(token, False), (first["session_id"], True)]
+    assert options["attempts"][0]["resumable"] is False
+    step = student_row(client)["steps"][1]
+    assert step["state"] == "done" and step["attempt_state"] == "in_progress"
+    marker(db, token)
+    assert client.get(url).json()["completed"] is True
+    assert db.query(models.ClassPathDeepDiveSession).count() == 2
 
 
 @pytest.mark.parametrize(

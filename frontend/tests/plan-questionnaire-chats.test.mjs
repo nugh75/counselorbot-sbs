@@ -55,9 +55,12 @@ async function fixture({width = 1440, teacher = true, pending = false, options =
         }
         if (p.endsWith('/deep-dive')) {
             if (method === 'GET') return json(state.options);
-            const session = bound(body.result_id);state.options.session = session;return json(session);
+            const session = bound(body?.result_id ?? state.options.session?.result.id ?? 8);
+            if (body?.attempt_id) session.session_id = body.attempt_id;
+            state.options.session = session;return json(session);
         }
         if (p === '/api/session/frozen/bound-249') return state.snapshotStatus !== 200 ? json({detail: 'qpcc_legacy_profile'}, state.snapshotStatus) : state.snapshot ? json(state.snapshot) : json({}, 404);
+        if (p.startsWith('/api/session/frozen/')) return json({}, 404);
         if (p === '/api/session/freeze') {state.snapshot = body;return json(body);}
         if (p === '/api/qsa/guided-ui-texts' && url.searchParams.get('questionnaire_type') === 'QPCC') return json({guided_steps: [
             {id: 'qpcc-intro', label: 'Presentazione', sort_order: 0, system_prompt_mode: 'generic'},
@@ -199,6 +202,25 @@ test('a completed analysis without a pause reopens on its final choices', async 
     } finally {await context.close();}
 });
 
+test('redo starts a distinct attempt and keeps the earlier report available', async () => {
+    const first = bound(8);
+    const {context, page, state} = await fixture({teacher: false, options: {personal: true, ready: true,
+        source_href: '/?start=QSA', results: [], session: first, completed: true,
+        attempts: [{...first, completed: true}]}});
+    try {
+        await page.goto(`${origin}/profilo/piani-operativi/301/20/approfondimento`, {waitUntil: 'domcontentloaded'});
+        await page.getByRole('button', {name: 'Rifai', exact: true}).click();
+        await page.getByText('Tentativi precedenti').waitFor();
+        const request = state.requests.find(row => row.p.endsWith('/deep-dive') && row.method === 'POST');
+        assert.match(request.body.attempt_id, /^[0-9a-f-]{36}$/i);
+        assert.notEqual(request.body.attempt_id, first.session_id);
+        assert.equal(request.body.result_id, 8);
+        await page.getByText('Tentativi precedenti').click();
+        assert.ok(await page.getByText('Sintesi sintetica del piano').isVisible());
+        assert.deepEqual(state.errors, []);
+    } finally {await context.close();}
+});
+
 
 test('personal analysis after an unsaved personal-tool step keeps its own source', async () => {
     const {context, page, state} = await fixture();
@@ -308,14 +330,14 @@ test('a standalone plan chat exposes resume beside its new-start action', async 
     state.studentPaths = [{id: 301, group_id: 11, group_name: 'Classe sintetica', title: 'Piano sintetico', mode: 'recommended',
         done: 0, total: 1, next_step_id: 30, steps: [{id: 30, path_id: 301, position: 1, step_type: 'guided_chat',
             tool_key: 'SAVICKAS', title: 'Colloquio', state: 'not_done', start_href: '/?start=SAVICKAS'}]}];
-    state.snapshot = {session_id: 'bound-249', questionnaire_type: 'SAVICKAS', current_phase: 'savickas-role-models',
+    state.snapshot = {session_id: 'bound-249', path_id: 301, path_step_id: 30, questionnaire_type: 'SAVICKAS', current_phase: 'savickas-role-models',
         messages: [], updated_at: '2026-10-27T12:00:00Z'};
     try {
         await page.goto(`${origin}/profilo/piani-operativi`, {waitUntil: 'domcontentloaded'});
         const card = page.getByTestId('class-path-hero-card');
-        await card.getByRole('link', {name: 'Riprendi chat', exact: true}).waitFor();
-        assert.equal(await card.getByRole('link', {name: 'Riprendi chat', exact: true}).getAttribute('href'), '/?frozen=bound-249&from=plan');
-        assert.equal(await card.getByRole('link', {name: 'Inizia', exact: false}).getAttribute('href'), '/?start=SAVICKAS&from=plan');
+        await card.getByRole('link', {name: 'Riprendi', exact: true}).waitFor();
+        assert.equal(await card.getByRole('link', {name: 'Riprendi', exact: true}).getAttribute('href'), '/?frozen=bound-249&from=plan&path_id=301&path_step_id=30');
+        assert.equal(await card.getByRole('link', {name: 'Rifai', exact: false}).getAttribute('href'), '/?start=SAVICKAS&from=plan&path_id=301&path_step_id=30');
         assert.deepEqual(state.errors, []);
     } finally {await context.close();}
 });

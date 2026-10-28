@@ -1,3 +1,27 @@
+# Handoff 28 ottobre 2026: tentativi nei piani operativi
+
+- Branch `fix/stati-tentativi-piani`: Inizia/Riprendi/Rifai, tentativi delle chat
+  conservati e idempotenti, bozze di questionario separate, storico personale
+  delle consegne e riscontri. Il docente vede soltanto la consegna attuale.
+- I passi forum usano la spunta dello studente. Il precedente completamento
+  automatico non è convertito in una scelta personale; post e override restano.
+  Incontri e strumenti personali condivisi mantengono i contenuti esistenti.
+- Test: 67 SQLite, 53 PostgreSQL per chat/forum/migrazione e 26 PostgreSQL per
+  assegnazioni, 50 unitari frontend, 19 scenari browser sulla produzione con API simulate,
+  TypeScript, ESLint mirato, guidance e portabilità SQL. Il lint globale ha 12
+  messaggi preesistenti di i18n nelle pagine docente; tre vecchi scenari browser
+  dell'editor non trovano il selettore di analisi da passo questionario.
+- PR #646 unita e deploy portable eseguito da worktree isolato; backend,
+  frontend, PostgreSQL e Piper sani. Migrazione PostgreSQL verificata; backup
+  `/Volumes/sviluppo/backups/counselorbot/pre-plan-deploy-20261028-105913.dump`
+  verificato prima del riavvio. Il checkout di produzione contiene modifiche
+  contemporanee non correlate e non è stato toccato: prima di un deploy dal ramo
+  parallelo, incorporare la versione aggiornata di main. Cache builder rimossa
+  (4,025 GB) e immagini inutilizzate rimosse (348,8 MB); nessun volume rimosso.
+  `sudo ./update_nginx.sh` non è necessario; nessun processo dev è in esecuzione.
+
+---
+
 # Handoff 28 ottobre 2026: Presentazione nel menu Area
 
 - Branch `fix/menu-presentazione` da `origin/main`: per chi ha fatto accesso,
