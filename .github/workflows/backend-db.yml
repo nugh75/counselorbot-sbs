@@ -78,7 +78,7 @@ jobs:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: backend/requirements.txt
-      - run: sudo apt-get update -q && sudo apt-get install -y --no-install-recommends graphviz fonts-inter tesseract-ocr-ita tesseract-ocr-eng && pip install -r backend/requirements.txt
+      - run: sudo apt-get update -q && sudo apt-get install -y --no-install-recommends graphviz fonts-inter tesseract-ocr-ita tesseract-ocr-eng && sudo dot -c && pip install -r backend/requirements.txt
       - name: Backend suite on Postgres with the ratchet (backend/tests/postgres_known_failures.txt)
         run: |
           cd "${TEST_ROOT:-$GITHUB_WORKSPACE}"
@@ -111,7 +111,7 @@ jobs:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: backend/requirements.txt
-      - run: sudo apt-get update -q && sudo apt-get install -y --no-install-recommends graphviz fonts-inter tesseract-ocr-ita tesseract-ocr-eng && pip install -r backend/requirements.txt
+      - run: sudo apt-get update -q && sudo apt-get install -y --no-install-recommends graphviz fonts-inter tesseract-ocr-ita tesseract-ocr-eng && sudo dot -c && pip install -r backend/requirements.txt
       - name: Backend suite on SQLite with the ratchet (backend/tests/sqlite_known_failures.txt)
         run: |
           export DATABASE_URL="sqlite:///$RUNNER_TEMP/backend.sqlite3" DATA_DIR="$RUNNER_TEMP/data" SESSION_MEMORY_DIR="$RUNNER_TEMP/memory"

@@ -6,6 +6,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event, text
@@ -112,6 +113,7 @@ def test_hiding_waits_for_a_concurrent_path_save(monkeypatch):
         drop(engine, schema)
 
 
+@pytest.mark.postgres_only  # Uses independent PostgreSQL schemas.
 def test_concurrent_replies_and_approval_wait_for_student_mark():
     assert os.environ["DATABASE_URL"] == "postgresql://c5_test@127.0.0.1:18650/counselorbot_test"
     schema = "tf154a_" + uuid.uuid4().hex

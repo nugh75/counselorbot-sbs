@@ -135,8 +135,8 @@ def test_mixed_path_publishes_every_type_with_one_activation(api):
     [student_path] = client.get("/user/paths").json()
     assert student_path["done"] == 0 and student_path["total"] == 5
     assert [step["state"] for step in student_path["steps"]] == ["not_done"] * 5
-    # Only the tool step can be self-marked; every typed step waits for its own evidence.
-    assert [step["can_self_mark"] for step in student_path["steps"]] == [False, False, False, False, True]
+    # Forum participation is marked by the student, as are generic tools.
+    assert [step["can_self_mark"] for step in student_path["steps"]] == [False, False, False, True, True]
 
     # Another class of the same institute neither sees nor launches it.
     as_user(identity, "eve")
@@ -298,6 +298,8 @@ def test_steps_added_while_archived_activate_on_restore(api):
     as_user(identity, "alice")
     reply = client.post(f"/forum/topics/{late['id']}/posts", json={"body": "My reply"})
     assert reply.status_code == 201, reply.text
+    assert client.get("/user/paths").json()[0]["steps"][5]["state"] == "not_done"
+    assert client.post(f"/user/paths/{path['id']}/steps/{late_step['id']}/done").status_code == 200
     assert client.get("/user/paths").json()[0]["steps"][5]["state"] == "done"
 
 
@@ -373,11 +375,14 @@ def test_legacy_strict_mixed_path_keeps_every_step_available(api):
     assert [step["state"] for step in steps] == ["not_done"] * 5
     forum = published["steps"][3]
     assert client.post(f"/user/paths/{path['id']}/steps/{forum['id']}/launch").status_code == 200
-    # A reply completes its own step without waiting for the earlier ones.
+    # The student can mark the forum without waiting for earlier steps.
     assert client.post(f"/forum/topics/{topic['id']}/posts", json={"body": "Early"}).status_code == 201
     steps = client.get("/user/paths").json()[0]["steps"]
+    assert [step["state"] for step in steps] == ["not_done"] * 5
+    assert client.post(f"/user/paths/{path['id']}/steps/{forum['id']}/done").status_code == 200
+    steps = client.get("/user/paths").json()[0]["steps"]
     assert [step["state"] for step in steps] == ["not_done", "not_done", "not_done", "done", "not_done"]
-    assert steps[3]["source"] == "automatic"
+    assert steps[3]["source"] == "student"
     as_user(identity, "teacher")
     for step in published["steps"][:3]:
         response = client.put(f"/teacher/paths/{path['id']}/steps/{step['id']}/progress/alice",

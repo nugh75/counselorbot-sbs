@@ -115,6 +115,7 @@ def settings(db, group, **values):
     db.commit()
 
 
+@pytest.mark.postgres_only  # Forum writes use PostgreSQL statement_timestamp.
 def test_student_marks_the_forum_step_manually(api):
     client, db, identity, group, _other = api
     discussion = topic(client, group)
@@ -151,6 +152,7 @@ def test_student_marks_the_forum_step_manually(api):
     assert teacher_cell(client, path, "bob")["state"] == "not_done"
 
 
+@pytest.mark.postgres_only  # Forum writes use PostgreSQL statement_timestamp.
 def test_student_can_reconsider_forum_without_removing_posts(api):
     client, db, identity, group, _other = api
     discussion = topic(client, group)
@@ -202,6 +204,7 @@ def test_targets_must_be_published_discussions_of_the_same_class(api):
     assert current["revision"] == path["revision"] and current["steps"] == []
 
 
+@pytest.mark.postgres_only  # Forum writes use PostgreSQL statement_timestamp.
 def test_posts_do_not_mark_the_step_on_the_students_behalf(api):
     client, db, identity, group, _other = api
     discussion = topic(client, group)
@@ -268,6 +271,7 @@ def test_pending_approval_hide_restore_and_delete(api):
     assert student_step(client)["forum_state"]["hidden"] is True
 
 
+@pytest.mark.postgres_only  # Forum writes use PostgreSQL statement_timestamp.
 def test_moderation_does_not_change_the_student_mark(api):
     client, db, identity, group, _other = api
     discussion = topic(client, group)
