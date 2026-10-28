@@ -16,6 +16,7 @@ type Work = {
     event: { id: string; reflection: string } | null;
     linked_goals: { id: number; title: string }[];
     submission: Submission | null; submitted_at: string | null; feedback: string; feedback_at: string | null;
+    history?: {id: number; submission: Submission; submitted_at: string | null; feedback: string}[];
 };
 type Portfolio = { id: number; title: string; description: string | null; updated_at: string | null; created_at: string };
 type SharedWork = Pick<Work, 'revision' | 'submission' | 'submitted_at' | 'feedback' | 'feedback_at'> & { username: string };
@@ -51,18 +52,24 @@ function WorkEditor({ assignmentId, authorName, onDraftStateChange }: { assignme
     const [shareBaseline, setShareBaseline] = useState('');
     const [busy, setBusy] = useState(false); const [error, setError] = useState<unknown>(null); const [saved, setSaved] = useState(false);
     const mounted = useRef(false); const inFlight = useRef(false);
+    const shareSection = useRef<HTMLDetailsElement>(null);
+    const [newAttempt, setNewAttempt] = useState(false);
     const load = useCallback(async () => {
         setBusy(true); setError(null); setSaved(false);
         try {
             const [state, ownGoals, ownPortfolio] = await Promise.all([request<Work>(`${base}/work`), request<PersonalGoal[]>('/user/goals'), request<Portfolio[]>('/user/portfolio')]);
             if (!mounted.current) return;
             setWork(state); setGoals(ownGoals); setPortfolio(ownPortfolio);
-            setReflection(state.event?.reflection ?? (state.action?.reflection || '')); setShareText(state.submission?.text || ''); setPortfolioId('');
+            const fresh = new URLSearchParams(window.location.search).get('attempt') === 'new'
+                && window.location.hash === `#assignment-${assignmentId}`;
+            setNewAttempt(fresh);
+            setReflection(state.event?.reflection ?? (state.action?.reflection || '')); setShareText(fresh ? '' : state.submission?.text || ''); setPortfolioId('');
             setReflectionRevision(state.workspace_revision);
-            setShareBaseline(JSON.stringify([state.submission?.text || '', '']));
+            setShareBaseline(JSON.stringify([fresh ? '' : state.submission?.text || '', '']));
         } catch (e) { if (mounted.current) setError(e); } finally { if (mounted.current) setBusy(false); }
-    }, [base]);
+    }, [base, assignmentId]);
     useEffect(() => { mounted.current = true; void load(); return () => { mounted.current = false; }; }, [load]);
+    useEffect(() => { if (newAttempt && shareSection.current) shareSection.current.open = true; }, [newAttempt, work]);
     const dirty = Boolean(work && (reflection !== (work.event?.reflection ?? (work.action?.reflection || '')) || JSON.stringify([shareText, portfolioId]) !== shareBaseline));
     const protectedBusy = busy && work !== null;
     useDraftGuard(dirty, lang, protectedBusy);
@@ -79,7 +86,13 @@ function WorkEditor({ assignmentId, authorName, onDraftStateChange }: { assignme
             if (path === 'reflection' || path === 'plan' || reflection === (work?.event?.reflection ?? (work?.action?.reflection || ''))) {
                 setReflection(next.event?.reflection ?? (next.action?.reflection || '')); setReflectionRevision(next.workspace_revision);
             }
-            if (path === 'submission') setShareBaseline(JSON.stringify([shareText, portfolioId]));
+            if (path === 'submission') {
+                setShareBaseline(JSON.stringify([shareText, portfolioId]));
+                setNewAttempt(false);
+                const params = new URLSearchParams(window.location.search);
+                params.delete('attempt');
+                window.history.replaceState(window.history.state, '', `${window.location.pathname}${params.size ? `?${params}` : ''}${window.location.hash}`);
+            }
             window.dispatchEvent(new Event('personal-assignments-changed'));
             return next;
         } catch (e) { if (mounted.current) setError(e); return null; } finally { inFlight.current = false; if (mounted.current) setBusy(false); }
@@ -124,11 +137,19 @@ function WorkEditor({ assignmentId, authorName, onDraftStateChange }: { assignme
                     {work.feedback && <div className="space-y-2 border-t border-indigo-200 pt-3"><h5 className="font-semibold">{l('feedback')}</h5><p className="whitespace-pre-wrap text-sm">{work.feedback}</p></div>}
                     <Button type="button" variant="secondary" onClick={() => { if (window.confirm(l('confirmWithdraw'))) void mutate(`submission?revision=${work.revision}`, 'DELETE'); }}>{l('withdraw')}</Button>
                 </section>}
-                <details className="rounded-lg border border-slate-200 p-3">
+                {!!work.history?.length && <details className="rounded-lg border border-slate-200 p-3">
+                    <summary className="cursor-pointer py-2 font-semibold">{l('history')}</summary>
+                    {work.history.map(item => <div key={item.id} className="space-y-2 border-t border-slate-200 py-3">
+                        {item.submitted_at && <p className="text-xs text-slate-500">{new Date(item.submitted_at).toLocaleString(lang)}</p>}
+                        <SharedText value={item.submission} />
+                        {item.feedback && <p className="whitespace-pre-wrap text-sm">{item.feedback}</p>}
+                    </div>)}
+                </details>}
+                <details ref={shareSection} className="rounded-lg border border-slate-200 p-3">
                     <summary className="cursor-pointer py-2 font-semibold">{l('submission')}</summary>
                     <form className="mt-3 space-y-3" onSubmit={event => {
                         event.preventDefault(); void mutate('submission', 'POST', { revision: work.revision, text: shareText,
-                            portfolio_id: selectedPortfolio?.id || null, portfolio_updated_at: selectedPortfolio ? selectedPortfolio.updated_at || selectedPortfolio.created_at : null });
+                            portfolio_id: selectedPortfolio?.id || null, portfolio_updated_at: selectedPortfolio ? selectedPortfolio.updated_at || selectedPortfolio.created_at : null, new_attempt: newAttempt });
                     }}>
                         <p className="text-sm text-slate-600">{l('shareHelp')}</p>
                         {reflection && <Button type="button" variant="secondary" onClick={() => setShareText(reflection)}>{l('useReflection')}</Button>}

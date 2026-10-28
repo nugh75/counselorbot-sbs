@@ -29,6 +29,8 @@ import { guideImages } from '@/lib/guide-images';
 import { teacherAreaName } from '@/lib/i18n-teacher-area';
 import { classSettingsText } from '@/lib/i18n-class-settings';
 import { forumText } from '@/lib/i18n-forum';
+import { pathForumText } from '@/lib/i18n-path-forum';
+import { resultsChatText } from '@/lib/i18n-results-chats';
 import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
 
 const TEACHER_ROUTES = ['/docente', '/docente/classi', '/docente', '/docente', '/docente', '/docente', '/bussola', '/docente/classi', '/docente/piani-operativi'];
@@ -70,7 +72,7 @@ function GuideContent() {
     const sections = Array.from({ length: teacher ? 9 : 17 }, (_, i) => i + 1);
     const sectionId = (n: number) => `guide-${teacher ? 'teacher-' : ''}section-${n}`;
     const sectionTitle = (n: number) => teacher ? l(`teacher${n}Title` as GuideAudienceKey) : t(`guide.section${n}.title`);
-    const sectionBody = (n: number) => (teacher ? l(`teacher${n}Body` as GuideAudienceKey) : n === 15 ? l('personalGroups') : t(`guide.section${n}.body`) + (n === 1 ? ` ${classSettingsText(lang, 'studentSupportGuide')}` : '') + (n === 12 ? ` ${categoryText(lang, 'guideDirectory')}` : '')) + ((teacher && n === 8) || (!teacher && n === 16) ? ` ${forumText(lang, 'guideLinks')}` : '');
+    const sectionBody = (n: number) => (teacher ? l(`teacher${n}Body` as GuideAudienceKey) : n === 15 ? l('personalGroups') : t(`guide.section${n}.body`) + (n === 1 ? ` ${classSettingsText(lang, 'studentSupportGuide')}` : '') + (n === 12 ? ` ${categoryText(lang, 'guideDirectory')}` : '') + (n === 17 ? ` ${pathForumText(lang, 'studentRule')} ${resultsChatText(lang, 'attemptsGuide')}` : '')) + ((teacher && n === 8) || (!teacher && n === 16) ? ` ${forumText(lang, 'guideLinks')}` : '');
     const images = guideImages[lang];
     const spotIllustrations: Record<number, string> = teacher ? {
         1: '/images/platform/feedback-docente.png',

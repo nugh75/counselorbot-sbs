@@ -37,6 +37,7 @@ class ShareWrite(RevisionWrite):
     text: str = Field(default='', max_length=3000)
     portfolio_id: int | None = Field(default=None, gt=0)
     portfolio_updated_at: datetime | None = None
+    new_attempt: bool = False
 
     @model_validator(mode='after')
     def has_content(self):
@@ -89,12 +90,23 @@ def _state(db, assignment_id, username):
     goals = db.query(models.PersonalGoal).join(models.GoalResourceLink).filter(
         models.PersonalGoal.username == username, models.GoalResourceLink.kind == 'action',
         models.GoalResourceLink.target_id == row.action_id).all() if row and action else []
+    history = (db.query(models.AssignmentSubmissionHistory).filter_by(work_id=row.id)
+               .order_by(models.AssignmentSubmissionHistory.id.desc()).all()) if row else []
     return dict(revision=row.revision if row else 0, workspace_revision=state['revision'],
                 planned=bool(row and row.action_id), action=action, event=event,
                 linked_goals=[dict(id=goal.id, title=goal.title) for goal in goals],
+                history=[dict(id=item.id, submission=item.submission, submitted_at=item.submitted_at,
+                              feedback=item.feedback, feedback_at=item.feedback_at) for item in history],
                 submission=row.submission if row else None, submitted_at=row.submitted_at if row else None,
                 feedback=row.feedback if row and row.submission else '',
                 feedback_at=row.feedback_at if row and row.submission else None)
+
+
+def _archive_submission(db, row):
+    if row.submission is not None:
+        db.add(models.AssignmentSubmissionHistory(work_id=row.id, submission=row.submission,
+            submitted_at=row.submitted_at, feedback=row.feedback or '', feedback_at=row.feedback_at,
+            archived_at=datetime.now(UTC)))
 
 
 @router.get('/user/assignments/{assignment_id}/work')
@@ -183,7 +195,8 @@ def share(assignment_id: int, payload: ShareWrite, db: Session = Depends(databas
             raise HTTPException(409, 'Portfolio preview changed: reload')
         # Share only the text preview the student chose, never images or live private links.
         snapshot['portfolio'] = dict(title=item.title, description=item.description or '')
-    if row.submission != snapshot:
+    if payload.new_attempt or row.submission != snapshot:
+        _archive_submission(db, row)
         row.submission = snapshot
         row.submitted_at = datetime.now(UTC)
         row.feedback = ''; row.feedback_at = None
@@ -196,6 +209,7 @@ def share(assignment_id: int, payload: ShareWrite, db: Session = Depends(databas
 def withdraw(assignment_id: int, revision: int = Query(ge=1), db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
     _student_assignment(db, user['username'], assignment_id, lock=True)
     row = _edit(db, assignment_id, user['username'], revision)
+    _archive_submission(db, row)
     row.submission = None; row.submitted_at = None; row.feedback = ''; row.feedback_at = None
     row.revision += 1
     db.commit()

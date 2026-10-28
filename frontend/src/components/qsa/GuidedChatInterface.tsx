@@ -102,6 +102,8 @@ interface GuidedChatInterfaceProps {
     onFrozen?: () => void;
     onBack?: () => void;
     frozenSnapshot?: FrozenSessionDetail | null;
+    planOrigin?: { pathId: number; stepId: number } | null;
+    registerAttemptSave?: (save: (() => Promise<void>) | null) => void;
     initialResponseLength?: ResponseLength;
     initialReasoningEffort?: ReasoningEffort;
     // Formato scelto nella pagina Impostazioni: lo porta la chat come valore di
@@ -459,7 +461,7 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
 // suo per non portarsela dietro negli altri strumenti.
 const IDEA_PANEL_BOUNDS = { min: 360, max: 720, initial: 480 };
 
-export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength, initialReasoningEffort, initialResponseFormat, reasoningCapable = true, reasoningMandatory = false, preview = false }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, planOrigin, registerAttemptSave, initialResponseLength, initialReasoningEffort, initialResponseFormat, reasoningCapable = true, reasoningMandatory = false, preview = false }: GuidedChatInterfaceProps) {
     const { access } = useUserAccess();
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
@@ -1586,6 +1588,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // l'autosalvataggio.
     const buildSnapshot = (): FrozenSessionSnapshot => ({
         session_id: sessionId,
+        path_id: planOrigin?.pathId ?? frozenSnapshot?.path_id ?? undefined,
+        path_step_id: planOrigin?.stepId ?? frozenSnapshot?.path_step_id ?? undefined,
         questionnaire_type: questionnaireType,
         messages,
         guided_navigation: { ...navigation,
@@ -1607,6 +1611,15 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         practice_notebook_id: notebookContext === 'practice' && practiceNotebookId ? practiceNotebookId : undefined,
         group_ids: isDocenza ? docenzaGroupIds : undefined,
         label: `${questionnaireType} — ${getPhaseLabel(currentPhase)}`,
+    });
+
+    // A new attempt must wait until the visible previous attempt is safely saved.
+    useEffect(() => {
+        registerAttemptSave?.(async () => {
+            if (isLoading) throw new Error('chat_busy');
+            await freezeSession(buildSnapshot());
+        });
+        return () => registerAttemptSave?.(null);
     });
 
     // Scrive lo snapshot in attesa. Chiamata dal timer di fine turno e, per

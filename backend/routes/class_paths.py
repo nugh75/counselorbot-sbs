@@ -34,6 +34,29 @@ router = APIRouter()
 get_db = database.get_db
 
 
+def _student_attempt_state(db, step, username):
+    """Only exact, persisted attempts; never infer a plan step from a tool name."""
+    from ..path_step_types import deep_dive_evidence
+    from ..questionnaire_entry import latest_guided_entry
+    from ..results_deep_dive import bound_result, existing_binding
+
+    if step.step_type == "guided_results_chat":
+        result = None if step.tool_key else bound_result(db, step, username)
+        binding = existing_binding(db, step, username, result)
+        if not binding:
+            return None
+        return "completed" if deep_dive_evidence(db, step, username, session_id=binding.session_id) else "in_progress"
+    if step.step_type == "questionnaire_administration":
+        entry = latest_guided_entry(db, step, username)
+        if entry and db.query(models.FrozenSession.id).filter_by(username=username, session_id=entry["session_id"]).first():
+            return "in_progress"
+    if step.step_type == "assignment":
+        work = db.query(models.AssignmentWork).filter_by(assignment_id=step.assignment_id, username=username).first()
+        if work and work.submission is None and work.action_id:
+            return "in_progress"
+    return None
+
+
 # Personal tools that do not support auto-detection (students self-mark as completed).
 SELF_MARK_PERSONAL_KEYS = frozenset({
     "actions",
@@ -270,7 +293,7 @@ def _resolve_cells(
         if not available[step.id]:
             state, source = "unavailable", None
         else:
-            mark = teacher or (by_source.get("student") if step.step_type == "tool" else None)
+            mark = teacher or (by_source.get("student") if step.step_type in ("tool", "forum") else None)
             if mark:
                 state, source = mark.state, mark.source
             elif auto[step.id] and (evidence := completion_evidence(db, path, step, username)):
@@ -886,9 +909,11 @@ async def list_student_class_paths(
                     "availability_reason": descriptors[cell["step"].id]["availability_reason"]
                     or (None if available[cell["step"].id] else "tool_unavailable"),
                     "state": cell["state"],
+                    "attempt_state": _student_attempt_state(db, cell["step"], username) if available[cell["step"].id] else None,
                     "source": cell["source"],
                     "start_href": descriptors[cell["step"].id]["start_href"],
-                    "can_self_mark": available[cell["step"].id] and not auto[cell["step"].id],
+                    "can_self_mark": available[cell["step"].id] and not auto[cell["step"].id] and (
+                        cell["step"].step_type != "forum" or cell["source"] != "teacher"),
                     "forum_state": forum_student_state(db, path, cell["step"], username)
                     if cell["step"].step_type == "forum" and available[cell["step"].id] else None,
                 }
@@ -944,7 +969,7 @@ def _require_student_step_access(
     if not step_descriptor(db, path, step)["available"]:
         raise HTTPException(status_code=422, detail="Tool is not available")
 
-    if step.step_type != "tool" or is_auto_detect_tool(db, step.tool_key):
+    if step.step_type != "forum" and (step.step_type != "tool" or is_auto_detect_tool(db, step.tool_key)):
         raise HTTPException(
             status_code=422,
             detail="Step has automatic completion and cannot be self-marked",
@@ -1115,4 +1140,6 @@ async def get_deep_dive_options(path_id: int, step_id: int,
 async def start_deep_dive(path_id: int, step_id: int, payload: Optional[schemas.ResultsChatStartInput] = None,
                           current_user=Depends(auth.get_current_user), db: Session=Depends(get_db)):
     from ..results_deep_dive import start_results_deep_dive
-    return start_results_deep_dive(db, current_user, path_id, step_id, payload.result_id if payload else None)
+    return start_results_deep_dive(db, current_user, path_id, step_id,
+                                   payload.result_id if payload else None,
+                                   str(payload.attempt_id) if payload and payload.attempt_id else None)

@@ -19,6 +19,8 @@ def _summary(row: models.FrozenSession) -> schemas.FrozenSessionSummary:
     data = row.data or {}
     return schemas.FrozenSessionSummary(
         session_id=row.session_id,
+        path_id=data.get("path_id"),
+        path_step_id=data.get("path_step_id"),
         questionnaire_type=row.questionnaire_type,
         label=data.get("label"),
         current_phase=data.get("current_phase") or "",

@@ -2,10 +2,27 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 // prettier-ignore
 // @ts-expect-error -- Node's TypeScript runner requires the extension.
-import { administrationDraftKey, commitAdministrationEntry, parseAdministrationLaunch, scoreAdministrationStep } from "./administration-entry.ts";
+import { administrationDraftKey, latestAdministrationDraft, commitAdministrationEntry, parseAdministrationLaunch, scoreAdministrationStep } from "./administration-entry.ts";
 // prettier-ignore
 // @ts-expect-error -- Node's TypeScript runner requires the extension.
 import { administrationStepText, administrationStepTexts, resultProvenanceText } from "./i18n-administration-steps.ts";
+
+test('only this step and account resume the most recent unfinished draft', () => {
+  const base = administrationDraftKey('a.user', 1, 2);
+  const attempt = 'ab12ab12-ab12-ab12-ab12-ab12ab12ab12';
+  const rows = new Map([
+    [base, JSON.stringify({scores: {C1: 1}, updatedAt: 5})],
+    [`${base}:attempt:${attempt}`, JSON.stringify({answers: {1: 3}, updatedAt: 10})],
+    [`${base}:attempt:${attempt}:session`, 'already-saved'],
+    [administrationDraftKey('another', 1, 2), JSON.stringify({scores: {C1: 9}, updatedAt: 20})],
+  ]);
+  const storage = {get length() {return rows.size;}, key: (index: number) => [...rows.keys()][index] ?? null,
+    getItem: (key: string) => rows.get(key) ?? null} as Storage;
+  assert.equal(latestAdministrationDraft(storage, 'a.user', 1, 2), attempt);
+  assert.equal(latestAdministrationDraft(storage, 'a.user', 1, 3), null);
+  rows.delete(`${base}:attempt:${attempt}`);
+  assert.equal(latestAdministrationDraft(storage, 'a.user', 1, 2), '');
+});
 
 test("launch preserves exact target and carries the class access password", () => {
   const launch = parseAdministrationLaunch({

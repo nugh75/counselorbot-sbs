@@ -67,6 +67,22 @@ def test_optional_goal_link_ownership_and_revisions(setup):
     assert c.post(path + '/goal', json=payload).status_code == 409
 
 
+def test_explicit_new_attempt_keeps_the_previous_identical_submission_private(setup):
+    db, c, who, group, _, sources = setup
+    assignment, path, work = assign_and_plan(c, who, group, sources)
+    work = c.post(path + '/submission', json={'revision': work['revision'], 'text': 'Il mio lavoro'}).json()
+    first_revision = work['revision']
+    response = c.post(path + '/submission', json={'revision': first_revision, 'text': 'Il mio lavoro', 'new_attempt': True})
+    assert response.status_code == 200, response.text
+    work = response.json()
+    assert work['revision'] == first_revision + 1
+    assert [entry['submission']['text'] for entry in work['history']] == ['Il mio lavoro']
+    assert c.post(path + '/submission', json={'revision': first_revision, 'text': 'Il mio lavoro', 'new_attempt': True}).status_code == 409
+    who.update(username='teacher', groups=['docenti'])
+    shared = c.get(f"/teacher/assignments/{assignment['id']}/submissions").json()
+    assert len(shared) == 1 and 'history' not in shared[0]
+
+
 def test_goal_link_from_assignment_is_an_action_means(setup):
     """A2 fix: the action link created from an assignment must be born with role 'means'."""
     db, c, who, group, _, sources = setup
@@ -103,9 +119,12 @@ def test_explicit_snapshot_feedback_resubmission_and_withdrawal(setup):
     response = c.post(path + '/submission', json=dict(revision=work['revision'], text='Restituzione aggiornata'))
     work = response.json()
     assert not work['feedback']
+    assert work['history'][0]['submission']['text'] == 'Solo questa frase al docente'
+    assert work['history'][0]['feedback'] == 'Prova a confrontare due scelte'
     assert c.delete(path + f"/submission?revision={work['revision']}").status_code == 200
     work = c.get(path + '/work').json()
     assert work['submission'] is None and work['action']['reflection'] == 'Altro pensiero privato'
+    assert [item['submission']['text'] for item in work['history']] == ['Restituzione aggiornata', 'Solo questa frase al docente']
     who.update(username='teacher', groups=['docenti'])
     assert c.get(teacher_path).json() == []
     assert c.put(teacher_path + '/alice/feedback', json=dict(revision=work['revision'], text='Non deve passare')).status_code == 404

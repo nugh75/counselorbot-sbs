@@ -3,6 +3,7 @@
 <!-- ai4educ:context-template v1.0 -->
 
 ## Quick Reference
+- **Tentativi nei piani e forum**: Inizia/Riprendi/Rifai distinguono sessioni e stato; le analisi conservano i tentativi precedenti e la ripetizione è idempotente. Il forum usa la spunta dello studente, indipendente dai messaggi. Migrazione, compatibilità e rollback: `docs/operations/operational-plan-questionnaire-chats.md` e `docs/operations/path-forum-validation.md`.
 - **Menu Area**: chi ha effettuato l'accesso trova «Presentazione» prima delle aree personali, sia nel selettore desktop sia nel menu mobile; `/?view=intro` apre sempre l'introduzione anche dalla home già montata.
 - **Vista «Tutti gli strumenti»**: per un utente iscritto nasconde dalla UI studente piani, compiti, messaggi e incontri delle classi; le preferenze della chat usano solo la vista attiva. I dati e l'iscrizione restano disponibili scegliendo una vista di classe; le chat personali conservano la propria storia.
 - **Catalogo Area studente**: in `/profilo` tutti i gruppi di strumenti restano visibili anche con piani attivi, ignorando la precedente preferenza di chiusura; i piani mantengono la propria apertura indipendente. In «Attività e percorsi» i piani partono chiusi e il catalogo resta visibile.

@@ -137,6 +137,7 @@ export default function Home() {
     const [preparingInstrument, setPreparingInstrument] = useState(false);
     const [sessionCounselorId, setSessionCounselorId] = useState<number | null>(null);
     const [frozenSnapshot, setFrozenSnapshot] = useState<FrozenSessionDetail | null>(null);
+    const [planOrigin, setPlanOrigin] = useState<{ pathId: number; stepId: number } | null>(null);
     // Chat appena congelata col fiocco: «Attività e percorsi» la ricorda in
     // cima, così chi ci arriva sa cosa è successo e come tornare indietro.
     const [pausedChat, setPausedChat] = useState<PausedChat | null>(null);
@@ -458,6 +459,7 @@ export default function Home() {
                     // token il PDF del profilo sparirebbe dal workspace.
                     setPdfToken(snapshot.pdf_token || undefined);
                     setFrozenSnapshot(snapshot);
+                    setPlanOrigin(snapshot.path_id && snapshot.path_step_id ? {pathId: snapshot.path_id, stepId: snapshot.path_step_id} : null);
                     setStep('interaction');
                     setReady(true);
                 } catch (err) {
@@ -613,6 +615,9 @@ export default function Home() {
 
         entryClaimed.current = true;
         const startedFromPlan = params.get('from') === 'plan';
+        const pathId = Number(params.get('path_id'));
+        const stepId = Number(params.get('path_step_id'));
+        if (startedFromPlan && Number.isSafeInteger(pathId) && pathId > 0 && Number.isSafeInteger(stepId) && stepId > 0) setPlanOrigin({ pathId, stepId });
         void (async () => {
             setFromPlan(startedFromPlan);
             const access = await fetchUserAccess();
@@ -694,6 +699,8 @@ export default function Home() {
 
     // Tutti gli ingressi riusano le preferenze dell’account.
     const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
+        setPlanOrigin(null);
+        setFromPlan(false);
         practiceProfileEntry.current = null;
         practiceProfileHref.current = null;
         setPausedChat(null);
@@ -875,6 +882,7 @@ export default function Home() {
 
     const analyzeAnother = () => {
         setFromPlan(false);
+        setPlanOrigin(null);
         setResume(null);
         setScores(null);
         setScoreOrigin('new');
@@ -1139,6 +1147,7 @@ export default function Home() {
                                     sessionId={sessionId}
                                     locale={lang}
                                     frozenSnapshot={frozenSnapshot}
+                                    planOrigin={planOrigin}
                                     initialResponseLength={responseLength}
                                     initialReasoningEffort={reasoningEffort}
                                     initialResponseFormat={responseFormat}

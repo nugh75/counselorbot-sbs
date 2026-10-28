@@ -64,6 +64,7 @@ export function AdministrationStepFlow({
   const [reload, setReload] = useState(0);
   const owner = useRef<string | null>(null);
   const draftKey = useRef<string | null>(null);
+  const saveAttempt = useRef<(() => Promise<void>) | null>(null);
   const retryIds = useRef<{ session_id: string; request_id: string } | null>(
     null,
   );
@@ -74,7 +75,7 @@ export function AdministrationStepFlow({
       try {
         sessionStorage.setItem(
           draftKey.current,
-          JSON.stringify({ retryIds: retryIds.current, ...draft }),
+          JSON.stringify({ retryIds: retryIds.current, updatedAt: Date.now(), ...draft }),
         );
       } catch {}
   };
@@ -107,6 +108,14 @@ export function AdministrationStepFlow({
           pathId,
           stepId,
         );
+        const params = new URLSearchParams(window.location.search);
+        let attempt = params.get('attempt');
+        if (attempt === 'new') {
+          attempt = crypto.randomUUID();
+          params.set('attempt', attempt);
+          window.history.replaceState(window.history.state, '', `${window.location.pathname}?${params}`);
+        }
+        if (attempt && /^[0-9a-f-]{36}$/i.test(attempt)) draftKey.current += `:attempt:${attempt}`;
         const response = await apiFetch(
           `/api/user/paths/${pathId}/steps/${stepId}/launch`,
           { method: "POST" },
@@ -121,7 +130,9 @@ export function AdministrationStepFlow({
         let frozen: FrozenSessionDetail | null = null;
         let resumeFailed = false;
         try {
-          frozen = target.latest_entry ? await getFrozenSession(target.latest_entry.session_id) : null;
+          const currentAttemptSession = attempt && draftKey.current ? sessionStorage.getItem(`${draftKey.current}:session`) : null;
+          frozen = target.latest_entry && (!attempt || currentAttemptSession === target.latest_entry.session_id)
+            ? await getFrozenSession(target.latest_entry.session_id) : null;
           if (frozen && (frozen.session_id !== target.latest_entry?.session_id || frozen.questionnaire_type !== target.instrument_code))
             throw new Error("snapshot mismatch");
         } catch {
@@ -250,7 +261,10 @@ export function AdministrationStepFlow({
         setSnapshot(frozen);
         setLaunch(current => current ? { ...current, latest_entry: committed } : current);
         setAck(committed);
-        if (draftKey.current) sessionStorage.removeItem(draftKey.current);
+        if (draftKey.current) {
+          sessionStorage.setItem(`${draftKey.current}:session`, committed.session_id);
+          sessionStorage.removeItem(draftKey.current);
+        }
       }
     } catch {
       setError(true);
@@ -325,24 +339,37 @@ export function AdministrationStepFlow({
       )}
     </div>
   );
-  const reenter = () => {
+  const reenter = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (ack && !completed && saveAttempt.current) await saveAttempt.current();
+    } catch {
+      setError(true); setBusy(false); return;
+    }
     setAck(null); setCompleted(false); setScores(null); setAnswers({}); setSaved(null);
     retryIds.current = null; runnerSession.current = null;
-    if (draftKey.current) sessionStorage.removeItem(draftKey.current);
+    const params = new URLSearchParams(window.location.search);
+    params.set('attempt', crypto.randomUUID());
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}?${params}`);
+    setError(false); setBusy(false);
     setReload(value => value + 1);
   };
-  const reenterButton = <Button variant="secondary" onClick={reenter}>{resultsChatText(lang, "reenterData")}</Button>;
+  const reenterButton = <Button variant="secondary" disabled={busy} onClick={() => void reenter()}>{resultsChatText(lang, "reenterData")}</Button>;
   if (ack && questionnaire && completed)
     return <div className="space-y-4">{reenterButton}<PlanChatCompleted sessionId={ack.session_id} questionnaireType={questionnaire.id} /></div>;
   if (ack && questionnaire)
     return (
-      <div className="space-y-4">{reenterButton}<GuidedChatInterface
+      <div className="space-y-4">{reenterButton}{error && <Callout variant="danger">{l('error')}</Callout>}<GuidedChatInterface
+        key={ack.session_id}
         scores={ack.result.scores}
         questionnaireType={questionnaire.id}
         sessionId={ack.session_id}
         counselorId={snapshot?.counselor_id ?? getSelectedCounselorId()}
         locale={snapshot?.locale || lang}
         frozenSnapshot={snapshot}
+        planOrigin={{pathId, stepId}}
+        registerAttemptSave={save => { saveAttempt.current = save; }}
         onFrozen={() => { setAck(null); setReload(value => value + 1); }}
         onComplete={() => {
           setCompleted(true);

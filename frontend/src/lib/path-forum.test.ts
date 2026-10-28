@@ -47,7 +47,7 @@ test('the builder lists only published visible discussions, once per path', () =
     assert.deepEqual(rows, [{id: 1, title: 'Discussion 1', locked: false}, {id: 5, title: 'Discussion 5', locked: true}]);
     const step = forumStepInput(rows[0], 4, 3);
     assert.deepEqual(step, {position: 3, step_type: 'forum', topic_id: 1, forum_summary: {id: 1, group_id: 4, locked: false},
-        tool_key: '', auto_detect: true, can_self_mark: false});
+        tool_key: '', auto_detect: false, can_self_mark: true});
     assert.deepEqual(selectablePathForumTopics(rows, [step]).map(row => row.id), [5]);
 });
 

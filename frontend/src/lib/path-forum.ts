@@ -24,7 +24,7 @@ export function selectablePathForumTopics(rows: PathForumTopic[], steps: ClassPa
 
 export function forumStepInput(row: PathForumTopic, groupId: number, position: number): ClassPathStep {
     return {position, step_type: 'forum', topic_id: row.id, forum_summary: {id: row.id, group_id: groupId, locked: row.locked},
-        tool_key: '', auto_detect: true, can_self_mark: false};
+        tool_key: '', auto_detect: false, can_self_mark: true};
 }
 
 const FORUM_ERRORS = new Set(['forum_topic_class_mismatch', 'forum_topic_unavailable', 'forum_class_inactive',
