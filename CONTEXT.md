@@ -3,6 +3,7 @@
 <!-- ai4educ:context-template v1.0 -->
 
 ## Quick Reference
+- **Catalogo Area studente**: in `/profilo` tutti i gruppi di strumenti restano visibili anche con piani attivi, ignorando la precedente preferenza di chiusura; i piani mantengono la propria apertura indipendente. In «Attività e percorsi» i piani partono chiusi e il catalogo resta visibile.
 - **Ripresa in Area studente e personale iscritto**: `/profilo` riunisce in «Da riprendere» chat guidate e analisi sospese insieme a obiettivi e assegnazioni; i duplicati locali e le simulazioni docente sono esclusi. Docenti, ricercatori e amministratori iscritti vedono i piani delle proprie classi e possono scegliere la vista di classe; iniziano nella vista completa, senza perdere il ruolo amministrativo.
 - **Formattazione chat QPCC**: separatori Markdown anomali e tag `small` normalizzati; metadati privati anche con radice JSON `recommendations` o involucro XML; bolle contenute e scroll delle sole tabelle. Compatibile con messaggi salvati, senza riscrittura dello storico. Contratto: `docs/operations/qpcc-chat-formatting.md`; fixture su :3159.
 - **Ripresa chat nei piani / profili QPCC storici**: le analisi mantengono «Reinserisci i dati» anche se la pausa fallisce; le somministrazioni recuperano la propria ultima sessione valida. K1–K5 non è riutilizzato: modulo e verifica dei piani usano i dieci fattori QPCC canonici anche con catalogo storico; una nuova compilazione apre una nuova analisi conservando lo storico. Contratto e regressioni: `docs/operations/operational-plan-questionnaire-chats.md`.

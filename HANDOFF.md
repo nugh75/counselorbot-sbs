@@ -1,3 +1,17 @@
+# Handoff 28 ottobre 2026: catalogo sempre visibile nell'Area studente
+
+- Branch `fix/attivita-piani-collassati`: `/profilo` mostra sempre i gruppi
+  degli strumenti, anche con un piano attivo o una vecchia preferenza di
+  chiusura salvata; le card dei piani conservano il comportamento precedente.
+- Verifiche: 722 test unitari, 11 test browser e presentazione dei piani in
+  sei lingue e due larghezze con API simulate, TypeScript, ESLint mirato e
+  guidance. Frontend portable ricostruito in produzione;
+  frontend, backend, PostgreSQL e Piper healthy. Rimossa la cache di build e
+  controllate le immagini inutilizzate, senza toccare volumi o database.
+- Nessun server di sviluppo avviato; `sudo ./update_nginx.sh` non necessario.
+
+---
+
 # Handoff 27 ottobre 2026: icone della barra di navigazione
 
 - Branch `fix/navbar-support-icons`, da `origin/main`; worktree isolato.
