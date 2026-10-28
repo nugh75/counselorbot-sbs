@@ -14,10 +14,12 @@ import { latestPausedByTool } from '@/lib/catalog-status';
 
 // Every published plan of the student: the priority one open, the others folded.
 // A forum link to a step (#class-step-N) opens the plan holding it.
-export function ClassPathHeroList({ paths, onReload, showAllLink = true }: {
+// With `collapsed` every plan starts folded, even when there is only one.
+export function ClassPathHeroList({ paths, onReload, showAllLink = true, collapsed = false }: {
     paths: StudentClassPath[];
     onReload?: () => Promise<void> | void;
     showAllLink?: boolean;
+    collapsed?: boolean;
 }) {
     const { lang } = useI18n();
     const discussions = useTeacherResource('/api/user/forum/links', parseForumDiscussionLinks);
@@ -37,8 +39,8 @@ export function ClassPathHeroList({ paths, onReload, showAllLink = true }: {
                     path={path}
                     pausedChats={paused}
                     onReload={onReload}
-                    collapsible={ordered.length > 1}
-                    defaultOpen={index === 0 || path.steps.some(step => hash === `#class-step-${step.id}`)}
+                    collapsible={collapsed || ordered.length > 1}
+                    defaultOpen={path.steps.some(step => hash === `#class-step-${step.id}`) || (!collapsed && index === 0)}
                     discussionLinks={discussions.forbidden || discussions.failed ? [] : discussions.data?.links || []}
                     meetings={meetings.meetings}
                     onMeetingsChanged={meetings.load}

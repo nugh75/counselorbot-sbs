@@ -143,6 +143,9 @@ try {
         await student.page.goto(`${origin}/?view=home`);
         const hero = student.page.getByTestId('class-path-hero-card');
         await hero.getByRole('heading', {name: 'Strategie di apprendimento', exact: true}).waitFor();
+        // On the home every plan starts folded: open it to read the step details.
+        await hero.getByRole('button', {name: 'Strategie di apprendimento', exact: true}).click();
+        await hero.locator('time').first().waitFor();
         assert.equal(await hero.locator('time').count(), 1);
         assert.deepEqual(student.errors, []);
         await student.context.close();

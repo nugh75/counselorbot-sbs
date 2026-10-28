@@ -312,22 +312,32 @@ test('student home includes a locally interrupted chat when no saved copy exists
     } finally { await f.context.close(); }
 });
 
-test('Home with active class path: hero card shown first, ochre current step, catalog collapsed with toggle', async () => {
+test('Home with active class path: heading first, folded plan, catalog always visible', async () => {
     const f = await createFixture({ paths: [samplePath1], lang: 'it' });
     try {
         await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
 
-        // Hero card is rendered
+        // The page heading comes first, the plan immediately below it.
+        const heading = f.page.getByRole('heading', { name: 'Attività e percorsi', exact: true });
         const heroCard = f.page.locator('[data-testid="class-path-hero-card"]');
         await heroCard.waitFor({ state: 'visible' });
+        const headingBox = await heading.boundingBox();
+        const heroBox = await heroCard.boundingBox();
+        assert.ok(headingBox.y < heroBox.y);
 
         // Subtitle shows class name
         assert.ok((await heroCard.innerText()).toLowerCase().includes('3b liceo'));
-        // Title shows path title
-        assert.ok((await heroCard.innerText()).includes('Inizio anno'));
+        // Title shows path title and starts folded
+        const planToggle = heroCard.getByRole('button', { name: 'Inizio anno', exact: true });
+        assert.equal(await planToggle.getAttribute('aria-expanded'), 'false');
+        assert.equal(await heroCard.getByText('Compilazione QSA').count(), 0);
+        // A folded plan still shows its progress.
+        assert.ok((await heroCard.innerText()).includes('1 di 3 completati'));
 
-        // Current step (step 102) is rendered with ochre styling and ▶
+        // Expanding the plan reveals the current step (step 102), with ochre styling and ▶.
         // A done step reopens; a chat start remembers the way back to the plan.
+        await planToggle.click();
+        assert.equal(await planToggle.getAttribute('aria-expanded'), 'true');
         assert.equal(await heroCard.getByRole('link', { name: 'Riapri' }).getAttribute('href'), '/bussola');
         assert.equal(await heroCard.getByRole('link', { name: 'Inizia' }).first().getAttribute('href'), '/?start=QSA&from=plan');
         const currentStep = heroCard.getByText('Compilazione QSA');
@@ -335,31 +345,11 @@ test('Home with active class path: hero card shown first, ochre current step, ca
         const currentBadge = heroCard.getByText('In corso');
         await currentBadge.waitFor({ state: 'visible' });
 
-        // Progress indicates 1 of 3
-        assert.ok((await heroCard.innerText()).includes('1 di 3 completati'));
-
-        // Catalog toggle button is visible and collapsed
-        const toggleBtn = f.page.locator('[data-testid="toggle-catalog-btn"]');
-        await toggleBtn.waitFor({ state: 'visible' });
-        assert.equal(await toggleBtn.getAttribute('aria-expanded'), 'false');
-
-        // Catalog section is hidden
+        // The rest of the page is never folded: no catalog toggle, catalog visible.
+        assert.equal(await f.page.locator('[data-testid="toggle-catalog-btn"]').count(), 0);
         const catalogSection = f.page.locator('#home-catalog-section');
-        assert.equal(await catalogSection.getAttribute('hidden'), '');
-
-        // Click toggle button expands catalog
-        await toggleBtn.click();
-        assert.equal(await toggleBtn.getAttribute('aria-expanded'), 'true');
+        await catalogSection.waitFor({ state: 'visible' });
         assert.equal(await catalogSection.getAttribute('hidden'), null);
-
-        // Verify localStorage remembered state
-        const stored = await f.page.evaluate(() => localStorage.getItem('cb_home_catalog_open'));
-        assert.equal(stored, 'true');
-
-        // Toggle back collapses catalog
-        await toggleBtn.click();
-        assert.equal(await toggleBtn.getAttribute('aria-expanded'), 'false');
-        assert.equal(await catalogSection.getAttribute('hidden'), '');
 
         assert.deepEqual(f.errors, []);
     } finally {
@@ -392,7 +382,7 @@ test('Home without active class path: hero card absent, catalog open normally', 
     }
 });
 
-test('Home with several paths: every plan listed, nearest due date open first, others collapsible', async () => {
+test('Home with several paths: every plan listed and folded', async () => {
     // samplePath1 has due date 2026-10-15; samplePath2 has due date 2026-11-10.
     const f = await createFixture({ paths: [samplePath2, samplePath1], lang: 'it' });
     try {
@@ -405,9 +395,9 @@ test('Home with several paths: every plan listed, nearest due date open first, o
 
         const first = list.getByRole('button', { name: 'Inizio anno', exact: true });
         const second = list.getByRole('button', { name: 'Percorso Autunno', exact: true });
-        assert.equal(await first.getAttribute('aria-expanded'), 'true');
+        assert.equal(await first.getAttribute('aria-expanded'), 'false');
         assert.equal(await second.getAttribute('aria-expanded'), 'false');
-        assert.ok(await cards.nth(0).getByText('Compilazione QSA').isVisible());
+        assert.equal(await cards.nth(0).getByText('Compilazione QSA').count(), 0);
         assert.equal(await cards.nth(1).getByText('Obiettivi di studio').count(), 0);
         // A folded plan still shows its progress.
         assert.ok((await cards.nth(1).innerText()).includes('0 di 1 completati'));
@@ -416,7 +406,8 @@ test('Home with several paths: every plan listed, nearest due date open first, o
         assert.equal(await second.getAttribute('aria-expanded'), 'true');
         await cards.nth(1).getByText('Obiettivi di studio').waitFor({ state: 'visible' });
         await first.click();
-        assert.equal(await cards.nth(0).getByText('Compilazione QSA').count(), 0);
+        assert.equal(await first.getAttribute('aria-expanded'), 'true');
+        await cards.nth(0).getByText('Compilazione QSA').waitFor({ state: 'visible' });
 
         const allPathsLink = list.getByRole('link', { name: /Vedi tutti i piani operativi/i });
         assert.equal(await allPathsLink.getAttribute('href'), '/profilo/piani-operativi');
