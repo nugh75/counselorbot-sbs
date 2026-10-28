@@ -421,6 +421,7 @@ test('orderClassPaths keeps every plan, open ones first by nearest due date', ()
 
 test('planStepHref marks only chat starts as coming from a plan', () => {
     assert.equal(planStepHref('/?start=OBIETTIVO_STUDIO'), '/?start=OBIETTIVO_STUDIO&from=plan');
+    assert.equal(planStepHref('/?start=QSA', 10, 20), '/?start=QSA&from=plan&path_id=10&path_step_id=20');
     assert.equal(planStepHref('/?frozen=qpcc-session'), '/?frozen=qpcc-session&from=plan');
     assert.equal(planStepHref('/profilo/timeline'), '/profilo/timeline');
     assert.equal(planStepHref('/profilo/piani-operativi/1/2/approfondimento'), '/profilo/piani-operativi/1/2/approfondimento');

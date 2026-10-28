@@ -29,11 +29,11 @@ import { MeetingDetails } from './MeetingDetails';
 import { resolveStepPresentation } from '@/lib/class-path-presentation';
 import type { FrozenSessionSummary } from '@/lib/frozen-session';
 import { resumeHref } from '@/lib/use-resume-entries';
-import { resultsChatText } from '@/lib/i18n-results-chats';
 
 interface Props {
     path: StudentClassPath;
     pausedChats?: Map<string, FrozenSessionSummary>;
+    drafts?: Map<string, string>;
     onReload?: () => Promise<void> | void;
     /** With several plans each card folds to its header and progress. */
     collapsible?: boolean;
@@ -44,7 +44,7 @@ interface Props {
     onMeetingsChanged?: () => Promise<void> | void;
 }
 
-export function ClassPathHeroCard({ path, pausedChats, onReload, collapsible = false, defaultOpen = true, discussionLinks = [], meetings = null, onMeetingsChanged }: Props) {
+export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collapsible = false, defaultOpen = true, discussionLinks = [], meetings = null, onMeetingsChanged }: Props) {
     const { lang, t } = useI18n();
     const l = (key: PathTextKey) => classPathText(lang, key);
     const [actionStepId, setActionStepId] = useState<number | null>(null);
@@ -154,7 +154,15 @@ export function ClassPathHeroCard({ path, pausedChats, onReload, collapsible = f
                     // Standalone chats share the instrument's saved activity. Analysis
                     // and administration pages resolve their exact bound session themselves.
                     const paused = step.start_href?.startsWith('/?start=') && step.tool_key
-                        ? pausedChats?.get(step.tool_key) : undefined;
+                        ? pausedChats?.get(`${path.id}:${step.id}`) : undefined;
+                    const draft = drafts?.get(`${path.id}:${step.id}`);
+                    const inProgress = Boolean(paused) || draft !== undefined || step.attempt_state === 'in_progress';
+                    const canRepeat = step.step_type === 'guided_chat' || step.step_type === 'guided_results_chat'
+                        || step.step_type === 'questionnaire_administration' || step.step_type === 'assignment' || Boolean(step.start_href?.startsWith('/?start='));
+                    const [redoPath, redoHash] = (step.start_href || '').split('#', 2);
+                    const redoHref = step.start_href && (step.step_type === 'guided_results_chat' || step.step_type === 'questionnaire_administration' || step.step_type === 'assignment')
+                        ? `${redoPath}${redoPath.includes('?') ? '&' : '?'}attempt=new${redoHash ? `#${redoHash}` : ''}` : step.start_href;
+                    const resumeStepHref = draft && step.start_href ? `${step.start_href}${step.start_href.includes('?') ? '&' : '?'}attempt=${draft}` : step.start_href;
 
                     const containerClasses = isCurrent
                         ? 'border-indigo-300 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-200 dark:border-indigo-800 dark:bg-indigo-950/30 dark:ring-indigo-900'
@@ -179,7 +187,7 @@ export function ClassPathHeroCard({ path, pausedChats, onReload, collapsible = f
                                         {isCurrent ? (
                                             <span
                                                 className="flex h-7 w-7 items-center justify-center rounded-full bg-ochre-600 text-xs font-bold text-white shadow-xs"
-                                                aria-label={l('current')}
+                                                aria-label={l(inProgress ? 'current' : 'next')}
                                             >
                                                 <Play className="h-3.5 w-3.5 fill-current" aria-hidden />
                                             </span>
@@ -219,7 +227,7 @@ export function ClassPathHeroCard({ path, pausedChats, onReload, collapsible = f
 
                                             {isCurrent && (
                                                 <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-bold text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
-                                                    {l('current')}
+                                                    {l(inProgress ? 'current' : 'next')}
                                                 </span>
                                             )}
                                             {isDone && (
@@ -307,22 +315,31 @@ export function ClassPathHeroCard({ path, pausedChats, onReload, collapsible = f
                                 {/* Right side: actions */}
                                 <div className="flex flex-wrap items-center gap-2 pt-2 sm:shrink-0 sm:justify-end sm:pt-0">
                                     {paused && !isLocked && !isUnavailable && <a
-                                        href={planStepHref(resumeHref(paused))}
+                                        href={planStepHref(resumeHref(paused), path.id, step.id)}
                                         className="inline-flex min-h-11 items-center rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700"
-                                    >{resultsChatText(lang, 'resumeChat')}</a>}
+                                    >{l('resume')}</a>}
                                     {step.start_href && !isLocked && !isUnavailable && (
-                                        <Link href={planStepHref(step.start_href)}>
+                                        <Link href={planStepHref(!inProgress && isDone && canRepeat ? redoHref! : resumeStepHref!, path.id, step.id)}>
                                             <Button
                                                 variant={isCurrent ? 'accent' : 'secondary'}
                                                 size="sm"
                                             >
-                                                {isDone ? l('reopen') : l('start')}
+                                                {inProgress && !paused ? l('resume') : canRepeat && (isDone || paused) ? l('redo') : isDone ? l('reopen') : l('start')}
                                                 <ArrowRight className="h-4 w-4" aria-hidden />
                                             </Button>
                                         </Link>
                                     )}
+                                    {inProgress && !paused && canRepeat && redoHref && !isLocked && !isUnavailable && (
+                                        <Link href={planStepHref(redoHref, path.id, step.id)}><Button variant="secondary" size="sm">{l('redo')}</Button></Link>
+                                    )}
 
-                                    {step.can_self_mark && !isUnavailable && !isLocked && (
+                                    {step.can_self_mark && step.step_type === 'forum' && !isUnavailable && !isLocked && (
+                                        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
+                                            <input type="checkbox" checked={isDone} disabled={isActionBusy} onChange={() => void handleToggleDone(step)} />
+                                            {pathForumText(lang, 'studentDone')}
+                                        </label>
+                                    )}
+                                    {step.can_self_mark && step.step_type !== 'forum' && !isUnavailable && !isLocked && (
                                         <Button
                                             variant={isDone ? 'ghost' : 'secondary'}
                                             size="sm"

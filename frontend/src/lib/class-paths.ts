@@ -235,6 +235,7 @@ export interface StudentClassPathStep {
     /** Informational planned day; can coexist with due_date. */
     scheduled_date?: string | null;
     state: 'done' | 'not_done' | 'locked' | 'unavailable';
+    attempt_state?: 'in_progress' | 'completed' | null;
     source?: 'student' | 'teacher' | 'automatic' | null;
     start_href?: string | null;
     can_self_mark: boolean;
@@ -277,6 +278,7 @@ export function parseStudentClassPathStep(input: unknown): StudentClassPathStep 
         due_date: raw.due_date ? String(raw.due_date) : null,
         scheduled_date: raw.scheduled_date ? String(raw.scheduled_date) : null,
         state,
+        attempt_state: raw.attempt_state === 'in_progress' || raw.attempt_state === 'completed' ? raw.attempt_state : null,
         source,
         start_href: raw.start_href ? String(raw.start_href) : null,
         can_self_mark: Boolean(raw.can_self_mark),
@@ -499,6 +501,7 @@ export function orderClassPaths(paths: StudentClassPath[]): StudentClassPath[] {
 }
 
 // A guided chat opened from a plan step remembers the way back to the plans.
-export function planStepHref(href: string): string {
-    return href.startsWith('/?start=') || href.startsWith('/?frozen=') ? `${href}&from=plan` : href;
+export function planStepHref(href: string, pathId?: number, stepId?: number): string {
+    return href.startsWith('/?start=') || href.startsWith('/?frozen=')
+        ? `${href}&from=plan${pathId && stepId ? `&path_id=${pathId}&path_step_id=${stepId}` : ''}` : href;
 }

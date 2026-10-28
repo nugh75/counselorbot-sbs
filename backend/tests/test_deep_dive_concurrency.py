@@ -155,8 +155,24 @@ def test_concurrent_starts_return_one_bound_session(monkeypatch):
                 responses = list(executor.map(start, range(2)))
             assert [row.status_code for row in responses] == [200, 200]
             assert responses[0].json() == responses[1].json()
+            attempt_id = str(uuid.uuid4())
+            ready = Barrier(2)
+
+            def redo(_):
+                with TestClient(app) as concurrent_client:
+                    ready.wait(timeout=10)
+                    return concurrent_client.post(
+                        f"/user/paths/{path['id']}/steps/{path['steps'][1]['id']}/deep-dive",
+                        json={"attempt_id": attempt_id},
+                    )
+
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                retries = list(executor.map(redo, range(2)))
+            assert [row.status_code for row in retries] == [200, 200]
+            assert retries[0].json() == retries[1].json()
+            assert retries[0].json()["session_id"] == attempt_id
         with factory() as db:
-            assert db.query(models.ClassPathDeepDiveSession).count() == 1
+            assert db.query(models.ClassPathDeepDiveSession).count() == 2
     finally:
         with engine.begin() as connection:
             connection.execute(text(f'DROP SCHEMA "{schema}" CASCADE'))

@@ -691,6 +691,18 @@ class AssignmentWork(Base):
     feedback_at = Column(UTCDateTime, nullable=True)
 
 
+class AssignmentSubmissionHistory(Base):
+    """Previous submitted snapshots, visible only to their owner."""
+    __tablename__ = "assignment_submission_history"
+    id = Column(Integer, primary_key=True)
+    work_id = Column(Integer, ForeignKey("assignment_work.id", ondelete="CASCADE"), nullable=False, index=True)
+    submission = Column(JSON, nullable=False)
+    submitted_at = Column(UTCDateTime, nullable=True)
+    feedback = Column(Text, nullable=False, default="")
+    feedback_at = Column(UTCDateTime, nullable=True)
+    archived_at = Column(UTCDateTime, nullable=False)
+
+
 class AssignmentRecipient(Base):
     __tablename__ = "assignment_recipients"
     __table_args__ = (UniqueConstraint("assignment_id", "username", name="uq_assignment_recipient"),)
@@ -2363,8 +2375,7 @@ class ClassPathDeepDiveSession(Base):
     exact session; no marker is synthesized and the session is never reused.
     """
     __tablename__ = "class_path_deep_dive_sessions"
-    __table_args__ = (UniqueConstraint("step_id", "username", "result_id", name="uq_deep_dive_step_result"),
-                      UniqueConstraint("session_id", name="uq_deep_dive_session"),)
+    __table_args__ = (UniqueConstraint("session_id", name="uq_deep_dive_session"),)
     id = Column(Integer, primary_key=True)
     step_id = Column(Integer, ForeignKey("class_path_steps.id", ondelete="CASCADE"), nullable=False, index=True)
     username = Column(String, nullable=False, index=True)

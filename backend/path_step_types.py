@@ -443,7 +443,7 @@ def forum_descriptor(db, path, step):
         return {
             "available": False,
             "availability_reason": error.detail,
-            "auto_detect": True,
+            "auto_detect": False,
             "target_summary": None,
             "start_href": None,
             "instrument_code": FORUM_TOOL_KEY,
@@ -452,7 +452,7 @@ def forum_descriptor(db, path, step):
     return {
         "available": True,
         "availability_reason": None,
-        "auto_detect": True,
+        "auto_detect": False,
         "instrument_code": FORUM_TOOL_KEY,
         "start_href": forum_href(path.group_id, row.id),
         "target_summary": {"id": row.id, "group_id": path.group_id, "locked": bool(row.locked)},
@@ -508,7 +508,7 @@ def completion_evidence(db, path, step, username):
     return next(administration_evidence(db, step, username), None)
 
 
-def deep_dive_evidence(db, step, username):
+def deep_dive_evidence(db, step, username, session_id=None):
     """Final guided-turn marker of a session bound to a still-qualifying result."""
     source = results_step(db, step)
     if step.active_from is None or (source is None and not step.tool_key):
@@ -519,6 +519,8 @@ def deep_dive_evidence(db, step, username):
         .filter_by(step_id=step.id, username=username)
         .order_by(models.ClassPathDeepDiveSession.id)
     ):
+        if session_id is not None and binding.session_id != session_id:
+            continue
         if binding.started_at < step.active_from or (qualifying is not None and binding.result_id not in qualifying):
             continue
         result = db.get(models.QuestionnaireResult, binding.result_id)

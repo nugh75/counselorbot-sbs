@@ -45,7 +45,7 @@ def existing_binding(db, step, username, result=None):
         if result is None:
             return None
         query = query.filter_by(result_id=result.id)
-    for binding in query.order_by(models.ClassPathDeepDiveSession.id):
+    for binding in query.order_by(models.ClassPathDeepDiveSession.id.desc()):
         bound = db.get(models.QuestionnaireResult, binding.result_id)
         # Obsolete QPCC profiles remain historical records; a new canonical
         # compilation can start its own analysis without replacing that history.
@@ -76,6 +76,13 @@ def deep_dive_options(db, identity, path_id, step_id):
         candidates = [{"id": row.id, "submitted_at": row.submitted_at.isoformat(), "locale": row.locale or ""}
                       for row in rows if personal_result_qualifies(db, step, username, row)]
     source = results_step(db, step)
+    attempts = []
+    for previous in db.query(models.ClassPathDeepDiveSession).filter_by(step_id=step.id, username=username).order_by(models.ClassPathDeepDiveSession.id.desc()):
+        previous_result = db.get(models.QuestionnaireResult, previous.result_id)
+        if previous_result:
+            attempts.append({**payload(previous, previous_result, step),
+                             "completed": bool(deep_dive_evidence(db, step, username, session_id=previous.session_id)),
+                             "resumable": bool(db.query(models.FrozenSession.id).filter_by(username=username, session_id=previous.session_id).first())})
     legacy_profile = False
     for previous in db.query(models.ClassPathDeepDiveSession).filter_by(step_id=step.id, username=username):
         previous_result = db.get(models.QuestionnaireResult, previous.result_id)
@@ -87,13 +94,14 @@ def deep_dive_options(db, identity, path_id, step_id):
         "personal": bool(step.tool_key),
         "results": candidates,
         "session": payload(binding, result, step) if binding and result else None,
-        "completed": bool(binding and result and deep_dive_evidence(db, step, username)),
+        "attempts": attempts,
+        "completed": bool(binding and result and deep_dive_evidence(db, step, username, session_id=binding.session_id)),
         "ready": bool(result) if not step.tool_key else bool(candidates),
         "source_href": step_descriptor(db, path, source)["start_href"] if source else f"/?start={step.tool_key}",
     }
 
 
-def start_results_deep_dive(db, identity, path_id, step_id, result_id=None):
+def start_results_deep_dive(db, identity, path_id, step_id, result_id=None, attempt_id=None):
     from .routes.class_paths import require_step_launch
 
     # Serialize starts (including a racing different selection) under the path lock.
@@ -101,6 +109,12 @@ def start_results_deep_dive(db, identity, path_id, step_id, result_id=None):
     if step.step_type != "guided_results_chat":
         raise HTTPException(422, "results_chat_step_required")
     username = identity["username"]
+    if attempt_id:
+        replay = db.query(models.ClassPathDeepDiveSession).filter_by(session_id=attempt_id).first()
+        if replay:
+            if replay.step_id != step.id or replay.username != username or (result_id is not None and result_id != replay.result_id):
+                raise HTTPException(409, "results_chat_attempt_conflict")
+            return payload(replay, db.get(models.QuestionnaireResult, replay.result_id), step)
     result = None if step.tool_key else bound_result(db, step, username)
     binding = existing_binding(db, step, username, result)
     if step.tool_key:
@@ -119,11 +133,11 @@ def start_results_deep_dive(db, identity, path_id, step_id, result_id=None):
         raise HTTPException(422, "results_chat_result_invalid")
     if result is None:
         raise HTTPException(409, "results_step_incomplete")
-    if binding:
+    if binding and not attempt_id:
         return payload(binding, result, step)
     binding = models.ClassPathDeepDiveSession(
         step_id=step.id, username=username, result_id=result.id,
-        session_id=str(uuid.uuid4()), started_at=datetime.now(UTC),
+        session_id=attempt_id or str(uuid.uuid4()), started_at=datetime.now(UTC),
     )
     try:
         db.add(binding)
@@ -131,7 +145,9 @@ def start_results_deep_dive(db, identity, path_id, step_id, result_id=None):
     except IntegrityError:
         db.rollback()
         binding = (db.query(models.ClassPathDeepDiveSession)
-                   .filter_by(step_id=step.id, username=username, result_id=result.id).one())
+                   .filter_by(session_id=attempt_id).first()) if attempt_id else existing_binding(db, step, username, result)
+        if not binding or binding.step_id != step.id or binding.username != username or binding.result_id != result.id:
+            raise HTTPException(409, "results_chat_attempt_conflict")
     except Exception:
         db.rollback()
         raise

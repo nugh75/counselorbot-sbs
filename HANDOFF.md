@@ -1,3 +1,23 @@
+# Handoff 28 ottobre 2026: tentativi nei piani operativi
+
+- Branch `fix/stati-tentativi-piani`: Inizia/Riprendi/Rifai, tentativi delle chat
+  conservati e idempotenti, bozze di questionario separate, storico personale
+  delle consegne e riscontri. Il docente vede soltanto la consegna attuale.
+- I passi forum usano la spunta dello studente. Il precedente completamento
+  automatico non è convertito in una scelta personale; post e override restano.
+  Incontri e strumenti personali condivisi mantengono i contenuti esistenti.
+- Test: 67 SQLite, 53 PostgreSQL per chat/forum/migrazione e 26 PostgreSQL per
+  assegnazioni, 50 unitari frontend, 6 scenari browser sulla build ottimizzata,
+  TypeScript, ESLint mirato, guidance e portabilità SQL. Il lint globale ha 12
+  messaggi preesistenti di i18n nelle pagine docente; tre vecchi scenari browser
+  dell'editor non trovano il selettore di analisi da passo questionario.
+- Deploy portable: da eseguire dopo backup PostgreSQL. Il checkout di produzione
+  contiene modifiche contemporanee non correlate: costruire le immagini dal
+  worktree isolato e riavviare il compose originale senza toccare quelle modifiche.
+  `sudo ./update_nginx.sh` non è necessario; nessun server dev è stato avviato.
+
+---
+
 # Handoff 28 ottobre 2026: Presentazione nel menu Area
 
 - Branch `fix/menu-presentazione` da `origin/main`: per chi ha fatto accesso,

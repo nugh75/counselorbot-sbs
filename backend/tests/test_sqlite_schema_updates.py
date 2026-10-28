@@ -3,7 +3,7 @@
 Each test builds its own SQLite file with the desktop PRAGMAs, whatever TEST_DB is.
 """
 import pytest
-from sqlalchemy import CheckConstraint, MetaData, String, create_engine, inspect, text
+from sqlalchemy import CheckConstraint, MetaData, String, UniqueConstraint, create_engine, inspect, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -84,6 +84,40 @@ def test_fresh_create_all_needs_no_rebuild(tmp_path):
     engine = _engine(tmp_path / "fresh.sqlite3")
     models.Base.metadata.create_all(engine)
     assert sync_sqlite_check_constraints(engine, models.Base.metadata) == []
+    engine.dispose()
+
+
+def test_deep_dive_migration_preserves_old_rows_and_accepts_more_attempts(tmp_path):
+    from importlib import import_module
+    from datetime import UTC, datetime
+
+    engine = _engine(tmp_path / "attempts.sqlite3")
+    old = MetaData()
+    for table in models.Base.metadata.sorted_tables:
+        table.to_metadata(old)
+    old.tables["class_path_deep_dive_sessions"].append_constraint(
+        UniqueConstraint("step_id", "username", "result_id", name="uq_deep_dive_step_result"))
+    old.create_all(engine)
+    with Session(engine) as db, db.begin():
+        group = models.StudentGroup(code="attempts", name="Class", owner_username="teacher")
+        db.add(group); db.flush()
+        path = models.ClassPath(group_id=group.id, title="Plan", created_by="teacher")
+        db.add(path); db.flush()
+        step = models.ClassPathStep(path_id=path.id, position=1, step_type="tool", tool_key="QSA")
+        result = models.QuestionnaireResult(session_id="result", questionnaire_type="QSA", username="student")
+        db.add_all([step, result]); db.flush()
+        db.add(models.ClassPathDeepDiveSession(step_id=step.id, username="student", result_id=result.id,
+                                                session_id="old", started_at=datetime.now(UTC)))
+    migration = import_module("backend.migrations.20261028_deep_dive_attempts")
+    migration.migrate(engine)
+    migration.migrate(engine)
+    with Session(engine) as db, db.begin():
+        first = db.query(models.ClassPathDeepDiveSession).one()
+        assert first.session_id == "old"
+        db.add(models.ClassPathDeepDiveSession(step_id=first.step_id, username=first.username,
+                                              result_id=first.result_id, session_id="new", started_at=datetime.now(UTC)))
+    with Session(engine) as db:
+        assert db.query(models.ClassPathDeepDiveSession).count() == 2
     engine.dispose()
 
 

@@ -20,19 +20,14 @@ The builder reads the discussions through the forum's own
 responses never carry the title: the step's target summary is `{id, group_id,
 locked}`.
 
-Completion is resolved on read. `forum_evidence` returns the current class member's
-earliest own reply in that exact discussion with `status=published`, no
-`hidden_at`, no `deleted_at` and `created_at` at or after the step's `active_from`
-(completion kind `forum_reply`). Pending replies, other discussions, other authors,
-the opening message and pre-activation replies never count. Approval qualifies the
-existing reply; hide, reject and delete remove it unless another qualifying reply
-remains; restore brings it back. A premoderated author edit returns the reply to
-pending. Lock keeps earlier evidence. A hidden discussion, an archived class or a
-class forum switched off makes the step unavailable (excluded from the ratio, no
-launch, no override, publish 409). The forum step ignores the student's tool view
-and the union of their classes: only the path class's own forum setting counts,
-exactly as on the forum routes. `/user/paths` adds `forum_state` (`pending`,
-`hidden`, `locked`, `muted`, booleans only) for available forum steps.
+Completion is explicitly marked by the student with the checkbox on the plan.
+Publishing, approving, hiding, editing or deleting a forum reply never changes
+that mark. The student can clear it and mark the step again; posts are preserved.
+A teacher override retains priority. A hidden discussion, archived class or
+disabled class forum makes the step unavailable until restored. The class's own
+forum setting applies; `/user/paths` still reports only moderation state flags.
+Older steps whose only completion was automatic now need the student's mark;
+existing posts and teacher overrides are not changed.
 
 ## Privacy seam
 
@@ -97,7 +92,7 @@ npm run build --prefix frontend
 make guidance-refresh && make guidance-check
 ```
 
-Covered: exact discussion, class, author and timing matrix; pending, approval,
+Historical validation covered the former automatic-completion rules; current tests cover the explicit mark and pending, approval,
 hide, restore, reject, delete and premoderated edit; two qualifying replies;
 locked discussion and muted student; hidden discussion; class archive and
 restore; class forum setting under the All tools view and under another class's
