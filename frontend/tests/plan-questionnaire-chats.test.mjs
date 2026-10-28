@@ -32,7 +32,10 @@ async function fixture({width = 1440, teacher = true, pending = false, options =
         if (p === '/api/user/account' || p === '/api/user/account-preferences') return json({setup_complete: true, notebook_completed: true, setup_completed: true, counselor_id: 1, counselor_ready: true, notebook_ready: true});
         if (p === '/api/orientation/status') return json({required: false, completed: true});
         if (p === '/api/user/access') return json({restricted: false, tool_keys: codes, counselor_ids: null, class_ids: [11]});
-        if (p === '/api/user/paths') return json(state.studentPaths);
+        if (p === '/api/user/paths') return json(state.studentPaths.map(path => state.autoPlanState ? {
+            ...path, steps: path.steps.map(step => step.id === 20 && state.options?.session
+                ? {...step, attempt_state: state.options.completed ? 'completed' : 'in_progress'} : step),
+        } : path));
         if (p.endsWith('/launch')) return json(state.launch);
         if (p === '/api/session/frozen') return json(state.snapshot ? [state.snapshot] : []);
         if (p === '/api/admin/groups') return json([group]);
@@ -55,7 +58,8 @@ async function fixture({width = 1440, teacher = true, pending = false, options =
         }
         if (p.endsWith('/deep-dive')) {
             if (method === 'GET') return json(state.options);
-            const session = bound(body?.result_id ?? state.options.session?.result.id ?? 8);
+            if (state.startGate) await state.startGate;
+            const session = state.autoSession ? structuredClone(state.autoSession) : bound(body?.result_id ?? state.options.session?.result.id ?? 8);
             if (body?.attempt_id) session.session_id = body.attempt_id;
             state.options.session = session;return json(session);
         }
@@ -156,6 +160,53 @@ for (const personal of [false, true]) test(`missing ${personal ? 'personal' : 'p
         assert.deepEqual(state.errors, []);
     } finally {await context.close();}
 });
+test('the plan starts QPCC directly and offers resume and redo after freezing', async () => {
+    const {context, page, state} = await fixture({teacher: false, options: {personal: false, ready: true,
+        source_href: '/profilo/piani-operativi/301/10', results: [], session: null, completed: false, attempts: []}});
+    state.autoSession = {...bound(8), results_step_id: 10, result: {...result(8), questionnaire_type: 'QPCC',
+        scores: Object.fromEntries(['A1','A2','A3','V1','V2','C1','C2','M1','M2','M3'].map(code => [code, 5]))}};
+    state.autoPlanState = true;
+    let releaseStart;
+    state.startGate = new Promise(resolve => { releaseStart = resolve; });
+    state.studentPaths = [{id: 301, group_id: 11, group_name: 'Classe sintetica', title: 'Piano sintetico', mode: 'recommended',
+        done: 0, total: 1, next_step_id: 20, steps: [{id: 20, path_id: 301, position: 1, step_type: 'guided_results_chat',
+            tool_key: '', title: 'Approfondimento QPCC', state: 'not_done', start_href: '/profilo/piani-operativi/301/20/approfondimento'}]}];
+    try {
+        await page.goto(`${origin}/profilo/piani-operativi`, {waitUntil: 'domcontentloaded'});
+        const optionsLoaded = page.waitForResponse(response => response.url().endsWith('/deep-dive') && response.request().method() === 'GET');
+        await page.getByTestId('class-path-hero-card').getByRole('link', {name: 'Inizia'}).click();
+        await optionsLoaded;
+        await page.getByText('Caricamento delle compilazioni…').waitFor();
+        assert.equal(await page.getByRole('button', {name: 'Avvia o riprendi l’approfondimento'}).count(), 0);
+        releaseStart();
+        await page.getByRole('button', {name: 'Congela sessione'}).waitFor();
+        assert.equal(state.requests.filter(row => row.p.endsWith('/deep-dive') && row.method === 'POST').length, 1);
+        assert.equal(await page.getByRole('button', {name: 'Avvia o riprendi l’approfondimento'}).count(), 0);
+        assert.equal(await page.getByRole('link', {name: 'Reinserisci i dati'}).count(), 0);
+        assert.equal(await page.getByRole('button', {name: 'Rifai', exact: true}).count(), 0);
+        await page.getByRole('button', {name: 'Congela sessione'}).click();
+        const card = page.getByTestId('class-path-hero-card');
+        await card.getByRole('link', {name: 'Riprendi'}).waitFor();
+        assert.equal(await card.getByRole('link', {name: 'Rifai'}).getAttribute('href'), '/profilo/piani-operativi/301/20/approfondimento?attempt=new');
+        await card.getByRole('link', {name: 'Riprendi'}).click();
+        await page.getByRole('button', {name: 'Congela sessione'}).waitFor();
+        assert.equal(state.requests.filter(row => row.p.endsWith('/deep-dive') && row.method === 'POST').length, 1);
+        assert.equal(await page.getByRole('link', {name: 'Reinserisci i dati'}).count(), 0);
+        assert.deepEqual(state.errors, []);
+    } finally {releaseStart?.(); await context.close();}
+});
+
+test('a single personal result starts without an extra selection', async () => {
+    const {context, page, state} = await fixture({teacher: false, options: {personal: true, ready: true,
+        source_href: '/?start=QSA', results: [{id: 8, submitted_at: '2026-09-20T12:00:00Z', locale: 'it'}], session: null}});
+    try {
+        await page.goto(`${origin}/profilo/piani-operativi/301/20/approfondimento`, {waitUntil: 'domcontentloaded'});
+        await page.getByRole('button', {name: 'Inizia', exact: true}).waitFor();
+        assert.deepEqual(state.requests.filter(row => row.p.endsWith('/deep-dive') && row.method === 'POST').map(row => row.body), [{result_id: 8}]);
+        assert.equal(await page.getByRole('combobox', {name: 'Scegli la compilazione'}).count(), 0);
+        assert.deepEqual(state.errors, []);
+    } finally {await context.close();}
+});
 test('explicit result choice reopens the same frozen session', async () => {
     const {context, page, state} = await fixture({teacher: false, options: {personal: true, ready: true, source_href: '/?start=QSA',
         results: [{id: 7, submitted_at: '2026-09-10T12:00:00Z', locale: 'it'}, {id: 8, submitted_at: '2026-09-20T12:00:00Z', locale: 'en'}], session: null}});
@@ -202,15 +253,15 @@ test('a completed analysis without a pause reopens on its final choices', async 
     } finally {await context.close();}
 });
 
-test('redo starts a distinct attempt and keeps the earlier report available', async () => {
+test('redo from the plan starts a distinct attempt and keeps the earlier report available', async () => {
     const first = bound(8);
     const {context, page, state} = await fixture({teacher: false, options: {personal: true, ready: true,
         source_href: '/?start=QSA', results: [], session: first, completed: true,
         attempts: [{...first, completed: true}]}});
     try {
-        await page.goto(`${origin}/profilo/piani-operativi/301/20/approfondimento`, {waitUntil: 'domcontentloaded'});
-        await page.getByRole('button', {name: 'Rifai', exact: true}).click();
+        await page.goto(`${origin}/profilo/piani-operativi/301/20/approfondimento?attempt=new`, {waitUntil: 'domcontentloaded'});
         await page.getByText('Tentativi precedenti').waitFor();
+        assert.equal(await page.getByRole('button', {name: 'Rifai', exact: true}).count(), 0);
         const request = state.requests.find(row => row.p.endsWith('/deep-dive') && row.method === 'POST');
         assert.match(request.body.attempt_id, /^[0-9a-f-]{36}$/i);
         assert.notEqual(request.body.attempt_id, first.session_id);
@@ -240,7 +291,7 @@ test('personal analysis after an unsaved personal-tool step keeps its own source
     } finally {await context.close();}
 });
 
-for (const width of [390, 1440]) test(`QPCC resumes the saved phase and keeps data entry available at ${width}px`, async () => {
+for (const width of [390, 1440]) test(`QPCC resumes the saved phase without redundant data entry at ${width}px`, async () => {
     const qpcc = {...bound(8), results_step_id: 10, result: {...result(8), questionnaire_type: 'QPCC',
         scores: Object.fromEntries(['A1','A2','A3','V1','V2','C1','C2','M1','M2','M3'].map(code => [code, 5]))}};
     const {context, page, state} = await fixture({teacher: false, width, options: {personal: false, ready: true,
@@ -252,8 +303,7 @@ for (const width of [390, 1440]) test(`QPCC resumes the saved phase and keeps da
     try {
         await page.goto(`${origin}/profilo/piani-operativi/301/20/approfondimento`, {waitUntil: 'domcontentloaded'});
         await page.getByRole('log').getByText('Ripresa QPCC dal punto conservato', {exact: true}).waitFor();
-        const reenter = page.getByRole('link', {name: 'Reinserisci i dati', exact: true});
-        assert.equal(await reenter.getAttribute('href'), '/profilo/piani-operativi/301/10');
+        assert.equal(await page.getByRole('link', {name: 'Reinserisci i dati', exact: true}).count(), 0);
         assert.equal(state.requests.filter(row => row.p === '/api/chat/stream').length, 0);
         assert.equal(state.requests.filter(row => row.p.endsWith('/deep-dive') && row.method === 'POST').length, 0);
         await page.screenshot({path: new URL(`../../output/playwright/qpcc-plan-resume-${width}.png`, import.meta.url).pathname, fullPage: true});

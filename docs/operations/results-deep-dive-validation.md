@@ -42,6 +42,15 @@ Migration `20261009_guided_results_chat_steps` (advisory lock, replay-safe) adds
 column, replaces the TF3 target check only when it lacks the new branch and creates
 `class_path_deep_dive_sessions`. Existing rows are untouched.
 
+## Direct entry from the plan
+
+The plan's start action opens the chat as soon as the linked result is ready;
+a single personal result is selected automatically, while multiple personal
+results require an explicit choice. A saved attempt resumes its exact snapshot;
+redo from the plan creates a new session and keeps earlier attempts in history. The data-entry
+link appears only when a result is missing or a legacy profile requires repair.
+Returning to the home refreshes plan status, including after browser history restores.
+
 ## Lean validation
 
 Synthetic PostgreSQL only, in the disposable container

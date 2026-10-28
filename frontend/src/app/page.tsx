@@ -148,18 +148,20 @@ export default function Home() {
     const [savedResults, setSavedResults] = useState<SavedResult[] | null>(null);
     const [notebookUpdatedAt, setNotebookUpdatedAt] = useState<string | null | undefined>(undefined);
     const [studentPaths, setStudentPaths] = useState<StudentClassPath[] | null>(null);
+    const studentPathsRequest = useRef(0);
 
     const loadStudentPaths = useCallback(async () => {
+        const request = ++studentPathsRequest.current;
         try {
             const res = await apiFetch('/api/user/paths');
             if (res.ok) {
                 const data = await res.json();
-                setStudentPaths(parseStudentClassPaths(data));
+                if (request === studentPathsRequest.current) setStudentPaths(parseStudentClassPaths(data));
             } else {
-                setStudentPaths([]);
+                if (request === studentPathsRequest.current) setStudentPaths([]);
             }
         } catch {
-            setStudentPaths([]);
+            if (request === studentPathsRequest.current) setStudentPaths([]);
         }
     }, []);
     // Schermata iniziale decisa: un link diretto (?frozen, ?start, ...) la
@@ -195,6 +197,22 @@ export default function Home() {
         void loadStudentPaths();
         return () => { alive = false; };
     }, [identity, loadStudentPaths]);
+
+    // Browser back/forward can restore this page from cache after a plan chat
+    // starts or is paused. Reload its steps when the user returns to the home.
+    useEffect(() => {
+        if (!identity?.authenticated || step !== 'base') return;
+        const refresh = () => { if (document.visibilityState === 'visible') void loadStudentPaths(); };
+        refresh();
+        window.addEventListener('pageshow', refresh);
+        window.addEventListener('focus', refresh);
+        document.addEventListener('visibilitychange', refresh);
+        return () => {
+            window.removeEventListener('pageshow', refresh);
+            window.removeEventListener('focus', refresh);
+            document.removeEventListener('visibilitychange', refresh);
+        };
+    }, [identity, step, loadStudentPaths]);
 
     // Un'entrata di cronologia per ogni passo, dal secondo in poi: la prima è
     // quella con cui la pagina è stata aperta e va lasciata al browser.

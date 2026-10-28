@@ -1,3 +1,20 @@
+# Handoff 28 ottobre 2026: accesso diretto alle chat dei piani
+
+- `fix/ripresa-chat-piani`: Inizia apre direttamente la chat di approfondimento
+  se il risultato è disponibile; Riprendi riapre la sessione e Rifai dal piano
+  avvia un nuovo tentativo conservando quelli precedenti. Il link di reinserimento
+  compare solo quando servono dati mancanti o va corretto un vecchio profilo.
+- La chat non mostra più Rifai e Reinserisci i dati sopra la conversazione.
+  Tornando alla home lo stato dei passi si aggiorna anche dalla cache del browser.
+- Verifiche: 731 unitari frontend, TypeScript, ESLint mirato, guida, 18 scenari
+  browser sulla build di produzione con dati sintetici; resa QPCC 390/1440 px.
+  Un warning ESLint preesistente sulla home resta invariato.
+- Build frontend di produzione completata, insieme al backend che include #648
+  e #649. Deploy portable successivo alle verifiche; `sudo ./update_nginx.sh`
+  non è necessario per questa configurazione. Nessun ambiente dev avviato.
+
+---
+
 # Handoff 28 ottobre 2026: reasoning disattivato in chat
 
 - `fix/reasoning-chat-universale`: gli stream con ragionamento disattivato

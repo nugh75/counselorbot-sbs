@@ -2874,6 +2874,13 @@ administration while its deep dive stays in the plan is a conflict
 is part of the immutable target once the step is activated. Omitting the step keeps
 the deep dive optional; removing it later never undoes the administration step.
 
+From the plan, Inizia loads the guided chat directly when its linked result is ready;
+Riprendi restores the saved attempt and Rifai, available on the plan step, starts
+another while preserving previous attempts. The chat itself has no redundant restart control. A single personal result is selected automatically; several personal results
+still require an explicit choice. Data entry is offered only when the required result
+is missing or a legacy result needs correction. Returning to the home refreshes the
+plan state so the buttons reflect the most recent attempt.
+
 The student opens the step once the administration is complete. CounselorBot binds
 a new, server-issued guided session to that student, deep-dive step and the result
 that completes the administration (guided entry or a confirmed import); starting
