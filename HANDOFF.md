@@ -7,14 +7,18 @@
   automatico non è convertito in una scelta personale; post e override restano.
   Incontri e strumenti personali condivisi mantengono i contenuti esistenti.
 - Test: 67 SQLite, 53 PostgreSQL per chat/forum/migrazione e 26 PostgreSQL per
-  assegnazioni, 50 unitari frontend, 6 scenari browser sulla build ottimizzata,
+  assegnazioni, 50 unitari frontend, 19 scenari browser sulla produzione con API simulate,
   TypeScript, ESLint mirato, guidance e portabilità SQL. Il lint globale ha 12
   messaggi preesistenti di i18n nelle pagine docente; tre vecchi scenari browser
   dell'editor non trovano il selettore di analisi da passo questionario.
-- Deploy portable: da eseguire dopo backup PostgreSQL. Il checkout di produzione
-  contiene modifiche contemporanee non correlate: costruire le immagini dal
-  worktree isolato e riavviare il compose originale senza toccare quelle modifiche.
-  `sudo ./update_nginx.sh` non è necessario; nessun server dev è stato avviato.
+- PR #646 unita e deploy portable eseguito da worktree isolato; backend,
+  frontend, PostgreSQL e Piper sani. Migrazione PostgreSQL verificata; backup
+  `/Volumes/sviluppo/backups/counselorbot/pre-plan-deploy-20261028-105913.dump`
+  verificato prima del riavvio. Il checkout di produzione contiene modifiche
+  contemporanee non correlate e non è stato toccato: prima di un deploy dal ramo
+  parallelo, incorporare la versione aggiornata di main. Cache builder rimossa
+  (4,025 GB) e immagini inutilizzate rimosse (348,8 MB); nessun volume rimosso.
+  `sudo ./update_nginx.sh` non è necessario; nessun processo dev è in esecuzione.
 
 ---
 
