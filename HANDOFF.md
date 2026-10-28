@@ -9,6 +9,24 @@
   allineata e immagine backend di produzione ricostruita. Il deploy portable
   non richiede `sudo ./update_nginx.sh`.
 
+
+---
+
+# Handoff 28 ottobre 2026: finalizzazione consiglio orientativo
+
+- PR #648: risposta di salvataggio completa, blocco delle revisioni concorrenti,
+  conferma prima di cambiare studente e documenti storici in sola lettura.
+- La bozza AI esclude il taccuino personale e i risultati di altre classi;
+  gateway privacy con soggetto studente e finalità orientamento; guida docenti
+  aggiornata in sei lingue.
+- Test: 13 SQLite e 27 PostgreSQL per consiglio e pubblicazione, 5 PostgreSQL
+  per forum, 731 unitari frontend, test browser produzione con API simulate,
+  TypeScript, lint mirato, portabilità SQL e guidance.
+  Il lint generale mantiene 12 errori i18n preesistenti. I nuovi scenari forum
+  richiedono PostgreSQL per una limitazione SQLite già presente.
+- Immagini portable di produzione ricostruite; aggiornamento dei container
+  subordinato alla verifica finale. Per la configurazione portable non serve sudo nginx.
+
 ---
 
 # Handoff 28 ottobre 2026: tentativi nei piani operativi
