@@ -1,5 +1,6 @@
 """Student view switcher (#146): full view or one class view, stored per account."""
 from contextlib import contextmanager
+import asyncio
 
 import pytest
 from fastapi import FastAPI
@@ -7,6 +8,10 @@ from fastapi.testclient import TestClient
 
 from backend import auth, class_access, database, models
 from backend.routes import class_access as class_access_routes
+from backend.routes.groups import get_student_class_chat_settings
+from backend.ai_service import AIService
+from backend.api_models import ChatRequest
+from backend.chat_preparation import prepare_chat_turn
 from backend.tests.artifact_database import artifact_session
 
 STUDENT = {"username": "anna", "groups": ["studenti"], "is_admin": False, "is_researcher": False, "authenticated": True}
@@ -101,6 +106,37 @@ def test_full_view_opens_the_server_guards(db):
     assert class_access.allowed_counselor_ids(db, STUDENT) is None
     with pytest.raises(class_access.ToolAccessDenied):
         class_access.require_tool(db, STUDENT, "OFF")
+
+
+def test_chat_class_settings_follow_selected_view(db):
+    group = _group(db, 'chat')
+    other = _group(db, 'other')
+    settings = db.get(models.ClassSettings, group.id)
+    settings.allow_student_response_length = False
+    settings.response_length = 'long'
+    db.commit()
+
+    def settings_for_student():
+        return asyncio.run(get_student_class_chat_settings(STUDENT, db))
+
+    def prepared_length():
+        request = ChatRequest(questionnaire_type='SAVICKAS', response_length='short', language='it')
+        return prepare_chat_turn(db, AIService(db), request, 'class-view-test', STUDENT,
+                                 include_retrieval=False, include_history=False).effective_response_length
+
+    assert set(settings_for_student()['group_ids']) == {group.id, other.id}
+    assert settings_for_student()['allow_student_response_length'] is False
+    assert prepared_length() == 'long'
+    _set_view(db, 'all')
+    assert settings_for_student()['group_ids'] == []
+    assert settings_for_student()['allow_student_response_length'] is True
+    assert prepared_length() == 'short'
+    _set_view(db, str(group.id))
+    assert settings_for_student()['group_ids'] == [group.id]
+    assert prepared_length() == 'long'
+    _set_view(db, str(other.id))
+    assert settings_for_student()['group_ids'] == [other.id]
+    assert prepared_length() == 'short'
 
 
 def test_specific_class_view_uses_that_class_only(db):

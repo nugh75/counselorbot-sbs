@@ -22,7 +22,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models, schemas
-from ..class_access import FORUM_OPTIONS, forum_option
+from ..class_access import FORUM_OPTIONS, active_view_group_ids, forum_option
 from ..class_tools import ALWAYS_ON, tool_catalog
 from ..group_visibility import (
     _is_admin,
@@ -435,8 +435,7 @@ async def get_student_class_chat_settings(
         return {"group_ids": [], "allow_student_response_format": True,
                 "allow_student_response_length": True, "allow_student_response_reasoning": True,
                 "response_format": None, "response_length": None, "response_reasoning": None}
-    memberships = db.query(models.GroupMembership.group_id).filter(models.GroupMembership.username == username).all()
-    group_ids = [row[0] for row in memberships]
+    group_ids = active_view_group_ids(db, current_user)
     if not group_ids:
         return {"group_ids": [], "allow_student_response_format": True,
                 "allow_student_response_length": True, "allow_student_response_reasoning": True,

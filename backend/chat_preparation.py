@@ -266,8 +266,8 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
             elif hasattr(identity, "get"):
                 username = identity.get("username")
             if username:
-                memberships = db.query(models.GroupMembership.group_id).filter(models.GroupMembership.username == username).all()
-                group_ids = [row[0] for row in memberships] if memberships else None
+                from .class_access import active_view_group_ids
+                group_ids = active_view_group_ids(db, identity) or None
                 if group_ids:
                     request = request.model_copy(update={"group_ids": group_ids})
         except Exception:

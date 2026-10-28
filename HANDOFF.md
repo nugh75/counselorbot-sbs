@@ -1,3 +1,20 @@
+# Handoff 28 ottobre 2026: vista personale senza contenuti di classe
+
+- Branch `fix/vista-studente-tutti-strumenti` da `origin/main`: la vista «Tutti
+  gli strumenti» nasconde nella UI studente piani, assegnazioni, messaggi e
+  incontri; cambiando vista i dati ricompaiono senza modificare le iscrizioni.
+  Le impostazioni e il contesto di classe della chat seguono la vista attiva;
+  le classi esplicitamente scelte nelle chat di docenza restano utilizzabili.
+- Verifiche: 723 test unitari frontend, 13 browser con API simulate, 33 test
+  backend SQLite anche nell'immagine di produzione, TypeScript, guida e
+  portabilità SQL. Il lint mirato segnala un errore preesistente in
+  `ReturningHome.tsx` e due avvisi preesistenti in `profilo/page.tsx`.
+- Frontend e backend portable ricostruiti e avviati in produzione; backup
+  PostgreSQL salvato fuori dal repository prima della sostituzione. Nessun
+  ambiente di sviluppo avviato; `sudo ./update_nginx.sh` non necessario.
+
+---
+
 # Handoff 28 ottobre 2026: catalogo sempre visibile nell'Area studente
 
 - Branch `fix/attivita-piani-collassati`: `/profilo` mostra sempre i gruppi

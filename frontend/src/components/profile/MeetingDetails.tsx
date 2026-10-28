@@ -7,6 +7,8 @@ import { classMeetingText, type ClassMeetingTextKey } from '@/lib/i18n-class-mee
 import { meetingHost, meetingWhen, parseMeetings, type ClassMeeting } from '@/lib/class-meetings';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
+import { isClassContentHidden } from '@/lib/user-access';
+import { useUserAccess } from '@/lib/use-user-access';
 
 /**
  * #175/#176: when, where or the link of a class or group meeting, the booking of
@@ -98,6 +100,7 @@ export function MeetingDetails({ lang, meeting, attended, onChanged, showTitle =
 
 /** The meetings of the student's classes or groups, with booking and attendance. */
 export function useStudentMeetings() {
+    const { access } = useUserAccess();
     const [meetings, setMeetings] = useState<ClassMeeting[] | null>(null);
     const [failed, setFailed] = useState(false);
     const load = useCallback(async () => {
@@ -109,7 +112,7 @@ export function useStudentMeetings() {
         } catch { setFailed(true); }
     }, []);
     useEffect(() => { void load(); }, [load]);
-    return { meetings, failed, load };
+    return isClassContentHidden(access) ? { meetings: [], failed: false, load } : { meetings, failed, load };
 }
 
 /** The meetings of the student's classes or groups, shown on the timeline. */
