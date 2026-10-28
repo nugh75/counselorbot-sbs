@@ -178,6 +178,7 @@ export const classSettingsTexts = {
     statusInactive: ['Inattiva', 'Inactive', 'Inactiva', 'Inactive', 'Inaktiv', 'Inaktiv'],
     shared: ['Condivisa', 'Shared', 'Compartida', 'Partagée', 'Geteilt', 'Delad'],
     council: ['Consiglio di classe', 'Class council', 'Consejo de clase', 'Conseil de classe', 'Klassenkonferenz', 'Klasskonferens'],
+    orientation: ['Consiglio orientativo', 'Guidance recommendation', 'Consejo orientador', 'Recommandation d’orientation', 'Orientierungsempfehlung', 'Studievägledande rekommendation'],
     noticing: ['Noticing', 'Noticing', 'Noticing', 'Noticing', 'Noticing', 'Noticing'],
     responseFormatTitle: ["Formato, lunghezza e analisi", "Format, length and reasoning", "Formato, longitud y razonamiento", "Format, longueur et raisonnement", "Format, Länge und Begründung", "Format, längd och resonemang"],
     responseFormatHelp: ["Impostazione del docente per la classe: se valorizzata, sostituisce la scelta dello studente in chat.", "Teacher setting for the class: if set, it overrides the student's choice in chat.", "Configuración del docente para la clase: si se establece, sustituye la elección del estudiante en el chat.", "Réglage de l'enseignant pour la classe : s'il est défini, il remplace le choix de l'élève dans le chat.", "Lehrereinstellung für die Klasse: wenn gesetzt, überschreibt sie die Auswahl des Schülers im Chat.", "Lärarinställning för klassen: om satt, åsidosätter den elevens val i chatten."],
