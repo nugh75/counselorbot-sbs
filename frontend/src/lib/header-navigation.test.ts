@@ -17,6 +17,7 @@ const FIXTURE_ENTRY: Record<HeaderLink['key'], keyof typeof ENTRY_HREFS & keyof 
     orientation: 'bussola',
     assistant: 'assistant',
     guide: 'guide',
+    presentation: 'presentation',
     profile: 'student',
     'teacher-panel': 'teacher',
     admin: 'admin',
@@ -60,10 +61,10 @@ test('one description drives the bar, the Area selector and the menu at every wi
 });
 
 test('links keep their order, destinations and groups', () => {
-    assert.deepEqual(HEADER_LINKS.map((link: HeaderLink) => link.key), ['instruments', 'orientation', 'assistant', 'guide', 'profile', 'teacher-panel', 'admin']);
+    assert.deepEqual(HEADER_LINKS.map((link: HeaderLink) => link.key), ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile', 'teacher-panel', 'admin']);
     for (const link of HEADER_LINKS as readonly HeaderLink[]) assert.equal(link.href, ENTRY_HREFS[FIXTURE_ENTRY[link.key]], link.key);
     // The «Area» selector of P4 reads this group: Studente, Docente, Amministrazione.
-    assert.deepEqual(HEADER_LINKS.filter((link: HeaderLink) => link.group === 'area').map((link: HeaderLink) => link.key), ['profile', 'teacher-panel', 'admin']);
+    assert.deepEqual(HEADER_LINKS.filter((link: HeaderLink) => link.group === 'area').map((link: HeaderLink) => link.key), ['presentation', 'profile', 'teacher-panel', 'admin']);
     // One label per link in the bar and in the «Menu» panel (P5): «Bussola»,
     // not the call to action «Apri la Bussola» of its page.
     assert.equal(HEADER_LINKS.find((link: HeaderLink) => link.key === 'orientation')?.labelKey, 'nav.orientation');
@@ -71,13 +72,13 @@ test('links keep their order, destinations and groups', () => {
 
 const PREDICATES: [string, ProfileKey, Record<string, unknown>][] = [
     ['guest', 'A', { links: ['instruments', 'guide'], classView: false, account: null, services: null }],
-    ['student without classes', 'S', { links: ['instruments', 'orientation', 'assistant', 'guide', 'profile'], classView: false, services: null }],
-    ['student whose class turns the Assistant off', 'S1', { links: ['instruments', 'orientation', 'guide', 'profile'], classView: true }],
-    ['student whose classes turn the Compass off', 'S2', { links: ['instruments', 'assistant', 'guide', 'profile'], classView: true }],
-    ['student in the full view', 'Sall', { links: ['instruments', 'orientation', 'assistant', 'guide', 'profile'], classView: true }],
-    ['teacher', 'D', { links: ['instruments', 'orientation', 'assistant', 'guide', 'profile', 'teacher-panel'], classView: false, services: null }],
-    ['researcher', 'R', { links: ['instruments', 'orientation', 'assistant', 'guide', 'profile', 'teacher-panel', 'admin'], services: 'portal' }],
-    ['admin', 'M', { links: ['instruments', 'orientation', 'assistant', 'guide', 'profile', 'teacher-panel', 'admin'], services: 'manager' }],
+    ['student without classes', 'S', { links: ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile'], classView: false, services: null }],
+    ['student whose class turns the Assistant off', 'S1', { links: ['instruments', 'orientation', 'guide', 'presentation', 'profile'], classView: true }],
+    ['student whose classes turn the Compass off', 'S2', { links: ['instruments', 'assistant', 'guide', 'presentation', 'profile'], classView: true }],
+    ['student in the full view', 'Sall', { links: ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile'], classView: true }],
+    ['teacher', 'D', { links: ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile', 'teacher-panel'], classView: false, services: null }],
+    ['researcher', 'R', { links: ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile', 'teacher-panel', 'admin'], services: 'portal' }],
+    ['admin', 'M', { links: ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile', 'teacher-panel', 'admin'], services: 'manager' }],
 ];
 
 for (const [name, key, expected] of PREDICATES) {
@@ -113,8 +114,8 @@ test('nothing but the brand while the identity loads, even for staff with access
 });
 
 test('tool entries wait for the class access, role entries do not', () => {
-    assert.deepEqual(keys(nav('D', { accessLoading: true })), ['instruments', 'guide', 'profile', 'teacher-panel']);
-    assert.deepEqual(keys(nav('S1', { accessLoading: true })), ['instruments', 'guide', 'profile']);
+    assert.deepEqual(keys(nav('D', { accessLoading: true })), ['instruments', 'guide', 'presentation', 'profile', 'teacher-panel']);
+    assert.deepEqual(keys(nav('S1', { accessLoading: true })), ['instruments', 'guide', 'presentation', 'profile']);
 });
 
 test('a failed identity read is a guest, a failed access read filters nothing', () => {
@@ -123,7 +124,7 @@ test('a failed identity read is a guest, a failed access read filters nothing', 
     assert.deepEqual(keys(guest), ['instruments', 'guide']);
     assert.equal(guest.authenticated, false);
     const unfiltered = nav('S1', { access: null });
-    assert.deepEqual(keys(unfiltered), ['instruments', 'orientation', 'assistant', 'guide', 'profile']);
+    assert.deepEqual(keys(unfiltered), ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile']);
     assert.equal(unfiltered.classView, false);
 });
 
@@ -134,10 +135,10 @@ const preview = (groups: string[], is_researcher = false): Identity => ({
 
 test('a role preview shows the previewed account, never the real admin entries', () => {
     const student = headerNavigation({ identity: preview(['studenti']), access: PROFILES.S.access, accessLoading: false });
-    assert.deepEqual(keys(student), ['instruments', 'orientation', 'assistant', 'guide', 'profile']);
+    assert.deepEqual(keys(student), ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile']);
     assert.equal(student.services, null);
     const teacher = headerNavigation({ identity: preview(['docenti']), access: PROFILES.D.access, accessLoading: false });
-    assert.deepEqual(keys(teacher), ['instruments', 'orientation', 'assistant', 'guide', 'profile', 'teacher-panel']);
+    assert.deepEqual(keys(teacher), ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile', 'teacher-panel']);
     const researcher = headerNavigation({ identity: preview(['ricercatori'], true), access: PROFILES.R.access, accessLoading: false });
     assert.equal(researcher.services, 'portal');
 });
@@ -166,6 +167,8 @@ const HREF_CASES: [string, string, string, boolean][] = [
     ['/?view=home', '/', '', false],
     ['/?view=home', '/', '?view=home&frozen=abc', false],
     ['/?view=home', '/profilo', '?view=home', false],
+    ['/?view=intro', '/', '?view=intro', true],
+    ['/?view=intro', '/', '?view=home', false],
 ];
 
 for (const [href, pathname, search, expected] of HREF_CASES) {
@@ -187,6 +190,7 @@ const CURRENT_CASES: [ProfileKey, string, string, string | null][] = [
     ['S', '/questionario', '', null],
     ['S', '/counselor', '?next=%2F%3Ffrozen%3Dabc', null],
     ['S', '/', '?frozen=abc', null],
+    ['S', '/', '?view=intro', 'presentation'],
     ['S', '/', '', null],
     ['A', '/profilo', '', null],
 ];

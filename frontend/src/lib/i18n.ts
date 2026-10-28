@@ -314,6 +314,7 @@ const it: Dict = {
     'nav.home': 'Torna alla home',
     'nav.skipToContent': 'Vai al contenuto',
     'nav.homeAria': 'Torna alla home',
+    'nav.presentation': 'Presentazione',
     'nav.back': 'Indietro',
     'nav.language': 'Cambia lingua',
     // counselor selector
@@ -1671,6 +1672,7 @@ const en: Dict = {
     'nav.home': 'Back to home',
     'nav.skipToContent': 'Skip to content',
     'nav.homeAria': 'Back to home',
+    'nav.presentation': 'Introduction',
     'nav.back': 'Back',
     'nav.language': 'Change language',
     // counselor selector
@@ -3015,6 +3017,7 @@ const es: Dict = {
     'nav.home': 'Volver al inicio',
     'nav.skipToContent': 'Ir al contenido',
     'nav.homeAria': 'Volver al inicio',
+    'nav.presentation': 'Presentación',
     'nav.back': 'Atrás',
     'nav.language': 'Cambiar idioma',
     // counselor selector
@@ -4358,6 +4361,7 @@ const fr: Dict = {
     'nav.home': "Retour à l'accueil",
     'nav.skipToContent': 'Aller au contenu',
     'nav.homeAria': "Retour à l'accueil",
+    'nav.presentation': 'Présentation',
     'nav.back': 'Retour',
     'nav.language': 'Changer de langue',
     // counselor selector
@@ -5701,6 +5705,7 @@ const de: Dict = {
     'nav.home': 'Zurück zur Startseite',
     'nav.skipToContent': 'Zum Inhalt springen',
     'nav.homeAria': 'Zurück zur Startseite',
+    'nav.presentation': 'Einführung',
     'nav.back': 'Zurück',
     'nav.language': 'Sprache ändern',
     // counselor selector
@@ -7044,6 +7049,7 @@ const sv: Dict = {
     'nav.home': 'Tillbaka till startsidan',
     'nav.skipToContent': 'Hoppa till innehållet',
     'nav.homeAria': 'Tillbaka till startsidan',
+    'nav.presentation': 'Presentation',
     'nav.back': 'Tillbaka',
     'nav.language': 'Byt språk',
     // counselor selector

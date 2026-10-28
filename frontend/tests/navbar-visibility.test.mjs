@@ -264,21 +264,42 @@ test('the navbar marks the current page in a named navigation landmark', async (
     } finally { await context.close(); }
 });
 
-test('compact menu marks the current page; a single area is a current link from lg', async () => {
+test('compact and desktop area menus mark the current page', async () => {
     for (const [profile, width, path, current, menuLandmarks] of [['S', 390, '/profilo', [LABELS.student], ['Navigazione del menu']], ['S', 1024, '/profilo', [LABELS.student], null], ['A', 1024, '/guide', [LABELS.guide], null]]) {
         const { page, context } = await fixture({ profile, width });
         try {
             await page.goto(`${origin}${path}`);
-            await eventually(() => names(header(page)), expectedNavbar(profile, width).bar, `${profile} bar`);
+            await eventually(() => names(header(page)), expectedNavbar(profile, width, { area: profile === 'S' && width >= 1024 ? LABELS.student : null }).bar, `${profile} bar`);
             if (menuLandmarks) {
                 await trigger(page).click();
                 await eventually(() => names(mobileMenu(page)), expectedNavbar(profile, width).menu, `${profile} menu`);
                 assert.deepEqual(await landmarks(mobileMenu(page)), menuLandmarks, `${profile} menu landmark`);
             } else {
                 assert.deepEqual(await landmarks(header(page)), ['Navigazione principale'], `${profile}: one landmark from lg`);
+                if (profile === 'S') await areaTrigger(page).click();
             }
-            const all = [...await currentNames(header(page)), ...(menuLandmarks ? await currentNames(mobileMenu(page)) : [])];
+            const all = [...await currentNames(header(page)), ...(menuLandmarks ? await currentNames(mobileMenu(page)) : profile === 'S' ? await currentNames(areaPanel(page)) : [])];
             assert.deepEqual(all, current, `${profile} at ${width}px`);
+        } finally { await context.close(); }
+    }
+});
+
+test('Presentation in Area opens the introduction from the catalog and from another page', async () => {
+    for (const width of [390, 1440]) {
+        const { page, context, errors } = await fixture({ profile: 'S', width, reducedMotion: 'reduce' });
+        await context.route('**/_next/image**', route => route.abort());
+        try {
+            for (const path of ['/?view=home', '/profilo']) {
+                await page.goto(`${origin}${path}`, { waitUntil: 'domcontentloaded' });
+                if (width < 1024) await trigger(page).click();
+                else await areaTrigger(page).click();
+                const panel = width < 1024 ? mobileMenu(page) : areaPanel(page);
+                const link = panel.getByRole('link', { name: 'Presentazione', exact: true });
+                assert.equal(await link.getAttribute('href'), '/?view=intro');
+                await link.click();
+                await page.locator('[data-testid="intro-screen"]').waitFor({ state: 'visible' });
+            }
+            assert.deepEqual(errors, []);
         } finally { await context.close(); }
     }
 });
@@ -312,7 +333,7 @@ for (const [locale, copy] of Object.entries(LOCALIZED)) {
                 if (width < 1024) {
                     await page.getByRole('button', { name: copy.menu, exact: true }).click();
                     visible = [...await names(header(page)), ...await names(mobileMenu(page))];
-                    wanted = [copy.bussola, copy.assistant, copy.guide, copy.student, copy.menu, copy.teacher, copy.admin, copy.signOut];
+                    wanted = [copy.presentation, copy.bussola, copy.assistant, copy.guide, copy.student, copy.menu, copy.teacher, copy.admin, copy.signOut];
                     absent = [copy.signIn, copy.area];
                 } else if (profile === 'A') {
                     await page.getByRole('button', { name: copy.preferences, exact: true }).click();
@@ -325,7 +346,7 @@ for (const [locale, copy] of Object.entries(LOCALIZED)) {
                     await page.keyboard.press('Escape');
                     await page.getByRole('button', { name: `${copy.account}${PROFILES.R.identity.name}`, exact: true }).click();
                     visible.push(...await names(accountPanel(page)));
-                    wanted = [copy.area, copy.bussola, copy.assistant, copy.guide, copy.student, copy.teacher, copy.admin, copy.signOut];
+                    wanted = [copy.area, copy.presentation, copy.bussola, copy.assistant, copy.guide, copy.student, copy.teacher, copy.admin, copy.signOut];
                     absent = [copy.signIn, copy.menu];
                 }
                 assert.equal(await page.evaluate(() => document.documentElement.lang), locale);

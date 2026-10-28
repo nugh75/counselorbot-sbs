@@ -70,13 +70,15 @@ test('every entry stays reachable in each band, privileged ones only for their r
     }
 });
 
-test('from 1024px the areas sit behind the Area selector, a single area is a link', () => {
+test('from 1024px the presentation and permitted areas sit behind the Area selector', () => {
     for (const key of Object.keys(PROFILES) as (keyof typeof PROFILES)[]) {
         for (const width of VIEWPORTS.filter(width => band(width) !== 'compact')) {
             const { bar, menu, areas } = expectedNavbar(key, width);
             assert.equal(menu, null, `${key} has no three-dot menu at ${width}px`);
             assert.equal(bar.includes(LABELS.teacher) || bar.includes(LABELS.admin), false);
-            const expected = { A: null, S: null, S1: null, S2: null, Sall: null, D: [LABELS.student, LABELS.teacher], R: [LABELS.student, LABELS.teacher, LABELS.admin], M: [LABELS.student, LABELS.teacher, LABELS.admin] }[key];
+            const student = [LABELS.presentation, LABELS.student];
+            const teacher = [...student, LABELS.teacher];
+            const expected = { A: null, S: student, S1: student, S2: student, Sall: student, D: teacher, R: [...teacher, LABELS.admin], M: [...teacher, LABELS.admin] }[key];
             assert.deepEqual(areas, expected, `${key} at ${width}px`);
             assert.equal(bar.includes(LABELS.area), expected !== null);
             assert.equal(bar.includes(LABELS.student), key !== 'A' && expected === null);

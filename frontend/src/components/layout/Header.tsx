@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Bot, Compass, GraduationCap, LayoutGrid, Settings, User, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, Compass, GraduationCap, House, LayoutGrid, Settings, User, type LucideIcon } from 'lucide-react';
 import { ClassViewSwitcher } from './ClassViewSwitcher';
 import { HeaderAccount, SignInLink } from './HeaderAccount';
 import { HeaderAreas } from './HeaderAreas';
@@ -25,6 +25,7 @@ const LINK_ICONS: Record<HeaderLinkKey, LucideIcon> = {
     orientation: Compass,
     assistant: Bot,
     guide: BookOpen,
+    presentation: House,
     profile: User,
     'teacher-panel': GraduationCap,
     admin: Settings,
