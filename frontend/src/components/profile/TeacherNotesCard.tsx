@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/auth';
 import { GraduationCap } from 'lucide-react';
+import { useUserAccess } from '@/lib/use-user-access';
+import { isClassContentHidden } from '@/lib/user-access';
 
 interface TeacherNote {
     id: number;
@@ -23,6 +25,7 @@ const TEXTS = {
 };
 
 export function TeacherNotesCard({ lang }: { lang: string }) {
+    const { access } = useUserAccess();
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const [notes, setNotes] = useState<TeacherNote[]>([]);
 
@@ -33,7 +36,7 @@ export function TeacherNotesCard({ lang }: { lang: string }) {
             .catch(() => { /* nessuna nota: card nascosta */ });
     }, []);
 
-    if (notes.length === 0) return null;
+    if (isClassContentHidden(access) || notes.length === 0) return null;
 
     return (
         <section className="glass-panel space-y-3 p-5" aria-labelledby="teacher-notes-section">

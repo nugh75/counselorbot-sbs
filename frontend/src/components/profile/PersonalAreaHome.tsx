@@ -11,8 +11,9 @@ import { personalAreaDescription, personalAreaName, personalAreaText } from '@/l
 import { forumText } from '@/lib/i18n-forum';
 import { personalAreaGroups, personalAreaImages, personalResumeItems, type ResumeAssignment } from '@/lib/personal-area';
 import type { PersonalGoal } from '@/lib/goals';
-import { enabledResumeItems, personalSlugEnabled, type UserAccess } from '@/lib/personal-tool-access';
-import { usePersonalToolAccess } from '@/lib/use-personal-tool-access';
+import { enabledResumeItems, personalSlugEnabled } from '@/lib/personal-tool-access';
+import { useUserAccess } from '@/lib/use-user-access';
+import { isClassContentHidden, type UserAccess as FullUserAccess } from '@/lib/user-access';
 import { Button } from '@/components/ui/Button';
 import { ClassPathHeroList } from '@/components/profile/ClassPathHeroList';
 import { parseStudentClassPaths, selectCurrentClassPath, type StudentClassPath } from '@/lib/class-paths';
@@ -21,7 +22,7 @@ import { LOCAL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resum
 import { resumeLabel } from '@/lib/resume-label';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 
-function PersonalResume({ access }: { access: UserAccess | null }) {
+function PersonalResume({ access }: { access: FullUserAccess | null }) {
     const { lang, tf, t } = useI18n();
     const resume = useResumeEntries();
     const [goals, setGoals] = useState<PersonalGoal[]>([]);
@@ -51,7 +52,7 @@ function PersonalResume({ access }: { access: UserAccess | null }) {
         return () => controller.abort();
     }, [attempt]);
 
-    const items = enabledResumeItems(personalResumeItems(goals, assignments), access);
+    const items = enabledResumeItems(personalResumeItems(goals, isClassContentHidden(access) ? [] : assignments), access);
     const frozen = resume.frozen.filter(row => !row.practice_notebook_id);
     const local = resume.localResume && !resume.frozen.some(row => row.session_id === resume.localResume?.sessionId)
         ? resume.localResume : null;
@@ -95,7 +96,7 @@ export function PersonalAreaHome() {
     const { lang } = useI18n();
     const [unreadTotal, setUnreadTotal] = useState(0);
     const [paths, setPaths] = useState<StudentClassPath[]>([]);
-    const access = usePersonalToolAccess();
+    const { access } = useUserAccess();
     const groups = personalAreaGroups
         .map(group => ({ id: group.id, slugs: group.slugs.filter(slug => personalSlugEnabled(access, slug)) }))
         .filter(group => group.slugs.length > 0);
@@ -138,7 +139,7 @@ export function PersonalAreaHome() {
 
     return (
         <div className="space-y-6" data-personal-area-home>
-            {currentPath && (
+            {!isClassContentHidden(access) && currentPath && (
                 <section aria-labelledby="profile-class-path-title">
                     <h2 id="profile-class-path-title" className="sr-only">
                         {classPathText(lang, 'yourClassPath')}
@@ -162,7 +163,7 @@ export function PersonalAreaHome() {
                             <span className="min-w-0 flex-1">
                                 <span id={`personal-link-${slug}`} className="flex items-center gap-2 font-bold text-slate-900 group-hover:text-indigo-700">
                                     <span>{personalAreaName(lang, slug)}</span>
-                                    {slug === 'classi' && unreadTotal > 0 && (
+                                    {slug === 'classi' && !isClassContentHidden(access) && unreadTotal > 0 && (
                                         <span
                                             className="inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full bg-ochre-600 px-1.5 text-xs font-semibold text-white"
                                             aria-label={forumText(lang, 'unreadBadge').replace('{count}', String(unreadTotal))}

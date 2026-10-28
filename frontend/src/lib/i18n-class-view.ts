@@ -3,6 +3,14 @@ const texts = {
     all: ['Tutti gli strumenti', 'All tools', 'Todas las herramientas', 'Tous les outils', 'Alle Werkzeuge', 'Alla verktyg'],
     classes: ['Le mie classi', 'My classes', 'Mis clases', 'Mes classes', 'Meine Klassen', 'Mina klasser'],
     class: ['Classe {name}', 'Class {name}', 'Clase {name}', 'Classe {name}', 'Klasse {name}', 'Klass {name}'],
+    classContentHidden: [
+        'Per vedere i contenuti della classe, scegli una vista di classe nel selettore Vista attiva.',
+        'To see class content, choose a class view in the Active view selector.',
+        'Para ver el contenido de la clase, elige una vista de clase en el selector Vista activa.',
+        'Pour voir le contenu de la classe, choisis une vue de classe dans le sélecteur Vue active.',
+        'Um Klasseninhalte zu sehen, wähle eine Klassenansicht unter Aktive Ansicht.',
+        'För att se klassens innehåll, välj en klassvy under Aktiv vy.',
+    ],
     hint: [
         'La classe consiglia gli strumenti da usare: puoi passare a tutti gli strumenti quando vuoi.',
         'Your class recommends which tools to use: you can switch to all tools at any time.',

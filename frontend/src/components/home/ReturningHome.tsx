@@ -21,7 +21,7 @@ import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries } fro
 import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { getDynamicToolCategories, resolveActiveStudentTools, TEACHER_AREA_INSTRUMENT_IDS } from '@/lib/tool-catalog';
 import { STRATEGIC_COMPETENCES_URLS } from '@/lib/questionnaire-sources';
-import { isToolAllowed } from '@/lib/user-access';
+import { isClassContentHidden, isToolAllowed } from '@/lib/user-access';
 import { latestPausedByTool, suggestTools, type PausedChat } from '@/lib/catalog-status';
 import { fetchOrientationSession, fetchOrientationStatus, type OrientationRecommendation } from '@/lib/orientation-api';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
@@ -161,7 +161,7 @@ export function ReturningHome({
                 </div>
             </section>
 
-            {currentPath && (
+            {!isClassContentHidden(access) && currentPath && (
                 <section aria-labelledby="home-class-path-title">
                     <h2 id="home-class-path-title" className="sr-only">
                         {classPathText(lang, 'yourClassPath')}

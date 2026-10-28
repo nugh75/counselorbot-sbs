@@ -19,6 +19,12 @@ export interface UserAccess {
 // `useUserAccess` follows without a reload.
 export const USER_ACCESS_CHANGED = 'cb-user-access-changed';
 
+// The full view of an enrolled user behaves like a student without a class.
+// Membership is retained so the selector can restore the class view.
+export function isClassContentHidden(access: UserAccess | null | undefined): boolean {
+    return access?.view === 'all' && (access.class_ids?.length ?? 0) > 0;
+}
+
 export function isToolAllowed(access: UserAccess | null | undefined, key: string): boolean {
     if (!access || !access.restricted) return true;
     return access.tool_keys.includes(key);

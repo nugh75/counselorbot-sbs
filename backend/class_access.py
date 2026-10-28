@@ -103,6 +103,11 @@ def _view_classes(db: Session, identity) -> list:
     return _scoped_classes(db, username, _active_classes(db, username), staff=is_staff(identity))[0]
 
 
+def active_view_group_ids(db: Session, identity) -> list[int]:
+    """Class memberships relevant to the selected view, without changing membership."""
+    return [group_id for group_id, _ in _view_classes(db, identity)]
+
+
 def save_view(db: Session, identity, view: str | int) -> None:
     """Store the active view; only a student with an active class may choose one."""
     username = _username(identity)

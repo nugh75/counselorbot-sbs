@@ -2,6 +2,7 @@
 
 import { factorTranslationKey } from '@/lib/questionnaires';
 import { ChatGPTUsageBadge } from '@/components/profile/ChatGPTUsageBadge';
+import { useUserAccess } from '@/lib/use-user-access';
 
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 
@@ -459,6 +460,7 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
 const IDEA_PANEL_BOUNDS = { min: 360, max: 720, initial: 480 };
 
 export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength, initialReasoningEffort, initialResponseFormat, reasoningCapable = true, reasoningMandatory = false, preview = false }: GuidedChatInterfaceProps) {
+    const { access } = useUserAccess();
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const { streamChat, ...continuation } = useChatContinuation();
@@ -605,7 +607,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             }
         }).catch(() => {});
         return () => { cancelled = true; };
-    }, []);
+    }, [access?.view, frozenSnapshot]);
     useEffect(() => {
         if (reasoningMandatory && reasoningEffort === 'off') setReasoningEffort('standard');
     }, [reasoningMandatory, reasoningEffort]);

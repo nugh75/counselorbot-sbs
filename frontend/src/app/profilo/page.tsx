@@ -28,6 +28,7 @@ import { TeacherNotesCard } from '@/components/profile/TeacherNotesCard';
 import { AssignmentsPanel } from '@/components/teacher/AssignmentsPanel';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
+import { ClassContentGate } from '@/components/profile/ClassContentGate';
 import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
     Trash2, Download, MessageSquare, ShieldAlert, Search, ChevronDown,
@@ -802,13 +803,13 @@ export default function ProfilePage() {
 
             {activeSection === 'combined' && <CrossSynthesisCard showHeading={false} />}
 
-            {activeSection === 'assignments' && <AssignmentsPanel showHeading={false} />}
-            {activeSection === 'groups' && <div className="space-y-4">
+            {activeSection === 'assignments' && <ClassContentGate><AssignmentsPanel showHeading={false} /></ClassContentGate>}
+            {activeSection === 'groups' && <ClassContentGate><div className="space-y-4">
                 <MyGroupsCard lang={lang} showHeading={false} canManageGroups={canUseTeacherAssistant(identity)} />
                 {/* F30 (lotto 5A): i messaggi del docente sono leggibili anche nella pagina Classi,
                     accanto al riepilogo di chi vede cosa. */}
                 <TeacherNotesCard lang={lang} />
-            </div>}
+            </div></ClassContentGate>}
 
             {activeSection === 'telegram' && <TelegramLinkCard lang={lang} showHeading={false} />}
 

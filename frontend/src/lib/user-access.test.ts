@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { isToolAllowed, isCounselorAllowed, resumeCounselor, fetchUserAccess, getCachedUserAccess, clearUserAccessCache, type UserAccess } from './user-access.ts';
+import { isClassContentHidden, isToolAllowed, isCounselorAllowed, resumeCounselor, fetchUserAccess, getCachedUserAccess, clearUserAccessCache, type UserAccess } from './user-access.ts';
 
 function withStorage(impl: Record<string, unknown> | undefined, run: () => void | Promise<void>) {
     const kept = (globalThis as { sessionStorage?: unknown }).sessionStorage;
@@ -137,6 +137,15 @@ test('fetchUserAccess revalidates so class changes reach the student (bug 838e68
 });
 
 const classAccess: UserAccess = { restricted: true, tool_keys: [], counselor_ids: [1, 5], default_counselor_id: 1, class_ids: [10] };
+
+test('only an enrolled user in the full view hides class content', () => {
+    assert.equal(isClassContentHidden(null), false);
+    assert.equal(isClassContentHidden({ ...classAccess, view: 'all' }), true);
+    assert.equal(isClassContentHidden({ ...classAccess, view: 'classes' }), false);
+    assert.equal(isClassContentHidden({ ...classAccess, view: 10 }), false);
+    assert.equal(isClassContentHidden({ ...classAccess, view: 'all', class_ids: [] }), false);
+    assert.equal(isClassContentHidden(classAccess), false);
+});
 
 test('counselor access follows the class resolution and fails open', () => {
     assert.equal(isCounselorAllowed(null, 2), true);

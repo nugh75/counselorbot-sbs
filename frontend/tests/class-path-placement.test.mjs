@@ -102,6 +102,9 @@ async function createFixture({
     admin = false,
     frozen = [],
     goals = [],
+    assignments = [],
+    teacherNotes = [],
+    meetings = [],
 } = {}) {
     const context = await browser.newContext({
         viewport: { width, height: 900 },
@@ -215,7 +218,13 @@ async function createFixture({
             return route.fulfill({ json: goals });
         }
         if (url.pathname === '/api/user/assignments') {
-            return route.fulfill({ json: [] });
+            return route.fulfill({ json: assignments });
+        }
+        if (url.pathname === '/api/user/teacher-notes') {
+            return route.fulfill({ json: teacherNotes });
+        }
+        if (url.pathname === '/api/user/meetings') {
+            return route.fulfill({ json: meetings });
         }
         if (url.pathname === '/api/user/paths') {
             return route.fulfill({ json: currentPaths });
@@ -279,21 +288,77 @@ test('student home resumes questionnaire and guided chats alongside personal wor
     } finally { await f.context.close(); }
 });
 
-test('an administrator enrolled in a class sees the student plan and class selector', async () => {
+test('teacher messages and class meetings follow the active view', async () => {
+    const f = await createFixture({
+        teacherNotes: [{ id: 1, author_username: 'prof', kind: 'message', text: 'Messaggio della classe', created_at: null }],
+        meetings: [{ id: 5, group_id: 10, title: 'Incontro della classe', starts_at: '2026-10-20T12:00:00Z', show_on_timeline: true }],
+    });
+    try {
+        await f.page.goto(`${origin}/profilo/taccuino`);
+        const selector = f.page.locator('header select').first();
+        const note = f.page.getByText('Messaggio della classe', { exact: false });
+        await note.waitFor();
+        await selector.selectOption('all');
+        await note.waitFor({ state: 'detached' });
+        await f.page.goto(`${origin}/profilo/timeline`);
+        assert.equal(await f.page.getByText('Incontro della classe', { exact: true }).count(), 0);
+        await f.page.locator('header select').first().selectOption('classes');
+        await f.page.getByText('Incontro della classe', { exact: true }).first().waitFor();
+        await f.page.goto(`${origin}/profilo/taccuino`);
+        await note.waitFor();
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('an administrator enrolled in a class sees the plan after selecting the class view', async () => {
     const f = await createFixture({ admin: true });
     try {
         await f.page.goto(`${origin}/profilo`);
         const hero = f.page.locator('[data-testid="class-path-hero-card"]');
-        await hero.waitFor();
-        assert.match(await hero.innerText(), /Inizio anno/);
         const selector = f.page.locator('header select').first();
         await selector.waitFor();
         assert.equal(await selector.inputValue(), 'all');
         assert.match(await selector.innerText(), /3B Liceo/);
+        assert.equal(await hero.count(), 0);
         await selector.selectOption('classes');
         await f.page.waitForFunction(() => document.querySelector('header select')?.value === 'classes');
+        await hero.waitFor();
+        assert.match(await hero.innerText(), /Inizio anno/);
         await f.page.locator('#personal-catalog-section').waitFor({ state: 'visible' });
         assert.equal(await f.page.locator('#personal-catalog-section a[href="/profilo/obiettivi"]').count(), 0);
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('all tools hides class content and switching back restores it without reloading', async () => {
+    const f = await createFixture({ assignments: [{ id: 1, snapshot: { title: 'Compito della classe' }, due_date: null }] });
+    try {
+        // Prevent image and prefetch requests from filling the browser's
+        // connections while this test performs several full navigations.
+        await f.page.route('**/_next/image?*', route => route.abort());
+        await f.page.route('**/*?_rsc=*', route => route.abort());
+        await f.page.goto(`${origin}/profilo`);
+        const selector = f.page.locator('header select').first();
+        const hero = f.page.locator('[data-testid="class-path-hero-card"]');
+        const resume = f.page.locator('section[aria-labelledby="personal-resume-title"]');
+        await hero.waitFor();
+        await resume.getByText('Compito della classe').waitFor();
+        await selector.selectOption('all');
+        await hero.waitFor({ state: 'detached' });
+        assert.equal(await resume.getByText('Compito della classe').count(), 0);
+        await f.page.locator('#personal-catalog-section a[href="/profilo/timeline"]').waitFor({ state: 'visible' });
+        for (const path of ['/profilo/assegnazioni', '/profilo/classi', '/profilo/classi/10/forum',
+            '/profilo/piani-operativi', '/profilo/piani-operativi/1/102', '/profilo/piani-operativi/1/102/approfondimento']) {
+            await f.page.goto(`${origin}${path}`, { waitUntil: 'commit' });
+            await f.page.getByText('Per vedere i contenuti della classe, scegli una vista di classe nel selettore Vista attiva.').waitFor();
+        }
+        await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
+        await f.page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).waitFor();
+        assert.equal(await hero.count(), 0);
+        await f.page.locator('header select').first().selectOption('classes');
+        await hero.waitFor();
+        await f.page.goto(`${origin}/profilo`);
+        await resume.getByText('Compito della classe').waitFor();
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
 });
