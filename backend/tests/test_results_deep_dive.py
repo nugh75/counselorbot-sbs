@@ -376,6 +376,7 @@ def test_new_attempt_preserves_history_and_retry_is_idempotent(api):
     assert options["session"]["session_id"] == token
     assert options["completed"] is False
     assert [(item["session_id"], item["completed"]) for item in options["attempts"]] == [(token, False), (first["session_id"], True)]
+    assert options["attempts"][0]["resumable"] is False
     step = student_row(client)["steps"][1]
     assert step["state"] == "done" and step["attempt_state"] == "in_progress"
     marker(db, token)

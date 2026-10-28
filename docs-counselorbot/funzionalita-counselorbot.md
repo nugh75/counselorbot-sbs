@@ -1141,7 +1141,7 @@ nelle scelte finali e se il caricamento della chat salvata fallisce. Le
 somministrazioni mantengono utilizzabile il modulo anche se la lettura della
 pausa restituisce un errore temporaneo. Le
 somministrazioni offrono la ripresa della propria ultima sessione valida;
-le chat autonome mostrano «Riprendi» e «Rifai» quando sono sospese. Un nuovo tentativo conserva quelli precedenti; le chat storiche senza riferimento al passo restano in «Da riprendere». Le bozze non inviate dei questionari restano nella scheda del browser; le consegne e i riscontri precedenti sono nello storico personale dello studente, mentre al docente resta visibile soltanto la consegna condivisa attuale. I passi che aprono strumenti personali riaprono i contenuti esistenti. La fase e i
+le chat autonome mostrano «Riprendi» e «Rifai» quando sono sospese. Un nuovo tentativo conserva quelli precedenti; un tentativo senza pausa salvata non propone una ripresa inesistente. Le chat storiche senza riferimento al passo restano in «Da riprendere». Le bozze non inviate dei questionari restano nella scheda del browser; le consegne e i riscontri precedenti sono nello storico personale dello studente, mentre al docente resta visibile soltanto la consegna condivisa attuale. I passi che aprono strumenti personali riaprono i contenuti esistenti. La fase e i
 messaggi salvati sono conservati. I vecchi profili QPCC K1–K5 richiedono un nuovo
 inserimento con dieci stanine: il piano spiega il motivo e apre il modulo corretto
 anche con un catalogo storico. La nuova compilazione e la sua analisi conservano

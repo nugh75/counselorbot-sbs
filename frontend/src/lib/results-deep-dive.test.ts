@@ -134,9 +134,11 @@ test('personal analysis sends only the explicitly selected result and accepts a 
 
 test('options preserve exact resumed session and reject non-local source links', async () => {
   const body = {personal: true, ready: true, source_href: '/?start=QSA',
-    results: [{id: 7, submitted_at: '2026-10-21', locale: ''}], session: {...session, results_step_id: null}};
+    results: [{id: 7, submitted_at: '2026-10-21', locale: ''}], session: {...session, results_step_id: null},
+    attempts: [{...session, results_step_id: null, completed: false, resumable: false}]};
   const options = await loadResultsDeepDiveOptions(async () => Response.json(body), 1, 3);
   assert.equal(options.session?.session_id, session.session_id);
+  assert.equal(options.attempts[0].resumable, false);
   for (const source_href of ['//example.invalid', 'https://example.invalid']) {
     await assert.rejects(loadResultsDeepDiveOptions(async () => Response.json({...body, source_href}), 1, 3));
   }

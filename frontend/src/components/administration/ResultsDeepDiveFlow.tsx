@@ -90,7 +90,7 @@ export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId
       const frozen = await getFrozenSession(started.session_id);
       if (frozen && (frozen.session_id !== started.session_id || frozen.questionnaire_type !== started.result.questionnaire_type)) throw new ResultsDeepDiveError('error');
       if (owner.current === (await getIdentity())?.username) {setSnapshot(frozen);setSession(started);setCompleted(false);setOptions({...options, completed: false, session: started,
-        attempts: session ? [{...session, completed: completed || options.completed}, ...options.attempts.filter(item => item.session_id !== session.session_id)] : options.attempts});attemptId.current = null;sessionStorage.removeItem(key);}
+        attempts: session ? [{...session, completed: completed || options.completed, resumable: !(completed || options.completed)}, ...options.attempts.filter(item => item.session_id !== session.session_id)] : options.attempts});attemptId.current = null;sessionStorage.removeItem(key);}
     } catch (error) {
       setFailure(error instanceof FrozenSessionAccessError && error.detail === 'qpcc_legacy_profile' ? 'legacy'
         : error instanceof ResultsDeepDiveError ? error.reason : 'error');
@@ -107,7 +107,8 @@ export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId
     <div className="space-y-3">{previous.map(item => <div key={item.session_id} className="rounded border border-slate-200 p-3">
       <p>{new Date(item.started_at).toLocaleString(lang)} · {item.result.questionnaire_type}</p>
       {item.completed ? <SessionReport sessionId={item.session_id} questionnaireType={item.result.questionnaire_type} />
-        : <Link href={`/?frozen=${encodeURIComponent(item.session_id)}&from=plan`}>{r('resumeChat')}</Link>}
+        : item.resumable ? <Link href={`/?frozen=${encodeURIComponent(item.session_id)}&from=plan`}>{r('resumeChat')}</Link>
+        : <p>{r('noSavedAttempt')}</p>}
     </div>)}</div></details>;
   if (session && (completed || (options?.completed && !snapshot))) return <div className="space-y-4">{dataEntry}{redoButton}{redoError}{history}<PlanChatCompleted sessionId={session.session_id} questionnaireType={session.result.questionnaire_type} /></div>;
   if (session) return <div className="space-y-4">{dataEntry}{redoButton}{redoError}{history}<GuidedChatInterface

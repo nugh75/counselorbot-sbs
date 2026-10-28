@@ -81,7 +81,8 @@ def deep_dive_options(db, identity, path_id, step_id):
         previous_result = db.get(models.QuestionnaireResult, previous.result_id)
         if previous_result:
             attempts.append({**payload(previous, previous_result, step),
-                             "completed": bool(deep_dive_evidence(db, step, username, session_id=previous.session_id))})
+                             "completed": bool(deep_dive_evidence(db, step, username, session_id=previous.session_id)),
+                             "resumable": bool(db.query(models.FrozenSession.id).filter_by(username=username, session_id=previous.session_id).first())})
     legacy_profile = False
     for previous in db.query(models.ClassPathDeepDiveSession).filter_by(step_id=step.id, username=username):
         previous_result = db.get(models.QuestionnaireResult, previous.result_id)

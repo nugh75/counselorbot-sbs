@@ -109,7 +109,7 @@ export interface ResultsDeepDiveOptions {
   source_href: string;
   results: {id: number; submitted_at: string; locale: string}[];
   session: ResultsDeepDiveSession | null;
-  attempts: (ResultsDeepDiveSession & {completed: boolean})[];
+  attempts: (ResultsDeepDiveSession & {completed: boolean; resumable: boolean})[];
   /** The bound session already reached its final guided turn. */
   completed: boolean;
   legacy_profile?: boolean;
@@ -130,5 +130,5 @@ export async function loadResultsDeepDiveOptions(
   // API controls this navigation; accept only local application links.
   if (!row.source_href.startsWith('/') || row.source_href.startsWith('//')) throw new ResultsDeepDiveError('error');
   return {...row, completed: row.completed === true, session: row.session ? parseResultsDeepDive(row.session, pathId, stepId) : null,
-    attempts: Array.isArray(row.attempts) ? row.attempts.map((attempt: {completed?: boolean}) => ({...parseResultsDeepDive(attempt, pathId, stepId), completed: attempt.completed === true})) : []};
+    attempts: Array.isArray(row.attempts) ? row.attempts.map((attempt: {completed?: boolean; resumable?: boolean}) => ({...parseResultsDeepDive(attempt, pathId, stepId), completed: attempt.completed === true, resumable: attempt.resumable === true})) : []};
 }
