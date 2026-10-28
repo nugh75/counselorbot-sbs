@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
-import { classPathText as text } from '../src/lib/i18n-class-paths.js';
+import { classPathText as text } from '../src/lib/i18n-class-paths.ts';
 
 const origin = new URL(process.env.CLASS_PATH_PRESENTATION_BASE_URL || 'http://127.0.0.1:3161').origin;
 const browser = await chromium.launch({headless: true});
@@ -142,7 +142,10 @@ try {
         await student.page.screenshot({path: `output/playwright/presentation-student-${lang}-${width}.png`, fullPage: true});
         await student.page.goto(`${origin}/?view=home`);
         const hero = student.page.getByTestId('class-path-hero-card');
+        // On the home every plan starts folded: open it to read the step details.
+        await hero.getByRole('button', {name: 'Piano sintetico OC3', exact: true}).click();
         await hero.getByRole('heading', {name: 'Strategie di apprendimento', exact: true}).waitFor();
+        await hero.locator('time').first().waitFor();
         assert.equal(await hero.locator('time').count(), 1);
         assert.deepEqual(student.errors, []);
         await student.context.close();
