@@ -17,7 +17,7 @@ import { classViewOptions } from './class-view.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { isToolAllowed, type UserAccess } from './user-access.ts';
 
-export type HeaderLinkKey = 'instruments' | 'orientation' | 'assistant' | 'guide' | 'profile' | 'teacher-panel' | 'admin';
+export type HeaderLinkKey = 'instruments' | 'orientation' | 'assistant' | 'guide' | 'presentation' | 'profile' | 'teacher-panel' | 'admin';
 
 // `support`: tools and help open to everyone allowed. `area`: the workspaces a
 // person can enter (Studente / Docente / Amministrazione), the entries of the
@@ -81,6 +81,7 @@ export const HEADER_LINKS: readonly (HeaderLink & { visible: Visible })[] = [
     },
     // Interface guide: for everyone, guests included.
     { key: 'guide', href: '/guide', labelKey: 'nav.guide', group: 'support', visible: () => true },
+    { key: 'presentation', href: '/?view=intro', labelKey: 'nav.presentation', group: 'area', visible: authenticated },
     {
         key: 'profile', href: '/profilo', labelKey: 'profile.nav', group: 'area',
         visible: ({ identity }) => canUsePersonalPage(identity),

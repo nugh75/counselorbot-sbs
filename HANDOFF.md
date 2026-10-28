@@ -1,3 +1,15 @@
+# Handoff 28 ottobre 2026: Presentazione nel menu Area
+
+- Branch `fix/menu-presentazione` da `origin/main`: per chi ha fatto accesso,
+  Presentazione è la prima voce del selettore Area desktop e del gruppo Area
+  mobile. Apre l'introduzione anche dalla home già montata; etichette in sei lingue.
+- Verifiche: 726 unitari frontend, 72 test browser con API simulate, TypeScript,
+  ESLint mirato e guidance superati. Frontend portable ricostruito e sano;
+  backup PostgreSQL eseguito prima del deploy e nessun ambiente dev avviato.
+- Per il deploy non è richiesto `sudo ./update_nginx.sh`.
+
+---
+
 # Handoff 28 ottobre 2026: vista personale senza contenuti di classe
 
 - Branch `fix/vista-studente-tutti-strumenti` da `origin/main`: la vista «Tutti

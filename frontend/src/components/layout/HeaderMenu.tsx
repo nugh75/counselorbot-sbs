@@ -62,8 +62,12 @@ export function HeaderMenu({ links, current, pathname, resumeEntries, authentica
                 href={link.href}
                 className={ROW}
                 aria-current={link.key === current ? 'page' : undefined}
-                onClick={() => {
+                onClick={(event) => {
                     closeToTrigger();
+                    if (link.key === 'presentation' && pathname === '/' && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+                        event.preventDefault();
+                        window.dispatchEvent(new CustomEvent('cb-navigate-intro'));
+                    }
                     if (link.key === 'instruments' && pathname === '/') {
                         window.dispatchEvent(new CustomEvent('cb-navigate-home'));
                     }

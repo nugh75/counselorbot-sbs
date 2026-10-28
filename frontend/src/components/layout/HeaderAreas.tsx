@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ChevronDown, type LucideIcon } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { useDisclosure } from '@/lib/use-disclosure';
@@ -11,6 +12,7 @@ import type { HeaderLink, HeaderLinkKey } from '@/lib/header-navigation';
 // e apre l'elenco filtrato per ruolo. Disclosure come gli altri pannelli.
 export function HeaderAreas({ areas, current, icons }: { areas: HeaderLink[]; current: HeaderLinkKey | null; icons: Record<HeaderLinkKey, LucideIcon> }) {
     const { t } = useI18n();
+    const pathname = usePathname();
     const { open, containerRef, triggerRef, triggerProps, onBlur, close } = useDisclosure('area-panel');
 
     if (areas.length === 0) return null;
@@ -48,7 +50,13 @@ export function HeaderAreas({ areas, current, icons }: { areas: HeaderLink[]; cu
                             <Link
                                 key={area.key}
                                 href={area.href}
-                                onClick={close}
+                                onClick={(event) => {
+                                    close();
+                                    if (area.key === 'presentation' && pathname === '/' && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+                                        event.preventDefault();
+                                        window.dispatchEvent(new CustomEvent('cb-navigate-intro'));
+                                    }
+                                }}
                                 aria-current={area.key === current ? 'page' : undefined}
                                 className="flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
                             >

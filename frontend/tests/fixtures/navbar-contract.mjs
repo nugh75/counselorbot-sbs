@@ -104,6 +104,7 @@ export const LABELS = {
     bussola: 'Bussola',
     assistant: 'Assistente',
     guide: 'Guida',
+    presentation: 'Presentazione',
     student: 'Area studente',
     teacher: 'Area docente',
     admin: 'Area amministrazione',
@@ -134,16 +135,17 @@ export const LABELS = {
 
 // Role-dependent labels in the six languages, independent of the dictionaries.
 export const LOCALIZED = {
-    it: { instruments: 'Attività e percorsi', menu: 'Menu', guide: 'Guida', student: 'Area studente', teacher: 'Area docente', admin: 'Area amministrazione', assistant: 'Assistente', bussola: 'Bussola', area: 'Area', account: 'Account: ', preferences: 'Preferenze', signIn: 'Accedi', signOut: 'Esci' },
-    en: { instruments: 'Activities and paths', menu: 'Menu', guide: 'Guide', student: 'Student area', teacher: 'Teacher area', admin: 'Administration area', assistant: 'Assistant', bussola: 'Compass', area: 'Area', account: 'Account: ', preferences: 'Preferences', signIn: 'Sign in', signOut: 'Sign out' },
-    es: { instruments: 'Actividades y recorridos', menu: 'Menú', guide: 'Guía', student: 'Área del estudiante', teacher: 'Área docente', admin: 'Área de administración', assistant: 'Asistente', bussola: 'Brújula', area: 'Área', account: 'Cuenta: ', preferences: 'Preferencias', signIn: 'Iniciar sesión', signOut: 'Cerrar sesión' },
-    fr: { instruments: 'Activités et parcours', menu: 'Menu', guide: 'Guide', student: 'Espace élève', teacher: 'Espace enseignant', admin: 'Espace administration', assistant: 'Assistant', bussola: 'Boussole', area: 'Espace', account: 'Compte : ', preferences: 'Préférences', signIn: 'Se connecter', signOut: 'Se déconnecter' },
-    de: { instruments: 'Aktivitäten und Wege', menu: 'Menü', guide: 'Anleitung', student: 'Bereich für Lernende', teacher: 'Lehrkräftebereich', admin: 'Verwaltungsbereich', assistant: 'Assistent', bussola: 'Kompass', area: 'Bereich', account: 'Konto: ', preferences: 'Einstellungen', signIn: 'Anmelden', signOut: 'Abmelden' },
-    sv: { instruments: 'Aktiviteter och vägledningar', menu: 'Meny', guide: 'Guide', student: 'Elevområde', teacher: 'Lärarområde', admin: 'Administrationsområde', assistant: 'Assistent', bussola: 'Kompass', area: 'Område', account: 'Konto: ', preferences: 'Inställningar', signIn: 'Logga in', signOut: 'Logga ut' },
+    it: { presentation: 'Presentazione', instruments: 'Attività e percorsi', menu: 'Menu', guide: 'Guida', student: 'Area studente', teacher: 'Area docente', admin: 'Area amministrazione', assistant: 'Assistente', bussola: 'Bussola', area: 'Area', account: 'Account: ', preferences: 'Preferenze', signIn: 'Accedi', signOut: 'Esci' },
+    en: { presentation: 'Introduction', instruments: 'Activities and paths', menu: 'Menu', guide: 'Guide', student: 'Student area', teacher: 'Teacher area', admin: 'Administration area', assistant: 'Assistant', bussola: 'Compass', area: 'Area', account: 'Account: ', preferences: 'Preferences', signIn: 'Sign in', signOut: 'Sign out' },
+    es: { presentation: 'Presentación', instruments: 'Actividades y recorridos', menu: 'Menú', guide: 'Guía', student: 'Área del estudiante', teacher: 'Área docente', admin: 'Área de administración', assistant: 'Asistente', bussola: 'Brújula', area: 'Área', account: 'Cuenta: ', preferences: 'Preferencias', signIn: 'Iniciar sesión', signOut: 'Cerrar sesión' },
+    fr: { presentation: 'Présentation', instruments: 'Activités et parcours', menu: 'Menu', guide: 'Guide', student: 'Espace élève', teacher: 'Espace enseignant', admin: 'Espace administration', assistant: 'Assistant', bussola: 'Boussole', area: 'Espace', account: 'Compte : ', preferences: 'Préférences', signIn: 'Se connecter', signOut: 'Se déconnecter' },
+    de: { presentation: 'Einführung', instruments: 'Aktivitäten und Wege', menu: 'Menü', guide: 'Anleitung', student: 'Bereich für Lernende', teacher: 'Lehrkräftebereich', admin: 'Verwaltungsbereich', assistant: 'Assistent', bussola: 'Kompass', area: 'Bereich', account: 'Konto: ', preferences: 'Einstellungen', signIn: 'Anmelden', signOut: 'Abmelden' },
+    sv: { presentation: 'Presentation', instruments: 'Aktiviteter och vägledningar', menu: 'Meny', guide: 'Guide', student: 'Elevområde', teacher: 'Lärarområde', admin: 'Administrationsområde', assistant: 'Assistent', bussola: 'Kompass', area: 'Område', account: 'Konto: ', preferences: 'Inställningar', signIn: 'Logga in', signOut: 'Logga ut' },
 };
 
 export const ENTRY_HREFS = {
     instruments: '/?view=home',
+    presentation: '/?view=intro',
     bussola: '/bussola',
     assistant: '/assistente',
     guide: '/guide',
@@ -198,6 +200,7 @@ export function expectedNavbar(profileKey, width, { resume = { rows: [], error: 
         ...(expect.assistant ? [LABELS.assistant] : []),
     ];
     const areaItems = [
+        ...(auth ? [LABELS.presentation] : []),
         ...(expect.student ? [LABELS.student] : []),
         ...(expect.teacher ? [LABELS.teacher] : []),
         ...(expect.admin ? [LABELS.admin] : []),

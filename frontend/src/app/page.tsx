@@ -231,18 +231,24 @@ export default function Home() {
     }, []);
 
     useEffect(() => {
-        const onNavigateHome = () => {
+        const navigate = (target: 'base' | 'intro') => {
             setSelectedQuestionnaire(null);
             setScores(null);
             setScoreOrigin('new');
             setPdfToken(undefined);
             setSessionId('');
             setExperience(null);
-            setStep('base');
+            setStep(target);
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
         };
+        const onNavigateHome = () => navigate('base');
+        const onNavigateIntro = () => navigate('intro');
         window.addEventListener('cb-navigate-home', onNavigateHome);
-        return () => window.removeEventListener('cb-navigate-home', onNavigateHome);
+        window.addEventListener('cb-navigate-intro', onNavigateIntro);
+        return () => {
+            window.removeEventListener('cb-navigate-home', onNavigateHome);
+            window.removeEventListener('cb-navigate-intro', onNavigateIntro);
+        };
     }, []);
 
     // Sull'intro nessuno strumento è ancora in corso: il chip nell'header non

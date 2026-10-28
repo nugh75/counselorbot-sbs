@@ -308,10 +308,10 @@ personale, accanto alle Flashcard. Il catalogo non contiene più il riquadro
 “Counselor · Come procediamo” né “Rivedi la presentazione iniziale”. Il comando
 indietro e la navigazione permettono di tornare alle pagine precedenti.
 
-Da 1024 px la testata mostra per primo l’ingresso alle aree con etichetta visibile:
-chi ha solo l’Area studente vede il link **Area studente**;
-docenti, ricercatori e admin vedono il selettore **Area**, che apre **Area
-studente**, **Area docente** e, per ricercatori e admin, **Area amministrazione**.
+Da 1024 px la testata mostra per primo il selettore **Area**: per chi ha fatto
+accesso include **Presentazione** e **Area studente**, e aggiunge **Area docente**
+e **Area amministrazione** secondo il ruolo. Presentazione apre la pagina iniziale
+anche quando si è già in «Attività e percorsi».
 Il selettore mostra il nome dell’area in cui ci si trova (per esempio «Area
 docente» dentro `/docente`). Seguono le icone di **Attività e percorsi**,
 **Bussola**, **Assistente** e **Guida**: il nome appare come suggerimento al
@@ -332,7 +332,7 @@ Sotto 1024 px (telefono e tablet in verticale) la barra mostra il marchio e il
 pulsante **Menu** con l’icona a tre righe. Il pannello si apre sotto la barra, a
 tutta larghezza sul telefono, e raccoglie le stesse funzioni del desktop in
 gruppi con un titolo: in alto la **Vista attiva** per chi ha classi, poi
-**Area** (Area studente, Area docente, Area amministrazione secondo il ruolo),
+**Area** (Presentazione, Area studente, Area docente e Area amministrazione secondo il ruolo),
 **Supporto** (Bussola, Assistente, Guida), **Conversazione** (strumento scelto,
 counselor e **Riprendi un’attività**, che apre il proprio elenco con il numero
 delle attività, Riprova in caso di errore e la cancellazione di ogni riga) e
