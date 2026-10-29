@@ -40,8 +40,12 @@ def api(monkeypatch):
             models.GroupMembership(group_id=other.id, username="carol"),
             models.QuestionnaireResult(session_id="s-alice", questionnaire_type="QSAr", username="alice",
                                        scores={"C1": 7}, administration_plan_id=plan.id),
+            models.Log(session_id="s-alice", action="questionnaire_pdf_summary",
+                       details={"summary": "Interesse per le scienze e buona organizzazione dello studio."}),
             models.QuestionnaireResult(session_id="s-private", questionnaire_type="PRIVATE_OTHER_CLASS", username="alice",
                                        scores={"private": 99}, administration_plan_id=other_plan.id),
+            models.Log(session_id="s-private", action="questionnaire_pdf_summary",
+                       details={"summary": "PRIVATE_OTHER_CLASS_SUMMARY"}),
             models.LearnerProfileRevision(username="alice", data={"goal": "PRIVATE_NOTEBOOK_MARKER"}, source="manual"),
         ])
         db.commit()
@@ -190,6 +194,80 @@ def test_ai_draft_proposes_but_never_saves(api):
 def test_ai_draft_never_reaches_a_non_member(api):
     client, _db, identity, _ai, group, _other = api
     assert client.post(f"/teacher/groups/{group.id}/orientation-recommendations/carol/ai-draft").status_code == 404
+
+
+@pytest.mark.parametrize("username", ["alice", "bob"])
+def test_ai_draft_reports_insufficient_information_without_descriptive_evidence(api, username):
+    client, db, _identity, ai, group, _other = api
+    # Alice has raw scores (and private material elsewhere); Bob has no results.
+    db.query(models.Log).filter_by(session_id="s-alice").delete()
+    db.commit()
+    response = client.post(f"/teacher/groups/{group.id}/orientation-recommendations/{username}/ai-draft")
+    assert response.status_code == 200, response.text
+    draft = response.json()["draft"]
+    assert "informazioni disponibili sono insufficienti" in draft
+    assert "punti di forza" in draft and "possibili percorsi scolastici" in draft
+    assert "interessi" in draft and "osservazioni dei docenti" in draft
+    ai.assert_not_called()
+    assert db.query(models.OrientationRecommendation).count() == 0
+
+
+def test_ai_draft_with_evidence_requires_alternatives_linked_to_strengths_and_interests(api):
+    client, db, _identity, ai, group, _other = api
+    ai.return_value.get_response.return_value = (
+        "L'interesse per le scienze potrebbe essere una risorsa nel liceo scientifico, "
+        "che approfondisce matematica e scienze. La stessa curiosità potrebbe aiutare "
+        "in un istituto tecnico a indirizzo chimico, con attività di laboratorio: "
+        "potresti esplorare entrambe le possibilità."
+    )
+    response = client.post(f"/teacher/groups/{group.id}/orientation-recommendations/alice/ai-draft")
+    assert response.status_code == 200, response.text
+    assert "liceo scientifico" in response.json()["draft"]
+    assert "istituto tecnico" in response.json()["draft"]
+    prompt, system = ai.return_value.get_response.call_args[0][:2]
+    assert "Interesse per le scienze" in prompt
+    assert "Presenta almeno due possibilità alternative" in system
+    assert "Per ciascuna spiega cosa si studia e quali punti di forza o interessi" in system
+    assert "Non indicare mai una scuola da scegliere né un indirizzo univoco" in system
+    assert "anche quando le informazioni sono sufficienti" in system
+    assert "senza graduatorie, preferenze" in system
+    assert "potresti valutare" in system and "potresti esplorare" in system
+    assert "informazioni disponibili sono insufficienti" in system
+    assert "Spiega quali elementi mancano e come raccoglierli" in system
+    assert "se puoi motivarne una sola, dichiara il limite" in system
+    assert "scuola e l'indirizzo consigliati" not in system
+    assert db.query(models.OrientationRecommendation).count() == 0
+
+
+@pytest.mark.parametrize("source", ["feedback", "goal", "progress_only"])
+def test_ai_draft_distinguishes_descriptive_evidence_from_progress(api, source):
+    client, db, _identity, ai, group, _other = api
+    marker = "Interesse documentato per attività di laboratorio"
+    assignment = models.TeacherAssignment(
+        author_username="teacher", author_name="Teacher One", group_id=group.id,
+        group_name=group.name, source_kind="goal", source_id=1,
+        snapshot={"title": "Attività di classe"}, instructions="",
+        request_id="orientation-evidence", request_hash="orientation-evidence",
+    )
+    db.add(assignment)
+    db.flush()
+    db.add(models.AssignmentWork(
+        assignment_id=assignment.id, username="bob", submission={"text": "Consegna"},
+        feedback=marker if source == "feedback" else "  ",
+    ))
+    if source == "goal":
+        db.add(models.PersonalGoal(username="bob", title=marker, shared_group_id=group.id))
+    db.commit()
+    response = client.post(f"/teacher/groups/{group.id}/orientation-recommendations/bob/ai-draft")
+    assert response.status_code == 200, response.text
+    if source == "progress_only":
+        assert "informazioni disponibili sono insufficienti" in response.json()["draft"]
+        ai.assert_not_called()
+    else:
+        ai.return_value.get_response.assert_called_once()
+        prompt = ai.return_value.get_response.call_args[0][0]
+        assert marker in prompt
+    assert db.query(models.OrientationRecommendation).count() == 0
 
 
 def test_pdf_export_needs_a_saved_document(api):
