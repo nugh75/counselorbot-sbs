@@ -20,8 +20,10 @@ import { useResponseFormat } from '@/lib/use-response-format';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
+import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 
-// Tabelle con bordi + scroll orizzontale per una lettura pulita dei documenti.
+// Anteprima dei documenti: tabelle con bordi + scroll orizzontale. Le risposte
+// in chat usano ChatMarkdown.
 const mdComponents: Components = {
     table: (props) => (
         <div className="overflow-x-auto my-3">
@@ -559,9 +561,9 @@ export default function AssistentePage() {
                         ) : (
                             <ChatRow key={i} role={msg.role === 'user' ? 'user' : 'assistant'}>
                                 <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'}>
-                                    <div className="prose prose-sm max-w-none break-words prose-p:my-1.5 prose-headings:my-2">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{msg.content}</ReactMarkdown>
-                                    </div>
+                                    {msg.role === 'assistant'
+                                        ? <div className="min-w-0 max-w-full"><ChatMarkdown content={msg.content} locale={lang} errorMessage={t('guided.stepConnError')} /></div>
+                                        : <span className="whitespace-pre-line">{msg.content}</span>}
                                     {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
                                         <div className="mt-3 pt-2 border-t border-slate-100 flex flex-wrap gap-2">
                                             {msg.sources.map((s) => (

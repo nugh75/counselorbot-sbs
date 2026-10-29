@@ -13,10 +13,9 @@ import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { Button } from '@/components/ui/Button';
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
+import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
 import Image from 'next/image';
 import { useI18n } from '@/lib/i18n-context';
@@ -311,7 +310,7 @@ export default function BussolaPage() {
                                 <ChatRow key={`${message.role}-${index}`} role={message.role === 'user' ? 'user' : 'assistant'}>
                                     <ChatBubble role={message.role === 'user' ? 'user' : 'assistant'}>
                                         <div data-voice-source={message.role === 'assistant' ? `bussola-${session.session_id}-${index}` : undefined}
-                                            data-voice-language={session.language || lang} data-voice-counselor={session.counselor_id ?? undefined} className="prose prose-sm max-w-none overflow-x-auto text-inherit">{message.role === "assistant" ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown> : <span className="whitespace-pre-line">{message.content}</span>}</div>
+                                            data-voice-language={session.language || lang} data-voice-counselor={session.counselor_id ?? undefined} className="min-w-0 max-w-full">{message.role === "assistant" ? <ChatMarkdown content={message.content} locale={session.language || lang} errorMessage={t('guided.stepConnError')} /> : <span className="whitespace-pre-line">{message.content}</span>}</div>
                                         {message.role === 'assistant' && <div className="mt-2" data-voice-ignore>
                                             <ListenButton id={`bussola-${session.session_id}-${index}`} text={message.content} language={session.language as typeof lang || lang} counselorId={session.counselor_id} className="min-h-[44px] min-w-[44px] px-2" />
                                         </div>}
