@@ -3,7 +3,7 @@ Agente: `t-copilota-hnup` · Pane: `wT:pN` · Branch: `docs/service-agent-profil
 Aggiornato: 29 ottobre 2026, Europe/Stockholm.
 
 ## Stato
-- Opus ha consegnato #653 nella PR #667 ed è idle; otto issue ancora da avviare, servizi Terra disponibili.
+- PR #667 MERGED, #653 chiusa; lo stesso Opus lavora sulla #654, sette issue successive da avviare.
 - Altre modifiche al prodotto e deploy richiedono un ordine esplicito.
 
 ## Fatto
@@ -14,7 +14,7 @@ Aggiornato: 29 ottobre 2026, Europe/Stockholm.
 - Due obiettivi raggiunti; nove gruppi di backlog aggiunti senza attivare la sync automatica.
 - #653: browser 4/4 e voce 7/7, TS/lint OK; quattro recovery e dodici i18n preesistenti documentati da Opus.
 - `s3-chat-ux-opus` avviato alle 12:00:00 CET su `wT:pP`, tab `S3: Chat UX (Opus)`.
-- PR #667 aperta, head `7a41ffb4`, worktree pulito; task #653 fatto, consegna recuperata dal Timoniere.
+- PR #667 MERGED verificata (`1eeddc57`); main aggiornato, branch locale #653 eliminato con -d.
 - `srv-stato`: tab `S: srv-stato`, pane `wT:pS`, letture Herdr/GitHub verificate dopo ripresa.
 - `srv-deploy`: tab `S: srv-deploy`, pane `wT:pR`, inventario Docker in sola lettura completato.
 - Entrambi T0 `gpt-6.1-terra` low scelti dall'utente; worktree documentali separati, non contesti build.
@@ -27,11 +27,11 @@ Aggiornato: 29 ottobre 2026, Europe/Stockholm.
 - Config/prompt/ricevute locali: directory dati Console `service-agents/Counselorbot/`.
 
 ## Prossimi passi
-- Attendere CI desktop e merge della PR #667 dal proprietario; nessuna revisione, come richiesto dall'utente.
-- Task #653: `80b9695c-9581-4b26-baf7-fe5560adce8a`; branch `feature/chat-ux-shared-shell-653`.
+- Monitorare #654; nessun revisore automatico, #667 unita senza revisione su scelta dell'utente.
+- Task #654: `ee7368f4-eada-416f-9f8b-2afae5e34f47`, branch `feature/chat-ux-markdown-654`; worktree precedente riusato.
 - Aggiornare srv-stato ai checkpoint e ogni 30 minuti durante il coordinamento attivo, solo quando disponibile.
 - Servizi persistenti: lasciare i task in corso anche se il singolo turno è idle/done.
-- Dopo il merge proseguire da #654; altre issue #655–#661. Operatività servizi: `docs/operations/service-agents.md`.
+- Dopo il merge della nuova slice: #655–#661. PR #666 servizi ancora aperta; `docs/operations/service-agents.md`.
 
 ## Blocchi e rischi
 - Ambiente del Timoniere eredita `HERDR_PANE_ID=wT:p6`: usare esplicitamente `wT:pN` nei bootstrap.
