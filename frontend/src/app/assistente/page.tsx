@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { LucideIcon } from 'lucide-react';
-import { GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen, Mic } from 'lucide-react';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { getIdentity, getViewAsAccount, loginHref, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
@@ -21,6 +21,13 @@ import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/Res
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
+import { AudioInput } from '@/components/ui/AudioInput';
+import { AudioSendOption } from '@/components/ui/AudioSendOption';
+import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
+import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
+import { ListenButton } from '@/components/voice-reader/VoiceReader';
+import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
+import { diagramContentForSpeech } from '@/lib/diagram-content';
 
 // Anteprima dei documenti: tabelle con bordi + scroll orizzontale. Le risposte
 // in chat usano ChatMarkdown.
@@ -136,6 +143,11 @@ export default function AssistentePage() {
     const [responseFormat, setResponseFormat] = useResponseFormat('assistant');
     const [responseLength, setResponseLength] = useState<ResponseLength>('medium');
     const [loading, setLoading] = useState(false);
+    // Audio come nella chat guidata e nella Bussola: dettatura, conversazione
+    // a voce e lettura delle risposte.
+    const [audioBusy, setAudioBusy] = useState(false);
+    const [voiceMode, setVoiceMode] = useState(false);
+    const [voiceOptionsContainer, setVoiceOptionsContainer] = useState<HTMLDivElement | null>(null);
     const [sessionId, setSessionId] = useState<string | undefined>(undefined);
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [preview, setPreview] = useState<PreviewState | null>(null);
@@ -264,9 +276,12 @@ export default function AssistentePage() {
         questionVariantIdx.current[selectedTopic.id] = (i + 1) % variants.length;
     };
 
-    const send = async () => {
-        const question = input.trim();
-        if (!question || loading) return;
+    // audioMessage arriva da AudioInput: il testo trascritto, mentre il campo
+    // può essere ancora occupato dalla trascrizione. onPartial porta lo
+    // streaming alla conversazione a voce, che legge la risposta mentre arriva.
+    const send = async (audioMessage?: string, onPartial?: (reply: string) => void): Promise<string | undefined> => {
+        const question = (audioMessage ?? input).trim();
+        if (!question || loading || (audioBusy && audioMessage === undefined)) return;
         setInput('');
         setMessages((m) => [...m, { role: 'user', content: question }, { role: 'assistant', content: '' }]);
         setLoading(true);
@@ -288,7 +303,7 @@ export default function AssistentePage() {
         try {
             const result = await streamChat(
                 { message: question, audience, session_id: sessionId, conversation_id: conversationId, language: lang, collection, counselor_id: counselorId ?? undefined, response_length: responseLength, response_format: responseFormat },
-                (full) => updateLast(full),
+                (full) => { updateLast(full); onPartial?.(full); },
                 controller.signal,
                 undefined,
                 '/api/site-chat/stream',
@@ -306,6 +321,7 @@ export default function AssistentePage() {
             });
             if (result.session_id) setSessionId(result.session_id);
             if (result.conversation_id) setConversationId(result.conversation_id);
+            return result.response;
         } catch (e) {
             // Interruzione chiesta dal lettore: il testo già arrivato resta, non
             // viene sostituito dal messaggio d'errore.
@@ -562,8 +578,12 @@ export default function AssistentePage() {
                             <ChatRow key={i} role={msg.role === 'user' ? 'user' : 'assistant'}>
                                 <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'}>
                                     {msg.role === 'assistant'
-                                        ? <div className="min-w-0 max-w-full"><ChatMarkdown content={msg.content} locale={lang} errorMessage={t('guided.stepConnError')} /></div>
+                                        ? <div className="min-w-0 max-w-full" data-voice-source={`assistente-${conversationId ?? 'new'}-${i}`} data-voice-language={lang} data-voice-counselor={counselorId ?? undefined}><ChatMarkdown content={msg.content} locale={lang} errorMessage={t('guided.stepConnError')} /></div>
                                         : <span className="whitespace-pre-line">{msg.content}</span>}
+                                    {/* La risposta in arrivo non si legge ancora: il testo cambia a ogni token. */}
+                                    {msg.role === 'assistant' && !(loading && i === messages.length - 1) && diagramContentForSpeech(msg.content) && <div className="mt-2" data-voice-ignore>
+                                        <ListenButton id={`assistente-${conversationId ?? 'new'}-${i}`} text={diagramContentForSpeech(msg.content)} language={lang} counselorId={counselorId} className="min-h-[44px] min-w-[44px] px-2" />
+                                    </div>}
                                     {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
                                         <div className="mt-3 pt-2 border-t border-slate-100 flex flex-wrap gap-2">
                                             {msg.sources.map((s) => (
@@ -626,6 +646,8 @@ export default function AssistentePage() {
                     <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:-mb-12 max-lg:bg-slate-50 max-lg:px-4 max-lg:pb-3 max-lg:pt-1">
                         <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer rounded-xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-indigo-500">
                             <ChatComposerInput
+                                id="assistente-composer"
+                                hidden={voiceMode}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder={t('assistant.inputPlaceholder')}
@@ -633,7 +655,15 @@ export default function AssistentePage() {
                                 className="w-full flex-none border-0 bg-transparent px-2 py-1.5 focus:ring-0"
                             />
                             <div className="flex flex-wrap items-center gap-2 pt-1">
-                                <button
+                                <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <>
+                                    <div ref={setVoiceOptionsContainer} />
+                                    {!voiceMode && <button type="button" disabled={loading || audioBusy} className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50" onClick={() => { close(); setVoiceMode(true); }}>
+                                        <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
+                                    </button>}
+                                    {!voiceMode && <AudioSendOption />}
+                                    <AudioLanguageOption />
+                                </>}</ChatActionsPopover>
+                                {!voiceMode && <button
                                     type="button"
                                     onClick={prepareQuestion}
                                     disabled={!selectedTopic}
@@ -642,15 +672,21 @@ export default function AssistentePage() {
                                     className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-bold text-slate-500 transition-colors hover:border-indigo-300 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                     <span aria-hidden="true">?</span>
-                                </button>
-                                <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                                </button>}
+                                {/* In conversazione a voce il pulsante Parla occupa la riga. */}
+                                <div className={`ml-auto flex flex-wrap items-center justify-end gap-2${voiceMode ? ' min-w-0 flex-1' : ''}`}>
                                     <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={loading} />
                                     <ResponseLengthSelector
                                         value={responseLength}
                                         onChange={setResponseLength}
                                         disabled={loading}
                                     />
-                                    <ChatSendButton loading={loading} onStop={stopGeneration} disabled={!input.trim()} sendLabel={t('chat.send')} stopLabel={t('chat.stop')} />
+                                    <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}
+                                        onSend={(text, onPartial) => send(text, onPartial)}
+                                        voiceMode={voiceMode} onExitVoice={() => setVoiceMode(false)} counselorId={counselorId}
+                                        voiceOptionsContainer={voiceOptionsContainer}
+                                        composerId="assistente-composer" sessionKey={`${collection}:${audience}:${selectedTopicId}`} disabled={loading} />
+                                    {!voiceMode && <ChatSendButton loading={loading} onStop={stopGeneration} disabled={!input.trim() || audioBusy} sendLabel={t('chat.send')} stopLabel={t('chat.stop')} />}
                                 </div>
                             </div>
                         </form>

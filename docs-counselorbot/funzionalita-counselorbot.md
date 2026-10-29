@@ -447,8 +447,10 @@ finita; le bolle hanno la stessa larghezza massima (piena su telefono, 90% su
 schermo largo); l’attesa è un unico segnale nella conversazione. Il campo di
 scrittura parte da una riga e cresce con il testo: Invio invia, Maiusc+Invio va
 a capo. Il pulsante Invia è uguale ovunque, largo e alto almeno 44 px, e, mentre la risposta arriva in
-Assistente e chat guidata, diventa «Ferma la risposta». Il microfono resta dove
-c’era già (chat guidata e Bussola); opzioni e azioni di ciascuna chat non cambiano.
+Assistente e chat guidata, diventa «Ferma la risposta». Le tre chat hanno lo
+stesso audio (#655): microfono accanto a Invia, conversazione vocale e opzioni
+audio nel menu «Opzioni della conversazione», «Ascolta» sotto ogni risposta
+finita; le altre opzioni e azioni di ciascuna chat non cambiano.
 Anche il testo delle risposte è reso allo stesso modo nelle tre chat (#654):
 stesso aspetto per titoli, elenchi, grassetto, collegamenti, codice e citazioni;
 le tabelle scorrono di lato dentro la loro cornice (raggiungibile anche da
@@ -975,7 +977,7 @@ Durante la generazione, i blocchi di ragionamento riconoscibili (tag `<think>`, 
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
 e feedback quando disponibili. Nei diagrammi gli archi che indicano un ostacolo sono rossi e tutti gli altri verdi (stessa palette in web, PDF e Telegram, temi chiaro e scuro); tratteggio, punta a T e legenda li distinguono anche senza il colore. Il disegno richiede il programma Graphviz: su un'installazione che non lo ha (per esempio un'app desktop senza Graphviz) il riquadro lo dice chiaramente, senza «Riprova», e riporta comunque le relazioni in testo; `GET /api/capabilities` indica se i diagrammi sono disponibili. Il lettore nel menu di navigazione legge il testo visibile,
 con impostazioni di voce e motore (Edge TTS online con filtro PII deterministico obbligatorio oppure Piper su host locale fidato, con dodici voci ONNX incorporate, attivo anche nella configurazione portatile); la correzione della pronuncia è visibile solo
-all’amministratore. La chat guidata e la Bussola accettano
+all’amministratore. Chat guidata, Bussola e Assistente accettano
 registrazione del microfono o file audio: la trascrizione è da controllare, salvo
 invio immediato scelto esplicitamente. In conversazione vocale si avvia e si ferma
 la registrazione; il microfono non riparte da solo.
