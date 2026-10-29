@@ -1,3 +1,46 @@
+# Handoff 29 ottobre 2026: flusso delle attività nei piani
+
+- Branch `feature/flusso-attivita-piani`: piano e attività sono le due viste;
+  Inizia/Riprendi/Rivedi e nuovi tentativi vengono dal contratto server `activity`.
+  Le chat autonome hanno un tentativo persistito già all’apertura; lo storico
+  resta nella scheda e Rivedi comprende conversazione, sintesi e PDF.
+- Le somministrazioni terminano salvando i risultati e aprono l’eventuale
+  approfondimento dal suo passo, con l’ultima compilazione valida. Bozze sul
+  server con revisione, salvataggio prima dell’uscita e ritorno al passo originale.
+- Da riprendere usa anche i tentativi del piano, senza duplicare le copie locali;
+  completati e attività di classe nella vista Tutti gli strumenti sono esclusi.
+  I tentativi del piano conservano lo storico e non si cancellano dal menu globale.
+- Editor e modelli mantengono il collegamento fra questionario e analisi.
+  L’indipendenza della navigazione non converte i risultati in compilazioni personali.
+- PostgreSQL 15 è l’unico target per i dati applicativi e per le nuove regressioni
+  (ADR-0004). Le iniziali esecuzioni della vecchia matrice SQLite erano superflue
+  e sono state interrotte; nessun percorso runtime SQLite è stato introdotto.
+- Documentazione e guida in sei lingue allineate, screenshot sintetici aggiornati.
+  Il controllo generale i18n continua a segnalare 12 testi preesistenti in
+  `ClassSettingsPage.tsx` e `ClassOverviewTab.tsx`, estranei a questa modifica.
+- Distribuzione portable dopo il merge e backup PostgreSQL. La tabella
+  `class_path_activity_attempts` è additiva; nessuna riscrittura dei dati storici.
+  Nginx resta valido: `sudo ./update_nginx.sh` non è necessario.
+  Immagini backend (Python 3.12) e frontend di produzione ricostruite e verificate;
+  tag locali `counselorbot-plan-activity-{backend,frontend}:final`.
+  Fixture PostgreSQL in tmpfs e frontend :3159 fermati; nessun ambiente dev avviato.
+  Prune del builder: 15,51 GB; rimosse le immagini validation superate, conservate
+  le due immagini finali. Nessun volume o servizio di produzione rimosso/riavviato.
+- Contratto, API e rollback: `docs/operations/plan-activity-flow.md`.
+- Verifica finale: 737 test unitari frontend, 44 scenari browser su immagini di
+  produzione a 390/1440 px, TypeScript ed ESLint dei file modificati superati.
+  PostgreSQL 15: 156 test superati, nessuna nuova failure; resta la failure già
+  registrata di `test_launch_describes_in_app_runner_without_external_link`
+  (la verifica cerca la parola password anche nella chiave con valore null).
+  Incluse le regressioni di concorrenza, storico e migrazione; Ruff superato.
+  La fixture privacy del forum usa contenuti distintivi, senza collisioni con
+  il nuovo identificatore pubblico `openDiscussion`.
+- Il controllo guidance viene eseguito anche sull'esportazione dei file della PR:
+  le modifiche locali preesistenti a package/lockfile e `opencode.json`, insieme
+  al rapporto locale di recupero, restano fuori dai commit di questa funzionalità.
+
+---
+
 # Handoff 28 ottobre 2026: accesso diretto alle chat dei piani
 
 - `fix/ripresa-chat-piani`: Inizia apre direttamente la chat di approfondimento
