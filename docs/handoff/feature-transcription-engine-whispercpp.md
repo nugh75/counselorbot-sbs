@@ -22,11 +22,16 @@ quantizzati per CPU deboli). Audio sempre locale.
 - Docs: `docs/operations/audio-input.md`, `funzionalita-counselorbot.md`.
 
 ## Test
+Esiti: backend 17 passati; servizio 16 passati nell'immagine (trascrizione
+reale di un WAV italiano con entrambi i motori); immagine +827 MB di strati.
 - Backend: `TEST_DB=sqlite python3.11 -m pytest backend/tests/test_audio_input.py`.
 - Servizio: `docker run --rm cb-stt-test:after python -m unittest test_server -v`
   (la classe `BundledEngineTests` usa binario e modelli reali dell'immagine).
 - Frontend: `next dev -H 127.0.0.1 -p 3163` poi
   `node --test tests/admin-transcription-engine.test.mjs`.
+  NON ancora eseguito: il 30/10 notte `next dev` restava bloccato a compilare
+  `/admin` (disco esterno lento, un altro agente in `next build`). `tsc` pulito
+  sui file toccati. Da eseguire alla prima occasione.
 
 ## Limiti noti
 - whisper.cpp: nessun VAD; modello mappato a ogni richiesta (nessun residente).
