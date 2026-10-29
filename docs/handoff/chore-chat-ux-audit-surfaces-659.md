@@ -21,11 +21,11 @@ da `origin/main` 904798af. Nessun codice applicativo toccato.
 - `make guidance-refresh` + `make guidance-check`: allineati.
 
 ## Prossimi passi
-- Slice di implementazione: OpenCode → `PracticeChats` con `ChatMarkdown` →
-  `PlanActivityReview`. Da aprire come issue; non iniziate.
+- OpenCode: da eliminare (decisione del proprietario), issue separata.
+- Allineamento: `PracticeChats` con `ChatMarkdown` → `PlanActivityReview`.
 
 ## Blocchi e rischi
-- Audio in OpenCode: dipende dal flusso backend del workspace, non verificato.
+- Rimozione OpenCode ampia (frontend, backend, desktop, docker, test): mappare prima.
 
 ## Sovrapposizioni per il merge
 - `docs-counselorbot/funzionalita-counselorbot.md`: stessa sezione toccata da

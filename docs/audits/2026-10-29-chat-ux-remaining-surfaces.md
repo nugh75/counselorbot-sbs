@@ -15,7 +15,7 @@ Solo documentale: nessun codice modificato.
 | Sandbox admin | `AdminChatSandbox` → `GuidedChatInterface preview` | Piena (è la chat guidata) |
 | Chat nei piani operativi | `PlanActivityFlow`, `ResultsDeepDiveFlow` → `GuidedChatInterface planOrigin`; sola lettura `PlanActivityReview` | Piena in chat; trascrizione quasi |
 | Taccuini di prova | `PracticeChats` (elenco/trascrizione); la chat vera è la guidata con `practiceNotebookId` | Chat piena; trascrizione no |
-| Workspace OpenCode | `OpenCodeExperience` | Divergente su quasi tutto |
+| Workspace OpenCode | `OpenCodeExperience` | Divergente su quasi tutto; **decisione: da eliminare** |
 
 ## 1. Sandbox admin (`components/admin/AdminChatSandbox.tsx`, `app/admin/preview-chat`)
 Riusa `GuidedChatInterface` con `preview={true}` dentro `ChatViewport`: guscio,
@@ -72,16 +72,13 @@ Divergenze rispetto allo standard:
   (`ChatResponseSettings`); nessuna lunghezza/analisi.
 - **Intestazione**: pulsanti con `p-1.5` (sotto i 44 px), tema
   scuro/chiaro proprio per la vista terminale (scelta legittima, da tenere).
-- Raccomandazione (alta, un'unica slice): sostituire transcript/riga/composer/
-  pulsante/attesa con `ChatShell`, risposte con `ChatMarkdown`, formato nel
-  `ChatResponseSettings`; aggiungere `AudioInput` e `ListenButton` solo se
-  il workspace invia testo al normale flusso (da verificare lato backend: se i
-  messaggi passano da OpenCode locale, l'audio può restare fuori ambito e va
-  dichiarato). Tenere invariati terminale, ripresa, auto-congelamento,
-  privacy della sessione e la vista chat/terminale.
+- **Decisione (proprietario, 2026-10-29): OpenCode va eliminato**, non
+  allineato. Nessun lavoro di allineamento a ChatShell/ChatMarkdown/audio.
+  La rimozione (componente, route `api/opencode`, terminale, backend, desktop,
+  docker, test, doc) è tracciata in una issue separata.
 
 ## Ordine suggerito
-1. OpenCode (divergenza maggiore, un solo file).
+1. OpenCode: rimozione (issue dedicata), non allineamento.
 2. `PracticeChats` con `ChatMarkdown` (poche righe).
 3. `PlanActivityReview` con `ChatRow`/`ChatTranscript`.
 4. Sandbox: nessuna azione.
