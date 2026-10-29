@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { pathActivityText } from '@/lib/i18n-path-activity';
-import { GuidedMessageContent } from '@/components/qsa/GuidedChatInterface';
+import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { SessionReport } from '@/components/qsa/SessionReport';
 import { Button } from '@/components/ui/Button';
 
@@ -30,7 +30,7 @@ export function PlanActivityReview({sessionId, instrument}: {sessionId: string; 
             {error && <p role="alert">{pathActivityText(lang, 'error')} <Button onClick={() => setRetry(value => value + 1)}>{pathActivityText(lang, 'retry')}</Button></p>}
             <div className="space-y-3">{messages.map((message, index) => <div key={index}
                 className={`min-w-0 rounded-lg p-3 ${message.role === 'student' ? 'ml-4 bg-indigo-50' : 'border border-slate-200 bg-white'}`}>
-                <GuidedMessageContent content={message.text} locale={lang} errorMessage={pathActivityText(lang, 'error')} />
+                <ChatMarkdown content={message.text} locale={lang} errorMessage={pathActivityText(lang, 'error')} />
             </div>)}</div>
         </details>
     </div>;

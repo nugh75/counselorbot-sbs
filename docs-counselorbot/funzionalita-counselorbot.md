@@ -449,6 +449,13 @@ scrittura parte da una riga e cresce con il testo: Invio invia, Maiusc+Invio va
 a capo. Il pulsante Invia è uguale ovunque, largo e alto almeno 44 px, e, mentre la risposta arriva in
 Assistente e chat guidata, diventa «Ferma la risposta». Il microfono resta dove
 c’era già (chat guidata e Bussola); opzioni e azioni di ciascuna chat non cambiano.
+Anche il testo delle risposte è reso allo stesso modo nelle tre chat (#654):
+stesso aspetto per titoli, elenchi, grassetto, collegamenti, codice e citazioni;
+le tabelle scorrono di lato dentro la loro cornice (raggiungibile anche da
+tastiera), senza spostare la pagina; i grafici proposti dal modello compaiono
+come grafici e un errore temporaneo del fornitore come avviso, non come testo
+tecnico. L’HTML scritto nel messaggio non viene eseguito. I messaggi della
+persona restano testo semplice.
 
 - **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti.
   Ascolta ciò che lo studente vuole affrontare e consiglia da quale strumento

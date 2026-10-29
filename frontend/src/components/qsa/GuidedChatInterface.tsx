@@ -6,7 +6,7 @@ import { useUserAccess } from '@/lib/use-user-access';
 
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 
-import { ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, BookOpen, Mic, AlignLeft, Rows3, Brain, NotebookPen } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, ThumbsUp, ThumbsDown, Snowflake, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, BookOpen, Mic, AlignLeft, Rows3, Brain, NotebookPen } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
@@ -20,9 +20,6 @@ import { canSelectPhase, emptyCheckpoint, emptyNavigation, explorationPayload, t
 import { navigationCopy } from '@/lib/guided-navigation-copy';
 import { chatErrorText } from '@/lib/i18n-personal-api';
 import { apiFetch } from '@/lib/auth';
-import ReactMarkdown from 'react-markdown';
-import type { Components } from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { useI18n } from '@/lib/i18n-context';
 import { GuideHelpLink } from '@/components/guide/GuideHelpLink';
 import { isNearBottom } from '@/lib/chat-scroll';
@@ -39,9 +36,9 @@ import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/Reasoni
 import { toast } from '@/components/ui/Toast';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
+import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
-import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
 import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
 import { IdeaBranchIntro } from '@/components/qsa/IdeaBranchIntro';
@@ -69,7 +66,7 @@ import {
 } from '@/lib/idea-map';
 import { freezeSession, type FrozenSessionDetail, type FrozenSessionSnapshot } from '@/lib/frozen-session';
 import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, phasesAlreadyOpened, shouldAutoFreeze } from '@/lib/auto-freeze';
-import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-content';
+import { diagramContentForSpeech } from '@/lib/diagram-content';
 import { EMPTY_RECOMMENDATIONS, normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 
 import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
@@ -394,66 +391,6 @@ function CompactScoreBar({
             </div>
         </div>
     );
-}
-
-// --- Markdown ---
-
-function omitMarkdownNode<T extends { node?: unknown }>(props: T): Omit<T, 'node'> {
-    const { node, ...elementProps } = props;
-    void node;
-    return elementProps;
-}
-
-const markdownComponents: Components = {
-    table: (props) => (
-        <div className="my-2 min-w-0 max-w-full overflow-x-auto" tabIndex={0}>
-        <table
-            className="w-full min-w-[760px] border-separate border-spacing-0 text-sm text-slate-800"
-            {...omitMarkdownNode(props)}
-        />
-        </div>
-    ),
-    thead: (props) => <thead className="bg-slate-50" {...omitMarkdownNode(props)} />,
-    tbody: (props) => <tbody className="[&_tr:nth-child(even)]:bg-slate-50/40" {...omitMarkdownNode(props)} />,
-    tr: (props) => <tr className="border-b border-slate-100" {...omitMarkdownNode(props)} />,
-    th: (props) => (
-        <th
-            className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600 border-b border-slate-200"
-            {...omitMarkdownNode(props)}
-        />
-    ),
-    td: (props) => <td className="px-3 py-2 align-top leading-relaxed border-b border-slate-100" {...omitMarkdownNode(props)} />,
-    p: (props) => <p className="my-1.5 text-sm leading-relaxed" {...omitMarkdownNode(props)} />,
-    ul: (props) => <ul className="my-2 pl-5 list-disc space-y-1" {...omitMarkdownNode(props)} />,
-    ol: (props) => <ol className="my-2 pl-5 list-decimal space-y-1" {...omitMarkdownNode(props)} />,
-    li: (props) => <li className="leading-relaxed" {...omitMarkdownNode(props)} />,
-    strong: (props) => <strong className="font-semibold text-slate-900" {...omitMarkdownNode(props)} />,
-};
-
-export function GuidedMessageContent({ content, locale, errorMessage }: { content: string; locale: string; errorMessage: string }) {
-    return splitDiagramContent(content).map((segment, index) => (
-        segment.kind === 'diagram' ? (
-            <DiagramBlock key={`diagram-${index}`} spec={segment.spec} locale={locale} />
-        ) : segment.kind === 'provider-error' ? (
-            <div
-                key={`error-${index}`}
-                className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"
-                role="alert"
-            >
-                <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>{errorMessage}</span>
-            </div>
-        ) : (
-            <div key={`markdown-${index}`} className="min-w-0 max-w-full [overflow-wrap:anywhere]">
-                <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={markdownComponents}
-                >
-                    {segment.content}
-                </ReactMarkdown>
-            </div>
-        )
-    ));
 }
 
 // --- Main Component ---
@@ -2113,7 +2050,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                                 {msg.content.trim() ? (
                                                     <div className="min-w-0 max-w-full overflow-hidden bg-white lg:rounded-lg lg:border lg:border-slate-200/80"
                                                         data-voice-source={`guided-${sessionId}-${idx}`} data-voice-language={activeLocale} data-voice-counselor={counselorId ?? undefined}>
-                                                        <GuidedMessageContent
+                                                        <ChatMarkdown
                                                             content={msg.content}
                                                             locale={activeLocale}
                                                             errorMessage={t('guided.stepConnError')}
