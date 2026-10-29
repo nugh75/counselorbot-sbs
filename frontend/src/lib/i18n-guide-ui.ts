@@ -1,0 +1,40 @@
+const text = {
+    title: ['Guida pratica', 'Practical guide', 'Guía práctica', 'Guide pratique', 'Praktische Hilfe', 'Praktisk guide'],
+    intro: ['Scegli un’azione e segui i passaggi.', 'Choose an action and follow the steps.', 'Elige una acción y sigue los pasos.', 'Choisissez une action et suivez les étapes.', 'Wähle eine Handlung und folge den Schritten.', 'Välj en handling och följ stegen.'],
+    search: ['Cosa vuoi fare?', 'What would you like to do?', '¿Qué quieres hacer?', 'Que souhaitez-vous faire ?', 'Was möchtest du tun?', 'Vad vill du göra?'],
+    searchHint: ['Cerca, per esempio, riprendere, questionario o condividere', 'Search for resume, questionnaire or sharing', 'Busca reanudar, cuestionario o compartir', 'Cherchez reprendre, questionnaire ou partager', 'Suche nach Fortsetzen, Fragebogen oder Teilen', 'Sök efter återuppta, enkät eller dela'],
+    clear: ['Cancella ricerca', 'Clear search', 'Borrar búsqueda', 'Effacer la recherche', 'Suche löschen', 'Rensa sökning'],
+    student: ['Uso personale / studente', 'Personal / student', 'Uso personal / estudiante', 'Personnel / élève', 'Persönlich / Lernende', 'Personligt / elev'],
+    teacher: ['Docente', 'Teacher', 'Docente', 'Enseignant', 'Lehrkraft', 'Lärare'],
+    admin: ['Amministrazione', 'Administration', 'Administración', 'Administration', 'Administration', 'Administration'],
+    audience: ['Guida per ruolo', 'Guide audience', 'Guía por rol', 'Public du guide', 'Zielgruppe der Hilfe', 'Guidens målgrupp'],
+    start: ['Primi passi', 'Getting started', 'Primeros pasos', 'Premiers pas', 'Erste Schritte', 'Kom igång'],
+    plans: ['Piani e classe', 'Plans and class', 'Planes y clase', 'Plans et classe', 'Pläne und Klasse', 'Planer och klass'],
+    chat: ['Questionari e chat', 'Questionnaires and chat', 'Cuestionarios y chat', 'Questionnaires et chat', 'Fragebögen und Chat', 'Enkäter och chatt'],
+    study: ['Studio e ripasso', 'Study and revision', 'Estudio y repaso', 'Étude et révision', 'Lernen und Wiederholen', 'Studier och repetition'],
+    tools: ['Strumenti personali', 'Personal tools', 'Herramientas personales', 'Outils personnels', 'Persönliche Werkzeuge', 'Personliga verktyg'],
+    data: ['Accesso e dati', 'Access and data', 'Acceso y datos', 'Accès et données', 'Zugriff und Daten', 'Åtkomst och uppgifter'],
+    teacherPlans: ['Classi e piani', 'Classes and plans', 'Clases y planes', 'Classes et plans', 'Klassen und Pläne', 'Klasser och planer'],
+    teacherChat: ['Questionari e risultati', 'Questionnaires and results', 'Cuestionarios y resultados', 'Questionnaires et résultats', 'Fragebögen und Ergebnisse', 'Enkäter och resultat'],
+    teacherStudy: ['Proposte e riscontri', 'Proposals and feedback', 'Propuestas y comentarios', 'Propositions et retours', 'Vorschläge und Rückmeldungen', 'Förslag och återkoppling'],
+    teacherTools: ['Strumenti docente', 'Teacher tools', 'Herramientas docentes', 'Outils enseignants', 'Lehrerwerkzeuge', 'Lärarverktyg'],
+    all: ['Tutte le istruzioni', 'All instructions', 'Todas las instrucciones', 'Toutes les instructions', 'Alle Anleitungen', 'Alla instruktioner'],
+    back: ['Torna agli argomenti', 'Back to topics', 'Volver a los temas', 'Revenir aux rubriques', 'Zurück zu den Themen', 'Tillbaka till ämnen'],
+    open: ['Apri nell’app', 'Open in the app', 'Abrir en la aplicación', 'Ouvrir dans l’application', 'In der App öffnen', 'Öppna i appen'],
+    related: ['Ti può servire anche', 'You may also need', 'También puede servirte', 'Également utile', 'Auch hilfreich', 'Kan också vara användbart'],
+    note: ['Se hai un dubbio', 'If you have a question', 'Si tienes dudas', 'En cas de doute', 'Bei Fragen', 'Om du undrar'],
+    important: ['Da sapere', 'Good to know', 'Qué debes saber', 'À savoir', 'Gut zu wissen', 'Bra att veta'],
+    results: ['Istruzioni trovate', 'Instructions found', 'Instrucciones encontradas', 'Instructions trouvées', 'Gefundene Anleitungen', 'Hittade instruktioner'],
+    empty: ['Nessuna istruzione trovata. Prova con meno parole oppure scegli un argomento.', 'No instructions found. Try fewer words or choose a topic.', 'No hay resultados. Prueba con menos palabras o elige un tema.', 'Aucune instruction trouvée. Essayez moins de mots ou choisissez une rubrique.', 'Keine Anleitung gefunden. Nutze weniger Wörter oder wähle ein Thema.', 'Inga instruktioner hittades. Försök med färre ord eller välj ett ämne.'],
+    unavailable: ['Questa istruzione non è disponibile nella vista scelta. Torna agli argomenti o cambia vista della guida.', 'These instructions are unavailable in this view. Return to topics or change guide audience.', 'Estas instrucciones no están disponibles en esta vista. Vuelve a los temas o cambia la vista de la guía.', 'Ces instructions ne sont pas disponibles dans cette vue. Revenez aux rubriques ou changez de public.', 'Diese Anleitung ist in dieser Ansicht nicht verfügbar. Kehre zu den Themen zurück oder ändere die Zielgruppe.', 'Instruktionen finns inte i denna vy. Gå tillbaka till ämnen eller byt målgrupp.'],
+    zoom: ['Ingrandisci la schermata', 'Enlarge screenshot', 'Ampliar pantalla', 'Agrandir la capture', 'Bild vergrößern', 'Förstora skärmbilden'],
+    close: ['Chiudi immagine', 'Close image', 'Cerrar imagen', 'Fermer l’image', 'Bild schließen', 'Stäng bilden'],
+    imageHint: ['Schermata dimostrativa: premi per ingrandire.', 'Example screenshot: select to enlarge.', 'Pantalla de ejemplo: pulsa para ampliar.', 'Capture de démonstration : sélectionnez pour agrandir.', 'Beispielansicht: zum Vergrößern auswählen.', 'Exempelskärm: välj för att förstora.'],
+    help: ['Guida a questa attività', 'Help with this activity', 'Ayuda para esta actividad', 'Aide pour cette activité', 'Hilfe zu dieser Aktivität', 'Hjälp med aktiviteten'],
+    loading: ['Caricamento della guida…', 'Loading guide…', 'Cargando guía…', 'Chargement du guide…', 'Hilfe wird geladen…', 'Laddar guiden…'],
+} as const satisfies Record<string, readonly [string, string, string, string, string, string]>;
+export type GuideUIKey = keyof typeof text;
+export function guideUIText(lang: string, key: GuideUIKey): string {
+    const i = ['it', 'en', 'es', 'fr', 'de', 'sv'].indexOf(lang);
+    return text[key][i < 0 ? 1 : i];
+}

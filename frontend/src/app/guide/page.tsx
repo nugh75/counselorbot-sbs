@@ -1,447 +1,139 @@
 'use client';
-
-// Public, localized guide. The audience query selects documentation, not permissions.
-
 import Link from 'next/link';
-import { instituteCredentialGuideImages, instituteGuideImages } from '@/lib/guide-institutes';
-import { credentialText } from '@/lib/i18n-institution-credentials';
-import { usePersonalAIFeatures } from '@/lib/use-personal-ai-features';
-import { personalAPIText } from '@/lib/i18n-personal-api';
-import personalAPIImage from '../../../public/guide/api-personali.png';
-import externalPrivacyImage from '../../../public/guide/protezione-dati.png';
-import { externalPrivacyText } from '@/lib/i18n-external-privacy';
 import { useSearchParams } from 'next/navigation';
-import Image, { type StaticImageData } from 'next/image';
-import chatOverview from '../../../public/guide/chat-guidata.png';
-import chatControlsImage from '../../../public/guide/controlli-chat.png';
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, MoreVertical, RotateCcw, Send, Snowflake, ThumbsDown, ThumbsUp, Volume2, X } from 'lucide-react';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { Suspense, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { ArrowLeft, ArrowRight, BookOpen, Search, X } from 'lucide-react';
 import { getIdentity, type Identity } from '@/lib/auth';
 import { canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
-import { counselorHelp } from '@/lib/i18n-counselor-help';
+import { usePersonalAIFeatures } from '@/lib/use-personal-ai-features';
+import { guideTaskCopy } from '@/lib/i18n-guide-tasks';
+import { guideUIText, type GuideUIKey } from '@/lib/i18n-guide-ui';
+import { GUIDE_GROUPS, GUIDE_TASKS, guideTaskHref, legacyGuideTask, searchGuideTasks, visibleGuideTasks, type GuideAudience, type GuideGroup } from '@/lib/guide-tasks';
+import { GuideFigure } from '@/components/guide/GuideFigure';
 
-import { categoryText } from '@/lib/i18n-institution-categories';
-import { classPickerText } from '@/lib/i18n-class-picker';
-import { guideAudienceText, type GuideAudienceKey } from '@/lib/i18n-guide-audiences';
-import { guideImages } from '@/lib/guide-images';
-import { teacherAreaName } from '@/lib/i18n-teacher-area';
-import { classSettingsText } from '@/lib/i18n-class-settings';
-import { forumText } from '@/lib/i18n-forum';
-import { pathForumText } from '@/lib/i18n-path-forum';
-import { resultsChatText } from '@/lib/i18n-results-chats';
-import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
-
-const TEACHER_ROUTES = ['/docente', '/docente/classi', '/docente', '/docente', '/docente', '/docente', '/bussola', '/docente/classi', '/docente/piani-operativi'];
-
+const subscribeHash = (callback: () => void) => {
+    window.addEventListener('hashchange', callback);
+    window.addEventListener('popstate', callback);
+    return () => { window.removeEventListener('hashchange', callback); window.removeEventListener('popstate', callback); };
+};
+const readHash = () => window.location.hash;
+const serverHash = () => '';
 export default function GuidePage() {
-    return <Suspense><GuideContent /></Suspense>;
+    const {lang} = useI18n();
+    return <Suspense fallback={<p role="status">{guideUIText(lang, 'loading')}</p>}><GuideContent /></Suspense>;
 }
 
 function GuideContent() {
-    const { t, lang } = useI18n();
-    const personalFeatures = usePersonalAIFeatures();
+    const { lang } = useI18n();
+    const l = (key: GuideUIKey) => guideUIText(lang, key);
     const params = useSearchParams();
-    // Senza parametro esplicito la guida segue il ruolo dell'utente: docenti,
-    // ricercatori e admin aprono la versione docente, tutti gli altri quella
-    // studente. Gli studenti non vedono il selettore né la versione docente.
-    const identityRef = useRef<Identity | null>(null);
-    const [audience, setAudience] = useState<'student' | 'teacher' | null>(() => {
-        const a = params.get('audience');
-        return a === 'teacher' ? 'teacher' : a === 'student' ? 'student' : null;
-    });
-    const [isTeacherUser, setIsTeacherUser] = useState(false);
-    const [isAdminUser, setIsAdminUser] = useState(false);
+    const hash = useSyncExternalStore(subscribeHash, readHash, serverHash);
+    const [identity, setIdentity] = useState<Identity | null>(null);
+    const query = params.get('q') || '';
+    const features = usePersonalAIFeatures();
+    const articleTitle = useRef<HTMLHeadingElement>(null);
+    const articleRegion = useRef<HTMLDivElement>(null);
+    const teacher = canUseTeacherAssistant(identity);
+    const admin = identity?.is_admin === true;
+    const requestedAudience = params.get('audience');
+    const baseAudience: GuideAudience = requestedAudience === 'admin' && admin ? 'admin'
+        : requestedAudience === 'teacher' ? 'teacher'
+        : requestedAudience === 'student' ? 'student' : teacher ? 'teacher' : 'student';
+    const legacy = params.get('task') ? null : legacyGuideTask(hash);
+    const legacyTask = GUIDE_TASKS.find(item => item.id === legacy);
+    const legacyAudience = legacyTask?.audience.includes(baseAudience) ? baseAudience : legacyTask?.audience[0];
+    const audience = legacyAudience && (legacyAudience !== 'admin' || admin) ? legacyAudience : baseAudience;
+    const tasks = useMemo(() => visibleGuideTasks(audience, features), [audience, features]);
+    const requestedTask = params.get('task') || legacy;
+    const task = query ? undefined : tasks.find(item => item.id === requestedTask);
+    const group = GUIDE_GROUPS.find(value => value === params.get('group'));
+    const result = searchGuideTasks(group && !query ? tasks.filter(item => item.group === group) : tasks, query, lang);
+    const homeHref = `/guide?audience=${audience}`;
+    const copy = task ? guideTaskCopy(lang, task.id) : null;
+    const related = tasks.filter(item => task?.related?.includes(item.id));
+    const changeQuery = (value: string) => {
+        const next = new URLSearchParams(params.toString());
+        next.set('audience', audience);
+        if (value) next.set('q', value); else next.delete('q');
+        window.history.replaceState(null, '', `/guide?${next}${hash}`);
+    };
+    const groupLabel = (value: GuideGroup) => l(audience === 'teacher' && ['plans', 'chat', 'study', 'tools'].includes(value)
+        ? `teacher${value[0].toUpperCase()}${value.slice(1)}` as GuideUIKey : value);
     useEffect(() => {
-        let cancelled = false;
-        getIdentity().then((identity) => {
-            if (cancelled || !identity) return;
-            identityRef.current = identity;
-            setIsTeacherUser(canUseTeacherAssistant(identity));
-            setIsAdminUser(identity.is_admin === true);
-            if (!params.get('audience')) {
-                setAudience(canUseTeacherAssistant(identity) ? 'teacher' : 'student');
-            }
-        });
-        return () => { cancelled = true; };
-    }, [params]);
-    const teacher = audience === 'teacher';
-    const showAudienceSelector = params.get('audience') !== 'student' && isTeacherUser;
-    const l = (key: GuideAudienceKey) => guideAudienceText(lang, key);
-    const sections = Array.from({ length: teacher ? 9 : 17 }, (_, i) => i + 1);
-    const sectionId = (n: number) => `guide-${teacher ? 'teacher-' : ''}section-${n}`;
-    const sectionTitle = (n: number) => teacher ? l(`teacher${n}Title` as GuideAudienceKey) : t(`guide.section${n}.title`);
-    const sectionBody = (n: number) => (teacher ? l(`teacher${n}Body` as GuideAudienceKey) : n === 15 ? l('personalGroups') : t(`guide.section${n}.body`) + (n === 1 ? ` ${classSettingsText(lang, 'studentSupportGuide')}` : '') + (n === 12 ? ` ${categoryText(lang, 'guideDirectory')}` : '') + (n === 17 ? ` ${pathForumText(lang, 'studentRule')} ${resultsChatText(lang, 'attemptsGuide')}` : '')) + ((teacher && n === 8) || (!teacher && n === 16) ? ` ${forumText(lang, 'guideLinks')}` : '');
-    const images = guideImages[lang];
-    const spotIllustrations: Record<number, string> = teacher ? {
-        1: '/images/platform/feedback-docente.png',
-        2: '/images/platform/classi.png',
-        3: '/images/platform/idea.png',
-        4: '/images/platform/assegnazioni.png',
-        5: '/images/platform/chat-guidata.png',
-        7: '/images/platform/bussola.png',
-        9: '/images/platform/percorsi-classe.png',
-    } : {
-        1: '/images/platform/bussola.png',
-        2: '/images/platform/idea.png',
-        3: '/images/platform/compilazioni.png',
-        4: '/images/platform/counselor.png',
-        5: '/images/platform/tavolo.png',
-        6: '/images/platform/su-di-me.png',
-        7: '/images/platform/chat-guidata.png',
-        8: '/images/intro/practice.png',
-        9: '/images/platform/carte-ordinare.png',
-        10: '/images/platform/eventi.png',
-        11: '/images/platform/bacheca-azioni.png',
-        12: '/images/cards/focus_goal.png',
-        13: '/images/platform/linea-del-tempo.png',
-        14: '/images/platform/assegnazioni.png',
-        15: '/images/platform/classi.png',
-        17: '/images/platform/percorsi-classe.png',
-    };
-    const sectionImages: Record<number, { image: StaticImageData; caption: string }[]> = teacher ? {
-        1: [{ image: images['teacher-area'], caption: l('teacher1Title') }, { image: images['teacher-notebook'], caption: teacherAreaName(lang, 'taccuino') }, { image: images['teacher-class-picker'], caption: classPickerText(lang, 'title') }],
-        2: [
-            { image: instituteGuideImages[lang], caption: teacherAreaName(lang, 'istituti') },
-            { image: instituteCredentialGuideImages[lang], caption: credentialText(lang, 'setCredentials') },
-            { image: images['teacher-groups'], caption: l('teacher2Title') },
-            { image: images['class-overview'], caption: classSettingsText(lang, 'overview') },
-            { image: images['class-tools'], caption: classSettingsText(lang, 'toolsTab') },
-            { image: images['institution-categories'], caption: categoryText(lang, 'title') },
-            ...(isAdminUser ? [
-                { image: images['admin-classes'], caption: classSettingsText(lang, 'adminClasses') },
-                { image: images['admin-locks'], caption: classSettingsText(lang, 'adminEdit') },
-                { image: images['admin-audit'], caption: classSettingsText(lang, 'audit') },
-            ] : []),
-        ],
-        3: [{ image: images['teacher-catalog'], caption: l('teacher3Title') }],
-        4: [{ image: images['teacher-assignment'], caption: l('teacher4Title') }],
-        5: [{ image: images['teacher-feedback'], caption: l('teacher5Title') }],
-        6: [{ image: images['goal-sharing'], caption: l('teacher6Title') }],
-        7: [
-            { image: images['study-event'], caption: t('guide.section10.title') },
-            { image: images['professional-event'], caption: t('guide.section11.title') },
-        ],
-        8: [{ image: images['teacher-forum'], caption: l('teacher8Title') }],
-        9: [{ image: images['teacher-class-paths'], caption: l('teacher9Title') }],
-    } : {
-        1: [{ image: images['access'], caption: t('guide.section1.title') }],
-        2: [{ image: images['introduction'], caption: t('guide.section2.title') }],
-        3: [{ image: images['activities'], caption: t('guide.section3.title') }],
-        4: [{ image: images['counselors'], caption: t('guide.section4.title') }],
-        5: [{ image: images['tool-selection'], caption: t('guide.section5.title') }],
-        6: [{ image: images['notebook'], caption: t('guide.section6.title') }],
-        8: [
-            { image: images['pdf-study'], caption: t('pqbl.card.title') },
-            { image: images['flashcards'], caption: t('profile.area.flashcards.title') },
-        ],
-        9: [{ image: images['cards'], caption: t('guide.section9.title') }],
-        10: [{ image: images['study-event'], caption: t('guide.section10.title') }],
-        11: [{ image: images['professional-event'], caption: t('guide.section11.title') }],
-        12: [
-            { image: images['personal-area'], caption: t('guide.section12.title') },
-            { image: images['personal-goals'], caption: t('guide.section12.title') },
-            { image: images['orientation'], caption: t('referrals.area.title') },
-        ],
-        13: [{ image: images['calendar'], caption: t('guide.section13.title') }],
-        14: [{ image: images['received-assignments'], caption: t('guide.section14.title') }],
-        15: [{ image: images['personal-groups'], caption: t('guide.section15.title') }],
-        16: [{ image: images['class-forum'], caption: t('guide.section16.title') }],
-        17: [{ image: images['class-paths'], caption: t('guide.section17.title') }],
-    };
-    const chatControls = [
-        { key: 'options', icon: <MoreVertical className="h-4 w-4" aria-hidden="true" /> },
-        { key: 'freeze', icon: <Snowflake className="h-4 w-4" aria-hidden="true" /> },
-        {
-            key: 'length',
-            icon: (
-                <span className="flex flex-col items-center gap-0.5" aria-hidden="true">
-                    <span className="h-px w-2 rounded-full bg-current" />
-                    <span className="h-px w-3 rounded-full bg-current" />
-                    <span className="h-px w-4 rounded-full bg-current" />
-                </span>
-            ),
-        },
-        { key: 'message', icon: <Send className="h-4 w-4" aria-hidden="true" /> },
-        { key: 'navigation', icon: <span className="flex" aria-hidden="true"><ChevronLeft className="h-4 w-4" /><RotateCcw className="h-4 w-4" /><ChevronRight className="h-4 w-4" /></span> },
-        { key: 'feedback', icon: <span className="flex gap-1" aria-hidden="true"><Volume2 className="h-4 w-4" /><ThumbsUp className="h-4 w-4" /><ThumbsDown className="h-4 w-4" /></span> },
-    ];
-
-    // Ingrandimento delle immagini (GUA-02): overlay fullscreen con un solo
-    // elemento focalizzabile (chiusura), Escape e ritorno del focus al trigger.
-    const [zoom, setZoom] = useState<{ src: string; alt: string } | null>(null);
-    const zoomTrigger = useRef<HTMLElement | null>(null);
-    const zoomCloseRef = useRef<HTMLButtonElement>(null);
-
-    const closeZoom = useCallback(() => {
-        setZoom(null);
-        zoomTrigger.current?.focus();
-        zoomTrigger.current = null;
+        let active = true;
+        void getIdentity().then(value => { if (active) setIdentity(value); }).catch(() => {});
+        return () => { active = false; };
     }, []);
-
     useEffect(() => {
-        if (!zoom) return;
-        zoomCloseRef.current?.focus();
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') closeZoom();
-            if (e.key === 'Tab') {
-                // Un solo elemento interattivo nell'overlay: trattieni il focus.
-                e.preventDefault();
-                zoomCloseRef.current?.focus();
-            }
-        };
-        document.addEventListener('keydown', onKeyDown);
-        return () => document.removeEventListener('keydown', onKeyDown);
-    }, [zoom, closeZoom]);
-
-    const openZoom = (src: string, alt: string, trigger: HTMLElement) => {
-        zoomTrigger.current = trigger;
-        setZoom({ src, alt });
-    };
-
-    const renderFigure = (image: StaticImageData, alt: string, caption: string) => (
-        <figure className={image.width < image.height ? "mx-auto max-w-sm" : undefined}>
-            <button
-                type="button"
-                onClick={(event) => openZoom(image.src, alt, event.currentTarget)}
-                aria-label={`${t('guide.zoomHint')}: ${alt}`}
-                className="block w-full cursor-zoom-in rounded-lg text-left"
-            >
-                <span className="block overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                    <Image
-                        src={image}
-                        width={image.width}
-                        height={image.height}
-                        alt={alt}
-                        className="h-auto w-full"
-                    />
-                </span>
-            </button>
-            <figcaption className="mt-2 text-xs leading-relaxed text-slate-500">
-                {caption}
-            </figcaption>
-        </figure>
-    );
-
-    return (
-        <div className="page-narrow scroll-smooth space-y-8">
-            <PageHeader title={t('guide.title')} subtitle={t('guide.subtitle')} backHref="/" />
-
-            <div className="space-y-3">
-                <nav aria-label={l('audience')} className="flex flex-wrap gap-2">
-                    {showAudienceSelector && (['student', 'teacher'] as const).map(audienceOption => (
-                        <a key={audienceOption} href={`/guide?audience=${audienceOption}`}
-                            aria-current={teacher === (audienceOption === 'teacher') ? 'page' : undefined}
-                            className={`inline-flex min-h-11 items-center rounded-lg border px-4 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${teacher === (audienceOption === 'teacher') ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'}`}>
-                            {l(audienceOption)}
-                        </a>
-                    ))}
-                </nav>
-                <p className="text-sm leading-relaxed text-slate-700">{l(teacher ? 'teacherIntro' : 'studentIntro')}</p>
-                <p className="text-xs leading-relaxed text-slate-500">{l('screenshots')}</p>
-            </div>
-
-            {personalFeatures.personalAPI && <section className="glass-panel p-5" aria-labelledby="guide-personal-api">
-                <h2 id="guide-personal-api" className="text-lg font-bold text-slate-900">{personalAPIText(lang, 'title')}</h2>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{personalAPIText(lang, 'sectionLocation')}</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700">{t('guide.personalAPIs')}</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700">{externalPrivacyText(lang, 'guide')}</p>
-                <Link href={teacher ? '/docente/api-personali' : '/profilo/api-personali'} className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 hover:underline">{personalAPIText(lang, 'title')}</Link>
-                <div className="mt-4">{renderFigure(personalAPIImage, personalAPIText(lang, 'title'), personalAPIText(lang, 'title'))}</div>
-            </section>}
-
-            {isAdminUser && <section className="glass-panel p-5" aria-labelledby="guide-external-privacy">
-                <h2 id="guide-external-privacy" className="text-lg font-bold text-slate-900">{externalPrivacyText(lang, 'title')}</h2>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700">{externalPrivacyText(lang, 'guide')}</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700">{externalPrivacyText(lang, 'limits')}</p>
-                <div className="mt-4">{renderFigure(externalPrivacyImage, externalPrivacyText(lang, 'title'), externalPrivacyText(lang, 'title'))}</div>
-            </section>}
-
-            {/* Indice con ancore (GUA-03): ogni sezione è raggiungibile senza
-                attraversare l'intero documento. */}
-            <nav aria-label={t('guide.indexTitle')} className="glass-panel p-5">
-                <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">{t('guide.indexTitle')}</h2>
-                <ol className="mt-3 space-y-1">
-                    {isAdminUser && <li><a href="#guide-external-privacy" className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700">{externalPrivacyText(lang, 'title')}</a></li>}
-                    {personalFeatures.chatgpt && <li><a href="#guide-chatgpt" className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700">{t('chatgpt.title')}</a></li>}
-                    {sections.map((n) => (
-                        <li key={n}>
-                            <a
-                                href={`#${sectionId(n)}`}
-                                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
-                            >
-                                <span className="font-mono text-xs font-semibold text-ochre-600 dark:text-ochre-200">
-                                    {String(n).padStart(2, '0')}
-                                </span>
-                                <span className="min-w-0">{sectionTitle(n)}</span>
-                            </a>
-                            {!teacher && n === 7 && (
-                                <a
-                                    href="#guide-chat-controls"
-                                    className="ml-8 flex items-center gap-2 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-700"
-                                >
-                                    {t('guide.chat.controlsTitle')}
-                                </a>
-                            )}
-                        </li>
-                    ))}
-                </ol>
-            </nav>
-
-            <ol className="space-y-4">
-                {personalFeatures.chatgpt && <li id="guide-chatgpt" className="glass-panel scroll-mt-24 space-y-2 p-5">
-                    <h2 className="font-bold text-slate-900">{t('chatgpt.title')}</h2>
-                    <p className="text-sm leading-relaxed text-slate-600">{personalAPIText(lang, 'sectionLocation')}</p>
-                    <p className="text-sm leading-relaxed text-slate-600">{t('chatgpt.guide')}</p>
-                    <Link href={teacher ? '/docente/api-personali#chatgpt' : '/profilo/api-personali#chatgpt'} className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline">{t('chatgpt.connect')}</Link>
-                </li>}
-                {sections.map((n) => (
-                    <li key={n} id={sectionId(n)} className="glass-panel scroll-mt-24 p-5 text-left">
-                        <div className="flex items-start justify-between gap-4">
-                            <div className="flex gap-4">
-                                <span className="font-mono text-sm font-semibold text-ochre-600 shrink-0 pt-0.5">
-                                    {String(n).padStart(2, '0')}
-                                </span>
-                                <div className="min-w-0">
-                                    <h2 className="font-bold text-slate-900">{sectionTitle(n)}</h2>
-                                    <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-slate-600">
-                                        {sectionBody(n)}
-                                    </p>
-                                </div>
-                            </div>
-                            {spotIllustrations[n] && (
-                                <div className="hidden sm:block shrink-0">
-                                    <Image
-                                        src={spotIllustrations[n]}
-                                        alt=""
-                                        width={80}
-                                        height={80}
-                                        className="h-20 w-20 object-contain"
-                                    />
-                                </div>
-                            )}
-                        </div>
-
-                        {teacher && (
-                            <Link href={TEACHER_ROUTES[n - 1]} className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline">{l('open')}</Link>
-                        )}
-                        {teacher && n === 1 && <p className="mt-4 text-sm leading-relaxed text-slate-600">{l('teacherClassCompilationsBody')}</p>}
-                        {teacher && n === 2 && <p className="mt-4 text-sm leading-relaxed text-slate-600">{l('teacherOrientationRecommendationBody')}</p>}
-                        {teacher && n === 2 && <div className="mt-4 text-sm leading-relaxed text-slate-600">
-                            <h3 className="font-semibold text-slate-900">{teacherAreaName(lang, 'istituti')}</h3>
-                            <p className="mt-1.5">{l('teacherInstitutesBody')}</p>
-                            <p className="mt-1.5">{l('teacherInstituteCredentialsBody')}</p>
-                            <p className="mt-1.5">{l('teacherItalianAdministrationBody')}</p>
-                            <p className="mt-1.5">{l('teacherItalianAdministrationRule')}</p>
-                            <p className="mt-1.5">{l('teacherItalianAdministrationLogin')}</p>
-                            <p className="mt-1.5">{l('teacherInAppAdministrationBody')}</p>
-                            <p className="mt-1.5">{l('teacherResultsDeepDiveBody')}</p>
-                            <p className="mt-1.5">{l('teacherPathAssignmentBody')}</p>
-                            <p className="mt-1.5">{l('teacherPathForumBody')}</p>
-                            <p className="mt-1.5">{l('teacherPathPublicationBody')}</p>
-                            <Link href="/docente/istituti" className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline">{teacherAreaName(lang, 'istituti')}</Link>
-                            <h3 className="font-semibold text-slate-900">{classSettingsText(lang, 'toolsTab')}</h3>
-                            <p className="mt-1.5">{l('classSettingsTeacher')}</p>
-                            <p className="mt-1.5">{classSettingsText(lang, 'supportGuide')}</p>
-                            <p className="mt-1.5">{l('classSettingsAccess')}</p>
-                            <p className="mt-1.5">{l('classViewSwitch')}</p>
-                            <p className="mt-1.5">{l('classSettingsCounselors')}</p>
-                            <p className="mt-1.5">{l('classSettingsHistory')}</p>
-                            <p className="mt-1.5">{l('classPathDistinction')}</p>
-                            <Link href="/docente/classi" className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline">{classSettingsText(lang, 'back')}</Link>
-                            {isAdminUser && <div className="mt-4" id="guide-admin-class-settings">
-                                <h3 className="font-semibold text-slate-900">{classSettingsText(lang, 'adminClasses')}</h3>
-                                <p className="mt-1.5">{l('classSettingsAdmin')}</p>
-                                <Link href={ADMIN_CLASSES_HREF} className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline">{classSettingsText(lang, 'adminEdit')}</Link>
-                            </div>}
-                        </div>}
-                        {teacher && n === 1 && (
-                            <Link href="/docente/taccuino" className="ml-3 mt-3 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline">{teacherAreaName(lang, 'taccuino')}</Link>
-                        )}
-                        {teacher && n === 1 && (
-                            <Link href="/docente/taccuini-prova" className="ml-3 mt-3 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline">{teacherAreaName(lang, 'taccuini-prova')}</Link>
-                        )}
-                        {sectionImages[n] && (
-                            <div className="mt-6 space-y-6">
-                                {sectionImages[n].map(({ image, caption }) => <div key={image.src}>{renderFigure(image, caption, caption)}</div>)}
-                            </div>
-                        )}
-                        {!teacher && n === 4 && (
-                            <div className="mt-4 space-y-2 text-sm leading-relaxed text-slate-600">
-                                <h3 className="font-semibold text-slate-900">{counselorHelp(lang).title}</h3>
-                                <p>{counselorHelp(lang).local}</p>
-                                <p>{counselorHelp(lang).external}</p>
-                                <p>{counselorHelp(lang).tools}</p>
-                                <p>{l('classSettingsCounselors')}</p>
-                            </div>
-                        )}
-                        {!teacher && n === 5 && <div className="mt-4 max-w-prose space-y-1.5 text-sm leading-relaxed text-slate-600">
-                            <p>{l('classSettingsAccess')}</p>
-                            <p>{l('classViewSwitch')}</p>
-                        </div>}
-                        {!teacher && n === 7 && (
-                            <div className="mt-6 space-y-6 border-t border-slate-100 pt-6">
-                                {renderFigure(chatOverview, t('guide.chat.overviewAlt'), t('guide.chat.overviewCaption'))}
-
-                                <div>
-                                    <h3 className="font-semibold text-slate-900">{t('guide.chat.controlsTitle')}</h3>
-                                    <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-slate-600">{t('guide.chat.controlsIntro')}</p>
-                                </div>
-
-                                {renderFigure(chatControlsImage, t('guide.chat.controlsAlt'), t('guide.chat.controlsCaption'))}
-
-                                <dl id="guide-chat-controls" className="grid scroll-mt-24 gap-3 sm:grid-cols-2">
-                                    {chatControls.map((control) => (
-                                        <div key={control.key} className="rounded-lg border border-slate-200 bg-slate-50/70 p-3">
-                                            <dt className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                                                <span className="flex min-h-7 min-w-7 items-center justify-center rounded-md border border-slate-200 bg-white px-1.5 text-slate-600">
-                                                    {control.icon}
-                                                </span>
-                                                {t(`guide.chat.${control.key}.title`)}
-                                            </dt>
-                                            <dd className="mt-2 text-sm leading-relaxed text-slate-600">
-                                                {t(`guide.chat.${control.key}.body`)}
-                                            </dd>
-                                        </div>
-                                    ))}
-                                </dl>
-
-                                <p className="rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs leading-relaxed text-indigo-900">
-                                    {t('guide.chat.keyboardHint')}
-                                </p>
-                            </div>
-                        )}
-                    </li>
-                ))}
-            </ol>
-
-            {zoom && (
-                <div
-                    className="fixed inset-0 z-[80] bg-slate-950/90"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={zoom.alt}
-                    onClick={(event) => {
-                        if (event.target === event.currentTarget) closeZoom();
-                    }}
-                >
-                    <button
-                        type="button"
-                        ref={zoomCloseRef}
-                        onClick={closeZoom}
-                        aria-label={t('guide.zoomClose')}
-                        className="absolute z-10 right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
-                    >
-                        <X className="h-5 w-5" />
-                    </button>
-                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 sm:p-12">
-                        <div className="relative h-full w-full">
-                            <Image src={zoom.src} alt={zoom.alt} fill sizes="100vw" className="object-contain" />
-                        </div>
-                    </div>
-                </div>
-            )}
+        if (!legacy || !legacyAudience || (legacyAudience === 'admin' && !admin)) return;
+        const next = new URLSearchParams(params.toString());
+        next.set('audience', legacyAudience); next.set('task', legacy);
+        window.history.replaceState(null, '', `/guide?${next}`);
+    }, [legacy, legacyAudience, admin, params]);
+    useEffect(() => {
+        if (!task) return;
+        articleTitle.current?.focus({preventScroll: true});
+        articleRegion.current?.scrollIntoView({block: 'start'});
+    }, [task]);
+    const actionLink = (item: typeof GUIDE_TASKS[number]) => <Link href={guideTaskHref(item.id, audience)} scroll={false}
+        className="flex min-h-[44px] items-center justify-between gap-3 rounded-md py-2 font-medium text-indigo-700 hover:underline">
+        <span>{guideTaskCopy(lang, item.id).title}</span><ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+    </Link>;
+    return <div className="page-wide space-y-5" data-testid="guide">
+        <header className="flex flex-wrap items-center justify-between gap-3">
+            <div><h1 className="text-2xl font-bold text-slate-900">{l('title')}</h1><p className="mt-1 text-sm text-slate-600">{l('intro')}</p></div>
+            {teacher && <nav aria-label={l('audience')} className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-white p-1">
+                {(['student', 'teacher', ...(admin ? ['admin'] : [])] as GuideAudience[]).map(value => <Link key={value}
+                    href={`/guide?audience=${value}`} scroll={false}
+                    aria-current={audience === value ? 'page' : undefined}
+                    className={`inline-flex min-h-[44px] items-center rounded-md px-3 text-sm font-semibold ${audience === value ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-50'}`}>{l(value)}</Link>)}
+            </nav>}
+        </header>
+        <div role="search" className="relative max-w-2xl">
+            <label htmlFor="guide-search" className="mb-1.5 block text-sm font-semibold text-slate-800">{l('search')}</label>
+            <Search className="pointer-events-none absolute bottom-3.5 left-3 h-5 w-5 text-slate-500" aria-hidden="true" />
+            <input id="guide-search" type="search" value={query} onChange={event => changeQuery(event.target.value)}
+                placeholder={l('searchHint')} aria-controls="guide-content" autoComplete="off"
+                className="min-h-[48px] w-full rounded-lg border border-slate-300 bg-white py-3 pr-12 pl-10 text-base text-slate-900" />
+            {query && <button aria-label={l('clear')} onClick={() => changeQuery('')}
+                className="absolute right-0 bottom-0 flex h-[48px] w-[44px] items-center justify-center text-slate-600"><X className="h-5 w-5" aria-hidden="true" /></button>}
         </div>
-    );
+        <div id="guide-content">
+            {task && copy ? <div ref={articleRegion} className="mx-auto max-w-4xl scroll-mt-24 space-y-4">
+                <Link href={homeHref} scroll={false} className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-indigo-700"><ArrowLeft className="h-4 w-4" aria-hidden="true" />{l('back')}</Link>
+                <article id={`guide-task-${task.id}`} className="glass-panel space-y-5 p-4 sm:p-6" aria-labelledby="guide-task-title">
+                    <div><p className="mb-1 text-xs font-semibold text-indigo-700">{groupLabel(task.group)}</p>
+                        <h2 id="guide-task-title" ref={articleTitle} tabIndex={-1} className="scroll-mt-24 text-xl font-bold text-slate-900">{copy.title}</h2>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-600">{copy.intro}</p></div>
+                    <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,300px)]"><div className="space-y-4">
+                    <ol className="space-y-3" data-testid="guide-steps">{copy.steps.map((step, index) => <li key={index} className="flex gap-3 text-sm leading-relaxed text-slate-800">
+                        <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-50 font-mono font-semibold text-indigo-700">{index + 1}</span><span className="pt-0.5">{step}</span>
+                    </li>)}</ol>
+                    <Link href={task.feature && audience !== 'student' ? task.href.replace('/profilo/', '/docente/') : task.href}
+                        className="inline-flex min-h-[44px] items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">{l('open')}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+                    {task.important ? <aside className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-700">
+                        <p className="mb-1 font-semibold">{l('important')}</p>{copy.note}</aside>
+                        : <details className="rounded-lg border border-slate-200 p-3 text-sm text-slate-700"><summary className="cursor-pointer py-1 font-semibold">{l('note')}</summary><p className="pt-2 leading-relaxed">{copy.note}</p></details>}
+                    </div><GuideFigure key={task.id} task={task} title={copy.title} /></div>
+                </article>
+                {related.length > 0 && <nav aria-label={l('related')} className="glass-panel p-4">
+                    <h2 className="text-sm font-semibold text-slate-800">{l('related')}</h2>
+                    {related.map(item => <div key={item.id}>{actionLink(item)}</div>)}
+                </nav>}
+            </div> : requestedTask && !query ? <div className="glass-panel space-y-3 p-5"><p role="status" className="text-sm text-slate-700">{l('unavailable')}</p><Link href={homeHref} className="inline-flex min-h-[44px] items-center text-indigo-700 underline">{l('back')}</Link></div>
+                : query || group ? <section className="max-w-3xl space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold text-slate-900">{query ? l('results') : groupLabel(group!)}</h2>
+                        <Link href={homeHref} scroll={false} className="inline-flex min-h-[44px] items-center text-sm text-indigo-700 underline">{l('back')}</Link></div>
+                    <p role="status" aria-live="polite" className="text-sm text-slate-600">{result.length ? `${l('results')}: ${result.length}` : l('empty')}</p>
+                    <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white px-4">{result.map(item => <li key={item.id}>{actionLink(item)}</li>)}</ul>
+                </section> : <nav aria-label={l('all')} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {GUIDE_GROUPS.map(value => ({value, items: tasks.filter(item => item.group === value)})).filter(({items}) => items.length).map(({value, items}) => <section key={value} className="glass-panel flex flex-col p-4">
+                        <h2 className="mb-2 flex items-center gap-2 text-base font-bold text-slate-900"><BookOpen className="h-4 w-4 text-indigo-600" aria-hidden="true" />{groupLabel(value)}</h2>
+                        {items.slice(0, 2).map(item => <div key={item.id}>{actionLink(item)}</div>)}
+                        {items.length > 2 && <Link href={`${homeHref}&group=${value}`} scroll={false} className="mt-auto inline-flex min-h-[44px] items-center pt-2 text-sm text-slate-600 underline">{l('all')} ({items.length})</Link>}
+                    </section>)}
+                </nav>}
+        </div>
+    </div>;
 }

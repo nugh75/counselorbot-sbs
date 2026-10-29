@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { BookOpen, ChevronLeft, ChevronRight, Compass, ExternalLink, X } from 'lucide-react';
 import { guidedIntroText, guideSectionFor } from '@/lib/i18n-guided-intro';
-import { useI18n } from '@/lib/i18n-context';
+import { guideTaskCopy } from '@/lib/i18n-guide-tasks';
+import { legacyGuideTask, guideTaskHref } from '@/lib/guide-tasks';
 
 const STORAGE_KEY = 'cb_guided_intro_seen_v2';
-const CHAT_CONTROLS = ['options', 'freeze', 'length', 'message', 'navigation', 'feedback'] as const;
 
 function wasSeen(): boolean {
     try { return window.localStorage.getItem(STORAGE_KEY) === '1'; } catch { return false; }
@@ -69,7 +69,8 @@ export function GuidedChatIntro({ locale, questionnaireType, stepNavigation = tr
 // Mostra in un dialog modale la sezione della guida (/guide) pertinente allo
 // strumento, con gli stessi testi della pagina: la chat resta sotto, intatta.
 function GuideSectionDialog({ section, locale, onClose }: { section: number; locale: string; onClose: () => void }) {
-    const { t } = useI18n();
+    const taskId = legacyGuideTask(`#guide-section-${section}`) || 'chat';
+    const copy = guideTaskCopy(locale, taskId);
     const ref = useRef<HTMLDialogElement>(null);
     useEffect(() => { const node = ref.current; if (node && !node.open) node.showModal(); }, []);
     const text = (key: Parameters<typeof guidedIntroText>[1]) => guidedIntroText(locale, key);
@@ -82,24 +83,17 @@ function GuideSectionDialog({ section, locale, onClose }: { section: number; loc
             className="m-0 h-dvh max-h-none w-full max-w-none bg-white p-0 text-slate-900 backdrop:bg-slate-900/50 sm:m-auto sm:h-auto sm:max-h-[90vh] sm:max-w-xl sm:rounded-xl">
             <div className="flex h-full max-h-[inherit] flex-col">
                 <div className="flex items-start justify-between gap-3 border-b border-slate-200 p-4 sm:px-6">
-                    <h2 id="guided-guide-title" className="text-lg font-bold">{t(`guide.section${section}.title`)}</h2>
+                    <h2 id="guided-guide-title" className="text-lg font-bold">{copy.title}</h2>
                     <button type="button" onClick={close} aria-label={text('closeGuide')}
                         className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100">
                         <X className="h-5 w-5" aria-hidden="true" />
                     </button>
                 </div>
                 <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 text-sm leading-relaxed text-slate-700 sm:px-6">
-                    <p>{t(`guide.section${section}.body`)}</p>
-                    {section === 7 && <div>
-                        <h3 className="font-semibold text-slate-900">{t('guide.chat.controlsTitle')}</h3>
-                        <dl className="mt-2 space-y-2">
-                            {CHAT_CONTROLS.map(key => <div key={key}>
-                                <dt className="font-semibold text-slate-800">{t(`guide.chat.${key}.title`)}</dt>
-                                <dd>{t(`guide.chat.${key}.body`)}</dd>
-                            </div>)}
-                        </dl>
-                    </div>}
-                    <a href={`/guide#guide-section-${section}`} target="_blank" rel="noopener"
+                    <p>{copy.intro}</p>
+                    <ol className="list-decimal space-y-2 pl-5">{copy.steps.map((step,index) => <li key={index}>{step}</li>)}</ol>
+                    <p className="text-slate-600">{copy.note}</p>
+                    <a href={guideTaskHref(taskId)} target="_blank" rel="noopener noreferrer"
                         className="inline-flex min-h-11 items-center gap-1.5 font-semibold text-indigo-700 underline">
                         {text('fullGuide')}<ExternalLink className="h-4 w-4" aria-hidden="true" />
                     </a>

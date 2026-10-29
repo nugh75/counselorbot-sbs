@@ -2,6 +2,8 @@
 import assert from 'node:assert/strict';
 import {after, before, test} from 'node:test';
 import {chromium} from 'playwright';
+import {guideTaskCopy} from '../src/lib/i18n-guide-tasks.ts';
+import {guidedIntroText} from '../src/lib/i18n-guided-intro.ts';
 const origin = process.env.PLAN_QUESTIONNAIRE_BASE_URL || 'http://127.0.0.1:3159';
 let browser;
 before(async () => {browser = await chromium.launch({headless: true});});
@@ -577,5 +579,29 @@ test('new analysis after a new compilation remains the same attempt after reload
         assert.equal(state.requests.filter(row => row.p.endsWith('/deep-dive') && row.method === 'POST').length, 1);
         assert.equal(state.options.session.session_id, firstId);
         assert.deepEqual(state.errors, []);
+    } finally {await context.close();}
+});
+
+for (const lang of ['it','en','es','fr','de','sv']) test(`chat popup shares the concise guide and preserves the draft in ${lang}`, async () => {
+    const {context,page,state} = await fixture({teacher:false,width:390,options:{personal:false,ready:true,
+        source_href:'/profilo/piani-operativi/301/10',results:[],session:bound(8)}});
+    await page.addInitScript(lang => {localStorage.setItem('cb_lang',lang);},lang);
+    try {
+        await page.goto(`${origin}/profilo/piani-operativi/301/20`);
+        const trigger=page.getByRole('button',{name:guidedIntroText(lang,'openGuide'),exact:true});
+        await trigger.waitFor();
+        const input=page.locator('#guided-composer');await input.fill('Draft');
+        await trigger.click();
+        const dialog=page.getByTestId('guided-guide');await dialog.waitFor();
+        const copy=guideTaskCopy(lang,'chat');
+        assert.equal(await dialog.getByRole('heading').innerText(),copy.title);
+        assert.equal(await dialog.locator('ol > li').count(),3);
+        assert.ok((await dialog.innerText()).split(/\s+/).length<150);
+        assert.equal(await dialog.getByRole('link').getAttribute('href'),'/guide?audience=student&task=chat');
+        await page.keyboard.press('Escape');
+        assert.equal(await dialog.count(),0);
+        assert.equal(await input.inputValue(),'Draft');
+        assert.equal(await trigger.evaluate(el=>el===document.activeElement),true);
+        assert.deepEqual(state.errors,[]);
     } finally {await context.close();}
 });

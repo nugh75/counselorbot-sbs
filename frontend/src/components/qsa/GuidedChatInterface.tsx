@@ -24,6 +24,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useI18n } from '@/lib/i18n-context';
+import { GuideHelpLink } from '@/components/guide/GuideHelpLink';
 import { isNearBottom } from '@/lib/chat-scroll';
 import { stepLabel, stripStepOrdinal } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
@@ -1829,6 +1830,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'options')}>
             {close => <div className="divide-y divide-slate-200">
                 <div className="space-y-1 pb-2">
+                <GuideHelpLink task="chat" />
                 <button type="button" className={messageActionClass} disabled={isLoading || !!activeExploration || agreementLocked || !currentPhase || currentPhase === FIXED_CONCLUSION_ID} onClick={() => { close(); setShowExplorationForm(true); }}>
                     <GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" />{navCopy.open}
                 </button>

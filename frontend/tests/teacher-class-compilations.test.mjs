@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { classCompilationsText as copy } from '../src/lib/i18n-class-compilations.js';
-import { guideAudienceText } from '../src/lib/i18n-guide-audiences.js';
+import { classCompilationsText as copy } from '../src/lib/i18n-class-compilations.ts';
+import { guideTaskCopy } from '../src/lib/i18n-guide-tasks.ts';
 
 const origin = new URL(process.env.TEACHER_COMPILATIONS_BASE_URL || 'http://127.0.0.1:3143').origin;
 let browser;
@@ -250,8 +250,8 @@ test('teacher guide explains the dashboard section in all six languages', async 
     for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
         const f = await fixture({ lang });
         try {
-            await f.page.goto(`${origin}/guide?audience=teacher`);
-            await f.page.getByText(guideAudienceText(lang, 'teacherClassCompilationsBody'), { exact: true }).waitFor();
+            await f.page.goto(`${origin}/guide?audience=teacher&task=student-results`);
+            await f.page.getByText(guideTaskCopy(lang, 'student-results').intro, { exact: true }).waitFor();
             clean(f.state);
         } finally { await f.context.close(); }
     }

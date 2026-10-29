@@ -15,6 +15,7 @@ import { ChatViewport } from '@/components/qsa/ChatViewport';
 import { PlanActivityReview } from '@/components/administration/PlanActivityReview';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
+import { GuideHelpLink } from '@/components/guide/GuideHelpLink';
 
 export function PlanActivityFlow({ pathId, stepId }: { pathId: number; stepId: number }) {
     const { lang } = useI18n();
@@ -81,6 +82,7 @@ export function PlanActivityFlow({ pathId, stepId }: { pathId: number; stepId: n
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
             <div className="min-w-0">
                 <Button variant="ghost" onClick={() => void leave()} disabled={busy}>← {l('back')}</Button>
+                <GuideHelpLink task="resume" />
                 {activity && <p className="px-3 text-sm text-slate-600">{activity.path_title} · {activity.position}. {activity.title}</p>}
                 {saveState && !readOnly && <p role="status" className="px-3 text-xs text-slate-600">{l(saveState === 'error' ? 'saveFailed' : saveState === 'saved' ? 'savedActivity' : 'saving')}</p>}
             </div>
