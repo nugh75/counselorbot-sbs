@@ -20,6 +20,8 @@ def generate(monkeypatch):
     monkeypatch.setattr(diagram, '_require_feature', lambda db: None)
     monkeypatch.setattr(diagram, '_resolve_counselor', lambda db, cid: ('ollama', 'selected', None, None, True, None, None))
     monkeypatch.setattr(diagram, '_diagram_fallback', lambda db: ('ollama', 'fallback', True, None, None))
+    monkeypatch.setattr(diagram.personal_api, 'bind_counselor', lambda db, cid: None)
+    monkeypatch.setattr(diagram.personal_api, 'active_settings', lambda db, username, cid: None)
 
     def run(replies):
         calls = []
