@@ -42,12 +42,25 @@ In consegna — milestone #39, slice composer. Branch
 - #657, #658, #661 (fuori da questa slice).
 
 ## Sovrapposizioni per il merge
-- PR #669 (#655, audio Assistente): `frontend/src/app/assistente/page.tsx`
-  (stesso blocco composer: conflitto atteso — risoluzione: tenere la forma di
-  questa slice e mettere voce/invio immediato/lingua di #655 nello stesso
-  popover opzioni, `AudioInput` tra campo e Invia, `hidden={voiceMode}` sul
-  campo), `docs-counselorbot/funzionalita-counselorbot.md` (paragrafi
-  adiacenti), `docs/operations/platform-guidance-state.json` (rigenerare).
+Con PR #669 (#655, audio Assistente). Prova di merge fatta e annullata:
+conflitti solo nei primi due file.
+- `frontend/src/app/assistente/page.tsx` (conflitto): tenere la forma di #656
+  (`ChatSuggestions` sopra; riga `items-end`: opzioni | campo | microfono |
+  Invia; niente «?», niente selettori in riga). Da #655 conservare: import
+  `Mic` (insieme a `AlignLeft`, `Rows3`), `hidden={voiceMode}` sul campo,
+  `AudioInput` fra campo e `ChatSendButton`, Invia solo `!voiceMode` e
+  disabilitato anche con `audioBusy`; nel popover opzioni due gruppi
+  (`divide-y`): formato+lunghezza, poi `setVoiceOptionsContainer`,
+  conversazione vocale, `AudioSendOption`, `AudioLanguageOption`. Togliere gli
+  import doppi di `ChatActionsPopover` e `chatLayoutLabel`.
+- `docs/operations/platform-guidance-state.json` (conflitto): non scegliere a
+  mano; dopo il merge `make guidance-refresh` + `make guidance-check`.
+- `docs-counselorbot/funzionalita-counselorbot.md` (fuso da solo): tenere
+  entrambi i paragrafi; nel mio cambiare «microfono (dove c’è)» in «microfono».
+- `docs/operations/live-dev-environment.md`: toccato solo da #669, nessun
+  intervento.
+- Dopo il merge rilanciare `chat-shell`, `chat-markdown` e
+  `assistant-audio.test.mjs` di #655 (usa `#assistente-composer`, compatibile).
 
 ## Blocchi e rischi
 - Dev Next sul volume esterno lento alla prima compilazione.
