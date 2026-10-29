@@ -4,6 +4,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { chatPreferenceLabel, type ResponseFormat } from '@/lib/chat-preferences';
 import { AlignLeft, List } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { ListRadioMark, listRadioClass, listRadioGroupClass } from '@/components/ui/ChatOptionsMenu';
 
 // Solo discorsivo e puntato: la variante tabella non era rispettata in modo
 // affidabile dal modello e allungava il selettore senza beneficio.
@@ -12,17 +13,22 @@ const COMPACT_OPTIONS = [
     { value: 'bullets', Icon: List },
 ] as const;
 
-export function ResponseFormatSelector({ value, onChange, disabled = false, compact = false }: {
+export function ResponseFormatSelector({ value, onChange, disabled = false, compact = false, list = false }: {
     value: ResponseFormat;
     onChange: (value: ResponseFormat) => void;
     disabled?: boolean;
     compact?: boolean;
+    // Elenco verticale con etichette, per il sottolivello del menù «⋮».
+    list?: boolean;
 }) {
     const { lang } = useI18n();
-    if (compact) return <div role="radiogroup" aria-label={chatPreferenceLabel(lang, 'format')} className="inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5">
+    if (compact || list) return <div role="radiogroup" aria-label={chatPreferenceLabel(lang, 'format')} className={list ? listRadioGroupClass : 'inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5'}>
         {COMPACT_OPTIONS.map(({ value: option, Icon }) => {
             const label = `${chatPreferenceLabel(lang, 'format')}: ${chatPreferenceLabel(lang, option)}`;
             const active = option === value;
+            if (list) return <button key={option} type="button" role="radio" aria-checked={active} aria-label={label} disabled={disabled} onClick={() => onChange(option)} className={listRadioClass(active)}>
+                <ListRadioMark active={active} /><Icon className="h-4 w-4 shrink-0" aria-hidden="true" />{chatPreferenceLabel(lang, option)}
+            </button>;
             return <Tooltip key={option} content={label} side="top"><button type="button" role="radio" aria-checked={active} aria-label={label} disabled={disabled} onClick={() => onChange(option)}
                 className={`flex h-7 w-7 items-center justify-center rounded transition-colors disabled:opacity-50 ${active ? 'bg-slate-700 text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}>
                 <Icon className="h-3.5 w-3.5" aria-hidden="true" />
