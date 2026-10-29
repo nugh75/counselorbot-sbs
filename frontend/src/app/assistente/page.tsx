@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { LucideIcon } from 'lucide-react';
-import { GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen, Mic } from 'lucide-react';
+import { GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen, Mic, GitBranch } from 'lucide-react';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { getIdentity, getViewAsAccount, loginHref, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
@@ -19,7 +19,10 @@ import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
 import { useResponseFormat } from '@/lib/use-response-format';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
-import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
+import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatTranscript, chatActionButtonClass } from '@/components/ui/ChatShell';
+import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
+import { Tooltip } from '@/components/ui/Tooltip';
+import { Button } from '@/components/ui/Button';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
@@ -163,6 +166,8 @@ export default function AssistentePage() {
     // Counselor AI: opzionale, scelta in una dropdown. Il sito-chat invia
     // counselor_id al backend che applichera' la persona al system prompt.
     const [counselorId, setCounselorId] = useState<number | null>(null);
+    // Senza una sessione guidata il server non salva i diagrammi: restano qui finché la pagina è aperta.
+    const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
     // Collezioni disponibili (builtin + dinamiche), caricate dal backend.
     const [availableCollections, setAvailableCollections] = useState<CollectionInfo[]>(
         BUILTIN_COLLECTIONS.map((id) => ({ id, label: id, builtin: true })),
@@ -580,10 +585,6 @@ export default function AssistentePage() {
                                     {msg.role === 'assistant'
                                         ? <div className="min-w-0 max-w-full" data-voice-source={`assistente-${conversationId ?? 'new'}-${i}`} data-voice-language={lang} data-voice-counselor={counselorId ?? undefined}><ChatMarkdown content={msg.content} locale={lang} errorMessage={t('guided.stepConnError')} /></div>
                                         : <span className="whitespace-pre-line">{msg.content}</span>}
-                                    {/* La risposta in arrivo non si legge ancora: il testo cambia a ogni token. */}
-                                    {msg.role === 'assistant' && !(loading && i === messages.length - 1) && diagramContentForSpeech(msg.content) && <div className="mt-2" data-voice-ignore>
-                                        <ListenButton id={`assistente-${conversationId ?? 'new'}-${i}`} text={diagramContentForSpeech(msg.content)} language={lang} counselorId={counselorId} className="min-h-[44px] min-w-[44px] px-2" />
-                                    </div>}
                                     {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
                                         <div className="mt-3 pt-2 border-t border-slate-100 flex flex-wrap gap-2">
                                             {msg.sources.map((s) => (
@@ -602,36 +603,40 @@ export default function AssistentePage() {
                                             ))}
                                         </div>
                                     )}
-                                    {msg.role === 'assistant' && msg.responseId && (
-                                        <div className="mt-2 flex items-center gap-1">
-                                            <button
-                                                onClick={() => submitFeedback(i, true)}
-                                                disabled={msg.feedback !== undefined}
-                                                title={t('assistant.feedbackUp')}
-                                                aria-label={t('assistant.feedbackUp')}
-                                                className={`tap-icon rounded transition-colors disabled:cursor-default ${
-                                                    msg.feedback === true ? 'text-green-600' : 'text-slate-500 hover:text-green-600'
-                                                }`}
-                                            >
-                                                <ThumbsUp className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => submitFeedback(i, false)}
-                                                disabled={msg.feedback !== undefined}
-                                                title={t('assistant.feedbackDown')}
-                                                aria-label={t('assistant.feedbackDown')}
-                                                className={`tap-icon rounded transition-colors disabled:cursor-default ${
-                                                    msg.feedback === false ? 'text-red-600' : 'text-slate-500 hover:text-red-600'
-                                                }`}
-                                            >
-                                                <ThumbsDown className="w-4 h-4" />
-                                            </button>
-                                            {msg.feedback !== undefined && (
-                                                <span className="text-xs text-slate-500 ml-1">{t('assistant.feedbackThanks')}</span>
-                                            )}
-                                        </div>
-                                    )}
                                 </ChatBubble>
+                                {/* La risposta in arrivo non ha ancora azioni: il testo cambia a ogni token. */}
+                                {msg.role === 'assistant' && !(loading && i === messages.length - 1) && (
+                                    <ChatMessageActions label={chatLayoutLabel(lang, 'messageActions')}>
+                                        <MessageDiagramButton
+                                            text={diagramContentForSpeech(msg.content) || msg.content}
+                                            locale={lang}
+                                            label={t('guided.diagram')}
+                                            failedLabel={t('guided.diagramFailed')}
+                                            placeholder={t('guided.diagramPrompt')}
+                                            submitLabel={t('guided.diagramSend')}
+                                            sessionId=""
+                                            sourceText={msg.content}
+                                            savedDiagrams={savedDiagrams}
+                                            onSaved={diagram => setSavedDiagrams(previous => ({ ...previous, [diagram.source_key]: diagram }))}
+                                            disabled={loading}
+                                            renderTrigger={(toggleDiagram, diagramOpen) => <>
+                                                <Tooltip content={t('guided.diagram')}><Button type="button" variant="ghost" className={chatActionButtonClass} aria-label={t('guided.diagram')} disabled={loading} aria-expanded={diagramOpen} onClick={toggleDiagram}>
+                                                    <GitBranch className="h-4 w-4" aria-hidden="true" />
+                                                </Button></Tooltip>
+                                                {diagramContentForSpeech(msg.content) && <ListenButton id={`assistente-${conversationId ?? 'new'}-${i}`} text={diagramContentForSpeech(msg.content)} language={lang} counselorId={counselorId} className={chatActionButtonClass} />}
+                                                {msg.responseId && <>
+                                                    <Tooltip content={t('assistant.feedbackUp')}><Button type="button" variant="ghost" className={`${chatActionButtonClass} aria-pressed:bg-indigo-50 aria-pressed:text-indigo-700`} aria-label={t('assistant.feedbackUp')} aria-pressed={msg.feedback === true} disabled={msg.feedback !== undefined} onClick={() => void submitFeedback(i, true)}>
+                                                        <ThumbsUp className="h-4 w-4" aria-hidden="true" />
+                                                    </Button></Tooltip>
+                                                    <Tooltip content={t('assistant.feedbackDown')}><Button type="button" variant="ghost" className={`${chatActionButtonClass} aria-pressed:bg-indigo-50 aria-pressed:text-indigo-700`} aria-label={t('assistant.feedbackDown')} aria-pressed={msg.feedback === false} disabled={msg.feedback !== undefined} onClick={() => void submitFeedback(i, false)}>
+                                                        <ThumbsDown className="h-4 w-4" aria-hidden="true" />
+                                                    </Button></Tooltip>
+                                                    {msg.feedback !== undefined && <span role="status" className="ml-1 text-xs text-slate-500">{t('assistant.feedbackThanks')}</span>}
+                                                </>}
+                                            </>}
+                                        />
+                                    </ChatMessageActions>
+                                )}
                             </ChatRow>
                         ))}
                     </ChatTranscript>

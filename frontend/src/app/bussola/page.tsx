@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowDown, ArrowRight, Check, Compass, Loader2, Mic, NotebookPen, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowRight, Check, Compass, GitBranch, Loader2, Mic, NotebookPen, Sparkles } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
@@ -14,7 +14,10 @@ import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { Button } from '@/components/ui/Button';
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
-import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
+import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatTranscript, chatActionButtonClass } from '@/components/ui/ChatShell';
+import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
+import { Tooltip } from '@/components/ui/Tooltip';
+import { diagramContentForSpeech } from '@/lib/diagram-content';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
 import Image from 'next/image';
@@ -61,6 +64,8 @@ export default function BussolaPage() {
     const { access, loading: accessLoading } = useUserAccess();
     const canWrite = !accessLoading && isToolAllowed(access, 'bussola');
     const [session, setSession] = useState<OrientationSession | null>(null);
+    // Senza una sessione guidata il server non salva i diagrammi: restano qui finché la pagina è aperta.
+    const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
     const [responseFormat, setResponseFormat] = useResponseFormat(`compass:${session?.session_id ?? 'new'}`);
     const [latestSessionId, setLatestSessionId] = useState<string | null>(null);
     const [orientationRequired, setOrientationRequired] = useState(false);
@@ -311,10 +316,30 @@ export default function BussolaPage() {
                                     <ChatBubble role={message.role === 'user' ? 'user' : 'assistant'}>
                                         <div data-voice-source={message.role === 'assistant' ? `bussola-${session.session_id}-${index}` : undefined}
                                             data-voice-language={session.language || lang} data-voice-counselor={session.counselor_id ?? undefined} className="min-w-0 max-w-full">{message.role === "assistant" ? <ChatMarkdown content={message.content} locale={session.language || lang} errorMessage={t('guided.stepConnError')} /> : <span className="whitespace-pre-line">{message.content}</span>}</div>
-                                        {message.role === 'assistant' && <div className="mt-2" data-voice-ignore>
-                                            <ListenButton id={`bussola-${session.session_id}-${index}`} text={message.content} language={session.language as typeof lang || lang} counselorId={session.counselor_id} className="min-h-[44px] min-w-[44px] px-2" />
-                                        </div>}
                                     </ChatBubble>
+                                    {message.role === 'assistant' && (
+                                        <ChatMessageActions label={chatLayoutLabel(session.language || lang, 'messageActions')}>
+                                            <MessageDiagramButton
+                                                text={diagramContentForSpeech(message.content) || message.content}
+                                                locale={session.language || lang}
+                                                label={t('guided.diagram')}
+                                                failedLabel={t('guided.diagramFailed')}
+                                                placeholder={t('guided.diagramPrompt')}
+                                                submitLabel={t('guided.diagramSend')}
+                                                sessionId=""
+                                                sourceText={message.content}
+                                                savedDiagrams={savedDiagrams}
+                                                onSaved={diagram => setSavedDiagrams(previous => ({ ...previous, [diagram.source_key]: diagram }))}
+                                                disabled={sending}
+                                                renderTrigger={(toggleDiagram, diagramOpen) => <>
+                                                    <Tooltip content={t('guided.diagram')}><Button type="button" variant="ghost" className={chatActionButtonClass} aria-label={t('guided.diagram')} disabled={sending} aria-expanded={diagramOpen} onClick={toggleDiagram}>
+                                                        <GitBranch className="h-4 w-4" aria-hidden="true" />
+                                                    </Button></Tooltip>
+                                                    <ListenButton id={`bussola-${session.session_id}-${index}`} text={message.content} language={session.language as typeof lang || lang} counselorId={session.counselor_id} className={chatActionButtonClass} />
+                                                </>}
+                                            />
+                                        </ChatMessageActions>
+                                    )}
                                 </ChatRow>
                             ))}
                             {sending && <ChatPending label={t('orientation.processing')} />}
