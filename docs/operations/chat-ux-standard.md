@@ -23,7 +23,8 @@ in `main`; ogni regola indica il componente che la fa rispettare.
 | `ChatSendButton` | `ChatShell.tsx` | Invia 44×44 px; con `onStop` diventa «Ferma» mentre la risposta arriva |
 | `ChatMarkdown` | `ChatMarkdown.tsx` | testo della risposta: Markdown, diagrammi, errore provider |
 | `ChatActionsPopover` | `ChatActionsPopover.tsx` | menu «Opzioni della conversazione» (popover nativo, non tagliato dallo scroll) |
-| `ChatResponseSettings` | `ChatResponseSettings.tsx` | righe Formato / Lunghezza / Analisi nel popover |
+| `ChatResponseSettings` | `ChatResponseSettings.tsx` | sezione «Risposte»: righe Formato / Lunghezza / Analisi con valore e sottolivello |
+| `ChatMenuSection`, `ChatMenuSetting` | `ChatOptionsMenu.tsx` | sezioni titolate del menu (`role=group` + `aria-labelledby`) e riga che apre un sottolivello (#682) |
 | `AudioInput` | `AudioInput.tsx` | microfono, file audio, conversazione vocale |
 | `AudioSendOption`, `AudioLanguageOption` | stesso nome | opzioni audio nel popover |
 | `ListenButton` | `components/voice-reader/VoiceReader.tsx` | «Ascolta» sotto la risposta |
@@ -109,8 +110,11 @@ Usare sempre `ChatMarkdown`; non usare `ReactMarkdown` direttamente né `prose`.
 ## 5. Impostazioni della risposta
 
 Sempre nel popover «Opzioni della conversazione», mai in riga col campo, con
-`ChatResponseSettings` nell'ordine **Formato → Lunghezza → (righe extra) →
-Analisi**, poi i gruppi audio (`divide-y` fra impostazioni e audio).
+sezioni titolate (#682) **Azioni → Mostra → Risposte → Guida** (`divide-y`
+fra le sezioni; una sezione vuota non compare). `ChatResponseSettings` è la
+sezione «Risposte», nell'ordine **Formato → Lunghezza → Analisi → (righe
+extra, es. taccuino)**: ogni riga mostra il valore e apre un sottolivello con
+il selettore in variante `list`; «‹» o `Esc` tornano al livello principale.
 
 Ogni chat passa **solo ciò che il suo backend accetta**:
 
@@ -166,8 +170,8 @@ guidata, la cui sessione può avere una lingua diversa dall'interfaccia.
    Azioni sotto la risposta finita con `ChatMessageActions`; suggerimenti con
    `ChatSuggestions`.
 4. Campo con `ChatComposerInput` in un `<form>`, con `aria-label`.
-5. Opzioni in `ChatActionsPopover` con `ChatResponseSettings` (solo righe
-   supportate dal backend) e, se c'è audio, i gruppi audio.
+5. Opzioni in `ChatActionsPopover`: `ChatMenuSection` «Azioni» (audio),
+   `ChatResponseSettings` (solo righe supportate dal backend), `GuideHelpLink`.
 6. Audio: `AudioInput` con `sessionKey`, `onSend` che restituisce la risposta;
    `ListenButton` + `data-voice-source` su risposte finite.
 7. Nessuno scroll orizzontale a 390 e 1440 px; target ≥ 44 px.
