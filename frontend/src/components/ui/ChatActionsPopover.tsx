@@ -25,12 +25,14 @@ export function ChatActionsPopover({ label, children, icon, disabled, onOpenChan
     // Sottolivello aperto (id della riga che l'ha aperto) e suo contenitore.
     const [sub, setSub] = useState<string | null>(null);
     const [subContainer, setSubContainer] = useState<HTMLDivElement | null>(null);
-    const back = useCallback(() => {
-        setSub(current => {
-            if (current) requestAnimationFrame(() => document.getElementById(current)?.focus({ preventScroll: true }));
-            return null;
-        });
-    }, []);
+    // Al ritorno il fuoco torna sulla riga che ha aperto il sottolivello.
+    const returnFocus = useRef<string | null>(null);
+    const back = useCallback(() => setSub(current => { returnFocus.current = current; return null; }), []);
+    useLayoutEffect(() => {
+        if (sub || !returnFocus.current) return;
+        document.getElementById(returnFocus.current)?.focus({ preventScroll: true });
+        returnFocus.current = null;
+    }, [sub]);
 
     useLayoutEffect(() => {
         if (!open) return;

@@ -1,6 +1,6 @@
 'use client';
 
-import { Children, createContext, useContext, useEffect, useId, useRef, type ReactNode } from 'react';
+import { Children, createContext, useContext, useId, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
@@ -39,7 +39,7 @@ export function ChatMenuSetting({ icon, label, value, title, disabled, children 
     const { lang } = useI18n();
     const backButton = useRef<HTMLButtonElement>(null);
     const active = level?.active === id;
-    useEffect(() => { if (active) backButton.current?.focus({ preventScroll: true }); }, [active]);
+    useLayoutEffect(() => { if (active) backButton.current?.focus({ preventScroll: true }); }, [active]);
     return <>
         <button type="button" id={id} aria-label={`${label}: ${value}`} disabled={disabled} onClick={() => level?.open(id)}
             className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-50">
