@@ -46,6 +46,8 @@ def test_local_to_cloud_redacts_every_input_and_records_actual_model(ai, streami
 
 
 def test_never_mix_models_after_the_answer_has_started(ai):
+    # Con il reasoning visibile la risposta arriva a pezzi; spento, e' bufferizzata (#649).
+    ai.disable_thinking = False
     def interrupted(*args, **kwargs):
         yield {"type": "content", "text": "already emitted"}
         raise TimeoutError("interrupted")
@@ -62,6 +64,7 @@ def test_a_model_that_only_thought_is_replaced_by_the_reserve(ai):
     """Il ragionamento viaggia su un canale separato: non entra nella risposta
     e non viene salvato. Un modello morto dopo il solo <think> non ha mostrato
     niente allo studente, quindi la riserva puo' subentrare senza duplicare."""
+    ai.disable_thinking = False  # spento, il reasoning non esce affatto (#649)
     def only_thinking(*args, **kwargs):
         yield {"type": "reasoning", "text": "sto pensando"}
         raise TimeoutError("interrupted")
