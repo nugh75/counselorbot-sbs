@@ -3,7 +3,7 @@ import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
 
 // ChatShell (#653): Bussola e Assistente condividono trascritto, riga, campo e
-// pulsante della chat guidata. Fixture sintetiche, nessun backend o modello.
+// pulsante della chat guidata; il composer (#656) ha la stessa forma. Fixture sintetiche, nessun backend o modello.
 const origin = process.env.CHAT_SHELL_BASE_URL || 'http://127.0.0.1:3173';
 let browser;
 before(async () => { browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) }); });
@@ -55,7 +55,7 @@ async function waitRelease(page, control) {
 }
 
 const surfaces = {
-    bussola: { path: '/bussola', composer: '#bussola-composer', send: 'Invia alla Bussola', stop: null, pending: 'La Bussola sta collegando', resume: 'Rivedi l’ultimo orientamento' },
+    bussola: { path: '/bussola', composer: '#bussola-composer', send: 'Invia alla Bussola', stop: null, pending: 'La Bussola sta collegando', suggestion: 'Come funziona la piattaforma?', resume: 'Rivedi l’ultimo orientamento' },
     assistente: { path: '/assistente', composer: 'form.assistente-composer textarea', send: 'Invia', stop: 'Ferma la risposta', pending: 'Sto pensando...' },
 };
 
@@ -83,6 +83,22 @@ for (const [name, surface] of Object.entries(surfaces)) {
                 const box = await send.boundingBox();
                 assert.ok(box.width >= 44 && box.height >= 44, JSON.stringify(box));
                 assert.ok(await send.isDisabled());
+                // Composer (#656): opzioni a sinistra, stesso pulsante di invio.
+                const options = page.getByRole('button', { name: 'Opzioni della conversazione', exact: true });
+                const optionsBox = await options.boundingBox();
+                assert.equal(optionsBox.width, box.width);
+                assert.equal(optionsBox.height, box.height);
+                assert.ok(optionsBox.x < (await composer.boundingBox()).x && box.x > (await composer.boundingBox()).x);
+                const radius = element => getComputedStyle(element).borderRadius;
+                assert.equal(await options.evaluate(radius), await send.evaluate(radius));
+                if (surface.suggestion) {
+                    // Il suggerimento si aggiunge alla bozza, non la sostituisce.
+                    await page.getByText('Domande suggerite', { exact: true }).click();
+                    await composer.fill('Ciao');
+                    await page.getByRole('button', { name: surface.suggestion, exact: true }).click();
+                    assert.equal(await composer.inputValue(), `Ciao\n\n${surface.suggestion}`);
+                    await composer.fill('');
+                }
 
                 // Tastiera: Maiusc+Invio va a capo e il campo cresce, Invio invia.
                 await composer.focus();
