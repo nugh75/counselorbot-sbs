@@ -440,6 +440,16 @@ catalog order is used. When no questionnaire is enabled, no starting-tool card i
 shown. The Guide remains available independently of these class toggles.
 
 
+**Forma comune della conversazione (#653).** Bussola, Assistente e chat guidata
+usano lo stesso guscio: la conversazione è un registro navigabile con lettore di
+schermo e un annuncio separato dice solo «sto elaborando» e poi la risposta
+finita; le bolle hanno la stessa larghezza massima (piena su telefono, 90% su
+schermo largo); l’attesa è un unico segnale nella conversazione. Il campo di
+scrittura parte da una riga e cresce con il testo: Invio invia, Maiusc+Invio va
+a capo. Il pulsante Invia è uguale ovunque, largo e alto almeno 44 px, e, mentre la risposta arriva in
+Assistente e chat guidata, diventa «Ferma la risposta». Il microfono resta dove
+c’era già (chat guidata e Bussola); opzioni e azioni di ciascuna chat non cambiano.
+
 - **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti.
   Ascolta ciò che lo studente vuole affrontare e consiglia da quale strumento
   partire, aiutando a valutare tempi e impegno. Non somministra questionari, non
