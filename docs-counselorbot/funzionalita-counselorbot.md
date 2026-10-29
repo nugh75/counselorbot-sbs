@@ -465,6 +465,9 @@ tastiera), senza spostare la pagina; i grafici proposti dal modello compaiono
 come grafici e un errore temporaneo del fornitore come avviso, non come testo
 tecnico. L’HTML scritto nel messaggio non viene eseguito. I messaggi della
 persona restano testo semplice.
+Lo standard completo per chi crea o modifica una chat (componenti condivisi, layout,
+Markdown, composer, impostazioni, audio, checklist) è in
+`docs/operations/chat-ux-standard.md` (#660).
 
 - **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti.
   Ascolta ciò che lo studente vuole affrontare e consiglia da quale strumento
