@@ -176,7 +176,7 @@ test('complete QSA retains its configured steps', async () => {
     } finally { await context.close(); }
 });
 
-test('Compass sends the preference and renders a table on mobile', async () => {
+test('Compass sends the preference chosen in the options popover on mobile', async () => {
     const { context, page, state } = await fixture(390);
     try {
         await page.goto(`${origin}/bussola`);
@@ -185,10 +185,10 @@ test('Compass sends the preference and renders a table on mobile', async () => {
         assert.equal(await page.getByRole('button', { name: 'Il tuo taccuino', exact: true }).count(), 0);
         assert.equal(await page.getByRole('button', { name: 'Libretto dello studente', exact: true }).count(), 0);
         await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
-        await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('table'); await page.keyboard.press('Escape');
+        await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).click(); await page.keyboard.press('Escape');
         await page.locator('#bussola-composer').fill('Cosa posso fare?'); await page.locator('#bussola-composer').press('Enter');
-        await page.getByRole('table').waitFor();
-        assert.equal(state.streams[0].response_format, 'table');
+        await page.getByRole('log').getByText(/^Risposta \d+: chat$/).waitFor();
+        assert.equal(state.streams[0].response_format, 'bullets');
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }
@@ -200,11 +200,13 @@ test('Assistant uses the selected format for subsequent replies', async () => {
         await page.goto(`${origin}/assistente`);
         assert.equal(await page.getByRole('button', { name: 'Il tuo taccuino', exact: true }).count(), 0);
         assert.equal(await page.getByRole('button', { name: 'Libretto dello studente', exact: true }).count(), 0);
-        await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('table');
+        // Formato e lunghezza stanno nel popover «Opzioni», come nella chat guidata (#657).
+        await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
+        await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).click(); await page.keyboard.press('Escape');
         const input = page.locator('main textarea').last();
         await input.fill('Come funziona il QSA?'); await input.press('Enter');
-        await page.getByRole('table').waitFor();
-        assert.equal(state.streams[0].response_format, 'table');
+        await page.getByRole('log').getByText(/^Risposta \d+: chat$/).waitFor();
+        assert.equal(state.streams[0].response_format, 'bullets');
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }
 });
