@@ -1019,7 +1019,9 @@ con impostazioni di voce e motore (Edge TTS online con filtro PII deterministico
 all’amministratore. Chat guidata, Bussola e Assistente accettano
 registrazione del microfono o file audio: la trascrizione è da controllare, salvo
 invio immediato scelto esplicitamente. In conversazione vocale si avvia e si ferma
-la registrazione; il microfono non riparte da solo.
+la registrazione; il microfono non riparte da solo. Il riconoscimento è sempre locale:
+l'amministratore sceglie il motore (faster-whisper, predefinito, oppure whisper.cpp,
+più leggero per CPU deboli) e il modello di quel motore nella scheda **Trascrizione audio**.
 
 Le conversazioni guidate con progressi si salvano dopo le risposte per essere
 riprese anche da un altro dispositivo. Congela sessione salva e chiude: si torna ad
