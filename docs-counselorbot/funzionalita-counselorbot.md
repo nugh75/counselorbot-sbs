@@ -446,7 +446,7 @@ schermo e un annuncio separato dice solo «sto elaborando» e poi la risposta
 finita; le bolle hanno la stessa larghezza massima (piena su telefono, 90% su
 schermo largo); l’attesa è un unico segnale nella conversazione. Il campo di
 scrittura parte da una riga e cresce con il testo: Invio invia, Maiusc+Invio va
-a capo. Il pulsante Invia è uguale ovunque e, mentre la risposta arriva in
+a capo. Il pulsante Invia è uguale ovunque, largo e alto almeno 44 px, e, mentre la risposta arriva in
 Assistente e chat guidata, diventa «Ferma la risposta». Il microfono resta dove
 c’era già (chat guidata e Bussola); opzioni e azioni di ciascuna chat non cambiano.
 

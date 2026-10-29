@@ -24,6 +24,9 @@ Consegnata in PR, in attesa di revisione/merge — milestone #39 «Chat UX unifi
   baseline, registrata nel Diario.
 - `tsc` 0, ESLint file toccati 0; `i18n:check` 12 testi fissi altrui (baseline).
 - `make guidance-refresh` + `make guidance-check` allineati.
+- Immagine isolata `counselorbot-frontend:chat-shell-653` (target runner)
+  costruita; nessun container avviato, produzione non toccata.
+- PR #667.
 
 ## Prossimi passi
 - Layout composer Assistente (opzioni nel popover) → #656; Markdown → #654;
