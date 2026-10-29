@@ -161,6 +161,28 @@ for (const width of [320, 390, 1440]) {
     });
 }
 
+test('a drawn diagram can be corrected with a follow-up request', async () => {
+    const { page, context, control } = await fixture(390);
+    try {
+        await openMessageDiagram(page);
+        const field = page.locator('input[maxlength="400"]');
+        const send = page.locator('form').filter({ has: field }).locator('button[type="submit"]');
+        await send.click();
+        await page.locator('figure svg g.node').first().waitFor();
+        assert.equal(await field.getAttribute('aria-label'), 'Cosa vuoi correggere nel diagramma? Lascia vuoto per rifarlo da capo');
+        assert.equal(await send.getAttribute('aria-label'), 'Correggi il diagramma');
+        await field.fill('Aggiungi il ripasso');
+        await send.click();
+        await page.waitForFunction(() => document.querySelector('input[maxlength="400"]')?.value === '');
+        const [first, correction] = control.requests.filter(request => request.path === '/api/diagram/from-message');
+        assert.equal(first.body.previous_spec, undefined);
+        assert.equal(correction.body.instruction, 'Aggiungi il ripasso');
+        assert.deepEqual(correction.body.previous_spec, spec);
+        assert.equal(correction.body.source_text, first.body.source_text);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
 test('recommendation actions save per item, retry, and hand a prompt to the composer', async () => {
     const { page, context, control } = await fixture(390);
     try {

@@ -6,6 +6,7 @@ spenta o non pubblicata, questi endpoint non esistono. Le due rotte
 anche al tavolo, che vive senza questa skill, e restano attive comunque.
 """
 import asyncio
+import json
 import logging
 from pathlib import Path
 
@@ -149,6 +150,9 @@ class FromMessageRequest(BaseModel):
     spec_only: bool = False
     session_id: str | None = Field(default=None, min_length=1, max_length=200)
     source_text: str | None = Field(default=None, min_length=1, max_length=200000)
+    # Correzione dopo il disegno: il diagramma da rivedere, con `instruction`
+    # che dice cosa cambiare. Assente: un diagramma nuovo dal messaggio.
+    previous_spec: dict | None = None
 
 
 def feature_enabled(db: Session) -> bool:
@@ -248,6 +252,12 @@ async def diagram_from_message(
     _require_feature(db)
     owner = session_owner(db, request.session_id, identity) if request.session_id else None
     questionnaire_type = session_questionnaire(db, request.session_id)
+    previous = None
+    if request.previous_spec is not None:
+        try:
+            previous = parse_spec(request.previous_spec, questionnaire_type=questionnaire_type)
+        except DiagramSpecError as exc:
+            raise HTTPException(status_code=422, detail=str(exc))
     base_prompt = SPEC_ONLY_SYSTEM_PROMPT + factor_selection_prompt(questionnaire_type)
     c_provider, c_model, _persona, _name, disable_thinking, reasoning_budget, reasoning_effort = _resolve_counselor(
         db, request.counselor_id
@@ -292,7 +302,7 @@ async def diagram_from_message(
                         ai_service.call_model,
                         provider=provider,
                         model=model,
-                        user_message=_spec_request(request),
+                        user_message=_spec_request(request, previous),
                         system_prompt=system_prompt,
                         max_tokens=2400,
                     ),
@@ -351,14 +361,22 @@ async def diagram_from_message(
     )
 
 
-def _spec_request(request: FromMessageRequest) -> str:
+def _spec_request(request: FromMessageRequest, previous: DiagramSpec | None = None) -> str:
     """Testo da cui ricavare lo spec, piu' l'eventuale richiesta dello studente.
 
     La richiesta e' dato non fidato: entra come materiale da cui disegnare, mai
     come istruzione al modello, e il contratto dello spec resta l'autorita'.
+    Con `previous` la richiesta e' una correzione del disegno gia' fatto.
     """
     text = request.text.strip()
     instruction = request.instruction.strip()
+    if previous is not None and instruction:
+        current = json.dumps(previous.model_dump(exclude_none=True, by_alias=True), ensure_ascii=False)
+        return (
+            f"{text}\n\n---\nThe reader already has this diagram of the text above:\n{current}\n\n"
+            f"---\nThe reader asked to correct it as follows; return the whole corrected diagram, keep what "
+            f"the correction does not touch, and add nothing the text does not say:\n{instruction}"
+        )
     if not instruction:
         return text
     return (
