@@ -11,6 +11,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { Button } from '@/components/ui/Button';
+import { GuideHelpLink } from '@/components/guide/GuideHelpLink';
 import { clearScoreDraft, loadScoreDraft, saveScoreDraft } from '@/lib/compilation-draft';
 
 type FormData = { scores: Record<string, string | number> };
@@ -216,6 +217,7 @@ export function ScoreInputForm({
 
     return (
         <div className="w-full space-y-5 animate-fade-in-up">
+            <GuideHelpLink task="questionnaires" />
             {actionsPosition === 'both' && actionButtons}
             {missingCount > 0 && (
                 <p role="alert" className="max-w-4xl mx-auto rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">

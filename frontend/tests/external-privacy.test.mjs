@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { externalPrivacyText } from '../src/lib/i18n-external-privacy.js';
+import { externalPrivacyText } from '../src/lib/i18n-external-privacy.ts';
 
 const origin = process.env.PRIVACY_BASE_URL || 'http://127.0.0.1:3135';
 let browser;
@@ -91,10 +91,10 @@ test('researchers cannot see or change the privacy mode', async () => {
 test('administrator guide explains the local-service block and shows the new settings', async () => {
     const f = await fixture();
     try {
-        await f.page.goto(`${origin}/guide`);
-        const section = f.page.locator('section[aria-labelledby="guide-external-privacy"]');
+        await f.page.goto(`${origin}/guide?audience=admin&task=external-privacy`);
+        const section = f.page.locator('#guide-task-external-privacy');
         await section.waitFor();
-        assert.ok(await section.getByText(externalPrivacyText('it', 'guide'), { exact: true }).isVisible());
+        assert.ok((await section.innerText()).includes('non garantisce anonimato'));
         assert.equal(await section.locator('img').count(), 1);
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }

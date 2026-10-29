@@ -27,9 +27,12 @@ Non sono eventi del calendario, questionari o valutazioni con punteggi.
    Le regole QSA-first, l’autonomia della persona e il catalogo chiuso restano validi.
 3. Aggiornare i documenti operativi in `docs-counselorbot/`, realmente indicizzati
    dall’Assistente. Le pubblicazioni accademiche conservano il testo della fonte.
-4. Aggiornare la guida visibile: `frontend/src/app/guide/page.tsx` e le chiavi
-   `guide.*` di `frontend/src/lib/i18n.ts` nelle sei lingue. Le sezioni 10–15
-   coprono i due eventi, obiettivi, calendario/diario, assegnazioni e docenti.
+4. Aggiornare la guida visibile: schede e traduzioni in
+   `frontend/src/lib/i18n-guide-tasks.ts`, gruppi e destinazioni in
+   `frontend/src/lib/guide-tasks.ts`, interfaccia in `frontend/src/app/guide/page.tsx`.
+   Le sei lingue devono avere tre passaggi e una nota per ogni procedura.
+   I popup della chat condividono gli stessi testi. Conservare gli adattatori dei
+   vecchi segnalibri; le precedenti chiavi `guide.*` restano per i riferimenti storici.
 
 ## Configurazioni attive e attivazione
 

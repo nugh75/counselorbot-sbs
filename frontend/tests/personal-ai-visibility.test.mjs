@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { CHATGPT_DICTS } from '../src/lib/i18n-chatgpt.js';
-import { personalAPIText } from '../src/lib/i18n-personal-api.js';
+import { CHATGPT_DICTS } from '../src/lib/i18n-chatgpt.ts';
+import { personalAPIText } from '../src/lib/i18n-personal-api.ts';
 
 const origin = process.env.PERSONAL_API_BASE_URL || 'http://127.0.0.1:3107';
 let browser;
@@ -71,10 +71,13 @@ for (const role of ['student', 'teacher']) {
                     assert.equal(await f.page.getByRole('button', { name: 'Aggiungi connessione', exact: true }).count(), api ? 1 : 0);
                 }
                 const guideLoaded = Promise.all(['/api/user/api-settings', '/api/user/chatgpt'].map(path => f.page.waitForResponse(r => new URL(r.url()).pathname === path)));
-                await f.page.goto(`${origin}/guide`); await guideLoaded;
-                await f.page.locator('#guide-personal-api').waitFor({ state: api ? 'visible' : 'hidden' });
-                await f.page.locator('#guide-chatgpt').waitFor({ state: chatgpt ? 'visible' : 'hidden' });
-                if (chatgpt) assert.equal(await f.page.locator('#guide-chatgpt a').getAttribute('href'), `/${area}/api-personali#chatgpt`);
+                await f.page.goto(`${origin}/guide?audience=${role === 'teacher' ? 'teacher' : 'student'}&group=data`); await guideLoaded;
+                await f.page.locator('a[href*="task=personal-api"]').waitFor({ state: api ? 'visible' : 'hidden' });
+                await f.page.locator('a[href*="task=chatgpt"]').waitFor({ state: chatgpt ? 'visible' : 'hidden' });
+                if (chatgpt) {
+                    await f.page.locator('a[href*="task=chatgpt"]').click();
+                    assert.equal(await f.page.locator('article a').getAttribute('href'), `/${area}/chatgpt`);
+                }
                 assert.deepEqual(f.errors, []);
             } finally { await f.context.close(); }
         });

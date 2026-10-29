@@ -3,6 +3,7 @@
 <!-- ai4educ:context-template v1.0 -->
 
 ## Quick Reference
+- **Guida pratica**: `/guide` organizza l'aiuto per azioni, con ricerca locale, sei argomenti studente/docente e schede con tre passaggi. Una procedura alla volta, ruoli e integrazioni filtrati, vecchi segnalibri compatibili; popup della chat e aiuti contestuali usano gli stessi contenuti. Contratto e verifiche: `docs/operations/concise-guide.md`.
 - **Flusso attività dei piani**: contratto di stato e azioni dal server, tentativi persistiti già all’apertura, bozze questionario con revisione, accesso diretto e ritorno al passo. Compilazione e analisi separate; storico e lettura delle conversazioni. `docs/operations/plan-activity-flow.md`.
 - **Tentativi nei piani e forum**: Inizia/Riprendi/Rifai distinguono sessioni e stato; le analisi conservano i tentativi precedenti e la ripetizione è idempotente. Il forum usa la spunta dello studente, indipendente dai messaggi. Migrazione, compatibilità e rollback: `docs/operations/operational-plan-questionnaire-chats.md` e `docs/operations/path-forum-validation.md`.
 - **Menu Area**: chi ha effettuato l'accesso trova «Presentazione» prima delle aree personali, sia nel selettore desktop sia nel menu mobile; `/?view=intro` apre sempre l'introduzione anche dalla home già montata.

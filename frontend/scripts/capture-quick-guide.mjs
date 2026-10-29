@@ -1,0 +1,90 @@
+// Focused screenshots from real pages. Every API request is intercepted.
+import {chromium} from 'playwright';
+import {mkdirSync,writeFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+import {chatLayoutLabel} from '../src/lib/i18n-chat-layout.ts';
+import {pathActivityText} from '../src/lib/i18n-path-activity.ts';
+import {personalAPIText} from '../src/lib/i18n-personal-api.ts';
+const origin=process.env.GUIDE_BASE_URL||'http://127.0.0.1:3108';
+const languages=['it','en','es','fr','de','sv'];
+const samples={it:['Una riflessione sul mio studio.','Possiamo partire da un esempio concreto.'],en:['A reflection on my studies.','We can start with a concrete example.'],es:['Una reflexión sobre mi estudio.','Podemos empezar con un ejemplo concreto.'],fr:['Une réflexion sur mes études.','Nous pouvons partir d’un exemple concret.'],de:['Eine Reflexion über mein Lernen.','Wir können mit einem konkreten Beispiel beginnen.'],sv:['En reflektion om mina studier.','Vi kan börja med ett konkret exempel.']};
+const names=['guided-chat','plan-attempt','personal-api','external-privacy','chatgpt'];
+const pins={};
+const browser=await chromium.launch({headless:true});
+try{for(const lang of languages){
+ const context=await browser.newContext({viewport:{width:390,height:1000},reducedMotion:'reduce'});
+ const page=await context.newPage();page.setDefaultTimeout(20000);
+ await page.addInitScript(lang=>{localStorage.setItem('cb_lang',lang);localStorage.setItem('cb_theme','light');localStorage.setItem('cb_selected_counselor','1');},lang);
+ let admin=false;const errors=[];page.on('pageerror',error=>errors.push(error.message));
+ const attempt={session_id:'guide-chat',started_at:'2026-10-28T10:00:00Z',state:'in_progress',resumable:true,revision:0,href:'/profilo/piani-operativi/31/2?attempt=guide-chat'};
+ const snapshot={session_id:'guide-chat',questionnaire_type:'QSA',current_phase:'qsa-focus',counselor_id:1,locale:lang,scores:{C1:7,C2:5},messages:[{role:'user',content:samples[lang][0]},{role:'assistant',content:samples[lang][1]}]};
+ const result={id:8,session_id:'guide-result',questionnaire_type:'QSA',scores:snapshot.scores,locale:lang};
+ const bound={path_id:31,step_id:2,results_step_id:1,session_id:attempt.session_id,started_at:attempt.started_at,result};
+ const activity={kind:'analysis',path_id:31,step_id:2,title:'QSA',path_title:'Demo',position:1,instrument_code:'QSA',current:attempt,attempts:[attempt],primary:{label:'resume',href:attempt.href},repeat:{label:'anotherAttempt',href:'/profilo/piani-operativi/31/2?attempt=new'}};
+ const api={available:true,api_enabled:true,chatgpt_enabled:true,chatgpt_models:[],providers:['openai','openrouter','anthropic','gemini'],enabled:true,default_connection_id:'a'.repeat(32),default_chatgpt_model:null,default_reasoning:null,connections:[{id:'a'.repeat(32),name:'Demo',provider:'openrouter',model:'demo/model'}],bindings:[],counselors:[{id:1,name:'Clio',is_personal:false}]};
+ await page.route('**/*',route=>{
+  const req=route.request(),url=new URL(req.url()),p=url.pathname;
+  if(url.origin!==origin)return route.abort();
+  if(!p.startsWith('/api/'))return route.continue();
+  let data=[];
+  if(p==='/api/auth/me')data={authenticated:true,username:'guide.demo',name:'Alex · Demo',groups:admin?['admins']:[],is_admin:admin};
+  else if(p==='/api/user/account-preferences')data={counselor_id:1,counselor_ready:true,notebook_ready:true,setup_completed:true,class_view:'classes'};
+  else if(p==='/api/orientation/status')data={required:false,completed:true};
+  else if(p==='/api/user/access')data={filters_applied:false,role:admin?'admin':'student',class_view:'classes',classes:[{id:91,name:'Demo'}]};
+  else if(p.endsWith('/activity'))data=activity;
+  else if(p.endsWith('/deep-dive'))data={personal:false,ready:true,completed:false,source_href:'/profilo',results:[],session:bound,attempts:[{...bound,completed:false,resumable:true,has_turns:true}]};
+  else if(p==='/api/session/frozen/guide-chat')data=snapshot;
+  else if(p==='/api/session/frozen')data=[{...snapshot,path_id:31,path_step_id:2}];
+  else if(p==='/api/session/freeze')data={status:'saved'};
+  else if(p==='/api/qsa/guided-ui-texts')data={guided_steps:[{id:'intro',label:'QSA',sort_order:0,system_prompt_mode:'generic'},{id:'qsa-focus',label:'QSA',sort_order:1,system_prompt_mode:'generic'}]};
+  else if(p==='/api/counselors')data=[{id:1,name:'Clio',suitable:true,is_active:true,language:['*']}];
+  else if(p.endsWith('/recommendations'))data={reading:[],strategy:[]};
+  else if(p==='/api/instruments')data=[{code:'QSA',name_en:'QSA',is_active:true}];
+  else if(p==='/api/user/paths')data=[{id:31,group_id:91,group_name:'Demo',title:'Demo',description:'',mode:'recommended',next_step_id:2,done:1,total:1,steps:[{id:2,path_id:31,position:1,step_type:'guided_chat',tool_key:'SAVICKAS',title:'Savickas',state:'done',auto_detect:true,can_self_mark:false,start_href:'/profilo/piani-operativi/31/2',activity:{...activity,kind:'chat',instrument_code:'SAVICKAS',attempts:[attempt,{...attempt,session_id:'guide-previous',state:'completed',href:'/profilo/piani-operativi/31/2?attempt=guide-previous&review=1'}]}}]}];
+  else if(p==='/api/user/api-settings')data={available:true,configured:true,enabled:true,active:true};
+  else if(p==='/api/user/api-connections'||p==='/api/user/api-routing')data=api;
+  else if(p==='/api/user/chatgpt')data={enabled:true,available:true,use_subscription:false};
+  else if(p==='/api/admin/external-privacy')data={mode:'local',local_model:'local-ner'};
+  return route.fulfill({json:data});
+ });
+ mkdirSync(`public/guide/${lang}`,{recursive:true});
+ const capture=async(name,locator,clip)=>{
+  await page.evaluate(()=>document.fonts.ready);
+  await (locator||page).screenshot({path:`public/guide/${lang}/${name}.png`,...(clip?{clip}:{})});
+  assert.deepEqual(errors,[]);console.log(`${lang}/${name}`);
+ };
+ await page.goto(`${origin}/profilo/piani-operativi/31/2`);
+ await page.getByRole('log').getByText(samples[lang][1],{exact:true}).waitFor();
+ const form=page.locator('form').filter({has:page.locator('#guided-composer')});
+ const nav=page.getByRole('navigation',{name:chatLayoutLabel(lang,'navigation'),exact:true});
+ const f=await form.boundingBox(),n=await nav.boundingBox();
+ await capture('guided-chat',null,{x:Math.max(0,f.x-2),y:f.y-2,width:Math.min(390-f.x+2,f.width+4),height:Math.max(f.y+f.height,n.y+n.height)-f.y+4});
+ await page.goto(`${origin}/profilo/piani-operativi`);
+ const card=page.locator('#class-step-2');await card.waitFor();
+ const cardBox=await card.boundingBox();pins[lang]={};
+ for(const [id,key] of [['resume','resume'],['repeat','anotherAttempt']]){
+  const box=await card.getByRole('link',{name:pathActivityText(lang,key),exact:true}).boundingBox();
+  pins[lang][id]={x:Math.max(.04,(box.x-cardBox.x-10)/cardBox.width),y:(box.y-cardBox.y+box.height/2)/cardBox.height};
+ }
+ await capture('plan-attempt',card);
+ await page.goto(`${origin}/profilo/api-personali`);await page.locator('#personal-counselor-1').waitFor();
+ const chatgpt=page.locator('#chatgpt');
+ const buttonBox=await chatgpt.getByRole('button').first().boundingBox(),sectionBox=await chatgpt.boundingBox();
+ const top=Math.max(sectionBox.y,buttonBox.y-100);
+ await capture('chatgpt',null,{x:sectionBox.x,y:top,width:sectionBox.width,height:buttonBox.y+buttonBox.height+8-top});
+ await page.getByRole('button',{name:personalAPIText(lang,'addConnection'),exact:true}).click();
+ await page.locator('#personal-key').scrollIntoViewIfNeeded();
+ const provider=await page.locator('#personal-provider').locator('..').boundingBox(),key=await page.locator('#personal-key').locator('..').boundingBox();
+ await capture('personal-api',null,{x:provider.x,y:provider.y,width:provider.width,height:key.y+key.height-provider.y});
+ await page.locator('form').filter({has:page.locator('#personal-key')}).getByRole('button').last().click();
+ admin=true;await page.goto(`${origin}/admin?tab=general`);await page.locator('#external-privacy-mode').waitFor();
+ await capture('external-privacy',page.locator('#external-privacy-mode').locator('..'));
+ await context.close();
+}
+let source='// Generated by scripts/capture-quick-guide.mjs from synthetic pages.\n';
+for(const [li,lang]of languages.entries())for(const[ni,name]of names.entries())source+=`import image${li}_${ni} from '../../public/guide/${lang}/${name}.png';\n`;
+source+='export const guideExtraImages = {\n';
+for(const[li,lang]of languages.entries())source+=`${lang}: {${names.map((name,ni)=>`'${name}': image${li}_${ni}`).join(',')}},\n`;
+source+='};\nexport const guideImagePins = '+JSON.stringify(pins,null,2)+';\n';
+writeFileSync('src/lib/guide-extra-images.ts',source);
+}finally{await browser.close();}

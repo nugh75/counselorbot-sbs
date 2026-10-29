@@ -534,16 +534,25 @@ shown. The Guide remains available independently of these class toggles.
   dare spazio a fonti diverse. La ricerca lessicale non traduce tra lingue. La base
   CounselorBot usa anche questo documento letto dal vivo. Se il recupero fallisce
   per altri motivi compare un messaggio localizzato privo di dettagli tecnici.
-- **Guida interfaccia** (`/guide`): con percorsi per uso personale e per docenti,
-  immagini ingrandibili e collegamenti alle sezioni. È pubblica anche senza login
+- **Guida pratica** (`/guide`): istruzioni brevi per azione, con ricerca locale
+  e sei argomenti per uso personale/studente e docente. Ogni scheda presenta
+  uno scopo, tre passaggi, un collegamento all'app e una schermata ingrandibile;
+  sul computer immagine e istruzioni sono affiancate, sul telefono si susseguono.
+  Le schermate conservano la nitidezza del testo; i richiami numerati indicano
+  i comandi del piano descritti nei passaggi.
+  i dettagli aggiuntivi sono separati e le informazioni sugli accessi restano
+  visibili nelle schede pertinenti. È pubblica anche senza login
   nelle installazioni che consentono accesso pubblico; su `counselorbot.labform.net`
   l'intero sito, inclusa la Guida e le sue immagini, richiede l'accesso Console.
   Senza parametro `audience` il percorso segue il ruolo: docenti, ricercatori e
   amministratori aprono la versione docente, studenti e visitatori quella
-  studente, e solo chi può usare l’assistente docente vede il selettore dei due
-  percorsi. Tutte le 15 sezioni personali e le 7 sezioni per docenti includono almeno uno
-  screenshot pertinente; le schermate della piattaforma sono disponibili nelle
-  sei lingue, mentre le due viste della chat sono dimostrazioni in italiano.
+  studente, e solo chi può usare l’assistente docente vede il selettore delle
+  viste. Gli amministratori possono scegliere anche le istruzioni di
+  amministrazione; le connessioni API e ChatGPT compaiono quando abilitate.
+  La guida apre una sola procedura alla volta; ricerca e schede hanno collegamenti
+  salvabili, con ritorno tramite Indietro. I vecchi segnalibri numerati restano
+  compatibili. Testi e nuove schermate mirate sono disponibili nelle sei lingue.
+  Piani, chat e inserimento dei punteggi offrono un aiuto contestuale.
 - Interfaccia e conversazioni: italiano, inglese, spagnolo, francese, tedesco e
   svedese. Sono disponibili tema chiaro/scuro, navigazione responsive e lettura vocale dal menu dell’account (da 1024 px) o dal pannello Menu.
 
@@ -593,7 +602,7 @@ attivazione e limiti delle verifiche: `docs/operations/guided-chat-choice.md`.
 
 **Introduzione della chat guidata (#409).** Al primo ingresso in una chat guidata, IDEA compresa (non anteprima, non sessione congelata), in cima alla conversazione compare una breve scheda uguale per tutti gli strumenti: cosa fa la chat (un tema alla volta, nessuna risposta giusta o sbagliata), quanto dura (circa 20–40 minuti per una prima conversazione, salvataggio automatico dopo ogni risposta), cosa fare (rispondere con parole proprie e inviare con Invio, continuare a scrivere per approfondire), dove stanno i pulsanti avanti/indietro (nella barra sotto la finestra della chat, sulla destra, su desktop, in una barra sotto la casella di scrittura su mobile; non in IDEA) e come chiudere (concludere all’ultimo passaggio o «Congela sessione» dai tre punti). Si chiude con «Ho capito» e non ricompare (preferenza nel browser). Testi in sei lingue.
 
-**Guida in popup dalla chat guidata.** La scheda iniziale ha il pulsante «Apri la guida», che resta in cima alla chat anche dopo «Ho capito». Apre in un dialog modale la sezione pertinente della Guida all’interfaccia, con gli stessi testi della pagina `/guide`: «Evento significativo di studio» per EVENTO_STUDIO, «Evento significativo professionale» per EVENTO_PROFESSIONALE, «Area studente e obiettivi» per OBIETTIVO_STUDIO e «La chat guidata» con i tasti della conversazione per questionari, Savickas, IDEA e Obiettivo di docenza. Si usa da tastiera, si chiude con Esc, con la X o cliccando fuori; il focus torna al pulsante e conversazione e bozza restano intatte. Il link «Apri la guida completa» apre `/guide` alla stessa sezione in una nuova scheda.
+**Guida in popup dalla chat guidata.** «Apri la guida» mostra scopo, tre passaggi e nota della stessa scheda breve di `/guide`: eventi significativi per i due percorsi evento, obiettivi per OBIETTIVO_STUDIO e conversazione per gli altri strumenti. Si chiude con Esc, X o clic sullo sfondo; il focus torna al pulsante. «Apri la guida completa» apre la procedura pertinente in una nuova scheda, conservando conversazione e bozza.
 
 Nelle chat guidate dei questionari, anche con Iride, dopo la lettura del profilo
 una domanda contestualizzata aiuta la persona a scegliere cosa comprendere meglio.
@@ -1450,10 +1459,11 @@ Nella header la voce verso l'area è «Area docente» con l'icona a berretto da
 laurea, uguale per docenti, ricercatori e amministrazione: nel selettore «Area» da
 1024 px, nel gruppo «Area» del pannello Menu sotto.
 
-La Guida interfaccia (`/guide`) ha una sezione «Piani operativi e incontri» sia per il
-docente (con lo screenshot dell’editor del piano operativo: passi, chat guidata e incontro) sia per lo studente (con lo screenshot della pagina Piani operativi), nelle sei
-lingue; gli screenshot si rigenerano con `GUIDE_SCREENS=class-paths` in
-`frontend/scripts/capture-guide.mjs`.
+La Guida pratica (`/guide`) distingue avvio/ripresa, nuovi tentativi e incontri
+per lo studente; per il docente separa creazione del piano, raccolta di risultati
+e programmazione degli incontri. Le schede sono nelle sei lingue. I richiami
+Riprendi e Fai un altro tentativo si rigenerano con `capture-quick-guide.mjs`;
+l'editor del piano resta in `GUIDE_SCREENS=class-paths` di `capture-guide.mjs`.
 
 Per **analizzare un questionario nel piano operativo**, il docente sceglie il tipo
 di questionario QSA, QSAr, ZTPI, QPCS, QPCC o QAP. L’analisi è autonoma e usa una
@@ -1952,19 +1962,14 @@ then returns to the session. Teachers, researchers and administrators are never
 filtered. Compass and Assistant follow the selected counselor; their own class
 toggles arrive with #92.
 
-**Class forum guide (F6, #107).** The public guide (`/guide`) has a student
-section “Class forum” (16) and a teacher section “Class forum and moderation”
-(8), in all six languages, each with a screenshot of the forum list built from
-synthetic data. The student section explains where to open the forum, when
-students can open discussions, text-only formatting, editing and deleting own
-messages, the posting limit, pre-approval, hidden messages, closed discussions,
-mute, a disabled forum, read-only archives and the unread badges. The teacher
-section covers the Forum tab, pin/close/hide/restore, the Forum switch and
-options in Tools & counselors with administrator locks, “Pending (n)”, “Mute
-author” and “Muted students”, and the Moderation log. Both sections then explain
-discussion links to path steps and assignments, and state that no AI model,
-local ones included, reads the forum and that messages stay out of research
-exports, session records and PDFs. The teacher section links to the Classes page.
+**Class forum guide (F6, #107).** The public guide (`/guide`) now offers the
+short student task `forum` and teacher task `moderate`, in six languages, with
+one synthetic screenshot each. Old student section 16 and teacher section 8
+bookmarks still resolve. Students read, post and mark their plan intervention
+complete; teachers configure discussion permissions, approval and moderation.
+Both explain that no AI model reads or summarises the forum. The full rules
+for rate limits, unread badges, moderation and data exclusion remain documented
+in the forum sections of this reference.
 
 **Class forum unread badge (F4, #105).** An in-app badge indicates unread forum
 activity across active classes. The backend (`GET /user/forum/unread`,
