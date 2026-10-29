@@ -1,12 +1,15 @@
 # Consiglio orientativo — documento interno della classe
 
 Funzione per la docenza: nel tab **Consiglio orientativo** di `/docente/classi/{id}`
-il consiglio di classe redige un documento per studente (attitudini, risultati
-osservati, metodi di studio, orientamento per gli anni successivi). Lo studente
+il consiglio di classe redige un documento per studente che indica quale scuola
+e indirizzo di studi consigliare, motivando la scelta con gli elementi raccolti
+su interessi, attitudini e percorso scolastico. Se le informazioni sono
+insufficienti, il documento deve dichiararlo e specificare cosa approfondire
+prima di formulare il consiglio. Lo studente
 **non** lo vede; non entra nel link read-only `/consiglio/{token}` (#422).
 L'unica uscita del testo è il PDF che un docente autorizzato scarica a mano.
 
-Contratto runtime del 28/10/2026, branch `feature/consiglio-orientativo`.
+Contratto runtime aggiornato al 29/10/2026.
 
 ## Dati
 
@@ -40,7 +43,7 @@ Tutte sotto `/api/teacher/groups/{group_id}/orientation-recommendations`:
 | `GET` | Elenco studenti con `status`, `revision`, `ai_draft_used`; il testo non viaggia, è nel documento singolo. |
 | `GET /{username}` | Documento; riga assente → documento vuoto (`status` null, `revision` 0, `content` ""). |
 | `PUT /{username}` | Salva `content`, `status` (opzionale), `ai_draft_used` (opzionale). Riga nuova: parte da `revision` 1, quindi il client manda `revision` 0. Revisione non coincidente → 409 `orientation_conflict`, niente scrittura. `status` sconosciuto → 422. `final` fissa `final_at`/`final_by`; `draft` li azzera. Ogni salvataggio incrementa `revision`. |
-| `POST /{username}/ai-draft` | Bozza proposta dal modello: mai salvata da sola; modello non raggiungibile o vuoto → 502 `orientation_draft_unavailable`. |
+| `POST /{username}/ai-draft` | Bozza mai salvata da sola. Senza evidenze descrittive restituisce una dichiarazione di informazioni insufficienti senza chiamare il modello; altrimenti proposta del modello. Modello non raggiungibile o vuoto → 502 `orientation_draft_unavailable`. |
 | `GET /{username}/pdf` | PDF del documento (`%PDF`, allegato, nome `consiglio-orientativo_<studente>.pdf`); 404 se la riga manca o il contenuto è vuoto. Solo testo redatto: nessun punteggio grezzo. |
 
 ## Bozza assistita
@@ -55,6 +58,18 @@ Tutte sotto `/api/teacher/groups/{group_id}/orientation-recommendations`:
   In modalità strict la policy può bloccare la generazione. Il prompt di
   sistema vieta dati inventati e riferimenti alla famiglia; output in italiano,
   entro ~350 parole.
+- Il prompt richiede una scuola e un indirizzo espliciti, con motivazione basata
+  sulle evidenze disponibili; non inventa istituti specifici o offerte locali.
+  Con dati pochi, parziali o contraddittori impone la dichiarazione «Le informazioni
+  disponibili sono insufficienti per consigliare una scuola o un indirizzo di
+  studi», l'indicazione degli elementi mancanti e dei prossimi passi. L'assenza
+  di informazioni non va interpretata come difficoltà o scarso rendimento.
+- In assenza di sintesi dei questionari, feedback dei docenti e obiettivi
+  condivisi con contenuto descrittivo, la risposta è una bozza predefinita di
+  informazioni insufficienti: niente chiamata AI, anche se sono presenti
+  punteggi grezzi o stati di avanzamento delle attività. La presenza di materiale
+  descrittivo abilita la valutazione del modello, senza attestare che basti per
+  scegliere una scuola. La docenza verifica sempre la proposta.
 - La bozza entra nel documento solo con «Usa bozza» nella scheda, che copia il
   testo nell'editor in revisione del docente; il salvataggio resta esplicito.
 
@@ -70,10 +85,12 @@ Tutte sotto `/api/teacher/groups/{group_id}/orientation-recommendations`:
 
 ## Verifiche
 
-- Backend: `backend/tests/test_orientation_recommendation.py` (9 test)
+- Backend: `backend/tests/test_orientation_recommendation.py`
   eseguiti su Postgres 16 (`DATABASE_URL` dedicata) e SQLite: elenco, documento
   vuoto, primo salvataggio, revisione 409, transizioni di stato, 422,
-  visibilità, bozza mai salvata con 502, PDF con `%PDF`.
+  visibilità, bozza mai salvata con 502, PDF con `%PDF`, dichiarazione di
+  informazioni insufficienti senza AI con dati assenti o soli punteggi,
+  richiesta esplicita di scuola/indirizzo e valutazione dei limiti nel prompt.
 - Frontend lib: `frontend/src/lib/orientation-recommendation.test.ts`
   (parser di elenco, documento e bozza; copertura e sei lingue dei testi).
 
