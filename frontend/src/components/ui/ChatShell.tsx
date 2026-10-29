@@ -1,6 +1,6 @@
 'use client';
 
-import type { ComponentProps, HTMLAttributes } from 'react';
+import type { ComponentProps, Dispatch, HTMLAttributes, ReactNode, SetStateAction } from 'react';
 import { Send, Square } from 'lucide-react';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,19 @@ export function ChatRow({ role, className, children, ...rest }: Omit<HTMLAttribu
                     {children}
                 </div>
             )}
+        </div>
+    );
+}
+
+// Azioni sotto la risposta (diagramma, ascolto, feedback): stessa riga, stessa
+// misura e stesso nome accessibile in tutte le chat. Va a capo invece di
+// allargare la pagina su mobile.
+export const chatActionButtonClass = 'h-[44px] w-[44px] shrink-0 p-0';
+
+export function ChatMessageActions({ label, className, children }: { label: string; className?: string; children: ReactNode }) {
+    return (
+        <div role="group" aria-label={label} data-voice-ignore className={cn('flex min-w-0 w-full flex-wrap items-center gap-1', className)}>
+            {children}
         </div>
     );
 }
@@ -83,5 +96,35 @@ export function ChatSendButton({ loading = false, disabled, onStop, sendLabel, s
         <button type="submit" disabled={disabled || loading} aria-label={sendLabel} className={cn(BUTTON, 'bg-indigo-600 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50')}>
             <Send className="h-5 w-5" />
         </button>
+    );
+}
+
+// Suggerimenti rapidi sopra il campo, chiusi per non spingere giù il
+// trascritto. Un suggerimento si aggiunge alla bozza invece di cancellarla; se
+// finisce con «…» è un inizio di frase, e il cursore resta lì per completarla.
+export function ChatSuggestions({ label, items, composerId, onInsert }: {
+    label: string;
+    items: string[];
+    composerId: string;
+    onInsert: Dispatch<SetStateAction<string>>;
+}) {
+    if (items.length === 0) return null;
+    return (
+        <details className="mb-2 text-xs text-slate-600">
+            <summary className="min-h-9 cursor-pointer py-2">{label}</summary>
+            <div className="flex flex-wrap gap-1.5 pb-2">
+                {items.map((text) => (
+                    <button key={text} type="button"
+                        onClick={() => {
+                            const draft = text.endsWith('…') ? text.slice(0, -1) + ' ' : text;
+                            onInsert(previous => previous.trim() ? `${previous}\n\n${draft}` : draft);
+                            window.requestAnimationFrame(() => document.getElementById(composerId)?.focus());
+                        }}
+                        className="min-h-9 max-w-full whitespace-normal break-words rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-left hover:bg-indigo-50">
+                        {text}
+                    </button>
+                ))}
+            </div>
+        </details>
     );
 }

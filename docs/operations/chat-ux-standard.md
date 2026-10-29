@@ -14,6 +14,11 @@ in `main`; ogni regola indica il componente che la fa rispettare.
 | `ChatRow` | `ChatShell.tsx` | larghezza unica della bolla: piena su telefono, 90% da `lg`; `system` centrato |
 | `ChatBubble` | `ChatBubble.tsx` | bolla `user` (indaco) / `assistant` (bianca, bordo) |
 | `ChatPending` | `ChatBubble.tsx` | attesa: spinner + testo, allineata a sinistra |
+| `ChatPendingIndicator` | `ChatBubble.tsx` | lo stesso spinner + testo dentro la risposta che deve ancora arrivare |
+| `ChatSuggestions` | `ChatShell.tsx` | elenco richiudibile di suggerimenti sopra il campo; il suggerimento si aggiunge alla bozza |
+| `ChatMessageActions` | `ChatShell.tsx` | riga «Azioni del messaggio» sotto la risposta finita (`role="group"`, `data-voice-ignore`, va a capo) |
+| `chatActionButtonClass` | `ChatShell.tsx` | pulsante azione 44×44 px nella riga azioni |
+| `MessageDiagramButton` | `MessageDiagramButton.tsx` | «Diagramma» di un messaggio; dopo il disegno il campo diventa correzione |
 | `ChatComposerInput` | `ChatShell.tsx` | campo auto-grow 1–6 righe; Invio invia, Maiusc+Invio va a capo |
 | `ChatSendButton` | `ChatShell.tsx` | Invia 44×44 px; con `onStop` diventa «Ferma» mentre la risposta arriva |
 | `ChatMarkdown` | `ChatMarkdown.tsx` | testo della risposta: Markdown, diagrammi, errore provider |
@@ -64,8 +69,12 @@ Esempio minimo (struttura delle tre chat):
 - Aree toccabili ≥ 44×44 px (la radice è 15 px: `h-11` da solo darebbe 41 px;
   usare `min-h-[44px] min-w-[44px]`).
 - L'attesa è **un solo** segnale (`ChatPending`), non un secondo indicatore.
-- Azioni extra del messaggio (es. Ascolta) stanno sotto la bolla, fuori dal
-  testo; marcatele `data-voice-ignore` perché il lettore non le legga.
+- Le azioni del messaggio (Diagramma, Ascolta, pollice su/giù dove il backend
+  li accetta) stanno sotto la bolla, fuori dal testo, in `ChatMessageActions`
+  (già `data-voice-ignore`, così il lettore non le legge), con
+  `chatActionButtonClass`.
+- I suggerimenti rapidi stanno sopra il campo, in `ChatSuggestions`, non come
+  pulsante nella riga del composer.
 
 ## 3. Markdown
 
@@ -152,8 +161,10 @@ guidata, la cui sessione può avere una lingua diversa dall'interfaccia.
 1. `ChatTranscript` + `ChatRow` + `ChatBubble`; `announcement` e `aria-label`.
 2. Risposte con `ChatMarkdown` (`errorMessage` = `guided.stepConnError`);
    persona in testo semplice.
-3. Attesa con `ChatPending`; Invia con `ChatSendButton` (+ `onStop` se
-   interrompibile).
+3. Attesa con `ChatPending` (`ChatPendingIndicator` nella risposta in
+   arrivo); Invia con `ChatSendButton` (+ `onStop` se interrompibile).
+   Azioni sotto la risposta finita con `ChatMessageActions`; suggerimenti con
+   `ChatSuggestions`.
 4. Campo con `ChatComposerInput` in un `<form>`, con `aria-label`.
 5. Opzioni in `ChatActionsPopover` con `ChatResponseSettings` (solo righe
    supportate dal backend) e, se c'è audio, i gruppi audio.
@@ -174,6 +185,8 @@ guidata, la cui sessione può avere una lingua diversa dall'interfaccia.
 
 - Bussola: niente «Ferma» (risposta non in streaming) e solo la riga Formato.
 - Assistente: nessuna riga Analisi (nessun backend per il ragionamento).
-- Dopo i merge delle altre slice della milestone #39 (composer, azioni,
-  diagrammi) il documento va riletto: suggerimenti sopra il campo, riga azioni
-  del messaggio e diagramma per messaggio sono definiti in quelle PR.
+- Diagramma: in Bussola e Assistente il disegno resta finché la pagina è
+  aperta; solo nella chat guidata è salvato con la sessione (#658, #661).
+- Pollice su/giù: solo chat guidata e Assistente (voto unico, «Grazie!»).
+- Altre chat (sandbox, piani, taccuini di prova, OpenCode): vedi
+  `docs/audits/2026-10-29-chat-ux-remaining-surfaces.md` (#659).

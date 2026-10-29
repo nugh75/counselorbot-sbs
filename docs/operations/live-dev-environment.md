@@ -19,6 +19,16 @@ nell'Assistente, microfono e TTS finti). Arresto: Ctrl+C nel terminale del runne
 Da SSH: `ssh -N -L 3173:127.0.0.1:3173 <utente>@<server>`, URL
 `http://localhost:3173`.
 
+### Diagrammi dei messaggi (#661)
+
+`bash scripts/dev-diagram-tests.sh` controlla la porta e avvia Next con hot
+reload su `127.0.0.1:3181`, backend inutilizzabile `127.0.0.1:9`. Da
+`frontend/`: `ARTIFACTS_BASE_URL=http://127.0.0.1:3181 node --test
+--test-name-pattern=diagram tests/conversation-artifacts.test.mjs` (diagramma,
+correzione, ripristino; API sintetiche, nessun modello). Arresto: Ctrl+C.
+Da SSH: `ssh -N -L 3181:127.0.0.1:3181 <utente>@<server>`, URL
+`http://localhost:3181`.
+
 ### Attività in corso e conferma cestino (#608, #609)
 
 `bash scripts/dev-active-actions-tests.sh` controlla la porta e avvia Next con
