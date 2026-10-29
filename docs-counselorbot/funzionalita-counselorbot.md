@@ -1713,8 +1713,15 @@ conversations, private workspaces and unshared goals are never shown. Each view 
 **Guidance recommendation (consiglio orientativo).** The **Guidance recommendation**
 (CounselorBot: «Consiglio orientativo») tab on `/docente/classi/{id}` lets the authorised
 class teachers (owner, co-teachers, administrators) write ONE internal document per
-student for the class council: a working evaluation of attitudes, observed method,
-concrete notes and the orientation for the coming year. The document never reaches the
+student for the class council. It explains several possible school pathways and
+connects each to the student's documented strengths, interests and attitudes,
+using open language such as “you could consider” and “you could also explore”.
+It never prescribes a school or a single programme, even with sufficient evidence,
+and does not rank the alternatives. Each possibility explains what is studied and
+how the student's resources could be useful there. If the available information
+is insufficient, the draft says so explicitly and identifies what to explore
+further; it must not invent links to fill out the alternatives.
+The document never reaches the
 student, never enters the read-only class-council link and never enters any student page;
 the only output is the PDF a teacher downloads explicitly («Scarica PDF»). The draft
 button asks the model for a proposal built ONLY from data the teacher already sees in
@@ -1723,7 +1730,12 @@ operational-plan progress, assignments with shared submissions and teacher feedb
 and class-shared goals (the personal notebook and results from other classes are excluded).
 The privacy gateway identifies the student as the data subject and the teacher as the
 requesting actor, with the orientation purpose; strict policy can block generation.
-The prompt forbids invented data and family references; the proposal is shown for review, «Use draft» copies it into the editable
+If there are no descriptive questionnaire summaries, teacher feedback or shared
+goals, the draft button returns an insufficient-information statement without
+calling the model: raw scores and activity progress alone do not support these
+connections. With descriptive material, the model still assesses whether it
+supports more than one possibility; a single supported link must not become a
+prescribed choice. The prompt forbids invented data and family references; the proposal is shown for review, «Use draft» copies it into the editable
 text, and saving remains an explicit action that the teacher flags as born from an AI
 draft. Saves take the current revision: a stale save answers 409 so the teacher can reload; switching students warns about
 unsaved edits or proposals, including before leaving the tab. Documents for former members remain readable and downloadable but cannot

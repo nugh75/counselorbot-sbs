@@ -1,11 +1,12 @@
 # Consiglio orientativo — documento interno della classe
 
 Funzione per la docenza: nel tab **Consiglio orientativo** di `/docente/classi/{id}`
-il consiglio di classe redige un documento per studente che indica quale scuola
-e indirizzo di studi consigliare, motivando la scelta con gli elementi raccolti
-su interessi, attitudini e percorso scolastico. Se le informazioni sono
-insufficienti, il documento deve dichiararlo e specificare cosa approfondire
-prima di formulare il consiglio. Lo studente
+il consiglio di classe redige un documento per studente che spiega più possibilità
+scolastiche da esplorare e collega ciascun percorso ai punti di forza, agli
+interessi e alle attitudini documentati. Non prescrive mai una scuola o un
+indirizzo univoco, neppure con dati sufficienti: usa formule come «potresti
+valutare» o «potresti esplorare». Se le informazioni sono insufficienti, il
+documento deve dichiararlo e specificare cosa approfondire. Lo studente
 **non** lo vede; non entra nel link read-only `/consiglio/{token}` (#422).
 L'unica uscita del testo è il PDF che un docente autorizzato scarica a mano.
 
@@ -58,18 +59,24 @@ Tutte sotto `/api/teacher/groups/{group_id}/orientation-recommendations`:
   In modalità strict la policy può bloccare la generazione. Il prompt di
   sistema vieta dati inventati e riferimenti alla famiglia; output in italiano,
   entro ~350 parole.
-- Il prompt richiede una scuola e un indirizzo espliciti, con motivazione basata
-  sulle evidenze disponibili; non inventa istituti specifici o offerte locali.
+- Il prompt richiede almeno due possibilità alternative, spiegando cosa si
+  studia e collegando ciascuna ai punti di forza o agli interessi documentati
+  dello studente, senza graduatorie o un percorso presentato come migliore.
+  La scelta resta dello studente. Non inventa istituti specifici, offerte locali
+  o requisiti di iscrizione verificati. Se gli elementi permettono di motivare
+  un solo collegamento, dichiara il limite e richiede approfondimenti senza
+  trasformarlo in una scelta univoca o inventare altre possibilità.
   Con dati pochi, parziali o contraddittori impone la dichiarazione «Le informazioni
-  disponibili sono insufficienti per consigliare una scuola o un indirizzo di
-  studi», l'indicazione degli elementi mancanti e dei prossimi passi. L'assenza
+  disponibili sono insufficienti per collegare in modo attendibile i punti di
+  forza e gli interessi a possibili percorsi scolastici», l'indicazione degli
+  elementi mancanti e dei prossimi passi. L'assenza
   di informazioni non va interpretata come difficoltà o scarso rendimento.
 - In assenza di sintesi dei questionari, feedback dei docenti e obiettivi
   condivisi con contenuto descrittivo, la risposta è una bozza predefinita di
   informazioni insufficienti: niente chiamata AI, anche se sono presenti
   punteggi grezzi o stati di avanzamento delle attività. La presenza di materiale
   descrittivo abilita la valutazione del modello, senza attestare che basti per
-  scegliere una scuola. La docenza verifica sempre la proposta.
+  collegare lo studente a più percorsi possibili. La docenza verifica sempre la proposta.
 - La bozza entra nel documento solo con «Usa bozza» nella scheda, che copia il
   testo nell'editor in revisione del docente; il salvataggio resta esplicito.
 
@@ -90,7 +97,8 @@ Tutte sotto `/api/teacher/groups/{group_id}/orientation-recommendations`:
   vuoto, primo salvataggio, revisione 409, transizioni di stato, 422,
   visibilità, bozza mai salvata con 502, PDF con `%PDF`, dichiarazione di
   informazioni insufficienti senza AI con dati assenti o soli punteggi,
-  richiesta esplicita di scuola/indirizzo e valutazione dei limiti nel prompt.
+  pluralità dei percorsi come possibilità, collegamenti con punti di forza e
+  interessi, divieto di scelta univoca e valutazione dei limiti nel prompt.
 - Frontend lib: `frontend/src/lib/orientation-recommendation.test.ts`
   (parser di elenco, documento e bozza; copertura e sei lingue dei testi).
 
