@@ -15,9 +15,9 @@ import { useUserAccess } from '@/lib/use-user-access';
 import { isToolAllowed } from '@/lib/user-access';
 import { fetchAssistantQuestions, type AssistantQuestionsByTopic } from '@/lib/assistant-questions';
 import { fetchCounselors, getSelectedCounselorId } from '@/lib/counselor';
-import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
+import { ChatResponseSettings } from '@/components/ui/ChatResponseSettings';
 import { useResponseFormat } from '@/lib/use-response-format';
-import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
+import type { ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
@@ -655,14 +655,19 @@ export default function AssistentePage() {
                                 className="w-full flex-none border-0 bg-transparent px-2 py-1.5 focus:ring-0"
                             />
                             <div className="flex flex-wrap items-center gap-2 pt-1">
-                                <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <>
+                                <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <div className="divide-y divide-slate-200">
+                                    <ChatResponseSettings
+                                        format={{ value: responseFormat, onChange: setResponseFormat, disabled: loading }}
+                                        length={{ value: responseLength, onChange: setResponseLength, disabled: loading }} />
+                                    <div className="space-y-1 py-2">
                                     <div ref={setVoiceOptionsContainer} />
                                     {!voiceMode && <button type="button" disabled={loading || audioBusy} className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50" onClick={() => { close(); setVoiceMode(true); }}>
                                         <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
                                     </button>}
                                     {!voiceMode && <AudioSendOption />}
                                     <AudioLanguageOption />
-                                </>}</ChatActionsPopover>
+                                    </div>
+                                </div>}</ChatActionsPopover>
                                 {!voiceMode && <button
                                     type="button"
                                     onClick={prepareQuestion}
@@ -675,12 +680,6 @@ export default function AssistentePage() {
                                 </button>}
                                 {/* In conversazione a voce il pulsante Parla occupa la riga. */}
                                 <div className={`ml-auto flex flex-wrap items-center justify-end gap-2${voiceMode ? ' min-w-0 flex-1' : ''}`}>
-                                    <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={loading} />
-                                    <ResponseLengthSelector
-                                        value={responseLength}
-                                        onChange={setResponseLength}
-                                        disabled={loading}
-                                    />
                                     <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}
                                         onSend={(text, onPartial) => send(text, onPartial)}
                                         voiceMode={voiceMode} onExitVoice={() => setVoiceMode(false)} counselorId={counselorId}

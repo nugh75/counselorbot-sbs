@@ -451,6 +451,13 @@ Assistente e chat guidata, diventa «Ferma la risposta». Le tre chat hanno lo
 stesso audio (#655): microfono accanto a Invia, conversazione vocale e opzioni
 audio nel menu «Opzioni della conversazione», «Ascolta» sotto ogni risposta
 finita; le altre opzioni e azioni di ciascuna chat non cambiano.
+Le impostazioni della risposta stanno sempre nello stesso posto (#657): nel menu
+«Opzioni della conversazione», con le righe della chat guidata nello stesso
+ordine e con le stesse etichette — **Formato** (discorsivo, per punti),
+**Lunghezza** (breve, media, lunga) e **Analisi** (livello di ragionamento) —
+prima delle opzioni audio. Ogni chat mostra solo quelle che può applicare: la
+chat guidata tutte e tre, l’Assistente formato e lunghezza, la Bussola il
+formato. Nella riga di scrittura restano solo opzioni, campo, microfono e Invia.
 Anche il testo delle risposte è reso allo stesso modo nelle tre chat (#654):
 stesso aspetto per titoli, elenchi, grassetto, collegamenti, codice e citazioni;
 le tabelle scorrono di lato dentro la loro cornice (raggiungibile anche da
@@ -865,7 +872,7 @@ i comandi indietro e avanti sempre visibili e raggiungibili: indietro è attivo 
 esiste un passo precedente (disattivato al primo passo), avanti passa alla fase
 successiva (disattivato all'ultima fase e prima del patto iniziale, quando previsto); ripeti permette di ricaricare il passo
 corrente (tranne al congedo). Il menu a tre punti offre pannello, **formato** della
-risposta (conversazione, elenco, tabella), **lunghezza** (breve, media, lunga), voce,
+risposta (discorsivo, per punti), **lunghezza** (breve, media, lunga), voce,
 lingua e Congela sessione. Formato e lunghezza sono scelte indipendenti. Con
 **Ragionamento → Nessuno** la chat sostituisce l’invito al pensiero con una
 direttiva esplicita di non produrre ragionamento e non mostra eventuali blocchi
