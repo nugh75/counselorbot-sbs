@@ -34,8 +34,8 @@ import { canUseTeacherAssistant } from '@/lib/roles';
 import { getIdentity } from '@/lib/auth';
 import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
 import { toast } from '@/components/ui/Toast';
-import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
-import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
+import { ChatBubble, ChatPending, ChatPendingIndicator } from '@/components/ui/ChatBubble';
+import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
@@ -2057,17 +2057,14 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                                         />
                                                     </div>
                                                 ) : !msg.reasoning ? (
-                                                    <span className="flex items-center gap-2 text-slate-500 italic">
-                                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                        {t('guided.thinking')}
-                                                    </span>
+                                                    <ChatPendingIndicator label={t('guided.thinking')} />
                                                 ) : null}
                                             </div>
                                         ) : msg.content}
                                     </ChatBubble>
 
                                     {msg.role === 'assistant' && msg.content.trim() && (
-                                        <div role="group" aria-label={chatLayoutLabel(activeLocale, 'messageActions')} className="flex min-w-0 w-full flex-wrap items-center gap-1">
+                                        <ChatMessageActions label={chatLayoutLabel(activeLocale, 'messageActions')}>
                                             <MessageDiagramButton
                                                 text={diagramContentForSpeech(msg.content) || msg.content}
                                                 locale={activeLocale}
@@ -2095,7 +2092,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                                     </>}
                                                 </>}
                                             />
-                                        </div>
+                                        </ChatMessageActions>
                                     )}
                                 </>
                             )}
