@@ -477,6 +477,16 @@ cancellarlo. Nell’Assistente l’elenco mostra le domande dell’argomento sce
 e prende il posto del vecchio pulsante «?», che ne proponeva una alla volta.
 La Bussola non ha «Ferma la risposta» perché riceve la risposta intera, non
 in streaming.
+Attesa e azioni sono uguali nelle tre chat (#658): «sto pensando» è lo stesso
+spinner con testo, sia in coda alla conversazione sia dentro la risposta che
+deve ancora arrivare. Sotto ogni risposta finita, fuori dalla bolla, c’è la riga
+«Azioni del messaggio» con pulsanti da 44 px che vanno a capo su telefono:
+**Diagramma** (in Bussola e Assistente il disegno resta finché la pagina è
+aperta; solo nella chat guidata viene salvato con la sessione), **Ascolta** e,
+quando la risposta lo consente (chat guidata e Assistente), **pollice su/giù**
+con lo stato premuto indicato; nell’Assistente il voto è unico e mostra
+«Grazie!». Le fonti dell’Assistente restano in fondo alla risposta e aprono
+l’anteprima del documento.
 
 - **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti.
   Ascolta ciò che lo studente vuole affrontare e consiglia da quale strumento

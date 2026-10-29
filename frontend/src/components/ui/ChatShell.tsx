@@ -1,6 +1,6 @@
 'use client';
 
-import type { ComponentProps, Dispatch, HTMLAttributes, SetStateAction } from 'react';
+import type { ComponentProps, Dispatch, HTMLAttributes, ReactNode, SetStateAction } from 'react';
 import { Send, Square } from 'lucide-react';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,19 @@ export function ChatRow({ role, className, children, ...rest }: Omit<HTMLAttribu
                     {children}
                 </div>
             )}
+        </div>
+    );
+}
+
+// Azioni sotto la risposta (diagramma, ascolto, feedback): stessa riga, stessa
+// misura e stesso nome accessibile in tutte le chat. Va a capo invece di
+// allargare la pagina su mobile.
+export const chatActionButtonClass = 'h-[44px] w-[44px] shrink-0 p-0';
+
+export function ChatMessageActions({ label, className, children }: { label: string; className?: string; children: ReactNode }) {
+    return (
+        <div role="group" aria-label={label} data-voice-ignore className={cn('flex min-w-0 w-full flex-wrap items-center gap-1', className)}>
+            {children}
         </div>
     );
 }

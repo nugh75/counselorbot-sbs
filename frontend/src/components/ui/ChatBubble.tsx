@@ -30,13 +30,23 @@ export function ChatBubble({
     return <div className={cn(BASE, ROLE[role], className)}>{children}</div>;
 }
 
+// Spinner e testo dell'attesa: lo stesso segno sia nella pillola in coda sia
+// dentro una bolla dell'assistente ancora vuota.
+export function ChatPendingIndicator({ label }: { label: string }) {
+    return (
+        <span className="flex items-center gap-3">
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-indigo-600" aria-hidden="true" />
+            <span className="text-xs font-medium text-slate-500">{label}</span>
+        </span>
+    );
+}
+
 // Attesa della risposta, allineata a sinistra come una bolla dell'assistente.
 export function ChatPending({ label }: { label: string }) {
     return (
         <div className="flex justify-start">
-            <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-indigo-600" />
-                <span className="text-xs font-medium text-slate-500">{label}</span>
+            <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                <ChatPendingIndicator label={label} />
             </div>
         </div>
     );
