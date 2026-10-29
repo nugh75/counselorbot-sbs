@@ -104,6 +104,7 @@ interface GuidedChatInterfaceProps {
     frozenSnapshot?: FrozenSessionDetail | null;
     planOrigin?: { pathId: number; stepId: number } | null;
     registerAttemptSave?: (save: (() => Promise<void>) | null) => void;
+    onSaveState?: (state: 'saving' | 'saved' | 'error') => void;
     initialResponseLength?: ResponseLength;
     initialReasoningEffort?: ReasoningEffort;
     // Formato scelto nella pagina Impostazioni: lo porta la chat come valore di
@@ -428,7 +429,7 @@ const markdownComponents: Components = {
     strong: (props) => <strong className="font-semibold text-slate-900" {...omitMarkdownNode(props)} />,
 };
 
-function GuidedMessageContent({ content, locale, errorMessage }: { content: string; locale: string; errorMessage: string }) {
+export function GuidedMessageContent({ content, locale, errorMessage }: { content: string; locale: string; errorMessage: string }) {
     return splitDiagramContent(content).map((segment, index) => (
         segment.kind === 'diagram' ? (
             <DiagramBlock key={`diagram-${index}`} spec={segment.spec} locale={locale} />
@@ -461,14 +462,16 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
 // suo per non portarsela dietro negli altri strumenti.
 const IDEA_PANEL_BOUNDS = { min: 360, max: 720, initial: 480 };
 
-export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, planOrigin, registerAttemptSave, initialResponseLength, initialReasoningEffort, initialResponseFormat, reasoningCapable = true, reasoningMandatory = false, preview = false }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, planOrigin, registerAttemptSave, onSaveState, initialResponseLength, initialReasoningEffort, initialResponseFormat, reasoningCapable = true, reasoningMandatory = false, preview = false }: GuidedChatInterfaceProps) {
     const { access } = useUserAccess();
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const { streamChat, ...continuation } = useChatContinuation();
     const pathChoiceAvailable = isEssentialInstrument(questionnaireType);
-    const [guidedPath, setGuidedPath] = useState<GuidedPath>(pathChoiceAvailable ? frozenSnapshot?.guided_path ?? 'complete' : 'complete');
-    const [pathStarted, setPathStarted] = useState(!pathChoiceAvailable || Boolean(frozenSnapshot?.session_id === sessionId));
+    const [guidedPath, setGuidedPath] = useState<GuidedPath>(() => pathChoiceAvailable
+        ? frozenSnapshot?.guided_path ?? (planOrigin && typeof window !== 'undefined'
+            && new URLSearchParams(window.location.search).get('guided_path') === 'essential' ? 'essential' : 'complete') : 'complete');
+    const [pathStarted, setPathStarted] = useState(!pathChoiceAvailable || Boolean(planOrigin) || Boolean(frozenSnapshot?.session_id === sessionId));
     const essential = pathChoiceAvailable && guidedPath === 'essential';
     const [responseFormat, setResponseFormat] = useState<ResponseFormat>(frozenSnapshot?.response_format ?? initialResponseFormat ?? 'standard');
     const [classAllowsFormat, setClassAllowsFormat] = useState(true);
@@ -1617,7 +1620,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     useEffect(() => {
         registerAttemptSave?.(async () => {
             if (isLoading) throw new Error('chat_busy');
-            await freezeSession(buildSnapshot());
+            if (completedRef.current) return;
+            onSaveState?.('saving');
+            try { await freezeSession(buildSnapshot()); onSaveState?.('saved'); }
+            catch (error) { onSaveState?.('error'); throw error; }
         });
         return () => registerAttemptSave?.(null);
     });
@@ -1630,12 +1636,15 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         pendingSnapshotRef.current = null;
         savedSignatureRef.current = pending.signature;
         try {
+            onSaveState?.('saving');
             await freezeSession(pending.snapshot, options);
+            onSaveState?.('saved');
         } catch {
             // Silenzioso: la sessione continua e il turno successivo riprova.
             savedSignatureRef.current = '';
+            onSaveState?.('error');
         }
-    }, []);
+    }, [onSaveState]);
 
     // Congela la sessione: salva lo stato visibile lato server e lascia che il
     // chiamante chiuda la chat. Lo studente la riprende da qualsiasi dispositivo.
@@ -1667,7 +1676,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         if (preview) return;
         if (!shouldAutoFreeze({
             sessionId,
-            messageCount: messages.length,
+            messageCount: planOrigin && currentPhase ? Math.max(2, messages.length) : messages.length,
             isLoading,
             completed: completedRef.current,
         })) return;
@@ -1679,7 +1688,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         // buildSnapshot legge lo stato corrente a ogni render: le dipendenze qui
         // sono quello che rende lo snapshot diverso dal precedente.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, notebookSignature, docenzaGroupIds, navigation, input, isLoading, sessionId, preview]);
+    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, notebookSignature, docenzaGroupIds, navigation, input, isLoading, sessionId, preview, planOrigin?.pathId, planOrigin?.stepId]);
 
     // Uscita dallo strumento con un turno ancora in attesa: `pagehide` copre tab
     // chiusa, ricarica e link che lasciano la pagina (il logo dell'header è un

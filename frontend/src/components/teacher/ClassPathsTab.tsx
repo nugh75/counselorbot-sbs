@@ -13,7 +13,7 @@ import { resolveStepPresentation } from '@/lib/class-path-presentation';
 import { StepPresentationFields } from './StepPresentationFields';
 import { plannedDayLocation, plannedDayText } from '@/lib/class-path-schedule';
 import { resultsChatText } from '@/lib/i18n-results-chats';
-import { pathStepKey, resultsSourcePayload } from '@/lib/results-deep-dive';
+import { deepDiveSources, pathStepKey, resultsSourcePayload } from '@/lib/results-deep-dive';
 import { assignmentSaveError, assignmentStepInput, parsePathAssignments, selectablePathAssignments } from '@/lib/path-assignments';
 import { pathAssignmentText } from '@/lib/i18n-path-assignments';
 import type { AssignmentStepSummary } from '@/lib/class-paths';
@@ -137,6 +137,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     };
     // Link a saved, new or pending questionnaire; resolve new IDs atomically on save.
     const [selectedAnalysisKey, setSelectedAnalysisKey] = useState('');
+    const [selectedResultsKey, setSelectedResultsKey] = useState('');
     // TF6: a whole-class goal assignment of this class, existing or created here.
     const p = (key: Parameters<typeof pathAssignmentText>[1]) => pathAssignmentText(lang, key);
     const [pathAssignments, setPathAssignments] = useState<AssignmentStepSummary[]>([]);
@@ -269,14 +270,19 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         setKind(null);
         setReplacing(null);
     };
-    const chatReady = Boolean(selectedAnalysisKey || selectedChatKey);
+    const analysisSources = deepDiveSources(steps);
+    const chatReady = Boolean(analysisSources.some(step => pathStepKey(step) === selectedResultsKey) || selectedAnalysisKey || selectedChatKey);
     const addChat = () => {
-        const chat: ClassPathStep = selectedAnalysisKey
+        const source = analysisSources.find(step => pathStepKey(step) === selectedResultsKey);
+        const chat: ClassPathStep = source
+            ? {position: 0, step_type: 'guided_results_chat', tool_key: '',
+                ...(source.id ? {results_step_id: source.id} : {results_key: selectedResultsKey}), auto_detect: true, can_self_mark: false}
+            : selectedAnalysisKey
             ? {position: 0, step_type: 'guided_results_chat', tool_key: selectedAnalysisKey,
                 auto_detect: true, can_self_mark: false}
             : {position: 0, step_type: 'guided_chat', tool_key: selectedChatKey, auto_detect: true, can_self_mark: false};
         placeSteps([chat]);
-        setSelectedAnalysisKey(''); setSelectedChatKey(''); setNotice(null);
+        setSelectedResultsKey(''); setSelectedAnalysisKey(''); setSelectedChatKey(''); setNotice(null);
     };
 
     const dirty =
@@ -913,9 +919,19 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             </details>
                             </div>}
                             {kind === 'guided_chat' && <div className="space-y-3">
+                                <h4 className="text-sm font-semibold">{r('sourcePlan')}</h4>
+                                <label className="block text-sm">{a('deepDiveFrom')}<select value={selectedResultsKey}
+                                    onChange={event => {setSelectedResultsKey(event.target.value);if (event.target.value) {setSelectedAnalysisKey('');setSelectedChatKey('');}}}
+                                    className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                    <option value="">{r('chooseSourceStep')}</option>
+                                    {analysisSources.map(source => <option key={pathStepKey(source)} value={pathStepKey(source)}>
+                                        {`#${source.position} · ${source.title || source.target_summary?.title || source.pending_config?.instrument_code || source.target_summary?.instrument_code || ''}`}
+                                    </option>)}
+                                </select></label>
+                                <p className="text-sm text-slate-600">{r('planResultsHelp')}</p>
                                 <h4 className="text-sm font-semibold">{r('personalResults')}</h4>
                                 <label className="block text-sm">{r('analyzeQuestionnaire')}<select value={selectedAnalysisKey}
-                                    onChange={event => {setSelectedAnalysisKey(event.target.value);if (event.target.value) {setSelectedChatKey('');}}}
+                                    onChange={event => {setSelectedAnalysisKey(event.target.value);if (event.target.value) {setSelectedChatKey('');setSelectedResultsKey('');}}}
                                     className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     <option value="">{r('chooseQuestionnaire')}</option>
                                     {enabledTools.filter(tool => ADMINISTRATION_QUESTIONNAIRES.includes(tool.key)).map(tool => <option key={tool.key} value={tool.key}>{`${r('analyzeQuestionnaire')} · ${tool.key}`}</option>)}
@@ -923,7 +939,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 <p className="text-sm text-slate-600">{r('personalResultsHelp')}</p>
                                 <h4 className="text-sm font-semibold">{k('chatStandalone')}</h4>
                                 {chatKeys.length === 0 ? <p className="text-sm text-slate-600">{k('noChats')}</p> : (
-                                    <label className="block w-full text-sm sm:w-auto"><span className="sr-only">{k('chatStandalone')}</span><select value={selectedChatKey} onChange={event=>{setSelectedChatKey(event.target.value);if (event.target.value) {setSelectedAnalysisKey('');}}} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                    <label className="block w-full text-sm sm:w-auto"><span className="sr-only">{k('chatStandalone')}</span><select value={selectedChatKey} onChange={event=>{setSelectedChatKey(event.target.value);if (event.target.value) {setSelectedAnalysisKey('');setSelectedResultsKey('');}}} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                         <option value="">{k('chooseGuidedPath')}</option>
                                         {chatKeys.map(key => <option key={key} value={key}>{toolLabel(key, classSettings.tools, lang)}</option>)}
                                     </select></label>

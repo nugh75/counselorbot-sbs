@@ -8,7 +8,7 @@ the path revision; activation times and step identities survive reorder,
 archive and restore; unavailable steps carry an actionable reason.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import pytest
 from fastapi import FastAPI
@@ -78,7 +78,10 @@ def targets(client, group, goal):
     assignment = client.post("/teacher/assignments", json=dict(
         source_kind="goal", source_id=goal.id, group_id=group.id, request_id="request-155"))
     assert assignment.status_code == 201, assignment.text
-    topic = client.post(f"/groups/{group.id}/forum/topics", json={"title": "Discussion", "body": "Opening"})
+    # Distinctive private content cannot collide with public action keys such as
+    # openDiscussion when asserting that the plan does not serialize the topic.
+    topic = client.post(f"/groups/{group.id}/forum/topics", json={
+        "title": "Private discussion title 155", "body": "Private opening content 155"})
     assert topic.status_code == 201, topic.text
     return plan.json(), assignment.json(), topic.json()
 

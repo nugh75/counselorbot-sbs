@@ -171,6 +171,8 @@ async def delete_frozen_session(
     if not rows:
         raise HTTPException(status_code=404, detail="Sessione congelata non trovata")
     for row in rows:
+        from ..path_activity import remember_saved_chat_attempt
+        remember_saved_chat_attempt(db, current_user, row)
         db.delete(row)
     db.commit()
     return {"status": "deleted", "session_id": session_id}

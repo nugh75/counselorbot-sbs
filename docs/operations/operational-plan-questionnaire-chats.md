@@ -1,5 +1,10 @@
 # Analisi dei questionari nei piani operativi — #249
 
+Il contratto corrente di navigazione, compilazione e tentativi è in
+[plan-activity-flow.md](plan-activity-flow.md). Le sezioni datate sotto descrivono
+le implementazioni precedenti; i pulsanti nella chat e la ripresa a doppio clic
+sono sostituiti dal flusso diretto con stato dal server.
+
 ## Tentativi e stato (28 ottobre 2026)
 
 - «Inizia», «Riprendi» e «Rifai» distinguono un passo nuovo, una sessione

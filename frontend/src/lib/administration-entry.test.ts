@@ -169,7 +169,8 @@ test('every administration message is explicit in all six interface languages', 
     assert.equal(values.length,6,key);
     assert.ok(values.every(value=>value.trim().length>0),key);
   }
-  assert.match(administrationStepText('en','rule'),/confirmed import/);
+  assert.match(administrationStepText('en','rule'),/save the results/);
+  assert.match(administrationStepText('en','rule'),/own step in the plan/);
   assert.match(administrationStepText('it','loginHint'),/codice di accesso della classe/);
   assert.match(administrationStepText('en','loginHint'),/does not complete/);
 });

@@ -28,7 +28,7 @@ test('the old tool catalog step and page are gone', () => {
 
 test('activities and paths carry the tool catalog pieces', () => {
     const home = read('../components/home/ReturningHome.tsx');
-    assert.match(home, /resumeHref\(\{ session_id: pausedChat\.sessionId \}\)/);
+    assert.match(home, /resumeHref\(frozen\.find\(row => row\.session_id === pausedChat\.sessionId\)/);
     for (const key of ['selector.paused.title', 'selector.paused.resume', 'selector.paused.dismiss', 'selector.badge.pausedOn',
         'selector.suggested.title', 'selector.openStrategic', 'selector.externalCredentials', 'selector.upcoming.title',
         'selector.unavailable.title', 'selector.experimentalBadge']) {

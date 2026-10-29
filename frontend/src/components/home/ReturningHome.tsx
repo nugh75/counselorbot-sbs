@@ -62,10 +62,7 @@ export function ReturningHome({
     const [internalPaths, setInternalPaths] = useState<StudentClassPath[] | null>(paths ?? null);
 
     useEffect(() => {
-        if (paths !== undefined) {
-            setInternalPaths(paths);
-            return;
-        }
+        if (paths !== undefined) return;
         let alive = true;
         apiFetch('/api/user/paths')
             .then((res) => (res.ok ? res.json() : []))
@@ -94,7 +91,7 @@ export function ReturningHome({
         }
     };
 
-    const activePaths = internalPaths ?? paths ?? [];
+    const activePaths = useMemo(() => paths !== undefined ? paths ?? [] : internalPaths ?? [], [paths, internalPaths]);
     const currentPath = useMemo(() => selectCurrentClassPath(activePaths), [activePaths]);
 
     const activeTools = useMemo(() => {
@@ -181,7 +178,7 @@ export function ReturningHome({
                     </div>
                     {/* Riprendere ricarica la pagina: la home legge lo snapshot al mount. */}
                     <a
-                        href={resumeHref({ session_id: pausedChat.sessionId })}
+                        href={resumeHref(frozen.find(row => row.session_id === pausedChat.sessionId) ?? { session_id: pausedChat.sessionId })}
                         className="inline-flex min-h-[44px] shrink-0 items-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
                     >
                         {t('selector.paused.resume')}
@@ -368,7 +365,7 @@ export function ReturningHome({
                     <ResumeLoadError entries={resumeEntries} />
                     <div className="mt-3 space-y-2">
                         {frozen.map((row) => (
-                            <ResumeEntry key={row.session_id} target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
+                            <ResumeEntry key={row.session_id} deletable={!row.path_id} target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
                                 <a
                                     href={resumeHref(row)}
                                     className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"

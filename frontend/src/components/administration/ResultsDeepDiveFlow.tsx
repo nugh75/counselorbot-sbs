@@ -10,7 +10,7 @@ import {
   ResultsDeepDiveError, loadResultsDeepDiveOptions, startResultsDeepDive,
   type ResultsDeepDiveFailure, type ResultsDeepDiveOptions, type ResultsDeepDiveSession,
 } from "@/lib/results-deep-dive";
-import { deleteFrozenSession, getFrozenSession, FrozenSessionAccessError, type FrozenSessionDetail } from '@/lib/frozen-session';
+import { deleteFrozenSession, getFrozenSession, notifyFrozenSessionsChanged, FrozenSessionAccessError, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { getSelectedCounselorId } from "@/lib/counselor";
 import { GuidedChatInterface } from "@/components/qsa/GuidedChatInterface";
 import { PlanChatCompleted } from "@/components/administration/PlanChatCompleted";
@@ -18,8 +18,12 @@ import { SessionReport } from "@/components/qsa/SessionReport";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Callout } from "@/components/ui/Callout";
+import type { RegisterActivitySave } from '@/lib/path-activity';
 
-export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId: number }) {
+export function ResultsDeepDiveFlow({ pathId, stepId, registerSave, onExit, onCompleted, onSaveState, embedded = false }: {
+  pathId: number; stepId: number; registerSave?: RegisterActivitySave; onExit?: () => void; onCompleted?: () => void; embedded?: boolean;
+  onSaveState?: (state: 'saving' | 'saved' | 'error') => void;
+}) {
   const router = useRouter();
   const { lang, t } = useI18n();
   const l = (key: Parameters<typeof administrationStepText>[1]) => administrationStepText(lang, key);
@@ -49,14 +53,27 @@ export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId
         // Keep the source action available even when loading the saved chat fails.
         if (active && owner.current === (await getIdentity())?.username) setOptions(next);
         let selected = next.session;
+        const requested = new URLSearchParams(window.location.search).get('attempt');
+        if (requested && requested !== 'new') {
+          const historical = next.attempts.find(item => item.session_id === requested);
+          if (!historical) throw new ResultsDeepDiveError('error');
+          selected = historical;
+          next.completed = historical.completed;
+        }
         const key = `deep-dive-attempt:${identity.username}:${pathId}:${stepId}`;
-        if (active && selected && new URLSearchParams(window.location.search).get('attempt') === 'new') {
+        const requestedResult = Number(new URLSearchParams(window.location.search).get('result_id'));
+        const chosenResult = next.results.find(result => result.id === requestedResult);
+        const newResultId = selected?.result.id ?? chosenResult?.id ?? (next.results.length === 1 ? next.results[0].id : undefined);
+        if (active && requested === 'new' && next.ready && (!next.personal || newResultId)) {
           attemptId.current = sessionStorage.getItem(key) || crypto.randomUUID();
           sessionStorage.setItem(key, attemptId.current);
-          selected = await startResultsDeepDive(apiFetch, pathId, stepId, next.personal ? selected.result.id : undefined, attemptId.current);
+          selected = await startResultsDeepDive(apiFetch, pathId, stepId, next.personal ? newResultId : undefined, attemptId.current);
+          notifyFrozenSessionsChanged();
           sessionStorage.removeItem(key);
           attemptId.current = null;
-          window.history.replaceState(window.history.state, '', window.location.pathname);
+          const params = new URLSearchParams(window.location.search);
+          params.set('attempt', selected.session_id);
+          window.history.replaceState(window.history.state, '', `${window.location.pathname}?${params}`);
           next.session = selected;
           next.completed = false;
         } else if (selected && sessionStorage.getItem(key) === selected.session_id) {
@@ -64,15 +81,18 @@ export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId
         }
         // Entering from the plan is already the student's decision to start.
         // Only ask for a choice when several personal results are available.
-        if (active && !selected && next.ready && (!next.personal || next.results.length === 1)) {
+        if (active && !selected && next.ready && (!next.personal || next.results.length === 1 || chosenResult)) {
           if (owner.current !== (await getIdentity())?.username) throw new ResultsDeepDiveError('error');
           if (!active) return;
           selected = await startResultsDeepDive(apiFetch, pathId, stepId,
-            next.personal ? next.results[0].id : undefined);
+            next.personal ? chosenResult?.id ?? next.results[0].id : undefined);
+          notifyFrozenSessionsChanged();
           next.session = selected;
           next.completed = false;
         }
         const frozen = selected ? await getFrozenSession(selected.session_id) : null;
+        const selectedMetadata = next.attempts.find(item => item.session_id === selected?.session_id);
+        if (selectedMetadata?.has_turns && !next.completed && !frozen) throw new ResultsDeepDiveError('error');
         if (frozen && (frozen.session_id !== selected?.session_id || frozen.questionnaire_type !== selected.result.questionnaire_type)) throw new ResultsDeepDiveError('error');
         if (active && owner.current === (await getIdentity())?.username) {
           setOptions(next); setSnapshot(frozen); setSession(selected);
@@ -88,11 +108,24 @@ export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId
     try {
       if (owner.current !== (await getIdentity())?.username) throw new ResultsDeepDiveError('error');
       const selected = options.personal ? Number(resultId) : undefined;
-      const started = await startResultsDeepDive(apiFetch, pathId, stepId, selected);
+      const isNew = new URLSearchParams(window.location.search).get('attempt') === 'new';
+      const key = `deep-dive-attempt:${owner.current}:${pathId}:${stepId}`;
+      if (isNew) {
+        attemptId.current = sessionStorage.getItem(key) || crypto.randomUUID();
+        sessionStorage.setItem(key, attemptId.current);
+      }
+      const started = await startResultsDeepDive(apiFetch, pathId, stepId, selected, isNew ? attemptId.current! : undefined);
+      notifyFrozenSessionsChanged();
       const frozen = await getFrozenSession(started.session_id);
+      if (!frozen && options.attempts.some(item => item.session_id === started.session_id && item.has_turns && !item.completed)) throw new ResultsDeepDiveError('error');
       if (frozen && (frozen.session_id !== started.session_id || frozen.questionnaire_type !== started.result.questionnaire_type)) throw new ResultsDeepDiveError('error');
       if (owner.current === (await getIdentity())?.username) {setSnapshot(frozen);setSession(started);setCompleted(false);setOptions({...options, completed: false, session: started,
         attempts: options.attempts});}
+      if (isNew) {
+        const params = new URLSearchParams(window.location.search); params.set('attempt', started.session_id);
+        window.history.replaceState(window.history.state, '', `${window.location.pathname}?${params}`);
+        sessionStorage.removeItem(key); attemptId.current = null;
+      }
     } catch (error) {
       setFailure(error instanceof FrozenSessionAccessError && error.detail === 'qpcc_legacy_profile' ? 'legacy'
         : error instanceof ResultsDeepDiveError ? error.reason : 'error');
@@ -106,18 +139,19 @@ export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId
         : item.resumable ? <Link href={`/?frozen=${encodeURIComponent(item.session_id)}&from=plan`}>{r('resumeChat')}</Link>
         : <p>{r('noSavedAttempt')}</p>}
     </div>)}</div></details>;
-  if (session && (completed || (options?.completed && !snapshot))) return <div className="space-y-4"><PlanChatCompleted sessionId={session.session_id} questionnaireType={session.result.questionnaire_type} />{history}</div>;
+  if (session && (completed || options?.completed)) return <div className="space-y-4"><PlanChatCompleted sessionId={session.session_id} questionnaireType={session.result.questionnaire_type} embedded={embedded} />{!embedded && history}</div>;
   if (session) return <div className="space-y-4"><GuidedChatInterface
     key={session.session_id}
     scores={session.result.scores} questionnaireType={session.result.questionnaire_type}
     sessionId={session.session_id} counselorId={snapshot?.counselor_id ?? getSelectedCounselorId()} locale={snapshot?.locale || lang}
     frozenSnapshot={snapshot}
     planOrigin={{pathId, stepId}}
-    onFrozen={() => router.push('/profilo/piani-operativi')}
-    onComplete={() => { setCompleted(true); void deleteFrozenSession(session.session_id).catch(() => {}); }} />{history}</div>;
+    registerAttemptSave={registerSave}
+    onSaveState={onSaveState}
+    onFrozen={() => onExit ? onExit() : router.push('/profilo/piani-operativi')}
+    onComplete={() => { setCompleted(true); onCompleted?.(); notifyFrozenSessionsChanged(); void deleteFrozenSession(session.session_id).catch(() => {}); }} />{!embedded && history}</div>;
   return <div className="space-y-4">
-    <Link href="/profilo/piani-operativi">{l('back')}</Link>
-    <h1 className="text-xl font-semibold">{l('deepDive')}</h1>
+    {!embedded && <><Link href="/profilo/piani-operativi">{l('back')}</Link><h1 className="text-xl font-semibold">{l('deepDive')}</h1></>}
     {loading && <p role="status">{r('loading')}</p>}
     {failure === 'incomplete' && <Callout variant="warning">{r('missingPlan')}</Callout>}
     {(failure === 'legacy' || options?.legacy_profile) && <Callout variant="warning">{t('q.QPCC.legacyProfile')}</Callout>}
@@ -127,7 +161,7 @@ export function ResultsDeepDiveFlow({ pathId, stepId }: { pathId: number; stepId
     </Link>}
     {failure && failure !== 'incomplete' && failure !== 'legacy' && <Callout variant="danger">{l('error')}{' '}
       <Button variant="secondary" onClick={() => setReload(value => value + 1)}>{l('retry')}</Button></Callout>}
-    {!loading && options && <Card className="space-y-3 p-4">
+    {!loading && options && !failure && <Card className="space-y-3 p-4">
       <p>{r('intro')}</p>
       {!options.ready ? <>
         <Callout variant="warning">{r(options.personal ? 'missingPersonal' : 'missingPlan')}</Callout>

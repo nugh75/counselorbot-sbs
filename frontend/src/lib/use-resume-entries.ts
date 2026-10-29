@@ -11,6 +11,10 @@ import { listFrozenSessions, subscribeToFrozenSessions, type FrozenSessionSummar
 import { hasPqblProgress, subscribeToPqblProgress } from '@/lib/pqbl-progress';
 import { allowedResumeEntries } from '@/lib/resume-access';
 import { useUserAccess } from '@/lib/use-user-access';
+import { apiFetch } from '@/lib/auth';
+import { parseStudentClassPaths } from '@/lib/class-paths';
+import { mergePlanResumes } from '@/lib/path-resume';
+import { isClassContentHidden } from '@/lib/user-access';
 
 export interface ResumeEntries {
     frozen: FrozenSessionSummary[];
@@ -38,7 +42,8 @@ export function useResumeEntries(enabled = true): ResumeEntries {
         () => (hasPqblProgress() ? '1' : null),
         () => null,
     ) !== null;
-    const [frozen, setFrozen] = useState<FrozenSessionSummary[]>([]);
+    const [saved, setSaved] = useState(() => mergePlanResumes([], null));
+    const frozen = saved.rows;
     const [error, setError] = useState(false);
     const [loading, setLoading] = useState(true);
     const [attempt, setAttempt] = useState(0);
@@ -52,32 +57,38 @@ export function useResumeEntries(enabled = true): ResumeEntries {
         const load = () => {
             const current = ++version;
             setLoading(true);
-            listFrozenSessions()
-                .then((rows) => {
+            Promise.allSettled([listFrozenSessions(), apiFetch('/api/user/paths').then(async response => {
+                if (!response.ok) throw new Error('plan resume');
+                return parseStudentClassPaths(await response.json());
+            })])
+                .then(([snapshots, plans]) => {
                     if (!alive || current !== version) return;
-                    // Due freeze concorrenti (uvicorn multi-worker) possono inserire due
-                    // righe per lo stesso session_id prima che il collasso lato server le
-                    // veda: dedup qui, tenendo la prima (ordine updated_at decrescente).
-                    const seen = new Set<string>();
-                    const deduped = rows.filter((row) => {
-                        if (seen.has(row.session_id)) return false;
-                        seen.add(row.session_id);
-                        return true;
-                    });
-                    setFrozen(deduped);
-                    setError(false);
+                    setSaved(mergePlanResumes(snapshots.status === 'fulfilled' ? snapshots.value : [],
+                        plans.status === 'fulfilled' ? plans.value : null));
+                    setError(snapshots.status === 'rejected' || plans.status === 'rejected');
                 })
                 .catch(() => { if (alive && current === version) setError(true); })
                 .finally(() => { if (alive && current === version) setLoading(false); });
         };
         load();
         const unsubscribe = subscribeToFrozenSessions(load);
-        return () => { alive = false; unsubscribe(); };
+        const visible = () => { if (document.visibilityState === 'visible') load(); };
+        window.addEventListener('focus', visible);
+        window.addEventListener('pageshow', visible);
+        document.addEventListener('visibilitychange', visible);
+        return () => {
+            alive = false; unsubscribe();
+            window.removeEventListener('focus', visible);
+            window.removeEventListener('pageshow', visible);
+            document.removeEventListener('visibilitychange', visible);
+        };
     }, [attempt, enabled]);
 
     const allowed = useMemo(
-        () => allowedResumeEntries(access, { frozen, localResume, pqbl }),
-        [access, frozen, localResume, pqbl],
+        () => allowedResumeEntries(access, { frozen, pqbl,
+            localResume: localResume && !saved.completed.has(localResume.sessionId)
+                && !(isClassContentHidden(access) && saved.planSessions.has(localResume.sessionId)) ? localResume : null }),
+        [access, frozen, localResume, pqbl, saved],
     );
 
     return { ...allowed, error, loading, retry };
@@ -85,7 +96,8 @@ export function useResumeEntries(enabled = true): ResumeEntries {
 
 // Riprendere ricarica la pagina: la home legge lo snapshot dai query param al
 // mount, una navigazione client-side non lo rileggerebbe.
-export function resumeHref(entry: { session_id: string }): string {
+export function resumeHref(entry: { session_id: string; path_id?: number | null; path_step_id?: number | null }): string {
+    if (entry.path_id && entry.path_step_id) return `/profilo/piani-operativi/${entry.path_id}/${entry.path_step_id}?attempt=${encodeURIComponent(entry.session_id)}`;
     return `/?frozen=${encodeURIComponent(entry.session_id)}`;
 }
 

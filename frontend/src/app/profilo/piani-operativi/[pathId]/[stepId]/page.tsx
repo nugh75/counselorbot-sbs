@@ -1,4 +1,4 @@
-import { AdministrationStepFlow } from "@/components/administration/AdministrationStepFlow";
+import { PlanActivityFlow } from "@/components/profile/PlanActivityFlow";
 import { ClassContentGate } from "@/components/profile/ClassContentGate";
 export default async function AdministrationStepPage({
   params,
@@ -7,6 +7,6 @@ export default async function AdministrationStepPage({
 }) {
   const { pathId, stepId } = await params;
   return (
-    <ClassContentGate><AdministrationStepFlow pathId={Number(pathId)} stepId={Number(stepId)} /></ClassContentGate>
+    <ClassContentGate><PlanActivityFlow pathId={Number(pathId)} stepId={Number(stepId)} /></ClassContentGate>
   );
 }

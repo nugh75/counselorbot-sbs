@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { classPathText } from '@/lib/i18n-class-paths';
@@ -28,6 +28,19 @@ export function ClassPathHeroList({ paths, onReload, showAllLink = true, collaps
     const meetings = useStudentMeetings();
     const resume = useResumeEntries();
     const [drafts, setDrafts] = useState<Map<string, string>>(new Map());
+    const revealedStep = useRef<string | null>(null);
+    useEffect(() => {
+        const reveal = () => {
+            const target = window.location.hash.slice(1);
+            if (/^class-step-\d+$/.test(target) && revealedStep.current !== target) requestAnimationFrame(() => {
+                const element = document.getElementById(target);
+                if (element && revealedStep.current !== target) { revealedStep.current = target; element.scrollIntoView({block: 'center'}); }
+            });
+        };
+        reveal();
+        window.addEventListener('hashchange', reveal);
+        return () => window.removeEventListener('hashchange', reveal);
+    }, [paths]);
     useEffect(() => {
         let active = true;
         void getIdentity().then(identity => {

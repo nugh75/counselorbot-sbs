@@ -98,12 +98,9 @@ export function newTemplateStep(type: TemplateStepType): TemplateStep {
     return parseStep({step_type: type, ...(type === 'guided_results_chat' ? {tool_key: 'QSA'} : {})});
 }
 
-/** Editing a legacy template detaches analyses from other steps without losing
- * the questionnaire type. Applied plans and saved sessions are unaffected. */
+/** Independent navigation preserves the analysis's data source when editing. */
 export function independentTemplateSteps(steps: TemplateStep[]): TemplateStep[] {
-    return steps.map(step => step.step_type === 'guided_results_chat' && !step.tool_key
-        ? {...step, tool_key: steps[(step.results_position ?? 0) - 1]?.instrument_code || 'QSA', results_position: undefined}
-        : step);
+    return steps.map(step => ({...step}));
 }
 
 /** Moving or removing steps keeps every results chat on the same questionnaire step. */

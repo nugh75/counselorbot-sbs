@@ -109,7 +109,7 @@ export interface ResultsDeepDiveOptions {
   source_href: string;
   results: {id: number; submitted_at: string; locale: string}[];
   session: ResultsDeepDiveSession | null;
-  attempts: (ResultsDeepDiveSession & {completed: boolean; resumable: boolean})[];
+  attempts: (ResultsDeepDiveSession & {completed: boolean; resumable: boolean; has_turns?: boolean})[];
   /** The bound session already reached its final guided turn. */
   completed: boolean;
   legacy_profile?: boolean;

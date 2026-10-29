@@ -5,7 +5,7 @@ an explicit selection from the student's valid compilations. Retry and resume
 never silently switch the selected result or reuse an earlier chat's completion.
 """
 import uuid
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
@@ -35,7 +35,9 @@ def payload(binding, result, step):
 
 def bound_result(db, step, username):
     source = results_step(db, step)
-    evidence = next(administration_evidence(db, source, username), None) if source else None
+    # A new compilation should feed the next analysis, not the oldest result.
+    evidence = list(administration_evidence(db, source, username)) if source else []
+    evidence = evidence[-1] if evidence else None
     return db.get(models.QuestionnaireResult, evidence["result_id"]) if evidence else None
 
 
@@ -82,7 +84,8 @@ def deep_dive_options(db, identity, path_id, step_id):
         if previous_result:
             attempts.append({**payload(previous, previous_result, step),
                              "completed": bool(deep_dive_evidence(db, step, username, session_id=previous.session_id)),
-                             "resumable": bool(db.query(models.FrozenSession.id).filter_by(username=username, session_id=previous.session_id).first())})
+                             "resumable": bool(db.query(models.FrozenSession.id).filter_by(username=username, session_id=previous.session_id).first()),
+                             "has_turns": bool(db.query(models.Log.id).filter_by(username=username, session_id=previous.session_id).first())})
     legacy_profile = False
     for previous in db.query(models.ClassPathDeepDiveSession).filter_by(step_id=step.id, username=username):
         previous_result = db.get(models.QuestionnaireResult, previous.result_id)
