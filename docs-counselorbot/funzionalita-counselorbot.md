@@ -465,6 +465,18 @@ tastiera), senza spostare la pagina; i grafici proposti dal modello compaiono
 come grafici e un errore temporaneo del fornitore come avviso, non come testo
 tecnico. L’HTML scritto nel messaggio non viene eseguito. I messaggi della
 persona restano testo semplice.
+Anche il composer ha la stessa forma nelle tre chat (#656): a sinistra il
+pulsante «Opzioni della conversazione», al centro il campo, a destra
+microfono e Invia, tutti quadrati da 44 px con gli stessi angoli;
+nella chat delle idee la graffetta degli allegati ha la stessa misura. Formato
+e lunghezza della risposta dell’Assistente stanno nelle opzioni, come nella
+chat guidata. I suggerimenti rapidi sono un elenco richiudibile sopra il campo
+(«Domande suggerite» in Bussola e Assistente, le domande della fase nella chat
+guidata): un suggerimento si aggiunge a ciò che si sta scrivendo, senza
+cancellarlo. Nell’Assistente l’elenco mostra le domande dell’argomento scelto
+e prende il posto del vecchio pulsante «?», che ne proponeva una alla volta.
+La Bussola non ha «Ferma la risposta» perché riceve la risposta intera, non
+in streaming.
 
 - **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti.
   Ascolta ciò che lo studente vuole affrontare e consiglia da quale strumento

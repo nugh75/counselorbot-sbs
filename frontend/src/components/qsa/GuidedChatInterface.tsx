@@ -35,7 +35,7 @@ import { getIdentity } from '@/lib/auth';
 import type { ReasoningEffort } from '@/components/ui/ReasoningSelector';
 import { toast } from '@/components/ui/Toast';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
-import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
+import { ChatComposerInput, ChatRow, ChatSendButton, ChatSuggestions, ChatTranscript } from '@/components/ui/ChatShell';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
@@ -2125,24 +2125,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             />
                         )}
                         <div className="p-3 sm:p-4">
-                        {!isLoading && steps.find(step => step.id === currentPhase)?.suggested_questions?.length ? (
-                            <details className="mb-2 text-xs text-slate-600">
-                                <summary className="min-h-9 cursor-pointer py-2">{t('guided.questionsLabel')}</summary>
-                                <div className="flex flex-wrap gap-1.5 pb-2">
-                                    {steps.find(step => step.id === currentPhase)!.suggested_questions!.map((text) => (
-                                        <button key={text} type="button"
-                                            onClick={() => {
-                                                const draft = text.endsWith('…') ? text.slice(0, -1) + ' ' : text;
-                                                setInput(previous => previous.trim() ? `${previous}\n\n${draft}` : draft);
-                                                window.requestAnimationFrame(() => document.getElementById('guided-composer')?.focus());
-                                            }}
-                                            className="min-h-9 max-w-full whitespace-normal break-words rounded-lg border border-slate-200 px-2.5 py-1 text-left hover:bg-indigo-50">
-                                            {text}
-                                        </button>
-                                    ))}
-                                </div>
-                            </details>
-                        ) : null}
+                        {!isLoading && <ChatSuggestions label={t('guided.questionsLabel')} items={steps.find(step => step.id === currentPhase)?.suggested_questions ?? []} composerId="guided-composer" onInsert={setInput} />}
                         {/* Risposte rapide dei percorsi a intervista. */}
                         {!isLoading && messages.length > 0 && quickReplies.length > 0 && (
                             <div className="mb-2 flex flex-wrap gap-1.5">
@@ -2209,11 +2192,11 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                             onClick={() => ideaReferenceInputRef.current?.click()}
                                             disabled={isLoading || isIdeaReferenceUploading || !sessionId}
                                             aria-label={t(ideaReference ? 'idea.reference.replace' : 'idea.reference.add')}
-                                            className="tap-icon rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {isIdeaReferenceUploading
-                                                ? <Loader2 className="h-4 w-4 animate-spin" />
-                                                : <Paperclip className="h-4 w-4" />}
+                                                ? <Loader2 className="h-5 w-5 animate-spin" />
+                                                : <Paperclip className="h-5 w-5" />}
                                         </button>
                                     </Tooltip>
                                 </>
