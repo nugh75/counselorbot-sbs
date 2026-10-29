@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { LucideIcon } from 'lucide-react';
-import { GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen, AlignLeft, Rows3 } from 'lucide-react';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { getIdentity, getViewAsAccount, loginHref, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
@@ -19,7 +19,10 @@ import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
 import { useResponseFormat } from '@/lib/use-response-format';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
-import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
+import { ChatComposerInput, ChatRow, ChatSendButton, ChatSuggestions, ChatTranscript } from '@/components/ui/ChatShell';
+import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
+import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
+import { chatPreferenceLabel } from '@/lib/chat-preferences';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 
 // Anteprima dei documenti: tabelle con bordi + scroll orizzontale. Le risposte
@@ -146,7 +149,6 @@ export default function AssistentePage() {
     const [dbQuestions, setDbQuestions] = useState<AssistantQuestionsByTopic>({});
     // Indice della prossima domanda per topic: "Prepara domanda" scorre la lista
     // cosi' propone ogni volta una domanda diversa invece di ripetere la stessa.
-    const questionVariantIdx = useRef<Record<string, number>>({});
     const requestRef = useRef<AbortController | null>(null);
     // Counselor AI: opzionale, scelta in una dropdown. Il sito-chat invia
     // counselor_id al backend che applichera' la persona al system prompt.
@@ -207,14 +209,11 @@ export default function AssistentePage() {
         });
     }, []);
 
-    // Carica le domande suggerite dal DB per la lingua corrente; reset del cursore.
+    // Carica le domande suggerite dal DB per la lingua corrente.
     useEffect(() => {
         let active = true;
         fetchAssistantQuestions(lang).then((data) => {
-            if (active) {
-                setDbQuestions(data);
-                questionVariantIdx.current = {};
-            }
+            if (active) setDbQuestions(data);
         });
         return () => { active = false; };
     }, [lang]);
@@ -250,19 +249,12 @@ export default function AssistentePage() {
         });
     };
 
-    const prepareQuestion = () => {
-        if (!selectedTopic) return; // collezione dinamica senza topic
-        // Preferisci le domande dal DB (gestite da admin); fallback alle varianti i18n.
-        const fromDb = dbQuestions[selectedTopic.id] ?? [];
-        const promptText = selectedTopic.prompt || '';
-        const variants = fromDb.length > 0
-            ? fromDb
-            : promptText.split('|||').map((s: string) => s.trim()).filter(Boolean);
-        if (variants.length === 0) return;
-        const i = questionVariantIdx.current[selectedTopic.id] ?? 0;
-        setInput(variants[i % variants.length]);
-        questionVariantIdx.current[selectedTopic.id] = (i + 1) % variants.length;
-    };
+    // Domande suggerite dell'argomento: dal DB (gestite da admin), altrimenti
+    // le varianti i18n del prompt. Collezione dinamica senza topic: nessuna.
+    const fromDb = selectedTopic ? dbQuestions[selectedTopic.id] ?? [] : [];
+    const topicQuestions = fromDb.length > 0
+        ? fromDb
+        : (selectedTopic?.prompt || '').split('|||').map((s: string) => s.trim()).filter(Boolean);
 
     const send = async () => {
         const question = input.trim();
@@ -624,34 +616,29 @@ export default function AssistentePage() {
                         ~40px dal fondo finestra e -mb-12 sul wrapper annulla il
                         padding-bottom del main, senza lasciare banda morta. */}
                     <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:-mb-12 max-lg:bg-slate-50 max-lg:px-4 max-lg:pb-3 max-lg:pt-1">
-                        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer rounded-xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-indigo-500">
-                            <ChatComposerInput
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                placeholder={t('assistant.inputPlaceholder')}
-                                aria-label={t('assistant.inputPlaceholder')}
-                                className="w-full flex-none border-0 bg-transparent px-2 py-1.5 focus:ring-0"
-                            />
-                            <div className="flex flex-wrap items-center gap-2 pt-1">
-                                <button
-                                    type="button"
-                                    onClick={prepareQuestion}
-                                    disabled={!selectedTopic}
-                                    title={t('assistant.prepareQuestion')}
-                                    aria-label={t('assistant.prepareQuestion')}
-                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-bold text-slate-500 transition-colors hover:border-indigo-300 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                    <span aria-hidden="true">?</span>
-                                </button>
-                                <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-                                    <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={loading} />
-                                    <ResponseLengthSelector
-                                        value={responseLength}
-                                        onChange={setResponseLength}
-                                        disabled={loading}
-                                    />
-                                    <ChatSendButton loading={loading} onStop={stopGeneration} disabled={!input.trim()} sendLabel={t('chat.send')} stopLabel={t('chat.stop')} />
-                                </div>
+                        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+                            {!loading && <ChatSuggestions label={t('orientation.suggested.label')} items={topicQuestions} composerId="assistente-composer" onInsert={setInput} />}
+                            <div className="flex items-end gap-2">
+                                <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{() => <div className="space-y-1">
+                                    <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
+                                        <AlignLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+                                        <span className="min-w-0 flex-1">{chatPreferenceLabel(lang, 'format')}</span>
+                                        <ResponseFormatSelector compact value={responseFormat} onChange={setResponseFormat} disabled={loading} />
+                                    </div>
+                                    <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
+                                        <Rows3 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                                        <span className="min-w-0 flex-1">{t('responseLength.shortLabel')}</span>
+                                        <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={loading} />
+                                    </div>
+                                </div>}</ChatActionsPopover>
+                                <ChatComposerInput
+                                    id="assistente-composer"
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    placeholder={t('assistant.inputPlaceholder')}
+                                    aria-label={t('assistant.inputPlaceholder')}
+                                />
+                                <ChatSendButton loading={loading} onStop={stopGeneration} disabled={!input.trim()} sendLabel={t('chat.send')} stopLabel={t('chat.stop')} />
                             </div>
                         </form>
                     </div>
