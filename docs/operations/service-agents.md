@@ -1,7 +1,9 @@
 # Agenti di servizio locali
 
-Configurazione Counselorbot del 29 ottobre 2026. Entrambi usano Codex con
-`gpt-6.1-terra`, effort `low`, scelto dal proprietario per questi servizi.
+Configurazione Counselorbot del 29 ottobre 2026. Entrambi usano Claude Code
+con Sonnet (`claude-sonnet-5-5`), lanciati con
+`herdr agent start <nome> --kind claude --pane <pane> -- --model sonnet`.
+Hanno sostituito Codex `gpt-6.1-terra` low, fermo per crediti esauriti.
 
 | Tab Herdr | Nome agente | Compito |
 | --- | --- | --- |
@@ -27,8 +29,8 @@ I checkout `../Counselorbot-worktrees/srv-stato-terra` e
 `../Counselorbot-worktrees/srv-deploy` hanno branch propri e un albero documentale
 parziale. Servono alla consultazione e non sono contesti validi per costruire immagini.
 Il monitor consulta esplicitamente il checkout principale, i worktree di lavoro,
-il diario, Herdr e GitHub. Le sessioni CLI sono isolate con `--no-daemon` e usano
-la revisione automatica delle approvazioni per l'accesso agli strumenti necessari.
+il diario, Herdr e GitHub. Le sessioni Claude Code usano l'auto mode per
+l'accesso agli strumenti necessari.
 
 Il servizio Docker identifica progetto Compose e contesto reale dalle etichette
 e dalle procedure correnti. Su un ordine di deploy verifica merge/SHA, aggiorna
