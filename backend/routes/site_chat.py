@@ -242,7 +242,7 @@ def _resolve_site_prompt(ai_service: AIService, audience: str, collection: str =
         key = SITE_CHAT_MODE_TO_PROMPT_KEY[audience]
         prompt = ai_service.config.get(key, _AUDIENCE_DEFAULT_PROMPT[audience])
         ctx = ai_service.config.get("questionari_chat_context", DEFAULT_QUESTIONARI_CHAT_CONTEXT)
-        card = ""
+        card = ai_service.config.get("site_chat_knowledge_card", DEFAULT_SITE_CHAT_KNOWLEDGE_CARD)
     elif collection != COLLECTION_COMPETENZE:
         # Collezione dinamica: prompt di grounding generico, senza contesto
         # specifico del sito. Config opzionale: rag_chat_context_<slug>.
