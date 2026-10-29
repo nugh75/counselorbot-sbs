@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowDown, ArrowRight, Check, Compass, Loader2, Mic, NotebookPen, Send, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowRight, Check, Compass, Loader2, Mic, NotebookPen, Sparkles } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
@@ -16,6 +16,7 @@ import { ListenButton } from '@/components/voice-reader/VoiceReader';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
+import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
 import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
 import Image from 'next/image';
 import { useI18n } from '@/lib/i18n-context';
@@ -301,30 +302,25 @@ export default function BussolaPage() {
             ) : (
                 <>
                     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                        {/* Come nella chat guidata e nell'assistente: il trascritto è un
-                            role="log" da navigare, e l'annuncio vive in una regione a
-                            parte con due soli stati. Un aria-live sul contenitore
-                            rileggeva l'intera conversazione a ogni turno. */}
-                        <p className="sr-only" aria-live="polite">{liveAnnouncement}</p>
-                        <div
-                            role="log"
+                        <ChatTranscript
+                            announcement={liveAnnouncement}
                             aria-label={t('orientation.title')}
                             className="max-h-chat space-y-4 overflow-y-auto px-4 py-5 sm:px-6"
                         >
                             {session.messages.map((message, index) => (
-                                <div key={`${message.role}-${index}`} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <ChatBubble role={message.role === 'user' ? 'user' : 'assistant'} className="max-w-[88%] sm:max-w-2xl">
+                                <ChatRow key={`${message.role}-${index}`} role={message.role === 'user' ? 'user' : 'assistant'}>
+                                    <ChatBubble role={message.role === 'user' ? 'user' : 'assistant'}>
                                         <div data-voice-source={message.role === 'assistant' ? `bussola-${session.session_id}-${index}` : undefined}
                                             data-voice-language={session.language || lang} data-voice-counselor={session.counselor_id ?? undefined} className="prose prose-sm max-w-none overflow-x-auto text-inherit">{message.role === "assistant" ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown> : <span className="whitespace-pre-line">{message.content}</span>}</div>
                                         {message.role === 'assistant' && <div className="mt-2" data-voice-ignore>
                                             <ListenButton id={`bussola-${session.session_id}-${index}`} text={message.content} language={session.language as typeof lang || lang} counselorId={session.counselor_id} className="min-h-[44px] min-w-[44px] px-2" />
                                         </div>}
                                     </ChatBubble>
-                                </div>
+                                </ChatRow>
                             ))}
                             {sending && <ChatPending label={t('orientation.processing')} />}
                             <div ref={endRef} />
-                        </div>
+                        </ChatTranscript>
                         {session.recommendations.length > 0 && (
                             <div className="border-t border-slate-100 px-4 py-2 sm:px-6">
                                 <button
@@ -377,13 +373,13 @@ export default function BussolaPage() {
                                         {!voiceMode && <AudioSendOption />}
                                         <AudioLanguageOption />
                                     </>}</ChatActionsPopover>
-                                    <textarea id="bussola-composer" hidden={voiceMode} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} rows={2} maxLength={4000} placeholder={t('orientation.input.placeholder')} className="min-h-20 min-w-0 flex-1 resize-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                                    <ChatComposerInput id="bussola-composer" hidden={voiceMode} value={input} onChange={(event) => setInput(event.target.value)} maxLength={4000} placeholder={t('orientation.input.placeholder')} aria-label={t('orientation.input.placeholder')} />
                                     <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}
                                         onSend={text => submitMessage({ preventDefault() {} }, text)}
                                         voiceMode={voiceMode} onExitVoice={() => setVoiceMode(false)} counselorId={session.counselor_id}
                                         voiceOptionsContainer={voiceOptionsContainer}
                                         composerId="bussola-composer" sessionKey={session.session_id} disabled={sending} maxLength={4000} />
-                                    {!voiceMode && <button type="submit" disabled={!input.trim() || sending || audioBusy} aria-label={t('orientation.input.send')} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40"><Send className="h-4 w-4" /></button>}
+                                    {!voiceMode && <ChatSendButton loading={sending} disabled={!input.trim() || audioBusy} sendLabel={t('orientation.input.send')} />}
                                 </div>
                             </form>
                         )}

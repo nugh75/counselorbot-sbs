@@ -6,7 +6,7 @@ import { useUserAccess } from '@/lib/use-user-access';
 
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, BookOpen, Mic, AlignLeft, Rows3, Brain, NotebookPen } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, BookOpen, Mic, AlignLeft, Rows3, Brain, NotebookPen } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
@@ -29,7 +29,6 @@ import { isNearBottom } from '@/lib/chat-scroll';
 import { stepLabel, stripStepOrdinal } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
 import { acceptsAgreement, advanceLabelKey, advancesOnSignal, autoAdvancesOnGenerate, currentGoalPhase, interviewQuickReplies, isAgreementStep, stepInstructionsMessage, userDecidesAdvance } from '@/lib/interview-path';
-import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { NotebookContextSelector } from '@/components/qsa/NotebookContextSelector';
 import { PracticeNotebookPicker } from '@/components/qsa/PracticeNotebookPicker';
@@ -39,6 +38,7 @@ import { getIdentity } from '@/lib/auth';
 import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
 import { toast } from '@/components/ui/Toast';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
+import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
@@ -2009,8 +2009,6 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 )}
             </>}>
             {openPanel => <>
-                <p className="sr-only" aria-live="polite">{liveAnnouncement}</p>
-
                 {isIdea && !activeExploration && navigation.explorations.length > 0 && <div className="flex flex-wrap gap-2 border-b border-slate-200 px-3 py-2">
                     {navigation.explorations.map(branch => <Button key={branch.id} type="button" variant="secondary" disabled={isLoading} aria-label={`${navCopy.resume}: ${branch.title}`} onClick={() => openExploration(branch.id)}><GitBranch className="mr-2 h-4 w-4" aria-hidden="true" />{branch.title}</Button>)}
                 </div>}
@@ -2031,10 +2029,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 </section>}
 
                 {/* Messages */}
-                <div
+                <ChatTranscript
                     ref={messagesRef}
+                    announcement={liveAnnouncement}
                     onScroll={(event) => { stickToBottom.current = isNearBottom(event.currentTarget); }}
-                    role="log"
                     aria-labelledby="guided-chat-title"
                     className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-2 sm:p-4 space-y-4 lg:space-y-6"
                 >
@@ -2083,14 +2081,11 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         </p>
                     )}
                     {visibleMessages.map(({ message: msg, index: idx }) => (
-                        <div key={idx} data-message-phase={msg.phaseId} className={cn(
-                            "flex min-w-0 animate-fade-in-up",
-                            msg.role === 'user' ? 'justify-end' : msg.role === 'system' ? 'justify-center' : 'justify-start'
-                        )}>
+                        <ChatRow key={idx} role={msg.role === 'user' ? 'user' : msg.role === 'system' ? 'system' : 'assistant'} data-message-phase={msg.phaseId} className="animate-fade-in-up">
                             {msg.role === 'system' ? (
                                 <span className="max-w-full break-words rounded-full bg-slate-50 px-3 py-2 text-2xs font-medium uppercase tracking-widest text-slate-500">{msg.content}</span>
                             ) : (
-                                <div className={cn("flex min-w-0 max-w-full flex-col gap-1 lg:max-w-[90%]", msg.role === 'user' ? "items-end" : "items-start")}>
+                                <>
                                     <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'} className="px-3 py-2 sm:px-3 sm:py-2 lg:px-5 lg:py-3.5">
                                         {msg.role === 'assistant' ? (
                                             <div className="min-w-0 max-w-full space-y-2">
@@ -2165,9 +2160,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                             />
                                         </div>
                                     )}
-                                </div>
+                                </>
                             )}
-                        </div>
+                        </ChatRow>
                     ))}
 
 
@@ -2176,7 +2171,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         "sto pensando", quindi il pendente in coda serve solo quando
                         quella bolla non c'e' ancora. */}
                     {isLoading && !continuation.pending && !awaitingAssistantBubble && <ChatPending label={t('guided.processing')} />}
-                </div>
+                </ChatTranscript>
 
                 <ChatContinuation locale={activeLocale} {...continuation} />
                 {/* Input Area */}
@@ -2302,22 +2297,13 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                 </>
                             )}
                             {renderConversationOptions(openPanel)}
-                            <AutoGrowTextarea
+                            <ChatComposerInput
                                 id="guided-composer"
                                 hidden={voiceMode}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        void handleSend(e);
-                                    }
-                                }}
                                 placeholder={chatLayoutLabel(activeLocale, 'write')}
                                 aria-label={inputPlaceholder}
-                                minRows={1}
-                                maxRows={6}
-                                className="min-w-0 flex-1 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
                             />
                             {/* Mentre la risposta arriva il primario ferma, non invia: la
                                 richiesta ha già il suo AbortController, mancava il comando. */}
@@ -2326,26 +2312,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                 voiceMode={voiceMode} onExitVoice={() => setVoiceMode(false)} counselorId={counselorId}
                                 voiceOptionsContainer={voiceOptionsContainer}
                                 composerId="guided-composer" sessionKey={`${sessionId}:${voiceMode ? 'voice' : currentPhase}`} disabled={isLoading || currentPhase === FIXED_CONCLUSION_ID} />
-                            {!voiceMode && (isLoading ? (
-                                <button
-                                    type="button"
-                                    onClick={stopGeneration}
-                                    aria-label={t('chat.stop')}
-                                    title={t('chat.stop')}
-                                    className="shrink-0 rounded-md bg-slate-700 p-3 text-white transition-colors hover:bg-slate-800"
-                                >
-                                    <Square className="h-5 w-5 fill-current" />
-                                </button>
-                            ) : (
-                                <button
-                                    type="submit"
-                                    disabled={!input.trim() || audioBusy}
-                                    aria-label={t('chat.send')}
-                                    className="shrink-0 rounded-md bg-indigo-600 p-3 text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
-                                >
-                                    <Send className="w-5 h-5" />
-                                </button>
-                            ))}
+                            {!voiceMode && <ChatSendButton loading={isLoading} onStop={stopGeneration} disabled={!input.trim() || audioBusy} sendLabel={t('chat.send')} stopLabel={t('chat.stop')} />}
                         </div>
                         {isAgreementPhase && <p className="mt-2 text-sm text-slate-500">{t('guided.hint.savickasPatto')}</p>}
                         </div>
