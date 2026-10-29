@@ -119,7 +119,7 @@ difficult; significance comes from the person's choice, not its dramatic nature.
 Both are conversation tools within CounselorBot, without questionnaires, scores
 or diagnoses. Six steps cover the episode, facts, what worked, what did not, a
 second look and what to try next time, followed by a final summary. The person
-reviews, edits and explicitly saves the resulting Booklet draft. This is distinct
+reviews, edits and explicitly saves the resulting Timeline milestone draft. This is distinct
 from adding an event to the personal calendar or sharing a teacher-assignment response.
 
 ## Administration console

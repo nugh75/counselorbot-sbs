@@ -136,8 +136,9 @@ budget can be configured with a fallback model (`qwen3.5:9b`).
    strategies. The chat streams (SSE) with progressive Markdown rendering. The system
    auto-expands factor codes (e.g. `C1` → `C1 (Elaborative strategies)`) and
    simplifies ZTPI technical labels.
-6. **Completion** — The student can download a PDF report, edit a **student booklet**
-   (also `EVENTO_STUDIO` and `EVENTO_PROFESSIONALE` narratives), analyze another
+6. **Completion** — The student can download a PDF report, review a **Reading**
+   or save a **Timeline milestone** (including `EVENTO_STUDIO` and
+   `EVENTO_PROFESSIONALE` narratives), analyze another
    questionnaire, or launch a **combined analysis** (when QSA/QSAr + ZTPI + Savickas
    are all completed).
 
@@ -147,12 +148,12 @@ EVENTO_STUDIO (Significant study event) revisits one study episode; EVENTO_PROFE
 (Significant professional event) revisits one work or placement episode, including
 a teacher's practice. Both follow six steps (event, facts, what worked, what did not,
 a second look, next time) and a final summary. They require no questionnaire or
-scores. The summary is a Booklet draft, reviewed and explicitly saved by the person.
+scores. The summary is a Timeline milestone draft, reviewed and explicitly saved by the person.
 These conversation tools are distinct from personal calendar events.
 
 The Student area starts with My journey, goals, next activities and assignments.
 `/profilo/obiettivi` coordinates student-owned goals and links to activities, diary,
-cards, comparisons, Notebook, Booklet, saved Tavoli and Portfolio. Completing an
+cards, comparisons, Notebook, Timeline milestones, saved Tavoli and Portfolio. Completing an
 activity never automatically achieves a goal. `/profilo/timeline` holds the shared
 personal activity/calendar/diary workspace. `/profilo/assegnazioni` connects teacher
 deliveries to planning, private reflection, explicit response sharing and feedback.
@@ -174,12 +175,13 @@ with formative feedback per alternative. Question banks exist per document (hash
 provider + language); `learning` and `final_test` modes are supported; answers are
 verified server-side.
 
-### Student area, Notebook, Booklet and Portfolio
+### Student area, Notebook, Reading and Portfolio
 
 - **Notebook** in the Student area (`/profilo`): self-description edited by the person, with **revision history** and
   **change-reflection notes** (`/profilo/cambiamenti`) linking two consecutive revisions.
-- **Student booklet**: per-instrument editable booklet exportable as PDF, plus
-  `EVENTO_STUDIO` and `EVENTO_PROFESSIONALE` narrative types.
+- **Reading / Timeline**: per-result reflections and milestone drafts, including
+  `EVENTO_STUDIO` and `EVENTO_PROFESSIONALE` narratives; the old Booklet route now
+  redirects to Results and conversations.
 - **Portfolio**: works with metadata (title, description, category, date, link) and
   image attachments (≤10 MB, JPG/PNG/WEBP/GIF). Portfolio context is injected into the
   informational assistant and the guided chat to personalize responses.

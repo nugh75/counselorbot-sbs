@@ -37,8 +37,8 @@ Four tools start directly with a conversation, without questionnaire items or sc
 
 Both significant-event tools explore one episode chosen by the person, whether
 positive or difficult. Six steps cover the event, facts, what worked, what did
-not, a second look, and what to try next time. A final summary becomes a **Booklet
-draft**: the person reviews, edits and explicitly saves it. There is no automatic
+not, a second look, and what to try next time. A final summary becomes a **Timeline
+milestone draft**: the person reviews, edits and explicitly saves it. There is no automatic
 score, diagnosis or saving. These conversations are distinct from calendar events.
 
 **pQBL** (`/profilo/pqbl`) is another activity: practice questions and formative feedback
@@ -72,8 +72,9 @@ purpose: understanding, exploring/acting, documenting and support.
 - **Notebook / Taccuino** is the person's editable self-description: context,
   difficulties, strengths and goals, with revision history and change reflections.
   It supplies context to the AI; it is not automatically written by the counselor.
-- **Booklet / Libretto** contains per-instrument reflections, including narrative
-  significant-event reflections, with PDF export.
+- **Reading / Lettura** is what the person reads in one questionnaire result
+  (strengths, areas to grow, what it says about them); it lives with the result.
+  The old Booklet route now redirects to Results and conversations.
 - **Portfolio** documents works with title, description, category, date, links and
   images. Its context may help personalize conversations.
 - **Tavolo** is a workspace for materials and ideas; saved Tavoli can be linked to goals.
@@ -85,7 +86,7 @@ purpose: understanding, exploring/acting, documenting and support.
 At `/profilo/obiettivi`, write a goal or explicitly adopt and personalize a catalog
 proposal. Record motivation, criteria for progress, priority, review date and
 reflection. Link existing activities, calendar events, cards, comparisons, Notebook,
-Booklet, saved Tavoli and Portfolio works. Adoption preserves the chosen catalog
+Timeline milestones, saved Tavoli and Portfolio works. Adoption preserves the chosen catalog
 version; later catalog edits do not rewrite an adopted goal.
 
 At `/profilo/timeline`, plan activities and dated events or periods, then record
@@ -135,7 +136,7 @@ technical settings. An AI counselor is a selectable persona, not a human login r
 
 ## Reports and configuration
 
-Session reports and Booklets can be exported to PDF. Combined analysis requires
+Session reports and Timeline milestones can be exported to PDF. Combined analysis requires
 QSA or QSAr plus ZTPI plus SAVICKAS results. Administrators manage prompt versions,
 guided steps, AI model presets, catalogs, monitoring, benchmarks and training data.
 Authentication uses ai4auth; server-side permissions govern access. The AI explains
