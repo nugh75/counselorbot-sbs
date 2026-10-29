@@ -23,7 +23,7 @@ def generate(monkeypatch):
     monkeypatch.setattr(diagram.personal_api, 'bind_counselor', lambda db, cid: None)
     monkeypatch.setattr(diagram.personal_api, 'active_settings', lambda db, username, cid: None)
 
-    def run(replies):
+    def run(replies, **fields):
         calls = []
 
         class AI:
@@ -40,7 +40,7 @@ def generate(monkeypatch):
                 return reply
 
         monkeypatch.setattr(diagram, 'AIService', AI)
-        request = diagram.FromMessageRequest(text='Un piano riduce l’incertezza e aiuta a iniziare.', counselor_id=1, spec_only=True)
+        request = diagram.FromMessageRequest(text='Un piano riduce l’incertezza e aiuta a iniziare.', counselor_id=1, spec_only=True, **fields)
         try:
             response = asyncio.run(diagram.diagram_from_message(request, None, {}))
         except HTTPException as error:
@@ -58,6 +58,29 @@ def test_overlong_edge_is_regenerated_with_specific_feedback(generate):
     assert 'edges.0.label' in calls[1]['system_prompt']
     assert '40 characters' in calls[1]['system_prompt']
     assert calls[1]['user_message'] == calls[0]['user_message']
+
+
+def test_correction_sends_the_current_diagram_with_the_reader_request(generate):
+    corrected = {**SPEC, 'title': 'Un piano scritto aiuta a iniziare'}
+    response, calls = generate([json.dumps(corrected)], instruction='Di che il piano è scritto', previous_spec=SPEC)
+    assert response.status_code == 200
+    assert json.loads(response.body)['title'] == corrected['title']
+    message = calls[0]['user_message']
+    assert message.startswith('Un piano riduce')
+    assert SPEC['title'] in message and 'correct it' in message
+    assert message.endswith('Di che il piano è scritto')
+
+
+def test_new_diagram_ignores_previous_spec_without_a_correction(generate):
+    response, calls = generate([json.dumps(SPEC)], previous_spec=SPEC)
+    assert response.status_code == 200
+    assert calls[0]['user_message'] == 'Un piano riduce l’incertezza e aiuta a iniziare.'
+
+
+def test_invalid_previous_spec_is_rejected_before_calling_a_model(generate):
+    response, calls = generate([], instruction='Più corto', previous_spec={'nodes': []})
+    assert response.status_code == 422
+    assert calls == []
 
 
 def test_truncated_json_is_retried_then_uses_fallback(generate):
