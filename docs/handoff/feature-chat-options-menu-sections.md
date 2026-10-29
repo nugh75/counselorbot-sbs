@@ -32,7 +32,20 @@ Solo frontend e documentazione: nessun backend, nessun `.github/`.
 - Formato: solo Discorsivo / Per punti (la tabella è stata tolta prima).
 
 ## Verifiche
-- Vedi PR. Dev su 127.0.0.1:3182 (solo frontend, API simulate nei test).
+Dev `next dev --webpack` su 127.0.0.1:3182 (API simulate dai test, nessun
+backend/DB), fermato. Turbopack rifiuta `node_modules` in symlink: usare
+`--webpack`. Disco condiviso molto lento: scaldare le pagine prima dei test.
+- ok: chat-settings 4/4 (×3, 390/1440, sezioni + sottolivello + Esc/«‹»),
+  assistant-audio 4/4, design-usability «conversation options» 320/1440,
+  chat-preferences QSA essential 390/1440 + Assistant, guided-navigation
+  (casi del menu), teacher-practice-notebooks chat guidata.
+- Già rotti, estranei al menu: chat-preferences QSAr/OpenCode (opzione
+  «Tabella» tolta prima), Compass (il mock `/message` risponde una tabella);
+  teacher-practice-notebooks Bussola (pagina lancia «Unexpected end of input»
+  sotto questa fixture); guided-navigation popup guida; design-usability
+  catalogo/navbar/step icons. Timeout di navigazione da compilazione lenta.
+- tsc: solo errori preesistenti sui moduli `.png` (manca `next-env.d.ts`).
+  eslint ok; `make guidance-refresh` + `guidance-check` ok.
 
 ## Prossimi passi
 - Dopo il merge: `make guidance-refresh` se il check lo chiede.
