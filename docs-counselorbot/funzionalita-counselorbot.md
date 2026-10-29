@@ -466,7 +466,8 @@ già le sue schede), **Risposte** (Formato, Lunghezza, Analisi e, per il docente
 Taccuino nel contesto) e in fondo il link alla guida (chat guidata e Bussola).
 Una sezione senza voci non compare. Ogni impostazione mostra il valore
 corrente; il tocco apre un sottolivello con le scelte in elenco: «‹» o Esc
-tornano al menu principale, un secondo Esc lo chiude. Le condizioni di
+tornano al menu principale con il fuoco sulla voce appena usata, un secondo
+Esc lo chiude. Le condizioni di
 abilitazione delle voci non cambiano.
 Anche il testo delle risposte è reso allo stesso modo nelle tre chat (#654):
 stesso aspetto per titoli, elenchi, grassetto, collegamenti, codice e citazioni;
