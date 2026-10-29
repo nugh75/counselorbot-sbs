@@ -270,6 +270,7 @@ for (const width of [320, 1440]) {
             await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
             // Sezioni titolate (#682); da desktop «Mostra» ha la sola voce Pannello.
             const menu = page.locator('.chat-options:popover-open');
+            await menu.getByRole('group', { name: 'Risposte', exact: true }).waitFor();
             assert.deepEqual(await menu.locator('[role="group"][aria-labelledby] > h3').allTextContents(), ['Azioni', 'Mostra', 'Risposte']);
             assert.equal(await menu.getByRole('button', { name: 'Pannello', exact: true }).count(), width >= 1024 ? 1 : 0);
             assert.equal(await menu.getByRole('button', { name: 'Percorso', exact: true }).count(), width >= 1024 ? 0 : 1);

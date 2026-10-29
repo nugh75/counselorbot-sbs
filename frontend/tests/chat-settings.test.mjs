@@ -64,6 +64,7 @@ for (const [name, surface] of Object.entries(surfaces)) {
                 assert.deepEqual(await sections.locator(':scope > h3').allTextContents(), surface.sections);
                 for (const title of surface.sections) await menu.getByRole('group', { name: title, exact: true }).waitFor();
                 const rows = settings.getByRole('button', { name: /^(Formato|Lunghezza): / });
+                await rows.first().waitFor();
                 assert.deepEqual(await rows.evaluateAll(items => items.map(item => item.getAttribute('aria-label'))), surface.rows);
                 for (const row of await rows.all()) assert.ok((await row.boundingBox()).height >= 44);
                 assert.equal(await menu.getByRole('link', { name: 'Guida a questa attività' }).count(), surface.guide ? 1 : 0);
