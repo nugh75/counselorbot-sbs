@@ -14,7 +14,7 @@ import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { Button } from '@/components/ui/Button';
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
-import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
+import { ChatComposerInput, ChatRow, ChatSendButton, ChatSuggestions, ChatTranscript } from '@/components/ui/ChatShell';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
 import Image from 'next/image';
@@ -337,23 +337,7 @@ export default function BussolaPage() {
                         {errorNote && <div className="border-t border-slate-100 px-4 py-3 sm:px-6">{errorNote}</div>}
                         {canWrite && session.status === 'in_progress' && (
                             <form onSubmit={submitMessage} className="border-t border-slate-100 bg-slate-50/70 p-3 sm:p-4">
-                                {!sending && (
-                                    <details className="mb-2 text-xs text-slate-600">
-                                        <summary className="min-h-9 cursor-pointer py-2">{t('orientation.suggested.label')}</summary>
-                                        <div className="flex flex-wrap gap-1.5 pb-2">
-                                            {[0, 1, 2, 3, 4].map((index) => (
-                                                <button key={index} type="button"
-                                                    onClick={() => {
-                                                        setInput(t(`orientation.suggested.${index}`));
-                                                        window.requestAnimationFrame(() => document.getElementById('bussola-composer')?.focus());
-                                                    }}
-                                                    className="min-h-9 max-w-full whitespace-normal break-words rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-left hover:bg-indigo-50">
-                                                    {t(`orientation.suggested.${index}`)}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </details>
-                                )}
+                                {!sending && <ChatSuggestions label={t('orientation.suggested.label')} items={[0, 1, 2, 3, 4].map(index => t(`orientation.suggested.${index}`))} composerId="bussola-composer" onInsert={setInput} />}
                                 <div className="flex items-end gap-2">
                                     <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <>
                                         <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={sending} />
