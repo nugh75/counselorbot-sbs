@@ -27,7 +27,7 @@ Aggiornato: 29 ottobre 2026, Europe/Stockholm.
 - Config/prompt/ricevute locali: directory dati Console `service-agents/Counselorbot/`.
 
 ## Prossimi passi
-- Attendere CI desktop e revisione/merge della PR #667; revisione proposta, non avviata.
+- Attendere CI desktop e merge della PR #667 dal proprietario; nessuna revisione, come richiesto dall'utente.
 - Task #653: `80b9695c-9581-4b26-baf7-fe5560adce8a`; branch `feature/chat-ux-shared-shell-653`.
 - Aggiornare srv-stato ai checkpoint e ogni 30 minuti durante il coordinamento attivo, solo quando disponibile.
 - Servizi persistenti: lasciare i task in corso anche se il singolo turno è idle/done.
