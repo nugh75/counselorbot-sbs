@@ -1,3 +1,37 @@
+# Handoff 29 ottobre 2026: guida pratica per azioni
+
+- Branch `feature/guida-operativa-concisa`: `/guide` sostituisce il manuale lungo
+  con sei argomenti studente/docente, ricerca locale e una procedura alla volta.
+  Sono disponibili 34 schede in sei lingue, con scopo, tre passaggi e nota.
+  Le schede standard italiane contano 1.222 parole per lo studente (18 schede)
+  e 1.030 per il docente (15 schede), comprese note e titoli.
+- Su desktop testo e schermata sono affiancati; sul telefono si susseguono.
+  Trenta nuove schermate mirate localizzate, tutte sintetiche e senza chiavi,
+  includono comandi chat, ripresa/nuovo tentativo, API, ChatGPT e filtro esterno.
+  Le immagini conservano il PNG nitido e si ingrandiscono da tastiera.
+- Le vecchie ancore numerate, dei comandi chat e delle impostazioni continuano
+  a funzionare e diventano URL canonici. Ricerca, Indietro e ricarica preservano
+  la scelta. Il popup della chat condivide i nuovi testi; gli aiuti contestuali
+  aprono la procedura senza abbandonare la chat o il modulo in corso.
+- Guida admin riservata all'identità amministratore; API personali e ChatGPT
+  seguono i flag disponibili. La guida docente esplicita resta documentazione
+  pubblica, come prima, senza attribuire permessi alle funzioni dell'app.
+- Verifiche: 742 unitari frontend, TypeScript, ESLint mirato e guidance.
+  Browser su immagini di produzione: 25 casi guida in sei lingue/390–1440 px,
+  33 casi piani/chat (sei nuovi sul popup e conservazione della bozza), 23 su
+  visibilità API/ChatGPT, tre guida/privacy e uno guida compilazioni docente.
+  Il controllo i18n generale mantiene 12 segnalazioni preesistenti nei pannelli
+  docente; quei file non sono modificati. Nessun test database necessario.
+- Immagine frontend di produzione ricostruita; fixture temporanee fermate.
+  Nessun dev o deploy di produzione durante questa sessione.
+  Distribuzione dopo il merge, con configurazione portable e documenti montati
+  aggiornati. `sudo ./update_nginx.sh` non è necessario.
+- Fonte dei testi: `i18n-guide-tasks.ts`; ruoli, argomenti, link e compatibilità:
+  `guide-tasks.ts`. Rimossa la vecchia tabella `i18n-guide-audiences.ts`.
+  Contratto e cattura delle schermate: `docs/operations/concise-guide.md`.
+
+---
+
 # Handoff 29 ottobre 2026: flusso delle attività nei piani
 
 - Branch `feature/flusso-attivita-piani`: piano e attività sono le due viste;
