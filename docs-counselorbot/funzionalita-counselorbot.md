@@ -487,6 +487,9 @@ quando la risposta lo consente (chat guidata e Assistente), **pollice su/giù**
 con lo stato premuto indicato; nell’Assistente il voto è unico e mostra
 «Grazie!». Le fonti dell’Assistente restano in fondo alla risposta e aprono
 l’anteprima del documento.
+Lo standard completo per chi crea o modifica una chat (componenti condivisi, layout,
+Markdown, composer, impostazioni, audio, checklist) è in
+`docs/operations/chat-ux-standard.md` (#660).
 
 **Audit delle altre chat (#659).** Sandbox admin, chat dei piani operativi e
 chat dei taccuini di prova sono la chat guidata e seguono già lo standard. Le
