@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { LucideIcon } from 'lucide-react';
-import { Send, Square, GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { getIdentity, getViewAsAccount, loginHref, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
@@ -18,7 +18,8 @@ import { fetchCounselors, getSelectedCounselorId } from '@/lib/counselor';
 import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
 import { useResponseFormat } from '@/lib/use-response-format';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
-import { ChatBubble } from '@/components/ui/ChatBubble';
+import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
+import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
 
 // Tabelle con bordi + scroll orizzontale per una lettura pulita dei documenti.
 const mdComponents: Components = {
@@ -530,8 +531,6 @@ export default function AssistentePage() {
                     (sticky) deve potersi fermare sul bordo del viewport di pagina.
                     Da lg l'altezza è fissa (h-chat) e overflow-hidden resta. */}
                 <div className="flex min-h-chat flex-1 min-w-0 flex-col gap-3 lg:overflow-hidden lg:min-h-0 lg:gap-4">
-                    <p className="sr-only" aria-live="polite">{liveAnnouncement}</p>
-
                     {/* Testata della chat: toggle sidebar + titolo. Il titolo resta
                         visibile anche a sidebar chiusa, che è lo stato predefinito. */}
                     <div className="flex shrink-0 items-center gap-3">
@@ -548,23 +547,21 @@ export default function AssistentePage() {
                         <h1 className="text-2xl font-bold text-slate-900">{t('assistant.title')}</h1>
                     </div>
                     <ChatGPTUsageBadge />
-                    <div ref={scrollRef} role="log" aria-label={t('assistant.title')} className="glass-panel min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
+                    <ChatTranscript ref={scrollRef} announcement={liveAnnouncement} aria-label={t('assistant.title')} className="glass-panel min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
                         {messages.length === 0 && (
                             <div className="flex items-start gap-3 text-slate-600">
                                 <p className="text-sm leading-relaxed pt-1">{welcomeText}</p>
                             </div>
                         )}
 
-                        {messages.map((msg, i) => (
-                            <div key={i} className={`flex min-w-0 items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                                <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'} className="max-w-[92%] sm:max-w-[80%]">
-                                    {msg.role === 'assistant' && !msg.content
-                                        ? <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
-                                        : (
-                                            <div className="prose prose-sm max-w-none break-words prose-p:my-1.5 prose-headings:my-2">
-                                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{msg.content}</ReactMarkdown>
-                                            </div>
-                                        )}
+                        {messages.map((msg, i) => msg.role === 'assistant' && !msg.content ? (
+                            <ChatPending key={i} label={t('guided.thinking')} />
+                        ) : (
+                            <ChatRow key={i} role={msg.role === 'user' ? 'user' : 'assistant'}>
+                                <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'}>
+                                    <div className="prose prose-sm max-w-none break-words prose-p:my-1.5 prose-headings:my-2">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{msg.content}</ReactMarkdown>
+                                    </div>
                                     {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
                                         <div className="mt-3 pt-2 border-t border-slate-100 flex flex-wrap gap-2">
                                             {msg.sources.map((s) => (
@@ -613,9 +610,9 @@ export default function AssistentePage() {
                                         </div>
                                     )}
                                 </ChatBubble>
-                            </div>
+                            </ChatRow>
                         ))}
-                    </div>
+                    </ChatTranscript>
 
                     <ChatContinuation locale={lang} {...continuation} />
                     {/* Composer unico: input e controlli dentro la stessa card, cosi'
@@ -625,19 +622,13 @@ export default function AssistentePage() {
                         ~40px dal fondo finestra e -mb-12 sul wrapper annulla il
                         padding-bottom del main, senza lasciare banda morta. */}
                     <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:-mb-12 max-lg:bg-slate-50 max-lg:px-4 max-lg:pb-3 max-lg:pt-1">
-                        <div className="assistente-composer rounded-xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-indigo-500">
-                            <textarea
+                        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer rounded-xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-indigo-500">
+                            <ChatComposerInput
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        send();
-                                    }
-                                }}
-                                rows={2}
                                 placeholder={t('assistant.inputPlaceholder')}
-                                className="min-w-0 w-full resize-none border-0 bg-transparent px-2 py-1.5 text-sm focus:outline-none focus:ring-0"
+                                aria-label={t('assistant.inputPlaceholder')}
+                                className="w-full flex-none border-0 bg-transparent px-2 py-1.5 focus:ring-0"
                             />
                             <div className="flex flex-wrap items-center gap-2 pt-1">
                                 <button
@@ -657,28 +648,10 @@ export default function AssistentePage() {
                                         onChange={setResponseLength}
                                         disabled={loading}
                                     />
-                                {loading ? (
-                                    <button
-                                        onClick={stopGeneration}
-                                        aria-label={t('chat.stop')}
-                                        title={t('chat.stop')}
-                                        className="flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-slate-700 px-0 text-white transition-colors hover:bg-slate-800 sm:w-auto sm:px-5"
-                                    >
-                                        <Square className="h-5 w-5 fill-current" />
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={send}
-                                        disabled={!input.trim()}
-                                        aria-label={t('chat.send')}
-                                        className="flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-0 text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-5"
-                                    >
-                                        <Send className="w-5 h-5" />
-                                    </button>
-                                )}
+                                    <ChatSendButton loading={loading} onStop={stopGeneration} disabled={!input.trim()} sendLabel={t('chat.send')} stopLabel={t('chat.stop')} />
                                 </div>
                             </div>
-                        </div>
+                        </form>
                     </div>
 
                 </div>
