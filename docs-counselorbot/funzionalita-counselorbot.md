@@ -488,6 +488,13 @@ con lo stato premuto indicato; nell’Assistente il voto è unico e mostra
 «Grazie!». Le fonti dell’Assistente restano in fondo alla risposta e aprono
 l’anteprima del documento.
 
+**Audit delle altre chat (#659).** Sandbox admin, chat dei piani operativi e
+chat dei taccuini di prova sono la chat guidata e seguono già lo standard. Le
+differenze rimaste sono nelle trascrizioni di sola lettura (taccuini di prova,
+revisione delle attività dei piani) e nel workspace OpenCode, che sarà eliminato
+invece di essere allineato; il dettaglio
+e l’ordine degli interventi sono in `docs/audits/2026-10-29-chat-ux-remaining-surfaces.md`.
+
 - **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti.
   Ascolta ciò che lo studente vuole affrontare e consiglia da quale strumento
   partire, aiutando a valutare tempi e impegno. Non somministra questionari, non
