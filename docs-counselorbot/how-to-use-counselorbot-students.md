@@ -54,8 +54,8 @@ describe the facts, consider what worked, what did not, take a second look, and
 choose what to try next time. A final summary follows. The professional path is
 also suitable for adults, trainees and teachers reflecting on their practice.
 
-There is no score or diagnosis. At the end you can review and edit a **Booklet
-draft**, then explicitly save it. The AI does not save the reflection for you.
+There is no score or diagnosis. At the end you can review and edit a **Timeline
+milestone draft**, then explicitly save it. The AI does not save the reflection for you.
 These guided conversations are different from adding a dated event to your calendar.
 
 ## Inside the guided chat
@@ -67,7 +67,7 @@ controls can request a diagram. Sessions with conversation progress save after
 replies; resume them from the home page or navigation. Freeze saves and closes.
 
 The tools include activities, cards for thoughts, comparison of alternatives,
-Notebook and Booklet. Transfers between notes and tools require choosing the
+Notebook and Timeline. Transfers between notes and tools require choosing the
 content and destination, reviewing it and confirming. They are not automatic.
 
 ## Student area and goals
@@ -80,13 +80,13 @@ documenting your experience, and finding support.
 At **Goals** (`/profilo/obiettivi`), write your own goal or choose and personalize
 a catalog proposal. Set a reason, a criterion for progress and a review date if
 useful. Link existing activities, calendar events, cards, comparisons, Notebook,
-Booklet, saved Tavoli and Portfolio works. You decide when to pause or conclude
+Timeline milestones, saved Tavoli and Portfolio works. You decide when to pause or conclude
 a goal; completing an activity does not automatically mean achieving it.
 
 **Tavolo** in the Student area is a workspace for ideas and materials. **Cards**
 collect thoughts; **Comparison** helps examine alternatives with criteria you
-choose. A **Booklet** stores instrument-specific reflections, including the event
-tools. The **Portfolio** documents your works. Linking them to a goal does not
+choose. A **Reading** is what you read in a result; the old Booklet route now
+redirects to Results and conversations. The **Portfolio** documents your works. Linking them to a goal does not
 copy, synchronize or share their contents automatically.
 
 ## Activities, calendar and diary
@@ -169,7 +169,7 @@ final guided step; if you leave, starting again resumes the same session.
 
 **pQBL** (`/profilo/pqbl`) generates practice questions and formative feedback from a study
 PDF. It is separate from the questionnaires and event conversations. Session
-reports and Booklets can be exported as PDF. The combined analysis becomes
+reports and Timeline milestones can be exported as PDF. The combined analysis becomes
 available with QSA or QSAr plus ZTPI plus SAVICKAS results. An optional OpenCode
 workspace offers another conversation experience. The AI supports reflection;
 it does not make decisions, adopt goals or submit work on your behalf.
