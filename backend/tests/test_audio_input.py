@@ -12,23 +12,23 @@ from backend.routes import audio_input
 
 
 class FakeQuery:
-    def __init__(self, row):
-        self.row = row
+    def __init__(self, rows):
+        self.rows = rows
 
     def filter(self, *args):
         return self
 
-    def first(self):
-        return self.row
+    def all(self):
+        return self.rows
 
 
 class FakeSession:
-    """Only the transcription-model config row is ever read here."""
-    def __init__(self, row=None):
-        self.row = row
+    """Only the transcription engine/model config rows are ever read here."""
+    def __init__(self, values=None):
+        self.rows = [SimpleNamespace(key=key, value=value) for key, value in (values or {}).items()]
 
     def query(self, *args):
-        return FakeQuery(self.row)
+        return FakeQuery(self.rows)
 
 
 @pytest.fixture
@@ -41,8 +41,9 @@ def client():
         yield client
 
 
-def configure_model(client, value):
-    client.app.dependency_overrides[database.get_db] = lambda: FakeSession(SimpleNamespace(value=value))
+def configure_model(client, value, engine=None):
+    values = {'transcription_model': value} if engine is None else {'transcription_model': value, 'transcription_engine': engine}
+    client.app.dependency_overrides[database.get_db] = lambda: FakeSession(values)
 
 
 def upload(client, content=b'audio', language=None):
@@ -77,7 +78,7 @@ def test_audio_stays_on_local_service_and_detected_language_is_reported(client):
     response, (args, kwargs) = forward(client, 'it')
     assert response.json() == {'text': 'Vorrei organizzare lo studio.', 'language': 'it', 'model': 'large-v3-turbo'}
     assert args == ('http://transcription:8000/transcribe',)
-    assert kwargs['data'] == {'language': 'it', 'model': 'large-v3-turbo'}
+    assert kwargs['data'] == {'language': 'it', 'model': 'large-v3-turbo', 'engine': 'faster-whisper'}
     assert kwargs['files']['audio'] == ('recording', b'audio', 'application/octet-stream')
 
 
@@ -93,6 +94,19 @@ def test_configured_model_is_used_and_unknown_names_fall_back(client):
     configure_model(client, 'gpt-whisper')
     _, (_, kwargs) = forward(client)
     assert kwargs['data']['model'] == 'large-v3-turbo'
+
+
+@pytest.mark.parametrize('engine,model,expected', [
+    ('whisper.cpp', 'base', ('whisper.cpp', 'base')),
+    ('whisper.cpp', 'large-v3', ('whisper.cpp', 'small')),
+    ('faster-whisper', 'base', ('faster-whisper', 'large-v3-turbo')),
+    ('cloud-whisper', 'large-v3', ('faster-whisper', 'large-v3')),
+    ('', '', ('faster-whisper', 'large-v3-turbo')),
+])
+def test_engine_selection_filters_models_and_falls_back(client, engine, model, expected):
+    configure_model(client, model, engine)
+    _, (_, kwargs) = forward(client)
+    assert (kwargs['data']['engine'], kwargs['data']['model']) == expected
 
 
 @pytest.mark.parametrize('status,code', [(413, 'too_long'), (400, 'invalid_audio'), (503, 'busy')])
@@ -137,5 +151,7 @@ def test_model_list_survives_an_unreachable_service(client):
     with patch.object(audio_input.httpx, 'AsyncClient') as factory:
         factory.return_value.__aenter__.return_value = service
         body = client.get('/audio/models').json()
-    assert body == {'active': 'large-v3-turbo', 'default': 'large-v3-turbo',
-                    'key': 'transcription_model', 'available': [], 'reachable': False}
+    assert body == {'active': 'large-v3-turbo', 'default': 'large-v3-turbo', 'key': 'transcription_model',
+                    'engine': 'faster-whisper', 'default_engine': 'faster-whisper', 'engine_key': 'transcription_engine',
+                    'default_models': {'faster-whisper': 'large-v3-turbo', 'whisper.cpp': 'small'},
+                    'available': [], 'reachable': False}
