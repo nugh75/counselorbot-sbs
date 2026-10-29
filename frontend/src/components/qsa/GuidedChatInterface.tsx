@@ -6,7 +6,7 @@ import { useUserAccess } from '@/lib/use-user-access';
 
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 
-import { ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, ThumbsUp, ThumbsDown, Snowflake, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, BookOpen, Mic, AlignLeft, Rows3, Brain, NotebookPen } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, ThumbsUp, ThumbsDown, Snowflake, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, BookOpen, Mic, NotebookPen } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
@@ -26,16 +26,16 @@ import { isNearBottom } from '@/lib/chat-scroll';
 import { stepLabel, stripStepOrdinal } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
 import { acceptsAgreement, advanceLabelKey, advancesOnSignal, autoAdvancesOnGenerate, currentGoalPhase, interviewQuickReplies, isAgreementStep, stepInstructionsMessage, userDecidesAdvance } from '@/lib/interview-path';
-import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
+import type { ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { NotebookContextSelector } from '@/components/qsa/NotebookContextSelector';
 import { PracticeNotebookPicker } from '@/components/qsa/PracticeNotebookPicker';
 import { notebookContextPayload, readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId, type NotebookContextChoice } from '@/lib/notebook-context';
 import { canUseTeacherAssistant } from '@/lib/roles';
 import { getIdentity } from '@/lib/auth';
-import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
+import type { ReasoningEffort } from '@/components/ui/ReasoningSelector';
 import { toast } from '@/components/ui/Toast';
 import { ChatBubble, ChatPending, ChatPendingIndicator } from '@/components/ui/ChatBubble';
-import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
+import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatSuggestions, ChatTranscript } from '@/components/ui/ChatShell';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
@@ -69,7 +69,7 @@ import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, phasesAlreadyOpened, shouldA
 import { diagramContentForSpeech } from '@/lib/diagram-content';
 import { EMPTY_RECOMMENDATIONS, normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 
-import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
+import { ChatResponseSettings } from '@/components/ui/ChatResponseSettings';
 import { ADVANCE_STEP, stripControlMarkers, stripControlMarkersForDisplay } from '@/lib/control-markers';
 import { chatPreferenceLabel, essentialSteps, essentialReplyPhase, essentialAdvancesOnSignal, essentialSignalAdvances, essentialPhasesFor, isEssentialInstrument, isEssentialSummaryPhase, type ResponseFormat, type GuidedPath } from '@/lib/chat-preferences';
 import { isGoalInstrument, type GoalDraft } from '@/lib/goal-draft';
@@ -1789,17 +1789,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 </div>
                 </div>
                 {currentPhase !== FIXED_CONCLUSION_ID && <>
-                    <div className="space-y-1 py-2">
-                        <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
-                            <AlignLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-                            <span className="min-w-0 flex-1">{chatPreferenceLabel(activeLocale, 'format')}</span>
-                            <ResponseFormatSelector compact value={responseFormat} onChange={setResponseFormat} disabled={isLoading || !classAllowsFormat} />
-                        </div>
-                        <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
-                            <Rows3 className="h-4 w-4 shrink-0" aria-hidden="true" />
-                            <span className="min-w-0 flex-1">{t('responseLength.shortLabel')}</span>
-                            <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading || !classAllowsLength} />
-                        </div>
+                    <ChatResponseSettings locale={activeLocale}
+                        format={{ value: responseFormat, onChange: setResponseFormat, disabled: isLoading || !classAllowsFormat }}
+                        length={{ value: responseLength, onChange: setResponseLength, disabled: isLoading || !classAllowsLength }}
+                        reasoning={reasoningCapable ? { value: reasoningEffort, onChange: setReasoningEffort, disabled: isLoading || !classAllowsReasoning, mandatory: reasoningMandatory } : undefined}>
                         {isTeacherUser && <div className="space-y-1 px-2 pb-1 text-sm text-slate-600">
                             <div className="flex min-h-[44px] items-center gap-2">
                                 <NotebookPen className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -1808,15 +1801,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             <NotebookContextSelector value={notebookContext} onChange={changeNotebookContext} disabled={isLoading} />
                         </div>}
                         {isTeacherUser && notebookContext === 'practice' && <PracticeNotebookPicker value={practiceNotebookId} onChange={changePracticeNotebookId} disabled={isLoading} />}
-                        {reasoningCapable && <div className="space-y-1 px-2 pb-1 text-sm text-slate-600">
-                            <div className="flex min-h-[44px] items-center gap-2">
-                                <Brain className="h-4 w-4 shrink-0" aria-hidden="true" />
-                                <span className="min-w-0 flex-1">{t('reasoning.shortLabel')}</span>
-                                <ReasoningSelector value={reasoningEffort} onChange={setReasoningEffort} disabled={isLoading || !classAllowsReasoning} mandatory={reasoningMandatory} />
-                            </div>
-                            {reasoningMandatory && <p className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-900">{t('reasoning.mandatory')}</p>}
-                        </div>}
-                    </div>
+                    </ChatResponseSettings>
                     <div className="space-y-1 py-2">
                         <div ref={setVoiceOptionsContainer} />
                         {!voiceMode && <button type="button" className={messageActionClass} disabled={isLoading || audioBusy} onClick={() => { close(); setVoiceMode(true); }}>
@@ -2137,24 +2122,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             />
                         )}
                         <div className="p-3 sm:p-4">
-                        {!isLoading && steps.find(step => step.id === currentPhase)?.suggested_questions?.length ? (
-                            <details className="mb-2 text-xs text-slate-600">
-                                <summary className="min-h-9 cursor-pointer py-2">{t('guided.questionsLabel')}</summary>
-                                <div className="flex flex-wrap gap-1.5 pb-2">
-                                    {steps.find(step => step.id === currentPhase)!.suggested_questions!.map((text) => (
-                                        <button key={text} type="button"
-                                            onClick={() => {
-                                                const draft = text.endsWith('…') ? text.slice(0, -1) + ' ' : text;
-                                                setInput(previous => previous.trim() ? `${previous}\n\n${draft}` : draft);
-                                                window.requestAnimationFrame(() => document.getElementById('guided-composer')?.focus());
-                                            }}
-                                            className="min-h-9 max-w-full whitespace-normal break-words rounded-lg border border-slate-200 px-2.5 py-1 text-left hover:bg-indigo-50">
-                                            {text}
-                                        </button>
-                                    ))}
-                                </div>
-                            </details>
-                        ) : null}
+                        {!isLoading && <ChatSuggestions label={t('guided.questionsLabel')} items={steps.find(step => step.id === currentPhase)?.suggested_questions ?? []} composerId="guided-composer" onInsert={setInput} />}
                         {/* Risposte rapide dei percorsi a intervista. */}
                         {!isLoading && messages.length > 0 && quickReplies.length > 0 && (
                             <div className="mb-2 flex flex-wrap gap-1.5">
@@ -2221,11 +2189,11 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                             onClick={() => ideaReferenceInputRef.current?.click()}
                                             disabled={isLoading || isIdeaReferenceUploading || !sessionId}
                                             aria-label={t(ideaReference ? 'idea.reference.replace' : 'idea.reference.add')}
-                                            className="tap-icon rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {isIdeaReferenceUploading
-                                                ? <Loader2 className="h-4 w-4 animate-spin" />
-                                                : <Paperclip className="h-4 w-4" />}
+                                                ? <Loader2 className="h-5 w-5 animate-spin" />
+                                                : <Paperclip className="h-5 w-5" />}
                                         </button>
                                     </Tooltip>
                                 </>

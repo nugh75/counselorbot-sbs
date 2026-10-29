@@ -15,11 +15,11 @@ import { useUserAccess } from '@/lib/use-user-access';
 import { isToolAllowed } from '@/lib/user-access';
 import { fetchAssistantQuestions, type AssistantQuestionsByTopic } from '@/lib/assistant-questions';
 import { fetchCounselors, getSelectedCounselorId } from '@/lib/counselor';
-import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
+import { ChatResponseSettings } from '@/components/ui/ChatResponseSettings';
 import { useResponseFormat } from '@/lib/use-response-format';
-import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
+import type { ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
-import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatTranscript, chatActionButtonClass } from '@/components/ui/ChatShell';
+import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatSuggestions, ChatTranscript, chatActionButtonClass } from '@/components/ui/ChatShell';
 import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { Button } from '@/components/ui/Button';
@@ -161,7 +161,6 @@ export default function AssistentePage() {
     const [dbQuestions, setDbQuestions] = useState<AssistantQuestionsByTopic>({});
     // Indice della prossima domanda per topic: "Prepara domanda" scorre la lista
     // cosi' propone ogni volta una domanda diversa invece di ripetere la stessa.
-    const questionVariantIdx = useRef<Record<string, number>>({});
     const requestRef = useRef<AbortController | null>(null);
     // Counselor AI: opzionale, scelta in una dropdown. Il sito-chat invia
     // counselor_id al backend che applichera' la persona al system prompt.
@@ -224,14 +223,11 @@ export default function AssistentePage() {
         });
     }, []);
 
-    // Carica le domande suggerite dal DB per la lingua corrente; reset del cursore.
+    // Carica le domande suggerite dal DB per la lingua corrente.
     useEffect(() => {
         let active = true;
         fetchAssistantQuestions(lang).then((data) => {
-            if (active) {
-                setDbQuestions(data);
-                questionVariantIdx.current = {};
-            }
+            if (active) setDbQuestions(data);
         });
         return () => { active = false; };
     }, [lang]);
@@ -267,19 +263,12 @@ export default function AssistentePage() {
         });
     };
 
-    const prepareQuestion = () => {
-        if (!selectedTopic) return; // collezione dinamica senza topic
-        // Preferisci le domande dal DB (gestite da admin); fallback alle varianti i18n.
-        const fromDb = dbQuestions[selectedTopic.id] ?? [];
-        const promptText = selectedTopic.prompt || '';
-        const variants = fromDb.length > 0
-            ? fromDb
-            : promptText.split('|||').map((s: string) => s.trim()).filter(Boolean);
-        if (variants.length === 0) return;
-        const i = questionVariantIdx.current[selectedTopic.id] ?? 0;
-        setInput(variants[i % variants.length]);
-        questionVariantIdx.current[selectedTopic.id] = (i + 1) % variants.length;
-    };
+    // Domande suggerite dell'argomento: dal DB (gestite da admin), altrimenti
+    // le varianti i18n del prompt. Collezione dinamica senza topic: nessuna.
+    const fromDb = selectedTopic ? dbQuestions[selectedTopic.id] ?? [] : [];
+    const topicQuestions = fromDb.length > 0
+        ? fromDb
+        : (selectedTopic?.prompt || '').split('|||').map((s: string) => s.trim()).filter(Boolean);
 
     // audioMessage arriva da AudioInput: il testo trascritto, mentre il campo
     // può essere ancora occupato dalla trascrizione. onPartial porta lo
@@ -649,43 +638,32 @@ export default function AssistentePage() {
                         ~40px dal fondo finestra e -mb-12 sul wrapper annulla il
                         padding-bottom del main, senza lasciare banda morta. */}
                     <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:-mb-12 max-lg:bg-slate-50 max-lg:px-4 max-lg:pb-3 max-lg:pt-1">
-                        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer rounded-xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-indigo-500">
-                            <ChatComposerInput
-                                id="assistente-composer"
-                                hidden={voiceMode}
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                placeholder={t('assistant.inputPlaceholder')}
-                                aria-label={t('assistant.inputPlaceholder')}
-                                className="w-full flex-none border-0 bg-transparent px-2 py-1.5 focus:ring-0"
-                            />
-                            <div className="flex flex-wrap items-center gap-2 pt-1">
-                                <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <>
+                        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+                            {!loading && !voiceMode && <ChatSuggestions label={t('orientation.suggested.label')} items={topicQuestions} composerId="assistente-composer" onInsert={setInput} />}
+                            <div className="flex items-end gap-2">
+                                <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <div className="divide-y divide-slate-200">
+                                    <ChatResponseSettings
+                                        format={{ value: responseFormat, onChange: setResponseFormat, disabled: loading }}
+                                        length={{ value: responseLength, onChange: setResponseLength, disabled: loading }} />
+                                    <div className="space-y-1 py-2">
                                     <div ref={setVoiceOptionsContainer} />
                                     {!voiceMode && <button type="button" disabled={loading || audioBusy} className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50" onClick={() => { close(); setVoiceMode(true); }}>
                                         <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
                                     </button>}
                                     {!voiceMode && <AudioSendOption />}
                                     <AudioLanguageOption />
-                                </>}</ChatActionsPopover>
-                                {!voiceMode && <button
-                                    type="button"
-                                    onClick={prepareQuestion}
-                                    disabled={!selectedTopic}
-                                    title={t('assistant.prepareQuestion')}
-                                    aria-label={t('assistant.prepareQuestion')}
-                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-bold text-slate-500 transition-colors hover:border-indigo-300 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                    <span aria-hidden="true">?</span>
-                                </button>}
+                                    </div>
+                                </div>}</ChatActionsPopover>
+                                <ChatComposerInput
+                                    id="assistente-composer"
+                                    hidden={voiceMode}
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    placeholder={t('assistant.inputPlaceholder')}
+                                    aria-label={t('assistant.inputPlaceholder')}
+                                />
                                 {/* In conversazione a voce il pulsante Parla occupa la riga. */}
-                                <div className={`ml-auto flex flex-wrap items-center justify-end gap-2${voiceMode ? ' min-w-0 flex-1' : ''}`}>
-                                    <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={loading} />
-                                    <ResponseLengthSelector
-                                        value={responseLength}
-                                        onChange={setResponseLength}
-                                        disabled={loading}
-                                    />
+                                <div className={`flex items-end gap-2${voiceMode ? ' min-w-0 flex-1' : ''}`}>
                                     <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}
                                         onSend={(text, onPartial) => send(text, onPartial)}
                                         voiceMode={voiceMode} onExitVoice={() => setVoiceMode(false)} counselorId={counselorId}
