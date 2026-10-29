@@ -206,24 +206,36 @@ def test_ai_draft_reports_insufficient_information_without_descriptive_evidence(
     assert response.status_code == 200, response.text
     draft = response.json()["draft"]
     assert "informazioni disponibili sono insufficienti" in draft
-    assert "scuola o un indirizzo di studi" in draft
+    assert "punti di forza" in draft and "possibili percorsi scolastici" in draft
     assert "interessi" in draft and "osservazioni dei docenti" in draft
     ai.assert_not_called()
     assert db.query(models.OrientationRecommendation).count() == 0
 
 
-def test_ai_draft_with_evidence_requires_school_choice_and_sufficiency_assessment(api):
+def test_ai_draft_with_evidence_requires_alternatives_linked_to_strengths_and_interests(api):
     client, db, _identity, ai, group, _other = api
-    ai.return_value.get_response.return_value = "Si consiglia il liceo scientifico, da valutare con il consiglio di classe."
+    ai.return_value.get_response.return_value = (
+        "L'interesse per le scienze potrebbe essere una risorsa nel liceo scientifico, "
+        "che approfondisce matematica e scienze. La stessa curiosità potrebbe aiutare "
+        "in un istituto tecnico a indirizzo chimico, con attività di laboratorio: "
+        "potresti esplorare entrambe le possibilità."
+    )
     response = client.post(f"/teacher/groups/{group.id}/orientation-recommendations/alice/ai-draft")
     assert response.status_code == 200, response.text
     assert "liceo scientifico" in response.json()["draft"]
+    assert "istituto tecnico" in response.json()["draft"]
     prompt, system = ai.return_value.get_response.call_args[0][:2]
     assert "Interesse per le scienze" in prompt
-    assert "tipo di scuola e indirizzo di studi scegliere" in system
+    assert "Presenta almeno due possibilità alternative" in system
+    assert "Per ciascuna spiega cosa si studia e quali punti di forza o interessi" in system
+    assert "Non indicare mai una scuola da scegliere né un indirizzo univoco" in system
+    assert "anche quando le informazioni sono sufficienti" in system
+    assert "senza graduatorie, preferenze" in system
+    assert "potresti valutare" in system and "potresti esplorare" in system
     assert "informazioni disponibili sono insufficienti" in system
     assert "Spiega quali elementi mancano e come raccoglierli" in system
-    assert "non forzare una scelta" in system
+    assert "se puoi motivarne una sola, dichiara il limite" in system
+    assert "scuola e l'indirizzo consigliati" not in system
     assert db.query(models.OrientationRecommendation).count() == 0
 
 
