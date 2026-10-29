@@ -67,7 +67,7 @@ export function ResumeList({ entries, onNavigate }: { entries: ResumeEntries; on
         <>
             <ResumeLoadError entries={entries} />
             {frozen.map((row) => (
-                <ResumeEntry key={row.session_id} target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
+                <ResumeEntry key={row.session_id} deletable={!row.path_id} target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
                     <Link
                         href={resumeHref(row)}
                         onClick={(event) => {

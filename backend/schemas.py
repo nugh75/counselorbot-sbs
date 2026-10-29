@@ -12,6 +12,17 @@ from .guided_explorations import Exploration
 
 
 # Token
+class PathActivityStart(BaseModel):
+    attempt_id: Optional[UUID] = None
+    new_attempt: bool = False
+
+
+class PathActivityDraft(BaseModel):
+    revision: int = Field(ge=0)
+    scores: Dict[str, float] = Field(default_factory=dict, max_length=200)
+    answers: Dict[str, int] = Field(default_factory=dict, max_length=500)
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -2190,6 +2201,7 @@ class ClassPathSummary(BaseModel):
 
 class StudentClassPathStep(BaseModel):
     attempt_state: Optional[Literal["in_progress", "completed"]] = None
+    activity: Optional[Dict[str, Any]] = None
     id: int
     tool_key: Optional[str] = None
     step_type: str = "tool"

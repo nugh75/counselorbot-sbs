@@ -19,24 +19,29 @@ import {
   type QuestionnaireConfig,
 } from "@/lib/questionnaires";
 import { fetchInstruments } from "@/lib/instruments-api";
-import { getSelectedCounselorId } from "@/lib/counselor";
-import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from "@/lib/frozen-session";
-import { resultsChatText } from "@/lib/i18n-results-chats";
+import { pathActivityText } from '@/lib/i18n-path-activity';
+import { notifyFrozenSessionsChanged } from '@/lib/frozen-session';
+import type { PathAttempt, RegisterActivitySave } from '@/lib/path-activity';
 import { ScoreInputForm } from "@/components/qsa/ScoreInputForm";
-import { GuidedChatInterface } from "@/components/qsa/GuidedChatInterface";
 import { InAppAdministrationRunner } from "@/components/administration/InAppAdministrationRunner";
-import { PlanChatCompleted } from "@/components/administration/PlanChatCompleted";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Callout } from "@/components/ui/Callout";
-import { useDraftGuard } from "@/lib/use-draft-guard";
 
 export function AdministrationStepFlow({
   pathId,
   stepId,
+  activityAttempt,
+  nextHref,
+  registerSave,
+  onSaved,
 }: {
   pathId: number;
   stepId: number;
+  activityAttempt: PathAttempt;
+  nextHref?: string | null;
+  registerSave: RegisterActivitySave;
+  onSaved: () => void;
 }) {
   const { lang } = useI18n();
   const l = (key: Parameters<typeof administrationStepText>[1]) =>
@@ -58,13 +63,16 @@ export function AdministrationStepFlow({
   const [saved, setSaved] = useState<AdministrationResult | null>(null);
   const runnerSession = useRef<string | null>(null);
   const [ack, setAck] = useState<AdministrationEntryAck | null>(null);
-  const [snapshot, setSnapshot] = useState<FrozenSessionDetail | null>(null);
-  const [resumeError, setResumeError] = useState(false);
-  const [completed, setCompleted] = useState(false);
   const [reload, setReload] = useState(0);
   const owner = useRef<string | null>(null);
   const draftKey = useRef<string | null>(null);
-  const saveAttempt = useRef<(() => Promise<void>) | null>(null);
+  const draftRevision = useRef(activityAttempt.revision);
+  const pendingDraft = useRef<{scores: Record<string, number>; answers: Record<number, number>} | null>(null);
+  const draftQueue = useRef(Promise.resolve());
+  const draftFailure = useRef<Error | null>(null);
+  const finished = useRef(activityAttempt.state === 'completed');
+  const initialDraft = useRef(activityAttempt.draft);
+  const [draftStatus, setDraftStatus] = useState('savedDraft');
   const retryIds = useRef<{ session_id: string; request_id: string } | null>(
     null,
   );
@@ -81,6 +89,7 @@ export function AdministrationStepFlow({
   };
   const remember = (values: Record<string, number>) => {
     setScores(values);
+    pendingDraft.current = {scores: values, answers}; setDraftStatus('saving');
     persist({ scores: values });
   };
   const rememberRunner = (
@@ -88,13 +97,51 @@ export function AdministrationStepFlow({
     result: AdministrationResult | null = saved,
   ) => {
     setAnswers(values);
+    pendingDraft.current = {scores: scores || {}, answers: values}; setDraftStatus('saving');
     persist({ answers: values, runnerSession: runnerSession.current, saved: result });
   };
-  useDraftGuard(
-    (!!scores || Object.keys(answers).length > 0 || !!saved) && !ack,
-    l("back"),
-    { blocked: busy },
-  );
+  const flushDraft = async (options: {keepalive?: boolean} = {}) => {
+    draftQueue.current = draftQueue.current.then(async () => {
+      if (draftFailure.current) throw draftFailure.current;
+      if (!pendingDraft.current || finished.current) return;
+      const data = pendingDraft.current;
+      if (!(await accountMatches())) throw new Error('account changed');
+      const response = await apiFetch(`/api/user/paths/${pathId}/steps/${stepId}/attempts/${activityAttempt.session_id}/draft`, {
+        method: 'PUT', headers: {'Content-Type': 'application/json'},
+        keepalive: options.keepalive,
+        body: JSON.stringify({revision: draftRevision.current, ...data}),
+      });
+      if (!response.ok) {
+        if (response.status === 409) draftFailure.current = new Error('draft conflict');
+        throw new Error('draft save');
+      }
+      draftRevision.current = (await response.json()).revision;
+      if (pendingDraft.current === data) { pendingDraft.current = null; setDraftStatus('savedDraft'); }
+    }).catch(error => { setError(true); throw error; });
+    // Keep the queue usable after transient network errors, while each caller
+    // still receives the failure and a revision conflict requires a reload.
+    const pending = draftQueue.current;
+    draftQueue.current = pending.catch(() => {});
+    return pending;
+  };
+  const flushOnLeave = useRef<() => Promise<void>>(async () => {});
+  flushOnLeave.current = () => flushDraft({keepalive: true});
+  useEffect(() => {
+    const leave = () => { void flushOnLeave.current().catch(() => {}); };
+    window.addEventListener('pagehide', leave);
+    return () => { window.removeEventListener('pagehide', leave); leave(); };
+  }, []);
+  useEffect(() => {
+    registerSave(async () => { if (busy) throw new Error('busy'); await flushDraft(); });
+    return () => registerSave(null);
+  });
+  useEffect(() => {
+    if (!pendingDraft.current || finished.current || busy) return;
+    const timer = window.setTimeout(() => { void flushDraft().catch(() => {}); }, 750);
+    return () => window.clearTimeout(timer);
+    // The queue reads the most recent draft, not the render that scheduled it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scores, answers, busy]);
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -108,14 +155,9 @@ export function AdministrationStepFlow({
           pathId,
           stepId,
         );
-        const params = new URLSearchParams(window.location.search);
-        let attempt = params.get('attempt');
-        if (attempt === 'new') {
-          attempt = crypto.randomUUID();
-          params.set('attempt', attempt);
-          window.history.replaceState(window.history.state, '', `${window.location.pathname}?${params}`);
-        }
-        if (attempt && /^[0-9a-f-]{36}$/i.test(attempt)) draftKey.current += `:attempt:${attempt}`;
+        draftKey.current += `:attempt:${activityAttempt.session_id}`;
+        runnerSession.current = activityAttempt.session_id;
+        retryIds.current = {session_id: activityAttempt.session_id, request_id: activityAttempt.session_id};
         const response = await apiFetch(
           `/api/user/paths/${pathId}/steps/${stepId}/launch`,
           { method: "POST" },
@@ -127,18 +169,6 @@ export function AdministrationStepFlow({
           throw new Error("launch");
         }
         const target = parseAdministrationLaunch(await response.json());
-        let frozen: FrozenSessionDetail | null = null;
-        let resumeFailed = false;
-        try {
-          const currentAttemptSession = attempt && draftKey.current ? sessionStorage.getItem(`${draftKey.current}:session`) : null;
-          frozen = target.latest_entry && (!attempt || currentAttemptSession === target.latest_entry.session_id)
-            ? await getFrozenSession(target.latest_entry.session_id) : null;
-          if (frozen && (frozen.session_id !== target.latest_entry?.session_id || frozen.questionnaire_type !== target.instrument_code))
-            throw new Error("snapshot mismatch");
-        } catch {
-          frozen = null;
-          resumeFailed = true;
-        }
         const rows = await fetchInstruments();
         const instrument = rows.find(
           (row) => row.code === target.instrument_code,
@@ -175,8 +205,8 @@ export function AdministrationStepFlow({
             if (stored?.retryIds) retryIds.current = stored.retryIds;
           } catch {}
           setLaunch(target);
-          setSnapshot(frozen);
-          setResumeError(resumeFailed);
+          if (initialDraft.current?.scores) setScores(initialDraft.current.scores);
+          if (initialDraft.current?.answers) setAnswers(initialDraft.current.answers);
           setQuestionnaire(config);
           setInstitutionCode(target.institution.institution_code ?? "");
           setError(false);
@@ -190,7 +220,7 @@ export function AdministrationStepFlow({
       cancelled = true;
     };
     // Ownership is captured at entry and checked before every write and acknowledgement.
-  }, [pathId, stepId, lang, reload]);
+  }, [pathId, stepId, lang, reload, activityAttempt.session_id]);
   const verify = async () => {
     if (
       !launch ||
@@ -249,18 +279,16 @@ export function AdministrationStepFlow({
     if ("scores" in body) remember(body.scores);
     else rememberRunner(answers);
     try {
+      await flushDraft();
       const committed = await commitAdministrationEntry(apiFetch, pathId, stepId, {
         ...retryIds.current,
         ...body,
         institution_grant: grant,
       });
-      const frozen = await getFrozenSession(committed.session_id);
-      if (frozen && (frozen.session_id !== committed.session_id || frozen.questionnaire_type !== committed.result.questionnaire_type))
-        throw new Error("snapshot mismatch");
       if (await accountMatches()) {
-        setSnapshot(frozen);
         setLaunch(current => current ? { ...current, latest_entry: committed } : current);
-        setAck(committed);
+        finished.current = true; pendingDraft.current = null;
+        setAck(committed); onSaved(); notifyFrozenSessionsChanged();
         if (draftKey.current) {
           sessionStorage.setItem(`${draftKey.current}:session`, committed.session_id);
           sessionStorage.removeItem(draftKey.current);
@@ -279,6 +307,7 @@ export function AdministrationStepFlow({
     runnerSession.current ??= crypto.randomUUID();
     rememberRunner(values);
     try {
+      await flushDraft();
       const { result } = await scoreAdministrationStep(apiFetch, pathId, stepId, {
         session_id: runnerSession.current,
         answers: values,
@@ -287,6 +316,13 @@ export function AdministrationStepFlow({
       if (await accountMatches()) {
         setSaved(result);
         rememberRunner(values, result);
+        const committed = await commitAdministrationEntry(apiFetch, pathId, stepId, {
+          session_id: activityAttempt.session_id, request_id: activityAttempt.session_id,
+          result_id: result.id, institution_grant: grant,
+        });
+        finished.current = true; pendingDraft.current = null;
+        setAck(committed); onSaved(); notifyFrozenSessionsChanged();
+        if (draftKey.current) sessionStorage.removeItem(draftKey.current);
       }
     } catch {
       setError(true);
@@ -339,63 +375,26 @@ export function AdministrationStepFlow({
       )}
     </div>
   );
-  const reenter = async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      if (ack && !completed && saveAttempt.current) await saveAttempt.current();
-    } catch {
-      setError(true); setBusy(false); return;
-    }
-    setAck(null); setCompleted(false); setScores(null); setAnswers({}); setSaved(null);
-    retryIds.current = null; runnerSession.current = null;
-    const params = new URLSearchParams(window.location.search);
-    params.set('attempt', crypto.randomUUID());
-    window.history.replaceState(window.history.state, '', `${window.location.pathname}?${params}`);
-    setError(false); setBusy(false);
-    setReload(value => value + 1);
-  };
-  const reenterButton = <Button variant="secondary" disabled={busy} onClick={() => void reenter()}>{resultsChatText(lang, "reenterData")}</Button>;
-  if (ack && questionnaire && completed)
-    return <div className="space-y-4">{reenterButton}<PlanChatCompleted sessionId={ack.session_id} questionnaireType={questionnaire.id} /></div>;
-  if (ack && questionnaire)
-    return (
-      <div className="space-y-4">{reenterButton}{error && <Callout variant="danger">{l('error')}</Callout>}<GuidedChatInterface
-        key={ack.session_id}
-        scores={ack.result.scores}
-        questionnaireType={questionnaire.id}
-        sessionId={ack.session_id}
-        counselorId={snapshot?.counselor_id ?? getSelectedCounselorId()}
-        locale={snapshot?.locale || lang}
-        frozenSnapshot={snapshot}
-        planOrigin={{pathId, stepId}}
-        registerAttemptSave={save => { saveAttempt.current = save; }}
-        onFrozen={() => { setAck(null); setReload(value => value + 1); }}
-        onComplete={() => {
-          setCompleted(true);
-          void deleteFrozenSession(ack.session_id).catch(() => {});
-        }}
-      /></div>
-    );
+  const completedResult = ack?.result || activityAttempt.result;
+  if (completedResult) return <Card className="space-y-4 p-4">
+    <h2 className="text-xl font-semibold">{pathActivityText(lang, 'saved')}</h2>
+    <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">{Object.entries(completedResult.scores || {}).map(([code, value]) =>
+      <div key={code}><dt className="text-sm text-slate-600">{questionnaire?.factors.find(factor => factor.code === code)?.name || code}</dt><dd className="font-semibold">{value}</dd></div>)}</dl>
+    {nextHref && <Link className="inline-flex min-h-11 items-center rounded-md bg-indigo-600 px-4 font-semibold text-white" href={nextHref}>{pathActivityText(lang, 'next')}</Link>}
+  </Card>;
   return (
     <div className="space-y-4">
-      <Link href="/profilo/piani-operativi">{l("back")}</Link>
       <h1 className="text-xl font-semibold">{l("administration")}</h1>
-      {launch?.latest_entry && snapshot && !error && <Button onClick={() => setAck(launch.latest_entry!)}>
-        {resultsChatText(lang, "resumeChat")}
-      </Button>}
-      {resumeError && <Callout variant="warning">{l("error")}{" "}
-        <Button variant="secondary" onClick={() => setReload(value => value + 1)}>{l("retry")}</Button>
-      </Callout>}
       {localeUnavailable && (
         <Callout variant="danger">{l("localeUnavailable")}</Callout>
       )}
+      {launch && <p role="status" className="text-sm text-slate-600">{pathActivityText(lang, draftStatus)}</p>}
       {error && !localeUnavailable && (
         <Callout variant="danger">
           {l("error")}{" "}
           <Button
             variant="secondary"
-            onClick={() => setReload((value) => value + 1)}
+            onClick={() => { setReload((value) => value + 1); onSaved(); }}
           >
             {l("retry")}
           </Button>
@@ -437,19 +436,15 @@ export function AdministrationStepFlow({
             <Card className="space-y-3 p-4">
               <p role="status">{l("resultSaved")}</p>
               <Button
-                disabled={busy || !grant || !getSelectedCounselorId()}
+                disabled={busy || !grant}
                 onClick={() => void enter({ result_id: saved.id }, saved.session_id)}
               >
-                {l("enterSaved")}
+                {pathActivityText(lang, "saveResults")}
               </Button>
               {!grant && <p className="text-sm text-slate-600">{l("verifyHint")}</p>}
             </Card>
           )}
-          {!getSelectedCounselorId() && (
-            <Link href={`/counselor?next=${encodeURIComponent(`/profilo/piani-operativi/${pathId}/${stepId}`)}`}>
-              {l("counselor")}
-            </Link>
-          )}
+
         </>
       ) : (
         <>
@@ -526,16 +521,12 @@ export function AdministrationStepFlow({
             persistDraft={false}
             initialScores={scores || undefined}
             onDraftChange={remember}
-            submitLabel={l("enter")}
-            submitDisabled={busy || !grant || !getSelectedCounselorId()}
+            submitLabel={pathActivityText(lang, "saveResults")}
+            submitDisabled={busy || !grant}
             actionsPosition="bottom"
             onSubmit={(values) => {remember(values);void enter({ scores: values });}}
           />
-          {!getSelectedCounselorId() && (
-            <Link href={`/counselor?next=${encodeURIComponent(`/profilo/piani-operativi/${pathId}/${stepId}`)}`}>
-              {l("counselor")}
-            </Link>
-          )}
+
         </>
       )}
     </div>

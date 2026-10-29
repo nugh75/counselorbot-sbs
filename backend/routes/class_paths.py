@@ -3,7 +3,7 @@
 Allows teachers to create and manage class paths composed of ordered steps
 selected from the tools currently enabled for the class.
 """
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -873,6 +873,7 @@ async def list_student_class_paths(
     user_tools_lower = {t.lower() for t in user_tools}
 
     result = []
+    from ..path_activity import student_activity
     for path in paths:
         steps = _active_steps(db, path.id)
         descriptors = {s.id: step_descriptor(db, path, s) for s in steps}
@@ -886,6 +887,12 @@ async def list_student_class_paths(
         marks = _load_marks(db, [s.id for s in steps], [username])
         cells, done, total, next_step_id = _resolve_cells(
             db, path, steps, username, available=available, auto=auto, marks=marks)
+        activities = {step.id: student_activity(db, path, step, username, descriptors[step.id])
+                      for step in steps if available[step.id]}
+        running = [(step_id, activity["current"]) for step_id, activity in activities.items()
+                   if activity["current"] and activity["current"]["state"] == "in_progress"]
+        if running:
+            next_step_id = max(running, key=lambda item: item[1]["started_at"] or "")[0]
 
         result.append({
             "id": path.id,
@@ -910,6 +917,7 @@ async def list_student_class_paths(
                     or (None if available[cell["step"].id] else "tool_unavailable"),
                     "state": cell["state"],
                     "attempt_state": _student_attempt_state(db, cell["step"], username) if available[cell["step"].id] else None,
+                    "activity": activities.get(cell["step"].id),
                     "source": cell["source"],
                     "start_href": descriptors[cell["step"].id]["start_href"],
                     "can_self_mark": available[cell["step"].id] and not auto[cell["step"].id] and (
@@ -1068,6 +1076,32 @@ def require_step_launch(db, identity, path_id, step_id, *, for_update=False):
         from ..class_access import require_tool
         require_tool(db, identity, descriptor["instrument_code"])
     return path, step, descriptor
+
+
+@router.get("/user/paths/{path_id}/steps/{step_id}/activity")
+async def get_activity(path_id: int, step_id: int, current_user=Depends(auth.get_current_user), db: Session=Depends(get_db)):
+    from ..path_activity import student_activity
+    path, step, descriptor = require_step_launch(db, current_user, path_id, step_id)
+    next_analysis = db.query(models.ClassPathStep).filter_by(path_id=path.id, results_step_id=step.id, removed_at=None).first()
+    return {"path_id": path.id, "step_id": step.id, "title": step.title or descriptor.get("instrument_code") or path.title,
+            "path_title": path.title, "position": step.position, "instrument_code": descriptor["instrument_code"],
+            "next_href": f"/profilo/piani-operativi/{path.id}/{next_analysis.id}" if next_analysis else None,
+            **student_activity(db, path, step, current_user["username"], descriptor, include_data=True)}
+
+
+@router.post("/user/paths/{path_id}/steps/{step_id}/attempts")
+async def create_activity_attempt(path_id: int, step_id: int, payload: schemas.PathActivityStart,
+                                  current_user=Depends(auth.get_current_user), db: Session=Depends(get_db)):
+    from ..path_activity import start_attempt
+    return start_attempt(db, current_user, path_id, step_id, payload.attempt_id, new_attempt=payload.new_attempt)
+
+
+@router.put("/user/paths/{path_id}/steps/{step_id}/attempts/{session_id}/draft")
+async def save_activity_draft(path_id: int, step_id: int, session_id: str, payload: schemas.PathActivityDraft,
+                              current_user=Depends(auth.get_current_user), db: Session=Depends(get_db)):
+    from ..path_activity import save_draft
+    return save_draft(db, current_user, path_id, step_id, session_id, payload.revision,
+                      payload.model_dump(exclude={"revision"}))
 
 
 @router.post("/user/paths/{path_id}/steps/{step_id}/launch")

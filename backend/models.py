@@ -6,7 +6,6 @@ from sqlalchemy import (
     CheckConstraint,
     Column,
     Date,
-    DateTime,
     Float,
     ForeignKey,
     Index,
@@ -2396,6 +2395,22 @@ class QuestionnaireImportConfirmation(Base):
     confirmed_by = Column(String, nullable=False)
     confirmed_at = Column(UTCDateTime, nullable=False)
     invalidated_at = Column(UTCDateTime, nullable=True)
+
+
+class ClassPathActivityAttempt(Base):
+    """An immediately persisted plan attempt, including an unsubmitted questionnaire.
+
+    Older analyses and administrations retain their immutable bindings; the
+    activity resolver presents those and these attempts through one contract.
+    """
+    __tablename__ = "class_path_activity_attempts"
+    id = Column(Integer, primary_key=True)
+    step_id = Column(Integer, ForeignKey("class_path_steps.id", ondelete="CASCADE"), nullable=False, index=True)
+    username = Column(String, nullable=False, index=True)
+    session_id = Column(String(64), nullable=False, unique=True)
+    started_at = Column(UTCDateTime, nullable=False, server_default=func.now())
+    draft = Column(JSON, nullable=True)
+    revision = Column(Integer, nullable=False, default=0)
 
 
 class ClassPathDeepDiveSession(Base):

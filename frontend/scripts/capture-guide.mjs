@@ -97,6 +97,8 @@ try {
         const studentPath = { id: 31, group_id: 91, group_name: groupName, title: groupName, description: instructions, mode: 'recommended',
             next_step_id: 2, done: 1, total: 3, steps: pathSteps.map((step, i) => ({ ...step, state: i === 0 ? 'done' : 'not_done',
                 source: i === 0 ? 'automatic' : null, start_href: i === 0 ? '/profilo/obiettivi' : i === 1 ? '/?start=SAVICKAS' : null,
+                activity: {kind: i === 1 ? 'chat' : i === 2 ? 'meeting' : 'tool', current: null, attempts: [], repeat: null,
+                    primary: i === 2 ? null : {label: i === 1 ? 'start' : 'open', href: i === 1 ? '/profilo/piani-operativi/31/2' : '/profilo/obiettivi'}},
                 availability_reason: null })) };
         const workspace = {
             ...emptyWorkspace(),

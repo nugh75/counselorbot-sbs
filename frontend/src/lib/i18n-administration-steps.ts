@@ -211,12 +211,12 @@ export const administrationStepTexts = {
     "Använd poäng i guidad chatt",
   ],
   rule: [
-    "Il passo è completato quando i dati entrano nella chat guidata. Un futuro import confermato per te e questa somministrazione potrà completarlo senza chat.",
-    "The step is done when data enter guided chat. A future confirmed import for you and this administration can complete it without chat.",
-    "El paso termina cuando los datos entran en el chat guiado. Una futura importación confirmada para ti y esta administración podrá completarlo sin chat.",
-    "L’étape est terminée quand les données entrent dans le chat guidé. Un futur import confirmé pour vous et cette passation pourra la terminer sans chat.",
-    "Der Schritt ist abgeschlossen, wenn die Daten in den geführten Chat eingehen. Ein künftig bestätigter Import für dich und diese Durchführung kann ihn ohne Chat abschließen.",
-    "Steget är klart när data kommer in i guidad chatt. En framtida bekräftad import för dig och denna enkätomgång kan slutföra det utan chatt.",
+    "Il passo è completato quando salvi i risultati. L’eventuale approfondimento si apre dal suo passo nel piano.",
+    "This step is completed when you save the results. Open any analysis from its own step in the plan.",
+    "El paso termina al guardar los resultados. El análisis se abre desde su propio paso del plan.",
+    "L’étape est terminée à l’enregistrement des résultats. L’analyse s’ouvre depuis son étape dans le plan.",
+    "Der Schritt ist nach dem Speichern der Ergebnisse abgeschlossen. Die Auswertung öffnet sich über ihren eigenen Planschritt.",
+    "Steget är klart när du sparar resultaten. Öppna analysen från dess eget steg i planen.",
   ],
   error: [
     "Operazione non riuscita. I punteggi restano disponibili: verifica il contesto o le credenziali e riprova.",

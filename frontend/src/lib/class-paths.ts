@@ -2,6 +2,8 @@
 import { effectiveDueDate } from './class-path-presentation.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { parseMeeting, type ClassMeeting } from './class-meetings.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { parsePathActivity, type PathActivity } from './path-activity.ts';
 // `pending`: applied from a template, created at publication (#172); `meeting`: a class or group meeting (#175).
 export type ClassPathStepType = "tool" | "questionnaire_administration" | "guided_results_chat" | "assignment" | "forum" | "pending" | "meeting" | "guided_chat";
 
@@ -236,6 +238,7 @@ export interface StudentClassPathStep {
     scheduled_date?: string | null;
     state: 'done' | 'not_done' | 'locked' | 'unavailable';
     attempt_state?: 'in_progress' | 'completed' | null;
+    activity?: PathActivity | null;
     source?: 'student' | 'teacher' | 'automatic' | null;
     start_href?: string | null;
     can_self_mark: boolean;
@@ -279,6 +282,7 @@ export function parseStudentClassPathStep(input: unknown): StudentClassPathStep 
         scheduled_date: raw.scheduled_date ? String(raw.scheduled_date) : null,
         state,
         attempt_state: raw.attempt_state === 'in_progress' || raw.attempt_state === 'completed' ? raw.attempt_state : null,
+        activity: parsePathActivity(raw.activity),
         source,
         start_href: raw.start_href ? String(raw.start_href) : null,
         can_self_mark: Boolean(raw.can_self_mark),

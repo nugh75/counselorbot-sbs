@@ -55,3 +55,16 @@ test('frozen sessions and the local chat follow the same switch', () => {
     assert.equal(result.localResume, null);
     assert.equal(result.count, 2);
 });
+
+test('one saved conversation is counted once even when a local resume pointer exists', () => {
+    const result = allowedResumeEntries(null, {...entries, pqbl: false,
+        localResume: {instrument: 'SAVICKAS', sessionId: 'b', counselorId: null, experience: 'standard'}});
+    assert.equal(result.localResume, null);
+    assert.equal(result.count, 2);
+});
+
+test('all tools hides plan conversations while preserving personal conversations', () => {
+    const result = allowedResumeEntries({...restricted([]), restricted: false, view: 'all'}, {...entries,
+        frozen: [{...entries.frozen[0], path_id: 1}, entries.frozen[1]], localResume: null, pqbl: false});
+    assert.deepEqual(result.frozen.map(row => row.session_id), ['b']);
+});

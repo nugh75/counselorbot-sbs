@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { Card } from '@/components/ui/Card';
@@ -19,24 +19,36 @@ export function StudentClassPathsPage() {
     const [paths, setPaths] = useState<StudentClassPath[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const requestVersion = useRef(0);
 
     const loadPaths = useCallback(async () => {
+        const version = ++requestVersion.current;
         setLoading(true);
         setError(false);
         try {
             const res = await apiFetch('/api/user/paths');
             if (!res.ok) throw new Error('Failed to load student paths');
             const data = await res.json();
-            setPaths(parseStudentClassPaths(data));
+            if (version === requestVersion.current) setPaths(parseStudentClassPaths(data));
         } catch {
-            setError(true);
+            if (version === requestVersion.current) setError(true);
         } finally {
-            setLoading(false);
+            if (version === requestVersion.current) setLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        void loadPaths();
+        void Promise.resolve().then(loadPaths);
+        const visible = () => { if (document.visibilityState === 'visible') void loadPaths(); };
+        window.addEventListener('focus', visible);
+        window.addEventListener('pageshow', visible);
+        document.addEventListener('visibilitychange', visible);
+        return () => {
+            requestVersion.current += 1;
+            window.removeEventListener('focus', visible);
+            window.removeEventListener('pageshow', visible);
+            document.removeEventListener('visibilitychange', visible);
+        };
     }, [loadPaths]);
 
     // A reload after an action keeps the cards (and their open state) on screen.

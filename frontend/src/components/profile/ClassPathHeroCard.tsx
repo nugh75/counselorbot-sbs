@@ -2,6 +2,10 @@
 
 import { useId, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { activityReturnHref, withActivityReturn, withActivityOptions } from '@/lib/path-activity';
+import { chatPreferenceLabel, isEssentialInstrument } from '@/lib/chat-preferences';
+import { pathActivityText } from '@/lib/i18n-path-activity';
 import { CheckCircle2, Lock, AlertCircle, ArrowRight, Play, ChevronRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { pathPublicationText } from '@/lib/i18n-path-publication';
@@ -46,9 +50,12 @@ interface Props {
 
 export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collapsible = false, defaultOpen = true, discussionLinks = [], meetings = null, onMeetingsChanged }: Props) {
     const { lang, t } = useI18n();
+    const pathname = usePathname();
     const l = (key: PathTextKey) => classPathText(lang, key);
     const [actionStepId, setActionStepId] = useState<number | null>(null);
     const [open, setOpen] = useState(defaultOpen);
+    const [selectedResults, setSelectedResults] = useState<Record<number, string>>({});
+    const [selectedPaths, setSelectedPaths] = useState<Record<number, string>>({});
     const stepsId = useId();
     const expanded = !collapsible || open;
 
@@ -156,7 +163,9 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
                     const paused = step.start_href?.startsWith('/?start=') && step.tool_key
                         ? pausedChats?.get(`${path.id}:${step.id}`) : undefined;
                     const draft = drafts?.get(`${path.id}:${step.id}`);
-                    const inProgress = Boolean(paused) || draft !== undefined || step.attempt_state === 'in_progress';
+                    const inProgress = step.activity ? step.activity.current?.state === 'in_progress'
+                        : Boolean(paused) || draft !== undefined || step.attempt_state === 'in_progress';
+                    const returnTo = activityReturnHref(pathname, step.id);
                     const canRepeat = step.step_type === 'guided_chat' || step.step_type === 'guided_results_chat'
                         || step.step_type === 'questionnaire_administration' || step.step_type === 'assignment' || Boolean(step.start_href?.startsWith('/?start='));
                     const [redoPath, redoHash] = (step.start_href || '').split('#', 2);
@@ -227,7 +236,7 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
 
                                             {isCurrent && (
                                                 <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-bold text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
-                                                    {l(inProgress ? 'current' : 'next')}
+                                                    {isDone && inProgress ? pathActivityText(lang, 'newInProgress') : l(inProgress ? 'current' : 'next')}
                                                 </span>
                                             )}
                                             {isDone && (
@@ -235,6 +244,9 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
                                                     {l('completed')}
                                                 </span>
                                             )}
+                                            {inProgress && !isCurrent && <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800">
+                                                {pathActivityText(lang, isDone ? 'newInProgress' : 'inProgress')}
+                                            </span>}
                                             {isUnavailable && (
                                                 <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                                                     {l('notAvailable')}
@@ -313,12 +325,52 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
                                 </div>
 
                                 {/* Right side: actions */}
-                                <div className="flex flex-wrap items-center gap-2 pt-2 sm:shrink-0 sm:justify-end sm:pt-0">
-                                    {paused && !isLocked && !isUnavailable && <a
+                                <div className="flex flex-wrap items-center gap-2 pt-2 sm:max-w-md sm:shrink-0 sm:justify-end sm:pt-0">
+                                    {step.activity && !isLocked && !isUnavailable && <>
+                                        {['chat', 'analysis'].includes(step.activity.kind) && isEssentialInstrument(step.activity.instrument_code || '') && <details className="basis-full text-sm">
+                                            <summary className="cursor-pointer py-2 text-slate-600">{pathActivityText(lang, step.activity.current ? 'newPathOptions' : 'pathOptions')}</summary>
+                                            <label className="block">{chatPreferenceLabel(lang, 'choosePath')}
+                                                <select className="mt-1 rounded-md border border-slate-300 p-2" value={selectedPaths[step.id] || 'complete'}
+                                                    onChange={event => setSelectedPaths(current => ({...current, [step.id]: event.target.value}))}>
+                                                    {(['complete', 'essential'] as const).map(mode => <option key={mode} value={mode}>{chatPreferenceLabel(lang, mode)}</option>)}
+                                                </select>
+                                            </label>
+                                        </details>}
+                                        {(step.activity.choices?.length ?? 0) > 1 && <label className="basis-full text-sm">
+                                            {pathActivityText(lang, 'chooseResult')}
+                                            <select value={selectedResults[step.id] || ''}
+                                                onChange={event => setSelectedResults(current => ({...current, [step.id]: event.target.value}))}
+                                                className="mt-1 block w-full rounded-md border border-slate-300 p-2">
+                                                <option value="">{pathActivityText(lang, 'chooseResult')}</option>
+                                                {step.activity.choices!.map(result => <option key={result.id} value={result.id}>{new Date(result.submitted_at).toLocaleString(lang)} · {result.locale.toUpperCase()}</option>)}
+                                            </select>
+                                        </label>}
+                                        {step.activity.primary && <Link href={withActivityReturn(withActivityOptions(step.activity.primary.href,
+                                            selectedResults[step.id], step.activity.primary.label === 'start' ? selectedPaths[step.id] : undefined), returnTo)}
+                                            aria-disabled={(step.activity.choices?.length ?? 0) > 1 && !selectedResults[step.id]}
+                                            onClick={event => { if ((step.activity?.choices?.length ?? 0) > 1 && !selectedResults[step.id]) event.preventDefault(); }}
+                                            className={`inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-semibold aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${isCurrent ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}>
+                                            {pathActivityText(lang, step.activity.primary.label)}<ArrowRight className="h-4 w-4" aria-hidden />
+                                        </Link>}
+                                        {step.activity.repeat && <Link href={withActivityReturn(withActivityOptions(step.activity.repeat.href, undefined, selectedPaths[step.id]), returnTo)}
+                                            className="inline-flex min-h-11 items-center rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                                            {pathActivityText(lang, step.activity.repeat.label)}
+                                        </Link>}
+                                        {step.activity.attempts.length > 0 && <details className="basis-full text-sm sm:ml-auto">
+                                            <summary className="cursor-pointer py-2 font-medium text-indigo-700">{pathActivityText(lang, 'history')} ({step.activity.attempts.length})</summary>
+                                            <ul className="space-y-2">{step.activity.attempts.map(attempt => <li key={attempt.session_id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-slate-50 p-2">
+                                                <span>{attempt.started_at ? new Date(attempt.started_at).toLocaleString(lang) : ''} · {pathActivityText(lang, attempt.state === 'completed' ? 'completed' : 'inProgress')}</span>
+                                                <Link className="inline-flex min-h-11 items-center px-2 font-semibold text-indigo-700 underline" href={withActivityReturn(attempt.href, returnTo)}>
+                                                    {pathActivityText(lang, attempt.state === 'completed' ? 'review' : 'resume')}
+                                                </Link>
+                                            </li>)}</ul>
+                                        </details>}
+                                    </>}
+                                    {!step.activity && paused && !isLocked && !isUnavailable && <a
                                         href={planStepHref(resumeHref(paused), path.id, step.id)}
                                         className="inline-flex min-h-11 items-center rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700"
                                     >{l('resume')}</a>}
-                                    {step.start_href && !isLocked && !isUnavailable && (
+                                    {!step.activity && step.start_href && !isLocked && !isUnavailable && (
                                         <Link href={planStepHref(!inProgress && isDone && canRepeat ? redoHref! : resumeStepHref!, path.id, step.id)}>
                                             <Button
                                                 variant={isCurrent ? 'accent' : 'secondary'}
@@ -329,7 +381,7 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
                                             </Button>
                                         </Link>
                                     )}
-                                    {inProgress && !paused && canRepeat && redoHref && !isLocked && !isUnavailable && (
+                                    {!step.activity && inProgress && !paused && canRepeat && redoHref && !isLocked && !isUnavailable && (
                                         <Link href={planStepHref(redoHref, path.id, step.id)}><Button variant="secondary" size="sm">{l('redo')}</Button></Link>
                                     )}
 

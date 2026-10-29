@@ -490,6 +490,11 @@ def forum_student_state(db, path, step, username):
 
 
 def completion_evidence(db, path, step, username):
+    if step.step_type == "guided_chat":
+        from .path_activity import activity_attempts
+        completed = next((attempt for attempt in activity_attempts(db, step, username)
+                          if attempt["state"] == "completed"), None)
+        return {"kind": "tool", "at": completed["started_at"]} if completed else None
     if step.step_type in ("tool", "guided_chat"):
         return (
             {"kind": "tool", "at": None}

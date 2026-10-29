@@ -1,4 +1,4 @@
-import { ResultsDeepDiveFlow } from "@/components/administration/ResultsDeepDiveFlow";
+import { PlanActivityFlow } from "@/components/profile/PlanActivityFlow";
 import { ClassContentGate } from "@/components/profile/ClassContentGate";
 export default async function ResultsDeepDivePage({
   params,
@@ -6,5 +6,5 @@ export default async function ResultsDeepDivePage({
   params: Promise<{ pathId: string; stepId: string }>;
 }) {
   const { pathId, stepId } = await params;
-  return <ClassContentGate><ResultsDeepDiveFlow pathId={Number(pathId)} stepId={Number(stepId)} /></ClassContentGate>;
+  return <ClassContentGate><PlanActivityFlow pathId={Number(pathId)} stepId={Number(stepId)} /></ClassContentGate>;
 }

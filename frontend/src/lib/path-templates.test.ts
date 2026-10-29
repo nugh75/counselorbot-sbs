@@ -55,16 +55,16 @@ test('personal questionnaire analyses need no administration and retain their so
 });
 
 
-test('legacy template analyses become independent and retain their questionnaire type', () => {
+test('independent navigation preserves the questionnaire data source in templates', () => {
     const original = [
         {step_type: 'questionnaire_administration' as const, instrument_code: 'ZTPI'},
         {step_type: 'guided_results_chat' as const, results_position: 1},
     ];
     const detached = independentTemplateSteps(original);
-    assert.equal(detached[1].tool_key, 'ZTPI');
-    assert.equal(detached[1].results_position, undefined);
+    assert.equal(detached[1].tool_key, undefined);
+    assert.equal(detached[1].results_position, 1);
     assert.equal(original[1].results_position, 1);
-    assert.equal(moveTemplateStep(detached, 1, 0)[0].tool_key, 'ZTPI');
-    assert.equal(moveTemplateStep(detached, 0, null)[0].tool_key, 'ZTPI');
+    assert.equal(templateStepsValid(moveTemplateStep(detached, 1, 0)), false);
+    assert.equal(templateStepsValid(moveTemplateStep(detached, 0, null)), false);
     assert.equal(newTemplateStep('guided_results_chat').tool_key, 'QSA');
 });

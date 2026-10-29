@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { PersonalAIConnections } from '@/components/profile/PersonalAIConnections';
 import Link from 'next/link';
@@ -96,17 +96,19 @@ export function PersonalAreaHome() {
     const { lang } = useI18n();
     const [unreadTotal, setUnreadTotal] = useState(0);
     const [paths, setPaths] = useState<StudentClassPath[]>([]);
+    const pathsVersion = useRef(0);
     const { access } = useUserAccess();
     const groups = personalAreaGroups
         .map(group => ({ id: group.id, slugs: group.slugs.filter(slug => personalSlugEnabled(access, slug)) }))
         .filter(group => group.slugs.length > 0);
 
     const loadPaths = useCallback(async () => {
+        const version = ++pathsVersion.current;
         try {
             const res = await apiFetch('/api/user/paths');
             if (res.ok) {
                 const data = await res.json();
-                setPaths(parseStudentClassPaths(data));
+                if (version === pathsVersion.current) setPaths(parseStudentClassPaths(data));
             }
         } catch {
             // Ignore network failure
@@ -114,14 +116,18 @@ export function PersonalAreaHome() {
     }, []);
 
     useEffect(() => {
-        const controller = new AbortController();
-        void apiFetch('/api/user/paths', { signal: controller.signal }).then(async response => {
-            if (!response.ok) return;
-            const data: unknown = await response.json();
-            if (!controller.signal.aborted) setPaths(parseStudentClassPaths(data));
-        }).catch(() => {});
-        return () => controller.abort();
-    }, []);
+        void Promise.resolve().then(loadPaths);
+        const visible = () => { if (document.visibilityState === 'visible') void loadPaths(); };
+        window.addEventListener('focus', visible);
+        window.addEventListener('pageshow', visible);
+        document.addEventListener('visibilitychange', visible);
+        return () => {
+            pathsVersion.current += 1;
+            window.removeEventListener('focus', visible);
+            window.removeEventListener('pageshow', visible);
+            document.removeEventListener('visibilitychange', visible);
+        };
+    }, [loadPaths]);
 
     const currentPath = useMemo(() => selectCurrentClassPath(paths), [paths]);
 
