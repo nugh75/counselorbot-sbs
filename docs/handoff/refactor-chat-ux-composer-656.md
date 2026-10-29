@@ -3,6 +3,8 @@
 ## Stato
 In consegna — milestone #39, slice composer. Branch
 `refactor/chat-ux-composer-656` da `origin/main` 83fc5423. Task Diario a3659979.
+2026-10-29: fuso `origin/main` (#669 audio, #671 `ChatResponseSettings`) per
+risolvere il CONFLICTING di PR #670 (merge, niente rebase).
 
 ## Fatto
 - `ChatShell.tsx`: nuovo `ChatSuggestions` (elenco richiudibile sopra il
@@ -37,6 +39,20 @@ In consegna — milestone #39, slice composer. Branch
   con i file di main → baseline, come già annotato in #655.
 - `tsc` 0, ESLint file toccati 0, `i18n:check` solo i 12 di baseline;
   `make guidance-refresh` + `guidance-check` allineati.
+
+Dopo il merge di main (#669, #671):
+- `assistente/page.tsx`: forma #656 (suggerimenti sopra, opzioni | campo |
+  microfono | Invia) + audio di #669 + popover con `ChatResponseSettings` di
+  #671 seguito dal gruppo voce. Suggerimenti nascosti in conversazione a voce
+  (il campo è nascosto). Import doppi e `AlignLeft`/`Rows3`/`chatPreferenceLabel`
+  tolti.
+- `funzionalita-counselorbot.md`: «microfono (dove c’è)» → «microfono».
+- `platform-guidance-state.json` rigenerato: `guidance-refresh` + `guidance-check` ok.
+- Dev :3173 (`scripts/dev-chat-shell-tests.sh`): `chat-shell` 4/4,
+  `chat-markdown` 2/2, `assistant-audio` 4/4, `chat-settings` 4/4;
+  `chat-preferences` 7/11: 3, 4, 7 baseline di #657; 2 (o 1) scade su
+  `goto /?frozen=prefs` col dev a freddo, passato in un giro precedente.
+- ESLint file in conflitto 0, `tsc` 0, `i18n:check` 12 (baseline). Dev fermato.
 
 ## Prossimi passi
 - #657, #658, #661 (fuori da questa slice).
