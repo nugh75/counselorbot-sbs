@@ -19,7 +19,7 @@ import { ChatResponseSettings } from '@/components/ui/ChatResponseSettings';
 import { useResponseFormat } from '@/lib/use-response-format';
 import type { ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
-import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
+import { ChatComposerInput, ChatRow, ChatSendButton, ChatSuggestions, ChatTranscript } from '@/components/ui/ChatShell';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
@@ -158,7 +158,6 @@ export default function AssistentePage() {
     const [dbQuestions, setDbQuestions] = useState<AssistantQuestionsByTopic>({});
     // Indice della prossima domanda per topic: "Prepara domanda" scorre la lista
     // cosi' propone ogni volta una domanda diversa invece di ripetere la stessa.
-    const questionVariantIdx = useRef<Record<string, number>>({});
     const requestRef = useRef<AbortController | null>(null);
     // Counselor AI: opzionale, scelta in una dropdown. Il sito-chat invia
     // counselor_id al backend che applichera' la persona al system prompt.
@@ -219,14 +218,11 @@ export default function AssistentePage() {
         });
     }, []);
 
-    // Carica le domande suggerite dal DB per la lingua corrente; reset del cursore.
+    // Carica le domande suggerite dal DB per la lingua corrente.
     useEffect(() => {
         let active = true;
         fetchAssistantQuestions(lang).then((data) => {
-            if (active) {
-                setDbQuestions(data);
-                questionVariantIdx.current = {};
-            }
+            if (active) setDbQuestions(data);
         });
         return () => { active = false; };
     }, [lang]);
@@ -262,19 +258,12 @@ export default function AssistentePage() {
         });
     };
 
-    const prepareQuestion = () => {
-        if (!selectedTopic) return; // collezione dinamica senza topic
-        // Preferisci le domande dal DB (gestite da admin); fallback alle varianti i18n.
-        const fromDb = dbQuestions[selectedTopic.id] ?? [];
-        const promptText = selectedTopic.prompt || '';
-        const variants = fromDb.length > 0
-            ? fromDb
-            : promptText.split('|||').map((s: string) => s.trim()).filter(Boolean);
-        if (variants.length === 0) return;
-        const i = questionVariantIdx.current[selectedTopic.id] ?? 0;
-        setInput(variants[i % variants.length]);
-        questionVariantIdx.current[selectedTopic.id] = (i + 1) % variants.length;
-    };
+    // Domande suggerite dell'argomento: dal DB (gestite da admin), altrimenti
+    // le varianti i18n del prompt. Collezione dinamica senza topic: nessuna.
+    const fromDb = selectedTopic ? dbQuestions[selectedTopic.id] ?? [] : [];
+    const topicQuestions = fromDb.length > 0
+        ? fromDb
+        : (selectedTopic?.prompt || '').split('|||').map((s: string) => s.trim()).filter(Boolean);
 
     // audioMessage arriva da AudioInput: il testo trascritto, mentre il campo
     // può essere ancora occupato dalla trascrizione. onPartial porta lo
@@ -644,17 +633,9 @@ export default function AssistentePage() {
                         ~40px dal fondo finestra e -mb-12 sul wrapper annulla il
                         padding-bottom del main, senza lasciare banda morta. */}
                     <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:-mb-12 max-lg:bg-slate-50 max-lg:px-4 max-lg:pb-3 max-lg:pt-1">
-                        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer rounded-xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-indigo-500">
-                            <ChatComposerInput
-                                id="assistente-composer"
-                                hidden={voiceMode}
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                placeholder={t('assistant.inputPlaceholder')}
-                                aria-label={t('assistant.inputPlaceholder')}
-                                className="w-full flex-none border-0 bg-transparent px-2 py-1.5 focus:ring-0"
-                            />
-                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+                            {!loading && !voiceMode && <ChatSuggestions label={t('orientation.suggested.label')} items={topicQuestions} composerId="assistente-composer" onInsert={setInput} />}
+                            <div className="flex items-end gap-2">
                                 <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <div className="divide-y divide-slate-200">
                                     <ChatResponseSettings
                                         format={{ value: responseFormat, onChange: setResponseFormat, disabled: loading }}
@@ -668,18 +649,16 @@ export default function AssistentePage() {
                                     <AudioLanguageOption />
                                     </div>
                                 </div>}</ChatActionsPopover>
-                                {!voiceMode && <button
-                                    type="button"
-                                    onClick={prepareQuestion}
-                                    disabled={!selectedTopic}
-                                    title={t('assistant.prepareQuestion')}
-                                    aria-label={t('assistant.prepareQuestion')}
-                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-bold text-slate-500 transition-colors hover:border-indigo-300 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                    <span aria-hidden="true">?</span>
-                                </button>}
+                                <ChatComposerInput
+                                    id="assistente-composer"
+                                    hidden={voiceMode}
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    placeholder={t('assistant.inputPlaceholder')}
+                                    aria-label={t('assistant.inputPlaceholder')}
+                                />
                                 {/* In conversazione a voce il pulsante Parla occupa la riga. */}
-                                <div className={`ml-auto flex flex-wrap items-center justify-end gap-2${voiceMode ? ' min-w-0 flex-1' : ''}`}>
+                                <div className={`flex items-end gap-2${voiceMode ? ' min-w-0 flex-1' : ''}`}>
                                     <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}
                                         onSend={(text, onPartial) => send(text, onPartial)}
                                         voiceMode={voiceMode} onExitVoice={() => setVoiceMode(false)} counselorId={counselorId}
