@@ -4,13 +4,12 @@ The institute display copy uses the same Fernet store as personal API
 credentials. Tests must never create a key file in the checkout, so they run
 with an ephemeral installation key for the whole session.
 
-TEST_DB=postgres|sqlite (ADR-0003 §5.1) picks the database; with sqlite, tests
-marked postgres_only are skipped. The ratchet compares the failures with
+TEST_DB=postgres (the only supported database) names the ratchet file. The
+ratchet compares the failures with
 <TEST_DB>_known_failures.txt: a failure not in the list fails the run, and so
 does a listed test that passes (remove it: the list can only get shorter).
 """
 import os
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -19,12 +18,7 @@ from cryptography.fernet import Fernet
 os.environ.setdefault("INSTITUTION_CREDENTIAL_KEY", Fernet.generate_key().decode())
 
 TEST_DB = os.environ.get("TEST_DB", "postgres").strip().lower()
-SQLITE = TEST_DB == "sqlite"
 KNOWN_FAILURES_FILE = Path(__file__).with_name(f"{TEST_DB}_known_failures.txt")
-
-if SQLITE and not os.environ.get("DATABASE_URL", "").startswith("sqlite"):
-    # The module-level engine must never reach a Postgres server in a SQLite run.
-    os.environ["DATABASE_URL"] = "sqlite:///" + os.path.join(tempfile.mkdtemp(prefix="cb-sqlite-"), "backend.sqlite3")
 
 
 def load_known_failures(path=KNOWN_FAILURES_FILE):
@@ -41,19 +35,10 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    config.addinivalue_line("markers", "postgres_only: Postgres-only test (legacy migrations), skipped with TEST_DB=sqlite")
-    # Modules that cannot even be imported (e.g. on SQLite) are listed as known failures.
+    config.addinivalue_line("markers", "postgres_only: Postgres-only test (legacy migrations)")
+    # Modules that cannot even be imported are listed as known failures.
     config.option.continue_on_collection_errors = True
     config.pluginmanager.register(KnownFailuresRatchet(config), "known-failures-ratchet")
-
-
-def pytest_collection_modifyitems(config, items):
-    if not SQLITE:
-        return
-    skip = pytest.mark.skip(reason="postgres_only (TEST_DB=sqlite)")
-    for item in items:
-        if "postgres_only" in item.keywords:
-            item.add_marker(skip)
 
 
 class KnownFailuresRatchet:

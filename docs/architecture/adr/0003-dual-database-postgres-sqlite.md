@@ -204,8 +204,8 @@ Con le transazioni *deferred* predefinite di SQLite, una transazione che prima l
 | Job | Database | Quando | Cosa |
 |---|---|---|---|
 | `tests (postgres)` | servizio `postgres:15` | `pull_request` che tocca `backend/**` o il workflow; `workflow_dispatch` | suite backend completa |
-| `tests (sqlite)` | file nel runner | idem | suite backend con il cricchetto |
-| `startup (sqlite)` | file nel runner | idem | avvio reale due volte sullo stesso file (idempotenza) e `GET /health` |
+| ~~`tests (sqlite)`~~ | — | — | rimosso 2026-10-29: SQLite non è più supportato |
+| ~~`startup (sqlite)`~~ | — | — | rimosso 2026-10-29 (resta `startup (postgres)`) |
 | `portability` | — | idem | `check-sql-portability.py` |
 
 Niente esecuzioni su ogni push di `main`. L'import del backend su Windows ha già il suo workflow (`backend-windows.yml`, F1-18) e resta nei workflow desktop (F1-15).

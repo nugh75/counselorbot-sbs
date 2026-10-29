@@ -73,13 +73,13 @@ def test_ratchet_reports_new_failures_and_listed_tests_that_pass(tmp_path):
 ])
 def test_ratchet_pytest_exit_status(tmp_path, source, known, strict, status):
     (tmp_path / "conftest.py").write_text(Path(conftest.__file__).read_text())
-    (tmp_path / "sqlite_known_failures.txt").write_text(known + "\n")
+    (tmp_path / "postgres_known_failures.txt").write_text(known + "\n")
     (tmp_path / "test_case.py").write_text(source + "\n")
     result = subprocess.run(
         [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider",
          "--failures-out", str(tmp_path / "failures.txt"),
          *(["--strict-known-failures"] if strict else [])],
-        cwd=tmp_path, env={**os.environ, "TEST_DB": "sqlite", "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"},
+        cwd=tmp_path, env={**os.environ, "TEST_DB": "postgres", "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"},
         capture_output=True, text=True, timeout=30,
     )
     assert result.returncode == status, result.stdout + result.stderr

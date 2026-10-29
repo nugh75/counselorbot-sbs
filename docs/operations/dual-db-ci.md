@@ -1,5 +1,7 @@
 # CI backend su Postgres e SQLite (F1-05a)
 
+> **Aggiornamento 2026-10-29**: SQLite non è più supportato. I job `tests (sqlite)` e `startup (sqlite)`, `sqlite_known_failures.txt` e i test solo-SQLite sono rimossi; `backend-db.yml` esegue solo Postgres (`ubuntu-24.04`, perché il graphviz di ubuntu-26.04 non ha i layout circo/twopi). Le sezioni SQLite sotto restano come storia.
+
 La PR #522 implementa ADR-0003 §5 e l'issue #520. Non modifica il motore
 F1-05b, le rotte applicative o il guscio F1-02. La PR resta **DRAFT**:
 la revisione applicabile e l'accettazione dell'estensione Postgres descritta
@@ -102,13 +104,13 @@ Postgres 15 usa esclusivamente il servizio effimero `counselorbot_test` del
 runner; SQLite usa file in `RUNNER_TEMP`. Nessun database operativo è raggiunto.
 
 ```sh
-# Mac da 8 GB: test mirati SQLite, senza Docker o frontend.
-TEST_DB=sqlite PYTHONPATH=. python3 -m pytest backend/tests/test_dual_db_checks.py -q
+# Test mirati sul Postgres di test (un solo container alla volta).
+PYTHONPATH=. python3 -m pytest backend/tests/test_dual_db_checks.py -q
 python3 scripts/check-sql-portability.py
 
 # Suite completa: preferire CI remota.
-TEST_DB=sqlite PYTHONPATH=. python3 -m pytest backend/tests -q \
-  --strict-known-failures --failures-out /tmp/sqlite-failures.txt
+PYTHONPATH=. python3 -m pytest backend/tests -q \
+  --strict-known-failures --failures-out /tmp/postgres-failures.txt
 ```
 
 `--failures-out` scrive node ID ordinati e univoci, anche per errori di setup
@@ -126,7 +128,7 @@ usare `@pytest.mark.postgres_only`, con motivazione. I moduli in baseline
 possono coprire errori successivi al primo: quando tornano importabili, i nuovi
 node ID emersi richiedono analisi e revisione, non un aggiornamento meccanico.
 
-## Startup SQLite: due avvii reali
+## Startup SQLite: due avvii reali (rimosso)
 
 Il probe avvia il backend due volte sullo stesso file SQLite e accetta HTTP 200
 (oppure 404 finché `/health` arriva con F1-02). Qualunque altro esito blocca:
