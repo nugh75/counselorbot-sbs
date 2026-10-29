@@ -25,3 +25,11 @@ test('saving uses the full original message while model input stays bounded', ()
     assert.equal(request.session_id, 'session-a');
     assert.equal(request.instruction, 'Solo due passi');
 });
+
+test('a correction sends the visible diagram, an empty request redraws from scratch', () => {
+    const spec = { type: 'flow', title: 'Un piano aiuta', nodes: [], edges: [] };
+    // @ts-expect-error -- a minimal spec is enough for the request shape.
+    assert.deepEqual(buildDiagramFromMessageRequest('Testo', 'it', ' Togli un nodo ', 42, 's', 'Testo', spec).previous_spec, spec);
+    // @ts-expect-error -- a minimal spec is enough for the request shape.
+    assert.equal('previous_spec' in buildDiagramFromMessageRequest('Testo', 'it', '  ', 42, 's', 'Testo', spec), false);
+});

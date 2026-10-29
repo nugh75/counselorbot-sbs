@@ -35,7 +35,11 @@ type State = 'idle' | 'loading' | 'done' | 'failed';
  *
  * Il bottone apre un campo: lo studente puo' dire che disegno vuole, o lasciarlo
  * vuoto e prendere il diagramma di cio' che il messaggio gia' dice. Il campo
- * resta aperto dopo il disegno, cosi' si puo' rifare chiedendo altro.
+ * resta aperto dopo il disegno e diventa una correzione: il testo dice cosa
+ * cambiare nel disegno visibile; vuoto, il diagramma si rifa' da capo.
+ *
+ * Il disegno appartiene al messaggio da cui nasce: se la riga mostra un altro
+ * messaggio (nuovo turno, risposta rigenerata) il disegno precedente sparisce.
  *
  * Il server torna lo spec, non l'immagine, e il disegno finisce nella stessa
  * card degli altri: titolo, legenda, zoom, trascinamento, schermo intero.
@@ -56,8 +60,8 @@ export function MessageDiagramButton({
 }: MessageDiagramButtonProps) {
     const [open, setOpen] = useState(false);
     const [instruction, setInstruction] = useState('');
-    const [state, setState] = useState<State>('idle');
-    const [spec, setSpec] = useState<DiagramSpec | null>(null);
+    const [status, setStatus] = useState<{ key: string; state: State }>({ key: '', state: 'idle' });
+    const [result, setResult] = useState<{ key: string; spec: DiagramSpec } | null>(null);
     const [error, setError] = useState('');
     const [sourceKey, setSourceKey] = useState('');
     useEffect(() => {
@@ -68,13 +72,18 @@ export function MessageDiagramButton({
     const savedDiagram = savedDiagrams[sourceKey];
     const requestRef = useRef<AbortController | null>(null);
     useEffect(() => () => requestRef.current?.abort(), []);
+    const spec = result && result.key === sourceKey ? result.spec : null;
     const visibleSpec = spec || savedDiagram?.spec;
+    const correcting = !!visibleSpec;
+    const state = status.key === sourceKey ? status.state : 'idle';
 
     const request = async () => {
-        if (state === 'loading' || disabled) return;
+        const key = sourceKey;
+        if (state === 'loading' || disabled || !key) return;
         const controller = new AbortController();
         requestRef.current = controller;
         const timeout = window.setTimeout(() => controller.abort(), 120000);
+        const setState = (next: State) => setStatus({ key, state: next });
         setState('loading');
         try {
             const counselorId = getSelectedCounselorId();
@@ -89,6 +98,7 @@ export function MessageDiagramButton({
                     counselorId,
                     sessionId,
                     sourceText,
+                    visibleSpec,
                 )),
                 signal: controller.signal,
             });
@@ -97,8 +107,9 @@ export function MessageDiagramButton({
             }
             const parsed = parseDiagramSpec(await response.json());
             if (!parsed) throw new Error(diagramRequestLabel('unsuitable', locale));
-            setSpec(parsed);
-            onSaved({ source_text: sourceText.trim(), source_key: await messageDiagramKey(sourceText), instruction, spec: parsed });
+            setResult({ key, spec: parsed });
+            onSaved({ source_text: sourceText.trim(), source_key: key, instruction, spec: parsed });
+            setInstruction('');
             setState('done');
         } catch (error) {
             setError(error instanceof DOMException && error.name === 'AbortError' ? diagramRequestLabel('unavailable', locale) : error instanceof Error ? error.message : failedLabel);
@@ -108,10 +119,7 @@ export function MessageDiagramButton({
         }
     };
 
-    const toggle = () => {
-        if (!open && savedDiagram && !spec) setInstruction(savedDiagram.instruction);
-        setOpen(value => !value);
-    };
+    const toggle = () => setOpen(value => !value);
 
     return (
         <>
@@ -140,16 +148,16 @@ export function MessageDiagramButton({
                         type="text"
                         value={instruction}
                         onChange={(event) => setInstruction(event.target.value)}
-                        placeholder={placeholder}
-                        aria-label={placeholder}
+                        placeholder={correcting ? diagramRequestLabel('correct', locale) : placeholder}
+                        aria-label={correcting ? diagramRequestLabel('correct', locale) : placeholder}
                         maxLength={400}
                         autoFocus
                         className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17747a]"
                     />
-                    <Tooltip content={submitLabel}><button
+                    <Tooltip content={correcting ? diagramRequestLabel('correctSend', locale) : submitLabel}><button
                         type="submit"
                         disabled={state === 'loading' || disabled}
-                        aria-label={submitLabel}
+                        aria-label={correcting ? diagramRequestLabel('correctSend', locale) : submitLabel}
                         className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-50 hover:text-[#17747a] disabled:opacity-50"
                     >
                         {state === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
