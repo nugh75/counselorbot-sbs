@@ -3,9 +3,11 @@
 Milestone #39 «Chat UX unification». Standard: la chat guidata
 (`components/qsa/GuidedChatInterface.tsx`) con i componenti condivisi di main:
 `ChatShell` (#653: `ChatTranscript`, `ChatRow`, `ChatComposerInput`,
-`ChatSendButton`), `ChatMarkdown` (#654), `AudioInput` + `ListenButton` (#655),
-`ChatResponseSettings` (#657). Stato letto dal codice di `main` (904798af);
-le PR #656, #658, #661 non sono ancora unite e non sono contate qui.
+`ChatSendButton`; #656: `ChatSuggestions`; #658: `ChatMessageActions`),
+`ChatMarkdown` (#654), `AudioInput` + `ListenButton` (#655),
+`ChatResponseSettings` (#657), `ChatPending` (#658), `MessageDiagramButton`
+(#661). Analisi fatta sul codice di `main` (904798af); dopo l'unione di #656,
+#658 e #661 le superfici analizzate qui non sono cambiate.
 Solo documentale: nessun codice modificato.
 
 ## Sintesi
@@ -84,5 +86,5 @@ Divergenze rispetto allo standard:
 4. Sandbox: nessuna azione.
 
 ## Fuori ambito di questa audit
-Bussola e Assistente (già allineati da #653–#657), tema terminale di OpenCode,
+Bussola e Assistente (già allineati da #653–#658 e #661), tema terminale di OpenCode,
 logica di backend. Test e codice non toccati.

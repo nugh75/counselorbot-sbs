@@ -1,3 +1,5 @@
+import type { DiagramSpec } from './diagram-content';
+
 export interface DiagramFromMessageRequest {
     text: string;
     lang: string;
@@ -6,6 +8,7 @@ export interface DiagramFromMessageRequest {
     counselor_id: number;
     session_id?: string;
     source_text?: string;
+    previous_spec?: DiagramSpec;
 }
 
 export function buildDiagramFromMessageRequest(
@@ -15,6 +18,7 @@ export function buildDiagramFromMessageRequest(
     counselorId: number,
     sessionId?: string,
     sourceText?: string,
+    previousSpec?: DiagramSpec,
 ): DiagramFromMessageRequest {
     return {
         text: text.slice(0, 8000),
@@ -23,6 +27,8 @@ export function buildDiagramFromMessageRequest(
         instruction: instruction.trim().slice(0, 400),
         counselor_id: counselorId,
         ...(sessionId ? { session_id: sessionId, source_text: sourceText || text } : {}),
+        // Una correzione rivede il disegno gia' fatto; senza testo si ridisegna da capo.
+        ...(previousSpec && instruction.trim() ? { previous_spec: previousSpec } : {}),
     };
 }
 

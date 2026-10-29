@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { LucideIcon } from 'lucide-react';
-import { GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen, Mic } from 'lucide-react';
+import { GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen, Mic, GitBranch } from 'lucide-react';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { getIdentity, getViewAsAccount, loginHref, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
@@ -19,7 +19,10 @@ import { ChatResponseSettings } from '@/components/ui/ChatResponseSettings';
 import { useResponseFormat } from '@/lib/use-response-format';
 import type { ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
-import { ChatComposerInput, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
+import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatSuggestions, ChatTranscript, chatActionButtonClass } from '@/components/ui/ChatShell';
+import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
+import { Tooltip } from '@/components/ui/Tooltip';
+import { Button } from '@/components/ui/Button';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
@@ -158,11 +161,12 @@ export default function AssistentePage() {
     const [dbQuestions, setDbQuestions] = useState<AssistantQuestionsByTopic>({});
     // Indice della prossima domanda per topic: "Prepara domanda" scorre la lista
     // cosi' propone ogni volta una domanda diversa invece di ripetere la stessa.
-    const questionVariantIdx = useRef<Record<string, number>>({});
     const requestRef = useRef<AbortController | null>(null);
     // Counselor AI: opzionale, scelta in una dropdown. Il sito-chat invia
     // counselor_id al backend che applichera' la persona al system prompt.
     const [counselorId, setCounselorId] = useState<number | null>(null);
+    // Senza una sessione guidata il server non salva i diagrammi: restano qui finché la pagina è aperta.
+    const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
     // Collezioni disponibili (builtin + dinamiche), caricate dal backend.
     const [availableCollections, setAvailableCollections] = useState<CollectionInfo[]>(
         BUILTIN_COLLECTIONS.map((id) => ({ id, label: id, builtin: true })),
@@ -219,14 +223,11 @@ export default function AssistentePage() {
         });
     }, []);
 
-    // Carica le domande suggerite dal DB per la lingua corrente; reset del cursore.
+    // Carica le domande suggerite dal DB per la lingua corrente.
     useEffect(() => {
         let active = true;
         fetchAssistantQuestions(lang).then((data) => {
-            if (active) {
-                setDbQuestions(data);
-                questionVariantIdx.current = {};
-            }
+            if (active) setDbQuestions(data);
         });
         return () => { active = false; };
     }, [lang]);
@@ -262,19 +263,12 @@ export default function AssistentePage() {
         });
     };
 
-    const prepareQuestion = () => {
-        if (!selectedTopic) return; // collezione dinamica senza topic
-        // Preferisci le domande dal DB (gestite da admin); fallback alle varianti i18n.
-        const fromDb = dbQuestions[selectedTopic.id] ?? [];
-        const promptText = selectedTopic.prompt || '';
-        const variants = fromDb.length > 0
-            ? fromDb
-            : promptText.split('|||').map((s: string) => s.trim()).filter(Boolean);
-        if (variants.length === 0) return;
-        const i = questionVariantIdx.current[selectedTopic.id] ?? 0;
-        setInput(variants[i % variants.length]);
-        questionVariantIdx.current[selectedTopic.id] = (i + 1) % variants.length;
-    };
+    // Domande suggerite dell'argomento: dal DB (gestite da admin), altrimenti
+    // le varianti i18n del prompt. Collezione dinamica senza topic: nessuna.
+    const fromDb = selectedTopic ? dbQuestions[selectedTopic.id] ?? [] : [];
+    const topicQuestions = fromDb.length > 0
+        ? fromDb
+        : (selectedTopic?.prompt || '').split('|||').map((s: string) => s.trim()).filter(Boolean);
 
     // audioMessage arriva da AudioInput: il testo trascritto, mentre il campo
     // può essere ancora occupato dalla trascrizione. onPartial porta lo
@@ -580,10 +574,6 @@ export default function AssistentePage() {
                                     {msg.role === 'assistant'
                                         ? <div className="min-w-0 max-w-full" data-voice-source={`assistente-${conversationId ?? 'new'}-${i}`} data-voice-language={lang} data-voice-counselor={counselorId ?? undefined}><ChatMarkdown content={msg.content} locale={lang} errorMessage={t('guided.stepConnError')} /></div>
                                         : <span className="whitespace-pre-line">{msg.content}</span>}
-                                    {/* La risposta in arrivo non si legge ancora: il testo cambia a ogni token. */}
-                                    {msg.role === 'assistant' && !(loading && i === messages.length - 1) && diagramContentForSpeech(msg.content) && <div className="mt-2" data-voice-ignore>
-                                        <ListenButton id={`assistente-${conversationId ?? 'new'}-${i}`} text={diagramContentForSpeech(msg.content)} language={lang} counselorId={counselorId} className="min-h-[44px] min-w-[44px] px-2" />
-                                    </div>}
                                     {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
                                         <div className="mt-3 pt-2 border-t border-slate-100 flex flex-wrap gap-2">
                                             {msg.sources.map((s) => (
@@ -602,36 +592,40 @@ export default function AssistentePage() {
                                             ))}
                                         </div>
                                     )}
-                                    {msg.role === 'assistant' && msg.responseId && (
-                                        <div className="mt-2 flex items-center gap-1">
-                                            <button
-                                                onClick={() => submitFeedback(i, true)}
-                                                disabled={msg.feedback !== undefined}
-                                                title={t('assistant.feedbackUp')}
-                                                aria-label={t('assistant.feedbackUp')}
-                                                className={`tap-icon rounded transition-colors disabled:cursor-default ${
-                                                    msg.feedback === true ? 'text-green-600' : 'text-slate-500 hover:text-green-600'
-                                                }`}
-                                            >
-                                                <ThumbsUp className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => submitFeedback(i, false)}
-                                                disabled={msg.feedback !== undefined}
-                                                title={t('assistant.feedbackDown')}
-                                                aria-label={t('assistant.feedbackDown')}
-                                                className={`tap-icon rounded transition-colors disabled:cursor-default ${
-                                                    msg.feedback === false ? 'text-red-600' : 'text-slate-500 hover:text-red-600'
-                                                }`}
-                                            >
-                                                <ThumbsDown className="w-4 h-4" />
-                                            </button>
-                                            {msg.feedback !== undefined && (
-                                                <span className="text-xs text-slate-500 ml-1">{t('assistant.feedbackThanks')}</span>
-                                            )}
-                                        </div>
-                                    )}
                                 </ChatBubble>
+                                {/* La risposta in arrivo non ha ancora azioni: il testo cambia a ogni token. */}
+                                {msg.role === 'assistant' && !(loading && i === messages.length - 1) && (
+                                    <ChatMessageActions label={chatLayoutLabel(lang, 'messageActions')}>
+                                        <MessageDiagramButton
+                                            text={diagramContentForSpeech(msg.content) || msg.content}
+                                            locale={lang}
+                                            label={t('guided.diagram')}
+                                            failedLabel={t('guided.diagramFailed')}
+                                            placeholder={t('guided.diagramPrompt')}
+                                            submitLabel={t('guided.diagramSend')}
+                                            sessionId=""
+                                            sourceText={msg.content}
+                                            savedDiagrams={savedDiagrams}
+                                            onSaved={diagram => setSavedDiagrams(previous => ({ ...previous, [diagram.source_key]: diagram }))}
+                                            disabled={loading}
+                                            renderTrigger={(toggleDiagram, diagramOpen) => <>
+                                                <Tooltip content={t('guided.diagram')}><Button type="button" variant="ghost" className={chatActionButtonClass} aria-label={t('guided.diagram')} disabled={loading} aria-expanded={diagramOpen} onClick={toggleDiagram}>
+                                                    <GitBranch className="h-4 w-4" aria-hidden="true" />
+                                                </Button></Tooltip>
+                                                {diagramContentForSpeech(msg.content) && <ListenButton id={`assistente-${conversationId ?? 'new'}-${i}`} text={diagramContentForSpeech(msg.content)} language={lang} counselorId={counselorId} className={chatActionButtonClass} />}
+                                                {msg.responseId && <>
+                                                    <Tooltip content={t('assistant.feedbackUp')}><Button type="button" variant="ghost" className={`${chatActionButtonClass} aria-pressed:bg-indigo-50 aria-pressed:text-indigo-700`} aria-label={t('assistant.feedbackUp')} aria-pressed={msg.feedback === true} disabled={msg.feedback !== undefined} onClick={() => void submitFeedback(i, true)}>
+                                                        <ThumbsUp className="h-4 w-4" aria-hidden="true" />
+                                                    </Button></Tooltip>
+                                                    <Tooltip content={t('assistant.feedbackDown')}><Button type="button" variant="ghost" className={`${chatActionButtonClass} aria-pressed:bg-indigo-50 aria-pressed:text-indigo-700`} aria-label={t('assistant.feedbackDown')} aria-pressed={msg.feedback === false} disabled={msg.feedback !== undefined} onClick={() => void submitFeedback(i, false)}>
+                                                        <ThumbsDown className="h-4 w-4" aria-hidden="true" />
+                                                    </Button></Tooltip>
+                                                    {msg.feedback !== undefined && <span role="status" className="ml-1 text-xs text-slate-500">{t('assistant.feedbackThanks')}</span>}
+                                                </>}
+                                            </>}
+                                        />
+                                    </ChatMessageActions>
+                                )}
                             </ChatRow>
                         ))}
                     </ChatTranscript>
@@ -644,17 +638,9 @@ export default function AssistentePage() {
                         ~40px dal fondo finestra e -mb-12 sul wrapper annulla il
                         padding-bottom del main, senza lasciare banda morta. */}
                     <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:-mb-12 max-lg:bg-slate-50 max-lg:px-4 max-lg:pb-3 max-lg:pt-1">
-                        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer rounded-xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-indigo-500">
-                            <ChatComposerInput
-                                id="assistente-composer"
-                                hidden={voiceMode}
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                placeholder={t('assistant.inputPlaceholder')}
-                                aria-label={t('assistant.inputPlaceholder')}
-                                className="w-full flex-none border-0 bg-transparent px-2 py-1.5 focus:ring-0"
-                            />
-                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+                            {!loading && !voiceMode && <ChatSuggestions label={t('orientation.suggested.label')} items={topicQuestions} composerId="assistente-composer" onInsert={setInput} />}
+                            <div className="flex items-end gap-2">
                                 <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <div className="divide-y divide-slate-200">
                                     <ChatResponseSettings
                                         format={{ value: responseFormat, onChange: setResponseFormat, disabled: loading }}
@@ -668,18 +654,16 @@ export default function AssistentePage() {
                                     <AudioLanguageOption />
                                     </div>
                                 </div>}</ChatActionsPopover>
-                                {!voiceMode && <button
-                                    type="button"
-                                    onClick={prepareQuestion}
-                                    disabled={!selectedTopic}
-                                    title={t('assistant.prepareQuestion')}
-                                    aria-label={t('assistant.prepareQuestion')}
-                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-bold text-slate-500 transition-colors hover:border-indigo-300 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                    <span aria-hidden="true">?</span>
-                                </button>}
+                                <ChatComposerInput
+                                    id="assistente-composer"
+                                    hidden={voiceMode}
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    placeholder={t('assistant.inputPlaceholder')}
+                                    aria-label={t('assistant.inputPlaceholder')}
+                                />
                                 {/* In conversazione a voce il pulsante Parla occupa la riga. */}
-                                <div className={`ml-auto flex flex-wrap items-center justify-end gap-2${voiceMode ? ' min-w-0 flex-1' : ''}`}>
+                                <div className={`flex items-end gap-2${voiceMode ? ' min-w-0 flex-1' : ''}`}>
                                     <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}
                                         onSend={(text, onPartial) => send(text, onPartial)}
                                         voiceMode={voiceMode} onExitVoice={() => setVoiceMode(false)} counselorId={counselorId}

@@ -465,6 +465,28 @@ tastiera), senza spostare la pagina; i grafici proposti dal modello compaiono
 come grafici e un errore temporaneo del fornitore come avviso, non come testo
 tecnico. L’HTML scritto nel messaggio non viene eseguito. I messaggi della
 persona restano testo semplice.
+Anche il composer ha la stessa forma nelle tre chat (#656): a sinistra il
+pulsante «Opzioni della conversazione», al centro il campo, a destra
+microfono e Invia, tutti quadrati da 44 px con gli stessi angoli;
+nella chat delle idee la graffetta degli allegati ha la stessa misura. Formato
+e lunghezza della risposta dell’Assistente stanno nelle opzioni, come nella
+chat guidata. I suggerimenti rapidi sono un elenco richiudibile sopra il campo
+(«Domande suggerite» in Bussola e Assistente, le domande della fase nella chat
+guidata): un suggerimento si aggiunge a ciò che si sta scrivendo, senza
+cancellarlo. Nell’Assistente l’elenco mostra le domande dell’argomento scelto
+e prende il posto del vecchio pulsante «?», che ne proponeva una alla volta.
+La Bussola non ha «Ferma la risposta» perché riceve la risposta intera, non
+in streaming.
+Attesa e azioni sono uguali nelle tre chat (#658): «sto pensando» è lo stesso
+spinner con testo, sia in coda alla conversazione sia dentro la risposta che
+deve ancora arrivare. Sotto ogni risposta finita, fuori dalla bolla, c’è la riga
+«Azioni del messaggio» con pulsanti da 44 px che vanno a capo su telefono:
+**Diagramma** (in Bussola e Assistente il disegno resta finché la pagina è
+aperta; solo nella chat guidata viene salvato con la sessione), **Ascolta** e,
+quando la risposta lo consente (chat guidata e Assistente), **pollice su/giù**
+con lo stato premuto indicato; nell’Assistente il voto è unico e mostra
+«Grazie!». Le fonti dell’Assistente restano in fondo alla risposta e aprono
+l’anteprima del documento.
 
 **Audit delle altre chat (#659).** Sandbox admin, chat dei piani operativi e
 chat dei taccuini di prova sono la chat guidata e seguono già lo standard. Le
@@ -989,7 +1011,7 @@ viene riscritto. Casi verificati e limiti della guardia sono descritti in
 `docs/operations/chat-continuation-duplicates.md` (#425).
 Durante la generazione, i blocchi di ragionamento riconoscibili (tag `<think>`, `<thinking>`, `<sto_pensando>` o `<analysis>`, inclusi tag aperti o chiusure orfane) vengono separati dalla risposta. Quando il ragionamento è disattivato, la risposta viene trattenuta fino alla fine per filtrarla prima di mostrarla: può quindi apparire tutta insieme. Il testo privo di segnali riconoscibili non è distinguibile con certezza dalla risposta del modello. Se una risposta risulta vuota, composta da soli spazi o svuotata dalla rimozione del reasoning (oppure in caso di errore vuoto del provider), il sistema evita errori 500/502 o messaggi vuoti e invia un fallback gentile e riflessivo, contestualizzato al passo corrente della chat guidata e nella lingua dell’utente (italiano, inglese, spagnolo, francese, tedesco, svedese), differenziato tra introduzione del tema all'ingresso dello step (o benvenuto nel Patto di Collaborazione) e prosecuzione della riflessione nei turni successivi. I contratti di dialogo escludono cliché terapeutici e meta-disclaimer ripetitivi (come "è un'ipotesi e non una verità", "senza giudizio", "non è un difetto"), affidando la natura non diagnostica al patto iniziale e la formulazione delle ipotesi alla modalità epistemica e alla curiosità fenomenologica naturale.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
-e feedback quando disponibili. Nei diagrammi gli archi che indicano un ostacolo sono rossi e tutti gli altri verdi (stessa palette in web, PDF e Telegram, temi chiaro e scuro); tratteggio, punta a T e legenda li distinguono anche senza il colore. Il disegno richiede il programma Graphviz: su un'installazione che non lo ha (per esempio un'app desktop senza Graphviz) il riquadro lo dice chiaramente, senza «Riprova», e riporta comunque le relazioni in testo; `GET /api/capabilities` indica se i diagrammi sono disponibili. Il lettore nel menu di navigazione legge il testo visibile,
+e feedback quando disponibili. Il diagramma di un messaggio appartiene a quel messaggio: ogni nuova risposta ha il suo, mai quello del turno precedente. Dopo il disegno il campo diventa una correzione: si scrive cosa cambiare e il diagramma visibile viene rivisto e salvato come nuova versione; lasciandolo vuoto si rifà da capo (#661). Nei diagrammi gli archi che indicano un ostacolo sono rossi e tutti gli altri verdi (stessa palette in web, PDF e Telegram, temi chiaro e scuro); tratteggio, punta a T e legenda li distinguono anche senza il colore. Il disegno richiede il programma Graphviz: su un'installazione che non lo ha (per esempio un'app desktop senza Graphviz) il riquadro lo dice chiaramente, senza «Riprova», e riporta comunque le relazioni in testo; `GET /api/capabilities` indica se i diagrammi sono disponibili. Il lettore nel menu di navigazione legge il testo visibile,
 con impostazioni di voce e motore (Edge TTS online con filtro PII deterministico obbligatorio oppure Piper su host locale fidato, con dodici voci ONNX incorporate, attivo anche nella configurazione portatile); la correzione della pronuncia è visibile solo
 all’amministratore. Chat guidata, Bussola e Assistente accettano
 registrazione del microfono o file audio: la trascrizione è da controllare, salvo
