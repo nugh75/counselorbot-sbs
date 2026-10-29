@@ -6,13 +6,14 @@ modifiche dal browser del Mac, **senza toccare i container di produzione**
 
 ## Comandi
 
-### Guscio chat condiviso (#653)
+### Guscio e Markdown chat condivisi (#653, #654)
 
 `bash scripts/dev-chat-shell-tests.sh` controlla la porta e avvia Next con hot
 reload su `127.0.0.1:3173`, backend inutilizzabile `127.0.0.1:9`.
 `frontend/tests/chat-shell.test.mjs` intercetta le API di Bussola e Assistente
 con dati sintetici: nessun database, SSO o provider. Da `frontend/`: `node --test
-tests/chat-shell.test.mjs`. Arresto: Ctrl+C nel terminale del runner.
+tests/chat-shell.test.mjs` e `node --test tests/chat-markdown.test.mjs`
+(stessa risposta su chat guidata, Bussola e Assistente). Arresto: Ctrl+C nel terminale del runner.
 Da SSH: `ssh -N -L 3173:127.0.0.1:3173 <utente>@<server>`, URL
 `http://localhost:3173`.
 
