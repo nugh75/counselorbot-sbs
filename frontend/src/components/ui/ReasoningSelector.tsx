@@ -4,6 +4,7 @@ import { Brain, BrainCircuit, Zap } from 'lucide-react';
 
 import { useI18n } from '@/lib/i18n-context';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { ListRadioMark, listRadioClass, listRadioGroupClass } from '@/components/ui/ChatOptionsMenu';
 
 export type ReasoningEffort = 'off' | 'standard' | 'deep';
 
@@ -19,16 +20,18 @@ interface ReasoningSelectorProps {
     disabled?: boolean;
     // Il modello ragiona sempre: «Nessuno» resta visibile ma non selezionabile.
     mandatory?: boolean;
+    // Elenco verticale con etichette, per il sottolivello del menù «⋮».
+    list?: boolean;
 }
 
-export function ReasoningSelector({ value, onChange, disabled = false, mandatory = false }: ReasoningSelectorProps) {
+export function ReasoningSelector({ value, onChange, disabled = false, mandatory = false, list = false }: ReasoningSelectorProps) {
     const { t } = useI18n();
 
     return (
         <div
             role="radiogroup"
             aria-label={t('reasoning.label')}
-            className="inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5"
+            className={list ? listRadioGroupClass : 'inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5'}
         >
             {OPTIONS.map(({ value: option, Icon }) => {
                 const optionLabel = t(`reasoning.${option}`);
@@ -37,6 +40,11 @@ export function ReasoningSelector({ value, onChange, disabled = false, mandatory
                     ? t('reasoning.mandatoryOption')
                     : `${t('reasoning.label')}: ${optionLabel}`;
                 const active = option === value;
+                if (list) return (
+                    <button key={option} type="button" role="radio" aria-checked={active} aria-label={tooltipLabel} aria-disabled={optionDisabled} disabled={optionDisabled} onClick={() => onChange(option)} className={listRadioClass(active)}>
+                        <ListRadioMark active={active} /><Icon className="h-4 w-4 shrink-0" aria-hidden="true" />{optionLabel}
+                    </button>
+                );
                 return (
                     <Tooltip key={option} content={tooltipLabel} side="top">
                         <button

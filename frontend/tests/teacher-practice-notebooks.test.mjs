@@ -179,6 +179,7 @@ test('nella Bussola il docente sceglie «Prova» e il turno porta il taccuino sc
     await page.goto(`${origin}/bussola`, { waitUntil: 'networkidle' });
     await page.locator('#bussola-composer').waitFor();
     await page.getByRole('button', { name: 'Opzioni' }).click();
+    await page.getByRole('button', { name: /^Taccuino nel contesto: / }).click();
     const selector = page.getByRole('radiogroup', { name: 'Taccuino nel contesto' });
     assert.deepEqual(await selector.getByRole('radio').allTextContents(), ['Predefinito', 'Prova']);
     await selector.getByRole('radio', { name: /Prova/ }).click();
@@ -187,6 +188,7 @@ test('nella Bussola il docente sceglie «Prova» e il turno porta il taccuino sc
     assert.equal(await picker.getByRole('combobox').inputValue(), '1');
     assert.ok(await picker.getByText('Simulazione: il modello sa che lo studente è immaginario.').isVisible());
     assert.equal(await picker.getByRole('link', { name: 'Gestisci i taccuini di prova' }).getAttribute('href'), '/docente/taccuini-prova');
+    await page.keyboard.press('Escape');
     await page.keyboard.press('Escape');
     await page.locator('#bussola-composer').fill('Da dove parto?');
     await page.locator('#bussola-composer').press('Enter');
@@ -267,6 +269,7 @@ test('nella chat guidata il docente sceglie «Prova» e un taccuino: turno e sna
     await page.getByRole('button', { name: 'Inizia', exact: true }).click();
     await page.locator('#guided-composer').waitFor();
     await page.getByRole('button', { name: 'Opzioni' }).click();
+    await page.getByRole('button', { name: /^Taccuino nel contesto: / }).click();
     const selector = page.getByRole('radiogroup', { name: 'Taccuino nel contesto' });
     assert.deepEqual(await selector.getByRole('radio').allTextContents(), ['Predefinito', 'Studente', 'Docente', 'Prova', 'Nessuno']);
     await selector.getByRole('radio', { name: /Prova/ }).click();
@@ -275,6 +278,7 @@ test('nella chat guidata il docente sceglie «Prova» e un taccuino: turno e sna
     await picker.selectOption('6');
     assert.equal(await page.evaluate(() => localStorage.getItem('cb-practice-notebook-id')), '6');
     assert.equal(await page.evaluate(() => localStorage.getItem('cb-notebook-context')), 'practice');
+    await page.keyboard.press('Escape');
     await page.keyboard.press('Escape');
     await page.locator('#guided-composer').fill('Proviamo');
     await page.locator('#guided-composer').press('Enter');

@@ -70,7 +70,9 @@ for (const width of [390, 1440]) {
             await page.getByRole('button', { name: 'Inizia', exact: true }).click();
             await page.getByRole('log').getByText('Apertura: qsa-essential-focus', { exact: true }).waitFor();
             await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
+            await page.getByRole('button', { name: /^Formato: / }).click();
             await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).click();
+            await page.keyboard.press('Escape');
             await page.keyboard.press('Escape');
             await send('Vorrei approfondire');
             await page.getByRole('log').getByText('Stiamo leggendo i fattori; dopo potrai scegliere un focus e un esempio. Vuoi chiarire il significato o proseguire?', { exact: true }).waitFor();
@@ -98,7 +100,9 @@ for (const width of [390, 1440]) {
             await page.locator('#guided-composer').waitFor();
             assert.equal(state.streams.length, count, 'frozen resume generates no duplicate turn');
             await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
+            await page.getByRole('button', { name: /^Formato: / }).click();
             await page.getByRole('radio', { name: 'Formato: Discorsivo', exact: true }).click();
+            await page.keyboard.press('Escape');
             await page.keyboard.press('Escape');
             await send('Approfondiamo');
             await page.getByRole('log').getByText('Riprendiamo volontariamente il tema scelto.', { exact: true }).waitFor();
@@ -114,7 +118,8 @@ test('QSAr keeps its original path and receives the format choice', async () => 
         await page.goto(`${origin}/?resume=1`); await page.locator('#guided-composer').waitFor();
         assert.equal(await page.getByRole('radio', { name: /Percorso essenziale/ }).count(), 0);
         await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
-        await page.getByRole('radio', { name: 'Formato: Tabella', exact: true }).click(); await page.keyboard.press('Escape');
+        await page.getByRole('button', { name: /^Formato: / }).click();
+        await page.getByRole('radio', { name: 'Formato: Tabella', exact: true }).click(); await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
         await page.locator('#guided-composer').fill('Un confronto'); await page.locator('#guided-composer').press('Enter');
         await page.getByRole('table').waitFor();
         assert.equal(state.streams.at(-1).guided_path, 'complete'); assert.equal(state.streams.at(-1).response_format, 'table');
@@ -185,7 +190,8 @@ test('Compass sends the preference chosen in the options popover on mobile', asy
         assert.equal(await page.getByRole('button', { name: 'Il tuo taccuino', exact: true }).count(), 0);
         assert.equal(await page.getByRole('button', { name: 'Libretto dello studente', exact: true }).count(), 0);
         await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
-        await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).click(); await page.keyboard.press('Escape');
+        await page.getByRole('button', { name: /^Formato: / }).click();
+        await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).click(); await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
         await page.locator('#bussola-composer').fill('Cosa posso fare?'); await page.locator('#bussola-composer').press('Enter');
         await page.getByRole('log').getByText(/^Risposta \d+: chat$/).waitFor();
         assert.equal(state.streams[0].response_format, 'bullets');
@@ -202,7 +208,8 @@ test('Assistant uses the selected format for subsequent replies', async () => {
         assert.equal(await page.getByRole('button', { name: 'Libretto dello studente', exact: true }).count(), 0);
         // Formato e lunghezza stanno nel popover «Opzioni», come nella chat guidata (#657).
         await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
-        await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).click(); await page.keyboard.press('Escape');
+        await page.getByRole('button', { name: /^Formato: / }).click();
+        await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).click(); await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
         const input = page.locator('main textarea').last();
         await input.fill('Come funziona il QSA?'); await input.press('Enter');
         await page.getByRole('log').getByText(/^Risposta \d+: chat$/).waitFor();

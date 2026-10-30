@@ -2,6 +2,7 @@
 
 import { useI18n } from '@/lib/i18n-context';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { ListRadioMark, listRadioClass, listRadioGroupClass } from '@/components/ui/ChatOptionsMenu';
 
 export type ResponseLength = 'short' | 'medium' | 'long';
 
@@ -11,21 +12,28 @@ interface ResponseLengthSelectorProps {
     value: ResponseLength;
     onChange: (value: ResponseLength) => void;
     disabled?: boolean;
+    // Elenco verticale con etichette, per il sottolivello del menù «⋮».
+    list?: boolean;
 }
 
-export function ResponseLengthSelector({ value, onChange, disabled = false }: ResponseLengthSelectorProps) {
+export function ResponseLengthSelector({ value, onChange, disabled = false, list = false }: ResponseLengthSelectorProps) {
     const { t } = useI18n();
 
     return (
         <div
             role="radiogroup"
             aria-label={t('responseLength.label')}
-            className="inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5"
+            className={list ? listRadioGroupClass : 'inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5'}
         >
             {OPTIONS.map((option, index) => {
                 const optionLabel = t(`responseLength.${option}`);
                 const tooltipLabel = `${t('responseLength.label')}: ${optionLabel}`;
                 const active = option === value;
+                if (list) return (
+                    <button key={option} type="button" role="radio" aria-checked={active} aria-label={tooltipLabel} disabled={disabled} onClick={() => onChange(option)} className={listRadioClass(active)}>
+                        <ListRadioMark active={active} />{optionLabel}
+                    </button>
+                );
                 return (
                     <Tooltip key={option} content={tooltipLabel} side="top">
                         <button
