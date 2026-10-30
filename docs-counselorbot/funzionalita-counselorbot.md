@@ -1560,6 +1560,23 @@ invece che con la finestra del browser. I colori scelti per counselor e
 strumenti restano quelli della loro palette. Testi, passi e comportamento non
 cambiano.
 
+Gli strumenti di sistema dell’Area amministrazione (configurazione e provider,
+costi, log, benchmark, gruppi e classi, piani di somministrazione e loro
+studenti, contatti di ricerca, segnalazioni di orientamento, dataset di
+addestramento ed esportazione di validazione, questionari di gradimento,
+riepilogo utenti, anteprima per ruolo, modelli audio, impostazioni di privacy,
+recupero documenti e contesto dei modelli) e le pagine `/admin/classi` e
+`/admin/preview-chat` usano gli stessi token semantici e le primitive `Button`,
+`Card` e `ConfirmInline` (audit UI 2026-10-30, zona 7b): spaziature su griglia
+di 8, due soli pesi, niente maiuscolo, ombre e raggi dai token, e comandi e
+campi alti almeno 44px. L’eliminazione di un piano, di un contatto di ricerca,
+di un questionario di gradimento, di un esempio del dataset e di una sessione
+di log, e la pulizia di conservazione dei log, chiedono conferma nel punto
+dell’azione; restano native le domande di archiviazione e sostituzione di un
+piano dentro il salvataggio. I grafici dei questionari usano un solo tratto
+sottile nel petrol del marchio. I fogli stampabili dei codici restano con i
+loro colori. Testi, passi e comportamento non cambiano.
+
 Nel gruppo **Classe e assegnazioni** dell'Area docenti, la voce illustrata
 **Compilazioni degli studenti** (`/docente/compilazioni`, con immagine `compilazioni.png`)
 apre la pagina dedicata dove il docente può scegliere una classe o un gruppo gestito,
