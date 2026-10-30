@@ -69,8 +69,16 @@ Lo stato di queste misure va aggiornato quando i blocchi sono rilasciati.
 |---|---|---|
 | Immagini (visione, OCR di scansioni QSA, PDF pQBL) | **mai** verso provider esterni; solo Ollama su host fidato, altrimenti errore (P6a) | **[DA VALIDARE 04-D9]** |
 | Lettura ad alta voce | Piper locale se disponibile; altrimenti **Microsoft Edge TTS** con testo filtrato da regole in modo distruttivo e bloccante in caso di errore (P6c). Sul PC del docente oggi si usa Edge filtrato | **[DA VALIDARE 04-D9]** |
-| Trascrizione della voce | servizio `transcription` interno all'installazione | **[DA VALIDARE]** |
+| Trascrizione della voce | locale per impostazione iniziale (`faster-whisper` o `whisper.cpp`); opzionalmente OpenRouter e il fornitore del modello, oppure Mistral diretto (UE), solo dopo scelta e salvataggio amministrativo. In quel caso esce **audio grezzo senza anonimizzazione**, per tutti gli utenti | **[DA VALIDARE]** |
 | Embedding per la ricerca nei documenti | documenti pubblici e query filtrate; i contenuti privati non escono; con OpenRouter si chiede `data_collection: deny` e `zdr: true` | **[DA VALIDARE 04-D10]** |
+
+Nota tecnica del 30 ottobre 2026 per la trascrizione opzionale: usare **solo dati
+fittizi nelle prove**. L'installazione non archivia l'audio e non registra il suo
+contenuto o il testo trascritto nei log del trasporto. Il filtro PII testuale
+non protegge la registrazione; OpenRouter la inoltra al fornitore del modello e
+non garantisce un percorso UE. La collocazione UE del servizio Mistral diretto
+non sostituisce la verifica delle condizioni di trattamento. Contratto tecnico:
+[eccezione STT nel gateway](../p6-gateway.md#trascrizione-online-opzionale).
 
 ## 5. Condizioni dei provider esterni
 

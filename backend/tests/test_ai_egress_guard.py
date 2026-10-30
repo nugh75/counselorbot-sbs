@@ -32,6 +32,8 @@ ALLOWED = {
     "pqbl_generator.py": ("transport", GATEWAY),         # kind="ocr"
     "embedding_service.py": ("transport", GATEWAY),      # kind="embedding"
     "routes/voice_reader.py": ("transport", GATEWAY),    # kind="tts" (Edge, Piper)
+    "routes/audio_input.py": ("transport", GATEWAY),    # explicit optional online STT
+    "privacy/gateway.py": ("privacy internal", ""),     # fixed STT endpoint allowlist
     "routes/chat.py": ("transport", "speech_text(clean_text"),  # /chat/tts through voice_reader
     "telegram_bot.py": ("transport", GATEWAY),           # kind="notify"
     # Responses transport of AIService (openai_chatgpt): its envelope is filtered upstream.

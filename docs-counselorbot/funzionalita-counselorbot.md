@@ -1055,12 +1055,26 @@ con impostazioni di voce e motore (Edge TTS online con filtro PII deterministico
 all’amministratore. Chat guidata, Bussola e Assistente accettano
 registrazione del microfono o file audio: la trascrizione è da controllare, salvo
 invio immediato scelto esplicitamente. In conversazione vocale si avvia e si ferma
-la registrazione; il microfono non riparte da solo. Il riconoscimento è sempre locale:
-l'amministratore sceglie il motore (faster-whisper, predefinito, oppure whisper.cpp,
-più leggero per CPU deboli) e il modello di quel motore nella scheda **Trascrizione audio** del gruppo «Voce e audio».
-Con **Riconoscimento automatico** la lingua è scelta fra le sei supportate e,
-se il riconoscimento è incerto, si usa la lingua dell'interfaccia; il parlato
-viene sempre trascritto, mai tradotto.
+la registrazione; il microfono non riparte da solo. Il riconoscimento è locale per
+impostazione iniziale: l'amministratore sceglie faster-whisper (predefinito) oppure
+whisper.cpp, più leggero per CPU deboli, e il modello nella scheda **Trascrizione audio**
+del gruppo «Voce e audio».
+Può anche scegliere e salvare **OpenRouter** o **Mistral diretto (UE)**, entrambi
+spenti inizialmente: serve la chiave backend già configurata, altrimenti l'opzione
+è disabilitata con spiegazione. L'ID modello online è libero; i default sono
+`mistralai/voxtral-mini-transcribe` e `voxtral-mini-latest`. L'avviso nelle sei
+lingue spiega che **l'audio di tutti gli utenti viene inviato senza anonimizzazione
+al fornitore esterno**: OpenRouter e il provider del modello oppure Mistral diretto.
+OpenRouter non garantisce residenza UE. Per le prove usare solo dati fittizi.
+Le chiavi non arrivano al browser e non si passa automaticamente a un altro motore.
+Il salvataggio globale di motore e modello è riservato agli amministratori anche
+tramite API: il ruolo ricercatore non può cambiare la destinazione dell'audio.
+Con **Riconoscimento automatico** locale la lingua è scelta fra le sei supportate e,
+se il riconoscimento è incerto, si usa la lingua dell'interfaccia; online si invia
+la lingua scelta o quella dell'interfaccia come indicazione al provider, oppure si
+lascia rilevare la lingua senza riserva. Il parlato viene trascritto, mai tradotto.
+L'audio non è archiviato dall'applicazione; il provider applica le proprie condizioni.
+Limiti e contratto: `docs/operations/audio-input.md`.
 
 Le conversazioni guidate con progressi si salvano dopo le risposte per essere
 riprese anche da un altro dispositivo. Congela sessione salva e chiude: si torna ad
