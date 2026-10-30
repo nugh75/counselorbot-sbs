@@ -13,6 +13,9 @@ Issue: [#706](https://github.com/nugh75/counselorbot-sbs/issues/706), milestone 
   an explicit administrative selection/save and are disabled when the provider key is absent.
   The browser receives only key presence. Model IDs remain editable; initial IDs are
   `mistralai/voxtral-mini-transcribe` and `voxtral-mini-latest`.
+- Added `transcription_engine` and `transcription_model` to the admin-only configuration
+  keys: the general configuration endpoint also admits researchers, who must not change
+  this global audio destination. HTTP tests require 403 before any database access.
 - Verified OpenRouter IDs through its public transcription catalog and Mistral's upload/language
   contract in the official documentation; links are in `docs/operations/audio-input.md`.
 - Restricted the privacy gateway exception to raw transcription audio at the two exact HTTPS
@@ -59,8 +62,8 @@ were created locally, without starting Next or changing tracked configuration.
 Browser tests require a dev server and were not run under the owner's resource limit.
 
 Results: 162 backend tests passed across the audio, gateway and egress-guard files;
-after tightening the unknown-provider boundary and debug-log assertions, all 67 audio
-tests passed again. All four frontend unit tests passed. The general i18n checker
+after tightening the unknown-provider boundary and debug-log assertions and adding
+the researcher settings boundary, all 69 audio tests passed. All four frontend unit tests passed. The general i18n checker
 reports the same 12 existing hard-coded texts in `ClassSettingsPage.tsx` and
 `ClassOverviewTab.tsx` already recorded in the previous handoff; those files are untouched.
 Targeted ESLint has zero errors and one pre-existing internal-navigation warning in

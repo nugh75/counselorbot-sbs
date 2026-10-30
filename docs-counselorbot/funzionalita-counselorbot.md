@@ -1044,6 +1044,8 @@ lingue spiega che **l'audio di tutti gli utenti viene inviato senza anonimizzazi
 al fornitore esterno**: OpenRouter e il provider del modello oppure Mistral diretto.
 OpenRouter non garantisce residenza UE. Per le prove usare solo dati fittizi.
 Le chiavi non arrivano al browser e non si passa automaticamente a un altro motore.
+Il salvataggio globale di motore e modello è riservato agli amministratori anche
+tramite API: il ruolo ricercatore non può cambiare la destinazione dell'audio.
 Con **Riconoscimento automatico** locale la lingua è scelta fra le sei supportate e,
 se il riconoscimento è incerto, si usa la lingua dell'interfaccia; online si invia
 la lingua scelta o quella dell'interfaccia come indicazione al provider, oppure si

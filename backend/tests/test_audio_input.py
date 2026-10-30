@@ -159,6 +159,19 @@ def test_model_list_is_admin_only(client):
     assert [model['id'] for model in body['available']] == ['small', 'large-v3-turbo']
 
 
+@pytest.mark.parametrize('key,value', [('transcription_engine', 'openrouter'),
+                                     ('transcription_model', 'openai/whisper-1')])
+def test_researcher_cannot_change_global_audio_egress_settings(client, key, value):
+    from backend.routes import admin
+
+    client.app.include_router(admin.router)
+    client.app.dependency_overrides[auth.get_identity] = lambda: {
+        'authenticated': True, 'is_admin': False, 'is_researcher': True, 'username': 'researcher'}
+    with patch.object(FakeSession, 'query', side_effect=AssertionError('No configuration write allowed')):
+        response = client.post('/admin/config', json={'key': key, 'value': value})
+    assert response.status_code == 403
+
+
 def test_model_list_survives_an_unreachable_service(client):
     client.app.dependency_overrides[auth.get_identity] = lambda: {'authenticated': True, 'is_admin': True, 'username': 'boss'}
     service = AsyncMock()

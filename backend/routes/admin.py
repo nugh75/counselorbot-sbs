@@ -54,6 +54,7 @@ get_db = database.get_db
 ADMIN_ONLY_CONFIG_KEYS = {
     'external_pii_redact', 'external_pii_fallback', 'pii_ner_enabled', 'pii_ner_model',
     'ollama_ip', 'llamacpp_url', 'omniroute_url',
+    'transcription_engine', 'transcription_model',
 }
 
 _KNOWN_LOG_PROVIDERS = {

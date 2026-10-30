@@ -113,6 +113,9 @@ salva il motore; `faster-whisper` rimane il predefinito. Ogni opzione online è
 disabilitata con spiegazione se manca la chiave. Si riusano le credenziali del
 backend risolte da `api_secrets.py`: `API_KEY_OPENROUTER` (alias esistente
 `OPENROUTER_API_KEY`) e `API_KEY_MISTRAL`; nessuna nuova variabile segreta.
+`POST /admin/config` riserva entrambe le chiavi di configurazione della
+trascrizione agli amministratori, come le altre impostazioni privacy: il ruolo
+ricercatore non può modificare il motore o il modello globale tramite API.
 L'avviso nelle sei lingue spiega che la scelta vale per tutti gli utenti e invia
 **audio grezzo, senza anonimizzazione**, a un fornitore esterno. Per le prove
 usare esclusivamente registrazioni e frasi fittizie.
