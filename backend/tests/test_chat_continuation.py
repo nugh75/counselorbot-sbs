@@ -326,3 +326,48 @@ def test_opencode_restore_hides_internal_continuation_turn_and_joins_answer(tmp_
     _, history, needs_seed = asyncio.run(opencode._ensure_opencode_session("test", {}))
     assert history == [{"role": "user", "content": "Come studio?"}, {"role": "assistant", "content": expected}]
     assert not needs_seed
+
+
+@pytest.mark.parametrize("chunk_size", [1, 23, 4096])
+def test_guided_continuation_answered_with_a_json_envelope_shows_one_clean_answer(monkeypatch, chunk_size):
+    # Production case: the continuation turn returned the whole answer again
+    # inside {"answer", "recommendations"}; it was appended to the partial.
+    partial = PARTIAL + " completare un esempio."
+    suffix = json.dumps({"answer": partial, "recommendations": []}, ensure_ascii=False)
+
+    def provider_output():
+        for i in range(0, len(suffix), chunk_size):
+            yield suffix[i:i + chunk_size]
+
+    ai = SimpleNamespace(config={}, last_provider=None, last_model=None,
+                         stream_response=MagicMock(return_value=provider_output()))
+    prepared = SimpleNamespace(
+        prompt_key="test", phase_prompt_key=None, effective_message="Come studio?",
+        step_label=None, questionnaire_type="QSA", effective_response_length=None,
+        max_tokens=900, model_scores_context="", knowledge_context="", strategy_ids=[],
+        certified_strategy_ids=[], reading_ids=[], recommendation_meta={}, reading_candidates={},
+        strategy_candidates={}, system_prompt_final="Italian", full_message="Come studio?",
+        history=[], sanitize=False, components={},
+    )
+    monkeypatch.setattr(chat, "AIService", lambda db, username=None: ai)
+    monkeypatch.setattr(chat, "_resolve_counselor", lambda *a: (None,) * 7)
+    monkeypatch.setattr(chat, "_apply_counselor_overrides", lambda *a: None)
+    monkeypatch.setattr(chat, "prepare_chat_turn", lambda *a, **kw: prepared)
+    monkeypatch.setattr(chat, "session_memory", MagicMock())
+    monkeypatch.setattr(chat, "_apply_idea_patch", lambda text, **kw: (text, None))
+    monkeypatch.setattr(chat, "_record_recommendations", MagicMock(return_value={}))
+    monkeypatch.setattr(chat.shared_response_memory, 'create_candidate', MagicMock(return_value='final-response'))
+    monkeypatch.setattr(chat.database, "SessionLocal", MagicMock())
+    monkeypatch.setattr(chat, "_update_markdown_memory_background", MagicMock())
+
+    async def run():
+        response = await chat.chat_stream(ChatRequest(message="Come studio?", session_id="continuation-test",
+            partial_response=partial), db=MagicMock(), identity={})
+        return await events(response)
+
+    output = asyncio.run(run())
+    assert output[-1]["done"] is True
+    assert output[-1]["response"] == partial
+    for event in output:
+        assert '"answer"' not in event.get("display", "") and "{" not in event.get("display", "")
+        assert '"answer"' not in event.get("delta", "")
