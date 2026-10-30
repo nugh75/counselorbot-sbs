@@ -25,6 +25,9 @@ DETECTOR = 'small'
 DETECTION_CONFIDENCE = 0.7
 MODELS = {'small': '/models/small', 'large-v3-turbo': '/models/turbo', 'large-v3': '/models/large-v3'}
 DEFAULT_MODEL = 'large-v3-turbo'
+# Model loaded at startup besides the detector; 'none' preloads nothing else. Small hosts
+# set it low, because a model stays resident once loaded.
+PRELOAD_MODEL = os.environ.get('TRANSCRIPTION_PRELOAD_MODEL', DEFAULT_MODEL)
 # whisper.cpp: quantized ggml models for weak CPUs, run by the pinned whisper-cli binary.
 # Each request starts the binary, which maps the model from disk: nothing stays resident.
 CPP_MODELS = {'base': '/models/ggml/ggml-base-q5_1.bin', 'small': '/models/ggml/ggml-small-q5_1.bin',
@@ -67,7 +70,8 @@ def load(name: str) -> WhisperModel:
 
 @asynccontextmanager
 async def lifespan(app):
-    load(DEFAULT_MODEL)
+    if PRELOAD_MODEL != 'none':
+        load(PRELOAD_MODEL)
     load(DETECTOR)
     yield
 

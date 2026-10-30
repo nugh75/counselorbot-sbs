@@ -50,6 +50,8 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+    environment:
+      TRANSCRIPTION_PRELOAD_MODEL: small
     cpus: 4
     mem_limit: 3g
     healthcheck:
