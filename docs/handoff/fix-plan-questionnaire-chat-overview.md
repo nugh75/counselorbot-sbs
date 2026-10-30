@@ -34,4 +34,4 @@ Server fixture: `scripts/dev-plan-questionnaire-tests.sh` (porta 3159, backend
 chiuso). Nessun Postgres, deploy, sudo o dato reale.
 
 ## Stato
-Vedi PR collegata a #684.
+PR #687 (Closes #684). Check desktop deb non bloccante; documentation riallineata con guidance-refresh.
