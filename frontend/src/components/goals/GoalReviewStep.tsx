@@ -31,15 +31,15 @@ export function GoalReviewStep({ goal, onDone, onCancel, onNavigate, onDirty, on
     // L'Annulla butta una bozza non salvata solo dopo conferma, come il resto del popup.
     const quit = () => { if (!dirty || window.confirm(l('discard'))) onCancel(); };
     const radios = (legend: GoalTextKey, name: string, current: string | null, values: readonly string[], prefix: string, select: (value: string) => void) => <fieldset disabled={busy || done} className="space-y-1">
-        <legend className="text-sm font-medium text-slate-700">{l(legend)}</legend>
-        {values.map(value => <label key={value} className="flex min-h-11 items-center gap-2 text-sm">
+        <legend className="text-sm font-semibold text-ink-body">{l(legend)}</legend>
+        {values.map(value => <label key={value} className="flex min-h-control items-center gap-2 text-sm">
             <input type="radio" name={name} checked={current === value} onChange={() => select(value)} />
             {l((prefix + value) as GoalTextKey)}
         </label>)}
     </fieldset>;
     // §10: 409 di revisione anche qui mostra «Ricarica» come nel resto del popup; la bozza resta (l'errore non azzera `done`).
     return <>
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:px-6">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-4 sm:px-6">
             <GoalIssue error={error} lang={lang} retry={onReload} />
             {radios('reviewCommitment', 'review-commitment', form.commitment, ['full', 'enough', 'partial', 'none'], 'commitment_', value => change({ commitment: value as Commitment }))}
             {radios('reviewOutcome', 'review-outcome', form.outcome, ['reached', 'partial', 'not_reached', 'abandoned'], 'outcome_', value => change({ outcome: value as Outcome }))}
@@ -48,19 +48,19 @@ export function GoalReviewStep({ goal, onDone, onCancel, onNavigate, onDirty, on
             <Field label={l('change')}><textarea className={input} maxLength={1500} disabled={busy || done} value={form.change} onChange={e => change({ change: e.target.value })} /></Field>
             <Field label={l('learned')}><textarea className={input} maxLength={1500} disabled={busy || done} value={form.learned} onChange={e => change({ learned: e.target.value })} /></Field>
             <Field label={l('nextStep')}><textarea className={input} maxLength={1500} disabled={busy || done} value={form.next_step} onChange={e => change({ next_step: e.target.value })} /></Field>
-            <div className="rounded-md bg-slate-50 p-3 text-sm">
+            <div className="rounded-control bg-surface-sunken p-4 text-sm">
                 <p className="font-semibold">{l('criteria')}</p>
                 <p className="whitespace-pre-wrap">{goal.criteria || '—'}</p>
-                <p className="mt-2 text-slate-600">{l('evidence')} · {goal.links.filter(link => link.role === 'evidence').length}</p>
+                <p className="mt-2 text-ink-muted">{l('evidence')} · {goal.links.filter(link => link.role === 'evidence').length}</p>
             </div>
-            {done && <div className="space-y-2 rounded-md border border-slate-200 p-3">
-                <p role="status" className="text-indigo-700">{l('saved')}</p>
+            {done && <div className="space-y-2 rounded-control border border-line p-4">
+                <p role="status" className="text-link">{l('saved')}</p>
                 <div><Button type="button" variant="secondary" onClick={() => onNavigate({ kind: 'create', prefill: { title: form.next_step.slice(0, 160) } })}><ArrowRight className="h-4 w-4" aria-hidden />{l('toNewGoal')}</Button></div>
                 <div><Button type="button" variant="secondary" onClick={() => onNavigate({ kind: 'edit', id: goal.id, prefill: { action: form.next_step.slice(0, 160) } })}><ArrowRight className="h-4 w-4" aria-hidden />{l('toNewAction')}</Button></div>
-                <Link className="inline-flex items-center gap-1 text-sm text-indigo-700 underline" href={`/profilo/taccuino?note=${encodeURIComponent(form.change)}`}><ArrowRight className="h-4 w-4" aria-hidden />{l('toNotebook')}</Link>
+                <Link className="inline-flex items-center gap-1 text-sm text-link underline" href={`/profilo/taccuino?note=${encodeURIComponent(form.change)}`}><ArrowRight className="h-4 w-4" aria-hidden />{l('toNotebook')}</Link>
             </div>}
         </div>
-        <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 bg-white p-4 sm:px-6">
+        <div className="flex flex-wrap items-center gap-2 border-t border-line bg-surface p-4 sm:px-6">
             <div className="ml-auto flex gap-2">
                 <Button type="button" variant="secondary" onClick={quit}>{l('cancel')}</Button>
                 {!done && <Button type="button" disabled={busy || !form.outcome} onClick={() => void save()}>{l('closeGoal')}</Button>}

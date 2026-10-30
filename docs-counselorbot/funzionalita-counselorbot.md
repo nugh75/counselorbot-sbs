@@ -1284,6 +1284,17 @@ Anche il menu **Da riprendere** usa lo stato dei tentativi del piano: include le
 bozze sul server, esclude i completati e conta una sola volta la stessa sessione.
 Nella vista **Tutti gli strumenti** le attività di classe restano nascoste.
 
+Le card dei piani operativi, la pagina degli obiettivi con i suoi popup, le
+assegnazioni dello studente e le schede di obiettivo ed evento proposte nella
+chat del passo usano i token semantici e le primitive `Card`, `Button` e
+`Callout` (audit UI 2026-10-30, zona 5): spaziature su griglia di 8, due soli
+pesi, niente maiuscolo, niente ombre o varianti scure scritte a mano (il tema
+scuro arriva dai token), controlli alti almeno 44px, barra di avanzamento più
+sottile e icona di lucide al posto del simbolo «ℹ». Il ritiro di un lavoro
+condiviso chiede conferma nel punto dell’azione invece che con la finestra del
+browser; restano native le domande sulle modifiche non salvate, sulla visibilità
+e sull’eliminazione di un obiettivo. Testi, passi e comportamento non cambiano.
+
 La somministrazione termina con **Salva risultati**. Quando il piano prevede
 un approfondimento separato, **Vai all’approfondimento** apre quel passo senza
 richiedere di riscrivere i punteggi. L’analisi usa l’ultima compilazione valida

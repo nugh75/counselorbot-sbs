@@ -17,11 +17,11 @@ export function ActivityToolsPicker({ lang, options, value, onChange, note }: {
     lang: string; options: string[]; value: string[]; onChange: (keys: string[]) => void; note?: string | null;
 }) {
     return <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">{activityToolText(lang, 'tools')}</legend>
-        <p className="text-xs text-slate-600">{activityToolText(lang, 'toolsHelp')}</p>
-        {note ? <p className="text-sm text-slate-600">{note}</p> : <div className="grid gap-1 sm:grid-cols-2">
+        <legend className="text-sm font-semibold">{activityToolText(lang, 'tools')}</legend>
+        <p className="text-xs text-ink-muted">{activityToolText(lang, 'toolsHelp')}</p>
+        {note ? <p className="text-sm text-ink-muted">{note}</p> : <div className="grid gap-1 sm:grid-cols-2">
             {options.map(key => <label key={key} className="flex min-h-[44px] items-center gap-2 text-sm">
-                <input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={value.includes(key)}
+                <input type="checkbox" className="h-4 w-4 accent-brand" checked={value.includes(key)}
                     onChange={event => onChange(event.target.checked ? [...value, key] : value.filter(item => item !== key))} />
                 {activityToolName(key, lang)}
             </label>)}
@@ -36,13 +36,13 @@ export function ActivityToolsList({ lang, tools, interactive = true }: { lang: s
     return <div className="space-y-2 text-sm">
         <p className="font-semibold">{activityToolText(lang, 'tools')}</p>
         <ul className="space-y-2">
-            {tools.map(tool => <li key={tool.key} className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-white p-2">
-                <span className="min-w-0 flex-1 font-medium text-slate-800">{activityToolName(tool.key, lang)}</span>
-                {!tool.available ? <span className="text-xs text-slate-600">{activityToolText(lang, 'unavailable')}</span>
+            {tools.map(tool => <li key={tool.key} className="flex flex-wrap items-center gap-2 rounded-control border border-line bg-surface p-2">
+                <span className="min-w-0 flex-1 font-semibold text-ink">{activityToolName(tool.key, lang)}</span>
+                {!tool.available ? <span className="text-xs text-ink-muted">{activityToolText(lang, 'unavailable')}</span>
                     : interactive && <>
-                        <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(tool.key)}>{activityToolText(lang, 'openHere')}</Button>
+                        <Button variant="secondary" type="button" onClick={() => setOpen(tool.key)}>{activityToolText(lang, 'openHere')}</Button>
                         <a href={activityToolHref(tool.key)} target="_blank" rel="noopener"
-                            className="inline-flex min-h-[44px] items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline">
+                            className="inline-flex min-h-[44px] items-center gap-1 text-xs font-semibold text-link hover:underline">
                             <ExternalLink className="h-3.5 w-3.5" aria-hidden />{activityToolText(lang, 'openFullPage')}
                         </a>
                     </>}
@@ -63,16 +63,16 @@ function ToolPopup({ lang, toolKey, close }: { lang: string; toolKey: string; cl
         return () => opener?.focus();
     }, []);
     return <dialog ref={dialog} aria-labelledby={heading} onClose={close} data-testid="activity-tool-popup"
-        className="fixed inset-0 m-auto h-[90dvh] w-[calc(100%-1rem)] max-w-5xl overflow-hidden rounded-xl border border-slate-200 bg-white p-0 text-slate-900 shadow-xl backdrop:bg-black/40">
+        className="fixed inset-0 m-auto h-[90dvh] w-[calc(100%-1rem)] max-w-5xl overflow-hidden rounded-card border border-line bg-surface p-0 text-ink shadow-modal backdrop:bg-black/40">
         <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
+            <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2">
                 <h2 id={heading} className="min-w-0 truncate font-semibold">{name}</h2>
                 <div className="flex items-center gap-2">
                     <a href={activityToolHref(toolKey)} target="_blank" rel="noopener"
-                        className="hidden min-h-[44px] items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline sm:inline-flex">
+                        className="hidden min-h-[44px] items-center gap-1 text-xs font-semibold text-link hover:underline sm:inline-flex">
                         <ExternalLink className="h-3.5 w-3.5" aria-hidden />{activityToolText(lang, 'openFullPage')}
                     </a>
-                    <Button variant="secondary" size="sm" type="button" autoFocus onClick={() => dialog.current?.close()}
+                    <Button variant="secondary" type="button" autoFocus onClick={() => dialog.current?.close()}
                         aria-label={activityToolText(lang, 'close')} title={activityToolText(lang, 'close')}>
                         <X className="h-4 w-4" aria-hidden />
                     </Button>

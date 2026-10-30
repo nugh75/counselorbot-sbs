@@ -17,14 +17,14 @@ export function GoalForm({ form, setForm, groups, create = false }: FormProps) {
         </div>
         <Field label={l('share')}><select className={input} value={form.shared_group_id || ''} onChange={e => setForm({ ...form, shared_group_id: Number(e.target.value) || null })}>
             <option value="">{l('private')}</option>{form.shared_group_id && !groups.some(g => g.id === form.shared_group_id) && <option value={form.shared_group_id}>{l('unavailable')}</option>}{groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-        </select></Field><p className="text-sm text-slate-600">{l('shareHelp')}</p>
+        </select></Field><p className="text-sm text-ink-muted">{l('shareHelp')}</p>
     </>;
     return <div className="space-y-4">
         <Field label={l('title')}><input className={input} required maxLength={160} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></Field>
         <Field label={l('motivation')}><textarea className={input} rows={3} maxLength={2000} value={form.motivation} onChange={e => setForm({ ...form, motivation: e.target.value })} /></Field>
         <Field label={l('reviewDate')}><input className={input} type="date" value={form.review_date || ''} onChange={e => setForm({ ...form, review_date: e.target.value || null })} /></Field>
         {create
-            ? <details className="rounded-md border border-slate-200 p-3"><summary className="min-h-11 cursor-pointer py-2 font-semibold text-indigo-700">{l('moreDetails')}</summary><div className="mt-3 space-y-4">{details}</div></details>
+            ? <details className="rounded-control border border-line p-4"><summary className="min-h-control cursor-pointer py-2 font-semibold text-link">{l('moreDetails')}</summary><div className="mt-4 space-y-4">{details}</div></details>
             : details}
     </div>;
 }

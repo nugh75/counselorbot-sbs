@@ -62,8 +62,8 @@ export function ClassPathHeroList({ paths, onReload, showAllLink = true, collaps
     const ordered = orderClassPaths(paths);
     const hash = typeof window === 'undefined' ? '' : window.location.hash;
     return (
-        <div data-testid="class-path-hero-list" className="space-y-3">
-            {resume.error && <button type="button" className="min-h-11 text-sm text-indigo-700 underline" onClick={resume.retry}>
+        <div data-testid="class-path-hero-list" className="space-y-4">
+            {resume.error && <button type="button" className="min-h-control text-sm text-link underline" onClick={resume.retry}>
                 {classPathText(lang, 'reload')}
             </button>}
             {ordered.map((path, index) => (
@@ -84,7 +84,7 @@ export function ClassPathHeroList({ paths, onReload, showAllLink = true, collaps
                 <div className="flex items-center justify-end">
                     <Link
                         href="/profilo/piani-operativi"
-                        className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-indigo-700 transition-colors hover:text-indigo-900 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300"
+                        className="inline-flex min-h-control items-center gap-2 text-sm font-semibold text-link transition-colors hover:text-link hover:underline"
                     >
                         <span>
                             {ordered.length > 1

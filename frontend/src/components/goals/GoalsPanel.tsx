@@ -74,19 +74,19 @@ export function GoalsPanel() {
     const forest = useMemo(() => buildForest(goals, showClosed), [goals, showClosed]);
     const shown = useMemo(() => visibleGoals(goals, showClosed), [goals, showClosed]);
     const viewButton = (value: 'list' | 'map', icon: ReactNode, key: GoalTextKey) => <Button type="button" variant={view === value ? 'primary' : 'secondary'} aria-pressed={view === value} onClick={() => chooseView(value)}>{icon}{l(key)}</Button>;
-    return <div className="space-y-5">
+    return <div className="space-y-6">
         <div className="flex flex-wrap items-center gap-2">
             <Button type="button" onClick={() => open({ kind: 'create' })}><Plus className="h-4 w-4" aria-hidden />{l('custom')}</Button>
             <Button type="button" variant="secondary" onClick={() => setCatalogOpen(true)}>{l('choose')}</Button>
-            <label className="inline-flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={showClosed} onChange={e => setShowClosed(e.target.checked)} />{l('showClosed')}</label>
+            <label className="inline-flex min-h-control items-center gap-2 text-sm"><input type="checkbox" checked={showClosed} onChange={e => setShowClosed(e.target.checked)} />{l('showClosed')}</label>
             <div className="ml-auto hidden gap-2 lg:flex">{viewButton('list', <List className="h-4 w-4" aria-hidden />, 'viewList')}{viewButton('map', <Network className="h-4 w-4" aria-hidden />, 'viewMap')}</div>
         </div>
         <GoalIssue error={error} lang={lang} retry={() => void load()} />
         {loading ? <p role="status">{l('loading')}</p> : <>
-            {!goals.length && !error && <p className="py-3">{l('empty')}</p>}
+            {!goals.length && !error && <p className="py-4">{l('empty')}</p>}
             <div className={view === 'map' ? 'lg:hidden' : ''}><GoalTree goals={goals} forest={forest} groups={groups} onOpen={openGoal} onAddChild={id => open({ kind: 'create', parentId: id })} /></div>
             {view === 'map' && goals.length > 0 && <GoalMap goals={shown} all={goals} onOpen={openGoal} />}
-            {!accessLoading && isToolAllowed(access, 'bussola') && <Link className="block py-3 text-sm text-indigo-700 underline" href="/bussola">{l('unsure')}</Link>}
+            {!accessLoading && isToolAllowed(access, 'bussola') && <Link className="block py-4 text-sm text-link underline" href="/bussola">{l('unsure')}</Link>}
         </>}
         {catalogOpen && <GoalCatalogDialog catalog={catalog} onClose={() => setCatalogOpen(false)} onPick={entry => { setCatalogOpen(false); open({ kind: 'create', source: entry }); }} />}
         {target && <GoalDialog target={target} goals={goals} groups={groups} saved={saved}
