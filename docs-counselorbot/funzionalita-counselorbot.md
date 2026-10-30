@@ -729,7 +729,11 @@ direttamente sotto `recommendations`: non compare nella risposta e le note vengo
 Se il modello avvolge la risposta in un oggetto JSON nudo `{"answer": ..., "recommendations": ...}`
 (anche dopo lo stesso testo in prosa, in streaming o in un turno di continuazione), lo studente
 vede solo il testo di `answer`, senza duplicati, e le raccomandazioni dichiarate lì passano
-dallo stesso filtro sul catalogo del turno. Al turno successivo,
+dallo stesso filtro sul catalogo del turno. Lo stesso vale per il blocco scritto come JSON
+nudo o in un recinto senza lingua, anche in testa alla risposta (per esempio all'apertura di un
+passo guidato, anche in modalità voce): `{"recommendations": []}` e le sue varianti con una nota
+o un elenco di note non compaiono mai, né in streaming né nel testo salvato, e le note valide
+vengono registrate. Un JSON ordinario resta visibile. Al turno successivo,
 la risposta dello studente viene accoppiata deterministicamente all'ipotesi aperta (`status`
 passa ad `answered` con salvataggio di `payload.reply`, limitato a 240 caratteri). Lo stato
 del filo (`thread_state`: `introduced`, `exploring`, `hypothesis_open`, `hypothesis_answered`)
