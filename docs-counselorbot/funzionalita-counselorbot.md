@@ -1577,6 +1577,13 @@ piano dentro il salvataggio. I grafici dei questionari usano un solo tratto
 sottile nel petrol del marchio. I fogli stampabili dei codici restano con i
 loro colori. Testi, passi e comportamento non cambiano.
 
+Dopo la migrazione per zone, le impostazioni di formato, lunghezza e analisi
+delle risposte della classe e l’avviso di tunnel non attivo nella panoramica
+della classe prendono i testi dalle traduzioni nelle sei lingue (prima erano
+fissi in italiano), e le regole del tema scuro rimaste senza più classi che le
+usino sono state tolte dal foglio di stile. Testi italiani, passi e
+comportamento non cambiano.
+
 Nel gruppo **Classe e assegnazioni** dell'Area docenti, la voce illustrata
 **Compilazioni degli studenti** (`/docente/compilazioni`, con immagine `compilazioni.png`)
 apre la pagina dedicata dove il docente può scegliere una classe o un gruppo gestito,

@@ -527,7 +527,7 @@ export function ClassOverviewTab({
                         ) : (
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold text-ink-body">{l('webLink')}</label>
-                                <p className="text-xs text-warning">Tunnel non attivo: il link sar&agrave; visibile quando il tunnel &egrave; avviato</p>
+                                <p className="text-xs text-warning">{l('tunnelInactive')}</p>
                             </div>
                         )}
 
