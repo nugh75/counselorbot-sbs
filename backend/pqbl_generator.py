@@ -686,7 +686,8 @@ def generate_batch_for_chunk(
         )
         logger.info(f"pQBL: chiamata LLM per chunk {chunk_index} (tentativo {_attempt + 1}/3)")
         try:
-            raw = ai.get_response(user_message, question_prompt, mode="pqbl-chunk", max_tokens=6000, provider=provider, model=model)
+            raw = ai.get_response(user_message, question_prompt, mode="pqbl-chunk", max_tokens=6000, provider=provider, model=model,
+                                  json_mode=True)
             logger.info(f"pQBL: risposta LLM ricevuta per chunk {chunk_index} ({len(raw)} caratteri)")
             payload = _parse_json_payload(raw)
         except ValueError as parse_err:

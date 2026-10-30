@@ -848,6 +848,7 @@ async def _ask_model(db: Session, *, task: str, counselor_id: int | None,
                         user_message=task,
                         system_prompt=attempt_prompt,
                         max_tokens=max_tokens,
+                        json_mode=True,
                     ),
                     timeout=remaining,
                 )
