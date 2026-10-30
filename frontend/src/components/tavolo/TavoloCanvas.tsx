@@ -46,18 +46,19 @@ import {
 } from '@/lib/tavolo-images';
 import { TavoloPieceNode, type PieceData } from './TavoloPieceNode';
 import { TavoloLinkEdge, type LinkData } from './TavoloLinkEdge';
+import { Button } from '@/components/ui/Button';
 
 const nodeTypes = { piece: TavoloPieceNode };
 const edgeTypes = { link: TavoloLinkEdge };
 const FORMS: TavoloForm[] = ['concept', 'action', 'decision', 'outcome', 'image'];
 // Le pastiglie della tavolozza: le stesse tinte dei pezzi, in piccolo.
 const SWATCH: Record<string, string> = {
-    none: 'border-indigo-400 bg-indigo-50',
+    none: 'border-brand bg-brand-soft',
     green: 'border-emerald-400 bg-emerald-50',
     blue: 'border-sky-400 bg-sky-50',
     violet: 'border-violet-400 bg-violet-50',
     pink: 'border-rose-400 bg-rose-50',
-    grey: 'border-slate-400 bg-slate-100',
+    grey: 'border-line-strong bg-surface-raised',
 };
 const DEFAULT_REL: TavoloRel = 'causes';
 
@@ -340,7 +341,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                                 () => setPanelOpen((open) => !open)],
                         ] as const).map(([key, Icon, act]) => (
                             <button key={key} type="button" onClick={act} aria-label={label(key)} title={label(key)}
-                                className={`inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 ${key === 'widen' || key === 'panel' ? 'ml-2' : ''}`}>
+                                className={`inline-flex h-control w-control items-center justify-center rounded-lg border border-line bg-surface text-ink-muted hover:bg-surface-sunken ${key === 'widen' || key === 'panel' ? 'ml-2' : ''}`}>
                                 <Icon className="h-4 w-4" aria-hidden="true" />
                             </button>
                         ))}
@@ -348,103 +349,103 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                 </ReactFlow>
             </div>
 
-            {panelOpen && <aside className="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto border-l border-slate-200 bg-white p-3">
+            {panelOpen && <aside className="flex w-72 shrink-0 flex-col gap-4 overflow-y-auto border-l border-line bg-surface p-4">
                 <div className="flex gap-2">
-                    <button type="button" onClick={addPiece}
-                        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700">
+                    <Button type="button" onClick={addPiece}
+                        className="flex-1">
                         <Plus className="h-4 w-4" aria-hidden="true" />{label('addNode')}
-                    </button>
+                    </Button>
                     <button type="button" onClick={removeSelected} disabled={!selected}
                         aria-label={label('deleteNode')}
-                        className="inline-flex min-h-11 w-11 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40">
+                        className="inline-flex min-h-control w-control items-center justify-center rounded-lg border border-line text-ink-muted hover:bg-surface-sunken disabled:opacity-40">
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </button>
                 </div>
 
                 <button type="button" onClick={() => { setConnecting((open) => !open); setFromId(node?.id ?? graph.nodes.find((item) => item.state === 'live')?.id ?? ''); }}
-                    aria-expanded={connecting} className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm text-indigo-700">{label('connectPieces')}</button>
+                    aria-expanded={connecting} className="min-h-control rounded-lg border border-line px-4 text-sm text-link">{label('connectPieces')}</button>
                 {connecting && <form className="space-y-2" onSubmit={(event) => {
                     event.preventDefault();
                     if (!fromId || !toId || fromId === toId) return;
                     onConnect({ source: fromId, target: toId, sourceHandle: null, targetHandle: null }, words);
                     setConnecting(false); setWords(''); setToId('');
                 }}>
-                    <p className="text-xs text-slate-600">{label('connectHint')}</p>
-                    {([['fromPiece', fromId, setFromId], ['toPiece', toId, setToId]] as const).map(([key, value, update]) => <label key={key} className="block text-xs text-slate-600">
+                    <p className="text-xs text-ink-muted">{label('connectHint')}</p>
+                    {([['fromPiece', fromId, setFromId], ['toPiece', toId, setToId]] as const).map(([key, value, update]) => <label key={key} className="block text-xs text-ink-muted">
                         {label(key)}
                         <select aria-label={label(key)} value={value} onChange={(event) => update(event.target.value)} required
-                            className="mt-1 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-800">
+                            className="mt-1 min-h-control w-full rounded-lg border border-line bg-surface px-2 text-sm text-ink">
                             <option value="">—</option>
                             {graph.nodes.filter((item) => item.state === 'live').map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
                         </select>
                     </label>)}
-                    <label className="block text-xs text-slate-600">{label('linkWords')}
+                    <label className="block text-xs text-ink-muted">{label('linkWords')}
                         <input value={words} onChange={(event) => setWords(event.target.value)} maxLength={40}
-                            className="mt-1 min-h-11 w-full rounded-lg border border-slate-200 px-2 text-sm text-slate-800" />
+                            className="mt-1 min-h-control w-full rounded-lg border border-line px-2 text-sm text-ink" />
                     </label>
-                    <button disabled={!fromId || !toId || fromId === toId} className="min-h-11 w-full rounded-lg bg-indigo-600 px-3 text-sm text-white disabled:opacity-40">{label('connectPieces')}</button>
+                    <Button disabled={!fromId || !toId || fromId === toId} className="w-full">{label('connectPieces')}</Button>
                 </form>}
 
                 {(node || edge) && onSave && <button type="button" onClick={() => void onSave().then(() => setSelected(null)).catch(() => undefined)}
-                    className="min-h-11 rounded-lg bg-indigo-600 px-3 text-sm text-white">{label('saveChanges')}</button>}
+                    className="min-h-control rounded-lg bg-brand px-4 text-sm text-ink-on-brand">{label('saveChanges')}</button>}
 
                 {node && (
-                    <div className="space-y-3">
-                        <label className="block text-xs font-medium text-slate-500">
+                    <div className="space-y-4">
+                        <label className="block text-xs text-ink-muted">
                             {label('rename')}
                             <input
                                 onKeyDown={(event) => { if (event.key === 'Enter' && onSave) { event.preventDefault(); void onSave().then(() => setSelected(null)).catch(() => undefined); } }}
                                 value={node.label}
                                 onChange={(event) => patchNode(node.id, { label: event.target.value.slice(0, 80) })}
-                                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-800"
+                                className="mt-1 w-full rounded-lg border border-line px-2 py-2 text-sm text-ink"
                             />
                         </label>
                         <fieldset>
-                            <legend className="text-xs font-medium text-slate-500">{label('form')}</legend>
+                            <legend className="text-xs text-ink-muted">{label('form')}</legend>
                             <div className="mt-1 grid grid-cols-2 gap-1">
                                 {FORMS.map((form) => (
                                     <button key={form} type="button" onClick={() => patchNode(node.id, { form })}
-                                        className={`min-h-11 rounded-lg border px-2 text-sm ${node.form === form
-                                            ? 'border-indigo-500 bg-indigo-50 text-indigo-800'
-                                            : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                                        className={`min-h-control rounded-lg border px-2 text-sm ${node.form === form
+                                            ? 'border-brand bg-brand-soft text-link'
+                                            : 'border-line text-ink-body hover:bg-surface-sunken'}`}>
                                         {label(form)}
                                     </button>
                                 ))}
                             </div>
                         </fieldset>
                         <fieldset>
-                            <legend className="text-xs font-medium text-slate-500">{label('color')}</legend>
+                            <legend className="text-xs text-ink-muted">{label('color')}</legend>
                             <div className="mt-1 flex flex-wrap gap-1">
                                 {([null, ...NODE_COLORS] as (TavoloColor | null)[]).map((tint) => (
                                     <button key={tint ?? 'none'} type="button"
                                         onClick={() => patchNode(node.id, { color: tint })}
                                         aria-pressed={(node.color ?? null) === tint}
                                         aria-label={label(tint ?? 'noColor')} title={label(tint ?? 'noColor')}
-                                        className={`h-11 w-11 rounded-lg border-2 ${SWATCH[tint ?? 'none']} ${(node.color ?? null) === tint
-                                            ? 'ring-2 ring-slate-800 ring-offset-1'
+                                        className={`h-control w-control rounded-lg border-2 ${SWATCH[tint ?? 'none']} ${(node.color ?? null) === tint
+                                            ? 'ring-2 ring-ink ring-offset-1'
                                             : ''}`} />
                                 ))}
                             </div>
                         </fieldset>
                         <fieldset>
-                            <legend className="text-xs font-medium text-slate-500">{label('icon')}</legend>
+                            <legend className="text-xs text-ink-muted">{label('icon')}</legend>
                             <input value={iconQuery} onChange={(event) => setIconQuery(event.target.value)}
                                 placeholder={label('iconSearch')} aria-label={label('iconSearch')}
-                                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-800" />
+                                className="mt-1 w-full rounded-lg border border-line px-2 py-2 text-sm text-ink" />
                             <div className="mt-1 grid max-h-48 grid-cols-6 gap-1 overflow-y-auto">
                                 <button type="button" onClick={() => patchNode(node.id, { icon: null, image: null })}
                                     aria-label={label('noIcon')} title={label('noIcon')}
                                     aria-pressed={!node.icon}
-                                    className={`flex h-11 w-11 items-center justify-center rounded-lg border text-xs ${!node.icon
-                                        ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                    className={`flex h-control w-control items-center justify-center rounded-lg border text-xs ${!node.icon
+                                        ? 'border-brand bg-brand-soft' : 'border-line hover:bg-surface-sunken'}`}>
                                     —
                                 </button>
                                 {matchIcons(icons, iconQuery).map((icon) => (
                                     <button key={icon.id} type="button" onClick={() => patchNode(node.id, { icon: icon.id, image: null })}
                                         aria-label={icon.label} title={icon.label}
                                         aria-pressed={node.icon === icon.id}
-                                        className={`flex h-11 w-11 items-center justify-center rounded-lg border ${node.icon === icon.id
-                                            ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                        className={`flex h-control w-control items-center justify-center rounded-lg border ${node.icon === icon.id
+                                            ? 'border-brand bg-brand-soft' : 'border-line hover:bg-surface-sunken'}`}>
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img src={iconUrl(icon.id)} alt="" width={20} height={20} className="h-5 w-5" />
                                     </button>
@@ -452,16 +453,16 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                             </div>
                         </fieldset>
                         <fieldset>
-                            <legend className="text-xs font-medium text-slate-500">{label('image')}</legend>
+                            <legend className="text-xs text-ink-muted">{label('image')}</legend>
                             <input value={imageQuery} onChange={(event) => setImageQuery(event.target.value)}
                                 placeholder={label('imageSearch')} aria-label={label('imageSearch')}
-                                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-800" />
+                                className="mt-1 w-full rounded-lg border border-line px-2 py-2 text-sm text-ink" />
                             <div className="mt-1 grid max-h-48 grid-cols-6 gap-1 overflow-y-auto">
                                 <button type="button" onClick={() => patchNode(node.id, { image: null })}
                                     aria-label={label('noImage')} title={label('noImage')}
                                     aria-pressed={!node.image}
-                                    className={`flex h-11 w-11 items-center justify-center rounded-lg border text-xs ${!node.image
-                                        ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                    className={`flex h-control w-control items-center justify-center rounded-lg border text-xs ${!node.image
+                                        ? 'border-brand bg-brand-soft' : 'border-line hover:bg-surface-sunken'}`}>
                                     —
                                 </button>
                                 {matchTavoloImages(images, imageQuery).map((image) => (
@@ -469,8 +470,8 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                                         aria-label={image.name}
                                         title={image.usage ? `${image.name} — ${image.usage}` : image.name}
                                         aria-pressed={node.image === image.id}
-                                        className={`flex h-11 w-11 items-center justify-center rounded-lg border ${node.image === image.id
-                                            ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                        className={`flex h-control w-control items-center justify-center rounded-lg border ${node.image === image.id
+                                            ? 'border-brand bg-brand-soft' : 'border-line hover:bg-surface-sunken'}`}>
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img src={tavoloImageUrl(image.id)} alt="" loading="lazy"
                                             className="h-8 w-8 rounded object-cover" />
@@ -480,17 +481,17 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                         </fieldset>
                         <button type="button" onClick={() => accent(node.id, !node.accent)}
                             aria-pressed={Boolean(node.accent)}
-                            className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border px-2 text-sm ${node.accent
-                                ? 'border-indigo-700 bg-indigo-600 text-white'
-                                : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                            className={`inline-flex min-h-control w-full items-center justify-center gap-2 rounded-lg border px-2 text-sm ${node.accent
+                                ? 'border-brand bg-brand text-ink-on-brand'
+                                : 'border-line text-ink-body hover:bg-surface-sunken'}`}>
                             <Star className="h-4 w-4" aria-hidden="true" />{label('accent')}
                         </button>
                     </div>
                 )}
 
                 {edge && (
-                    <div className="space-y-3">
-                        <label className="block text-xs font-medium text-slate-500">
+                    <div className="space-y-4">
+                        <label className="block text-xs text-ink-muted">
                             {label('linkWords')}
                             <input
                                 value={edge.label ?? ''}
@@ -498,58 +499,58 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                                 onChange={(event) => patchEdge(edgeKey(edge), {
                                     label: event.target.value.slice(0, 40) || null,
                                 })}
-                                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-800"
+                                className="mt-1 w-full rounded-lg border border-line px-2 py-2 text-sm text-ink"
                             />
                         </label>
 
                         <fieldset>
-                            <legend className="text-xs font-medium text-slate-500">{label('family')}</legend>
+                            <legend className="text-xs text-ink-muted">{label('family')}</legend>
                             <div className="mt-1 grid grid-cols-2 gap-1">
                                 {FAMILIES.map((family) => (
                                     <button key={family} type="button"
                                         onClick={() => patchEdge(edgeKey(edge), { rel: RELS_BY_FAMILY[family][0] })}
-                                        className={`min-h-11 rounded-lg border px-2 text-sm ${familyOf(edge.rel) === family
-                                            ? 'border-indigo-500 bg-indigo-50 text-indigo-800'
-                                            : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                                        className={`min-h-control rounded-lg border px-2 text-sm ${familyOf(edge.rel) === family
+                                            ? 'border-brand bg-brand-soft text-link'
+                                            : 'border-line text-ink-body hover:bg-surface-sunken'}`}>
                                         {familyLabel(family, locale)}
                                     </button>
                                 ))}
                             </div>
                         </fieldset>
                         <fieldset>
-                            <legend className="text-xs font-medium text-slate-500">{label('connection')}</legend>
+                            <legend className="text-xs text-ink-muted">{label('connection')}</legend>
                             <div className="mt-1 flex flex-col gap-1">
                                 {RELS_BY_FAMILY[familyOf(edge.rel)].map((rel) => (
                                     <button key={rel} type="button" onClick={() => patchEdge(edgeKey(edge), { rel })}
-                                        className={`min-h-11 rounded-lg border px-2 text-left text-sm ${edge.rel === rel
-                                            ? 'border-indigo-500 bg-indigo-50 text-indigo-800'
-                                            : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                                        className={`min-h-control rounded-lg border px-2 text-left text-sm ${edge.rel === rel
+                                            ? 'border-brand bg-brand-soft text-link'
+                                            : 'border-line text-ink-body hover:bg-surface-sunken'}`}>
                                         {relLabel(rel, locale)}
                                     </button>
                                 ))}
                             </div>
                         </fieldset>
                         <fieldset>
-                            <legend className="text-xs font-medium text-slate-500">{label('strength')}</legend>
+                            <legend className="text-xs text-ink-muted">{label('strength')}</legend>
                             <div className="mt-1 grid grid-cols-3 gap-1">
                                 {[1, 2, 3].map((strength) => (
                                     <button key={strength} type="button"
                                         onClick={() => patchEdge(edgeKey(edge), { strength })}
-                                        className={`min-h-11 rounded-lg border px-1 text-xs ${edge.strength === strength
-                                            ? 'border-indigo-500 bg-indigo-50 text-indigo-800'
-                                            : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                                        className={`min-h-control rounded-lg border px-1 text-xs ${edge.strength === strength
+                                            ? 'border-brand bg-brand-soft text-link'
+                                            : 'border-line text-ink-body hover:bg-surface-sunken'}`}>
                                         {label(`strength${strength}` as 'strength1')}
                                     </button>
                                 ))}
                             </div>
                         </fieldset>
-                        <label className="flex min-h-11 items-center gap-2 text-sm text-slate-700">
+                        <label className="flex min-h-control items-center gap-2 text-sm text-ink-body">
                             <input type="checkbox" checked={edge.hypothesis}
                                 onChange={(event) => patchEdge(edgeKey(edge), { hypothesis: event.target.checked })} />
                             {label('hypothesis')}
                         </label>
                         {familyOf(edge.rel) !== 'part' && (
-                            <label className="flex min-h-11 items-center gap-2 text-sm text-slate-700">
+                            <label className="flex min-h-control items-center gap-2 text-sm text-ink-body">
                                 <input type="checkbox" checked={Boolean(edge.reciprocal)}
                                     onChange={(event) => patchEdge(edgeKey(edge), { reciprocal: event.target.checked })} />
                                 {label('reciprocal')}
@@ -559,7 +560,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                 )}
 
                 {!node && !edge && (
-                    <p className="text-sm text-slate-500">{label('proposalHint')}</p>
+                    <p className="text-sm text-ink-muted">{label('proposalHint')}</p>
                 )}
             </aside>}
         </div>

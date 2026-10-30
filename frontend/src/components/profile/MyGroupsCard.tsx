@@ -7,6 +7,8 @@ import { forumText } from '@/lib/i18n-forum';
 import { learningText, } from '@/lib/i18n-assignment-work';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Users, Loader2 } from 'lucide-react';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 interface MyGroup {
     membership_id: number;
@@ -184,44 +186,44 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
     };
 
     return (
-        <section
-            className="glass-panel space-y-3 p-5"
+        <Card as="section"
+            className="space-y-4 p-6"
             aria-labelledby={showHeading ? 'my-groups-section' : undefined}
             aria-label={showHeading ? undefined : texts.title}
         >
             {showHeading && (
                 <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-slate-500" aria-hidden />
-                    <h2 id="my-groups-section" className="text-lg font-bold text-slate-800">{texts.title}</h2>
+                    <Users className="h-4 w-4 text-ink-muted" aria-hidden />
+                    <h2 id="my-groups-section" className="text-lg font-semibold text-ink">{texts.title}</h2>
                 </div>
             )}
             {canManageGroups && (
-                <Link href="/docente/classi" className="block text-sm text-indigo-700 underline underline-offset-2">
+                <Link href="/docente/classi" className="block text-sm text-link underline underline-offset-2">
                     {texts.manage}
                 </Link>
             )}
-            <p className="text-sm text-slate-600">{learningText(lang, 'groupVisibility')}</p>
+            <p className="text-sm text-ink-muted">{learningText(lang, 'groupVisibility')}</p>
             {loading && groups.length === 0 ? (
-                <p className="flex items-center gap-2 py-4 text-sm text-slate-500" role="status"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{texts.loading}</p>
+                <p className="flex items-center gap-2 py-4 text-sm text-ink-muted" role="status"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{texts.loading}</p>
             ) : loadError && groups.length === 0 ? (
-                <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                <div role="alert" className="rounded-control border border-danger-line bg-danger-soft p-4 text-sm text-danger-ink">
                     <p>{texts.loadError}</p>
-                    <button type="button" onClick={() => void load()} className="mt-2 min-h-11 rounded-md border border-red-300 bg-white px-3 text-sm font-semibold text-red-700 hover:bg-red-50">{texts.retry}</button>
+                    <button type="button" onClick={() => void load()} className="mt-2 min-h-control rounded-control border border-danger-line bg-surface px-4 text-sm font-semibold text-danger-ink hover:bg-danger-soft">{texts.retry}</button>
                 </div>
             ) : (
                 <>
                     {loadError && groups.length > 0 && (
-                        <p role="alert" className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
-                            {texts.loadError} <button type="button" onClick={() => void load()} className="min-h-11 font-semibold text-amber-900 underline">{texts.retry}</button>
+                        <p role="alert" className="rounded-control border border-warning-line bg-warning-soft p-2 text-xs text-warning-ink">
+                            {texts.loadError} <button type="button" onClick={() => void load()} className="min-h-control font-semibold text-warning-ink underline">{texts.retry}</button>
                         </p>
                     )}
                     <ul className="space-y-2">
                         {groups.map((group) => (
-                            <li key={group.membership_id} className="rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                            <li key={group.membership_id} className="rounded-control border border-line bg-surface p-4 text-sm text-ink-body">
                                 <div className="flex items-center gap-2">
                                     <span className="flex-1">
                                         <span className="font-semibold">{group.name}</span>
-                                        <span className="ml-2 text-xs text-slate-500">
+                                        <span className="ml-2 text-xs text-ink-muted">
                                             {texts.via} {group.joined_via === 'telegram' ? 'Telegram' : 'web'}
                                             {group.joined_at ? ` - ${new Date(group.joined_at).toLocaleDateString(lang)}` : ''}
                                         </span>
@@ -231,16 +233,16 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                                         aria-label={`${texts.leave}: ${group.name}`}
                                         aria-expanded={confirmingLeave === group.membership_id}
                                         onClick={() => { setConfirmingLeave(previous => previous === group.membership_id ? null : group.membership_id); setLeaveErrorId(null); }}
-                                        className="min-h-11 shrink-0 rounded-md px-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600"
+                                        className="min-h-control shrink-0 rounded-control px-2 text-xs font-semibold text-ink-muted hover:bg-surface-sunken hover:text-danger"
                                     >
                                         {texts.leave}
                                     </button>
                                 </div>
-                                <Link href={`/profilo/classi/${group.group_id}/forum`} className="mt-1 mr-4 inline-flex min-h-[44px] items-center gap-2 text-sm text-indigo-700 underline underline-offset-2">
+                                <Link href={`/profilo/classi/${group.group_id}/forum`} className="mt-1 mr-4 inline-flex min-h-control items-center gap-2 text-sm text-link underline underline-offset-2">
                                     <span>{forumText(lang, 'forum')} — {group.name}</span>
                                     {Boolean(unreadByGroup[group.group_id] && unreadByGroup[group.group_id] > 0) && (
                                         <span
-                                            className="inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full bg-ochre-600 px-1.5 text-xs font-semibold text-white no-underline"
+                                            className="inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full bg-move px-2 text-xs font-semibold text-ink-on-brand no-underline"
                                             aria-label={forumText(lang, 'unreadBadge').replace('{count}', String(unreadByGroup[group.group_id]))}
                                         >
                                             {unreadByGroup[group.group_id]}
@@ -249,7 +251,7 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                                     )}
                                 </Link>
                                 {/* F30 (lotto 5A): dalla classe alle assegnazioni che la riguardano, con il filtro già impostato. */}
-                                <Link href={`/profilo/assegnazioni?group=${encodeURIComponent(group.name)}`} className="mt-1 inline-block text-sm text-indigo-700 underline underline-offset-2">
+                                <Link href={`/profilo/assegnazioni?group=${encodeURIComponent(group.name)}`} className="mt-1 inline-block text-sm text-link underline underline-offset-2">
                                     {learningText(lang, 'assignmentPage')} — {group.name}
                                 </Link>
                                 {confirmingLeave === group.membership_id && (
@@ -260,8 +262,8 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                                             onConfirm={() => void leave(group.membership_id)}
                                             onCancel={() => setConfirmingLeave(null)}
                                         />
-                                        <p className="text-xs text-slate-500">{texts.leaveConsequence}</p>
-                                        {leaveErrorId === group.membership_id && <p role="alert" className="text-xs text-red-700">{texts.leaveError}</p>}
+                                        <p className="text-xs text-ink-muted">{texts.leaveConsequence}</p>
+                                        {leaveErrorId === group.membership_id && <p role="alert" className="text-xs text-danger-ink">{texts.leaveError}</p>}
                                     </div>
                                 )}
                             </li>
@@ -275,23 +277,21 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                     onChange={(event) => setJoinCode(event.target.value)}
                     placeholder={texts.joinPlaceholder}
                     aria-label={texts.joinPlaceholder}
-                    className="min-w-0 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-sm"
+                    className="min-w-0 w-full rounded-control border border-line-strong px-4 py-2 font-mono text-sm"
                 />
-                <button
+                <Button
                     type="button"
                     disabled={busy || !joinCode.trim()}
-                    onClick={() => void join()}
-                    className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                >
+                    onClick={() => void join()}>
                     {texts.join}
-                </button>
+                </Button>
             </div>
-            {joinError && <p role="alert" className="text-sm text-red-600">{joinError === 'invalid' ? texts.joinError : texts.joinNetworkError}</p>}
+            {joinError && <p role="alert" className="text-sm text-danger">{joinError === 'invalid' ? texts.joinError : texts.joinNetworkError}</p>}
             {joinResult && (
-                <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">
+                <p role="status" className="rounded-control border border-success-line bg-success-soft p-4 text-sm font-semibold text-success-ink">
                     {joinResult.already ? texts.joinedAlready : texts.joinedOk}: {joinResult.name}
                 </p>
             )}
-        </section>
+        </Card>
     );
 }

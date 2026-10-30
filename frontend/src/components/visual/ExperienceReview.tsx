@@ -13,12 +13,12 @@ import { GoalDialog, type DialogTarget } from '@/components/goals/GoalDialog';
 import { emptyEventReview, type EventReview, type TimelineEvent } from '@/lib/visual-tools';
 import { draftFor, linesOf } from '@/lib/review-lines';
 
-const field = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
+const field = 'mt-1 w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-[15px] text-ink';
 
 function LinesField({ label, hint, items, onChange }: { label: string; hint: string; items: string[]; onChange: (items: string[]) => void }) {
     const [draft, setDraft] = useState(items.join('\n'));
     const text = draftFor(draft, items);
-    return <label className="block text-sm">{label} <span className="text-xs text-slate-500">({hint})</span>
+    return <label className="block text-sm">{label} <span className="text-xs text-ink-muted">({hint})</span>
         <textarea rows={3} className={field} value={text} onChange={e => { setDraft(e.target.value); onChange(linesOf(e.target.value)); }} /></label>;
 }
 
@@ -46,31 +46,31 @@ export function ExperienceReview({ event, locale, onPatch }: { event: TimelineEv
         goalApi<PersonalGoal[]>('/user/goals').then((rows) => setGoals(rows)).catch(() => setGoals([]));
     };
     const nextStep = review.try_next.trim();
-    return <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-        <summary className="min-h-11 cursor-pointer py-2 font-medium text-indigo-700">{l('experienceReview')}</summary>
-        <div className="mt-3 space-y-3">
+    return <details className="mt-4 rounded-card border border-line bg-surface-sunken p-4">
+        <summary className="min-h-control cursor-pointer py-2 text-link">{l('experienceReview')}</summary>
+        <div className="mt-4 space-y-4">
             <fieldset>
                 <legend className="text-sm">{b('eventBooklet.field.role')}</legend>
                 <div className="flex flex-wrap gap-4">
-                    {EVENT_ROLES.map(role => <label key={role} className="flex min-h-11 items-center gap-2 text-sm">
+                    {EVENT_ROLES.map(role => <label key={role} className="flex min-h-control items-center gap-2 text-sm">
                         <input type="radio" name={`review-role-${event.id}`} checked={review.role === role} onChange={() => patch({ role })} />{b(`eventBooklet.role.${role}`)}
                     </label>)}
                 </div>
             </fieldset>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
                 <LinesField label={b('eventBooklet.field.worked')} hint={b('eventBooklet.itemsHint')} items={review.worked} onChange={worked => patch({ worked })} />
                 <LinesField label={b('eventBooklet.field.didNotWork')} hint={b('eventBooklet.itemsHint')} items={review.did_not_work} onChange={did_not_work => patch({ did_not_work })} />
             </div>
             <label className="block text-sm">{b('eventBooklet.field.reading')}<textarea rows={3} maxLength={1500} className={field} value={review.reading} onChange={e => patch({ reading: e.target.value })} /></label>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm">{b('booklet.bio.discovery')}<textarea rows={2} maxLength={1000} className={field} value={review.discovery} onChange={e => patch({ discovery: e.target.value })} /></label>
                 <label className="block text-sm">{b('booklet.bio.keywords')}<input maxLength={200} className={field} value={review.keywords} onChange={e => patch({ keywords: e.target.value })} /></label>
             </div>
             <label className="block text-sm">{b('eventBooklet.field.try')}<textarea rows={2} maxLength={1000} className={field} value={review.try_next} onChange={e => patch({ try_next: e.target.value })} /></label>
             <label className="block text-sm">{b('eventBooklet.field.howWhen')}<textarea rows={2} maxLength={1000} className={field} value={review.how_when} onChange={e => patch({ how_when: e.target.value })} /></label>
-            {nextStep && <div className="flex flex-wrap gap-3">
+            {nextStep && <div className="flex flex-wrap gap-4">
                 <Button type="button" variant="secondary" onClick={() => { setDialogSaved(false); setTarget({ kind: 'create', origin: { kind: 'event', target_id: event.id }, prefill: { title: nextStep } }); }}><ArrowRight className="h-4 w-4" aria-hidden />{goalText(locale, 'toNewGoal')}</Button>
-                <Link className="inline-flex min-h-11 items-center gap-1 text-indigo-700 underline" href={`/profilo/azioni?new=1&title=${encodeURIComponent(nextStep)}`}><ArrowRight className="h-4 w-4" aria-hidden />{goalText(locale, 'toNewAction')}</Link>
+                <Link className="inline-flex min-h-control items-center gap-1 text-link underline" href={`/profilo/azioni?new=1&title=${encodeURIComponent(nextStep)}`}><ArrowRight className="h-4 w-4" aria-hidden />{goalText(locale, 'toNewAction')}</Link>
             </div>}
         </div>
         {target && <GoalDialog target={target} goals={goals} groups={groups} saved={dialogSaved}

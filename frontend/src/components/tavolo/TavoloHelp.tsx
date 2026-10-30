@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { tavoloLabel } from '@/lib/i18n-tavolo';
 import { helpTavolo, type TavoloHelpTurn } from '@/lib/tavolo';
+import { Button } from '@/components/ui/Button';
 
 export function TavoloHelp({ id, counselorId, available, beforeAsk, onBusy, onClose }: {
     id: string;
@@ -21,18 +22,18 @@ export function TavoloHelp({ id, counselorId, available, beforeAsk, onBusy, onCl
     const [failed, setFailed] = useState(false);
     const log = useRef<HTMLDivElement>(null);
     useEffect(() => { log.current?.scrollTo(0, log.current.scrollHeight); }, [turns, busy]);
-    return <section aria-label={label('help')} className="shrink-0 space-y-2 border-b border-slate-200 bg-white px-4 py-2">
+    return <section aria-label={label('help')} className="shrink-0 space-y-2 border-b border-line bg-surface px-4 py-2">
         <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-800">{label('help')}</h2>
-            <button type="button" onClick={onClose} className="min-h-11 px-2 text-sm text-slate-600">{label('close')}</button>
+            <h2 className="text-sm font-semibold text-ink">{label('help')}</h2>
+            <button type="button" onClick={onClose} className="min-h-control px-2 text-sm text-ink-muted">{label('close')}</button>
         </div>
-        <div ref={log} role="log" aria-live="polite" className="max-h-40 space-y-2 overflow-y-auto text-sm text-slate-700">
+        <div ref={log} role="log" aria-live="polite" className="max-h-40 space-y-2 overflow-y-auto text-sm text-ink-body">
             {turns.map((turn, index) => <div key={index} className="space-y-1">
-                <p className="font-medium">{turn.question}</p>
+                <p>{turn.question}</p>
                 <p className="whitespace-pre-wrap">{turn.reply}</p>
             </div>)}
         </div>
-        {failed && <p role="alert" className="text-sm text-amber-800">{label('helpFailed')}</p>}
+        {failed && <p role="alert" className="text-sm text-warning-ink">{label('helpFailed')}</p>}
         <form className="flex gap-2" onSubmit={(event) => {
             event.preventDefault();
             if (!question.trim() || busy || !available) return;
@@ -50,10 +51,10 @@ export function TavoloHelp({ id, counselorId, available, beforeAsk, onBusy, onCl
         }}>
             <input value={question} onChange={(event) => setQuestion(event.target.value)} maxLength={1200} disabled={busy}
                 aria-label={label('helpQuestion')} placeholder={label('helpQuestion')}
-                className="min-h-11 min-w-0 flex-1 rounded-lg border border-slate-200 px-3 text-sm text-slate-800" />
-            <button disabled={busy || !available || !question.trim()} className="min-h-11 rounded-lg bg-indigo-600 px-3 text-sm text-white disabled:opacity-40">
+                className="min-h-control min-w-0 flex-1 rounded-lg border border-line px-4 text-sm text-ink" />
+            <Button disabled={busy || !available || !question.trim()}>
                 {busy ? '…' : label('send')}
-            </button>
+            </Button>
         </form>
     </section>;
 }

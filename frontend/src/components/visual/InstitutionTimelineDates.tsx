@@ -23,16 +23,16 @@ export function InstitutionTimelineDates({ locale, work, edit }: { locale: strin
         return () => controller.abort();
     }, [locale, attempt]);
     const timeline = work.timeline ?? { title: '', events: [] };
-    return <details className="rounded-xl border border-indigo-200 bg-indigo-50 p-3">
-        <summary className="min-h-11 cursor-pointer font-medium">{l('institutionDates')}{data?.institution ? ` · ${data.institution.name}` : ''}</summary>
-        {failed ? <p role="alert">{l('loadError')} <Button type="button" variant="secondary" onClick={() => setAttempt(n => n + 1)}>{l('retry')}</Button></p> : !data ? <p role="status">{l('loading')}</p> : <div className="space-y-3">
-            {!data.institution && <Link href="/profilo/taccuino" className="block text-indigo-700 underline">{l('chooseInstitution')}</Link>}
+    return <details className="rounded-card border border-brand-line bg-brand-soft p-4">
+        <summary className="min-h-control cursor-pointer">{l('institutionDates')}{data?.institution ? ` · ${data.institution.name}` : ''}</summary>
+        {failed ? <p role="alert">{l('loadError')} <Button type="button" variant="secondary" onClick={() => setAttempt(n => n + 1)}>{l('retry')}</Button></p> : !data ? <p role="status">{l('loading')}</p> : <div className="space-y-4">
+            {!data.institution && <Link href="/profilo/taccuino" className="block text-link underline">{l('chooseInstitution')}</Link>}
             {!data.events.length && <p>{l('noInstitutionDates')}</p>}
-            {data.events.map(event => <article key={event.id} className="space-y-2 rounded-lg bg-white p-3">
-                <h3 className="font-medium">{event.title}</h3>
+            {data.events.map(event => <article key={event.id} className="space-y-2 rounded-lg bg-surface p-4">
+                <h3>{event.title}</h3>
                 <p>{new Date(event.starts_at).toLocaleString(locale)}{event.location ? ` · ${event.location}` : ''}</p>
                 {event.registration_deadline && <p>{l('registrationDeadline')}: {new Date(event.registration_deadline).toLocaleString(locale)}</p>}
-                {event.page_url && <a href={event.page_url} target="_blank" rel="noopener noreferrer" className="block text-indigo-700 underline">{l('institutionDetails')}</a>}
+                {event.page_url && <a href={event.page_url} target="_blank" rel="noopener noreferrer" className="block text-link underline">{l('institutionDetails')}</a>}
                 {(['start', ...(event.registration_deadline ? ['deadline'] : [])] as ('start' | 'deadline')[]).map(kind => <Button key={kind} type="button" variant="secondary" disabled={timeline.events.some(e => e.institution_event === event.id && (e.institution_date || 'start') === kind)} onClick={() => {
                     const period = kind === 'start' ? event.starts_at : event.registration_deadline;
                     edit({ ...work, timeline: { title: timeline.title || l('timeline'), events: [...timeline.events, {

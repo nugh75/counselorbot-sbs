@@ -10,6 +10,8 @@ import { apiFetch } from '@/lib/auth';
 import { Sparkles, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 interface AvailabilityInstrument {
     questionnaire_type: string;
@@ -59,20 +61,20 @@ export function CrossSynthesisCard({ showHeading = true }: { showHeading?: boole
     };
 
     return (
-        <section className="glass-panel p-5 space-y-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
+        <Card as="section" className="p-6 space-y-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
                 {showHeading && <div>
-                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-indigo-600" />
+                    <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-link" />
                         {t('combined.title')}
                     </h2>
-                    <p className="mt-1 text-sm text-slate-500">{t('combined.desc')}</p>
+                    <p className="mt-1 text-sm text-ink-muted">{t('combined.desc')}</p>
                 </div>}
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                     {(availability.instruments ?? []).map((inst) => (
                         <span
                             key={inst.questionnaire_type}
-                            className="px-2.5 py-0.5 border border-slate-200 bg-slate-50 text-slate-600 text-xs font-bold rounded-full uppercase"
+                            className="px-2 py-1 border border-line bg-surface-sunken text-ink-muted text-xs font-semibold rounded-full"
                         >
                             {inst.questionnaire_type}
                         </span>
@@ -81,16 +83,15 @@ export function CrossSynthesisCard({ showHeading = true }: { showHeading?: boole
             </div>
 
             {!availability.available ? (
-                <p className="text-sm text-slate-500 border border-dashed border-slate-200 rounded-xl bg-white px-4 py-6 text-center">
+                <p className="text-sm text-ink-muted border border-dashed border-line rounded-card bg-surface px-4 py-6 text-center">
                     {t('combined.needTwo')}
                 </p>
             ) : (
                 <>
                     {!content && (
-                        <button
+                        <Button
                             onClick={() => void generate()}
                             disabled={loading}
-                            className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
                         >
                             {loading ? (
                                 <>
@@ -100,18 +101,18 @@ export function CrossSynthesisCard({ showHeading = true }: { showHeading?: boole
                             ) : (
                                 t('combined.generate')
                             )}
-                        </button>
+                        </Button>
                     )}
                     {error && (
-                        <p className="text-sm text-red-600">{t('combined.error')}</p>
+                        <p className="text-sm text-danger">{t('combined.error')}</p>
                     )}
                     {content && (
-                        <div className="bg-white p-4 border border-slate-100 rounded-xl prose prose-sm max-w-none prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1 prose-li:my-0.5 text-slate-800">
+                        <div className="bg-surface p-4 border border-line rounded-card prose prose-sm max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-1 prose-li:my-1 text-ink">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
                         </div>
                     )}
                 </>
             )}
-        </section>
+        </Card>
     );
 }

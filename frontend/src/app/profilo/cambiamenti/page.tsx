@@ -41,15 +41,15 @@ export default function ProfileChangesPage() {
 
     if (!identity) {
         return (
-            <div className="max-w-md mx-auto my-12 p-8 bg-white border border-slate-200 rounded-xl text-center space-y-6 shadow-sm">
-                <div className="mx-auto w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-indigo-600" />
+            <div className="max-w-md mx-auto my-12 p-8 bg-surface border border-line rounded-card text-center space-y-6 shadow-card">
+                <div className="mx-auto w-12 h-12 bg-brand-soft rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-link" />
                 </div>
-                <h1 className="text-2xl font-bold text-slate-900">{t('profile.loginRequired')}</h1>
-                <p className="text-slate-500 text-sm">{t('profile.loginRequiredDesc')}</p>
+                <h1 className="text-2xl font-semibold text-ink">{t('profile.loginRequired')}</h1>
+                <p className="text-ink-muted text-sm">{t('profile.loginRequiredDesc')}</p>
                 <button
                     onClick={() => window.location.href = '/'}
-                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition-colors"
+                    className="w-full min-h-control py-2 bg-brand hover:bg-brand-hover text-ink-on-brand rounded-control font-semibold transition-colors"
                 >
                     {t('profile.backToHomeToLogin')}
                 </button>
@@ -59,15 +59,15 @@ export default function ProfileChangesPage() {
 
     if (!canUsePersonalPage(identity)) {
         return (
-            <div className="max-w-md mx-auto my-12 p-8 bg-white border border-slate-200 rounded-xl text-center space-y-6 shadow-sm">
-                <div className="mx-auto w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center">
-                    <ShieldAlert className="w-6 h-6 text-amber-600" />
+            <div className="max-w-md mx-auto my-12 p-8 bg-surface border border-line rounded-card text-center space-y-6 shadow-card">
+                <div className="mx-auto w-12 h-12 bg-warning-soft rounded-full flex items-center justify-center">
+                    <ShieldAlert className="w-6 h-6 text-warning" />
                 </div>
-                <h1 className="text-2xl font-bold text-slate-900">{t('profile.restrictedTitle')}</h1>
-                <p className="text-slate-500 text-sm">{t('profile.restrictedDesc')}</p>
+                <h1 className="text-2xl font-semibold text-ink">{t('profile.restrictedTitle')}</h1>
+                <p className="text-ink-muted text-sm">{t('profile.restrictedDesc')}</p>
                 <button
                     onClick={() => window.location.href = '/'}
-                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition-colors"
+                    className="w-full min-h-control py-2 bg-brand hover:bg-brand-hover text-ink-on-brand rounded-control font-semibold transition-colors"
                 >
                     {t('profile.backToHomeToLogin')}
                 </button>

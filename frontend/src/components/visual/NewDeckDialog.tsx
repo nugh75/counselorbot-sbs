@@ -5,7 +5,7 @@ import { Columns3, Compass, Layers, MessageCircleQuestion, Scale, SquareKanban, 
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { deckTypeColumns, type CardColumn, type DeckType } from '@/lib/visual-tools';
 
-const inputClass = 'w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
+const inputClass = 'w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-[15px] text-ink';
 const typeIcons: Record<DeckType, typeof Layers> = {
     kanban: SquareKanban,
     reflection: Columns3,
@@ -54,18 +54,18 @@ export function NewDeckDialog({ open, locale, onCancel, onCreate }: Props) {
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={`${id}-title`}
-                className="w-full max-w-xl rounded-xl bg-white p-5 shadow-xl"
+                className="w-full max-w-xl rounded-card bg-surface p-6 shadow-pop"
                 onClick={event => event.stopPropagation()}
             >
                 <div className="mb-4 flex items-center justify-between">
-                    <h3 id={`${id}-title`} className="text-base font-semibold text-slate-900">{l('newDeck')}</h3>
-                    <Button type="button" variant="ghost" className="h-8 w-8 p-0" aria-label={l('deckCancel')} onClick={onCancel}>
+                    <h3 id={`${id}-title`} className="text-base font-semibold text-ink">{l('newDeck')}</h3>
+                    <Button type="button" variant="ghost" className="h-control w-control p-0" aria-label={l('deckCancel')} onClick={onCancel}>
                         <X className="h-4 w-4" aria-hidden="true" />
                     </Button>
                 </div>
                 <div className="space-y-4">
                     <div>
-                        <label htmlFor={`${id}-name`} className="mb-1 block text-sm font-medium text-slate-700">{l('deckName')}</label>
+                        <label htmlFor={`${id}-name`} className="mb-1 block text-sm text-ink-body">{l('deckName')}</label>
                         <input
                             ref={nameRef}
                             id={`${id}-name`}
@@ -78,7 +78,7 @@ export function NewDeckDialog({ open, locale, onCancel, onCreate }: Props) {
                         />
                     </div>
                     <div role="radiogroup" aria-label={l('deckType')}>
-                        <span className="mb-1 block text-sm font-medium text-slate-700">{l('deckType')}</span>
+                        <span className="mb-1 block text-sm text-ink-body">{l('deckType')}</span>
                         <div className="grid gap-2 sm:grid-cols-3">
                             {deckTypes.map(deckType => {
                                 const Icon = typeIcons[deckType];
@@ -90,20 +90,20 @@ export function NewDeckDialog({ open, locale, onCancel, onCreate }: Props) {
                                         role="radio"
                                         aria-checked={selected}
                                         onClick={() => setType(deckType)}
-                                        className={`flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-all ${
-                                            selected ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-600/20' : 'border-slate-200 bg-white hover:bg-slate-50'
+                                        className={`flex flex-col items-start gap-1 rounded-lg border p-4 text-left transition-all ${
+                                            selected ? 'border-brand bg-brand-soft ring-2 ring-brand/20' : 'border-line bg-surface hover:bg-surface-sunken'
                                         }`}
                                     >
-                                        <Icon className={`h-5 w-5 ${selected ? 'text-indigo-700' : 'text-slate-500'}`} aria-hidden="true" />
-                                        <span className={`text-sm font-medium ${selected ? 'text-indigo-900' : 'text-slate-800'}`}>{typeLabel(deckType)}</span>
-                                        <span className="text-xs leading-snug text-slate-500">{l(`deckType${deckType[0].toUpperCase()}${deckType.slice(1)}Desc`)}</span>
+                                        <Icon className={`h-5 w-5 ${selected ? 'text-link' : 'text-ink-muted'}`} aria-hidden="true" />
+                                        <span className={`text-sm ${selected ? 'text-link' : 'text-ink'}`}>{typeLabel(deckType)}</span>
+                                        <span className="text-xs leading-snug text-ink-muted">{l(`deckType${deckType[0].toUpperCase()}${deckType.slice(1)}Desc`)}</span>
                                     </button>
                                 );
                             })}
                         </div>
                     </div>
                 </div>
-                <div className="mt-5 flex justify-end gap-2">
+                <div className="mt-6 flex justify-end gap-2">
                     <Button type="button" variant="secondary" onClick={onCancel}>{l('deckCancel')}</Button>
                     <Button type="button" disabled={!name.trim()} onClick={create}>{l('deckCreate')}</Button>
                 </div>

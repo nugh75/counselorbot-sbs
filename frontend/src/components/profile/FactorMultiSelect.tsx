@@ -38,7 +38,7 @@ export function FactorMultiSelect({ label, value, onChange, questionnaireType }:
         onChange(next.length > 0 ? next : ['']);
     };
 
-    const inputClass = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400';
+    const inputClass = 'w-full rounded-control border border-line-strong px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus';
 
     const row = (item: string, index: number) => (
         <div key={index} className="flex items-center gap-2">
@@ -64,7 +64,7 @@ export function FactorMultiSelect({ label, value, onChange, questionnaireType }:
             <button
                 type="button"
                 onClick={() => removeItem(index)}
-                className="shrink-0 rounded-md border border-slate-200 p-2 text-slate-500 hover:bg-slate-50 hover:text-rose-500"
+                className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control border border-line text-ink-muted hover:bg-surface-sunken hover:text-danger"
                 aria-label={t('booklet.remove')}
             >
                 <X className="h-4 w-4" />
@@ -74,14 +74,14 @@ export function FactorMultiSelect({ label, value, onChange, questionnaireType }:
 
     return (
         <div className="block">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</span>
+            <span className="text-xs font-semibold text-ink-muted">{label}</span>
             <div className="mt-1 space-y-2">
                 {value.map((item, index) => row(item, index))}
             </div>
             <button
                 type="button"
                 onClick={() => onChange([...value, ''])}
-                className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+                className="mt-2 inline-flex min-h-control items-center gap-1 text-xs font-semibold text-link hover:text-link"
             >
                 <Plus className="h-3.5 w-3.5" /> {t('booklet.add')}
             </button>

@@ -46,23 +46,23 @@ export function TavoloCounselor({ initialId, busy, onChange }: {
     const capabilities = capabilityResult?.id === id ? capabilityResult?.value : null;
     const selected = counselors.find((item) => item.id === id);
     return (
-        <div className="space-y-1 text-xs text-slate-600">
-            <div className="flex flex-wrap items-center gap-2 font-medium">
+        <div className="space-y-1 text-xs text-ink-muted">
+            <div className="flex flex-wrap items-center gap-2">
                 {label('counselor')}
                 <select aria-label={label('counselor')} value={id ?? ''} disabled={busy || !loaded}
                     onChange={(event) => setPicked(Number(event.target.value) || undefined)}
-                    className="min-h-11 max-w-full rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-800">
+                    className="min-h-control max-w-full rounded-lg border border-line bg-surface px-2 text-sm text-ink">
                     <option value="" disabled>{label('chooseCounselor')}</option>
                     {counselors.map((item) => <option key={item.id} value={item.id}>
                         {item.name} · {t(item.model_origin === 'local' ? 'counselor.origin.local' : 'counselor.origin.external')}
                     </option>)}
                 </select>
-                <Link href="/guide#guide-section-4" className="font-normal text-indigo-700 underline">{label('guideLink')}</Link>
+                <Link href="/guide#guide-section-4" className="font-normal text-link underline">{label('guideLink')}</Link>
             </div>
             {selected?.model_origin && <p>{counselorHelp(lang)[selected.model_origin]}</p>}
             <p>{label('aiHint')}</p>
             {capabilities?.fallback_origin && <p>{label(capabilities.fallback_origin === 'local' ? 'fallbackLocal' : 'fallbackExternal')}</p>}
-            {capabilities && !capabilities.available && <p role="status" className="text-amber-800">{label('aiUnavailable')}</p>}
+            {capabilities && !capabilities.available && <p role="status" className="text-warning-ink">{label('aiUnavailable')}</p>}
         </div>
     );
 }

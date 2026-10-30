@@ -13,6 +13,7 @@ import { learningText } from '@/lib/i18n-assignment-work';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { FactorMultiSelect } from '@/components/profile/FactorMultiSelect';
 import { GoalDialog, type DialogTarget } from '@/components/goals/GoalDialog';
+import { Card } from '@/components/ui/Card';
 
 type ReadingRow = {
     session_id: string;
@@ -141,13 +142,13 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores, onDraf
     void scores; // riservato al PDF «Percorso dell'obiettivo» (D1): la card accetta i punteggi della compilazione
 
     return (
-        <div className="glass-panel p-5 space-y-5">
-            <h2 className="text-lg font-bold text-slate-800">{l('title')}</h2>
+        <Card className="p-6 space-y-6">
+            <h2 className="text-lg font-semibold text-ink">{l('title')}</h2>
             {loading ? (
-                <div className="text-sm text-slate-500">{t('booklet.loading')}</div>
+                <div className="text-sm text-ink-muted">{t('booklet.loading')}</div>
             ) : (
-                <fieldset disabled={saving} className="min-w-0 space-y-5">
-                    <div className="grid gap-3 md:grid-cols-2">
+                <fieldset disabled={saving} className="min-w-0 space-y-6">
+                    <div className="grid gap-4 md:grid-cols-2">
                         <FactorMultiSelect
                             label={l('strengths')}
                             value={strengths}
@@ -162,16 +163,16 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores, onDraf
                         />
                     </div>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{l('note')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{l('note')}</span>
                         <textarea
                             value={note}
                             onChange={(event) => setNote(event.target.value)}
                             rows={3}
                             maxLength={2000}
-                            className="mt-1 w-full resize-y rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            className="mt-1 w-full resize-y rounded-control border border-line-strong px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
                         />
                     </label>
-                    <div className="flex justify-end border-t border-slate-200 pt-4">
+                    <div className="flex justify-end border-t border-line pt-4">
                         <Button type="button" onClick={() => void save()} disabled={saving}>
                             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" aria-hidden />}
                             {l('save')}
@@ -180,8 +181,8 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores, onDraf
                     {savedGrowthAreas.length > 0 && (
                         <ul className="space-y-2">
                             {savedGrowthAreas.map((area, index) => (
-                                <li key={index} className="flex items-center justify-between gap-3 rounded-md bg-slate-50 p-2">
-                                    <span className="min-w-0 flex-1 break-words text-sm text-slate-700">{area || `#${index + 1}`}</span>
+                                <li key={index} className="flex items-center justify-between gap-4 rounded-control bg-surface-sunken p-2">
+                                    <span className="min-w-0 flex-1 break-words text-sm text-ink-body">{area || `#${index + 1}`}</span>
                                     <Button
                                         type="button"
                                         variant="secondary"
@@ -196,11 +197,11 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores, onDraf
                     )}
                     {(savedReading?.goal_ids.length ?? 0) > 0 && (
                         <section className="space-y-2">
-                            <h3 className="text-sm font-bold text-slate-700">{l('born')}</h3>
+                            <h3 className="text-sm font-semibold text-ink-body">{l('born')}</h3>
                             <ul className="space-y-1">
                                 {(savedReading?.goal_ids ?? []).map((id) => (
                                     <li key={id}>
-                                        <Link className="text-indigo-700 underline" href={`/profilo/obiettivi?goal=${id}`}>
+                                        <Link className="text-link underline" href={`/profilo/obiettivi?goal=${id}`}>
                                             {goals.find((goal) => goal.id === id)?.title ?? `#${id}`}
                                         </Link>
                                     </li>
@@ -216,6 +217,6 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores, onDraf
                 onSaved={row => { setGoals(previous => previous.map(goal => goal.id === row.id ? row : goal)); setDialogSaved(true); }}
                 onCreated={row => { setGoals(previous => [row, ...previous]); setDialogSaved(true); closeDialog(); refreshReading(); }}
                 onDeleted={() => { closeDialog(); refreshReading(); reloadGoals(); }} />}
-        </div>
+        </Card>
     );
 }

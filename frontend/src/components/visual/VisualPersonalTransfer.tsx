@@ -9,7 +9,7 @@ import { visualLabel } from '@/lib/i18n-visual-tools';
 import { annotationEntries, importAnnotation, notebookFields, readingLabel, visualEntries, type ImportTarget, type PersonalContext } from '@/lib/visual-personal';
 import type { SavedWorkspace, VisualWorkspace } from '@/lib/visual-tools';
 
-const inputClass = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-800';
+const inputClass = 'mt-1 w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-base text-ink';
 
 export function VisualPersonalTransfer({ sessionId, locale, work, saveWorkspace, onClose }: {
     sessionId: string;
@@ -92,41 +92,41 @@ export function VisualPersonalTransfer({ sessionId, locale, work, saveWorkspace,
 
     return <section className="mx-auto w-full max-w-3xl space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 ref={heading} tabIndex={-1} className="text-lg font-semibold text-slate-900">{l('personalLinks')}</h3>
+            <h3 ref={heading} tabIndex={-1} className="text-lg font-semibold text-ink">{l('personalLinks')}</h3>
             <BackButton variant="labelled" onClick={onClose} label={l('backTools')} disabled={busy} />
         </div>
-        <details className="text-sm text-slate-600"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('howTo')}</summary><p>{l('personalHelp')}</p></details>
-        {issue && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-            {l(issue)}{['personalLoadError', 'personalConflict'].includes(issue) && <Button type="button" variant="secondary" className="ml-2 min-h-[44px]" onClick={() => void load()} disabled={busy}>{l('reloadPersonal')}</Button>}
+        <details className="text-sm text-ink-muted"><summary className="min-h-control cursor-pointer py-4 text-link">{l('howTo')}</summary><p>{l('personalHelp')}</p></details>
+        {issue && <div role="alert" className="rounded-lg border border-danger-line bg-danger-soft p-4 text-sm text-danger-ink">
+            {l(issue)}{['personalLoadError', 'personalConflict'].includes(issue) && <Button type="button" variant="secondary" className="ml-2 min-h-control" onClick={() => void load()} disabled={busy}>{l('reloadPersonal')}</Button>}
         </div>}
-        {status && <p role="status" className="text-sm text-indigo-700">{l(status)}</p>}
+        {status && <p role="status" className="text-sm text-link">{l(status)}</p>}
         {!data ? <p role="status">{l(busy ? 'loading' : 'personalLoadError')}</p> : <fieldset disabled={busy} className="space-y-4">
-            <label className="block text-sm font-medium">{l('transferDirection')}<select aria-label={l('transferDirection')} className={inputClass} value={direction} onChange={event => { setDirection(event.target.value as 'in' | 'out'); setSelection(''); setDraft(''); setIssue(''); setStatus(''); }}>
+            <label className="block text-sm">{l('transferDirection')}<select aria-label={l('transferDirection')} className={inputClass} value={direction} onChange={event => { setDirection(event.target.value as 'in' | 'out'); setSelection(''); setDraft(''); setIssue(''); setStatus(''); }}>
                 <option value="out">{l('toPersonal')}</option><option value="in">{l('fromPersonal')}</option>
             </select></label>
-            <label className="block text-sm font-medium">{l('chooseContent')}<select aria-label={l('chooseContent')} className={inputClass} value={selection} onChange={event => choose(event.target.value)}>
+            <label className="block text-sm">{l('chooseContent')}<select aria-label={l('chooseContent')} className={inputClass} value={selection} onChange={event => choose(event.target.value)}>
                 <option value="">{l('chooseContent')}</option>{entries.map(entry => <option key={entry.id} value={entry.id}>{entry.label.slice(0, 180)}</option>)}
             </select></label>
-            {!entries.length && <p className="text-sm text-slate-600">{l(direction === 'in' ? 'personalEmpty' : 'visualEmpty')}</p>}
+            {!entries.length && <p className="text-sm text-ink-muted">{l(direction === 'in' ? 'personalEmpty' : 'visualEmpty')}</p>}
             {direction === 'out' ? <>
-                <label className="block text-sm font-medium">{l('destination')}<select aria-label={l('destination')} className={inputClass} value={destination} onChange={event => { const next = event.target.value as 'notebook' | 'reading'; setDestination(next); setField(next === 'notebook' ? 'notes' : 'note'); setStatus(''); }}>
+                <label className="block text-sm">{l('destination')}<select aria-label={l('destination')} className={inputClass} value={destination} onChange={event => { const next = event.target.value as 'notebook' | 'reading'; setDestination(next); setField(next === 'notebook' ? 'notes' : 'note'); setStatus(''); }}>
                     <option value="notebook">{l('notebook')}</option><option value="reading" disabled={!data.reading}>{readingLabel(locale)}{data.questionnaire_type ? ` · ${data.questionnaire_type}` : ''}</option>
                 </select></label>
-                {destination === 'notebook' && <label className="block text-sm font-medium">{l('destinationField')}<select aria-label={l('destinationField')} className={inputClass} value={field} onChange={event => { setField(event.target.value); setStatus(''); }}>
+                {destination === 'notebook' && <label className="block text-sm">{l('destinationField')}<select aria-label={l('destinationField')} className={inputClass} value={field} onChange={event => { setField(event.target.value); setStatus(''); }}>
                     {Object.entries(notebookFields).map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}
                 </select></label>}
-            </> : <label className="block text-sm font-medium">{l('destination')}<select aria-label={l('destination')} className={inputClass} value={target} onChange={event => { setTarget(event.target.value as ImportTarget); setStatus(''); }}>
+            </> : <label className="block text-sm">{l('destination')}<select aria-label={l('destination')} className={inputClass} value={target} onChange={event => { setTarget(event.target.value as ImportTarget); setStatus(''); }}>
                 <option value="cards">{l('cards')}</option><option value="actions">{l('board')}</option><option value="comparison">{l('option')}</option>
             </select></label>}
             {selected && <>
-                {direction === 'in' && target === 'actions' && <label className="block text-sm font-medium">{l('titleField')}<input aria-label={l('titleField')} className={inputClass} maxLength={160} value={title} onChange={event => setTitle(event.target.value)} /></label>}
-                <label className="block text-sm font-medium">{l('reviewTransfer')}<textarea aria-label={l('reviewTransfer')} rows={5} className={inputClass} value={draft} onChange={event => { setDraft(event.target.value); setStatus(''); }} /></label>
-                {direction === 'out' && <details open className="rounded-lg border border-slate-200 p-3">
-                    <summary className="min-h-[44px] cursor-pointer py-2 text-sm font-semibold">{l('resultPreview')}</summary>
-                    <p className="whitespace-pre-wrap break-words text-sm text-slate-700">{preview}</p>
+                {direction === 'in' && target === 'actions' && <label className="block text-sm">{l('titleField')}<input aria-label={l('titleField')} className={inputClass} maxLength={160} value={title} onChange={event => setTitle(event.target.value)} /></label>}
+                <label className="block text-sm">{l('reviewTransfer')}<textarea aria-label={l('reviewTransfer')} rows={5} className={inputClass} value={draft} onChange={event => { setDraft(event.target.value); setStatus(''); }} /></label>
+                {direction === 'out' && <details open className="rounded-lg border border-line p-4">
+                    <summary className="min-h-control cursor-pointer py-2 text-sm font-semibold">{l('resultPreview')}</summary>
+                    <p className="whitespace-pre-wrap break-words text-sm text-ink-body">{preview}</p>
                 </details>}
-                <p className={`text-sm ${tooLong ? 'text-red-700' : 'text-slate-600'}`}>{direction === 'out' ? preview.length : draft.length} / {maxLength}{tooLong ? ` · ${l('personalLength')}` : ''}</p>
-                <Button type="button" className="min-h-[44px]" disabled={!draft.trim() || tooLong || (direction === 'in' && target === 'actions' && !title.trim())} onClick={() => void transfer()}>
+                <p className={`text-sm ${tooLong ? 'text-danger-ink' : 'text-ink-muted'}`}>{direction === 'out' ? preview.length : draft.length} / {maxLength}{tooLong ? ` · ${l('personalLength')}` : ''}</p>
+                <Button type="button" className="min-h-control" disabled={!draft.trim() || tooLong || (direction === 'in' && target === 'actions' && !title.trim())} onClick={() => void transfer()}>
                     {l(direction === 'out' ? 'savePersonal' : 'saveVisual')}
                 </Button>
             </>}

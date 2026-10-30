@@ -1085,6 +1085,19 @@ lavori. Il progresso PDF, invece, è locale al browser.
 
 ## Area studente e strumenti
 
+L’Area studente (`/profilo` e i suoi strumenti, tavoli, flashcard, carte,
+linea del tempo e `/tavolo`) usa i token semantici e le primitive `Card`,
+`Button`, `PageHeader` e `Callout` (audit UI 2026-10-30, zona 4): l’intestazione
+di ogni strumento è un `PageHeader` con immagine, spaziature su griglia di 8, due
+soli pesi, niente maiuscolo, niente sfocature, controlli alti almeno 44px e campi
+di ricerca con il focus visibile. L’eliminazione di un mazzo, di una carta o di un
+tavolo e l’azzeramento del progresso chiedono conferma nel punto dell’azione
+invece che con la finestra del browser; restano native solo le
+domande sulle modifiche non salvate. I badge dei questionari sono neutri e il
+grafico dei fattori usa i colori di stato con barre più sottili; le tinte dei
+gruppi del tavolo restano quelle scelte. Testi, passi e comportamento non
+cambiano.
+
 La sezione **API e ChatGPT** è in fondo alla panoramica dell’Area studente
 (`/profilo`) e dell’Area docenti (`/docente`), dopo tutte le sezioni degli strumenti.
 Ha una sola voce, **API e ChatGPT** (`/profilo/api-personali`,

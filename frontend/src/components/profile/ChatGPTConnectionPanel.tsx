@@ -125,15 +125,15 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
     const countdown = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`;
     const osName = t(device === 'windows' ? 'chatgpt.osWindows' : device === 'macos' ? 'chatgpt.osMacos' : device === 'linux' ? 'chatgpt.osLinux' : 'chatgpt.osUnknown');
     const windowsLink = status.windows_helper_available && <div key="windows" className="space-y-1">
-        <a className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline" href="/api/chatgpt/helper/windows" download="CounselorBot-ChatGPT-Windows.zip">{t('chatgpt.windowsDownload')}</a>
-        <p className="text-xs text-slate-600">{t('chatgpt.windowsSecurity').replace('{origin}', origin)}</p>
+        <a className="inline-flex min-h-control items-center text-sm font-semibold text-link underline" href="/api/chatgpt/helper/windows" download="CounselorBot-ChatGPT-Windows.zip">{t('chatgpt.windowsDownload')}</a>
+        <p className="text-xs text-ink-muted">{t('chatgpt.windowsSecurity').replace('{origin}', origin)}</p>
     </div>;
     const macosLink = status.macos_helper_available && <div key="macos" className="space-y-1">
-        <a className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline" href="/api/chatgpt/helper/macos" download="CounselorBot-ChatGPT.zip">{t('chatgpt.macosDownload')}</a>
-        <p className="text-xs text-slate-600">{t('chatgpt.macosSecurity')}</p>
+        <a className="inline-flex min-h-control items-center text-sm font-semibold text-link underline" href="/api/chatgpt/helper/macos" download="CounselorBot-ChatGPT.zip">{t('chatgpt.macosDownload')}</a>
+        <p className="text-xs text-ink-muted">{t('chatgpt.macosSecurity')}</p>
     </div>;
     const pythonLink = <div key="python" className="space-y-1">
-        <a className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline" href="/api/chatgpt/helper" download="chatgpt-connect.py">{t('chatgpt.pythonHelper')}</a>
+        <a className="inline-flex min-h-control items-center text-sm font-semibold text-link underline" href="/api/chatgpt/helper" download="chatgpt-connect.py">{t('chatgpt.pythonHelper')}</a>
     </div>;
     // The detected system's helper first (Python when no packaged one exists); the rest stay one click away.
     const primary = device === 'windows' ? (windowsLink || pythonLink) : device === 'macos' ? (macosLink || pythonLink)
@@ -142,19 +142,19 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
 
     return <Card as="section" className="space-y-4" data-testid="chatgpt-wizard"
         data-state={failed ? 'error' : link ? 'waiting' : status.connected && !status.needs_reconnect ? 'connected' : 'not_connected'}>
-        <h2 className="text-xl font-semibold text-slate-900">{t('chatgpt.title')}</h2>
-        <p className="text-sm text-slate-600">{t('chatgpt.intro')}</p>
+        <h2 className="text-xl font-semibold text-ink">{t('chatgpt.title')}</h2>
+        <p className="text-sm text-ink-muted">{t('chatgpt.intro')}</p>
         {/* The subscription is personal: teachers learn how to give GPT to a class instead. */}
-        <p className="text-sm text-slate-700">{t(area === 'docente' ? 'chatgpt.personalTeacher' : 'chatgpt.personalStudent')}</p>
+        <p className="text-sm text-ink-body">{t(area === 'docente' ? 'chatgpt.personalTeacher' : 'chatgpt.personalStudent')}</p>
         {(notice || status?.revocation_pending) && <Callout variant="warning">{t(notice || 'chatgpt.revocation')}</Callout>}
         {status && !status.available && <Callout>{t(`chatgpt.errors.${status.reason || 'disabled'}`)}</Callout>}
-        {status.available && !status.connected && device !== 'unsupported' && <p className="text-sm text-slate-700">{t('chatgpt.detected').replace('{os}', osName)}</p>}
+        {status.available && !status.connected && device !== 'unsupported' && <p className="text-sm text-ink-body">{t('chatgpt.detected').replace('{os}', osName)}</p>}
 
         {/* State 4: expired or failed, with a retry that starts a new link without reloading. */}
         {failed && <Callout variant="danger">
             <p>{t(errorKey)}</p>
             {device !== 'unsupported' && <Button type="button" variant="secondary" disabled={busy} onClick={() => void startLink()}>{t('chatgpt.retryLink')}</Button>}
-            <details className="mt-2 text-sm"><summary className="cursor-pointer font-medium">{t('chatgpt.troubleshooting')}</summary><p className="mt-1">{t('chatgpt.troubleshootingBody')}</p></details>
+            <details className="mt-2 text-sm"><summary className="cursor-pointer">{t('chatgpt.troubleshooting')}</summary><p className="mt-1">{t('chatgpt.troubleshootingBody')}</p></details>
         </Callout>}
 
         {/* State 1: not connected. Phones, tablets and Chromebooks get an explanation and no actions. */}
@@ -163,60 +163,60 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
             : <Button type="button" disabled={busy} onClick={() => void startLink()}>{t(status.connected || status.needs_reconnect ? 'chatgpt.reconnect' : 'chatgpt.connect')}</Button>)}
 
         {/* State 2: waiting for the sign-in, in three numbered steps. */}
-        {link && <div className="space-y-4 rounded-lg border border-slate-200 p-4" data-testid="chatgpt-link">
+        {link && <div className="space-y-4 rounded-lg border border-line p-4" data-testid="chatgpt-link">
             <ol className="space-y-4">
                 <li className="space-y-2">
                     <p className="text-sm font-semibold">{`1. ${t('chatgpt.stepDownload')}`}</p>
                     {primary}
                     {others.length > 0 && <details className="space-y-2" open={primary ? undefined : true}>
-                        <summary className="cursor-pointer text-sm font-medium text-slate-700">{t('chatgpt.otherSystems')}</summary>
+                        <summary className="cursor-pointer text-sm text-ink-body">{t('chatgpt.otherSystems')}</summary>
                         <div className="space-y-2 pt-1">{others}</div>
                     </details>}
                 </li>
                 <li className="space-y-2">
                     <p className="text-sm font-semibold">{`2. ${t('chatgpt.stepCode')}`}</p>
-                    <code data-testid="chatgpt-pairing-code" className="block select-all break-all rounded bg-slate-50 p-3 text-sm">{link.pairing_code}</code>
-                    <div className="flex flex-wrap items-center gap-3">
+                    <code data-testid="chatgpt-pairing-code" className="block select-all break-all rounded bg-surface-sunken p-4 text-sm">{link.pairing_code}</code>
+                    <div className="flex flex-wrap items-center gap-4">
                         <Button type="button" variant="secondary" onClick={() => void copy(link.pairing_code, 'code')}>{t(copied === 'code' ? 'chatgpt.copied' : 'chatgpt.copy')}</Button>
                         {/* Not announced every second: the timer is visual, the expiry is announced as an error. */}
-                        <span role="timer" aria-live="off" className="text-xs text-slate-600">{t('chatgpt.expiresIn').replace('{time}', countdown)}</span>
+                        <span role="timer" aria-live="off" className="text-xs text-ink-muted">{t('chatgpt.expiresIn').replace('{time}', countdown)}</span>
                     </div>
                     <span role="status" className="sr-only">{copied === 'code' ? t('chatgpt.copied') : ''}</span>
                 </li>
                 <li className="space-y-1">
                     <p className="text-sm font-semibold">{`3. ${t('chatgpt.stepSignIn')}`}</p>
-                    <p role="status" className="text-xs text-slate-600">{t('chatgpt.waiting')}</p>
+                    <p role="status" className="text-xs text-ink-muted">{t('chatgpt.waiting')}</p>
                 </li>
             </ol>
-            <p className="text-xs text-slate-600">{t('chatgpt.remote')}</p>
-            <details className="space-y-3">
+            <p className="text-xs text-ink-muted">{t('chatgpt.remote')}</p>
+            <details className="space-y-4">
                 <summary className="cursor-pointer text-sm font-semibold">{t('chatgpt.manual')}</summary>
                 <p className="text-sm">{t('chatgpt.instructions')}</p>
-                <a className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline" href="/api/chatgpt/helper" download="chatgpt-connect.py">{t('chatgpt.download')}</a>
+                <a className="inline-flex min-h-control items-center text-sm font-semibold text-link underline" href="/api/chatgpt/helper" download="chatgpt-connect.py">{t('chatgpt.download')}</a>
                 <p className="text-sm font-semibold">{t('chatgpt.command')}</p>
-                <code className="block break-all rounded bg-slate-50 p-3 text-sm">{command}</code>
+                <code className="block break-all rounded bg-surface-sunken p-4 text-sm">{command}</code>
                 <Button type="button" variant="secondary" onClick={() => void copy(command, 'command')}>{t(copied === 'command' ? 'chatgpt.copied' : 'chatgpt.copy')}</Button>
                 <p className="text-sm">{t('chatgpt.sshInstructions')}</p>
-                <code data-testid="chatgpt-ssh-command" className="block break-all rounded bg-slate-50 p-3 text-sm">{sshCommand}</code>
+                <code data-testid="chatgpt-ssh-command" className="block break-all rounded bg-surface-sunken p-4 text-sm">{sshCommand}</code>
                 <Button type="button" variant="secondary" onClick={() => void copy(sshCommand, 'ssh')}>{t(copied === 'ssh' ? 'chatgpt.copied' : 'chatgpt.copy')}</Button>
             </details>
             <Button type="button" variant="secondary" disabled={busy} onClick={() => void act(async () => { await chatgptRequest('/link', 'DELETE'); setLink(undefined); await load(); })}>{t('chatgpt.cancel')}</Button>
         </div>}
 
         {/* State 3: connected. Which counselor uses which model is chosen with the other sources (#200). */}
-        {status?.connected && <div className="space-y-3">
+        {status?.connected && <div className="space-y-4">
             <p role="status" className="break-words text-sm font-semibold">{t('chatgpt.connected')}{status.email ? ` · ${status.email}` : ''}</p>
-            <p className="text-sm text-slate-600">{t('chatgpt.chooseBelow')}</p>
+            <p className="text-sm text-ink-muted">{t('chatgpt.chooseBelow')}</p>
             <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="secondary" disabled={busy || !!link || !status.available} onClick={() => void refresh()}>{t('chatgpt.refresh')}</Button>
                 <Button type="button" variant="secondary" disabled={busy} onClick={() => void disconnect()}>{t('chatgpt.disconnect')}</Button>
             </div>
         </div>}
-        {status?.use_subscription ? <p role="status" className="text-sm font-semibold">{t('chatgpt.active')} · {status.model}</p> : status?.connected && <p className="text-sm text-slate-600">{t('chatgpt.inactive')}</p>}
+        {status?.use_subscription ? <p role="status" className="text-sm font-semibold">{t('chatgpt.active')} · {status.model}</p> : status?.connected && <p className="text-sm text-ink-muted">{t('chatgpt.inactive')}</p>}
         {status?.needs_reconnect && <Callout variant="warning">{t('chatgpt.errors.reconnect')}</Callout>}
         {status?.registered && !status.connected && <Button type="button" variant="secondary" disabled={busy || !!link} onClick={() => void disconnect(true)}>{t('chatgpt.forget')}</Button>}
-        {(status?.connected || status?.use_subscription) && <a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-sm text-indigo-700 underline">{t('chatgpt.usage')}</a>}
-        <p className="text-xs text-slate-600">{t('chatgpt.billing')}</p>
-        <p className="text-xs text-slate-600">{t('chatgpt.privacy')}</p>
+        {(status?.connected || status?.use_subscription) && <a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-control items-center text-sm text-link underline">{t('chatgpt.usage')}</a>}
+        <p className="text-xs text-ink-muted">{t('chatgpt.billing')}</p>
+        <p className="text-xs text-ink-muted">{t('chatgpt.privacy')}</p>
     </Card>;
 }

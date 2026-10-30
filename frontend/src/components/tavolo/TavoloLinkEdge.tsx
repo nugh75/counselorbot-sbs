@@ -122,8 +122,8 @@ function Link({ id, source, target, data, markerStart, markerEnd, selected }: Ed
                         onClick={data.onSelect}
                         // La pastiglia opaca sotto il testo e' la stessa cura dei diagrammi
                         // Graphviz: senza, la linea taglia la parola.
-                        className={`cursor-pointer rounded bg-white px-1.5 py-0.5 text-[11px] leading-tight text-slate-600 shadow-sm border ${
-                            selected ? 'border-indigo-500 ring-1 ring-indigo-500 font-medium' : 'border-slate-200 hover:border-indigo-300'
+                        className={`cursor-pointer rounded bg-surface px-2 py-1 text-[11px] leading-tight text-ink-muted shadow-card border ${
+                            selected ? 'border-brand ring-1 ring-brand' : 'border-line hover:border-brand-line'
                         }`}
                     >
                         {word}
@@ -137,7 +137,7 @@ function Link({ id, source, target, data, markerStart, markerEnd, selected }: Ed
                             }}
                             aria-label={data.deleteLabel || 'Togli dal tavolo'}
                             title={data.deleteLabel || 'Togli dal tavolo'}
-                            className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-500 shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-opacity"
+                            className="flex h-5 w-5 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-muted shadow-card hover:bg-danger-soft hover:text-danger transition-opacity"
                         >
                             <Trash2 className="h-3 w-3" aria-hidden="true" />
                         </button>

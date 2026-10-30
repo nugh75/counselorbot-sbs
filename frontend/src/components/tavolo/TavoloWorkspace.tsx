@@ -281,12 +281,12 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
         : <PreviousPageButton fallbackHref="/profilo/tavolo" beforeBack={flush} />;
 
     if (status === 'loading') {
-        return <p className="flex min-h-dvh items-center justify-center gap-2 text-sm text-slate-600" role="status">
+        return <p className="flex min-h-dvh items-center justify-center gap-2 text-sm text-ink-muted" role="status">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />{label('loading')}
         </p>;
     }
     if (status === 'missing' || !view || !graph) {
-        return <div className="space-y-4 p-4">{back}<p className="text-sm text-slate-600">{label('notFound')}</p></div>;
+        return <div className="space-y-4 p-4">{back}<p className="text-sm text-ink-muted">{label('notFound')}</p></div>;
     }
 
     const waiting = pendingIds(graph);
@@ -296,14 +296,14 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
         return (
             <main className="mx-auto max-w-2xl space-y-4 p-4">
                 {back}
-                <h1 className="text-lg font-semibold text-slate-800">{view.title || label('untitled')}</h1>
-                <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{label('desktopOnly')}</p>
+                <h1 className="text-lg font-semibold text-ink">{view.title || label('untitled')}</h1>
+                <p className="rounded-lg bg-surface-sunken p-4 text-sm text-ink-muted">{label('desktopOnly')}</p>
                 {view.has_capture && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={`/api/tavolo/${encodeURIComponent(id)}/capture.png`} alt={view.title || label('title')}
-                        className="w-full rounded-lg border border-slate-200" />
+                        className="w-full rounded-lg border border-line" />
                 )}
-                <p className="text-sm leading-relaxed text-slate-700">
+                <p className="text-sm leading-relaxed text-ink-body">
                     {view.rendition || content.nodes.map((node) => node.label).join(' · ')}
                 </p>
             </main>
@@ -312,63 +312,63 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
 
     return (
         <main className={`flex min-h-[32rem] w-full flex-col ${onReturn ? 'h-full' : 'h-[calc(100dvh-6rem)]'}`}>
-            <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-slate-200 bg-white px-4 py-2">
+            <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-line bg-surface px-4 py-2">
                 {back}
-                <h1 className="min-w-0 truncate text-sm font-semibold text-slate-800">
+                <h1 className="min-w-0 truncate text-sm font-semibold text-ink">
                     {view.title || label('untitled')}
-                    {!view.saved && <span className="ml-2 rounded bg-ochre-50 px-1.5 py-0.5 text-xs font-normal text-ochre-700">{label('draft')}</span>}
+                    {!view.saved && <span className="ml-2 rounded bg-ochre-50 px-2 py-1 text-xs font-normal text-move">{label('draft')}</span>}
                 </h1>
                 <button type="button" disabled={busy} onClick={() => void rename()} aria-label={label('renameTable')} title={label('renameTable')}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 text-slate-600">
+                    className="inline-flex h-control w-control items-center justify-center rounded-lg border border-line text-ink-muted">
                     <Pencil className="h-4 w-4" aria-hidden="true" />
                 </button>
-                <Link href="/tavolo" onClick={(event) => { event.preventDefault(); void flush().then(() => onReturn ? onReturn() : router.push('/tavolo')).catch(() => undefined); }} className="mr-auto shrink-0 text-xs text-indigo-700 hover:underline">
+                <Link href="/tavolo" onClick={(event) => { event.preventDefault(); void flush().then(() => onReturn ? onReturn() : router.push('/tavolo')).catch(() => undefined); }} className="mr-auto shrink-0 text-xs text-link hover:underline">
                     {label('all')}
                 </Link>
                 {INTENTS.map((intent) => (
                     <button key={intent} type="button" disabled={busy || !aiAvailable} onClick={() => void ask(intent)}
-                        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-40">
+                        className="inline-flex min-h-control items-center gap-2 rounded-lg border border-line px-4 text-sm text-ink-body hover:bg-surface-sunken disabled:opacity-40">
                         <Sparkles className="h-4 w-4" aria-hidden="true" />{label(INTENT_LABEL[intent])}
                     </button>
                 ))}
                 <button type="button" disabled={busy || !aiAvailable} onClick={() => setHelpOpen((open) => !open)} aria-expanded={helpOpen}
-                    className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 disabled:opacity-40">
+                    className="inline-flex min-h-control items-center gap-2 rounded-lg border border-line px-4 text-sm text-ink-body disabled:opacity-40">
                     <MessageCircle className="h-4 w-4" aria-hidden="true" />{label('help')}
                 </button>
                 <button type="button" disabled={busy} onClick={() => void save()}
-                    className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40">
+                    className="inline-flex min-h-control items-center gap-2 rounded-lg bg-brand px-4 text-sm text-ink-on-brand hover:bg-brand-hover disabled:opacity-40">
                     <Save className="h-4 w-4" aria-hidden="true" />{label('save')}
                 </button>
             </header>
 
-            <div className="shrink-0 border-b border-slate-200 bg-white px-4 py-2">
+            <div className="shrink-0 border-b border-line bg-surface px-4 py-2">
                 <TavoloCounselor initialId={initialCounselorId} busy={busy} onChange={counselorChanged} />
-                {writeStatus === 'failed' && <p role="alert" className="mt-1 text-xs text-slate-600">
+                {writeStatus === 'failed' && <p role="alert" className="mt-1 text-xs text-ink-muted">
                     {label('changesFailed')}
-                    <button type="button" onClick={() => void flush().catch(() => undefined)} className="ml-2 min-h-11 text-indigo-700 underline">{label('retry')}</button>
+                    <button type="button" onClick={() => void flush().catch(() => undefined)} className="ml-2 min-h-control text-link underline">{label('retry')}</button>
                 </p>}
             </div>
 
             {waiting.length > 0 && (
-                <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ochre-200 bg-ochre-50 px-4 py-2 text-sm text-slate-700">
+                <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ochre-200 bg-ochre-50 px-4 py-2 text-sm text-ink-body">
                     <span className="mr-auto">{label('proposals')} · {waiting.length}</span>
                     <button type="button" onClick={() => { setReviewOpen((open) => !open); setFocusIds(graph.nodes.filter((node) => node.state === 'pending').map((node) => node.id)); }}
-                        aria-expanded={reviewOpen} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-slate-300 px-3">
+                        aria-expanded={reviewOpen} className="inline-flex min-h-control items-center gap-2 rounded-lg border border-line-strong px-4">
                         <Eye className="h-4 w-4" aria-hidden="true" />{label(reviewOpen ? 'hideProposals' : 'viewProposals')}
                     </button>
                     <button type="button" disabled={busy} onClick={() => void settle(waiting, 'accept')}
-                        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40">
+                        className="inline-flex min-h-control items-center gap-2 rounded-lg bg-brand px-4 text-sm text-ink-on-brand hover:bg-brand-hover disabled:opacity-40">
                         <Check className="h-4 w-4" aria-hidden="true" />{label('acceptAll')}
                     </button>
                     <button type="button" disabled={busy} onClick={() => void settle(waiting, 'reject')}
-                        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-slate-300 px-3 text-sm text-slate-700 hover:bg-white disabled:opacity-40">
+                        className="inline-flex min-h-control items-center gap-2 rounded-lg border border-line-strong px-4 text-sm text-ink-body hover:bg-surface disabled:opacity-40">
                         <X className="h-4 w-4" aria-hidden="true" />{label('rejectAll')}
                     </button>
                 </div>
             )}
 
-            {reviewOpen && waiting.length > 0 && <section aria-label={label('viewProposals')} className="max-h-48 shrink-0 overflow-y-auto border-b border-slate-200 bg-white px-4 py-2 text-sm">
-                <p className="mb-2 text-xs text-slate-600">{label('proposalCountHint')}</p>
+            {reviewOpen && waiting.length > 0 && <section aria-label={label('viewProposals')} className="max-h-48 shrink-0 overflow-y-auto border-b border-line bg-surface px-4 py-2 text-sm">
+                <p className="mb-2 text-xs text-ink-muted">{label('proposalCountHint')}</p>
                 <ul className="space-y-1">
                     {[
                         ...graph.nodes.filter((node) => node.state === 'pending').map((node) => ({
@@ -381,20 +381,20 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
                             focus: [edge.from, edge.to], reject: [edgeKey(edge)],
                             accept: [edgeKey(edge), ...graph.nodes.filter((node) => node.state === 'pending' && (node.id === edge.from || node.id === edge.to)).map((node) => node.id)],
                         })),
-                    ].map((item) => <li key={item.id} className="flex items-center gap-2 border-b border-slate-100">
-                        <button type="button" onClick={() => setFocusIds(item.focus)} className="min-h-11 min-w-0 flex-1 text-left text-indigo-700 underline">{item.text}</button>
-                        <button type="button" disabled={busy} onClick={() => void settle(item.accept, 'accept')} className="min-h-11 px-2 text-indigo-700">{label('accept')}</button>
-                        <button type="button" disabled={busy} onClick={() => void settle(item.reject, 'reject')} className="min-h-11 px-2 text-slate-600">{label('reject')}</button>
+                    ].map((item) => <li key={item.id} className="flex items-center gap-2 border-b border-line">
+                        <button type="button" onClick={() => setFocusIds(item.focus)} className="min-h-control min-w-0 flex-1 text-left text-link underline">{item.text}</button>
+                        <button type="button" disabled={busy} onClick={() => void settle(item.accept, 'accept')} className="min-h-control px-2 text-link">{label('accept')}</button>
+                        <button type="button" disabled={busy} onClick={() => void settle(item.reject, 'reject')} className="min-h-control px-2 text-ink-muted">{label('reject')}</button>
                     </li>)}
                 </ul>
             </section>}
 
             <div hidden={!helpOpen} className="shrink-0"><TavoloHelp id={id} counselorId={counselorId} available={aiAvailable} beforeAsk={flush} onBusy={setBusy} onClose={() => setHelpOpen(false)} /></div>
 
-            {message && <p role="status" className="shrink-0 px-4 py-2 text-sm text-slate-600">{message}</p>}
+            {message && <p role="status" className="shrink-0 px-4 py-2 text-sm text-ink-muted">{message}</p>}
 
-            <details className="shrink-0 border-b border-slate-200 bg-slate-50 px-4 py-2">
-                <summary className="cursor-pointer py-2 text-sm font-medium text-slate-700">{label('compose')}</summary>
+            <details className="shrink-0 border-b border-line bg-surface-sunken px-4 py-2">
+                <summary className="cursor-pointer py-2 text-sm text-ink-body">{label('compose')}</summary>
                 <div className="max-h-64 overflow-y-auto"><TavoloCompose busy={busy} aiAvailable={aiAvailable} onCompose={compose} /></div>
             </details>
 

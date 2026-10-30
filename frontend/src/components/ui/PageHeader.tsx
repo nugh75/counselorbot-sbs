@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { BackButton } from './BackButton';
 import { PreviousPageButton } from './PreviousPageButton';
 
@@ -16,9 +16,11 @@ interface PageHeaderProps {
     icon?: ReactNode;
     actions?: ReactNode;
     forward?: ReactNode;
+    // Titolo che riceve il focus al cambio di pagina (area personale).
+    headingRef?: Ref<HTMLHeadingElement>;
 }
 
-export function PageHeader({ title, subtitle, backHref, onBack, backLabel, icon, actions, forward }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, backHref, onBack, backLabel, icon, actions, forward, headingRef }: PageHeaderProps) {
     return (
         <div className="flex flex-wrap items-center gap-4">
             {(backHref || onBack) && (
@@ -34,7 +36,7 @@ export function PageHeader({ title, subtitle, backHref, onBack, backLabel, icon,
             <div className="flex min-w-0 items-center gap-2">
                 {icon}
                 <div className="min-w-0">
-                    <h1 className="text-2xl font-semibold text-ink">{title}</h1>
+                    <h1 ref={headingRef} tabIndex={headingRef ? -1 : undefined} className="text-2xl font-semibold text-ink focus:outline-none">{title}</h1>
                     {subtitle && <p className="mt-2 text-ink-muted">{subtitle}</p>}
                 </div>
             </div>
