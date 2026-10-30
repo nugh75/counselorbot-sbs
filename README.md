@@ -113,8 +113,6 @@ docker exec counselorbot_backend python -m backend.tests.test_smoke
 
 # Database utilities from the host
 python check_sequences.py
-python migrate_data.py --dry-run
-python migrate_data.py
 
 # Deployment helpers
 ./deploy.sh
