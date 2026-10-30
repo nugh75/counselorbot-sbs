@@ -7,7 +7,6 @@ from contextlib import nullcontext
 
 import pytest
 from fastapi.testclient import TestClient
-from starlette.websockets import WebSocketDisconnect
 
 from backend import auth, database, install_profile, local_auth
 from backend.main import app
@@ -28,7 +27,6 @@ ADMIN_ROUTES = ["/admin/config/env-status", "/admin/personal-api-policy"]
 LAB_ROUTES = [
     ("get", "/admin/prompt-experiments", {}),
     ("get", "/telegram/bot-info", {}),
-    ("post", "/opencode/workspace", {"json": {}}),
     ("get", "/chatgpt/helper", {}),
     ("get", "/tts/voices?engine=piper", {}),
     ("post", "/tts/stream", {"json": {"text": "Ciao", "engine": "piper", "voice": "it_IT-paola-medium"}}),
@@ -112,13 +110,6 @@ def test_lab_features_exist_on_other_profiles(teacher_pc, monkeypatch, method, p
     monkeypatch.setattr(auth, "AI4AUTH_VERIFY_URL", "")
     # Anonymous: the route exists, so the answer is about auth or input, not 404.
     assert getattr(teacher_pc, method)(path, **kwargs).status_code != 404
-
-
-def test_opencode_terminal_is_missing_on_teacher_pc(teacher_pc):
-    _login_teacher(teacher_pc)
-    with pytest.raises(WebSocketDisconnect):
-        with teacher_pc.websocket_connect("/term?key=abc", headers=LOCAL):
-            pass
 
 
 def test_edge_reader_stays_on_teacher_pc(teacher_pc, monkeypatch):

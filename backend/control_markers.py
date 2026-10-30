@@ -2,7 +2,7 @@
 
 Il modello chiude uno step con `[[AVANZA_STEP]]`. Il segnale serve
 all'applicazione, non a chi legge: esce dal testo nel percorso comune di ogni
-chat (le due rotte `/chat` e `/chat/stream`, la chat del sito, OpenCode) come
+chat (le due rotte `/chat` e `/chat/stream`, la chat del sito) come
 gli altri blocchi privati, e arriva al client come `control_signals`. Log,
 memoria, cronologia ed export ricevono quindi solo il testo visibile; chi
 rilegge log scritti prima di questo filtro passa da `strip_control_markers`.

@@ -374,17 +374,11 @@ def test_parallel_requests_renew_a_rotating_refresh_token_only_once(signed, monk
             engine.dispose()
 
 
-def test_account_change_is_explicit_and_opencode_never_uses_a_paid_reserve(signed):
-    from backend.routes.opencode import _require_direct_chat
+def test_account_change_is_explicit(signed):
     with artifact_session() as db:
         connect(db, signed)
         row = db.query(models.ChatGPTConnection).one(); row.catalog=[{"slug":"model"}]; db.commit()
         accounts.set_preference(db, "alice", True, "model")
-        from fastapi import HTTPException
-        with pytest.raises(HTTPException) as failure:
-            _require_direct_chat(db, {"authenticated":True,"username":"alice"}, "en")
-        assert failure.value.status_code == 409
-        assert failure.value.detail == error_message("unsupported", "en")
         # No need for a network revocation when the grant is already gone.
         row.encrypted_credentials = None; db.commit()
         accounts.disconnect(db, "alice", forget=True)

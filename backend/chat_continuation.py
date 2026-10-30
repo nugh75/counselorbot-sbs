@@ -34,13 +34,3 @@ def continuation_message(message: str, partial: str) -> str:
         f"{_PARTIAL_MARKER}{json.dumps(partial, ensure_ascii=False)}"
     )
 
-
-def continuation_prefix(message: str) -> str | None:
-    """Recognize internal continuation turns when restoring native OpenCode history."""
-    if _PARTIAL_MARKER not in message:
-        return None
-    try:
-        value = json.loads(message.rsplit(_PARTIAL_MARKER, 1)[1])
-    except ValueError:
-        return None
-    return value if isinstance(value, str) else None

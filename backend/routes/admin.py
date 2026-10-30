@@ -66,7 +66,6 @@ _KNOWN_LOG_PROVIDERS = {
     "omniroute",
     "ollama",
     "llamacpp",
-    "opencode",
     "unknown",
 }
 

@@ -1717,16 +1717,6 @@ async def upload_qsa_document(
         if "error" in extraction_data:
             raise _qsa_extraction_error(extraction_data, lang)
 
-        # Save PDF to uploads/qsa with a token
-        import shutil
-        import uuid
-        token = uuid.uuid4().hex  # 32 characters hex
-        storage_dir = "uploads/qsa"
-        os.makedirs(storage_dir, exist_ok=True)
-        dest_path = os.path.join(storage_dir, f"{token}.pdf")
-        shutil.copy(temp_file_path, dest_path)
-
-        extraction_data["pdf_token"] = token
         return extraction_data
     finally:
         if os.path.exists(temp_file_path):

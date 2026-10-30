@@ -213,20 +213,12 @@ def test_alignment_rejects_a_concurrent_admin_ownership_claim():
         assert db.query(models.Factor).count() == 0
 
 
-def test_qpcc_score_bands_and_opencode_are_scoped_to_the_canonical_instrument():
+def test_qpcc_score_bands_are_scoped_to_the_canonical_instrument():
     from backend.certified_strategy_service import score_bands
-    from backend.routes.opencode import _scores_markdown
     text = '\n'.join(f'- {code} ({label}): {9 if code in INVERTED or code == "M2" else 1}/9' for code,label in names('it').items())
     bands = score_bands('QPCC',text)
     assert set(bands) == set(CODES)
     assert bands['A2'] == 'growth' and bands['V1'] == 'growth' and bands['M2'] == 'normal'
-    with artifact_session() as db:
-        markdown = _scores_markdown(db,'QPCC',SCORES,'it')
-        assert 'Competenza comunicativa' in markdown and 'INVERTITO' in markdown
-        assert '| M2 | Orientamento all’io | 5/9 | Orientamento all’io |' in markdown
-        with pytest.raises(HTTPException) as error:
-            _scores_markdown(db,'QPCC',{'K1':5},'it')
-        assert error.value.status_code == 422
 
 
 def test_qpcc_pdf_uses_its_own_names_and_directions_without_qsa_collisions():
