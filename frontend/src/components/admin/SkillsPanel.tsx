@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Lock, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { SkillWizard, type AdminSkill, type SkillCatalog } from '@/components/admin/SkillWizard';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Button } from '@/components/ui/Button';
 
 // Scheda Admin → Skill: elenco, accensione e la procedura guidata per creare o
 // modificare una skill. `?skill=<id>` (link dalla mappa dei prompt) apre subito
@@ -60,8 +62,8 @@ export function SkillsPanel() {
         void load();
     };
 
+    const [confirmDelete, setConfirmDelete] = useState<string | number | null>(null);
     const remove = async (skill: AdminSkill) => {
-        if (!window.confirm(t('admin.skills.confirmDelete', { name: skill.name }))) return;
         setError('');
         const res = await fetch(`/api/admin/skills/${skill.id}`, { method: 'DELETE' });
         if (!res.ok) {
@@ -74,24 +76,23 @@ export function SkillsPanel() {
     };
 
     return <div className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="max-w-2xl">
                 <h2 className="text-xl font-semibold">{t('admin.skills.title')}</h2>
-                <p className="mt-1 text-sm text-slate-600">{t('admin.skills.intro')}</p>
+                <p className="mt-1 text-sm text-ink-muted">{t('admin.skills.intro')}</p>
             </div>
-            <button type="button" onClick={() => setEditing('new')} disabled={!catalog}
-                className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm text-white disabled:opacity-50">
+            <Button type="button" onClick={() => setEditing('new')} disabled={!catalog}>
                 <Plus className="h-4 w-4" />{t('admin.skills.new')}
-            </button>
+            </Button>
         </div>
 
-        {error && <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-        {status && <p role="status" className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{status}</p>}
+        {error && <p role="alert" className="rounded-control bg-danger-soft px-4 py-2 text-sm text-danger-ink">{error}</p>}
+        {status && <p role="status" className="rounded-control bg-success-soft px-4 py-2 text-sm text-success-ink">{status}</p>}
 
         <div className="overflow-x-auto">
             <table className="w-full text-sm">
                 <thead>
-                    <tr className="border-b text-left text-xs uppercase text-slate-500">
+                    <tr className="border-b text-left text-xs text-ink-muted">
                         <th className="py-2">{t('admin.skills.field.name')}</th>
                         <th>{t('admin.skills.summary.when')}</th>
                         <th>{t('admin.skills.position.routing')}</th>
@@ -104,30 +105,32 @@ export function SkillsPanel() {
                     {skills.map(skill => {
                         const intents = Array.isArray(skill.conditions?.intents) ? (skill.conditions?.intents as string[]) : [];
                         return <tr key={skill.id} className="border-b align-top">
-                            <td className="py-2 pr-3">
-                                <span className="font-medium">{skill.name}</span>
-                                {skill.builtin && <span className="ml-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600"
+                            <td className="py-2 pr-4">
+                                <span className="font-semibold">{skill.name}</span>
+                                {skill.builtin && <span className="ml-2 inline-flex items-center gap-1 rounded bg-surface-raised px-2 py-1 text-2xs text-ink-muted"
                                     title={t('admin.skills.builtinHint')}>
                                     <Lock aria-hidden className="h-3 w-3" />{t('admin.skills.builtin')}
                                 </span>}
-                                <code className="block text-xs text-slate-400">{skill.slug}</code>
+                                <code className="block text-xs text-ink-muted">{skill.slug}</code>
                             </td>
-                            <td className="pr-3 text-xs">
+                            <td className="pr-4 text-xs">
                                 {intents.length ? intents.map(intent => t(`admin.skills.intent.${intent}`)).join(' · ') : t('admin.skills.summary.anyIntent')}
                             </td>
-                            <td className="pr-3 text-xs">{t(`admin.skills.routing.${skill.routing}`)}</td>
-                            <td className="pr-3 text-xs">{t(`admin.skills.status.${skill.status}`)}</td>
-                            <td className="pr-3">
+                            <td className="pr-4 text-xs">{t(`admin.skills.routing.${skill.routing}`)}</td>
+                            <td className="pr-4 text-xs">{t(`admin.skills.status.${skill.status}`)}</td>
+                            <td className="pr-4">
                                 <input type="checkbox" checked={skill.is_active} onChange={() => toggleActive(skill)}
                                     aria-label={t('admin.skills.field.active')} />
                             </td>
                             <td className="whitespace-nowrap text-right">
-                                <button type="button" onClick={() => setEditing(skill)} disabled={!catalog} className="p-1" aria-label={t('admin.skills.edit')}>
+                                <button type="button" onClick={() => setEditing(skill)} disabled={!catalog} className="inline-flex min-h-control min-w-control items-center justify-center p-2" aria-label={t('admin.skills.edit')}>
                                     <Pencil className="h-4 w-4" />
                                 </button>
-                                {!skill.builtin && <button type="button" onClick={() => remove(skill)} className="p-1" aria-label={t('admin.skills.delete')}>
-                                    <Trash2 className="h-4 w-4" />
-                                </button>}
+                                {!skill.builtin && (confirmDelete === skill.id
+                                    ? <ConfirmInline question={t('admin.skills.confirmDelete', { name: skill.name })} onConfirm={() => { setConfirmDelete(null); void remove(skill); }} onCancel={() => setConfirmDelete(null)} />
+                                    : <button type="button" onClick={() => setConfirmDelete(skill.id)} className="inline-flex min-h-control min-w-control items-center justify-center p-2" aria-label={t('admin.skills.delete')}>
+                                          <Trash2 className="h-4 w-4" />
+                                      </button>)}
                             </td>
                         </tr>;
                     })}

@@ -16,6 +16,7 @@ import { apiFetch } from '@/lib/auth';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
 import { ChatViewport } from '@/components/qsa/ChatViewport';
+import { Button } from '@/components/ui/Button';
 
 export interface AdminChatSandboxProps {
     instrumentCode: string;
@@ -144,37 +145,37 @@ export function AdminChatSandbox({
     );
 
     return (
-        <section aria-labelledby="sandbox-heading" className="flex flex-col h-full bg-slate-50 text-slate-800">
+        <section aria-labelledby="sandbox-heading" className="flex flex-col h-full bg-surface-sunken text-ink">
             {/* Top Toolbar */}
-            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 shadow-2xs">
+            <header className="flex flex-wrap items-center justify-between gap-4 border-b border-line bg-surface px-4 py-4 shadow-card">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-link">
                         <FlaskConical className="h-4 w-4" aria-hidden="true" />
                     </div>
                     <div>
                         <div className="flex flex-wrap items-center gap-2">
-                            <h2 id="sandbox-heading" className="text-sm font-bold text-slate-900">
+                            <h2 id="sandbox-heading" className="text-sm font-semibold text-ink">
                                 {t('admin.sandbox.title')}
                             </h2>
-                            <span className="font-mono text-xs font-semibold rounded bg-slate-100 px-2 py-0.5 text-slate-700 border border-slate-200">
+                            <span className="font-mono text-xs font-semibold rounded bg-surface-raised px-2 py-1 text-ink-body border border-line">
                                 {instrumentCode}
                             </span>
                             <span
-                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-2xs font-semibold ${
                                     isActive
-                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                        : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                        ? 'bg-success-soft text-success border border-success-line'
+                                        : 'bg-warning-soft text-warning border border-warning-line'
                                 }`}
                             >
-                                <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                                <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-success' : 'bg-warning'}`} />
                                 {isActive ? t('admin.sandbox.activeBadge') : t('admin.sandbox.draftBadge')}
                             </span>
-                            <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft border border-brand-line px-2 py-1 text-2xs font-semibold text-link">
                                 {t('admin.sandbox.badge')}
                             </span>
                         </div>
                         {resolvedName && resolvedName !== instrumentCode && (
-                            <p className="text-xs text-slate-500 truncate mt-0.5 max-w-md">
+                            <p className="text-xs text-ink-muted truncate mt-1 max-w-md">
                                 {resolvedName}
                             </p>
                         )}
@@ -184,12 +185,12 @@ export function AdminChatSandbox({
                 {/* Controls */}
                 <div className="flex flex-wrap items-center gap-2">
                     {counselors.length > 0 && (
-                        <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                        <label className="flex items-center gap-2 text-xs font-semibold text-ink-muted">
                             <span className="hidden sm:inline">{t('admin.sandbox.selectCounselor')}</span>
                             <select
                                 value={selectedCounselorId ?? ''}
                                 onChange={(e) => handleCounselorChange(e.target.value ? Number(e.target.value) : null)}
-                                className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-800 shadow-2xs outline-none focus:border-indigo-500"
+                                className="rounded-control border border-line-strong bg-surface px-2 py-2 text-xs font-semibold text-ink shadow-card outline-none focus:border-brand"
                             >
                                 {counselors.map((c) => (
                                     <option key={c.id} value={c.id}>
@@ -200,15 +201,14 @@ export function AdminChatSandbox({
                         </label>
                     )}
 
-                    <button
+                    <Button variant="secondary"
                         type="button"
                         onClick={handleRestart}
                         title={t('admin.sandbox.restart')}
-                        className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs"
-                    >
+                        className="gap-1 text-xs">
                         <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
                         <span className="hidden sm:inline">{t('admin.sandbox.restart')}</span>
-                    </button>
+                    </Button>
 
                     {isModal && (
                         <a
@@ -216,7 +216,7 @@ export function AdminChatSandbox({
                             target="_blank"
                             rel="noopener noreferrer"
                             title={t('admin.sandbox.openFullscreen')}
-                            className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs"
+                            className="inline-flex items-center gap-1 rounded-control border border-line-strong bg-surface px-2 py-2 text-xs font-semibold text-ink-body hover:bg-surface-sunken shadow-card"
                         >
                             <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                             <span className="hidden sm:inline">{t('admin.sandbox.openFullscreen')}</span>
@@ -230,8 +230,8 @@ export function AdminChatSandbox({
                             aria-label={isModal ? t('admin.sandbox.close') : t('admin.sandbox.backToAdmin')}
                             className={
                                 isModal
-                                    ? 'rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700'
-                                    : 'inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs'
+                                    ? 'min-h-control min-w-control rounded-lg p-2 text-ink-muted hover:bg-surface-raised hover:text-ink-body'
+                                    : 'inline-flex min-h-control items-center gap-1 rounded-control border border-line-strong bg-surface px-2 py-2 text-xs font-semibold text-ink-body hover:bg-surface-sunken shadow-card'
                             }
                         >
                             {isModal ? (
@@ -248,8 +248,8 @@ export function AdminChatSandbox({
             </header>
 
             {/* Ephemeral Disclaimer Banner */}
-            <div className="flex items-start gap-2 border-b border-indigo-100 bg-indigo-50/70 px-4 py-2.5 text-xs text-indigo-900">
-                <Info className="h-4 w-4 shrink-0 text-indigo-600 mt-0.5" aria-hidden="true" />
+            <div className="flex items-start gap-2 border-b border-brand-line bg-brand-soft/70 px-4 py-2 text-xs text-link">
+                <Info className="h-4 w-4 shrink-0 text-brand mt-1" aria-hidden="true" />
                 <p className="flex-1 leading-relaxed">
                     {t('admin.sandbox.disclaimer')}
                 </p>
@@ -257,16 +257,16 @@ export function AdminChatSandbox({
 
             {/* Completed state banner */}
             {completed && (
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-200 bg-emerald-50 px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-success-line bg-success-soft px-4 py-4">
                     <div>
-                        <h3 className="text-xs font-bold text-emerald-900">{t('admin.sandbox.completedTitle')}</h3>
-                        <p className="mt-0.5 text-xs text-emerald-700">{t('admin.sandbox.completedBody')}</p>
+                        <h3 className="text-xs font-semibold text-success-ink">{t('admin.sandbox.completedTitle')}</h3>
+                        <p className="mt-1 text-xs text-success">{t('admin.sandbox.completedBody')}</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <button
                             type="button"
                             onClick={handleRestart}
-                            className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-700"
+                            className="min-h-control inline-flex items-center gap-1 rounded-control bg-success px-4 py-2 text-xs font-semibold text-ink-on-brand shadow-card hover:bg-success"
                         >
                             <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
                             {t('admin.sandbox.restart')}
@@ -275,7 +275,7 @@ export function AdminChatSandbox({
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-50"
+                                className="min-h-control inline-flex items-center gap-1 rounded-control border border-success-line bg-surface px-4 py-2 text-xs font-semibold text-success-ink hover:bg-success-soft"
                             >
                                 <X className="h-3.5 w-3.5" aria-hidden="true" />
                                 {t('admin.sandbox.close')}
@@ -288,18 +288,18 @@ export function AdminChatSandbox({
             {/* Main Interactive Area */}
             <div className="flex-1 min-h-0 flex flex-col relative overflow-hidden">
                 {hasSteps === null ? (
-                    <div className="flex-1 flex items-center justify-center gap-2 text-slate-500 text-xs">
-                        <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                    <div className="flex-1 flex items-center justify-center gap-2 text-ink-muted text-xs">
+                        <Loader2 className="h-4 w-4 animate-spin text-brand" />
                         <span>{t('admin.sandbox.loading')}</span>
                     </div>
                 ) : hasSteps === false ? (
                     <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-                        <div className="max-w-md w-full rounded-xl border border-amber-200 bg-amber-50/60 p-6 shadow-xs space-y-3">
-                            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                        <div className="max-w-md w-full rounded-card border border-warning-line bg-warning-soft/60 p-6 shadow-card space-y-4">
+                            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-warning-soft text-warning">
                                 <TriangleAlert className="h-5 w-5" aria-hidden="true" />
                             </div>
-                            <h3 className="text-sm font-bold text-slate-800">{t('admin.sandbox.title')}</h3>
-                            <p className="text-xs text-slate-600 leading-relaxed">
+                            <h3 className="text-sm font-semibold text-ink">{t('admin.sandbox.title')}</h3>
+                            <p className="text-xs text-ink-muted leading-relaxed">
                                 {t('admin.sandbox.noSteps')}
                             </p>
                         </div>

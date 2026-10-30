@@ -71,12 +71,12 @@ function ScoreBadge({ value, code, questionnaireType, invertedTitle }: { value: 
     const isGrowth = !(questionnaireType === 'QPCC' && code === 'M2') && (inverted ? value >= 7 : value <= 3);
 
     let color: string;
-    if (isStrength) color = 'bg-green-100 text-green-700';
-    else if (isGrowth) color = 'bg-red-100 text-red-700';
-    else color = 'bg-yellow-100 text-yellow-700';
+    if (isStrength) color = 'bg-success-soft text-success';
+    else if (isGrowth) color = 'bg-danger-soft text-danger-ink';
+    else color = 'bg-warning-soft text-warning';
 
     return (
-        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-bold ${color}`}
+        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-control text-xs font-semibold ${color}`}
               title={inverted ? invertedTitle : ''}>
             {value}
         </span>
@@ -152,12 +152,12 @@ export function QuestionnaireResultsViewer() {
 
     const getTypeColor = (type: string) => {
         const colors: Record<string, string> = {
-            QSA: 'bg-blue-100 text-blue-700',
-            QSAr: 'bg-sky-100 text-sky-700',
-            ZTPI: 'bg-amber-100 text-amber-700',
-            SAVICKAS: 'bg-emerald-100 text-emerald-700',
+            QSA: 'bg-info-soft text-link',
+            QSAr: 'bg-info-soft text-info',
+            ZTPI: 'bg-warning-soft text-warning',
+            SAVICKAS: 'bg-success-soft text-success',
         };
-        return colors[type] || 'bg-slate-100 text-slate-700';
+        return colors[type] || 'bg-surface-raised text-ink-body';
     };
 
     const typeStatsList = useMemo<TypeStats[]>(() => {
@@ -243,23 +243,23 @@ export function QuestionnaireResultsViewer() {
             {/* Stats */}
             {results.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
-                        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-md">
+                    <div className="bg-surface p-4 rounded-lg border border-line shadow-card flex items-center gap-4">
+                        <div className="p-4 bg-brand-soft text-brand rounded-control">
                             <FileText className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-sm text-slate-500 font-medium">{t('admin.results.total')}</p>
-                            <h4 className="text-2xl font-bold text-slate-800">{totalResults}</h4>
+                            <p className="text-sm text-ink-muted font-semibold">{t('admin.results.total')}</p>
+                            <h4 className="text-2xl font-semibold text-ink">{totalResults}</h4>
                         </div>
                     </div>
                     {QUESTIONNAIRE_TYPES.map(type => (
-                        <div key={type} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
-                            <div className={`p-3 rounded-md ${getTypeColor(type)}`}>
-                                <span className="text-xs font-bold">{type}</span>
+                        <div key={type} className="bg-surface p-4 rounded-lg border border-line shadow-card flex items-center gap-4">
+                            <div className={`p-4 rounded-control ${getTypeColor(type)}`}>
+                                <span className="text-xs font-semibold">{type}</span>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500 font-medium">{type}</p>
-                                <h4 className="text-2xl font-bold text-slate-800">{typeCounts[type] || 0}</h4>
+                                <p className="text-sm text-ink-muted font-semibold">{type}</p>
+                                <h4 className="text-2xl font-semibold text-ink">{typeCounts[type] || 0}</h4>
                             </div>
                         </div>
                     ))}
@@ -267,15 +267,15 @@ export function QuestionnaireResultsViewer() {
             )}
 
             {/* Filter */}
-            <div className="flex items-center gap-3">
-                <Filter className="w-4 h-4 text-slate-500" />
+            <div className="flex items-center gap-4">
+                <Filter className="w-4 h-4 text-ink-muted" />
                 <div className="flex flex-wrap gap-2">
                     <button
                         onClick={() => handleFilterChange('')}
-                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${
+                        className={`min-h-control px-4 py-2 rounded-control text-xs font-semibold transition-colors border ${
                             !filterType
-                                ? 'bg-indigo-50 border-indigo-100 text-indigo-600'
-                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                ? 'bg-brand-soft border-brand-line text-brand'
+                                : 'bg-surface border-line text-ink-muted hover:bg-surface-sunken'
                         }`}
                     >
                         {t('admin.results.all')}
@@ -284,10 +284,10 @@ export function QuestionnaireResultsViewer() {
                         <button
                             key={type}
                             onClick={() => handleFilterChange(type)}
-                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${
+                            className={`min-h-control px-4 py-2 rounded-control text-xs font-semibold transition-colors border ${
                                 filterType === type
-                                    ? 'bg-indigo-50 border-indigo-100 text-indigo-600'
-                                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                    ? 'bg-brand-soft border-brand-line text-brand'
+                                    : 'bg-surface border-line text-ink-muted hover:bg-surface-sunken'
                             }`}
                         >
                             {type}
@@ -297,14 +297,14 @@ export function QuestionnaireResultsViewer() {
                 <div className="ml-auto flex items-center gap-1">
                     <button
                         onClick={handleExportCsv}
-                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-700 transition-colors"
+                        className="inline-flex min-h-control min-w-control items-center justify-center p-2 hover:bg-surface-raised rounded-lg text-ink-muted hover:text-ink-body transition-colors"
                         title={t('admin.results.csv')}
                     >
                         <Download className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => fetchResults(filterType || undefined)}
-                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-700 transition-colors"
+                        className="inline-flex min-h-control min-w-control items-center justify-center p-2 hover:bg-surface-raised rounded-lg text-ink-muted hover:text-ink-body transition-colors"
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                     </button>
@@ -325,12 +325,12 @@ export function QuestionnaireResultsViewer() {
                 }));
 
                 return (
-                    <div key={type} className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
-                        <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 flex items-center gap-2">
-                            <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${getTypeColor(type)}`}>
+                    <div key={type} className="bg-surface rounded-lg border border-line overflow-hidden shadow-card">
+                        <div className="px-4 py-4 border-b border-line bg-surface-sunken flex items-center gap-2">
+                            <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${getTypeColor(type)}`}>
                                 {type}
                             </span>
-                            <h3 className="text-sm font-semibold text-slate-700">{t('admin.results.stats')}</h3>
+                            <h3 className="text-sm font-semibold text-ink-body">{t('admin.results.stats')}</h3>
                         </div>
                         <div className="p-4">
                             <ResponsiveContainer width="100%" height={280}>
@@ -342,9 +342,9 @@ export function QuestionnaireResultsViewer() {
                                         if (!p.active || !p.payload?.length) return null;
                                         const d = p.payload[0].payload;
                                         return (
-                                            <div className="bg-white border border-slate-200 shadow-md rounded-lg p-3 text-xs">
-                                                <p className="font-semibold text-slate-700 mb-1">{d.factorName as string}</p>
-                                                <div className="space-y-0.5 text-slate-600">
+                                            <div className="bg-surface border border-line shadow-pop rounded-lg p-4 text-xs">
+                                                <p className="font-semibold text-ink-body mb-1">{d.factorName as string}</p>
+                                                <div className="space-y-1 text-ink-muted">
                                                     <p>{t('admin.results.mean')}: {(d.mean as number).toFixed(2)}</p>
                                                     <p>{t('admin.results.stddev')}: {(d.stdDev as number).toFixed(2)}</p>
                                                     <p>{t('admin.results.min')}: {d.min as number}</p>
@@ -363,43 +363,43 @@ export function QuestionnaireResultsViewer() {
                                             dataKey="mean"
                                             position="top"
                                             formatter={(v: unknown) => typeof v === 'number' ? v.toFixed(1) : String(v)}
-                                            style={{ fontSize: '11px', fill: '#666' }}
+                                            style={{ fontSize: '11px', fill: 'var(--ink-muted)' }}
                                         />
                                         <ErrorBar dataKey="stdDev" width={4} strokeWidth={2} stroke="#666" />
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
-                        <div className="border-t border-slate-100">
+                        <div className="border-t border-line">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm text-left">
-                                    <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                    <thead className="bg-surface-sunken text-ink-muted border-b border-line">
                                         <tr>
-                                            <th className="px-4 py-2.5 font-medium text-xs">{t('admin.results.factor')}</th>
-                                            <th className="px-4 py-2.5 font-medium text-xs">{t('admin.results.count')}</th>
-                                            <th className="px-4 py-2.5 font-medium text-xs">{t('admin.results.mean')}</th>
-                                            <th className="px-4 py-2.5 font-medium text-xs">{t('admin.results.stddev')}</th>
-                                            <th className="px-4 py-2.5 font-medium text-xs">{t('admin.results.min')}</th>
-                                            <th className="px-4 py-2.5 font-medium text-xs">{t('admin.results.max')}</th>
-                                            <th className="px-4 py-2.5 font-medium text-xs">{t('admin.results.pctStrength')}</th>
-                                            <th className="px-4 py-2.5 font-medium text-xs">{t('admin.results.pctNormal')}</th>
-                                            <th className="px-4 py-2.5 font-medium text-xs">{t('admin.results.pctGrowth')}</th>
+                                            <th className="px-4 py-2 font-semibold text-xs">{t('admin.results.factor')}</th>
+                                            <th className="px-4 py-2 font-semibold text-xs">{t('admin.results.count')}</th>
+                                            <th className="px-4 py-2 font-semibold text-xs">{t('admin.results.mean')}</th>
+                                            <th className="px-4 py-2 font-semibold text-xs">{t('admin.results.stddev')}</th>
+                                            <th className="px-4 py-2 font-semibold text-xs">{t('admin.results.min')}</th>
+                                            <th className="px-4 py-2 font-semibold text-xs">{t('admin.results.max')}</th>
+                                            <th className="px-4 py-2 font-semibold text-xs">{t('admin.results.pctStrength')}</th>
+                                            <th className="px-4 py-2 font-semibold text-xs">{t('admin.results.pctNormal')}</th>
+                                            <th className="px-4 py-2 font-semibold text-xs">{t('admin.results.pctGrowth')}</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100">
+                                    <tbody className="divide-y divide-line">
                                         {factors.map(f => (
-                                            <tr key={f.code} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-4 py-2.5 text-xs font-medium text-slate-700">
+                                            <tr key={f.code} className="hover:bg-surface-sunken transition-colors">
+                                                <td className="px-4 py-2 text-xs font-semibold text-ink-body">
                                                     {getFactorName(f.code, type, tf)}
                                                 </td>
-                                                <td className="px-4 py-2.5 text-xs text-slate-600">{f.count}</td>
-                                                <td className="px-4 py-2.5 text-xs text-slate-600">{f.mean.toFixed(2)}</td>
-                                                <td className="px-4 py-2.5 text-xs text-slate-600">{f.stdDev.toFixed(2)}</td>
-                                                <td className="px-4 py-2.5 text-xs text-slate-600">{f.min}</td>
-                                                <td className="px-4 py-2.5 text-xs text-slate-600">{f.max}</td>
-                                                <td className="px-4 py-2.5 text-xs text-slate-600">{f.strengthPct}%</td>
-                                                <td className="px-4 py-2.5 text-xs text-slate-600">{f.normalPct}%</td>
-                                                <td className="px-4 py-2.5 text-xs text-slate-600">{f.growthPct}%</td>
+                                                <td className="px-4 py-2 text-xs text-ink-muted">{f.count}</td>
+                                                <td className="px-4 py-2 text-xs text-ink-muted">{f.mean.toFixed(2)}</td>
+                                                <td className="px-4 py-2 text-xs text-ink-muted">{f.stdDev.toFixed(2)}</td>
+                                                <td className="px-4 py-2 text-xs text-ink-muted">{f.min}</td>
+                                                <td className="px-4 py-2 text-xs text-ink-muted">{f.max}</td>
+                                                <td className="px-4 py-2 text-xs text-ink-muted">{f.strengthPct}%</td>
+                                                <td className="px-4 py-2 text-xs text-ink-muted">{f.normalPct}%</td>
+                                                <td className="px-4 py-2 text-xs text-ink-muted">{f.growthPct}%</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -411,40 +411,40 @@ export function QuestionnaireResultsViewer() {
             })}
 
             {/* Table */}
-            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+            <div className="bg-surface rounded-lg border border-line overflow-hidden shadow-card">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                        <thead className="bg-surface-sunken text-ink-muted border-b border-line">
                             <tr>
-                                <th className="px-4 py-3 font-medium">{t('admin.results.col.date')}</th>
-                                <th className="px-4 py-3 font-medium">{t('admin.results.col.type')}</th>
-                                <th className="px-4 py-3 font-medium">{t('admin.results.col.session')}</th>
-                                <th className="px-4 py-3 font-medium">{t('admin.results.col.factors')}</th>
+                                <th className="px-4 py-4 font-semibold">{t('admin.results.col.date')}</th>
+                                <th className="px-4 py-4 font-semibold">{t('admin.results.col.type')}</th>
+                                <th className="px-4 py-4 font-semibold">{t('admin.results.col.session')}</th>
+                                <th className="px-4 py-4 font-semibold">{t('admin.results.col.factors')}</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-line">
                             {results.map((result) => {
                                 const scoreKeys = result.scores ? Object.keys(result.scores) : [];
                                 return (
                                     <Fragment key={result.id}>
                                         <tr
-                                            className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                            className="hover:bg-surface-sunken transition-colors cursor-pointer"
                                             onClick={() => setExpandedId(expandedId === result.id ? null : result.id)}
                                         >
-                                            <td className="px-4 py-3 text-slate-600 whitespace-nowrap text-xs">
+                                            <td className="px-4 py-4 text-ink-muted whitespace-nowrap text-xs">
                                                 {format(new Date(result.submitted_at), 'dd/MM/yyyy HH:mm')}
                                             </td>
-                                            <td className="px-4 py-3">
-                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${getTypeColor(result.questionnaire_type)}`}>
+                                            <td className="px-4 py-4">
+                                                <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${getTypeColor(result.questionnaire_type)}`}>
                                                     {result.questionnaire_type}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-xs text-slate-500 font-mono">
+                                            <td className="px-4 py-4 text-xs text-ink-muted font-mono">
                                                 {result.session_id.substring(0, 8)}…
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td className="px-4 py-4">
                                                 {QUALITATIVE_TYPES.has(result.questionnaire_type) ? (
-                                                    <span className="text-xs text-slate-500 italic">{t('admin.results.qualitative')}</span>
+                                                    <span className="text-xs text-ink-muted italic">{t('admin.results.qualitative')}</span>
                                                 ) : scoreKeys.length > 0 ? (
                                                     <div className="flex flex-wrap gap-1">
                                                         {scoreKeys.slice(0, 6).map(key => (
@@ -457,25 +457,25 @@ export function QuestionnaireResultsViewer() {
                                                             />
                                                         ))}
                                                         {scoreKeys.length > 6 && (
-                                                            <span className="text-xs text-slate-500">+{scoreKeys.length - 6}</span>
+                                                            <span className="text-xs text-ink-muted">+{scoreKeys.length - 6}</span>
                                                         )}
                                                     </div>
                                                 ) : (
-                                                    <span className="text-xs text-slate-500">-</span>
+                                                    <span className="text-xs text-ink-muted">-</span>
                                                 )}
                                             </td>
                                         </tr>
                                         {expandedId === result.id && (
-                                            <tr className="bg-slate-50/50">
+                                            <tr className="bg-surface-sunken/50">
                                                 <td colSpan={4} className="px-4 py-4">
                                                     <div className="text-xs space-y-2">
-                                                        <div className="flex items-center gap-2 text-slate-500 mb-3">
+                                                        <div className="flex items-center gap-2 text-ink-muted mb-4">
                                                             <span className="font-mono">{t('admin.results.sessionFull')}: {result.session_id}</span>
                                                         </div>
                                                         {QUALITATIVE_TYPES.has(result.questionnaire_type) ? (
-                                                            <p className="text-slate-500 italic">{t('admin.results.qualitativeDesc')}</p>
+                                                            <p className="text-ink-muted italic">{t('admin.results.qualitativeDesc')}</p>
                                                         ) : result.scores ? (
-                                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                                                 {Object.entries(result.scores).map(([code, value]) => {
                                                                     const inverted = isInverted(code, result.questionnaire_type);
                                                                     const name = getFactorName(code, result.questionnaire_type, tf);
@@ -483,25 +483,25 @@ export function QuestionnaireResultsViewer() {
                                                                     const isStrength = !(result.questionnaire_type === 'QPCC' && code === 'M2') && (inverted ? value <= 3 : value >= 7);
                                                                     const isGrowth = !(result.questionnaire_type === 'QPCC' && code === 'M2') && (inverted ? value >= 7 : value <= 3);
                                                                     let badgeClass: string;
-                                                                    if (isStrength) badgeClass = 'border-green-300 bg-green-50';
-                                                                    else if (isGrowth) badgeClass = 'border-red-300 bg-red-50';
-                                                                    else badgeClass = 'border-yellow-300 bg-yellow-50';
+                                                                    if (isStrength) badgeClass = 'border-success-line bg-success-soft';
+                                                                    else if (isGrowth) badgeClass = 'border-danger-line bg-danger-soft';
+                                                                    else badgeClass = 'border-warning-line bg-warning-soft';
 
                                                                     return (
                                                                         <div key={code} className={`p-2 rounded border ${badgeClass}`}>
-                                                                            <div className="font-semibold text-slate-700">{name}</div>
-                                                                            {desc && <div className="text-slate-500 mt-0.5">{desc}</div>}
-                                                                            <div className="flex items-center gap-1.5 mt-1">
-                                                                                <span className="text-lg font-bold">{value}</span>
-                                                                                <span className="text-xs text-slate-500">/9</span>
-                                                                                {inverted && <span className="text-xs text-slate-500">({t('admin.results.invertedAbbr')})</span>}
+                                                                            <div className="font-semibold text-ink-body">{name}</div>
+                                                                            {desc && <div className="text-ink-muted mt-1">{desc}</div>}
+                                                                            <div className="flex items-center gap-2 mt-1">
+                                                                                <span className="text-lg font-semibold">{value}</span>
+                                                                                <span className="text-xs text-ink-muted">/9</span>
+                                                                                {inverted && <span className="text-xs text-ink-muted">({t('admin.results.invertedAbbr')})</span>}
                                                                             </div>
                                                                         </div>
                                                                     );
                                                                 })}
                                                             </div>
                                                         ) : (
-                                                            <p className="text-slate-500">{t('admin.results.noScores')}</p>
+                                                            <p className="text-ink-muted">{t('admin.results.noScores')}</p>
                                                         )}
                                                     </div>
                                                 </td>
@@ -512,14 +512,14 @@ export function QuestionnaireResultsViewer() {
                             })}
                             {results.length === 0 && !loading && (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
+                                    <td colSpan={4} className="px-6 py-8 text-center text-ink-muted">
                                         {t('admin.results.empty')}
                                     </td>
                                 </tr>
                             )}
                             {loading && (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
+                                    <td colSpan={4} className="px-6 py-8 text-center text-ink-muted">
                                         <RefreshCw className="w-5 h-5 animate-spin mx-auto" />
                                     </td>
                                 </tr>

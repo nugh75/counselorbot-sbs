@@ -525,8 +525,8 @@ h1.text-3xl {
 @media (pointer: coarse) {
   .admin-shell button,
   .admin-shell [role="button"] {
-    min-width: 44px;
-    min-height: 44px;
+    min-width: var(--spacing-control);
+    min-height: var(--spacing-control);
   }
 }
 

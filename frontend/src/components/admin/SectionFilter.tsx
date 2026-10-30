@@ -94,7 +94,7 @@ export function SectionFilter({ label, searchPlaceholder, emptyLabel, groups, va
 
     return (
         <div ref={rootRef} className="relative w-full sm:max-w-md">
-            <span id={`${id}-label`} className="mb-1.5 block text-sm font-semibold text-slate-700">{label}</span>
+            <span id={`${id}-label`} className="mb-2 block text-sm font-semibold text-ink-body">{label}</span>
             <button
                 ref={triggerRef}
                 type="button"
@@ -108,17 +108,17 @@ export function SectionFilter({ label, searchPlaceholder, emptyLabel, groups, va
                         openList();
                     }
                 }}
-                className="flex w-full min-w-0 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-left text-sm font-medium text-slate-800 outline-none transition-colors hover:bg-slate-50 focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+                className="min-h-control flex w-full min-w-0 items-center gap-2 rounded-control border border-line-strong bg-surface px-4 py-2 text-left text-sm font-semibold text-ink outline-none transition-colors hover:bg-surface-sunken focus:ring-2 focus:ring-focus disabled:opacity-60"
             >
                 {selected?.icon}
                 <span id={`${id}-value`} className="min-w-0 flex-1 truncate">{selected?.detail ?? selected?.label}</span>
-                <ChevronDown aria-hidden className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`} />
+                <ChevronDown aria-hidden className={`h-4 w-4 shrink-0 text-ink-muted transition-transform ${open ? 'rotate-180' : ''}`} />
             </button>
 
             {open && (
-                <div className="absolute left-0 right-0 z-30 mt-1 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
-                    <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2">
-                        <Search aria-hidden className="h-4 w-4 shrink-0 text-slate-400" />
+                <div className="absolute left-0 right-0 z-30 mt-1 overflow-hidden rounded-control border border-line bg-surface shadow-pop">
+                    <div className="flex items-center gap-2 border-b border-line px-4 py-2">
+                        <Search aria-hidden className="h-4 w-4 shrink-0 text-ink-muted" />
                         <input
                             autoFocus
                             type="text"
@@ -132,13 +132,13 @@ export function SectionFilter({ label, searchPlaceholder, emptyLabel, groups, va
                             onChange={(event) => setQuery(event.target.value)}
                             onKeyDown={onSearchKeyDown}
                             placeholder={searchPlaceholder}
-                            className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
+                            className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-muted"
                         />
                     </div>
                     <ul id={`${id}-listbox`} role="listbox" aria-label={label} className="max-h-80 overflow-y-auto py-1">
                         {visibleGroups.map((group, groupIndex) => (
                             <li key={group.label} role="presentation">
-                                <div id={`${id}-group-${groupIndex}`} className="px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                <div id={`${id}-group-${groupIndex}`} className="px-4 pb-1 pt-2 text-2xs font-semibold text-ink-muted">
                                     {group.label}
                                 </div>
                                 <ul role="group" aria-labelledby={`${id}-group-${groupIndex}`}>
@@ -153,11 +153,11 @@ export function SectionFilter({ label, searchPlaceholder, emptyLabel, groups, va
                                                 aria-selected={isSelected}
                                                 onMouseEnter={() => setActiveId(item.id)}
                                                 onClick={() => choose(item.id)}
-                                                className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm ${isActive ? 'bg-slate-100 text-slate-900' : 'text-slate-700'} ${isSelected ? 'font-semibold' : ''}`}
+                                                className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm ${isActive ? 'bg-surface-raised text-ink' : 'text-ink-body'} ${isSelected ? 'font-semibold' : ''}`}
                                             >
                                                 {item.icon}
                                                 <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                                                {isSelected && <Check aria-hidden className="h-4 w-4 shrink-0 text-indigo-600" />}
+                                                {isSelected && <Check aria-hidden className="h-4 w-4 shrink-0 text-brand" />}
                                             </li>
                                         );
                                     })}
@@ -165,7 +165,7 @@ export function SectionFilter({ label, searchPlaceholder, emptyLabel, groups, va
                             </li>
                         ))}
                         {visibleItems.length === 0 && (
-                            <li role="presentation" className="px-3 py-3 text-sm text-slate-500">{emptyLabel}</li>
+                            <li role="presentation" className="px-4 py-4 text-sm text-ink-muted">{emptyLabel}</li>
                         )}
                     </ul>
                 </div>

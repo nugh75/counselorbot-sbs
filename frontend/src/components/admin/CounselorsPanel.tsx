@@ -8,6 +8,8 @@ import { LANGUAGES } from '@/lib/i18n';
 import { CounselorCover } from '@/components/questionnaire/CounselorCover';
 import { CounselorCoverModal } from '@/components/admin/CounselorCoverModal';
 import type { PublicCounselor } from '@/lib/counselor';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Button } from '@/components/ui/Button';
 
 const QTYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
 
@@ -219,8 +221,8 @@ export function CounselorsPanel() {
         }
     };
 
+    const [confirmDelete, setConfirmDelete] = useState<string | number | null>(null);
     const remove = async (id: number) => {
-        if (!window.confirm(t('admin.counselors.confirmDelete'))) return;
         try {
             const res = await fetch(`/api/admin/counselors/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('delete failed');
@@ -230,7 +232,7 @@ export function CounselorsPanel() {
         }
     };
 
-    const inputCls = 'h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400';
+    const inputCls = 'h-9 w-full rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-focus';
 
     const renderForm = () => {
         const previewCounselor: PublicCounselor = {
@@ -248,28 +250,28 @@ export function CounselorsPanel() {
         };
 
         return (
-            <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.slug')}
+            <div className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.counselors.slug')}
                         <input className={inputCls} value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="marco" />
                     </label>
-                    <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.name')}
+                    <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.counselors.name')}
                         <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                     </label>
-                    <div className="flex flex-col gap-1 text-xs font-medium text-slate-500">
+                    <div className="flex flex-col gap-1 text-xs font-semibold text-ink-muted">
                         <div className="flex items-center justify-between">
                             <span>{t('admin.counselors.avatar')}</span>
                             <button
                                 type="button"
                                 onClick={() => setCoverModalOpen(true)}
-                                className="inline-flex items-center gap-1 text-2xs font-semibold text-indigo-600 hover:text-indigo-800 transition"
+                                className="min-h-control inline-flex items-center gap-1 text-2xs font-semibold text-brand hover:text-link transition"
                             >
-                                <Sparkles className="h-3 w-3 text-amber-500" aria-hidden />
+                                <Sparkles className="h-3 w-3 text-warning" aria-hidden />
                                 <span>{t('admin.counselors.coverButton')}</span>
                             </button>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="relative aspect-[16/9] h-9 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-100 shadow-2xs">
+                            <div className="relative aspect-[16/9] h-9 shrink-0 overflow-hidden rounded-control border border-line bg-surface-raised shadow-card">
                                 <CounselorCover
                                     counselor={previewCounselor}
                                     src={form.avatar.trim() || null}
@@ -280,31 +282,31 @@ export function CounselorsPanel() {
                             <input className={inputCls} value={form.avatar} onChange={(e) => setForm({ ...form, avatar: e.target.value })} placeholder="https://..." />
                         </div>
                     </div>
-                    <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.preset')}
+                    <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.counselors.preset')}
                     <select className={inputCls} value={form.preset_id} onChange={(e) => setForm({ ...form, preset_id: e.target.value })}>
                         <option value="">{t('admin.counselors.noPreset')}</option>
                         {presets.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.provider}/{p.model})</option>)}
                     </select>
                 </label>
                 <div className="col-span-full">
-                    <div className="mb-1 text-xs font-medium text-slate-500">{t('admin.counselors.language')}</div>
+                    <div className="mb-1 text-xs font-semibold text-ink-muted">{t('admin.counselors.language')}</div>
                     <div className="flex flex-wrap gap-2">
-                        <button key="*" type="button" onClick={() => toggleLang('*')} className={`rounded-md border px-2 py-1 text-xs font-medium ${form.language.includes('*') ? 'border-indigo-300 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-500'}`}>{t('admin.counselors.allLanguages')}</button>
+                        <button key="*" type="button" onClick={() => toggleLang('*')} className={`min-h-control rounded-control border px-2 py-1 text-xs font-semibold ${form.language.includes('*') ? 'border-brand-line bg-brand-soft text-link' : 'border-line bg-surface text-ink-muted'}`}>{t('admin.counselors.allLanguages')}</button>
                         {LANGUAGES.map((l) => (
-                            <button key={l.code} type="button" onClick={() => toggleLang(l.code)} className={`rounded-md border px-2 py-1 text-xs font-medium ${form.language.includes(l.code) ? 'border-indigo-300 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-500'}`}>{l.label}</button>
+                            <button key={l.code} type="button" onClick={() => toggleLang(l.code)} className={`min-h-control rounded-control border px-2 py-1 text-xs font-semibold ${form.language.includes(l.code) ? 'border-brand-line bg-brand-soft text-link' : 'border-line bg-surface text-ink-muted'}`}>{l.label}</button>
                         ))}
                     </div>
                 </div>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.order')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.counselors.order')}
                     <input className={inputCls} type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
                 </label>
             </div>
 
             {/* Translation language tabs + description */}
-            <div className="mt-3">
+            <div className="mt-4">
                 <div className="mb-1 flex items-center gap-2">
-                    <span className="text-xs font-medium text-slate-500">{t('admin.counselors.description')}</span>
-                    <button type="button" disabled={saving} onClick={() => void translate()} title={t('admin.counselors.translateHint') || 'Traduci via Ollama'} className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-2xs font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50">
+                    <span className="text-xs font-semibold text-ink-muted">{t('admin.counselors.description')}</span>
+                    <button type="button" disabled={saving} onClick={() => void translate()} title={t('admin.counselors.translateHint') || 'Traduci via Ollama'} className="min-h-control inline-flex items-center gap-1 rounded border border-line bg-surface px-2 py-1 text-2xs font-semibold text-ink-muted hover:bg-surface-sunken disabled:opacity-50">
                         <Languages className="h-3 w-3" /> {t('admin.counselors.translate') || 'Traduci'}
                     </button>
                 </div>
@@ -314,18 +316,18 @@ export function CounselorsPanel() {
                             key={l.code}
                             type="button"
                             onClick={() => setTLang(l.code)}
-                            className={`rounded-md border px-2 py-0.5 text-2xs font-medium ${
+                            className={`min-h-control rounded-control border px-2 py-1 text-2xs font-semibold ${
                                 tLang === l.code
-                                    ? 'border-indigo-300 bg-indigo-100 text-indigo-700'
-                                    : 'border-slate-200 bg-white text-slate-500'
+                                    ? 'border-brand-line bg-brand-soft text-link'
+                                    : 'border-line bg-surface text-ink-muted'
                             }`}
                         >
                             {l.label}
                         </button>
                     ))}
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="flex flex-col text-xs font-medium text-slate-500">
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="flex flex-col text-xs font-semibold text-ink-muted">
                         {t('admin.counselors.descriptionLabel') || 'Descrizione'}
                         <input
                             className={inputCls}
@@ -334,7 +336,7 @@ export function CounselorsPanel() {
                             placeholder={t('admin.counselors.descPlaceholder', { lang: tLang })}
                         />
                     </label>
-                    <label className="flex flex-col text-xs font-medium text-slate-500">
+                    <label className="flex flex-col text-xs font-semibold text-ink-muted">
                         {t('admin.counselors.voice') || 'Voce edge-tts'}
                         <select
                             className={inputCls}
@@ -356,8 +358,8 @@ export function CounselorsPanel() {
                 </div>
             </div>
 
-            <label className="mt-3 flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.persona')}
-                <textarea className="min-h-[90px] w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 outline-none focus:border-sky-400" value={form.persona} onChange={(e) => setForm({ ...form, persona: e.target.value })} />
+            <label className="mt-4 flex flex-col text-xs font-semibold text-ink-muted">{t('admin.counselors.persona')}
+                <textarea className="min-h-[90px] w-full rounded-control border border-line bg-surface px-2 py-1 text-sm text-ink-body outline-none focus:border-focus" value={form.persona} onChange={(e) => setForm({ ...form, persona: e.target.value })} />
             </label>
             {typeof editingId === 'number' && (
                 <PromptHistory
@@ -367,41 +369,41 @@ export function CounselorsPanel() {
                     onRestored={(value) => { setForm((f) => ({ ...f, persona: value })); void refresh(); }}
                 />
             )}
-            <div className="mt-3">
-                <div className="mb-1 text-xs font-medium text-slate-500">{t('admin.counselors.questionnaires')}</div>
+            <div className="mt-4">
+                <div className="mb-1 text-xs font-semibold text-ink-muted">{t('admin.counselors.questionnaires')}</div>
                 <div className="flex flex-wrap gap-2">
                     {QTYPES.map((q) => (
-                        <button key={q} type="button" onClick={() => toggleQ(q)} className={`rounded-md border px-2 py-1 text-xs font-medium ${form.questionnaire_types.includes(q) ? 'border-indigo-300 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-500'}`}>{q}</button>
+                        <button key={q} type="button" onClick={() => toggleQ(q)} className={`min-h-control rounded-control border px-2 py-1 text-xs font-semibold ${form.questionnaire_types.includes(q) ? 'border-brand-line bg-brand-soft text-link' : 'border-line bg-surface text-ink-muted'}`}>{q}</button>
                     ))}
                 </div>
             </div>
-            <div className="mt-3 flex items-center gap-4">
-                <label className="flex items-center gap-2 text-sm text-slate-600">
+            <div className="mt-4 flex items-center gap-4">
+                <label className="flex items-center gap-2 text-sm text-ink-muted">
                     <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
                     {t('admin.counselors.active')}
                 </label>
-                <label className="flex items-center gap-2 text-sm text-slate-600">
+                <label className="flex items-center gap-2 text-sm text-ink-muted">
                     <input type="checkbox" checked={form.show_in_assistant} onChange={(e) => setForm({ ...form, show_in_assistant: e.target.checked })} />
                     {t('admin.counselors.showInAssistant') || 'Mostra in assistente'}
                 </label>
                 {form.show_in_assistant && (
-                    <label className="flex items-center gap-2 text-sm text-slate-600">
-                        <span className="text-xs text-slate-500">
+                    <label className="flex items-center gap-2 text-sm text-ink-muted">
+                        <span className="text-xs text-ink-muted">
                             {t('admin.counselors.assistantAudience') || 'Visibile a:'}
                         </span>
-                        <select className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700" value={form.assistant_audience} onChange={(e) => setForm({ ...form, assistant_audience: e.target.value })}>
+                        <select className="h-8 rounded-control border border-line bg-surface px-2 text-xs text-ink-body" value={form.assistant_audience} onChange={(e) => setForm({ ...form, assistant_audience: e.target.value })}>
                             <option value="">{t('admin.counselors.bothAudiences') || 'Entrambi'}</option>
                             <option value="studente">{t('audience.studente') || 'Studente'}</option>
                             <option value="docente">{t('audience.docente') || 'Docente'}</option>
                         </select>
                     </label>
                 )}
-                <button type="button" disabled={saving} onClick={() => void save()} className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                <Button type="button" disabled={saving} onClick={() => void save()}>
                     <Check className="h-4 w-4" />{t('admin.counselors.save')}
-                </button>
-                <button type="button" onClick={cancel} className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                </Button>
+                <Button variant="secondary" type="button" onClick={cancel}>
                     <X className="h-4 w-4" />{t('admin.counselors.cancel')}
-                </button>
+                </Button>
             </div>
         </div>
     );
@@ -409,52 +411,54 @@ export function CounselorsPanel() {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex flex-wrap items-end justify-between gap-4 rounded-lg border border-line bg-surface p-4">
                 <div>
-                    <h2 className="text-lg font-bold text-slate-900">{t('admin.counselors.title')}</h2>
-                    <p className="text-sm text-slate-500">{t('admin.counselors.subtitle')}</p>
+                    <h2 className="text-lg font-semibold text-ink">{t('admin.counselors.title')}</h2>
+                    <p className="text-sm text-ink-muted">{t('admin.counselors.subtitle')}</p>
                 </div>
                 {editingId === null && (
-                    <button type="button" onClick={startNew} className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700">
+                    <Button type="button" onClick={startNew}>
                         <Plus className="h-4 w-4" />{t('admin.counselors.add')}
-                    </button>
+                    </Button>
                 )}
             </div>
 
             {editingId === 'new' && renderForm()}
 
-            <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+            <div className="overflow-x-auto rounded-lg border border-line bg-surface">
                 <table className="w-full text-left text-sm">
-                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+                    <thead className="border-b border-line text-xs text-ink-muted">
                         <tr>
-                            <th className="px-3 py-2 font-semibold">{t('admin.counselors.name')}</th>
-                            <th className="px-3 py-2 font-semibold">{t('admin.counselors.preset')}</th>
-                            <th className="px-3 py-2 font-semibold">{t('admin.counselors.questionnaires')}</th>
-                            <th className="px-3 py-2 font-semibold">{t('admin.counselors.active')}</th>
-                            <th className="px-3 py-2 text-right font-semibold">{t('admin.counselors.actions')}</th>
+                            <th className="px-4 py-2 font-semibold">{t('admin.counselors.name')}</th>
+                            <th className="px-4 py-2 font-semibold">{t('admin.counselors.preset')}</th>
+                            <th className="px-4 py-2 font-semibold">{t('admin.counselors.questionnaires')}</th>
+                            <th className="px-4 py-2 font-semibold">{t('admin.counselors.active')}</th>
+                            <th className="px-4 py-2 text-right font-semibold">{t('admin.counselors.actions')}</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {loading && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">…</td></tr>}
+                    <tbody className="divide-y divide-line">
+                        {loading && <tr><td colSpan={5} className="px-4 py-6 text-center text-ink-muted">…</td></tr>}
                         {!loading && counselors.length === 0 && editingId !== 'new' && (
-                            <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">{t('admin.counselors.empty')}</td></tr>
+                            <tr><td colSpan={5} className="px-4 py-6 text-center text-ink-muted">{t('admin.counselors.empty')}</td></tr>
                         )}
                         {counselors.map((c) => (
                             editingId === c.id ? (
-                                <tr key={c.id}><td colSpan={5} className="px-3 py-3">{renderForm()}</td></tr>
+                                <tr key={c.id}><td colSpan={5} className="px-4 py-4">{renderForm()}</td></tr>
                             ) : (
                                 <tr key={c.id}>
-                                    <td className="px-3 py-2 font-medium text-slate-800">
+                                    <td className="px-4 py-2 font-semibold text-ink">
                                         {c.name}
-                                        <span className="ml-2 font-mono text-xs text-slate-500">{c.slug}</span>
+                                        <span className="ml-2 font-mono text-xs text-ink-muted">{c.slug}</span>
                                     </td>
-                                    <td className="px-3 py-2 text-xs text-slate-500">{c.provider ? `${c.provider}/${c.model}` : '-'}</td>
-                                    <td className="px-3 py-2 text-xs text-slate-500">{(c.questionnaire_types || []).join(', ') || '-'}</td>
-                                    <td className="px-3 py-2">{c.is_active ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-slate-500" />}</td>
-                                    <td className="px-3 py-2">
+                                    <td className="px-4 py-2 text-xs text-ink-muted">{c.provider ? `${c.provider}/${c.model}` : '-'}</td>
+                                    <td className="px-4 py-2 text-xs text-ink-muted">{(c.questionnaire_types || []).join(', ') || '-'}</td>
+                                    <td className="px-4 py-2">{c.is_active ? <Check className="h-4 w-4 text-success" /> : <X className="h-4 w-4 text-ink-muted" />}</td>
+                                    <td className="px-4 py-2">
                                         <div className="flex justify-end gap-1">
-                                            <button type="button" onClick={() => startEdit(c)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil className="h-4 w-4" /></button>
-                                            <button type="button" onClick={() => void remove(c.id)} className="rounded p-1.5 text-red-500 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
+                                            <button type="button" onClick={() => startEdit(c)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-ink-muted hover:bg-surface-raised hover:text-ink"><Pencil className="h-4 w-4" /></button>
+                                            {confirmDelete === c.id
+                                                ? <ConfirmInline question={t('admin.counselors.confirmDelete')} onConfirm={() => { setConfirmDelete(null); void remove(c.id); }} onCancel={() => setConfirmDelete(null)} />
+                                                : <button type="button" onClick={() => setConfirmDelete(c.id)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-danger hover:bg-danger-soft"><Trash2 className="h-4 w-4" /></button>}
                                         </div>
                                     </td>
                                 </tr>

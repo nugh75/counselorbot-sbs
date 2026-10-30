@@ -1545,6 +1545,21 @@ dell’azione invece che con la finestra del browser; restano native le domande
 sulle modifiche non salvate e sull’eliminazione di un percorso. Testi, passi e
 comportamento non cambiano.
 
+L’Area amministrazione (`/admin`) e i suoi pannelli dei contenuti (assistente,
+preset, counselor e copertine, strategie e letture certificate, skill, domande
+suggerite, mappa e cronologia dei prompt, esperimenti sui prompt, esportazione,
+questionari e risultati, documenti RAG, immagini del Tavolo, guardia del filo,
+pQBL, sandbox di collaudo) usano i token semantici e le primitive `PageHeader`,
+`Button`, `Card`, `Callout` e `ConfirmInline` (audit UI 2026-10-30, zona 7a):
+spaziature su griglia di 8, due soli pesi, niente maiuscolo, niente gradienti né
+sfocature dietro le finestre, testo minimo `text-2xs` e comandi alti almeno 44px
+anche con il mouse. L’eliminazione di un preset, counselor, strategia, lettura,
+skill, domanda, fattore, item, documento o collezione RAG, immagine del Tavolo e
+il ripristino di una versione di prompt chiedono conferma nel punto dell’azione
+invece che con la finestra del browser. I colori scelti per counselor e
+strumenti restano quelli della loro palette. Testi, passi e comportamento non
+cambiano.
+
 Nel gruppo **Classe e assegnazioni** dell'Area docenti, la voce illustrata
 **Compilazioni degli studenti** (`/docente/compilazioni`, con immagine `compilazioni.png`)
 apre la pagina dedicata dove il docente può scegliere una classe o un gruppo gestito,

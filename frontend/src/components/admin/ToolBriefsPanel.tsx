@@ -65,16 +65,16 @@ export function ToolBriefsPanel() {
         }
     };
 
-    if (loading) return <p className="text-sm text-slate-500" role="status">{t('common.loading')}</p>;
+    if (loading) return <p className="text-sm text-ink-muted" role="status">{t('common.loading')}</p>;
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-2xl">
-                    <h2 className="text-lg font-bold text-slate-900">{t('admin.toolBriefs.title')}</h2>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-500">{t('admin.toolBriefs.subtitle')}</p>
+                    <h2 className="text-lg font-semibold text-ink">{t('admin.toolBriefs.title')}</h2>
+                    <p className="mt-1 text-sm leading-relaxed text-ink-muted">{t('admin.toolBriefs.subtitle')}</p>
                 </div>
-                <Button variant="secondary" className="w-11 px-0" onClick={() => void load()} aria-label={t('admin.toolBriefs.reload')} title={t('admin.toolBriefs.reload')}>
+                <Button variant="secondary" className="w-control px-0" onClick={() => void load()} aria-label={t('admin.toolBriefs.reload')} title={t('admin.toolBriefs.reload')}>
                     <RefreshCw className="h-4 w-4" aria-hidden />
                 </Button>
             </div>
@@ -85,22 +85,22 @@ export function ToolBriefsPanel() {
                 {rows.map((row) => {
                     const dirty = (drafts[row.tool_id] ?? '') !== row.brief;
                     return (
-                        <div key={row.tool_id} className="glass-panel p-4 space-y-3">
-                            <div className="flex flex-wrap items-center gap-3">
-                                <span className="font-mono text-sm font-bold text-indigo-700">{row.tool_id}</span>
+                        <div key={row.tool_id} className="rounded-card border border-line bg-surface shadow-card p-4 space-y-4">
+                            <div className="flex flex-wrap items-center gap-4">
+                                <span className="font-mono text-sm font-semibold text-link">{row.tool_id}</span>
                                 {!row.is_active && (
-                                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-2xs font-bold text-amber-800">
+                                    <span className="rounded-full bg-warning-soft px-2 py-1 text-2xs font-semibold text-warning-ink">
                                         {t('admin.toolBriefs.inactive')}
                                     </span>
                                 )}
                                 {row.updated_at && (
-                                    <span className="font-mono text-xs text-slate-500">
+                                    <span className="font-mono text-xs text-ink-muted">
                                         {new Date(row.updated_at).toLocaleDateString()}
                                     </span>
                                 )}
                                 <div className="ml-auto flex items-center gap-2">
                                     {savedId === row.tool_id && !dirty && (
-                                        <span className="inline-flex items-center gap-1 text-sm text-emerald-600">
+                                        <span className="inline-flex items-center gap-1 text-sm text-success">
                                             <Check className="h-4 w-4" /> {t('admin.toolBriefs.saved')}
                                         </span>
                                     )}
@@ -118,7 +118,7 @@ export function ToolBriefsPanel() {
                                 onChange={(event) => setDrafts((prev) => ({ ...prev, [row.tool_id]: event.target.value }))}
                                 rows={12}
                                 aria-label={`${t('admin.toolBriefs.title')} — ${row.tool_id}`}
-                                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs leading-relaxed text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full rounded-control border border-line-strong bg-surface px-4 py-2 font-mono text-xs leading-relaxed text-ink focus:outline-none focus:ring-2 focus:ring-focus"
                             />
                         </div>
                     );

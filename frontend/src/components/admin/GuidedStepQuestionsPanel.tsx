@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import type { AdminGuidedStepQuestion } from '@/lib/guided-step-questions';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 
 const STEPS_BY_QUESTIONNAIRE: Record<string, string[]> = {
     QSA: ['intro', 'cognitive', 'affective', 'sl-elaboration', 'sl-selfcontrol', 'sl-motivation', 'sl-emotions', 'sl-attribution', 'sl-social', 'questions'],
@@ -206,8 +209,8 @@ export function GuidedStepQuestionsPanel() {
         }
     };
 
+    const [confirmDelete, setConfirmDelete] = useState<string | number | null>(null);
     const remove = async (q: AdminGuidedStepQuestion) => {
-        if (!window.confirm(t('admin.gsq.confirmDelete'))) return;
         setMessage('');
         try {
             const res = await fetch(`/api/admin/guided-step-questions/${q.id}`, { method: 'DELETE' });
@@ -219,12 +222,12 @@ export function GuidedStepQuestionsPanel() {
         }
     };
 
-    const inputCls = 'mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-400';
+    const inputCls = 'mt-1 h-9 w-full rounded-control border border-line-strong bg-surface px-4 text-sm text-ink outline-none focus:border-brand';
 
     const renderForm = () => (
-        <section className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
-            <div className="grid gap-3 md:grid-cols-4">
-                <label className="text-xs font-semibold uppercase text-slate-500">
+        <section className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+            <div className="grid gap-4 md:grid-cols-4">
+                <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.gsq.form.questionnaire')}
                     <select
                         className={inputCls}
@@ -236,7 +239,7 @@ export function GuidedStepQuestionsPanel() {
                         ))}
                     </select>
                 </label>
-                <label className="text-xs font-semibold uppercase text-slate-500">
+                <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.gsq.form.step')}
                     <select
                         className={inputCls}
@@ -248,7 +251,7 @@ export function GuidedStepQuestionsPanel() {
                         ))}
                     </select>
                 </label>
-                <label className="text-xs font-semibold uppercase text-slate-500">
+                <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.gsq.form.language')}
                     <select
                         className={inputCls}
@@ -260,7 +263,7 @@ export function GuidedStepQuestionsPanel() {
                         ))}
                     </select>
                 </label>
-                <label className="text-xs font-semibold uppercase text-slate-500">
+                <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.gsq.form.order')}
                     <input
                         type="number"
@@ -270,16 +273,16 @@ export function GuidedStepQuestionsPanel() {
                     />
                 </label>
             </div>
-            <label className="mt-3 block text-xs font-semibold uppercase text-slate-500">
+            <label className="mt-4 block text-xs font-semibold text-ink-muted">
                 {t('admin.gsq.form.text')}
                 <textarea
-                    className="mt-1 min-h-[80px] w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-400"
+                    className="mt-1 min-h-[80px] w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink outline-none focus:border-brand"
                     value={form.text}
                     onChange={(e) => setForm({ ...form, text: e.target.value })}
                     placeholder={t('admin.gsq.form.textPlaceholder')}
                 />
             </label>
-            <label className="mt-3 flex items-center gap-2 text-sm font-medium text-slate-700">
+            <label className="mt-4 flex items-center gap-2 text-sm font-semibold text-ink-body">
                 <input
                     type="checkbox"
                     checked={form.is_active}
@@ -288,70 +291,62 @@ export function GuidedStepQuestionsPanel() {
                 {t('admin.gsq.form.active')}
             </label>
             <div className="mt-4 flex flex-wrap items-center gap-2">
-                <button
+                <Button
                     type="button"
                     disabled={saving}
-                    onClick={() => void save()}
-                    className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                >
+                    onClick={() => void save()}>
                     <Check className="h-4 w-4" />
                     {t('admin.gsq.save')}
-                </button>
-                <button
+                </Button>
+                <Button variant="secondary"
                     type="button"
-                    onClick={cancel}
-                    className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                >
+                    onClick={cancel}>
                     <X className="h-4 w-4" />
                     {t('admin.gsq.cancel')}
-                </button>
+                </Button>
             </div>
         </section>
     );
 
     return (
         <div className="space-y-4">
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
+            <section className="rounded-lg border border-line bg-surface p-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">{t('admin.gsq.title')}</h2>
-                        <p className="mt-1 max-w-2xl text-sm text-slate-500">{t('admin.gsq.subtitle')}</p>
+                        <h2 className="text-lg font-semibold text-ink">{t('admin.gsq.title')}</h2>
+                        <p className="mt-1 max-w-2xl text-sm text-ink-muted">{t('admin.gsq.subtitle')}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        <button
+                        <Button variant="secondary"
                             type="button"
-                            onClick={() => void refresh()}
-                            className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                        >
+                            onClick={() => void refresh()}>
                             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                             {t('admin.gsq.refresh')}
-                        </button>
+                        </Button>
                         {editingId === null && (
-                            <button
+                            <Button
                                 type="button"
-                                onClick={startNew}
-                                className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700"
-                            >
+                                onClick={startNew}>
                                 <Plus className="h-4 w-4" />
                                 {t('admin.gsq.new')}
-                            </button>
+                            </Button>
                         )}
                     </div>
                 </div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-7">
+                <div className="mt-4 grid gap-4 sm:grid-cols-3 lg:grid-cols-7">
                     {Object.keys(STEPS_BY_QUESTIONNAIRE).map((code) => (
-                        <div key={code} className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                            <p className="text-xs font-semibold uppercase text-slate-500">{code}</p>
-                            <p className="mt-1 text-2xl font-bold text-slate-900">{countsByQuestionnaire[code] ?? 0}</p>
-                            <p className="text-xs text-slate-500">{t('admin.gsq.activeIt')}</p>
+                        <div key={code} className="rounded-control border border-line bg-surface-sunken p-4">
+                            <p className="text-xs font-semibold text-ink-muted">{code}</p>
+                            <p className="mt-1 text-2xl font-semibold text-ink">{countsByQuestionnaire[code] ?? 0}</p>
+                            <p className="text-xs text-ink-muted">{t('admin.gsq.activeIt')}</p>
                         </div>
                     ))}
                 </div>
             </section>
 
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="grid gap-3 sm:grid-cols-3">
-                    <label className="text-xs font-semibold uppercase text-slate-500">
+            <section className="rounded-lg border border-line bg-surface p-4">
+                <div className="grid gap-4 sm:grid-cols-3">
+                    <label className="text-xs font-semibold text-ink-muted">
                         {t('admin.gsq.filter.questionnaire')}
                         <select
                             className={inputCls}
@@ -364,7 +359,7 @@ export function GuidedStepQuestionsPanel() {
                             ))}
                         </select>
                     </label>
-                    <label className="text-xs font-semibold uppercase text-slate-500">
+                    <label className="text-xs font-semibold text-ink-muted">
                         {t('admin.gsq.filter.step')}
                         <select
                             className={inputCls}
@@ -378,7 +373,7 @@ export function GuidedStepQuestionsPanel() {
                             ))}
                         </select>
                     </label>
-                    <label className="text-xs font-semibold uppercase text-slate-500">
+                    <label className="text-xs font-semibold text-ink-muted">
                         {t('admin.gsq.filter.language')}
                         <select
                             className={inputCls}
@@ -395,16 +390,16 @@ export function GuidedStepQuestionsPanel() {
             </section>
 
             {editingId === 'new' && renderForm()}
-            {message && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p>}
+            {message && <Callout variant="danger">{message}</Callout>}
 
             <div className="space-y-2">
                 {loading && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
+                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted">
                         {t('admin.gsq.loading')}
                     </section>
                 )}
                 {!loading && filtered.length === 0 && editingId !== 'new' && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
+                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted">
                         {t('admin.gsq.empty')}
                     </section>
                 )}
@@ -414,27 +409,27 @@ export function GuidedStepQuestionsPanel() {
                     ) : (
                         <section
                             key={q.id}
-                            className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+                            className="flex items-start justify-between gap-4 rounded-lg border border-line bg-surface p-4 shadow-card"
                         >
                             <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+                                    <span className="rounded-full bg-brand-soft px-2 py-1 text-xs font-semibold text-link">
                                         {q.questionnaire_type}
                                     </span>
-                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                                    <span className="rounded-full bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-muted">
                                         {q.step_id}
                                     </span>
-                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                                    <span className="rounded-full bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-muted">
                                         {q.language.toUpperCase()}
                                     </span>
-                                    <span className="text-xs text-slate-500">#{q.sort_order}</span>
+                                    <span className="text-xs text-ink-muted">#{q.sort_order}</span>
                                     {!q.is_active && (
-                                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                                        <span className="rounded-full bg-warning-soft px-2 py-1 text-xs font-semibold text-warning">
                                             {t('admin.gsq.inactive')}
                                         </span>
                                     )}
                                 </div>
-                                <p className={`mt-1 text-sm leading-relaxed ${q.is_active ? 'text-slate-800' : 'text-slate-500 line-through'}`}>
+                                <p className={`mt-1 text-sm leading-relaxed ${q.is_active ? 'text-ink' : 'text-ink-muted line-through'}`}>
                                     {q.text}
                                 </p>
                             </div>
@@ -442,7 +437,7 @@ export function GuidedStepQuestionsPanel() {
                                 <button
                                     type="button"
                                     onClick={() => void toggleActive(q)}
-                                    className="rounded-md px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100"
+                                    className="min-h-control rounded-control px-2 py-1 text-xs font-semibold text-ink-muted hover:bg-surface-raised"
                                     title={t('admin.gsq.toggle')}
                                 >
                                     {q.is_active ? t('admin.gsq.disable') : t('admin.gsq.enable')}
@@ -450,19 +445,21 @@ export function GuidedStepQuestionsPanel() {
                                 <button
                                     type="button"
                                     onClick={() => startEdit(q)}
-                                    className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                    className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-ink-muted hover:bg-surface-raised hover:text-ink"
                                     title={t('admin.gsq.edit')}
                                 >
                                     <Pencil className="h-4 w-4" />
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => void remove(q)}
-                                    className="rounded-md p-2 text-red-500 hover:bg-red-50"
-                                    title={t('admin.gsq.delete')}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
+                                {confirmDelete === q.id
+                                    ? <ConfirmInline question={t('admin.gsq.confirmDelete')} onConfirm={() => { setConfirmDelete(null); void remove(q); }} onCancel={() => setConfirmDelete(null)} />
+                                    : <button
+                                          type="button"
+                                          onClick={() => setConfirmDelete(q.id)}
+                                          className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-danger hover:bg-danger-soft"
+                                          title={t('admin.gsq.delete')}
+                                      >
+                                          <Trash2 className="h-4 w-4" />
+                                      </button>}
                             </div>
                         </section>
                     )

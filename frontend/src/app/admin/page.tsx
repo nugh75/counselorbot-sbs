@@ -39,6 +39,9 @@ import { AudioModelsPanel } from '@/components/admin/AudioModelsPanel';
 import { getRealIdentity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { canUseResearchConsole } from '@/lib/roles';
 import { adminTabUrl, DEFAULT_ADMIN_TAB, parseAdminTab, type AdminTab } from '@/lib/admin-navigation';
 
@@ -150,59 +153,54 @@ export default function AdminPage() {
     }, []);
 
     if (authState === 'loading') {
-        return <div className="min-h-[60vh] flex items-center justify-center text-slate-500">{t('admin.verifying')}</div>;
+        return <div className="min-h-[60vh] flex items-center justify-center text-ink-muted">{t('admin.verifying')}</div>;
     }
 
     if (authState === 'forbidden') {
         return (
             <div className="min-h-[60vh] flex items-center justify-center p-4">
-                <div className="max-w-md w-full bg-white border border-slate-200 p-8 rounded-lg text-center space-y-4 shadow-sm">
-                    <div className="mx-auto w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
-                        <ShieldAlert className="w-6 h-6 text-red-600" />
+                <Card className="max-w-md w-full p-8 text-center space-y-4">
+                    <div className="mx-auto w-12 h-12 bg-danger-soft rounded-lg flex items-center justify-center">
+                        <ShieldAlert className="w-6 h-6 text-danger" />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900">{t('admin.forbidden.title')}</h2>
-                    <p className="text-slate-500 text-sm">
+                    <h2 className="text-xl font-semibold text-ink">{t('admin.forbidden.title')}</h2>
+                    <p className="text-ink-muted text-sm">
                         {t('admin.forbidden.body')}
                     </p>
-                    <button
-                        onClick={() => router.push('/')}
-                        className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-medium transition-colors"
-                    >
+                    <Button onClick={() => router.push('/')} className="w-full">
                         {t('admin.forbidden.cta')}
-                    </button>
-                </div>
+                    </Button>
+                </Card>
             </div>
         );
     }
 
     return (
-        <div className="admin-shell min-h-screen bg-slate-50">
+        <div className="admin-shell min-h-screen bg-surface-sunken">
             <section className="mx-auto max-w-[96rem] px-0 py-6 sm:px-4 sm:py-8">
-                <div className="mb-5 flex flex-wrap items-center justify-between gap-4 xl:mb-8">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-indigo-600 rounded-md flex items-center justify-center">
-                            <Settings className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="font-bold text-2xl text-slate-900">{t('admin.title')}</h1>
-                            <p className="text-sm text-slate-500 mt-1">CounselorBot · {activeItem?.label}</p>
-                        </div>
-                    </div>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-4 xl:mb-8">
+                    <PageHeader
+                        title={t('admin.title')}
+                        subtitle={<span className="text-sm">CounselorBot · {activeItem?.label}</span>}
+                        icon={<div className="w-8 h-8 shrink-0 bg-brand rounded-control flex items-center justify-center">
+                            <Settings className="w-5 h-5 text-ink-on-brand" />
+                        </div>}
+                    />
                     <div className="flex flex-wrap gap-2">
                         <BackButton variant="labelled" href="/docente" label={t('nav.teacherPanel')} />
                         <BackButton variant="labelled" href="/" label={t('nav.home')} />
                     </div>
                 </div>
 
-                <div className="glass-panel mb-5 p-3 xl:hidden">
-                    <label htmlFor="admin-section" className="mb-1.5 block text-sm font-semibold text-slate-700">
+                <div className="rounded-card border border-line bg-surface shadow-card mb-4 p-4 xl:hidden">
+                    <label htmlFor="admin-section" className="mb-2 block text-sm font-semibold text-ink-body">
                         {t('admin.header.subtitle')}
                     </label>
                     <select
                         id="admin-section"
                         value={activeTab}
                         onChange={(event) => setActiveTab(event.target.value as AdminTab)}
-                        className="min-w-0 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="min-w-0 w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink outline-none focus:ring-2 focus:ring-focus"
                     >
                         {navGroups.map((group) => (
                             <optgroup key={group.title} label={group.title}>
@@ -220,29 +218,28 @@ export default function AdminPage() {
                         ? 'xl:grid-cols-[4.5rem_minmax(0,1fr)]'
                         : 'xl:grid-cols-[17rem_minmax(0,1fr)]',
                 )}>
-                    <aside className="glass-panel hidden p-3 xl:sticky xl:top-24 xl:block xl:self-start">
-                        <div className={cn('mb-3 flex items-center', sidebarCollapsed ? 'justify-center' : 'justify-between')}>
+                    <aside className="rounded-card border border-line bg-surface shadow-card hidden p-4 xl:sticky xl:top-24 xl:block xl:self-start">
+                        <div className={cn('mb-4 flex items-center', sidebarCollapsed ? 'justify-center' : 'justify-between')}>
                             {!sidebarCollapsed && (
                                 <div>
-                                    <h2 className="text-sm font-bold text-slate-900">{t('admin.title')}</h2>
-                                    <p className="text-xs text-slate-500">{t('admin.header.subtitle')}</p>
+                                    <h2 className="text-sm font-semibold text-ink">{t('admin.title')}</h2>
+                                    <p className="text-xs text-ink-muted">{t('admin.header.subtitle')}</p>
                                 </div>
                             )}
-                            <button
+                            <Button variant="secondary"
                                 type="button"
                                 onClick={() => setSidebarCollapsed((value) => !value)}
                                 title={sidebarCollapsed ? t('admin.sidebar.expand') : t('admin.sidebar.collapse')}
                                 aria-label={sidebarCollapsed ? t('admin.sidebar.expand') : t('admin.sidebar.collapse')}
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                            >
+                                className="h-control w-control hover:text-ink">
                                 {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-                            </button>
+                            </Button>
                         </div>
                         <nav className="space-y-4">
                             {navGroups.map((group) => (
                                 <div key={group.title}>
                                     {!sidebarCollapsed && (
-                                    <h3 className="px-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                                    <h3 className="px-2 text-2xs font-semibold text-ink-muted">
                                         {group.title}
                                     </h3>
                                     )}
@@ -257,11 +254,11 @@ export default function AdminPage() {
                                                     onClick={() => setActiveTab(item.id)}
                                                     title={sidebarCollapsed ? item.label : undefined}
                                                     className={cn(
-                                                        'flex w-full items-center rounded-md text-left text-sm font-medium transition-colors',
-                                                        sidebarCollapsed ? 'h-10 justify-center px-0' : 'gap-2 px-3 py-2',
+                                                        'flex min-h-control w-full items-center rounded-control text-left text-sm font-semibold transition-colors',
+                                                        sidebarCollapsed ? 'justify-center px-0' : 'gap-2 px-4 py-2',
                                                         active
-                                                            ? 'bg-indigo-50 text-indigo-700'
-                                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+                                                            ? 'bg-brand-soft text-link'
+                                                            : 'text-ink-muted hover:bg-surface-sunken hover:text-ink',
                                                     )}
                                                 >
                                                     <Icon className="h-4 w-4 shrink-0" />

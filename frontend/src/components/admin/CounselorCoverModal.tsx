@@ -201,7 +201,7 @@ export function CounselorCoverModal({
 
     return createPortal(
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-3 sm:p-5 backdrop-blur-xs"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 sm:p-4"
             onMouseDown={(e) => {
                 if (e.target === e.currentTarget && !saving) onClose();
             }}
@@ -211,15 +211,15 @@ export function CounselorCoverModal({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="counselor-cover-modal-title"
-                className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+                className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-modal"
             >
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                <div className="flex items-center justify-between border-b border-line px-4 py-4">
                     <div>
-                        <h2 id="counselor-cover-modal-title" className="text-base font-bold text-slate-900 sm:text-lg">
+                        <h2 id="counselor-cover-modal-title" className="text-base font-semibold text-ink sm:text-lg">
                             {t('admin.counselorCover.modalTitle')}
                         </h2>
-                        <p className="mt-0.5 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-ink-muted">
                             {t('admin.counselorCover.modalSubtitle')}
                         </p>
                     </div>
@@ -229,7 +229,7 @@ export function CounselorCoverModal({
                         size="sm"
                         onClick={onClose}
                         disabled={saving}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                        className="rounded-lg p-2 text-ink-muted hover:bg-surface-raised hover:text-ink-body"
                         aria-label={t('admin.counselorCover.close')}
                     >
                         <X className="h-5 w-5" aria-hidden />
@@ -237,10 +237,10 @@ export function CounselorCoverModal({
                 </div>
 
                 {/* Banner anteprima 16:9 live */}
-                <div className="border-b border-slate-100 bg-slate-50/80 px-5 py-3">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="relative aspect-[16/9] h-14 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-100 shadow-2xs">
+                <div className="border-b border-line bg-surface-sunken/80 px-4 py-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="relative aspect-[16/9] h-14 shrink-0 overflow-hidden rounded-control border border-line bg-surface-raised shadow-card">
                                 <CounselorCover
                                     counselor={previewCounselor}
                                     src={activeCover}
@@ -249,10 +249,10 @@ export function CounselorCoverModal({
                                 />
                             </div>
                             <div className="min-w-0">
-                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                <span className="text-xs font-semibold text-ink-muted">
                                     {t('admin.counselorCover.currentPreview')}
                                 </span>
-                                <p className="truncate text-sm font-semibold text-slate-800" title={counselorName}>
+                                <p className="truncate text-sm font-semibold text-ink" title={counselorName}>
                                     {counselorName || 'Counselor'}
                                 </p>
                             </div>
@@ -261,27 +261,27 @@ export function CounselorCoverModal({
                 </div>
 
                 {/* Tabs Switcher */}
-                <div className="flex border-b border-slate-200 bg-white px-5">
+                <div className="flex border-b border-line bg-surface px-4">
                     <button
                         type="button"
                         onClick={() => setActiveTab('ai')}
-                        className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition ${
+                        className={`min-h-control flex items-center gap-2 border-b-2 px-4 py-4 text-xs sm:text-sm font-semibold transition ${
                             activeTab === 'ai'
-                                ? 'border-indigo-600 text-indigo-700'
-                                : 'border-transparent text-slate-500 hover:text-slate-800'
+                                ? 'border-brand text-link'
+                                : 'border-transparent text-ink-muted hover:text-ink'
                         }`}
                     >
-                        <Sparkles className="h-4 w-4 text-amber-500" aria-hidden />
+                        <Sparkles className="h-4 w-4 text-warning" aria-hidden />
                         <span>{t('admin.counselorCover.tabAI')}</span>
                     </button>
 
                     <button
                         type="button"
                         onClick={() => setActiveTab('upload')}
-                        className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition ${
+                        className={`min-h-control flex items-center gap-2 border-b-2 px-4 py-4 text-xs sm:text-sm font-semibold transition ${
                             activeTab === 'upload'
-                                ? 'border-indigo-600 text-indigo-700'
-                                : 'border-transparent text-slate-500 hover:text-slate-800'
+                                ? 'border-brand text-link'
+                                : 'border-transparent text-ink-muted hover:text-ink'
                         }`}
                     >
                         <Upload className="h-4 w-4" aria-hidden />
@@ -291,10 +291,10 @@ export function CounselorCoverModal({
                     <button
                         type="button"
                         onClick={() => setActiveTab('url')}
-                        className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition ${
+                        className={`min-h-control flex items-center gap-2 border-b-2 px-4 py-4 text-xs sm:text-sm font-semibold transition ${
                             activeTab === 'url'
-                                ? 'border-indigo-600 text-indigo-700'
-                                : 'border-transparent text-slate-500 hover:text-slate-800'
+                                ? 'border-brand text-link'
+                                : 'border-transparent text-ink-muted hover:text-ink'
                         }`}
                     >
                         <LinkIcon className="h-4 w-4" aria-hidden />
@@ -315,15 +315,15 @@ export function CounselorCoverModal({
                 )}
 
                 {/* Modal Body */}
-                <div className="flex-1 overflow-y-auto p-5">
+                <div className="flex-1 overflow-y-auto p-4">
                     {/* 1. Scheda CREA CON IA */}
                     {activeTab === 'ai' && (
                         <div className="space-y-4">
-                            <div className="rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50/60 to-orange-50/40 p-4 text-xs leading-relaxed text-slate-700">
-                                <div className="flex items-start gap-2.5">
-                                    <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+                            <div className="rounded-card border border-warning-line bg-warning-soft p-4 text-xs leading-relaxed text-ink-body">
+                                <div className="flex items-start gap-2">
+                                    <Sparkles className="mt-1 h-4 w-4 shrink-0 text-warning" aria-hidden />
                                     <div>
-                                        <strong className="font-semibold text-slate-900">
+                                        <strong className="font-semibold text-ink">
                                             {t('admin.counselorCover.aiHeading')}
                                         </strong>
                                         <p className="mt-1">
@@ -334,8 +334,8 @@ export function CounselorCoverModal({
                             </div>
 
                             {/* Selettore Metafora */}
-                            <div className="space-y-1.5">
-                                <label htmlFor="counselor-metaphor-select" className="text-xs font-semibold text-slate-700">
+                            <div className="space-y-2">
+                                <label htmlFor="counselor-metaphor-select" className="text-xs font-semibold text-ink-body">
                                     {t('admin.counselorCover.metaphorLabel')}
                                 </label>
                                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -347,7 +347,7 @@ export function CounselorCoverModal({
                                                 setSelectedMetaphor(e.target.value);
                                                 setCustomMetaphor('');
                                             }}
-                                            className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-xs font-medium text-slate-800 outline-none focus:border-indigo-500"
+                                            className="h-10 w-full rounded-card border border-line-strong bg-surface px-4 text-xs font-semibold text-ink outline-none focus:border-brand"
                                         >
                                             {COUNSELOR_METAPHOR_PRESETS.map((preset) => (
                                                 <option key={preset.id} value={preset.label}>
@@ -361,15 +361,15 @@ export function CounselorCoverModal({
                                         value={customMetaphor}
                                         onChange={(e) => setCustomMetaphor(e.target.value)}
                                         placeholder={t('admin.counselorCover.metaphorPlaceholder')}
-                                        className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-800 outline-none focus:border-indigo-500"
+                                        className="h-10 w-full rounded-card border border-line-strong bg-surface px-4 text-xs text-ink outline-none focus:border-brand"
                                     />
                                 </div>
                             </div>
 
                             {/* Prompt TextArea */}
-                            <div className="space-y-1.5">
+                            <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <label htmlFor="ai-counselor-cover-prompt" className="text-xs font-semibold text-slate-700">
+                                    <label htmlFor="ai-counselor-cover-prompt" className="text-xs font-semibold text-ink-body">
                                         {t('admin.counselorCover.promptLabel')}
                                     </label>
                                     <Button
@@ -377,12 +377,12 @@ export function CounselorCoverModal({
                                         variant="secondary"
                                         size="sm"
                                         onClick={() => void handleCopyPrompt()}
-                                        className="inline-flex min-h-[32px] items-center gap-1.5 text-xs font-semibold"
+                                        className="inline-flex min-h-[32px] items-center gap-2 text-xs font-semibold"
                                     >
                                         {copied ? (
                                             <>
-                                                <Check className="h-3.5 w-3.5 text-emerald-600" aria-hidden />
-                                                <span className="text-emerald-700">{t('admin.counselorCover.promptCopied')}</span>
+                                                <Check className="h-3.5 w-3.5 text-success" aria-hidden />
+                                                <span className="text-success">{t('admin.counselorCover.promptCopied')}</span>
                                             </>
                                         ) : (
                                             <>
@@ -398,29 +398,29 @@ export function CounselorCoverModal({
                                     readOnly
                                     rows={5}
                                     value={aiPrompt}
-                                    className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs leading-relaxed text-slate-800 focus:outline-hidden"
+                                    className="w-full rounded-card border border-line-strong bg-surface-sunken p-4 text-xs leading-relaxed text-ink focus:outline-hidden"
                                 />
                             </div>
 
                             {/* Link a ChatGPT e Gemini */}
-                            <div className="flex flex-wrap items-center gap-3 pt-2">
+                            <div className="flex flex-wrap items-center gap-4 pt-2">
                                 <a
                                     href="https://chatgpt.com"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                                    className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-body shadow-card transition hover:border-line-strong hover:bg-surface-sunken hover:text-ink"
                                 >
                                     <span>{t('admin.counselorCover.openChatGPT')}</span>
-                                    <ExternalLink className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+                                    <ExternalLink className="h-3.5 w-3.5 text-ink-muted" aria-hidden />
                                 </a>
                                 <a
                                     href="https://gemini.google.com"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                                    className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-body shadow-card transition hover:border-line-strong hover:bg-surface-sunken hover:text-ink"
                                 >
                                     <span>{t('admin.counselorCover.openGemini')}</span>
-                                    <ExternalLink className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+                                    <ExternalLink className="h-3.5 w-3.5 text-ink-muted" aria-hidden />
                                 </a>
                             </div>
                         </div>
@@ -459,25 +459,25 @@ export function CounselorCoverModal({
                                         setPreviewUrl(URL.createObjectURL(file));
                                     }
                                 }}
-                                className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/70 p-6 text-center transition hover:border-indigo-400 hover:bg-indigo-50/30"
+                                className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-line-strong bg-surface-sunken/70 p-6 text-center transition hover:border-brand hover:bg-brand-soft/30"
                             >
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-link">
                                     <ImagePlus className="h-6 w-6" aria-hidden />
                                 </div>
-                                <h3 className="mt-3 text-sm font-semibold text-slate-900">
+                                <h3 className="mt-4 text-sm font-semibold text-ink">
                                     {selectedFile ? selectedFile.name : t('admin.counselorCover.uploadDropzone')}
                                 </h3>
-                                <p className="mt-1 max-w-sm text-xs text-slate-500">
+                                <p className="mt-1 max-w-sm text-xs text-ink-muted">
                                     {t('admin.counselorCover.uploadHint')}
                                 </p>
                             </div>
 
                             {previewUrl && (
-                                <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                <div className="space-y-4 rounded-card border border-line bg-surface p-4">
+                                    <span className="text-xs font-semibold text-ink-muted">
                                         {t('admin.counselorCover.selectedPreview')}
                                     </span>
-                                    <div className="relative aspect-[16/9] w-full max-h-48 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                                    <div className="relative aspect-[16/9] w-full max-h-48 overflow-hidden rounded-lg border border-line bg-surface-raised">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={previewUrl}
@@ -527,8 +527,8 @@ export function CounselorCoverModal({
                     {/* 3. Scheda URL O PRESET MANUALE */}
                     {activeTab === 'url' && (
                         <div className="space-y-4">
-                            <div className="space-y-1.5">
-                                <label htmlFor="counselor-manual-url" className="text-xs font-semibold text-slate-700">
+                            <div className="space-y-2">
+                                <label htmlFor="counselor-manual-url" className="text-xs font-semibold text-ink-body">
                                     {t('admin.counselorCover.urlLabel')}
                                 </label>
                                 <div className="flex gap-2">
@@ -538,7 +538,7 @@ export function CounselorCoverModal({
                                         value={manualUrl}
                                         onChange={(e) => setManualUrl(e.target.value)}
                                         placeholder={t('admin.counselorCover.urlPlaceholder')}
-                                        className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-800 outline-none focus:border-indigo-500"
+                                        className="h-10 w-full rounded-card border border-line-strong bg-surface px-4 text-xs text-ink outline-none focus:border-brand"
                                     />
                                     <Button
                                         type="button"
@@ -555,7 +555,7 @@ export function CounselorCoverModal({
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-end border-t border-slate-200 bg-slate-50 px-5 py-3">
+                <div className="flex justify-end border-t border-line bg-surface-sunken px-4 py-4">
                     <Button
                         type="button"
                         variant="secondary"

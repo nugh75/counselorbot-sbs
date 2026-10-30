@@ -5,6 +5,8 @@ import { ArrowRight, RefreshCw, Play, Plus, Trash2, Save, ListChecks, Sliders, F
 import { useI18n } from '@/lib/i18n-context';
 import { CreateInstrumentDialog } from '@/components/admin/CreateInstrumentDialog';
 import { AdminChatSandboxModal } from '@/components/admin/AdminChatSandboxModal';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Button } from '@/components/ui/Button';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 // Le sei lingue dell'app. Non piu' le quattro che avevano una colonna dedicata:
@@ -230,8 +232,8 @@ export function QuestionnaireEditor() {
         if (res.ok) { setFactors([...factors, await res.json()]); }
     };
 
+    const [confirmDelete, setConfirmDelete] = useState<string | number | null>(null);
     const deleteFactor = async (id: number) => {
-        if (!confirm(t('admin.q.confirmDelete'))) return;
         const res = await fetch(`/api/admin/factors/${id}`, { method: 'DELETE' });
         if (res.ok) setFactors(factors.filter((x) => x.id !== id));
     };
@@ -261,7 +263,6 @@ export function QuestionnaireEditor() {
     };
 
     const deleteItem = async (id: number) => {
-        if (!confirm(t('admin.q.confirmDelete'))) return;
         const res = await fetch(`/api/admin/items/${id}`, { method: 'DELETE' });
         if (res.ok) setItems(items.filter((x) => x.id !== id));
     };
@@ -271,7 +272,7 @@ export function QuestionnaireEditor() {
     const patchItem = (id: number, patch: Partial<Item>) =>
         setItems(items.map((it) => it.id === id ? { ...it, ...patch } : it));
 
-    if (loading) return <div className="text-slate-500">{t('admin.q.loading')}</div>;
+    if (loading) return <div className="text-ink-muted">{t('admin.q.loading')}</div>;
 
     const subTabs: { id: SubTab; label: string; icon: typeof Sliders }[] = [
         { id: 'meta', label: t('admin.q.tab.meta'), icon: Sliders },
@@ -281,58 +282,57 @@ export function QuestionnaireEditor() {
     ];
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-4">
             {/* Disclaimer metodologico */}
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <div className="rounded-control border border-warning-line bg-warning-soft px-4 py-4 text-sm text-warning-ink">
                 {t('admin.q.disclaimer')}
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-4">
                 <select
                     value={selected}
                     onChange={(e) => setSelected(e.target.value)}
-                    className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
+                    className="rounded-control border border-line-strong px-4 py-2 text-sm font-semibold"
                 >
                     {instruments.map((i) => (
                         <option key={i.code} value={i.code}>{i.code} — {i.name_en ?? i.code}</option>
                     ))}
                 </select>
                 {meta && (
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        meta.status === 'validated' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-800'
+                    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                        meta.status === 'validated' ? 'bg-success-soft text-success' : 'bg-warning-soft text-warning-ink'
                     }`}>
                         {meta.status}
                     </span>
                 )}
-                <button
+                <Button
                     type="button"
                     onClick={() => setCreatingInstrument(true)}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700"
-                >
+                    className="text-xs">
                     <Plus className="w-3.5 h-3.5" /> {t('admin.instrumentWizard.createInstrumentButton')}
-                </button>
+                </Button>
                 <button
                     type="button"
                     onClick={() => setTestingChat(true)}
                     disabled={!selected}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
+                    className="min-h-control inline-flex items-center gap-2 rounded-control border border-brand-line bg-brand-soft px-4 py-2 text-xs font-semibold text-link hover:bg-brand-soft disabled:opacity-60"
                 >
                     <Play className="w-3.5 h-3.5" /> {t('admin.q.testChat')}
                 </button>
-                {msg && <span className="text-sm text-indigo-600">{msg}</span>}
-                <button type="button" onClick={() => loadInstrument(selected)} aria-label={t('admin.q.reload')} title={t('admin.q.reload')} className="tap-icon ml-auto rounded-md text-slate-500 hover:bg-slate-50 hover:text-slate-800">
+                {msg && <span className="text-sm text-brand">{msg}</span>}
+                <button type="button" onClick={() => loadInstrument(selected)} aria-label={t('admin.q.reload')} title={t('admin.q.reload')} className="inline-flex min-h-control min-w-control items-center justify-center ml-auto rounded-control text-ink-muted hover:bg-surface-sunken hover:text-ink">
                     <RefreshCw className="w-4 h-4" aria-hidden />
                 </button>
             </div>
 
             {/* Sub-tabs */}
-            <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
+            <div className="flex flex-wrap gap-2 border-b border-line pb-2">
                 {subTabs.map(({ id, label, icon: Icon }) => (
                     <button
                         key={id}
                         onClick={() => setSubTab(id)}
-                        className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium ${
-                            subTab === id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'
+                        className={`min-h-control inline-flex items-center gap-2 rounded-control px-4 py-2 text-sm font-semibold ${
+                            subTab === id ? 'bg-brand-soft text-link' : 'text-ink-muted hover:bg-surface-sunken'
                         }`}
                     >
                         <Icon className="w-4 h-4" /> {label}
@@ -345,54 +345,54 @@ export function QuestionnaireEditor() {
                 <div className="space-y-4 max-w-2xl">
                     {LOCALES.map((l) => (
                         <label key={l} className="block">
-                            <span className="text-xs font-semibold text-slate-500 uppercase">{t('admin.q.name')} ({l})</span>
+                            <span className="text-xs font-semibold text-ink-muted">{t('admin.q.name')} ({l})</span>
                             <input
                                 value={localizedValue(meta, 'name', l)}
                                 onChange={(e) => setMeta({
                                     ...meta,
                                     name_i18n: mergedI18n(meta.name_i18n, l, e.target.value),
                                 })}
-                                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm"
                             />
                         </label>
                     ))}
                     <div className="flex gap-4">
                         <label className="block">
-                            <span className="text-xs font-semibold text-slate-500 uppercase">{t('admin.q.scaleMin')}</span>
+                            <span className="text-xs font-semibold text-ink-muted">{t('admin.q.scaleMin')}</span>
                             <input type="number" value={meta.response_scale_min}
                                 onChange={(e) => setMeta({ ...meta, response_scale_min: Number(e.target.value) })}
-                                className="mt-1 w-24 rounded-md border border-slate-300 px-3 py-2 text-sm" />
+                                className="mt-1 w-24 rounded-control border border-line-strong px-4 py-2 text-sm" />
                         </label>
                         <label className="block">
-                            <span className="text-xs font-semibold text-slate-500 uppercase">{t('admin.q.scaleMax')}</span>
+                            <span className="text-xs font-semibold text-ink-muted">{t('admin.q.scaleMax')}</span>
                             <input type="number" value={meta.response_scale_max}
                                 onChange={(e) => setMeta({ ...meta, response_scale_max: Number(e.target.value) })}
-                                className="mt-1 w-24 rounded-md border border-slate-300 px-3 py-2 text-sm" />
+                                className="mt-1 w-24 rounded-control border border-line-strong px-4 py-2 text-sm" />
                         </label>
                         <label className="block">
-                            <span className="text-xs font-semibold text-slate-500 uppercase">{t('admin.q.status')}</span>
+                            <span className="text-xs font-semibold text-ink-muted">{t('admin.q.status')}</span>
                             <select value={meta.status}
                                 onChange={(e) => setMeta({ ...meta, status: e.target.value })}
-                                className="mt-1 rounded-md border border-slate-300 px-3 py-2 text-sm">
+                                className="mt-1 rounded-control border border-line-strong px-4 py-2 text-sm">
                                 <option value="experimental">{t('admin.q.status.experimental')}</option>
                                 <option value="validated">{t('admin.q.status.validated')}</option>
                             </select>
                         </label>
                     </div>
-                    <p className="text-xs text-slate-500">{t('admin.q.scaleHint')}</p>
-                    <button onClick={saveMeta} className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+                    <p className="text-xs text-ink-muted">{t('admin.q.scaleHint')}</p>
+                    <Button onClick={saveMeta}>
                         <Save className="w-4 h-4" /> {t('admin.q.save')}
-                    </button>
+                    </Button>
                 </div>
             )}
 
             {/* FACTORS */}
             {subTab === 'factors' && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="text-left text-xs text-slate-500 border-b">
+                                <tr className="text-left text-xs text-ink-muted border-b">
                                     <th className="py-2 pr-2">{t('admin.q.code')}</th>
                                     <th className="py-2 pr-2">{t('admin.q.dimension')}</th>
                                     <th className="py-2 pr-2">{t('admin.q.orientation')}</th>
@@ -403,18 +403,18 @@ export function QuestionnaireEditor() {
                             </thead>
                             <tbody>
                                 {factors.map((f) => (
-                                    <tr key={f.id} className="border-b border-slate-100 align-top">
+                                    <tr key={f.id} className="border-b border-line align-top">
                                         <td className="py-2 pr-2">
                                             <input value={f.code} onChange={(e) => patchFactor(f.id, { code: e.target.value })}
-                                                className="w-20 rounded border border-slate-300 px-2 py-1" />
+                                                className="w-20 rounded border border-line-strong px-2 py-1" />
                                         </td>
                                         <td className="py-2 pr-2">
                                             <input value={f.dimension ?? ''} onChange={(e) => patchFactor(f.id, { dimension: e.target.value })}
-                                                className="w-28 rounded border border-slate-300 px-2 py-1" />
+                                                className="w-28 rounded border border-line-strong px-2 py-1" />
                                         </td>
                                         <td className="py-2 pr-2">
                                             <select value={f.orientation} onChange={(e) => patchFactor(f.id, { orientation: e.target.value })}
-                                                className="rounded border border-slate-300 px-2 py-1">
+                                                className="rounded border border-line-strong px-2 py-1">
                                                 {ORIENTATIONS.map((o) => <option key={o} value={o}>{o}</option>)}
                                             </select>
                                         </td>
@@ -429,19 +429,21 @@ export function QuestionnaireEditor() {
                                                     onChange={(e) => patchFactor(f.id, {
                                                         label_i18n: mergedI18n(f.label_i18n, l, e.target.value),
                                                     })}
-                                                    className="w-full rounded border border-slate-300 px-2 py-1" />
+                                                    className="w-full rounded border border-line-strong px-2 py-1" />
                                             ))}
                                         </td>
                                         <td className="py-2 whitespace-nowrap">
-                                            <button onClick={() => saveFactor(f)} className="text-indigo-600 hover:text-indigo-800 mr-2"><Save className="w-4 h-4" /></button>
-                                            <button onClick={() => deleteFactor(f.id)} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></button>
+                                            <button onClick={() => saveFactor(f)} className="min-h-control text-brand hover:text-link mr-2"><Save className="w-4 h-4" /></button>
+                                            {confirmDelete === `factor-${f.id}`
+                                                ? <ConfirmInline question={t('admin.q.confirmDelete')} onConfirm={() => { setConfirmDelete(null); void deleteFactor(f.id); }} onCancel={() => setConfirmDelete(null)} />
+                                                : <button onClick={() => setConfirmDelete(`factor-${f.id}`)} className="min-h-control text-danger hover:text-danger-ink"><Trash2 className="w-4 h-4" /></button>}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                    <button onClick={addFactor} className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
+                    <button onClick={addFactor} className="min-h-control inline-flex items-center gap-2 rounded-control border border-line-strong px-4 py-2 text-sm text-ink-body hover:bg-surface-sunken">
                         <Plus className="w-4 h-4" /> {t('admin.q.addFactor')}
                     </button>
                 </div>
@@ -449,12 +451,12 @@ export function QuestionnaireEditor() {
 
             {/* ITEMS */}
             {subTab === 'items' && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                     <div className="flex items-center gap-2 text-sm">
-                        <span className="text-slate-500">{t('admin.q.editLocale')}:</span>
+                        <span className="text-ink-muted">{t('admin.q.editLocale')}:</span>
                         {LOCALES.map((l) => (
                             <button key={l} onClick={() => setLocale(l)}
-                                className={`rounded px-2 py-0.5 ${locale === l ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                className={`min-h-control rounded px-2 py-1 ${locale === l ? 'bg-brand text-ink-on-brand' : 'bg-surface-raised text-ink-muted'}`}>
                                 {l}
                             </button>
                         ))}
@@ -471,7 +473,7 @@ export function QuestionnaireEditor() {
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="text-left text-xs text-slate-500 border-b">
+                                <tr className="text-left text-xs text-ink-muted border-b">
                                     <th className="py-2 pr-2 w-12">#</th>
                                     <th className="py-2 pr-2">{t('admin.q.factor')}</th>
                                     <th className="py-2 pr-2">{t('admin.q.reverse')}</th>
@@ -482,15 +484,15 @@ export function QuestionnaireEditor() {
                             </thead>
                             <tbody>
                                 {items.map((it) => (
-                                    <tr key={it.id} className="border-b border-slate-100 align-top">
+                                    <tr key={it.id} className="border-b border-line align-top">
                                         <td className="py-2 pr-2">
                                             <input type="number" value={it.item_number}
                                                 onChange={(e) => patchItem(it.id, { item_number: Number(e.target.value) })}
-                                                className="w-14 rounded border border-slate-300 px-2 py-1" />
+                                                className="w-14 rounded border border-line-strong px-2 py-1" />
                                         </td>
                                         <td className="py-2 pr-2">
                                             <select value={it.factor_code ?? ''} onChange={(e) => patchItem(it.id, { factor_code: e.target.value || null })}
-                                                className="rounded border border-slate-300 px-2 py-1">
+                                                className="rounded border border-line-strong px-2 py-1">
                                                 <option value="">—</option>
                                                 {factors.map((f) => <option key={f.id} value={f.code}>{f.code}</option>)}
                                             </select>
@@ -510,18 +512,20 @@ export function QuestionnaireEditor() {
                                                     text_i18n: mergedI18n(it.text_i18n, locale, e.target.value),
                                                 })}
                                                 rows={2}
-                                                className="w-full min-w-[20rem] rounded border border-slate-300 px-2 py-1" />
+                                                className="w-full min-w-[20rem] rounded border border-line-strong px-2 py-1" />
                                         </td>
                                         <td className="py-2 whitespace-nowrap">
-                                            <button onClick={() => saveItem(it)} className="text-indigo-600 hover:text-indigo-800 mr-2"><Save className="w-4 h-4" /></button>
-                                            <button onClick={() => deleteItem(it.id)} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></button>
+                                            <button onClick={() => saveItem(it)} className="min-h-control text-brand hover:text-link mr-2"><Save className="w-4 h-4" /></button>
+                                            {confirmDelete === `item-${it.id}`
+                                                ? <ConfirmInline question={t('admin.q.confirmDelete')} onConfirm={() => { setConfirmDelete(null); void deleteItem(it.id); }} onCancel={() => setConfirmDelete(null)} />
+                                                : <button onClick={() => setConfirmDelete(`item-${it.id}`)} className="min-h-control text-danger hover:text-danger-ink"><Trash2 className="w-4 h-4" /></button>}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                    <button onClick={addItem} className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
+                    <button onClick={addItem} className="min-h-control inline-flex items-center gap-2 rounded-control border border-line-strong px-4 py-2 text-sm text-ink-body hover:bg-surface-sunken">
                         <Plus className="w-4 h-4" /> {t('admin.q.addItem')}
                     </button>
                 </div>
@@ -531,31 +535,31 @@ export function QuestionnaireEditor() {
             {subTab === 'rules' && rules && (
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 text-sm">
-                        <span className="text-slate-500">{t('admin.q.viewLocale')}:</span>
+                        <span className="text-ink-muted">{t('admin.q.viewLocale')}:</span>
                         {LOCALES.map((l) => (
                             <button key={l} onClick={() => setLocale(l)}
-                                className={`rounded px-2 py-0.5 ${locale === l ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                className={`min-h-control rounded px-2 py-1 ${locale === l ? 'bg-brand text-ink-on-brand' : 'bg-surface-raised text-ink-muted'}`}>
                                 {l}
                             </button>
                         ))}
                     </div>
-                    <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                    <div className="rounded-control border border-line bg-surface-sunken px-4 py-4 text-sm text-ink-muted">
                         {t('admin.q.rules.scale')}: <b>{rules.instrument.response_scale_min}–{rules.instrument.response_scale_max}</b> ·{' '}
                         {t('admin.q.rules.report')}: <b>{rules.instrument.report_scale_type}</b> ·{' '}
                         {t('admin.q.rules.norms')}: <b>{rules.uses_validated_norms ? t('admin.q.rules.normed') : t('admin.q.rules.experimental')}</b>
                     </div>
-                    <div className="grid gap-3 md:grid-cols-2">
+                    <div className="grid gap-4 md:grid-cols-2">
                         {rules.factors.map((f) => (
-                            <div key={f.code} className="rounded-lg border border-slate-200 p-4">
+                            <div key={f.code} className="rounded-lg border border-line p-4">
                                 <div className="flex items-center justify-between">
-                                    <span className="font-semibold text-indigo-700">{f.code} — {f.label}</span>
-                                    <span className="text-xs text-slate-500">{f.orientation}{f.is_interpretation_inverted ? ' · inv' : ''}</span>
+                                    <span className="font-semibold text-link">{f.code} — {f.label}</span>
+                                    <span className="text-xs text-ink-muted">{f.orientation}{f.is_interpretation_inverted ? ' · inv' : ''}</span>
                                 </div>
-                                <p className="mt-2 text-xs text-slate-500">
+                                <p className="mt-2 text-xs text-ink-muted">
                                     {t('admin.q.rules.items')}: {f.item_numbers.join(', ') || '—'}
                                 </p>
                                 {f.reverse_item_numbers.length > 0 && (
-                                    <p className="mt-1 text-xs text-amber-700">
+                                    <p className="mt-1 text-xs text-warning">
                                         {t('admin.q.rules.reverse')}: {f.reverse_item_numbers.join(', ')}
                                     </p>
                                 )}
@@ -620,30 +624,30 @@ function LanguageStatusBar({
     };
 
     return (
-        <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm space-y-2">
+        <div className="rounded-control border border-line bg-surface-sunken px-4 py-2 text-sm space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-                <span className="text-slate-500">{t('admin.q.versionStatus')} ({locale}):</span>
-                <span className="rounded bg-white px-2 py-0.5 font-semibold text-slate-800 border border-slate-200">
+                <span className="text-ink-muted">{t('admin.q.versionStatus')} ({locale}):</span>
+                <span className="rounded bg-surface px-2 py-1 font-semibold text-ink border border-line">
                     {version?.status ?? '—'}
                 </span>
                 {version?.source && (
-                    <span className="text-xs text-slate-500">{t('admin.q.versionSource')}: {version.source}</span>
+                    <span className="text-xs text-ink-muted">{t('admin.q.versionSource')}: {version.source}</span>
                 )}
                 {version?.approved_by && (
-                    <span className="text-xs text-slate-500">{t('admin.q.versionApprovedBy')}: {version.approved_by}</span>
+                    <span className="text-xs text-ink-muted">{t('admin.q.versionApprovedBy')}: {version.approved_by}</span>
                 )}
             </div>
             {version && (
-                <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-2">
                     {ladder.filter((s) => s !== version.status).map((s) => (
-                        <button key={s} onClick={() => promote(s)}
-                            className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-0.5 text-xs text-slate-700 hover:bg-slate-100">
+                        <Button variant="secondary" key={s} onClick={() => promote(s)}
+                            className="gap-1 text-xs">
                             <ArrowRight className="h-3 w-3" aria-hidden />{s}
-                        </button>
+                        </Button>
                     ))}
                 </div>
             )}
-            {error && <p className="text-xs text-red-600">{error}</p>}
+            {error && <p className="text-xs text-danger">{error}</p>}
         </div>
     );
 }

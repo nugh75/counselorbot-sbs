@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import type { AdminAssistantQuestion } from '@/lib/assistant-questions';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 
 // Topic allineati a TOPICS_BY_COLLECTION_AUDIENCE della pagina /assistente.
 // Solo questi vengono renderizzati nell'assistente, quindi l'admin sceglie tra questi.
@@ -173,8 +176,8 @@ export function AssistantQuestionsPanel() {
         }
     };
 
+    const [confirmDelete, setConfirmDelete] = useState<string | number | null>(null);
     const remove = async (q: AdminAssistantQuestion) => {
-        if (!window.confirm(t('admin.aq.confirmDelete'))) return;
         setMessage('');
         try {
             const res = await fetch(`/api/admin/assistant-questions/${q.id}`, { method: 'DELETE' });
@@ -186,26 +189,26 @@ export function AssistantQuestionsPanel() {
         }
     };
 
-    const inputCls = 'mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-400';
+    const inputCls = 'mt-1 h-9 w-full rounded-control border border-line-strong bg-surface px-4 text-sm text-ink outline-none focus:border-brand';
 
     const topicLabel = (topic: string) => t(`admin.aq.topic.${topic}`) || topic;
 
     const renderForm = () => (
-        <section className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
-            <div className="grid gap-3 md:grid-cols-3">
-                <label className="text-xs font-semibold uppercase text-slate-500">
+        <section className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+            <div className="grid gap-4 md:grid-cols-3">
+                <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.aq.form.topic')}
                     <select className={inputCls} value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value })}>
                         {TOPICS.map((topic) => <option key={topic} value={topic}>{topicLabel(topic)}</option>)}
                     </select>
                 </label>
-                <label className="text-xs font-semibold uppercase text-slate-500">
+                <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.aq.form.language')}
                     <select className={inputCls} value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })}>
                         {LANGUAGES.map((lang) => <option key={lang} value={lang}>{lang.toUpperCase()}</option>)}
                     </select>
                 </label>
-                <label className="text-xs font-semibold uppercase text-slate-500">
+                <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.aq.form.order')}
                     <input
                         type="number"
@@ -215,91 +218,83 @@ export function AssistantQuestionsPanel() {
                     />
                 </label>
             </div>
-            <label className="mt-3 block text-xs font-semibold uppercase text-slate-500">
+            <label className="mt-4 block text-xs font-semibold text-ink-muted">
                 {t('admin.aq.form.text')}
                 <textarea
-                    className="mt-1 min-h-[80px] w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-400"
+                    className="mt-1 min-h-[80px] w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink outline-none focus:border-brand"
                     value={form.text}
                     onChange={(e) => setForm({ ...form, text: e.target.value })}
                     placeholder={t('admin.aq.form.textPlaceholder')}
                 />
             </label>
-            <label className="mt-3 flex items-center gap-2 text-sm font-medium text-slate-700">
+            <label className="mt-4 flex items-center gap-2 text-sm font-semibold text-ink-body">
                 <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
                 {t('admin.aq.form.active')}
             </label>
             <div className="mt-4 flex flex-wrap items-center gap-2">
-                <button
+                <Button
                     type="button"
                     disabled={saving}
-                    onClick={() => void save()}
-                    className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                >
+                    onClick={() => void save()}>
                     <Check className="h-4 w-4" />
                     {t('admin.aq.save')}
-                </button>
-                <button
+                </Button>
+                <Button variant="secondary"
                     type="button"
-                    onClick={cancel}
-                    className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                >
+                    onClick={cancel}>
                     <X className="h-4 w-4" />
                     {t('admin.aq.cancel')}
-                </button>
+                </Button>
             </div>
         </section>
     );
 
     return (
         <div className="space-y-4">
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
+            <section className="rounded-lg border border-line bg-surface p-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">{t('admin.aq.title')}</h2>
-                        <p className="mt-1 max-w-2xl text-sm text-slate-500">{t('admin.aq.subtitle')}</p>
+                        <h2 className="text-lg font-semibold text-ink">{t('admin.aq.title')}</h2>
+                        <p className="mt-1 max-w-2xl text-sm text-ink-muted">{t('admin.aq.subtitle')}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        <button
+                        <Button variant="secondary"
                             type="button"
-                            onClick={() => void refresh()}
-                            className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                        >
+                            onClick={() => void refresh()}>
                             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                             {t('admin.aq.refresh')}
-                        </button>
+                        </Button>
                         {editingId === null && (
-                            <button
+                            <Button
                                 type="button"
-                                onClick={startNew}
-                                className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700"
-                            >
+                                onClick={startNew}>
                                 <Plus className="h-4 w-4" />
                                 {t('admin.aq.new')}
-                            </button>
+                            </Button>
                         )}
                     </div>
                 </div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {TOPICS.map((topic) => (
-                        <div key={topic} className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                            <p className="text-xs font-semibold uppercase text-slate-500">{topicLabel(topic)}</p>
-                            <p className="mt-1 text-2xl font-bold text-slate-900">{countsByTopic[topic] ?? 0}</p>
-                            <p className="text-xs text-slate-500">{t('admin.aq.activeIt')}</p>
+                        <div key={topic} className="rounded-control border border-line bg-surface-sunken p-4">
+                            <p className="text-xs font-semibold text-ink-muted">{topicLabel(topic)}</p>
+                            <p className="mt-1 text-2xl font-semibold text-ink">{countsByTopic[topic] ?? 0}</p>
+                            <p className="text-xs text-ink-muted">{t('admin.aq.activeIt')}</p>
                         </div>
                     ))}
                 </div>
             </section>
 
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="text-xs font-semibold uppercase text-slate-500">
+            <section className="rounded-lg border border-line bg-surface p-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="text-xs font-semibold text-ink-muted">
                         {t('admin.aq.filter.topic')}
                         <select className={inputCls} value={filterTopic} onChange={(e) => setFilterTopic(e.target.value)}>
                             <option value="all">{t('admin.aq.filter.all')}</option>
                             {TOPICS.map((topic) => <option key={topic} value={topic}>{topicLabel(topic)}</option>)}
                         </select>
                     </label>
-                    <label className="text-xs font-semibold uppercase text-slate-500">
+                    <label className="text-xs font-semibold text-ink-muted">
                         {t('admin.aq.filter.language')}
                         <select className={inputCls} value={filterLang} onChange={(e) => setFilterLang(e.target.value)}>
                             <option value="all">{t('admin.aq.filter.all')}</option>
@@ -310,16 +305,16 @@ export function AssistantQuestionsPanel() {
             </section>
 
             {editingId === 'new' && renderForm()}
-            {message && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p>}
+            {message && <Callout variant="danger">{message}</Callout>}
 
             <div className="space-y-2">
                 {loading && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
+                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted">
                         {t('admin.aq.loading')}
                     </section>
                 )}
                 {!loading && filtered.length === 0 && editingId !== 'new' && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
+                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted">
                         {t('admin.aq.empty')}
                     </section>
                 )}
@@ -327,28 +322,30 @@ export function AssistantQuestionsPanel() {
                     editingId === q.id ? (
                         <div key={q.id}>{renderForm()}</div>
                     ) : (
-                        <section key={q.id} className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                        <section key={q.id} className="flex items-start justify-between gap-4 rounded-lg border border-line bg-surface p-4 shadow-card">
                             <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">{topicLabel(q.topic)}</span>
-                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">{q.language.toUpperCase()}</span>
-                                    <span className="text-xs text-slate-500">#{q.sort_order}</span>
+                                    <span className="rounded-full bg-brand-soft px-2 py-1 text-xs font-semibold text-link">{topicLabel(q.topic)}</span>
+                                    <span className="rounded-full bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-muted">{q.language.toUpperCase()}</span>
+                                    <span className="text-xs text-ink-muted">#{q.sort_order}</span>
                                     {!q.is_active && (
-                                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">{t('admin.aq.inactive')}</span>
+                                        <span className="rounded-full bg-warning-soft px-2 py-1 text-xs font-semibold text-warning">{t('admin.aq.inactive')}</span>
                                     )}
                                 </div>
-                                <p className={`mt-1 text-sm leading-relaxed ${q.is_active ? 'text-slate-800' : 'text-slate-500 line-through'}`}>{q.text}</p>
+                                <p className={`mt-1 text-sm leading-relaxed ${q.is_active ? 'text-ink' : 'text-ink-muted line-through'}`}>{q.text}</p>
                             </div>
                             <div className="flex shrink-0 gap-1">
-                                <button type="button" onClick={() => void toggleActive(q)} className="rounded-md px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100" title={t('admin.aq.toggle')}>
+                                <button type="button" onClick={() => void toggleActive(q)} className="min-h-control rounded-control px-2 py-1 text-xs font-semibold text-ink-muted hover:bg-surface-raised" title={t('admin.aq.toggle')}>
                                     {q.is_active ? t('admin.aq.disable') : t('admin.aq.enable')}
                                 </button>
-                                <button type="button" onClick={() => startEdit(q)} className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900" title={t('admin.aq.edit')}>
+                                <button type="button" onClick={() => startEdit(q)} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-ink-muted hover:bg-surface-raised hover:text-ink" title={t('admin.aq.edit')}>
                                     <Pencil className="h-4 w-4" />
                                 </button>
-                                <button type="button" onClick={() => void remove(q)} className="rounded-md p-2 text-red-500 hover:bg-red-50" title={t('admin.aq.delete')}>
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
+                                {confirmDelete === q.id
+                                    ? <ConfirmInline question={t('admin.aq.confirmDelete')} onConfirm={() => { setConfirmDelete(null); void remove(q); }} onCancel={() => setConfirmDelete(null)} />
+                                    : <button type="button" onClick={() => setConfirmDelete(q.id)} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-danger hover:bg-danger-soft" title={t('admin.aq.delete')}>
+                                          <Trash2 className="h-4 w-4" />
+                                      </button>}
                             </div>
                         </section>
                     )

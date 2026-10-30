@@ -22,23 +22,23 @@ export function PromptExperimentContext({ targetKey, steps, baseline, frozen, la
     const C = promptLabContextCopy[lang];
     const ordered = [...steps].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
     const target = ordered.find((s) => s.id === targetKey);
-    return <section aria-label={C.location} className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-700">
-        <h4 className="font-bold text-slate-900">{C.location}</h4>
-        <p className="font-semibold text-indigo-800">{C.path} → {target ? targetLabel(target, lang) : targetKey}</p>
+    return <section aria-label={C.location} className="space-y-4 rounded-lg border border-line bg-surface p-4 text-sm text-ink-body">
+        <h4 className="font-semibold text-ink">{C.location}</h4>
+        <p className="font-semibold text-link">{C.path} → {target ? targetLabel(target, lang) : targetKey}</p>
         <p>{C.scope}</p>
-        {frozen && <p className="text-xs text-slate-500">{C.frozen}</p>}
+        {frozen && <p className="text-xs text-ink-muted">{C.frozen}</p>}
         {target ? <ol className="flex flex-wrap gap-2" aria-label={C.path}>
             {ordered.map((step) => <li key={step.id} aria-current={step.id === targetKey ? 'step' : undefined}
-                className={cn('rounded-md border px-2 py-1 text-xs', step.id === targetKey ? 'border-indigo-200 bg-indigo-50 font-semibold text-indigo-800' : 'border-slate-200 text-slate-500')}>
+                className={cn('rounded-control border px-2 py-1 text-xs', step.id === targetKey ? 'border-brand-line bg-brand-soft font-semibold text-link' : 'border-line text-ink-muted')}>
                 {targetLabel(step, lang)}
             </li>)}
         </ol> : <p>{C.unavailable}</p>}
         <p>{C.composition}</p>
         <div>
             <h5 className="mb-1 font-semibold">{frozen ? C.baseline : C.preview}</h5>
-            <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md border border-slate-200 bg-slate-50 p-3 font-sans text-sm">{baseline ?? target?.prompt ?? C.unavailable}</pre>
+            <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-control border border-line bg-surface-sunken p-4 font-sans text-sm">{baseline ?? target?.prompt ?? C.unavailable}</pre>
         </div>
-        <details className="text-xs text-slate-500">
+        <details className="text-xs text-ink-muted">
             <summary className="cursor-pointer">{C.technical}</summary>
             <p className="mt-2 break-all font-mono">{`guided_steps.prompt · id=${targetKey} · system_prompt_mode=${target?.system_prompt_mode ?? '—'}`}</p>
         </details>

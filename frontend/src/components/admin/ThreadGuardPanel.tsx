@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, Check, Eye, Info, RefreshCw, Save } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { Button } from '@/components/ui/Button';
 
 interface ActiveProvider {
     id: string;
@@ -146,32 +147,32 @@ export function ThreadGuardPanel() {
     };
 
     if (loading) {
-        return <div className="glass-panel p-6 text-sm text-slate-500">{t('admin.threadGuard.loading')}</div>;
+        return <div className="rounded-card border border-line bg-surface shadow-card p-6 text-sm text-ink-muted">{t('admin.threadGuard.loading')}</div>;
     }
 
     const currentProviderKnown = activeProviders.some((p) => p.id === provider);
     const canEnable = Boolean(provider && isProviderActive && model.trim());
 
     return (
-        <div className="glass-panel space-y-5 p-6">
-            <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-indigo-50">
-                    <Eye className="h-5 w-5 text-indigo-600" />
+        <div className="rounded-card border border-line bg-surface shadow-card space-y-4 p-6">
+            <div className="flex items-start gap-4">
+                <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-control bg-brand-soft">
+                    <Eye className="h-5 w-5 text-brand" />
                 </div>
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-900">{t('admin.threadGuard.title')}</h2>
-                    <p className="mt-1 max-w-3xl text-sm text-slate-500">{t('admin.threadGuard.subtitle')}</p>
+                    <h2 className="text-lg font-semibold text-ink">{t('admin.threadGuard.title')}</h2>
+                    <p className="mt-1 max-w-3xl text-sm text-ink-muted">{t('admin.threadGuard.subtitle')}</p>
                 </div>
             </div>
 
             {/* Avviso provider inattivo */}
             {provider && !isProviderActive && (
-                <div className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                <div className="flex items-start gap-4 rounded-control border border-warning-line bg-warning-soft p-4 text-sm text-warning-ink">
+                    <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-warning" />
                     <div>
                         <div className="font-semibold">{t('admin.threadGuard.providerInactiveWarning')}</div>
-                        <div className="mt-1 text-xs text-amber-700">
-                            {t('admin.threadGuard.provider')}: <span className="font-mono font-medium">{provider}</span> ({t('admin.threadGuard.inactiveTag')})
+                        <div className="mt-1 text-xs text-warning">
+                            {t('admin.threadGuard.provider')}: <span className="font-mono font-semibold">{provider}</span> ({t('admin.threadGuard.inactiveTag')})
                         </div>
                     </div>
                 </div>
@@ -179,15 +180,15 @@ export function ThreadGuardPanel() {
 
             {/* Avviso nessun provider configurato */}
             {!provider && (
-                <div className="flex items-start gap-3 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                    <Info className="mt-0.5 h-5 w-5 shrink-0 text-slate-500" />
+                <div className="flex items-start gap-4 rounded-control border border-line bg-surface-sunken p-4 text-sm text-ink-body">
+                    <Info className="mt-1 h-5 w-5 shrink-0 text-ink-muted" />
                     <div>{t('admin.threadGuard.noProviderWarning')}</div>
                 </div>
             )}
 
             {/* Checkbox attivazione */}
             <label
-                className={`flex items-start gap-3 rounded-md border border-slate-200 bg-white p-4 ${
+                className={`flex items-start gap-4 rounded-control border border-line bg-surface p-4 ${
                     !canEnable ? 'opacity-80' : ''
                 }`}
             >
@@ -199,26 +200,26 @@ export function ThreadGuardPanel() {
                         if (!canEnable && event.target.checked) return;
                         setEnabled(event.target.checked);
                     }}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+                    className="mt-1 h-4 w-4 rounded border-line-strong text-brand focus:ring-focus disabled:opacity-50"
                 />
                 <span>
-                    <span className="block text-sm font-semibold text-slate-900">{t('admin.threadGuard.enabled')}</span>
-                    <span className="mt-1 block text-sm text-slate-500">{t('admin.threadGuard.enabledHint')}</span>
+                    <span className="block text-sm font-semibold text-ink">{t('admin.threadGuard.enabled')}</span>
+                    <span className="mt-1 block text-sm text-ink-muted">{t('admin.threadGuard.enabledHint')}</span>
                 </span>
             </label>
 
             {/* Selettore Provider */}
-            <div className="rounded-md border border-slate-200 bg-white p-4">
-                <label htmlFor="thread-guard-provider" className="block text-sm font-semibold text-slate-900">
+            <div className="rounded-control border border-line bg-surface p-4">
+                <label htmlFor="thread-guard-provider" className="block text-sm font-semibold text-ink">
                     {t('admin.threadGuard.provider')}
                 </label>
-                <p className="mt-1 text-sm text-slate-500">{t('admin.threadGuard.providerHint')}</p>
+                <p className="mt-1 text-sm text-ink-muted">{t('admin.threadGuard.providerHint')}</p>
 
                 <select
                     id="thread-guard-provider"
                     value={provider}
                     onChange={(event) => handleProviderChange(event.target.value)}
-                    className="mt-3 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="mt-4 w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-focus"
                 >
                     <option value="">{t('admin.threadGuard.selectProvider')}</option>
                     {provider && !currentProviderKnown && (
@@ -234,31 +235,31 @@ export function ThreadGuardPanel() {
                 </select>
 
                 {activeProviders.length === 0 && (
-                    <p className="mt-2 text-xs text-amber-600">{t('admin.threadGuard.noActiveProviders')}</p>
+                    <p className="mt-2 text-xs text-warning">{t('admin.threadGuard.noActiveProviders')}</p>
                 )}
             </div>
 
             {/* Selettore Modello */}
             {provider && (
-                <div className="rounded-md border border-slate-200 bg-white p-4">
+                <div className="rounded-control border border-line bg-surface p-4">
                     <div className="flex items-center justify-between">
-                        <label htmlFor="thread-guard-model" className="block text-sm font-semibold text-slate-900">
+                        <label htmlFor="thread-guard-model" className="block text-sm font-semibold text-ink">
                             {t('admin.threadGuard.model')}
                         </label>
                         {liveModels.length > 0 && (
                             <button
                                 type="button"
                                 onClick={() => setCustomModel((prev) => !prev)}
-                                className="text-xs text-indigo-600 hover:text-indigo-800 underline"
+                                className="text-xs text-brand hover:text-link underline"
                             >
                                 {customModel ? t('admin.threadGuard.selectModel') : t('admin.threadGuard.customModel')}
                             </button>
                         )}
                     </div>
-                    <p className="mt-1 text-sm text-slate-500">{t('admin.threadGuard.modelHint')}</p>
+                    <p className="mt-1 text-sm text-ink-muted">{t('admin.threadGuard.modelHint')}</p>
 
                     {loadingModels ? (
-                        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                        <div className="mt-4 flex items-center gap-2 text-xs text-ink-muted">
                             <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                             {t('admin.threadGuard.loading')}
                         </div>
@@ -267,7 +268,7 @@ export function ThreadGuardPanel() {
                             id="thread-guard-model"
                             value={model}
                             onChange={(event) => setModel(event.target.value)}
-                            className="mt-3 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="mt-4 w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-focus"
                         >
                             <option value="">{t('admin.threadGuard.selectModel')}</option>
                             {model && !liveModels.includes(model) && (
@@ -286,37 +287,35 @@ export function ThreadGuardPanel() {
                             value={model}
                             onChange={(event) => setModel(event.target.value)}
                             placeholder="es. qwen3.8:latest, mistral-large-latest, gpt-4o"
-                            className="mt-3 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="mt-4 w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-focus"
                         />
                     )}
                 </div>
             )}
 
             {/* Azioni di salvataggio */}
-            <div className="flex items-center gap-3">
-                <button
+            <div className="flex items-center gap-4">
+                <Button
                     type="button"
                     onClick={save}
-                    disabled={saving}
-                    className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
-                >
+                    disabled={saving}>
                     <Save className="h-4 w-4" />
                     {t('admin.threadGuard.save')}
-                </button>
+                </Button>
                 {status === 'saved' && (
-                    <span className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium">
+                    <span className="flex items-center gap-2 text-sm text-success font-semibold">
                         <Check className="h-4 w-4" />
                         {t('admin.threadGuard.saved')}
                     </span>
                 )}
                 {status === 'error' && (
-                    <span className="text-sm text-red-600">
+                    <span className="text-sm text-danger">
                         {errorMessage || t('admin.threadGuard.saveError')}
                     </span>
                 )}
             </div>
 
-            <p className="text-xs text-slate-500">{t('admin.threadGuard.logHint')}</p>
+            <p className="text-xs text-ink-muted">{t('admin.threadGuard.logHint')}</p>
         </div>
     );
 }

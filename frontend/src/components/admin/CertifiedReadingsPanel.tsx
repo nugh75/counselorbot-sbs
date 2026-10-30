@@ -4,6 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, BadgeCheck, AlertTriangle, Search } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { ContentLanguageStatus } from './ContentLanguageStatus';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 
 type Lang = 'it' | 'en' | 'es' | 'fr' | 'de' | 'sv';
 const LANGS: Lang[] = ['it', 'en', 'es', 'fr', 'de', 'sv'];
@@ -258,8 +261,8 @@ export function CertifiedReadingsPanel() {
         }
     };
 
+    const [confirmDelete, setConfirmDelete] = useState<string | number | null>(null);
     const remove = async (id: number) => {
-        if (!window.confirm(t('admin.readings.confirmDelete'))) return;
         try {
             const res = await fetch(`/api/admin/certified-readings/${id}`, { method: 'DELETE' });
             if (res.ok) await refresh();
@@ -271,71 +274,71 @@ export function CertifiedReadingsPanel() {
     const verificationBadge = (row: Reading) => {
         const match = row.verification?.match as boolean | null | undefined;
         if (row.verification == null) {
-            return <span className="text-xs text-slate-500">{t('admin.readings.neverChecked')}</span>;
+            return <span className="text-xs text-ink-muted">{t('admin.readings.neverChecked')}</span>;
         }
         if (match === true) {
-            return <span className="inline-flex items-center gap-1 text-xs text-emerald-700"><BadgeCheck className="h-3.5 w-3.5" />{t('admin.readings.verified')}</span>;
+            return <span className="inline-flex items-center gap-1 text-xs text-success"><BadgeCheck className="h-3.5 w-3.5" />{t('admin.readings.verified')}</span>;
         }
         if (match === false) {
-            return <span className="inline-flex items-center gap-1 text-xs text-red-600"><AlertTriangle className="h-3.5 w-3.5" />{t('admin.readings.notFound')}</span>;
+            return <span className="inline-flex items-center gap-1 text-xs text-danger"><AlertTriangle className="h-3.5 w-3.5" />{t('admin.readings.notFound')}</span>;
         }
-        return <span className="text-xs text-amber-700">{t('admin.readings.manualCheck')}</span>;
+        return <span className="text-xs text-warning">{t('admin.readings.manualCheck')}</span>;
     };
 
-    const inputCls = 'h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400';
-    const areaCls = 'min-h-[70px] w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 outline-none focus:border-sky-400';
+    const inputCls = 'h-9 w-full rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-focus';
+    const areaCls = 'min-h-[70px] w-full rounded-control border border-line bg-surface px-2 py-1 text-sm text-ink-body outline-none focus:border-focus';
     const chip = (active: boolean) =>
-        `rounded-md border px-2 py-1 text-xs font-medium ${active ? 'border-indigo-300 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-500'}`;
+        `min-h-control rounded-control border px-2 py-1 text-xs font-semibold ${active ? 'border-brand-line bg-brand-soft text-link' : 'border-line bg-surface text-ink-muted'}`;
 
     const renderForm = () => (
-        <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.slug')}
+        <div className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.slug')}
                     <input className={inputCls} value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="dweck-mindset" />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.kind')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.kind')}
                     <select className={inputCls} value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}>
                         {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
                     </select>
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.status')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.status')}
                     <select className={inputCls} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                         <option value="draft">{t('admin.readings.draft')}</option>
                         <option value="certified">{t('admin.readings.certified')}</option>
                     </select>
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.order')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.order')}
                     <input className={inputCls} type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
                 </label>
             </div>
 
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <label className="flex flex-col text-xs font-medium text-slate-500 lg:col-span-2">{t('admin.readings.title.field')}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <label className="flex flex-col text-xs font-semibold text-ink-muted lg:col-span-2">{t('admin.readings.title.field')}
                     <input className={inputCls} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500 lg:col-span-2">{t('admin.readings.originalTitle')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted lg:col-span-2">{t('admin.readings.originalTitle')}
                     <input className={inputCls} value={form.original_title} onChange={(e) => setForm({ ...form, original_title: e.target.value })} />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500 lg:col-span-2">{t('admin.readings.creators')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted lg:col-span-2">{t('admin.readings.creators')}
                     <input className={inputCls} value={form.creators} onChange={(e) => setForm({ ...form, creators: e.target.value })} placeholder="Carol S. Dweck" />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.year')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.year')}
                     <input className={inputCls} type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.publisher')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.publisher')}
                     <input className={inputCls} value={form.publisher} onChange={(e) => setForm({ ...form, publisher: e.target.value })} />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.isbn')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.isbn')}
                     <input className={inputCls} value={form.isbn} onChange={(e) => setForm({ ...form, isbn: e.target.value })} />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.doi')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.doi')}
                     <input className={inputCls} value={form.doi} onChange={(e) => setForm({ ...form, doi: e.target.value })} placeholder="10.1177/..." />
                 </label>
             </div>
 
             {/* Temi: e' la chiave con cui la voce raggiunge una conversazione */}
             <div className="mt-4">
-                <div className="mb-1 text-xs font-medium text-slate-500">{t('admin.readings.themes')}</div>
+                <div className="mb-1 text-xs font-semibold text-ink-muted">{t('admin.readings.themes')}</div>
                 <div className="flex flex-wrap gap-1">
                     {themes.map((theme) => (
                         <button key={theme.code} type="button" className={chip(form.themes.includes(theme.code))}
@@ -346,11 +349,11 @@ export function CertifiedReadingsPanel() {
                 </div>
             </div>
 
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.factors')}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.factors')}
                     <input className={inputCls} value={form.factor_codes} onChange={(e) => setForm({ ...form, factor_codes: e.target.value })} placeholder="A1, S1" />
                 </label>
-                <div className="text-xs font-medium text-slate-500">{t('admin.readings.instruments')}
+                <div className="text-xs font-semibold text-ink-muted">{t('admin.readings.instruments')}
                     <div className="mt-1 flex flex-wrap gap-1">
                         {INSTRUMENTS.map((code) => (
                             <button key={code} type="button" className={chip(form.questionnaire_types.includes(code))}
@@ -358,7 +361,7 @@ export function CertifiedReadingsPanel() {
                         ))}
                     </div>
                 </div>
-                <div className="text-xs font-medium text-slate-500">{t('admin.readings.audience')}
+                <div className="text-xs font-semibold text-ink-muted">{t('admin.readings.audience')}
                     <div className="mt-1 flex flex-wrap gap-1">
                         {AUDIENCES.map((code) => (
                             <button key={code} type="button" className={chip(form.audience.includes(code))}
@@ -366,7 +369,7 @@ export function CertifiedReadingsPanel() {
                         ))}
                     </div>
                 </div>
-                <div className="text-xs font-medium text-slate-500">{t('admin.readings.languages')}
+                <div className="text-xs font-semibold text-ink-muted">{t('admin.readings.languages')}
                     <div className="mt-1 flex flex-wrap gap-1">
                         {LANGS.map((code) => (
                             <button key={code} type="button" className={chip(form.available_languages.includes(code))}
@@ -389,43 +392,43 @@ export function CertifiedReadingsPanel() {
                     locale={lang}
                 />
             )}
-            <div className="mt-2 space-y-3">
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.summary')}
+            <div className="mt-2 space-y-4">
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.summary')}
                     <textarea className={areaCls} value={form.summary_i18n[lang] ?? ''}
                         onChange={(e) => setForm({ ...form, summary_i18n: { ...form.summary_i18n, [lang]: e.target.value } })} />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.why')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.why')}
                     <textarea className={areaCls} value={form.why_i18n[lang] ?? ''}
                         onChange={(e) => setForm({ ...form, why_i18n: { ...form.why_i18n, [lang]: e.target.value } })} />
                 </label>
             </div>
 
             {/* Sinossi: di cosa parla l'opera. Viene da una fonte, e la fonte si dichiara. */}
-            <div className="mt-3 rounded-md border border-slate-200 bg-white/70 p-3">
+            <div className="mt-4 rounded-control border border-line bg-surface/70 p-4">
                 <div className="flex items-start justify-between gap-2">
-                    <div className="text-xs font-medium text-slate-500">{t('admin.readings.synopsis')}</div>
+                    <div className="text-xs font-semibold text-ink-muted">{t('admin.readings.synopsis')}</div>
                     {typeof editingId === 'number' && (
                         <button type="button" onClick={() => void fetchSynopsis()} disabled={fetchingSynopsis}
-                            className="inline-flex h-7 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-[11px] font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+                            className="inline-flex min-h-control items-center gap-1 rounded-control border border-line bg-surface px-2 text-2xs font-semibold text-ink-muted hover:bg-surface-sunken disabled:opacity-50">
                             <Search className="h-3.5 w-3.5" />{t('admin.readings.synopsisFetch')}
                         </button>
                     )}
                 </div>
-                <p className="mt-1 text-[11px] text-slate-500">{t('admin.readings.synopsisHint')}</p>
+                <p className="mt-1 text-2xs text-ink-muted">{t('admin.readings.synopsisHint')}</p>
                 <textarea className={`${areaCls} mt-2`} value={form.synopsis_i18n[lang] ?? ''}
                     onChange={(e) => setForm({ ...form, synopsis_i18n: { ...form.synopsis_i18n, [lang]: e.target.value } })} />
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.synopsisSource')}
+                    <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.synopsisSource')}
                         <input className={inputCls} value={form.synopsis_source.source ?? ''}
                             onChange={(e) => setForm({ ...form, synopsis_source: { ...form.synopsis_source, source: e.target.value } })} />
                     </label>
-                    <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.synopsisUrl')}
+                    <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.synopsisUrl')}
                         <input className={inputCls} value={form.synopsis_source.url ?? ''}
                             onChange={(e) => setForm({ ...form, synopsis_source: { ...form.synopsis_source, url: e.target.value } })} />
                     </label>
                 </div>
                 {form.synopsis_source.retrieved_at && (
-                    <p className="mt-1 text-[11px] text-slate-500">
+                    <p className="mt-1 text-2xs text-ink-muted">
                         {t('admin.readings.synopsisRetrieved')}: {form.synopsis_source.retrieved_at}
                         {form.synopsis_source.license ? ` — ${form.synopsis_source.license}` : ''}
                     </p>
@@ -433,46 +436,44 @@ export function CertifiedReadingsPanel() {
             </div>
 
             {/* Materiale sensibile */}
-            <div className="mt-4 rounded-md border border-amber-200 bg-amber-50/60 p-3">
-                <label className="flex items-center gap-2 text-xs font-medium text-amber-900">
+            <div className="mt-4 rounded-control border border-warning-line bg-warning-soft/60 p-4">
+                <label className="flex items-center gap-2 text-xs font-semibold text-warning-ink">
                     <input type="checkbox" checked={form.is_sensitive} onChange={(e) => setForm({ ...form, is_sensitive: e.target.checked })} />
                     {t('admin.readings.sensitive')}
                 </label>
-                <p className="mt-1 text-[11px] text-amber-800">{t('admin.readings.sensitiveHint')}</p>
+                <p className="mt-1 text-2xs text-warning-ink">{t('admin.readings.sensitiveHint')}</p>
                 {form.is_sensitive && (
-                    <label className="mt-2 flex flex-col text-xs font-medium text-amber-900">{t('admin.readings.warning')}
+                    <label className="mt-2 flex flex-col text-xs font-semibold text-warning-ink">{t('admin.readings.warning')}
                         <textarea className={areaCls} value={form.content_warning} onChange={(e) => setForm({ ...form, content_warning: e.target.value })} />
                     </label>
                 )}
             </div>
 
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.whereToFind')}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.whereToFind')}
                     <textarea className={areaCls} value={form.where_to_find} onChange={(e) => setForm({ ...form, where_to_find: e.target.value })} />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.source')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.source')}
                     <textarea className={areaCls} value={form.source_reference} onChange={(e) => setForm({ ...form, source_reference: e.target.value })} />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.certifiedBy')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.certifiedBy')}
                     <input className={inputCls} value={form.certified_by} onChange={(e) => setForm({ ...form, certified_by: e.target.value })} />
                 </label>
-                <label className="flex items-center gap-2 self-end text-xs font-medium text-slate-500">
+                <label className="flex items-center gap-2 self-end text-xs font-semibold text-ink-muted">
                     <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
                     {t('admin.readings.active')}
                 </label>
             </div>
 
-            {error && <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
+            {error && <Callout variant="danger" className="mt-4">{error}</Callout>}
 
             <div className="mt-4 flex gap-2">
-                <button type="button" disabled={saving || !form.slug.trim() || !form.title.trim()} onClick={() => void save()}
-                    className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-4 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                <Button type="button" disabled={saving || !form.slug.trim() || !form.title.trim()} onClick={() => void save()}>
                     <Check className="h-4 w-4" />{t('admin.readings.save')}
-                </button>
-                <button type="button" onClick={cancel}
-                    className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                </Button>
+                <Button variant="secondary" type="button" onClick={cancel}>
                     <X className="h-4 w-4" />{t('admin.readings.cancel')}
-                </button>
+                </Button>
             </div>
         </div>
     );
@@ -481,41 +482,41 @@ export function CertifiedReadingsPanel() {
         <div className="space-y-4">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-800">{t('admin.readings.title')}</h2>
-                    <p className="mt-1 max-w-3xl text-sm text-slate-500">{t('admin.readings.subtitle')}</p>
+                    <h2 className="text-lg font-semibold text-ink">{t('admin.readings.title')}</h2>
+                    <p className="mt-1 max-w-3xl text-sm text-ink-muted">{t('admin.readings.subtitle')}</p>
                 </div>
-                <button type="button" onClick={startNew}
-                    className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700">
+                <Button type="button" onClick={startNew}
+                    className="shrink-0">
                     <Plus className="h-4 w-4" />{t('admin.readings.new')}
-                </button>
+                </Button>
             </div>
 
             {editingId === 'new' && renderForm()}
 
             {loading ? (
-                <p className="text-sm text-slate-500">…</p>
+                <p className="text-sm text-ink-muted">…</p>
             ) : readings.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">{t('admin.readings.empty')}</p>
+                <p className="rounded-lg border border-dashed border-line p-6 text-center text-sm text-ink-muted">{t('admin.readings.empty')}</p>
             ) : (
                 <ul className="space-y-2">
                     {readings.map((row) => (
-                        <li key={row.id} className="rounded-lg border border-slate-200 bg-white p-3">
+                        <li key={row.id} className="rounded-lg border border-line bg-surface p-4">
                             {editingId === row.id ? renderForm() : (
-                                <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-start justify-between gap-4">
                                     <div className="min-w-0">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium uppercase text-slate-500">{row.kind}</span>
-                                            <span className="font-medium text-slate-800">{row.title}</span>
-                                            {row.year && <span className="text-xs text-slate-500">{row.year}</span>}
-                                            <span className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${row.status === 'certified' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                            <span className="rounded bg-surface-raised px-2 py-1 text-2xs font-semibold text-ink-muted">{row.kind}</span>
+                                            <span className="font-semibold text-ink">{row.title}</span>
+                                            {row.year && <span className="text-xs text-ink-muted">{row.year}</span>}
+                                            <span className={`rounded px-2 py-1 text-2xs font-semibold ${row.status === 'certified' ? 'bg-success-soft text-success' : 'bg-surface-raised text-ink-muted'}`}>
                                                 {row.status === 'certified' ? t('admin.readings.certified') : t('admin.readings.draft')}
                                             </span>
-                                            {row.is_sensitive && <AlertTriangle className="h-4 w-4 text-amber-600" aria-label={t('admin.readings.sensitive')} />}
+                                            {row.is_sensitive && <AlertTriangle className="h-4 w-4 text-warning" aria-label={t('admin.readings.sensitive')} />}
                                         </div>
-                                        <div className="mt-1 text-xs text-slate-500">{(row.creators ?? []).join(', ')}</div>
+                                        <div className="mt-1 text-xs text-ink-muted">{(row.creators ?? []).join(', ')}</div>
                                         <div className="mt-1 flex flex-wrap gap-1">
                                             {(row.themes ?? []).map((code) => (
-                                                <span key={code} className="rounded bg-indigo-50 px-1.5 py-0.5 text-[11px] text-indigo-700">
+                                                <span key={code} className="rounded bg-brand-soft px-2 py-1 text-2xs text-link">
                                                     {themes.find((th) => th.code === code)?.label ?? code}
                                                 </span>
                                             ))}
@@ -525,17 +526,19 @@ export function CertifiedReadingsPanel() {
                                     <div className="flex shrink-0 flex-wrap gap-1">
                                         <button type="button" onClick={() => void verify(row.id)} disabled={verifyingId === row.id}
                                             title={t('admin.readings.verify')} aria-label={t('admin.readings.verify')}
-                                            className="rounded-md border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50 disabled:opacity-50">
+                                            className="inline-flex min-h-control min-w-control items-center justify-center rounded-control border border-line p-2 text-ink-muted hover:bg-surface-sunken disabled:opacity-50">
                                             <Search className="h-4 w-4" />
                                         </button>
                                         <button type="button" onClick={() => startEdit(row)} aria-label={t('admin.readings.edit')}
-                                            className="rounded-md border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50">
+                                            className="inline-flex min-h-control min-w-control items-center justify-center rounded-control border border-line p-2 text-ink-muted hover:bg-surface-sunken">
                                             <Pencil className="h-4 w-4" />
                                         </button>
-                                        <button type="button" onClick={() => void remove(row.id)} aria-label={t('admin.readings.delete')}
-                                            className="rounded-md border border-slate-200 p-1.5 text-red-500 hover:bg-red-50">
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
+                                        {confirmDelete === row.id
+                                            ? <ConfirmInline question={t('admin.readings.confirmDelete')} onConfirm={() => { setConfirmDelete(null); void remove(row.id); }} onCancel={() => setConfirmDelete(null)} />
+                                            : <button type="button" onClick={() => setConfirmDelete(row.id)} aria-label={t('admin.readings.delete')}
+                                                  className="inline-flex min-h-control min-w-control items-center justify-center rounded-control border border-line p-2 text-danger hover:bg-danger-soft">
+                                                  <Trash2 className="h-4 w-4" />
+                                              </button>}
                                     </div>
                                 </div>
                             )}
