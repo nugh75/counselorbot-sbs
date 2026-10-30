@@ -206,7 +206,7 @@ export function ClassImageModal({
 
     return createPortal(
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-3 sm:p-5 backdrop-blur-xs"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 sm:p-6"
             onMouseDown={(e) => {
                 if (e.target === e.currentTarget && !saving) onClose();
             }}
@@ -216,15 +216,15 @@ export function ClassImageModal({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="class-cover-modal-title"
-                className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+                className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-card border border-line bg-surface shadow-modal"
             >
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                <div className="flex items-center justify-between border-b border-line px-6 py-4">
                     <div>
-                        <h2 id="class-cover-modal-title" className="text-base font-bold text-slate-900 sm:text-lg">
+                        <h2 id="class-cover-modal-title" className="text-base font-semibold text-ink sm:text-lg">
                             {l('classCoverModalTitle')}
                         </h2>
-                        <p className="mt-0.5 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-ink-muted">
                             {l('classCoverModalSubtitle')}
                         </p>
                     </div>
@@ -234,7 +234,7 @@ export function ClassImageModal({
                         size="sm"
                         onClick={onClose}
                         disabled={saving}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                        className="rounded-lg p-2 text-ink-muted hover:bg-surface-raised hover:text-ink-body"
                         aria-label={l('classCoverClose')}
                     >
                         <X className="h-5 w-5" aria-hidden />
@@ -242,10 +242,10 @@ export function ClassImageModal({
                 </div>
 
                 {/* Banner anteprima attuale */}
-                <div className="border-b border-slate-100 bg-slate-50/80 px-5 py-3">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="relative aspect-[16/9] h-14 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-100 shadow-2xs">
+                <div className="border-b border-line bg-surface-sunken/80 px-6 py-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="relative aspect-[16/9] h-14 shrink-0 overflow-hidden rounded-control border border-line bg-surface-raised shadow-card">
                                 <Image
                                     src={currentCoverUrl}
                                     alt={group.name}
@@ -255,10 +255,10 @@ export function ClassImageModal({
                                 />
                             </div>
                             <div className="min-w-0">
-                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                <span className="text-xs font-semibold text-ink-muted">
                                     {l('classCoverCurrentPreview')}
                                 </span>
-                                <p className="truncate text-sm font-semibold text-slate-800" title={group.name}>
+                                <p className="truncate text-sm font-semibold text-ink" title={group.name}>
                                     {group.name}
                                 </p>
                             </div>
@@ -271,7 +271,7 @@ export function ClassImageModal({
                                 size="sm"
                                 disabled={saving}
                                 onClick={() => void handleResetDefault()}
-                                className="inline-flex min-h-[36px] items-center gap-1.5 self-start text-xs font-medium text-slate-600 sm:self-auto"
+                                className="inline-flex min-h-[36px] items-center gap-2 self-start text-xs font-semibold text-ink-muted sm:self-auto"
                             >
                                 <RotateCcw className="h-3.5 w-3.5" aria-hidden />
                                 <span>{l('classCoverResetDefault')}</span>
@@ -281,14 +281,14 @@ export function ClassImageModal({
                 </div>
 
                 {/* Tabs Switcher */}
-                <div className="flex border-b border-slate-200 bg-white px-5">
+                <div className="flex border-b border-line bg-surface px-6">
                     <button
                         type="button"
                         onClick={() => setActiveTab('presets')}
-                        className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition ${
+                        className={`flex items-center gap-2 border-b-2 px-4 py-4 text-xs sm:text-sm font-semibold transition ${
                             activeTab === 'presets'
-                                ? 'border-indigo-600 text-indigo-700'
-                                : 'border-transparent text-slate-500 hover:text-slate-800'
+                                ? 'border-brand text-link'
+                                : 'border-transparent text-ink-muted hover:text-ink'
                         }`}
                     >
                         <Palette className="h-4 w-4" aria-hidden />
@@ -298,10 +298,10 @@ export function ClassImageModal({
                     <button
                         type="button"
                         onClick={() => setActiveTab('upload')}
-                        className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition ${
+                        className={`flex items-center gap-2 border-b-2 px-4 py-4 text-xs sm:text-sm font-semibold transition ${
                             activeTab === 'upload'
-                                ? 'border-indigo-600 text-indigo-700'
-                                : 'border-transparent text-slate-500 hover:text-slate-800'
+                                ? 'border-brand text-link'
+                                : 'border-transparent text-ink-muted hover:text-ink'
                         }`}
                     >
                         <Upload className="h-4 w-4" aria-hidden />
@@ -311,13 +311,13 @@ export function ClassImageModal({
                     <button
                         type="button"
                         onClick={() => setActiveTab('ai')}
-                        className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition ${
+                        className={`flex items-center gap-2 border-b-2 px-4 py-4 text-xs sm:text-sm font-semibold transition ${
                             activeTab === 'ai'
-                                ? 'border-indigo-600 text-indigo-700'
-                                : 'border-transparent text-slate-500 hover:text-slate-800'
+                                ? 'border-brand text-link'
+                                : 'border-transparent text-ink-muted hover:text-ink'
                         }`}
                     >
-                        <Sparkles className="h-4 w-4 text-amber-500" aria-hidden />
+                        <Sparkles className="h-4 w-4 text-warning" aria-hidden />
                         <span>{l('classCoverTabAI')}</span>
                     </button>
                 </div>
@@ -335,14 +335,14 @@ export function ClassImageModal({
                 )}
 
                 {/* Modal Body */}
-                <div className="flex-1 overflow-y-auto p-5">
+                <div className="flex-1 overflow-y-auto p-6">
                     {/* 1. Scheda PRESET GRAFICI */}
                     {activeTab === 'presets' && (
-                        <div className="space-y-3">
-                            <p className="text-xs text-slate-500">
+                        <div className="space-y-4">
+                            <p className="text-xs text-ink-muted">
                                 {l('classCoverPresetsDesc')}
                             </p>
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
                                 {CLASS_COVER_PRESETS.map((preset) => {
                                     const isSelected = group.image_url === preset.url;
                                     const presetName = l(preset.labelKey as Parameters<typeof teacherAreaText>[1]);
@@ -352,10 +352,10 @@ export function ClassImageModal({
                                             type="button"
                                             disabled={saving}
                                             onClick={() => void handleSelectPreset(preset.url)}
-                                            className={`group/preset relative flex flex-col overflow-hidden rounded-xl border text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${
+                                            className={`group/preset relative flex flex-col overflow-hidden rounded-card border text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
                                                 isSelected
-                                                    ? 'border-indigo-600 ring-2 ring-indigo-500/30 shadow-sm'
-                                                    : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow-xs'
+                                                    ? 'border-brand ring-2 ring-brand/30 shadow-card'
+                                                    : 'border-line bg-surface hover:border-brand-line hover:shadow-card'
                                             }`}
                                         >
                                             <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-900">
@@ -367,13 +367,13 @@ export function ClassImageModal({
                                                     className="object-cover transition group-hover/preset:scale-105"
                                                 />
                                                 {isSelected && (
-                                                    <div className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white shadow-xs">
+                                                    <div className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-ink-on-brand shadow-card">
                                                         <Check className="h-3 w-3 stroke-[3]" aria-hidden />
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="p-2">
-                                                <p className="line-clamp-1 text-xs font-semibold text-slate-800 group-hover/preset:text-indigo-700">
+                                                <p className="line-clamp-1 text-xs font-semibold text-ink group-hover/preset:text-link">
                                                     {presetName}
                                                 </p>
                                             </div>
@@ -411,25 +411,25 @@ export function ClassImageModal({
                                         setPreviewUrl(URL.createObjectURL(file));
                                     }
                                 }}
-                                className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/70 p-6 text-center transition hover:border-indigo-400 hover:bg-indigo-50/30"
+                                className="flex cursor-pointer flex-col items-center justify-center rounded-card border-2 border-dashed border-line-strong bg-surface-sunken/70 p-6 text-center transition hover:border-brand hover:bg-brand-soft/30"
                             >
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-link">
                                     <ImagePlus className="h-6 w-6" aria-hidden />
                                 </div>
-                                <h3 className="mt-3 text-sm font-semibold text-slate-900">
+                                <h3 className="mt-4 text-sm font-semibold text-ink">
                                     {selectedFile ? selectedFile.name : l('classCoverUploadButton')}
                                 </h3>
-                                <p className="mt-1 max-w-sm text-xs text-slate-500">
+                                <p className="mt-1 max-w-sm text-xs text-ink-muted">
                                     {l('classCoverUploadHint')}
                                 </p>
                             </div>
 
                             {previewUrl && (
-                                <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                <div className="space-y-4 rounded-card border border-line bg-surface p-4">
+                                    <span className="text-xs font-semibold text-ink-muted">
                                         {l('classCoverSelectedPreview')}
                                     </span>
-                                    <div className="relative aspect-[16/9] w-full max-h-48 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                                    <div className="relative aspect-[16/9] w-full max-h-48 overflow-hidden rounded-lg border border-line bg-surface-raised">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={previewUrl}
@@ -477,11 +477,11 @@ export function ClassImageModal({
                     {/* 3. Scheda CREA CON IA */}
                     {activeTab === 'ai' && (
                         <div className="space-y-4">
-                            <div className="rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50/60 to-orange-50/40 p-4 text-xs leading-relaxed text-slate-700">
-                                <div className="flex items-start gap-2.5">
-                                    <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+                            <div className="rounded-card border border-warning-line bg-warning-soft p-4 text-xs leading-relaxed text-ink-body">
+                                <div className="flex items-start gap-2">
+                                    <Sparkles className="mt-1 h-4 w-4 shrink-0 text-warning" aria-hidden />
                                     <div>
-                                        <strong className="font-semibold text-slate-900">
+                                        <strong className="font-semibold text-ink">
                                             {l('classCoverAIHeading')}
                                         </strong>
                                         <p className="mt-1">
@@ -491,9 +491,9 @@ export function ClassImageModal({
                                 </div>
                             </div>
 
-                            <div className="space-y-1.5">
+                            <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <label htmlFor="ai-cover-prompt" className="text-xs font-semibold text-slate-700">
+                                    <label htmlFor="ai-cover-prompt" className="text-xs font-semibold text-ink-body">
                                         {l('classCoverAIPromptLabel')}
                                     </label>
                                     <Button
@@ -501,12 +501,12 @@ export function ClassImageModal({
                                         variant="secondary"
                                         size="sm"
                                         onClick={() => void handleCopyPrompt()}
-                                        className="inline-flex min-h-[32px] items-center gap-1.5 text-xs font-semibold"
+                                        className="inline-flex min-h-[32px] items-center gap-2 text-xs font-semibold"
                                     >
                                         {copied ? (
                                             <>
-                                                <Check className="h-3.5 w-3.5 text-emerald-600" aria-hidden />
-                                                <span className="text-emerald-700">{l('classCoverPromptCopied')}</span>
+                                                <Check className="h-3.5 w-3.5 text-success" aria-hidden />
+                                                <span className="text-success">{l('classCoverPromptCopied')}</span>
                                             </>
                                         ) : (
                                             <>
@@ -522,31 +522,31 @@ export function ClassImageModal({
                                     readOnly
                                     rows={4}
                                     value={aiPrompt}
-                                    className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs leading-relaxed text-slate-800 focus:outline-hidden"
+                                    className="w-full rounded-card border border-line-strong bg-surface-sunken p-4 text-xs leading-relaxed text-ink focus:outline-hidden"
                                 />
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-3 pt-2">
-                                <span className="text-xs font-semibold text-slate-500">
+                            <div className="flex flex-wrap items-center gap-4 pt-2">
+                                <span className="text-xs font-semibold text-ink-muted">
                                     {l('classCoverAIGenerateOn')}
                                 </span>
                                 <a
                                     href="https://chatgpt.com"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                                    className="inline-flex min-h-control items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-body shadow-card transition hover:border-line-strong hover:bg-surface-sunken hover:text-ink"
                                 >
                                     <span>{l('classCoverOpenChatGPT')}</span>
-                                    <ExternalLink className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+                                    <ExternalLink className="h-3.5 w-3.5 text-ink-muted" aria-hidden />
                                 </a>
                                 <a
                                     href="https://gemini.google.com"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                                    className="inline-flex min-h-control items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-body shadow-card transition hover:border-line-strong hover:bg-surface-sunken hover:text-ink"
                                 >
                                     <span>{l('classCoverOpenGemini')}</span>
-                                    <ExternalLink className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+                                    <ExternalLink className="h-3.5 w-3.5 text-ink-muted" aria-hidden />
                                 </a>
                             </div>
                         </div>
@@ -554,7 +554,7 @@ export function ClassImageModal({
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-end border-t border-slate-200 bg-slate-50 px-5 py-3">
+                <div className="flex justify-end border-t border-line bg-surface-sunken px-6 py-4">
                     <Button
                         type="button"
                         variant="secondary"

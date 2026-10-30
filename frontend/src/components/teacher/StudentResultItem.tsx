@@ -95,44 +95,44 @@ function StudentResultDetails({ path, username, result }: { path: string; userna
     const reading = data.reading;
     const hasReading = reading && (reading.strengths.length || reading.growth_areas.length || reading.note.trim());
 
-    return <div className="min-w-0 space-y-5 rounded-lg border border-slate-200 bg-white p-3 sm:p-4" data-student-result-detail>
+    return <div className="min-w-0 space-y-6 rounded-lg border border-line bg-surface p-4 sm:p-4" data-student-result-detail>
         <Button type="button" variant="secondary" onClick={() => void download()} disabled={downloading} aria-busy={downloading} className="min-h-[44px] max-w-full whitespace-normal">
             <Download className="h-4 w-4 shrink-0" aria-hidden />{t('completed.downloadPdf')}
         </Button>
         {pdfError && <Callout variant="danger">{l('pdfError')}</Callout>}
         <section className="space-y-2" aria-label={t('profile.factorBreakdown')}>
-            <h3 className="font-semibold text-slate-800">{t('profile.factorBreakdown')}</h3>
+            <h3 className="font-semibold text-ink">{t('profile.factorBreakdown')}</h3>
             {legacy ? <p>{t('q.QPCC.legacyProfile')}</p> : data.scores && Object.keys(data.scores).length > 0 && questionnaire
                 ? <ProfileVisualization scores={data.scores} questionnaire={questionnaire} />
-                : <p className="text-slate-500">{l('noScores')}</p>}
+                : <p className="text-ink-muted">{l('noScores')}</p>}
         </section>
         <section className="space-y-2" aria-label={t('profile.sessionSummary.title')}>
-            <h3 className="font-semibold text-slate-800">{t('profile.sessionSummary.title')}</h3>
-            {data.summary ? <div className="prose prose-sm max-w-full overflow-x-auto break-words text-slate-700"><ReactMarkdown remarkPlugins={[remarkGfm]}>{data.summary}</ReactMarkdown></div>
-                : <p className="text-slate-500">{t('profile.sessionSummary.pending')}</p>}
+            <h3 className="font-semibold text-ink">{t('profile.sessionSummary.title')}</h3>
+            {data.summary ? <div className="prose prose-sm max-w-full overflow-x-auto break-words text-ink-body"><ReactMarkdown remarkPlugins={[remarkGfm]}>{data.summary}</ReactMarkdown></div>
+                : <p className="text-ink-muted">{t('profile.sessionSummary.pending')}</p>}
         </section>
-        <section className="space-y-3 rounded-md border border-indigo-200 bg-indigo-50 p-3" aria-label={l('studentReading')}>
-            <h3 className="font-semibold text-slate-800">{l('studentReading')}</h3>
+        <section className="space-y-4 rounded-control border border-brand-line bg-brand-soft p-4" aria-label={l('studentReading')}>
+            <h3 className="font-semibold text-ink">{l('studentReading')}</h3>
             {hasReading && reading ? <>
-                <dl className="space-y-3">
+                <dl className="space-y-4">
                     {(['strengths', 'growth_areas'] as const).map(key => <div key={key}>
                         <dt className="font-semibold">{readingText(lang, key === 'strengths' ? 'strengths' : 'growth')}</dt>
                         <dd>{reading[key].length ? <ul className="list-inside list-disc break-words">{reading[key].map((text, i) => <li key={i}>{text}</li>)}</ul> : <p>{l('notProvided')}</p>}</dd>
                     </div>)}
                     <div><dt className="font-semibold">{readingText(lang, 'note')}</dt><dd className="whitespace-pre-wrap break-words">{reading.note.trim() ? reading.note : l('notProvided')}</dd></div>
                 </dl>
-                {reading.updated_at && <p className="text-xs text-slate-600">{l('updated')}{' '}<time dateTime={reading.updated_at}>{new Date(reading.updated_at).toLocaleString(lang)}</time></p>}
+                {reading.updated_at && <p className="text-xs text-ink-muted">{l('updated')}{' '}<time dateTime={reading.updated_at}>{new Date(reading.updated_at).toLocaleString(lang)}</time></p>}
             </> : <p>{l('noReading')}</p>}
         </section>
         <NoticingPanel path={`${path}/noticing`} onQuote={showMessage} />
         <section className="space-y-2" aria-label={l('conversation')}>
-            <h3 className="font-semibold text-slate-800">{l('conversation')}</h3>
-            <div className="max-h-96 space-y-3 overflow-y-auto break-words rounded-md border border-slate-200 bg-slate-50 p-3">
+            <h3 className="font-semibold text-ink">{l('conversation')}</h3>
+            <div className="max-h-96 space-y-4 overflow-y-auto break-words rounded-control border border-line bg-surface-sunken p-4">
                 {!data.conversation.length && <p>{l('noConversation')}</p>}
                 {data.conversation.map((message, index) => <div key={index} id={noticingMessageId(messagePrefix, index)} tabIndex={-1}
-                    className={`rounded-md p-1 ${highlighted === index ? 'bg-violet-100 ring-2 ring-violet-400' : ''}`}>
-                    <p className="font-semibold"><span className="mr-2 text-xs font-normal text-slate-500">{index + 1}</span>{message.role === 'student' ? l('student') : 'CounselorBot'}</p>
-                    <div className="prose prose-sm max-w-full overflow-x-auto text-slate-700"><ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown></div>
+                    className={`rounded-control p-1 ${highlighted === index ? 'bg-brand-soft ring-2 ring-brand' : ''}`}>
+                    <p className="font-semibold"><span className="mr-2 text-xs font-normal text-ink-muted">{index + 1}</span>{message.role === 'student' ? l('student') : 'CounselorBot'}</p>
+                    <div className="prose prose-sm max-w-full overflow-x-auto text-ink-body"><ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown></div>
                 </div>)}
             </div>
         </section>
@@ -145,12 +145,12 @@ function ResultItem({ base, username, result }: Props) {
     const id = useId();
     const l = (key: Parameters<typeof classCompilationsText>[1]) => classCompilationsText(lang, key);
     const path = `${base}/students/${encodeURIComponent(username)}/results/${result.id}`;
-    return <div className="min-w-0 space-y-2 text-sm text-slate-700">
+    return <div className="min-w-0 space-y-2 text-sm text-ink-body">
         <dl className="flex flex-wrap gap-x-4 gap-y-1">
             <div><dt className="sr-only">{l('instrument')}</dt><dd className="font-semibold">{result.questionnaire_type}</dd></div>
             {result.submitted_at && <div><dt className="sr-only">{l('date')}</dt><dd><time dateTime={result.submitted_at}>{new Date(result.submitted_at).toLocaleString(lang)}</time></dd></div>}
         </dl>
-        {result.scores && <p className="break-words font-mono text-xs text-slate-600">
+        {result.scores && <p className="break-words font-mono text-xs text-ink-muted">
             {Object.entries(result.scores).sort(([a], [b]) => a.localeCompare(b)).map(([code, value]) => `${code}=${value}`).join(' ')}
         </p>}
         <Button type="button" variant="ghost" className="min-h-[44px] max-w-full whitespace-normal px-2 text-left" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>

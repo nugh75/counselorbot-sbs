@@ -79,34 +79,34 @@ export function PathTemplateUpdate({ lang, pathId, revision, disabled, onUpdated
             </Button>
             {notice && (
                 <p role={notice === 'templateUpdated' ? 'status' : 'alert'}
-                    className={`basis-full text-sm font-medium ${notice === 'templateUpdated' ? 'text-emerald-700' : 'text-red-600'}`}>
+                    className={`basis-full text-sm font-semibold ${notice === 'templateUpdated' ? 'text-success' : 'text-danger'}`}>
                     {l(notice)}
                 </p>
             )}
             {preview && (
-                <Card className="basis-full space-y-3" aria-label={l('updateFromTemplate')}>
+                <Card className="basis-full space-y-4" aria-label={l('updateFromTemplate')}>
                     <div>
-                        <p className="font-semibold text-slate-900">{`${l('updateFromTemplate')} · ${preview.template_title}`}</p>
-                        <p className="mt-1 text-sm text-slate-600">{l('updateIntro')}</p>
+                        <p className="font-semibold text-ink">{`${l('updateFromTemplate')} · ${preview.template_title}`}</p>
+                        <p className="mt-1 text-sm text-ink-muted">{l('updateIntro')}</p>
                     </div>
                     {preview.changes.length === 0 ? (
-                        <p className="text-sm text-slate-700">{l('updateNone')}</p>
+                        <p className="text-sm text-ink-body">{l('updateNone')}</p>
                     ) : (
                         <ul className="space-y-2">
                             {preview.changes.map((row, index) => (
-                                <li key={index} className="rounded-md border border-slate-200 p-2 text-sm">
-                                    <span className="font-semibold text-slate-800">{l(CHANGE_LABEL[row.change])}</span>
+                                <li key={index} className="rounded-control border border-line p-2 text-sm">
+                                    <span className="font-semibold text-ink">{l(CHANGE_LABEL[row.change])}</span>
                                     {` · ${l(TYPE_LABEL[row.step_type])}`}
                                     {row.tool_key ? ` · ${toolName(row.tool_key, lang)}` : ''}
                                     {row.title ? ` · ${row.title}` : ''}
                                     {(row.current_presentation || row.template_presentation) && <div className="mt-2 grid gap-2 sm:grid-cols-2">
                                         {(['current_presentation', 'template_presentation'] as const).map(key => <div key={key}>
-                                            <p className="font-medium">{l(key === 'current_presentation' ? 'currentPresentation' : 'templatePresentation')}</p>
+                                            <p className="font-semibold">{l(key === 'current_presentation' ? 'currentPresentation' : 'templatePresentation')}</p>
                                             <p className="whitespace-pre-wrap break-words">{l('stepTitle')}: {row[key]?.title || l('defaultTitle')}</p>
                                             <p className="whitespace-pre-wrap break-words">{l('stepNote')}: {row[key]?.instructions || l('emptyNote')}</p>
                                         </div>)}
                                     </div>}
-                                    <span className={`block text-xs ${row.status === 'apply' ? 'text-emerald-700' : 'text-slate-600'}`}>
+                                    <span className={`block text-xs ${row.status === 'apply' ? 'text-success' : 'text-ink-muted'}`}>
                                         {l(STATUS_LABEL[row.status])}
                                     </span>
                                 </li>

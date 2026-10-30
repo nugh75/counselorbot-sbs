@@ -297,22 +297,22 @@ export function TeacherNotebook({ showHeading = true }: { showHeading?: boolean 
     if (forbidden) return <TeacherForbidden />;
 
     return (
-        <div data-teacher-notebook className="rounded-lg border border-indigo-200 bg-white p-4">
-            {showHeading && <h2 className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                <NotebookPen className="h-5 w-5 text-indigo-600" /> {texts.title}
+        <div data-teacher-notebook className="rounded-lg border border-brand-line bg-surface p-4">
+            {showHeading && <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
+                <NotebookPen className="h-5 w-5 text-link" /> {texts.title}
             </h2>}
-            <p className="mt-1 max-w-2xl text-sm text-slate-500">{texts.subtitle}</p>
-            <p className="mt-1 max-w-2xl text-sm text-slate-500">{texts.summary}</p>
-            <div className="mt-4 space-y-5">
+            <p className="mt-1 max-w-2xl text-sm text-ink-muted">{texts.subtitle}</p>
+            <p className="mt-1 max-w-2xl text-sm text-ink-muted">{texts.summary}</p>
+            <div className="mt-4 space-y-6">
                 {FIELD_GROUPS.map(group => (
                     <fieldset key={group.title} className="min-w-0">
-                        <legend className="w-full border-b border-slate-200 pb-2">
-                            <GroupHeading className="text-sm font-semibold text-slate-800">{texts[group.title]}</GroupHeading>
+                        <legend className="w-full border-b border-line pb-2">
+                            <GroupHeading className="text-sm font-semibold text-ink">{texts[group.title]}</GroupHeading>
                         </legend>
-                        <div className="mt-3 grid gap-3">
+                        <div className="mt-4 grid gap-4">
                             {group.fields.map(([key, labelKey, placeholderKey, hintKey]) => (
                                 <div key={key}>
-                                    <label className="block text-xs font-semibold text-slate-600" htmlFor={`teacher-notebook-${key}`}>
+                                    <label className="block text-xs font-semibold text-ink-muted" htmlFor={`teacher-notebook-${key}`}>
                                         {texts[labelKey as keyof typeof texts] as string}
                                     </label>
                                     <textarea
@@ -329,19 +329,19 @@ export function TeacherNotebook({ showHeading = true }: { showHeading?: boolean 
                                         placeholder={texts[placeholderKey as keyof typeof texts] as string}
                                         rows={2}
                                         maxLength={600}
-                                        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                        className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm"
                                     />
-                                    <p id={`teacher-notebook-${key}-hint`} className="mt-1 text-xs text-slate-500">
+                                    <p id={`teacher-notebook-${key}-hint`} className="mt-1 text-xs text-ink-muted">
                                         {texts[hintKey]}
                                     </p>
                                     {notebookToolLinks.filter(link => link.field === key).map(link => link.label === 'classes' ? (
                                         <button key={link.href} type="button" aria-haspopup="dialog" onClick={() => setClassPickerOpen(true)}
-                                            className="mr-3 inline-flex min-h-[44px] items-center text-left text-xs font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900 focus-visible:outline-2 focus-visible:outline-offset-2">
+                                            className="mr-4 inline-flex min-h-[44px] items-center text-left text-xs font-semibold text-link underline underline-offset-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2">
                                             {notebookLinkText(lang, link.label)}
                                         </button>
                                     ) : (
                                         <Link key={link.href} href={link.href}
-                                            className="mr-3 inline-flex min-h-[44px] items-center text-xs font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900 focus-visible:outline-2 focus-visible:outline-offset-2">
+                                            className="mr-4 inline-flex min-h-[44px] items-center text-xs font-semibold text-link underline underline-offset-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2">
                                             {notebookLinkText(lang, link.label)}
                                         </Link>
                                     ))}
@@ -351,28 +351,28 @@ export function TeacherNotebook({ showHeading = true }: { showHeading?: boolean 
                     </fieldset>
                 ))}
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center gap-4">
                 <button
                     type="button"
                     disabled={busy || loading || !loaded}
                     onClick={() => void save()}
-                    className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                    className="min-h-control rounded-control bg-brand px-4 py-2 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover disabled:opacity-50"
                 >
                     {savedFlash ? texts.saved : texts.save}
                 </button>
                 {!failed && loaded && <button type="button" disabled={loading || busy} onClick={() => void reload()}
-                    className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">{t('common.refresh')}</button>}
-                {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+                    className="min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-50">{t('common.refresh')}</button>}
+                {error && <p role="alert" className="text-sm text-danger">{error}</p>}
                 {loaded && !loading && !failed && !savedFlash && !Object.values(values).some((v) => (v ?? '').trim()) && (
-                    <p className="text-xs text-slate-500">{texts.empty}</p>
+                    <p className="text-xs text-ink-muted">{texts.empty}</p>
                 )}
             </div>
-            {busy && <p role="status" className="mt-2 text-xs text-slate-500">{notebookLinkText(lang, 'saving')}</p>}
-            {loading && <p role="status" className="mt-3 text-sm text-slate-500">{t('common.loading')}</p>}
-            {failed && <div role="alert" className="mt-3 flex flex-wrap items-center gap-3 text-sm text-red-600">
+            {busy && <p role="status" className="mt-2 text-xs text-ink-muted">{notebookLinkText(lang, 'saving')}</p>}
+            {loading && <p role="status" className="mt-4 text-sm text-ink-muted">{t('common.loading')}</p>}
+            {failed && <div role="alert" className="mt-4 flex flex-wrap items-center gap-4 text-sm text-danger">
                 <p>{teacherLoadingText(lang, 'notebook')}</p>
                 <button type="button" disabled={loading || busy} onClick={() => void reload()}
-                    className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">{t('setup.retry')}</button>
+                    className="min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-50">{t('setup.retry')}</button>
             </div>}
             {classPickerOpen && <ClassGroupPicker close={() => setClassPickerOpen(false)} onNavigationState={setClassNavigationState} />}
         </div>

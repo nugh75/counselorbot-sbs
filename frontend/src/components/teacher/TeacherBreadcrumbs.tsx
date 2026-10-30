@@ -25,9 +25,9 @@ export function TeacherBreadcrumbs({ items, extra, className = '' }: TeacherBrea
         <nav
             aria-label={teacherAreaText(lang, 'breadcrumbsAriaLabel')}
             data-testid="teacher-breadcrumbs"
-            className={`flex flex-wrap items-center justify-between gap-3 text-sm ${className}`}
+            className={`flex flex-wrap items-center justify-between gap-4 text-sm ${className}`}
         >
-            <ol className="flex flex-wrap items-center gap-1 text-slate-600">
+            <ol className="flex flex-wrap items-center gap-1 text-ink-muted">
                 {items.map((item, index) => {
                     const isFirst = index === 0;
                     const isLast = index === items.length - 1;
@@ -36,22 +36,22 @@ export function TeacherBreadcrumbs({ items, extra, className = '' }: TeacherBrea
                     return (
                         <li key={index} className="inline-flex items-center gap-1">
                             {!isFirst && (
-                                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
                             )}
                             {item.href && !isCurrent ? (
                                 <Link
                                     href={item.href}
                                     data-testid={isFirst ? 'breadcrumb-root-link' : `breadcrumb-link-${index}`}
-                                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:hover:bg-slate-800"
+                                    className="inline-flex min-h-[44px] items-center gap-2 rounded-lg px-2 text-ink-muted transition-colors hover:bg-surface-raised hover:text-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                                 >
-                                    {isFirst && <ArrowLeft className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />}
+                                    {isFirst && <ArrowLeft className="h-4 w-4 shrink-0 text-ink-muted" aria-hidden="true" />}
                                     <span>{item.label}</span>
                                 </Link>
                             ) : (
                                 <span
                                     aria-current="page"
                                     data-testid={`breadcrumb-current-${index}`}
-                                    className="inline-flex min-h-[44px] items-center px-2 font-bold text-slate-900"
+                                    className="inline-flex min-h-[44px] items-center px-2 font-semibold text-ink"
                                 >
                                     {item.label}
                                 </span>

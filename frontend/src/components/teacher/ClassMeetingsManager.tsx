@@ -13,8 +13,8 @@ import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { TeacherLoading } from './TeacherAccess';
 import { parseClassGroups } from './class-group-types';
 
-const input = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white p-2 text-sm';
-const select = 'mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto';
+const input = 'mt-1 w-full min-w-0 rounded-control border border-line-strong bg-surface p-2 text-sm';
+const select = 'mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto';
 
 type HostKind = ClassMeeting['host_kind'];
 interface Draft {
@@ -185,11 +185,11 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
         && (!kindFilter || row.kind === kindFilter));
     const label = (row: ClassMeeting) => row.kind === 'individual' ? `${row.title} · ${m('individual')}` : `${row.title} · ${meetingWhen(row, lang)}`;
     if (initialMeetingId !== undefined && !loaded) return <TeacherLoading />;
-    return <div className="space-y-3" data-testid="class-meetings">
+    return <div className="space-y-4" data-testid="class-meetings">
         {initialMeetingId !== undefined && loaded && !meetings.some(row => row.id === initialMeetingId && row.status === 'scheduled')
             && <Callout variant="warning">{m('loadError')}</Callout>}
         {loadFailed && <Callout variant="danger">{m('loadError')} <Button variant="secondary" onClick={() => void load()}>{m('retry')}</Button></Callout>}
-        {!loadFailed && !meetings.length && <p className="text-sm text-slate-600">{m('empty')}</p>}
+        {!loadFailed && !meetings.length && <p className="text-sm text-ink-muted">{m('empty')}</p>}
         <div className="flex flex-wrap items-end gap-2">
             {onAdd && <>
             <label className="block w-full text-sm sm:w-auto">{m('meeting')}
@@ -206,9 +206,9 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
             </>}
             <Button variant={onAdd ? 'secondary' : 'primary'} disabled={busy} onClick={() => open('new')}>{m('newMeeting')}</Button>
         </div>
-        <p className="text-sm text-slate-600">{m('rule')}</p>
+        <p className="text-sm text-ink-muted">{m('rule')}</p>
 
-        {editing && <fieldset disabled={busy} className="space-y-2 rounded-md border border-slate-200 bg-white p-3">
+        {editing && <fieldset disabled={busy} className="space-y-2 rounded-control border border-line bg-surface p-4">
             <legend className="px-1 text-sm font-semibold">{editing === 'new' ? m('newMeeting') : `${m('edit')} · ${editing.title}`}</legend>
             <label className="block text-sm">{m('topic')}
                 <input className={input} maxLength={200} value={draft.title} onChange={event => changeDraft({ ...draft, title: event.target.value })} /></label>
@@ -217,16 +217,16 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                 <legend className="mb-1">{m('kind')}</legend>
                 {(['group', 'individual'] as const).map(kind => <label key={kind} className="flex min-h-[44px] items-center gap-2">
                     <input type="radio" name={`meeting-kind-${groupId}`} checked={draft.kind === kind} onChange={() => changeDraft({ ...draft, kind })}
-                        className="h-4 w-4 accent-indigo-600" />{m(kind)}</label>)}
+                        className="h-4 w-4 accent-brand" />{m(kind)}</label>)}
             </fieldset>}
             <fieldset className="space-y-1 text-sm">
                 <legend className="mb-1">{m('host')}</legend>
                 <div className="flex flex-wrap gap-4">
                     {(['teacher', 'referent', 'expert'] as const).map(host => <label key={host} className="flex min-h-[44px] items-center gap-2">
                         <input type="radio" name={`meeting-host-${groupId}`} checked={draft.hostKind === host} onChange={() => changeDraft({ ...draft, hostKind: host })}
-                            className="h-4 w-4 accent-indigo-600" />{m(host)}</label>)}
+                            className="h-4 w-4 accent-brand" />{m(host)}</label>)}
                 </div>
-                {draft.hostKind === 'referent' && (referents.length === 0 ? <p className="text-slate-600">{m('noReferents')}</p>
+                {draft.hostKind === 'referent' && (referents.length === 0 ? <p className="text-ink-muted">{m('noReferents')}</p>
                     : <label className="block">{m('referent')}
                         <select className={select} value={draft.referralId} onChange={event => changeDraft({ ...draft, referralId: event.target.value })}>
                             <option value="">{m('chooseReferent')}</option>
@@ -238,7 +238,7 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                     <label className="block">{m('expertRole')}
                         <input className={input} maxLength={200} value={draft.hostRole} onChange={event => changeDraft({ ...draft, hostRole: event.target.value })} /></label>
                 </div>}
-                {draft.hostKind !== 'teacher' && <p className="text-xs text-slate-600">{m('inviteNote')}</p>}
+                {draft.hostKind !== 'teacher' && <p className="text-xs text-ink-muted">{m('inviteNote')}</p>}
             </fieldset>
             {draft.kind === 'group' && <div className="grid gap-2 sm:grid-cols-2">
                 <label className="block text-sm">{m('startsAt')}
@@ -250,7 +250,7 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                 <legend className="mb-1">{m('mode')}</legend>
                 {(['in_person', 'online'] as const).map(mode => <label key={mode} className="flex min-h-[44px] items-center gap-2">
                     <input type="radio" name={`meeting-mode-${groupId}`} checked={draft.mode === mode} onChange={() => changeDraft({ ...draft, mode })}
-                        className="h-4 w-4 accent-indigo-600" />{m(mode)}</label>)}
+                        className="h-4 w-4 accent-brand" />{m(mode)}</label>)}
             </fieldset>
             {draft.mode === 'in_person'
                 ? <label className="block text-sm">{m('place')}
@@ -261,7 +261,7 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                 <legend className="mb-1">{m('alsoFor')}</legend>
                 <div className="grid gap-x-4 sm:grid-cols-2">
                     {otherGroups.map(other => <label key={other.id} className="flex min-h-[44px] items-center gap-2">
-                        <input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={draft.groupIds.includes(other.id)}
+                        <input type="checkbox" className="h-4 w-4 accent-brand" checked={draft.groupIds.includes(other.id)}
                             onChange={event => changeDraft({ ...draft, groupIds: event.target.checked ? [...draft.groupIds, other.id]
                                 : draft.groupIds.filter(id => id !== other.id) })} />{other.name}</label>)}
                 </div>
@@ -270,11 +270,11 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                 <legend className="mb-1">{m('attendanceBy')}</legend>
                 {(['student', 'teacher', 'both'] as const).map(mode => <label key={mode} className="flex min-h-[44px] items-center gap-2">
                     <input type="radio" name={`meeting-attendance-${groupId}`} checked={draft.attendanceMode === mode}
-                        onChange={() => changeDraft({ ...draft, attendanceMode: mode })} className="h-4 w-4 accent-indigo-600" />{m(`attendance_${mode}`)}</label>)}
+                        onChange={() => changeDraft({ ...draft, attendanceMode: mode })} className="h-4 w-4 accent-brand" />{m(`attendance_${mode}`)}</label>)}
             </fieldset>
             <label className="flex min-h-[44px] items-center gap-2 text-sm">
                 <input type="checkbox" checked={draft.showOnTimeline} onChange={event => changeDraft({ ...draft, showOnTimeline: event.target.checked })}
-                    className="h-4 w-4 accent-indigo-600" />{m('showOnTimeline')}</label>
+                    className="h-4 w-4 accent-brand" />{m('showOnTimeline')}</label>
             <label className="block text-sm">{m('description')}
                 <textarea className={input} rows={2} maxLength={3000} value={draft.description} onChange={event => changeDraft({ ...draft, description: event.target.value })} /></label>
             <div className="flex flex-wrap gap-2">
@@ -284,16 +284,16 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                 }}>{m('discard')}</Button>
             </div>
         </fieldset>}
-        {failure && <div role="alert" className="space-y-2 text-sm font-medium text-red-600">
+        {failure && <div role="alert" className="space-y-2 text-sm font-semibold text-danger">
             <p>{m(failure)}</p>
             {onDraft && failure === 'conflict' && <Button variant="secondary" disabled={busy} onClick={() => void reloadEditing()}>{classPathText(lang, 'reload')}</Button>}
         </div>}
 
         {meetings.length > 0 && <ul className="space-y-2">
-            {meetings.map(row => <li key={row.id} className="space-y-1 rounded-md border border-slate-200 bg-white p-2 text-sm">
+            {meetings.map(row => <li key={row.id} className="space-y-1 rounded-control border border-line bg-surface p-2 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="min-w-0 flex-1 basis-full break-words font-semibold text-slate-800 sm:basis-auto">
-                        {row.title}{row.status === 'cancelled' && <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">{m('cancelled')}</span>}
+                    <p className="min-w-0 flex-1 basis-full break-words font-semibold text-ink sm:basis-auto">
+                        {row.title}{row.status === 'cancelled' && <span className="ml-2 rounded bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-muted">{m('cancelled')}</span>}
                     </p>
                     {row.status === 'scheduled' && <div className="flex flex-wrap gap-1">
                         {row.attendance_mode !== 'student' && <Button variant="secondary" size="sm" aria-expanded={registerOf === row.id}
@@ -302,15 +302,15 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                         <Button variant="secondary" size="sm" disabled={busy} onClick={() => setConfirmCancel(row.id)}>{m('cancelMeeting')}</Button>
                     </div>}
                 </div>
-                <p className="text-slate-600">{[row.kind === 'individual' ? m('individual') : meetingWhen(row, lang), m(row.mode), row.place ?? row.link,
+                <p className="text-ink-muted">{[row.kind === 'individual' ? m('individual') : meetingWhen(row, lang), m(row.mode), row.place ?? row.link,
                     meetingHost(row) ? `${m('with')} ${meetingHost(row)}` : null].filter(Boolean).join(' · ')}</p>
                 {/* Attendance means something only once a scheduled meeting has started. */}
                 {row.status === 'scheduled' && (row.kind === 'individual' || (row.starts_at && new Date(row.starts_at).getTime() <= Date.now()))
-                    && <p className="text-xs text-slate-500">{`${row.attendance_count ?? 0} ${m('attendances')}`}
+                    && <p className="text-xs text-ink-muted">{`${row.attendance_count ?? 0} ${m('attendances')}`}
                         {(row.group_ids?.length ?? 0) > 1 && ` (${(row.group_ids ?? []).map((id, index) =>
                             `${row.group_names?.[index] ?? id}: ${row.attendance_by_group?.[String(id)] ?? 0}`).join(' · ')})`}</p>}
-                {(row.group_names?.length ?? 0) > 1 && <p className="text-xs text-slate-600">{`${m('forGroups')}: ${row.group_names!.join(', ')}`}</p>}
-                <p className="text-xs text-slate-600">{`${m('attendanceBy')}: ${m(`attendance_${row.attendance_mode}`)}`}</p>
+                {(row.group_names?.length ?? 0) > 1 && <p className="text-xs text-ink-muted">{`${m('forGroups')}: ${row.group_names!.join(', ')}`}</p>}
+                <p className="text-xs text-ink-muted">{`${m('attendanceBy')}: ${m(`attendance_${row.attendance_mode}`)}`}</p>
                 {registerOf === row.id && row.status === 'scheduled' && row.attendance_mode !== 'student'
                     && <AttendanceRegister lang={lang} meeting={row} onChanged={async () => { await load(); }} />}
                 {row.kind === 'individual' && row.status === 'scheduled'
@@ -349,17 +349,17 @@ function AttendanceRegister({ lang, meeting, onChanged }: { lang: string; meetin
             await Promise.all([load(), onChanged()]);
         } catch { setFailed(true); } finally { setBusy(null); }
     };
-    return <div className="space-y-1 border-t border-slate-100 pt-2" data-testid="meeting-register">
-        <p className="text-xs font-semibold text-slate-700">{m('register')}</p>
-        {failed && <p role="alert" className="text-xs font-medium text-red-600">{m('error')}</p>}
-        {rows && !rows.length && <p className="text-xs text-slate-600">{m('registerEmpty')}</p>}
+    return <div className="space-y-1 border-t border-line pt-2" data-testid="meeting-register">
+        <p className="text-xs font-semibold text-ink-body">{m('register')}</p>
+        {failed && <p role="alert" className="text-xs font-semibold text-danger">{m('error')}</p>}
+        {rows && !rows.length && <p className="text-xs text-ink-muted">{m('registerEmpty')}</p>}
         {rows && rows.length > 0 && <ul className="grid gap-x-4 sm:grid-cols-2">
             {rows.map(row => <li key={row.username}>
                 <label className="flex min-h-[44px] items-center gap-2 text-sm">
-                    <input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={row.attended} disabled={busy !== null}
+                    <input type="checkbox" className="h-4 w-4 accent-brand" checked={row.attended} disabled={busy !== null}
                         onChange={() => void toggle(row)} />
                     <span className="min-w-0 break-words">{row.name}</span>
-                    {row.attended && !row.marked_by_teacher && <span className="text-xs text-slate-500">({m('selfMarked')})</span>}
+                    {row.attended && !row.marked_by_teacher && <span className="text-xs text-ink-muted">({m('selfMarked')})</span>}
                 </label>
             </li>)}
         </ul>}
@@ -377,17 +377,17 @@ function SlotsEditor({ lang, meeting, busy, send, onDraftChange }: {
     useEffect(() => () => { onDraftChange?.(meeting.id, false); }, [meeting.id, onDraftChange]);
     const slots = (meeting.slots ?? []).filter(slot => slot.status !== 'cancelled');
     const free = (except: MeetingSlot) => slots.filter(slot => slot.id !== except.id && !slot.booking && new Date(slot.starts_at).getTime() > Date.now());
-    return <div className="space-y-2 border-t border-slate-100 pt-2" data-testid="meeting-slots">
-        <p className="text-xs font-semibold text-slate-700">{m('slots')}</p>
-        {!slots.length && <p className="text-xs text-slate-600">{m('noSlots')}</p>}
+    return <div className="space-y-2 border-t border-line pt-2" data-testid="meeting-slots">
+        <p className="text-xs font-semibold text-ink-body">{m('slots')}</p>
+        {!slots.length && <p className="text-xs text-ink-muted">{m('noSlots')}</p>}
         <ul className="space-y-1">
-            {slots.map(slot => <li key={slot.id} className="flex flex-wrap items-center gap-2 rounded border border-slate-100 p-1.5">
+            {slots.map(slot => <li key={slot.id} className="flex flex-wrap items-center gap-2 rounded border border-line p-2">
                 <span className="min-w-0 flex-1 basis-full sm:basis-auto">
                     <time dateTime={slot.starts_at}>{meetingWhen(slot, lang)}</time>{' · '}
-                    {slot.booking ? <strong>{slot.booking.name}</strong> : <span className="text-slate-500">{m('free')}</span>}
+                    {slot.booking ? <strong>{slot.booking.name}</strong> : <span className="text-ink-muted">{m('free')}</span>}
                 </span>
                 {slot.booking && free(slot).length > 0 && <label className="text-xs"><span className="sr-only">{m('moveTo')}</span>
-                    <select className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs" value="" disabled={busy}
+                    <select className="rounded-control border border-line-strong bg-surface px-2 py-1 text-xs" value="" disabled={busy}
                         onChange={event => { if (event.target.value) void send(`/api/teacher/bookings/${slot.booking!.id}/move`, 'POST', { slot_id: Number(event.target.value) }); }}>
                         <option value="">{m('moveTo')}</option>
                         {free(slot).map(other => <option key={other.id} value={other.id}>{meetingWhen(other, lang)}</option>)}

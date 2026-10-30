@@ -15,7 +15,7 @@ export default function TeacherDevicesPage() {
                 subtitle={localPairingText(lang, 'devicesSubtitle')}
                 backHref="/docente"
                 backLabel={localPairingText(lang, 'backToTeacher')}
-                icon={<Smartphone className="h-7 w-7 text-indigo-600" aria-hidden />}
+                icon={<Smartphone className="h-7 w-7 text-link" aria-hidden />}
             />
             <TeacherDevicesPanel />
         </main>

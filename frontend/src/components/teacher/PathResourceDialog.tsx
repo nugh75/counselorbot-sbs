@@ -67,11 +67,11 @@ export function PathResourceDialog({ title, planDirty, onClose, children }: {
     // The render prop forwards these callbacks to event handlers/effects only.
     // eslint-disable-next-line react-hooks/refs -- No callback is invoked during rendering; the live draft guards immediate Escape.
     const content = children({onDraft, close});
-    return createPortal(<div ref={root} className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3">
+    return createPortal(<div ref={root} className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4">
         <section role="dialog" aria-modal="true" aria-labelledby={id}
-            className="max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-4 shadow-xl sm:p-6">
-            <div className="mb-4 flex items-start justify-between gap-3">
-                <h2 ref={heading} id={id} tabIndex={-1} className="text-lg font-semibold text-slate-900">{title}</h2>
+            className="max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-card bg-surface p-4 shadow-modal sm:p-6">
+            <div className="mb-4 flex items-start justify-between gap-4">
+                <h2 ref={heading} id={id} tabIndex={-1} className="text-lg font-semibold text-ink">{title}</h2>
                 <Button variant="ghost" disabled={draft.busy} onClick={close} aria-label={stepKindText(lang, 'close')}>
                     <X className="h-5 w-5" aria-hidden />
                 </Button>

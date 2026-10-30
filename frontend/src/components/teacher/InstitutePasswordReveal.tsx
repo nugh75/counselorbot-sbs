@@ -77,15 +77,15 @@ export function InstitutePasswordReveal({ institute, onForbidden }: {
     };
 
     return <div className="mt-2 flex flex-wrap items-center gap-2 text-sm" aria-live="polite">
-        <span className="text-slate-600">{l('passwordLabel')}:</span>
+        <span className="text-ink-muted">{l('passwordLabel')}:</span>
         {visible && password !== null
-            ? <span className="select-all whitespace-pre-wrap break-all font-mono text-slate-900">{password}</span>
-            : <span className="font-mono tracking-widest text-slate-500" aria-hidden="true">••••••••</span>}
+            ? <span className="select-all whitespace-pre-wrap break-all font-mono text-ink">{password}</span>
+            : <span className="font-mono tracking-widest text-ink-muted" aria-hidden="true">••••••••</span>}
         <Button type="button" variant="secondary" size="sm" disabled={busy}
                 aria-pressed={visible} onClick={() => void toggle()}>
             {visible ? l('hidePassword') : l('showPassword')}
         </Button>
-        {missing && <p className="text-xs text-amber-700">{l('passwordUnavailable')}</p>}
-        {error && <p className="text-xs text-red-700" role="alert">{l('revealError')}</p>}
+        {missing && <p className="text-xs text-warning">{l('passwordUnavailable')}</p>}
+        {error && <p className="text-xs text-danger" role="alert">{l('revealError')}</p>}
     </div>;
 }

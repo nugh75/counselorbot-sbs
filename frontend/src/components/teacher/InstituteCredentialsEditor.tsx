@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { TeacherForbidden } from './TeacherAccess';
 
-const input = 'w-full min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm';
+const input = 'w-full min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm';
 
 // The password is never prefilled or kept after a successful save. A member
 // teacher can reveal the encrypted display copy from the institute card; class
@@ -60,9 +60,9 @@ export function InstituteCredentialsEditor({ institute, onSaved, onCancel }: { i
         finally { if (!controller.signal.aborted) { setBusy(false); pending.current = null; } }
     };
     if (forbidden) return <TeacherForbidden />;
-    return <form onSubmit={event => void save(event)} className="mt-3 space-y-3" aria-label={l(institute.credentials_configured ? 'replaceCredentials' : 'setCredentials')}>
-        <p className="text-sm text-slate-600">{l('writeOnly')}</p>
-        <fieldset disabled={busy} className="grid gap-3 sm:grid-cols-2">
+    return <form onSubmit={event => void save(event)} className="mt-4 space-y-4" aria-label={l(institute.credentials_configured ? 'replaceCredentials' : 'setCredentials')}>
+        <p className="text-sm text-ink-muted">{l('writeOnly')}</p>
+        <fieldset disabled={busy} className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1 text-sm">{l('code')}<input className={input} required maxLength={50} autoComplete="off" value={code} onChange={event => setCode(event.target.value)} /></label>
             <label className="space-y-1 text-sm">{l('password')}<input type="password" className={input} required autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} /></label>
         </fieldset>

@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
 import { resultsChatText } from '@/lib/i18n-results-chats';
@@ -30,7 +31,7 @@ import type { StudentGroup } from './class-group-types';
 import { resolveStepPresentation } from '@/lib/class-path-presentation';
 import { StepPresentationFields } from './StepPresentationFields';
 
-const input = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white p-2 text-sm';
+const input = 'mt-1 w-full min-w-0 rounded-control border border-line-strong bg-surface p-2 text-sm';
 export const TYPE_LABEL: Record<TemplateStepType, PathTemplateTextKey> = {
     tool: 'typeTool', questionnaire_administration: 'typeQuestionnaire', guided_results_chat: 'typeResults',
     assignment: 'typeAssignment', forum: 'typeForum',
@@ -50,6 +51,7 @@ export function PathTemplatesPanel({ groups, onApplied }: { groups: StudentGroup
     const [applying, setApplying] = useState<PathTemplate | null>(null);
     const [notice, setNotice] = useState<PathTemplateTextKey | null>(null);
     const [busy, setBusy] = useState(false);
+    const [confirmRemove, setConfirmRemove] = useState<number | null>(null);
 
     const act = async (request: () => Promise<Response>, success: PathTemplateTextKey | null) => {
         setBusy(true);
@@ -75,10 +77,10 @@ export function PathTemplatesPanel({ groups, onApplied }: { groups: StudentGroup
     </Callout>;
 
     const row = (template: PathTemplate) => (
-        <li key={template.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3">
+        <li key={template.id} className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-line bg-surface p-4">
             <div className="min-w-0">
-                <p className="break-words font-semibold text-slate-800">{template.title}</p>
-                <p className="text-xs text-slate-600">
+                <p className="break-words font-semibold text-ink">{template.title}</p>
+                <p className="text-xs text-ink-muted">
                     {`${template.steps.length} ${l(template.steps.length === 1 ? 'step' : 'steps')}`}
                     {!template.is_owner && ` · ${l('by')} ${template.owner_name}`}
                     {template.is_owner && template.shared && ` · ${l('shared')}`}
@@ -92,29 +94,31 @@ export function PathTemplatesPanel({ groups, onApplied }: { groups: StudentGroup
                         `/api/teacher/path-templates/${template.id}/share`, {revision: template.revision, shared: !template.shared}), null)}>
                         {l(template.shared ? 'unshare' : 'share')}
                     </Button>
-                    <Button variant="secondary" className="text-red-600" disabled={busy} onClick={() => {
-                        if (window.confirm(l('removeConfirm'))) void act(() => apiFetch(`/api/teacher/path-templates/${template.id}`, {method: 'DELETE'}), null);
-                    }}>{l('remove')}</Button>
+                    {confirmRemove === template.id
+                        ? <ConfirmInline question={l('removeConfirm')} busy={busy}
+                            onConfirm={() => { setConfirmRemove(null); void act(() => apiFetch(`/api/teacher/path-templates/${template.id}`, {method: 'DELETE'}), null); }}
+                            onCancel={() => setConfirmRemove(null)} />
+                        : <Button variant="secondary" className="text-danger" disabled={busy} onClick={() => setConfirmRemove(template.id)}>{l('remove')}</Button>}
                 </> : <Button variant="secondary" disabled={busy} onClick={() => void act(() => post(`/api/teacher/path-templates/${template.id}/copy`), 'saved')}>{l('copy')}</Button>}
             </div>
         </li>
     );
 
     return <Card className="space-y-4" data-testid="path-templates">
-        <p className="text-sm text-slate-600">{l('intro')}</p>
+        <p className="text-sm text-ink-muted">{l('intro')}</p>
         {notice && <p role={notice === 'saved' || notice === 'applied' ? 'status' : 'alert'}
-            className={`text-sm font-medium ${notice === 'saved' || notice === 'applied' ? 'text-emerald-700' : 'text-red-600'}`}>{l(notice)}</p>}
+            className={`text-sm font-semibold ${notice === 'saved' || notice === 'applied' ? 'text-success' : 'text-danger'}`}>{l(notice)}</p>}
         <section aria-labelledby="my-templates" className="space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 id="my-templates" className="text-base font-semibold text-slate-800">{l('myTemplates')}</h2>
+                <h2 id="my-templates" className="text-base font-semibold text-ink">{l('myTemplates')}</h2>
                 <Button disabled={busy} onClick={() => setEditing('new')}><Plus className="h-4 w-4" aria-hidden />{l('newTemplate')}</Button>
             </div>
-            {list.data.mine.length ? <ul className="space-y-2">{list.data.mine.map(row)}</ul> : <p className="text-sm text-slate-500">{l('noTemplates')}</p>}
-            <p className="text-xs text-slate-500">{l('shareNote')}</p>
+            {list.data.mine.length ? <ul className="space-y-2">{list.data.mine.map(row)}</ul> : <p className="text-sm text-ink-muted">{l('noTemplates')}</p>}
+            <p className="text-xs text-ink-muted">{l('shareNote')}</p>
         </section>
         <section aria-labelledby="shared-presets" className="space-y-2">
-            <h2 id="shared-presets" className="text-base font-semibold text-slate-800">{l('sharedPresets')}</h2>
-            {list.data.shared.length ? <ul className="space-y-2">{list.data.shared.map(row)}</ul> : <p className="text-sm text-slate-500">{l('noShared')}</p>}
+            <h2 id="shared-presets" className="text-base font-semibold text-ink">{l('sharedPresets')}</h2>
+            {list.data.shared.length ? <ul className="space-y-2">{list.data.shared.map(row)}</ul> : <p className="text-sm text-ink-muted">{l('noShared')}</p>}
         </section>
         {applying && <ApplyTemplate template={applying} groups={groups} close={() => setApplying(null)}
             applied={groupId => { setApplying(null); setNotice('applied'); onApplied(groupId); }} />}
@@ -144,17 +148,17 @@ function ApplyTemplate({ template, groups, close, applied }: {
             setBusy(false);
         }
     };
-    return <fieldset className="space-y-3 rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
-        <legend className="px-1 font-semibold text-slate-800">{`${l('applyTitle')}: ${template.title}`}</legend>
-        <p className="text-sm text-slate-600">{l('applyHelp')}</p>
+    return <fieldset className="space-y-4 rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+        <legend className="px-1 font-semibold text-ink">{`${l('applyTitle')}: ${template.title}`}</legend>
+        <p className="text-sm text-ink-muted">{l('applyHelp')}</p>
         <div className="grid gap-1 sm:grid-cols-2">
-            {groups.map(group => <label key={group.id} className="flex min-h-11 items-center gap-2 text-sm">
+            {groups.map(group => <label key={group.id} className="flex min-h-control items-center gap-2 text-sm">
                 <input type="checkbox" checked={chosen.includes(group.id)} onChange={event => setChosen(current =>
                     event.target.checked ? [...current, group.id] : current.filter(id => id !== group.id))} />
                 {group.institution_name ? `${group.name} · ${group.institution_name}` : group.name}
             </label>)}
         </div>
-        {failure && <p role="alert" className="text-sm font-medium text-red-600">{l(failure)}</p>}
+        {failure && <p role="alert" className="text-sm font-semibold text-danger">{l(failure)}</p>}
         <div className="flex flex-wrap gap-2">
             <Button disabled={busy || !chosen.length} onClick={() => void submit()}>{l('apply')}</Button>
             <Button variant="secondary" disabled={busy} onClick={close}>{l('cancel')}</Button>
@@ -216,23 +220,23 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
     };
 
     return <Card className="space-y-4" data-testid="path-template-editor">
-        <label className="block text-sm font-medium text-slate-700">{l('title')}
+        <label className="block text-sm font-semibold text-ink-body">{l('title')}
             <input className={input} value={title} maxLength={200} onChange={event => setTitle(event.target.value)} /></label>
-        <label className="block text-sm font-medium text-slate-700">{l('description')}
+        <label className="block text-sm font-semibold text-ink-body">{l('description')}
             <textarea className={input} rows={2} value={description} maxLength={3000} onChange={event => setDescription(event.target.value)} /></label>
 
-        <ol className="space-y-3">
-            {steps.length === 0 && <li className="text-sm text-slate-500">{l('noSteps')}</li>}
+        <ol className="space-y-4">
+            {steps.length === 0 && <li className="text-sm text-ink-muted">{l('noSteps')}</li>}
             {steps.map((step, index) => <li key={step.id ?? step.client_key} data-testid="template-step"
-                className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                className="space-y-2 rounded-lg border border-line bg-surface p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-semibold text-slate-800">{`#${index + 1} · ${isChat(step) ? stepKindText(lang, 'chatStandalone') : l(TYPE_LABEL[step.step_type])}`}</p>
+                    <p className="font-semibold text-ink">{`#${index + 1} · ${isChat(step) ? stepKindText(lang, 'chatStandalone') : l(TYPE_LABEL[step.step_type])}`}</p>
                     <div className="flex gap-1">
-                        <Button variant="secondary" className="w-11 px-0" disabled={index === 0} aria-label={`${l('moveUp')} #${index + 1}`}
+                        <Button variant="secondary" className="w-control px-0" disabled={index === 0} aria-label={`${l('moveUp')} #${index + 1}`}
                             onClick={() => setSteps(current => moveTemplateStep(current, index, index - 1))}><ArrowUp className="h-4 w-4" aria-hidden /></Button>
-                        <Button variant="secondary" className="w-11 px-0" disabled={index === steps.length - 1} aria-label={`${l('moveDown')} #${index + 1}`}
+                        <Button variant="secondary" className="w-control px-0" disabled={index === steps.length - 1} aria-label={`${l('moveDown')} #${index + 1}`}
                             onClick={() => setSteps(current => moveTemplateStep(current, index, index + 1))}><ArrowDown className="h-4 w-4" aria-hidden /></Button>
-                        <Button variant="secondary" className="w-11 px-0 text-red-600" aria-label={`${l('removeStep')} #${index + 1}`}
+                        <Button variant="secondary" className="w-control px-0 text-danger" aria-label={`${l('removeStep')} #${index + 1}`}
                             onClick={() => setSteps(current => moveTemplateStep(current, index, null))}><X className="h-4 w-4" aria-hidden /></Button>
                     </div>
                 </div>
@@ -246,9 +250,9 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
             </li>)}
         </ol>
 
-        <div className="space-y-3 border-t border-slate-100 pt-3">
+        <div className="space-y-4 border-t border-line pt-4">
             {!adding ? <Button variant="secondary" onClick={() => setAdding(true)}>{stepKindText(lang, 'addStep')}</Button> : (
-                <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="space-y-4 rounded-lg border border-line bg-surface-sunken p-4">
                     <StepKindPicker lang={lang} value={kind} onChange={setKind} available={TEMPLATE_STEP_KINDS} />
                     {kind && <div className="flex flex-wrap gap-2">
                         {(kind === 'guided_chat' ? [['guided_results_chat', 'chatOnResults'], ['tool', 'chatStandalone']] as const
@@ -264,7 +268,7 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
             )}
         </div>
 
-        {failure && <p role="alert" className="text-sm font-medium text-red-600">{l(failure)}</p>}
+        {failure && <p role="alert" className="text-sm font-semibold text-danger">{l(failure)}</p>}
         <div className="flex flex-wrap gap-2">
             <Button disabled={busy || !valid} onClick={() => void save()}>{l(busy ? 'saving' : 'save')}</Button>
             <Button variant="secondary" disabled={busy} onClick={() => close(false)}>{l('cancel')}</Button>
@@ -284,7 +288,7 @@ function StepFields({ step, index, steps, goals, update }: {
             // A standalone guided chat picks among chats; a tool among personal tools (an older key stays listed).
             const list = isChat(step) ? STANDALONE_GUIDED_CHATS : TEMPLATE_TOOLS;
             const tools = list.includes(step.tool_key ?? '') || !step.tool_key ? list : [step.tool_key, ...list];
-            return <label className="block text-sm text-slate-700">{isChat(step) ? stepKindText(lang, 'chatStandalone') : l('tool')}
+            return <label className="block text-sm text-ink-body">{isChat(step) ? stepKindText(lang, 'chatStandalone') : l('tool')}
                 <select id={id} className={input} value={step.tool_key ?? ''} onChange={event => update({tool_key: event.target.value})}>
                     <option value="">{l('choose')}</option>
                     {tools.map(key => <option key={key} value={key}>{toolName(key, lang)}</option>)}
@@ -292,58 +296,58 @@ function StepFields({ step, index, steps, goals, update }: {
         }
         case 'questionnaire_administration':
             return <div className="grid gap-2 sm:grid-cols-3">
-                <label className="block text-sm text-slate-700">{l('instrument')}
+                <label className="block text-sm text-ink-body">{l('instrument')}
                     <select className={input} value={step.instrument_code} onChange={event => update({instrument_code: event.target.value})}>
                         {TEMPLATE_QUESTIONNAIRES.map(code => <option key={code}>{code}</option>)}
                     </select></label>
-                <label className="block text-sm text-slate-700">{l('language')}
+                <label className="block text-sm text-ink-body">{l('language')}
                     <select className={input} value={step.locale} onChange={event => update({locale: event.target.value})}>
                         {TEMPLATE_LOCALES.map(locale => <option key={locale} value={locale}>{locale.toUpperCase()}</option>)}
                     </select></label>
-                <label className="block text-sm text-slate-700">{l('planTitle')}
+                <label className="block text-sm text-ink-body">{l('planTitle')}
                     <input className={input} value={step.plan_title ?? ''} maxLength={200} onChange={event => update({plan_title: event.target.value})} /></label>
             </div>;
         case 'guided_results_chat':
             return <div className="space-y-2">
-                <label className="block text-sm text-slate-700">{resultsChatText(lang, 'origin')}
+                <label className="block text-sm text-ink-body">{resultsChatText(lang, 'origin')}
                     <select className={input} value={step.tool_key ? 'personal' : 'plan'} onChange={event => update(event.target.value === 'personal'
                         ? {tool_key: 'QSA', results_position: undefined} : {tool_key: '', results_position: undefined})}>
                         <option value="personal">{resultsChatText(lang, 'sourcePersonal')}</option>
                         <option value="plan">{resultsChatText(lang, 'sourcePlan')}</option>
                     </select></label>
-                {!step.tool_key ? <label className="block text-sm text-slate-700">{resultsChatText(lang, 'chooseSourceStep')}
+                {!step.tool_key ? <label className="block text-sm text-ink-body">{resultsChatText(lang, 'chooseSourceStep')}
                     <select className={input} value={step.results_position ?? ''} onChange={event => update({results_position: Number(event.target.value) || undefined})}>
                         <option value="">{l('choose')}</option>
                         {steps.slice(0, index).flatMap((source, position) => source.step_type === 'questionnaire_administration'
                             ? [<option key={position} value={position + 1}>{`#${position + 1} · ${source.plan_title || source.instrument_code}`}</option>] : [])}
                     </select></label> : <>
-                <label className="block text-sm text-slate-700">{resultsChatText(lang, 'analyzeQuestionnaire')}
+                <label className="block text-sm text-ink-body">{resultsChatText(lang, 'analyzeQuestionnaire')}
                     <select className={input} value={step.tool_key || 'QSA'} onChange={event => update({tool_key: event.target.value})}>
                         {TEMPLATE_QUESTIONNAIRES.map(code => <option key={code}>{code}</option>)}
                     </select></label>
-                <p className="text-sm text-slate-600">{resultsChatText(lang, 'personalResultsHelp')}</p>
+                <p className="text-sm text-ink-muted">{resultsChatText(lang, 'personalResultsHelp')}</p>
                 </>}
             </div>;
         case 'assignment': {
             const options = goals.some(goal => goal.id === step.goal_id) || !step.goal_id ? goals
                 : [{id: step.goal_id, title: step.goal_title || `#${step.goal_id}`}, ...goals];
             return <div className="space-y-2">
-                <label className="block text-sm text-slate-700">{l('goal')}
+                <label className="block text-sm text-ink-body">{l('goal')}
                     <select className={input} value={step.goal_id ?? ''} onChange={event => update({goal_id: Number(event.target.value) || undefined})}>
                         <option value="">{l('choose')}</option>
                         {options.map(goal => <option key={goal.id} value={goal.id}>{goal.title}</option>)}
                     </select></label>
                 <ActivityToolsPicker lang={lang} options={ACTIVITY_TOOLS} value={step.tool_keys ?? []} onChange={tool_keys => update({tool_keys})} />
-                <label className="block text-sm text-slate-700">{l('assignmentInstructions')}
+                <label className="block text-sm text-ink-body">{l('assignmentInstructions')}
                     <textarea className={input} rows={2} maxLength={3000} value={step.assignment_instructions ?? ''}
                         onChange={event => update({assignment_instructions: event.target.value})} /></label>
             </div>;
         }
         case 'forum':
             return <div className="space-y-2">
-                <label className="block text-sm text-slate-700">{l('topicTitle')}
+                <label className="block text-sm text-ink-body">{l('topicTitle')}
                     <input className={input} maxLength={160} value={step.topic_title ?? ''} onChange={event => update({topic_title: event.target.value})} /></label>
-                <label className="block text-sm text-slate-700">{l('topicBody')}
+                <label className="block text-sm text-ink-body">{l('topicBody')}
                     <textarea className={input} rows={3} maxLength={4000} value={step.topic_body ?? ''} onChange={event => update({topic_body: event.target.value})} /></label>
             </div>;
     }

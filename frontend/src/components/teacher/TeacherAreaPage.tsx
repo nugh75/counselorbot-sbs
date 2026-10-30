@@ -18,7 +18,7 @@ export function TeacherAreaPage({ slug, children, wide = true, customBreadcrumbs
     if (state === 'loading') return <TeacherLoading />;
     if (state === 'forbidden') return <TeacherForbidden />;
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-surface-sunken">
             <section className={`${wide ? 'page-wide' : 'page-narrow'} space-y-8 px-4 py-8`}>
                 <TeacherAreaHeader slug={slug} customBreadcrumbs={customBreadcrumbs} extra={extra} />
                 {children(teacher, institutes)}

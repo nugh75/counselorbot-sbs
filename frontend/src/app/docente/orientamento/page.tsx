@@ -9,6 +9,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { categoryText, type CategoryTextKey } from '@/lib/i18n-institution-categories';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import type { Institution } from '@/lib/referrals-api';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 type Category = { id: string; name: string; description: string; is_active: boolean; position: number; updated_by: string; updated_at: string };
 type Content = { id: number; kind: 'referral' | 'event'; title: string; starts_at: string | null; updated_at: string; category_ids: string[] };
@@ -16,17 +17,18 @@ type AssignmentDraft = { content: Content; selected: string[]; original: string[
 type Snapshot = { revision: number; categories: Category[]; contents?: Content[] };
 type Draft = { id?: string; name: string; description: string; originalName: string; originalDescription: string };
 type Action = 'create' | 'edit' | 'archive' | 'restore' | 'move_up' | 'move_down';
-const control = 'min-h-[44px] rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-50 dark:border-slate-600';
-const input = `${control} w-full bg-white dark:bg-slate-900`;
+const control = 'min-h-control rounded-control border border-line-strong px-4 py-2 text-sm disabled:opacity-50';
+const input = `${control} w-full bg-surface`;
 
 function Heading() {
     const { lang } = useI18n();
-    return <header className="space-y-5">
-        <Link href="/docente" className="inline-flex min-h-[44px] items-center gap-2 text-sm"><ArrowLeft className="h-4 w-4" aria-hidden />{categoryText(lang, 'back')}</Link>
-        <div className="flex items-center gap-4">
-            <Image src="/images/platform/bussola.png" width={64} height={64} alt="" className="h-16 w-16 shrink-0 object-contain" />
-            <div className="min-w-0"><h1 className="text-2xl font-bold">{categoryText(lang, 'title')}</h1><p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{categoryText(lang, 'subtitle')}</p></div>
-        </div>
+    return <header className="space-y-6">
+        <Link href="/docente" className="inline-flex min-h-control items-center gap-2 rounded-control px-4 text-sm hover:bg-surface-raised"><ArrowLeft className="h-4 w-4" aria-hidden />{categoryText(lang, 'back')}</Link>
+        <PageHeader
+            title={categoryText(lang, 'title')}
+            subtitle={categoryText(lang, 'subtitle')}
+            icon={<Image src="/images/platform/bussola.png" width={64} height={64} alt="" className="h-16 w-16 shrink-0 object-contain" />}
+        />
     </header>;
 }
 
@@ -48,7 +50,7 @@ export default function InstitutionOrientationPage() {
     }, [attempt]);
     if (institutions?.length && selected !== null) return <CategoryEditor key={selected} institutions={institutions} institutionId={selected} onSelect={setSelected} />;
     return <div className="page-wide space-y-6 px-4 py-8"><Heading />
-        {errorKey ? <div role="alert" className="space-y-3"><p>{categoryText(lang, errorKey)}</p><button className={control} onClick={() => { setErrorKey(null); setAttempt(value => value + 1); }}>{categoryText(lang, 'retry')}</button></div>
+        {errorKey ? <div role="alert" className="space-y-4"><p>{categoryText(lang, errorKey)}</p><button className={control} onClick={() => { setErrorKey(null); setAttempt(value => value + 1); }}>{categoryText(lang, 'retry')}</button></div>
             : <p role="status">{categoryText(lang, institutions ? 'noInstitutions' : 'loading')}</p>}
     </div>;
 }
@@ -159,23 +161,23 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
     return <div className="page-wide space-y-6 px-4 py-8" data-institution-categories>
         <Heading />
         {institutions.length > 1 ? <label className="block max-w-lg text-sm">{l('institution')}<select className={`${input} mt-1`} value={institutionId} disabled={busy} onChange={event => { if (mayDiscard()) onSelect(Number(event.target.value)); }}>{institutions.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
-            : <p className="font-medium">{l('institution')}: {institution.name}</p>}
-        <div className="flex flex-wrap items-center justify-between gap-3"><h2 ref={listRef} tabIndex={-1} className="text-lg font-semibold">{l('categories')}</h2><button type="button" disabled={blocked} className={`${control} inline-flex items-center gap-2`} onClick={() => openEditor()}><Plus className="h-4 w-4" aria-hidden />{l('new')}</button></div>
-        {errorKey && <div role="alert" className="space-y-2 rounded-lg border border-amber-300 p-3"><p>{l(errorKey)}</p><button type="button" disabled={busy || loading} className={control} onClick={reload}>{l('retry')}</button></div>}
-        {draft && <form className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900" onSubmit={event => { event.preventDefault(); void change(draft.id ? 'edit' : 'create', draft.id); }}>
+            : <p className="font-semibold">{l('institution')}: {institution.name}</p>}
+        <div className="flex flex-wrap items-center justify-between gap-4"><h2 ref={listRef} tabIndex={-1} className="text-lg font-semibold">{l('categories')}</h2><button type="button" disabled={blocked} className={`${control} inline-flex items-center gap-2`} onClick={() => openEditor()}><Plus className="h-4 w-4" aria-hidden />{l('new')}</button></div>
+        {errorKey && <div role="alert" className="space-y-2 rounded-card border border-warning-line bg-warning-soft p-4 text-warning-ink"><p>{l(errorKey)}</p><button type="button" disabled={busy || loading} className={control} onClick={reload}>{l('retry')}</button></div>}
+        {draft && <form className="space-y-4 rounded-card border border-line bg-surface p-4" onSubmit={event => { event.preventDefault(); void change(draft.id ? 'edit' : 'create', draft.id); }}>
             <h3 className="font-semibold">{l(draft.id ? 'edit' : 'new')}</h3>
             {unavailableDraft && <p role="alert">{l('unavailable')}</p>}
             <label className="block text-sm">{l('name')} *<input ref={nameRef} className={`${input} mt-1`} maxLength={120} required disabled={busy} value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} /></label>
             <label className="block text-sm">{l('description')}<textarea className={`${input} mt-1`} rows={3} maxLength={2000} disabled={busy} value={draft.description} onChange={event => setDraft({ ...draft, description: event.target.value })} /></label>
-            <div className="flex justify-end gap-2"><button type="button" disabled={busy} className={control} onClick={() => { if (mayDiscard()) { setDraft(null); listRef.current?.focus(); } }}>{l('cancel')}</button><button type="submit" disabled={blocked || unavailableDraft || !draft.name.trim()} className={`${control} bg-cyan-800 text-white`}>{l('save')}</button></div>
+            <div className="flex justify-end gap-2"><button type="button" disabled={busy} className={control} onClick={() => { if (mayDiscard()) { setDraft(null); listRef.current?.focus(); } }}>{l('cancel')}</button><button type="submit" disabled={blocked || unavailableDraft || !draft.name.trim()} className={`${control} border-brand bg-brand font-semibold text-ink-on-brand hover:bg-brand-hover`}>{l('save')}</button></div>
         </form>}
         {loading && <p role="status">{l('loading')}</p>}
         {!loading && snapshot && active.length === 0 && <p>{l('empty')}</p>}
         <ul className="space-y-2" aria-label={l('categories')}>
-            {active.map((category, index) => <li key={category.id} data-category-id={category.id} className="flex items-start gap-3 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
-                <div className="min-w-0 flex-1"><h3 className="break-words font-medium">{category.name}</h3>{category.description && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-600 dark:text-slate-400">{category.description}</p>}<p className="mt-2 break-words text-xs text-slate-500">{l('changed')}: {category.updated_by} · {new Date(category.updated_at).toLocaleString(lang)}</p></div>
+            {active.map((category, index) => <li key={category.id} data-category-id={category.id} className="flex items-start gap-4 rounded-card border border-line p-4">
+                <div className="min-w-0 flex-1"><h3 className="break-words font-semibold">{category.name}</h3>{category.description && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-ink-muted">{category.description}</p>}<p className="mt-2 break-words text-xs text-ink-muted">{l('changed')}: {category.updated_by} · {new Date(category.updated_at).toLocaleString(lang)}</p></div>
                 <div className="relative shrink-0"><button ref={node => { if (node) triggers.current.set(category.id, node); else triggers.current.delete(category.id); }} type="button" aria-label={`${l('actions')}: ${category.name}`} aria-expanded={menu === category.id} aria-controls={`category-actions-${category.id}`} disabled={blocked} className={control} onClick={() => setMenu(menu === category.id ? null : category.id)}><MoreHorizontal className="h-4 w-4" aria-hidden /></button>
-                    {menu === category.id && <div ref={menuRef} id={`category-actions-${category.id}`} className="absolute right-0 top-full z-20 mt-1 w-48 max-w-[calc(100vw-3rem)] space-y-1 rounded-lg border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900" onBlur={event => { if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget) && !triggers.current.get(category.id)?.contains(event.relatedTarget)) setMenu(null); }}>
+                    {menu === category.id && <div ref={menuRef} id={`category-actions-${category.id}`} className="absolute right-0 top-full z-20 mt-1 w-48 max-w-[calc(100vw-3rem)] space-y-1 rounded-card border border-line bg-surface p-2 shadow-pop" onBlur={event => { if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget) && !triggers.current.get(category.id)?.contains(event.relatedTarget)) setMenu(null); }}>
                         <button type="button" className={`${control} w-full text-left`} onClick={() => openEditor(category)}>{l('edit')}</button>
                         <button type="button" disabled={index === 0 || Boolean(draft || assignment)} className={`${control} w-full text-left`} onClick={() => void change('move_up', category.id)}>{l('up')}</button>
                         <button type="button" disabled={index === active.length - 1 || Boolean(draft || assignment)} className={`${control} w-full text-left`} onClick={() => void change('move_down', category.id)}>{l('down')}</button>
@@ -184,28 +186,28 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
                 </div>
             </li>)}
         </ul>
-        {archived.length > 0 && <details><summary className="cursor-pointer py-3 text-sm">{l('archived')} ({archived.length})</summary><ul className="space-y-2">{archived.map(category => <li key={category.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700"><span className="min-w-0 break-words">{category.name}</span><button type="button" disabled={blocked || Boolean(draft || assignment)} className={`${control} shrink-0`} onClick={() => void change('restore', category.id)}>{l('restore')}</button></li>)}</ul></details>}
-        <section className="space-y-3 border-t border-slate-200 pt-6 dark:border-slate-700" aria-label={l('contents')}>
+        {archived.length > 0 && <details><summary className="cursor-pointer py-4 text-sm">{l('archived')} ({archived.length})</summary><ul className="space-y-2">{archived.map(category => <li key={category.id} className="flex items-center justify-between gap-4 rounded-card border border-line p-4"><span className="min-w-0 break-words">{category.name}</span><button type="button" disabled={blocked || Boolean(draft || assignment)} className={`${control} shrink-0`} onClick={() => void change('restore', category.id)}>{l('restore')}</button></li>)}</ul></details>}
+        <section className="space-y-4 border-t border-line pt-6" aria-label={l('contents')}>
             <h2 className="text-lg font-semibold">{l('contents')}</h2>
             {active.length === 0 && <p className="text-sm">{l('createFirst')}</p>}
-            {assignment && <form className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900" onSubmit={event => { event.preventDefault(); void saveAssignment(); }}>
+            {assignment && <form className="space-y-4 rounded-card border border-line bg-surface p-4" onSubmit={event => { event.preventDefault(); void saveAssignment(); }}>
                 <fieldset ref={assignmentRef} tabIndex={-1} disabled={busy} className="space-y-2">
                     <legend className="mb-2 break-words font-semibold">{l('assign')}: {assignment.content.title}</legend>
                     {!currentContent && <p role="alert">{l('contentUnavailable')}</p>}
                     {invalidSelections && <p role="alert">{l('assignmentConflict')}</p>}
-                    {snapshot?.categories.filter(category => category.is_active || assignment.selected.includes(category.id)).map(category => <label key={category.id} className="flex min-h-[44px] items-center gap-3 text-sm"><input type="checkbox" checked={assignment.selected.includes(category.id)} onChange={event => setAssignment({ ...assignment, selected: event.target.checked ? [...assignment.selected, category.id] : assignment.selected.filter(id => id !== category.id) })} /><span className="min-w-0 break-words">{category.name}{!category.is_active && ` (${l('archivedTag')})`}</span></label>)}
+                    {snapshot?.categories.filter(category => category.is_active || assignment.selected.includes(category.id)).map(category => <label key={category.id} className="flex min-h-[44px] items-center gap-4 text-sm"><input type="checkbox" checked={assignment.selected.includes(category.id)} onChange={event => setAssignment({ ...assignment, selected: event.target.checked ? [...assignment.selected, category.id] : assignment.selected.filter(id => id !== category.id) })} /><span className="min-w-0 break-words">{category.name}{!category.is_active && ` (${l('archivedTag')})`}</span></label>)}
                 </fieldset>
-                <div className="flex justify-end gap-2"><button type="button" disabled={busy} className={control} onClick={() => { if (mayDiscard()) { setAssignment(null); listRef.current?.focus(); } }}>{l('cancel')}</button><button type="submit" disabled={blocked || !currentContent || invalidSelections} className={`${control} bg-cyan-800 text-white`}>{l('save')}</button></div>
+                <div className="flex justify-end gap-2"><button type="button" disabled={busy} className={control} onClick={() => { if (mayDiscard()) { setAssignment(null); listRef.current?.focus(); } }}>{l('cancel')}</button><button type="submit" disabled={blocked || !currentContent || invalidSelections} className={`${control} border-brand bg-brand font-semibold text-ink-on-brand hover:bg-brand-hover`}>{l('save')}</button></div>
             </form>}
-            {(['referral', 'event'] as const).map(kind => <details key={kind} className="rounded-lg border border-slate-200 px-3 dark:border-slate-700">
-                <summary className="cursor-pointer py-3 font-medium">{l(kind === 'referral' ? 'contacts' : 'events')} ({contents.filter(item => item.kind === kind).length})</summary>
-                {contents.filter(item => item.kind === kind).length === 0 && <p className="pb-3 text-sm">{l('noContents')}</p>}
+            {(['referral', 'event'] as const).map(kind => <details key={kind} className="rounded-card border border-line px-4">
+                <summary className="cursor-pointer py-4 font-semibold">{l(kind === 'referral' ? 'contacts' : 'events')} ({contents.filter(item => item.kind === kind).length})</summary>
+                {contents.filter(item => item.kind === kind).length === 0 && <p className="pb-4 text-sm">{l('noContents')}</p>}
                 <ul>{contents.filter(item => item.kind === kind).map(content => {
                     const key = `content-${kind}-${content.id}`;
-                    return <li key={key} className="flex items-start gap-3 border-t border-slate-200 py-3 dark:border-slate-700">
-                        <div className="min-w-0 flex-1"><h3 className="break-words font-medium">{content.title}</h3>{content.starts_at && <p className="text-sm text-slate-500">{new Date(content.starts_at).toLocaleDateString(lang)}</p>}<p className="mt-1 break-words text-sm text-slate-600 dark:text-slate-400">{active.filter(category => content.category_ids.includes(category.id)).map(category => category.name).join(' · ') || l('uncategorized')}</p></div>
+                    return <li key={key} className="flex items-start gap-4 border-t border-line py-4">
+                        <div className="min-w-0 flex-1"><h3 className="break-words font-semibold">{content.title}</h3>{content.starts_at && <p className="text-sm text-ink-muted">{new Date(content.starts_at).toLocaleDateString(lang)}</p>}<p className="mt-1 break-words text-sm text-ink-muted">{active.filter(category => content.category_ids.includes(category.id)).map(category => category.name).join(' · ') || l('uncategorized')}</p></div>
                         {active.length > 0 && <div className="relative shrink-0"><button ref={node => { if (node) triggers.current.set(key, node); else triggers.current.delete(key); }} type="button" disabled={blocked} aria-label={`${l('actions')}: ${content.title}`} aria-expanded={menu === key} aria-controls={`actions-${key}`} className={control} onClick={() => setMenu(menu === key ? null : key)}><MoreHorizontal className="h-4 w-4" aria-hidden /></button>
-                            {menu === key && <div ref={menuRef} id={`actions-${key}`} className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900" onBlur={event => { if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget) && !triggers.current.get(key)?.contains(event.relatedTarget)) setMenu(null); }}><button type="button" className={`${control} w-full text-left`} onClick={() => openAssignment(content)}>{l('assign')}</button></div>}
+                            {menu === key && <div ref={menuRef} id={`actions-${key}`} className="absolute right-0 top-full z-20 mt-1 w-48 rounded-card border border-line bg-surface p-2 shadow-pop" onBlur={event => { if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget) && !triggers.current.get(key)?.contains(event.relatedTarget)) setMenu(null); }}><button type="button" className={`${control} w-full text-left`} onClick={() => openAssignment(content)}>{l('assign')}</button></div>}
                         </div>}
                     </li>;
                 })}</ul>

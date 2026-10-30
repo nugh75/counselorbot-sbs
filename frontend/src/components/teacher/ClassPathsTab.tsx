@@ -536,23 +536,23 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-4">
                 <button
                     type="button"
                     onClick={onBack}
-                    className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-indigo-700 hover:text-indigo-900"
+                    className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-link hover:text-ink"
                 >
                     <ArrowLeft className="h-4 w-4" aria-hidden />
                     {l('backToList')}
                 </button>
                 <div className="flex flex-wrap items-center gap-2">
                     <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        className={`rounded-full px-2 py-1 text-xs font-semibold ${
                             currentPath.status === 'published'
-                                ? 'bg-emerald-100 text-emerald-800'
+                                ? 'bg-success-soft text-success-ink'
                                 : currentPath.status === 'archived'
-                                ? 'bg-slate-200 text-slate-700'
-                                : 'bg-amber-100 text-amber-800'
+                                ? 'bg-line text-ink-body'
+                                : 'bg-warning-soft text-warning-ink'
                         }`}
                     >
                         {currentPath.status === 'published'
@@ -567,7 +567,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     </Button>
                     <Button
                         variant="secondary"
-                        className="w-11 px-0"
+                        className="w-control px-0"
                         disabled={busy || dirty}
                         onClick={handleArchiveOrRestore}
                         aria-label={currentPath.status === 'archived' ? l('restore') : l('archive')}
@@ -579,7 +579,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     </Button>
                     <Button
                         variant="secondary"
-                        className="w-11 px-0 text-red-600"
+                        className="w-control px-0 text-danger"
                         disabled={busy}
                         onClick={handleDelete}
                         aria-label={l('deleteDraft')}
@@ -607,7 +607,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             )}
             {templateNotice && (
                 <p role={templateNotice === 'savedAsTemplate' ? 'status' : 'alert'}
-                    className={`text-sm font-medium ${templateNotice === 'savedAsTemplate' ? 'text-emerald-700' : 'text-red-600'}`}>
+                    className={`text-sm font-semibold ${templateNotice === 'savedAsTemplate' ? 'text-success' : 'text-danger'}`}>
                     {pathTemplateText(lang, templateNotice)}
                 </p>
             )}
@@ -615,7 +615,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             {editingPlan ? (
                 <Card className="space-y-4">
                     <div>
-                        <label htmlFor="path-title" className="block text-sm font-semibold text-slate-800">
+                        <label htmlFor="path-title" className="block text-sm font-semibold text-ink">
                             {l('titleLabel')}
                         </label>
                         <input
@@ -627,12 +627,12 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 if (notice === 'saved' || notice === 'published') setNotice(null);
                             }}
                             placeholder={l('titlePlaceholder')}
-                            className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-600 focus:outline-none"
+                            className="mt-1 block w-full rounded-control border border-line-strong px-4 py-2 text-sm text-ink focus:border-brand focus:outline-none"
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="path-description" className="block text-sm font-semibold text-slate-800">
+                        <label htmlFor="path-description" className="block text-sm font-semibold text-ink">
                             {l('descriptionLabel')}
                         </label>
                         <textarea
@@ -644,38 +644,38 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 if (notice === 'saved' || notice === 'published') setNotice(null);
                             }}
                             placeholder={l('descriptionPlaceholder')}
-                            className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-600 focus:outline-none"
+                            className="mt-1 block w-full rounded-control border border-line-strong px-4 py-2 text-sm text-ink focus:border-brand focus:outline-none"
                         />
                     </div>
 
-                    <p className="text-sm text-slate-600">{t('piano.builder.independentSteps')}</p>
+                    <p className="text-sm text-ink-muted">{t('piano.builder.independentSteps')}</p>
                     {currentPath.steps.length > 0 && (
                         <Button variant="secondary" onClick={() => setEditingPlan(false)}>{l('doneEditing')}</Button>
                     )}
                 </Card>
             ) : (
-                <Card className="flex flex-wrap items-start justify-between gap-3" data-testid="path-summary">
+                <Card className="flex flex-wrap items-start justify-between gap-4" data-testid="path-summary">
                     <div className="min-w-0 flex-1 space-y-1">
-                        <h2 className="break-words text-lg font-semibold text-slate-800">{title}</h2>
-                        {description && <p className="whitespace-pre-wrap text-sm text-slate-600">{description}</p>}
-                        <p className="text-xs text-slate-500">{t('piano.builder.independentSteps')}</p>
+                        <h2 className="break-words text-lg font-semibold text-ink">{title}</h2>
+                        {description && <p className="whitespace-pre-wrap text-sm text-ink-muted">{description}</p>}
+                        <p className="text-xs text-ink-muted">{t('piano.builder.independentSteps')}</p>
                     </div>
                     <Button variant="secondary" disabled={busy} onClick={() => setEditingPlan(true)}>{l('editPlan')}</Button>
                 </Card>
             )}
 
             <Card className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
-                    <h3 className="text-base font-semibold text-slate-800">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-4">
+                    <h3 className="text-base font-semibold text-ink">
                         {`${l('stepsHeading')} (${steps.length})`}
                     </h3>
-                    <p className="text-xs text-slate-500 md:max-w-xl">{l('scheduleHelp')}</p>
+                    <p className="text-xs text-ink-muted md:max-w-xl">{l('scheduleHelp')}</p>
                 </div>
 
                 {steps.length === 0 ? (
-                    <p className="py-6 text-center text-sm text-slate-500">{l('noStepsYet')}</p>
+                    <p className="py-6 text-center text-sm text-ink-muted">{l('noStepsYet')}</p>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {steps.map((step, index) => {
                             const source = steps.find(row => (row.id !== undefined && row.id === step.results_step_id)
                                 || (step.results_key !== undefined && pathStepKey(row) === step.results_key));
@@ -730,29 +730,29 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 <div
                                     key={step.id ? `step-${step.id}` : `new-step-${step.client_key}`}
                                     data-testid="path-step-card"
-                                    className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 md:flex-row md:items-start"
+                                    className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-4 md:flex-row md:items-start"
                                 >
-                                    <div className="flex items-center gap-3 md:w-48">
-                                        <span className="font-mono text-sm font-bold text-slate-500">{`#${step.position}`}</span>
+                                    <div className="flex items-center gap-4 md:w-48">
+                                        <span className="font-mono text-sm font-semibold text-ink-muted">{`#${step.position}`}</span>
 
                                         <div className="min-w-0 flex-1">
-                                            <p className="break-words text-sm font-semibold text-slate-800">{name}</p>
+                                            <p className="break-words text-sm font-semibold text-ink">{name}</p>
                                             {!step.auto_detect && (
-                                                <span className="mt-0.5 inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800">
+                                                <span className="mt-1 inline-flex items-center gap-1 rounded bg-warning-soft px-2 py-1 text-xs font-semibold text-warning-ink">
                                                     <Flag className="h-3 w-3" aria-hidden />
                                                     {l('selfMarkBadge')}
                                                 </span>
                                             )}
                                             {action && (
                                                 <>
-                                                    <span className="mt-0.5 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">
+                                                    <span className="mt-1 inline-block rounded bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-body">
                                                         {l('notAvailable')}
                                                     </span>
-                                                    <p className="mt-1 text-xs text-slate-600">{unavailableActionText(lang, action)}</p>
+                                                    <p className="mt-1 text-xs text-ink-muted">{unavailableActionText(lang, action)}</p>
                                                 </>
                                             )}
-                                            {pending && <p className="mt-1 text-xs text-slate-600">{pathTemplateText(lang, 'pendingHelp')}</p>}
-                                            {isLegacyQuestionnaireTool(step) && <p className="mt-1 text-xs text-slate-600">{k('legacyQuestionnaire')}</p>}
+                                            {pending && <p className="mt-1 text-xs text-ink-muted">{pathTemplateText(lang, 'pendingHelp')}</p>}
+                                            {isLegacyQuestionnaireTool(step) && <p className="mt-1 text-xs text-ink-muted">{k('legacyQuestionnaire')}</p>}
                                             {step.step_type === 'meeting' && step.meeting_id && (
                                                 <Button variant="ghost" size="sm" disabled={busy} onClick={() => setMeetingEditor({id: step.meeting_id!, adding: false})}>
                                                     {t('piano.builder.editMeeting')}
@@ -766,7 +766,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             {step.step_type === 'questionnaire_administration' && step.administration_plan_id && (
                                                 // Classroom and research views edit the same administration row.
                                                 <Link href={`/docente/somministrazioni#plan-${step.administration_plan_id}`}
-                                                    className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-xs font-semibold text-indigo-700">
+                                                    className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-xs font-semibold text-link">
                                                     <ExternalLink className="h-3.5 w-3.5" aria-hidden />{pub('openResearchView')}
                                                 </Link>
                                             )}
@@ -783,32 +783,32 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                 update={patch => handleUpdateStep(index, patch)}
                                             />
                                         ) : <>
-                                            <p className="break-words text-sm text-slate-800">{presentation.title}</p>
-                                            {presentation.note && <p className="whitespace-pre-wrap text-xs text-slate-600">{presentation.note}</p>}
+                                            <p className="break-words text-sm text-ink">{presentation.title}</p>
+                                            {presentation.note && <p className="whitespace-pre-wrap text-xs text-ink-muted">{presentation.note}</p>}
                                         </>}
                                     </div>
 
                                     <div className="space-y-2 md:w-52">
                                         {isMeeting ? (
                                             <div>
-                                                <p className="text-[11px] font-medium text-slate-500">{l('meetingDate')}</p>
-                                                <p className="text-xs text-slate-700">{meetingDate || '—'}</p>
+                                                <p className="text-[11px] font-semibold text-ink-muted">{l('meetingDate')}</p>
+                                                <p className="text-xs text-ink-body">{meetingDate || '—'}</p>
                                             </div>
                                         ) : (
                                             <>
                                                 {isQuestionnaire && (
                                                     <div>
-                                                        <p className="text-[11px] font-medium text-slate-500">{l('plannedDayFromPlan')}</p>
-                                                        <p className="text-xs text-slate-700">{plannedDay || l('plannedDayNotSet')}</p>
-                                                        {plannedLocation && <p className="text-xs text-slate-500">{plannedLocation}</p>}
+                                                        <p className="text-[11px] font-semibold text-ink-muted">{l('plannedDayFromPlan')}</p>
+                                                        <p className="text-xs text-ink-body">{plannedDay || l('plannedDayNotSet')}</p>
+                                                        {plannedLocation && <p className="text-xs text-ink-muted">{plannedLocation}</p>}
                                                     </div>
                                                 )}
                                                 {!open && <>
-                                                    {isChat && plannedDay && <p className="text-xs text-slate-700">{`${l('plannedDay')}: ${plannedDay}`}</p>}
-                                                    {presentation.showDueDate && presentation.dueDate && <p className="text-xs text-slate-700">{`${l('dueHeader')}: ${new Date(`${presentation.dueDate}T12:00:00`).toLocaleDateString(lang, { dateStyle: 'medium' })}`}</p>}
+                                                    {isChat && plannedDay && <p className="text-xs text-ink-body">{`${l('plannedDay')}: ${plannedDay}`}</p>}
+                                                    {presentation.showDueDate && presentation.dueDate && <p className="text-xs text-ink-body">{`${l('dueHeader')}: ${new Date(`${presentation.dueDate}T12:00:00`).toLocaleDateString(lang, { dateStyle: 'medium' })}`}</p>}
                                                 </>}
                                                 {open && isChat && (
-                                                    <label className="block text-[11px] font-medium text-slate-500">
+                                                    <label className="block text-[11px] font-semibold text-ink-muted">
                                                         {l('plannedDayOptional')}
                                                         <input
                                                             type="date"
@@ -820,7 +820,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                                 if (notice === 'saved' || notice === 'published') setNotice(null);
                                                             }}
                                                             aria-label={`${name} ${l('plannedDay')}`}
-                                                            className="mt-1 block w-full rounded border border-slate-300 px-2 py-1 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
+                                                            className="mt-1 block w-full rounded border border-line-strong px-2 py-1 text-xs text-ink focus:border-brand focus:outline-none"
                                                         />
                                                     </label>
                                                 )}
@@ -844,7 +844,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             onClick={() => handleMoveStep(index, -1)}
                                             title={l('moveUp')}
                                             aria-label={`${l('moveUp')} #${step.position}`}
-                                            className="flex h-9 w-9 items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-30"
+                                            className="flex h-control w-control items-center justify-center rounded-control border border-line text-ink-muted hover:bg-surface-raised disabled:opacity-30"
                                         >
                                             <ArrowUp className="h-4 w-4" aria-hidden />
                                         </button>
@@ -854,7 +854,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             onClick={() => handleMoveStep(index, 1)}
                                             title={l('moveDown')}
                                             aria-label={`${l('moveDown')} #${step.position}`}
-                                            className="flex h-9 w-9 items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-30"
+                                            className="flex h-control w-control items-center justify-center rounded-control border border-line text-ink-muted hover:bg-surface-raised disabled:opacity-30"
                                         >
                                             <ArrowDown className="h-4 w-4" aria-hidden />
                                         </button>
@@ -864,7 +864,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             onClick={() => handleRemoveStep(index)}
                                             title={l('removeStep')}
                                             aria-label={`${l('removeStep')} #${step.position}`}
-                                            className="flex h-9 w-9 items-center justify-center rounded border border-slate-200 text-red-600 hover:bg-red-50 disabled:opacity-30"
+                                            className="flex h-control w-control items-center justify-center rounded-control border border-line text-danger hover:bg-danger-soft disabled:opacity-30"
                                         >
                                             <X className="h-4 w-4" aria-hidden />
                                         </button>
@@ -876,26 +876,26 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     </div>
                 )}
 
-                <div ref={addPanel} className="mt-4 scroll-mt-24 space-y-3 border-t border-slate-100 pt-3" data-testid="add-step">
+                <div ref={addPanel} className="mt-4 scroll-mt-24 space-y-4 border-t border-line pt-4" data-testid="add-step">
                     {!adding ? (
                         <Button variant="secondary" disabled={busy} onClick={() => setAdding(true)}>{k('addStep')}</Button>
                     ) : (
-                        <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <div className="space-y-4 rounded-lg border border-line bg-surface-sunken p-4">
                             {replacing !== null && steps[replacing] && <div role="status" className="space-y-1">
-                                <p className="text-sm font-semibold text-slate-800">{`${l('replacingStep')} #${steps[replacing].position}`}</p>
-                                <p className="text-xs text-slate-600">{l('replaceHelp')}</p>
+                                <p className="text-sm font-semibold text-ink">{`${l('replacingStep')} #${steps[replacing].position}`}</p>
+                                <p className="text-xs text-ink-muted">{l('replaceHelp')}</p>
                             </div>}
                             <StepKindPicker lang={lang} value={kind} onChange={setKind} />
-                            {kind === 'questionnaire' && <div className="space-y-3">
-                            <Link href="/docente/somministrazioni" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-indigo-700 hover:underline">
+                            {kind === 'questionnaire' && <div className="space-y-4">
+                            <Link href="/docente/somministrazioni" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-link hover:underline">
                                 <ExternalLink className="h-4 w-4" aria-hidden />{a('research')}</Link>
                             {institutionId == null && <Callout variant="warning">{pub('noInstitute')}{' '}
-                                <Link href="/docente/istituti" className="font-semibold text-indigo-700 underline">{pub('goToInstitutes')}</Link></Callout>}
+                                <Link href="/docente/istituti" className="font-semibold text-link underline">{pub('goToInstitutes')}</Link></Callout>}
                             {replacing !== null && steps[replacing]?.step_type === 'questionnaire_administration' && <Callout>{t('admin.ap.pathReplaceHint')}</Callout>}
                             {replacementError && <Callout variant="danger">{t('admin.ap.error.cleanReplacement')}</Callout>}
                             {administrationError && <Callout variant="danger">{a('error')} <Button variant="secondary" onClick={()=>void loadAdministrations()}>{a('retry')}</Button></Callout>}
                             <div className="flex flex-wrap items-end gap-2">
-                                <label className="block w-full text-sm sm:w-auto">{a('existing')}<select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                <label className="block w-full text-sm sm:w-auto">{a('existing')}<select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
                                     <option value="">{a('choose')}</option>
                                     {administrations.filter(offered).map(row=><option key={row.id} value={row.id}>{row.code} · {row.title} · {row.locale.toUpperCase()}</option>)}
                                 </select></label>
@@ -903,74 +903,74 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             </div>
                             <h4 className="text-sm font-semibold">{a('createNew')}</h4>
                             <div className="flex flex-wrap items-end gap-2">
-                                <label className="block w-full text-sm sm:w-auto">{a('title')}<input value={administrationTitle} onChange={event=>setAdministrationTitle(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto" /></label>
-                                <label className="block w-full text-sm sm:w-auto">{a('instrument')}<select value={administrationInstrument} onChange={event=>{setAdministrationInstrument(event.target.value);setAdministrationLocale('it');}} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                <label className="block w-full text-sm sm:w-auto">{a('title')}<input value={administrationTitle} onChange={event=>setAdministrationTitle(event.target.value)} className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto" /></label>
+                                <label className="block w-full text-sm sm:w-auto">{a('instrument')}<select value={administrationInstrument} onChange={event=>{setAdministrationInstrument(event.target.value);setAdministrationLocale('it');}} className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
                                     {['QSA','QSAr','ZTPI','QPCS','QPCC','QAP'].map(code=><option key={code}>{code}</option>)}
                                 </select></label>
-                                <label className="block w-full text-sm sm:w-auto">{a('locale')}<select value={administrationLocale} onChange={event=>setAdministrationLocale(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                <label className="block w-full text-sm sm:w-auto">{a('locale')}<select value={administrationLocale} onChange={event=>setAdministrationLocale(event.target.value)} className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
                                     {localeOptions(administrationInstrument).map(locale=><option key={locale} value={locale}>{locale.toUpperCase()}</option>)}
                                 </select></label>
                                 <Button disabled={busy || !administrationTitle.trim()} onClick={()=>void createAdministration()}>{a('create')}</Button>
                             </div>
-                            <details className="text-sm text-slate-600">
-                                <summary className="cursor-pointer font-medium text-slate-700">{a('howDone')}</summary>
+                            <details className="text-sm text-ink-muted">
+                                <summary className="cursor-pointer font-semibold text-ink-body">{a('howDone')}</summary>
                                 <p className="mt-1">{a('rule')}</p>
                                 <p className="mt-1">{a('teacherInAppGuide')}</p>
                             </details>
                             </div>}
-                            {kind === 'guided_chat' && <div className="space-y-3">
+                            {kind === 'guided_chat' && <div className="space-y-4">
                                 <h4 className="text-sm font-semibold">{r('sourcePlan')}</h4>
                                 <label className="block text-sm">{a('deepDiveFrom')}<select value={selectedResultsKey}
                                     onChange={event => {setSelectedResultsKey(event.target.value);if (event.target.value) {setSelectedAnalysisKey('');setSelectedChatKey('');}}}
-                                    className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                    className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
                                     <option value="">{r('chooseSourceStep')}</option>
                                     {analysisSources.map(source => <option key={pathStepKey(source)} value={pathStepKey(source)}>
                                         {`#${source.position} · ${source.title || source.target_summary?.title || source.pending_config?.instrument_code || source.target_summary?.instrument_code || ''}`}
                                     </option>)}
                                 </select></label>
-                                <p className="text-sm text-slate-600">{r('planResultsHelp')}</p>
+                                <p className="text-sm text-ink-muted">{r('planResultsHelp')}</p>
                                 <h4 className="text-sm font-semibold">{r('personalResults')}</h4>
                                 <label className="block text-sm">{r('analyzeQuestionnaire')}<select value={selectedAnalysisKey}
                                     onChange={event => {setSelectedAnalysisKey(event.target.value);if (event.target.value) {setSelectedChatKey('');setSelectedResultsKey('');}}}
-                                    className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                    className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
                                     <option value="">{r('chooseQuestionnaire')}</option>
                                     {enabledTools.filter(tool => ADMINISTRATION_QUESTIONNAIRES.includes(tool.key)).map(tool => <option key={tool.key} value={tool.key}>{`${r('analyzeQuestionnaire')} · ${tool.key}`}</option>)}
                                 </select></label>
-                                <p className="text-sm text-slate-600">{r('personalResultsHelp')}</p>
+                                <p className="text-sm text-ink-muted">{r('personalResultsHelp')}</p>
                                 <h4 className="text-sm font-semibold">{k('chatStandalone')}</h4>
-                                {chatKeys.length === 0 ? <p className="text-sm text-slate-600">{k('noChats')}</p> : (
-                                    <label className="block w-full text-sm sm:w-auto"><span className="sr-only">{k('chatStandalone')}</span><select value={selectedChatKey} onChange={event=>{setSelectedChatKey(event.target.value);if (event.target.value) {setSelectedAnalysisKey('');setSelectedResultsKey('');}}} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                {chatKeys.length === 0 ? <p className="text-sm text-ink-muted">{k('noChats')}</p> : (
+                                    <label className="block w-full text-sm sm:w-auto"><span className="sr-only">{k('chatStandalone')}</span><select value={selectedChatKey} onChange={event=>{setSelectedChatKey(event.target.value);if (event.target.value) {setSelectedAnalysisKey('');setSelectedResultsKey('');}}} className="w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
                                         <option value="">{k('chooseGuidedPath')}</option>
                                         {chatKeys.map(key => <option key={key} value={key}>{toolLabel(key, classSettings.tools, lang)}</option>)}
                                     </select></label>
                                 )}
                                 <Button variant="secondary" disabled={busy || !chatReady} onClick={() => {addChat();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
                             </div>}
-                            {kind === 'activity' && <div className="space-y-3">
+                            {kind === 'activity' && <div className="space-y-4">
                             {assignmentLoadError && <Callout variant="danger">{p('loadError')} <Button variant="secondary" onClick={()=>void loadPathAssignments()}>{p('retry')}</Button></Callout>}
-                            {!assignmentLoadError && !pathAssignments.length && <p className="text-sm text-slate-600">{p('empty')}</p>}
+                            {!assignmentLoadError && !pathAssignments.length && <p className="text-sm text-ink-muted">{p('empty')}</p>}
                             <div className="flex flex-wrap gap-2">
-                                <label className="block w-full text-sm sm:w-auto">{p('choose')}<select value={selectedAssignment} onChange={event=>setSelectedAssignment(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                <label className="block w-full text-sm sm:w-auto">{p('choose')}<select value={selectedAssignment} onChange={event=>setSelectedAssignment(event.target.value)} className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
                                     <option value="">{p('choose')}</option>
                                     {selectablePathAssignments(pathAssignments, steps).map(row=><option key={row.id} value={row.id}>{row.attachments.length ? `${row.title} · ${row.attachments.map(item=>item.title).join(', ')}` : row.title}</option>)}
                                 </select></label>
                                 <Button variant="secondary" disabled={busy || !selectedAssignment} onClick={() => {addAssignmentStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
                                 <Button variant="secondary" disabled={busy} onClick={()=>setCreatingAssignment(true)}>{p('create')}</Button>
                             </div>
-                            <details className="text-sm text-slate-600">
-                                <summary className="cursor-pointer font-medium text-slate-700">{a('howDone')}</summary>
+                            <details className="text-sm text-ink-muted">
+                                <summary className="cursor-pointer font-semibold text-ink-body">{a('howDone')}</summary>
                                 <p className="mt-1">{p('rule')}</p>
                             </details>
                             {creatingAssignment && createPortal(<AssignmentDialog classId={path.group_id} close={()=>setCreatingAssignment(false)}
                                 saved={created=>void loadPathAssignments(created.id)} />, document.body)}
                             </div>}
-                            {kind === 'tool' && <div className="space-y-3">
-                                <div className="flex flex-wrap items-center gap-3">
+                            {kind === 'tool' && <div className="space-y-4">
+                                <div className="flex flex-wrap items-center gap-4">
                                     <select
                                         value={selectedToolKey}
                                         onChange={e => setSelectedToolKey(e.target.value)}
                                         aria-label={l('chooseTool')}
-                                        className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-600 focus:outline-none"
+                                        className="rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink focus:border-brand focus:outline-none"
                                     >
                                         <option value="">{l('chooseTool')}</option>
                                         {personalTools.map(t => (
@@ -984,16 +984,16 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                         {l('addStep')}
                                     </Button>
                                 </div>
-                                <p className="text-sm text-slate-600">{k('toolHelp')}</p>
+                                <p className="text-sm text-ink-muted">{k('toolHelp')}</p>
                             </div>}
                             {kind === 'meeting' && <Button variant="secondary" disabled={busy} onClick={() => setMeetingEditor({id: null, adding: true})}>
                                 {t('piano.builder.manageMeetings')}
                             </Button>}
-                            {kind === 'discussion' && <div className="space-y-3">
+                            {kind === 'discussion' && <div className="space-y-4">
                             {forumLoadError && <Callout variant="danger">{f('loadError')} <Button variant="secondary" onClick={()=>void loadForumTopics()}>{f('retry')}</Button></Callout>}
-                            {!forumLoadError && !forumTopics.length && <p className="text-sm text-slate-600">{f('empty')}</p>}
+                            {!forumLoadError && !forumTopics.length && <p className="text-sm text-ink-muted">{f('empty')}</p>}
                             <div className="flex flex-wrap gap-2">
-                                <label className="block w-full text-sm sm:w-auto">{f('choose')}<select value={selectedTopic} onChange={event=>setSelectedTopic(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                <label className="block w-full text-sm sm:w-auto">{f('choose')}<select value={selectedTopic} onChange={event=>setSelectedTopic(event.target.value)} className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
                                     <option value="">{f('choose')}</option>
                                     {selectablePathForumTopics(forumTopics, steps).map(row=><option key={row.id} value={row.id}>{row.locked ? `${row.title} · ${f('locked')}` : row.title}</option>)}
                                 </select></label>
@@ -1001,8 +1001,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 <Button variant="secondary" disabled={busy} onClick={() => setDiscussionEditor({topicId: null})}>{t('piano.builder.createDiscussion')}</Button>
                                 <Button variant="secondary" disabled={busy || !selectedTopic} onClick={() => setDiscussionEditor({topicId: Number(selectedTopic)})}>{t('piano.builder.editDiscussion')}</Button>
                             </div>
-                            <details className="text-sm text-slate-600">
-                                <summary className="cursor-pointer font-medium text-slate-700">{a('howDone')}</summary>
+                            <details className="text-sm text-ink-muted">
+                                <summary className="cursor-pointer font-semibold text-ink-body">{a('howDone')}</summary>
                                 <p className="mt-1">{f('rule')}</p>
                             </details>
                             </div>}
@@ -1012,7 +1012,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                 </div>
 
                 {/* Explains the self-mark badge only when a step shows it; the tool form says which tools are offered. */}
-                {steps.some(step => !step.auto_detect) && <p className="flex items-center gap-1 text-xs text-slate-500"><Flag className="h-3 w-3 shrink-0" aria-hidden />{l('selfMarkHelp')}</p>}
+                {steps.some(step => !step.auto_detect) && <p className="flex items-center gap-1 text-xs text-ink-muted"><Flag className="h-3 w-3 shrink-0" aria-hidden />{l('selfMarkHelp')}</p>}
             </Card>
 
             {currentPath.published_at && (
@@ -1042,38 +1042,38 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             </PathResourceDialog>}
 
             <StickyActions>
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-card border border-line bg-surface p-4">
                     <div className="min-w-0 flex-1 text-sm">
                         {notice === 'saved' && (
-                            <p role="status" className="text-emerald-700 font-medium">
+                            <p role="status" className="text-success font-semibold">
                                 {l('saved')}
                             </p>
                         )}
                         {notice === 'published' && (
-                            <p role="status" className="text-emerald-700 font-medium">
+                            <p role="status" className="text-success font-semibold">
                                 {l('publishedSuccess')}
                             </p>
                         )}
                         {notice === 'conflict' && (
-                            <p role="alert" className="text-red-600 font-medium">
+                            <p role="alert" className="text-danger font-semibold">
                                 {l('conflictNotice')}
                             </p>
                         )}
                         {notice === 'assignment_invalid' && (
-                            <p role="alert" className="text-red-600 font-medium">{p('invalid')}</p>
+                            <p role="alert" className="text-danger font-semibold">{p('invalid')}</p>
                         )}
                         {notice === 'forum_invalid' && (
-                            <p role="alert" className="text-red-600 font-medium">{f('invalid')}</p>
+                            <p role="alert" className="text-danger font-semibold">{f('invalid')}</p>
                         )}
                         {(notice === 'deep_dive_referenced' || notice === 'deep_dive_invalid') && (
-                            <p role="alert" className="text-red-600 font-medium">
+                            <p role="alert" className="text-danger font-semibold">
                                 {a(notice === 'deep_dive_referenced' ? 'deepDiveReferenced' : 'deepDiveInvalid')}
                             </p>
                         )}
                         {notice === 'blocked' && (
-                            <div role="alert" className="text-red-600">
-                                <p className="font-medium">{pub('blocked')}</p>
-                                <ul className="mt-1 list-disc pl-5">
+                            <div role="alert" className="text-danger">
+                                <p className="font-semibold">{pub('blocked')}</p>
+                                <ul className="mt-1 list-disc pl-6">
                                     {problems.map(row => {
                                         const action = unavailableAction(row.reason);
                                         return <li key={`${row.step_id}-${row.reason}`}>{`#${row.position} · ${action ? unavailableActionText(lang, action) : row.reason}`}</li>;
@@ -1082,19 +1082,19 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             </div>
                         )}
                         {notice === 'lifecycle_error' && (
-                            <p role="alert" className="text-red-600 font-medium">{pub('lifecycleError')}</p>
+                            <p role="alert" className="text-danger font-semibold">{pub('lifecycleError')}</p>
                         )}
                         {notice === 'tool_disabled' && (
-                            <p role="alert" className="text-red-600 font-medium">
+                            <p role="alert" className="text-danger font-semibold">
                                 {l('toolDisabledNotice')}
                             </p>
                         )}
                         {notice === 'error' && (
-                            <p role="alert" className="text-red-600 font-medium">
+                            <p role="alert" className="text-danger font-semibold">
                                 {l('genericError')}
                             </p>
                         )}
-                        {dirty && !notice && <p className="text-slate-600">{l('dirty')}</p>}
+                        {dirty && !notice && <p className="text-ink-muted">{l('dirty')}</p>}
                     </div>
                     <div className="flex items-center gap-2">
                         {notice === 'conflict' && (
@@ -1190,8 +1190,8 @@ export function ClassPathsTab({ groupId, classSettings, institutionId = null }: 
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg font-bold text-slate-800">{l('pathsTitle')}</h2>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <h2 className="text-lg font-semibold text-ink">{l('pathsTitle')}</h2>
                 <Button onClick={() => void handleCreateNewDraft()} disabled={creating}>
                     <Plus className="h-4 w-4" aria-hidden />
                     {l('newPath')}
@@ -1200,21 +1200,21 @@ export function ClassPathsTab({ groupId, classSettings, institutionId = null }: 
 
             {activePaths.length === 0 && archivedPaths.length === 0 ? (
                 <Card>
-                    <p className="py-8 text-center text-sm text-slate-500">{l('emptyPaths')}</p>
+                    <p className="py-8 text-center text-sm text-ink-muted">{l('emptyPaths')}</p>
                 </Card>
             ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                     {activePaths.map(p => (
                         <Card key={p.id} className="flex flex-wrap items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-4">
                                 {p.status === 'published' ? (
-                                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" aria-hidden />
+                                    <CheckCircle2 className="h-5 w-5 text-success shrink-0" aria-hidden />
                                 ) : (
-                                    <Circle className="h-5 w-5 text-amber-500 shrink-0" aria-hidden />
+                                    <Circle className="h-5 w-5 text-warning shrink-0" aria-hidden />
                                 )}
                                 <div>
-                                    <h3 className="text-base font-semibold text-slate-800">{p.title}</h3>
-                                    <p className="text-xs text-slate-500">
+                                    <h3 className="text-base font-semibold text-ink">{p.title}</h3>
+                                    <p className="text-xs text-ink-muted">
                                         {`${p.status === 'published' ? l('publishedBadge') : l('draftBadge')} · ${p.steps_count} ${l(p.steps_count === 1 ? 'stepCountOne' : 'stepsCount')}`}
                                     </p>
                                 </div>
@@ -1230,19 +1230,19 @@ export function ClassPathsTab({ groupId, classSettings, institutionId = null }: 
                             <button
                                 type="button"
                                 onClick={() => setArchivedOpen(!archivedOpen)}
-                                className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-800"
+                                className="flex min-h-control items-center gap-2 text-sm font-semibold text-ink-muted hover:text-ink"
                             >
                                 <Archive className="h-4 w-4" aria-hidden />
                                 <span>{`${l('archivedSection')} (${archivedPaths.length})`}</span>
                             </button>
 
                             {archivedOpen && (
-                                <div className="mt-3 space-y-2 pl-4 border-l-2 border-slate-200">
+                                <div className="mt-4 space-y-2 pl-4 border-l-2 border-line">
                                     {archivedPaths.map(p => (
-                                        <Card key={p.id} className="flex flex-wrap items-center justify-between gap-4 bg-slate-50">
+                                        <Card key={p.id} className="flex flex-wrap items-center justify-between gap-4 bg-surface-sunken">
                                             <div>
-                                                <h3 className="text-sm font-semibold text-slate-700">{p.title}</h3>
-                                                <p className="text-xs text-slate-400">
+                                                <h3 className="text-sm font-semibold text-ink-body">{p.title}</h3>
+                                                <p className="text-xs text-ink-muted">
                                                     {`${l('archivedBadge')} · ${p.steps_count} ${l(p.steps_count === 1 ? 'stepCountOne' : 'stepsCount')}`}
                                                 </p>
 

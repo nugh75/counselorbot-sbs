@@ -32,10 +32,10 @@ export function TeacherClassPathsPage() {
     const active = groups.data.filter(row => row.is_active);
     if (active.length === 0) return <Callout>{teacherAreaText(lang, 'pathsNoClasses')}</Callout>;
     const group = active.find(row => row.id === chosen) ?? active[0];
-    return <div className="space-y-5">
+    return <div className="space-y-6">
         <PathTemplatesPanel groups={active} onApplied={groupId => { setChosen(groupId); setApplied(count => count + 1); }} />
-        <label className="block max-w-md text-sm font-medium text-slate-700">{teacherAreaText(lang, 'pathsChooseClass')}
-            <select className="mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white p-2 text-sm" value={group.id}
+        <label className="block max-w-md text-sm font-semibold text-ink-body">{teacherAreaText(lang, 'pathsChooseClass')}
+            <select className="mt-1 w-full min-w-0 rounded-control border border-line-strong bg-surface p-2 text-sm" value={group.id}
                 onChange={event => setChosen(Number(event.target.value))}>
                 {active.map(row => <option key={row.id} value={row.id}>{row.institution_name ? `${row.name} · ${row.institution_name}` : row.name}</option>)}
             </select>

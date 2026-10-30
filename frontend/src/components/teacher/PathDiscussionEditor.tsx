@@ -20,7 +20,7 @@ export function PathDiscussionEditor(props: Props) {
     const { lang } = useI18n();
     const [forbidden, setForbidden] = useState(false);
     if (props.topicId !== null) return <EditDiscussion {...props} topicId={props.topicId} />;
-    return <div className="space-y-3">
+    return <div className="space-y-4">
         {forbidden && <Callout variant="danger">{forumText(lang, 'forbidden')}</Callout>}
         <ForumComposer path={`/api/groups/${props.groupId}/forum/topics`} topic guard={false}
             onDraft={props.onDraft} onCancel={props.onCancel} onPublished={props.onSaved}
@@ -61,7 +61,7 @@ function EditDiscussion({ groupId, topicId, onSaved, onDraft, onCancel }: Props 
         {resource.failed && <Button variant="secondary" onClick={() => void resource.reload()}>{forumText(lang, 'retry')}</Button>}
     </Callout>;
     if (detail.topic.title === null || detail.topic.body === null) return <Callout variant="danger">{forumText(lang, 'forbidden')}</Callout>;
-    return <div className="space-y-3">
+    return <div className="space-y-4">
         {failed && <Callout variant="danger">{forumText(lang, 'sendError')}</Callout>}
         <TopicForm initial={{title: detail.topic.title, body: detail.topic.body}} busy={busy} guard={false}
             onDraft={onDraft} onSave={changes => void save(changes)} onCancel={onCancel} />

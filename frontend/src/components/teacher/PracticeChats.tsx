@@ -13,7 +13,7 @@ import type { FrozenSessionSummary } from '@/lib/frozen-session';
 import type { PracticeChat, PracticeChatMessage } from '@/lib/practice-notebooks';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 
-const secondary = 'min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50';
+const secondary = 'min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-50';
 
 type Row = { sessionId: string; instrument: string; updatedAt?: string | null; turns?: number; logged: boolean; open: boolean };
 
@@ -72,21 +72,21 @@ export function PracticeChats({ notebookId, openChats, openChatsFailed }: {
     };
 
     return (
-        <section data-practice-chats className="space-y-2 border-t border-slate-200 pt-3">
-            <h3 className="text-sm font-semibold text-slate-700">{l('practiceChats')}</h3>
-            <p className="text-xs text-slate-500">{l('practiceChatsHint')}</p>
-            {(failed || openChatsFailed) && <div role="alert" className="flex flex-wrap items-center gap-2 text-xs text-red-600">
+        <section data-practice-chats className="space-y-2 border-t border-line pt-4">
+            <h3 className="text-sm font-semibold text-ink-body">{l('practiceChats')}</h3>
+            <p className="text-xs text-ink-muted">{l('practiceChatsHint')}</p>
+            {(failed || openChatsFailed) && <div role="alert" className="flex flex-wrap items-center gap-2 text-xs text-danger">
                 <p>{l('chatsError')}</p>
                 {failed && <button type="button" onClick={() => void load()} className={secondary}>{l('retry')}</button>}
             </div>}
-            {chats !== null && openChats !== null && !rows.length && <p className="text-xs text-slate-500">{l('noPracticeChats')}</p>}
+            {chats !== null && openChats !== null && !rows.length && <p className="text-xs text-ink-muted">{l('noPracticeChats')}</p>}
             <ul className="space-y-2">
                 {rows.map((row) => (
-                    <li key={row.sessionId} data-practice-chat={row.sessionId} className="rounded-md border border-slate-200 p-2 text-sm">
+                    <li key={row.sessionId} data-practice-chat={row.sessionId} className="rounded-control border border-line p-2 text-sm">
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className="min-w-0 flex-1 text-slate-800">
+                            <span className="min-w-0 flex-1 text-ink">
                                 <span className="font-semibold">{instrumentName(row.instrument)}</span>
-                                <span className="ml-2 text-xs text-slate-500">
+                                <span className="ml-2 text-xs text-ink-muted">
                                     {[row.updatedAt ? new Date(row.updatedAt).toLocaleDateString(lang) : '', l(row.open ? 'chatOpen' : 'chatCompleted')].filter(Boolean).join(' · ')}
                                 </span>
                             </span>
@@ -96,13 +96,13 @@ export function PracticeChats({ notebookId, openChats, openChatsFailed }: {
                             {row.open && <Link href={`/?frozen=${encodeURIComponent(row.sessionId)}`} className={`${secondary} inline-flex items-center`}>{l('openChat')}</Link>}
                         </div>
                         {shown === row.sessionId && (
-                            <div data-practice-transcript className="mt-2 space-y-2 border-t border-slate-100 pt-2">
-                                {transcript === null && !transcriptFailed && <p role="status" className="text-xs text-slate-500">{t('common.loading')}</p>}
-                                {transcriptFailed && <p role="alert" className="text-xs text-red-600">{l('transcriptError')}</p>}
+                            <div data-practice-transcript className="mt-2 space-y-2 border-t border-line pt-2">
+                                {transcript === null && !transcriptFailed && <p role="status" className="text-xs text-ink-muted">{t('common.loading')}</p>}
+                                {transcriptFailed && <p role="alert" className="text-xs text-danger">{l('transcriptError')}</p>}
                                 {transcript?.map((message, index) => (
                                     <div key={index}>
-                                        <p className="text-xs font-semibold text-slate-600">{l(message.role === 'student' ? 'roleStudent' : 'roleCounselor')}</p>
-                                        <p className="whitespace-pre-line text-slate-800">{message.text}</p>
+                                        <p className="text-xs font-semibold text-ink-muted">{l(message.role === 'student' ? 'roleStudent' : 'roleCounselor')}</p>
+                                        <p className="whitespace-pre-line text-ink">{message.text}</p>
                                     </div>
                                 ))}
                             </div>
