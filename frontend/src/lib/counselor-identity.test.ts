@@ -237,7 +237,7 @@ test('CounselorCover component as top element in 16:9 rectangular layout in Coun
 
     // 3. Posizionamento: CounselorCover compare PRIMA del nome (h2) e della descrizione (primo elemento assoluto in cima alla card)
     const coverIndex = selectorSrc.indexOf('<CounselorCover');
-    const nameIndex = selectorSrc.indexOf('<h2 className="text-base font-bold text-slate-900">{c.name}</h2>');
+    const nameIndex = selectorSrc.indexOf('<h2 className="text-base font-semibold text-ink">{c.name}</h2>');
     const descIndex = selectorSrc.indexOf('c.description || t(\'counselor.toneDefault\')');
     assert.ok(coverIndex !== -1, 'CounselorCover must be present in CounselorSelector');
     assert.ok(nameIndex !== -1, 'Counselor name must be present in CounselorSelector');

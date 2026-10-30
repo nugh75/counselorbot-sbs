@@ -17,6 +17,8 @@ import { counselorHelp } from '@/lib/i18n-counselor-help';
 import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { CounselorCover } from './CounselorCover';
 
 // Selettore counselor lato utente. Se non ci sono counselor configurati non
@@ -156,18 +158,18 @@ export function CounselorSelector({
 
     if (!loaded) {
         return (
-            <div className="glass-panel p-8 text-center text-sm text-slate-500">
+            <Card className="p-8 text-center text-sm text-ink-muted">
                 {t('counselor.loading')}
-            </div>
+            </Card>
         );
     }
 
     if (counselors.length === 0) {
         return (
-            <div className="glass-panel p-8 text-center space-y-3">
-                <h2 className="text-xl font-bold text-slate-900">{t('counselor.empty.title')}</h2>
-                <p className="text-sm text-slate-500">{t('counselor.empty.body')}</p>
-            </div>
+            <Card className="p-8 text-center space-y-4">
+                <h2 className="text-xl font-semibold text-ink">{t('counselor.empty.title')}</h2>
+                <p className="text-sm text-ink-muted">{t('counselor.empty.body')}</p>
+            </Card>
         );
     }
 
@@ -186,15 +188,15 @@ export function CounselorSelector({
                     if (onContinue) onContinue(c.id);
                 }}
                 disabled={disabled}
-                className={`relative flex flex-col justify-between rounded-lg border p-4 text-left transition-colors ${
+                className={`relative flex flex-col justify-between rounded-card border p-4 text-left transition-colors ${
                     disabled
-                        ? 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-70'
+                        ? 'cursor-not-allowed border-line bg-surface-sunken opacity-70'
                         : isSelected
-                            ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-300'
-                            : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
+                            ? 'border-brand bg-brand-soft ring-1 ring-focus'
+                            : 'border-line bg-surface hover:border-brand-line hover:bg-surface-sunken'
                 }`}
             >
-                <div className="w-full space-y-3">
+                <div className="w-full space-y-4">
                     {/* In cima: blocco copertina rettangolare CounselorCover (16:9) come primo elemento assoluto (stile YouTube card) con spunta di selezione in overlay */}
                     <div className="relative w-full">
                         <CounselorCover
@@ -203,7 +205,7 @@ export function CounselorSelector({
                             counselor={c}
                         />
                         {isSelected && !disabled && (
-                            <div className="absolute top-2 right-2 z-10 shrink-0 rounded-full bg-indigo-600 p-1 text-white shadow-md">
+                            <div className="absolute top-2 right-2 z-10 shrink-0 rounded-full bg-brand p-1 text-ink-on-brand">
                                 <Check className="h-3.5 w-3.5" />
                             </div>
                         )}
@@ -211,21 +213,21 @@ export function CounselorSelector({
 
                     {/* Sotto la copertina: Testata con Nome counselor (h2), badge modello (Cpu/Cloud), badge tipo/stato */}
                     <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-base font-bold text-slate-900">{c.name}</h2>
+                        <h2 className="text-base font-semibold text-ink">{c.name}</h2>
                         {c.is_active === false && (
-                            <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-2xs font-bold uppercase text-slate-500">
+                            <span className="rounded-full border border-line bg-surface px-2 py-1 text-2xs font-semibold text-ink-muted">
                                 {t('counselor.unavailable')}
                             </span>
                         )}
                         {c.is_active !== false && c.suitable === false && (
-                            <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-2xs font-bold uppercase text-amber-700">
+                            <span className="rounded-full border border-warning-line bg-warning-soft px-2 py-1 text-2xs font-semibold text-warning">
                                 {t('counselor.notForInstrument')}
                             </span>
                         )}
                         {c.model_origin && (
                             <span
                                 title={t(c.model_origin === 'local' ? 'counselor.origin.local.hint' : 'counselor.origin.external.hint')}
-                                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-2xs font-medium text-slate-500"
+                                className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2 py-1 text-2xs text-ink-muted"
                             >
                                 {c.model_origin === 'local'
                                     ? <Cpu className="h-3 w-3" />
@@ -234,7 +236,7 @@ export function CounselorSelector({
                             </span>
                         )}
                         {c.model && (
-                            <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-2xs font-medium text-indigo-700">
+                            <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-brand-line bg-brand-soft px-2 py-1 text-2xs text-link">
                                 <span>{t('counselor.modelLabel')}</span>
                                 <span className="truncate font-mono" title={c.model}>{c.model}</span>
                             </span>
@@ -243,7 +245,7 @@ export function CounselorSelector({
 
                     {/* Tagline distintiva */}
                     {tagline ? (
-                        <p className="rounded border border-indigo-100 bg-indigo-50/70 px-2.5 py-1 text-xs font-medium italic text-indigo-950/90 leading-relaxed">
+                        <p className="rounded-control border border-brand-line bg-brand-soft/70 px-2 py-1 text-xs italic text-ink/90 leading-relaxed">
                             {`"${tagline}"`}
                         </p>
                     ) : null}
@@ -254,7 +256,7 @@ export function CounselorSelector({
                             {c.approach_categories.map((cat) => (
                                 <span
                                     key={cat}
-                                    className="rounded-full border border-indigo-200/70 bg-indigo-50/50 px-2 py-0.5 text-2xs font-semibold text-indigo-700"
+                                    className="rounded-full border border-brand-line/70 bg-brand-soft/50 px-2 py-1 text-2xs font-semibold text-link"
                                 >
                                     {formatCategoryLabel(cat, lang)}
                                 </span>
@@ -263,16 +265,16 @@ export function CounselorSelector({
                     )}
 
                     {/* Sotto le categorie: paragrafo descrittivo */}
-                    <p className="text-sm leading-relaxed text-slate-600">
+                    <p className="text-sm leading-relaxed text-ink-muted">
                         {c.description || t('counselor.toneDefault')}
                     </p>
                 </div>
 
                 {/* Sotto la descrizione: badge degli strumenti */}
                 {(c.questionnaire_types && c.questionnaire_types.length > 0) && (
-                    <div className="mt-3 flex flex-wrap gap-1.5 pt-1">
+                    <div className="mt-4 flex flex-wrap gap-2 pt-1">
                         {c.questionnaire_types.slice(0, 6).map((q) => (
-                            <span key={q} className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-2xs font-semibold text-slate-500">
+                            <span key={q} className="rounded-full border border-line bg-surface px-2 py-1 text-2xs font-semibold text-ink-muted">
                                 {q}
                             </span>
                         ))}
@@ -300,20 +302,20 @@ export function CounselorSelector({
 
     return (
         <section className="space-y-6">
-            <p className="text-sm leading-relaxed text-slate-600">{counselorHelp(lang).tools}</p>
+            <p className="text-sm leading-relaxed text-ink-muted">{counselorHelp(lang).tools}</p>
 
             {/* Ricerca per stile o approccio cercato */}
-            <div className="glass-panel space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+            <Card className="space-y-4 bg-surface-sunken p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <label htmlFor="counselor-search-input" className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
-                        <Sparkles className="h-4 w-4 text-indigo-600" />
+                    <label htmlFor="counselor-search-input" className="text-sm font-semibold text-ink flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-link" />
                         {t('counselor.search.label')}
                     </label>
                     {searchQuery || recommendation ? (
                         <button
                             type="button"
                             onClick={handleClearSearch}
-                            className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1 self-start sm:self-auto"
+                            className="min-h-control text-xs text-ink-muted hover:text-ink-body flex items-center gap-1 self-start sm:self-auto"
                         >
                             <X className="h-3.5 w-3.5" />
                             {t('counselor.search.clear')}
@@ -329,35 +331,34 @@ export function CounselorSelector({
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder={t('counselor.search.placeholder')}
-                            className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="w-full min-h-control rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink placeholder-ink-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-focus"
                         />
                         {searching && (
-                            <div className="absolute right-3 top-2.5 text-xs text-slate-400">
+                            <div className="absolute right-4 top-2 text-xs text-ink-muted">
                                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                             </div>
                         )}
                     </div>
-                    <button
+                    <Button
                         type="submit"
                         disabled={searching || !searchQuery.trim()}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
                     >
                         <Search className="h-4 w-4" />
                         <span>{t('counselor.search.button')}</span>
-                    </button>
+                    </Button>
                 </form>
 
                 {searchNoMatch && (
-                    <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-2.5">
+                    <p className="text-xs text-warning-ink bg-warning-soft border border-warning-line rounded-control p-2">
                         {t('counselor.search.noMatch')}
                     </p>
                 )}
 
                 {/* Scheda raccomandazione se presente */}
                 {recommendation?.counselor && (
-                    <div className="rounded-lg border border-indigo-200 bg-indigo-50/80 p-4 transition-all">
+                    <div className="rounded-card border border-brand-line bg-brand-soft p-4 transition-all">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <div className="flex flex-col sm:flex-row items-start gap-3.5 flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row items-start gap-4 flex-1 min-w-0">
                                 <div className="w-full sm:w-44 md:w-48 shrink-0">
                                     <CounselorCover
                                         src={recommendation.counselor.avatar_url}
@@ -366,30 +367,30 @@ export function CounselorSelector({
                                         compact
                                     />
                                 </div>
-                                <div className="space-y-1.5 flex-1 min-w-0">
+                                <div className="space-y-2 flex-1 min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1">
+                                        <span className="text-xs font-semibold text-link flex items-center gap-1">
                                             <Sparkles className="h-3.5 w-3.5" />
                                             {t('counselor.search.recommendationTitle')}:
                                         </span>
-                                        <span className="font-bold text-slate-900 text-base">
+                                        <span className="font-semibold text-ink text-base">
                                             {recommendation.counselor.name}
                                         </span>
                                         {recommendation.confidence > 0 && (
-                                            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-2xs font-semibold text-indigo-800">
+                                            <span className="rounded-full bg-brand-soft px-2 py-1 text-2xs font-semibold text-link">
                                                 {Math.round(recommendation.confidence * 100)}% {t('counselor.search.confidence')}
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-xs text-slate-700 leading-relaxed">
+                                    <p className="text-xs text-ink-body leading-relaxed">
                                         {recommendation.explanation}
                                     </p>
                                     {recommendation.matched_categories.length > 0 && (
-                                        <div className="flex flex-wrap gap-1 pt-0.5">
+                                        <div className="flex flex-wrap gap-1 pt-1">
                                             {recommendation.matched_categories.map((cat) => (
                                                 <span
                                                     key={cat}
-                                                    className="rounded-full border border-indigo-200 bg-white px-2 py-0.5 text-2xs font-semibold text-indigo-700"
+                                                    className="rounded-full border border-brand-line bg-surface px-2 py-1 text-2xs font-semibold text-link"
                                                 >
                                                     {formatCategoryLabel(cat, lang)}
                                                 </span>
@@ -407,10 +408,10 @@ export function CounselorSelector({
                                             choose(recommendation.counselor);
                                         }
                                     }}
-                                    className={`rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-colors ${
+                                    className={`min-h-control rounded-control px-4 py-2 text-xs font-semibold transition-colors ${
                                         selected === recommendation.counselor.id
-                                            ? 'bg-indigo-700 text-white ring-2 ring-indigo-400'
-                                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                            ? 'bg-brand-hover text-ink-on-brand ring-2 ring-focus'
+                                            : 'bg-brand text-ink-on-brand hover:bg-brand-hover'
                                     }`}
                                 >
                                     {selected === recommendation.counselor.id
@@ -421,17 +422,17 @@ export function CounselorSelector({
                         </div>
                     </div>
                 )}
-            </div>
+            </Card>
 
             {/* Filtro per categoria */}
             {allCategories.length > 0 && (
                 <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2 text-xs font-semibold text-slate-600">
-                        <div className="flex items-center gap-1.5">
-                            <Filter className="h-3.5 w-3.5 text-slate-400" />
+                    <div className="flex items-center justify-between gap-2 text-xs font-semibold text-ink-muted">
+                        <div className="flex items-center gap-2">
+                            <Filter className="h-3.5 w-3.5 text-ink-muted" />
                             <span>{t('counselor.filter.label')}</span>
                             {selectedCategories.length > 0 && (
-                                <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-2xs font-semibold text-indigo-700">
+                                <span className="rounded-full bg-brand-soft px-2 py-1 text-2xs font-semibold text-link">
                                     {selectedCategories.length}
                                 </span>
                             )}
@@ -440,21 +441,21 @@ export function CounselorSelector({
                             <button
                                 type="button"
                                 onClick={clearCategories}
-                                className="inline-flex items-center gap-1 text-2xs font-medium text-slate-500 hover:text-indigo-600 transition-colors"
+                                className="inline-flex min-h-control items-center gap-1 text-2xs text-ink-muted hover:text-link transition-colors"
                             >
                                 <X className="h-3 w-3" />
                                 <span>{t('counselor.filter.reset')}</span>
                             </button>
                         )}
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-2">
                         <button
                             type="button"
                             onClick={clearCategories}
-                            className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                            className={`min-h-control rounded-full px-4 py-1 text-xs transition-colors ${
                                 selectedCategories.length === 0
-                                    ? 'bg-indigo-600 text-white shadow-sm font-semibold'
-                                    : 'border border-slate-200 bg-white text-slate-700 hover:border-indigo-200 hover:bg-slate-50 font-medium'
+                                    ? 'bg-brand text-ink-on-brand shadow-sm font-semibold'
+                                    : 'border border-line bg-surface text-ink-body hover:border-brand-line hover:bg-surface-sunken'
                             }`}
                         >
                             {t('counselor.filter.all')} ({counselors.length})
@@ -475,10 +476,10 @@ export function CounselorSelector({
                                     type="button"
                                     onClick={() => toggleCategory(cat)}
                                     aria-pressed={active}
-                                    className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                                    className={`min-h-control rounded-full px-4 py-1 text-xs transition-colors ${
                                         active
-                                            ? 'bg-indigo-600 text-white shadow-sm font-semibold'
-                                            : 'border border-slate-200 bg-white text-slate-700 hover:border-indigo-200 hover:bg-slate-50 font-medium'
+                                            ? 'bg-brand text-ink-on-brand shadow-sm font-semibold'
+                                            : 'border border-line bg-surface text-ink-body hover:border-brand-line hover:bg-surface-sunken'
                                     }`}
                                 >
                                     {formatCategoryLabel(cat, lang)} ({count})
@@ -490,7 +491,7 @@ export function CounselorSelector({
             )}
 
             {chosenIsUnfit && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
+                <div className="rounded-card border border-warning-line bg-warning-soft px-4 py-4 text-sm text-warning-ink" role="status">
                     <p>
                         <span className="font-semibold">{chosen?.name}</span>{' '}
                         {t('counselor.unfit.notice')}{' '}
@@ -504,7 +505,7 @@ export function CounselorSelector({
                 </div>
             )}
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
                 {onContinue && (
                     <ForwardButton
@@ -516,14 +517,14 @@ export function CounselorSelector({
             </div>
 
             {groups.length === 0 && selectedCategories.length > 0 && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center space-y-2">
-                    <p className="text-sm text-slate-600">
+                <div className="rounded-card border border-line bg-surface-sunken p-6 text-center space-y-2">
+                    <p className="text-sm text-ink-muted">
                         {t('counselor.filter.empty')}
                     </p>
                     <button
                         type="button"
                         onClick={clearCategories}
-                        className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline"
+                        className="min-h-control text-xs font-semibold text-link underline"
                     >
                         {t('counselor.filter.all')}
                     </button>
@@ -531,18 +532,18 @@ export function CounselorSelector({
             )}
 
             {groups.map((group) => (
-                <div key={group.key} className="space-y-3">
-                    <div className="flex items-center gap-3">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">
+                <div key={group.key} className="space-y-4">
+                    <div className="flex items-center gap-4">
+                        <span className="inline-flex items-center gap-2 text-xs font-semibold text-ink-muted">
                             {group.key === 'local'
                                 ? <Cpu className="h-3.5 w-3.5" />
                                 : <Cloud className="h-3.5 w-3.5" />}
                             {group.label}
                         </span>
-                        <span className="h-px flex-1 bg-slate-200" />
+                        <span className="h-px flex-1 bg-line" />
                     </div>
-                    <p className="text-sm text-slate-600">{counselorHelp(lang)[group.key]}</p>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <p className="text-sm text-ink-muted">{counselorHelp(lang)[group.key]}</p>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {group.items.map(renderCard)}
                     </div>
                 </div>
