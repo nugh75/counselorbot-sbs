@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { Loader2, Trash2 } from 'lucide-react';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { useI18n } from '@/lib/i18n-context';
 import { deleteFrozenSession } from '@/lib/frozen-session';
@@ -16,9 +17,10 @@ export function ResumeEntry({ target, label, children, deletable = true }: {
     const { t } = useI18n();
     const [busy, setBusy] = useState(false);
     const [failed, setFailed] = useState(false);
+    const [confirming, setConfirming] = useState(false);
     const remove = async () => {
-        if (busy || !window.confirm(`${t('frozen.deleteConfirm')}\n\n${label}`)) return;
-        setBusy(true); setFailed(false);
+        if (busy) return;
+        setConfirming(false); setBusy(true); setFailed(false);
         try {
             if (target.kind === 'pqbl') clearPqblProgress();
             else {
@@ -28,15 +30,17 @@ export function ResumeEntry({ target, label, children, deletable = true }: {
         } catch { setFailed(true); }
         finally { setBusy(false); }
     };
-    return <div className="flex min-w-0 flex-wrap items-center [&>a]:min-h-[44px] [&>a]:min-w-0 [&>a]:flex-1">
+    return <div className="flex min-w-0 flex-wrap items-center [&>a]:min-h-control [&>a]:min-w-0 [&>a]:flex-1">
         {children}
-        {deletable && <Tooltip content={t('frozen.delete')}>
+        {deletable && !confirming && <Tooltip content={t('frozen.delete')}>
             <button type="button" aria-label={`${t('frozen.delete')}: ${label}`}
-                disabled={busy} onClick={() => void remove()}
-                className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-red-50 hover:text-red-700 disabled:opacity-40">
+                disabled={busy} onClick={() => setConfirming(true)}
+                className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control text-ink-muted hover:bg-danger-soft hover:text-danger disabled:opacity-40">
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Trash2 className="h-4 w-4" aria-hidden="true" />}
             </button>
         </Tooltip>}
-        {failed && <p role="alert" className="w-full px-3 py-2 text-sm text-red-700">{t('frozen.deleteError')}</p>}
+        {deletable && confirming && <ConfirmInline question={t('frozen.deleteConfirm')} busy={busy}
+            onConfirm={() => void remove()} onCancel={() => setConfirming(false)} className="w-full flex-wrap" />}
+        {failed && <p role="alert" className="w-full px-4 py-2 text-sm text-danger">{t('frozen.deleteError')}</p>}
     </div>;
 }
