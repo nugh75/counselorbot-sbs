@@ -46,21 +46,21 @@ export function ExternalPrivacySettings() {
         } catch { setError(true); } finally { setBusy(false); }
     };
     return <div data-testid="external-privacy-settings"><Card>
-        <h4 className="font-semibold text-slate-900">{l('title')}</h4>
-        <p className="mt-2 text-sm text-slate-600">{l('help')}</p>
-        {!policy && !error && <p role="status" className="mt-3 text-sm text-slate-600">{l('loading')}</p>}
+        <h4 className="font-semibold text-ink">{l('title')}</h4>
+        <p className="mt-2 text-sm text-ink-muted">{l('help')}</p>
+        {!policy && !error && <p role="status" className="mt-4 text-sm text-ink-muted">{l('loading')}</p>}
         {policy && <div className="mt-4 space-y-4">
-            <label className="block text-sm font-semibold text-slate-800" htmlFor="external-privacy-mode">{l('mode')}</label>
-            <select id="external-privacy-mode" value={mode} disabled={busy} onChange={e => { setMode(e.target.value as Mode); setSaved(false); }} className="min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900">
+            <label className="block text-sm font-semibold text-ink" htmlFor="external-privacy-mode">{l('mode')}</label>
+            <select id="external-privacy-mode" value={mode} disabled={busy} onChange={e => { setMode(e.target.value as Mode); setSaved(false); }} className="h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-ink">
                 {policy.mode === 'custom' && <option value="custom" disabled>{l('custom')}</option>}
                 <option value="local">{l('local')}</option><option value="basic">{l('basic')}</option>
             </select>
-            {mode === 'local' && <p className="text-sm text-slate-600">{l('localHelp')} <span className="break-all font-mono">{policy.local_model}</span></p>}
-            {mode === 'basic' && <><p className="text-sm text-slate-600">{l('basicHelp')}</p><Callout variant="warning">{l('limits')}</Callout></>}
+            {mode === 'local' && <p className="text-sm text-ink-muted">{l('localHelp')} <span className="break-all font-mono">{policy.local_model}</span></p>}
+            {mode === 'basic' && <><p className="text-sm text-ink-muted">{l('basicHelp')}</p><Callout variant="warning">{l('limits')}</Callout></>}
             {mode === 'custom' && <Callout variant="info">{l('customHelp')}</Callout>}
             <Button disabled={busy || !dirty || mode === 'custom'} onClick={() => void save()}>{l('save')}</Button>
         </div>}
-        {error && <div className="mt-3 space-y-2"><Callout variant="danger">{l('error')}</Callout>{!policy && <Button variant="secondary" disabled={busy} onClick={() => void load()}>{l('retry')}</Button>}</div>}
-        {saved && <p role="status" className="mt-3 text-sm text-indigo-700">{l('saved')}</p>}
+        {error && <div className="mt-4 space-y-2"><Callout variant="danger">{l('error')}</Callout>{!policy && <Button variant="secondary" disabled={busy} onClick={() => void load()}>{l('retry')}</Button>}</div>}
+        {saved && <p role="status" className="mt-4 text-sm text-link">{l('saved')}</p>}
     </Card></div>;
 }

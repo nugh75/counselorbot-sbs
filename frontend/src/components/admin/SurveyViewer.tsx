@@ -5,7 +5,12 @@ import { RefreshCw, Trash2, BarChart3, TrendingUp, Users, Activity } from 'lucid
 import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useI18n } from '@/lib/i18n-context';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
 // Dynamically import Plotly for client-side rendering only
+// Plotly non legge le variabili CSS: un solo tratto sottile nel petrol del marchio
+// (--brand) per tutte le dimensioni, invece di dieci tinte diverse.
+const VIOLIN_COLOR = '#155e63';
+
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 interface SurveyResponse {
@@ -38,6 +43,7 @@ export function SurveyViewer() {
     const [surveys, setSurveys] = useState<SurveyResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedSurvey, setExpandedSurvey] = useState<number | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
     const fetchSurveys = async () => {
         setLoading(true);
@@ -63,9 +69,8 @@ export function SurveyViewer() {
         fetchSurveys();
     }, []);
 
-    const handleDelete = async (id: number, e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!confirm(t('admin.surveys.confirmDelete'))) return;
+    const handleDelete = async (id: number) => {
+        setConfirmDeleteId(null);
 
         try {
             const res = await fetch(`/api/admin/survey/${id}`, {
@@ -80,10 +85,10 @@ export function SurveyViewer() {
     };
 
     const renderRating = (value?: number) => {
-        if (value === undefined || value === null) return <span className="text-slate-500">-</span>;
+        if (value === undefined || value === null) return <span className="text-ink-muted">-</span>;
         return (
-            <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${value >= 4 ? 'bg-green-100 text-green-700' :
-                value === 3 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+            <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold ${value >= 4 ? 'bg-success-soft text-success' :
+                value === 3 ? 'bg-warning-soft text-warning' : 'bg-danger-soft text-danger'
                 }`}>
                 {value}
             </span>
@@ -92,13 +97,13 @@ export function SurveyViewer() {
 
     const renderTools = (value?: string[] | string) => {
         const tools = Array.isArray(value) ? value : value ? [value] : [];
-        if (tools.length === 0) return <span className="text-slate-500">-</span>;
+        if (tools.length === 0) return <span className="text-ink-muted">-</span>;
         return (
             <div className="flex flex-wrap gap-2">
                 {tools.map((tool) => (
                     <span
                         key={tool}
-                        className="inline-flex px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium"
+                        className="inline-flex px-2 py-1 rounded-full bg-brand-soft text-link text-xs font-semibold"
                     >
                         {t(`survey.tool.${tool}`)}
                     </span>
@@ -117,17 +122,17 @@ export function SurveyViewer() {
             'q_coinvolgente', 'q_consiglierei'
         ];
 
-        const fieldMetadata: Record<string, { label: string; color: string; bg: string }> = {
-            'q_utile': { label: t('admin.surveys.m.utile'), color: '#155e63', bg: 'bg-indigo-50' },
-            'q_pertinente': { label: t('admin.surveys.m.pertinente'), color: '#1f7376', bg: 'bg-indigo-50' },
-            'q_chiaro': { label: t('admin.surveys.m.chiaro'), color: '#0ea5e9', bg: 'bg-sky-50' },
-            'q_dettaglio': { label: t('admin.surveys.m.dettaglio'), color: '#06b6d4', bg: 'bg-cyan-50' },
-            'q_facile': { label: t('admin.surveys.m.facile'), color: '#14b8a6', bg: 'bg-teal-50' },
-            'q_veloce': { label: t('admin.surveys.m.veloce'), color: '#10b981', bg: 'bg-emerald-50' },
-            'q_fiducia': { label: t('admin.surveys.m.fiducia'), color: '#22c55e', bg: 'bg-green-50' },
-            'q_riflettere': { label: t('admin.surveys.m.riflettere'), color: '#84cc16', bg: 'bg-lime-50' },
-            'q_coinvolgente': { label: t('admin.surveys.m.coinvolgente'), color: '#8b5cf6', bg: 'bg-violet-50' },
-            'q_consiglierei': { label: t('admin.surveys.m.consiglierei'), color: '#d946ef', bg: 'bg-fuchsia-50' }
+        const fieldMetadata: Record<string, { label: string }> = {
+            'q_utile': { label: t('admin.surveys.m.utile') },
+            'q_pertinente': { label: t('admin.surveys.m.pertinente') },
+            'q_chiaro': { label: t('admin.surveys.m.chiaro') },
+            'q_dettaglio': { label: t('admin.surveys.m.dettaglio') },
+            'q_facile': { label: t('admin.surveys.m.facile') },
+            'q_veloce': { label: t('admin.surveys.m.veloce') },
+            'q_fiducia': { label: t('admin.surveys.m.fiducia') },
+            'q_riflettere': { label: t('admin.surveys.m.riflettere') },
+            'q_coinvolgente': { label: t('admin.surveys.m.coinvolgente') },
+            'q_consiglierei': { label: t('admin.surveys.m.consiglierei') }
         };
 
         let totalSum = 0;
@@ -163,8 +168,6 @@ export function SurveyViewer() {
             return {
                 id: field,
                 name: meta.label,
-                color: meta.color,
-                bg: meta.bg,
                 value: parseFloat(avg.toFixed(2)),
                 stdDev: parseFloat(stdDev.toFixed(2)),
                 data: validValues
@@ -193,49 +196,49 @@ export function SurveyViewer() {
                 <div className="space-y-8 animate-fade-in-up">
                     {/* Key Metrics Cards */}
                     <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
-                            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-md">
+                        <div className="bg-surface p-4 rounded-lg border border-line shadow-card flex items-center gap-4">
+                            <div className="p-4 bg-brand-soft text-brand rounded-control">
                                 <Users className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500 font-medium">{t('admin.surveys.totalResponses')}</p>
-                                <h4 className="text-2xl font-bold text-slate-800">{stats.keyMetrics.total}</h4>
+                                <p className="text-sm text-ink-muted font-semibold">{t('admin.surveys.totalResponses')}</p>
+                                <h4 className="text-2xl font-semibold text-ink">{stats.keyMetrics.total}</h4>
                             </div>
                         </div>
-                        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
-                            <div className="p-3 bg-green-100 text-green-600 rounded-lg">
+                        <div className="bg-surface p-4 rounded-lg border border-line shadow-card flex items-center gap-4">
+                            <div className="p-4 bg-success-soft text-success rounded-lg">
                                 <TrendingUp className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500 font-medium">{t('admin.surveys.overallAvg')}</p>
-                                <h4 className="text-2xl font-bold text-slate-800">{stats.keyMetrics.overallAvg}/5</h4>
+                                <p className="text-sm text-ink-muted font-semibold">{t('admin.surveys.overallAvg')}</p>
+                                <h4 className="text-2xl font-semibold text-ink">{stats.keyMetrics.overallAvg}/5</h4>
                             </div>
                         </div>
-                        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
-                            <div className="p-3 bg-purple-100 text-purple-600 rounded-lg">
+                        <div className="bg-surface p-4 rounded-lg border border-line shadow-card flex items-center gap-4">
+                            <div className="p-4 bg-brand-soft text-brand rounded-control">
                                 <Activity className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500 font-medium">{t('admin.surveys.avgStdDev')}</p>
-                                <h4 className="text-2xl font-bold text-slate-800">{stats.keyMetrics.avgStdDev}</h4>
+                                <p className="text-sm text-ink-muted font-semibold">{t('admin.surveys.avgStdDev')}</p>
+                                <h4 className="text-2xl font-semibold text-ink">{stats.keyMetrics.avgStdDev}</h4>
                             </div>
                         </div>
                     </div>
 
                     {/* Detailed Metric Grid */}
                     <div>
-                        <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-2">
+                        <h4 className="text-sm font-semibold text-ink-muted mb-6 flex items-center gap-2">
                             <BarChart3 className="w-4 h-4" /> {t('admin.surveys.dimensionalAnalysis')}
                         </h4>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {stats.metrics.map((metric) => (
-                                <div key={metric.id} className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                                    <div className={`px-4 py-3 border-b border-slate-100 ${metric.bg} flex justify-between items-center`}>
-                                        <h5 className="font-semibold text-slate-700">{metric.name}</h5>
+                                <div key={metric.id} className="bg-surface rounded-lg border border-line shadow-card overflow-hidden flex flex-col">
+                                    <div className="px-4 py-4 border-b border-line bg-surface-sunken flex justify-between items-center">
+                                        <h5 className="font-semibold text-ink-body">{metric.name}</h5>
                                         <div className="flex items-baseline gap-1">
-                                            <span className="text-xl font-bold text-slate-800">{metric.value}</span>
-                                            <span className="text-xs text-slate-500">±{metric.stdDev}</span>
+                                            <span className="text-xl font-semibold text-ink">{metric.value}</span>
+                                            <span className="text-xs text-ink-muted">±{metric.stdDev}</span>
                                         </div>
                                     </div>
                                     <div className="h-[200px] w-full p-2">
@@ -244,7 +247,7 @@ export function SurveyViewer() {
                                                 type: 'violin',
                                                 y: metric.data,
                                                 box: { visible: true },
-                                                line: { color: metric.color },
+                                                line: { color: VIOLIN_COLOR, width: 1 },
                                                 meanline: { visible: true },
                                                 points: 'all',
                                                 jitter: 0.5,
@@ -271,28 +274,28 @@ export function SurveyViewer() {
             )}
 
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-slate-800">{t('admin.surveys.detailTitle')}</h3>
+                <h3 className="text-lg font-semibold text-ink">{t('admin.surveys.detailTitle')}</h3>
                 <button
                     onClick={fetchSurveys}
-                    className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-700 transition-colors"
+                    className="inline-flex items-center justify-center min-h-control min-w-control p-2 hover:bg-surface-raised rounded-lg text-ink-muted hover:text-ink transition-colors"
                 >
                     <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 </button>
             </div>
 
-            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+            <div className="bg-surface rounded-lg border border-line overflow-hidden shadow-card">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                        <thead className="bg-surface-sunken text-ink-muted border-b border-line">
                             <tr>
-                                <th className="px-4 py-3 font-medium">{t('admin.surveys.col.date')}</th>
-                                <th className="px-4 py-3 font-medium">{t('admin.surveys.col.user')}</th>
-                                <th className="px-4 py-3 font-medium">{t('admin.surveys.col.avgRating')}</th>
-                                <th className="px-4 py-3 font-medium">{t('admin.surveys.det.openFeedback')}</th>
-                                <th className="px-4 py-3 font-medium text-right">{t('admin.surveys.col.actions')}</th>
+                                <th className="px-4 py-4 font-semibold">{t('admin.surveys.col.date')}</th>
+                                <th className="px-4 py-4 font-semibold">{t('admin.surveys.col.user')}</th>
+                                <th className="px-4 py-4 font-semibold">{t('admin.surveys.col.avgRating')}</th>
+                                <th className="px-4 py-4 font-semibold">{t('admin.surveys.det.openFeedback')}</th>
+                                <th className="px-4 py-4 font-semibold text-right">{t('admin.surveys.col.actions')}</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-line">
                             {surveys.map((survey) => {
                                 const ratings = [
                                     survey.q_utile, survey.q_pertinente, survey.q_chiaro,
@@ -305,99 +308,109 @@ export function SurveyViewer() {
                                 return (
                                     <Fragment key={survey.id}>
                                         <tr
-                                            className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                            className="hover:bg-surface-sunken transition-colors cursor-pointer"
                                             onClick={() => setExpandedSurvey(expandedSurvey === survey.id ? null : survey.id)}
                                         >
-                                            <td className="px-4 py-3 text-slate-600 whitespace-nowrap text-xs">
+                                            <td className="px-4 py-4 text-ink-muted whitespace-nowrap text-xs">
                                                 {format(new Date(survey.submitted_at), 'dd/MM/yyyy HH:mm')}
                                             </td>
-                                            <td className="px-4 py-3 text-slate-600 text-xs">
-                                                <div className="font-medium text-slate-900">{survey.sesso || '-'}, {survey.eta || '-'}</div>
-                                                <div className="text-slate-500">{survey.istruzione || '-'}</div>
+                                            <td className="px-4 py-4 text-ink-muted text-xs">
+                                                <div className="font-semibold text-ink">{survey.sesso || '-'}, {survey.eta || '-'}</div>
+                                                <div className="text-ink-muted">{survey.istruzione || '-'}</div>
                                             </td>
-                                            <td className="px-4 py-3">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700`}>
+                                            <td className="px-4 py-4">
+                                                <span className={`inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-semibold bg-brand-soft text-link`}>
                                                     {t('admin.surveys.rating')}: {avgRating}/5
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-slate-600 text-xs max-w-md">
+                                            <td className="px-4 py-4 text-ink-muted text-xs max-w-md">
                                                 {survey.feedback_aperto ? (
-                                                    <span className="block whitespace-pre-wrap break-words text-slate-700">
+                                                    <span className="block whitespace-pre-wrap break-words text-ink-body">
                                                         {survey.feedback_aperto}
                                                     </span>
                                                 ) : (
-                                                    <span className="italic text-slate-500">{t('admin.surveys.det.noOpenFeedback')}</span>
+                                                    <span className="italic text-ink-muted">{t('admin.surveys.det.noOpenFeedback')}</span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <button
-                                                    onClick={(e) => handleDelete(survey.id, e)}
-                                                    className="p-1.5 hover:bg-red-50 text-slate-500 hover:text-red-500 rounded transition-colors"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                            <td className="px-4 py-4 text-right">
+                                                {confirmDeleteId === survey.id ? (
+                                                    <span onClick={(e) => e.stopPropagation()}>
+                                                        <ConfirmInline
+                                                            question={t('admin.surveys.confirmDelete')}
+                                                            onConfirm={() => void handleDelete(survey.id)}
+                                                            onCancel={() => setConfirmDeleteId(null)}
+                                                        />
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(survey.id); }}
+                                                        className="min-h-control min-w-control inline-flex items-center justify-center hover:bg-danger-soft text-ink-muted hover:text-danger rounded-control transition-colors"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                         {expandedSurvey === survey.id && (
-                                            <tr className="bg-slate-50/50">
+                                            <tr className="bg-surface-sunken/50">
                                                 <td colSpan={5} className="px-4 py-4">
                                                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs">
-                                                        <div><span className="text-slate-500 block mb-1">{t('admin.surveys.m.utile')}</span>{renderRating(survey.q_utile)}</div>
-                                                        <div><span className="text-slate-500 block mb-1">{t('admin.surveys.m.pertinente')}</span>{renderRating(survey.q_pertinente)}</div>
-                                                        <div><span className="text-slate-500 block mb-1">{t('admin.surveys.m.chiaro')}</span>{renderRating(survey.q_chiaro)}</div>
-                                                        <div><span className="text-slate-500 block mb-1">{t('admin.surveys.m.dettaglio')}</span>{renderRating(survey.q_dettaglio)}</div>
-                                                        <div><span className="text-slate-500 block mb-1">{t('admin.surveys.m.facile')}</span>{renderRating(survey.q_facile)}</div>
-                                                        <div><span className="text-slate-500 block mb-1">{t('admin.surveys.m.veloce')}</span>{renderRating(survey.q_veloce)}</div>
-                                                        <div><span className="text-slate-500 block mb-1">{t('admin.surveys.m.fiducia')}</span>{renderRating(survey.q_fiducia)}</div>
-                                                        <div><span className="text-slate-500 block mb-1">{t('admin.surveys.m.riflettere')}</span>{renderRating(survey.q_riflettere)}</div>
-                                                        <div><span className="text-slate-500 block mb-1">{t('admin.surveys.m.coinvolgente')}</span>{renderRating(survey.q_coinvolgente)}</div>
-                                                        <div><span className="text-slate-500 block mb-1">{t('admin.surveys.m.consiglierei')}</span>{renderRating(survey.q_consiglierei)}</div>
+                                                        <div><span className="text-ink-muted block mb-1">{t('admin.surveys.m.utile')}</span>{renderRating(survey.q_utile)}</div>
+                                                        <div><span className="text-ink-muted block mb-1">{t('admin.surveys.m.pertinente')}</span>{renderRating(survey.q_pertinente)}</div>
+                                                        <div><span className="text-ink-muted block mb-1">{t('admin.surveys.m.chiaro')}</span>{renderRating(survey.q_chiaro)}</div>
+                                                        <div><span className="text-ink-muted block mb-1">{t('admin.surveys.m.dettaglio')}</span>{renderRating(survey.q_dettaglio)}</div>
+                                                        <div><span className="text-ink-muted block mb-1">{t('admin.surveys.m.facile')}</span>{renderRating(survey.q_facile)}</div>
+                                                        <div><span className="text-ink-muted block mb-1">{t('admin.surveys.m.veloce')}</span>{renderRating(survey.q_veloce)}</div>
+                                                        <div><span className="text-ink-muted block mb-1">{t('admin.surveys.m.fiducia')}</span>{renderRating(survey.q_fiducia)}</div>
+                                                        <div><span className="text-ink-muted block mb-1">{t('admin.surveys.m.riflettere')}</span>{renderRating(survey.q_riflettere)}</div>
+                                                        <div><span className="text-ink-muted block mb-1">{t('admin.surveys.m.coinvolgente')}</span>{renderRating(survey.q_coinvolgente)}</div>
+                                                        <div><span className="text-ink-muted block mb-1">{t('admin.surveys.m.consiglierei')}</span>{renderRating(survey.q_consiglierei)}</div>
 
-                                                        <div className="col-span-2 md:col-span-5 mt-4 pt-4 border-t border-slate-200">
+                                                        <div className="col-span-2 md:col-span-5 mt-4 pt-4 border-t border-line">
                                                             <div className="grid md:grid-cols-3 gap-4">
                                                                 <div>
-                                                                    <span className="text-slate-500 block mb-1">{t('admin.surveys.det.istituto')}</span>
-                                                                    <span className="font-medium text-slate-700">{survey.tipo_istituto || '-'}</span>
+                                                                    <span className="text-ink-muted block mb-1">{t('admin.surveys.det.istituto')}</span>
+                                                                    <span className="font-semibold text-ink-body">{survey.tipo_istituto || '-'}</span>
                                                                 </div>
                                                                 <div>
-                                                                    <span className="text-slate-500 block mb-1">{t('admin.surveys.det.provenienza')}</span>
-                                                                    <span className="font-medium text-slate-700">{survey.provenienza || '-'}</span>
+                                                                    <span className="text-ink-muted block mb-1">{t('admin.surveys.det.provenienza')}</span>
+                                                                    <span className="font-semibold text-ink-body">{survey.provenienza || '-'}</span>
                                                                 </div>
                                                                 <div>
-                                                                    <span className="text-slate-500 block mb-1">{t('admin.surveys.det.area')}</span>
-                                                                    <span className="font-medium text-slate-700">{survey.area_studio || '-'}</span>
+                                                                    <span className="text-ink-muted block mb-1">{t('admin.surveys.det.area')}</span>
+                                                                    <span className="font-semibold text-ink-body">{survey.area_studio || '-'}</span>
                                                                 </div>
                                                             </div>
                                                             {survey.paese && (
                                                                 <div className="mt-4 grid md:grid-cols-3 gap-4">
                                                                     <div>
-                                                                        <span className="text-slate-500 block mb-1">{t('admin.surveys.det.paese')}</span>
-                                                                        <span className="font-medium text-slate-700">{survey.paese}</span>
+                                                                        <span className="text-ink-muted block mb-1">{t('admin.surveys.det.paese')}</span>
+                                                                        <span className="font-semibold text-ink-body">{survey.paese}</span>
                                                                     </div>
                                                                 </div>
                                                             )}
                                                         </div>
 
-                                                        <div className="col-span-2 md:col-span-5 mt-4 pt-4 border-t border-slate-200">
+                                                        <div className="col-span-2 md:col-span-5 mt-4 pt-4 border-t border-line">
                                                             <div className="grid md:grid-cols-2 gap-4">
                                                                 <div>
-                                                                    <span className="text-slate-500 block mb-1">{t('admin.surveys.det.tools')}</span>
+                                                                    <span className="text-ink-muted block mb-1">{t('admin.surveys.det.tools')}</span>
                                                                     {renderTools(survey.strumenti_utilizzati)}
-                                                                    <span className="text-slate-500 block mb-1 mt-3">{t('admin.surveys.det.counselor')}</span>
+                                                                    <span className="text-ink-muted block mb-1 mt-4">{t('admin.surveys.det.counselor')}</span>
                                                                     {survey.counselor_utilizzato ? (
-                                                                        <span className="inline-flex px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 text-xs font-medium">
+                                                                        <span className="inline-flex px-2 py-1 rounded-full bg-brand-soft text-link text-xs font-semibold">
                                                                             {survey.counselor_utilizzato}
                                                                         </span>
                                                                     ) : (
-                                                                        <span className="text-slate-500">-</span>
+                                                                        <span className="text-ink-muted">-</span>
                                                                     )}
                                                                 </div>
                                                                 <div>
-                                                                    <span className="text-slate-500 block mb-1">{t('admin.surveys.det.openFeedback')}</span>
+                                                                    <span className="text-ink-muted block mb-1">{t('admin.surveys.det.openFeedback')}</span>
                                                                     {survey.feedback_aperto ? (
-                                                                        <p className="font-medium text-slate-700 whitespace-pre-wrap">{survey.feedback_aperto}</p>
+                                                                        <p className="font-semibold text-ink-body whitespace-pre-wrap">{survey.feedback_aperto}</p>
                                                                     ) : (
-                                                                        <span className="italic text-slate-500">{t('admin.surveys.det.noOpenFeedback')}</span>
+                                                                        <span className="italic text-ink-muted">{t('admin.surveys.det.noOpenFeedback')}</span>
                                                                     )}
                                                                 </div>
                                                             </div>
@@ -412,14 +425,14 @@ export function SurveyViewer() {
 
                             {surveys.length === 0 && !loading && (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                                    <td colSpan={5} className="px-6 py-8 text-center text-ink-muted">
                                         {t('admin.surveys.empty')}
                                     </td>
                                 </tr>
                             )}
                             {loading && (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                                    <td colSpan={5} className="px-6 py-8 text-center text-ink-muted">
                                         <RefreshCw className="w-5 h-5 animate-spin mx-auto" />
                                     </td>
                                 </tr>

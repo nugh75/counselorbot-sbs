@@ -28,7 +28,7 @@ const PROVIDER_TEXT: Record<RetrievalProvider, DocumentRetrievalKey> = {
 const MODE_TEXT: Record<RetrievalMode, DocumentRetrievalKey> = { hybrid: 'modeHybrid', lexical: 'modeLexical', vector: 'modeVector' };
 const mutation = { cache: 'no-store' as const, headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'CounselorBot' } };
 const toDraft = (s: State): Draft => ({ provider: s.provider, model: s.model, dimensions: s.dimensions && s.provider === 'openrouter' ? String(s.dimensions) : '', mode: s.mode });
-const field = 'min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900';
+const field = 'min-h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-ink';
 
 export function DocumentRetrievalSettings() {
     const { lang } = useI18n();
@@ -136,47 +136,47 @@ export function DocumentRetrievalSettings() {
         : e.price_known && e.estimated_cost_usd !== null ? formatUsd(e.estimated_cost_usd) : l('estimateUnknown');
 
     return <div data-testid="document-retrieval-settings"><Card>
-        <h4 className="font-semibold text-slate-900">{l('title')}</h4>
-        <p className="mt-2 text-sm text-slate-600">{l('help')}</p>
-        {!state && !loadError && <p role="status" className="mt-3 text-sm text-slate-600">{l('loading')}</p>}
-        {loadError && !state && <div className="mt-3 space-y-2"><Callout variant="danger">{l('loadError')}</Callout><Button variant="secondary" onClick={() => void load()}>{l('retry')}</Button></div>}
+        <h4 className="font-semibold text-ink">{l('title')}</h4>
+        <p className="mt-2 text-sm text-ink-muted">{l('help')}</p>
+        {!state && !loadError && <p role="status" className="mt-4 text-sm text-ink-muted">{l('loading')}</p>}
+        {loadError && !state && <div className="mt-4 space-y-2"><Callout variant="danger">{l('loadError')}</Callout><Button variant="secondary" onClick={() => void load()}>{l('retry')}</Button></div>}
         {state && draft && <div className="mt-4 space-y-4">
             <div className="space-y-1">
-                <label className="block text-sm font-semibold text-slate-800" htmlFor="retrieval-provider">{l('provider')}</label>
+                <label className="block text-sm font-semibold text-ink" htmlFor="retrieval-provider">{l('provider')}</label>
                 <select id="retrieval-provider" value={draft.provider} disabled={busy} className={field}
                     onChange={e => { const next = e.target.value as RetrievalProvider; setDraft({ ...draft, provider: next, model: next === state.provider ? state.model : '', dimensions: '', mode: next === 'none' ? 'lexical' : draft.mode === 'lexical' && state.provider === 'none' ? 'hybrid' : draft.mode }); setNotice(null); }}>
                     {state.providers.map(p => <option key={p.id} value={p.id}>{l(PROVIDER_TEXT[p.id])}</option>)}
                 </select>
             </div>
             {provider?.external && <>
-                <p className={`text-sm font-semibold ${provider.key_present ? 'text-emerald-700' : 'text-amber-800'}`} data-testid="retrieval-key-status">
+                <p className={`text-sm font-semibold ${provider.key_present ? 'text-success' : 'text-warning-ink'}`} data-testid="retrieval-key-status">
                     {l(provider.key_present ? 'keyPresent' : 'keyMissing', { env })}
                 </p>
-                <p className="text-sm text-slate-600">{l('keyHelp', { env })}</p>
+                <p className="text-sm text-ink-muted">{l('keyHelp', { env })}</p>
                 <Callout variant="info">{l('privacyExternal')}</Callout>
             </>}
             {draft.provider !== 'none' && provider && <div className="space-y-1">
-                <label className="block text-sm font-semibold text-slate-800" htmlFor="retrieval-model">{l('model')}</label>
+                <label className="block text-sm font-semibold text-ink" htmlFor="retrieval-model">{l('model')}</label>
                 <input id="retrieval-model" list="retrieval-models" value={draft.model} disabled={busy} maxLength={200} className={`${field} font-mono`}
                     placeholder={provider.default_model} onChange={e => setDraft({ ...draft, model: e.target.value })} />
                 <datalist id="retrieval-models">{provider.models.map(m => <option key={m} value={m} />)}</datalist>
-                <p className="text-xs text-slate-600">{l('modelHelp', { model: provider.default_model })}</p>
+                <p className="text-xs text-ink-muted">{l('modelHelp', { model: provider.default_model })}</p>
             </div>}
             {draft.provider === 'openrouter' && <div className="space-y-1">
-                <label className="block text-sm font-semibold text-slate-800" htmlFor="retrieval-dimensions">{l('dimensions')}</label>
+                <label className="block text-sm font-semibold text-ink" htmlFor="retrieval-dimensions">{l('dimensions')}</label>
                 <input id="retrieval-dimensions" inputMode="numeric" pattern="[0-9]*" value={draft.dimensions} disabled={busy} maxLength={5} className={field}
                     placeholder="768" onChange={e => setDraft({ ...draft, dimensions: e.target.value.replace(/\D/g, '') })} />
-                <p className="text-xs text-slate-600">{l('dimensionsHelp')}</p>
+                <p className="text-xs text-ink-muted">{l('dimensionsHelp')}</p>
                 {!dirty && state.dimensions_warning && <Callout variant="warning">{l('dimensionsUnusual')}</Callout>}
             </div>}
             {draft.provider !== 'none' && <div className="space-y-1">
-                <label className="block text-sm font-semibold text-slate-800" htmlFor="retrieval-mode">{l('mode')}</label>
+                <label className="block text-sm font-semibold text-ink" htmlFor="retrieval-mode">{l('mode')}</label>
                 <select id="retrieval-mode" value={draft.mode} disabled={busy} className={field} onChange={e => setDraft({ ...draft, mode: e.target.value as RetrievalMode })}>
                     {(Object.keys(MODE_TEXT) as RetrievalMode[]).map(m => <option key={m} value={m}>{l(MODE_TEXT[m])}</option>)}
                 </select>
             </div>}
             {provider?.external && state.provider === draft.provider && state.privacy.ner_required && !blocked
-                && <p className="text-sm text-slate-600">{l('nerRequired', { model: state.privacy.ner_model })}</p>}
+                && <p className="text-sm text-ink-muted">{l('nerRequired', { model: state.privacy.ner_model })}</p>}
             {provider?.external && state.provider === draft.provider && blocked && <div className="space-y-2" data-testid="retrieval-ner-blocked">
                 <Callout variant="warning">{l('nerBlocked')}</Callout>
                 <Button variant="secondary" disabled={busy} onClick={() => void chooseBasic()}>{l('useBasic')}</Button>
@@ -185,18 +185,18 @@ export function DocumentRetrievalSettings() {
                 <Button disabled={busy || !dirty || running} onClick={() => void save()}>{l('save')}</Button>
                 <Button variant="secondary" disabled={busy || dirty} onClick={() => void test()}>{l('test')}</Button>
             </div>
-            <p className="text-xs text-slate-600">{dirty ? l('unsaved') : l('testHelp')}</p>
+            <p className="text-xs text-ink-muted">{dirty ? l('unsaved') : l('testHelp')}</p>
             {probe && <Callout variant={probe.ok ? 'success' : 'danger'}>
                 {probe.ok ? l('testOk', { dimensions: probe.dimensions ?? 0, ms: probe.elapsed_ms ?? 0 }) : l('testFailed', { reason: l(errorText(probe.error)) })}
             </Callout>}
             {notice && <Callout variant={notice.variant}>{notice.text}</Callout>}
             {!!state.semantic_suspended_seconds && <Callout variant="warning">{l('semanticSuspended', { seconds: state.semantic_suspended_seconds })}</Callout>}
             <div className="space-y-2" data-testid="retrieval-reindex">
-                <h5 className="text-sm font-semibold text-slate-800">{l('collections')}</h5>
-                <p className="text-xs text-slate-600">{l('reindexHint')}</p>
+                <h5 className="text-sm font-semibold text-ink">{l('collections')}</h5>
+                <p className="text-xs text-ink-muted">{l('reindexHint')}</p>
                 <Button variant="secondary" disabled={busy || running || !!plan} onClick={() => void askReindex()}>{l('reindexAll')}</Button>
-                {plan && <div className="space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3" role="group" aria-labelledby="reindex-confirm">
-                    <p id="reindex-confirm" className="text-sm text-slate-800">
+                {plan && <div className="space-y-2 rounded-control border border-line bg-surface-sunken p-4" role="group" aria-labelledby="reindex-confirm">
+                    <p id="reindex-confirm" className="text-sm text-ink">
                         {l('reindexConfirm', { inputs: plan.input_count, tokens: plan.estimated_tokens.toLocaleString(lang), cost: costText(plan) })}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -206,25 +206,25 @@ export function DocumentRetrievalSettings() {
                 </div>}
                 {job && job.status !== 'idle' && <div className="space-y-1">
                     {running && <>
-                        <p className="text-sm font-semibold text-slate-800">{l('jobProgress', { percent: jobPercent(job) })}</p>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                            <div className="h-full rounded-full bg-indigo-600 transition-all duration-300" style={{ width: `${jobPercent(job)}%` }}
+                        <p className="text-sm font-semibold text-ink">{l('jobProgress', { percent: jobPercent(job) })}</p>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-line">
+                            <div className="h-full rounded-full bg-brand transition-all duration-300" style={{ width: `${jobPercent(job)}%` }}
                                 role="progressbar" aria-valuenow={jobPercent(job)} aria-valuemin={0} aria-valuemax={100} aria-label={l('jobProgressLabel')} />
                         </div>
                     </>}
-                    {job.status === 'done' && <p role="status" className={`text-sm ${jobErrors ? 'text-amber-800' : 'text-emerald-700'}`}>
+                    {job.status === 'done' && <p role="status" className={`text-sm ${jobErrors ? 'text-warning-ink' : 'text-success'}`}>
                         {l(jobErrors ? 'jobFinishedErrors' : 'jobFinished', { time: time(job.finished_at), errors: jobErrors })}
                     </p>}
-                    {(job.status === 'interrupted' || job.status === 'error') && <p role="status" className="text-sm text-amber-800">{l('jobStopped')}</p>}
+                    {(job.status === 'interrupted' || job.status === 'error') && <p role="status" className="text-sm text-warning-ink">{l('jobStopped')}</p>}
                 </div>}
-                <ul className="divide-y divide-slate-200 rounded-md border border-slate-200">
+                <ul className="divide-y divide-line rounded-control border border-line">
                     {state.collections.map(c => {
                         const status = collectionStatus(c, state.provider, state.mode);
                         const progress = jobLine(c.id);
-                        return <li key={c.id} className="space-y-1 p-3" data-testid={`retrieval-collection-${c.id}`}>
-                            <p className="break-words text-sm font-semibold text-slate-900">{c.label}</p>
-                            <p className="text-xs text-slate-600">{l('chunks', { chunks: c.n_chunks })} · {l(STATUS_TEXT[status], { reason: l(errorText(c.last_build_error)) })}</p>
-                            {progress && <p className="text-xs font-semibold text-slate-800">{l('reindexAll')}: {progress}</p>}
+                        return <li key={c.id} className="space-y-1 p-4" data-testid={`retrieval-collection-${c.id}`}>
+                            <p className="break-words text-sm font-semibold text-ink">{c.label}</p>
+                            <p className="text-xs text-ink-muted">{l('chunks', { chunks: c.n_chunks })} · {l(STATUS_TEXT[status], { reason: l(errorText(c.last_build_error)) })}</p>
+                            {progress && <p className="text-xs font-semibold text-ink">{l('reindexAll')}: {progress}</p>}
                         </li>;
                     })}
                 </ul>

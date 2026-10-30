@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DollarSign, RefreshCw, Users, MessageSquare, Layers, TrendingUp, CalendarDays, Wallet, AlertTriangle } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { Button } from '@/components/ui/Button';
 
 interface ModelRow {
     model: string;
@@ -200,83 +201,83 @@ export function CostStats() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-wrap items-end justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex flex-wrap items-end justify-between gap-4 rounded-lg border border-line bg-surface p-4">
                 <div>
-                    <h2 className="text-lg font-bold text-slate-900">{t('admin.costs.title')}</h2>
-                    <p className="text-sm text-slate-500">{t('admin.costs.subtitle')}</p>
+                    <h2 className="text-lg font-semibold text-ink">{t('admin.costs.title')}</h2>
+                    <p className="text-sm text-ink-muted">{t('admin.costs.subtitle')}</p>
                 </div>
-                <div className="flex flex-wrap items-end gap-3">
-                    <label className="flex flex-col text-xs font-medium text-slate-500">
+                <div className="flex flex-wrap items-end gap-4">
+                    <label className="flex flex-col text-xs font-semibold text-ink-muted">
                         {t('admin.costs.from')}
-                        <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="mt-1 h-9 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400" />
+                        <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="mt-1 h-control rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
                     </label>
-                    <label className="flex flex-col text-xs font-medium text-slate-500">
+                    <label className="flex flex-col text-xs font-semibold text-ink-muted">
                         {t('admin.costs.to')}
-                        <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="mt-1 h-9 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400" />
+                        <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="mt-1 h-control rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
                     </label>
-                    <label className="flex flex-col text-xs font-medium text-slate-500">
+                    <label className="flex flex-col text-xs font-semibold text-ink-muted">
                         {t('admin.costs.eurRate')}
-                        <input type="number" min={0} step="0.01" value={eurRate} onChange={(e) => setEurRate(e.target.value)} className="mt-1 h-9 w-24 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400" />
+                        <input type="number" min={0} step="0.01" value={eurRate} onChange={(e) => setEurRate(e.target.value)} className="mt-1 h-control w-24 rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
                     </label>
-                    <button type="button" onClick={() => void fetchStats()} className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                    <Button variant="secondary" type="button" onClick={() => void fetchStats()}>
                         <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                         {t('admin.costs.refresh')}
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             {!data || (data.total_turns === 0) ? (
-                <div className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
+                <div className="rounded-lg border border-dashed border-line-strong bg-surface p-10 text-center text-sm text-ink-muted">
                     {t('admin.costs.noData')}
                 </div>
             ) : (
                 <>
                     {/* KPI cards */}
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {kpis.map((kpi) => (
-                            <div key={kpi.label} className="rounded-lg border border-slate-200 bg-white p-4">
-                                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                            <div key={kpi.label} className="rounded-lg border border-line bg-surface p-4">
+                                <div className="flex items-center gap-2 text-xs font-semibold text-ink-muted">
                                     <kpi.icon className="h-4 w-4" />
                                     {kpi.label}
                                 </div>
-                                <div className="mt-2 text-2xl font-bold text-slate-900">{kpi.value}</div>
+                                <div className="mt-2 text-2xl font-semibold text-ink">{kpi.value}</div>
                             </div>
                         ))}
                     </div>
 
                     {/* Run-rate: periodo corrente + proiezione */}
-                    <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-3">
                         {([
                             { key: 'month', label: t('admin.costs.thisMonth'), rr: data.periods.month },
                             { key: 'week', label: t('admin.costs.thisWeek'), rr: data.periods.week },
                             { key: 'year', label: t('admin.costs.thisYear'), rr: data.periods.year },
                         ] as const).map(({ key, label, rr }) => (
-                            <div key={key} className="rounded-lg border border-slate-200 bg-white p-4">
-                                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                            <div key={key} className="rounded-lg border border-line bg-surface p-4">
+                                <div className="flex items-center gap-2 text-xs font-semibold text-ink-muted">
                                     <CalendarDays className="h-4 w-4" />
-                                    {label} <span className="font-mono text-slate-500">{rr.period}</span>
+                                    {label} <span className="font-mono text-ink-muted">{rr.period}</span>
                                 </div>
-                                <div className="mt-2 text-xl font-bold text-slate-900">{fmtUsdEur(rr.cost_to_date, rate)}</div>
+                                <div className="mt-2 text-xl font-semibold text-ink">{fmtUsdEur(rr.cost_to_date, rate)}</div>
                                 <div className="mt-2 flex items-baseline justify-between">
-                                    <span className="text-xs text-slate-500">{t('admin.costs.projected')}</span>
-                                    <span className="text-lg font-bold text-emerald-600">{fmtUsdEur(rr.projected_cost, rate)}</span>
+                                    <span className="text-xs text-ink-muted">{t('admin.costs.projected')}</span>
+                                    <span className="text-lg font-semibold text-success">{fmtUsdEur(rr.projected_cost, rate)}</span>
                                 </div>
-                                <div className="text-[11px] text-slate-500">{rr.days_elapsed} / {rr.days_total} {t('admin.costs.days')}</div>
+                                <div className="text-2xs text-ink-muted">{rr.days_elapsed} / {rr.days_total} {t('admin.costs.days')}</div>
                             </div>
                         ))}
                     </div>
 
                     {/* Costi per periodo: giorno / settimana / mese / anno */}
-                    <div className="rounded-lg border border-slate-200 bg-white p-4">
-                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                            <h3 className="text-sm font-semibold text-slate-700">{t('admin.costs.byPeriod')}</h3>
-                            <div className="inline-flex rounded-md border border-slate-200 p-0.5">
+                    <div className="rounded-lg border border-line bg-surface p-4">
+                        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                            <h3 className="text-sm font-semibold text-ink-body">{t('admin.costs.byPeriod')}</h3>
+                            <div className="inline-flex rounded-control border border-line p-1">
                                 {(['day', 'week', 'month', 'year'] as const).map((g) => (
                                     <button
                                         key={g}
                                         type="button"
                                         onClick={() => setGranularity(g)}
-                                        className={`rounded px-3 py-1 text-xs font-medium ${granularity === g ? 'bg-sky-500 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+                                        className={`min-h-control rounded px-4 py-1 text-xs font-semibold ${granularity === g ? 'bg-info text-ink-on-brand' : 'text-ink-muted hover:bg-surface-sunken'}`}
                                     >
                                         {t(`admin.costs.gran.${g}`)}
                                     </button>
@@ -285,32 +286,32 @@ export function CostStats() {
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+                                <thead className="border-b border-line text-xs text-ink-muted">
                                     <tr>
-                                        <th className="px-3 py-2 font-semibold">{t('admin.costs.period')}</th>
-                                        <th className="px-3 py-2 text-right font-semibold">{t('admin.costs.turns')}</th>
-                                        <th className="px-3 py-2 font-semibold">{t('admin.costs.cost')}</th>
-                                        <th className="px-3 py-2 text-right font-semibold">EUR</th>
+                                        <th className="px-4 py-2 font-semibold">{t('admin.costs.period')}</th>
+                                        <th className="px-4 py-2 text-right font-semibold">{t('admin.costs.turns')}</th>
+                                        <th className="px-4 py-2 font-semibold">{t('admin.costs.cost')}</th>
+                                        <th className="px-4 py-2 text-right font-semibold">EUR</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-line">
                                     {[...periodRows].reverse().map((row) => (
                                         <tr key={row.period}>
-                                            <td className="px-3 py-2 font-mono text-xs font-medium text-slate-800">{row.period}</td>
-                                            <td className="px-3 py-2 text-right text-slate-500">{fmtInt(row.turns)}</td>
-                                            <td className="px-3 py-2">
+                                            <td className="px-4 py-2 font-mono text-xs font-semibold text-ink">{row.period}</td>
+                                            <td className="px-4 py-2 text-right text-ink-muted">{fmtInt(row.turns)}</td>
+                                            <td className="px-4 py-2">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="h-3 w-32 overflow-hidden rounded bg-slate-100">
-                                                        <div className="h-full rounded bg-sky-400" style={{ width: maxPeriodCost > 0 ? `${Math.max(2, (row.cost / maxPeriodCost) * 100)}%` : '0%' }} />
+                                                    <div className="h-3 w-32 overflow-hidden rounded bg-surface-raised">
+                                                        <div className="h-full rounded bg-info" style={{ width: maxPeriodCost > 0 ? `${Math.max(2, (row.cost / maxPeriodCost) * 100)}%` : '0%' }} />
                                                     </div>
-                                                    <span className="font-medium text-slate-700">{fmtCost(row.cost)}</span>
+                                                    <span className="font-semibold text-ink-body">{fmtCost(row.cost)}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-3 py-2 text-right text-slate-500">{fmtEur(row.cost, rate)}</td>
+                                            <td className="px-4 py-2 text-right text-ink-muted">{fmtEur(row.cost, rate)}</td>
                                         </tr>
                                     ))}
                                     {periodRows.length === 0 && (
-                                        <tr><td colSpan={4} className="px-3 py-6 text-center text-slate-500">{t('admin.costs.noData')}</td></tr>
+                                        <tr><td colSpan={4} className="px-4 py-6 text-center text-ink-muted">{t('admin.costs.noData')}</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -318,45 +319,45 @@ export function CostStats() {
                     </div>
 
                     {/* Budget mensile: a superamento si passa al ripiego configurato */}
-                    <div className={`rounded-lg border p-4 ${data.budget_exceeded ? 'border-rose-300 bg-rose-50/50' : 'border-slate-200 bg-white'}`}>
-                        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                    <div className={`rounded-lg border p-4 ${data.budget_exceeded ? 'border-danger-line bg-danger-soft/50' : 'border-line bg-surface'}`}>
+                        <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink-body">
                             <Wallet className="h-4 w-4" />{t('admin.costs.budget.title')}
                             {data.monthly_budget_usd > 0 && (
-                                <span className={`ml-2 rounded px-2 py-0.5 text-[11px] font-medium ${data.budget_exceeded ? 'bg-rose-200 text-rose-800' : 'bg-emerald-100 text-emerald-700'}`}>
+                                <span className={`ml-2 rounded px-2 py-1 text-2xs font-semibold ${data.budget_exceeded ? 'bg-danger-line text-danger-ink' : 'bg-success-soft text-success'}`}>
                                     {data.budget_exceeded ? t('admin.costs.budget.exceeded') : t('admin.costs.budget.ok')}
                                 </span>
                             )}
                         </div>
                         <div className="flex flex-wrap items-end gap-4">
-                            <label className="flex flex-col text-xs font-medium text-slate-500">
+                            <label className="flex flex-col text-xs font-semibold text-ink-muted">
                                 {t('admin.costs.budget.monthly')}
                                 <div className="mt-1 flex gap-1">
-                                    <input type="number" min={0} step="1" value={budgetInput} onChange={(e) => setBudgetInput(e.target.value)} className="h-9 w-28 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400" />
-                                    <button type="button" disabled={savingBudget} onClick={() => void saveBudget()} className="inline-flex h-9 items-center rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{t('admin.costs.budget.set')}</button>
+                                    <input type="number" min={0} step="1" value={budgetInput} onChange={(e) => setBudgetInput(e.target.value)} className="h-control w-28 rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
+                                    <Button type="button" disabled={savingBudget} onClick={() => void saveBudget()}>{t('admin.costs.budget.set')}</Button>
                                 </div>
                             </label>
                             {data.monthly_budget_usd > 0 && (
                                 <>
                                     <div>
-                                        <div className="text-xs font-medium text-slate-500">{t('admin.costs.budget.spent')}</div>
-                                        <div className="text-lg font-bold text-slate-900">{fmtUsdEur(data.month_to_date_cost, rate)}</div>
+                                        <div className="text-xs font-semibold text-ink-muted">{t('admin.costs.budget.spent')}</div>
+                                        <div className="text-lg font-semibold text-ink">{fmtUsdEur(data.month_to_date_cost, rate)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-xs font-medium text-slate-500">{t('admin.costs.budget.remaining')}</div>
-                                        <div className={`text-lg font-bold ${data.budget_remaining < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>{fmtUsdEur(data.budget_remaining, rate)}</div>
+                                        <div className="text-xs font-semibold text-ink-muted">{t('admin.costs.budget.remaining')}</div>
+                                        <div className={`text-lg font-semibold ${data.budget_remaining < 0 ? 'text-danger' : 'text-success'}`}>{fmtUsdEur(data.budget_remaining, rate)}</div>
                                     </div>
                                 </>
                             )}
                         </div>
                         {data.monthly_budget_usd > 0 && (
-                            <div className="mt-3">
-                                <div className="h-3 w-full overflow-hidden rounded bg-slate-100">
-                                    <div className={`h-full rounded ${data.budget_exceeded ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min(100, data.budget_used_pct)}%` }} />
+                            <div className="mt-4">
+                                <div className="h-3 w-full overflow-hidden rounded bg-surface-raised">
+                                    <div className={`h-full rounded ${data.budget_exceeded ? 'bg-danger' : 'bg-success'}`} style={{ width: `${Math.min(100, data.budget_used_pct)}%` }} />
                                 </div>
-                                <p className="mt-2 flex items-center gap-1 text-xs text-slate-500">
+                                <p className="mt-2 flex items-center gap-1 text-xs text-ink-muted">
                                     {data.budget_used_pct.toFixed(1)}%
                                     {data.budget_exceeded && (
-                                        <span className="ml-2 inline-flex items-center gap-1 font-medium text-rose-600">
+                                        <span className="ml-2 inline-flex items-center gap-1 font-semibold text-danger">
                                             <AlertTriangle className="h-3.5 w-3.5" />
                                             {t('admin.costs.budget.fallback')}: {data.budget_fallback_target || '—'}
                                         </span>
@@ -365,47 +366,47 @@ export function CostStats() {
                             </div>
                         )}
                         {data.monthly_budget_usd <= 0 && (
-                            <p className="mt-2 text-xs text-slate-500">{t('admin.costs.budget.hint')}</p>
+                            <p className="mt-2 text-xs text-ink-muted">{t('admin.costs.budget.hint')}</p>
                         )}
                     </div>
 
                     {/* Benchmark vs Production + proiezione articolata */}
-                    <div className="grid gap-3 lg:grid-cols-2">
-                        <div className="rounded-lg border border-slate-200 bg-white p-4">
-                            <h3 className="mb-3 text-sm font-semibold text-slate-700">{t('admin.costs.split')}</h3>
-                            <div className="grid grid-cols-2 gap-3">
+                    <div className="grid gap-4 lg:grid-cols-2">
+                        <div className="rounded-lg border border-line bg-surface p-4">
+                            <h3 className="mb-4 text-sm font-semibold text-ink-body">{t('admin.costs.split')}</h3>
+                            <div className="grid grid-cols-2 gap-4">
                                 {(['production', 'benchmark'] as const).map((key) => (
-                                    <div key={key} className="rounded-md bg-slate-50 p-3">
-                                        <div className="text-xs font-medium text-slate-500">{t(`admin.costs.${key}`)}</div>
-                                        <div className="mt-1 text-lg font-bold text-slate-900">{fmtCost(data.split[key].cost)}</div>
-                                        <div className="text-xs text-slate-500">{fmtInt(data.split[key].turns)} {t('admin.costs.turns').toLowerCase()}</div>
+                                    <div key={key} className="rounded-control bg-surface-sunken p-4">
+                                        <div className="text-xs font-semibold text-ink-muted">{t(`admin.costs.${key}`)}</div>
+                                        <div className="mt-1 text-lg font-semibold text-ink">{fmtCost(data.split[key].cost)}</div>
+                                        <div className="text-xs text-ink-muted">{fmtInt(data.split[key].turns)} {t('admin.costs.turns').toLowerCase()}</div>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                        <div className="rounded-lg border border-slate-200 bg-white p-4">
-                            <h3 className="mb-3 text-sm font-semibold text-slate-700">{t('admin.costs.projection')}</h3>
-                            <div className="flex flex-wrap items-end gap-3">
-                                <label className="flex flex-col text-xs font-medium text-slate-500">
+                        <div className="rounded-lg border border-line bg-surface p-4">
+                            <h3 className="mb-4 text-sm font-semibold text-ink-body">{t('admin.costs.projection')}</h3>
+                            <div className="flex flex-wrap items-end gap-4">
+                                <label className="flex flex-col text-xs font-semibold text-ink-muted">
                                     {t('admin.costs.estUsers')}
-                                    <input type="number" min={0} value={estUsers} onChange={(e) => setEstUsers(e.target.value)} className="mt-1 h-9 w-24 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400" />
+                                    <input type="number" min={0} value={estUsers} onChange={(e) => setEstUsers(e.target.value)} className="mt-1 h-control w-24 rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
                                 </label>
-                                <label className="flex flex-col text-xs font-medium text-slate-500">
+                                <label className="flex flex-col text-xs font-semibold text-ink-muted">
                                     {t('admin.costs.intPerUser')}
-                                    <input type="number" min={0} value={intPerUser} onChange={(e) => setIntPerUser(e.target.value)} className="mt-1 h-9 w-24 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400" />
+                                    <input type="number" min={0} value={intPerUser} onChange={(e) => setIntPerUser(e.target.value)} className="mt-1 h-control w-24 rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
                                 </label>
                             </div>
-                            <div className="mt-3 grid grid-cols-2 gap-3">
-                                <div className="rounded-md bg-slate-50 p-3">
-                                    <div className="text-xs font-medium text-slate-500">{t('admin.costs.perMonth')}</div>
-                                    <div className={`text-xl font-bold ${data.monthly_budget_usd > 0 && scenario.monthly > data.monthly_budget_usd ? 'text-rose-600' : 'text-emerald-600'}`}>{fmtUsdEur(scenario.monthly, rate)}</div>
+                            <div className="mt-4 grid grid-cols-2 gap-4">
+                                <div className="rounded-control bg-surface-sunken p-4">
+                                    <div className="text-xs font-semibold text-ink-muted">{t('admin.costs.perMonth')}</div>
+                                    <div className={`text-xl font-semibold ${data.monthly_budget_usd > 0 && scenario.monthly > data.monthly_budget_usd ? 'text-danger' : 'text-success'}`}>{fmtUsdEur(scenario.monthly, rate)}</div>
                                 </div>
-                                <div className="rounded-md bg-slate-50 p-3">
-                                    <div className="text-xs font-medium text-slate-500">{t('admin.costs.perYear')}</div>
-                                    <div className="text-xl font-bold text-emerald-600">{fmtUsdEur(scenario.yearly, rate)}</div>
+                                <div className="rounded-control bg-surface-sunken p-4">
+                                    <div className="text-xs font-semibold text-ink-muted">{t('admin.costs.perYear')}</div>
+                                    <div className="text-xl font-semibold text-success">{fmtUsdEur(scenario.yearly, rate)}</div>
                                 </div>
                             </div>
-                            <p className="mt-2 text-xs text-slate-500">
+                            <p className="mt-2 text-xs text-ink-muted">
                                 {fmtInt(scenario.totalInteractions)} {t('admin.costs.turns').toLowerCase()} · {fmtCost(scenario.costPerInteraction)}/{t('admin.costs.perInteraction')}
                             </p>
                         </div>
@@ -413,31 +414,31 @@ export function CostStats() {
 
 
                     {/* By model / provider */}
-                    <div className="rounded-lg border border-slate-200 bg-white p-4">
-                        <h3 className="mb-3 text-sm font-semibold text-slate-700">{t('admin.costs.byModel')}</h3>
+                    <div className="rounded-lg border border-line bg-surface p-4">
+                        <h3 className="mb-4 text-sm font-semibold text-ink-body">{t('admin.costs.byModel')}</h3>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+                                <thead className="border-b border-line text-xs text-ink-muted">
                                     <tr>
-                                        <th className="px-3 py-2 font-semibold">{t('admin.costs.model')}</th>
-                                        <th className="px-3 py-2 font-semibold">{t('admin.costs.provider')}</th>
-                                        <th className="px-3 py-2 text-right font-semibold">{t('admin.costs.turns')}</th>
-                                        <th className="px-3 py-2 text-right font-semibold">{t('admin.costs.tokensIn')}</th>
-                                        <th className="px-3 py-2 text-right font-semibold">{t('admin.costs.tokensOut')}</th>
-                                        <th className="px-3 py-2 text-right font-semibold">{t('admin.costs.avgPerTurn')}</th>
-                                        <th className="px-3 py-2 text-right font-semibold">{t('admin.costs.cost')}</th>
+                                        <th className="px-4 py-2 font-semibold">{t('admin.costs.model')}</th>
+                                        <th className="px-4 py-2 font-semibold">{t('admin.costs.provider')}</th>
+                                        <th className="px-4 py-2 text-right font-semibold">{t('admin.costs.turns')}</th>
+                                        <th className="px-4 py-2 text-right font-semibold">{t('admin.costs.tokensIn')}</th>
+                                        <th className="px-4 py-2 text-right font-semibold">{t('admin.costs.tokensOut')}</th>
+                                        <th className="px-4 py-2 text-right font-semibold">{t('admin.costs.avgPerTurn')}</th>
+                                        <th className="px-4 py-2 text-right font-semibold">{t('admin.costs.cost')}</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-line">
                                     {data.by_model.map((row) => (
                                         <tr key={row.model}>
-                                            <td className="px-3 py-2 font-medium text-slate-800">{row.model}</td>
-                                            <td className="px-3 py-2 text-slate-500">{row.provider}</td>
-                                            <td className="px-3 py-2 text-right text-slate-600">{fmtInt(row.turns)}</td>
-                                            <td className="px-3 py-2 text-right text-slate-600">{fmtInt(row.prompt_tokens)}</td>
-                                            <td className="px-3 py-2 text-right text-slate-600">{fmtInt(row.completion_tokens)}</td>
-                                            <td className="px-3 py-2 text-right text-slate-600">{fmtCost(row.avg_cost_per_turn)}</td>
-                                            <td className="px-3 py-2 text-right font-semibold text-slate-900">{fmtCost(row.cost)}</td>
+                                            <td className="px-4 py-2 font-semibold text-ink">{row.model}</td>
+                                            <td className="px-4 py-2 text-ink-muted">{row.provider}</td>
+                                            <td className="px-4 py-2 text-right text-ink-muted">{fmtInt(row.turns)}</td>
+                                            <td className="px-4 py-2 text-right text-ink-muted">{fmtInt(row.prompt_tokens)}</td>
+                                            <td className="px-4 py-2 text-right text-ink-muted">{fmtInt(row.completion_tokens)}</td>
+                                            <td className="px-4 py-2 text-right text-ink-muted">{fmtCost(row.avg_cost_per_turn)}</td>
+                                            <td className="px-4 py-2 text-right font-semibold text-ink">{fmtCost(row.cost)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -446,27 +447,27 @@ export function CostStats() {
                     </div>
 
                     {/* By user */}
-                    <div className="rounded-lg border border-slate-200 bg-white p-4">
-                        <h3 className="mb-3 text-sm font-semibold text-slate-700">{t('admin.costs.byUser')}</h3>
+                    <div className="rounded-lg border border-line bg-surface p-4">
+                        <h3 className="mb-4 text-sm font-semibold text-ink-body">{t('admin.costs.byUser')}</h3>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+                                <thead className="border-b border-line text-xs text-ink-muted">
                                     <tr>
-                                        <th className="px-3 py-2 font-semibold">{t('admin.costs.code')}</th>
-                                        <th className="px-3 py-2 text-right font-semibold">{t('admin.costs.sessions')}</th>
-                                        <th className="px-3 py-2 text-right font-semibold">{t('admin.costs.turns')}</th>
-                                        <th className="px-3 py-2 text-right font-semibold">{t('admin.costs.avgPerTurn')}</th>
-                                        <th className="px-3 py-2 text-right font-semibold">{t('admin.costs.cost')}</th>
+                                        <th className="px-4 py-2 font-semibold">{t('admin.costs.code')}</th>
+                                        <th className="px-4 py-2 text-right font-semibold">{t('admin.costs.sessions')}</th>
+                                        <th className="px-4 py-2 text-right font-semibold">{t('admin.costs.turns')}</th>
+                                        <th className="px-4 py-2 text-right font-semibold">{t('admin.costs.avgPerTurn')}</th>
+                                        <th className="px-4 py-2 text-right font-semibold">{t('admin.costs.cost')}</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-line">
                                     {data.by_user.map((row) => (
                                         <tr key={row.anonymous_research_code}>
-                                            <td className="px-3 py-2 font-mono text-xs text-slate-700">{row.anonymous_research_code}</td>
-                                            <td className="px-3 py-2 text-right text-slate-600">{fmtInt(row.sessions)}</td>
-                                            <td className="px-3 py-2 text-right text-slate-600">{fmtInt(row.turns)}</td>
-                                            <td className="px-3 py-2 text-right text-slate-600">{fmtCost(row.avg_cost_per_turn)}</td>
-                                            <td className="px-3 py-2 text-right font-semibold text-slate-900">{fmtCost(row.cost)}</td>
+                                            <td className="px-4 py-2 font-mono text-xs text-ink-body">{row.anonymous_research_code}</td>
+                                            <td className="px-4 py-2 text-right text-ink-muted">{fmtInt(row.sessions)}</td>
+                                            <td className="px-4 py-2 text-right text-ink-muted">{fmtInt(row.turns)}</td>
+                                            <td className="px-4 py-2 text-right text-ink-muted">{fmtCost(row.avg_cost_per_turn)}</td>
+                                            <td className="px-4 py-2 text-right font-semibold text-ink">{fmtCost(row.cost)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -475,17 +476,17 @@ export function CostStats() {
                     </div>
 
                     {/* Daily trend */}
-                    <div className="rounded-lg border border-slate-200 bg-white p-4">
-                        <h3 className="mb-3 text-sm font-semibold text-slate-700">{t('admin.costs.byDay')}</h3>
+                    <div className="rounded-lg border border-line bg-surface p-4">
+                        <h3 className="mb-4 text-sm font-semibold text-ink-body">{t('admin.costs.byDay')}</h3>
                         <div className="space-y-1">
                             {data.by_day.map((row) => (
-                                <div key={row.date} className="flex items-center gap-3 text-xs">
-                                    <span className="w-24 shrink-0 text-slate-500">{row.date}</span>
-                                    <div className="h-4 flex-1 overflow-hidden rounded bg-slate-100">
-                                        <div className="h-full rounded bg-sky-400" style={{ width: maxDayCost > 0 ? `${Math.max(2, (row.cost / maxDayCost) * 100)}%` : '0%' }} />
+                                <div key={row.date} className="flex items-center gap-4 text-xs">
+                                    <span className="w-24 shrink-0 text-ink-muted">{row.date}</span>
+                                    <div className="h-4 flex-1 overflow-hidden rounded bg-surface-raised">
+                                        <div className="h-full rounded bg-info" style={{ width: maxDayCost > 0 ? `${Math.max(2, (row.cost / maxDayCost) * 100)}%` : '0%' }} />
                                     </div>
-                                    <span className="w-24 shrink-0 text-right font-medium text-slate-700">{fmtCost(row.cost)}</span>
-                                    <span className="w-16 shrink-0 text-right text-slate-500">{fmtInt(row.turns)}</span>
+                                    <span className="w-24 shrink-0 text-right font-semibold text-ink-body">{fmtCost(row.cost)}</span>
+                                    <span className="w-16 shrink-0 text-right text-ink-muted">{fmtInt(row.turns)}</span>
                                 </div>
                             ))}
                         </div>

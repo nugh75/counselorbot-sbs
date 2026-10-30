@@ -47,20 +47,20 @@ export function PersonalAPIPolicy() {
         } catch { setPolicy(previous); setError(true); } finally { setBusy(false); }
     };
     return <div data-testid="personal-api-settings"><Card>
-        <h4 className="font-semibold text-slate-900">{l('title')}</h4>
-        {policy && <label className="mt-3 flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-800">
+        <h4 className="font-semibold text-ink">{l('title')}</h4>
+        {policy && <label className="mt-4 flex min-h-control items-center gap-4 text-sm font-semibold text-ink">
             <input type="checkbox" checked={policy.enabled} disabled={busy} onChange={event => void toggle(event.target.checked)} />
             {l('adminToggle')}
         </label>}
         {policy?.enabled && <AudienceSwitches feature="api" />}
-        {policy?.reason === 'keyMissing' && <Callout variant="warning" className="mt-3">{l('keyMissing')}</Callout>}
+        {policy?.reason === 'keyMissing' && <Callout variant="warning" className="mt-4">{l('keyMissing')}</Callout>}
         {/* Technical notes last, in small print: switching off, key protection, backups. */}
-        <div className="mt-3 space-y-1 text-xs text-slate-600">
+        <div className="mt-4 space-y-1 text-xs text-ink-muted">
             <p>{l('adminHelp')}</p>
             {policy && <p>{l(policy.encryption_ready ? 'protected' : 'automatic')}</p>}
             <p>{l('backup')}</p>
         </div>
-        {error && <div className="mt-3 space-y-2"><Callout variant="danger">{l(reason)}</Callout><Button variant="secondary" onClick={() => void load()} disabled={busy}>{l('retry')}</Button></div>}
-        {saved && <p role="status" className="mt-3 text-sm text-indigo-700">{l('saved')}</p>}
+        {error && <div className="mt-4 space-y-2"><Callout variant="danger">{l(reason)}</Callout><Button variant="secondary" onClick={() => void load()} disabled={busy}>{l('retry')}</Button></div>}
+        {saved && <p role="status" className="mt-4 text-sm text-link">{l('saved')}</p>}
     </Card></div>;
 }

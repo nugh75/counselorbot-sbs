@@ -14,6 +14,7 @@ import { parseClassGroups, type StudentGroup } from '../teacher/class-group-type
 import { classLayoutText } from '@/lib/i18n-class-layout';
 import { teacherLoadingText } from '@/lib/i18n-teacher-loading';
 import { classSettingsText } from '@/lib/i18n-class-settings';
+import { Button } from '@/components/ui/Button';
 
 export interface GroupsPanelProps {
     institutionId?: number;
@@ -111,51 +112,50 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h2 className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                        <Users className="h-5 w-5 text-slate-500" /> {texts.title}
+                    <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
+                        <Users className="h-5 w-5 text-ink-muted" /> {texts.title}
                     </h2>
-                    <p className="mt-1 max-w-2xl text-sm text-slate-500">{texts.subtitle}</p>
+                    <p className="mt-1 max-w-2xl text-sm text-ink-muted">{texts.subtitle}</p>
                 </div>
-                <button
+                <Button
                     type="button"
                     disabled={!groups || loading}
                     onClick={() => setCreating(true)}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50"
                 >
                     <Plus className="h-4 w-4" /> {texts.newGroup}
-                </button>
+                </Button>
             </div>
 
             {creating && (
-                <div className="grid min-w-0 gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2">
-                    <label className="min-w-0 text-xs font-semibold text-slate-600">
+                <div className="grid min-w-0 gap-4 rounded-control border border-line bg-surface p-4 shadow-card sm:grid-cols-2">
+                    <label className="min-w-0 text-xs font-semibold text-ink-muted">
                         {classLayoutText(lang, 'name')}
                         <input
                             value={newName}
                             onChange={(event) => setNewName(event.target.value)}
                             placeholder={texts.namePlaceholder}
-                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none"
+                            className="mt-1 h-control w-full min-w-0 rounded-control border border-line-strong px-4 py-2 text-sm focus:border-brand focus:outline-none"
                         />
                     </label>
-                    <label className="min-w-0 text-xs font-semibold text-slate-600">
+                    <label className="min-w-0 text-xs font-semibold text-ink-muted">
                         {texts.school}
                         <input
                             value={newSchool}
                             onChange={(event) => setNewSchool(event.target.value)}
                             placeholder={texts.schoolPlaceholder}
-                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none"
+                            className="mt-1 h-control w-full min-w-0 rounded-control border border-line-strong px-4 py-2 text-sm focus:border-brand focus:outline-none"
                         />
                     </label>
-                    <label className="min-w-0 text-xs font-semibold text-slate-600">
+                    <label className="min-w-0 text-xs font-semibold text-ink-muted">
                         {texts.levelLabel}
                         <select
                             value={newLevel}
                             onChange={(event) => setNewLevel(event.target.value)}
                             title={texts.levelHint}
                             aria-label={texts.levelLabel}
-                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none"
+                            className="mt-1 h-control w-full min-w-0 rounded-control border border-line-strong px-4 py-2 text-sm focus:border-brand focus:outline-none"
                         >
                             <option value="">{texts.levelNone}</option>
                             <option value="secondaria">{texts.levelSecondaria}</option>
@@ -163,7 +163,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                             <option value="adulti">{texts.levelAdulti}</option>
                         </select>
                     </label>
-                    <label className="min-w-0 text-xs font-semibold text-slate-600">
+                    <label className="min-w-0 text-xs font-semibold text-ink-muted">
                         {texts.institutionLabel}
                         <select
                             value={newInstitutionId}
@@ -171,7 +171,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                             onChange={(event) => setNewInstitutionId(event.target.value)}
                             title={texts.institutionHint}
                             aria-label={texts.institutionLabel}
-                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none"
+                            className="mt-1 h-control w-full min-w-0 rounded-control border border-line-strong px-4 py-2 text-sm focus:border-brand focus:outline-none"
                         >
                             <option value="">{texts.institutionNone}</option>
                             {institutions.map((institution) => (
@@ -182,14 +182,13 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                         </select>
                     </label>
                     <div className="flex flex-wrap gap-2 sm:col-span-2">
-                        <button
+                        <Button
                             type="button"
                             disabled={busy || loading || !groups || !newName.trim()}
                             onClick={() => void create()}
-                            className="min-h-11 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                         >
                             {texts.create}
-                        </button>
+                        </Button>
                         <button
                             type="button"
                             onClick={() => {
@@ -199,7 +198,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                                 setNewLevel('');
                                 setNewInstitutionId(institutionId ? String(institutionId) : '');
                             }}
-                            className="min-h-11 rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            className="min-h-control rounded-control border border-line-strong px-4 py-2 text-sm font-semibold text-ink-body hover:bg-surface-sunken"
                         >
                             {texts.cancel}
                         </button>
@@ -207,24 +206,23 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                 </div>
             )}
 
-            {message && <p className="text-sm text-red-600">{message}</p>}
-            {loading && <p role="status" className="text-sm text-slate-500">{t('common.loading')}</p>}
+            {message && <p className="text-sm text-danger">{message}</p>}
+            {loading && <p role="status" className="text-sm text-ink-muted">{t('common.loading')}</p>}
             {failed && (
-                <div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-red-600">
+                <div role="alert" className="flex flex-wrap items-center gap-4 text-sm text-danger">
                     <p>{teacherLoadingText(lang, 'classes')}</p>
-                    <button
+                    <Button variant="secondary"
                         type="button"
                         disabled={loading}
                         onClick={() => void load()}
-                        className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                     >
                         {t('setup.retry')}
-                    </button>
+                    </Button>
                 </div>
             )}
-            {!loading && !failed && visibleGroups?.length === 0 && <p className="text-sm text-slate-500">{texts.empty}</p>}
+            {!loading && !failed && visibleGroups?.length === 0 && <p className="text-sm text-ink-muted">{texts.empty}</p>}
 
-            <div className="space-y-3">
+            <div className="space-y-4">
                 {(visibleGroups || []).map((group) => {
                     const isShared =
                         (group.shares_count !== undefined ? group.shares_count > 0 : (sharesCount[group.id] ?? 0) > 0) ||
@@ -237,32 +235,32 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                     return (
                         <section
                             key={group.id}
-                            className={`min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5 ${
-                                group.is_active ? '' : 'bg-slate-50 opacity-75'
+                            className={`min-w-0 rounded-lg border border-line bg-surface p-4 shadow-card transition-shadow hover:shadow-pop sm:p-4 ${
+                                group.is_active ? '' : 'bg-surface-sunken opacity-75'
                             }`}
                         >
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                 <div className="min-w-0 flex-1 space-y-2">
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <h3 className="text-base font-bold text-slate-900 sm:text-lg">
+                                        <h3 className="text-base font-semibold text-ink sm:text-lg">
                                             <Link
                                                 href={`${basePath}/${group.id}`}
-                                                className="hover:text-indigo-700 hover:underline focus-visible:outline-2"
+                                                className="hover:text-link hover:underline focus-visible:outline-2"
                                             >
                                                 {group.name}
                                             </Link>
                                         </h3>
                                         {/* Status badge: Attiva / Inattiva */}
                                         <span
-                                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                            className={`inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs font-semibold ${
                                                 group.is_active
-                                                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-                                                    : 'border border-slate-200 bg-slate-100 text-slate-600'
+                                                    ? 'border border-success-line bg-success-soft text-success'
+                                                    : 'border border-line bg-surface-raised text-ink-muted'
                                             }`}
                                         >
                                             <span
                                                 className={`h-1.5 w-1.5 rounded-full ${
-                                                    group.is_active ? 'bg-emerald-500' : 'bg-slate-400'
+                                                    group.is_active ? 'bg-success' : 'bg-line-strong'
                                                 }`}
                                                 aria-hidden="true"
                                             />
@@ -270,7 +268,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                                         </span>
                                         {/* Shared badge: Condivisa */}
                                         {isShared && (
-                                            <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-brand-line bg-brand-soft px-2 py-1 text-xs font-semibold text-link">
                                                 <Share2 className="h-3 w-3" aria-hidden="true" />
                                                 {classSettingsText(lang, 'shared')}
                                             </span>
@@ -278,10 +276,10 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                                     </div>
 
                                     {/* Code & Meta info */}
-                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-600">
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-slate-500">{texts.code}:</span>
-                                            <span className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono font-semibold text-slate-800">
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-ink-muted">{texts.code}:</span>
+                                            <span className="inline-flex items-center gap-1 rounded border border-line bg-surface-sunken px-2 py-1 font-mono font-semibold text-ink">
                                                 {group.code}
                                                 <button
                                                     type="button"
@@ -296,10 +294,10 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                                                             ? classSettingsText(lang, 'copied')
                                                             : `${classSettingsText(lang, 'copyCode')} ${group.code}`
                                                     }
-                                                    className="inline-flex min-h-6 min-w-6 items-center justify-center text-slate-500 hover:text-indigo-700 focus-visible:outline-2"
+                                                    className="inline-flex min-h-control min-w-control items-center justify-center text-ink-muted hover:text-link focus-visible:outline-2"
                                                 >
                                                     {copiedCodeId === group.id ? (
-                                                        <Check className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
+                                                        <Check className="h-3.5 w-3.5 text-success" aria-hidden="true" />
                                                     ) : (
                                                         <Copy className="h-3.5 w-3.5" aria-hidden="true" />
                                                     )}
@@ -308,7 +306,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                                         </div>
 
                                         <span className="inline-flex items-center gap-1">
-                                            <Users className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                                            <Users className="h-3.5 w-3.5 text-ink-muted" aria-hidden="true" />
                                             <span>
                                                 {group.members_count} {texts.members}
                                             </span>
@@ -316,21 +314,21 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
 
                                         {group.school && (
                                             <span className="truncate">
-                                                <span className="text-slate-400">•</span> {texts.school}:{' '}
-                                                <span className="font-medium text-slate-700">{group.school}</span>
+                                                <span className="text-ink-muted">•</span> {texts.school}:{' '}
+                                                <span className="font-semibold text-ink-body">{group.school}</span>
                                             </span>
                                         )}
 
                                         {group.institution_name && !group.school && (
                                             <span className="truncate">
-                                                <span className="text-slate-400">•</span>{' '}
-                                                <span className="font-medium text-slate-700">{group.institution_name}</span>
+                                                <span className="text-ink-muted">•</span>{' '}
+                                                <span className="font-semibold text-ink-body">{group.institution_name}</span>
                                             </span>
                                         )}
 
                                         <span className="truncate">
-                                            <span className="text-slate-400">•</span> {classSettingsText(lang, 'owner')}:{' '}
-                                            <span className="font-medium text-slate-700">{group.owner_username}</span>
+                                            <span className="text-ink-muted">•</span> {classSettingsText(lang, 'owner')}:{' '}
+                                            <span className="font-semibold text-ink-body">{group.owner_username}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -340,7 +338,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                                     <Link
                                         href={`${basePath}/${group.id}`}
                                         aria-label={classSettingsText(lang, 'open')}
-                                        className="inline-flex min-h-11 items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2"
+                                        className="inline-flex min-h-control items-center gap-2 rounded-control bg-brand px-4 py-2 text-sm font-semibold text-ink-on-brand shadow-card hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-2"
                                     >
                                         <span>{classSettingsText(lang, 'open')}</span>
                                         <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -349,26 +347,26 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                             </div>
 
                             {/* Tab shortcuts */}
-                            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+                            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-4">
                                 <Link
                                     href={`${basePath}/${group.id}?tab=students`}
-                                    className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-indigo-700 focus-visible:outline-2"
+                                    className="inline-flex min-h-control items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-body hover:border-line-strong hover:bg-surface-sunken hover:text-link focus-visible:outline-2"
                                 >
-                                    <Users className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
+                                    <Users className="h-3.5 w-3.5 text-ink-muted" aria-hidden="true" />
                                     <span>{classSettingsText(lang, 'students')}</span>
                                 </Link>
                                 <Link
                                     href={`${basePath}/${group.id}?tab=tools`}
-                                    className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-indigo-700 focus-visible:outline-2"
+                                    className="inline-flex min-h-control items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-body hover:border-line-strong hover:bg-surface-sunken hover:text-link focus-visible:outline-2"
                                 >
-                                    <Wrench className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
+                                    <Wrench className="h-3.5 w-3.5 text-ink-muted" aria-hidden="true" />
                                     <span>{classSettingsText(lang, 'toolsTab')}</span>
                                 </Link>
                                 <Link
                                     href={`${basePath}/${group.id}?tab=paths`}
-                                    className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-indigo-700 focus-visible:outline-2"
+                                    className="inline-flex min-h-control items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-body hover:border-line-strong hover:bg-surface-sunken hover:text-link focus-visible:outline-2"
                                 >
-                                    <Route className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
+                                    <Route className="h-3.5 w-3.5 text-ink-muted" aria-hidden="true" />
                                     <span>{classSettingsText(lang, 'paths')}</span>
                                 </Link>
                             </div>

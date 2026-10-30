@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Building2, Check, RefreshCw, School, Search, UserCheck, Users } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
+import { Button } from '@/components/ui/Button';
 
 interface UserEntry {
     username: string;
@@ -242,64 +243,63 @@ export function UsersSummaryPanel() {
 
     return (
         <div className="space-y-4">
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
+            <section className="rounded-lg border border-line bg-surface p-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <h2 className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                            <Users className="h-5 w-5 text-slate-500" /> {texts.title}
+                        <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
+                            <Users className="h-5 w-5 text-ink-muted" /> {texts.title}
                         </h2>
-                        <p className="mt-1 max-w-2xl text-sm text-slate-500">{texts.subtitle}</p>
+                        <p className="mt-1 max-w-2xl text-sm text-ink-muted">{texts.subtitle}</p>
                     </div>
-                    <button
+                    <Button variant="secondary"
                         type="button"
                         onClick={() => void load()}
-                        className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                     >
                         <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                         {texts.refresh}
-                    </button>
+                    </Button>
                 </div>
                 {data && (
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                        <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                            <p className="flex items-center gap-2 text-xs font-semibold uppercase text-slate-500">
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                        <div className="rounded-control border border-line bg-surface-sunken p-4">
+                            <p className="flex items-center gap-2 text-xs font-semibold text-ink-muted">
                                 <UserCheck className="h-4 w-4" /> {texts.totalUsers}
                             </p>
-                            <p className="mt-1 text-2xl font-bold text-indigo-700">{data.total_users}</p>
+                            <p className="mt-1 text-2xl font-semibold text-link">{data.total_users}</p>
                         </div>
-                        <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                            <p className="flex items-center gap-2 text-xs font-semibold uppercase text-slate-500">
+                        <div className="rounded-control border border-line bg-surface-sunken p-4">
+                            <p className="flex items-center gap-2 text-xs font-semibold text-ink-muted">
                                 <School className="h-4 w-4" /> {texts.totalGroups}
                             </p>
-                            <p className="mt-1 text-2xl font-bold text-emerald-700">{data.total_groups}</p>
+                            <p className="mt-1 text-2xl font-semibold text-success">{data.total_groups}</p>
                         </div>
                     </div>
                 )}
             </section>
 
-            <div className="flex gap-1 rounded-md border border-slate-200 bg-white p-1">
+            <div className="flex gap-1 rounded-control border border-line bg-surface p-1">
                 <button
                     type="button"
                     onClick={() => setTab('users')}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold ${tab === 'users' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                    className={`min-h-control flex-1 rounded-control px-4 py-2 text-sm font-semibold ${tab === 'users' ? 'bg-brand-soft text-link' : 'text-ink-muted hover:bg-surface-sunken'}`}
                 >
-                    <Users className="mr-1.5 inline h-4 w-4" />
+                    <Users className="mr-2 inline h-4 w-4" />
                     {texts.tabsUsers} {data ? `(${data.total_users})` : ''}
                 </button>
                 <button
                     type="button"
                     onClick={() => setTab('groups')}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold ${tab === 'groups' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                    className={`min-h-control flex-1 rounded-control px-4 py-2 text-sm font-semibold ${tab === 'groups' ? 'bg-brand-soft text-link' : 'text-ink-muted hover:bg-surface-sunken'}`}
                 >
-                    <School className="mr-1.5 inline h-4 w-4" />
+                    <School className="mr-2 inline h-4 w-4" />
                     {texts.tabsGroups} {data ? `(${data.total_groups})` : ''}
                 </button>
                 <button
                     type="button"
                     onClick={() => setTab('schools')}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold ${tab === 'schools' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                    className={`min-h-control flex-1 rounded-control px-4 py-2 text-sm font-semibold ${tab === 'schools' ? 'bg-brand-soft text-link' : 'text-ink-muted hover:bg-surface-sunken'}`}
                 >
-                    <Building2 className="mr-1.5 inline h-4 w-4" />
+                    <Building2 className="mr-2 inline h-4 w-4" />
                     {texts.tabsSchools}
                 </button>
             </div>
@@ -307,44 +307,44 @@ export function UsersSummaryPanel() {
             {tab === 'users' && (
                 <>
                     <div className="relative">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
                         <input
                             type="search"
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
                             placeholder={texts.search}
-                            className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-800 outline-none focus:border-indigo-400"
+                            className="h-control w-full rounded-control border border-line-strong bg-surface pl-8 pr-4 text-sm text-ink outline-none focus:border-brand"
                         />
                     </div>
 
-                    {loading && <p className="text-sm text-slate-500">{texts.loading}</p>}
+                    {loading && <p className="text-sm text-ink-muted">{texts.loading}</p>}
                     {!loading && data && staffUsers.length > 0 && (
-                        <section className="rounded-lg border border-slate-200 bg-white p-4">
-                            <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-indigo-600">{texts.docentiRicercatori} ({staffUsers.length})</h3>
+                        <section className="rounded-lg border border-line bg-surface p-4">
+                            <h3 className="mb-4 text-xs font-semibold text-brand">{texts.docentiRicercatori} ({staffUsers.length})</h3>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm">
                                     <thead>
-                                        <tr className="border-b border-slate-200 text-xs font-semibold uppercase text-slate-500">
-                                            <th className="px-3 py-2">{texts.username}</th>
-                                            <th className="px-3 py-2">{texts.groupsOwned}</th>
-                                            <th className="px-3 py-2">{texts.plansCreated}</th>
-                                            <th className="px-3 py-2">{texts.notesWritten}</th>
-                                            <th className="px-3 py-2">{texts.resultsSubmitted}</th>
-                                            <th className="px-3 py-2">{texts.memberOf}</th>
+                                        <tr className="border-b border-line text-xs font-semibold text-ink-muted">
+                                            <th className="px-4 py-2">{texts.username}</th>
+                                            <th className="px-4 py-2">{texts.groupsOwned}</th>
+                                            <th className="px-4 py-2">{texts.plansCreated}</th>
+                                            <th className="px-4 py-2">{texts.notesWritten}</th>
+                                            <th className="px-4 py-2">{texts.resultsSubmitted}</th>
+                                            <th className="px-4 py-2">{texts.memberOf}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {staffUsers.map((user) => (
-                                            <tr key={user.username} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                                                <td className="px-3 py-2.5">
-                                                    <span className="font-medium text-slate-800">{user.display_name}</span>
-                                                    <span className="block text-2xs text-slate-500">{user.username}</span>
+                                            <tr key={user.username} className="border-b border-line last:border-0 hover:bg-surface-sunken">
+                                                <td className="px-4 py-2">
+                                                    <span className="font-semibold text-ink">{user.display_name}</span>
+                                                    <span className="block text-2xs text-ink-muted">{user.username}</span>
                                                 </td>
-                                                <td className="px-3 py-2.5 text-slate-600">{user.groups_count || '—'}</td>
-                                                <td className="px-3 py-2.5 text-slate-600">{user.plans_count || '—'}</td>
-                                                <td className="px-3 py-2.5 text-slate-600">{user.notes_count || '—'}</td>
-                                                <td className="px-3 py-2.5 text-slate-600">{user.results_count || '—'}</td>
-                                                <td className="px-3 py-2.5 text-slate-600">{user.memberships_count || '—'}</td>
+                                                <td className="px-4 py-2 text-ink-muted">{user.groups_count || '—'}</td>
+                                                <td className="px-4 py-2 text-ink-muted">{user.plans_count || '—'}</td>
+                                                <td className="px-4 py-2 text-ink-muted">{user.notes_count || '—'}</td>
+                                                <td className="px-4 py-2 text-ink-muted">{user.results_count || '—'}</td>
+                                                <td className="px-4 py-2 text-ink-muted">{user.memberships_count || '—'}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -354,26 +354,26 @@ export function UsersSummaryPanel() {
                     )}
 
                     {studentUsers.length > 0 && (
-                        <section className="rounded-lg border border-slate-200 bg-white p-4">
-                            <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-emerald-600">{texts.studenti} ({studentUsers.length})</h3>
+                        <section className="rounded-lg border border-line bg-surface p-4">
+                            <h3 className="mb-4 text-xs font-semibold text-success">{texts.studenti} ({studentUsers.length})</h3>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm">
                                     <thead>
-                                        <tr className="border-b border-slate-200 text-xs font-semibold uppercase text-slate-500">
-                                            <th className="px-3 py-2">{texts.username}</th>
-                                            <th className="px-3 py-2">{texts.resultsSubmitted}</th>
-                                            <th className="px-3 py-2">{texts.memberOf}</th>
+                                        <tr className="border-b border-line text-xs font-semibold text-ink-muted">
+                                            <th className="px-4 py-2">{texts.username}</th>
+                                            <th className="px-4 py-2">{texts.resultsSubmitted}</th>
+                                            <th className="px-4 py-2">{texts.memberOf}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {studentUsers.map((user) => (
-                                            <tr key={user.username} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                                                <td className="px-3 py-2.5">
-                                                    <span className="font-medium text-slate-800">{user.display_name}</span>
-                                                    <span className="block text-2xs text-slate-500">{user.username}</span>
+                                            <tr key={user.username} className="border-b border-line last:border-0 hover:bg-surface-sunken">
+                                                <td className="px-4 py-2">
+                                                    <span className="font-semibold text-ink">{user.display_name}</span>
+                                                    <span className="block text-2xs text-ink-muted">{user.username}</span>
                                                 </td>
-                                                <td className="px-3 py-2.5 text-slate-600">{user.results_count || '—'}</td>
-                                                <td className="px-3 py-2.5 text-slate-600">{user.memberships_count || '—'}</td>
+                                                <td className="px-4 py-2 text-ink-muted">{user.results_count || '—'}</td>
+                                                <td className="px-4 py-2 text-ink-muted">{user.memberships_count || '—'}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -383,24 +383,24 @@ export function UsersSummaryPanel() {
                     )}
 
                     {otherUsers.length > 0 && (
-                        <section className="rounded-lg border border-slate-200 bg-white p-4">
-                            <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">{texts.altri} ({otherUsers.length})</h3>
+                        <section className="rounded-lg border border-line bg-surface p-4">
+                            <h3 className="mb-4 text-xs font-semibold text-ink-muted">{texts.altri} ({otherUsers.length})</h3>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm">
                                     <thead>
-                                        <tr className="border-b border-slate-200 text-xs font-semibold uppercase text-slate-500">
-                                            <th className="px-3 py-2">{texts.username}</th>
-                                            <th className="px-3 py-2">{texts.inLogs}</th>
+                                        <tr className="border-b border-line text-xs font-semibold text-ink-muted">
+                                            <th className="px-4 py-2">{texts.username}</th>
+                                            <th className="px-4 py-2">{texts.inLogs}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {otherUsers.map((user) => (
-                                            <tr key={user.username} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                                                <td className="px-3 py-2.5">
-                                                    <span className="font-medium text-slate-800">{user.display_name}</span>
-                                                    <span className="block text-2xs text-slate-500">{user.username}</span>
+                                            <tr key={user.username} className="border-b border-line last:border-0 hover:bg-surface-sunken">
+                                                <td className="px-4 py-2">
+                                                    <span className="font-semibold text-ink">{user.display_name}</span>
+                                                    <span className="block text-2xs text-ink-muted">{user.username}</span>
                                                 </td>
-                                                <td className="px-3 py-2.5 text-slate-600">{user.in_logs ? <Check className="h-4 w-4 text-emerald-700" role="img" aria-label={texts.inLogs} /> : '—'}</td>
+                                                <td className="px-4 py-2 text-ink-muted">{user.in_logs ? <Check className="h-4 w-4 text-success" role="img" aria-label={texts.inLogs} /> : '—'}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -410,7 +410,7 @@ export function UsersSummaryPanel() {
                     )}
 
                     {!loading && data && filteredUsers.length === 0 && (
-                        <p className="text-sm text-slate-500">{texts.noUsers}</p>
+                        <p className="text-sm text-ink-muted">{texts.noUsers}</p>
                     )}
                 </>
             )}
@@ -418,42 +418,42 @@ export function UsersSummaryPanel() {
             {tab === 'groups' && (
                 <>
                     <div className="relative">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
                         <input
                             type="search"
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
                             placeholder={texts.searchGroups}
-                            className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-800 outline-none focus:border-indigo-400"
+                            className="h-control w-full rounded-control border border-line-strong bg-surface pl-8 pr-4 text-sm text-ink outline-none focus:border-brand"
                         />
                     </div>
 
-                    {loading && <p className="text-sm text-slate-500">{texts.loading}</p>}
+                    {loading && <p className="text-sm text-ink-muted">{texts.loading}</p>}
                     {data && !loading && (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {filteredGroups.map((group) => (
-                                <section key={group.id} className={`rounded-lg border border-slate-200 bg-white p-4 ${group.is_active ? '' : 'opacity-60'}`}>
+                                <section key={group.id} className={`rounded-lg border border-line bg-surface p-4 ${group.is_active ? '' : 'opacity-60'}`}>
                                     <div className="flex flex-wrap items-start justify-between gap-2">
                                         <div>
-                                            <h3 className="font-bold text-slate-800">{group.name}</h3>
-                                            <p className="mt-0.5 text-xs text-slate-500">
-                                                {texts.code}: <span className="font-mono font-semibold text-slate-600">{group.code}</span>
+                                            <h3 className="font-semibold text-ink">{group.name}</h3>
+                                            <p className="mt-1 text-xs text-ink-muted">
+                                                {texts.code}: <span className="font-mono font-semibold text-ink-muted">{group.code}</span>
                                                 {' · '}{texts.owner}: {group.owner_username}
                                                 {' · '}{group.members_count} {texts.members}
                                                 {group.school ? <>{' · '}{texts.school}: {group.school}</> : null}
                                             </p>
                                         </div>
-                                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${group.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${group.is_active ? 'bg-success-soft text-success' : 'bg-surface-raised text-ink-muted'}`}>
                                             {group.is_active ? texts.active : texts.inactive}
                                         </span>
                                     </div>
                                     {group.created_at && (
-                                        <p className="mt-2 text-xs text-slate-500">{texts.created}: {new Date(group.created_at).toLocaleDateString(lang, { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
+                                        <p className="mt-2 text-xs text-ink-muted">{texts.created}: {new Date(group.created_at).toLocaleDateString(lang, { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
                                     )}
                                 </section>
                             ))}
                             {filteredGroups.length === 0 && (
-                                <p className="text-sm text-slate-500">{texts.noGroups}</p>
+                                <p className="text-sm text-ink-muted">{texts.noGroups}</p>
                             )}
                         </div>
                     )}
@@ -463,51 +463,51 @@ export function UsersSummaryPanel() {
             {tab === 'schools' && (
                 <>
                     <div className="relative">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
                         <input
                             type="search"
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
                             placeholder={texts.searchGroups}
-                            className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-800 outline-none focus:border-indigo-400"
+                            className="h-control w-full rounded-control border border-line-strong bg-surface pl-8 pr-4 text-sm text-ink outline-none focus:border-brand"
                         />
                     </div>
 
-                    {loading && <p className="text-sm text-slate-500">{texts.loading}</p>}
+                    {loading && <p className="text-sm text-ink-muted">{texts.loading}</p>}
                     {data && !loading && (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {schoolBuckets.map(([school, schoolGroups]) => (
-                                <section key={school || '—'} className="rounded-lg border border-slate-200 bg-white p-4">
-                                    <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
-                                        <Building2 className="h-4 w-4 text-slate-500" />
+                                <section key={school || '—'} className="rounded-lg border border-line bg-surface p-4">
+                                    <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink">
+                                        <Building2 className="h-4 w-4 text-ink-muted" />
                                         {school || texts.noSchool}
-                                        <span className="text-xs font-normal text-slate-500">
+                                        <span className="text-xs font-normal text-ink-muted">
                                             ({schoolGroups.length} {texts.groups.toLowerCase()} · {schoolGroups.reduce((n, g) => n + g.members_count, 0)} {texts.members.toLowerCase()})
                                         </span>
                                     </h3>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left text-sm">
                                             <thead>
-                                                <tr className="border-b border-slate-200 text-xs font-semibold uppercase text-slate-500">
-                                                    <th className="px-3 py-2">{texts.classCol}</th>
-                                                    <th className="px-3 py-2">{texts.owner}</th>
-                                                    <th className="px-3 py-2">{texts.studentsList}</th>
+                                                <tr className="border-b border-line text-xs font-semibold text-ink-muted">
+                                                    <th className="px-4 py-2">{texts.classCol}</th>
+                                                    <th className="px-4 py-2">{texts.owner}</th>
+                                                    <th className="px-4 py-2">{texts.studentsList}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {schoolGroups.map((group) => (
-                                                    <tr key={group.id} className="border-b border-slate-100 align-top last:border-0 hover:bg-slate-50">
-                                                        <td className="px-3 py-2.5">
-                                                            <span className="font-medium text-slate-800">{group.name}</span>
-                                                            <span className="block font-mono text-2xs text-slate-500">{group.code}</span>
+                                                    <tr key={group.id} className="border-b border-line align-top last:border-0 hover:bg-surface-sunken">
+                                                        <td className="px-4 py-2">
+                                                            <span className="font-semibold text-ink">{group.name}</span>
+                                                            <span className="block font-mono text-2xs text-ink-muted">{group.code}</span>
                                                         </td>
-                                                        <td className="px-3 py-2.5 text-slate-600">{group.owner_username}</td>
-                                                        <td className="px-3 py-2.5 text-slate-600">
-                                                            {group.members.length === 0 && <span className="text-slate-500">{texts.noStudents}</span>}
+                                                        <td className="px-4 py-2 text-ink-muted">{group.owner_username}</td>
+                                                        <td className="px-4 py-2 text-ink-muted">
+                                                            {group.members.length === 0 && <span className="text-ink-muted">{texts.noStudents}</span>}
                                                             {group.members.length > 0 && (
                                                                 <div className="flex flex-wrap gap-1">
                                                                     {group.members.map((member) => (
-                                                                        <span key={member.username} title={member.username} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                                                                        <span key={member.username} title={member.username} className="rounded-full bg-surface-raised px-2 py-1 text-xs text-ink-body">
                                                                             {member.display_name}
                                                                         </span>
                                                                     ))}
@@ -522,7 +522,7 @@ export function UsersSummaryPanel() {
                                 </section>
                             ))}
                             {schoolBuckets.length === 0 && (
-                                <p className="text-sm text-slate-500">{texts.noGroups}</p>
+                                <p className="text-sm text-ink-muted">{texts.noGroups}</p>
                             )}
                         </div>
                     )}

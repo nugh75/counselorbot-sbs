@@ -31,10 +31,10 @@ function ClassDirectory({ rows }: { rows: AdminClass[] }) {
     const result = useTeacherResource(`/api/admin/classes${query}`, parseClasses);
     const institutions = [...new Map(rows.filter(row => row.institution_id).map(row => [row.institution_id, row.institution_name])).entries()];
     const owners = [...new Map(rows.map(row => [row.owner_username, row.owner_display_name || row.owner_username])).entries()];
-    const inputClass = 'min-h-[44px] min-w-0 rounded-md border border-slate-300 bg-white px-2';
+    const inputClass = 'min-h-control min-w-0 rounded-control border border-line-strong bg-surface px-2';
     return <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-slate-800">{l('adminClasses')}</h1>
-        <form className="grid gap-3 text-sm text-slate-700 sm:grid-cols-2" onSubmit={event => {
+        <h1 className="text-2xl font-semibold text-ink">{l('adminClasses')}</h1>
+        <form className="grid gap-4 text-sm text-ink-body sm:grid-cols-2" onSubmit={event => {
             event.preventDefault();
             const params = new URLSearchParams();
             if (search.trim()) params.set('search', search.trim());
@@ -51,16 +51,16 @@ function ClassDirectory({ rows }: { rows: AdminClass[] }) {
             <Button type="submit" disabled={result.loading}>{l('filter')}</Button>
         </form>
         {result.forbidden ? <TeacherForbidden /> : result.loading ? <TeacherLoading /> : result.failed ? <Callout variant="danger">{l('loadError')} <Button onClick={() => void result.reload()}>{l('reload')}</Button></Callout> : <>
-            <p className="text-sm text-slate-600">{l('back')}: {result.data?.length ?? 0}</p>
-            {!result.data?.length && <p className="text-slate-600">{l('noClasses')}</p>}
-            {result.data?.map(row => <Card key={row.id}><article className="space-y-3 break-words text-sm text-slate-700">
-                <h2 className="text-lg font-bold text-slate-800">{row.name}</h2>
+            <p className="text-sm text-ink-muted">{l('back')}: {result.data?.length ?? 0}</p>
+            {!result.data?.length && <p className="text-ink-muted">{l('noClasses')}</p>}
+            {result.data?.map(row => <Card key={row.id}><article className="space-y-4 break-words text-sm text-ink-body">
+                <h2 className="text-lg font-semibold text-ink">{row.name}</h2>
                 <div className="grid gap-2 sm:grid-cols-3"><p className="font-mono">{row.code}</p><p>{row.school}</p><p>{row.institution_name}</p>
                     <p>{l('owner')}: {row.owner_display_name || row.owner_username}</p><p>{row.members_count} {l('members')}</p><p>{l(row.is_active ? 'active' : 'inactive')}</p></div>
                 {row.co_teachers.length > 0 && <p>{row.co_teachers.join(' · ')}</p>}
                 <p>{row.has_custom_settings && `${l('customSettings')} · `}{l('lockCount')}: {row.locked_items_count}</p>
-                <Link href={`/admin/classi/${row.id}`} className="inline-flex min-h-[44px] items-center text-indigo-700 hover:text-indigo-800 underline">{l('adminEdit')} · {l('audit')}</Link>
-                <Link href={`/admin/classi/${row.id}?tab=students`} className="ml-4 inline-flex min-h-[44px] items-center text-indigo-700 hover:text-indigo-800 underline">{l('students')}</Link>
+                <Link href={`/admin/classi/${row.id}`} className="inline-flex min-h-control items-center text-link hover:text-link underline">{l('adminEdit')} · {l('audit')}</Link>
+                <Link href={`/admin/classi/${row.id}?tab=students`} className="ml-4 inline-flex min-h-control items-center text-link hover:text-link underline">{l('students')}</Link>
             </article></Card>)}
         </>}
     </div>;

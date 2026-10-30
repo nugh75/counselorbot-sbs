@@ -59,13 +59,13 @@ export function ModelContextSettings() {
     if (state === 'loading') return <p role="status">{t('admin.promptMap.loading')}</p>;
     if (state === 'error') return <div role="alert">{t('admin.promptMap.loadError')} <Button onClick={() => void load()}>{t('admin.promptMap.reload')}</Button></div>;
     return <section className="space-y-4" aria-label={t('admin.context.title')}>
-        <h3 className="text-sm font-semibold text-slate-700">{t('admin.context.title')}</h3>
-        <p className="text-sm text-slate-600">{t('admin.context.help')}</p>
-        <fieldset disabled={!!saving} className="space-y-3">
-            <legend className="text-sm font-medium">{t('admin.context.levels')}</legend>
-            {Object.entries(levels).map(([id, level]) => <details key={id} className="rounded border border-slate-200 p-3">
+        <h3 className="text-sm font-semibold text-ink-body">{t('admin.context.title')}</h3>
+        <p className="text-sm text-ink-muted">{t('admin.context.help')}</p>
+        <fieldset disabled={!!saving} className="space-y-4">
+            <legend className="text-sm font-semibold">{t('admin.context.levels')}</legend>
+            {Object.entries(levels).map(([id, level]) => <details key={id} className="rounded border border-line p-4">
                 <summary className="cursor-pointer text-sm">{level.label} · {id}</summary>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     <label className="text-xs">{t('admin.context.name')}<input aria-label={`${t('admin.context.name')} ${id}`} value={level.label} onChange={event => updateLevel(id, 'label', event.target.value)} className="mt-1 w-full rounded border p-2" /></label>
                     {LIMITS.map(key => <label key={key} className="text-xs">{t(`admin.context.${key}`)}<input type="number" min="0" aria-label={`${t(`admin.context.${key}`)} ${id}`} value={level[key] as number ?? ''} onChange={event => updateLevel(id, key, event.target.value === '' ? null : Number(event.target.value))} className="mt-1 w-full rounded border p-2" /></label>)}
                     {(['meta', 'short_prompt'] as const).map(key => <label key={key} className="flex items-center gap-2 text-xs"><input type="checkbox" checked={level[key]} onChange={event => updateLevel(id, key, event.target.checked)} />{t(`admin.context.${key}`)}</label>)}
@@ -80,9 +80,9 @@ export function ModelContextSettings() {
                 <Button onClick={() => void save('model_context_levels')}>{t('admin.context.saveLevels')}</Button>
             </div>
         </fieldset>
-        <fieldset disabled={!!saving} className="space-y-3">
-            <legend className="text-sm font-medium">{t('admin.context.assignments')}</legend>
-            {assignments.map((row, index) => <div key={index} className="grid gap-2 rounded border border-slate-200 p-3 sm:grid-cols-2">
+        <fieldset disabled={!!saving} className="space-y-4">
+            <legend className="text-sm font-semibold">{t('admin.context.assignments')}</legend>
+            {assignments.map((row, index) => <div key={index} className="grid gap-2 rounded border border-line p-4 sm:grid-cols-2">
                 <label className="text-xs">{t('admin.context.target')}<input value={row.target} aria-label={`${t('admin.context.target')} ${index + 1}`} onChange={event => updateAssignment(index, { target: event.target.value })} className="mt-1 w-full rounded border p-2" /></label>
                 <label className="text-xs">{t('admin.context.level')}<select value={row.profile.level || ''} aria-label={`${t('admin.context.level')} ${index + 1}`} onChange={event => {
                     const profile = { ...row.profile }; if (event.target.value) profile.level = event.target.value; else delete profile.level;
@@ -97,7 +97,7 @@ export function ModelContextSettings() {
             </div>)}
             <div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={() => { setAssignments([...assignments, { target: '', profile: {} }]); setStatus(''); }}>{t('admin.context.addAssignment')}</Button><Button onClick={() => void save('model_context_profiles')}>{t('admin.context.saveAssignments')}</Button></div>
         </fieldset>
-        <p role="status" className="text-xs text-slate-600">{saving ? t('admin.promptMap.saving') : status}</p>
-        {error && <p role="alert" className="text-xs text-red-700">{error}</p>}
+        <p role="status" className="text-xs text-ink-muted">{saving ? t('admin.promptMap.saving') : status}</p>
+        {error && <p role="alert" className="text-xs text-danger">{error}</p>}
     </section>;
 }

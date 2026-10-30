@@ -8,6 +8,7 @@ import { Check, ChevronDown, ChevronRight, Grid3X3, List, RefreshCw, Send, Stick
 import { StudentResultItem, type StudentResult } from '@/components/teacher/StudentResultItem';
 import { buildClassResultsMatrix, formatCompactScores, type PlanStudent } from '@/lib/class-results-matrix';
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
+import { Button } from '@/components/ui/Button';
 
 interface TeacherNote {
     id: number;
@@ -304,31 +305,31 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
     };
 
     if (students === null) {
-        return <p className="mt-3 text-sm text-slate-500">{texts.loading}</p>;
+        return <p className="mt-4 text-sm text-ink-muted">{texts.loading}</p>;
     }
     if (students.length === 0) {
-        return <p className="mt-3 text-sm text-slate-500">{texts.empty}</p>;
+        return <p className="mt-4 text-sm text-ink-muted">{texts.empty}</p>;
     }
 
     const matrix = buildClassResultsMatrix(students);
     const totalSubmissions = Object.values(matrix.totalsByInstrument).reduce((a, b) => a + b, 0);
 
     return (
-        <div className="mt-3 space-y-4" data-class-results-panel>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+        <div className="mt-4 space-y-4" data-class-results-panel>
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
                 <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-slate-800">{texts.students}</h3>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                    <h3 className="text-base font-semibold text-ink">{texts.students}</h3>
+                    <span className="rounded-full bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-body">
                         {students.length}
                     </span>
                 </div>
-                <div role="group" aria-label={texts.viewModeLabel} className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-1">
+                <div role="group" aria-label={texts.viewModeLabel} className="inline-flex rounded-lg border border-line bg-surface-raised p-1">
                     <button
                         type="button"
                         aria-pressed={viewMode === 'matrix'}
                         onClick={() => setViewMode('matrix')}
-                        className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-colors ${
-                            viewMode === 'matrix' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                        className={`inline-flex min-h-control items-center gap-2 rounded-control px-4 text-xs font-semibold transition-colors ${
+                            viewMode === 'matrix' ? 'bg-surface text-link shadow-card' : 'text-ink-muted hover:text-ink'
                         }`}
                     >
                         <Grid3X3 className="h-3.5 w-3.5" aria-hidden />
@@ -338,8 +339,8 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                         type="button"
                         aria-pressed={viewMode === 'list'}
                         onClick={() => setViewMode('list')}
-                        className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-colors ${
-                            viewMode === 'list' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                        className={`inline-flex min-h-control items-center gap-2 rounded-control px-4 text-xs font-semibold transition-colors ${
+                            viewMode === 'list' ? 'bg-surface text-link shadow-card' : 'text-ink-muted hover:text-ink'
                         }`}
                     >
                         <List className="h-3.5 w-3.5" aria-hidden />
@@ -350,24 +351,24 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
 
             {viewMode === 'matrix' ? (
                 matrix.instruments.length === 0 ? (
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 text-center">
-                        <p className="text-sm text-slate-600">{texts.noResultsYet}</p>
-                        <button
+                    <div className="rounded-lg border border-line bg-surface p-4 text-center">
+                        <p className="text-sm text-ink-muted">{texts.noResultsYet}</p>
+                        <Button variant="secondary"
                             type="button"
                             onClick={() => setViewMode('list')}
-                            className="mt-3 inline-flex min-h-[36px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                            className="mt-4"
                         >
                             <List className="h-4 w-4" aria-hidden />
                             {texts.listView} ({students.length})
-                        </button>
+                        </Button>
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+                        <div className="overflow-x-auto rounded-lg border border-line bg-surface shadow-card">
                             <table className="w-full border-collapse text-left text-sm" aria-label={texts.matrixView}>
                                 <thead>
-                                    <tr className="border-b border-slate-200 bg-slate-50/75">
-                                        <th scope="col" className="whitespace-nowrap px-3 py-2.5 font-semibold text-slate-800">
+                                    <tr className="border-b border-line bg-surface-sunken/75">
+                                        <th scope="col" className="whitespace-nowrap px-4 py-2 font-semibold text-ink">
                                             {texts.studentHeader}
                                         </th>
                                         {matrix.instruments.map(inst => (
@@ -375,27 +376,27 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                                 key={inst}
                                                 scope="col"
                                                 title={resolveClassPathToolName(inst, lang)}
-                                                className="whitespace-nowrap px-3 py-2.5 text-center font-semibold text-slate-800"
+                                                className="whitespace-nowrap px-4 py-2 text-center font-semibold text-ink"
                                             >
                                                 <span className="font-mono text-xs">{inst}</span>
-                                                <span className="block text-2xs font-normal text-slate-500">
+                                                <span className="block text-2xs font-normal text-ink-muted">
                                                     {matrix.totalsByInstrument[inst]}/{matrix.totalStudents}
                                                 </span>
                                             </th>
                                         ))}
-                                        <th scope="col" className="whitespace-nowrap px-3 py-2.5 text-center font-semibold text-slate-800">
+                                        <th scope="col" className="whitespace-nowrap px-4 py-2 text-center font-semibold text-ink">
                                             {texts.totalCompleted}
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-line">
                                     {matrix.rows.map(row => (
-                                        <tr key={row.username} className="hover:bg-slate-50/60">
-                                            <th scope="row" className="whitespace-nowrap px-3 py-2.5 font-mono text-xs font-medium text-slate-900">
-                                                <div className="flex items-center gap-1.5">
+                                        <tr key={row.username} className="hover:bg-surface-sunken/60">
+                                            <th scope="row" className="whitespace-nowrap px-4 py-2 font-mono text-xs font-semibold text-ink">
+                                                <div className="flex items-center gap-2">
                                                     <span>{row.username}</span>
                                                     {row.telegram_linked && (
-                                                        <span title={texts.telegram} className="inline-flex items-center rounded bg-sky-100 px-1 py-0.5 text-2xs font-semibold text-sky-800">
+                                                        <span title={texts.telegram} className="inline-flex items-center rounded bg-info-soft px-1 py-1 text-2xs font-semibold text-info-ink">
                                                             {'TG'}
                                                         </span>
                                                     )}
@@ -405,7 +406,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                                 const cell = row.cells[inst];
                                                 if (!cell || !cell.latest) {
                                                     return (
-                                                        <td key={inst} className="px-2 py-2 text-center font-mono text-sm text-slate-400">
+                                                        <td key={inst} className="px-2 py-2 text-center font-mono text-sm text-ink-muted">
                                                             —
                                                         </td>
                                                     );
@@ -418,23 +419,23 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                                             aria-pressed={isSelected}
                                                             aria-label={`${row.username} — ${inst}: ${cell.latest.submitted_at ? new Date(cell.latest.submitted_at).toLocaleDateString(lang) : ''}`}
                                                             onClick={() => setSelectedCell(isSelected ? null : { username: row.username, result: cell.latest! })}
-                                                            className={`flex min-h-[44px] w-full min-w-[7rem] flex-col items-center justify-center rounded-md border p-1 text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 ${
+                                                            className={`flex min-h-control w-full min-w-[7rem] flex-col items-center justify-center rounded-control border p-1 text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
                                                                 isSelected
-                                                                    ? 'border-indigo-600 bg-indigo-50 text-indigo-900 ring-2 ring-indigo-600'
-                                                                    : 'border-emerald-200 bg-emerald-50/60 text-emerald-950 hover:border-emerald-400 hover:bg-emerald-50'
+                                                                    ? 'border-brand bg-brand-soft text-link ring-2 ring-brand'
+                                                                    : 'border-success-line bg-success-soft/60 text-success-ink hover:border-success hover:bg-success-soft'
                                                             }`}
                                                         >
-                                                            <div className="flex items-center gap-1 font-semibold text-emerald-800">
-                                                                <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden />
+                                                            <div className="flex items-center gap-1 font-semibold text-success-ink">
+                                                                <Check className="h-3.5 w-3.5 shrink-0 text-success" aria-hidden />
                                                                 <span>{cell.latest.submitted_at ? new Date(cell.latest.submitted_at).toLocaleDateString(lang) : ''}</span>
                                                                 {cell.results.length > 1 && (
-                                                                    <span className="rounded bg-emerald-200 px-1 text-2xs font-bold text-emerald-900" title={`${cell.results.length} ${texts.tests}`}>
+                                                                    <span className="rounded bg-success-line px-1 text-2xs font-semibold text-success-ink" title={`${cell.results.length} ${texts.tests}`}>
                                                                         {`×${cell.results.length}`}
                                                                     </span>
                                                                 )}
                                                             </div>
                                                             {cell.latest.scores && (
-                                                                <div className="mt-0.5 max-w-[9rem] truncate font-mono text-2xs text-slate-600">
+                                                                <div className="mt-1 max-w-[9rem] truncate font-mono text-2xs text-ink-muted">
                                                                     {formatCompactScores(cell.latest.scores)}
                                                                 </div>
                                                             )}
@@ -442,23 +443,23 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                                     </td>
                                                 );
                                             })}
-                                            <td className="whitespace-nowrap px-3 py-2 text-center font-mono text-xs font-medium text-slate-700">
+                                            <td className="whitespace-nowrap px-4 py-2 text-center font-mono text-xs font-semibold text-ink-body">
                                                 {row.totalCompleted}/{matrix.instruments.length}
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
-                                <tfoot className="border-t border-slate-200 bg-slate-50/75">
+                                <tfoot className="border-t border-line bg-surface-sunken/75">
                                     <tr>
-                                        <th scope="row" className="whitespace-nowrap px-3 py-2.5 text-xs font-semibold text-slate-700">
+                                        <th scope="row" className="whitespace-nowrap px-4 py-2 text-xs font-semibold text-ink-body">
                                             {texts.totalCompleted}
                                         </th>
                                         {matrix.instruments.map(inst => (
-                                            <td key={inst} className="px-2 py-2 text-center font-mono text-xs font-semibold text-slate-700">
+                                            <td key={inst} className="px-2 py-2 text-center font-mono text-xs font-semibold text-ink-body">
                                                 {matrix.totalsByInstrument[inst]}/{matrix.totalStudents}
                                             </td>
                                         ))}
-                                        <td className="px-3 py-2 text-center font-mono text-xs font-bold text-slate-800">
+                                        <td className="px-4 py-2 text-center font-mono text-xs font-semibold text-ink">
                                             {totalSubmissions}
                                         </td>
                                     </tr>
@@ -467,15 +468,15 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                         </div>
 
                         {selectedCell ? (
-                            <div className="space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/40 p-4" aria-live="polite">
-                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 pb-2">
+                            <div className="space-y-4 rounded-card border border-brand-line bg-brand-soft/40 p-4" aria-live="polite">
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-line pb-2">
                                     <div>
-                                        <h4 className="font-bold text-slate-900">
-                                            <span className="font-mono text-indigo-700">{selectedCell.username}</span>
+                                        <h4 className="font-semibold text-ink">
+                                            <span className="font-mono text-link">{selectedCell.username}</span>
                                             {' · '}
                                             <span>{resolveClassPathToolName(selectedCell.result.questionnaire_type, lang)}</span>
                                         </h4>
-                                        <p className="text-xs text-slate-600">
+                                        <p className="text-xs text-ink-muted">
                                             {selectedCell.result.submitted_at && new Date(selectedCell.result.submitted_at).toLocaleString(lang)}
                                         </p>
                                     </div>
@@ -486,25 +487,25 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                                 setViewMode('list');
                                                 setOpenStudent(selectedCell.username);
                                             }}
-                                            className="inline-flex min-h-[36px] items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                            className="inline-flex min-h-control items-center gap-1 rounded-control border border-line-strong bg-surface px-2 py-1 text-xs font-semibold text-ink-body hover:bg-surface-sunken"
                                         >
                                             {texts.openStudentSheet}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setSelectedCell(null)}
-                                            className="inline-flex min-h-[36px] items-center rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                            className="inline-flex min-h-control items-center rounded-control border border-line-strong bg-surface px-2 py-1 text-xs font-semibold text-ink-body hover:bg-surface-sunken"
                                         >
                                             {texts.closeDetails}
                                         </button>
                                     </div>
                                 </div>
-                                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                                <div className="rounded-lg border border-line bg-surface p-4">
                                     <StudentResultItem base={base} username={selectedCell.username} result={selectedCell.result} />
                                 </div>
                             </div>
                         ) : (
-                            <p className="text-xs text-slate-500">{texts.selectCellHint}</p>
+                            <p className="text-xs text-ink-muted">{texts.selectCellHint}</p>
                         )}
                     </div>
                 )
@@ -514,21 +515,21 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                         const isOpen = openStudent === student.username;
                         const studentNotes = notes.filter((note) => note.username === student.username);
                         return (
-                            <div key={student.username} className="rounded-md border border-slate-200 bg-white">
+                            <div key={student.username} className="rounded-control border border-line bg-surface">
                                 <button
                                     type="button"
                                     onClick={() => setOpenStudent(isOpen ? null : student.username)}
-                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-slate-700"
+                                    className="min-h-control flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-ink-body"
                                 >
                                     {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                                     <span className="font-mono">{student.username}</span>
-                                    <span className="text-xs font-normal text-slate-500">
+                                    <span className="text-xs font-normal text-ink-muted">
                                         {student.results.length} {texts.tests}
                                         {student.telegram_linked ? ` - ${texts.telegram}` : ''}
                                     </span>
                                 </button>
                                 {isOpen && (
-                                    <div className="space-y-4 border-t border-slate-100 px-3 py-3">
+                                    <div className="space-y-4 border-t border-line px-4 py-4">
                                         {student.results.length > 0 ? (
                                             <ul className="space-y-2">
                                                 {student.results.map((result) => (
@@ -538,13 +539,13 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                                 ))}
                                             </ul>
                                         ) : (
-                                            <p className="text-xs text-slate-500">{texts.noResultsYet}</p>
+                                            <p className="text-xs text-ink-muted">{texts.noResultsYet}</p>
                                         )}
 
                                         {student.learner_profile && (
-                                            <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
-                                                <p className="text-xs font-semibold uppercase text-slate-500">{texts.profile}</p>
-                                                <pre className="mt-1 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs text-slate-600">
+                                            <div className="rounded-control border border-line bg-surface-sunken p-2">
+                                                <p className="text-xs font-semibold text-ink-muted">{texts.profile}</p>
+                                                <pre className="mt-1 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs text-ink-muted">
                                                     {JSON.stringify(student.learner_profile, null, 1)}
                                                 </pre>
                                             </div>
@@ -552,15 +553,15 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
 
                                         {withNotes && (
                                         <div>
-                                            <p className="flex items-center gap-1 text-xs font-semibold uppercase text-slate-500">
+                                            <p className="flex items-center gap-1 text-xs font-semibold text-ink-muted">
                                                 <StickyNote className="h-3.5 w-3.5" /> {texts.notes}
                                             </p>
                                             <ul className="mt-1 space-y-1">
                                                 {studentNotes.map((note) => (
-                                                    <li key={note.id} className="flex items-start gap-2 text-sm text-slate-700">
+                                                    <li key={note.id} className="flex items-start gap-2 text-sm text-ink-body">
                                                         <span className="flex-1">
                                                             {note.kind === 'message' ? '[messaggio] ' : ''}{note.text}
-                                                            <span className="ml-2 text-xs text-slate-500">
+                                                            <span className="ml-2 text-xs text-ink-muted">
                                                                 {note.author_username}
                                                                 {note.visible_to_student ? ` - ${texts.visible.toLowerCase()}` : ''}
                                                                 {note.created_at ? ` - ${new Date(note.created_at).toLocaleDateString()}` : ''}
@@ -570,7 +571,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                                             type="button"
                                                             title={texts.deleteNote}
                                                             onClick={() => void deleteNote(note.id)}
-                                                            className="text-slate-500 hover:text-red-600"
+                                                            className="min-h-control text-ink-muted hover:text-danger"
                                                         >
                                                             <Trash2 className="h-3.5 w-3.5" />
                                                         </button>
@@ -583,10 +584,10 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                                     onChange={(event) => setNoteText(event.target.value)}
                                                     placeholder={texts.notePlaceholder}
                                                     rows={2}
-                                                    className="w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                                                    className="w-full rounded-control border border-line-strong px-2 py-1 text-sm"
                                                 />
                                                 <div className="flex items-center justify-between">
-                                                    <label className="flex items-center gap-1 text-xs text-slate-500">
+                                                    <label className="flex items-center gap-1 text-xs text-ink-muted">
                                                         <input
                                                             type="checkbox"
                                                             checked={noteVisible}
@@ -598,7 +599,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                                         type="button"
                                                         disabled={busy || !noteText.trim()}
                                                         onClick={() => void addNote(student.username)}
-                                                        className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                                        className="min-h-control rounded-control border border-line-strong px-2 py-1 text-xs font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-50"
                                                     >
                                                         {texts.addNote}
                                                     </button>
@@ -609,7 +610,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
 
                                         {withNotes && (
                                         <div>
-                                            <p className="flex items-center gap-1 text-xs font-semibold uppercase text-slate-500">
+                                            <p className="flex items-center gap-1 text-xs font-semibold text-ink-muted">
                                                 <Send className="h-3.5 w-3.5" /> {texts.message}
                                             </p>
                                             <textarea
@@ -617,18 +618,17 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                                 onChange={(event) => setMessageText(event.target.value)}
                                                 placeholder={texts.messagePlaceholder}
                                                 rows={2}
-                                                className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                                                className="mt-1 w-full rounded-control border border-line-strong px-2 py-1 text-sm"
                                             />
                                             <div className="mt-1 flex items-center justify-between">
-                                                <span className="text-xs text-slate-500">{feedback}</span>
-                                                <button
+                                                <span className="text-xs text-ink-muted">{feedback}</span>
+                                                <Button
                                                     type="button"
                                                     disabled={busy || !messageText.trim()}
                                                     onClick={() => void sendMessage(student.username)}
-                                                    className="rounded-md bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                                                 >
                                                     {texts.send}
-                                                </button>
+                                                </Button>
                                             </div>
                                         </div>
                                         )}
@@ -643,7 +643,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
             <button
                 type="button"
                 onClick={() => void load()}
-                className="inline-flex min-h-[36px] items-center gap-1 text-xs text-slate-500 hover:text-slate-700"
+                className="inline-flex min-h-control items-center gap-1 text-xs text-ink-muted hover:text-ink"
             >
                 <RefreshCw className="h-3.5 w-3.5" /> {texts.refresh}
             </button>

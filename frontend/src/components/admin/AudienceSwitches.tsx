@@ -26,7 +26,7 @@ export function AudienceSwitches({ feature }: { feature: 'api' | 'chatgpt' }) {
         void apiFetch('/api/admin/personal-ai-audiences', { cache: 'no-store' })
             .then(async response => { if (response.ok) setValues(((await response.json()) as Audiences)[feature]); }).catch(() => setFailed(true));
     }, [feature]);
-    if (!values) return failed ? <p role="alert" className="text-sm text-red-600">{l('error')}</p> : null;
+    if (!values) return failed ? <p role="alert" className="text-sm text-danger">{l('error')}</p> : null;
     const save = async (next: Switches) => {
         const previous = values;
         setValues(next); setBusy(true); setFailed(false);
@@ -52,16 +52,16 @@ export function AudienceSwitches({ feature }: { feature: 'api' | 'chatgpt' }) {
     };
     const label = feature === 'api' ? { teachers: l('audienceTeachersApi'), students: l('audienceStudentsApi') }
         : { teachers: l('audienceTeachersChatgpt'), students: l('audienceStudentsChatgpt') };
-    return <fieldset className="mt-3 space-y-1 rounded-lg border border-slate-200 p-3" data-testid={`audience-${feature}`} disabled={busy}>
-        <legend className="px-1 text-sm font-semibold text-slate-800">{l(feature === 'api' ? 'audienceTitle' : 'audienceTitleChatgpt')}</legend>
-        {(['teachers', 'students'] as const).map(audience => <label key={audience} className="flex min-h-11 items-center gap-3 text-sm text-slate-800">
+    return <fieldset className="mt-4 space-y-1 rounded-lg border border-line p-4" data-testid={`audience-${feature}`} disabled={busy}>
+        <legend className="px-1 text-sm font-semibold text-ink">{l(feature === 'api' ? 'audienceTitle' : 'audienceTitleChatgpt')}</legend>
+        {(['teachers', 'students'] as const).map(audience => <label key={audience} className="flex min-h-control items-center gap-4 text-sm text-ink">
             <input type="checkbox" checked={values[audience]} onChange={event => void save({ ...values, [audience]: event.target.checked })} />
             {label[audience]}
         </label>)}
-        {share !== null && <label className="flex min-h-11 items-center gap-3 text-sm text-slate-800">
+        {share !== null && <label className="flex min-h-control items-center gap-4 text-sm text-ink">
             <input type="checkbox" checked={share} onChange={event => void saveShare(event.target.checked)} />
             {l('audienceShareApi')}
         </label>}
-        {failed && <p role="alert" className="text-sm text-red-600">{l('error')}</p>}
+        {failed && <p role="alert" className="text-sm text-danger">{l('error')}</p>}
     </fieldset>;
 }

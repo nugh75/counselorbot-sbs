@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Database, Download, Filter, RefreshCw } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { publicOrigin } from '@/lib/runtime-config';
+import { Button } from '@/components/ui/Button';
 
 interface Instrument {
     code: string;
@@ -118,23 +119,23 @@ export function ValidationExportPanel() {
     };
 
     return (
-        <div className="space-y-5">
-            <section className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
+        <div className="space-y-4">
+            <section className="rounded-control border border-warning-line bg-warning-soft px-4 py-4 text-sm leading-relaxed text-warning-ink">
                 {t('admin.validation.intro')}
             </section>
 
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                    <Filter className="h-4 w-4 text-indigo-600" />
+            <section className="rounded-lg border border-line bg-surface p-4">
+                <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink-body">
+                    <Filter className="h-4 w-4 text-brand" />
                     {t('admin.validation.choices')}
                 </div>
                 <div className="grid gap-4 md:grid-cols-4">
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.instrument')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t('admin.validation.instrument')}</span>
                         <select
                             value={instrument}
                             onChange={(event) => setInstrument(event.target.value)}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm"
                         >
                             {instruments.map((item) => (
                                 <option key={item.code} value={item.code}>
@@ -144,11 +145,11 @@ export function ValidationExportPanel() {
                         </select>
                     </label>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.language')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t('admin.validation.language')}</span>
                         <select
                             value={locale}
                             onChange={(event) => setLocale(event.target.value)}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm"
                         >
                             {LOCALES.map((item) => (
                                 <option key={item || 'all'} value={item}>
@@ -158,93 +159,91 @@ export function ValidationExportPanel() {
                         </select>
                     </label>
                     <label className="block md:col-span-2">
-                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.version')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t('admin.validation.version')}</span>
                         <input
                             value={version}
                             onChange={(event) => setVersion(event.target.value)}
                             placeholder={t('admin.validation.placeholderVersion')}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm"
                         />
                     </label>
                     <label className="block md:col-span-2">
-                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.studyCode')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t('admin.validation.studyCode')}</span>
                         <input
                             value={study}
                             onChange={(event) => setStudy(event.target.value)}
                             placeholder={t('admin.validation.placeholderStudyCode')}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm"
                         />
                     </label>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                    <button
+                    <Button variant="secondary"
                         type="button"
                         onClick={load}
-                        className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                     >
                         <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                         {t('common.refresh')}
-                    </button>
+                    </Button>
                     <a
                         href={exportUrl}
-                        className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                        className="inline-flex items-center gap-2 rounded-control bg-brand px-4 py-2 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover"
                     >
                         <Download className="h-4 w-4" />
                         {t('admin.validation.exportCsv')}
                     </a>
                 </div>
-                <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.collectionLink')}</p>
+                <div className="mt-4 rounded-control border border-line bg-surface-sunken p-4">
+                    <p className="text-xs font-semibold text-ink-muted">{t('admin.validation.collectionLink')}</p>
                     <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                         <input
                             readOnly
                             value={collectionUrl}
-                            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-700"
+                            className="w-full rounded-control border border-line-strong bg-surface px-4 py-2 font-mono text-xs text-ink-body"
                         />
-                        <button
+                        <Button variant="secondary"
                             type="button"
                             onClick={() => navigator.clipboard?.writeText(collectionUrl)}
-                            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                         >
                             {t('common.copy')}
-                        </button>
+                        </Button>
                     </div>
                 </div>
-                {message && <p className="mt-3 text-sm text-red-600">{message}</p>}
+                {message && <p className="mt-4 text-sm text-danger">{message}</p>}
             </section>
 
-            <section className="grid gap-3 md:grid-cols-4">
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase text-slate-500">
+            <section className="grid gap-4 md:grid-cols-4">
+                <div className="rounded-lg border border-line bg-surface p-4">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-ink-muted">
                         <Database className="h-4 w-4" />
                         {t('admin.validation.responses')}
                     </div>
-                    <p className="mt-2 text-3xl font-bold text-slate-900">{summary?.total ?? 0}</p>
+                    <p className="mt-2 text-3xl font-semibold text-ink">{summary?.total ?? 0}</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4 md:col-span-2">
-                    <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.versions')}</p>
-                    <p className="mt-2 text-sm text-slate-700">
+                <div className="rounded-lg border border-line bg-surface p-4 md:col-span-2">
+                    <p className="text-xs font-semibold text-ink-muted">{t('admin.validation.versions')}</p>
+                    <p className="mt-2 text-sm text-ink-body">
                         {summary && Object.keys(summary.by_version).length
                             ? Object.entries(summary.by_version).map(([key, value]) => `${key}: ${value}`).join(' · ')
                             : t('admin.validation.noVersions')}
                     </p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                    <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.latestResponse')}</p>
-                    <p className="mt-2 text-sm font-medium text-slate-700">
+                <div className="rounded-lg border border-line bg-surface p-4">
+                    <p className="text-xs font-semibold text-ink-muted">{t('admin.validation.latestResponse')}</p>
+                    <p className="mt-2 text-sm font-semibold text-ink-body">
                         {summary?.latest_submitted_at ? new Date(summary.latest_submitted_at).toLocaleString(lang) : '-'}
                     </p>
                 </div>
             </section>
 
-            <section className="rounded-lg border border-slate-200 bg-white">
-                <div className="border-b border-slate-200 px-4 py-3">
-                    <h2 className="text-sm font-semibold text-slate-900">{t('admin.validation.latestRaw')}</h2>
+            <section className="rounded-lg border border-line bg-surface">
+                <div className="border-b border-line px-4 py-4">
+                    <h2 className="text-sm font-semibold text-ink">{t('admin.validation.latestRaw')}</h2>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-500">
+                            <tr className="border-b border-line text-left text-xs text-ink-muted">
                                 <th className="px-4 py-2">{t('admin.validation.table.date')}</th>
                                 <th className="px-4 py-2">{t('admin.validation.table.session')}</th>
                                 <th className="px-4 py-2">{t('admin.validation.table.instrument')}</th>
@@ -256,10 +255,10 @@ export function ValidationExportPanel() {
                         </thead>
                         <tbody>
                             {rows.map((row) => (
-                                <tr key={row.id} className="border-b border-slate-100">
-                                    <td className="px-4 py-2 text-slate-600">{new Date(row.submitted_at).toLocaleString(lang)}</td>
-                                    <td className="px-4 py-2 font-mono text-xs text-slate-500">{row.session_id}</td>
-                                    <td className="px-4 py-2 font-semibold text-slate-800">{row.instrument_code}</td>
+                                <tr key={row.id} className="border-b border-line">
+                                    <td className="px-4 py-2 text-ink-muted">{new Date(row.submitted_at).toLocaleString(lang)}</td>
+                                    <td className="px-4 py-2 font-mono text-xs text-ink-muted">{row.session_id}</td>
+                                    <td className="px-4 py-2 font-semibold text-ink">{row.instrument_code}</td>
                                     <td className="px-4 py-2">{row.locale}</td>
                                     <td className="px-4 py-2">{row.version_label}</td>
                                     <td className="px-4 py-2">{row.answers ? Object.keys(row.answers).length : 0}</td>
@@ -268,7 +267,7 @@ export function ValidationExportPanel() {
                             ))}
                             {!rows.length && (
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                                    <td colSpan={7} className="px-4 py-8 text-center text-ink-muted">
                                         {t('admin.validation.empty')}
                                     </td>
                                 </tr>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Mic, Save } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { isOnlineTranscription, modelForEngine, transcriptionAvailable, validTranscriptionModel, type TranscriptionModel, type TranscriptionProviders } from '@/lib/transcription-models';
+import { Button } from '@/components/ui/Button';
 
 interface ModelStatus {
     active: string;
@@ -80,7 +81,7 @@ export function AudioModelsPanel() {
         }
     };
 
-    if (loading) return <div className="glass-panel p-6 text-sm text-slate-500">{t('admin.audio.loading')}</div>;
+    if (loading) return <div className="rounded-card border border-line bg-surface shadow-card p-6 text-sm text-ink-muted">{t('admin.audio.loading')}</div>;
 
     // Without the service the saved name is still the only choice we can offer.
     const all: TranscriptionModel[] = status?.available.length
@@ -95,27 +96,27 @@ export function AudioModelsPanel() {
     };
 
     return (
-        <div className="glass-panel space-y-5 p-6">
-            <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-indigo-50">
-                    <Mic className="h-5 w-5 text-indigo-600" />
+        <div className="rounded-card border border-line bg-surface shadow-card space-y-4 p-6">
+            <div className="flex items-start gap-4">
+                <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-control bg-brand-soft">
+                    <Mic className="h-5 w-5 text-brand" />
                 </div>
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-900">{t('admin.audio.title')}</h2>
-                    <p className="mt-1 max-w-3xl text-sm text-slate-500">{t('admin.audio.subtitle')}</p>
+                    <h2 className="text-lg font-semibold text-ink">{t('admin.audio.title')}</h2>
+                    <p className="mt-1 max-w-3xl text-sm text-ink-muted">{t('admin.audio.subtitle')}</p>
                 </div>
             </div>
 
             {status && !status.reachable && !online && (
-                <p role="alert" className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{t('admin.audio.unreachable')}</p>
+                <p role="alert" className="rounded-control border border-warning-line bg-warning-soft p-4 text-sm text-warning-ink">{t('admin.audio.unreachable')}</p>
             )}
 
-            <fieldset className="rounded-md border border-slate-200 bg-white p-4">
-                <legend className="px-1 text-sm font-semibold text-slate-900">{t('admin.audio.engine')}</legend>
-                <p className="text-sm text-slate-500">{t('admin.audio.engineHint')}</p>
-                <div className="mt-3 space-y-2">
+            <fieldset className="rounded-control border border-line bg-surface p-4">
+                <legend className="px-1 text-sm font-semibold text-ink">{t('admin.audio.engine')}</legend>
+                <p className="text-sm text-ink-muted">{t('admin.audio.engineHint')}</p>
+                <div className="mt-4 space-y-2">
                     {engines.map((name) => (
-                        <label key={name} className="flex items-start gap-3 rounded-md border border-slate-200 p-3 text-sm">
+                        <label key={name} className="flex items-start gap-4 rounded-control border border-line p-4 text-sm">
                             <input
                                 type="radio"
                                 name="transcription-engine"
@@ -124,13 +125,13 @@ export function AudioModelsPanel() {
                                 disabled={!transcriptionAvailable(name, status?.providers)}
                                 aria-describedby={!transcriptionAvailable(name, status?.providers) ? `audio-key-${name}` : undefined}
                                 onChange={() => chooseEngine(name)}
-                                className="mt-0.5 h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                className="mt-1 h-4 w-4 border-line-strong text-brand focus:ring-focus"
                             />
                             <span>
-                                <span className="block font-semibold text-slate-900">{name}</span>
-                                <span className="mt-1 block text-slate-500">{t(`admin.audio.engine.${name}`)}</span>
+                                <span className="block font-semibold text-ink">{name}</span>
+                                <span className="mt-1 block text-ink-muted">{t(`admin.audio.engine.${name}`)}</span>
                                 {!transcriptionAvailable(name, status?.providers) && (
-                                    <span id={`audio-key-${name}`} className="mt-1 block text-amber-800">
+                                    <span id={`audio-key-${name}`} className="mt-1 block text-warning-ink">
                                         {t('admin.audio.keyMissing').replace('{provider}', name === 'openrouter' ? 'OpenRouter' : 'Mistral')}
                                     </span>
                                 )}
@@ -140,34 +141,34 @@ export function AudioModelsPanel() {
                 </div>
             </fieldset>
 
-            {online && <p role="alert" className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{t('admin.audio.externalWarning')}</p>}
+            {online && <p role="alert" className="rounded-control border border-warning-line bg-warning-soft p-4 text-sm text-warning-ink">{t('admin.audio.externalWarning')}</p>}
 
-            <fieldset className="rounded-md border border-slate-200 bg-white p-4">
-                <legend className="px-1 text-sm font-semibold text-slate-900">{t('admin.audio.model')}</legend>
-                <p className="text-sm text-slate-500">{t(online ? 'admin.audio.onlineModelHint' : 'admin.audio.modelHint')}</p>
+            <fieldset className="rounded-control border border-line bg-surface p-4">
+                <legend className="px-1 text-sm font-semibold text-ink">{t('admin.audio.model')}</legend>
+                <p className="text-sm text-ink-muted">{t(online ? 'admin.audio.onlineModelHint' : 'admin.audio.modelHint')}</p>
                 {online ? (
-                    <label className="mt-3 block text-sm text-slate-700">
+                    <label className="mt-4 block text-sm text-ink-body">
                         {t('admin.audio.modelId')}
                         <input type="text" value={selected} onChange={event => setSelected(event.target.value)}
                             maxLength={200} spellCheck={false} autoComplete="off"
-                            className="mt-1 block w-full rounded-md border border-slate-300 p-2" />
+                            className="mt-1 block w-full rounded-control border border-line-strong p-2" />
                     </label>
                 ) : (
-                <div className="mt-3 space-y-2">
+                <div className="mt-4 space-y-2">
                     {models.map((model) => (
-                        <label key={`${engine}-${model.id}`} className="flex items-start gap-3 rounded-md border border-slate-200 p-3 text-sm">
+                        <label key={`${engine}-${model.id}`} className="flex items-start gap-4 rounded-control border border-line p-4 text-sm">
                             <input
                                 type="radio"
                                 name="transcription-model"
                                 value={model.id}
                                 checked={selected === model.id}
                                 onChange={() => setSelected(model.id)}
-                                className="mt-0.5 h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                className="mt-1 h-4 w-4 border-line-strong text-brand focus:ring-focus"
                             />
                             <span>
-                                <span className="block font-semibold text-slate-900">{model.id}</span>
-                                <span className="mt-1 block text-slate-500">{t(hintKey(engine, model.id))}</span>
-                                <span className="mt-1 block text-xs text-slate-400">
+                                <span className="block font-semibold text-ink">{model.id}</span>
+                                <span className="mt-1 block text-ink-muted">{t(hintKey(engine, model.id))}</span>
+                                <span className="mt-1 block text-xs text-ink-muted">
                                     {model.bytes ? `${formatBytes(model.bytes)} · ` : ''}
                                     {WEIGHT[engine]?.[model.id] ? `RAM ${WEIGHT[engine][model.id][0]} · ${t(`admin.audio.cpu.${WEIGHT[engine][model.id][1]}`)} · ` : ''}
                                     {engine === 'whisper.cpp' ? t('admin.audio.perRequest') : model.loaded ? t('admin.audio.loaded') : t('admin.audio.notLoaded')}
@@ -179,17 +180,16 @@ export function AudioModelsPanel() {
                 )}
             </fieldset>
 
-            <div className="flex items-center gap-3">
-                <button
+            <div className="flex items-center gap-4">
+                <Button
                     type="button"
                     onClick={save}
                     disabled={!status || saving || !validTranscriptionModel(selected) || !transcriptionAvailable(engine, status.providers) || (selected.trim() === status.active && engine === status.engine)}
-                    className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                 >
                     <Save className="h-4 w-4" />{t('admin.audio.save')}
-                </button>
-                {saved === 'saved' && <span className="text-sm text-emerald-700">{t('admin.audio.saved')}</span>}
-                {saved === 'error' && <span role="alert" className="text-sm text-red-700">{t('admin.audio.saveError')}</span>}
+                </Button>
+                {saved === 'saved' && <span className="text-sm text-success">{t('admin.audio.saved')}</span>}
+                {saved === 'error' && <span role="alert" className="text-sm text-danger">{t('admin.audio.saveError')}</span>}
             </div>
         </div>
     );

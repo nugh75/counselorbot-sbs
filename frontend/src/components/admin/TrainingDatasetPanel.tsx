@@ -5,6 +5,8 @@ import { BrainCircuit, Check, Download, Filter, Plus, RefreshCw, Save, Trash2, X
 import { LANGUAGES } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
 
 interface TrainingSummary {
     total: number;
@@ -57,10 +59,10 @@ function queryString(filters: { instrument: string; locale: string; phase: strin
 }
 
 function statusClass(status: TrainingExample['status']) {
-    if (status === 'approved') return 'bg-green-100 text-green-700';
-    if (status === 'edited') return 'bg-blue-100 text-blue-700';
-    if (status === 'rejected') return 'bg-red-100 text-red-700';
-    return 'bg-amber-100 text-amber-700';
+    if (status === 'approved') return 'bg-success-soft text-success';
+    if (status === 'edited') return 'bg-info-soft text-info';
+    if (status === 'rejected') return 'bg-danger-soft text-danger';
+    return 'bg-warning-soft text-warning';
 }
 
 export function TrainingDatasetPanel() {
@@ -72,6 +74,7 @@ export function TrainingDatasetPanel() {
     const [summary, setSummary] = useState<TrainingSummary | null>(null);
     const [examples, setExamples] = useState<TrainingExample[]>([]);
     const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
     const [draftAnswer, setDraftAnswer] = useState('');
     const [draftNotes, setDraftNotes] = useState('');
     const [loading, setLoading] = useState(false);
@@ -163,7 +166,8 @@ export function TrainingDatasetPanel() {
     };
 
     const deleteSelected = async () => {
-        if (!selected || !window.confirm(t('admin.training.confirmDelete'))) return;
+        setConfirmingDelete(false);
+        if (!selected) return;
         try {
             const res = await fetch(`/api/admin/training-dataset/examples/${selected.id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('delete failed');
@@ -177,31 +181,31 @@ export function TrainingDatasetPanel() {
     const approvedCount = (summary?.by_status.approved || 0) + (summary?.by_status.edited || 0);
 
     return (
-        <div className="space-y-5">
-            <section className="rounded-md border border-sky-200 bg-sky-50 px-4 py-3 text-sm leading-relaxed text-sky-950">
+        <div className="space-y-4">
+            <section className="rounded-control border border-info-line bg-info-soft px-4 py-4 text-sm leading-relaxed text-info-ink">
                 {t('admin.training.notice')}
             </section>
 
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                    <Filter className="h-4 w-4 text-indigo-600" />
+            <section className="rounded-lg border border-line bg-surface p-4">
+                <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink-body">
+                    <Filter className="h-4 w-4 text-brand" />
                     {t('admin.training.filters')}
                 </div>
                 <div className="grid gap-4 md:grid-cols-5">
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.instrument')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t('admin.training.instrument')}</span>
                         <input
                             readOnly
                             value="QSA"
-                            className="mt-1 w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm"
+                            className="mt-1 w-full rounded-control border border-line-strong bg-surface-sunken px-4 py-2 text-sm"
                         />
                     </label>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.language')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t('admin.training.language')}</span>
                         <select
                             value={locale}
                             onChange={(event) => setLocale(event.target.value)}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm"
                         >
                             {LANGUAGES.map((item) => (
                                 <option key={item.code} value={item.code}>{item.label}</option>
@@ -209,11 +213,11 @@ export function TrainingDatasetPanel() {
                         </select>
                     </label>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.phase')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t('admin.training.phase')}</span>
                         <select
                             value={phase}
                             onChange={(event) => setPhase(event.target.value)}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm"
                         >
                             {PHASES.map((item) => (
                                 <option key={item} value={item}>{t(`admin.training.phase.${item}`)}</option>
@@ -221,11 +225,11 @@ export function TrainingDatasetPanel() {
                         </select>
                     </label>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.status')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t('admin.training.status')}</span>
                         <select
                             value={status}
                             onChange={(event) => setStatus(event.target.value)}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm"
                         >
                             {STATUSES.map((item) => (
                                 <option key={item || 'all'} value={item}>{item ? t(`admin.training.status.${item}`) : t('admin.training.status.all')}</option>
@@ -233,70 +237,68 @@ export function TrainingDatasetPanel() {
                         </select>
                     </label>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.count')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t('admin.training.count')}</span>
                         <input
                             type="number"
                             min={1}
                             max={50}
                             value={count}
                             onChange={(event) => setCount(Number(event.target.value))}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm"
                         />
                     </label>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                    <button
+                    <Button variant="secondary"
                         type="button"
                         onClick={load}
-                        className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                     >
                         <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
                         {t('admin.training.refresh')}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="button"
                         onClick={generate}
                         disabled={generating}
-                        className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
                     >
                         <Plus className="h-4 w-4" />
                         {generating ? t('admin.training.generating') : t('admin.training.generate')}
-                    </button>
+                    </Button>
                     <a
                         href={exportUrl}
-                        className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                        className="inline-flex min-h-control items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink-body hover:bg-surface-sunken"
                     >
                         <Download className="h-4 w-4" />
                         {t('admin.training.export')}
                     </a>
                 </div>
-                {message && <p className="mt-3 text-sm text-slate-600">{message}</p>}
+                {message && <p className="mt-4 text-sm text-ink-muted">{message}</p>}
             </section>
 
-            <section className="grid gap-3 md:grid-cols-4">
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                    <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.total')}</p>
-                    <p className="mt-2 text-3xl font-bold text-slate-900">{summary?.total ?? 0}</p>
+            <section className="grid gap-4 md:grid-cols-4">
+                <div className="rounded-lg border border-line bg-surface p-4">
+                    <p className="text-xs font-semibold text-ink-muted">{t('admin.training.total')}</p>
+                    <p className="mt-2 text-3xl font-semibold text-ink">{summary?.total ?? 0}</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                    <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.pending')}</p>
-                    <p className="mt-2 text-3xl font-bold text-amber-700">{summary?.by_status.pending ?? 0}</p>
+                <div className="rounded-lg border border-line bg-surface p-4">
+                    <p className="text-xs font-semibold text-ink-muted">{t('admin.training.pending')}</p>
+                    <p className="mt-2 text-3xl font-semibold text-warning">{summary?.by_status.pending ?? 0}</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                    <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.exportable')}</p>
-                    <p className="mt-2 text-3xl font-bold text-green-700">{approvedCount}</p>
+                <div className="rounded-lg border border-line bg-surface p-4">
+                    <p className="text-xs font-semibold text-ink-muted">{t('admin.training.exportable')}</p>
+                    <p className="mt-2 text-3xl font-semibold text-success">{approvedCount}</p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                    <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.rejected')}</p>
-                    <p className="mt-2 text-3xl font-bold text-red-700">{summary?.by_status.rejected ?? 0}</p>
+                <div className="rounded-lg border border-line bg-surface p-4">
+                    <p className="text-xs font-semibold text-ink-muted">{t('admin.training.rejected')}</p>
+                    <p className="mt-2 text-3xl font-semibold text-danger">{summary?.by_status.rejected ?? 0}</p>
                 </div>
             </section>
 
             <section className="grid gap-4 lg:grid-cols-[minmax(280px,380px)_1fr]">
-                <div className="rounded-lg border border-slate-200 bg-white">
-                    <div className="border-b border-slate-200 px-4 py-3">
-                        <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                            <BrainCircuit className="h-4 w-4 text-indigo-600" />
+                <div className="rounded-lg border border-line bg-surface">
+                    <div className="border-b border-line px-4 py-4">
+                        <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
+                            <BrainCircuit className="h-4 w-4 text-brand" />
                             {t('admin.training.queue')}
                         </h2>
                     </div>
@@ -307,121 +309,126 @@ export function TrainingDatasetPanel() {
                                 type="button"
                                 onClick={() => setSelectedId(item.id)}
                                 className={cn(
-                                    'block w-full border-b border-slate-100 px-4 py-3 text-left hover:bg-slate-50',
-                                    selected?.id === item.id && 'bg-indigo-50'
+                                    'block w-full border-b border-line px-4 py-4 text-left hover:bg-surface-sunken',
+                                    selected?.id === item.id && 'bg-brand-soft'
                                 )}
                             >
                                 <div className="mb-2 flex items-center justify-between gap-2">
-                                    <span className="font-mono text-xs text-slate-500">#{item.id}</span>
+                                    <span className="font-mono text-xs text-ink-muted">#{item.id}</span>
                                     <span className={cn('rounded px-2 py-1 text-xs font-semibold', statusClass(item.status))}>
                                         {t(`admin.training.status.${item.status}`)}
                                     </span>
                                 </div>
-                                <p className="text-sm font-semibold text-slate-800">{t(`admin.training.phase.${item.phase}`)}</p>
-                                <p className="mt-1 line-clamp-2 text-xs text-slate-500">{item.student_message}</p>
+                                <p className="text-sm font-semibold text-ink">{t(`admin.training.phase.${item.phase}`)}</p>
+                                <p className="mt-1 line-clamp-2 text-xs text-ink-muted">{item.student_message}</p>
                             </button>
                         ))}
                         {!examples.length && (
-                            <div className="px-4 py-8 text-center text-sm text-slate-500">
+                            <div className="px-4 py-8 text-center text-sm text-ink-muted">
                                 {t('admin.training.empty')}
                             </div>
                         )}
                     </div>
                 </div>
 
-                <div className="rounded-lg border border-slate-200 bg-white">
+                <div className="rounded-lg border border-line bg-surface">
                     {selected ? (
                         <div>
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line px-4 py-4">
                                 <div>
-                                    <h2 className="text-sm font-semibold text-slate-900">
+                                    <h2 className="text-sm font-semibold text-ink">
                                         {t('admin.training.reviewTitle', { id: selected.id })}
                                     </h2>
-                                    <p className="text-xs text-slate-500">{selected.locale} · {selected.phase} · {selected.source}</p>
+                                    <p className="text-xs text-ink-muted">{selected.locale} · {selected.phase} · {selected.source}</p>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
-                                    <button
+                                    <Button variant="success"
                                         type="button"
                                         onClick={() => updateSelected('approved')}
-                                        className="inline-flex items-center gap-2 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700"
                                     >
                                         <Check className="h-4 w-4" />
                                         {t('admin.training.approve')}
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button variant="danger"
                                         type="button"
                                         onClick={() => updateSelected('rejected')}
-                                        className="inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700"
                                     >
                                         <X className="h-4 w-4" />
                                         {t('admin.training.reject')}
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button variant="secondary"
                                         type="button"
                                         onClick={() => updateSelected()}
-                                        className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                                     >
                                         <Save className="h-4 w-4" />
                                         {t('admin.training.save')}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={deleteSelected}
-                                        className="inline-flex items-center gap-2 rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                        {t('admin.training.delete')}
-                                    </button>
+                                    </Button>
+                                    {confirmingDelete ? (
+                                        <ConfirmInline
+                                            question={t('admin.training.confirmDelete')}
+                                            onConfirm={() => void deleteSelected()}
+                                            onCancel={() => setConfirmingDelete(false)}
+                                        />
+                                    ) : (
+                                        <Button variant="secondary"
+                                            type="button"
+                                            onClick={() => setConfirmingDelete(true)}
+                                            className="border-danger-line text-danger hover:bg-danger-soft"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                            {t('admin.training.delete')}
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="grid gap-4 p-4 xl:grid-cols-2">
                                 <div className="space-y-4">
                                     <label className="block">
-                                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.scoresContext')}</span>
+                                        <span className="text-xs font-semibold text-ink-muted">{t('admin.training.scoresContext')}</span>
                                         <textarea
                                             readOnly
                                             value={selected.scores_context}
-                                            className="mt-1 h-52 w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700"
+                                            className="mt-1 h-52 w-full rounded-control border border-line-strong bg-surface-sunken px-4 py-2 font-mono text-xs text-ink-body"
                                         />
                                     </label>
                                     <label className="block">
-                                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.studentMessage')}</span>
+                                        <span className="text-xs font-semibold text-ink-muted">{t('admin.training.studentMessage')}</span>
                                         <textarea
                                             readOnly
                                             value={selected.student_message}
-                                            className="mt-1 h-24 w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700"
+                                            className="mt-1 h-24 w-full rounded-control border border-line-strong bg-surface-sunken px-4 py-2 text-sm text-ink-body"
                                         />
                                     </label>
-                                    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                                        <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.rubric')}</p>
-                                        <pre className="mt-2 overflow-x-auto text-xs text-slate-700">
+                                    <div className="rounded-control border border-line bg-surface-sunken p-4">
+                                        <p className="text-xs font-semibold text-ink-muted">{t('admin.training.rubric')}</p>
+                                        <pre className="mt-2 overflow-x-auto text-xs text-ink-body">
                                             {JSON.stringify(selected.auto_score || {}, null, 2)}
                                         </pre>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
                                     <label className="block">
-                                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.assistantAnswer')}</span>
+                                        <span className="text-xs font-semibold text-ink-muted">{t('admin.training.assistantAnswer')}</span>
                                         <textarea
                                             value={draftAnswer}
                                             onChange={(event) => setDraftAnswer(event.target.value)}
-                                            className="mt-1 h-80 w-full rounded-md border border-slate-300 px-3 py-2 text-sm leading-relaxed text-slate-800"
+                                            className="mt-1 h-80 w-full rounded-control border border-line-strong px-4 py-2 text-sm leading-relaxed text-ink"
                                         />
                                     </label>
                                     <label className="block">
-                                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.training.reviewNotes')}</span>
+                                        <span className="text-xs font-semibold text-ink-muted">{t('admin.training.reviewNotes')}</span>
                                         <textarea
                                             value={draftNotes}
                                             onChange={(event) => setDraftNotes(event.target.value)}
-                                            className="mt-1 h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800"
+                                            className="mt-1 h-24 w-full rounded-control border border-line-strong px-4 py-2 text-sm text-ink"
                                         />
                                     </label>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="px-4 py-12 text-center text-sm text-slate-500">
+                        <div className="px-4 py-12 text-center text-sm text-ink-muted">
                             {t('admin.training.selectEmpty')}
                         </div>
                     )}
