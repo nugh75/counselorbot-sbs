@@ -757,13 +757,13 @@ def _apply_thinking_directive(system_prompt: str, language: Optional[str] = None
 
 
 # --- Separazione del ragionamento dal testo visibile (canale «sto pensando») ---
-# Blocchi di pensiero tollerati: <think>, <thinking>, <sto_pensando> (case-insensitive).
+# Blocchi di pensiero tollerati: <think>, <thinking>, <sto_pensando>, <reasoning> (case-insensitive).
 _THINK_BLOCK_RE = re.compile(
-    r"<\s*(think|thinking|sto_pensando|analysis)\s*>(.*?)</\s*\1\s*>",
+    r"<\s*(think|thinking|sto_pensando|analysis|reasoning)\s*>(.*?)</\s*\1\s*>",
     re.IGNORECASE | re.DOTALL,
 )
 _THINK_OPEN_RE = re.compile(
-    r"<\s*(?:think|thinking|sto_pensando|analysis)\s*>(.*)$",
+    r"<\s*(?:think|thinking|sto_pensando|analysis|reasoning)\s*>(.*)$",
     re.IGNORECASE | re.DOTALL,
 )
 # Una chiusura senza apertura. I blocchi accoppiati sono gia' stati tolti quando
@@ -771,11 +771,14 @@ _THINK_OPEN_RE = re.compile(
 # reasoning perche' nessun tag l'ha aperta: un `</think>` ancora presente qui e'
 # orfano per costruzione, e cio' che lo precede era il ragionamento del modello.
 _THINK_CLOSE_ORPHAN_RE = re.compile(
-    r"\A(.*?)</\s*(?:think|thinking|sto_pensando|analysis)\s*>",
+    r"\A(.*?)</\s*(?:think|thinking|sto_pensando|analysis|reasoning)\s*>",
     re.IGNORECASE | re.DOTALL,
 )
+# Delimitatori non XML: [THINK]…[/THINK] (Magistral), ◁think▷…◁/think▷ (Kimi).
+# Vengono riscritti come <think> prima dell'estrazione.
+_ALT_THINK_TAG_RE = re.compile(r"\[(/?)think\]|◁(/?)think▷", re.IGNORECASE)
 _THINK_TAG_ANY_RE = re.compile(
-    r"</?\s*(?:think|thinking|sto_pensando|analysis)\b[^>]*>",
+    r"</?\s*(?:think|thinking|sto_pensando|analysis|reasoning)\b[^>]*>",
     re.IGNORECASE,
 )
 
@@ -809,6 +812,7 @@ def split_thinking(text: str) -> tuple[Optional[str], str]:
     non chiuso (output troncato): tutto cio' che segue l'apertura diventa reasoning."""
     if not text:
         return None, text or ""
+    text = _ALT_THINK_TAG_RE.sub(lambda m: f"<{m.group(1) or m.group(2) or ''}think>", text)
     reasoning_parts: list[str] = []
 
     def _collect(match: re.Match) -> str:
@@ -915,8 +919,8 @@ class ThinkStreamSplitter:
     potrebbero essere l'inizio di un tag. `feed(delta)` e `flush()` ritornano una
     lista di dict `{"type": "reasoning"|"content", "text": ...}`."""
 
-    _OPEN = ("<think>", "<thinking>", "<sto_pensando>", "<analysis>")
-    _CLOSE = ("</think>", "</thinking>", "</sto_pensando>", "</analysis>")
+    _OPEN = ("<think>", "<thinking>", "<sto_pensando>", "<analysis>", "<reasoning>", "[think]", "◁think▷")
+    _CLOSE = ("</think>", "</thinking>", "</sto_pensando>", "</analysis>", "</reasoning>", "[/think]", "◁/think▷")
 
     def __init__(self) -> None:
         self._buf = ""

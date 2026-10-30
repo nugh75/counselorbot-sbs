@@ -71,6 +71,28 @@ def test_split_multiple_and_variant_tags():
     assert visible == "XY"
 
 
+def test_split_non_xml_and_reasoning_tag_variants():
+    for text in (
+        "[THINK]piano privato[/THINK]Risposta.",
+        "◁think▷piano privato◁/think▷Risposta.",
+        "<reasoning>piano privato</reasoning>Risposta.",
+        "piano privato[/THINK]Risposta.",
+    ):
+        reasoning, visible = split_thinking(text)
+        assert reasoning == "piano privato", text
+        assert visible == "Risposta.", text
+
+
+def test_stream_variant_tags_split_across_chunks():
+    for text in ("A[THINK]R[/THINK]B", "A◁think▷R◁/think▷B", "A<reasoning>R</reasoning>B"):
+        sp = ThinkStreamSplitter()
+        items = []
+        for ch in text:
+            items.extend(sp.feed(ch))
+        items.extend(sp.flush())
+        assert _reconstruct(items) == ("AB", "R"), text
+
+
 def test_stream_full_string():
     sp = ThinkStreamSplitter()
     items = sp.feed("AB<think>RT</think>CD") + sp.flush()
