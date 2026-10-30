@@ -276,6 +276,8 @@ function normalizeLoadedSteps(questionnaireType: string, loadedSteps: StepDef[])
 const FIXED_QUESTIONS_ID = 'questions';
 const FIXED_CONCLUSION_ID = 'conclusion';
 
+type OpeningVoice = { onPartial: (text: string) => void; resolve: (text?: string) => void };
+
 // --- Sidebar section labels per prefix ---
 
 const PREFIX_SIDEBAR: Record<string, string> = {
@@ -594,6 +596,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const stickToBottom = useRef(true);
     const ideaReferenceInputRef = useRef<HTMLInputElement>(null);
     const processedPhases = useRef<Set<string>>(new Set());
+    // Voce: un avanzamento apre lo step successivo con un turno a parte. Chi
+    // parla deve sentire anche quello, non solo la breve risposta che chiude.
+    const openingVoiceRef = useRef<OpeningVoice | null>(null);
     const turnCheckpointRef = useRef<GuidedCheckpoint | null>(null);
     const navigationScopeRef = useRef('');
     useEffect(() => {
@@ -961,12 +966,14 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
     // Phase change handler
     useEffect(() => {
-        if (!currentPhase || initialLoading || !pathStarted || activeExploration) return;
+        const voice = openingVoiceRef.current;
+        openingVoiceRef.current = null;
+        if (!currentPhase || initialLoading || !pathStarted || activeExploration) { voice?.resolve(); return; }
         setNavigation(prev => ({ ...prev, visited: [...new Set([...prev.visited, ...processedPhases.current, currentPhase])] }));
         // Genera l'intro dello step solo alla PRIMA visita: tornando a uno step già
         // visitato (pulsante "Step precedente") si cambia solo il contesto attivo,
         // senza rigenerare messaggi o duplicare il banner.
-        if (processedPhases.current.has(currentPhase)) return;
+        if (processedPhases.current.has(currentPhase)) { voice?.resolve(); return; }
         processedPhases.current.add(currentPhase);
         setShowAdvanceSuggestion(false);
         setUserMessagesInPhase(0);
@@ -982,8 +989,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             }
             phaseMessages.push({ role: 'system', content: questionsBanner }, { role: 'assistant', content: questionsIntro });
             setMessages(prev => [...prev, ...phaseMessages]);
-            void generateReflectionQuestions();
+            void generateReflectionQuestions(voice);
         } else if (currentPhase === FIXED_CONCLUSION_ID) {
+            voice?.resolve();
             void recordMemoryEvent(currentPhase, true);
             setMessages(prev => [...prev, {
                 role: 'assistant',
@@ -992,17 +1000,21 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         } else if (isIdea) {
             // Il passo di Idea e' solo il contesto del prossimo turno della
             // persona, non un turno da generare: la conversazione la guida lei.
+            voice?.resolve();
         } else {
             const step = getStepDef(currentPhase);
             if (step) {
-                generateAnalysis(step);
+                generateAnalysis(step, voice);
+            } else {
+                voice?.resolve();
             }
         }
         // The phase guard above intentionally makes this effect run once per phase.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPhase, initialLoading, pathStarted, activeExploration?.id]);
 
-    const generateReflectionQuestions = async () => {
+    const generateReflectionQuestions = async (voice?: OpeningVoice | null) => {
+        let opening: string | undefined;
         const controller = beginRequest();
         setIsLoading(true);
         const scoresContext = scoresContextOverride ?? formatScoresForPrompt(scores);
@@ -1049,16 +1061,18 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 ...notebookPayload,
                 idea_budget: isIdea ? ideaBudget : undefined,
                 preview: preview ? true : undefined,
-            }, (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
+            }, (full) => { updateLast(full); voice?.onPartial(full); }, controller.signal, (r) => updateReasoning(r));
             if (result.conversation_id) setConversationId(result.conversation_id);
             adoptRecommendations(result.recommendations);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
             refreshIdeaWorkspace(result.idea_revision_id);
             if (isIdea) setIdeaDrew(result.idea_revision_id != null);
-            if (!result.response?.trim()) dropLast();
+            opening = result.response?.trim() || undefined;
+            if (!opening) dropLast();
         } catch {
             if (!controller.signal.aborted) dropLast();
         } finally {
+            voice?.resolve(opening);
             if (requestRef.current === controller) {
                 requestRef.current = null;
                 setIsLoading(false);
@@ -1066,7 +1080,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         }
     };
 
-    const generateAnalysis = async (step: StepDef) => {
+    const generateAnalysis = async (step: StepDef, voice?: OpeningVoice | null) => {
+        let opening: string | undefined;
         const controller = beginRequest();
         setIsLoading(true);
         if (messages.length > 0) {
@@ -1149,7 +1164,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
             setMessages(prev => [...prev, { role: 'assistant', content: '', phaseId: step.id }]);
             try {
-                const result = await streamChat(buildPayload(false), (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
+                const result = await streamChat(buildPayload(false), (full) => { updateLast(full); voice?.onPartial(full); }, controller.signal, (r) => updateReasoning(r));
                 responseText = result.response || '';
                 advanceSignal = result.control_signals.includes(ADVANCE_STEP);
                 if (result.conversation_id) setConversationId(result.conversation_id);
@@ -1169,6 +1184,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             const cleanText = responseText.trim();
             if (streamOk && cleanText) {
                 const shouldAdvance = advanceSignal;
+                opening = cleanText;
                 updateLast(cleanText);
                 // Obiettivi: la sintesi è l'ultima fase, il percorso è concluso.
                 if (!essential && isGoalInstrument(questionnaireType) && step.id === phases[phases.length - 1]) {
@@ -1209,6 +1225,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 content: t('guided.stepConnError')
             }]);
         } finally {
+            voice?.resolve(opening);
             if (requestRef.current === controller) {
                 requestRef.current = null;
                 setIsLoading(false);
@@ -1290,8 +1307,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 role: 'assistant',
                 content: t('guided.pattoAck'),
             }]);
-            await advancePhase(userMessage, true);
-            return t('guided.pattoAck');
+            return advanceSpeaking(t('guided.pattoAck'), onPartial, () => advancePhase(userMessage, true));
         }
 
         setIsLoading(true);
@@ -1379,15 +1395,14 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             if (activeExploration) return cleanText || undefined;
             if (agreementLocked && shouldAdvance && isAgreementStep(questionnaireType, currentPhase)) {
                 setNavigation(prev => ({ ...prev, agreement_accepted: true }));
-                await advancePhase(userMessage, true);
-                return cleanText || undefined;
+                return await advanceSpeaking(cleanText, onPartial, () => advancePhase(userMessage, true)) || undefined;
             }
             if (essential && essentialAdvancesOnSignal(questionnaireType)) {
                 // La fase resta aperta finche' il modello non la
                 // chiude col marcatore su una risposta completata; la fase
                 // successiva si apre poi con il suo turno.
                 if (essentialSignalAdvances(questionnaireType, currentPhase, { completed: true, marker: shouldAdvance, entry: false })) {
-                    await advancePhase(userMessage);
+                    return await advanceSpeaking(cleanText, onPartial, () => advancePhase(userMessage)) || undefined;
                 } else if (cleanText) {
                     void recordMemoryEvent(currentPhase, false, userMessage);
                 }
@@ -1403,13 +1418,11 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 if (userDecidesAdvance(questionnaireType, currentPhase, cleanText)) {
                     setShowAdvanceSuggestion(true);
                 } else {
-                    await advancePhase();
                     // Turno senza testo: in voce dire dove si va, invece di
                     // segnalare una risposta mancante.
                     const nextPhase = phases[phases.indexOf(currentPhase) + 1];
-                    if (!cleanText && nextPhase) {
-                        return `${t(advanceLabelKey(questionnaireType, currentPhase))}: ${getPhaseLabel(nextPhase)}`;
-                    }
+                    const reply = !cleanText && nextPhase ? `${t(advanceLabelKey(questionnaireType, currentPhase))}: ${getPhaseLabel(nextPhase)}` : cleanText;
+                    return await advanceSpeaking(reply, onPartial, () => advancePhase()) || undefined;
                 }
             }
             return cleanText || undefined;
@@ -1498,7 +1511,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     };
 
     const advancePhase = async (userMessage = '', accepted = navigation.agreement_accepted) => {
-        if (activeExploration || (agreementLocked && !accepted)) return;
+        if (activeExploration || (agreementLocked && !accepted)) return false;
         setShowAdvanceSuggestion(false);
         setNavigation(prev => ({ ...prev, completed: [...new Set([...prev.completed, currentPhase])] }));
         await recordMemoryEvent(currentPhase, true, userMessage);
@@ -1510,6 +1523,22 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             stickToBottom.current = true;
             setCurrentPhase(target);
         }
+        return !!target;
+    };
+
+    // In voce il turno che avanza resta aperto finché lo step successivo non ha
+    // scritto la sua apertura: la risposta letta è la loro unione.
+    const advanceSpeaking = async (reply: string, onPartial: ((text: string) => void) | undefined, advance: () => Promise<boolean>) => {
+        if (!onPartial) { await advance(); return reply; }
+        const join = (opening?: string) => [reply, opening?.trim()].filter(Boolean).join('\n\n');
+        const opening = new Promise<string | undefined>(resolve => {
+            openingVoiceRef.current = { onPartial: text => onPartial(join(text)), resolve };
+        });
+        if (!(await advance())) {
+            openingVoiceRef.current?.resolve();
+            openingVoiceRef.current = null;
+        }
+        return join(await opening);
     };
 
     const goToPreviousStep = () => {

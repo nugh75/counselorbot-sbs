@@ -102,7 +102,7 @@ async function fixture({ bussola = false, width = 390, lang = 'it', live = false
         else if (path === '/api/qsa/guided-ui-texts') data = {guided_steps:[{id:'intro',label:'Introduzione',sort_order:1,system_prompt_mode:'qsa-intro',suggested_questions:[]}]};
         else if (path === '/api/chat/stream') {
             const frames = (control.deltas || []).map(delta => ({delta}));
-            const reply = control.deltas ? control.deltas.join('') : control.reply;
+            const reply = control.deltas ? control.deltas.join('') : control.replies?.length ? control.replies.shift() : control.reply;
             return route.fulfill({contentType:'text/event-stream',body:[...frames, {done:true,response:reply,session_id:'audio-fixture',incomplete:control.incomplete}]
                 .map(event => 'data: '+JSON.stringify(event)+'\n\n').join('')});
         }
@@ -500,6 +500,22 @@ test('the final guided reply remains audible after the path completes', async ()
         assert.equal(await panel.getByRole('button', {name:'Interrompi e parla'}).isDisabled(), true);
         await (await f.options()).getByRole('button', {name:'Torna a scrivere'}).click();
         assert.equal(await f.composer.count(), 0, 'Completed paths keep their normal closed composer');
+        assert.deepEqual(f.control.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('a voice turn that advances the step also reads the next step opening', async () => {
+    const f = await fixture();
+    try {
+        f.control.replies = ['Bene. [[AVANZA_STEP]]', 'Che cosa ti ha sorpreso dei risultati?'];
+        await f.voice();
+        const panel = f.page.getByRole('group', {name:'Conversazione vocale',exact:true});
+        await panel.getByRole('button', {name:'Premi per parlare'}).click();
+        await panel.getByRole('button', {name:'Ferma e invia'}).click();
+        await panel.getByRole('button', {name:'Interrompi e parla'}).waitFor();
+        await f.page.getByRole('log').getByText('Che cosa ti ha sorpreso dei risultati?',{exact:true}).waitFor();
+        const spoken = f.control.requests.filter(r => r.path === '/api/tts/stream').map(r => r.body.text).join('\n\n');
+        assert.equal(spoken, 'Bene.\n\nChe cosa ti ha sorpreso dei risultati?');
         assert.deepEqual(f.control.errors, []);
     } finally { await f.context.close(); }
 });
