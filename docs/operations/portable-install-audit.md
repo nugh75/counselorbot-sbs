@@ -114,6 +114,25 @@ stato applicato, né sono stati introdotti override per nascondere il rilievo.
 Questi tool non sono copiati nel runtime standalone, ma il rischio
 residuo dei tool di sviluppo resta da monitorare.
 
+## Aggiornamento di sicurezza del 30/10/2026
+
+L'audit del 28/10/2026 (issue #641–#644) segnalava cinque pacchetti:
+`next` 16.3.8 (critico), `zod` 4.3.5 e `source-map-js` 1.2.1 (alti),
+`postcss-selector-parser` 6.0.10 tramite `@tailwindcss/typography`
+(moderato, contato due volte). Correzioni, tutte nello stesso major:
+
+- `next` ed `eslint-config-next` a `16.4.3`;
+- `zod` a `^4.6.7`;
+- `source-map-js` a `1.2.2` nel lockfile (dipendenza transitiva, il range
+  `^1.2.1` già lo consentiva);
+- override `@tailwindcss/typography → postcss-selector-parser 6.1.5`: anche
+  Typography `0.5.20` fissa il parser a `6.0.10` e npm propone solo un
+  downgrade a `0.5.4`. La `6.1.5` è la release corretta della linea 6
+  (`legacy-v6`), quindi senza cambi di API per il plugin.
+
+`npm audit` completo dopo l'aggiornamento: **zero vulnerabilità**.
+I pacchetti in `desktop/` non contengono queste dipendenze.
+
 Il controllo i18n passa: 2947 chiavi in sei lingue. Il lint completo
 riporta un errore e 44 warning; l'errore è
 `react-hooks/set-state-in-effect` in `NewDeckDialog.tsx`, sul codice già
