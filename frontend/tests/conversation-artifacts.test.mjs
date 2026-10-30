@@ -68,7 +68,7 @@ async function fixture(width, phase = 'intro', options = {}) {
             if (control.failDiagram) return route.fulfill({ status: 503, body: '{}' });
             const body = request.postDataJSON();
             assert.equal(body.session_id, 'fixture');
-            control.saved = [{ source_text: body.source_text, source_key: createHash('sha256').update(body.source_text.trim()).digest('hex'), instruction: body.instruction, spec: fixtureSpec }];
+            control.saved = [...control.saved, { source_text: body.source_text, source_key: createHash('sha256').update(body.source_text.trim()).digest('hex'), instruction: body.instruction, spec: fixtureSpec }];
             data = fixtureSpec;
         } else if (url.pathname === '/api/diagram/render') {
             const body = request.postDataJSON();
@@ -161,7 +161,7 @@ for (const width of [320, 390, 1440]) {
     });
 }
 
-test('a drawn diagram can be corrected with a follow-up request', async () => {
+test('a correction adds a new diagram and keeps the previous one', async () => {
     const { page, context, control } = await fixture(390);
     try {
         await openMessageDiagram(page);
@@ -179,6 +179,12 @@ test('a drawn diagram can be corrected with a follow-up request', async () => {
         assert.equal(correction.body.instruction, 'Aggiungi il ripasso');
         assert.deepEqual(correction.body.previous_spec, spec);
         assert.equal(correction.body.source_text, first.body.source_text);
+        const drawn = page.locator('figure:has(svg g.node)');
+        await page.waitForFunction(() => document.querySelectorAll('figure svg g.node').length >= 4);
+        assert.equal(await drawn.count(), 2, 'the new diagram joins the previous one');
+        await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
+        await drawn.first().waitFor();
+        assert.equal(await drawn.count(), 2, 'both diagrams restored after reload');
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
 });

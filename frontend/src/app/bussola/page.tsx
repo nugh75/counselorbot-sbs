@@ -21,6 +21,7 @@ import { ListenButton } from '@/components/voice-reader/VoiceReader';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatSuggestions, ChatTranscript, chatActionButtonClass } from '@/components/ui/ChatShell';
 import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
+import { addMessageDiagrams } from '@/lib/diagram-request';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { diagramContentForSpeech } from '@/lib/diagram-content';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
@@ -70,7 +71,7 @@ export default function BussolaPage() {
     const canWrite = !accessLoading && isToolAllowed(access, 'bussola');
     const [session, setSession] = useState<OrientationSession | null>(null);
     // Senza una sessione guidata il server non salva i diagrammi: restano qui finché la pagina è aperta.
-    const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
+    const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram[]>>({});
     const [responseFormat, setResponseFormat] = useResponseFormat(`compass:${session?.session_id ?? 'new'}`);
     const [latestSessionId, setLatestSessionId] = useState<string | null>(null);
     const [orientationRequired, setOrientationRequired] = useState(false);
@@ -330,7 +331,7 @@ export default function BussolaPage() {
                                                 sessionId=""
                                                 sourceText={message.content}
                                                 savedDiagrams={savedDiagrams}
-                                                onSaved={diagram => setSavedDiagrams(previous => ({ ...previous, [diagram.source_key]: diagram }))}
+                                                onSaved={diagram => setSavedDiagrams(previous => addMessageDiagrams(previous, [diagram]))}
                                                 disabled={sending}
                                                 renderTrigger={(toggleDiagram, diagramOpen) => <>
                                                     <Tooltip content={t('guided.diagram')}><Button type="button" variant="ghost" className={chatActionButtonClass} aria-label={t('guided.diagram')} disabled={sending} aria-expanded={diagramOpen} onClick={toggleDiagram}>

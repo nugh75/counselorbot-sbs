@@ -22,7 +22,7 @@ interface MessageDiagramButtonProps {
     submitLabel: string;
     sessionId: string;
     sourceText: string;
-    savedDiagrams: Record<string, SavedMessageDiagram>;
+    savedDiagrams: Record<string, SavedMessageDiagram[]>;
     onSaved: (diagram: SavedMessageDiagram) => void;
     disabled?: boolean;
     renderTrigger?: (toggle: () => void, open: boolean) => ReactNode;
@@ -36,10 +36,12 @@ type State = 'idle' | 'loading' | 'done' | 'failed';
  * Il bottone apre un campo: lo studente puo' dire che disegno vuole, o lasciarlo
  * vuoto e prendere il diagramma di cio' che il messaggio gia' dice. Il campo
  * resta aperto dopo il disegno e diventa una correzione: il testo dice cosa
- * cambiare nel disegno visibile; vuoto, il diagramma si rifa' da capo.
+ * cambiare nell'ultimo disegno; vuoto, il diagramma si rifa' da capo.
  *
- * Il disegno appartiene al messaggio da cui nasce: se la riga mostra un altro
- * messaggio (nuovo turno, risposta rigenerata) il disegno precedente sparisce.
+ * Ogni disegno riuscito si aggiunge sotto i precedenti dello stesso messaggio:
+ * nessun diagramma gia' fatto sparisce. I disegni appartengono al messaggio da
+ * cui nascono: se la riga mostra un altro messaggio (nuovo turno, risposta
+ * rigenerata) mostra i disegni di quello.
  *
  * Il server torna lo spec, non l'immagine, e il disegno finisce nella stessa
  * card degli altri: titolo, legenda, zoom, trascinamento, schermo intero.
@@ -61,7 +63,6 @@ export function MessageDiagramButton({
     const [open, setOpen] = useState(false);
     const [instruction, setInstruction] = useState('');
     const [status, setStatus] = useState<{ key: string; state: State }>({ key: '', state: 'idle' });
-    const [result, setResult] = useState<{ key: string; spec: DiagramSpec } | null>(null);
     const [error, setError] = useState('');
     const [sourceKey, setSourceKey] = useState('');
     useEffect(() => {
@@ -69,12 +70,11 @@ export function MessageDiagramButton({
         void messageDiagramKey(sourceText).then(key => { if (active) setSourceKey(key); });
         return () => { active = false; };
     }, [sourceText]);
-    const savedDiagram = savedDiagrams[sourceKey];
+    const diagrams = savedDiagrams[sourceKey] || [];
     const requestRef = useRef<AbortController | null>(null);
     useEffect(() => () => requestRef.current?.abort(), []);
-    const spec = result && result.key === sourceKey ? result.spec : null;
-    const visibleSpec = spec || savedDiagram?.spec;
-    const correcting = !!visibleSpec;
+    const latestSpec = diagrams.at(-1)?.spec;
+    const correcting = !!latestSpec;
     const state = status.key === sourceKey ? status.state : 'idle';
 
     const request = async () => {
@@ -98,7 +98,7 @@ export function MessageDiagramButton({
                     counselorId,
                     sessionId,
                     sourceText,
-                    visibleSpec,
+                    latestSpec,
                 )),
                 signal: controller.signal,
             });
@@ -107,7 +107,6 @@ export function MessageDiagramButton({
             }
             const parsed = parseDiagramSpec(await response.json());
             if (!parsed) throw new Error(diagramRequestLabel('unsuitable', locale));
-            setResult({ key, spec: parsed });
             onSaved({ source_text: sourceText.trim(), source_key: key, instruction, spec: parsed });
             setInstruction('');
             setState('done');
@@ -168,9 +167,9 @@ export function MessageDiagramButton({
                 <span>{error || failedLabel}</span>
                 <Tooltip content={diagramRequestLabel('retry', locale)}><button type="button" aria-label={diagramRequestLabel('retry', locale)} onClick={() => void request()} className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control text-ink-muted hover:bg-surface-raised"><RotateCcw className="h-4 w-4" aria-hidden="true" /></button></Tooltip>
             </div>}
-            {visibleSpec && (
+            {diagrams.length > 0 && (
                 <div className="min-w-0 w-full basis-full">
-                    <DiagramBlock spec={visibleSpec} locale={locale} />
+                    {diagrams.map((diagram, index) => <DiagramBlock key={index} spec={diagram.spec} locale={locale} />)}
                     <p className="text-2xs text-ink-muted" role="status">{diagramRequestLabel('saved', locale)}</p>
                 </div>
             )}
