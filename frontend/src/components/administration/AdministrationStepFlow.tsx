@@ -333,8 +333,8 @@ export function AdministrationStepFlow({
   // Le stesse credenziali che il sito chiede per compilare: codice e password.
   // La verifica resta locale e serve solo ad accettare i punteggi.
   const verificationFields = () => (
-    <div className="space-y-3">
-      <div className="grid gap-3 sm:grid-cols-2">
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm">
           {l("code")}
           <input
@@ -344,7 +344,7 @@ export function AdministrationStepFlow({
               setInstitutionCode(event.target.value);
               if (verifyError) setVerifyError(null);
             }}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full min-h-control rounded-control border border-line-strong px-4 py-2 text-sm"
           />
         </label>
         <label className="block text-sm">
@@ -357,7 +357,7 @@ export function AdministrationStepFlow({
               setPassword(event.target.value);
               if (verifyError) setVerifyError(null);
             }}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 w-full min-h-control rounded-control border border-line-strong px-4 py-2 text-sm"
           />
         </label>
       </div>
@@ -367,9 +367,9 @@ export function AdministrationStepFlow({
       >
         {l("verify")}
       </Button>
-      <p className="text-xs text-slate-500">{l("verifyNotice")}</p>
+      <p className="text-xs text-ink-muted">{l("verifyNotice")}</p>
       {verifyError && (
-        <p role="alert" className="text-sm font-medium text-red-700">
+        <p role="alert" className="text-sm font-semibold text-danger-ink">
           {verifyError}
         </p>
       )}
@@ -379,16 +379,16 @@ export function AdministrationStepFlow({
   if (completedResult) return <Card className="space-y-4 p-4">
     <h2 className="text-xl font-semibold">{pathActivityText(lang, 'saved')}</h2>
     <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">{Object.entries(completedResult.scores || {}).map(([code, value]) =>
-      <div key={code}><dt className="text-sm text-slate-600">{questionnaire?.factors.find(factor => factor.code === code)?.name || code}</dt><dd className="font-semibold">{value}</dd></div>)}</dl>
-    {nextHref && <Link className="inline-flex min-h-11 items-center rounded-md bg-indigo-600 px-4 font-semibold text-white" href={nextHref}>{pathActivityText(lang, 'next')}</Link>}
+      <div key={code}><dt className="text-sm text-ink-muted">{questionnaire?.factors.find(factor => factor.code === code)?.name || code}</dt><dd className="font-semibold">{value}</dd></div>)}</dl>
+    {nextHref && <Link className="inline-flex min-h-control items-center rounded-control bg-brand px-4 font-semibold text-ink-on-brand" href={nextHref}>{pathActivityText(lang, 'next')}</Link>}
   </Card>;
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">{l("administration")}</h1>
+      <h1 className="text-2xl font-semibold">{l("administration")}</h1>
       {localeUnavailable && (
         <Callout variant="danger">{l("localeUnavailable")}</Callout>
       )}
-      {launch && <p role="status" className="text-sm text-slate-600">{pathActivityText(lang, draftStatus)}</p>}
+      {launch && <p role="status" className="text-sm text-ink-muted">{pathActivityText(lang, draftStatus)}</p>}
       {error && !localeUnavailable && (
         <Callout variant="danger">
           {l("error")}{" "}
@@ -404,15 +404,15 @@ export function AdministrationStepFlow({
         <p>{l("loading")}</p>
       ) : launch.delivery_mode === "in_app" ? (
         <>
-          <Card className="space-y-3 p-4">
-            <p className="text-sm text-slate-600">
+          <Card className="space-y-4 p-4">
+            <p className="text-sm text-ink-muted">
               {questionnaire.name} · {launch.locale.toUpperCase()} ·{" "}
               {launch.institution.name}
             </p>
             <p>{l("inAppHint")}</p>
-            <p className="text-sm text-slate-600">{l("rule")}</p>
+            <p className="text-sm text-ink-muted">{l("rule")}</p>
             {grant ? (
-              <p role="status" className="text-sm text-green-700">
+              <p role="status" className="text-sm text-success-ink">
                 {l("verified")}
               </p>
             ) : (
@@ -433,7 +433,7 @@ export function AdministrationStepFlow({
             />
           )}
           {saved && (
-            <Card className="space-y-3 p-4">
+            <Card className="space-y-4 p-4">
               <p role="status">{l("resultSaved")}</p>
               <Button
                 disabled={busy || !grant}
@@ -441,7 +441,7 @@ export function AdministrationStepFlow({
               >
                 {pathActivityText(lang, "saveResults")}
               </Button>
-              {!grant && <p className="text-sm text-slate-600">{l("verifyHint")}</p>}
+              {!grant && <p className="text-sm text-ink-muted">{l("verifyHint")}</p>}
             </Card>
           )}
 
@@ -450,29 +450,29 @@ export function AdministrationStepFlow({
         <>
           <Card className="space-y-4 p-4">
             <div className="space-y-1">
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-ink-muted">
                 {questionnaire.name} · {launch.institution.name}
               </p>
               <h2 className="font-semibold">{l("compileTitle")}</h2>
             </div>
             <p>{l("loginHint")}</p>
-            <dl className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <dl className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-control border border-line bg-surface-sunken p-4">
+                <dt className="text-xs font-semibold text-ink-muted">
                   {l("code")}
                 </dt>
-                <dd className="mt-1 font-mono text-lg text-slate-900">
+                <dd className="mt-1 font-mono text-lg text-ink">
                   {launch.institution.institution_code}
                 </dd>
               </div>
-              <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <div className="rounded-control border border-line bg-surface-sunken p-4">
+                <dt className="text-xs font-semibold text-ink-muted">
                   {l("password")}
                 </dt>
-                <dd className="mt-1 text-sm text-slate-700">
+                <dd className="mt-1 text-sm text-ink-body">
                   {launch.institution.institution_password ? (
                     <span className="flex flex-wrap items-center gap-2">
-                      <span className="select-all whitespace-pre-wrap font-mono text-lg text-slate-900">
+                      <span className="select-all whitespace-pre-wrap font-mono text-lg text-ink">
                         {showPassword
                           ? launch.institution.institution_password
                           : "********"}
@@ -497,16 +497,16 @@ export function AdministrationStepFlow({
               href={launch.external_href ?? undefined}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center justify-center rounded-md border border-indigo-200 bg-white px-4 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
+              className="inline-flex min-h-control items-center justify-center rounded-control border border-brand-line bg-surface px-4 text-sm font-semibold text-link hover:bg-brand-soft"
             >
               {l("external")}
             </a>
-            <p className="text-sm text-slate-600">{l("rule")}</p>
+            <p className="text-sm text-ink-muted">{l("rule")}</p>
           </Card>
-          <Card className="space-y-3 p-4">
+          <Card className="space-y-4 p-4">
             <h2 className="font-semibold">{l("scoresTitle")}</h2>
             {grant ? (
-              <p role="status" className="text-sm text-green-700">
+              <p role="status" className="text-sm text-success-ink">
                 {l("verifiedScores")}
               </p>
             ) : (
