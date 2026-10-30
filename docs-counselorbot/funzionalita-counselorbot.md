@@ -1032,7 +1032,7 @@ registrazione del microfono o file audio: la trascrizione è da controllare, sal
 invio immediato scelto esplicitamente. In conversazione vocale si avvia e si ferma
 la registrazione; il microfono non riparte da solo. Il riconoscimento è sempre locale:
 l'amministratore sceglie il motore (faster-whisper, predefinito, oppure whisper.cpp,
-più leggero per CPU deboli) e il modello di quel motore nella scheda **Trascrizione audio**.
+più leggero per CPU deboli) e il modello di quel motore nella scheda **Trascrizione audio** del gruppo «Voce e audio».
 Con **Riconoscimento automatico** la lingua è scelta fra le sei supportate e,
 se il riconoscimento è incerto, si usa la lingua dell'interfaccia; il parlato
 viene sempre trascritto, mai tradotto.
