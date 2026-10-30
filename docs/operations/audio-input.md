@@ -188,12 +188,17 @@ I modelli sono inclusi nell'immagine: nessun volume né cache da creare.
 
 Con 3 GB usare **whisper.cpp `base` o `small`**, oppure **faster-whisper
 `small`**; non `large-v3` (~3,5 GB) e, con faster-whisper, nemmeno
-`large-v3-turbo` (~2 GB più `small` residente per la lingua). Attenzione:
-all'avvio il servizio precarica sempre `large-v3-turbo` e `small` di
-faster-whisper, quindi con il limite di 3 GB l'avvio è al margine della
-memoria; se il container viene terminato per memoria (`docker inspect
---format '{{.State.OOMKilled}}'`), alzare `mem_limit` o ridurre i modelli
-precaricati. Scegliere motore e modello dalla console di amministrazione.
+`large-v3-turbo` (~2 GB più `small` residente per la lingua).
+
+Il Compose portabile imposta `TRANSCRIPTION_PRELOAD_MODEL=small`: all'avvio
+resta in memoria solo `small` (~0,5-1 GB) più il rilevatore di lingua, che è
+lo stesso `small`. Senza la variabile il servizio precarica `large-v3-turbo`
+(valore predefinito, invariato in `docker-compose.yml`); `none` non precarica
+nulla oltre al rilevatore. Un modello caricato resta residente: su questo Mac
+in Amministrazione va scelto **whisper.cpp `base` o `small`** oppure
+**faster-whisper `small`**; scegliere `large-v3-turbo` o `large-v3` con
+faster-whisper lo carica e supera il limite di 3 GB (controllare
+`docker inspect --format '{{.State.OOMKilled}}'`).
 
 Ricostruzione dopo una modifica al servizio o al backend:
 
