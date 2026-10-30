@@ -37,7 +37,7 @@ export function PracticeNotebookPicker({ value, onChange, disabled = false }: Pr
     const missing = value !== null && !notebooks.some((notebook) => notebook.id === value);
 
     return (
-        <div data-practice-notebook-picker className="space-y-1 px-2 pb-1 text-xs text-slate-600">
+        <div data-practice-notebook-picker className="space-y-1 px-2 pb-1 text-xs text-ink-muted">
             {notebooks.length > 0 ? (
                 <label className="block space-y-1">
                     <span className="block">{t('notebookContext.practiceNotebook')}</span>
@@ -45,16 +45,16 @@ export function PracticeNotebookPicker({ value, onChange, disabled = false }: Pr
                         value={missing || value === null ? '' : String(value)}
                         onChange={(event) => onChange(event.target.value ? Number(event.target.value) : null)}
                         disabled={disabled}
-                        className="min-h-[44px] w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
+                        className="min-h-control w-full rounded-control border border-line-strong bg-surface px-2 py-1 text-xs text-ink-body"
                     >
                         {(missing || value === null) && <option value="">{t('notebookContext.practiceChoose')}</option>}
                         {notebooks.map((notebook) => <option key={notebook.id} value={notebook.id}>{notebook.title}</option>)}
                     </select>
                 </label>
             ) : <p>{t('notebookContext.practiceEmpty')}</p>}
-            {missing && <p role="status" className="text-amber-700">{t('notebookContext.practiceMissing')}</p>}
-            <p className="text-slate-500">{t('notebookContext.practiceHint')}</p>
-            <Link href="/docente/taccuini-prova" className="inline-block font-medium text-indigo-700 underline-offset-2 hover:underline">
+            {missing && <p role="status" className="text-warning-ink">{t('notebookContext.practiceMissing')}</p>}
+            <p className="text-ink-muted">{t('notebookContext.practiceHint')}</p>
+            <Link href="/docente/taccuini-prova" className="inline-flex min-h-control items-center font-semibold text-link underline-offset-2 hover:underline">
                 {t('notebookContext.practiceManage')}
             </Link>
         </div>

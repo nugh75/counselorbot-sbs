@@ -130,8 +130,8 @@ export function MessageDiagramButton({
                 aria-label={label}
                 aria-expanded={open}
                 className={cn(
-                    'inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-md transition-colors',
-                    open ? 'bg-slate-100 text-slate-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-600',
+                    'inline-flex h-control w-control shrink-0 items-center justify-center rounded-control transition-colors',
+                    open ? 'bg-surface-raised text-ink-body' : 'text-ink-muted hover:bg-surface-sunken hover:text-ink-body',
                 )}
             >
                 <GitBranch className="h-4 w-4" aria-hidden="true" />
@@ -142,7 +142,7 @@ export function MessageDiagramButton({
                         event.preventDefault();
                         void request();
                     }}
-                    className="flex min-w-0 w-full basis-full items-center gap-1.5 py-1"
+                    className="flex min-w-0 w-full basis-full items-center gap-2 py-1"
                 >
                     <input
                         type="text"
@@ -152,26 +152,26 @@ export function MessageDiagramButton({
                         aria-label={correcting ? diagramRequestLabel('correct', locale) : placeholder}
                         maxLength={400}
                         autoFocus
-                        className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17747a]"
+                        className="min-h-control min-w-0 flex-1 rounded-control border border-line-strong bg-surface px-4 py-2 text-xs text-ink-body placeholder:text-ink-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                     />
                     <Tooltip content={correcting ? diagramRequestLabel('correctSend', locale) : submitLabel}><button
                         type="submit"
                         disabled={state === 'loading' || disabled}
                         aria-label={correcting ? diagramRequestLabel('correctSend', locale) : submitLabel}
-                        className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-50 hover:text-[#17747a] disabled:opacity-50"
+                        className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control text-ink-muted transition-colors hover:bg-surface-sunken hover:text-link disabled:opacity-50"
                     >
                         {state === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </button></Tooltip>
                 </form>
             )}
-            {state === 'failed' && <div role="alert" className="flex w-full flex-wrap items-center gap-2 text-xs text-slate-600">
+            {state === 'failed' && <div role="alert" className="flex w-full flex-wrap items-center gap-2 text-xs text-ink-muted">
                 <span>{error || failedLabel}</span>
-                <Tooltip content={diagramRequestLabel('retry', locale)}><button type="button" aria-label={diagramRequestLabel('retry', locale)} onClick={() => void request()} className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><RotateCcw className="h-4 w-4" aria-hidden="true" /></button></Tooltip>
+                <Tooltip content={diagramRequestLabel('retry', locale)}><button type="button" aria-label={diagramRequestLabel('retry', locale)} onClick={() => void request()} className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control text-ink-muted hover:bg-surface-raised"><RotateCcw className="h-4 w-4" aria-hidden="true" /></button></Tooltip>
             </div>}
             {visibleSpec && (
                 <div className="min-w-0 w-full basis-full">
                     <DiagramBlock spec={visibleSpec} locale={locale} />
-                    <p className="text-2xs text-slate-500" role="status">{diagramRequestLabel('saved', locale)}</p>
+                    <p className="text-2xs text-ink-muted" role="status">{diagramRequestLabel('saved', locale)}</p>
                 </div>
             )}
         </>
