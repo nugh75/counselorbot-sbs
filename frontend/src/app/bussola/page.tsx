@@ -14,6 +14,9 @@ import { ChatMenuSection, ChatMenuSetting } from '@/components/ui/ChatOptionsMen
 import { GuideHelpLink } from '@/components/guide/GuideHelpLink';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
+import { Card } from '@/components/ui/Card';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatSuggestions, ChatTranscript, chatActionButtonClass } from '@/components/ui/ChatShell';
@@ -241,7 +244,7 @@ export default function BussolaPage() {
     // il taccuino: chi vedeva fallire un invio doveva scorrere per sapere perché.
     // Con la conversazione aperta va sotto il trascritto, accanto alla casella.
     const errorNote = error
-        ? <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</p>
+        ? <Callout variant="danger" icon={null}>{error}</Callout>
         : null;
 
     // Due soli stati per lo screen reader: l'attesa e la risposta arrivata.
@@ -267,51 +270,47 @@ export default function BussolaPage() {
 
     return (
         <div className="page-wide space-y-8">
-            <header className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-7 shadow-sm sm:px-8 sm:py-9">
-                <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full border border-indigo-100" aria-hidden="true" />
-                <div className="pointer-events-none absolute -right-5 top-8 h-28 w-28 rounded-full border border-ochre-100" aria-hidden="true" />
-                <div className="relative max-w-3xl">
-                    <div className="flex items-center gap-3">
-                        <Image src="/images/platform/bussola.png" alt="" width={48} height={48} priority className="h-12 w-12 shrink-0 object-contain" />
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ochre-600">{t('orientation.eyebrow')}</p>
-                            <h1 className="font-display text-3xl font-bold text-slate-900 sm:text-4xl">{t('orientation.title')}</h1>
-                        </div>
-                    </div>
-                    <p className="mt-5 text-base leading-relaxed text-slate-600 sm:text-lg">{t('orientation.subtitle')}</p>
+            <Card as="section" className="sm:p-8">
+                <div className="max-w-3xl space-y-2">
+                    <p className="text-xs font-semibold text-move">{t('orientation.eyebrow')}</p>
+                    <PageHeader
+                        title={t('orientation.title')}
+                        subtitle={t('orientation.subtitle')}
+                        icon={<Image src="/images/platform/bussola.png" alt="" width={48} height={48} priority className="h-12 w-12 shrink-0 object-contain" />}
+                    />
                 </div>
-            </header>
+            </Card>
 
             {loading ? (
-                <div className="flex justify-center py-12"><Loader2 className="h-7 w-7 animate-spin text-indigo-600" /></div>
+                <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-link" /></div>
             ) : atFork ? (
-                <section className="rounded-xl border border-indigo-200 bg-white p-5 shadow-sm sm:p-7">
+                <Card as="section" className="border-brand-line sm:p-8">
                     <div className="max-w-2xl">
-                        <h2 className="font-display text-2xl font-bold text-slate-900">{t('orientation.fork.title')}</h2>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-600">{t('orientation.fork.body')}</p>
+                        <h2 className="text-xl font-semibold text-ink">{t('orientation.fork.title')}</h2>
+                        <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t('orientation.fork.body')}</p>
                     </div>
-                    <div className="mt-6 flex flex-wrap gap-3">
+                    <div className="mt-6 flex flex-wrap gap-4">
                         <Button type="button" variant="accent" onClick={startConversation}>{t('orientation.landing.open')}</Button>
                         <Button type="button" variant="secondary" onClick={goToTools}>{t('orientation.landing.skip')}</Button>
 
                     </div>
-                </section>
+                </Card>
             ) : !session ? (
-                <section className="glass-panel flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3"><Compass className="h-6 w-6 text-indigo-600" /><p className="text-sm leading-relaxed text-slate-600">{t('orientation.subtitle')}</p></div>
+                <Card as="section" className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-4"><Compass className="h-6 w-6 text-link" /><p className="text-sm leading-relaxed text-ink-muted">{t('orientation.subtitle')}</p></div>
                     <div className="flex flex-wrap gap-2">
                         {latestSessionId && <Button type="button" variant="secondary" onClick={() => void openSession(latestSessionId)}>{t('orientation.landing.latest')}</Button>}
                         {canWrite && <Button type="button" variant="accent" onClick={() => void startConversation()}>{t('orientation.landing.new')}</Button>}
                         {orientationRequired && <Button type="button" variant="ghost" onClick={skipToTools}>{t('orientation.landing.skip')}</Button>}
                     </div>
-                </section>
+                </Card>
             ) : (
                 <>
-                    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <Card as="section" className="overflow-hidden p-0">
                         <ChatTranscript
                             announcement={liveAnnouncement}
                             aria-label={t('orientation.title')}
-                            className="max-h-chat space-y-4 overflow-y-auto px-4 py-5 sm:px-6"
+                            className="max-h-chat space-y-4 overflow-y-auto px-4 py-6 sm:px-6"
                         >
                             {session.messages.map((message, index) => (
                                 <ChatRow key={`${message.role}-${index}`} role={message.role === 'user' ? 'user' : 'assistant'}>
@@ -348,28 +347,28 @@ export default function BussolaPage() {
                             <div ref={endRef} />
                         </ChatTranscript>
                         {session.recommendations.length > 0 && (
-                            <div className="border-t border-slate-100 px-4 py-2 sm:px-6">
+                            <div className="border-t border-line px-4 py-2 sm:px-6">
                                 <button
                                     type="button"
                                     // Qui scrollare la pagina e' l'intento: il pannello sta sotto
                                     // la piega e senza questo non c'era nulla che lo indicasse.
                                     onClick={() => document.getElementById('orientation-recommendations')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 hover:underline"
+                                    className="inline-flex min-h-control items-center gap-2 text-sm font-semibold text-link hover:underline"
                                 >
                                     {t('orientation.recommendations.jump', { count: session.recommendations.length })}
                                     <ArrowDown className="h-4 w-4" />
                                 </button>
                             </div>
                         )}
-                        {errorNote && <div className="border-t border-slate-100 px-4 py-3 sm:px-6">{errorNote}</div>}
+                        {errorNote && <div className="border-t border-line px-4 py-4 sm:px-6">{errorNote}</div>}
                         {canWrite && session.status === 'in_progress' && (
-                            <form onSubmit={submitMessage} className="border-t border-slate-100 bg-slate-50/70 p-3 sm:p-4">
+                            <form onSubmit={submitMessage} className="border-t border-line bg-surface-sunken p-4">
                                 {!sending && <ChatSuggestions label={t('orientation.suggested.label')} items={[0, 1, 2, 3, 4].map(index => t(`orientation.suggested.${index}`))} composerId="bussola-composer" onInsert={setInput} />}
                                 <div className="flex items-end gap-2">
-                                    <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <div className="divide-y divide-slate-200">
+                                    <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <div className="divide-y divide-line">
                                         <ChatMenuSection title={chatLayoutLabel(lang, 'menuActions')}>
                                             <div ref={setVoiceOptionsContainer} />
-                                            {!voiceMode && <button type="button" disabled={sending || audioBusy} className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50" onClick={() => { close(); setVoiceMode(true); }}>
+                                            {!voiceMode && <button type="button" disabled={sending || audioBusy} className="flex min-h-control w-full items-center gap-2 rounded-control px-2 py-2 text-left text-sm hover:bg-surface-raised disabled:opacity-50" onClick={() => { close(); setVoiceMode(true); }}>
                                                 <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
                                             </button>}
                                             {!voiceMode && <AudioSendOption />}
@@ -394,7 +393,7 @@ export default function BussolaPage() {
                                 </div>
                             </form>
                         )}
-                    </section>
+                    </Card>
 
                     {session.recommendations.length > 0 && (
                         <div id="orientation-recommendations">
@@ -410,19 +409,19 @@ export default function BussolaPage() {
                         </div>
                     )}
                     {session.status === 'completed' && (
-                        <section className="glass-panel space-y-5 border-teal-200 p-5 sm:p-6">
-                            <div className="flex gap-3"><Sparkles className="mt-0.5 h-6 w-6 shrink-0 text-teal-600" /><div><h2 className="font-display text-xl font-bold text-slate-900">{t('orientation.completed.title')}</h2><p className="mt-1 text-sm leading-relaxed text-slate-600">{t('orientation.completed.body')}</p></div></div>
+                        <Card as="section" className="space-y-4 border-success-line">
+                            <div className="flex gap-4"><Sparkles className="h-6 w-6 shrink-0 text-success" /><div><h2 className="text-xl font-semibold text-ink">{t('orientation.completed.title')}</h2><p className="mt-1 text-sm leading-relaxed text-ink-muted">{t('orientation.completed.body')}</p></div></div>
                             {/* Concludere la Bussola non e' un vicolo cieco: la home con il
                                 catalogo c'e' sempre. `?next=` lo mette solo il cancello quando
                                 rimanda qui, e allora si puo' anche riprendere quella strada. */}
                             <div className="flex flex-wrap gap-2">
                                 <Button type="button" variant="accent" onClick={goToTools}>{t('orientation.completed.allTools')}<ArrowRight className="h-4 w-4" /></Button>
-                                {nextHref && <Link href={nextHref} className="inline-flex min-h-11 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm text-slate-700 transition-colors hover:bg-slate-50">{t('orientation.continue')}</Link>}
+                                {nextHref && <Link href={nextHref} className="inline-flex min-h-control items-center gap-2 rounded-control border border-line bg-surface px-4 text-sm font-semibold text-ink-body transition-colors hover:bg-surface-sunken">{t('orientation.continue')}</Link>}
                             </div>
-                            <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                                {canWrite && <Button type="button" variant="ghost" onClick={() => void startConversation()} className="ml-auto text-indigo-700 hover:bg-indigo-50">{t('orientation.landing.new')}</Button>}
+                            <div className="flex flex-wrap gap-2 border-t border-line pt-4">
+                                {canWrite && <Button type="button" variant="ghost" onClick={() => void startConversation()} className="ml-auto text-link hover:bg-brand-soft">{t('orientation.landing.new')}</Button>}
                             </div>
-                        </section>
+                        </Card>
                     )}
 
 
@@ -430,7 +429,7 @@ export default function BussolaPage() {
             )}
 
             {!session && errorNote}
-            {!accessLoading && !canWrite && <p className="text-sm text-slate-600" role="status">{t('session.disabledForClass')}</p>}
+            {!accessLoading && !canWrite && <p className="text-sm text-ink-muted" role="status">{t('session.disabledForClass')}</p>}
         </div>
     );
 }
@@ -442,20 +441,20 @@ function RecommendationSection({ session, onPick }: { session: OrientationSessio
     if (loading || recommendations.length === 0) return null;
     return (
         <section>
-            <h2 className="font-display text-2xl font-bold text-slate-900">{t('orientation.recommendations.title')}</h2>
-            <p className="mt-1 text-sm leading-relaxed text-slate-500">{t('orientation.recommendations.subtitle')}</p>
+            <h2 className="text-xl font-semibold text-ink">{t('orientation.recommendations.title')}</h2>
+            <p className="mt-1 text-sm leading-relaxed text-ink-muted">{t('orientation.recommendations.subtitle')}</p>
             <div className="mt-4 grid gap-4 lg:grid-cols-3">
                 {recommendations.map((item, index) => (
-                    <article key={item.id} className={`flex flex-col rounded-xl border bg-white p-5 shadow-sm ${index === 0 ? 'border-indigo-300 ring-1 ring-indigo-100' : 'border-slate-200'}`}>
-                        <div className="flex items-center justify-between gap-3"><span className="font-mono text-xs font-semibold text-ochre-600">{String(index + 1).padStart(2, '0')}</span>{index === 0 && <Compass className="h-5 w-5 text-indigo-600" />}</div>
-                        <h3 className="mt-3 text-lg font-bold text-slate-900">{toolName(item.id, t)}</h3>
-                        <p className="mt-1 text-sm leading-relaxed text-slate-500">{toolDescription(item.id, t)}</p>
-                        <p className="mt-4 grow text-sm leading-relaxed text-slate-700">{item.reason}</p>
+                    <Card as="article" key={item.id} className={`flex flex-col ${index === 0 ? 'border-brand-line' : ''}`}>
+                        <div className="flex items-center justify-between gap-4"><span className="text-xs font-semibold text-move">{String(index + 1).padStart(2, '0')}</span>{index === 0 && <Compass className="h-5 w-5 text-link" />}</div>
+                        <h3 className="mt-2 text-lg font-semibold text-ink">{toolName(item.id, t)}</h3>
+                        <p className="mt-1 text-sm leading-relaxed text-ink-muted">{toolDescription(item.id, t)}</p>
+                        <p className="mt-4 grow text-sm leading-relaxed text-ink-body">{item.reason}</p>
                         {/* La Bussola manda a `/?start=<id>`, che salta la card di scelta:
                             senza questo, il link al questionario non lo vede mai nessuno. */}
                         <QuestionnaireLink instrument={item.id} className="mt-4" />
-                        <Button type="button" onClick={() => onPick(item.id)} className="mt-5 justify-between">{t('orientation.recommendation.start')}<ArrowRight className="h-4 w-4" /></Button>
-                    </article>
+                        <Button type="button" onClick={() => onPick(item.id)} className="mt-6 justify-between">{t('orientation.recommendation.start')}<ArrowRight className="h-4 w-4" /></Button>
+                    </Card>
                 ))}
             </div>
         </section>
