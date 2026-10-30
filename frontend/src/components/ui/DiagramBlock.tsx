@@ -315,7 +315,7 @@ function DiagramView({ spec, locale, renderedSvg, imageUrl, onPickNode }: Diagra
                 </div>}
             </ChatActionsPopover>
             {full ? <Tooltip content={diagramFullscreenLabel('close', locale)}><button type="button" autoFocus className={controlClass} onClick={closeFullscreen} aria-label={diagramFullscreenLabel('close', locale)}><X className="h-5 w-5" /></button></Tooltip>
-                : <Tooltip content={diagramFullscreenLabel('open', locale)}><button type="button" ref={expandButton} disabled={!markup} className={controlClass} onClick={() => { setCardBodyHeight(cardBody.current?.getBoundingClientRect().height ?? 0); setIsFullscreen(true); }} aria-label={diagramFullscreenLabel('open', locale)}>
+                : <Tooltip content={diagramFullscreenLabel('open', locale)}><button type="button" ref={expandButton} data-diagram-expand disabled={!markup} className={controlClass} onClick={() => { setCardBodyHeight(cardBody.current?.getBoundingClientRect().height ?? 0); setIsFullscreen(true); }} aria-label={diagramFullscreenLabel('open', locale)}>
                     <Maximize2 className="h-5 w-5" aria-hidden="true" />
                 </button></Tooltip>}
         </div>

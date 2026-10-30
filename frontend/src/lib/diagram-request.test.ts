@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { addMessageDiagrams, buildDiagramFromMessageRequest } from './diagram-request.ts';
+import { addMessageDiagrams, buildDiagramFromMessageRequest, messageDiagramId, messageDiagramList } from './diagram-request.ts';
 
 test('an on-demand diagram request carries the counselor selected for the chat', () => {
     assert.deepEqual(
@@ -42,4 +42,18 @@ test('a new diagram joins the earlier ones of its message, other messages keep t
     const after = addMessageDiagrams(loaded, [second]);
     assert.deepEqual(after, { a: [first, second], b: [other] });
     assert.deepEqual(loaded, { a: [first], b: [other] });
+});
+
+test('the sidebar lists every diagram in drawing order with the id its message uses', () => {
+    const saved = [
+        { source_key: 'a', source_text: 'Prima risposta', spec: { title: 'Mappa iniziale' } },
+        { source_key: 'b', source_text: 'Seconda risposta\naltro', spec: { title: ' ' } },
+        { source_key: 'a', source_text: 'Prima risposta', spec: { title: 'Mappa corretta' } },
+    ];
+    assert.deepEqual(messageDiagramList(saved), [
+        { id: messageDiagramId('a', 0), title: 'Mappa iniziale' },
+        { id: messageDiagramId('b', 0), title: 'Seconda risposta' },
+        { id: messageDiagramId('a', 1), title: 'Mappa corretta' },
+    ]);
+    assert.notEqual(messageDiagramId('a', 0), messageDiagramId('a', 1));
 });
