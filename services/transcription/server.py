@@ -76,11 +76,17 @@ async def lifespan(app):
     yield
 
 
-def detect(samples: np.ndarray) -> str | None:
-    """Detection on the small model: on a large one it costs as much again as the
-    transcription itself, and an unsure guess is better left to the real model."""
-    language, probability, _ = load(DETECTOR).detect_language(audio=samples)
-    return language if probability >= DETECTION_CONFIDENCE else None
+def detect(samples: np.ndarray, fallback: str = 'auto') -> str | None:
+    """Detection on the small model, for every engine and model: on a large one it
+    costs as much again as the transcription itself. Only the supported languages
+    compete, and an unsure guess gives way to the fallback (the interface language),
+    so a short Italian clip is not transcribed as a neighbouring language."""
+    _, _, probabilities = load(DETECTOR).detect_language(audio=samples)
+    supported = [(code, p) for code, p in probabilities or [] if code in GLOSSARY and code != 'auto']
+    language, probability = max(supported, key=lambda item: item[1], default=(None, 0.0))
+    if probability >= DETECTION_CONFIDENCE:
+        return language
+    return None if fallback == 'auto' else fallback
 
 
 app = FastAPI(lifespan=lifespan)
@@ -159,7 +165,8 @@ def transcribe_cpp(samples: np.ndarray, language: str, model: str) -> tuple[str,
 
 @app.post('/transcribe')
 def transcribe(audio: UploadFile = File(...), language: Language = Form('auto'),
-               model: Annotated[Model, Form()] = DEFAULT_MODEL, engine: Annotated[Engine, Form()] = DEFAULT_ENGINE):
+               model: Annotated[Model, Form()] = DEFAULT_MODEL, engine: Annotated[Engine, Form()] = DEFAULT_ENGINE,
+               fallback_language: Annotated[Language, Form()] = 'auto'):
     if model not in ENGINES[engine]:
         raise HTTPException(422, 'unsupported_model')
     try:
@@ -175,16 +182,11 @@ def transcribe(audio: UploadFile = File(...), language: Language = Form('auto'),
     if not slot.acquire(timeout=QUEUE_WAIT):
         raise HTTPException(503, 'busy')
     try:
+        spoken = language if language != 'auto' else detect(samples, fallback_language)
         if engine == 'whisper.cpp':
-            text, spoken = transcribe_cpp(samples, language, model)
+            text, spoken = transcribe_cpp(samples, spoken or 'auto', model)
             return {'text': text, 'language': spoken, 'model': model, 'engine': engine,
                     'duration': round(len(samples) / SAMPLE_RATE, 2)}
-        if language != 'auto':
-            spoken = language
-        elif model == DETECTOR:
-            spoken = None
-        else:
-            spoken = detect(samples)
         segments, info = load(model).transcribe(
             samples, language=spoken, task='transcribe',
             beam_size=5, vad_filter=True, condition_on_previous_text=False,

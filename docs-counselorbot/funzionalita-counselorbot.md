@@ -1033,6 +1033,9 @@ invio immediato scelto esplicitamente. In conversazione vocale si avvia e si fer
 la registrazione; il microfono non riparte da solo. Il riconoscimento è sempre locale:
 l'amministratore sceglie il motore (faster-whisper, predefinito, oppure whisper.cpp,
 più leggero per CPU deboli) e il modello di quel motore nella scheda **Trascrizione audio**.
+Con **Riconoscimento automatico** la lingua è scelta fra le sei supportate e,
+se il riconoscimento è incerto, si usa la lingua dell'interfaccia; il parlato
+viene sempre trascritto, mai tradotto.
 
 Le conversazioni guidate con progressi si salvano dopo le risposte per essere
 riprese anche da un altro dispositivo. Congela sessione salva e chiude: si torna ad

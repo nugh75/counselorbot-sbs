@@ -64,8 +64,8 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
     const generation = useRef(0);
     const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
     const recorded = useRef<Blob | null>(null);
-    const latest = useRef({ value, onChange, onSend, autoSend, voiceMode, speechLanguage });
-    useLayoutEffect(() => { latest.current = { value, onChange, onSend, autoSend, voiceMode, speechLanguage }; }, [value, onChange, onSend, autoSend, voiceMode, speechLanguage]);
+    const latest = useRef({ value, onChange, onSend, autoSend, voiceMode, speechLanguage, lang });
+    useLayoutEffect(() => { latest.current = { value, onChange, onSend, autoSend, voiceMode, speechLanguage, lang }; }, [value, onChange, onSend, autoSend, voiceMode, speechLanguage, lang]);
     useEffect(() => { onBusyChange(stage !== 'idle' && stage !== 'reply'); }, [stage, onBusyChange]);
 
     const releaseMicrophone = useCallback(() => {
@@ -180,6 +180,7 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
         const form = new FormData();
         form.append('audio', blob, 'recording');
         form.append('language', latest.current.speechLanguage);
+        form.append('fallback_language', latest.current.lang);
         try {
             const response = await apiFetch('/api/audio/transcribe', { method: 'POST', body: form, signal: controller.signal });
             const result = await response.json();
