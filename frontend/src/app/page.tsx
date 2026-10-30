@@ -43,6 +43,8 @@ import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 import { practiceResultChatHref } from '@/lib/practice-notebooks';
 import { apiFetch, getIdentity, loginHref, type Identity } from '@/lib/auth';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, setActiveSessionCounselorId } from '@/lib/counselor';
+import type { ResponseLength } from '@/components/ui/ResponseLengthSelector';
+import type { ReasoningEffort } from '@/components/ui/ReasoningSelector';
 import { getInputMethodPref, getReasoningPref, getResponseLengthPref, setInputMethodPref, setReasoningPref, setResponseLengthPref } from '@/lib/session-prefs';
 import type { ResponseFormat } from '@/lib/chat-preferences';
 import { setSelectedInstrumentId } from '@/lib/instrument';
