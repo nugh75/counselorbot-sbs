@@ -22,7 +22,7 @@ import math
 import os
 import random
 import uuid
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import (
     APIRouter,
