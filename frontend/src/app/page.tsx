@@ -24,10 +24,11 @@ import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
 import { ChatViewport } from '@/components/qsa/ChatViewport';
 import { cn } from '@/lib/utils';
 import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
+import { FreeChatInterface } from '@/components/qsa/FreeChatInterface';
 import { ChatSettingsCard } from '@/components/qsa/ChatSettingsCard';
 import { SessionReport } from '@/components/qsa/SessionReport';
 import { ReturningHome } from '@/components/home/ReturningHome';
-import { LogIn } from 'lucide-react';
+import { MessageSquare, MessagesSquare, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { FlowStepper } from '@/components/ui/FlowStepper';
@@ -43,9 +44,7 @@ import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 import { practiceResultChatHref } from '@/lib/practice-notebooks';
 import { apiFetch, getIdentity, loginHref, type Identity } from '@/lib/auth';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, setActiveSessionCounselorId } from '@/lib/counselor';
-import type { ResponseLength } from '@/components/ui/ResponseLengthSelector';
-import type { ReasoningEffort } from '@/components/ui/ReasoningSelector';
-import { getInputMethodPref, getReasoningPref, getResponseLengthPref, setInputMethodPref, setReasoningPref, setResponseLengthPref } from '@/lib/session-prefs';
+import { experiencePrefForInstrument, getExperiencePref, getInputMethodPref, getReasoningPref, getResponseLengthPref, setExperiencePref, setInputMethodPref, setReasoningPref, setResponseLengthPref } from '@/lib/session-prefs';
 import type { ResponseFormat } from '@/lib/chat-preferences';
 import { setSelectedInstrumentId } from '@/lib/instrument';
 import { getResume, setResume } from '@/lib/resume';
@@ -53,6 +52,8 @@ import { deleteFrozenSession, getFrozenSession, FrozenSessionAccessError, type F
 import { fetchUserAccess, isToolAllowed, resumeCounselor } from '@/lib/user-access';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
+import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
+import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
 import { fetchAccountPreferences, saveAccountPreferences } from '@/lib/account-preferences';
 import { isStartableQuestionnaireId } from '@/lib/tool-catalog';
 import { enterStep, startTrail, stepAtDepth, type Trail } from '@/lib/flow-history';
@@ -87,6 +88,10 @@ function generateUUID() {
     });
 }
 
+// Gli snapshot salvati prima della rimozione del workspace OpenCode portano
+// 'opencode': oggi è la chat libera.
+const freeExperience = (value: string | null | undefined) => value === 'free' || value === 'opencode';
+
 export default function Home() {
     const { t, lang } = useI18n();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
@@ -113,6 +118,8 @@ export default function Home() {
     // finiscono nel repertorio del taccuino, mai tra le Compilazioni.
     const [scoreOrigin, setScoreOrigin] = useState<'new' | 'own' | 'practice'>('new');
     const [sessionId, setSessionId] = useState<string>('');
+    const [experience, setExperience] = useState<'standard' | 'free' | null>(null);
+    const [rememberExperience, setRememberExperience] = useState(() => getExperiencePref() !== null);
     const [responseLength, setResponseLength] = useState<ResponseLength>(() => getResponseLengthPref());
     const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(() => getReasoningPref());
     // Formato delle risposte: scelto nella pagina Impostazioni e consegnato
@@ -248,6 +255,7 @@ export default function Home() {
             setScores(null);
             setScoreOrigin('new');
             setSessionId('');
+            setExperience(null);
             setStep(target);
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
         };
@@ -319,14 +327,19 @@ export default function Home() {
         setReady(true);
     }, [ready, identity, savedResults, notebookUpdatedAt, studentPaths]);
 
-    // Apre direttamente la chat guidata.
+    // Apre la chat con la modalità già scelta in passato; Idea fa eccezione,
+    // perché mappa grafica e chat libera devono restare una scelta esplicita.
     const beginInteraction = useCallback((sid: string, instrument: string) => {
         if (practiceProfileEntry.current !== null) {
             storePracticeNotebookId(practiceProfileEntry.current);
             storeNotebookContext('practice');
         }
         setSessionCounselorId(getSelectedCounselorId());
-        setResume({ instrument, sessionId: sid, experience: 'standard', counselorId: getSelectedCounselorId() });
+        const pref = practiceProfileEntry.current ? 'standard' : experiencePrefForInstrument(instrument, getExperiencePref());
+        // Se la preferenza non è memorizzata resta la scelta fatta nella scheda
+        // Impostazioni; null solo se nessuna delle due parla (retrocompatibilità).
+        setExperience((current) => pref ?? current);
+        if (pref) setResume({ instrument, sessionId: sid, experience: pref, counselorId: getSelectedCounselorId() });
         setStep('interaction');
     }, []);
 
@@ -454,6 +467,9 @@ export default function Home() {
                     if (counselor.id != null) setSelectedCounselorId(counselor.id);
                     setSessionId(snapshot.session_id);
                     setScores(snapshot.scores || {});
+                    // La chat libera si congela come la guidata: riaprirla
+                    // in modalità guidata mostrerebbe un percorso che non è il suo.
+                    setExperience(freeExperience(snapshot.experience) ? 'free' : 'standard');
                     if (snapshot.response_length) setResponseLength(snapshot.response_length);
                     if (snapshot.reasoning_effort) setReasoningEffort(snapshot.reasoning_effort);
                     setFrozenSnapshot(snapshot);
@@ -514,12 +530,14 @@ export default function Home() {
                         if (counselor.id != null) setSelectedCounselorId(counselor.id);
                         setSessionId(r.sessionId);
                         setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
+                        setExperience(freeExperience(r.experience) ? 'free' : 'standard');
                         // Prefer the owned server snapshot: it retains the essential path and format.
                         try {
                             const snapshot = await getFrozenSession(r.sessionId);
                             if (snapshot) {
                                 setFrozenSnapshot(snapshot);
                                 setScores(snapshot.scores || {});
+                                setExperience(freeExperience(snapshot.experience) ? 'free' : 'standard');
                                 if (snapshot.response_length) setResponseLength(snapshot.response_length);
                                 if (snapshot.reasoning_effort) setReasoningEffort(snapshot.reasoning_effort);
                             }
@@ -560,6 +578,7 @@ export default function Home() {
             setScores(null);
             setScoreOrigin('new');
             setSessionId('');
+            setExperience(null);
             setStep(view === 'intro' ? 'intro' : 'base');
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
             claimEntry();
@@ -592,6 +611,7 @@ export default function Home() {
                     setSelectedInstrumentId(questionnaire.id);
                     setSessionId(resumeSession);
                     setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
+                    setExperience(null);
                     void prepareInstrument(questionnaire, profile?.scores ?? {}, resumeSession);
                     claimEntry();
                 } else {
@@ -682,6 +702,7 @@ export default function Home() {
             setScores(practiceScores);
             setScoreOrigin(practiceScores ? 'practice' : 'new');
             setSessionId('');
+            setExperience(practiceScores ? 'standard' : null);
             void prepareInstrument(questionnaire, practiceScores);
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
             claimEntry();
@@ -700,6 +721,7 @@ export default function Home() {
         setScores(null);
         setScoreOrigin('new');
         setSessionId('');
+        setExperience(null);
         void prepareInstrument(questionnaire, null);
     };
 
@@ -833,17 +855,30 @@ export default function Home() {
     };
 
     // Spazio di ragionamento: stessa logica della lunghezza. Vale per la chat
-    // guidata.
+    // guidata e per la chat libera.
     const handleReasoningChange = (value: ReasoningEffort) => {
         setReasoningEffort(value);
         setReasoningPref(value);
     };
 
-    // Avvio dalla scheda Impostazioni: registra il punto di ripresa (header
-    // "Riprendi") e apre la chat guidata.
-    const handleStartInteraction = () => {
+    // Scelta modalità chat: registra la preferenza, ricorda se richiesto e
+    // registra il punto di ripresa (header "Riprendi"). La scheda Impostazioni
+    // chiama questa prima di avviare, così la scelta fatta lì vale come qui.
+    const chooseExperience = (exp: 'standard' | 'free') => {
+        setExperience(exp);
+        if (selectedQuestionnaire?.id !== 'IDEA') setExperiencePref(rememberExperience ? exp : null);
         if (selectedQuestionnaire) {
-            setResume({ instrument: selectedQuestionnaire.id, sessionId, experience: 'standard', counselorId: sessionCounselorId });
+            setResume({ instrument: selectedQuestionnaire.id, sessionId, experience: exp, counselorId: sessionCounselorId });
+        }
+    };
+
+    // Avvio dalla scheda Impostazioni: la scelta della modalità (se la sezione
+    // era visibile, cioè la preferenza non era già memorizzata) passa dalla
+    // stessa funzione della vecchia schermata dedicata; il guard evita che una
+    // modalità in memoria da una sessione precedente sovrascriva la preferenza.
+    const handleStartInteraction = () => {
+        if (experience && selectedQuestionnaire && experiencePrefForInstrument(selectedQuestionnaire.id, getExperiencePref()) === null) {
+            chooseExperience(experience);
         }
         startInteraction();
     };
@@ -862,6 +897,7 @@ export default function Home() {
         setScores(null);
         setScoreOrigin('new');
         setSelectedQuestionnaire(null);
+        setExperience(null);
         setStep(homeStep());
     };
 
@@ -1042,8 +1078,8 @@ export default function Home() {
                     )}
 
                     {/* Step: Impostazioni conversazione. Una pagina sola, prima di
-                        entrare in chat (la chat guidata, che ammette anche domande
-                        libere). Chi riprende
+                        entrare in chat: include la scelta della modalità (guidata
+                        vs chat libera), prima in una schermata a parte. Chi riprende
                         una sessione congelata la salta, perché la sua conversazione
                         ha già le sue regole. */}
                     {step === 'chat-settings' && scores && selectedQuestionnaire && (
@@ -1059,36 +1095,104 @@ export default function Home() {
                             onReasoningChange={handleReasoningChange}
                             onBack={goBack}
                             onStart={handleStartInteraction}
+                            showModeChoice={!practiceProfileEntry.current && experiencePrefForInstrument(selectedQuestionnaire.id, getExperiencePref()) === null}
+                            experience={experience}
+                            onExperienceChange={setExperience}
+                            rememberExperience={rememberExperience}
+                            onRememberChange={selectedQuestionnaire.id !== 'IDEA' ? setRememberExperience : undefined}
                         />
                     )}
 
                     {/* Step: Guided Chat Interaction */}
                     {step === 'interaction' && scores && selectedQuestionnaire && (
                         <div className="space-y-4">
-                            <ChatViewport>
-                            <GuidedChatInterface
-                                counselorId={sessionCounselorId}
-                                onBack={goBack}
-                                scores={scores}
-                                questionnaireType={selectedQuestionnaire.id}
-                                onComplete={handleInteractionComplete}
-                                sessionId={sessionId}
-                                locale={lang}
-                                frozenSnapshot={frozenSnapshot}
-                                planOrigin={planOrigin}
-                                initialResponseLength={responseLength}
-                                initialReasoningEffort={reasoningEffort}
-                                initialResponseFormat={responseFormat}
-                                reasoningCapable={reasoningCapable}
-                                reasoningMandatory={reasoningMandatory}
-                                onFrozen={() => {
-                                    setPausedChat({ sessionId, questionnaireId: selectedQuestionnaire.id });
-                                    setResume(null);
-                                    setFrozenSnapshot(null);
-                                    setStep('base');
-                                }}
-                            />
-                            </ChatViewport>
+                            {experience !== 'standard' && <BackButton onClick={goBack} label={t('nav.back')} />}
+                            {experience === null ? (
+                                /* Solo per gli strumenti agent-only (SAVICKAS, Eventi,
+                                    Obiettivi): entrano in interazione senza passare dalla
+                                    scheda Impostazioni, quindi mantengono la scelta compatta.
+                                    La logica è la stessa chooseExperience del flusso standard. */
+                                <div className="max-w-md mx-auto">
+                                    <Card className="p-6 text-center space-y-4">
+                                        <div>
+                                            <h3 className="text-base font-semibold text-ink">{t('experience.choose.title')}</h3>
+                                            <p className="text-sm text-ink-muted mt-1">{t('experience.choose.sub')}</p>
+                                        </div>
+                                        {selectedQuestionnaire.id !== 'IDEA' && <label className="flex min-h-control items-center gap-4 text-left text-sm text-ink-muted">
+                                            <input type="checkbox" checked={rememberExperience} onChange={event => setRememberExperience(event.target.checked)} className="h-4 w-4 accent-brand" />
+                                            {t('experience.remember')}
+                                        </label>}
+                                        <div className="grid sm:grid-cols-2 gap-2">
+                                            <Button onClick={() => chooseExperience('standard')} className="w-full">
+                                                <MessageSquare className="w-4 h-4" />
+                                                {t('guided.mode.guided')}
+                                            </Button>
+                                            <Button variant="secondary" onClick={() => chooseExperience('free')} className="w-full">
+                                                <MessagesSquare className="w-4 h-4" />
+                                                {t('guided.mode.sandbox')}
+                                            </Button>
+                                        </div>
+                                        <div className="mt-4 flex flex-col items-center gap-2">
+                                            <p className="text-xs font-semibold text-ink-muted">{t('responseLength.label')}</p>
+                                            <ResponseLengthSelector value={responseLength} onChange={handleResponseLengthChange} />
+                                            {reasoningCapable && <>
+                                                <p className="mt-2 text-xs font-semibold text-ink-muted">{t('reasoning.label')}</p>
+                                                <ReasoningSelector value={reasoningEffort} onChange={handleReasoningChange} mandatory={reasoningMandatory} />
+                                                {reasoningMandatory && <p className="max-w-xs rounded-control border border-warning-line bg-warning-soft px-2 py-2 text-center text-xs text-warning-ink">{t('reasoning.mandatory')}</p>}
+                                            </>}
+                                        </div>
+                                    </Card>
+                                </div>
+                            ) : experience === 'standard' ? (
+                                /* Schermata 3: chat (modalità già scelta, nessun toggle in alto). */
+                                <ChatViewport>
+                                <GuidedChatInterface
+                                    counselorId={sessionCounselorId}
+                                    onBack={goBack}
+                                    scores={scores}
+                                    questionnaireType={selectedQuestionnaire.id}
+                                    onComplete={handleInteractionComplete}
+                                    sessionId={sessionId}
+                                    locale={lang}
+                                    frozenSnapshot={frozenSnapshot}
+                                    planOrigin={planOrigin}
+                                    initialResponseLength={responseLength}
+                                    initialReasoningEffort={reasoningEffort}
+                                    initialResponseFormat={responseFormat}
+                                    reasoningCapable={reasoningCapable}
+                                    reasoningMandatory={reasoningMandatory}
+                                    onFrozen={() => {
+                                        setPausedChat({ sessionId, questionnaireId: selectedQuestionnaire.id });
+                                        setResume(null);
+                                        setFrozenSnapshot(null);
+                                        setStep('base');
+                                    }}
+                                />
+                                </ChatViewport>
+                            ) : (
+                                <ChatViewport>
+                                <FreeChatInterface
+                                    counselorId={sessionCounselorId}
+                                    scores={scores}
+                                    questionnaireType={selectedQuestionnaire.id}
+                                    sessionId={sessionId}
+                                    locale={lang}
+                                    onComplete={handleInteractionComplete}
+                                    frozenSnapshot={frozenSnapshot}
+                                    initialResponseLength={responseLength}
+                                    initialReasoningEffort={reasoningEffort}
+                                    initialResponseFormat={responseFormat}
+                                    reasoningCapable={reasoningCapable}
+                                    reasoningMandatory={reasoningMandatory}
+                                    onFrozen={() => {
+                                        setPausedChat({ sessionId, questionnaireId: selectedQuestionnaire.id });
+                                        setResume(null);
+                                        setFrozenSnapshot(null);
+                                        setStep('base');
+                                    }}
+                                />
+                                </ChatViewport>
+                            )}
                         </div>
                     )}
 

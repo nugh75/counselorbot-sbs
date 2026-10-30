@@ -125,15 +125,18 @@ test('QSAr keeps its original path and receives the format choice', async () => 
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }
 });
-test('free questions go through the standard chat: a legacy OpenCode resume point opens the guided chat', async () => {
+test('free chat opens without steps and talks to the standard stream, also from a legacy OpenCode resume point', async () => {
     const { context, page, state } = await fixture(390, 'QSA', 'opencode');
     try {
-        await page.goto(`${origin}/?resume=1`); await page.locator('#guided-composer').waitFor();
+        await page.goto(`${origin}/?resume=1`); await page.locator('#free-composer').waitFor();
+        assert.equal(await page.locator('#guided-composer').count(), 0);
         assert.equal(await page.locator('#opencode-composer').count(), 0);
-        await page.locator('#guided-composer').fill('Aiutami a riflettere'); await page.locator('#guided-composer').press('Enter');
+        await page.locator('#free-composer').fill('Aiutami a riflettere'); await page.locator('#free-composer').press('Enter');
         await page.getByRole('log').getByText(/^Risposta 1:/).waitFor();
         assert.equal(state.streams.length, 1);
         assert.equal(state.streams[0].message, 'Aiutami a riflettere');
+        assert.equal(state.streams[0].phase, undefined);
+        assert.match(state.streams[0].scores_context, /C1/);
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }
 });

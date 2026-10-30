@@ -161,12 +161,12 @@ test('personal pages fetch conversation and summary only in compilations', async
     } finally { await context.close(); }
 });
 
-for (const surface of ['site', 'guided']) {
+for (const surface of ['site', 'guided', 'free']) {
     test(`${surface} chat preserves the partial answer across retry failure`, async () => {
-        const { page, context, control } = await fixture(390);
+        const { page, context, control } = await fixture(390, { experience: surface === 'free' ? 'free' : 'standard' });
         try {
             await page.goto(`${origin}${surface === 'site' ? '/assistente' : '/?frozen=recovery'}`, { waitUntil: 'networkidle' });
-            const input = surface === 'site' ? page.locator('textarea').first() : page.locator('#guided-composer');
+            const input = surface === 'site' ? page.locator('textarea').first() : page.locator(surface === 'free' ? '#free-composer' : '#guided-composer');
             await input.fill('Come posso studiare?');
             await input.press('Enter');
             await page.getByText('Studia e verifica.', { exact: true }).last().waitFor();

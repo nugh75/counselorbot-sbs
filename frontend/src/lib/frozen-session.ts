@@ -26,7 +26,9 @@ export interface FrozenSessionSummary {
     questionnaire_type: string;
     label?: string | null;
     current_phase: string;
-    experience?: 'standard' | null;
+    // 'opencode' è il valore degli snapshot salvati prima della rimozione del
+    // workspace: si legge come 'free'.
+    experience?: 'standard' | 'free' | 'opencode' | null;
     updated_at?: string | null;
     // Solo in prova: il taccuino dello studente simulato (area docente).
     practice_notebook_id?: number | null;
@@ -58,7 +60,7 @@ export interface FrozenSessionSnapshot {
     current_phase: string;
     scores: Record<string, number>;
     counselor_id: number | null;
-    experience: 'standard';
+    experience: 'standard' | 'free';
     locale: string;
     response_format?: ResponseFormat;
     guided_path?: GuidedPath;

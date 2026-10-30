@@ -53,8 +53,8 @@ test('the signature changes only when something freezable changes', () => {
     );
 });
 
-test('the guided chat saves on a turn and flushes when the student leaves', () => {
-    for (const file of ['GuidedChatInterface']) {
+test('both chat modes save on a turn and flush when the student leaves', () => {
+    for (const file of ['GuidedChatInterface', 'FreeChatInterface']) {
         const source = readFileSync(
             new URL(`../components/qsa/${file}.tsx`, import.meta.url),
             'utf8',
