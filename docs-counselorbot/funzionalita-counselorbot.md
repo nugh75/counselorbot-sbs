@@ -524,16 +524,20 @@ revisione delle attività dei piani); il workspace OpenCode è stato eliminato
 invece di essere allineato. Il dettaglio
 e l’ordine degli interventi sono in `docs/audits/2026-10-29-chat-ux-remaining-surfaces.md`.
 
-**Chat libera senza OpenCode (#676).** Dopo il profilo non si sceglie più tra
-percorso guidato e «chat libera con AI»: ogni strumento apre la chat guidata, che
-usa i modelli e i fornitori configurati dall’amministrazione (stesso percorso
-della chat standard) e consente anche domande libere sul profilo. Non esistono
-più il workspace OpenCode, il terminale di ripiego, la visualizzazione affiancata
-del PDF e i file di lavoro (`documento.md`, `memoria.md`, `appunti.md`); il PDF
-caricato serve solo a estrarre i punteggi e non ne viene conservata una copia.
-Le sessioni salvate come OpenCode si riaprono come chat guidata. Tra le domande
-suggerite dell’Assistente quella sull’esperienza OpenCode è sostituita da una sul
-formato delle risposte della chat.
+**Chat libera senza OpenCode (#676).** Dopo il profilo si sceglie ancora tra
+«Chat Guidata» e «Chat libera con AI» (con «Ricorda questa modalità»). La chat
+libera è una conversazione aperta sul profilo, senza passi né fasi: usa lo stesso
+percorso `/chat/stream` della chat guidata, con i modelli e i fornitori
+configurati dall’amministrazione (anche con l’abbonamento ChatGPT personale), gli
+stessi elementi di chat (bolle, menu Opzioni con formato, lunghezza e ragionamento,
+voce, diagrammi, salvataggio automatico e «Riprendi») e il profilo con i punteggi
+nel contesto di ogni turno. Non esistono più il workspace OpenCode, il terminale
+di ripiego, la visualizzazione affiancata del PDF e i file di lavoro
+(`documento.md`, `memoria.md`, `appunti.md`); il PDF caricato serve solo a
+estrarre i punteggi e non ne viene conservata una copia. Le sessioni salvate con
+OpenCode si riaprono come chat libera. Nella chat libera non c’è il pannello dei
+consigli di lettura e strategie. Tra le domande suggerite dell’Assistente quella
+sull’esperienza OpenCode è sostituita da una sul formato delle risposte della chat.
 
 Le pagine `/bussola` e `/assistente`, con il selettore del taccuino nel contesto,
 il taccuino di prova, il richiamo all’abbonamento ChatGPT e il campo del
