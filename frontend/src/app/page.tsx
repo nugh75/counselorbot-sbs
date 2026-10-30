@@ -51,8 +51,6 @@ import { deleteFrozenSession, getFrozenSession, FrozenSessionAccessError, type F
 import { fetchUserAccess, isToolAllowed, resumeCounselor } from '@/lib/user-access';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
-import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
-import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
 import { fetchAccountPreferences, saveAccountPreferences } from '@/lib/account-preferences';
 import { isStartableQuestionnaireId } from '@/lib/tool-catalog';
 import { enterStep, startTrail, stepAtDepth, type Trail } from '@/lib/flow-history';
