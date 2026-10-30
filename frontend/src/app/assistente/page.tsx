@@ -23,6 +23,8 @@ import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatSug
 import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
@@ -37,12 +39,12 @@ import { diagramContentForSpeech } from '@/lib/diagram-content';
 // in chat usano ChatMarkdown.
 const mdComponents: Components = {
     table: (props) => (
-        <div className="overflow-x-auto my-3">
+        <div className="overflow-x-auto my-4">
             <table {...props} className="w-full border-collapse text-xs" />
         </div>
     ),
-    th: (props) => <th {...props} className="border border-slate-300 bg-slate-50 px-2 py-1 text-left font-semibold" />,
-    td: (props) => <td {...props} className="border border-slate-200 px-2 py-1 align-top" />,
+    th: (props) => <th {...props} className="border border-line-strong bg-surface-sunken px-2 py-1 text-left font-semibold" />,
+    td: (props) => <td {...props} className="border border-line px-2 py-1 align-top" />,
 };
 
 type Audience = 'studente' | 'docente';
@@ -392,7 +394,7 @@ export default function AssistentePage() {
     if (identity === undefined || accessLoading) {
         return (
             <div className="page-narrow">
-                <div className="glass-panel p-8 text-center text-sm text-slate-500">{t('assistant.loadingAccess')}</div>
+                <Card className="p-8 text-center text-sm text-ink-muted">{t('assistant.loadingAccess')}</Card>
             </div>
         );
     }
@@ -400,17 +402,17 @@ export default function AssistentePage() {
     if (!identity?.authenticated) {
         return (
             <div className="page-narrow">
-                <div className="glass-panel p-8 text-center space-y-5">
-                    <ShieldAlert className="mx-auto h-10 w-10 text-indigo-600" />
+                <Card className="p-8 text-center space-y-4">
+                    <ShieldAlert className="mx-auto h-10 w-10 text-link" />
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">{t('assistant.authTitle')}</h1>
-                        <p className="mt-2 text-sm text-slate-600">{t('assistant.authBody')}</p>
+                        <h1 className="text-2xl font-semibold text-ink">{t('assistant.authTitle')}</h1>
+                        <p className="mt-2 text-sm text-ink-muted">{t('assistant.authBody')}</p>
                     </div>
-                    <a href={loginHref('/assistente')} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700">
+                    <a href={loginHref('/assistente')} className="inline-flex min-h-control items-center gap-2 rounded-control bg-brand px-6 py-2 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover">
                         <LogIn className="h-4 w-4" />
                         {t('assistant.authLogin')}
                     </a>
-                </div>
+                </Card>
             </div>
         );
     }
@@ -418,11 +420,11 @@ export default function AssistentePage() {
     if (!canUseAssistant(identity) || !isToolAllowed(access, 'assistant')) {
         return (
             <div className="page-narrow">
-                <div className="glass-panel p-8 text-center space-y-4">
-                    <ShieldAlert className="mx-auto h-10 w-10 text-amber-600" />
-                    <h1 className="text-2xl font-bold text-slate-900">{t('assistant.deniedTitle')}</h1>
-                    <p className="text-sm text-slate-600">{t(!canUseAssistant(identity) ? 'assistant.deniedBody' : 'detail.disabledForClass.body')}</p>
-                </div>
+                <Card className="p-8 text-center space-y-4">
+                    <ShieldAlert className="mx-auto h-10 w-10 text-warning" />
+                    <h1 className="text-2xl font-semibold text-ink">{t('assistant.deniedTitle')}</h1>
+                    <p className="text-sm text-ink-muted">{t(!canUseAssistant(identity) ? 'assistant.deniedBody' : 'detail.disabledForClass.body')}</p>
+                </Card>
             </div>
         );
     }
@@ -449,13 +451,13 @@ export default function AssistentePage() {
                 {sidebarOpen && (
                 <div id="assistente-sidebar" className="w-full lg:w-96 shrink-0 flex flex-col gap-4 lg:overflow-y-auto lg:pr-1">
                     {viewAs && (
-                        <div className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 ${
+                        <div className={`flex items-center gap-2 rounded-control border px-4 py-2 ${
                             audience === 'studente'
-                                ? 'border-indigo-200 bg-indigo-50 text-indigo-600'
-                                : 'border-emerald-200 bg-emerald-50 text-emerald-600'
+                                ? 'border-brand-line bg-brand-soft text-link'
+                                : 'border-success-line bg-success-soft text-success-ink'
                         }`}>
-                            <Eye className="h-3.5 w-3.5 shrink-0" />
-                            <span className="text-xs font-medium">{viewAs.name}</span>
+                            <Eye className="h-4 w-4 shrink-0" />
+                            <span className="text-xs font-semibold">{viewAs.name}</span>
                         </div>
                     )}
 
@@ -463,10 +465,10 @@ export default function AssistentePage() {
                         Più leggibile della griglia 2×2: una sola scelta evidente,
                         tutte le collezioni (builtin + dinamiche) in colonna. */}
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
+                        <p className="text-xs font-semibold text-ink-muted mb-2">
                             {t('assistant.collection.label')}
                         </p>
-                        <div role="radiogroup" aria-label={t('assistant.collection.label')} className="flex flex-col gap-0.5">
+                        <div role="radiogroup" aria-label={t('assistant.collection.label')} className="flex flex-col gap-1">
                             {availableCollections.map((c) => {
                                 const active = collection === c.id;
                                 return (
@@ -476,16 +478,16 @@ export default function AssistentePage() {
                                         role="radio"
                                         aria-checked={active}
                                         onClick={() => chooseCollection(c.id)}
-                                        className={`flex min-h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium transition-colors ${
+                                        className={`flex min-h-control items-center gap-2 rounded-control px-2 text-sm transition-colors ${
                                             active
-                                                ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200'
-                                                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                                ? 'bg-brand-soft font-semibold text-link ring-1 ring-brand-line'
+                                                : 'text-ink-muted hover:bg-surface-raised hover:text-ink'
                                         }`}
                                     >
                                         <span
                                             aria-hidden="true"
                                             className={`h-2.5 w-2.5 shrink-0 rounded-full border-2 transition-colors ${
-                                                active ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300 bg-white'
+                                                active ? 'border-brand bg-brand' : 'border-line-strong bg-surface'
                                             }`}
                                         />
                                         <span className="truncate">{c.builtin ? t(`assistant.collection.${c.id}`) : c.label}</span>
@@ -500,10 +502,10 @@ export default function AssistentePage() {
                         la lista resta scansionabile a colpo d'occhio e il dettaglio
                         è visibile senza occupare spazio per tutti. */}
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
+                        <p className="text-xs font-semibold text-ink-muted mb-2">
                             {t('assistant.topic.label')}
                         </p>
-                        <div role="radiogroup" aria-label={t('assistant.topic.label')} className="flex flex-col gap-0.5">
+                        <div role="radiogroup" aria-label={t('assistant.topic.label')} className="flex flex-col gap-1">
                             {topics.map((topic) => {
                                 const Icon = topic.icon;
                                 const active = selectedTopic?.id === topic.id;
@@ -514,20 +516,20 @@ export default function AssistentePage() {
                                         role="radio"
                                         aria-checked={active}
                                         onClick={() => chooseTopic(topic.id)}
-                                        className={`rounded-lg px-2.5 py-2 text-left transition-colors ${
+                                        className={`min-h-control rounded-control px-2 py-2 text-left transition-colors ${
                                             active
-                                                ? 'bg-indigo-50 ring-1 ring-indigo-200'
-                                                : 'hover:bg-slate-100'
+                                                ? 'bg-brand-soft ring-1 ring-brand-line'
+                                                : 'hover:bg-surface-raised'
                                         }`}
                                     >
-                                        <span className="flex items-center gap-2.5">
-                                            <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-indigo-700' : 'text-slate-500'}`} aria-hidden="true" />
-                                            <span className={`truncate text-sm font-semibold ${active ? 'text-indigo-700' : 'text-slate-800'}`}>
+                                        <span className="flex items-center gap-2">
+                                            <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-link' : 'text-ink-muted'}`} aria-hidden="true" />
+                                            <span className={`truncate text-sm font-semibold ${active ? 'text-link' : 'text-ink'}`}>
                                                 {topic.title}
                                             </span>
                                         </span>
                                         {active && (
-                                            <span className="mt-1.5 block pl-6.5 text-xs leading-relaxed text-slate-500">
+                                            <span className="mt-2 block pl-6 text-xs leading-relaxed text-ink-muted">
                                                 {topic.body}
                                             </span>
                                         )}
@@ -543,26 +545,28 @@ export default function AssistentePage() {
                 {/* Sotto lg la colonna non clippa: il composer ancorato in fondo
                     (sticky) deve potersi fermare sul bordo del viewport di pagina.
                     Da lg l'altezza è fissa (h-chat) e overflow-hidden resta. */}
-                <div className="flex min-h-chat flex-1 min-w-0 flex-col gap-3 lg:overflow-hidden lg:min-h-0 lg:gap-4">
+                <div className="flex min-h-chat flex-1 min-w-0 flex-col gap-2 lg:overflow-hidden lg:min-h-0 lg:gap-4">
                     {/* Testata della chat: toggle sidebar + titolo. Il titolo resta
                         visibile anche a sidebar chiusa, che è lo stato predefinito. */}
-                    <div className="flex shrink-0 items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={toggleSidebar}
-                            aria-expanded={sidebarOpen}
-                            aria-controls="assistente-sidebar"
-                            title={sidebarOpen ? t('assistant.sidebar.hide') : t('assistant.sidebar.show')}
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:border-indigo-300 hover:text-indigo-600"
-                        >
-                            {sidebarOpen ? <PanelLeftClose className="h-4.5 w-4.5" aria-hidden="true" /> : <PanelLeftOpen className="h-4.5 w-4.5" aria-hidden="true" />}
-                        </button>
-                        <h1 className="text-2xl font-bold text-slate-900">{t('assistant.title')}</h1>
+                    <div className="shrink-0">
+                        <PageHeader
+                            title={t('assistant.title')}
+                            icon={<button
+                                type="button"
+                                onClick={toggleSidebar}
+                                aria-expanded={sidebarOpen}
+                                aria-controls="assistente-sidebar"
+                                title={sidebarOpen ? t('assistant.sidebar.hide') : t('assistant.sidebar.show')}
+                                className="flex h-control w-control shrink-0 items-center justify-center rounded-control border border-line bg-surface text-ink-muted transition-colors hover:border-brand-line hover:text-link"
+                            >
+                                {sidebarOpen ? <PanelLeftClose className="h-5 w-5" aria-hidden="true" /> : <PanelLeftOpen className="h-5 w-5" aria-hidden="true" />}
+                            </button>}
+                        />
                     </div>
                     <ChatGPTUsageBadge />
-                    <ChatTranscript ref={scrollRef} announcement={liveAnnouncement} aria-label={t('assistant.title')} className="glass-panel min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
+                    <ChatTranscript ref={scrollRef} announcement={liveAnnouncement} aria-label={t('assistant.title')} className="min-h-0 flex-1 overflow-y-auto rounded-card border border-line bg-surface p-4 shadow-card space-y-4">
                         {messages.length === 0 && (
-                            <div className="flex items-start gap-3 text-slate-600">
+                            <div className="flex items-start gap-4 text-ink-muted">
                                 <p className="text-sm leading-relaxed pt-1">{welcomeText}</p>
                             </div>
                         )}
@@ -576,16 +580,16 @@ export default function AssistentePage() {
                                         ? <div className="min-w-0 max-w-full" data-voice-source={`assistente-${conversationId ?? 'new'}-${i}`} data-voice-language={lang} data-voice-counselor={counselorId ?? undefined}><ChatMarkdown content={msg.content} locale={lang} errorMessage={t('guided.stepConnError')} /></div>
                                         : <span className="whitespace-pre-line">{msg.content}</span>}
                                     {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
-                                        <div className="mt-3 pt-2 border-t border-slate-100 flex flex-wrap gap-2">
+                                        <div className="mt-4 pt-2 border-t border-line flex flex-wrap gap-2">
                                             {msg.sources.map((s) => (
                                                 <button
                                                     key={s}
                                                     onClick={() => openPreview(s)}
                                                     title={t('assistant.openPreview', { name: sourceLabel(s) })}
-                                                    className={`inline-flex items-center gap-1 text-xs rounded px-2 py-0.5 transition-colors ${
+                                                    className={`inline-flex min-h-control items-center gap-1 text-xs rounded-control px-2 transition-colors ${
                                                         preview?.source === s
-                                                            ? 'bg-indigo-100 text-indigo-700'
-                                                            : 'bg-slate-50 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600'
+                                                            ? 'bg-brand-soft text-link'
+                                                            : 'bg-surface-sunken text-ink-muted hover:bg-brand-soft hover:text-link'
                                                     }`}
                                                 >
                                                     <FileText className="w-3 h-3" /> {sourceLabel(s)}
@@ -615,13 +619,13 @@ export default function AssistentePage() {
                                                 </Button></Tooltip>
                                                 {diagramContentForSpeech(msg.content) && <ListenButton id={`assistente-${conversationId ?? 'new'}-${i}`} text={diagramContentForSpeech(msg.content)} language={lang} counselorId={counselorId} className={chatActionButtonClass} />}
                                                 {msg.responseId && <>
-                                                    <Tooltip content={t('assistant.feedbackUp')}><Button type="button" variant="ghost" className={`${chatActionButtonClass} aria-pressed:bg-indigo-50 aria-pressed:text-indigo-700`} aria-label={t('assistant.feedbackUp')} aria-pressed={msg.feedback === true} disabled={msg.feedback !== undefined} onClick={() => void submitFeedback(i, true)}>
+                                                    <Tooltip content={t('assistant.feedbackUp')}><Button type="button" variant="ghost" className={`${chatActionButtonClass} aria-pressed:bg-brand-soft aria-pressed:text-link`} aria-label={t('assistant.feedbackUp')} aria-pressed={msg.feedback === true} disabled={msg.feedback !== undefined} onClick={() => void submitFeedback(i, true)}>
                                                         <ThumbsUp className="h-4 w-4" aria-hidden="true" />
                                                     </Button></Tooltip>
-                                                    <Tooltip content={t('assistant.feedbackDown')}><Button type="button" variant="ghost" className={`${chatActionButtonClass} aria-pressed:bg-indigo-50 aria-pressed:text-indigo-700`} aria-label={t('assistant.feedbackDown')} aria-pressed={msg.feedback === false} disabled={msg.feedback !== undefined} onClick={() => void submitFeedback(i, false)}>
+                                                    <Tooltip content={t('assistant.feedbackDown')}><Button type="button" variant="ghost" className={`${chatActionButtonClass} aria-pressed:bg-brand-soft aria-pressed:text-link`} aria-label={t('assistant.feedbackDown')} aria-pressed={msg.feedback === false} disabled={msg.feedback !== undefined} onClick={() => void submitFeedback(i, false)}>
                                                         <ThumbsDown className="h-4 w-4" aria-hidden="true" />
                                                     </Button></Tooltip>
-                                                    {msg.feedback !== undefined && <span role="status" className="ml-1 text-xs text-slate-500">{t('assistant.feedbackThanks')}</span>}
+                                                    {msg.feedback !== undefined && <span role="status" className="ml-2 text-xs text-ink-muted">{t('assistant.feedbackThanks')}</span>}
                                                 </>}
                                             </>}
                                         />
@@ -638,14 +642,14 @@ export default function AssistentePage() {
                         card resta ancorata al fondo della vista; da lg termina a
                         ~40px dal fondo finestra e -mb-12 sul wrapper annulla il
                         padding-bottom del main, senza lasciare banda morta. */}
-                    <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:-mb-12 max-lg:bg-slate-50 max-lg:px-4 max-lg:pb-3 max-lg:pt-1">
-                        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+                    <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:-mb-12 max-lg:bg-background max-lg:px-4 max-lg:pb-4 max-lg:pt-1">
+                        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer rounded-card border border-line bg-surface p-4 shadow-card">
                             {!loading && !voiceMode && <ChatSuggestions label={t('orientation.suggested.label')} items={topicQuestions} composerId="assistente-composer" onInsert={setInput} />}
                             <div className="flex items-end gap-2">
-                                <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <div className="divide-y divide-slate-200">
+                                <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <div className="divide-y divide-line">
                                     <ChatMenuSection title={chatLayoutLabel(lang, 'menuActions')}>
                                         <div ref={setVoiceOptionsContainer} />
-                                        {!voiceMode && <button type="button" disabled={loading || audioBusy} className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50" onClick={() => { close(); setVoiceMode(true); }}>
+                                        {!voiceMode && <button type="button" disabled={loading || audioBusy} className="flex min-h-control w-full items-center gap-2 rounded-control px-2 py-2 text-left text-sm hover:bg-surface-raised disabled:opacity-50" onClick={() => { close(); setVoiceMode(true); }}>
                                             <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
                                         </button>}
                                         {!voiceMode && <AudioSendOption />}
@@ -680,10 +684,10 @@ export default function AssistentePage() {
 
                 {/* Pannello anteprima documento */}
                 {preview && (
-                    <aside className="glass-panel flex min-h-[22rem] max-h-[min(70svh,34rem)] w-full flex-col lg:h-full lg:max-h-none lg:min-h-0 lg:w-[460px] lg:shrink-0">
-                        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200">
-                            <FileText className="w-4 h-4 text-indigo-600 shrink-0" />
-                            <span className="text-sm font-semibold text-slate-800 truncate flex-1" title={preview.title}>
+                    <aside className="flex min-h-[22rem] rounded-card border border-line bg-surface shadow-card max-h-[min(70svh,34rem)] w-full flex-col lg:h-full lg:max-h-none lg:min-h-0 lg:w-[460px] lg:shrink-0">
+                        <div className="flex items-center gap-2 px-4 py-2 border-b border-line">
+                            <FileText className="w-4 h-4 text-link shrink-0" />
+                            <span className="text-sm font-semibold text-ink truncate flex-1" title={preview.title}>
                                 {preview.title}
                             </span>
                             <a
@@ -691,14 +695,14 @@ export default function AssistentePage() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 title={t('assistant.previewNewTab')}
-                                className="p-1 text-slate-500 hover:text-indigo-600 transition-colors"
+                                className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control text-ink-muted hover:text-link transition-colors"
                             >
                                 <ExternalLink className="w-4 h-4" />
                             </a>
                             <button
                                 onClick={() => setPreview(null)}
                                 title={t('assistant.previewClose')}
-                                className="p-1 text-slate-500 hover:text-slate-700 transition-colors"
+                                className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control text-ink-muted hover:text-ink-body transition-colors"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -706,12 +710,12 @@ export default function AssistentePage() {
 
                         <div className="flex-1 min-h-0 overflow-hidden">
                             {preview.loading && (
-                                <div className="h-full flex items-center justify-center text-slate-500">
+                                <div className="h-full flex items-center justify-center text-ink-muted">
                                     <Loader2 className="w-6 h-6 animate-spin" />
                                 </div>
                             )}
                             {preview.error && (
-                                <div className="p-4 text-sm text-red-600">{preview.error}</div>
+                                <div className="p-4 text-sm text-danger">{preview.error}</div>
                             )}
                             {!preview.loading && !preview.error && preview.kind === 'pdf' && (
                                 <iframe
