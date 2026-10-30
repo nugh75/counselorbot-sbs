@@ -123,7 +123,7 @@ DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR_QA = (
 
 DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL = (
     "Provide an integrated analysis of the short-form QSAr factors "
-    "of the study method, connecting the relevant results and proposing practical guidance in English. "
+    "of the study method, connecting the relevant results and proposing practical guidance. "
     "Avoid diagnoses and do not use opening greetings. Start directly with the requested analysis."
     + DEFAULT_FACTOR_INTERPLAY_QSAR
     + DEFAULT_SECOND_LEVEL_METHOD

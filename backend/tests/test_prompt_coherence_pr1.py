@@ -3,7 +3,8 @@
 Factory texts changed here are also written to the database, overwriting saved
 versions once (owner decision 5.1 of the prompt coherence audit).
 """
-from backend import models, skills_seed
+from backend import models, prompt_config, prompt_revisions, skills_seed
+from backend.prompt_factory_alignment import apply_plan, factory_catalog, make_plan
 from backend.tests.artifact_database import artifact_session
 
 
@@ -41,3 +42,31 @@ def test_tavolo_icon_rule_has_no_factor_field():
     assert TAVOLO_ICON_SELECTION_PROMPT in composed
     assert 'factor' not in composed and 'INSTRUMENT:CODE' not in composed
     assert 'Icon meanings:' in composed
+
+
+# B01 + D04: QSAr second level follows the language directive and knows single-factor steps.
+def test_qsar_second_level_has_no_fixed_language_and_a_single_factor_exception():
+    prompt = prompt_config.DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL
+    assert 'in English' not in prompt
+    assert 'single-factor steps skip this requirement' in prompt_config.DEFAULT_FACTOR_INTERPLAY_QSAR
+    assert prompt_config.DEFAULT_FACTOR_INTERPLAY_QSAR in prompt
+
+
+def test_changed_factory_text_overwrites_a_personalised_row_once():
+    configs, _ = factory_catalog()
+    key = 'prompt_qsar_second_level'
+    with artifact_session() as db:
+        db.add(models.Config(key=key, value='Admin text proposing guidance in English.'))
+        prompt_revisions.record(db, 'config', key, 'Admin text proposing guidance in English.', prompt_revisions.ORIGIN_ADMIN)
+        db.commit()
+        plan = make_plan(db)
+        assert [change['key'] for change in plan['changes']] == [key]
+        apply_plan(db, plan, author='alignment', origin=prompt_revisions.ORIGIN_MIGRATION)
+        assert db.query(models.Config).filter_by(key=key).one().value == configs[key]
+        # A later admin edit is the admin's again: no second overwrite.
+        row = db.query(models.Config).filter_by(key=key).one()
+        row.value = 'A later admin edit.'
+        prompt_revisions.record(db, 'config', key, row.value, prompt_revisions.ORIGIN_ADMIN)
+        db.commit()
+        assert make_plan(db)['changes'] == []
+        assert make_plan(db)['preserved'] == [{'scope': 'config', 'key': key, 'reason': 'personalised'}]
