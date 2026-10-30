@@ -726,8 +726,8 @@ Nel blocco privato `recommendations` il modello può dichiarare note di tipo `hy
 (con campo facoltativo `lens` vincolato ai fattori dello step corrente). Il blocco resta
 privato anche quando il modello lo scrive come fence `json` con l'elenco delle note
 direttamente sotto `recommendations`: non compare nella risposta e le note vengono registrate.
-Se il modello avvolge la risposta in un oggetto JSON nudo `{"answer": ..., "recommendations": ...}`
-(anche dopo lo stesso testo in prosa, in streaming o in un turno di continuazione), lo studente
+Se il modello avvolge la risposta in un oggetto JSON nudo `{"answer": ..., "recommendations": ...}`,
+con le due chiavi in qualunque ordine (anche dopo lo stesso testo in prosa, in streaming o in un turno di continuazione), lo studente
 vede solo il testo di `answer`, senza duplicati, e le raccomandazioni dichiarate lì passano
 dallo stesso filtro sul catalogo del turno. Lo stesso vale per il blocco scritto come JSON
 nudo o in un recinto senza lingua, anche in testa alla risposta (per esempio all'apertura di un
@@ -742,6 +742,18 @@ viene iniettato il blocco compatto `[REFLECTION THREAD]` (entro 500 caratteri). 
 degli step successivi, il Session Ledger include la cronologia delle letture proposte con le
 relative risposte dello studente e la direttiva di considerare la versione dello studente
 come riferimento primario senza mai riproporre letture rifiutate o corrette.
+
+Ogni risposta segue un solo ordine: prima il testo visibile, poi gli eventuali blocchi privati
+(`recommendations`, bozza del libretto `booklet`, bozza dell'obiettivo `goal`, patch `idea`) e, quando
+lo step si chiude, il marcatore `[[AVANZA_STEP]]` da solo sull'ultima riga, dopo i blocchi. Nella
+mappa IDEA le frecce usano sempre `source` e `target`. Quando una risposta interrotta viene ripresa,
+il modello riceve un contratto apposito: le parole ancora disponibili rispetto alla lunghezza scelta e
+l'elenco dei blocchi privati ancora dovuti, invece della richiesta di una nuova risposta completa.
+Nell'Assistente il ragionamento che il modello scrive nel testo (`<think>…`) viene tolto mentre la
+risposta arriva, prima del display e della lettura a voce, come nella chat guidata. Il formato JSON
+di trasporto (Ollama, DeepSeek) lo chiede solo il codice che si aspetta un JSON (pQBL, osservazioni
+della classe, Tavolo, diagrammi, traduzioni): la frase «return only JSON» dentro un documento citato o
+nel messaggio dello studente non cambia più il formato della risposta.
 
 Nella sintesi di fine percorso (`journey_context`), la riduzione bounded dell'evidenza include
 la regola esplicita di preservazione delle ipotesi (`preserve_hypotheses=True` per tutti i dialoghi
@@ -807,17 +819,15 @@ stato sostituito da un criterio qualitativo di comprensione orientato all'agire 
 a circa cinque scambi: il chatbot resta nell'area finché lo studente la sviluppa, esplorando cosa fa,
 come sceglie e quali conseguenze ne derivano, e chiude il passaggio quando emerge un modo concreto di
 agire e lo studente ha risposto a una lettura di esso, oppure su richiesta esplicita o al raggiungimento
-del tetto massimo di scambi. I testi di step e i prompt di sistema d'intervista (QPCC, QAP, Savickas,
+della scelta della persona. I testi di step e i prompt di sistema d'intervista (QPCC, QAP, Savickas,
 Evento e QPCS) e i relativi hash legacy in `prompt_factory_legacy.json` garantiscono piena continuità,
 prevenzione dei loop conversazionali e compatibilità con l'allineamento dei prompt di fabbrica.
-A livello applicativo, la chiusura dello step è garantita anche lato server (`backend/step_closure.py`
-integrato in `backend/routes/chat.py` per chiamate sincrone e streaming SSE): se il modello non emette
-spontaneamente il marcatore `[[AVANZA_STEP]]` entro il tetto di sicurezza configurato (predefinito a 5
-scambi dell'assistente nello step, escludendo i passi di introduzione e le sintesi finali/farewell),
-il backend appende automaticamente il marcatore in coda alla risposta prima dell'estrazione dei segnali
-di controllo e aggiorna la memoria di sessione (`completed_step=True`). Il frontend riceve quindi il
-segnale `AVANZA_STEP` nei `control_signals`, abilitando l'avanzamento allo step successivo senza dipendere
-unicamente dalla decisione probabilistica del modello LLM.
+Il numero di scambi non fa mai avanzare lo step da solo: il backend non aggiunge il marcatore
+`[[AVANZA_STEP]]`. Ogni tot scambi dell'assistente nello step (soglia `step_safety_threshold`,
+predefinita a 5, esclusi i passi di introduzione e le sintesi finali) `backend/step_closure.py`
+aggiunge al prompt un promemoria di scelta: il counselor riassume in breve ciò che è emerso e offre
+UNA scelta tra continuare l'approfondimento e riprendere il percorso, rispettando la scelta già fatta.
+Finché la scelta è in sospeso o si esplora il tema scelto, il modello non emette il marcatore.
 
 
 ### Envelope snello, deduplicazione e divieto di elenchi puntati
