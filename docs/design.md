@@ -88,14 +88,17 @@ slate**, quindi un `text-gray-300` resta illeggibile in tema scuro.
 
 ### 2.4 Ruoli semantici
 
-Fissati in `components/ui/Callout.tsx` e validi ovunque:
+Fissati dai token di stato (§2.6) e usati da `components/ui/Callout.tsx`:
 
-| Ruolo | Famiglia | Bordo / fondo / testo |
+| Ruolo | Famiglia | Bordo / fondo / testo (chiaro) |
 | --- | --- | --- |
-| info | `sky` | `sky-200` / `sky-50` / `sky-950` |
-| warning | `amber` | `amber-300` (2px) / `amber-50` / `amber-950` |
+| info | petrol (`indigo`) | `indigo-200` / `indigo-50` / `slate-900` |
+| warning | `amber` | `amber-300` / `amber-50` / `amber-950` |
 | success | `emerald` | `emerald-200` / `emerald-50` / `emerald-950` |
 | danger | `red` | `red-200` / `red-50` / `red-800` |
+
+Info è petrol, non `sky`: è la scelta già in uso in `Callout`, ora scritta qui.
+Tutti i bordi sono da 1px.
 
 Le zone del profilo (`ProfileVisualization`) hanno una scala propria, perché non
 sono stati dell'interfaccia ma **esiti di misura**: forza `#22c55e`, adeguato
@@ -127,6 +130,53 @@ stessi fra i due prodotti. `--console-primary` è **lo stesso petrol** di
 `indigo-600`. Le usano `body`, l'header, l'anello di focus e le classi
 `.console-*`.
 
+### 2.6 Token semantici
+
+Definiti in `globals.css`: valore in `:root`, valore scuro in `.dark`, utility
+via `@theme inline`. `text-ink`, `bg-surface`, `border-line` cambiano col tema
+**senza** voce di remap e senza `dark:`. Il nuovo codice e ogni PR di migrazione
+(audit UI 2026-10-30, §7) usano questi al posto delle classi `slate-*`/`indigo-*`;
+il remap `.dark .text-slate-*` resta finché la migrazione non è finita. I nomi
+evitano `primary`, `muted`, `accent`, `border`, `card`, già presi da shadcn.
+
+| Token (utility) | Chiaro = oggi | Ruolo |
+| --- | --- | --- |
+| `ink` | `slate-900` | titoli, testo forte |
+| `ink-body` | `slate-700` | corpo |
+| `ink-muted` | `slate-500` | secondario, sottotitoli, stati vuoti |
+| `ink-on-brand` | bianco | testo su petrol e ocra |
+| `surface` / `surface-sunken` / `surface-raised` | bianco / `slate-50` / `slate-100` | card; fondi incassati; chip e hover |
+| `line` / `line-strong` | `slate-200` / `slate-300` | bordo standard; bordo dei campi |
+| `brand` / `brand-hover` | `indigo-600` / `indigo-700` | CTA primarie |
+| `brand-soft` / `brand-line` | `indigo-50` / `indigo-200` | selezionato; bordo accentato |
+| `link` | `indigo-700` | link e testo accentato |
+| `move` / `move-hover` | `ochre-600` / `ochre-700` | CTA d'ingresso, passo attivo |
+| `focus` | `--console-focus` | anello di focus |
+| `info`, `success`, `warning`, `danger` | da §2.4 | tinta dell'icona; più `-soft` (fondo), `-line` (bordo), `-ink` (testo sul fondo) |
+
+Forma: `rounded-control` (= `rounded-md`, bottoni e campi), `rounded-card`
+(= `rounded-xl`, card e popover); `shadow-card` / `shadow-pop` / `shadow-modal`
+(= `shadow-sm` / `shadow-lg` / `shadow-2xl`), le sole tre ombre; `h-control` /
+`min-h-control` = **44px in px**. `h-11` con la radice a 15px fa 41px: non è un
+target touch. `cn()` conosce questi nomi, quindi `rounded-lg` o `min-h-0` passati
+a una primitiva li sostituiscono.
+
+### 2.7 Principi visivi
+
+Decisione del proprietario, dettagliata nella §9 dell'audit
+`docs/audits/ui-consistency-audit-2026-10-30.md`:
+
+1. Spaziature su griglia di 8 (passi Tailwind 2, 4, 6, 8…; 1 solo dentro i controlli).
+2. Una sola palette neutra, niente gradienti né glow: colore solo per marchio e stati.
+3. Icone solo `lucide-react`, lineari; nessuna emoji come icona.
+4. Al massimo due pesi (`font-normal`, `font-semibold`), niente `uppercase`.
+5. Numeri e indicatori essenziali, senza badge vistosi.
+6. Grafici essenziali: linee sottili, colori tenui dalla palette.
+
+`frontend/src/lib/ui-primitives-tokens.test.ts` fa rispettare 2 e 4 (più niente
+hex, niente `h-11` e niente classi di palette grezze) alle primitive `Button`,
+`Card`, `PageHeader`, `Callout`; le pagine si allineano zona per zona.
+
 ---
 
 ## 3. Tipografia
@@ -152,10 +202,11 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
 
 ## 4. Forma, spazio, movimento
 
-- **Raggio**: `--radius: 0.75rem`. Le card usano `rounded-xl` cotto dentro
-  `glass-panel`; i controlli `rounded-md`.
-- **Card**: utility `glass-panel` (bianco, bordo `slate-200`, ombra minima) +
-  `glass-panel-hover` per le card cliccabili. 91 call-site: è il contenitore.
+- **Raggio**: `--radius: 0.75rem`. Card `rounded-card`, controlli
+  `rounded-control` (§2.6); `glass-panel` cuoce ancora `rounded-xl`.
+- **Card**: la primitiva `Card` (token `surface`, `line`, `shadow-card`); l'utility
+  `glass-panel` (bianco, bordo `slate-200`, ombra minima) + `glass-panel-hover`
+  resta per i call-site non ancora migrati.
 - **Larghezza**: due soli token. `page-narrow` (max-w-4xl) per lettura e form;
   `page-wide` (max-w-6xl) per chat, dashboard, admin.
 - **Altezza chat**: `--chat-h` / `h-chat` / `min-h-chat`, con fallback `svh`/`dvh`
@@ -275,12 +326,12 @@ aggiunge alla primitiva.
 
 | Primitiva | Cosa fissa |
 | --- | --- |
-| `Button` | 6 varianti (primary/**accent**/secondary/ghost/danger/success) × 3 taglie; `md` e `lg` partono da 44px |
-| `Card` | `glass-panel p-6` |
+| `Button` | 6 varianti (primary/**accent**/secondary/ghost/danger/success) × 3 taglie, sui token; `md` e `lg` hanno `min-h-control` (44px reali), `sm` 30px |
+| `Card` | `bg-surface border-line rounded-card shadow-card p-6` |
 | `ChatBubble`, `ChatPending` | la forma condivisa delle tre chat (guidata, Bussola, assistente) |
 | `SkipLink` | primo elemento focalizzabile della pagina, verso `#contenuto` |
-| `Callout` | i 4 ruoli semantici, con icona di default |
-| `PageHeader` | titolo + sottotitolo + back-nav |
+| `Callout` | i 4 ruoli semantici dai token di stato, con icona di default |
+| `PageHeader` | titolo `text-2xl font-semibold text-ink` + sottotitolo `ink-muted` + back-nav |
 | `BackButton` | due varianti dichiarate: `icon` (cerchio, percorso guidato) e `labelled` (pillola con testo, pagine autonome) |
 | `ForwardButton` | il primario del percorso: petrol pieno, etichetta visibile, 44px |
 | `FlowStepper` | il passo attivo è ocra, i fatti sono petrol, i futuri slate |
