@@ -98,6 +98,25 @@ def test_stream_keeps_reasoning_when_it_is_on():
     assert [item["text"] for item in items if item["type"] == "reasoning"] == ["native secret"]
 
 
+def test_off_hides_reasoning_of_a_model_that_cannot_stop_thinking():
+    # The provider keeps reasoning at the minimum level, but «off» is what the
+    # student sees: no reasoning event, no inline block, only the answer.
+    from backend.reasoning_profiles import ReasoningPlan
+    ai = _bare_ai()
+    ai.reasoning_effort_override = "off"
+    ai._reasoning_plan = ReasoningPlan(enabled=True, reasoning_budget=1024, max_tokens=4096,
+                                       effort="minimal", effort_honored=False)
+    assert ai.reasoning_enabled is True
+    assert ai.reasoning_suppressed is True
+    chunks = [
+        _chunk(reasoning="native secret"),
+        _chunk(content="<think>inline secret</think>visible answer", finish_reason="stop"),
+    ]
+    items = list(ai._iter_chat_stream(_client(chunks), "openai/o1", "system", "user"))
+    assert [item for item in items if item["type"] == "reasoning"] == []
+    assert "".join(item["text"] for item in items if item["type"] == "content") == "visible answer"
+
+
 def test_no_think_token_is_only_sent_to_qwen3_llama_cpp():
     ai = _bare_ai()
     ai._disable_thinking = True

@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import re
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from functools import partial
 
 import anthropic
@@ -571,8 +571,11 @@ class AIService:
 
     @property
     def reasoning_suppressed(self) -> bool:
-        """True se gli eventi di reasoning vanno nascosti all'utente."""
-        return not self.reasoning_enabled
+        """True se gli eventi di reasoning vanno nascosti all'utente.
+
+        Un modello che impone il reasoning ragiona anche con «off» (il piano
+        resta attivo), ma la scelta dell'utente vale per cio' che vede."""
+        return not self.reasoning_enabled or bool(self.disable_thinking)
 
     def _budget_is_locked(self) -> bool:
         """True se il budget mensile e' impostato (>0) e la spesa del mese
@@ -692,7 +695,7 @@ class AIService:
 
     def _apply_no_think(self, system_prompt: str, model: str = "") -> str:
         """Qwen3 soft switch for llama.cpp; other models must not receive it."""
-        if (self.reasoning_suppressed and re.search(r"(?:^|[/_-])qwen3(?:[.:-]|$)", model.lower())
+        if (not self.reasoning_enabled and re.search(r"(?:^|[/_-])qwen3(?:[.:-]|$)", model.lower())
                 and "/no_think" not in system_prompt):
             return f"{system_prompt}\n\n/no_think"
         return system_prompt
@@ -1344,7 +1347,7 @@ class AIService:
         # Estrazione JSON (parser QSA): mai reasoning, altrimenti il `think` puo'
         # rompere/rallentare l'output strutturato. Forza think off a prescindere.
         is_json = json_mode if json_mode is not None else _requests_json_response(system_prompt, user_message)
-        if self.reasoning_suppressed or is_json:
+        if not self.reasoning_enabled or is_json:
             payload["think"] = False
         else:
             payload["think"] = self._plan().enabled
