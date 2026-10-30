@@ -13,6 +13,9 @@ import {
 import { deleteFrozenSession, getFrozenSession, notifyFrozenSessionsChanged, FrozenSessionAccessError, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { getSelectedCounselorId } from "@/lib/counselor";
 import { GuidedChatInterface } from "@/components/qsa/GuidedChatInterface";
+import { ProfileVisualization } from "@/components/qsa/ProfileVisualization";
+import { ForwardButton } from "@/components/ui/ForwardButton";
+import { getQuestionnaire, type QuestionnaireType } from "@/lib/questionnaires";
 import { PlanChatCompleted } from "@/components/administration/PlanChatCompleted";
 import { SessionReport } from "@/components/qsa/SessionReport";
 import { Button } from "@/components/ui/Button";
@@ -37,6 +40,7 @@ export function ResultsDeepDiveFlow({ pathId, stepId, registerSave, onExit, onCo
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [profileSeen, setProfileSeen] = useState<string | null>(null);
   const owner = useRef<string | null>(null);
   const pending = useRef(false);
   const attemptId = useRef<string | null>(null);
@@ -140,6 +144,12 @@ export function ResultsDeepDiveFlow({ pathId, stepId, registerSave, onExit, onCo
         : <p>{r('noSavedAttempt')}</p>}
     </div>)}</div></details>;
   if (session && (completed || options?.completed)) return <div className="space-y-4"><PlanChatCompleted sessionId={session.session_id} questionnaireType={session.result.questionnaire_type} embedded={embedded} />{!embedded && history}</div>;
+  // Come il passo Profilo del percorso normale: una chat nuova mostra prima il
+  // prospetto dei punteggi; la ripresa di una pausa va dritta alla conversazione.
+  if (session && !snapshot && profileSeen !== session.session_id && Object.keys(session.result.scores || {}).length > 0) return <div className="space-y-4">
+    <ForwardButton onClick={() => setProfileSeen(session.session_id)} label={t('dashboard.ready.btn')} />
+    <ProfileVisualization scores={session.result.scores} questionnaire={getQuestionnaire(session.result.questionnaire_type as QuestionnaireType)} />
+  </div>;
   if (session) return <div className="space-y-4"><GuidedChatInterface
     key={session.session_id}
     scores={session.result.scores} questionnaireType={session.result.questionnaire_type}
