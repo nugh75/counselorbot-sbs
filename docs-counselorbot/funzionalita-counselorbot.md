@@ -296,6 +296,16 @@ Sperimentale della compilazione in app e, in italiano, **Compila sul sito** con 
 credenziali; in fondo restano gli strumenti **In preparazione** e, nelle lingue senza
 questionari, l’avviso con il passaggio all’inglese.
 
+La presentazione, «Attività e percorsi», le pagine pubbliche (`/guide`,
+`/guide/dati-riservatezza`, `/privacy`, `/unisciti`, `/login`, `/accesso-locale`,
+`/telegram-link`) e la barra di navigazione con i suoi menu usano i token
+semantici e le primitive `Card`, `Button` e `PageHeader` (audit UI 2026-10-30,
+zona 3): spaziature su griglia di 8, due soli pesi, niente maiuscolo, controlli
+alti almeno 44px. L’eliminazione di un’attività da riprendere chiede conferma
+nella riga stessa invece che con la finestra del browser; il banner
+dell’anteprima di ruolo usa i colori di avviso. Testi, passi e comportamento non
+cambiano.
+
 L’interfaccia non usa emoji né segni testuali come «+», «→» o «✓» nelle etichette:
 ogni simbolo è un’icona SVG (lucide-react). Le azioni dal significato evidente
 (aggiungere una strategia, modificare, eliminare, archiviare o ripristinare,
