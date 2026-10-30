@@ -10,7 +10,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { useDisclosure } from '@/lib/use-disclosure';
 import { Tooltip } from '@/components/ui/Tooltip';
 
-const ROW = 'block truncate px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50';
+const ROW = 'block truncate px-4 py-2 text-left text-sm text-ink-body hover:bg-surface-sunken';
 
 // Pulsante "Riprendi" nell'header: compare quando c'è una sessione congelata
 // sul server (ripresa da qualsiasi dispositivo) o una chat interrotta salvata
@@ -41,9 +41,9 @@ export function HeaderResume({ entries }: { entries: ResumeEntries }) {
             {open && (
                 <div
                     id="resume-panel"
-                    className="header-panel absolute right-0 mt-1 w-56 max-h-64 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg z-[60]"
+                    className="header-panel absolute right-0 mt-1 w-56 max-h-64 overflow-y-auto rounded-control border border-line bg-surface shadow-pop z-[60]"
                 >
-                    <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-100">
+                    <div className="px-4 py-2 text-xs font-semibold text-ink-muted border-b border-line">
                         {t('frozen.resumeTitle')}
                     </div>
                     <ResumeList entries={entries} onNavigate={close} />
@@ -90,7 +90,7 @@ export function ResumeList({ entries, onNavigate }: { entries: ResumeEntries; on
                             onNavigate();
                             resumeWithReload(LOCAL_RESUME_HREF);
                         }}
-                        className={`${ROW} border-t border-slate-100`}
+                        className={`${ROW} border-t border-line`}
                     >
                         {t('header.resume')} · {resumeLabel(localResume.instrument, null, tf)}
                     </Link>
@@ -98,7 +98,7 @@ export function ResumeList({ entries, onNavigate }: { entries: ResumeEntries; on
             )}
             {pqbl && (
                 <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
-                    <Link href={PQBL_RESUME_HREF} onClick={onNavigate} className={`${ROW} border-t border-slate-100`}>
+                    <Link href={PQBL_RESUME_HREF} onClick={onNavigate} className={`${ROW} border-t border-line`}>
                         {t('header.resume')} · {t('pqbl.card.title')}
                     </Link>
                 </ResumeEntry>

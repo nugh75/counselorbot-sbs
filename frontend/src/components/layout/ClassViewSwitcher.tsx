@@ -40,12 +40,12 @@ export function ClassViewSwitcher({ access, labelled = false, className }: { acc
         <div className={cn(labelled ? 'flex flex-col gap-1' : 'flex min-w-0 items-center', className)}>
             <label
                 htmlFor={id}
-                className={labelled ? 'text-2xs font-semibold uppercase tracking-wide text-slate-500' : 'sr-only'}
+                className={labelled ? 'text-2xs font-semibold text-ink-muted' : 'sr-only'}
             >
                 {label}
             </label>
             <div className="relative flex min-w-0 items-center">
-                <Layers className="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
+                <Layers className="pointer-events-none absolute left-2 h-4 w-4 text-ink-muted" aria-hidden="true" />
                 <select
                     id={id}
                     value={currentClassView(access)}
@@ -55,8 +55,8 @@ export function ClassViewSwitcher({ access, labelled = false, className }: { acc
                     aria-invalid={failed || undefined}
                     onChange={(event) => onChange(event.target.value)}
                     className={cn(
-                        'min-h-[44px] w-full min-w-0 truncate rounded-full border border-slate-200 bg-slate-50 py-1 pl-8 pr-7 text-sm font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 lg:min-h-0 lg:max-w-56',
-                        failed && 'border-red-400 dark:border-red-500',
+                        'min-h-control w-full min-w-0 truncate rounded-full border border-line bg-surface-sunken py-1 pl-8 pr-8 text-sm text-ink-body hover:border-line-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-60 lg:min-h-0 lg:max-w-56',
+                        failed && 'border-danger',
                     )}
                 >
                     {options.map((option) => (
@@ -66,8 +66,8 @@ export function ClassViewSwitcher({ access, labelled = false, className }: { acc
                     ))}
                 </select>
             </div>
-            <span id={`${id}-hint`} className={labelled ? 'text-xs text-slate-500' : 'sr-only'}>{hint}</span>
-            <span role="status" className={failed ? 'text-xs text-red-600 dark:text-red-400' : 'sr-only'}>
+            <span id={`${id}-hint`} className={labelled ? 'text-xs text-ink-muted' : 'sr-only'}>{hint}</span>
+            <span role="status" className={failed ? 'text-xs text-danger' : 'sr-only'}>
                 {failed ? classViewText(lang, 'error') : ''}
             </span>
         </div>

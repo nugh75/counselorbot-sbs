@@ -29,7 +29,7 @@ export function ThemeToggle({ labelled = false }: { labelled?: boolean }) {
             <button
                 type="button"
                 onClick={toggle}
-                className={labelled ? 'flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100' : 'console-topbar-icon'}
+                className={labelled ? 'flex min-h-control w-full items-center gap-2 px-4 py-2 text-left text-sm text-ink-body hover:bg-surface-raised' : 'console-topbar-icon'}
                 aria-label={labelled ? undefined : dark ? t('theme.switchToLight') : t('theme.switchToDark')}
             >
                 {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}

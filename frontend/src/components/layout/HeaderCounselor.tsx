@@ -24,7 +24,7 @@ export function HeaderCounselor({ inline = false, onNavigate }: { inline?: boole
             openCounselor();
         }
         onNavigate?.();
-    }} className={`inline-flex max-w-full items-center gap-1.5 rounded-md px-3 text-sm font-medium text-indigo-700 hover:bg-indigo-50 ${inline ? 'min-h-[44px] w-full' : 'min-h-11'}`}
+    }} className={`inline-flex max-w-full items-center gap-2 rounded-control px-4 text-sm text-link hover:bg-brand-soft ${inline ? 'min-h-control w-full' : 'min-h-control'}`}
         aria-label={t('setup.counselor')} title={t('setup.counselor')}>
         <User className="h-4 w-4 shrink-0" />
         {/* Nella barra da `lg` il nome cede spazio alle voci di navigazione. */}

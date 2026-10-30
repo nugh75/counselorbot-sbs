@@ -40,10 +40,10 @@ export function HeaderAreas({ areas, current, icons }: { areas: HeaderLink[]; cu
             >
                 {Icon && <Icon className="h-4 w-4 shrink-0" />}
                 <span className="whitespace-nowrap">{currentArea ? t(currentArea.labelKey) : t('header.area')}</span>
-                <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                <ChevronDown className="h-4 w-4 shrink-0" />
             </button>
             {open && (
-                <div id="area-panel" className="header-panel absolute left-0 top-full z-[60] mt-2 w-64 rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+                <div id="area-panel" className="header-panel absolute left-0 top-full z-[60] mt-2 w-64 rounded-control border border-line bg-surface py-1 shadow-pop">
                     {areas.map((area) => {
                         const AreaIcon = icons[area.key];
                         return (
@@ -58,7 +58,7 @@ export function HeaderAreas({ areas, current, icons }: { areas: HeaderLink[]; cu
                                     }
                                 }}
                                 aria-current={area.key === current ? 'page' : undefined}
-                                className="flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                                className="flex min-h-control w-full items-center gap-2 px-4 py-2 text-sm text-ink-body hover:bg-surface-raised"
                             >
                                 <AreaIcon className="h-4 w-4 shrink-0" />
                                 <span className="truncate">{t(area.labelKey)}</span>

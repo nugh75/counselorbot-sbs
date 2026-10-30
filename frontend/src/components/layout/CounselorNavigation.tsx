@@ -37,7 +37,7 @@ function CounselorPage({ onReturn, opener }: { onReturn: () => void; opener: HTM
         };
     }, [opener]);
     return <dialog ref={dialog} aria-modal="true" aria-label={t('setup.counselor')} onCancel={event => { event.preventDefault(); onReturn(); }}
-        className="fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-y-auto border-0 bg-slate-50 px-4 py-6 text-slate-900 sm:px-6">
+        className="fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-y-auto border-0 bg-surface-sunken px-4 py-6 text-ink sm:px-6">
         <AccountSetup counselorOnly onReturn={onReturn} />
     </dialog>;
 }
