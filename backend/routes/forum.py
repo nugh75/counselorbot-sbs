@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from .. import auth, database, models
 from ..class_access import class_tool_enabled, forum_option, require_class_tool
-from ..db_compat import dialect_insert, is_sqlite
+from ..db_compat import dialect_insert
 from ..forum_schemas import (
     ForumHide,
     ForumMuteCreate,
@@ -353,7 +353,7 @@ def mark_read(topic_id: int, identity=Depends(auth.get_current_user), db: Sessio
     topic = _get_topic(db, topic_id)
     _, staff = _access(db, identity, topic.group_id)
     _check_pending_visibility(topic, staff, identity["username"])
-    now = func.current_timestamp() if is_sqlite(db) else func.statement_timestamp()
+    now = func.statement_timestamp()
     statement = dialect_insert(db, models.ForumRead).values(
         topic_id=topic_id, username=identity["username"], last_read_at=now)
     db.execute(statement.on_conflict_do_update(

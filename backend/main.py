@@ -264,10 +264,6 @@ import_module("backend.migrations.20261025_credential_deks").migrate(database.en
 import_module("backend.migrations.20261025_privacy_consent").migrate(database.engine)
 import_module("backend.migrations.20261027_class_response_format").migrate(database.engine)
 import_module("backend.migrations.20261028_deep_dive_attempts").migrate(database.engine)
-# SQLite: i CHECK di un file creato da una versione precedente seguono il modello (ADR-0003 §3.4).
-from .sqlite_schema import sync_sqlite_check_constraints
-
-sync_sqlite_check_constraints(database.engine, models.Base.metadata)
 
 
 @asynccontextmanager
@@ -282,7 +278,7 @@ async def lifespan(app: FastAPI):
     _seed_and_migrate()
     from .privacy import field_crypto as _field_crypto
     if _field_crypto.enabled():
-        # P11: keys are created now, outside any write transaction (SQLite would lock on first use).
+        # P11: keys are created now, outside any write transaction.
         _field_crypto.ensure_keys()
     from .credential_storage import ensure_keys as _ensure_credential_keys
     _ensure_credential_keys()

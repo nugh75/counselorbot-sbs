@@ -98,7 +98,7 @@ di autenticazione intercambiabile prevista da #209.
 
 ### 2.4 Database e migrazioni
 
-- `backend/database.py:8`: default `sqlite:///./counselorbot.db`; produzione usa Postgres.
+- `backend/database.py`: solo PostgreSQL; il runtime SQLite è stato rimosso (#679, 30/10/2026).
 - Schema: 112 modelli in `backend/models.py`, 94 colonne `JSON` generiche (portabili).
 - Migrazioni: **nessun Alembic**. `create_all` (`backend/main.py:206`) più migrazioni idempotenti a mano
   in `backend/main.py` (`_seed_and_migrate`, `:328`) e in 23 file `backend/migrations/*.py`.
@@ -542,7 +542,7 @@ richiede il merge della precedente e i criteri completi sono in ADR-0004 §9:
 |----|---------|-----------------|------------|-------|
 | PG-00 | Contratto PostgreSQL unico | ADR-0004, layout/contratto 2, aggiornamento piano e guide senza dichiarare il target consegnato | #595 in `main` | ✅ docs |
 | PG-01 | Runtime PostgreSQL incorporato | Binari/manifest/hash/licenze, cluster proprietario, credenziali OS, lifecycle e health sui 4 target | PG-00 merged | da avviare |
-| PG-02 | Converter e backup ripristinabili | Snapshot SQLite, import transazionale/ripetibile, verifiche complete, dump/restore e rollback | PG-01 merged | da avviare |
+| PG-02 | Converter e backup ripristinabili (converter rimosso con il runtime SQLite, #679) | Snapshot SQLite, import transazionale/ripetibile, verifiche complete, dump/restore e rollback | PG-01 merged | da avviare |
 | PG-03 | Unificazione runtime/sviluppo/CI | PostgreSQL solo business, SQLite solo converter, validazione upgrade e lifecycle finale sui 4 target | PG-02 merged | da avviare |
 
 **Sequenza storica originaria dopo ADR-0003 (non più il piano target)**

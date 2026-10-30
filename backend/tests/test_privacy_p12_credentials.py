@@ -209,8 +209,6 @@ def test_dek_read_does_not_require_legacy_key_after_migration(db, store, monkeyp
 
 def test_upgrade_old_key_constraint_preserves_existing_keys(monkeypatch):
     from contextlib import nullcontext
-    from sqlalchemy import CheckConstraint, MetaData
-    from backend.sqlite_schema import sqlite_rebuild_table, sync_sqlite_check_constraints
 
     monkeypatch.setenv("PRIVACY_KEK", keys.generate_kek())
     old_check = "purpose IN ('content', 'mapping', 'credentials', 'research', 'pid', 'index')"
@@ -219,50 +217,15 @@ def test_upgrade_old_key_constraint_preserves_existing_keys(monkeypatch):
         original_id, original_key = keys.KeyRing(session).active("content")
         session.commit()
         bind = session.get_bind()
-        if bind.dialect.name == "sqlite":
-            old_table = models.PrivacyKey.__table__.to_metadata(MetaData())
-            for constraint in list(old_table.constraints):
-                if isinstance(constraint, CheckConstraint):
-                    old_table.constraints.remove(constraint)
-            old_table.append_constraint(CheckConstraint(old_check, name="ck_privacy_key_purpose"))
-            with sqlite_rebuild_table(bind, "privacy_keys", copy_from=old_table):
-                pass
-            metadata = MetaData()
-            models.PrivacyKey.__table__.to_metadata(metadata)
-            assert sync_sqlite_check_constraints(bind, metadata) == ["privacy_keys"]
-            assert sync_sqlite_check_constraints(bind, metadata) == []
-        else:
-            bind.execute(text("ALTER TABLE privacy_keys DROP CONSTRAINT ck_privacy_key_purpose"))
-            bind.execute(text("ALTER TABLE privacy_keys ADD CONSTRAINT ck_privacy_key_purpose CHECK (" + old_check + ")"))
-            target = SimpleNamespace(dialect=bind.dialect, begin=lambda: nullcontext(bind))
-            migration.migrate(target)
-            migration.migrate(target)
+        bind.execute(text("ALTER TABLE privacy_keys DROP CONSTRAINT ck_privacy_key_purpose"))
+        bind.execute(text("ALTER TABLE privacy_keys ADD CONSTRAINT ck_privacy_key_purpose CHECK (" + old_check + ")"))
+        target = SimpleNamespace(dialect=bind.dialect, begin=lambda: nullcontext(bind))
+        migration.migrate(target)
+        migration.migrate(target)
         ring = keys.KeyRing(session)
         assert ring.key(original_id, "content") == original_key
         assert len({ring.active(p)[0] for p in credential_storage.PURPOSES.values()}) == 3
         session.commit()
-
-
-def test_sqlite_request_writer_can_use_prepared_deks(tmp_path, monkeypatch):
-    """Use the real BEGIN IMMEDIATE engine, not only the artifact fixture PRAGMAs."""
-    from sqlalchemy import create_engine
-    from backend.database import configure_sqlite_engine
-
-    monkeypatch.setenv("PRIVACY_KEK", keys.generate_kek())
-    monkeypatch.setenv("PRIVACY_CREDENTIAL_ENCRYPTION", "on")
-    engine = create_engine("sqlite:///" + str(tmp_path / "writer.sqlite3"))
-    configure_sqlite_engine(engine)
-    try:
-        models.PrivacyKey.__table__.create(engine)
-        store = credential_storage.CredentialStore("PERSONAL_API", str(tmp_path), session_factory=lambda: Session(engine))
-        store._with_ring(lambda ring: ring.active(store.purpose))
-        with Session(engine.execution_options(sqlite_begin="IMMEDIATE")) as writer:
-            writer.execute(text("UPDATE privacy_keys SET wrapped_key = wrapped_key"))
-            token = store.cipher().encrypt(secrets.token_bytes(32))
-            assert store.cipher().decrypt(token)
-            writer.rollback()
-    finally:
-        engine.dispose()
 
 
 def test_startup_does_not_regenerate_lost_active_dek(db):

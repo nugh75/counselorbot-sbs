@@ -184,18 +184,10 @@ async def _log_retention_loop(interval_seconds: int = 3600):
             days = _get_int_config(db, "log_retention_days", 90)
             if days <= 0:
                 continue
-            dialect = database.engine.dialect.name
-            if dialect == "postgresql":
-                stmt = sa_text(
-                    "DELETE FROM logs WHERE timestamp < now() - (:days || ' days')::interval"
-                )
-                result = db.execute(stmt, {"days": days})
-            else:
-                # SQLite fallback (local-dev): timestamp senza timezone.
-                import datetime as _dt
-                cutoff = _dt.datetime.utcnow() - _dt.timedelta(days=days)
-                stmt = sa_text("DELETE FROM logs WHERE timestamp < :cutoff")
-                result = db.execute(stmt, {"cutoff": cutoff})
+            stmt = sa_text(
+                "DELETE FROM logs WHERE timestamp < now() - (:days || ' days')::interval"
+            )
+            result = db.execute(stmt, {"days": days})
             db.commit()
             deleted = getattr(result, "rowcount", 0) or 0
             if deleted:

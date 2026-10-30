@@ -10,14 +10,11 @@ import httpx
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
-from sqlalchemy.pool import StaticPool
-
 from backend import auth, database, embedding_service as embeddings, models, pii_ner, rag_index as rag, rag_reindex_job
 from backend.ai_service import AIService
 from backend.api_secrets import API_KEY_ENV_MAP
 from backend.routes import document_retrieval
+from backend.tests.artifact_database import artifact_session
 from backend.tests.test_embedding_provider import fake_client, no_network  # noqa: F401
 from backend.tests.test_rag_embedding_degradation import _Corpus, _index
 
@@ -29,13 +26,9 @@ def db(monkeypatch):
     for names in API_KEY_ENV_MAP.values():
         for name in names:
             monkeypatch.delenv(name, raising=False)
-    # Routes run in the TestClient threadpool: share one in-memory connection.
-    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
-    for table in (models.Config, models.Log, models.PromptRevision):
-        table.__table__.create(engine)
-    with Session(engine) as session:
+    # Routes run in the TestClient threadpool and share this session.
+    with artifact_session() as session:
         yield session
-    engine.dispose()
 
 
 def _service(db):
