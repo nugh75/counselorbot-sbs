@@ -531,7 +531,9 @@ della chat standard) e consente anche domande libere sul profilo. Non esistono
 più il workspace OpenCode, il terminale di ripiego, la visualizzazione affiancata
 del PDF e i file di lavoro (`documento.md`, `memoria.md`, `appunti.md`); il PDF
 caricato serve solo a estrarre i punteggi e non ne viene conservata una copia.
-Le sessioni salvate come OpenCode si riaprono come chat guidata.
+Le sessioni salvate come OpenCode si riaprono come chat guidata. Tra le domande
+suggerite dell’Assistente quella sull’esperienza OpenCode è sostituita da una sul
+formato delle risposte della chat.
 
 Le pagine `/bussola` e `/assistente`, con il selettore del taccuino nel contesto,
 il taccuino di prova, il richiamo all’abbonamento ChatGPT e il campo del
