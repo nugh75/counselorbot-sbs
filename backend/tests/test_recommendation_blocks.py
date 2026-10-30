@@ -235,3 +235,19 @@ def test_ordinary_bare_json_and_unlabelled_code_stay_visible():
                  'Esempio:\n```\n{"name": "Ada"}\n```'):
         assert strip_for_display(text) == text
         assert extract(text)[0] == text
+
+
+def test_private_blocks_share_one_order_with_the_step_marker_last():
+    # A02: visible text, then private blocks, then [[AVANZA_STEP]] alone on the last line.
+    from backend.event_booklet import DIRECTIVE as booklet
+    from backend.goal_draft import DIRECTIVE as goal
+    from backend.prompt_contract import turn_contract
+    from backend.recommendation_blocks import notes_directive
+
+    contract = turn_contract(language='it', questionnaire_type='QSA', phase='cognitive', advice_allowed=True)
+    assert 'private blocks, and the [[AVANZA_STEP]] marker' in contract
+    for text in (build_directive({'book': 'Libro'}, {}), notes_directive(advice_allowed=True), booklet, goal):
+        assert 'very end' not in text
+        assert 'marker line' in text
+    for text in (build_directive({'book': 'Libro'}, {}, idea=True), notes_directive(advice_allowed=True, idea=True)):
+        assert 'before the final idea patch' in text and 'AVANZA_STEP' not in text

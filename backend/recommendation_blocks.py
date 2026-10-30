@@ -105,7 +105,8 @@ def build_directive(
     lines.append(
         "Rules: use these exact ids and nothing else; never invent an id; leave an "
         "array empty when you recommended nothing from that catalogue; write the "
-        "block once, at the very end of the message. Candidates are not yet shown in "
+        "block once, after the visible reply and before any [[AVANZA_STEP]] marker line, which "
+        "stays last. Candidates are not yet shown in "
         "the panel: only this declaration adds them. Select an item only when the "
         "visible response actually proposes it; never select a rejected item or one "
         "awaiting clarification. Name each selected work or strategy in the visible "
@@ -114,7 +115,8 @@ def build_directive(
     )
     directive = "\n".join(lines)
     if idea:
-        directive = directive.replace("at the very end of the message", "after the visible reply and before the final idea patch")
+        directive = directive.replace(
+            "before any [[AVANZA_STEP]] marker line, which stays last", "before the final idea patch")
     return directive
 
 
@@ -386,7 +388,8 @@ def _whitelist(values, allowed: Mapping[str, str]) -> list[str]:
 
 def notes_directive(*, advice_allowed: bool, idea: bool = False, hypothesis_allowed: bool = False, example_lens: str = "A5") -> str:
     """Log concrete proposals, reflective questions and interpretive hypotheses without certifying them."""
-    position = "before the final idea patch" if idea else "at the very end"
+    position = ("before the final idea patch" if idea else
+                "after the visible reply and before any [[AVANZA_STEP]] marker line, which stays last")
     kinds = "question, advice or hypothesis" if hypothesis_allowed else "question or advice"
     hyp_sentence = (
         " and one interpretive reading offered as an open hypothesis (with optional lens: factor code)"
