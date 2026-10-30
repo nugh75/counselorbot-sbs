@@ -99,7 +99,7 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
 
             {regenerated && (
                 <Callout variant="warning" title={l('regeneratedCode', { pseudonym: regenerated.pseudonym })}>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         <p>{l('regeneratedHint')}</p>
                         <div className="flex flex-col gap-2 sm:flex-row">
                             <label htmlFor={`regenerated-${regenerated.username}`} className="sr-only">{l('personalCodeLabel')}</label>
@@ -108,7 +108,7 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
                                 readOnly
                                 value={formatPersonalCode(regenerated.code)}
                                 onFocus={event => event.target.select()}
-                                className="min-h-11 min-w-0 flex-1 rounded-md border border-amber-300 bg-white px-3 text-center font-mono text-lg font-bold tracking-widest text-slate-900"
+                                className="min-h-control min-w-0 flex-1 rounded-control border border-warning-line bg-surface px-4 text-center font-mono tracking-widest text-lg font-semibold text-ink"
                             />
                             <Button type="button" variant="secondary" onClick={() => void copyRegenerated()}>
                                 {copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
@@ -125,33 +125,33 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
                 </Callout>
             )}
             {loading && classes.length === 0 && (
-                <p role="status" className="flex items-center gap-2 text-sm text-slate-600">
+                <p role="status" className="flex items-center gap-2 text-sm text-ink-muted">
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden />{l('loading')}
                 </p>
             )}
             {!loading && !loadError && classes.length === 0 && (
-                <Card><p className="text-sm text-slate-600">{l(groupId === undefined ? 'noDevices' : 'noClassDevices')}</p></Card>
+                <Card><p className="text-sm text-ink-muted">{l(groupId === undefined ? 'noDevices' : 'noClassDevices')}</p></Card>
             )}
 
             {classes.map(group => (
                 <Card key={group.group_id}>
                     <section aria-labelledby={`device-class-${group.group_id}`} className="space-y-4">
-                        <h2 id={`device-class-${group.group_id}`} className="border-b border-slate-100 pb-3 text-lg font-bold text-slate-800">
+                        <h2 id={`device-class-${group.group_id}`} className="border-b border-line pb-4 text-lg font-semibold text-ink">
                             {group.group_name}
                         </h2>
-                        <ul className="divide-y divide-slate-100">
+                        <ul className="divide-y divide-line">
                             {group.devices.map(device => (
-                                <li key={device.id} className="space-y-3 py-4 first:pt-0 last:pb-0">
-                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                                <li key={device.id} className="space-y-4 py-4 first:pt-0 last:pb-0">
+                                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                         <div className="min-w-0 space-y-1">
                                             <div className="flex flex-wrap items-center gap-2">
-                                                <h3 className="font-semibold text-slate-900">{device.pseudonym}</h3>
-                                                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${device.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
+                                                <h3 className="font-semibold text-ink">{device.pseudonym}</h3>
+                                                <span className={`rounded-full px-2 py-1 text-xs font-semibold ${device.status === 'active' ? 'bg-success-soft text-success' : 'bg-warning-soft text-warning-ink'}`}>
                                                     {l(device.status === 'active' ? 'activeStatus' : 'pendingStatus')}
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-slate-600">{device.device_label || l('unnamedDevice')}</p>
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-sm text-ink-muted">{device.device_label || l('unnamedDevice')}</p>
+                                            <p className="text-xs text-ink-muted">
                                                 <time dateTime={device.created_at}>{l('pairedAt', { date: new Date(device.created_at).toLocaleString(lang) })}</time>
                                                 {' · '}
                                                 <time dateTime={device.last_seen_at}>{l('lastSeen', { date: new Date(device.last_seen_at).toLocaleString(lang) })}</time>
@@ -174,8 +174,8 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
                                         </div>
                                     </div>
                                     {revokeId === device.id && (
-                                        <div role="group" aria-label={l('revokeConfirm')} className="flex flex-wrap items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
-                                            <p className="w-full text-sm text-red-800">{l('revokeConfirm')}</p>
+                                        <div role="group" aria-label={l('revokeConfirm')} className="flex flex-wrap items-center gap-2 rounded-lg border border-danger-line bg-danger-soft p-4">
+                                            <p className="w-full text-sm text-danger-ink">{l('revokeConfirm')}</p>
                                             <Button type="button" variant="danger" size="sm" disabled={busy !== null} onClick={() => void revoke(device)}>
                                                 {busy === `revoke:${device.id}` ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
                                                 {l(busy === `revoke:${device.id}` ? 'actionBusy' : 'revoke')}

@@ -51,14 +51,14 @@ export function ClassQuickSwitcher({
                 {teacherAreaText(lang, 'quickClassSwitcherAriaLabel')}
             </label>
             <div className="relative inline-flex items-center">
-                <Users className="pointer-events-none absolute left-2.5 h-4 w-4 text-slate-400" aria-hidden="true" />
+                <Users className="pointer-events-none absolute left-2.5 h-4 w-4 text-ink-muted" aria-hidden="true" />
                 <select
                     id="quick-class-select"
                     aria-label={teacherAreaText(lang, 'quickClassSwitcherAriaLabel')}
                     value={currentGroupId}
                     disabled={!hasMultiple}
                     onChange={handleChange}
-                    className="min-h-[44px] appearance-none rounded-lg border border-slate-300 bg-white py-1.5 pl-8 pr-8 text-xs font-semibold text-slate-700 shadow-xs transition hover:border-indigo-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-default disabled:opacity-80"
+                    className="min-h-[44px] appearance-none rounded-lg border border-line-strong bg-surface py-2 pl-8 pr-8 text-xs font-semibold text-ink-body shadow-card transition hover:border-brand focus:border-brand focus:outline-none focus:ring-2 focus:ring-focus/20 disabled:cursor-default disabled:opacity-80"
                 >
                     {activeGroups.map(group => (
                         <option key={group.id} value={group.id}>
@@ -67,7 +67,7 @@ export function ClassQuickSwitcher({
                     ))}
                 </select>
                 {hasMultiple && (
-                    <ChevronDown className="pointer-events-none absolute right-2.5 h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                    <ChevronDown className="pointer-events-none absolute right-2.5 h-3.5 w-3.5 text-ink-muted" aria-hidden="true" />
                 )}
             </div>
         </div>

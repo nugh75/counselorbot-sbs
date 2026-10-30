@@ -16,10 +16,10 @@ export default function TeacherPage() {
     if (state === 'forbidden') return <TeacherForbidden />;
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-surface-sunken">
             <section className="page-wide px-4 py-8">
-                <h1 className="text-2xl font-bold text-slate-800">{teacherAreaText(lang, 'title')}</h1>
-                <p className="mt-1 text-sm text-slate-500">{teacherAreaText(lang, 'subtitle')}</p>
+                <h1 className="text-2xl font-semibold text-ink">{teacherAreaText(lang, 'title')}</h1>
+                <p className="mt-1 text-sm text-ink-muted">{teacherAreaText(lang, 'subtitle')}</p>
                 <div className="mt-6">
                     <TeacherAreaHome teacher={teacher} institutes={institutes} />
                 </div>

@@ -6,6 +6,8 @@ import { test } from 'node:test';
 // una utility di colore senza voce `.dark .x` resta chiara sul fondo scuro.
 // Nell'area docente e' successo con i gradienti delle card (`from-*-50`,
 // `via-white`) e con `bg-white/80`: card bianca, testo gia' schiarito sopra.
+// Dalla migrazione ai token (zona 6) le classi passano da `bg-surface`, `text-ink`…,
+// che cambiano col tema da sole: questa guardia resta per le eccezioni grezze.
 const stylesheet = readFileSync(new URL('../app/globals.css', import.meta.url), 'utf-8');
 const darkBlock = stylesheet.slice(stylesheet.indexOf('DARK MODE'));
 const remapped = new Set(
@@ -49,13 +51,10 @@ test('every light background and dark text in the teacher area has a dark-theme 
     );
 });
 
-test('the class-goal and practice-gym cards turn dark, light theme untouched', () => {
-    // Le tappe del gradiente sono variabili: il remap ridefinisce la variabile,
-    // non `background-color`, altrimenti il gradiente coprirebbe il colore.
-    for (const stop of ['via-white', 'from-indigo-50\\/70', 'to-sky-50\\/40', 'from-indigo-50\\/50', 'to-white']) {
-        const rule = darkBlock.slice(darkBlock.indexOf(`.dark .${stop} {`)).split('}')[0];
-        assert.match(rule, /--tw-gradient-(from|via|to):/, `${stop} deve ridefinire la sua tappa`);
-    }
-    const beforeDark = stylesheet.slice(0, stylesheet.indexOf('DARK MODE'));
-    assert.equal(beforeDark.includes('--tw-gradient-'), false, 'il tema chiaro non viene toccato');
+test('the teacher area draws no gradients and no call-site dark: variants', () => {
+    // Zona migrata ai token semantici (docs/audits/ui-consistency-audit-2026-10-30.md §9):
+    // le card hero sono a tinta piena e il tema scuro arriva dai token, non dai call-site.
+    const offending = sources.flatMap(({ name, text }) =>
+        [...text.matchAll(/(?<![\w-])(?:bg-(?:gradient|linear)-[\w-]+|dark:[\w:/[\]-]+)/g)].map(m => `${m[0]} (${name})`));
+    assert.deepEqual(offending, []);
 });

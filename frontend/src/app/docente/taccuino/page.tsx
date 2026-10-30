@@ -10,7 +10,7 @@ export default function TeacherNotebookPage() {
     return (
         <TeacherAreaPage slug="taccuino" wide={false}>
             {() => <div className="space-y-4">
-                <p className="text-sm text-slate-600">{teacherAreaText(lang, 'notebookNote')}</p>
+                <p className="text-sm text-ink-muted">{teacherAreaText(lang, 'notebookNote')}</p>
                 <TeacherNotebook showHeading={false} />
             </div>}
         </TeacherAreaPage>

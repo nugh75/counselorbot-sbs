@@ -9,6 +9,7 @@
 
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
 import type { NotebookContextChoice } from '@/lib/notebook-context';
 import { docenzaClassesInContext } from '@/lib/docenza-groups';
 import { useI18n } from '@/lib/i18n-context';
@@ -98,23 +99,22 @@ export function DocenzaClassBar({ selected, onChange, notebookContext = 'default
     };
 
     return (
-        <div className="mb-2 rounded-md border border-indigo-100 bg-indigo-50/60 px-2.5 py-2">
-            <p className="flex items-center gap-1.5 text-xs font-semibold text-indigo-900">
-                <GraduationCap className="h-3.5 w-3.5" aria-hidden="true" />
+        <div className="mb-2 rounded-control border border-brand-line bg-brand-soft/60 px-2 py-2">
+            <p className="flex items-center gap-2 text-xs font-semibold text-ink">
+                <GraduationCap className="h-4 w-4 text-link" aria-hidden="true" />
                 {texts.label}
             </p>
-            <p className="mt-0.5 text-2xs text-indigo-700/80">{docenzaClassesInContext(notebookContext) ? texts.hint : texts.hintNoNotebook}</p>
-            {loading && <p role="status" className="mt-1 flex items-center gap-1 text-xs text-slate-500"><Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> {t('common.loading')}</p>}
-            {forbidden ? <p role="alert" className="mt-1 text-xs text-red-600">{teacherAreaText(lang, 'forbidden')}</p>
-                : failed && <div role="alert" className="mt-1 flex flex-wrap items-center gap-3 text-xs text-red-600">
+            <p className="mt-1 text-2xs text-ink-muted">{docenzaClassesInContext(notebookContext) ? texts.hint : texts.hintNoNotebook}</p>
+            {loading && <p role="status" className="mt-1 flex items-center gap-1 text-xs text-ink-muted"><Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> {t('common.loading')}</p>}
+            {forbidden ? <p role="alert" className="mt-1 text-xs text-danger">{teacherAreaText(lang, 'forbidden')}</p>
+                : failed && <div role="alert" className="mt-1 flex flex-wrap items-center gap-4 text-xs text-danger">
                     <p>{teacherLoadingText(lang, 'classes')}</p>
-                    <button type="button" disabled={loading} onClick={() => void reload()}
-                        className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">{t('setup.retry')}</button>
+                    <Button type="button" variant="secondary" disabled={loading} onClick={() => void reload()} className="text-xs">{t('setup.retry')}</Button>
                 </div>}
             {!loading && !failed && !forbidden && groups?.length === 0 ? (
-                <p className="mt-1 text-xs text-slate-500">{texts.none}</p>
+                <p className="mt-1 text-xs text-ink-muted">{texts.none}</p>
             ) : (
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                <div className="mt-2 flex flex-wrap gap-2">
                     {(groups ?? []).filter((group) => group.is_active).map((group) => {
                         const isSelected = selected.includes(group.id);
                         return (
@@ -124,10 +124,10 @@ export function DocenzaClassBar({ selected, onChange, notebookContext = 'default
                                 aria-pressed={isSelected}
                                 onClick={() => toggle(group.id)}
                                 className={cn(
-                                    'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                                    'min-h-control rounded-full border px-4 py-1 text-xs font-semibold transition-colors',
                                     isSelected
-                                        ? 'border-indigo-500 bg-indigo-600 text-white'
-                                        : 'border-slate-300 bg-white text-slate-600 hover:border-indigo-300 hover:bg-indigo-50',
+                                        ? 'border-brand bg-brand text-ink-on-brand'
+                                        : 'border-line-strong bg-surface text-ink-muted hover:border-brand-line hover:bg-brand-soft',
                                 )}
                             >
                                 {group.name}
@@ -136,8 +136,7 @@ export function DocenzaClassBar({ selected, onChange, notebookContext = 'default
                     })}
                 </div>
             )}
-            {!failed && !forbidden && groups !== undefined && <button type="button" disabled={loading} onClick={() => void reload()}
-                className="mt-1 min-h-11 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">{t('common.refresh')}</button>}
+            {!failed && !forbidden && groups !== undefined && <Button type="button" variant="secondary" disabled={loading} onClick={() => void reload()} className="mt-2 text-xs">{t('common.refresh')}</Button>}
         </div>
     );
 }

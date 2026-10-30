@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { SourceOptions } from '@/components/profile/SourceOptions';
 
-const field = 'mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900';
+const field = 'mt-1 min-h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-ink';
 
 async function request(path: string, method = 'GET', body?: unknown) {
     const response = await apiFetch(path, {
@@ -66,48 +66,48 @@ export function CounselorDetailsDialog({ counselor, onClose }: { counselor: Clas
 
     return <dialog ref={dialog} aria-labelledby="counselor-details-title" data-testid="counselor-details"
         onCancel={e => { e.preventDefault(); onClose(); }} onClick={e => { if (e.target === dialog.current) onClose(); }}
-        className="m-0 h-dvh max-h-none w-full max-w-none bg-white p-0 text-slate-900 backdrop:bg-slate-900/50 sm:m-auto sm:h-auto sm:max-h-[90vh] sm:max-w-xl sm:rounded-xl">
+        className="m-0 h-dvh max-h-none w-full max-w-none bg-surface p-0 text-ink backdrop:bg-slate-900/50 sm:m-auto sm:h-auto sm:max-h-[90vh] sm:max-w-xl sm:rounded-card">
         <div className="flex h-full max-h-[inherit] flex-col">
-            <div className="flex items-start justify-between gap-3 border-b border-slate-200 p-4 sm:px-6">
-                <div className="flex min-w-0 items-center gap-3">
+            <div className="flex items-start justify-between gap-4 border-b border-line p-4 sm:px-6">
+                <div className="flex min-w-0 items-center gap-4">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {counselor.avatar_url && <img src={counselor.avatar_url} alt="" className="h-10 w-16 shrink-0 rounded object-cover" />}
                     <div className="min-w-0">
-                        <h2 id="counselor-details-title" className="break-words text-xl font-bold">{counselor.name}</h2>
-                        {counselor.approach_categories.length > 0 && <p className="text-xs text-slate-500">{counselor.approach_categories.map(item => formatCategoryLabel(item, lang)).join(' · ')}</p>}
+                        <h2 id="counselor-details-title" className="break-words text-xl font-semibold">{counselor.name}</h2>
+                        {counselor.approach_categories.length > 0 && <p className="text-xs text-ink-muted">{counselor.approach_categories.map(item => formatCategoryLabel(item, lang)).join(' · ')}</p>}
                     </div>
                 </div>
                 <Button type="button" variant="ghost" aria-label={l('counselorClose')} onClick={onClose}><X className="h-5 w-5" aria-hidden /></Button>
             </div>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:px-6">
-                <p className="whitespace-pre-wrap text-sm text-slate-700">{description || l('counselorNoDescription')}</p>
+                <p className="whitespace-pre-wrap text-sm text-ink-body">{description || l('counselorNoDescription')}</p>
                 <dl className="space-y-2 text-sm">
-                    <div><dt className="font-semibold text-slate-800">{l('counselorInstitutionModel')}</dt><dd className="break-words text-slate-600" data-testid="counselor-institution-model">{model}</dd></div>
-                    {sources?.available && <div><dt className="font-semibold text-slate-800">{l('counselorAnswersForYou')}</dt><dd className="break-words text-slate-600" data-testid="counselor-answers">{answers}</dd></div>}
+                    <div><dt className="font-semibold text-ink">{l('counselorInstitutionModel')}</dt><dd className="break-words text-ink-muted" data-testid="counselor-institution-model">{model}</dd></div>
+                    {sources?.available && <div><dt className="font-semibold text-ink">{l('counselorAnswersForYou')}</dt><dd className="break-words text-ink-muted" data-testid="counselor-answers">{answers}</dd></div>}
                 </dl>
-                {sources?.available && <fieldset disabled={busy} className="space-y-3 rounded-lg border border-slate-200 p-3">
-                    <legend className="px-1 text-sm font-semibold text-slate-800">{l('counselorYourSource')}</legend>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                {sources?.available && <fieldset disabled={busy} className="space-y-4 rounded-lg border border-line p-4">
+                    <legend className="px-1 text-sm font-semibold text-ink">{l('counselorYourSource')}</legend>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
                         <div className="min-w-0 flex-1">
-                            <label htmlFor="counselor-details-source" className="text-sm font-semibold text-slate-800">{p('defaultConnection')}</label>
+                            <label htmlFor="counselor-details-source" className="text-sm font-semibold text-ink">{p('defaultConnection')}</label>
                             <select id="counselor-details-source" className={field} value={source} onChange={e => { setSource(e.target.value); if (!levelsFor(sources, e.target.value).includes(reasoning)) setReasoning(''); }}>
                                 <option value="">{p('useDefault')}</option><SourceOptions sources={sources} />
                             </select>
                         </div>
                         {source && <div className="sm:w-48">
-                            <label htmlFor="counselor-details-reasoning" className="text-sm font-semibold text-slate-800">{p('reasoning')}</label>
+                            <label htmlFor="counselor-details-reasoning" className="text-sm font-semibold text-ink">{p('reasoning')}</label>
                             <select id="counselor-details-reasoning" className={field} value={reasoning} onChange={e => setReasoning(e.target.value)}>
                                 <option value="">{p('reasoningDefault')}</option>
                                 {levelsFor(sources, source).map(level => <option key={level} value={level}>{p(`reasoning_${level}` as Parameters<typeof personalAPIText>[1])}</option>)}
                             </select>
                         </div>}
                     </div>
-                    <p className="text-sm text-slate-600">{l('counselorPersonalOnly')}</p>
+                    <p className="text-sm text-ink-muted">{l('counselorPersonalOnly')}</p>
                     <Button type="button" disabled={busy || !dirty} onClick={save}>{l('counselorSaveSource')}</Button>
-                    {status === 'saved' && <p role="status" className="text-sm text-slate-700">{l('counselorSourceSaved')}</p>}
+                    {status === 'saved' && <p role="status" className="text-sm text-ink-body">{l('counselorSourceSaved')}</p>}
                     {status === 'error' && <Callout variant="danger">{p('error')}</Callout>}
                 </fieldset>}
-                {sources?.available && <Link href="/docente/api-personali" className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline">{l('counselorOpenSources')}</Link>}
+                {sources?.available && <Link href="/docente/api-personali" className="inline-flex min-h-control items-center text-sm font-semibold text-link underline">{l('counselorOpenSources')}</Link>}
             </div>
         </div>
     </dialog>;

@@ -11,7 +11,7 @@ export function ClassSettingLock({ item, label, disabled, admin, onChange }: {
 }) {
     const { lang } = useI18n();
     const l = (key: Parameters<typeof classSettingsText>[1]) => classSettingsText(lang, key);
-    return <div className="space-y-1 text-xs text-slate-600">
+    return <div className="space-y-1 text-xs text-ink-muted">
         {(item.locked || item.changed_by_admin) && <p title={item.locked ? `${l('locked')} · ${item.locked_by ?? ''} · ${item.locked_at ? new Date(item.locked_at).toLocaleString(lang) : ''}` : undefined}>
             {l(item.locked ? 'locked' : 'changed')}{item.locked && ` · ${l(item.locked_enabled ? 'enabled' : 'disabled')}`}
         </p>}

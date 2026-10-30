@@ -19,7 +19,7 @@ export function GroupAssignments({ groupName }: { groupName: string }) {
     const groupRows = (rows ?? []).filter(row => row.group_name === groupName);
     return (
         <details
-            className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-3"
+            className="mt-2 rounded-control border border-line bg-surface-sunken p-4"
             onToggle={event => {
                 if (!(event.target as HTMLDetailsElement).open || rows !== null || failed) return;
                 apiFetch('/api/teacher/assignments')
@@ -28,26 +28,26 @@ export function GroupAssignments({ groupName }: { groupName: string }) {
                     .catch(() => setFailed(true));
             }}
         >
-            <summary className="cursor-pointer text-xs font-semibold text-slate-600">{l('groupAssignments')}</summary>
+            <summary className="cursor-pointer text-xs font-semibold text-ink-muted">{l('groupAssignments')}</summary>
             <div className="mt-2 space-y-1">
-                {failed && <p className="text-xs text-slate-500">{l('error')}</p>}
-                {!failed && rows === null && <p role="status" className="text-xs text-slate-500">{l('loading')}</p>}
+                {failed && <p className="text-xs text-ink-muted">{l('error')}</p>}
+                {!failed && rows === null && <p role="status" className="text-xs text-ink-muted">{l('loading')}</p>}
                 {!failed && rows !== null && groupRows.length === 0 && (
-                    <p className="text-xs text-slate-500">{l('groupAssignmentsEmpty')}</p>
+                    <p className="text-xs text-ink-muted">{l('groupAssignmentsEmpty')}</p>
                 )}
                 {groupRows.map(row => (
                     <Link key={row.id} href={`${manageHref}#assignment-${row.id}`}
-                        className="block break-words rounded-md bg-white px-2 py-1.5 text-xs hover:bg-indigo-50">
-                        <span className="font-semibold text-slate-700">{l(row.source_kind)}</span>
+                        className="flex min-h-control items-center break-words rounded-control bg-surface px-2 py-2 text-xs hover:bg-brand-soft">
+                        <span className="font-semibold text-ink-body">{l(row.source_kind)}</span>
                         {' · '}
-                        <span className="text-slate-800">{row.snapshot.title}</span>
-                        <span className="block text-slate-500">
+                        <span className="text-ink">{row.snapshot.title}</span>
+                        <span className="block text-ink-muted">
                             {l('recipients')}: {row.recipient_username || l('all')} ({row.recipient_count})
                             {row.due_date && <> · <time dateTime={row.due_date}>{new Date(row.due_date).toLocaleDateString(lang)}</time></>}
                         </span>
                     </Link>
                 ))}
-                <Link href={manageHref} className="inline-block text-xs font-semibold text-indigo-600 underline underline-offset-2 hover:text-indigo-800">
+                <Link href={manageHref} className="inline-block text-xs font-semibold text-link underline underline-offset-2 hover:text-link">
                     {l('groupAssignmentsManage')}
                 </Link>
             </div>

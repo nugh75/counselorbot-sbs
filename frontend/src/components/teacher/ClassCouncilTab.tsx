@@ -9,6 +9,7 @@ import { publicOrigin } from '@/lib/runtime-config';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
 
@@ -17,9 +18,9 @@ const DURATIONS = [7, 14, 30, 60, 90];
 function CopyField({ label, value, lang }: { label: string; value: string; lang: string }) {
     const [copied, setCopied] = useState(false);
     return <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+        <p className="text-xs font-semibold text-ink-muted">{label}</p>
         <div className="flex flex-wrap items-center gap-2">
-            <code className="min-w-0 flex-1 break-all rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800">{value}</code>
+            <code className="min-w-0 flex-1 break-all rounded-control border border-line bg-surface px-4 py-2 text-sm text-ink">{value}</code>
             <Button variant="secondary" onClick={() => {
                 void navigator.clipboard?.writeText(value).then(() => setCopied(true));
             }}>{classCouncilText(lang, copied ? 'copied' : 'copy')}</Button>
@@ -35,6 +36,7 @@ export function ClassCouncilTab({ groupId }: { groupId: number }) {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<'' | 'createError' | 'ownerOnly'>('');
     const [created, setCreated] = useState<CouncilLink | null>(null);
+    const [confirmRevoke, setConfirmRevoke] = useState<number | null>(null);
     const date = (value: string) => new Date(value).toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' });
     const origin = publicOrigin();
     const councilLink = origin ? `${origin}${councilPath(created?.token || '')}` : '';
@@ -56,54 +58,56 @@ export function ClassCouncilTab({ groupId }: { groupId: number }) {
     };
 
     const revoke = async (link: CouncilLink) => {
-        if (!window.confirm(l('revokeConfirm'))) return;
+        setConfirmRevoke(null);
         const res = await apiFetch(`/api/teacher/council-links/${link.id}`, { method: 'DELETE' }).catch(() => null);
         if (res && res.status === 403) setError('ownerOnly');
         if (created?.id === link.id) setCreated(null);
         await links.reload();
     };
 
-    return <div className="space-y-5">
+    return <div className="space-y-6">
         <Card className="space-y-4">
             <div className="space-y-2">
-                <h2 className="text-lg font-semibold text-slate-800">{l('title')}</h2>
-                <p className="text-sm text-slate-600">{l('intro')}</p>
-                <p className="text-sm text-slate-600">{l('privacy')}</p>
+                <h2 className="text-lg font-semibold text-ink">{l('title')}</h2>
+                <p className="text-sm text-ink-muted">{l('intro')}</p>
+                <p className="text-sm text-ink-muted">{l('privacy')}</p>
             </div>
-            <div className="flex flex-wrap items-end gap-3">
-                <label className="space-y-1 text-sm font-medium text-slate-700">
+            <div className="flex flex-wrap items-end gap-4">
+                <label className="space-y-1 text-sm font-semibold text-ink-body">
                     <span className="block">{l('duration')}</span>
                     <select value={days} onChange={event => setDays(Number(event.target.value))}
-                        className="min-h-[44px] rounded-md border border-slate-300 bg-white px-3 text-sm">
+                        className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 text-sm">
                         {DURATIONS.map(value => <option key={value} value={value}>{value} {l('days')}</option>)}
                     </select>
                 </label>
                 <Button disabled={busy} onClick={() => void create()}>{l(busy ? 'creating' : 'create')}</Button>
             </div>
-            {error && <p role="alert" className="text-sm text-red-600">{l(error)}</p>}
-            {created?.password && councilLink && <div role="status" className="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-                <p className="font-semibold text-emerald-800">{l('newLink')}</p>
-                <p className="text-sm text-emerald-800">{l('passwordOnce')}</p>
+            {error && <p role="alert" className="text-sm text-danger">{l(error)}</p>}
+            {created?.password && councilLink && <div role="status" className="space-y-4 rounded-lg border border-success-line bg-success-soft p-4">
+                <p className="font-semibold text-success-ink">{l('newLink')}</p>
+                <p className="text-sm text-success-ink">{l('passwordOnce')}</p>
                 <CopyField label={l('link')} value={councilLink} lang={lang} />
                 <CopyField label={l('password')} value={created.password} lang={lang} />
             </div>}
         </Card>
-        <Card className="space-y-3">
-            <h3 className="font-semibold text-slate-800">{l('links')}</h3>
+        <Card className="space-y-4">
+            <h3 className="font-semibold text-ink">{l('links')}</h3>
             {links.loading && <TeacherLoading />}
             {links.failed && <Callout variant="danger"><p>{l('loadError')}</p>
                 <Button variant="secondary" onClick={() => void links.reload()}>{l('reload')}</Button></Callout>}
-            {links.data && links.data.length === 0 && <p className="text-sm text-slate-500">{l('noLinks')}</p>}
-            {links.data && links.data.length > 0 && <ul className="divide-y divide-slate-100">
-                {links.data.map(link => <li key={link.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+            {links.data && links.data.length === 0 && <p className="text-sm text-ink-muted">{l('noLinks')}</p>}
+            {links.data && links.data.length > 0 && <ul className="divide-y divide-line">
+                {links.data.map(link => <li key={link.id} className="flex flex-wrap items-center justify-between gap-4 py-4">
                     <div className="min-w-0 space-y-1 text-sm">
                         <p className="flex flex-wrap items-center gap-2">
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${link.state === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>{l(link.state)}</span>
-                            <span className="text-slate-700">{l('expires')} {date(link.expires_at)}</span>
+                            <span className={`rounded-full px-2 py-1 text-xs font-semibold ${link.state === 'active' ? 'bg-success-soft text-success-ink' : 'bg-surface-raised text-ink-muted'}`}>{l(link.state)}</span>
+                            <span className="text-ink-body">{l('expires')} {date(link.expires_at)}</span>
                         </p>
-                        <p className="text-slate-500">{link.last_viewed_at ? `${l('lastViewed')}: ${date(link.last_viewed_at)}` : l('neverViewed')}</p>
+                        <p className="text-ink-muted">{link.last_viewed_at ? `${l('lastViewed')}: ${date(link.last_viewed_at)}` : l('neverViewed')}</p>
                     </div>
-                    {link.state === 'active' && <Button variant="secondary" onClick={() => void revoke(link)}>{l('revoke')}</Button>}
+                    {link.state === 'active' && (confirmRevoke === link.id
+                        ? <ConfirmInline question={l('revokeConfirm')} onConfirm={() => void revoke(link)} onCancel={() => setConfirmRevoke(null)} />
+                        : <Button variant="secondary" onClick={() => setConfirmRevoke(link.id)}>{l('revoke')}</Button>)}
                 </li>)}
             </ul>}
         </Card>

@@ -12,12 +12,13 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
 
 const STATUS_CHIP = {
-    draft: 'bg-amber-100 text-amber-800',
-    final: 'bg-emerald-100 text-emerald-800',
+    draft: 'bg-warning-soft text-warning-ink',
+    final: 'bg-success-soft text-success-ink',
 } as const;
 
 function date(lang: string, value: string | null) {
@@ -40,6 +41,7 @@ export function OrientationTab({ groupId }: { groupId: number }) {
     const [docLoading, setDocLoading] = useState(false);
     const [docFailed, setDocFailed] = useState(false);
     const [busy, setBusy] = useState(false);
+    const [confirmFinalize, setConfirmFinalize] = useState(false);
     const [draftBusy, setDraftBusy] = useState(false);
     const [draft, setDraft] = useState('');
     const [notice, setNotice] = useState<'' | 'saved' | 'saveError' | 'conflict' | 'detailLoadError' | 'generateError' | 'downloadError'>('');
@@ -157,42 +159,42 @@ export function OrientationTab({ groupId }: { groupId: number }) {
             || row.username.toLowerCase().includes(needle);
     });
     const chip = (value: RecommendationSummary['status']) => value
-        ? <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_CHIP[value]}`}>{l(value === 'final' ? 'statusFinal' : 'statusDraft')}</span>
-        : <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">{l('noDocument')}</span>;
+        ? <span className={`rounded-full px-2 py-1 text-xs font-semibold ${STATUS_CHIP[value]}`}>{l(value === 'final' ? 'statusFinal' : 'statusDraft')}</span>
+        : <span className="rounded-full bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-muted">{l('noDocument')}</span>;
 
-    return <div className="space-y-5">
+    return <div className="space-y-6">
         <Card className="space-y-2">
-            <h2 className="text-lg font-semibold text-slate-800">{l('title')}</h2>
-            <p className="text-sm text-slate-600">{l('intro')}</p>
-            <p className="text-sm text-slate-600">{l('privacy')}</p>
+            <h2 className="text-lg font-semibold text-ink">{l('title')}</h2>
+            <p className="text-sm text-ink-muted">{l('intro')}</p>
+            <p className="text-sm text-ink-muted">{l('privacy')}</p>
         </Card>
         {students.loading && <TeacherLoading />}
         {students.failed && <Callout variant="danger"><p>{l('loadError')}</p>
             <Button variant="secondary" onClick={() => void students.reload()}>{l('reload')}</Button></Callout>}
         {students.forbidden && <Callout variant="danger"><p>{l('loadError')}</p></Callout>}
-        {students.data && <div className="grid gap-5 lg:grid-cols-[320px,1fr]">
-            <Card className="h-max space-y-3">
+        {students.data && <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
+            <Card className="h-max space-y-4">
                 <input value={query} onChange={event => setQuery(event.target.value)}
                     placeholder={l('search')} aria-label={l('search')}
-                    className="min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm" />
-                {students.data.length === 0 && <p className="text-sm text-slate-500">{l('noStudents')}</p>}
-                {list.length === 0 && students.data.length > 0 && <p className="text-sm text-slate-500">{l('search')}</p>}
-                {list.length > 0 && <ul className="divide-y divide-slate-100">
+                    className="min-h-[44px] w-full rounded-control border border-line-strong bg-surface px-4 text-sm" />
+                {students.data.length === 0 && <p className="text-sm text-ink-muted">{l('noStudents')}</p>}
+                {list.length === 0 && students.data.length > 0 && <p className="text-sm text-ink-muted">{l('search')}</p>}
+                {list.length > 0 && <ul className="divide-y divide-line">
                     {list.map(row => <li key={row.username}>
                         <button type="button" disabled={busy || draftBusy} onClick={() => void openStudent(row)}
                             aria-pressed={username === row.username}
-                            className={`min-h-[44px] w-full space-y-1 rounded-md px-2 py-2 text-left text-sm ${username === row.username ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}>
-                            <span className="block font-medium text-slate-800">{row.display_name}</span>
+                            className={`min-h-[44px] w-full space-y-1 rounded-control px-2 py-2 text-left text-sm ${username === row.username ? 'bg-brand-soft' : 'hover:bg-surface-sunken'}`}>
+                            <span className="block font-semibold text-ink">{row.display_name}</span>
                             <span className="flex flex-wrap items-center gap-2">
                                 {chip(row.status)}
-                                {row.ai_draft_used && <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">{l('aiDrag')}</span>}
+                                {row.ai_draft_used && <span className="rounded-full bg-brand-soft px-2 py-1 text-xs font-semibold text-link">{l('aiDrag')}</span>}
                             </span>
                         </button>
                     </li>)}
                 </ul>}
             </Card>
             <Card className="space-y-4">
-                {!username && <p className="text-sm text-slate-500">{l('selectHint')}</p>}
+                {!username && <p className="text-sm text-ink-muted">{l('selectHint')}</p>}
                 {username && docLoading && <TeacherLoading />}
                 {username && docFailed && <Callout variant="danger"><p>{l('detailLoadError')}</p>
                     <Button variant="secondary" onClick={() => {
@@ -203,40 +205,40 @@ export function OrientationTab({ groupId }: { groupId: number }) {
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="space-y-1">
                             <p className="text-sm">
-                                <span className="font-medium text-slate-500">{l('classLabel')}:</span>
-                                <span className="text-slate-800"> {doc?.group_name || ''}</span>
-                                <span className="font-medium text-slate-500"> · {l('studentLabel')}:</span>
-                                <span className="text-slate-800"> {doc?.display_name || ''}</span>
+                                <span className="font-semibold text-ink-muted">{l('classLabel')}:</span>
+                                <span className="text-ink"> {doc?.group_name || ''}</span>
+                                <span className="font-semibold text-ink-muted"> · {l('studentLabel')}:</span>
+                                <span className="text-ink"> {doc?.display_name || ''}</span>
                             </p>
-                            {doc?.updated_at && <p className="text-xs text-slate-500">
+                            {doc?.updated_at && <p className="text-xs text-ink-muted">
                                 {l('lastChange')}: {date(lang, doc.updated_at)}{doc.updated_by ? ` · ${doc.updated_by}` : ''}
                             </p>}
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                             {chip(status)}
-                            {draftUsed && <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">{l('aiDrag')}</span>}
+                            {draftUsed && <span className="rounded-full bg-brand-soft px-2 py-1 text-xs font-semibold text-link">{l('aiDrag')}</span>}
                         </div>
                     </div>
-                    {!doc?.is_member && <p className="text-sm text-slate-600">{l('historical')}</p>}
+                    {!doc?.is_member && <p className="text-sm text-ink-muted">{l('historical')}</p>}
                     <Button variant="secondary" disabled={draftBusy || busy || !doc?.is_member} onClick={() => void generate()}>
                         {l(draftBusy ? 'generating' : 'generate')}
                     </Button>
-                    {draft && <div role="status" className="space-y-2 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
-                        <p className="text-sm font-semibold text-indigo-800">{l('draftTitle')}</p>
-                        <p className="whitespace-pre-wrap rounded-md bg-white p-3 text-sm text-slate-700">{draft}</p>
-                        <p className="text-xs text-indigo-700">{l('draftReady')}</p>
+                    {draft && <div role="status" className="space-y-2 rounded-lg border border-brand-line bg-brand-soft p-4">
+                        <p className="text-sm font-semibold text-link">{l('draftTitle')}</p>
+                        <p className="whitespace-pre-wrap rounded-control bg-surface p-4 text-sm text-ink-body">{draft}</p>
+                        <p className="text-xs text-link">{l('draftReady')}</p>
                         <div className="flex flex-wrap gap-2">
                             <Button disabled={busy} onClick={() => { setContent(draft); setDraftUsed(true); setDraft(''); }}>{l('useIt')}</Button>
                             <Button variant="secondary" disabled={busy} onClick={() => setDraft('')}>{l('discard')}</Button>
                         </div>
                     </div>}
                     <label className="block space-y-1">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{l('content')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{l('content')}</span>
                         <textarea value={content} disabled={busy || !doc?.is_member} onChange={event => setContent(event.target.value)}
                             rows={14} placeholder={l('contentPlaceholder')}
-                            className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm leading-6" />
+                            className="w-full rounded-control border border-line-strong bg-surface p-4 text-sm leading-6" />
                     </label>
-                    {notice && <p role="alert" className={`text-sm ${(notice === 'saved') ? 'text-emerald-700' : 'text-red-600'}`}>
+                    {notice && <p role="alert" className={`text-sm ${(notice === 'saved') ? 'text-success' : 'text-danger'}`}>
                         {notice === 'saved' && l('saved')}
                         {notice === 'saveError' && l('saveError')}
                         {notice === 'conflict' && l('conflictReload')}
@@ -251,11 +253,15 @@ export function OrientationTab({ groupId }: { groupId: number }) {
                         </Button>
                         {status === 'final'
                             ? <Button variant="secondary" disabled={busy || draftBusy || !doc?.is_member || !content.trim()} onClick={() => void save('draft')}>{l('backToDraft')}</Button>
-                            : <Button variant="secondary" disabled={busy || draftBusy || !doc?.is_member || !content.trim()}
-                                onClick={() => { if (window.confirm(l('finalizeConfirm'))) void save('final'); }}>
-                                {l('finalize')}</Button>}
+                            : confirmFinalize
+                                ? <ConfirmInline question={l('finalizeConfirm')} busy={busy}
+                                    onConfirm={() => { setConfirmFinalize(false); void save('final'); }}
+                                    onCancel={() => setConfirmFinalize(false)} />
+                                : <Button variant="secondary" disabled={busy || draftBusy || !doc?.is_member || !content.trim()}
+                                    onClick={() => setConfirmFinalize(true)}>
+                                    {l('finalize')}</Button>}
                         <Button variant="secondary" disabled={!doc?.content.trim()} onClick={() => void download()}>{l('download')}</Button>
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{l('internalBadge')}</span>
+                        <span className="rounded-full bg-surface-raised px-2 py-1 text-xs text-ink-muted">{l('internalBadge')}</span>
                     </div>
                 </div>}
             </Card>

@@ -386,19 +386,19 @@ export function ClassOverviewTab({
                     <button
                         type="button"
                         onClick={() => onSelectTab('students')}
-                        className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs transition hover:border-indigo-300 hover:shadow-sm"
+                        className="group flex flex-col justify-between rounded-card border border-line bg-surface p-4 text-left shadow-card transition hover:border-brand-line hover:shadow-card"
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-slate-700">{l('enrolledStudents')}</span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100">
+                            <span className="text-sm font-semibold text-ink-body">{l('enrolledStudents')}</span>
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-link group-hover:bg-brand-soft">
                                 <Users className="h-4 w-4" aria-hidden />
                             </span>
                         </div>
-                        <div className="mt-3 flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-slate-900">{group.members_count}</span>
-                            <span className="text-xs text-slate-500">{l('members')}</span>
+                        <div className="mt-4 flex items-baseline gap-2">
+                            <span className="text-2xl font-semibold text-ink">{group.members_count}</span>
+                            <span className="text-xs text-ink-muted">{l('members')}</span>
                         </div>
-                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-indigo-700 group-hover:underline">
+                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-link group-hover:underline">
                             {l('goToStudents')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                         </div>
                     </button>
@@ -407,19 +407,19 @@ export function ClassOverviewTab({
                     <button
                         type="button"
                         onClick={() => onSelectTab('toolsTab')}
-                        className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs transition hover:border-indigo-300 hover:shadow-sm"
+                        className="group flex flex-col justify-between rounded-card border border-line bg-surface p-4 text-left shadow-card transition hover:border-brand-line hover:shadow-card"
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-slate-700">{l('enabledTools')}</span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100">
+                            <span className="text-sm font-semibold text-ink-body">{l('enabledTools')}</span>
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-link group-hover:bg-brand-soft">
                                 <Wrench className="h-4 w-4" aria-hidden />
                             </span>
                         </div>
-                        <div className="mt-3 flex items-baseline gap-1.5">
-                            <span className="text-2xl font-bold text-slate-900">{enabledToolsCount}</span>
-                            <span className="text-sm text-slate-500">/ {nonAlwaysOnTools.length}</span>
+                        <div className="mt-4 flex items-baseline gap-2">
+                            <span className="text-2xl font-semibold text-ink">{enabledToolsCount}</span>
+                            <span className="text-sm text-ink-muted">/ {nonAlwaysOnTools.length}</span>
                         </div>
-                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-indigo-700 group-hover:underline">
+                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-link group-hover:underline">
                             {l('goToTools')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                         </div>
                     </button>
@@ -428,18 +428,18 @@ export function ClassOverviewTab({
                     <button
                         type="button"
                         onClick={() => onSelectTab('paths')}
-                        className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs transition hover:border-indigo-300 hover:shadow-sm"
+                        className="group flex flex-col justify-between rounded-card border border-line bg-surface p-4 text-left shadow-card transition hover:border-brand-line hover:shadow-card"
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-slate-700">{l('classPaths')}</span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100">
+                            <span className="text-sm font-semibold text-ink-body">{l('classPaths')}</span>
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-link group-hover:bg-brand-soft">
                                 <Route className="h-4 w-4" aria-hidden />
                             </span>
                         </div>
-                        <div className="mt-3">
-                            <p className="line-clamp-2 text-xs text-slate-600">{l('classPathsDesc')}</p>
+                        <div className="mt-4">
+                            <p className="line-clamp-2 text-xs text-ink-muted">{l('classPathsDesc')}</p>
                         </div>
-                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-indigo-700 group-hover:underline">
+                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-link group-hover:underline">
                             {l('goToPaths')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                         </div>
                     </button>
@@ -448,18 +448,18 @@ export function ClassOverviewTab({
                     <button
                         type="button"
                         onClick={() => onSelectTab('forum')}
-                        className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs transition hover:border-indigo-300 hover:shadow-sm"
+                        className="group flex flex-col justify-between rounded-card border border-line bg-surface p-4 text-left shadow-card transition hover:border-brand-line hover:shadow-card"
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-slate-700">{l('classForum')}</span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100">
+                            <span className="text-sm font-semibold text-ink-body">{l('classForum')}</span>
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-link group-hover:bg-brand-soft">
                                 <MessageSquare className="h-4 w-4" aria-hidden />
                             </span>
                         </div>
-                        <div className="mt-3">
-                            <p className="line-clamp-2 text-xs text-slate-600">{l('classForumDesc')}</p>
+                        <div className="mt-4">
+                            <p className="line-clamp-2 text-xs text-ink-muted">{l('classForumDesc')}</p>
                         </div>
-                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-indigo-700 group-hover:underline">
+                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-link group-hover:underline">
                             {l('goToForum')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                         </div>
                     </button>
@@ -469,21 +469,21 @@ export function ClassOverviewTab({
             {/* 2. Invito Studenti */}
             {isLocalAuth() ? <ClassPairingSection groupId={group.id} /> : <Card>
                 <section aria-labelledby="class-invitation-heading" className="space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-4">
                         <div>
-                            <h2 id="class-invitation-heading" className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                                <UserPlus className="h-5 w-5 text-indigo-700" aria-hidden />
+                            <h2 id="class-invitation-heading" className="flex items-center gap-2 text-lg font-semibold text-ink">
+                                <UserPlus className="h-5 w-5 text-link" aria-hidden />
                                 {l('inviteStudentsTitle')}
                             </h2>
-                            <p className="mt-0.5 text-xs text-slate-500">{l('inviteStudentsHint')}</p>
+                            <p className="mt-1 text-xs text-ink-muted">{l('inviteStudentsHint')}</p>
                         </div>
                     </div>
 
                     {/* Codice classe in evidenza */}
-                    <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-indigo-900">{l('classCode')}</span>
-                        <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
-                            <span className="font-mono text-2xl font-extrabold tracking-widest text-indigo-950 sm:text-3xl">
+                    <div className="rounded-card border border-brand-line bg-brand-soft/50 p-4">
+                        <span className="text-xs font-semibold text-ink">{l('classCode')}</span>
+                        <div className="mt-1 flex flex-wrap items-center justify-between gap-4">
+                            <span className="font-mono tracking-widest text-2xl font-semibold text-ink sm:text-3xl">
                                 {group.code}
                             </span>
                             <Button
@@ -492,17 +492,17 @@ export function ClassOverviewTab({
                                 onClick={() => void copy('code', group.code)}
                                 className="inline-flex items-center gap-2"
                             >
-                                {copiedKey === 'code' ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                                {copiedKey === 'code' ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
                                 {copiedKey === 'code' ? l('copied') : l('copyCode')}
                             </Button>
                         </div>
                     </div>
 
                     {/* Link di iscrizione Web & Telegram */}
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         {showWebLink ? (
-                            <div className="space-y-1.5">
-                                <label htmlFor="overview-weblink" className="text-xs font-semibold text-slate-700">
+                            <div className="space-y-2">
+                                <label htmlFor="overview-weblink" className="text-xs font-semibold text-ink-body">
                                     {l('webLink')}
                                 </label>
                                 <div className="flex gap-2">
@@ -510,7 +510,7 @@ export function ClassOverviewTab({
                                         id="overview-weblink"
                                         readOnly
                                         value={webLink}
-                                        className="min-h-[44px] flex-1 rounded-md border border-slate-300 bg-slate-50 px-3 font-mono text-xs text-slate-700 focus:outline-hidden"
+                                        className="min-h-[44px] flex-1 rounded-control border border-line-strong bg-surface-sunken px-4 font-mono text-xs text-ink-body focus:outline-hidden"
                                     />
                                     <Button
                                         type="button"
@@ -519,21 +519,21 @@ export function ClassOverviewTab({
                                         aria-label={l('copyWebLink')}
                                         className="shrink-0"
                                     >
-                                        {copiedKey === 'web' ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                                        {copiedKey === 'web' ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
                                         <span className="hidden sm:inline">{copiedKey === 'web' ? l('copied') : l('copy')}</span>
                                     </Button>
                                 </div>
                             </div>
                         ) : (
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-700">{l('webLink')}</label>
-                                <p className="text-xs text-amber-600">Tunnel non attivo: il link sar&agrave; visibile quando il tunnel &egrave; avviato</p>
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-ink-body">{l('webLink')}</label>
+                                <p className="text-xs text-warning">Tunnel non attivo: il link sar&agrave; visibile quando il tunnel &egrave; avviato</p>
                             </div>
                         )}
 
                         {botUsername && (
-                            <div className="space-y-1.5">
-                                <label htmlFor="overview-telegramlink" className="text-xs font-semibold text-slate-700">
+                            <div className="space-y-2">
+                                <label htmlFor="overview-telegramlink" className="text-xs font-semibold text-ink-body">
                                     {l('telegramLink')}
                                 </label>
                                 <div className="flex gap-2">
@@ -541,7 +541,7 @@ export function ClassOverviewTab({
                                         id="overview-telegramlink"
                                         readOnly
                                         value={telegramLink}
-                                        className="min-h-[44px] flex-1 rounded-md border border-slate-300 bg-slate-50 px-3 font-mono text-xs text-slate-700 focus:outline-hidden"
+                                        className="min-h-[44px] flex-1 rounded-control border border-line-strong bg-surface-sunken px-4 font-mono text-xs text-ink-body focus:outline-hidden"
                                     />
                                     <Button
                                         type="button"
@@ -550,7 +550,7 @@ export function ClassOverviewTab({
                                         aria-label={l('copyTelegramLink')}
                                         className="shrink-0"
                                     >
-                                        {copiedKey === 'tg' ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                                        {copiedKey === 'tg' ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
                                         <span className="hidden sm:inline">{copiedKey === 'tg' ? l('copied') : l('copy')}</span>
                                     </Button>
                                 </div>
@@ -558,7 +558,7 @@ export function ClassOverviewTab({
                         )}
                     </div>
 
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-ink-muted">
                         {learningText(lang, 'groupVisibility')}
                     </p>
                 </section>
@@ -567,22 +567,22 @@ export function ClassOverviewTab({
             {/* 3. Condivisione con Colleghi */}
             <Card>
                 <section aria-labelledby="class-sharing-heading" className="space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-4">
                         <div>
-                            <h2 id="class-sharing-heading" className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                                <Share2 className="h-5 w-5 text-indigo-700" aria-hidden />
+                            <h2 id="class-sharing-heading" className="flex items-center gap-2 text-lg font-semibold text-ink">
+                                <Share2 className="h-5 w-5 text-link" aria-hidden />
                                 {l('shareWithColleagues')}
                             </h2>
-                            <p className="mt-0.5 text-xs text-slate-500">{l('shareHint')}</p>
+                            <p className="mt-1 text-xs text-ink-muted">{l('shareHint')}</p>
                         </div>
-                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                            {l('owner')}: <span className="font-medium text-slate-900">@{group.owner_username}</span>
+                        <span className="rounded-full bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-muted">
+                            {l('owner')}: <span className="font-semibold text-ink">@{group.owner_username}</span>
                         </span>
                     </div>
 
                     {/* Form aggiunta collega */}
-                    <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
-                        <label htmlFor="overview-share-select" className="block text-xs font-semibold text-slate-700">
+                    <div className="space-y-2 rounded-lg border border-line bg-surface-sunken/60 p-4">
+                        <label htmlFor="overview-share-select" className="block text-xs font-semibold text-ink-body">
                             {l('addColleague')}
                         </label>
                         <div className="flex flex-wrap gap-2">
@@ -591,7 +591,7 @@ export function ClassOverviewTab({
                                 value={selectedUserToAdd}
                                 onChange={e => setSelectedUserToAdd(e.target.value)}
                                 disabled={shareBusy}
-                                className="min-h-[44px] min-w-[200px] flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800"
+                                className="min-h-[44px] min-w-[200px] flex-1 rounded-control border border-line-strong bg-surface px-4 text-sm text-ink"
                             >
                                 <option value="">{l('selectColleague')}</option>
                                 {availableUsers.map(user => (
@@ -604,14 +604,14 @@ export function ClassOverviewTab({
                                 type="button"
                                 disabled={shareBusy || !selectedUserToAdd}
                                 onClick={() => void handleAddShare()}
-                                className="inline-flex items-center gap-1.5"
+                                className="inline-flex items-center gap-2"
                             >
                                 <UserPlus className="h-4 w-4" />
                                 {l('shareBtn')}
                             </Button>
                         </div>
                         {shareMessage && (
-                            <p className={`text-xs ${shareMessage.kind === 'error' ? 'text-red-600' : 'text-emerald-700'}`}>
+                            <p className={`text-xs ${shareMessage.kind === 'error' ? 'text-danger' : 'text-success'}`}>
                                 {shareMessage.text}
                             </p>
                         )}
@@ -619,24 +619,24 @@ export function ClassOverviewTab({
 
                     {/* Elenco condivisioni attive */}
                     <div className="space-y-2">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">{l('sharedWith')}</h3>
+                        <h3 className="text-xs font-semibold text-ink-muted">{l('sharedWith')}</h3>
                         {sharesLoading ? (
-                            <p className="text-xs text-slate-500">{t('common.loading')}</p>
+                            <p className="text-xs text-ink-muted">{t('common.loading')}</p>
                         ) : shares.length === 0 ? (
-                            <p className="rounded-md border border-dashed border-slate-200 p-3 text-center text-xs text-slate-500">
+                            <p className="rounded-control border border-dashed border-line p-4 text-center text-xs text-ink-muted">
                                 {l('noShares')}
                             </p>
                         ) : (
-                            <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+                            <div className="divide-y divide-line rounded-lg border border-line bg-surface">
                                 {shares.map(share => {
                                     const user = allUsers.find(u => u.username === share.shared_with_username);
                                     return (
-                                        <div key={share.id} className="flex items-center justify-between p-3 text-sm">
+                                        <div key={share.id} className="flex items-center justify-between p-4 text-sm">
                                             <div>
-                                                <span className="font-semibold text-slate-800">
+                                                <span className="font-semibold text-ink">
                                                     {user?.display_name || share.shared_with_username}
                                                 </span>
-                                                <span className="ml-2 font-mono text-xs text-slate-500">
+                                                <span className="ml-2 font-mono text-xs text-ink-muted">
                                                     @{share.shared_with_username}
                                                 </span>
                                             </div>
@@ -645,7 +645,7 @@ export function ClassOverviewTab({
                                                 variant="secondary"
                                                 disabled={shareBusy}
                                                 onClick={() => void handleRemoveShare(share.id)}
-                                                className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700"
+                                                className="inline-flex items-center gap-1 text-xs text-danger hover:text-danger"
                                             >
                                                 <UserMinus className="h-3.5 w-3.5" />
                                                 {l('removeShare')}
@@ -662,25 +662,25 @@ export function ClassOverviewTab({
             {/* 4. Anagrafica & Informazioni di Classe */}
             <Card>
                 <section aria-labelledby="class-details-heading" className="space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-4">
                         <div>
-                            <h2 id="class-details-heading" className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                                <FileText className="h-5 w-5 text-indigo-700" aria-hidden />
+                            <h2 id="class-details-heading" className="flex items-center gap-2 text-lg font-semibold text-ink">
+                                <FileText className="h-5 w-5 text-link" aria-hidden />
                                 {l('classDetailsTitle')}
                             </h2>
-                            <p className="mt-0.5 text-xs text-slate-500">{l('classDetailsHint')}</p>
+                            <p className="mt-1 text-xs text-ink-muted">{l('classDetailsHint')}</p>
                         </div>
                         {isDirty && (
-                            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                            <span className="rounded-full bg-warning-soft px-2 py-1 text-xs font-semibold text-warning-ink">
                                 {l('dirty')}
                             </span>
                         )}
                     </div>
 
                     {/* Copertina 16:9 della classe */}
-                    <div className="flex flex-col gap-3 rounded-xl border border-slate-200/90 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-4 rounded-card border border-line/90 bg-surface-sunken/70 p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="relative aspect-[16/9] h-16 sm:h-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow-2xs">
+                            <div className="relative aspect-[16/9] h-16 sm:h-20 shrink-0 overflow-hidden rounded-lg border border-line bg-surface-raised shadow-card">
                                 <Image
                                     src={getClassCoverUrl(group)}
                                     alt={group.name}
@@ -690,10 +690,10 @@ export function ClassOverviewTab({
                                 />
                             </div>
                             <div className="min-w-0">
-                                <h3 className="text-sm font-bold text-slate-800">
+                                <h3 className="text-sm font-semibold text-ink">
                                     {teacherAreaText(lang, 'classCoverModalTitle')}
                                 </h3>
-                                <p className="mt-0.5 text-xs text-slate-500">
+                                <p className="mt-1 text-xs text-ink-muted">
                                     {teacherAreaText(lang, 'classCoverModalSubtitle')}
                                 </p>
                             </div>
@@ -711,7 +711,7 @@ export function ClassOverviewTab({
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         {/* Nome classe */}
-                        <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700">
+                        <label className="flex flex-col gap-1 text-xs font-semibold text-ink-body">
                             {l('className')} *
                             <input
                                 type="text"
@@ -719,12 +719,12 @@ export function ClassOverviewTab({
                                 onChange={e => setName(e.target.value)}
                                 disabled={saveBusy}
                                 required
-                                className="min-h-[44px] rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                                className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             />
                         </label>
 
                         {/* Scuola */}
-                        <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700">
+                        <label className="flex flex-col gap-1 text-xs font-semibold text-ink-body">
                             {l('school')}
                             <input
                                 type="text"
@@ -732,18 +732,18 @@ export function ClassOverviewTab({
                                 onChange={e => setSchool(e.target.value)}
                                 disabled={saveBusy}
                                 placeholder={l('schoolPlaceholder')}
-                                className="min-h-[44px] rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                                className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             />
                         </label>
 
                         {/* Grado / Livello scolastico */}
-                        <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700">
+                        <label className="flex flex-col gap-1 text-xs font-semibold text-ink-body">
                             {l('schoolLevel')}
                             <select
                                 value={schoolLevel}
                                 onChange={e => setSchoolLevel(e.target.value)}
                                 disabled={saveBusy}
-                                className="min-h-[44px] rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                                className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             >
                                 <option value="">{l('levelNone')}</option>
                                 <option value="secondaria">{l('levelSecondaria')}</option>
@@ -753,13 +753,13 @@ export function ClassOverviewTab({
                         </label>
 
                         {/* Istituto */}
-                        <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700">
+                        <label className="flex flex-col gap-1 text-xs font-semibold text-ink-body">
                             {l('partnerInstitution')}
                             <select
                                 value={institutionId}
                                 onChange={e => setInstitutionId(e.target.value)}
                                 disabled={saveBusy}
-                                className="min-h-[44px] rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                                className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             >
                                 <option value="">{l('institutionNone')}</option>
                                 {group.institution_id && !institutions.some(row => row.id === group.institution_id) && (
@@ -774,7 +774,7 @@ export function ClassOverviewTab({
                         </label>
 
                         {/* Descrizione classe */}
-                        <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700 sm:col-span-2">
+                        <label className="flex flex-col gap-1 text-xs font-semibold text-ink-body sm:col-span-2">
                             {l('description')}
                             <textarea
                                 rows={3}
@@ -782,12 +782,12 @@ export function ClassOverviewTab({
                                 onChange={e => setDescription(e.target.value)}
                                 disabled={saveBusy}
                                 placeholder={l('descriptionPlaceholder')}
-                                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                                className="rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             />
                         </label>
 
                         {/* Metodologie */}
-                        <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700 sm:col-span-2">
+                        <label className="flex flex-col gap-1 text-xs font-semibold text-ink-body sm:col-span-2">
                             {l('methodologies')}
                             <textarea
                                 rows={3}
@@ -795,38 +795,38 @@ export function ClassOverviewTab({
                                 onChange={e => setMethodologies(e.target.value)}
                                 disabled={saveBusy}
                                 placeholder={l('methodologiesPlaceholder')}
-                                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                                className="rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             />
                         </label>
 
                         {/* Visibilità contesto per studenti */}
-                        <label className="flex min-h-[44px] items-center gap-3 text-xs text-slate-700 sm:col-span-2">
+                        <label className="flex min-h-[44px] items-center gap-4 text-xs text-ink-body sm:col-span-2">
                             <input
                                 type="checkbox"
                                 checked={visible}
                                 onChange={e => setVisible(e.target.checked)}
                                 disabled={saveBusy}
-                                className="h-4 w-4 rounded-xs border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                className="h-4 w-4 rounded-xs border-line-strong text-link focus:ring-focus"
                             />
                             <span>{l('shareContextToStudents')}</span>
                         </label>
                     </div>
 
                     {/* Barra azioni salvataggio */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4">
                         <div className="min-w-0 flex-1 text-sm">
                             {saveStatus === 'saved' && (
-                                <p role="status" className="font-medium text-emerald-700">
+                                <p role="status" className="font-semibold text-success">
                                     {l('classSaved')}
                                 </p>
                             )}
                             {saveStatus === 'error' && (
-                                <p role="alert" className="font-medium text-red-600">
+                                <p role="alert" className="font-semibold text-danger">
                                     {saveError || l('classSaveError')}
                                 </p>
                             )}
                             {isDirty && saveStatus === null && (
-                                <p className="text-xs text-slate-500">{l('dirty')}</p>
+                                <p className="text-xs text-ink-muted">{l('dirty')}</p>
                             )}
                         </div>
                         <div className="flex gap-2">
@@ -855,26 +855,26 @@ export function ClassOverviewTab({
             {/* 5. Stato della Classe & Azioni */}
             <Card>
                 <section aria-labelledby="class-status-heading" className="space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-4">
                         <div>
-                            <h2 id="class-status-heading" className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                                <Power className="h-5 w-5 text-indigo-700" aria-hidden />
+                            <h2 id="class-status-heading" className="flex items-center gap-2 text-lg font-semibold text-ink">
+                                <Power className="h-5 w-5 text-link" aria-hidden />
                                 {l('classStatusTitle')}
                             </h2>
-                            <p className="mt-0.5 text-xs text-slate-500">
+                            <p className="mt-1 text-xs text-ink-muted">
                                 {group.is_active ? l('classStatusActiveHelp') : l('classStatusInactiveHelp')}
                             </p>
                         </div>
                         <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+                            className={`inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs font-semibold ${
                                 group.is_active
-                                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-                                    : 'border border-slate-200 bg-slate-100 text-slate-600'
+                                    ? 'border border-success-line bg-success-soft text-success'
+                                    : 'border border-line bg-surface-raised text-ink-muted'
                             }`}
                         >
                             <span
                                 className={`h-2 w-2 rounded-full ${
-                                    group.is_active ? 'bg-emerald-500' : 'bg-slate-400'
+                                    group.is_active ? 'bg-success' : 'bg-line-strong'
                                 }`}
                             />
                             {group.is_active ? l('classStatusActive') : l('classStatusInactive')}
@@ -882,15 +882,15 @@ export function ClassOverviewTab({
                     </div>
 
                     {statusError && (
-                        <p className="text-xs font-semibold text-red-600">{statusError}</p>
+                        <p className="text-xs font-semibold text-danger">{statusError}</p>
                     )}
 
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
                         <div className="space-y-1">
-                            <p className="text-sm font-semibold text-slate-800">
+                            <p className="text-sm font-semibold text-ink">
                                 {group.is_active ? l('deactivateClass') : l('activateClass')}
                             </p>
-                            <p className="max-w-xl text-xs text-slate-500">
+                            <p className="max-w-xl text-xs text-ink-muted">
                                 {group.is_active ? l('deactivateClassDesc') : l('activateClassDesc')}
                             </p>
                         </div>
@@ -905,18 +905,18 @@ export function ClassOverviewTab({
                     </div>
 
                     {/* Danger Zone: Cancellazione */}
-                    <div className="mt-4 rounded-xl border border-red-200 bg-red-50/50 p-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="mt-4 rounded-card border border-danger-line bg-danger-soft/50 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-4">
                             <div className="space-y-1">
-                                <h3 className="flex items-center gap-1.5 text-sm font-bold text-red-900">
-                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                <h3 className="flex items-center gap-2 text-sm font-semibold text-danger-ink">
+                                    <Trash2 className="h-4 w-4 text-danger" />
                                     {l('deleteClass')}
                                 </h3>
-                                <p className="max-w-xl text-xs text-red-700">
+                                <p className="max-w-xl text-xs text-danger">
                                     {l('deleteClassWarning')}
                                 </p>
                                 {deleteError && (
-                                    <p className="mt-1 text-xs font-semibold text-red-600">
+                                    <p className="mt-1 text-xs font-semibold text-danger">
                                         {deleteError}
                                     </p>
                                 )}
@@ -939,26 +939,26 @@ export function ClassOverviewTab({
                     {showDeleteDialog && (
                         <dialog
                             ref={deleteDialogRef}
-                            className="fixed inset-0 z-50 m-auto max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl backdrop:bg-slate-900/40"
+                            className="fixed inset-0 z-50 m-auto max-w-md rounded-card border border-line bg-surface p-6 shadow-modal backdrop:bg-slate-900/40"
                             onCancel={() => setShowDeleteDialog(false)}
                         >
                             <div className="space-y-4">
-                                <div className="flex items-start gap-3">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+                                <div className="flex items-start gap-4">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-danger-soft text-danger">
                                         <AlertTriangle className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-slate-900">
+                                        <h3 className="text-lg font-semibold text-ink">
                                             {l('deleteClassConfirmTitle')}
                                         </h3>
-                                        <p className="mt-1 text-sm text-slate-600">
+                                        <p className="mt-1 text-sm text-ink-muted">
                                             {l('deleteClassConfirmMessage')}
                                         </p>
                                     </div>
                                 </div>
 
                                 {deleteError && (
-                                    <div className="rounded-lg bg-red-50 p-3 text-xs font-semibold text-red-700">
+                                    <div className="rounded-lg bg-danger-soft p-4 text-xs font-semibold text-danger">
                                         {deleteError}
                                     </div>
                                 )}

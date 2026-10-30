@@ -100,42 +100,42 @@ export function ClassGroupPicker({ close, onNavigationState }: {
             const rect = event.currentTarget.getBoundingClientRect();
             if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) request(close);
         }}
-        className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 text-slate-900 shadow-xl backdrop:bg-black/40">
-        <div className="mb-3 flex items-start justify-between gap-2">
-            <h2 id={heading} className="min-w-0 break-words text-lg font-bold">{l('title')}</h2>
-            <Button type="button" variant="ghost" aria-label={t('common.close')} title={t('common.close')} disabled={blocked} onClick={() => request(close)} className="shrink-0 px-3"><X aria-hidden="true" className="h-5 w-5" /></Button>
+        className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-card border border-line bg-surface p-4 text-ink shadow-modal backdrop:bg-black/40">
+        <div className="mb-4 flex items-start justify-between gap-2">
+            <h2 id={heading} className="min-w-0 break-words text-lg font-semibold">{l('title')}</h2>
+            <Button type="button" variant="ghost" aria-label={t('common.close')} title={t('common.close')} disabled={blocked} onClick={() => request(close)} className="shrink-0 px-4"><X aria-hidden="true" className="h-5 w-5" /></Button>
         </div>
-        <label className="block text-sm font-semibold text-slate-700" htmlFor={picker}>{l('label')}</label>
+        <label className="block text-sm font-semibold text-ink-body" htmlFor={picker}>{l('label')}</label>
         <select id={picker} autoFocus value={ready ? selected : ''} disabled={!ready || blocked || groups.loading || groups.failed}
             onChange={event => { const value = event.target.value; request(() => setSelected(value)); }}
-            className="mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
+            className="mt-1 w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-sm">
             <option value="">{l('choose')}</option>
             {ready && groups.data?.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}
         </select>
-        {forbidden ? <p role="alert" className="mt-3 text-sm text-red-600">{teacherAreaText(lang, 'forbidden')}</p> : <>
-            {(groups.loading || institutions.loading) && <p role="status" className="mt-3 text-sm text-slate-500">{t('common.loading')}</p>}
-            {groups.failed && <div role="alert" className="mt-3 text-sm text-red-600">
+        {forbidden ? <p role="alert" className="mt-4 text-sm text-danger">{teacherAreaText(lang, 'forbidden')}</p> : <>
+            {(groups.loading || institutions.loading) && <p role="status" className="mt-4 text-sm text-ink-muted">{t('common.loading')}</p>}
+            {groups.failed && <div role="alert" className="mt-4 text-sm text-danger">
                 <p>{teacherLoadingText(lang, 'classes')}</p><Button type="button" variant="secondary" disabled={groups.loading || blocked} onClick={() => void groups.reload()}>{t('setup.retry')}</Button>
             </div>}
-            {institutions.failed && <div role="alert" className="mt-3 text-sm text-red-600">
+            {institutions.failed && <div role="alert" className="mt-4 text-sm text-danger">
                 <p>{l('institutionsError')}</p><Button type="button" variant="secondary" disabled={institutions.loading || blocked} onClick={() => void institutions.reload()}>{t('setup.retry')}</Button>
             </div>}
-            {!groups.loading && !groups.failed && groups.data?.length === 0 && <p className="mt-3 text-sm text-slate-600">{texts.empty}</p>}
-            {group && <div className="mt-4 min-w-0 space-y-3">
-                <p className="break-words text-sm font-semibold text-slate-800">{group.name}</p>
-                <p className="break-words text-xs text-slate-500">{group.school && `${group.school} · `}{group.owner_username} · {group.members_count} {texts.members}</p>
+            {!groups.loading && !groups.failed && groups.data?.length === 0 && <p className="mt-4 text-sm text-ink-muted">{texts.empty}</p>}
+            {group && <div className="mt-4 min-w-0 space-y-4">
+                <p className="break-words text-sm font-semibold text-ink">{group.name}</p>
+                <p className="break-words text-xs text-ink-muted">{group.school && `${group.school} · `}{group.owner_username} · {group.members_count} {texts.members}</p>
                 <ClassGroupEditor group={group} institutions={institutions.data ?? []} editors={editors} idPrefix="class-picker"
                     disabled={groups.loading || groups.failed || institutions.loading || institutions.failed} />
             </div>}
         </>}
-        <p id={hint} className="mt-3 text-xs text-slate-500">{l('cancelHint')}</p>
-        <Button type="button" variant="secondary" disabled={blocked} onClick={() => request(close)} className="mt-3">{texts.cancel}</Button>
+        <p id={hint} className="mt-4 text-xs text-ink-muted">{l('cancelHint')}</p>
+        <Button type="button" variant="secondary" disabled={blocked} onClick={() => request(close)} className="mt-4">{texts.cancel}</Button>
         {transition && <dialog ref={confirmation} aria-labelledby={confirmHeading} aria-describedby={`${hint}-confirm`}
             onKeyDown={trapTab}
             onCancel={event => { event.preventDefault(); event.stopPropagation(); keep(); }}
-            className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 text-slate-900 shadow-xl backdrop:bg-black/40">
-            <h3 id={confirmHeading} className="text-lg font-bold">{l('discardTitle')}</h3>
-            <p id={`${hint}-confirm`} className="mt-2 text-sm text-slate-600">{l('cancelHint')}</p>
+            className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-card border border-line bg-surface p-4 text-ink shadow-modal backdrop:bg-black/40">
+            <h3 id={confirmHeading} className="text-lg font-semibold">{l('discardTitle')}</h3>
+            <p id={`${hint}-confirm`} className="mt-2 text-sm text-ink-muted">{l('cancelHint')}</p>
             <div className="mt-4 flex flex-wrap gap-2">
                 <Button type="button" variant="secondary" autoFocus onClick={keep}>{l('keep')}</Button>
                 <Button type="button" disabled={blocked} onClick={() => {

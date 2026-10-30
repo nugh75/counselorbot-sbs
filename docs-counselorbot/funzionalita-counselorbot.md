@@ -1530,6 +1530,21 @@ salvata. I dettagli di attivazione automatica e ripristino sono in
 
 ## Docenti, ricercatori e amministrazione
 
+Le pagine dell’Area docenti (classi, percorsi, incontri, palestra, taccuini,
+risorse, istituti, dispositivi, orientamento) e la barra delle classi della chat
+degli obiettivi didattici usano i token semantici e le primitive `PageHeader`,
+`Button`, `Card`, `Callout` e `ConfirmInline` (audit UI 2026-10-30, zona 6):
+l’intestazione di ogni sottopagina passa da `PageHeader`, le card iniziali di
+progettazione, palestra e risorse sono a tinta piena senza gradienti né sfocature,
+spaziature su griglia di 8, due soli pesi, niente maiuscolo, niente varianti
+scure scritte a mano (il tema scuro arriva dai token) e controlli alti almeno
+44px. La rimozione di un modello di percorso, di un taccuino di prova o di un
+profilo del repertorio, la revoca di un link per il consiglio di classe e la
+finalizzazione di un consiglio orientativo chiedono conferma nel punto
+dell’azione invece che con la finestra del browser; restano native le domande
+sulle modifiche non salvate e sull’eliminazione di un percorso. Testi, passi e
+comportamento non cambiano.
+
 Nel gruppo **Classe e assegnazioni** dell'Area docenti, la voce illustrata
 **Compilazioni degli studenti** (`/docente/compilazioni`, con immagine `compilazioni.png`)
 apre la pagina dedicata dove il docente può scegliere una classe o un gruppo gestito,

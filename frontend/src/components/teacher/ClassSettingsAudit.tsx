@@ -44,11 +44,11 @@ export function ClassSettingsAudit({ settings }: { settings: ClassSettings }) {
     if (resource.forbidden) return <TeacherForbidden />;
     if (resource.loading) return <TeacherLoading />;
     if (resource.failed) return <Callout variant="danger">{l('loadError')} <Button onClick={() => void resource.reload()}>{l('reload')}</Button></Callout>;
-    return <section className="space-y-3" aria-label={l('audit')}>
-        <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-bold text-slate-800">{l('audit')}</h2>
+    return <section className="space-y-4" aria-label={l('audit')}>
+        <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold text-ink">{l('audit')}</h2>
             <Button variant="secondary" onClick={() => void resource.reload()}>{l('reload')}</Button></div>
-        {!resource.data?.length && <p className="text-sm text-slate-600">{l('auditEmpty')}</p>}
-        {resource.data?.map(row => <Card key={row.id}><div className="break-words text-sm text-slate-700">
+        {!resource.data?.length && <p className="text-sm text-ink-muted">{l('auditEmpty')}</p>}
+        {resource.data?.map(row => <Card key={row.id}><div className="break-words text-sm text-ink-body">
             <p className="font-semibold">{targetText(row)} · {l(row.action)}</p>
             <p>{valueText(row.old_value)} → {valueText(row.new_value)}</p>
             <p>{row.actor_display_name || row.actor_username} ({row.actor_username}) · <time dateTime={row.created_at}>{new Date(row.created_at).toLocaleString(lang)}</time></p>

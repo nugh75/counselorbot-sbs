@@ -63,28 +63,28 @@ export function ClassPairingSection({ groupId }: { groupId: number }) {
 
     return (
         <Card>
-            <section aria-labelledby="class-pairing-heading" className="space-y-5">
-                <div className="border-b border-slate-100 pb-3">
-                    <h2 id="class-pairing-heading" className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                        <Link2 className="h-5 w-5 text-indigo-700" aria-hidden />
+            <section aria-labelledby="class-pairing-heading" className="space-y-6">
+                <div className="border-b border-line pb-4">
+                    <h2 id="class-pairing-heading" className="flex items-center gap-2 text-lg font-semibold text-ink">
+                        <Link2 className="h-5 w-5 text-link" aria-hidden />
                         {l('classPairingTitle')}
                     </h2>
-                    <p className="mt-1 text-xs text-slate-500">{l('classPairingHint')}</p>
+                    <p className="mt-1 text-xs text-ink-muted">{l('classPairingHint')}</p>
                 </div>
 
-                <form onSubmit={event => void generate(event)} className="space-y-3">
-                    <label className="flex min-h-11 items-center gap-3 text-sm text-slate-700">
+                <form onSubmit={event => void generate(event)} className="space-y-4">
+                    <label className="flex min-h-control items-center gap-4 text-sm text-ink-body">
                         <input
                             type="checkbox"
                             checked={requiresApproval}
                             onChange={event => setRequiresApproval(event.target.checked)}
                             disabled={busy}
-                            className="h-4 w-4 rounded-xs border-slate-300 text-indigo-600"
+                            className="h-4 w-4 rounded-xs border-line-strong text-link"
                         />
                         {l('requiresApproval')}
                     </label>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                        <label htmlFor={`pairing-max-uses-${groupId}`} className="min-w-0 flex-1 text-xs font-semibold text-slate-700">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                        <label htmlFor={`pairing-max-uses-${groupId}`} className="min-w-0 flex-1 text-xs font-semibold text-ink-body">
                             {l('maxUses')}
                             <input
                                 id={`pairing-max-uses-${groupId}`}
@@ -95,7 +95,7 @@ export function ClassPairingSection({ groupId }: { groupId: number }) {
                                 onChange={event => setMaxUses(event.target.value)}
                                 placeholder={l('maxUsesPlaceholder')}
                                 disabled={busy}
-                                className="mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                                className="mt-1 min-h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             />
                         </label>
                         <Button type="submit" variant="accent" disabled={busy || invalidMaxUses}>
@@ -108,8 +108,8 @@ export function ClassPairingSection({ groupId }: { groupId: number }) {
                 {error && <Callout variant="danger">{l('actionError')}</Callout>}
                 {link && !hasPublicOrigin && <Callout variant="warning">{l('tunnelMissing')}</Callout>}
                 {link && hasPublicOrigin && (
-                    <div className="space-y-2 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
-                        <label htmlFor={`pairing-link-${groupId}`} className="text-xs font-semibold uppercase tracking-wider text-indigo-900">
+                    <div className="space-y-2 rounded-card border border-brand-line bg-brand-soft/50 p-4">
+                        <label htmlFor={`pairing-link-${groupId}`} className="text-xs font-semibold text-ink">
                             {l('pairingLink')}
                         </label>
                         <div className="flex flex-col gap-2 sm:flex-row">
@@ -118,21 +118,21 @@ export function ClassPairingSection({ groupId }: { groupId: number }) {
                                 readOnly
                                 value={link}
                                 onFocus={event => event.target.select()}
-                                className="min-h-11 min-w-0 flex-1 rounded-md border border-indigo-200 bg-white px-3 font-mono text-xs text-slate-700"
+                                className="min-h-control min-w-0 flex-1 rounded-control border border-brand-line bg-surface px-4 font-mono text-xs text-ink-body"
                             />
                             <Button type="button" variant="secondary" onClick={() => void copyLink()}>
-                                {copied ? <Check className="h-4 w-4 text-emerald-600" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
+                                {copied ? <Check className="h-4 w-4 text-success" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
                                 {l(copied ? 'copied' : 'copyLink')}
                             </Button>
                         </div>
-                        <p className="text-xs text-slate-600">
+                        <p className="text-xs text-ink-muted">
                             <time dateTime={expiresAt}>{l('expiresAt', { date: new Date(expiresAt).toLocaleString(lang) })}</time>
                         </p>
                     </div>
                 )}
 
                 <TeacherDevicesPanel groupId={groupId} />
-                <Link href="/docente/dispositivi" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-indigo-700 hover:underline">
+                <Link href="/docente/dispositivi" className="inline-flex min-h-control items-center gap-2 text-sm font-semibold text-link hover:underline">
                     {l('openDevices')}<ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
             </section>
