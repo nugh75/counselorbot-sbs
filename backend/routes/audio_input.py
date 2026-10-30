@@ -9,6 +9,7 @@ from .. import auth, database, models
 from ..auth import get_current_user
 
 router = APIRouter(prefix='/audio', dependencies=[Depends(get_current_user)])
+Language = Literal['auto', 'it', 'en', 'es', 'fr', 'de', 'sv']
 MAX_BYTES = 10 * 1024 * 1024
 SERVICE = 'http://transcription:8000'
 MODEL_CONFIG_KEY = 'transcription_model'
@@ -35,7 +36,8 @@ def selected(db: Session) -> tuple[str, str]:
 
 @router.post('/transcribe')
 async def transcribe(audio: UploadFile = File(...),
-                     language: Literal['auto', 'it', 'en', 'es', 'fr', 'de', 'sv'] = Form('auto'),
+                     language: Language = Form('auto'),
+                     fallback_language: Language = Form('auto'),
                      db: Session = Depends(database.get_db)):
     try:
         data = await audio.read(MAX_BYTES + 1)
@@ -50,7 +52,8 @@ async def transcribe(audio: UploadFile = File(...),
         async with httpx.AsyncClient(timeout=300) as client:
             response = await client.post(f'{SERVICE}/transcribe',
                                          files={'audio': ('recording', data, 'application/octet-stream')},
-                                         data={'language': language, 'model': model, 'engine': engine})
+                                         data={'language': language, 'fallback_language': fallback_language,
+                                               'model': model, 'engine': engine})
         if response.status_code != 200:
             code = response.json().get('detail')
             raise HTTPException(ERRORS.get(code, 502), code if code in ERRORS else 'unavailable')
