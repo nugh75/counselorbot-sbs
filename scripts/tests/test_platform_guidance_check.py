@@ -10,13 +10,7 @@ spec.loader.exec_module(check)
 
 
 class GuidanceCheckTests(unittest.TestCase):
-    def test_refresh_requires_changed_markdown(self):
-        old = {'product_sha256': 'a', 'guide_sha256': 'x'}
-        with self.assertRaises(ValueError):
-            check.refresh({'product_sha256': 'b', 'guide_sha256': 'x'}, old)
-        self.assertEqual(check.refresh({'product_sha256': 'b', 'guide_sha256': 'y'}, old)['guide_sha256'], 'y')
-
-    def test_real_repository_add_change_delete_and_base(self):
+    def test_base_requires_guide_update_with_product_change(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             subprocess.run(['git', 'init', '-q', str(root)], check=True)
@@ -24,25 +18,14 @@ class GuidanceCheckTests(unittest.TestCase):
                 target = root / path
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text(text)
-            original = check.snapshot(root)
-            check.validate(original, original)
             check.git(root, 'add', '.')
             check.git(root, '-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'baseline')
-            source = root / 'frontend/src/page.tsx'
-            source.write_text('changed')
-            with self.assertRaises(ValueError):
-                check.validate(check.snapshot(root), original)
+            check.check_base(root, 'HEAD')
+            (root / 'frontend/src/page.tsx').write_text('changed')
             with self.assertRaises(ValueError):
                 check.check_base(root, 'HEAD')
             (root / check.GUIDE).write_text('# CounselorBot\nUpdated')
             check.check_base(root, 'HEAD')
-            updated = check.snapshot(root)
-            check.refresh(updated, original)
-            source.unlink()
-            self.assertNotEqual(check.snapshot(root)['product_sha256'], updated['product_sha256'])
-            source.write_text('changed')
-            (root / 'frontend/src/new.tsx').write_text('new feature')
-            self.assertNotEqual(check.snapshot(root)['product_sha256'], updated['product_sha256'])
 
     def test_scope_excludes_tests_but_covers_prompt_and_ui_changes(self):
         for name in ['backend/routes/new.py', 'backend/prompts/new.md', 'frontend/src/lib/i18n.ts', 'frontend/public/images/new.png', 'docker-compose.yml']:

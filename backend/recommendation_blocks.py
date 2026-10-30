@@ -38,13 +38,22 @@ _PARTIAL_TAG_RE = re.compile(r"(?:^|\n)<([A-Za-z]*)$")
 _JSON_OPEN_RE = re.compile(r"```json[ \t]*\r?\n", re.IGNORECASE)
 
 
+def _unwrap(data):
+    """Toglie l'involucro {"recommendations": ...}; una lista di note li' dentro
+    (forma prodotta da alcuni modelli) vale come {"notes": [...]}."""
+    if isinstance(data, dict) and set(data) == {"recommendations"}:
+        data = data["recommendations"]
+        if isinstance(data, list) and data and all(isinstance(item, dict) and "kind" in item for item in data):
+            data = {"notes": data}
+    return data
+
+
 def _private_json(raw: str) -> bool:
     try:
         data = json.loads(raw)
     except ValueError:
         return False
-    if isinstance(data, dict) and set(data) == {"recommendations"}:
-        data = data["recommendations"]
+    data = _unwrap(data)
     return bool(isinstance(data, dict) and data and set(data) <= {"reading", "strategy", "notes"}
                 and ("notes" in data or {"reading", "strategy"} <= set(data))
                 and all(isinstance(value, list) for value in data.values()))
@@ -210,7 +219,7 @@ def _first_valid(payloads: list[str]) -> dict | None:
             continue
         if isinstance(data, dict):
             if set(data) == {"recommendations"} and _private_json(raw):
-                return data["recommendations"]
+                return _unwrap(data)
             return data
     return None
 

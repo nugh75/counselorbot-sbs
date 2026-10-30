@@ -699,7 +699,9 @@ sull'agire (scelte, comportamenti e conseguenze nello studio), rimuove formule c
 (esperienza concreta, comprensione dell'agire, elementi per la sintesi) e propone letture solo come
 ipotesi aperte che lo studente è libero di confermare, correggere o rifiutare.
 Nel blocco privato `recommendations` il modello può dichiarare note di tipo `hypothesis`
-(con campo facoltativo `lens` vincolato ai fattori dello step corrente). Al turno successivo,
+(con campo facoltativo `lens` vincolato ai fattori dello step corrente). Il blocco resta
+privato anche quando il modello lo scrive come fence `json` con l'elenco delle note
+direttamente sotto `recommendations`: non compare nella risposta e le note vengono registrate. Al turno successivo,
 la risposta dello studente viene accoppiata deterministicamente all'ipotesi aperta (`status`
 passa ad `answered` con salvataggio di `payload.reply`, limitato a 240 caratteri). Lo stato
 del filo (`thread_state`: `introduced`, `exploring`, `hypothesis_open`, `hypothesis_answered`)
@@ -3193,3 +3195,8 @@ Le finestre proteggono le bozze alla chiusura, mantengono il focus e chiedono
 conferma prima di scartare modifiche o ricaricare una revisione in conflitto.
 La Guida interfaccia descrive questo comportamento nelle sei lingue. Contratto
 e verifiche: `docs/operations/independent-plan-steps.md`.
+
+**Controllo documentazione (interno, nessun effetto visibile).** Il controllo
+`make guidance-check` non usa più un manifest con hash globale: confronta il diff
+con `origin/main` e richiede l'aggiornamento di questo Markdown quando cambiano
+sorgenti di prodotto. Nessuna modifica a funzionalità o Guida interfaccia.

@@ -194,11 +194,11 @@ La Bussola conserva inoltre i propri fallback localizzati in caso di errore AI.
    senza effetti visibili va annotata come tale, senza inventare funzionalità.
 2. Se cambia ciò che l’utente vede o deve fare, allineare i testi della Guida
    nelle sei lingue e le schermate interessate. Preservare gli ancoraggi esistenti.
-3. Eseguire `make guidance-refresh` dopo la revisione, poi `make guidance-check`.
-   Il refresh viene rifiutato se i sorgenti cambiano ma il Markdown è identico.
-   Includere `docs/operations/platform-guidance-state.json` nel commit.
-4. La GitHub Action `Platform guidance` verifica gli hash e, rispetto alla base
-   della modifica, la presenza dell’aggiornamento del Markdown. Il controllo
+3. Eseguire `make guidance-check` dopo la revisione: fallisce se il diff rispetto
+   a `origin/main` tocca sorgenti di prodotto senza toccare il Markdown. Non esiste
+   più un manifest con hash globale (`guidance-refresh` è un no-op).
+4. La GitHub Action `Platform guidance` esegue lo stesso controllo rispetto alla
+   base della modifica. Il controllo
    comprende codice frontend/backend, prompt, immagini e configurazione Docker;
    esclude test e dati ignorati da Git. Aggiunte e rimozioni sono comprese.
 5. Ricostruire l’indice CounselorBot quando cambiano gli approfondimenti RAG;
