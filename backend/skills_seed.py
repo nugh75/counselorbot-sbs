@@ -130,7 +130,7 @@ this turn must do. Do that; do not run the whole path.
 
 ```idea
 {"add_nodes":[{"id":"t1","label":"Non so se ho tempo","role":"constraint","status":"mentioned"}],
- "add_edges":[{"from":"t1","to":"idea","kind":"weakens"}],
+ "add_edges":[{"source":"t1","target":"idea","kind":"weakens"}],
  "update":[{"id":"idea","status":"defined"}]}
 ```
 
@@ -197,6 +197,7 @@ OBIETTIVO_ENGINE_POLICY_MARKER = "skills_obiettivo_instruments_v1"
 IDEA_WAYFINDER_POLICY_MARKER = "skills_idea_wayfinder_v1"
 IDEA_CONCEPT_POLICY_MARKER = "skills_idea_concept_v1"
 SKILLS_BUDGET_POLICY_MARKER = "skills_total_budget_6500_v1"
+IDEA_EDGE_KEYS_POLICY_MARKER = "skills_idea_edge_keys_v1"
 # Valori di serie precedenti: le installazioni ferme su uno di questi non
 # hanno mai regolato il tetto a mano, e sono le uniche da aggiornare.
 PREVIOUS_TOTAL_MAX_CHARS = ("3000", "4500")
@@ -862,6 +863,28 @@ def apply_obiettivo_engine_policy(db) -> bool:
         key=OBIETTIVO_ENGINE_POLICY_MARKER,
         value="applied",
         description="Migrazione una tantum: percorsi Obiettivo nella lista degli strumenti del motore di skill.",
+    ))
+    db.commit()
+    return updated
+
+
+def apply_idea_edge_keys_policy(db) -> bool:
+    """Una tantum: la skill IDEA usa source/target come il contratto del turno.
+
+    Per decisione del proprietario (audit di coerenza dei prompt, 5.1) il testo
+    salvato viene sovrascritto anche se personalizzato; le modifiche successive
+    dell'admin restano, perche' il marcatore impedisce un secondo passaggio.
+    """
+    if db.query(models.Config).filter(models.Config.key == IDEA_EDGE_KEYS_POLICY_MARKER).first():
+        return False
+    skill = db.query(models.Skill).filter(models.Skill.slug == "idea-focus").first()
+    updated = skill is not None and skill.instructions_i18n != {"en": IDEA_FOCUS_INSTRUCTIONS_EN}
+    if updated:
+        skill.instructions_i18n = {"en": IDEA_FOCUS_INSTRUCTIONS_EN}
+    db.add(models.Config(
+        key=IDEA_EDGE_KEYS_POLICY_MARKER,
+        value="applied",
+        description="One-time migration: the IDEA skill uses source/target edge keys.",
     ))
     db.commit()
     return updated
