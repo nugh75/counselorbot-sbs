@@ -271,6 +271,48 @@ def test_site_continuation_uses_original_question_for_retrieval_and_saves_comple
             assert event['display'] == partial or expected.startswith(event['display'])
 
 
+def _site_stream(monkeypatch, provider_output, **request):
+    ai = SimpleNamespace(config={}, stream_response=MagicMock(return_value=provider_output))
+    index = SimpleNamespace(search=MagicMock(return_value=[{"source": "test"}]))
+    monkeypatch.setattr(site_chat, "AIService", lambda db, username=None: ai)
+    monkeypatch.setattr(site_chat, "get_index", lambda collection: index)
+    monkeypatch.setattr(site_chat, "_resolve_site_prompt", lambda *a: "Italian")
+    monkeypatch.setattr(site_chat, "_apply_language_directive", lambda text, *a, **kw: text)
+    monkeypatch.setattr(site_chat, "_resolve_counselor", lambda *a: (None, None))
+    monkeypatch.setattr(site_chat, "_portfolio_context", lambda *a: "")
+    monkeypatch.setattr(site_chat, "_top_k", lambda ai: 3)
+    monkeypatch.setattr(site_chat, "_retrieval_params", lambda ai: ({}, {}, 2, 0))
+    monkeypatch.setattr(site_chat, "_filter_single_instrument_results", lambda q, rows: rows)
+    monkeypatch.setattr(site_chat, "build_context", lambda rows, **kwargs: ("Materials", ["test"]))
+    memory = MagicMock()
+    memory.get_relevant_context.return_value = ""
+    monkeypatch.setattr(site_chat, "session_memory", memory)
+    monkeypatch.setattr(site_chat.database, "SessionLocal", MagicMock())
+
+    async def run():
+        response = await site_chat.site_chat_stream(SiteChatRequest(
+            message="Come studio?", session_id="site-test", **request), current_user={}, db=MagicMock())
+        return await events(response)
+
+    return asyncio.run(run()), ai
+
+
+@pytest.mark.parametrize("chunk_size", [1, 5, 4096])
+@pytest.mark.parametrize("raw", [
+    "<think>Piano privato: rispondere breve.</think>Risposta visibile.",
+    "<thinking>Piano privato</thinking>\nRisposta visibile.",
+])
+def test_site_chat_never_streams_inline_reasoning(monkeypatch, raw, chunk_size):
+    chunks = iter([raw[i:i + chunk_size] for i in range(0, len(raw), chunk_size)])
+    output, _ = _site_stream(monkeypatch, chunks)
+    displayed = [event["display"] for event in output if "display" in event]
+    assert displayed
+    for display in displayed:
+        assert "Piano" not in display and "<" not in display
+        assert "Risposta visibile.".startswith(display.strip())
+    assert output[-1]["response"] == "Risposta visibile."
+
+
 @pytest.mark.parametrize("reason", ["stop", "length"])
 @pytest.mark.parametrize("provider", ["ollama", "openai"])
 def test_provider_token_limit_preserves_partial_output_but_never_reports_success(provider, reason):
