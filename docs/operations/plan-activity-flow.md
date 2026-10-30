@@ -41,8 +41,11 @@ rimangono compatibili.
 
 La somministrazione termina salvando i dati. Non apre automaticamente una chat:
 se esiste un passo di analisi collegato, offre Vai all’approfondimento. L’analisi
-usa l’ultima compilazione valida del passo di origine. Ripetere un’analisi riusa
-il risultato; una nuova compilazione raccoglie dati nuovi.
+usa l’ultima compilazione valida del passo di origine.
+Come nel percorso normale, una nuova analisi mostra prima il passo Profilo
+(prospetto dei punteggi per fattore) e apre la chat con Continua. La ripresa di
+una conversazione in pausa salta il prospetto, come `/?frozen=` nella home.
+Ripetere un’analisi riusa il risultato; una nuova compilazione raccoglie dati nuovi.
 Nell’editor e nei modelli si può scegliere un questionario del piano o una
 compilazione personale. La navigazione indipendente conserva questi collegamenti
 ai dati: modificare un modello non li converte in risultati personali.
