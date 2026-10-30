@@ -204,7 +204,8 @@ export function RecommendationsPanel({
                 </div>
 
                 {visibleTab === 'diagram' ? (
-                    <div className="space-y-1" role="tabpanel" id={panelId('diagram')} aria-labelledby={tabId('diagram')} tabIndex={0}>
+                    <div className="space-y-2" role="tabpanel" id={panelId('diagram')} aria-labelledby={tabId('diagram')} tabIndex={0}>
+                        <h4 className="text-sm font-semibold text-slate-700">{rec('diagram.tab')}</h4>
                         {diagrams.length ? (
                             <ol className="space-y-1">
                                 {diagrams.map((item) => (
@@ -232,6 +233,7 @@ export function RecommendationsPanel({
                         aria-labelledby={tabId('reading')}
                         tabIndex={0}
                     >
+                        <h4 className="text-sm font-semibold text-slate-700">{t('recommendations.reading')}</h4>
                         {readings.open.map((item) => (
                             <ReadingCard
                                 key={item.slug}
@@ -261,6 +263,7 @@ export function RecommendationsPanel({
                         aria-labelledby={tabId('strategy')}
                         tabIndex={0}
                     >
+                        <h4 className="text-sm font-semibold text-slate-700">{t('recommendations.strategy')}</h4>
                         {strategies.open.map((item) => (
                             <StrategyCard
                                 key={item.slug}
@@ -284,6 +287,7 @@ export function RecommendationsPanel({
                     </div>
                 ) : (
                     <div className="space-y-2" role="tabpanel" id={panelId('advice')} aria-labelledby={tabId('advice')} tabIndex={0}>
+                        <h4 className="text-sm font-semibold text-slate-700">{rec('advice.tab')}</h4>
                         {advice.open.map((item) => (
                             <AdviceCard key={item.slug} item={item} canAct={canAct}
                                 onPatch={(patch) => void sendPatch('advice', item.slug, patch)}

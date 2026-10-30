@@ -425,7 +425,7 @@ Nell'interfaccia utente del selettore counselor (`CounselorSelector`):
 - Sotto la copertina compaiono: la testata con nome del counselor, badge del modello AI impiegato (locale/cloud con icona), eventuale stato di disponibilità; la frase distintiva localizzata (tagline); i chip delle categorie di approccio; il paragrafo descrittivo del counselor e l'elenco degli strumenti supportati (`questionnaire_types`).
 - Sopra l'elenco è presente una barra di ricerca per approccio («Che tipo di counselor vorresti?») con pulsante di ricerca e scheda di proposta che evidenzia il counselor consigliato con la sua copertina orizzontale 16:9 compatta, la motivazione e un pulsante per selezionarlo direttamente con un click.
 - Sopra le schede è disponibile un filtro rapido a chip per categorie di approccio («Tutti», chip con selezione multipla e pulsante «Azzera filtri»); il selettore mostra solo i counselor che contengono tutti i tag selezionati (logica AND), preservando la priorità dell'eventuale counselor raccomandato se rispetta tutti i filtri attivi.
-- Nella barra delle raccomandazioni (letture e film, strategie, consigli e domande, diagrammi) la scheda selezionata mostra il proprio titolo sotto l'icona; le altre restano compatte con icona e conteggio e il nome accessibile non cambia.
+- Nella barra delle raccomandazioni (letture e film, strategie, consigli e domande, diagrammi) la scheda selezionata mostra il proprio titolo sotto l'icona; le altre restano compatte con icona e conteggio e il nome accessibile non cambia. Sotto la riga delle schede, l'elenco delle carte si apre con un sottotitolo che nomina la sezione scelta (es. «Strategie»).
 - La scheda **Diagrammi** della barra laterale della chat guidata elenca, in ordine di disegno, i diagrammi chiesti nella conversazione (titolo del diagramma; il conteggio sta sulla linguetta). Cliccandone uno la chat scorre al messaggio che lo contiene, lo evidenzia e lo apre ingrandito nel visualizzatore della card; l'elenco viene dai diagrammi già salvati con la sessione, quindi resta dopo una ricarica e non richiama il modello.
 
 Nel pannello di gestione e costruzione dei counselor (`CounselorsPanel`, Issue #288), l'amministratore può generare, caricare o personalizzare direttamente l'avatar e la copertina 16:9 di ciascuna persona virtuale:
@@ -1056,7 +1056,9 @@ con impostazioni di voce e motore (Edge TTS online con filtro PII deterministico
 all’amministratore. Chat guidata, Bussola e Assistente accettano
 registrazione del microfono o file audio: la trascrizione è da controllare, salvo
 invio immediato scelto esplicitamente. In conversazione vocale si avvia e si ferma
-la registrazione; il microfono non riparte da solo. Il riconoscimento è locale per
+la registrazione; il microfono non riparte da solo. Nella chat guidata, quando il turno
+vocale fa avanzare lo step, viene letta anche l'apertura dello step successivo, non
+solo la breve risposta che chiude il precedente. Il riconoscimento è locale per
 impostazione iniziale: l'amministratore sceglie faster-whisper (predefinito) oppure
 whisper.cpp, più leggero per CPU deboli, e il modello nella scheda **Trascrizione audio**
 del gruppo «Voce e audio».
