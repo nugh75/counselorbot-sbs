@@ -28,7 +28,7 @@ from sqlalchemy.orm import Session
 
 from .. import auth, class_access, database, models, personal_api
 from ..ai_service import AIError, AIService
-from ..diagram_icon_catalog import ICON_SELECTION_PROMPT
+from ..diagram_icon_catalog import TAVOLO_ICON_SELECTION_PROMPT
 from ..diagram_render import NODE_FORMS
 from ..message_diagrams import session_owner
 from ..tavolo import (
@@ -136,7 +136,7 @@ def _compose_system_prompt(preset: dict | None) -> str:
         "strength (1, 2 or 3) says how much the link weighs: 1 sometimes, 2 usually, 3 always. "
         "hypothesis:true marks a link you are guessing rather than one the person stated.",
         "Write every label in the language of the table.",
-        ICON_SELECTION_PROMPT,
+        TAVOLO_ICON_SELECTION_PROMPT,
     ]
     lines.append(
         preset["prompt"] if preset

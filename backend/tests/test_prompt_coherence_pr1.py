@@ -29,3 +29,15 @@ def test_idea_edge_policy_overwrites_the_stored_skill_once():
         assert skills_seed.apply_idea_edge_keys_policy(db) is False
         db.refresh(skill)
         assert skill.instructions_i18n == {'en': 'Admin edit after the alignment'}
+
+
+# C08: the Tavolo ignores `factor`, so its icon rule never asks for it.
+def test_tavolo_icon_rule_has_no_factor_field():
+    from backend.diagram_icon_catalog import ICON_SELECTION_PROMPT, TAVOLO_ICON_SELECTION_PROMPT
+    from backend.routes.tavolo import _compose_system_prompt
+
+    assert 'set factor to INSTRUMENT:CODE' in ICON_SELECTION_PROMPT
+    composed = _compose_system_prompt(None)
+    assert TAVOLO_ICON_SELECTION_PROMPT in composed
+    assert 'factor' not in composed and 'INSTRUMENT:CODE' not in composed
+    assert 'Icon meanings:' in composed
