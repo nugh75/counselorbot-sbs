@@ -509,6 +509,13 @@ revisione delle attività dei piani) e nel workspace OpenCode, che sarà elimina
 invece di essere allineato; il dettaglio
 e l’ordine degli interventi sono in `docs/audits/2026-10-29-chat-ux-remaining-surfaces.md`.
 
+Le pagine `/bussola` e `/assistente`, con il selettore del taccuino nel contesto,
+il taccuino di prova, il richiamo all’abbonamento ChatGPT e il campo del
+diagramma, usano i token semantici e le primitive `Card`, `PageHeader` e
+`Callout` (audit UI 2026-10-30, zona 2): spaziature su griglia di 8, due soli
+pesi, niente maiuscolo né cerchi decorativi, controlli alti almeno 44px. Testi,
+passi e comportamento non cambiano.
+
 - **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti.
   Ascolta ciò che lo studente vuole affrontare e consiglia da quale strumento
   partire, aiutando a valutare tempi e impegno. Non somministra questionari, non
