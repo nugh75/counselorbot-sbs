@@ -3,6 +3,7 @@
 import { useCallback, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { MoreVertical } from 'lucide-react';
 import { Tooltip, TooltipPortalContainer } from '@/components/ui/Tooltip';
+import { ChatMenuLevel } from '@/components/ui/ChatOptionsMenu';
 
 /** Native popovers escape the transcript's clipping and handle outside tap/Escape. */
 export function ChatActionsPopover({ label, children, icon, disabled, onOpenChange }: {
@@ -21,6 +22,17 @@ export function ChatActionsPopover({ label, children, icon, disabled, onOpenChan
         setTooltipContainer(element);
     }, []);
     const [open, setOpen] = useState(false);
+    // Sottolivello aperto (id della riga che l'ha aperto) e suo contenitore.
+    const [sub, setSub] = useState<string | null>(null);
+    const [subContainer, setSubContainer] = useState<HTMLDivElement | null>(null);
+    // Al ritorno il fuoco torna sulla riga che ha aperto il sottolivello.
+    const returnFocus = useRef<string | null>(null);
+    const back = useCallback(() => setSub(current => { returnFocus.current = current; return null; }), []);
+    useLayoutEffect(() => {
+        if (sub || !returnFocus.current) return;
+        document.getElementById(returnFocus.current)?.focus({ preventScroll: true });
+        returnFocus.current = null;
+    }, [sub]);
 
     useLayoutEffect(() => {
         if (!open) return;
@@ -69,11 +81,17 @@ export function ChatActionsPopover({ label, children, icon, disabled, onOpenChan
                 </button>
             </Tooltip>
             <div ref={attachPanel} id={id} popover="auto" role="group" aria-label={label}
-                onToggle={event => { const next = event.newState === 'open'; setOpen(next); onOpenChange?.(next); }}
+                onToggle={event => { const next = event.newState === 'open'; setOpen(next); if (!next) setSub(null); onOpenChange?.(next); }}
+                onKeyDown={event => { if (event.key === 'Escape' && sub) { event.preventDefault(); event.stopPropagation(); back(); } }}
                 className="chat-options fixed m-0 overflow-visible rounded-lg border border-slate-200 bg-white text-slate-700 shadow-lg"
                 style={{ inset: 'auto', visibility: open ? 'visible' : 'hidden' }}>
                 <TooltipPortalContainer.Provider value={tooltipContainer}>
-                    <div className="overflow-y-auto p-2" style={{ maxHeight: 'inherit' }}>{children(close)}</div>
+                    <ChatMenuLevel.Provider value={{ active: sub, open: setSub, back, container: subContainer }}>
+                        <div className="overflow-y-auto p-2" style={{ maxHeight: 'inherit' }}>
+                            <div hidden={!!sub}>{children(close)}</div>
+                            <div ref={setSubContainer} hidden={!sub} />
+                        </div>
+                    </ChatMenuLevel.Provider>
                 </TooltipPortalContainer.Provider>
             </div>
     </div>;

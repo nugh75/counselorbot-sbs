@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 
 // Impostazioni di risposta (#657): formato, lunghezza e analisi stanno nel
 // popover «Opzioni della conversazione» con le stesse righe della chat guidata.
+// Sezioni titolate e sottolivello del selettore (#682).
 // Fixture sintetiche, nessun backend o modello.
 const origin = process.env.CHAT_SHELL_BASE_URL || 'http://127.0.0.1:3173';
 let browser;
@@ -39,8 +40,8 @@ async function fixture(width) {
 }
 
 const surfaces = {
-    bussola: { path: '/bussola', composer: '#bussola-composer', resume: 'Rivedi l’ultimo orientamento', rows: ['Formato'] },
-    assistente: { path: '/assistente', composer: 'form.assistente-composer textarea', rows: ['Formato', 'Lunghezza'] },
+    bussola: { path: '/bussola', composer: '#bussola-composer', resume: 'Rivedi l’ultimo orientamento', sections: ['Azioni', 'Risposte'], rows: ['Formato: Discorsivo'], guide: true },
+    assistente: { path: '/assistente', composer: 'form.assistente-composer textarea', sections: ['Azioni', 'Risposte'], rows: ['Formato: Discorsivo', 'Lunghezza: Media'], guide: false },
 };
 
 for (const [name, surface] of Object.entries(surfaces)) {
@@ -57,18 +58,41 @@ for (const [name, surface] of Object.entries(surfaces)) {
                 await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
                 const settings = page.getByTestId('chat-response-settings');
                 await settings.waitFor();
-                const labels = await settings.locator(':scope > div > span').allTextContents();
-                assert.deepEqual(labels, surface.rows);
-                const groups = settings.locator('[role="radiogroup"]');
-                assert.equal(await groups.count(), surface.rows.length);
-                for (const row of await settings.locator(':scope > div').all()) {
-                    assert.ok((await row.boundingBox()).height >= 44);
-                }
+                const menu = page.locator('.chat-options:popover-open');
+                // Sezioni come gruppi con intestazione; righe con valore corrente.
+                const sections = menu.locator('[role="group"][aria-labelledby]');
+                assert.deepEqual(await sections.locator(':scope > h3').allTextContents(), surface.sections);
+                for (const title of surface.sections) await menu.getByRole('group', { name: title, exact: true }).waitFor();
+                const rows = settings.getByRole('button', { name: /^(Formato|Lunghezza): / });
+                await rows.first().waitFor();
+                assert.deepEqual(await rows.evaluateAll(items => items.map(item => item.getAttribute('aria-label'))), surface.rows);
+                for (const row of await rows.all()) assert.ok((await row.boundingBox()).height >= 44);
+                assert.equal(await menu.getByRole('link', { name: 'Guida a questa attività' }).count(), surface.guide ? 1 : 0);
+                assert.equal(await settings.locator('[role="radiogroup"]').count(), 0, 'selectors live in the sub-level');
 
-                // Il formato si cambia dal popover e resta selezionato.
-                const radios = groups.first().locator('[role="radio"]');
+                // Sottolivello: il fuoco va su «‹», la scelta resta selezionata e il valore si aggiorna.
+                await rows.first().click();
+                const back = menu.getByRole('button', { name: 'Torna alle opzioni', exact: true });
+                assert.equal(await back.evaluate(element => element === document.activeElement), true);
+                await menu.getByRole('group', { name: 'Formato', exact: true }).waitFor();
+                assert.equal(await menu.getByRole('group', { name: 'Azioni', exact: true }).count(), 0);
+                const radios = menu.getByRole('radiogroup', { name: 'Formato' }).getByRole('radio');
+                assert.deepEqual(await radios.allTextContents(), ['Discorsivo', 'Per punti']);
+                for (const radio of await radios.all()) assert.ok((await radio.boundingBox()).height >= 44);
                 await radios.nth(1).click();
                 assert.equal(await radios.nth(1).getAttribute('aria-checked'), 'true');
+                // Escape torna al livello principale, con il fuoco sulla riga.
+                await page.keyboard.press('Escape');
+                await menu.waitFor();
+                const format = settings.getByRole('button', { name: 'Formato: Per punti', exact: true });
+                assert.equal(await format.evaluate(element => element === document.activeElement), true);
+                // Tastiera: Invio riapre il sottolivello, «‹» torna indietro.
+                await page.keyboard.press('Enter');
+                await back.waitFor();
+                await page.keyboard.press('Enter');
+                assert.equal(await format.evaluate(element => element === document.activeElement), true);
+                await page.keyboard.press('Escape');
+                assert.equal(await page.locator('.chat-options:popover-open').count(), 0);
                 assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
                 assert.deepEqual(errors, []);
             } finally { await context.close(); }

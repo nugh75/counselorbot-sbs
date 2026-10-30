@@ -39,6 +39,7 @@ import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatSug
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
+import { ChatMenuSection, ChatMenuSetting } from '@/components/ui/ChatOptionsMenu';
 import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
 import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
 import { IdeaBranchIntro } from '@/components/qsa/IdeaBranchIntro';
@@ -1766,51 +1767,50 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const renderConversationOptions = (openPanel: (panel?: 'path' | 'scores' | 'resources') => void) => (
         <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'options')}>
             {close => <div className="divide-y divide-slate-200">
-                <div className="space-y-1 pb-2">
-                <GuideHelpLink task="chat" />
-                <button type="button" className={messageActionClass} disabled={isLoading || !!activeExploration || agreementLocked || !currentPhase || currentPhase === FIXED_CONCLUSION_ID} onClick={() => { close(); setShowExplorationForm(true); }}>
-                    <GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" />{navCopy.open}
-                </button>
-                <button type="button" className={`${messageActionClass} hidden lg:flex`} onClick={() => { close(); openPanel(); }}>
-                    <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{chatLayoutLabel(activeLocale, 'panel')}
-                    {recommendations.reading.length + recommendations.strategy.length > 0 && <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>}
-                </button>
-                <div className="lg:hidden">
-                    {!isIdea && <button type="button" className={messageActionClass} onClick={() => { close(); openPanel('path'); }}>
-                        <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{t('guided.path')}
-                    </button>}
-                    {hasScoreEntries && <button type="button" className={messageActionClass} onClick={() => { close(); openPanel('scores'); }}>
-                        <BarChart3 className="h-4 w-4 shrink-0" aria-hidden="true" />{t('guided.scores')}
-                    </button>}
-                    {recommendations.reading.length + recommendations.strategy.length > 0 && <button type="button" className={messageActionClass} aria-label={t('recommendations.title')} onClick={() => { close(); openPanel('resources'); }}>
-                        <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />{t('recommendations.title')}
-                        <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>
-                    </button>}
-                </div>
-                </div>
-                {currentPhase !== FIXED_CONCLUSION_ID && <>
-                    <ChatResponseSettings locale={activeLocale}
-                        format={{ value: responseFormat, onChange: setResponseFormat, disabled: isLoading || !classAllowsFormat }}
-                        length={{ value: responseLength, onChange: setResponseLength, disabled: isLoading || !classAllowsLength }}
-                        reasoning={reasoningCapable ? { value: reasoningEffort, onChange: setReasoningEffort, disabled: isLoading || !classAllowsReasoning, mandatory: reasoningMandatory } : undefined}>
-                        {isTeacherUser && <div className="space-y-1 px-2 pb-1 text-sm text-slate-600">
-                            <div className="flex min-h-[44px] items-center gap-2">
-                                <NotebookPen className="h-4 w-4 shrink-0" aria-hidden="true" />
-                                <span className="min-w-0 flex-1">{t('notebookContext.label')}</span>
-                            </div>
-                            <NotebookContextSelector value={notebookContext} onChange={changeNotebookContext} disabled={isLoading} />
-                        </div>}
-                        {isTeacherUser && notebookContext === 'practice' && <PracticeNotebookPicker value={practiceNotebookId} onChange={changePracticeNotebookId} disabled={isLoading} />}
-                    </ChatResponseSettings>
-                    <div className="space-y-1 py-2">
+                {/* Sezioni del menù (#682): Azioni · Mostra · Risposte · Guida. */}
+                <ChatMenuSection title={chatLayoutLabel(activeLocale, 'menuActions')}>
+                    {currentPhase !== FIXED_CONCLUSION_ID && <>
                         <div ref={setVoiceOptionsContainer} />
                         {!voiceMode && <button type="button" className={messageActionClass} disabled={isLoading || audioBusy} onClick={() => { close(); setVoiceMode(true); }}>
                             <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
                         </button>}
+                    </>}
+                    <button type="button" className={messageActionClass} disabled={isLoading || !!activeExploration || agreementLocked || !currentPhase || currentPhase === FIXED_CONCLUSION_ID} onClick={() => { close(); setShowExplorationForm(true); }}>
+                        <GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" />{navCopy.open}
+                    </button>
+                    {currentPhase !== FIXED_CONCLUSION_ID && <>
                         {!voiceMode && <AudioSendOption compact />}
                         <AudioLanguageOption compact />
-                    </div>
-                </>}
+                    </>}
+                </ChatMenuSection>
+                {/* Da desktop il pannello ha già le sue schede: basta una voce per aprirlo. */}
+                <ChatMenuSection title={chatLayoutLabel(activeLocale, 'menuShow')}>
+                    {desktop && <button type="button" className={messageActionClass} onClick={() => { close(); openPanel(); }}>
+                        <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{chatLayoutLabel(activeLocale, 'panel')}
+                        {recommendations.reading.length + recommendations.strategy.length > 0 && <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>}
+                    </button>}
+                    {!desktop && !isIdea && <button type="button" className={messageActionClass} onClick={() => { close(); openPanel('path'); }}>
+                        <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{t('guided.path')}
+                    </button>}
+                    {!desktop && hasScoreEntries && <button type="button" className={messageActionClass} onClick={() => { close(); openPanel('scores'); }}>
+                        <BarChart3 className="h-4 w-4 shrink-0" aria-hidden="true" />{t('guided.scores')}
+                    </button>}
+                    {!desktop && recommendations.reading.length + recommendations.strategy.length > 0 && <button type="button" className={messageActionClass} aria-label={t('recommendations.title')} onClick={() => { close(); openPanel('resources'); }}>
+                        <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />{t('recommendations.title')}
+                        <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>
+                    </button>}
+                </ChatMenuSection>
+                {currentPhase !== FIXED_CONCLUSION_ID && <ChatResponseSettings locale={activeLocale}
+                    format={{ value: responseFormat, onChange: setResponseFormat, disabled: isLoading || !classAllowsFormat }}
+                    length={{ value: responseLength, onChange: setResponseLength, disabled: isLoading || !classAllowsLength }}
+                    reasoning={reasoningCapable ? { value: reasoningEffort, onChange: setReasoningEffort, disabled: isLoading || !classAllowsReasoning, mandatory: reasoningMandatory } : undefined}>
+                    {isTeacherUser && <ChatMenuSetting icon={<NotebookPen className="h-4 w-4 shrink-0" aria-hidden="true" />}
+                        label={t('notebookContext.label')} value={t(`notebookContext.${notebookContext}`)} title={t('notebookContext.label')}>
+                        <NotebookContextSelector list value={notebookContext} onChange={changeNotebookContext} disabled={isLoading} />
+                        {notebookContext === 'practice' && <PracticeNotebookPicker value={practiceNotebookId} onChange={changePracticeNotebookId} disabled={isLoading} />}
+                    </ChatMenuSetting>}
+                </ChatResponseSettings>}
+                <div className="px-2 pt-2"><GuideHelpLink task="chat" /></div>
             </div>}
         </ChatActionsPopover>
     );

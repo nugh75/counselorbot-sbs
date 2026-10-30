@@ -268,10 +268,19 @@ for (const width of [320, 1440]) {
             const options = page.getByRole('group', { name: 'Opzioni della conversazione', exact: true, includeHidden: true });
             assert.equal(await options.isVisible(), false);
             await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
+            // Sezioni titolate (#682); da desktop «Mostra» ha la sola voce Pannello.
+            const menu = page.locator('.chat-options:popover-open');
+            await menu.getByRole('group', { name: 'Risposte', exact: true }).waitFor();
+            assert.deepEqual(await menu.locator('[role="group"][aria-labelledby] > h3').allTextContents(), ['Azioni', 'Mostra', 'Risposte']);
+            assert.equal(await menu.getByRole('button', { name: 'Pannello', exact: true }).count(), width >= 1024 ? 1 : 0);
+            assert.equal(await menu.getByRole('button', { name: 'Percorso', exact: true }).count(), width >= 1024 ? 0 : 1);
+            await page.getByRole('button', { name: /^Lunghezza: / }).click();
             await page.getByRole('radio', { name: 'Lunghezza risposta: Breve', exact: true }).click();
             assert.equal(await page.getByRole('radio', { name: 'Lunghezza risposta: Breve', exact: true }).getAttribute('aria-checked'), 'true');
             // Il congelamento non sta nel menu dei tre puntini: è un pulsante
             // dedicato della barra, raggiungibile senza aprire il popover.
+            // Escape torna al livello principale, poi chiude il menù.
+            await page.keyboard.press('Escape');
             await page.keyboard.press('Escape');
             assert.equal(await options.isVisible(), false);
             const freeze = await page.getByRole('button', { name: 'Congela sessione', exact: true }).boundingBox();

@@ -28,6 +28,7 @@ import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
+import { ChatMenuSection } from '@/components/ui/ChatOptionsMenu';
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { diagramContentForSpeech } from '@/lib/diagram-content';
@@ -642,17 +643,17 @@ export default function AssistentePage() {
                             {!loading && !voiceMode && <ChatSuggestions label={t('orientation.suggested.label')} items={topicQuestions} composerId="assistente-composer" onInsert={setInput} />}
                             <div className="flex items-end gap-2">
                                 <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <div className="divide-y divide-slate-200">
+                                    <ChatMenuSection title={chatLayoutLabel(lang, 'menuActions')}>
+                                        <div ref={setVoiceOptionsContainer} />
+                                        {!voiceMode && <button type="button" disabled={loading || audioBusy} className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50" onClick={() => { close(); setVoiceMode(true); }}>
+                                            <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
+                                        </button>}
+                                        {!voiceMode && <AudioSendOption />}
+                                        <AudioLanguageOption />
+                                    </ChatMenuSection>
                                     <ChatResponseSettings
                                         format={{ value: responseFormat, onChange: setResponseFormat, disabled: loading }}
                                         length={{ value: responseLength, onChange: setResponseLength, disabled: loading }} />
-                                    <div className="space-y-1 py-2">
-                                    <div ref={setVoiceOptionsContainer} />
-                                    {!voiceMode && <button type="button" disabled={loading || audioBusy} className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50" onClick={() => { close(); setVoiceMode(true); }}>
-                                        <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
-                                    </button>}
-                                    {!voiceMode && <AudioSendOption />}
-                                    <AudioLanguageOption />
-                                    </div>
                                 </div>}</ChatActionsPopover>
                                 <ChatComposerInput
                                     id="assistente-composer"

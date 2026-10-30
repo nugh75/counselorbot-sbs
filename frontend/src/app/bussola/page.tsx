@@ -10,6 +10,8 @@ import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
 import { ChatResponseSettings } from '@/components/ui/ChatResponseSettings';
 import { useResponseFormat } from '@/lib/use-response-format';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
+import { ChatMenuSection, ChatMenuSetting } from '@/components/ui/ChatOptionsMenu';
+import { GuideHelpLink } from '@/components/guide/GuideHelpLink';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { Button } from '@/components/ui/Button';
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
@@ -365,24 +367,22 @@ export default function BussolaPage() {
                                 {!sending && <ChatSuggestions label={t('orientation.suggested.label')} items={[0, 1, 2, 3, 4].map(index => t(`orientation.suggested.${index}`))} composerId="bussola-composer" onInsert={setInput} />}
                                 <div className="flex items-end gap-2">
                                     <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <div className="divide-y divide-slate-200">
-                                        <ChatResponseSettings format={{ value: responseFormat, onChange: setResponseFormat, disabled: sending }}>
-                                            {isTeacherUser && <div className="space-y-1 px-2 pb-1 text-sm text-slate-600">
-                                                <div className="flex min-h-[44px] items-center gap-2">
-                                                    <NotebookPen className="h-4 w-4 shrink-0" aria-hidden="true" />
-                                                    <span className="min-w-0 flex-1">{t('notebookContext.label')}</span>
-                                                </div>
-                                                <NotebookContextSelector value={notebookChoice} onChange={changeNotebookChoice} disabled={sending} options={['default', 'practice']} />
-                                            </div>}
-                                            {isTeacherUser && notebookChoice === 'practice' && <PracticeNotebookPicker value={practiceNotebookId} onChange={changePracticeNotebookId} disabled={sending} />}
-                                        </ChatResponseSettings>
-                                        <div className="space-y-1 py-2">
+                                        <ChatMenuSection title={chatLayoutLabel(lang, 'menuActions')}>
                                             <div ref={setVoiceOptionsContainer} />
                                             {!voiceMode && <button type="button" disabled={sending || audioBusy} className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50" onClick={() => { close(); setVoiceMode(true); }}>
                                                 <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
                                             </button>}
                                             {!voiceMode && <AudioSendOption />}
                                             <AudioLanguageOption />
-                                        </div>
+                                        </ChatMenuSection>
+                                        <ChatResponseSettings format={{ value: responseFormat, onChange: setResponseFormat, disabled: sending }}>
+                                            {isTeacherUser && <ChatMenuSetting icon={<NotebookPen className="h-4 w-4 shrink-0" aria-hidden="true" />}
+                                                label={t('notebookContext.label')} value={t(`notebookContext.${notebookChoice}`)} title={t('notebookContext.label')}>
+                                                <NotebookContextSelector list value={notebookChoice} onChange={changeNotebookChoice} disabled={sending} options={['default', 'practice']} />
+                                                {notebookChoice === 'practice' && <PracticeNotebookPicker value={practiceNotebookId} onChange={changePracticeNotebookId} disabled={sending} />}
+                                            </ChatMenuSetting>}
+                                        </ChatResponseSettings>
+                                        <div className="px-2 pt-2"><GuideHelpLink task="orientation" /></div>
                                     </div>}</ChatActionsPopover>
                                     <ChatComposerInput id="bussola-composer" hidden={voiceMode} value={input} onChange={(event) => setInput(event.target.value)} maxLength={4000} placeholder={t('orientation.input.placeholder')} aria-label={t('orientation.input.placeholder')} />
                                     <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}

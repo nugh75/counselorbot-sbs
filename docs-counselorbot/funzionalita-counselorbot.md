@@ -458,6 +458,17 @@ ordine e con le stesse etichette — **Formato** (discorsivo, per punti),
 prima delle opzioni audio. Ogni chat mostra solo quelle che può applicare: la
 chat guidata tutte e tre, l’Assistente formato e lunghezza, la Bussola il
 formato. Nella riga di scrittura restano solo opzioni, campo, microfono e Invia.
+Il menu «⋮» è diviso in sezioni con titolo (#682): **Azioni** (conversazione
+vocale, «Apri un’esplorazione» nella chat guidata, opzioni della dettatura),
+**Mostra** (solo chat guidata: su telefono Percorso, Punteggi e «Per te» con il
+numero di consigli; da desktop la sola voce «Pannello», perché il pannello ha
+già le sue schede), **Risposte** (Formato, Lunghezza, Analisi e, per il docente,
+Taccuino nel contesto) e in fondo il link alla guida (chat guidata e Bussola).
+Una sezione senza voci non compare. Ogni impostazione mostra il valore
+corrente; il tocco apre un sottolivello con le scelte in elenco: «‹» o Esc
+tornano al menu principale con il fuoco sulla voce appena usata, un secondo
+Esc lo chiude. Le condizioni di
+abilitazione delle voci non cambiano.
 Anche il testo delle risposte è reso allo stesso modo nelle tre chat (#654):
 stesso aspetto per titoli, elenchi, grassetto, collegamenti, codice e citazioni;
 le tabelle scorrono di lato dentro la loro cornice (raggiungibile anche da
