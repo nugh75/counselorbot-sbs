@@ -86,6 +86,59 @@
   --animate-fade-in-up: fadeInUp 0.5s ease-out forwards;
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-indeterminate: indeterminate 1.2s ease-in-out infinite;
+
+  /* FORMA — token semantici (docs/design.md §2.6). Tre ombre: card, popover,
+     modale (= shadow-sm / shadow-lg / shadow-2xl). L'altezza dei controlli e' in
+     px, non in rem: con la radice a 15px `h-11` fa 41px, sotto il target touch. */
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-pop: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-modal: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --spacing-control: 44px;
+}
+
+/* COLORE — token semantici (docs/design.md §2.6). `inline` fa puntare le utility
+   (`text-ink`, `bg-surface`, `border-line`…) direttamente alle variabili sotto,
+   che `.dark` ridefinisce: niente voce di remap e niente `dark:` al call-site.
+   Nomi scelti per non scontrarsi con primary/muted/accent/border/card di shadcn. */
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-body: var(--ink-body);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-on-brand: var(--ink-on-brand);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-raised: var(--surface-raised);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-line: var(--brand-line);
+  --color-link: var(--link);
+  --color-move: var(--move);
+  --color-move-hover: var(--move-hover);
+  --color-focus: var(--console-focus);
+
+  /* Stati: tinta (icona), soft (fondo), line (bordo), ink (testo sul soft). */
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-line: var(--info-line);
+  --color-info-ink: var(--info-ink);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-line: var(--success-line);
+  --color-success-ink: var(--success-ink);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-line: var(--warning-line);
+  --color-warning-ink: var(--warning-ink);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-line: var(--danger-line);
+  --color-danger-ink: var(--danger-ink);
+
+  --radius-control: calc(var(--radius) - 2px);
+  --radius-card: calc(var(--radius) + 4px);
 }
 
 :root {
@@ -138,6 +191,42 @@
 
   --color-accent: #e2e8f0;
   --color-accent-foreground: #0f172a;
+
+  /* Token semantici: i valori sono le classi piu' usate oggi (audit UI §6), cosi'
+     passare da `text-slate-900` a `text-ink` non cambia nulla a schermo. */
+  --ink: var(--color-slate-900);
+  --ink-body: var(--color-slate-700);
+  --ink-muted: var(--color-slate-500);
+  --ink-on-brand: #ffffff;
+  --surface: #ffffff;
+  --surface-sunken: var(--color-slate-50);
+  --surface-raised: var(--color-slate-100);
+  --line: var(--color-slate-200);
+  --line-strong: var(--color-slate-300);
+  --brand: var(--color-indigo-600);
+  --brand-hover: var(--color-indigo-700);
+  --brand-soft: var(--color-indigo-50);
+  --brand-line: var(--color-indigo-200);
+  --link: var(--color-indigo-700);
+  --move: var(--color-ochre-600);
+  --move-hover: var(--color-ochre-700);
+  /* Stati, dai colori di Callout.tsx. */
+  --info: var(--color-indigo-600);
+  --info-soft: var(--color-indigo-50);
+  --info-line: var(--color-indigo-200);
+  --info-ink: var(--ink);
+  --success: var(--color-emerald-600);
+  --success-soft: var(--color-emerald-50);
+  --success-line: var(--color-emerald-200);
+  --success-ink: var(--color-emerald-950);
+  --warning: var(--color-amber-700);
+  --warning-soft: var(--color-amber-50);
+  --warning-line: var(--color-amber-300);
+  --warning-ink: var(--color-amber-950);
+  --danger: var(--color-red-600);
+  --danger-soft: var(--color-red-50);
+  --danger-line: var(--color-red-200);
+  --danger-ink: var(--color-red-800);
 
   /* ZONE DI MISURA (ProfileVisualization). Non sono stati dell'interfaccia ma
      esiti, quindi hanno scala propria — vedi design.md §2.4. Stanno qui, e non
@@ -568,6 +657,37 @@ h1.text-3xl {
   --color-muted-foreground: #94a3b8;
   --color-accent: #334155;
   --color-accent-foreground: #f1f5f9;
+
+  /* Token semantici: gli stessi valori del remap `.dark .text-slate-*` &co. qui
+     sotto. brand e move restano pieni (il bianco sopra regge), il link schiarisce. */
+  --ink: #f8fafc;
+  --ink-body: #cbd5e1;
+  --ink-muted: #94a3b8;
+  --surface: #1e293b;
+  --surface-sunken: #0f172a;
+  --surface-raised: #334155;
+  --line: #334155;
+  --line-strong: #475569;
+  --brand-soft: #103f42;
+  --brand-line: #1f7376;
+  --link: #8fcfd1;
+  --info: #8fcfd1;
+  --info-soft: #103f42;
+  --info-line: #1f7376;
+  --success: #6ee7b7;
+  --success-soft: #052e16;
+  --success-line: #047857;
+  --success-ink: #6ee7b7;
+  /* Bordi warning/danger: amber-300 e red-200 non avevano voce scura e restavano
+     cornici chiare sul fondo scuro (audit §2.3). */
+  --warning: #fcd34d;
+  --warning-soft: #3a2206;
+  --warning-line: #b45309;
+  --warning-ink: #fcd34d;
+  --danger: #fca5a5;
+  --danger-soft: #3f0a0a;
+  --danger-line: #b91c1c;
+  --danger-ink: #fca5a5;
 
   /* Zone di misura: banda un filo piu' densa sul fondo scuro, testo schiarito. */
   --zone-growth-band: rgb(239 68 68 / 0.22);

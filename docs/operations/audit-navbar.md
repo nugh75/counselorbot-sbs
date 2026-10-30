@@ -283,8 +283,8 @@ con il nuovo menu globale.
 | Monitoraggio e costi (`admin.group.monitoring`) | Log Conversazioni | `logs` / `logs` | FileText |
 | idem | Costi | `costs` / `costs` | Coins |
 | idem | Benchmark | `benchmark` / `benchmark` | Gauge |
-| idem | Trascrizione audio | `audio` / `audio` | Mic |
 | idem | Esperimenti sui prompt | dizionario inline IT/EN/ES/FR/DE/SV / `promptExperiments` | Gauge |
+| Voce e audio (`admin.group.voice`) | Trascrizione audio | `audio` / `audio` | Mic |
 | pQBL (`admin.group.pqbl`) | pQBL (PDF) | `pqbl` / `pqbl` | GraduationCap |
 | Anteprima (`admin.group.preview`) | Anteprima ruoli | `rolePreview` / `rolePreview` | Eye |
 

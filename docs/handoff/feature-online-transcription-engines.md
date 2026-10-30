@@ -19,14 +19,16 @@ Issue: [#706](https://github.com/nugh75/counselorbot-sbs/issues/706), milestone 
   endpoints, with no text, images or attached context. Existing purpose, authorization and audit
   behavior remains in force. Six-language warnings disclose external, unredacted audio for all
   users; tests use fictitious data. OpenRouter can forward beyond the EU.
-- Updated six-language audio help, feature grounding, operational/privacy docs and guidance state.
+- Updated six-language audio help, feature grounding and operational/privacy docs.
   Reviewed `/guide`: existing chat navigation and screenshots remain applicable; the changed
   controls are confined to the administration audio panel and its model input.
 - Online upload size is checked by the backend. The three-minute limit is checked in the UI;
   only the local service decodes duration/content, while online acceptance depends on the provider.
   There is no real-provider transcription smoke test; HTTP requests and errors are simulated.
-- Did not edit `backend/ai_service.py`, `frontend/src/app/admin/page.tsx`, shared UI components
-  or global CSS. No Docker build, production restart, dev server or test database/container was
+- No manual edits to `backend/ai_service.py`, `frontend/src/app/admin/page.tsx`, shared UI components
+  or global CSS; upstream changes are preserved by merging `origin/main` (including #698, #699 and #708).
+  The merge keeps the new **Voice and audio** admin group and the removal of the obsolete global
+  guidance hash manifest. No Docker build, production restart, dev server or test database/container was
   started. No deploy or sudo step is required for this session.
 
 Verification commands (run sequentially for test suites):
@@ -44,7 +46,6 @@ cd frontend
   src/lib/transcription-models.test.ts src/lib/i18n-voice.ts
 ~/.nvm/versions/node/v22.23.3/bin/node scripts/check-i18n.mjs
 cd ..
-make guidance-refresh
 make guidance-check
 ```
 
@@ -62,3 +63,7 @@ after tightening the unknown-provider boundary and debug-log assertions, all 67 
 tests passed again. All four frontend unit tests passed. The general i18n checker
 reports the same 12 existing hard-coded texts in `ClassSettingsPage.tsx` and
 `ClassOverviewTab.tsx` already recorded in the previous handoff; those files are untouched.
+Targeted ESLint has zero errors and one pre-existing internal-navigation warning in
+`AudioModelsPanel.tsx`. TypeScript passes with the standard local Next ambient references.
+Guidance passed before merging and passes with the updated diff-based upstream gate
+(`--base origin/main`), which no longer uses a state manifest.

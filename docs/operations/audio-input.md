@@ -160,7 +160,7 @@ CTranslate2 4.8.2 e tre modelli multilingue inclusi nell'immagine:
 | `large-v3` | [Systran/faster-whisper-large-v3, rev. edaa852](https://huggingface.co/Systran/faster-whisper-large-v3/tree/edaa852ec7e145841d8ffdb056a99866b5f0a478) | qualità massima, nettamente più lento su CPU |
 
 Motore e modello si scelgono dalla console di amministrazione, scheda
-**Trascrizione audio** (gruppo Monitoraggio), che elenca i modelli presenti
+**Trascrizione audio** (gruppo Voce e audio), che elenca i modelli presenti
 nell'immagine, quali sono già in memoria e, per ciascuno, una riga su qualità,
 RAM e CPU indicative. Le scelte sono le chiavi di configurazione
 `transcription_engine` (`faster-whisper` predefinito, `whisper.cpp`, `openrouter`, `mistral`) e
