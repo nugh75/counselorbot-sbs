@@ -10,7 +10,7 @@ import pytest
 from sqlalchemy import text
 
 from backend.tests import conftest
-from backend.tests.artifact_database import artifact_session, is_sqlite_test_db
+from backend.tests.artifact_database import artifact_session
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("check_sql_portability", ROOT / "scripts" / "check-sql-portability.py")
@@ -85,11 +85,6 @@ def test_ratchet_pytest_exit_status(tmp_path, source, known, strict, status):
     assert result.returncode == status, result.stdout + result.stderr
 
 
-def test_artifact_session_uses_the_selected_database_with_the_desktop_pragmas():
+def test_artifact_session_uses_postgres():
     with artifact_session() as db:
-        dialect = db.get_bind().dialect.name
-        assert dialect == ("sqlite" if is_sqlite_test_db() else "postgresql")
-        if dialect == "sqlite":
-            assert db.execute(text("PRAGMA journal_mode")).scalar() == "wal"
-            assert db.execute(text("PRAGMA foreign_keys")).scalar() == 1
-            assert db.execute(text("PRAGMA busy_timeout")).scalar() == 5000
+        assert db.get_bind().dialect.name == "postgresql"

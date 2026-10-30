@@ -42,7 +42,7 @@ class _EffortRejected(Exception):
 
 def _stream(db, model, message, instructions, history, timeout, effort):
     # Revalidate consent and refresh credentials in a short session. Never
-    # reopen the request's SQLite write transaction across the Responses stream.
+    # hold the request's transaction open across the Responses stream.
     with independent_read_session(db) as lookup:
         lookup.info.update(db.info)
         require_ready(lookup)

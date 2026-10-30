@@ -1,4 +1,4 @@
-"""F1-05c: add_column_if_missing on the selected database (ADR-0003 §3, TEST_DB=postgres|sqlite)."""
+"""F1-05c: add_column_if_missing on the PostgreSQL test database (ADR-0003 §3)."""
 from sqlalchemy import JSON, inspect, text
 
 from backend.db_compat import add_column_if_missing

@@ -98,7 +98,7 @@ def _aad(table: str, column: str, row_id: str) -> bytes:
 
 
 def ensure_keys() -> None:
-    """Creates the ``content`` and index keys at startup, outside any write transaction (SQLite locks)."""
+    """Creates the ``content`` and index keys at startup, outside any write transaction."""
     _active_key()
     _with_ring(lambda ring: ring.active("index"))
 

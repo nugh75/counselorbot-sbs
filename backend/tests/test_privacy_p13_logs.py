@@ -210,14 +210,11 @@ def test_qsa_validation_failure_logs_only_operational_event(data, caplog):
 @pytest.fixture
 def export_app(tmp_path):
     from fastapi import FastAPI
-    from sqlalchemy.orm import Session
     from backend import auth, models
     from backend.routes import admin
-    from backend.tests.artifact_database import sqlite_engine
+    from backend.tests.artifact_database import artifact_session
 
-    engine = sqlite_engine(tmp_path / "export.sqlite3")
-    models.Base.metadata.create_all(engine)
-    with Session(engine) as db:
+    with artifact_session() as db:
         db.add(models.Log(username="synthetic-student", email=SECRETS[2], action="chat",
                           session_id="private-session", conversation_id="private-conversation",
                           details={"user_input": RAW, "nested": [{"text": "Giulia Bianchi"}],
@@ -230,7 +227,6 @@ def export_app(tmp_path):
         app.dependency_overrides[admin.get_db] = lambda: db
         app.dependency_overrides[auth.get_current_active_admin] = lambda: {"is_admin": True}
         yield app, db
-    engine.dispose()
 
 
 @pytest.mark.parametrize("format", ["json", "csv"])
