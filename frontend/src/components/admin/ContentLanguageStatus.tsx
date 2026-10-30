@@ -70,26 +70,26 @@ export function ContentLanguageStatus({
     if (!contentKey) return null;
 
     return (
-        <div className="mt-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm space-y-2">
+        <div className="mt-2 rounded-control border border-line bg-surface px-4 py-2 text-sm space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-                <span className="text-slate-500">{t('admin.q.versionStatus')} ({locale}):</span>
-                <span className="rounded border border-slate-200 px-2 py-0.5 font-semibold text-slate-800">
+                <span className="text-ink-muted">{t('admin.q.versionStatus')} ({locale}):</span>
+                <span className="rounded border border-line px-2 py-1 font-semibold text-ink">
                     {version?.status ?? '—'}
                 </span>
-                {version?.source && <span className="text-xs text-slate-500">{t('admin.q.versionSource')}: {version.source}</span>}
-                {version?.approved_by && <span className="text-xs text-slate-500">{t('admin.q.versionApprovedBy')}: {version.approved_by}</span>}
+                {version?.source && <span className="text-xs text-ink-muted">{t('admin.q.versionSource')}: {version.source}</span>}
+                {version?.approved_by && <span className="text-xs text-ink-muted">{t('admin.q.versionApprovedBy')}: {version.approved_by}</span>}
             </div>
             {version && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                     {ladder.filter((status) => status !== version.status).map((status) => (
                         <button key={status} type="button" onClick={() => void changeStatus(status)}
-                            className="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-0.5 text-xs text-slate-700 hover:bg-slate-50">
+                            className="min-h-control inline-flex items-center gap-1 rounded border border-line-strong px-2 py-1 text-xs text-ink-body hover:bg-surface-sunken">
                             <ArrowRight className="h-3 w-3" aria-hidden />{status}
                         </button>
                     ))}
                 </div>
             )}
-            {error && <p className="text-xs text-red-600">{error}</p>}
+            {error && <p className="text-xs text-danger">{error}</p>}
         </div>
     );
 }

@@ -64,52 +64,52 @@ export function RolePreviewPanel() {
 
     return (
         <div className="space-y-6">
-            <div className="glass-panel p-5 space-y-2">
-                <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <Eye className="h-5 w-5 text-indigo-600" />
+            <div className="rounded-card border border-line bg-surface shadow-card p-4 space-y-2">
+                <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-brand" />
                     {t('admin.rolePreview.title')}
                 </h2>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-ink-muted">
                     {t('admin.rolePreview.description')}
                 </p>
             </div>
 
             {active && (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-card border border-warning-line bg-warning-soft p-4">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-warning-ink">
                         <UserCog className="h-5 w-5" />
                         {t('admin.rolePreview.active', { name: active.name, role: t(ROLE_KEY[active.role]), username: active.username })}
                     </div>
                     <button
                         type="button"
                         onClick={stopPreview}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800"
+                        className="min-h-control inline-flex items-center gap-2 rounded-control bg-warning px-4 py-2 text-sm font-semibold text-ink-on-brand hover:bg-warning"
                     >
                         {t('admin.rolePreview.back')}
                     </button>
                 </div>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {VIEW_AS_ACCOUNTS.map((account) => {
                     const isActive = active?.username === account.username;
                     return (
-                        <div key={account.username} className="glass-panel flex flex-col gap-2 p-4">
+                        <div key={account.username} className="rounded-card border border-line bg-surface shadow-card flex flex-col gap-2 p-4">
                             <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-slate-800">{account.name}</h3>
-                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-2xs font-bold text-slate-600">
+                                <h3 className="font-semibold text-ink">{account.name}</h3>
+                                <span className="rounded-full bg-surface-raised px-2 py-1 text-2xs font-semibold text-ink-muted">
                                     {t(ROLE_KEY[account.role])}
                                 </span>
                             </div>
-                            <p className="text-[11px] font-semibold text-slate-500">{account.username}</p>
-                            <p className="grow text-xs text-slate-500">{t(ROLE_DESC_KEY[account.role])}</p>
+                            <p className="text-2xs font-semibold text-ink-muted">{account.username}</p>
+                            <p className="grow text-xs text-ink-muted">{t(ROLE_DESC_KEY[account.role])}</p>
                             <button
                                 type="button"
                                 onClick={() => startPreview(account)}
-                                className={`inline-flex items-center justify-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold ${
+                                className={`min-h-control inline-flex items-center justify-center gap-2 rounded-control px-4 py-2 text-sm font-semibold ${
                                     isActive
-                                        ? 'border border-indigo-200 bg-indigo-50 text-indigo-700'
-                                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                        ? 'border border-brand-line bg-brand-soft text-link'
+                                        : 'bg-brand text-ink-on-brand hover:bg-brand-hover'
                                 }`}
                             >
                                 <Eye className="h-4 w-4" />
@@ -121,29 +121,29 @@ export function RolePreviewPanel() {
             </div>
 
             {/* Matrice delle capacita' per ruolo: cosa vede/puo' fare ciascun ruolo. */}
-            <div className="glass-panel overflow-x-auto p-5">
-                <h3 className="mb-3 text-sm font-bold text-slate-800">{t('admin.rolePreview.matrixTitle')}</h3>
+            <div className="rounded-card border border-line bg-surface shadow-card overflow-x-auto p-4">
+                <h3 className="mb-4 text-sm font-semibold text-ink">{t('admin.rolePreview.matrixTitle')}</h3>
                 <table className="w-full min-w-[34rem] text-sm">
                     <thead>
-                        <tr className="border-b border-slate-200 text-left text-slate-500">
+                        <tr className="border-b border-line text-left text-ink-muted">
                             <th className="py-2 pr-4 font-semibold">{t('admin.rolePreview.function')}</th>
                             {ROLES.map((role) => (
-                                <th key={role} className="px-3 py-2 text-center font-semibold">{t(ROLE_KEY[role])}</th>
+                                <th key={role} className="px-4 py-2 text-center font-semibold">{t(ROLE_KEY[role])}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {CAPABILITIES.map((cap) => (
-                            <tr key={cap.labelKey} className="border-b border-slate-100">
-                                <td className="py-2 pr-4 font-medium text-slate-700">{t(cap.labelKey)}</td>
+                            <tr key={cap.labelKey} className="border-b border-line">
+                                <td className="py-2 pr-4 font-semibold text-ink-body">{t(cap.labelKey)}</td>
                                 {ROLES.map((role) => {
                                     const ok = cap.fn(syntheticIdentity(role));
                                     return (
-                                        <td key={role} className="px-3 py-2 text-center">
+                                        <td key={role} className="px-4 py-2 text-center">
                                             {ok ? (
-                                                <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                                <Check className="mx-auto h-4 w-4 text-success" />
                                             ) : (
-                                                <Minus className="mx-auto h-4 w-4 text-slate-500" />
+                                                <Minus className="mx-auto h-4 w-4 text-ink-muted" />
                                             )}
                                         </td>
                                     );

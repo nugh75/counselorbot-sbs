@@ -19,12 +19,12 @@ export function ModelSearchSelect({ id, models, value, onChange, disabled = fals
     const [query, setQuery] = useState('');
     const { matches, total, selectedHidden } = modelSearchOptions(models, value, query, labels);
     const noMatches = !!query.trim() && matches.length === 0;
-    const inputClass = 'min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-60';
+    const inputClass = 'min-h-10 w-full rounded-control border border-line-strong bg-surface px-4 text-sm text-ink outline-none focus:ring-2 focus:ring-focus disabled:cursor-not-allowed disabled:opacity-60';
 
     return (
         <div className="min-w-0 space-y-2">
             <div className="relative">
-                <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-ink-muted" />
                 <input
                     id={`${id}_search`}
                     type="search"
@@ -35,10 +35,10 @@ export function ModelSearchSelect({ id, models, value, onChange, disabled = fals
                     onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); setQuery(''); } }}
                     disabled={disabled}
                     placeholder={t('admin.config.searchModelPlaceholder')}
-                    className={`${inputClass} pl-9 pr-10`}
+                    className={`${inputClass} pl-8 pr-10`}
                 />
                 {query && (
-                    <button type="button" aria-label={t('admin.config.clearSearch')} onClick={() => setQuery('')} className="absolute right-0 top-0 inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-500 hover:text-slate-900">
+                    <button type="button" aria-label={t('admin.config.clearSearch')} onClick={() => setQuery('')} className="absolute right-0 top-0 inline-flex min-h-control min-w-control items-center justify-center rounded-control text-ink-muted hover:text-ink">
                         <X aria-hidden="true" className="h-4 w-4" />
                     </button>
                 )}
@@ -49,7 +49,7 @@ export function ModelSearchSelect({ id, models, value, onChange, disabled = fals
                 {!value && <option value="">{emptyLabel || '—'}</option>}
                 {matches.map(model => <option key={model} value={model}>{labels[model] || model}</option>)}
             </select>
-            <p id={`${id}_status`} role="status" className="text-xs font-normal text-slate-500">
+            <p id={`${id}_status`} role="status" className="text-xs font-normal text-ink-muted">
                 {loading ? '…' : noMatches ? t('admin.config.noModelsFound', { query: query.trim() }) : t('admin.config.modelsFiltered', { n: matches.length, total })}
             </p>
         </div>

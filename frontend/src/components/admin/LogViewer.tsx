@@ -25,6 +25,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useI18n } from '@/lib/i18n-context';
 import { Button } from '@/components/ui/Button';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { ChatBubble } from '@/components/ui/ChatBubble';
 import { stripControlMarkers } from '@/lib/control-markers';
 
@@ -143,34 +144,34 @@ function MultiSelectFilter({
 
     return (
         <div ref={ref} className="relative min-w-0">
-            <button
+            <Button variant="secondary"
                 type="button"
                 onClick={() => setOpen((value) => !value)}
-                className="flex h-10 w-full items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400"
+                className="w-full justify-between outline-none focus:border-brand"
             >
-                <span className={`truncate ${selected.length === 0 ? 'text-slate-500' : ''}`}>{summary}</span>
-                <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`} />
-            </button>
+                <span className={`truncate ${selected.length === 0 ? 'text-ink-muted' : ''}`}>{summary}</span>
+                <ChevronDown className={`h-4 w-4 shrink-0 text-ink-muted transition-transform ${open ? 'rotate-180' : ''}`} />
+            </Button>
             {open && (
-                <div className="absolute z-20 mt-1 w-full min-w-[200px] rounded-md border border-slate-200 bg-white p-2 shadow-lg">
+                <div className="absolute z-20 mt-1 w-full min-w-[200px] rounded-control border border-line bg-surface p-2 shadow-pop">
                     <input
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder={searchPlaceholder}
-                        className="mb-2 h-8 w-full rounded border border-slate-200 px-2 text-sm outline-none focus:border-sky-400"
+                        className="mb-2 h-control w-full rounded border border-line px-2 text-sm outline-none focus:border-brand"
                         autoFocus
                     />
                     <div className="max-h-56 overflow-auto">
                         {filtered.length === 0 && (
-                            <div className="px-2 py-3 text-center text-xs text-slate-500">{emptyLabel}</div>
+                            <div className="px-2 py-4 text-center text-xs text-ink-muted">{emptyLabel}</div>
                         )}
                         {filtered.map((value) => (
-                            <label key={value} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
+                            <label key={value} className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm text-ink-body hover:bg-surface-sunken">
                                 <input
                                     type="checkbox"
                                     checked={selected.includes(value)}
                                     onChange={() => toggle(value)}
-                                    className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                                    className="h-4 w-4 rounded border-line-strong text-info focus:ring-focus"
                                 />
                                 <span className="truncate" title={value}>{value}</span>
                             </label>
@@ -180,7 +181,7 @@ function MultiSelectFilter({
                         <button
                             type="button"
                             onClick={() => onChange([])}
-                            className="mt-2 w-full rounded border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                            className="min-h-control mt-2 w-full rounded border border-line px-2 py-1 text-xs font-semibold text-ink-muted hover:bg-surface-sunken"
                         >
                             {clearLabel}
                         </button>
@@ -234,13 +235,13 @@ function formatDate(value?: string | null): string {
 
 function LogMarkdown({ text }: { text: string }) {
     return (
-        <div className="prose prose-sm min-w-0 max-w-none break-words text-slate-700 prose-p:my-2 prose-pre:my-2 prose-pre:whitespace-pre-wrap prose-headings:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-table:my-2">
+        <div className="prose prose-sm min-w-0 max-w-none break-words text-ink-body prose-p:my-2 prose-pre:my-2 prose-pre:whitespace-pre-wrap prose-headings:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-table:my-2">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                    table: ({ children }) => <div className="my-3 overflow-x-auto"><table className="w-full border-collapse text-left text-sm">{children}</table></div>,
-                    th: ({ children, style }) => <th style={style} className="border-b border-slate-200 bg-slate-50 p-2 align-top font-semibold text-slate-700">{children}</th>,
-                    td: ({ children, style }) => <td style={style} className="border-b border-slate-200 p-2 align-top">{children}</td>,
+                    table: ({ children }) => <div className="my-4 overflow-x-auto"><table className="w-full border-collapse text-left text-sm">{children}</table></div>,
+                    th: ({ children, style }) => <th style={style} className="border-b border-line bg-surface-sunken p-2 align-top font-semibold text-ink-body">{children}</th>,
+                    td: ({ children, style }) => <td style={style} className="border-b border-line p-2 align-top">{children}</td>,
                 }}
             >
                 {text}
@@ -288,6 +289,7 @@ export function LogViewer() {
     const [hygieneLoading, setHygieneLoading] = useState(false);
     const [hygieneMessage, setHygieneMessage] = useState('');
     const [selectedSession, setSelectedSession] = useState<string | null>(null);
+    const [confirming, setConfirming] = useState<'session' | 'retention' | null>(null);
     const [selectedSessionKind, setSelectedSessionKind] = useState<'session' | 'conversation'>('session');
     const overlayRef = useRef<HTMLDivElement>(null);
     const dialogRef = useRef<HTMLDivElement>(null);
@@ -516,6 +518,7 @@ export function LogViewer() {
 
     const openSession = async (sessionId: string) => {
         setSelectedSession(sessionId);
+        setConfirming(null);
         setSelectedSessionKind('session');
         setSessionLogs([]);
         setSessionLoading(true);
@@ -533,6 +536,7 @@ export function LogViewer() {
 
     const openConversation = async (conversationId: string) => {
         setSelectedSession(conversationId);
+        setConfirming(null);
         setSelectedSessionKind('conversation');
         setSessionLogs([]);
         setSessionLoading(true);
@@ -550,7 +554,7 @@ export function LogViewer() {
 
     const deleteSelectedSession = async () => {
         if (!selectedSession) return;
-        if (!window.confirm(t('admin.logs.deleteConfirm'))) return;
+        setConfirming(null);
         const res = await fetch(`/api/admin/logs/session/${encodeURIComponent(selectedSession)}?confirm=true`, { method: 'DELETE' });
         if (handleAuthError(res)) return;
         setSelectedSession(null);
@@ -565,7 +569,7 @@ export function LogViewer() {
     };
 
     const runRetention = async () => {
-        if (!window.confirm(t('admin.logs.retentionConfirm'))) return;
+        setConfirming(null);
         setHygieneLoading(true);
         try {
             const res = await fetch('/api/admin/logs/retention-run?confirm=true', { method: 'POST' });
@@ -604,9 +608,9 @@ export function LogViewer() {
     };
 
     const renderFeedback = (value: boolean | null | undefined) => {
-        if (value === true) return <ThumbsUp className="h-4 w-4 text-emerald-600" aria-label={t('admin.logs.feedbackPositive')} />;
-        if (value === false) return <ThumbsDown className="h-4 w-4 text-red-600" aria-label={t('admin.logs.feedbackNegative')} />;
-        return <span className="text-xs text-slate-500">-</span>;
+        if (value === true) return <ThumbsUp className="h-4 w-4 text-success" aria-label={t('admin.logs.feedbackPositive')} />;
+        if (value === false) return <ThumbsDown className="h-4 w-4 text-danger" aria-label={t('admin.logs.feedbackNegative')} />;
+        return <span className="text-xs text-ink-muted">-</span>;
     };
 
     const filterSummary = useMemo(() => {
@@ -647,8 +651,8 @@ export function LogViewer() {
     };
 
     const detailBlock = (label: string, text: string, key?: string) => (
-        <div key={key} className="rounded-md border border-slate-200 bg-slate-50 p-3">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+        <div key={key} className="rounded-control border border-line bg-surface-sunken p-4">
+            <div className="mb-1 text-xs font-semibold text-ink-muted">{label}</div>
             <LogMarkdown text={text} />
         </div>
     );
@@ -675,9 +679,9 @@ export function LogViewer() {
                 .map((item, i) => renderDetailValue(`#${i + 1}`, item, `${keyId}.${i}`))
                 .filter(Boolean);
             return items.length ? (
-                <div key={keyId} className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-                    <div className="space-y-2 border-l-2 border-slate-200 pl-3">{items}</div>
+                <div key={keyId} className="rounded-control border border-line bg-surface-sunken p-4">
+                    <div className="mb-2 text-xs font-semibold text-ink-muted">{label}</div>
+                    <div className="space-y-2 border-l-2 border-line pl-4">{items}</div>
                 </div>
             ) : null;
         }
@@ -685,9 +689,9 @@ export function LogViewer() {
             .map(([k, v]) => renderDetailValue(k, v, `${keyId}.${k}`))
             .filter(Boolean);
         return entries.length ? (
-            <div key={keyId} className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-                <div className="space-y-2 border-l-2 border-slate-200 pl-3">{entries}</div>
+            <div key={keyId} className="rounded-control border border-line bg-surface-sunken p-4">
+                <div className="mb-2 text-xs font-semibold text-ink-muted">{label}</div>
+                <div className="space-y-2 border-l-2 border-line pl-4">{entries}</div>
             </div>
         ) : null;
     };
@@ -734,13 +738,13 @@ export function LogViewer() {
             .filter(Boolean);
 
         return (
-            <details className="min-w-0 rounded-md border border-slate-200 bg-white p-3">
-                <summary className="cursor-pointer text-sm font-medium text-slate-600">{t('admin.logs.d.meta')}</summary>
-                <div className="mt-3 space-y-3">
+            <details className="min-w-0 rounded-control border border-line bg-surface p-4">
+                <summary className="cursor-pointer text-sm font-semibold text-ink-muted">{t('admin.logs.d.meta')}</summary>
+                <div className="mt-4 space-y-4">
                     <div className="flex flex-wrap gap-2">
                         {chips.map((c) => (
-                            <span key={c.k} className="min-w-0 break-words rounded-md bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
-                                <span className="font-semibold text-slate-500">{c.k}:</span> {c.v}
+                            <span key={c.k} className="min-w-0 break-words rounded-control bg-surface-raised px-2 py-1 text-xs text-ink-muted">
+                                <span className="font-semibold text-ink-muted">{c.k}:</span> {c.v}
                             </span>
                         ))}
                     </div>
@@ -749,8 +753,8 @@ export function LogViewer() {
                     {sources.length > 0 && detailBlock(t('admin.logs.d.sources'), sources.join('\n'))}
                     {otherNodes}
                     <details>
-                        <summary className="cursor-pointer text-sm font-medium text-slate-600">{t('admin.logs.viewJson')}</summary>
-                        <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(details, null, 2)}</pre>
+                        <summary className="cursor-pointer text-sm font-semibold text-ink-muted">{t('admin.logs.viewJson')}</summary>
+                        <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-control border border-line bg-surface-sunken p-4 text-xs text-ink">{JSON.stringify(details, null, 2)}</pre>
                     </details>
                 </div>
             </details>
@@ -763,11 +767,11 @@ export function LogViewer() {
         const botResponse = firstText(details, ['bot_response', 'answer']);
         const error = textValue(details.error);
         return (
-            <div className="min-w-0 space-y-3">
+            <div className="min-w-0 space-y-4">
                 {userInput && detailBlock(t('admin.logs.d.userInput'), userInput)}
                 {botResponse && detailBlock(t('admin.logs.d.botResponse'), botResponse)}
                 {error && detailBlock(t('admin.logs.d.error'), error)}
-                {!userInput && !botResponse && !error && <p className="text-sm text-slate-500">{t('admin.logs.d.empty')}</p>}
+                {!userInput && !botResponse && !error && <p className="text-sm text-ink-muted">{t('admin.logs.d.empty')}</p>}
                 {renderTechnicalDetail(log)}
                 <Button type="button" variant="secondary" onClick={() => void openSession(log.session_id)}>
                     {t('admin.logs.openSession')}
@@ -780,22 +784,22 @@ export function LogViewer() {
         const rows = Object.entries(data || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
         const max = Math.max(1, ...rows.map(([, count]) => count));
         return (
-            <div className="rounded-lg border border-slate-200 bg-white p-4">
-                <h4 className="text-sm font-semibold text-slate-800">{title}</h4>
-                <div className="mt-3 space-y-2">
+            <div className="rounded-lg border border-line bg-surface p-4">
+                <h4 className="text-sm font-semibold text-ink">{title}</h4>
+                <div className="mt-4 space-y-2">
                     {rows.map(([key, count]) => (
-                        <div key={key} className="grid grid-cols-[minmax(120px,1fr)_3fr_48px] items-center gap-3 text-xs">
-                            <span className="truncate text-slate-600">{key}</span>
-                            <span className="h-2 rounded-full bg-slate-100">
+                        <div key={key} className="grid grid-cols-[minmax(120px,1fr)_3fr_48px] items-center gap-4 text-xs">
+                            <span className="truncate text-ink-muted">{key}</span>
+                            <span className="h-2 rounded-full bg-surface-raised">
                                 <span
-                                    className="block h-2 rounded-full bg-sky-500"
+                                    className="block h-2 rounded-full bg-info"
                                     style={{ width: `${Math.max(6, (count / max) * 100)}%` }}
                                 />
                             </span>
-                            <span className="text-right font-mono text-slate-500">{count}</span>
+                            <span className="text-right font-mono text-ink-muted">{count}</span>
                         </div>
                     ))}
-                    {rows.length === 0 && <p className="text-sm text-slate-500">{t('admin.logs.empty')}</p>}
+                    {rows.length === 0 && <p className="text-sm text-ink-muted">{t('admin.logs.empty')}</p>}
                 </div>
             </div>
         );
@@ -803,16 +807,16 @@ export function LogViewer() {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h3 className="text-lg font-semibold text-slate-900">{t('admin.logs.title')}</h3>
-                    <p className="text-sm text-slate-500">{filterSummary}</p>
+                    <h3 className="text-lg font-semibold text-ink">{t('admin.logs.title')}</h3>
+                    <p className="text-sm text-ink-muted">{filterSummary}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <button
                         type="button"
                         onClick={() => setView('logs')}
-                        className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium ${view === 'logs' ? 'border-sky-200 bg-sky-50 text-sky-700' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+                        className={`min-h-control inline-flex items-center gap-2 rounded-control border px-4 py-2 text-sm font-semibold ${view === 'logs' ? 'border-info-line bg-info-soft text-info' : 'border-line bg-surface text-ink-muted hover:bg-surface-sunken'}`}
                     >
                         <MessageSquare className="h-4 w-4" />
                         {t('admin.logs.tabLogs')}
@@ -820,7 +824,7 @@ export function LogViewer() {
                     <button
                         type="button"
                         onClick={() => setView('stats')}
-                        className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium ${view === 'stats' ? 'border-sky-200 bg-sky-50 text-sky-700' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+                        className={`min-h-control inline-flex items-center gap-2 rounded-control border px-4 py-2 text-sm font-semibold ${view === 'stats' ? 'border-info-line bg-info-soft text-info' : 'border-line bg-surface text-ink-muted hover:bg-surface-sunken'}`}
                     >
                         <BarChart3 className="h-4 w-4" />
                         {t('admin.logs.tabStats')}
@@ -828,31 +832,30 @@ export function LogViewer() {
                     <button
                         type="button"
                         onClick={() => setView('hygiene')}
-                        className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium ${view === 'hygiene' ? 'border-sky-200 bg-sky-50 text-sky-700' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+                        className={`min-h-control inline-flex items-center gap-2 rounded-control border px-4 py-2 text-sm font-semibold ${view === 'hygiene' ? 'border-info-line bg-info-soft text-info' : 'border-line bg-surface text-ink-muted hover:bg-surface-sunken'}`}
                     >
                         <ShieldCheck className="h-4 w-4" />
                         {t('admin.logs.tabHygiene')}
                     </button>
-                    <button
+                    <Button variant="secondary"
                         type="button"
                         onClick={() => view === 'logs' ? void fetchLogs() : view === 'stats' ? void fetchStats() : void fetchHygiene()}
-                        className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
                     >
                         <RefreshCw className={`h-4 w-4 ${loading || statsLoading || hygieneLoading ? 'animate-spin' : ''}`} />
                         {t('admin.logs.refresh')}
-                    </button>
+                    </Button>
                 </div>
             </div>
 
-            <div className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                     <label className="relative block">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
                         <input
                             value={filters.q}
                             onChange={(event) => setFilter('q', event.target.value)}
                             placeholder={t('admin.logs.search')}
-                            className="h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                            className="h-control w-full rounded-control border border-line bg-surface pl-8 pr-4 text-sm text-ink-body outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft"
                         />
                     </label>
                     <MultiSelectFilter
@@ -906,28 +909,27 @@ export function LogViewer() {
                         emptyLabel={t('admin.logs.multiSelectEmpty')}
                     />
                     <div className="grid grid-cols-2 gap-2">
-                        <input type="date" value={filters.from_date} onChange={(event) => setFilter('from_date', event.target.value)} className="h-10 min-w-0 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400" />
-                        <input type="date" value={filters.to_date} onChange={(event) => setFilter('to_date', event.target.value)} className="h-10 min-w-0 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400" />
+                        <input type="date" value={filters.from_date} onChange={(event) => setFilter('from_date', event.target.value)} className="h-control min-w-0 rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
+                        <input type="date" value={filters.to_date} onChange={(event) => setFilter('to_date', event.target.value)} className="h-control min-w-0 rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
                     </div>
-                    <button
+                    <Button variant="secondary"
                         type="button"
                         onClick={resetFilters}
-                        className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 hover:bg-slate-50"
                     >
                         <Filter className="h-4 w-4" />
                         {t('admin.logs.reset')}
-                    </button>
+                    </Button>
                 </div>
                 <button
                     type="button"
                     onClick={() => setShowAdvanced((v) => !v)}
-                    className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+                    className="min-h-control mt-4 inline-flex items-center gap-2 text-sm font-semibold text-ink-muted hover:text-ink"
                 >
                     <SlidersHorizontal className="h-4 w-4" />
                     {t('admin.logs.moreFilters')}
                 </button>
                 {showAdvanced && (
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <MultiSelectFilter
                             label={t('admin.logs.allConversations')}
                             options={options.conversation_ids}
@@ -968,7 +970,7 @@ export function LogViewer() {
                             clearLabel={t('admin.logs.multiSelectClear')}
                             emptyLabel={t('admin.logs.multiSelectEmpty')}
                         />
-                        <select value={filters.feedback} onChange={(event) => setFilter('feedback', event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400">
+                        <select value={filters.feedback} onChange={(event) => setFilter('feedback', event.target.value)} className="h-control rounded-control border border-line bg-surface px-4 text-sm text-ink-body outline-none focus:border-brand">
                             <option value="">{t('admin.logs.feedbackAll')}</option>
                             <option value="helpful">{t('admin.logs.feedbackHelpful')}</option>
                             <option value="not_helpful">{t('admin.logs.feedbackNotHelpful')}</option>
@@ -981,7 +983,7 @@ export function LogViewer() {
                             value={filters.cost_min}
                             onChange={(event) => setFilter('cost_min', event.target.value)}
                             placeholder={t('admin.logs.costMin')}
-                            className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400"
+                            className="h-control rounded-control border border-line bg-surface px-4 text-sm text-ink-body outline-none focus:border-brand"
                         />
                         <input
                             type="number"
@@ -990,9 +992,9 @@ export function LogViewer() {
                             value={filters.cost_max}
                             onChange={(event) => setFilter('cost_max', event.target.value)}
                             placeholder={t('admin.logs.costMax')}
-                            className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400"
+                            className="h-control rounded-control border border-line bg-surface px-4 text-sm text-ink-body outline-none focus:border-brand"
                         />
-                        <label className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-600">
+                        <label className="inline-flex h-10 items-center gap-2 rounded-control border border-line bg-surface px-4 text-sm text-ink-muted">
                             <input
                                 type="checkbox"
                                 checked={filters.paid_only === 'true'}
@@ -1001,7 +1003,7 @@ export function LogViewer() {
                             />
                             {t('admin.logs.paidOnly')}
                         </label>
-                        <label className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-600">
+                        <label className="inline-flex h-10 items-center gap-2 rounded-control border border-line bg-surface px-4 text-sm text-ink-muted">
                             <input
                                 type="checkbox"
                                 checked={filters.has_pii === 'true'}
@@ -1012,57 +1014,57 @@ export function LogViewer() {
                         </label>
                     </div>
                 )}
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
-                    <label className="inline-flex items-center gap-2 text-sm text-slate-600">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4">
+                    <label className="inline-flex items-center gap-2 text-sm text-ink-muted">
                         <input
                             type="checkbox"
                             checked={autoRefresh}
                             onChange={(event) => setAutoRefresh(event.target.checked)}
-                            className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                            className="h-4 w-4 rounded border-line-strong text-info focus:ring-focus"
                         />
                         {t('admin.logs.autoRefresh')}
                     </label>
                     <div className="flex flex-wrap items-center gap-2">
-                        <button type="button" onClick={() => exportLogs('csv')} className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                        <Button variant="secondary" type="button" onClick={() => exportLogs('csv')}>
                             <Download className="h-4 w-4" />
                             CSV
-                        </button>
-                        <button type="button" onClick={() => exportLogs('json')} className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                        </Button>
+                        <Button variant="secondary" type="button" onClick={() => exportLogs('json')}>
                             <FileJson className="h-4 w-4" />
                             JSON
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
 
             {view === 'logs' && (
-                <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 text-sm text-slate-500">
+                <div className="rounded-lg border border-line bg-surface shadow-card">
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line px-4 py-4 text-sm text-ink-muted">
                         <span>{t('admin.logs.totalCount').replace('{n}', String(total))}</span>
                         <div className="flex min-w-0 flex-wrap items-center gap-2">
-                            <span className="text-xs text-slate-500">{t('admin.logs.sortOrder')}:</span>
+                            <span className="text-xs text-ink-muted">{t('admin.logs.sortOrder')}:</span>
                             <select
                                 value={sort}
                                 onChange={(event) => { setSort(event.target.value as 'desc' | 'asc'); setPage(0); }}
-                                className="h-9 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400"
+                                className="h-control rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand"
                             >
                                 <option value="desc">{t('admin.logs.sortDesc')}</option>
                                 <option value="asc">{t('admin.logs.sortAsc')}</option>
                             </select>
-                            <span className="mx-1 h-4 w-px bg-slate-200"></span>
-                            <select value={limit} onChange={(event) => { setLimit(Number(event.target.value)); setPage(0); }} className="h-9 rounded-md border border-slate-200 bg-white px-2 text-sm">
+                            <span className="mx-1 h-4 w-px bg-line"></span>
+                            <select value={limit} onChange={(event) => { setLimit(Number(event.target.value)); setPage(0); }} className="h-control rounded-control border border-line bg-surface px-2 text-sm">
                                 {[25, 50, 100, 200].map((value) => <option key={value} value={value}>{value}</option>)}
                             </select>
-                            <button type="button" disabled={page === 0} onClick={() => setPage((value) => Math.max(0, value - 1))} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 disabled:opacity-40">
+                            <button type="button" disabled={page === 0} onClick={() => setPage((value) => Math.max(0, value - 1))} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control border border-line text-ink-muted disabled:opacity-40">
                                 <ChevronLeft className="h-4 w-4" />
                             </button>
-                            <span className="min-w-20 text-center text-xs text-slate-500">{page + 1} / {pageCount}</span>
-                            <button type="button" disabled={page + 1 >= pageCount} onClick={() => setPage((value) => value + 1)} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 disabled:opacity-40">
+                            <span className="min-w-20 text-center text-xs text-ink-muted">{page + 1} / {pageCount}</span>
+                            <button type="button" disabled={page + 1 >= pageCount} onClick={() => setPage((value) => value + 1)} className="inline-flex h-9 w-9 items-center justify-center rounded-control border border-line text-ink-muted disabled:opacity-40">
                                 <ChevronRight className="h-4 w-4" />
                             </button>
                         </div>
                     </div>
-                    <ul className="divide-y divide-slate-200" aria-label={t('admin.logs.title')}>
+                    <ul className="divide-y divide-line" aria-label={t('admin.logs.title')}>
                         {logs.map((log) => {
                             const details = asObject(log.details);
                             const conversationId = logConversationId(log);
@@ -1071,17 +1073,17 @@ export function LogViewer() {
                             return (
                                 <li key={log.id} className="min-w-0 p-4">
                                     <article className="min-w-0 space-y-4">
-                                        <div className="grid min-w-0 gap-3 lg:grid-cols-[8.5rem_12rem_minmax(0,1fr)_auto] lg:items-start lg:gap-4">
-                                            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 lg:block">
+                                        <div className="grid min-w-0 gap-4 lg:grid-cols-[8.5rem_12rem_minmax(0,1fr)_auto] lg:items-start lg:gap-4">
+                                            <div className="flex flex-wrap items-center gap-2 text-sm text-ink-muted lg:block">
                                                 <time dateTime={log.timestamp}>{formatDate(log.timestamp)}</time>
                                                 <span className="inline-flex items-center gap-1 lg:mt-2 lg:flex">{renderFeedback(log.helpful)}</span>
-                                                {log.action === 'chat_error' && <span className="text-red-700">{t('admin.logs.d.error')}</span>}
+                                                {log.action === 'chat_error' && <span className="text-danger">{t('admin.logs.d.error')}</span>}
                                             </div>
                                             <div className="min-w-0 space-y-1 break-words text-sm">
-                                                <p className="font-semibold text-slate-800">{log.username || anon}</p>
-                                                <p className="text-slate-600">{log.questionnaire_type || '-'}{log.phase || log.mode ? ` · ${log.phase || log.mode}` : ''}</p>
+                                                <p className="font-semibold text-ink">{log.username || anon}</p>
+                                                <p className="text-ink-muted">{log.questionnaire_type || '-'}{log.phase || log.mode ? ` · ${log.phase || log.mode}` : ''}</p>
                                             </div>
-                                            <p className="line-clamp-3 min-w-0 break-words text-sm leading-relaxed text-slate-700">{renderLogPreview(log)}</p>
+                                            <p className="line-clamp-3 min-w-0 break-words text-sm leading-relaxed text-ink-body">{renderLogPreview(log)}</p>
                                             <div className="flex flex-wrap gap-2 lg:flex-col">
                                                 <Button type="button" onClick={() => void openConversation(conversationId)}>
                                                     <MessageSquare className="h-4 w-4 shrink-0" />
@@ -1100,13 +1102,13 @@ export function LogViewer() {
                                             </div>
                                         </div>
                                         {expanded && (
-                                            <div id={`log-detail-${log.id}`} className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-4">
-                                                <div className="mb-3 inline-flex rounded-md border border-slate-200 p-0.5">
+                                            <div id={`log-detail-${log.id}`} className="min-w-0 rounded-lg border border-line bg-surface-sunken p-4 sm:p-4">
+                                                <div className="mb-4 inline-flex rounded-control border border-line p-1">
                                                     <Button type="button" variant={detailView === 'human' ? 'primary' : 'ghost'} onClick={() => setDetailView('human')}>{t('admin.logs.viewHuman')}</Button>
                                                     <Button type="button" variant={detailView === 'json' ? 'primary' : 'ghost'} onClick={() => setDetailView('json')}>{t('admin.logs.viewJson')}</Button>
                                                 </div>
                                                 {detailView === 'human' ? renderHumanDetail(log) : (
-                                                    <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap break-words rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(details, null, 2)}</pre>
+                                                    <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap break-words rounded-control border border-line bg-surface-sunken p-4 text-xs text-ink">{JSON.stringify(details, null, 2)}</pre>
                                                 )}
                                             </div>
                                         )}
@@ -1114,33 +1116,33 @@ export function LogViewer() {
                                 </li>
                             );
                         })}
-                        {logs.length === 0 && !loading && <li className="px-4 py-10 text-center text-slate-500">{t('admin.logs.empty')}</li>}
-                        {loading && <li role="status" className="flex items-center justify-center gap-2 px-4 py-10 text-slate-500"><RefreshCw className="h-5 w-5 animate-spin" />{t('common.loading')}</li>}
+                        {logs.length === 0 && !loading && <li className="px-4 py-10 text-center text-ink-muted">{t('admin.logs.empty')}</li>}
+                        {loading && <li role="status" className="flex items-center justify-center gap-2 px-4 py-10 text-ink-muted"><RefreshCw className="h-5 w-5 animate-spin" />{t('common.loading')}</li>}
                     </ul>
                 </div>
             )}
 
             {view === 'stats' && (
                 <div className="space-y-4">
-                    {statsLoading && <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500"><RefreshCw className="mx-auto h-5 w-5 animate-spin" /></div>}
+                    {statsLoading && <div className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted"><RefreshCw className="mx-auto h-5 w-5 animate-spin" /></div>}
                     {stats && !statsLoading && (
                         <>
-                            <div className="grid gap-3 md:grid-cols-4">
-                                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                                    <div className="text-xs uppercase text-slate-500">{t('admin.logs.statsTurns')}</div>
-                                    <div className="mt-2 text-2xl font-semibold text-slate-900">{stats.total}</div>
+                            <div className="grid gap-4 md:grid-cols-4">
+                                <div className="rounded-lg border border-line bg-surface p-4">
+                                    <div className="text-xs text-ink-muted">{t('admin.logs.statsTurns')}</div>
+                                    <div className="mt-2 text-2xl font-semibold text-ink">{stats.total}</div>
                                 </div>
-                                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                                    <div className="text-xs uppercase text-slate-500">{t('admin.logs.statsSessions')}</div>
-                                    <div className="mt-2 text-2xl font-semibold text-slate-900">{stats.distinct_sessions}</div>
+                                <div className="rounded-lg border border-line bg-surface p-4">
+                                    <div className="text-xs text-ink-muted">{t('admin.logs.statsSessions')}</div>
+                                    <div className="mt-2 text-2xl font-semibold text-ink">{stats.distinct_sessions}</div>
                                 </div>
-                                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                                    <div className="text-xs uppercase text-slate-500">{t('admin.logs.statsRated')}</div>
-                                    <div className="mt-2 text-2xl font-semibold text-slate-900">{stats.feedback.rated}</div>
+                                <div className="rounded-lg border border-line bg-surface p-4">
+                                    <div className="text-xs text-ink-muted">{t('admin.logs.statsRated')}</div>
+                                    <div className="mt-2 text-2xl font-semibold text-ink">{stats.feedback.rated}</div>
                                 </div>
-                                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                                    <div className="text-xs uppercase text-slate-500">{t('admin.logs.statsPositive')}</div>
-                                    <div className="mt-2 text-2xl font-semibold text-slate-900">{stats.positive_feedback_pct}%</div>
+                                <div className="rounded-lg border border-line bg-surface p-4">
+                                    <div className="text-xs text-ink-muted">{t('admin.logs.statsPositive')}</div>
+                                    <div className="mt-2 text-2xl font-semibold text-ink">{stats.positive_feedback_pct}%</div>
                                 </div>
                             </div>
                             <div className="grid gap-4 lg:grid-cols-3">
@@ -1148,13 +1150,13 @@ export function LogViewer() {
                                 {renderBreakdown(t('admin.logs.byProvider'), stats.by_provider)}
                                 {renderBreakdown(t('admin.logs.byQuestionnaire'), stats.by_questionnaire_type)}
                             </div>
-                            <div className="rounded-lg border border-slate-200 bg-white p-4">
-                                <h4 className="text-sm font-semibold text-slate-800">{t('admin.logs.turnsByDay')}</h4>
-                                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                            <div className="rounded-lg border border-line bg-surface p-4">
+                                <h4 className="text-sm font-semibold text-ink">{t('admin.logs.turnsByDay')}</h4>
+                                <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                                     {stats.turns_by_day.slice(-12).map((item) => (
-                                        <div key={item.date} className="rounded-md border border-slate-100 p-3">
-                                            <div className="text-xs text-slate-500">{item.date.slice(0, 10)}</div>
-                                            <div className="mt-1 text-lg font-semibold text-slate-800">{item.turns}</div>
+                                        <div key={item.date} className="rounded-control border border-line p-4">
+                                            <div className="text-xs text-ink-muted">{item.date.slice(0, 10)}</div>
+                                            <div className="mt-1 text-lg font-semibold text-ink">{item.turns}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -1166,44 +1168,52 @@ export function LogViewer() {
 
             {view === 'hygiene' && (
                 <div className="grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4">
-                        <div className="flex items-center justify-between gap-3">
-                            <h4 className="text-sm font-semibold text-slate-800">{t('admin.logs.retention')}</h4>
-                            <button type="button" onClick={() => void runRetention()} className="inline-flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100">
-                                <Trash2 className="h-4 w-4" />
-                                {t('admin.logs.runRetention')}
-                            </button>
+                    <div className="rounded-lg border border-line bg-surface p-4">
+                        <div className="flex items-center justify-between gap-4">
+                            <h4 className="text-sm font-semibold text-ink">{t('admin.logs.retention')}</h4>
+                            {confirming === 'retention' ? (
+                                <ConfirmInline
+                                    question={t('admin.logs.retentionConfirm')}
+                                    onConfirm={() => void runRetention()}
+                                    onCancel={() => setConfirming(null)}
+                                />
+                            ) : (
+                                <Button variant="secondary" type="button" onClick={() => setConfirming('retention')} className="border-danger-line text-danger hover:bg-danger-soft bg-danger-soft">
+                                    <Trash2 className="h-4 w-4" />
+                                    {t('admin.logs.runRetention')}
+                                </Button>
+                            )}
                         </div>
-                        {hygieneLoading && <RefreshCw className="mt-6 h-5 w-5 animate-spin text-slate-500" />}
+                        {hygieneLoading && <RefreshCw className="mt-6 h-5 w-5 animate-spin text-ink-muted" />}
                         {retention && (
-                            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                                <div><dt className="text-slate-500">{t('admin.logs.retentionDays')}</dt><dd className="mt-1 font-semibold text-slate-800">{retention.retention_enabled ? retention.retention_days : t('admin.logs.disabled')}</dd></div>
-                                <div><dt className="text-slate-500">{t('admin.logs.purgeable')}</dt><dd className="mt-1 font-semibold text-slate-800">{retention.purgeable_logs}</dd></div>
-                                <div><dt className="text-slate-500">{t('admin.logs.totalLogs')}</dt><dd className="mt-1 font-semibold text-slate-800">{retention.total_logs}</dd></div>
-                                <div><dt className="text-slate-500">{t('admin.logs.oldest')}</dt><dd className="mt-1 font-semibold text-slate-800">{formatDate(retention.oldest_log_timestamp)}</dd></div>
+                            <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                                <div><dt className="text-ink-muted">{t('admin.logs.retentionDays')}</dt><dd className="mt-1 font-semibold text-ink">{retention.retention_enabled ? retention.retention_days : t('admin.logs.disabled')}</dd></div>
+                                <div><dt className="text-ink-muted">{t('admin.logs.purgeable')}</dt><dd className="mt-1 font-semibold text-ink">{retention.purgeable_logs}</dd></div>
+                                <div><dt className="text-ink-muted">{t('admin.logs.totalLogs')}</dt><dd className="mt-1 font-semibold text-ink">{retention.total_logs}</dd></div>
+                                <div><dt className="text-ink-muted">{t('admin.logs.oldest')}</dt><dd className="mt-1 font-semibold text-ink">{formatDate(retention.oldest_log_timestamp)}</dd></div>
                             </dl>
                         )}
                         {retention?.age_buckets && (
                             <div className="mt-4 space-y-2">
                                 {Object.entries(retention.age_buckets).map(([key, value]) => (
-                                    <div key={key} className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 text-sm">
-                                        <span className="text-slate-500">{key.replaceAll('_', ' ')}</span>
-                                        <span className="font-mono text-slate-700">{value}</span>
+                                    <div key={key} className="flex items-center justify-between rounded-control bg-surface-sunken px-4 py-2 text-sm">
+                                        <span className="text-ink-muted">{key.replaceAll('_', ' ')}</span>
+                                        <span className="font-mono text-ink-body">{value}</span>
                                     </div>
                                 ))}
                             </div>
                         )}
-                        {hygieneMessage && <p className="mt-3 text-sm text-emerald-700">{hygieneMessage}</p>}
+                        {hygieneMessage && <p className="mt-4 text-sm text-success">{hygieneMessage}</p>}
                     </div>
 
-                    <div className="rounded-lg border border-slate-200 bg-white p-4">
-                        <h4 className="text-sm font-semibold text-slate-800">{t('admin.logs.piiReport')}</h4>
+                    <div className="rounded-lg border border-line bg-surface p-4">
+                        <h4 className="text-sm font-semibold text-ink">{t('admin.logs.piiReport')}</h4>
                         {piiReport && (
-                            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                                <div><dt className="text-slate-500">{t('admin.logs.redaction')}</dt><dd className="mt-1 font-semibold text-slate-800">{piiReport.redaction_enabled ? t('admin.logs.enabled') : t('admin.logs.disabled')}</dd></div>
-                                <div><dt className="text-slate-500">{t('admin.logs.scanned')}</dt><dd className="mt-1 font-semibold text-slate-800">{piiReport.scanned_logs}</dd></div>
-                                <div><dt className="text-slate-500">{t('admin.logs.suspect')}</dt><dd className="mt-1 font-semibold text-slate-800">{piiReport.suspect_logs}</dd></div>
-                                <div><dt className="text-slate-500">Email / Tel / CF</dt><dd className="mt-1 font-semibold text-slate-800">{piiReport.by_type.email || 0} / {piiReport.by_type.telefono || 0} / {piiReport.by_type.cf || 0}</dd></div>
+                            <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                                <div><dt className="text-ink-muted">{t('admin.logs.redaction')}</dt><dd className="mt-1 font-semibold text-ink">{piiReport.redaction_enabled ? t('admin.logs.enabled') : t('admin.logs.disabled')}</dd></div>
+                                <div><dt className="text-ink-muted">{t('admin.logs.scanned')}</dt><dd className="mt-1 font-semibold text-ink">{piiReport.scanned_logs}</dd></div>
+                                <div><dt className="text-ink-muted">{t('admin.logs.suspect')}</dt><dd className="mt-1 font-semibold text-ink">{piiReport.suspect_logs}</dd></div>
+                                <div><dt className="text-ink-muted">Email / Tel / CF</dt><dd className="mt-1 font-semibold text-ink">{piiReport.by_type.email || 0} / {piiReport.by_type.telefono || 0} / {piiReport.by_type.cf || 0}</dd></div>
                             </dl>
                         )}
                     </div>
@@ -1222,21 +1232,21 @@ export function LogViewer() {
                         aria-modal="true"
                         aria-labelledby="log-conversation-title"
                         aria-describedby="log-conversation-id"
-                        className="flex max-h-[calc(100dvh-1rem)] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-white shadow-xl sm:max-h-[90dvh]"
+                        className="flex max-h-[calc(100dvh-1rem)] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-surface shadow-modal sm:max-h-[90dvh]"
                     >
-                        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-4 py-4">
                             <div className="min-w-0">
-                                <h2 id="log-conversation-title" className="font-semibold text-slate-900">{selectedSessionKind === 'conversation' ? t('admin.logs.conversation') : t('admin.logs.session')}</h2>
-                                <p id="log-conversation-id" className="break-all font-mono text-xs text-slate-500">{selectedSession}</p>
+                                <h2 id="log-conversation-title" className="font-semibold text-ink">{selectedSessionKind === 'conversation' ? t('admin.logs.conversation') : t('admin.logs.session')}</h2>
+                                <p id="log-conversation-id" className="break-all font-mono text-xs text-ink-muted">{selectedSession}</p>
                             </div>
                             <div className="flex shrink-0 items-center gap-2">
-                                <button ref={closeRef} type="button" aria-label={t('common.close')} onClick={() => setSelectedSession(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50">
+                                <button ref={closeRef} type="button" aria-label={t('common.close')} onClick={() => setSelectedSession(null)} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control border border-line text-ink-muted hover:bg-surface-sunken">
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
                         </div>
-                        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain bg-slate-50 p-3 sm:p-5" aria-busy={sessionLoading}>
-                            {sessionLoading && <div role="status" className="flex items-center justify-center gap-2 text-slate-500"><RefreshCw className="h-5 w-5 animate-spin" />{t('common.loading')}</div>}
+                        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain bg-surface-sunken p-4 sm:p-4" aria-busy={sessionLoading}>
+                            {sessionLoading && <div role="status" className="flex items-center justify-center gap-2 text-ink-muted"><RefreshCw className="h-5 w-5 animate-spin" />{t('common.loading')}</div>}
                             {!sessionLoading && sessionLogs.map((log) => {
                                 const details = asObject(log.details);
                                 const userText = firstText(details, ['user_input', 'effective_user_input', 'question']);
@@ -1245,8 +1255,8 @@ export function LogViewer() {
                                 const botText = stripControlMarkers(firstText(details, ['bot_response', 'answer']));
                                 const error = textValue(details.error);
                                 return (
-                                    <article key={log.id} className="min-w-0 space-y-3">
-                                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                                    <article key={log.id} className="min-w-0 space-y-4">
+                                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-muted">
                                             <time dateTime={log.timestamp}>{formatDate(log.timestamp)}{log.questionnaire_type ? ` · ${log.questionnaire_type}` : ''}</time>
                                             <span className="inline-flex items-center gap-1">{renderFeedback(log.helpful)}</span>
                                         </div>
@@ -1260,7 +1270,7 @@ export function LogViewer() {
                                         )}
                                         {botText && (
                                             <ChatBubble role="assistant" className="w-full">
-                                                <p className="mb-1 text-xs font-semibold text-slate-600">{t('admin.logs.counselor')}</p>
+                                                <p className="mb-1 text-xs font-semibold text-ink-muted">{t('admin.logs.counselor')}</p>
                                                 <LogMarkdown text={botText} />
                                             </ChatBubble>
                                         )}
@@ -1269,14 +1279,22 @@ export function LogViewer() {
                                     </article>
                                 );
                             })}
-                            {!sessionLoading && sessionLogs.length === 0 && <p className="text-center text-sm text-slate-500">{t('admin.logs.empty')}</p>}
+                            {!sessionLoading && sessionLogs.length === 0 && <p className="text-center text-sm text-ink-muted">{t('admin.logs.empty')}</p>}
                         </div>
                         {selectedSessionKind === 'session' && (
-                            <div className="shrink-0 border-t border-slate-200 px-4 py-3">
-                                <Button type="button" variant="danger" onClick={() => void deleteSelectedSession()}>
-                                    <Trash2 className="h-4 w-4" />
-                                    {t('admin.logs.deleteSession')}
-                                </Button>
+                            <div className="shrink-0 border-t border-line px-4 py-4">
+                                {confirming === 'session' ? (
+                                    <ConfirmInline
+                                        question={t('admin.logs.deleteConfirm')}
+                                        onConfirm={() => void deleteSelectedSession()}
+                                        onCancel={() => setConfirming(null)}
+                                    />
+                                ) : (
+                                    <Button type="button" variant="danger" onClick={() => setConfirming('session')}>
+                                        <Trash2 className="h-4 w-4" />
+                                        {t('admin.logs.deleteSession')}
+                                    </Button>
+                                )}
                             </div>
                         )}
                     </div>

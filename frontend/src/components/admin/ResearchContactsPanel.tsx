@@ -5,6 +5,8 @@ import { Building2, Check, Copy, FileText, Link2, Mail, Pencil, Phone, Plus, QrC
 import QRCode from 'qrcode';
 import { useI18n } from '@/lib/i18n-context';
 import { getAuthUrls } from '@/lib/auth';
+import { Button } from '@/components/ui/Button';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
 
 type LocaleCode = 'en' | 'es' | 'sv';
 
@@ -76,9 +78,9 @@ function QrThumb({ value, size = 96 }: { value: string; size?: number }) {
             .catch(() => { if (active) setSrc(''); });
         return () => { active = false; };
     }, [value, size]);
-    if (!src) return <div style={{ width: size, height: size }} className="shrink-0 rounded-md border border-slate-200 bg-slate-50" />;
+    if (!src) return <div style={{ width: size, height: size }} className="shrink-0 rounded-control border border-line bg-surface-sunken" />;
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt="QR" width={size} height={size} className="shrink-0 rounded-md border border-slate-200 bg-white" />;
+    return <img src={src} alt="QR" width={size} height={size} className="shrink-0 rounded-control border border-line bg-surface" />;
 }
 
 interface ResearchContact {
@@ -134,6 +136,7 @@ function formatDate(value: string) {
 export function ResearchContactsPanel() {
     const { t } = useI18n();
     const [contacts, setContacts] = useState<ResearchContact[]>([]);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [editingId, setEditingId] = useState<number | 'new' | null>(null);
@@ -238,7 +241,7 @@ export function ResearchContactsPanel() {
     };
 
     const remove = async (contact: ResearchContact) => {
-        if (!window.confirm(t('admin.rc.confirmDelete', { name: contact.name }))) return;
+        setConfirmDeleteId(null);
         setMessage('');
         try {
             const res = await fetch(`/api/admin/research-contacts/${contact.id}`, { method: 'DELETE' });
@@ -361,167 +364,163 @@ export function ResearchContactsPanel() {
         win.document.close();
     };
 
-    const inputCls = 'mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-400';
+    const inputCls = 'mt-1 h-9 w-full rounded-control border border-line-strong bg-surface px-4 text-sm text-ink outline-none focus:border-brand';
 
     const renderForm = () => (
-        <section className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                <label className="text-xs font-semibold uppercase text-slate-500">
+        <section className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.rc.form.name')}
                     <input className={inputCls} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
                 </label>
-                <label className="text-xs font-semibold uppercase text-slate-500">
+                <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.rc.form.email')}
                     <input className={inputCls} type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
                 </label>
-                <label className="text-xs font-semibold uppercase text-slate-500">
+                <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.rc.form.phone')}
                     <input className={inputCls} value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
                 </label>
-                <label className="text-xs font-semibold uppercase text-slate-500">
+                <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.rc.form.institution')}
                     <input className={inputCls} value={form.institution} onChange={(event) => setForm({ ...form, institution: event.target.value })} />
                 </label>
-                <label className="text-xs font-semibold uppercase text-slate-500">
+                <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.rc.form.role')}
                     <input className={inputCls} value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} />
                 </label>
-                <label className="flex items-center gap-2 pt-6 text-sm font-medium text-slate-700">
+                <label className="flex items-center gap-2 pt-6 text-sm font-semibold text-ink-body">
                     <input type="checkbox" checked={form.is_active} onChange={(event) => setForm({ ...form, is_active: event.target.checked })} />
                     {t('admin.rc.form.active')}
                 </label>
             </div>
-            <label className="mt-3 block text-xs font-semibold uppercase text-slate-500">
+            <label className="mt-4 block text-xs font-semibold text-ink-muted">
                 {t('admin.rc.form.notes')}
                 <textarea
-                    className="mt-1 min-h-[80px] w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-400"
+                    className="mt-1 min-h-[80px] w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink outline-none focus:border-brand"
                     value={form.notes}
                     onChange={(event) => setForm({ ...form, notes: event.target.value })}
                     placeholder={t('admin.rc.form.notesPlaceholder')}
                 />
             </label>
             <div className="mt-4 flex flex-wrap items-center gap-2">
-                <button
+                <Button
                     type="button"
                     disabled={saving}
                     onClick={() => void save()}
-                    className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
                     <Check className="h-4 w-4" />
                     {t('admin.rc.save')}
-                </button>
-                <button
+                </Button>
+                <Button variant="secondary"
                     type="button"
                     onClick={cancel}
-                    className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
                     <X className="h-4 w-4" />
                     {t('admin.rc.cancel')}
-                </button>
+                </Button>
             </div>
         </section>
     );
 
     return (
         <div className="space-y-4">
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
+            <section className="rounded-lg border border-line bg-surface p-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">{t('admin.rc.title')}</h2>
-                        <p className="mt-1 max-w-2xl text-sm text-slate-500">
+                        <h2 className="text-lg font-semibold text-ink">{t('admin.rc.title')}</h2>
+                        <p className="mt-1 max-w-2xl text-sm text-ink-muted">
                             {t('admin.rc.subtitle')}
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        <button
+                        <Button variant="secondary"
                             type="button"
                             onClick={() => void refresh()}
-                            className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                         >
                             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                             {t('admin.rc.refresh')}
-                        </button>
+                        </Button>
                         {editingId === null && (
-                            <button
+                            <Button
                                 type="button"
                                 onClick={startNew}
-                                className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700"
                             >
                                 <Plus className="h-4 w-4" />
                                 {t('admin.rc.new')}
-                            </button>
+                            </Button>
                         )}
                     </div>
                 </div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.rc.stats.total')}</p>
-                        <p className="mt-1 text-2xl font-bold text-slate-900">{contacts.length}</p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                    <div className="rounded-control border border-line bg-surface-sunken p-4">
+                        <p className="text-xs font-semibold text-ink-muted">{t('admin.rc.stats.total')}</p>
+                        <p className="mt-1 text-2xl font-semibold text-ink">{contacts.length}</p>
                     </div>
-                    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.rc.stats.active')}</p>
-                        <p className="mt-1 text-2xl font-bold text-emerald-700">{activeCount}</p>
+                    <div className="rounded-control border border-line bg-surface-sunken p-4">
+                        <p className="text-xs font-semibold text-ink-muted">{t('admin.rc.stats.active')}</p>
+                        <p className="mt-1 text-2xl font-semibold text-success">{activeCount}</p>
                     </div>
-                    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.rc.stats.codeUse')}</p>
-                        <p className="mt-1 text-sm font-medium text-slate-700">{t('admin.rc.stats.codeUseValue')}</p>
+                    <div className="rounded-control border border-line bg-surface-sunken p-4">
+                        <p className="text-xs font-semibold text-ink-muted">{t('admin.rc.stats.codeUse')}</p>
+                        <p className="mt-1 text-sm font-semibold text-ink-body">{t('admin.rc.stats.codeUseValue')}</p>
                     </div>
                 </div>
             </section>
 
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                    <Link2 className="h-4 w-4 text-indigo-600" />
+            <section className="rounded-lg border border-line bg-surface p-4">
+                <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink-body">
+                    <Link2 className="h-4 w-4 text-brand" />
                     {t('admin.rc.quickLink.title')}
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="text-xs font-semibold uppercase text-slate-500">
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="text-xs font-semibold text-ink-muted">
                         {t('admin.rc.quickLink.instrument')}
                         <select className={inputCls} value={linkInstrument} onChange={(event) => setLinkInstrument(event.target.value)}>
                             {INSTRUMENTS.map((instrument) => <option key={instrument} value={instrument}>{instrument}</option>)}
                         </select>
                     </label>
-                    <label className="text-xs font-semibold uppercase text-slate-500">
+                    <label className="text-xs font-semibold text-ink-muted">
                         {t('admin.rc.quickLink.language')}
                         <select className={inputCls} value={linkLocale} onChange={(event) => setLinkLocale(event.target.value as LocaleCode)}>
                             {LOCALES.map((locale) => <option key={locale.value} value={locale.value}>{locale.label}</option>)}
                         </select>
                     </label>
                 </div>
-                <p className="mt-3 text-xs text-slate-500">
+                <p className="mt-4 text-xs text-ink-muted">
                     {t('admin.rc.quickLink.hintBefore')} <span className="font-mono">study=CODICE</span>{t('admin.rc.quickLink.hintAfter')}
                 </p>
             </section>
 
             {editingId === 'new' && renderForm()}
-            {message && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p>}
+            {message && <p className="rounded-control border border-danger-line bg-danger-soft px-4 py-2 text-sm text-danger">{message}</p>}
 
             {!loading && contacts.length > 0 && (
                 <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
                     <input
                         type="search"
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder={t('admin.rc.searchPlaceholder')}
-                        className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-800 outline-none focus:border-indigo-400"
+                        className="h-control w-full rounded-control border border-line-strong bg-surface pl-8 pr-4 text-sm text-ink outline-none focus:border-brand"
                     />
                 </div>
             )}
 
             <div className="grid gap-4 xl:grid-cols-2">
                 {loading && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 xl:col-span-2">
+                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
                         {t('admin.rc.loading')}
                     </section>
                 )}
                 {!loading && contacts.length === 0 && editingId !== 'new' && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 xl:col-span-2">
+                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
                         {t('admin.rc.empty')}
                     </section>
                 )}
                 {!loading && contacts.length > 0 && filtered.length === 0 && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 xl:col-span-2">
+                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
                         {t('admin.rc.noResults')}
                     </section>
                 )}
@@ -529,125 +528,129 @@ export function ResearchContactsPanel() {
                     editingId === contact.id ? (
                         <div key={contact.id} className="xl:col-span-2">{renderForm()}</div>
                     ) : (
-                        <section key={contact.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-                            <div className="flex flex-wrap items-start justify-between gap-3">
+                        <section key={contact.id} className="rounded-lg border border-line bg-surface p-4 shadow-card">
+                            <div className="flex flex-wrap items-start justify-between gap-4">
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <h3 className="text-base font-bold text-slate-900">{contact.name}</h3>
-                                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${contact.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                        <h3 className="text-base font-semibold text-ink">{contact.name}</h3>
+                                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${contact.is_active ? 'bg-success-soft text-success' : 'bg-surface-raised text-ink-muted'}`}>
                                             {contact.is_active ? t('admin.rc.status.active') : t('admin.rc.status.inactive')}
                                         </span>
                                     </div>
-                                    <p className="mt-1 text-xs text-slate-500">{t('admin.rc.createdOn')} {formatDate(contact.created_at)}</p>
+                                    <p className="mt-1 text-xs text-ink-muted">{t('admin.rc.createdOn')} {formatDate(contact.created_at)}</p>
                                 </div>
                                 <div className="flex gap-1">
-                                    <button type="button" onClick={() => startEdit(contact)} className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900" title={t('admin.rc.action.edit')}>
+                                    <button type="button" onClick={() => startEdit(contact)} className="inline-flex items-center justify-center min-h-control min-w-control rounded-control p-2 text-ink-muted hover:bg-surface-raised hover:text-ink" title={t('admin.rc.action.edit')}>
                                         <Pencil className="h-4 w-4" />
                                     </button>
-                                    <button type="button" onClick={() => void remove(contact)} className="rounded-md p-2 text-red-500 hover:bg-red-50" title={t('admin.rc.action.delete')}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </button>
+                                    {confirmDeleteId === contact.id ? (
+                                        <ConfirmInline
+                                            question={t('admin.rc.confirmDelete', { name: contact.name })}
+                                            onConfirm={() => void remove(contact)}
+                                            onCancel={() => setConfirmDeleteId(null)}
+                                        />
+                                    ) : (
+                                        <button type="button" onClick={() => setConfirmDeleteId(contact.id)} className="inline-flex items-center justify-center min-h-control min-w-control rounded-control p-2 text-danger hover:bg-danger-soft" title={t('admin.rc.action.delete')}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="mt-4 rounded-md border border-indigo-200 bg-indigo-50 p-3">
-                                <p className="text-xs font-semibold uppercase text-indigo-700">{t('admin.rc.card.codeLabel')}</p>
+                            <div className="mt-4 rounded-control border border-brand-line bg-brand-soft p-4">
+                                <p className="text-xs font-semibold text-link">{t('admin.rc.card.codeLabel')}</p>
                                 <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
-                                    <code className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-lg font-bold tracking-wide text-indigo-900">
+                                    <code className="w-full rounded-control border border-brand-line bg-surface px-4 py-2 text-lg font-semibold text-link">
                                         {contact.code}
                                     </code>
-                                    <button
+                                    <Button variant="secondary"
                                         type="button"
                                         onClick={() => void copy(`code-${contact.id}`, contact.code)}
-                                        className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-100"
+                                        className="border-brand-line text-link hover:bg-brand-soft"
                                     >
                                         {copiedKey === `code-${contact.id}` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                                         {t('admin.rc.action.code')}
-                                    </button>
+                                    </Button>
                                 </div>
-                                <p className="mt-2 text-xs text-indigo-900">
+                                <p className="mt-2 text-xs text-link">
                                     {t('admin.rc.card.codeHint')}
                                 </p>
                             </div>
 
-                            <div className="mt-4 grid gap-2 text-sm text-slate-600">
+                            <div className="mt-4 grid gap-2 text-sm text-ink-muted">
                                 {contact.role && (
                                     <div className="flex items-center gap-2">
-                                        <User className="h-4 w-4 text-slate-500" />
+                                        <User className="h-4 w-4 text-ink-muted" />
                                         {contact.role}
                                     </div>
                                 )}
                                 {contact.institution && (
                                     <div className="flex items-center gap-2">
-                                        <Building2 className="h-4 w-4 text-slate-500" />
+                                        <Building2 className="h-4 w-4 text-ink-muted" />
                                         {contact.institution}
                                     </div>
                                 )}
                                 {contact.email && (
                                     <div className="flex items-center gap-2">
-                                        <Mail className="h-4 w-4 text-slate-500" />
-                                        <a className="text-indigo-700 hover:text-indigo-900" href={`mailto:${contact.email}`}>{contact.email}</a>
+                                        <Mail className="h-4 w-4 text-ink-muted" />
+                                        <a className="text-link hover:text-link" href={`mailto:${contact.email}`}>{contact.email}</a>
                                     </div>
                                 )}
                                 {contact.phone && (
                                     <div className="flex items-center gap-2">
-                                        <Phone className="h-4 w-4 text-slate-500" />
+                                        <Phone className="h-4 w-4 text-ink-muted" />
                                         {contact.phone}
                                     </div>
                                 )}
                             </div>
 
                             {contact.notes && (
-                                <p className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-600">
+                                <p className="mt-4 rounded-control border border-line bg-surface-sunken p-4 text-sm leading-relaxed text-ink-muted">
                                     {contact.notes}
                                 </p>
                             )}
 
-                            <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
-                                <div className="flex items-start gap-3">
+                            <div className="mt-4 rounded-control border border-line bg-surface-sunken p-4">
+                                <div className="flex items-start gap-4">
                                     <QrThumb value={collectionUrl(contact)} />
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.rc.card.linkLabel')} · {t('admin.rc.qrLabel')}</p>
+                                        <p className="text-xs font-semibold text-ink-muted">{t('admin.rc.card.linkLabel')} · {t('admin.rc.qrLabel')}</p>
                                         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                                            <input readOnly value={collectionUrl(contact)} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-700" />
-                                            <button
+                                            <input readOnly value={collectionUrl(contact)} className="w-full rounded-control border border-line-strong bg-surface px-4 py-2 font-mono text-xs text-ink-body" />
+                                            <Button variant="secondary"
                                                 type="button"
                                                 onClick={() => void copy(`link-${contact.id}`, collectionUrl(contact))}
-                                                className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                                             >
                                                 {copiedKey === `link-${contact.id}` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                                                 {t('admin.rc.action.link')}
-                                            </button>
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="mt-3 flex flex-wrap gap-2">
-                                <button
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                <Button variant="secondary"
                                     type="button"
                                     onClick={() => void copy(`card-${contact.id}`, cardText(contact))}
-                                    className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                                 >
                                     {copiedKey === `card-${contact.id}` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                                     {t('admin.rc.action.copyCard')}
-                                </button>
-                                <button
+                                </Button>
+                                <Button variant="secondary"
                                     type="button"
                                     onClick={() => void downloadQr(contact)}
-                                    className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                                 >
                                     <QrCode className="h-4 w-4" />
                                     {t('admin.rc.action.qr')}
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     type="button"
                                     onClick={() => void openHandoutPdf(contact)}
-                                    className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700"
                                 >
                                     <FileText className="h-4 w-4" />
                                     {t('admin.rc.action.pdf')}
-                                </button>
+                                </Button>
                             </div>
                         </section>
                     )

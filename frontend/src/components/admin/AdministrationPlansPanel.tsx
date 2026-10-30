@@ -9,6 +9,8 @@ import { replacePlan, changePlanArchive, parsePlanInstitutionOptions, planIdFrom
 import Link from 'next/link';
 import { credentialText, type CredentialTextKey } from '@/lib/i18n-institution-credentials';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
+import { Button } from '@/components/ui/Button';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
 
 type LocaleCode = 'it' | 'en' | 'es' | 'sv';
 
@@ -143,9 +145,9 @@ function QrThumb({ value, size = 88 }: { value: string; size?: number }) {
             .catch(() => { if (active) setSrc(''); });
         return () => { active = false; };
     }, [value, size]);
-    if (!src) return <div style={{ width: size, height: size }} className="shrink-0 rounded-md border border-slate-200 bg-slate-50" />;
+    if (!src) return <div style={{ width: size, height: size }} className="shrink-0 rounded-control border border-line bg-surface-sunken" />;
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt="QR" width={size} height={size} className="shrink-0 rounded-md border border-slate-200 bg-white" />;
+    return <img src={src} alt="QR" width={size} height={size} className="shrink-0 rounded-control border border-line bg-surface" />;
 }
 
 const PLAN_ERRORS: Record<string, CredentialTextKey> = {
@@ -159,6 +161,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
     const { t, lang } = useI18n();
     const c = (key: CredentialTextKey) => credentialText(lang, key);
     const [plans, setPlans] = useState<AdministrationPlan[]>([]);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
     const [contacts, setContacts] = useState<ResearchContact[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -408,15 +411,15 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
     };
 
     const archiveButton = (plan: AdministrationPlan) => (
-        <button type="button" disabled={saving} onClick={() => void archive(plan)}
-            className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+        <Button variant="secondary" type="button" disabled={saving} onClick={() => void archive(plan)}
+           >
             {plan.status === 'archived' ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
             {t(plan.status === 'archived' ? 'admin.ap.action.restore' : 'admin.ap.action.archive')}
-        </button>
+        </Button>
     );
 
     const remove = async (plan: AdministrationPlan) => {
-        if (!window.confirm(t('admin.ap.confirmDelete', { title: plan.title }))) return;
+        setConfirmDeleteId(null);
         setMessage('');
         try {
             const res = await apiFetch(`/api/admin/administration-plans/${plan.id}`, { method: 'DELETE' });
@@ -510,13 +513,13 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
         win.document.close();
     };
 
-    const inputCls = 'mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-400';
+    const inputCls = 'mt-1 h-9 w-full rounded-control border border-line-strong bg-surface px-4 text-sm text-ink outline-none focus:border-brand';
 
     const renderForm = () => (
-        <section className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
+        <section className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
             <div className="space-y-4">
-                {replacingPlan && <p role="status" className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{t('admin.ap.replaceHint', {title: replacingPlan.title})}</p>}
-                <label className="block text-xs font-semibold uppercase text-slate-500">
+                {replacingPlan && <p role="status" className="rounded-control border border-warning-line bg-warning-soft p-4 text-sm text-warning-ink">{t('admin.ap.replaceHint', {title: replacingPlan.title})}</p>}
+                <label className="block text-xs font-semibold text-ink-muted">
                     {t('admin.ap.form.title')}
                     <input
                         className={inputCls}
@@ -525,29 +528,29 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                     />
                 </label>
 
-                <section className="rounded-md border border-slate-200 bg-white p-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('admin.ap.section.details')}</h3>
-                    <div className="mt-3 grid gap-3 md:grid-cols-3">
-                        <label className="text-xs font-semibold uppercase text-slate-500">
+                <section className="rounded-control border border-line bg-surface p-4">
+                    <h3 className="text-xs font-semibold text-ink-muted">{t('admin.ap.section.details')}</h3>
+                    <div className="mt-4 grid gap-4 md:grid-cols-3">
+                        <label className="text-xs font-semibold text-ink-muted">
                             {t('admin.ap.instrument')}
                             <select className={inputCls} value={form.instrument_code} onChange={(event) => setForm({ ...form, instrument_code: event.target.value })}>
                                 {INSTRUMENTS.map((instrument) => <option key={instrument} value={instrument}>{instrument}</option>)}
                             </select>
                         </label>
-                        <label className="text-xs font-semibold uppercase text-slate-500">
+                        <label className="text-xs font-semibold text-ink-muted">
                             {t('admin.ap.class')}
                             <select className={inputCls} disabled={Boolean(replacingPlan?.group_id)} value={form.group_id} onChange={(event) => setForm({ ...form, group_id: event.target.value })}>
                                 <option value="">{t('admin.ap.noClass')}</option>
                                 {groups.map((group) => <option key={group.id} value={String(group.id)}>{group.name} ({group.code})</option>)}
                             </select>
                         </label>
-                        <label className="text-xs font-semibold uppercase text-slate-500">
+                        <label className="text-xs font-semibold text-ink-muted">
                             {t('admin.ap.language')}
                             <select className={inputCls} value={form.locale} onChange={(event) => setForm({ ...form, locale: event.target.value as LocaleCode })}>
                                 {LOCALES.map((locale) => <option key={locale.value} value={locale.value}>{locale.label}</option>)}
                             </select>
                         </label>
-                        <label className="text-xs font-semibold uppercase text-slate-500">
+                        <label className="text-xs font-semibold text-ink-muted">
                             {t('admin.readings.audience')}
                             <select className={inputCls} value={form.school_level}
                                 onChange={(event) => setForm({ ...form, school_level: event.target.value })}>
@@ -557,7 +560,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                                 <option value="adulti">{t('admin.readings.levelAdulti')}</option>
                             </select>
                         </label>
-                        <label className="text-xs font-semibold uppercase text-slate-500">
+                        <label className="text-xs font-semibold text-ink-muted">
                             {t('admin.ap.status')}
                             <select className={inputCls} value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>
                                 {STATUSES.filter(status => !replacingPlan || status === 'planned' || status === 'active').map((status) => <option key={status} value={status}>{t(`admin.ap.status.${status}`)}</option>)}
@@ -566,31 +569,31 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                     </div>
                 </section>
 
-                <section className="rounded-md border border-slate-200 bg-white p-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('admin.ap.section.schedule')}</h3>
-                    <div className="mt-3 grid gap-3 md:grid-cols-2">
-                        <label className="text-xs font-semibold uppercase text-slate-500">
+                <section className="rounded-control border border-line bg-surface p-4">
+                    <h3 className="text-xs font-semibold text-ink-muted">{t('admin.ap.section.schedule')}</h3>
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <label className="text-xs font-semibold text-ink-muted">
                             {t('admin.ap.date')}
                             <input className={inputCls} type="datetime-local" value={form.scheduled_at} onChange={(event) => setForm({ ...form, scheduled_at: event.target.value })} />
                         </label>
-                        <label className="text-xs font-semibold uppercase text-slate-500">
+                        <label className="text-xs font-semibold text-ink-muted">
                             {t('admin.ap.location')}
                             <input className={inputCls} value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} />
                         </label>
                     </div>
                 </section>
 
-                <section className="rounded-md border border-slate-200 bg-white p-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">{c('planInstitute')}</h3>
-                    <p className="text-xs text-slate-600 mt-2">{c('planInstituteHelp')}</p>
+                <section className="rounded-control border border-line bg-surface p-4">
+                    <h3 className="text-xs font-semibold text-ink-muted">{c('planInstitute')}</h3>
+                    <p className="text-xs text-ink-muted mt-2">{c('planInstituteHelp')}</p>
                     {editingPlan?.institution_link_state === 'needs_reconciliation' && (
-                        <div role="status" className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
+                        <div role="status" className="mt-4 rounded-control border border-warning-line bg-warning-soft p-2 text-xs text-warning-ink">
                             <p className="font-semibold">{c('needsReconciliation')}</p>
                             {editingPlan.reconciliation_reason && <p>{c(`reason_${editingPlan.reconciliation_reason}` as CredentialTextKey)}</p>}
                             {editingPlan.legacy_institution_code && <p>{c('legacyCode')}: <span className="font-mono">{editingPlan.legacy_institution_code}</span></p>}
                         </div>
                     )}
-                    <label className="mt-3 block text-xs font-semibold uppercase text-slate-500">
+                    <label className="mt-4 block text-xs font-semibold text-ink-muted">
                         {c('planInstitute')}
                         <select className={inputCls} value={form.institution_id} disabled={Boolean(replacingPlan?.group_id) || (institutes === null && !institutesFailed)}
                             onChange={(event) => setForm({ ...form, institution_id: event.target.value })}>
@@ -605,44 +608,44 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                             ))}
                         </select>
                     </label>
-                    {institutesFailed && <p role="alert" className="mt-2 text-xs text-red-700">{c('institutesLoadError')}</p>}
+                    {institutesFailed && <p role="alert" className="mt-2 text-xs text-danger">{c('institutesLoadError')}</p>}
                     {editingPlan?.institution_link_state === 'needs_reconciliation' && (
-                        <label className="mt-2 flex items-start gap-2 text-sm text-slate-700">
+                        <label className="mt-2 flex items-start gap-2 text-sm text-ink-body">
                             <input type="checkbox" checked={form.confirm_reconciliation}
                                 onChange={(event) => setForm({ ...form, confirm_reconciliation: event.target.checked })} />
                             {c('confirmReconciliation')}
                         </label>
                     )}
                 </section>
-                <section className="rounded-md border border-slate-200 bg-white p-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('admin.ap.section.researchers')}</h3>
-                    <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                <section className="rounded-control border border-line bg-surface p-4">
+                    <h3 className="text-xs font-semibold text-ink-muted">{t('admin.ap.section.researchers')}</h3>
+                    <div className="mt-4 grid gap-4 lg:grid-cols-2">
                         <section>
-                            <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.ap.contacts')}</p>
+                            <p className="text-xs font-semibold text-ink-muted">{t('admin.ap.contacts')}</p>
                             <div className="mt-2 max-h-44 space-y-1 overflow-y-auto pr-1">
                                 {activeContacts.map((contact) => (
-                                    <label key={contact.id} className="flex items-start gap-2 rounded-md px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
+                                    <label key={contact.id} className="flex items-start gap-2 rounded-control px-2 py-2 text-sm text-ink-body hover:bg-surface-sunken">
                                         <input
                                             type="checkbox"
                                             checked={form.contact_ids.includes(contact.id)}
                                             onChange={() => toggleContact(contact.id)}
-                                            className="mt-1 accent-indigo-600"
+                                            className="mt-1 accent-brand"
                                         />
                                         <span>
-                                            <span className="font-medium">{contact.name}</span>
-                                            <span className="block text-xs text-slate-500">
+                                            <span className="font-semibold">{contact.name}</span>
+                                            <span className="block text-xs text-ink-muted">
                                                 {[contact.institution, contact.email, contact.code].filter(Boolean).join(' · ')}
                                             </span>
                                         </span>
                                     </label>
                                 ))}
-                                {activeContacts.length === 0 && <p className="text-sm text-slate-500">{t('admin.ap.noContacts')}</p>}
+                                {activeContacts.length === 0 && <p className="text-sm text-ink-muted">{t('admin.ap.noContacts')}</p>}
                             </div>
                         </section>
-                        <label className="block text-xs font-semibold uppercase text-slate-500">
+                        <label className="block text-xs font-semibold text-ink-muted">
                             {t('admin.ap.externalResearchers')}
                             <textarea
-                                className="mt-1 min-h-[160px] w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-400"
+                                className="mt-1 min-h-[160px] w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink outline-none focus:border-brand"
                                 value={form.external_researchers}
                                 onChange={(event) => setForm({ ...form, external_researchers: event.target.value })}
                                 placeholder={t('admin.ap.externalResearchersPlaceholder')}
@@ -651,12 +654,12 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                     </div>
                 </section>
 
-                <section className="rounded-md border border-slate-200 bg-white p-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('admin.ap.section.notes')}</h3>
-                    <label className="mt-3 block text-xs font-semibold uppercase text-slate-500">
+                <section className="rounded-control border border-line bg-surface p-4">
+                    <h3 className="text-xs font-semibold text-ink-muted">{t('admin.ap.section.notes')}</h3>
+                    <label className="mt-4 block text-xs font-semibold text-ink-muted">
                         {t('admin.ap.notes')}
                         <textarea
-                            className="mt-1 min-h-[80px] w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-400"
+                            className="mt-1 min-h-[80px] w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink outline-none focus:border-brand"
                             value={form.notes}
                             onChange={(event) => setForm({ ...form, notes: event.target.value })}
                         />
@@ -666,102 +669,98 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
                 {editingPlan && archiveButton(editingPlan)}
-                <button
+                <Button
                     type="button"
                     disabled={saving}
                     onClick={() => void save()}
-                    className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
                     <Check className="h-4 w-4" />
                     {t(replacingPlan ? 'admin.ap.action.confirmReplace' : 'admin.ap.save')}
-                </button>
-                <button
+                </Button>
+                <Button variant="secondary"
                     type="button"
                     onClick={cancel}
-                    className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
                     <X className="h-4 w-4" />
                     {t('admin.ap.cancel')}
-                </button>
+                </Button>
             </div>
         </section>
     );
 
     return (
         <div className="space-y-4">
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
+            <section className="rounded-lg border border-line bg-surface p-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">{t('admin.ap.title')}</h2>
-                        <p className="mt-1 max-w-2xl text-sm text-slate-500">{t('admin.ap.subtitle')}</p>
+                        <h2 className="text-lg font-semibold text-ink">{t('admin.ap.title')}</h2>
+                        <p className="mt-1 max-w-2xl text-sm text-ink-muted">{t('admin.ap.subtitle')}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        <button
+                        <Button variant="secondary"
                             type="button"
                             onClick={() => void refresh()}
-                            className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                         >
                             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                             {t('admin.ap.refresh')}
-                        </button>
+                        </Button>
                         {editingId === null && (
-                            <button
+                            <Button
                                 type="button"
                                 onClick={startNew}
-                                className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700"
                             >
                                 <Plus className="h-4 w-4" />
                                 {t('admin.ap.new')}
-                            </button>
+                            </Button>
                         )}
                     </div>
                 </div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.ap.stats.total')}</p>
-                        <p className="mt-1 text-2xl font-bold text-slate-900">{stats.total}</p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                    <div className="rounded-control border border-line bg-surface-sunken p-4">
+                        <p className="text-xs font-semibold text-ink-muted">{t('admin.ap.stats.total')}</p>
+                        <p className="mt-1 text-2xl font-semibold text-ink">{stats.total}</p>
                     </div>
-                    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.ap.stats.active')}</p>
-                        <p className="mt-1 text-2xl font-bold text-emerald-700">{stats.active}</p>
+                    <div className="rounded-control border border-line bg-surface-sunken p-4">
+                        <p className="text-xs font-semibold text-ink-muted">{t('admin.ap.stats.active')}</p>
+                        <p className="mt-1 text-2xl font-semibold text-success">{stats.active}</p>
                     </div>
-                    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.ap.stats.responses')}</p>
-                        <p className="mt-1 text-2xl font-bold text-indigo-700">{stats.responses}</p>
+                    <div className="rounded-control border border-line bg-surface-sunken p-4">
+                        <p className="text-xs font-semibold text-ink-muted">{t('admin.ap.stats.responses')}</p>
+                        <p className="mt-1 text-2xl font-semibold text-link">{stats.responses}</p>
                     </div>
                 </div>
             </section>
 
             {editingId === 'new' && renderForm()}
-            {replacementCode && <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{t('admin.ap.replaced', {code: replacementCode})}</p>}
-            {message && <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p>}
+            {replacementCode && <p role="status" className="rounded-control border border-success-line bg-success-soft px-4 py-2 text-sm text-success-ink">{t('admin.ap.replaced', {code: replacementCode})}</p>}
+            {message && <p role="alert" className="rounded-control border border-danger-line bg-danger-soft px-4 py-2 text-sm text-danger">{message}</p>}
 
             {!loading && plans.length > 0 && (
                 <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
                     <input
                         type="search"
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder={t('admin.ap.searchPlaceholder')}
-                        className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-800 outline-none focus:border-indigo-400"
+                        className="h-control w-full rounded-control border border-line-strong bg-surface pl-8 pr-4 text-sm text-ink outline-none focus:border-brand"
                     />
                 </div>
             )}
 
             <div className="grid gap-4 xl:grid-cols-2">
                 {loading && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 xl:col-span-2">
+                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
                         {t('admin.ap.loading')}
                     </section>
                 )}
                 {!loading && plans.length === 0 && editingId !== 'new' && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 xl:col-span-2">
+                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
                         {t('admin.ap.empty')}
                     </section>
                 )}
                 {!loading && plans.length > 0 && filteredPlans.length === 0 && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 xl:col-span-2">
+                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
                         {t('admin.ap.noResults')}
                     </section>
                 )}
@@ -770,144 +769,148 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                         <div key={plan.id} className="xl:col-span-2">{renderForm()}</div>
                     ) : (
                         <section key={plan.id} id={`plan-${plan.id}`} tabIndex={-1}
-                            className={`rounded-lg border bg-white p-4 shadow-sm ${focusedPlanId === plan.id ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-slate-200'}`}>
-                            <div className="flex flex-wrap items-start justify-between gap-3">
+                            className={`rounded-lg border bg-surface p-4 shadow-card ${focusedPlanId === plan.id ? 'border-brand-line ring-2 ring-brand-line' : 'border-line'}`}>
+                            <div className="flex flex-wrap items-start justify-between gap-4">
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <h3 className="text-base font-bold text-slate-900">{plan.title}</h3>
-                                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+                                        <h3 className="text-base font-semibold text-ink">{plan.title}</h3>
+                                        <span className="rounded-full bg-brand-soft px-2 py-1 text-xs font-semibold text-link">
                                             {plan.instrument_code} · {plan.locale.toUpperCase()}
                                         </span>
-                                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                                        <span className="rounded-full bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-muted">
                                             {t(`admin.ap.status.${plan.status}`)}
                                         </span>
                                     </div>
-                                    <p className="mt-1 text-xs text-slate-500">{t('admin.ap.createdOn')} {formatDateTime(plan.created_at)}</p>
-                                    <p className="mt-1 text-xs text-slate-600">
+                                    <p className="mt-1 text-xs text-ink-muted">{t('admin.ap.createdOn')} {formatDateTime(plan.created_at)}</p>
+                                    <p className="mt-1 text-xs text-ink-muted">
                                         {c('planInstitute')}: {plan.institution_name
                                             ? <span className="font-semibold">{plan.institution_name}{plan.institution_code ? ` (${plan.institution_code})` : ''}{plan.institution_credentials_configured ? '' : ` — ${c('credentialsMissing')}`}</span>
                                             : c('noInstitute')}
                                     </p>
                                     {plan.institution_link_state === 'needs_reconciliation' && (
-                                        <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">{c('needsReconciliation')}</span>
+                                        <span className="mt-1 inline-flex rounded-full bg-warning-soft px-2 py-1 text-xs font-semibold text-warning-ink">{c('needsReconciliation')}</span>
                                     )}
                                 </div>
                                 <div className="flex flex-wrap gap-1">
                                     {archiveButton(plan)}
-                                    {plan.status !== 'archived' && <button type="button" disabled={saving} onClick={() => startReplacement(plan)}
-                                        className="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50">
+                                    {plan.status !== 'archived' && <Button variant="secondary" type="button" disabled={saving} onClick={() => startReplacement(plan)}
+                                        className="border-brand-line text-link hover:bg-brand-soft">
                                         <ArrowRightLeft className="h-4 w-4" />{t('admin.ap.action.replace')}
-                                    </button>}
-                                    <button type="button" onClick={() => startEdit(plan)} className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900" title={t('admin.ap.action.edit')}>
+                                    </Button>}
+                                    <button type="button" onClick={() => startEdit(plan)} className="inline-flex items-center justify-center min-h-control min-w-control rounded-control p-2 text-ink-muted hover:bg-surface-raised hover:text-ink" title={t('admin.ap.action.edit')}>
                                         <Pencil className="h-4 w-4" />
                                     </button>
-                                    <button type="button" onClick={() => void remove(plan)} className="rounded-md p-2 text-red-500 hover:bg-red-50" title={t('admin.ap.action.delete')}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </button>
+                                    {confirmDeleteId === plan.id ? (
+                                        <ConfirmInline
+                                            question={t('admin.ap.confirmDelete', { title: plan.title })}
+                                            onConfirm={() => void remove(plan)}
+                                            onCancel={() => setConfirmDeleteId(null)}
+                                        />
+                                    ) : (
+                                        <button type="button" onClick={() => setConfirmDeleteId(plan.id)} className="inline-flex items-center justify-center min-h-control min-w-control rounded-control p-2 text-danger hover:bg-danger-soft" title={t('admin.ap.action.delete')}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="mt-4 rounded-md border border-indigo-200 bg-indigo-50 p-3">
-                                <p className="text-xs font-semibold uppercase text-indigo-700">{t('admin.ap.code')}</p>
+                            <div className="mt-4 rounded-control border border-brand-line bg-brand-soft p-4">
+                                <p className="text-xs font-semibold text-link">{t('admin.ap.code')}</p>
                                 <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
-                                    <code className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-lg font-bold tracking-wide text-indigo-900">
+                                    <code className="w-full rounded-control border border-brand-line bg-surface px-4 py-2 text-lg font-semibold text-link">
                                         {plan.code}
                                     </code>
-                                    <button
+                                    <Button variant="secondary"
                                         type="button"
                                         onClick={() => void copy(`code-${plan.id}`, plan.code)}
-                                        className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-100"
+                                        className="border-brand-line text-link hover:bg-brand-soft"
                                     >
                                         {copiedKey === `code-${plan.id}` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                                         {t('admin.rc.action.code')}
-                                    </button>
+                                    </Button>
                                 </div>
-                                <p className="mt-2 text-xs text-indigo-900">{t('admin.ap.codeHint')}</p>
+                                <p className="mt-2 text-xs text-link">{t('admin.ap.codeHint')}</p>
                             </div>
 
-                            <div className="mt-4 grid gap-2 text-sm text-slate-600">
+                            <div className="mt-4 grid gap-2 text-sm text-ink-muted">
                                 {plan.scheduled_at && (
                                     <div className="flex items-center gap-2">
-                                        <CalendarDays className="h-4 w-4 text-slate-500" />
+                                        <CalendarDays className="h-4 w-4 text-ink-muted" />
                                         {formatDateTime(plan.scheduled_at)}
                                     </div>
                                 )}
                                 {plan.location && (
                                     <div className="flex items-center gap-2">
-                                        <MapPin className="h-4 w-4 text-slate-500" />
+                                        <MapPin className="h-4 w-4 text-ink-muted" />
                                         {plan.location}
                                     </div>
                                 )}
                                 {plan.researchers.length > 0 && (
                                     <div className="flex items-start gap-2">
-                                        <Users className="mt-0.5 h-4 w-4 text-slate-500" />
+                                        <Users className="mt-1 h-4 w-4 text-ink-muted" />
                                         <span>{plan.researchers.map((researcher) => researcher.name).join(', ')}</span>
                                     </div>
                                 )}
                                 <div className="flex items-center gap-2">
-                                    <FileText className="h-4 w-4 text-slate-500" />
+                                    <FileText className="h-4 w-4 text-ink-muted" />
                                     {t('admin.ap.responses')}: {plan.responses_count}
                                 </div>
                             </div>
 
                             {plan.notes && (
-                                <p className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-600">
+                                <p className="mt-4 rounded-control border border-line bg-surface-sunken p-4 text-sm leading-relaxed text-ink-muted">
                                     {plan.notes}
                                 </p>
                             )}
 
-                            <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
-                                <div className="flex items-start gap-3">
+                            <div className="mt-4 rounded-control border border-line bg-surface-sunken p-4">
+                                <div className="flex items-start gap-4">
                                     <QrThumb value={collectionUrl(plan)} />
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.ap.linkLabel')} · {t('admin.rc.qrLabel')}</p>
+                                        <p className="text-xs font-semibold text-ink-muted">{t('admin.ap.linkLabel')} · {t('admin.rc.qrLabel')}</p>
                                         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                                            <input readOnly value={collectionUrl(plan)} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-700" />
-                                            <button
+                                            <input readOnly value={collectionUrl(plan)} className="w-full rounded-control border border-line-strong bg-surface px-4 py-2 font-mono text-xs text-ink-body" />
+                                            <Button variant="secondary"
                                                 type="button"
                                                 onClick={() => void copy(`link-${plan.id}`, collectionUrl(plan))}
-                                                className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                                             >
                                                 {copiedKey === `link-${plan.id}` ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
                                                 {t('admin.rc.action.link')}
-                                            </button>
+                                            </Button>
                                         </div>
                                         {plan.group_name && (
-                                            <p className="mt-2 text-xs text-slate-500">
+                                            <p className="mt-2 text-xs text-ink-muted">
                                                 {t('admin.ap.class')}: <span className="font-semibold">{plan.group_name}</span>
                                                 {classHref && plan.group_id != null && classLinkLabel && (
                                                     // Research and classroom views manage the same plan row.
-                                                    <Link href={classHref(plan.group_id)} className="ml-2 inline-flex min-h-[44px] items-center font-semibold text-indigo-700 underline">
+                                                    <Link href={classHref(plan.group_id)} className="ml-2 inline-flex min-h-control items-center font-semibold text-link underline">
                                                         {classLinkLabel}
                                                     </Link>
                                                 )}
                                             </p>
                                         )}
                                         <div className="mt-2 flex flex-wrap gap-2">
-                                            <button
+                                            <Button variant="secondary"
                                                 type="button"
                                                 onClick={() => setStudentsOpenId(studentsOpenId === plan.id ? null : plan.id)}
-                                                className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                                             >
                                                 <Users className="h-4 w-4" />
                                                 {t('admin.ap.students')}
-                                            </button>
-                                            <button
+                                            </Button>
+                                            <Button variant="secondary"
                                                 type="button"
                                                 onClick={() => void downloadQr(plan)}
-                                                className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                                             >
                                                 <QrCode className="h-4 w-4" />
                                                 {t('admin.rc.action.qr')}
-                                            </button>
-                                            <button
+                                            </Button>
+                                            <Button variant="secondary"
                                                 type="button"
                                                 onClick={() => void openHandoutPdf(plan)}
-                                                className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                                             >
                                                 <FileText className="h-4 w-4" />
                                                 {t('admin.rc.action.pdf')}
-                                            </button>
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>

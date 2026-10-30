@@ -222,11 +222,11 @@ const MODEL_TAG_KEYS: Record<ModelRecommendation['tag'], string> = {
 };
 
 const MODEL_TAG_STYLES: Record<ModelRecommendation['tag'], string> = {
-    recommended: 'bg-emerald-100 text-emerald-800',
-    quality: 'bg-indigo-100 text-indigo-800',
-    fast: 'bg-sky-100 text-sky-800',
-    free: 'bg-amber-100 text-amber-800',
-    reasoning: 'bg-violet-100 text-violet-800',
+    recommended: 'bg-success-soft text-success-ink',
+    quality: 'bg-brand-soft text-link',
+    fast: 'bg-info-soft text-info-ink',
+    free: 'bg-warning-soft text-warning-ink',
+    reasoning: 'bg-surface-raised text-ink-body',
 };
 
 // Modelli in fascia gratuita: ottimi per prove, soggetti ai limiti del provider.
@@ -666,7 +666,7 @@ export function ConfigForm() {
 
     // --- Render ---
 
-    if (loading) return <div className="text-center py-8 text-slate-500">{t('admin.config.loading')}</div>;
+    if (loading) return <div className="text-center py-8 text-ink-muted">{t('admin.config.loading')}</div>;
 
     const localConnections = [
         { key: 'ollama_ip', label: 'Ollama IP Address' },
@@ -677,9 +677,9 @@ export function ConfigForm() {
         {
             label: t('admin.config.section.groupSettings'),
             items: [
-                { id: 'general', label: t('admin.config.section.general'), icon: <Server aria-hidden className="w-4 h-4 shrink-0 text-indigo-600" /> },
-                { id: 'prompt-map', label: t('admin.promptMap.section'), detail: t('admin.promptMap.sectionDetail'), icon: <Layers aria-hidden className="w-4 h-4 shrink-0 text-indigo-600" /> },
-                { id: 'directives', label: t('admin.config.section.directives'), icon: <FileText aria-hidden className="w-4 h-4 shrink-0 text-amber-600" /> },
+                { id: 'general', label: t('admin.config.section.general'), icon: <Server aria-hidden className="w-4 h-4 shrink-0 text-brand" /> },
+                { id: 'prompt-map', label: t('admin.promptMap.section'), detail: t('admin.promptMap.sectionDetail'), icon: <Layers aria-hidden className="w-4 h-4 shrink-0 text-brand" /> },
+                { id: 'directives', label: t('admin.config.section.directives'), icon: <FileText aria-hidden className="w-4 h-4 shrink-0 text-warning" /> },
             ],
         },
     ];
@@ -702,10 +702,10 @@ export function ConfigForm() {
                 (animate-fade-in-up) che altrimenti intrappola il position:fixed. */}
             {toast && typeof document !== 'undefined' && createPortal(
                 <div
-                    className={`fixed top-6 right-6 z-[100] px-4 py-3 rounded-md shadow-lg text-sm font-medium border ${
+                    className={`fixed top-6 right-6 z-[100] px-4 py-4 rounded-control shadow-pop text-sm font-semibold border ${
                         toast.type === 'success'
-                            ? 'bg-green-50 border-green-200 text-green-700'
-                            : 'bg-red-50 border-red-200 text-red-700'
+                            ? 'bg-success-soft border-success-line text-success'
+                            : 'bg-danger-soft border-danger-line text-danger'
                     }`}
                     role="status"
                 >
@@ -720,7 +720,7 @@ export function ConfigForm() {
 
             <fieldset disabled={factoryAlignmentBusy} className="contents">
             {/* Filtro di sezione: impostazioni e strumenti raggruppati */}
-            <div className="border-b border-slate-200 pb-3">
+            <div className="border-b border-line pb-4">
                 <SectionFilter
                     label={t('admin.config.section.label')}
                     searchPlaceholder={t('admin.config.section.search')}
@@ -734,15 +734,15 @@ export function ConfigForm() {
             {activeSection === 'general' && (
             <div className="space-y-8">
             {/* 1. Funzioni */}
-            <div className="space-y-4 rounded-lg border border-slate-200 p-4">
-                <h3 className="text-sm font-semibold text-slate-700">{t('admin.features.title')}</h3>
+            <div className="space-y-4 rounded-lg border border-line p-4">
+                <h3 className="text-sm font-semibold text-ink-body">{t('admin.features.title')}</h3>
                 <div className="space-y-2">
-                    <label htmlFor="feature_tavolo" className="block text-sm font-medium text-slate-700">{t('admin.features.tavolo')}</label>
+                    <label htmlFor="feature_tavolo" className="block text-sm font-semibold text-ink-body">{t('admin.features.tavolo')}</label>
                     <select
                         id="feature_tavolo"
                         value={getConfigValue('feature_tavolo') === 'true' ? 'true' : 'false'}
                         onChange={event => setConfigDraft('feature_tavolo', event.target.value, t('admin.features.tavolo'))}
-                        className="w-full rounded-md border border-slate-300 bg-slate-50 p-2 font-mono text-xs text-slate-900"
+                        className="w-full rounded-control border border-line-strong bg-surface-sunken p-2 font-mono text-xs text-ink"
                     >
                         <option value="false">{String(false)}</option>
                         <option value="true">{String(true)}</option>
@@ -760,10 +760,10 @@ export function ConfigForm() {
             {/* 2. AI dello studente: chiavi personali, ChatGPT, privacy verso provider esterni */}
             <section aria-labelledby="student-ai-settings-title" className="space-y-4" data-testid="student-ai-settings">
                 <div>
-                    <h3 id="student-ai-settings-title" className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.studentAi.title')}</h3>
-                    <p className="mt-1 ml-1 text-sm text-slate-600">{t('admin.config.studentAi.intro')}</p>
+                    <h3 id="student-ai-settings-title" className="text-sm font-semibold text-ink-muted ml-1">{t('admin.config.studentAi.title')}</h3>
+                    <p className="mt-1 ml-1 text-sm text-ink-muted">{t('admin.config.studentAi.intro')}</p>
                 </div>
-                <p className="ml-1 text-sm text-slate-600">{personalAPIText(lang, 'adminSectionHelp')}</p>
+                <p className="ml-1 text-sm text-ink-muted">{personalAPIText(lang, 'adminSectionHelp')}</p>
                 <PersonalAPIPolicy />
                 <ChatGPTSettingsPanel />
                 <ExternalPrivacySettings />
@@ -775,8 +775,8 @@ export function ConfigForm() {
             {/* 3. API Keys */}
             <div className="space-y-4">
                 <div>
-                    <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.apiKeys')}</h3>
-                    <p className="mt-1 ml-1 text-sm text-slate-600">{t('admin.config.apiKeysIntro')}</p>
+                    <h3 className="text-sm font-semibold text-ink-muted ml-1">{t('admin.config.apiKeys')}</h3>
+                    <p className="mt-1 ml-1 text-sm text-ink-muted">{t('admin.config.apiKeysIntro')}</p>
                 </div>
                 <Callout variant="info" title={t('admin.config.apiKeysContractTitle')}>
                     <div className="space-y-2">
@@ -785,14 +785,14 @@ export function ConfigForm() {
                             href={getAuthUrls().secretsUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+                            className="inline-flex items-center gap-2 font-semibold text-link hover:text-link hover:underline"
                         >
                             {t('admin.config.apiKeysManagedLink')}
                             <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                         </a>
                     </div>
                 </Callout>
-                <div className="grid gap-3 lg:grid-cols-2">
+                <div className="grid gap-4 lg:grid-cols-2">
                     {apiKeyStatuses.map((status) => {
                         const verification = apiKeyVerification[status.provider] || 'idle';
                         const providerLabel = PROVIDERS[status.provider]?.label || status.provider;
@@ -801,16 +801,16 @@ export function ConfigForm() {
                         return (
                             <section
                                 key={status.provider}
-                                className={`glass-panel p-4 space-y-3 ${active ? 'bg-indigo-50 ring-1 ring-indigo-300' : ''}`}
+                                className={`rounded-card border border-line bg-surface shadow-card p-4 space-y-4 ${active ? 'bg-brand-soft ring-1 ring-brand-line' : ''}`}
                                 aria-labelledby={`api-key-${status.provider}`}
                             >
                                 <div className="flex flex-wrap items-start justify-between gap-2">
                                     <div>
-                                        <h4 id={`api-key-${status.provider}`} className="flex items-center gap-2 font-semibold text-slate-900">
-                                            <KeyRound className="w-4 h-4 text-indigo-600" />
+                                        <h4 id={`api-key-${status.provider}`} className="flex items-center gap-2 font-semibold text-ink">
+                                            <KeyRound className="w-4 h-4 text-brand" />
                                             {providerLabel}
                                         </h4>
-                                        <p className="mt-1 text-xs text-slate-500">
+                                        <p className="mt-1 text-xs text-ink-muted">
                                             {status.source === 'environment'
                                                 ? t('admin.config.apiKeySourceEnvironment')
                                                 : t('admin.config.apiKeySourceUnset')}
@@ -818,12 +818,12 @@ export function ConfigForm() {
                                     </div>
                                     <span role="status" aria-live="polite" className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${
                                         verification === 'working'
-                                            ? 'bg-emerald-100 text-emerald-800'
+                                            ? 'bg-success-soft text-success-ink'
                                             : verification === 'failed'
-                                                ? 'bg-red-100 text-red-800'
+                                                ? 'bg-danger-soft text-danger-ink'
                                                 : status.configured
-                                                    ? 'bg-amber-100 text-amber-800'
-                                                    : 'bg-slate-100 text-slate-700'
+                                                    ? 'bg-warning-soft text-warning-ink'
+                                                    : 'bg-surface-raised text-ink-body'
                                     }`}>
                                         {verification === 'working' && <CheckCircle2 className="w-3.5 h-3.5" />}
                                         {verification === 'failed' && <XCircle className="w-3.5 h-3.5" />}
@@ -839,7 +839,7 @@ export function ConfigForm() {
                                     </span>
                                 </div>
 
-                                <p className="rounded-md bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-700">
+                                <p className="rounded-control bg-surface-sunken px-4 py-2 text-xs leading-relaxed text-ink-body">
                                     {t(
                                         status.configured
                                             ? 'admin.config.apiKeyEnvironmentInstructions'
@@ -849,7 +849,7 @@ export function ConfigForm() {
                                 </p>
 
                                 {verification === 'failed' && (
-                                    <p className="text-xs leading-relaxed text-red-700">{t('admin.config.apiKeyFailedHint')}</p>
+                                    <p className="text-xs leading-relaxed text-danger">{t('admin.config.apiKeyFailedHint')}</p>
                                 )}
 
                                 {status.configured && (
@@ -871,21 +871,21 @@ export function ConfigForm() {
                     })}
                 </div>
 
-                <div className="space-y-3 pt-2">
-                    <h4 className="text-sm font-semibold text-slate-700">{t('admin.config.localConnections')}</h4>
+                <div className="space-y-4 pt-2">
+                    <h4 className="text-sm font-semibold text-ink-body">{t('admin.config.localConnections')}</h4>
                     {localConnections.map((def) => {
                         const currentVal = configs.find(c => c.key === def.key)?.value || '';
                         const isEnvOverridden = envOverrides[def.key] || false;
                         return (
-                            <div key={def.key} className="glass-panel p-4 flex items-center gap-4">
+                            <div key={def.key} className="rounded-card border border-line bg-surface shadow-card p-4 flex items-center gap-4">
                                 <div className="flex-1">
-                                    <label className="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-2">
+                                    <label className="text-xs font-semibold text-ink-muted mb-1 flex items-center gap-2">
                                         {def.label}
-                                        {isEnvOverridden && <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">ENV</span>}
+                                        {isEnvOverridden && <span className="rounded-full bg-info-soft px-2 py-1 text-xs text-info-ink">ENV</span>}
                                     </label>
                                     <input
                                         type="url"
-                                        className="w-full border-none bg-transparent p-0 font-mono text-sm text-slate-900 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="w-full border-none bg-transparent p-0 font-mono text-sm text-ink focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
                                         placeholder={isEnvOverridden ? t('admin.config.envSet') : 'http://host.docker.internal:11434'}
                                         value={isEnvOverridden ? '' : currentVal}
                                         disabled={isEnvOverridden}
@@ -916,37 +916,37 @@ export function ConfigForm() {
 
             {/* Riserva di sistema (quando l'utente non ha ChatGPT o una chiave personale) */}
             <details
-                className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6"
+                className="group rounded-card border border-line bg-surface p-6 shadow-card space-y-6"
                 data-testid="system-ai-fallback-section"
             >
-                <summary className="flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none">
+                <summary className="flex flex-wrap items-center justify-between gap-4 cursor-pointer select-none">
                     <div className="flex items-center gap-2">
-                        <Server className="w-5 h-5 text-indigo-600 shrink-0" />
-                        <h3 className="text-base font-semibold text-slate-900 inline">
+                        <Server className="w-5 h-5 text-brand shrink-0" />
+                        <h3 className="text-base font-semibold text-ink inline">
                             {systemAIText(lang, 'title')}
                         </h3>
                     </div>
                     <div className="flex items-center gap-2">
                         {activeProvider && activeModel ? (
-                            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">
+                            <span className="rounded-full bg-success-soft px-2 py-1 text-xs font-semibold text-success-ink">
                                 {systemAIText(lang, 'configured')}: {PROVIDERS[activeProvider]?.label || activeProvider} ({activeModel})
                             </span>
                         ) : (
-                            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+                            <span className="rounded-full bg-warning-soft px-2 py-1 text-xs font-semibold text-warning-ink">
                                 {systemAIText(lang, 'notConfigured')}
                             </span>
                         )}
-                        <span className="text-xs text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+                        <span className="text-xs text-ink-muted group-open:rotate-180 transition-transform">▼</span>
                     </div>
                 </summary>
 
                 <div className="space-y-6 pt-2">
                     {/* Spiegazione ordine di scelta 1-2-3 */}
-                    <div className="rounded-lg bg-slate-50 border border-slate-200 p-3.5 text-xs text-slate-700 leading-relaxed space-y-1">
-                        <p className="font-semibold text-slate-800">
+                    <div className="rounded-lg bg-surface-sunken border border-line p-4 text-xs text-ink-body leading-relaxed space-y-1">
+                        <p className="font-semibold text-ink">
                             {systemAIText(lang, 'orderHelp')}
                         </p>
-                        <p className="text-slate-600">
+                        <p className="text-ink-muted">
                             {systemAIText(lang, 'sectionHelp')}
                         </p>
                     </div>
@@ -961,13 +961,13 @@ export function ConfigForm() {
                     {/* Selezione Provider e Modello */}
                     <div className="grid md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">
+                            <label className="text-sm font-semibold text-ink-body">
                                 {systemAIText(lang, 'provider')}
                             </label>
                             <select
                                 value={activeProvider}
                                 onChange={(e) => handleProviderChange(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className="w-full bg-surface-sunken border border-line-strong rounded-control p-4 text-sm text-ink focus:ring-2 focus:ring-focus outline-none"
                             >
                                 <option value="">{systemAIText(lang, 'noProviderSelected')}</option>
                                 {Object.entries(PROVIDERS).map(([key, data]) => (
@@ -978,7 +978,7 @@ export function ConfigForm() {
 
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <label className="text-sm font-medium text-slate-700">
+                                <label className="text-sm font-semibold text-ink-body">
                                     {systemAIText(lang, 'model')}
                                 </label>
                                 {activeProvider && (
@@ -986,7 +986,7 @@ export function ConfigForm() {
                                         type="button"
                                         onClick={() => fetchModels(activeProvider)}
                                         disabled={modelsLoading || activeKeyMissing}
-                                        className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 disabled:opacity-50"
+                                        className="min-h-control flex items-center gap-1 text-xs text-brand hover:text-link disabled:opacity-50"
                                         title={t('admin.config.reloadTitle')}
                                     >
                                         <RefreshCw className={`w-3 h-3 ${modelsLoading ? 'animate-spin' : ''}`} />
@@ -1001,12 +1001,12 @@ export function ConfigForm() {
 
                             {/* Elenco del provider oppure ID digitato a mano (modelli non in elenco). */}
                             {activeProvider && (
-                                <div className="flex rounded-md border border-slate-300 bg-slate-50 p-0.5 text-xs">
+                                <div className="flex rounded-control border border-line-strong bg-surface-sunken p-1 text-xs">
                                     <button
                                         type="button"
                                         aria-pressed={!customModelMode}
                                         onClick={() => toggleCustomModelMode(false)}
-                                        className={`flex-1 rounded px-2 py-1.5 font-medium transition-colors ${!customModelMode ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                                        className={`min-h-control flex-1 rounded px-2 py-2 font-semibold transition-colors ${!customModelMode ? 'bg-surface text-ink shadow-card' : 'text-ink-muted hover:text-ink'}`}
                                     >
                                         {t('admin.config.useDropdownList')}
                                     </button>
@@ -1014,7 +1014,7 @@ export function ConfigForm() {
                                         type="button"
                                         aria-pressed={customModelMode}
                                         onClick={() => toggleCustomModelMode(true)}
-                                        className={`flex-1 rounded px-2 py-1.5 font-medium transition-colors ${customModelMode ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                                        className={`min-h-control flex-1 rounded px-2 py-2 font-semibold transition-colors ${customModelMode ? 'bg-surface text-ink shadow-card' : 'text-ink-muted hover:text-ink'}`}
                                     >
                                         {t('admin.config.customModelToggle')}
                                     </button>
@@ -1024,7 +1024,7 @@ export function ConfigForm() {
                             {customModelMode ? (
                                 <div className="space-y-2">
                                     <div className="relative">
-                                        <Cpu className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                                        <Cpu className="absolute left-3 top-3 w-4 h-4 text-ink-muted" />
                                         <input
                                             id="system_ai_model_manual"
                                             type="text"
@@ -1037,7 +1037,7 @@ export function ConfigForm() {
                                                 }
                                             }}
                                             placeholder={t('admin.config.customModelPlaceholder')}
-                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 pl-10 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            className="w-full bg-surface-sunken border border-line-strong rounded-control p-4 pl-10 text-sm text-ink focus:ring-2 focus:ring-focus outline-none"
                                         />
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2">
@@ -1047,13 +1047,13 @@ export function ConfigForm() {
                                             size="sm"
                                             onClick={commitManualModel}
                                             disabled={!canSaveManualModel}
-                                            className="flex items-center gap-1.5"
+                                            className="flex items-center gap-2"
                                         >
                                             <Save className="w-3.5 h-3.5" />
                                             {t('common.save')}
                                         </Button>
                                         {manualModelInvalid && (
-                                            <p className="text-xs text-red-600">{t('admin.config.customModelInvalid')}</p>
+                                            <p className="text-xs text-danger">{t('admin.config.customModelInvalid')}</p>
                                         )}
                                     </div>
                                 </div>
@@ -1071,10 +1071,10 @@ export function ConfigForm() {
                                         labels={modelLabels}
                                     />
                                     {activeProvider && activeKeyMissing ? (
-                                        <p className="text-xs text-amber-600">{t('admin.config.modelNeedsKeyHint')}</p>
+                                        <p className="text-xs text-warning">{t('admin.config.modelNeedsKeyHint')}</p>
                                     ) : (
                                         activeProvider && liveModels.length === 0 && !modelsLoading && (
-                                            <p className="text-xs text-amber-600">{t('admin.config.providerUnreachable')}</p>
+                                            <p className="text-xs text-warning">{t('admin.config.providerUnreachable')}</p>
                                         )
                                     )}
                                 </>
@@ -1082,24 +1082,24 @@ export function ConfigForm() {
 
                             {/* Avvisi sul modello attivo: reasoning e fascia gratuita. */}
                             {activeModel && (
-                                <p className="flex items-start gap-1.5 text-xs text-violet-700">
-                                    <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                                <p className="flex items-start gap-2 text-xs text-ink-muted">
+                                    <Sparkles className="w-3.5 h-3.5 mt-1 shrink-0" />
                                     <span>{t('admin.config.reasoningHint')}</span>
                                 </p>
                             )}
                             {activeModel && isFreeModel(activeModel) && (
-                                <p className="flex items-start gap-1.5 text-xs text-amber-700">
-                                    <Award className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                                <p className="flex items-start gap-2 text-xs text-warning">
+                                    <Award className="w-3.5 h-3.5 mt-1 shrink-0" />
                                     <span>{t('admin.config.freeTierHint')}</span>
                                 </p>
                             )}
                         </div>
 
-                        <div className="md:col-span-2 flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                        <div className="md:col-span-2 flex items-center gap-4 p-4 bg-surface-sunken border border-line rounded-lg">
                             <input
                                 id="disable_thinking"
                                 type="checkbox"
-                                className="w-4 h-4 accent-blue-600 cursor-pointer"
+                                className="w-4 h-4 accent-brand cursor-pointer"
                                 checked={getConfigValue('disable_thinking') === 'true'}
                                 onChange={(e) => {
                                     const val = e.target.checked ? 'true' : 'false';
@@ -1107,18 +1107,18 @@ export function ConfigForm() {
                                     handleSaveConfig({ key: 'disable_thinking', value: val, description: 'Disattiva il reasoning/thinking sui modelli che lo supportano' });
                                 }}
                             />
-                            <label htmlFor="disable_thinking" className="text-sm font-medium text-slate-700 cursor-pointer">
+                            <label htmlFor="disable_thinking" className="text-sm font-semibold text-ink-body cursor-pointer">
                                 {t('admin.config.noThinking')} <strong>{t('admin.config.noThinkingName')}</strong>
-                                <span className="block text-xs text-slate-500 font-normal">{t('admin.config.noThinkingDesc')}</span>
+                                <span className="block text-xs text-ink-muted font-normal">{t('admin.config.noThinkingDesc')}</span>
                             </label>
                         </div>
                     </div>
 
                     {/* Suggerimento: quali modelli sono adatti per CounselorBot e perché. */}
                     {providerRecommendations.length > 0 && (
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
-                            <p className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                                <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
+                        <div className="rounded-lg border border-line bg-surface-sunken p-4 space-y-4">
+                            <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+                                <Sparkles className="w-4 h-4 text-brand shrink-0" />
                                 {t('admin.config.recommendedModels')}
                             </p>
                             <ul className="grid gap-2 sm:grid-cols-2">
@@ -1132,21 +1132,21 @@ export function ConfigForm() {
                                                 disabled={activeKeyMissing}
                                                 onClick={() => handleModelChange(recommendation.id)}
                                                 className={cn(
-                                                    'h-full w-full rounded-lg border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+                                                    'h-full w-full rounded-lg border p-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60',
                                                     selected
-                                                        ? 'border-indigo-400 bg-indigo-50'
-                                                        : 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/40',
+                                                        ? 'border-brand-line bg-brand-soft'
+                                                        : 'border-line bg-surface hover:border-brand-line hover:bg-brand-soft/40',
                                                 )}
                                             >
                                                 <span className="flex flex-wrap items-center gap-2">
-                                                    <span className="text-sm font-semibold text-slate-900">{recommendation.label}</span>
-                                                    <span className={cn('rounded-full px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide', MODEL_TAG_STYLES[recommendation.tag])}>
+                                                    <span className="text-sm font-semibold text-ink">{recommendation.label}</span>
+                                                    <span className={cn('rounded-full px-2 py-1 text-2xs font-semibold', MODEL_TAG_STYLES[recommendation.tag])}>
                                                         {t(MODEL_TAG_KEYS[recommendation.tag])}
                                                     </span>
-                                                    {selected && <CheckCircle2 className="w-4 h-4 text-indigo-600" />}
+                                                    {selected && <CheckCircle2 className="w-4 h-4 text-brand" />}
                                                 </span>
-                                                <span className="mt-1 block break-all font-mono text-xs text-slate-500">{recommendation.id}</span>
-                                                <span className="mt-1 block text-xs text-slate-600">{t('admin.config.modelAdvice.' + recommendation.tag)}</span>
+                                                <span className="mt-1 block break-all font-mono text-xs text-ink-muted">{recommendation.id}</span>
+                                                <span className="mt-1 block text-xs text-ink-muted">{t('admin.config.modelAdvice.' + recommendation.tag)}</span>
                                             </button>
                                         </li>
                                     );
@@ -1161,7 +1161,7 @@ export function ConfigForm() {
                     </Callout>
 
                     {/* Pulsante Prova */}
-                    <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <div className="flex flex-wrap items-center gap-4 pt-2">
                         <Button
                             type="button"
                             variant="secondary"
@@ -1176,7 +1176,7 @@ export function ConfigForm() {
 
                     {/* Risultati prova */}
                     {systemAIProbeResults && (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {(!systemAIProbeResults.system_configured || systemAIProbeResults.results.length === 0) ? (
                                 <Callout variant="warning" title={systemAIText(lang, 'notConfigured')}>
                                     <p className="text-xs">{systemAIText(lang, 'noFallbackWarning')}</p>
@@ -1186,7 +1186,7 @@ export function ConfigForm() {
                                     variant={systemAIProbeResults.results.every(r => r.ok) ? 'success' : 'danger'}
                                     title={systemAIText(lang, systemAIProbeResults.results.every(r => r.ok) ? 'testSuccessTitle' : 'testFailureTitle')}
                                 >
-                                    <p className="text-xs mb-3">{systemAIText(lang, 'testResultsIntro')}</p>
+                                    <p className="text-xs mb-4">{systemAIText(lang, 'testResultsIntro')}</p>
                                     <div className="space-y-2">
                                         {systemAIProbeResults.results.map((result, idx) => {
                                             const roleText = systemAIRoleLabel(lang, result.role, result.role === 'fallback' ? idx : undefined);
@@ -1194,28 +1194,28 @@ export function ConfigForm() {
                                             return (
                                                 <div
                                                     key={`${result.role}-${result.provider}-${result.model}-${idx}`}
-                                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-md border border-slate-200/80 bg-white/90 text-xs text-slate-800"
+                                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 rounded-control border border-line/80 bg-surface/90 text-xs text-ink"
                                                 >
                                                     <div className="flex items-center gap-2 min-w-0">
-                                                        <span className="font-semibold text-slate-900 shrink-0">
+                                                        <span className="font-semibold text-ink shrink-0">
                                                             {roleText}:
                                                         </span>
-                                                        <code className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[11px] truncate">
+                                                        <code className="px-2 py-1 rounded bg-surface-raised text-ink-body font-mono text-2xs truncate">
                                                             {result.provider} / {result.model}
                                                         </code>
                                                     </div>
-                                                    <div className="flex items-center gap-3 shrink-0">
-                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${
-                                                            result.ok ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                                                    <div className="flex items-center gap-4 shrink-0">
+                                                        <span className={`inline-flex items-center px-2 py-1 rounded-full font-semibold ${
+                                                            result.ok ? 'bg-success-soft text-success-ink' : 'bg-danger-soft text-danger-ink'
                                                         }`}>
                                                             {result.ok ? 'OK' : (result.error_code || 'error')}
                                                         </span>
-                                                        <span className="text-slate-500">
+                                                        <span className="text-ink-muted">
                                                             {`${result.elapsed_ms} ms`}
                                                         </span>
                                                     </div>
                                                     {detailText && (
-                                                        <div className="sm:hidden text-[11px] text-slate-600">
+                                                        <div className="sm:hidden text-2xs text-ink-muted">
                                                             {detailText}
                                                         </div>
                                                     )}
@@ -1229,11 +1229,11 @@ export function ConfigForm() {
                     )}
 
                     {/* Dettaglio avanzato per JSON di routing e timeout */}
-                    <details className="rounded-lg border border-slate-200 bg-slate-50/70 p-4 space-y-4">
-                        <summary className="cursor-pointer text-sm font-semibold text-slate-700 select-none">
+                    <details className="rounded-lg border border-line bg-surface-sunken/70 p-4 space-y-4">
+                        <summary className="cursor-pointer text-sm font-semibold text-ink-body select-none">
                             {systemAIText(lang, 'advancedTitle')}
                         </summary>
-                        <p className="text-xs text-slate-600">
+                        <p className="text-xs text-ink-muted">
                             {systemAIText(lang, 'advancedHelp')}
                         </p>
                         {[
@@ -1241,13 +1241,13 @@ export function ConfigForm() {
                             ['ai_timeout_seconds', 'admin.routing.timeout', '120'],
                         ].map(([key, label, fallback]) => (
                             <div key={key} className="space-y-2">
-                                <label htmlFor={key} className="block text-sm font-medium text-slate-700">{t(label)}</label>
+                                <label htmlFor={key} className="block text-sm font-semibold text-ink-body">{t(label)}</label>
                                 <textarea
                                     id={key}
                                     rows={key === 'ai_timeout_seconds' ? 1 : 3}
                                     value={getConfigValue(key) || fallback}
                                     onChange={event => setConfigDraft(key, event.target.value, t(label))}
-                                    className="w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-xs text-slate-900"
+                                    className="w-full rounded-control border border-line-strong bg-surface p-2 font-mono text-xs text-ink"
                                 />
                                 <Button
                                     size="sm"
@@ -1257,8 +1257,8 @@ export function ConfigForm() {
                                 </Button>
                             </div>
                         ))}
-                        <p className="text-xs text-slate-500">{t('admin.routing.example')}</p>
-                        <code className="block overflow-x-auto text-xs text-slate-700 font-mono p-2 bg-white rounded border border-slate-200">
+                        <p className="text-xs text-ink-muted">{t('admin.routing.example')}</p>
+                        <code className="block overflow-x-auto text-xs text-ink-body font-mono p-2 bg-surface rounded border border-line">
                             {'[{"provider":"openrouter","model":"openrouter/free"},{"provider":"omniroute","model":"auto/best-chat"}]'}
                         </code>
                         <ModelContextSettings />
@@ -1267,32 +1267,32 @@ export function ConfigForm() {
             </details>
 
             {/* Placeholder Language Mappings */}
-            <div className="glass-panel p-6 space-y-4">
-                <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
-                    <Layers className="w-5 h-5 text-indigo-600" />
+            <div className="rounded-card border border-line bg-surface shadow-card p-6 space-y-4">
+                <h3 className="text-lg font-semibold text-ink flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-brand" />
                     {t('admin.config.placeholder.title')}
                 </h3>
-                <p className="text-xs text-slate-500 max-w-2xl">
+                <p className="text-xs text-ink-muted max-w-2xl">
                     {t('admin.config.placeholder.desc')}
                 </p>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="border-b border-slate-200">
-                                <th className="text-left py-2 px-3 text-slate-500 font-medium w-24">{t('admin.config.placeholder.code')}</th>
-                                <th className="text-left py-2 px-3 text-slate-500 font-medium">{t('admin.config.placeholder.englishName')}</th>
-                                <th className="text-left py-2 px-3 text-slate-500 font-medium">{t('admin.config.placeholder.nativeName')}</th>
+                            <tr className="border-b border-line">
+                                <th className="text-left py-2 px-4 text-ink-muted font-semibold w-24">{t('admin.config.placeholder.code')}</th>
+                                <th className="text-left py-2 px-4 text-ink-muted font-semibold">{t('admin.config.placeholder.englishName')}</th>
+                                <th className="text-left py-2 px-4 text-ink-muted font-semibold">{t('admin.config.placeholder.nativeName')}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {Object.entries(DEFAULT_PLACEHOLDERS).map(([code]) => {
                                 const val = placeholderDraft[code] || ['', ''];
                                 return (
-                                    <tr key={code} className="border-b border-slate-100">
-                                        <td className="py-2 px-3 font-mono text-slate-700">{code}</td>
-                                        <td className="py-2 px-3">
+                                    <tr key={code} className="border-b border-line">
+                                        <td className="py-2 px-4 font-mono text-ink-body">{code}</td>
+                                        <td className="py-2 px-4">
                                             <input
-                                                className="w-full bg-slate-50 border border-slate-300 rounded-md px-2 py-1.5 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                className="w-full bg-surface-sunken border border-line-strong rounded-control px-2 py-2 text-sm text-ink focus:ring-2 focus:ring-focus outline-none"
                                                 value={val[0]}
                                                 onChange={(e) => {
                                                     setPlaceholderDraft(prev => ({
@@ -1303,9 +1303,9 @@ export function ConfigForm() {
                                                 placeholder={t('admin.config.placeholder.englishPlaceholder')}
                                             />
                                         </td>
-                                        <td className="py-2 px-3">
+                                        <td className="py-2 px-4">
                                             <input
-                                                className="w-full bg-slate-50 border border-slate-300 rounded-md px-2 py-1.5 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                className="w-full bg-surface-sunken border border-line-strong rounded-control px-2 py-2 text-sm text-ink focus:ring-2 focus:ring-focus outline-none"
                                                 value={val[1]}
                                                 onChange={(e) => {
                                                     setPlaceholderDraft(prev => ({
@@ -1323,16 +1323,15 @@ export function ConfigForm() {
                     </table>
                 </div>
                 <div className="flex justify-end pt-2">
-                    <button
+                    <Button
                         onClick={() => {
                             const json = JSON.stringify(placeholderDraft);
                             handleSaveConfig({ key: 'placeholder_language_mappings', value: json, description: 'Language placeholder mapping' });
                         }}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
                     >
                         <Save className="w-4 h-4" />
                         {t('admin.config.placeholder.save')}
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -1341,12 +1340,12 @@ export function ConfigForm() {
 
             {activeSection === 'directives' && (
             <div className="space-y-6">
-                <div className="glass-panel p-6 space-y-6">
-                    <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-amber-600" />
+                <div className="rounded-card border border-line bg-surface shadow-card p-6 space-y-6">
+                    <h3 className="text-lg font-semibold text-ink flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-warning" />
                         {t('admin.config.section.directives')}
                     </h3>
-                    <p className="text-xs text-slate-500 max-w-2xl">
+                    <p className="text-xs text-ink-muted max-w-2xl">
                         {t('admin.config.directives.desc')}
                     </p>
                     {[
@@ -1358,17 +1357,17 @@ export function ConfigForm() {
                         return (
                             <div key={def.key} className="space-y-2">
                                 <div className="flex justify-between items-center">
-                                    <label className="text-sm font-semibold text-slate-700">{def.label}</label>
+                                    <label className="text-sm font-semibold text-ink-body">{def.label}</label>
                                     <button
                                         onClick={() => handleSaveConfig({ key: def.key, value: getConfigValue(def.key), description: def.label })}
-                                        className="p-2 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors shrink-0"
+                                        className="inline-flex items-center justify-center min-h-control min-w-control p-2 hover:bg-surface-raised rounded-control text-brand transition-colors shrink-0"
                                     >
                                         <Save className="w-4 h-4" />
                                     </button>
                                 </div>
-                                {def.hint && <p className="text-xs text-amber-600">{def.hint}</p>}
+                                {def.hint && <p className="text-xs text-warning">{def.hint}</p>}
                                 <textarea
-                                    className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[160px] ring-amber-500 outline-none font-mono text-slate-900 focus:ring-2"
+                                    className="w-full bg-surface-sunken border border-line-strong rounded-lg p-4 text-sm min-h-[160px] ring-warning outline-none font-mono text-ink focus:ring-2"
                                     value={currentVal}
                                     onChange={(e) => setConfigDraft(def.key, e.target.value, def.label)}
                                     placeholder={t('admin.config.directive.placeholder')}
