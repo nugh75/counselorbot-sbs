@@ -162,3 +162,46 @@ def test_ordinary_json_and_braces_stay_visible():
     for text in ('Usa la formula {a + b}.', 'Esempio:\n```json\n{"name": "Ada"}\n```', 'Un insieme {1, 2}'):
         assert strip_for_display(text) == text
         assert extract(text)[0] == text
+
+
+# Shape seen in production (Gemini 2.5 Flash, QPCC step opening in voice mode):
+# the private block arrives first, as bare JSON or in a fence with no label.
+STEP_OPENING_TEXT = ("Con un'auto-percezione di 7 su 9 per l'**A1 (Ansia di parlare in pubblico)**, "
+                     "potresti descrivere cosa fai quando senti che il disagio sale?")
+
+
+def test_bare_recommendations_json_at_the_start_never_reaches_the_student():
+    block = '{\n "recommendations": []\n}'
+    for raw in ('\n' + block + '\n\n' + STEP_OPENING_TEXT,
+                '```\n' + block + '\n```\n' + STEP_OPENING_TEXT,
+                '```json\n' + block + '\n```\n' + STEP_OPENING_TEXT,
+                STEP_OPENING_TEXT + '\n' + block):
+        for end in range(len(raw) + 1):
+            visible = strip_for_display(raw[:end])
+            assert 'recommendations' not in visible and '{' not in visible, raw[:end][-40:]
+            assert '`' not in visible, raw[:end][-40:]
+        assert extract(raw) == (STEP_OPENING_TEXT, {'reading': [], 'strategy': []})
+
+
+def test_bare_recommendations_are_still_recorded():
+    import json
+    from backend.recommendation_blocks import extract_notes
+    hypothesis = 'Sembra che il tuo senso di inadeguatezza emerga quando ti senti valutato.'
+    text = hypothesis + ' Come si manifesta nel lavoro?'
+    note = {'kind': 'hypothesis', 'lens': 'A3', 'text': hypothesis}
+    for recommendations in ([note], note):
+        raw = json.dumps({'recommendations': recommendations}, indent=1) + '\n' + text
+        visible, _ = extract(raw)
+        assert visible == text
+        notes = extract_notes(raw, visible, advice_allowed=False, hypothesis_allowed=True)
+        assert [(n['kind'], n['lens']) for n in notes] == [('hypothesis', 'A3')]
+    raw = '{"reading": ["book"], "strategy": []}\nLeggi Il libro della prova.'
+    assert extract(raw, readings={'book': 'Il libro della prova'}) == (
+        'Leggi Il libro della prova.', {'reading': ['book'], 'strategy': []})
+
+
+def test_ordinary_bare_json_and_unlabelled_code_stay_visible():
+    for text in ('Il formato è {"name": "Ada"} e basta.', 'Codice:\n```\nprint(1)\n```',
+                 'Esempio:\n```\n{"name": "Ada"}\n```'):
+        assert strip_for_display(text) == text
+        assert extract(text)[0] == text

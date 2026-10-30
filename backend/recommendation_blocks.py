@@ -36,6 +36,12 @@ _TAG_BLOCK_RE = re.compile(r"<recommendations(?:\s[^>]*)?>(.*?)</recommendations
 _TAG_OPEN_RE = re.compile(r"<recommendations(?:\s[^>]*)?>", re.IGNORECASE)
 _PARTIAL_TAG_RE = re.compile(r"(?:^|\n)<([A-Za-z]*)$")
 _JSON_OPEN_RE = re.compile(r"```json[ \t]*\r?\n", re.IGNORECASE)
+# Gemini 2.5 Flash, apertura di passo QPCC: il blocco arriva come JSON nudo o in
+# un recinto senza nome, anche in testa alla risposta.
+_BARE_OPEN_RE = re.compile(r'(?:```[ \t]*\r?\n[ \t]*)?\{(?=\s*")')
+_BARE_CLOSE_RE = re.compile(r"\s*```")
+_PARTIAL_BARE_RE = re.compile(r'(?:```[ \t]*\r?\n[ \t]*)?(?:\{\s*(?:"(\w*)("?))?)?')
+_PRIVATE_KEYS = ("recommendations", "reading", "strategy", "notes")
 # Alcuni modelli (Gemini 2.5 Flash, turni di continuazione) avvolgono la
 # risposta in {"answer": ..., "recommendations": ...}, spesso dopo lo stesso
 # testo in prosa e senza recinto: l'answer e' la risposta visibile.
@@ -48,7 +54,10 @@ def _unwrap(data):
     (forma prodotta da alcuni modelli) vale come {"notes": [...]}."""
     if isinstance(data, dict) and set(data) == {"recommendations"}:
         data = data["recommendations"]
-        if isinstance(data, list) and data and all(isinstance(item, dict) and "kind" in item for item in data):
+        if isinstance(data, dict) and "kind" in data:
+            data = [data]
+        # Anche la lista vuota: {"recommendations": []} e' il blocco privato vuoto.
+        if isinstance(data, list) and all(isinstance(item, dict) and "kind" in item for item in data):
             data = {"notes": data}
     return data
 
@@ -58,6 +67,10 @@ def _private_json(raw: str) -> bool:
         data = json.loads(raw)
     except ValueError:
         return False
+    return _private_data(data)
+
+
+def _private_data(data) -> bool:
     data = _unwrap(data)
     return bool(isinstance(data, dict) and data and set(data) <= {"reading", "strategy", "notes"}
                 and ("notes" in data or {"reading", "strategy"} <= set(data))
@@ -127,6 +140,9 @@ def strip_for_display(text: str) -> str:
     for match in _JSON_OPEN_RE.finditer(cleaned):
         if "```" not in cleaned[match.end():]:
             return cleaned[:match.start()].rstrip()
+    partial_bare = _partial_bare(cleaned)
+    if partial_bare is not None:
+        return cleaned[:partial_bare].rstrip()
     trailing_fence = re.search(r'(?:^|\n)`{1,3}$', cleaned)
     if trailing_fence and cleaned[:trailing_fence.start()].count('```') % 2 == 0:
         return re.sub(r'(?:^|\n)`{1,3}$', '', cleaned).rstrip()
@@ -271,7 +287,55 @@ def _remove_blocks(text: str, *, final: bool = True) -> tuple[str, list[str]]:
         return match.group(0)
 
     cleaned = _TAG_BLOCK_RE.sub(_take, BLOCK_RE.sub(_take, text))
-    return _JSON_BLOCK_RE.sub(_take_json, cleaned), payloads + envelope
+    cleaned = _remove_bare(_JSON_BLOCK_RE.sub(_take_json, cleaned), payloads)
+    return cleaned, payloads + envelope
+
+
+def _remove_bare(text: str, payloads: list[str]) -> str:
+    """Toglie il JSON privato nudo o in un recinto senza nome; il resto resta."""
+    parts, pos = [], 0
+    for match in _BARE_OPEN_RE.finditer(text):
+        if match.start() < pos:
+            continue
+        brace = match.end() - 1
+        try:
+            data, end = json.JSONDecoder().raw_decode(text, brace)
+        except ValueError:
+            continue
+        if not _private_data(data):
+            continue
+        if match.group(0).startswith("```") and (close := _BARE_CLOSE_RE.match(text, end)):
+            end = close.end()
+        payloads.append(text[brace:end])
+        parts.append(text[pos:match.start()])
+        pos = end
+    return "".join(parts) + text[pos:]
+
+
+def _partial_bare(text: str) -> int | None:
+    """Inizio di un JSON privato nudo ancora in arrivo, da non mostrare."""
+    for match in _PARTIAL_BARE_RE.finditer(text):
+        if not match.group(0):
+            continue
+        key, closed = match.group(1), match.group(2)
+        fenced = match.group(0).startswith("```")
+        if match.end() == len(text):
+            if "{" not in match.group(0):
+                # Recinto senza nome appena aperto: si aspetta di vedere cosa contiene.
+                if fenced and text[:match.start()].count("```") % 2 == 0:
+                    return match.start()
+                continue
+            if not closed and any(name.startswith(key or "") for name in _PRIVATE_KEYS):
+                return match.start()
+            if closed and key in _PRIVATE_KEYS:
+                return match.start()
+            continue
+        if closed and key in _PRIVATE_KEYS:
+            try:
+                json.JSONDecoder().raw_decode(text, text.index("{", match.start()))
+            except ValueError:
+                return match.start()
+    return None
 
 
 def _first_valid(payloads: list[str]) -> dict | None:
