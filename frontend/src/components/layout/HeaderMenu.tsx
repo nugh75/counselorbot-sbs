@@ -16,7 +16,7 @@ import { HeaderCounselor } from './HeaderCounselor';
 import { HeaderInstrument } from './HeaderInstrument';
 import { ResumeList } from './HeaderResume';
 
-const ROW = 'flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100';
+const ROW = 'flex min-h-control w-full items-center gap-2 px-4 py-2 text-left text-sm text-ink-body hover:bg-surface-raised';
 
 // Menu sotto 1024 px (P5): un pulsante «Menu» con etichetta e un pannello che
 // si apre sotto la barra, a tutta larghezza sul telefono. Disclosure come gli
@@ -82,23 +82,23 @@ export function HeaderMenu({ links, current, pathname, resumeEntries, authentica
     return (
         // Senza `relative`: il pannello si posiziona sulla barra fissa, sotto di essa.
         <div ref={containerRef} onBlur={onBlur}>
-            <button type="button" ref={triggerRef} {...triggerProps} className="console-topbar-action min-h-[44px] font-semibold">
+            <button type="button" ref={triggerRef} {...triggerProps} className="console-topbar-action min-h-control font-semibold">
                 <Menu className="h-5 w-5 shrink-0" aria-hidden="true" />
                 <span>{t('header.menu')}</span>
             </button>
             {open && (
                 <div
                     id="mobile-menu"
-                    className="header-panel absolute inset-x-0 top-full z-[60] max-h-[calc(100dvh-4rem)] divide-y divide-slate-100 overflow-y-auto overscroll-contain border-b border-slate-200 bg-white shadow-lg sm:left-auto sm:right-3 sm:mt-2 sm:max-h-[calc(100dvh-4.5rem)] sm:w-96 sm:rounded-md sm:border dark:divide-slate-700 dark:border-slate-700"
+                    className="header-panel absolute inset-x-0 top-full z-[60] max-h-[calc(100dvh-4rem)] divide-y divide-line overflow-y-auto overscroll-contain border-b border-line bg-surface shadow-pop sm:left-auto sm:right-4 sm:mt-2 sm:max-h-[calc(100dvh-4.5rem)] sm:w-96 sm:rounded-control sm:border"
                 >
-                    {classView && <ClassViewSwitcher access={access} labelled className="px-3 py-2" />}
-                    <nav aria-label={t('header.menuNavigation')} className="divide-y divide-slate-100 dark:divide-slate-700">
+                    {classView && <ClassViewSwitcher access={access} labelled className="px-4 py-2" />}
+                    <nav aria-label={t('header.menuNavigation')} className="divide-y divide-line">
                         {areas.length > 0 && <MenuGroup title={t('header.area')}>{areas.map(renderLink)}</MenuGroup>}
                         <MenuGroup title={t('header.support')}>{support.map(renderLink)}</MenuGroup>
                     </nav>
                     {(instrument || authenticated || resumeVisible) && (
                         <MenuGroup title={t('header.conversation')}>
-                            {instrument && <div className="px-3 py-1"><HeaderInstrument /></div>}
+                            {instrument && <div className="px-4 py-1"><HeaderInstrument /></div>}
                             {authenticated && <HeaderCounselor inline onNavigate={close} />}
                             {resumeVisible && (
                                 <>
@@ -113,14 +113,14 @@ export function HeaderMenu({ links, current, pathname, resumeEntries, authentica
                                         <RotateCcw className="h-4 w-4 shrink-0" />
                                         <span className="min-w-0 flex-1 truncate">{t('frozen.resumeTitle')}</span>
                                         {resumeEntries.count > 0 && (
-                                            <span className="rounded-full bg-slate-100 px-2 text-xs font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-200" aria-hidden="true">
+                                            <span className="rounded-full bg-surface-raised px-2 text-xs font-semibold text-ink-muted" aria-hidden="true">
                                                 {resumeEntries.count}
                                             </span>
                                         )}
                                         <ChevronDown className={cn('h-4 w-4 shrink-0 transition-transform', resumeOpen && 'rotate-180')} />
                                     </button>
                                     {resumeOpen && (
-                                        <div id="mobile-resume" className="ml-4 border-l border-slate-100 dark:border-slate-700">
+                                        <div id="mobile-resume" className="ml-4 border-l border-line">
                                             <ResumeList entries={resumeEntries} onNavigate={close} />
                                         </div>
                                     )}
@@ -149,7 +149,7 @@ function MenuGroup({ title, children }: { title: string; children: ReactNode }) 
     const id = useId();
     return (
         <div role="group" aria-labelledby={id} className="py-1">
-            <div id={id} className="px-3 pb-1 pt-2 text-2xs font-semibold uppercase tracking-wide text-slate-500">{title}</div>
+            <div id={id} className="px-4 pb-1 pt-2 text-2xs font-semibold text-ink-muted">{title}</div>
             {children}
         </div>
     );

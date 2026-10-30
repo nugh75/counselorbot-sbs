@@ -10,13 +10,13 @@ export function CompassEntry({ onOpen }: { onOpen?: () => void }) {
     const { t } = useI18n();
     const { access, loading } = useUserAccess();
     if (loading || !isToolAllowed(access, 'bussola')) return null;
-    const className = 'relative flex w-full cursor-pointer flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 text-left transition-colors hover:border-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 sm:flex-row sm:items-center';
+    const className = 'relative flex w-full cursor-pointer flex-col gap-4 rounded-card border border-line bg-surface p-6 text-left transition-colors hover:border-brand-line focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus sm:flex-row sm:items-center';
     const content = <>
         <Image src="/images/intro/compass.png" alt="" width={144} height={144} sizes="96px" className="h-18 w-18 shrink-0 self-center object-contain sm:h-24 sm:w-24" />
         <div>
-            <h3 className="font-display text-lg font-bold text-slate-900">{t('app.intro.action.compass.label')}</h3>
-            <p className="mt-1 text-sm leading-relaxed text-slate-600">{t('app.intro.action.compass.desc')}</p>
-            <span className="mt-3 inline-flex min-h-11 items-center font-semibold text-indigo-700">{t('app.intro.action.compass.open')}</span>
+            <h3 className="font-display text-lg font-semibold text-ink">{t('app.intro.action.compass.label')}</h3>
+            <p className="mt-1 text-sm leading-relaxed text-ink-muted">{t('app.intro.action.compass.desc')}</p>
+            <span className="mt-4 inline-flex min-h-control items-center font-semibold text-link">{t('app.intro.action.compass.open')}</span>
         </div>
     </>;
     return onOpen

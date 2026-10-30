@@ -35,11 +35,13 @@ const OpenCodeExperience = dynamic(
 );
 import { MessageSquare, Terminal, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { FlowStepper } from '@/components/ui/FlowStepper';
 import { IntroScreen } from '@/components/home/IntroScreen';
 import { FeedbackEntry } from '@/components/home/FeedbackEntry';
 import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
+import { Card } from '@/components/ui/Card';
 import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker';
 import { canUseTeacherAssistant } from '@/lib/roles';
 import { readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId } from '@/lib/notebook-context';
@@ -933,9 +935,9 @@ export default function Home() {
     if (identity === undefined) {
         return (
             <div className="page-narrow">
-                <div className="glass-panel p-8 text-center text-sm text-slate-500">
+                <Card className="p-8 text-center text-sm text-ink-muted">
                     {t('home.auth.loading')}
-                </div>
+                </Card>
             </div>
         );
     }
@@ -943,22 +945,22 @@ export default function Home() {
     if (!identity?.authenticated) {
         return (
             <div className="page-narrow">
-                <div className="glass-panel p-8 text-center space-y-5">
+                <Card className="p-8 text-center space-y-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">{t('home.auth.title')}</h1>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                        <h1 className="text-2xl font-semibold text-ink">{t('home.auth.title')}</h1>
+                        <p className="mt-2 text-sm leading-relaxed text-ink-muted">
                             {t('home.auth.body')}
                         </p>
                     </div>
                     <a
                         href={loginHref('/')}
-                        className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
+                        className="inline-flex items-center gap-2 rounded-control min-h-control bg-brand px-6 py-2 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover"
                     >
                         <LogIn className="h-4 w-4" />
                         {t('home.auth.cta')}
                     </a>
-                </div>
-                <FeedbackEntry className="mt-5" />
+                </Card>
+                <FeedbackEntry className="mt-6" />
             </div>
         );
     }
@@ -966,9 +968,9 @@ export default function Home() {
     if (!ready || preparingInstrument) {
         return (
             <div className="page-narrow">
-                <div className="glass-panel p-8 text-center text-sm text-slate-500">
+                <Card className="p-8 text-center text-sm text-ink-muted">
                     {t('home.auth.loading')}
-                </div>
+                </Card>
             </div>
         );
     }
@@ -1038,8 +1040,7 @@ export default function Home() {
 
                     {step === 'counselor-select' && counselorRequest && (
                         <section className="space-y-4">
-                            <h1 className="text-2xl font-bold text-slate-900">{t('setup.counselor')}</h1>
-                            <p className="text-sm text-slate-600">{t('setup.compatibility', { instrument: counselorRequest.questionnaire.name })}</p>
+                            <PageHeader title={t('setup.counselor')} subtitle={t('setup.compatibility', { instrument: counselorRequest.questionnaire.name })} />
                             <CounselorSelector questionnaireType={counselorRequest.questionnaire.id}
                                 questionnaireName={counselorRequest.questionnaire.name} initialSelectedId={counselorRequest.previousId}
                                 busy={starting} onBack={goBack} onContinue={(id) => {
@@ -1079,7 +1080,7 @@ export default function Home() {
                     {/* Step: Dashboard with Profile. */}
                     {step === 'dashboard' && scores && selectedQuestionnaire && (
                         <div className="space-y-4 animate-fade-in-up">
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-4">
                                 <BackButton onClick={goBack} label={t('nav.back')} />
                                 <ForwardButton onClick={() => setStep('chat-settings')} label={t('dashboard.ready.btn')} disabled={starting} />
                             </div>
@@ -1115,7 +1116,7 @@ export default function Home() {
 
                     {/* Step: Guided Chat Interaction */}
                     {step === 'interaction' && scores && selectedQuestionnaire && (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {experience !== 'standard' && <BackButton onClick={goBack} label={t('nav.back')} />}
                             {experience === null ? (
                                 /* Solo per gli strumenti agent-only (SAVICKAS, Eventi,
@@ -1123,16 +1124,16 @@ export default function Home() {
                                     scheda Impostazioni, quindi mantengono la scelta compatta.
                                     La logica è la stessa chooseExperience del flusso standard. */
                                 <div className="max-w-md mx-auto">
-                                    <div className="glass-panel p-6 text-center space-y-4">
+                                    <Card className="p-6 text-center space-y-4">
                                         <div>
-                                            <h3 className="text-base font-semibold text-slate-800">{t('experience.choose.title')}</h3>
-                                            <p className="text-sm text-slate-500 mt-1">{t('experience.choose.sub')}</p>
+                                            <h3 className="text-base font-semibold text-ink">{t('experience.choose.title')}</h3>
+                                            <p className="text-sm text-ink-muted mt-1">{t('experience.choose.sub')}</p>
                                         </div>
-                                        {selectedQuestionnaire.id !== 'IDEA' && <label className="flex min-h-11 items-center gap-3 text-left text-sm text-slate-600">
-                                            <input type="checkbox" checked={rememberExperience} onChange={event => setRememberExperience(event.target.checked)} className="h-4 w-4 accent-indigo-600" />
+                                        {selectedQuestionnaire.id !== 'IDEA' && <label className="flex min-h-control items-center gap-4 text-left text-sm text-ink-muted">
+                                            <input type="checkbox" checked={rememberExperience} onChange={event => setRememberExperience(event.target.checked)} className="h-4 w-4 accent-brand" />
                                             {t('experience.remember')}
                                         </label>}
-                                        <div className="grid sm:grid-cols-2 gap-2.5">
+                                        <div className="grid sm:grid-cols-2 gap-2">
                                             <Button onClick={() => chooseExperience('standard')} className="w-full">
                                                 <MessageSquare className="w-4 h-4" />
                                                 {t('guided.mode.guided')}
@@ -1142,16 +1143,16 @@ export default function Home() {
                                                 {t('guided.mode.sandbox')}
                                             </Button>
                                         </div>
-                                        <div className="mt-4 flex flex-col items-center gap-1.5">
-                                            <p className="text-xs font-semibold text-slate-500">{t('responseLength.label')}</p>
+                                        <div className="mt-4 flex flex-col items-center gap-2">
+                                            <p className="text-xs font-semibold text-ink-muted">{t('responseLength.label')}</p>
                                             <ResponseLengthSelector value={responseLength} onChange={handleResponseLengthChange} />
                                             {reasoningCapable && <>
-                                                <p className="mt-2 text-xs font-semibold text-slate-500">{t('reasoning.label')}</p>
+                                                <p className="mt-2 text-xs font-semibold text-ink-muted">{t('reasoning.label')}</p>
                                                 <ReasoningSelector value={reasoningEffort} onChange={handleReasoningChange} mandatory={reasoningMandatory} />
-                                                {reasoningMandatory && <p className="max-w-xs rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-center text-xs text-amber-900">{t('reasoning.mandatory')}</p>}
+                                                {reasoningMandatory && <p className="max-w-xs rounded-control border border-warning-line bg-warning-soft px-2 py-2 text-center text-xs text-warning-ink">{t('reasoning.mandatory')}</p>}
                                             </>}
                                         </div>
-                                    </div>
+                                    </Card>
                                 </div>
                             ) : experience === 'standard' ? (
                                 /* Schermata 3: chat (modalità già scelta, nessun toggle in alto). */
@@ -1205,10 +1206,10 @@ export default function Home() {
                     {/* Step: Completed */}
                     {step === 'completed' && (
                         <div className="max-w-xl mx-auto">
-                            <div className="glass-panel p-8 text-center space-y-6">
+                            <Card className="p-8 text-center space-y-6">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-slate-800">{t('completed.title')}</h2>
-                                    <p className="text-slate-500 mt-2">
+                                    <h2 className="text-2xl font-semibold text-ink">{t('completed.title')}</h2>
+                                    <p className="text-ink-muted mt-2">
                                         {t('completed.body1')} <strong>{selectedQuestionnaire?.name}</strong>.
                                     </p>
                                 </div>
@@ -1221,22 +1222,22 @@ export default function Home() {
                                 {fromPlan && (
                                     <Link
                                         href="/profilo/piani-operativi"
-                                        className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                        className="inline-flex min-h-control w-full items-center justify-center rounded-control border border-line-strong bg-surface px-6 py-2 text-sm font-semibold text-ink-body hover:bg-surface-sunken"
                                     >
                                         {administrationStepText(lang, 'back')}
                                     </Link>
                                 )}
-                            </div>
+                            </Card>
                         </div>
                     )}
 
                     {/* Step: Farewell — commiato, feedback opzionale e ritorno all'inizio del percorso. */}
                     {step === 'farewell' && (
                         <div className="max-w-xl mx-auto">
-                            <div className="glass-panel p-8 text-center space-y-6">
+                            <Card className="p-8 text-center space-y-6">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-slate-800">{t('farewell.title')}</h2>
-                                    <p className="text-slate-500 mt-3">
+                                    <h2 className="text-2xl font-semibold text-ink">{t('farewell.title')}</h2>
+                                    <p className="text-ink-muted mt-4">
                                         {t('farewell.body')}
                                     </p>
                                 </div>
@@ -1246,7 +1247,7 @@ export default function Home() {
                                         href="/questionario"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-ochre-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-ochre-700"
+                                        className="inline-flex min-h-control w-full items-center justify-center rounded-control bg-move px-6 py-2 text-sm font-semibold text-ink-on-brand transition-colors hover:bg-move-hover"
                                     >
                                         {t('farewell.feedback')}
                                     </a>
@@ -1254,7 +1255,7 @@ export default function Home() {
                                         {t('farewell.home')}
                                     </Button>
                                 </div>
-                            </div>
+                            </Card>
                         </div>
                     )}
                 </motion.div>

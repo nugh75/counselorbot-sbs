@@ -381,7 +381,7 @@ export function CounselorCover({
 
     return (
         <div
-            className={`group relative aspect-[16/9] w-full overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100 shadow-xs ${heightClass} ${className}`}
+            className={`group relative aspect-[16/9] w-full overflow-hidden rounded-control border border-line bg-surface-raised ${heightClass} ${className}`}
         >
             {hasImage ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -404,7 +404,7 @@ export function CounselorCover({
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-black/70 px-2 py-0.5 text-2xs font-semibold text-white shadow-sm backdrop-blur-xs transition-colors hover:bg-black/90 border border-white/20"
+                            className="inline-flex min-h-control items-center gap-2 rounded-control bg-black/70 px-2 py-1 text-2xs font-semibold text-white transition-colors hover:bg-black/90 border border-white/20"
                             title={t('counselor.cover.videoWatch')}
                         >
                             <Play className="h-2.5 w-2.5 fill-white text-white" />
@@ -412,7 +412,7 @@ export function CounselorCover({
                         </a>
                     ) : (
                         <span
-                            className="inline-flex items-center gap-1.5 rounded-md bg-black/70 px-2 py-0.5 text-2xs font-semibold text-white shadow-sm backdrop-blur-xs border border-white/20"
+                            className="inline-flex items-center gap-2 rounded-control bg-black/70 px-2 py-1 text-2xs font-semibold text-white border border-white/20"
                             title={t('counselor.cover.videoAvailable')}
                         >
                             <Play className="h-2.5 w-2.5 fill-white text-white" />

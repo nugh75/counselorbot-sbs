@@ -45,6 +45,6 @@ export function AccountSetupGate({ children }: { children: React.ReactNode }) {
         return () => { active = false; };
     }, [pathname, router, retry]);
     if (error) return <div className="page-wide space-y-4" role="alert"><p>{t('setup.error')}</p><Button onClick={() => setRetry(n => n + 1)}>{t('setup.retry')}</Button></div>;
-    if (loadedPath !== pathname) return <div className="mx-auto mt-16 h-1 w-24 animate-pulse rounded bg-slate-200" aria-busy="true" />;
+    if (loadedPath !== pathname) return <div className="mx-auto mt-16 h-1 w-24 animate-pulse rounded bg-line" aria-busy="true" />;
     return children;
 }

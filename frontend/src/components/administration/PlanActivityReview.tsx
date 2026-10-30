@@ -25,11 +25,11 @@ export function PlanActivityReview({sessionId, instrument}: {sessionId: string; 
     }, [sessionId, retry]);
     return <div className="space-y-4">
         <SessionReport sessionId={sessionId} questionnaireType={instrument} />
-        <details className="rounded-xl border border-slate-200 p-3 text-left">
+        <details className="rounded-card border border-line p-4 text-left">
             <summary className="cursor-pointer py-2 font-semibold">{pathActivityText(lang, 'conversation')}</summary>
             {error && <p role="alert">{pathActivityText(lang, 'error')} <Button onClick={() => setRetry(value => value + 1)}>{pathActivityText(lang, 'retry')}</Button></p>}
-            <div className="space-y-3">{messages.map((message, index) => <div key={index}
-                className={`min-w-0 rounded-lg p-3 ${message.role === 'student' ? 'ml-4 bg-indigo-50' : 'border border-slate-200 bg-white'}`}>
+            <div className="space-y-4">{messages.map((message, index) => <div key={index}
+                className={`min-w-0 rounded-card p-4 ${message.role === 'student' ? 'ml-4 bg-brand-soft' : 'border border-line bg-surface'}`}>
                 <ChatMarkdown content={message.text} locale={lang} errorMessage={pathActivityText(lang, 'error')} />
             </div>)}</div>
         </details>

@@ -15,11 +15,11 @@ import { useI18n } from '@/lib/i18n-context';
 import { getSelectedCounselorId } from '@/lib/counselor';
 import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
 import { Callout } from '@/components/ui/Callout';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { clearPqblProgress, loadPqblProgress, savePqblProgress } from '@/lib/pqbl-progress';
 import type { Lang } from '@/lib/i18n';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 
 type Phase = 'setup' | 'generating' | 'onboarding' | 'quiz' | 'summary' | 'final' | 'finalResults';
 
@@ -443,9 +443,9 @@ export default function PqblPage() {
             <PersonalAreaHeader slug="pqbl" />
 
             {restoredProgress && (
-                <div className="flex flex-wrap items-center gap-4 rounded-lg border border-info-line bg-info-soft px-4 py-4 text-sm text-info-ink" role="status">
+                <div className="flex flex-wrap items-center gap-4 rounded-card border border-info-line bg-info-soft px-4 py-4 text-sm text-info-ink" role="status">
                     <span>{t('pqbl.resume.restored')}</span>
-                    <button type="button" onClick={restart} className="inline-flex min-h-control items-center font-semibold underline underline-offset-2">
+                    <button type="button" onClick={restart} className="min-h-control font-semibold underline underline-offset-2">
                         {t('pqbl.resume.restart')}
                     </button>
                 </div>
@@ -464,7 +464,7 @@ export default function PqblPage() {
                         <button
                             type="button"
                             onClick={() => startPolling(documentInfo.document_id)}
-                            className="inline-flex min-h-control items-center font-semibold underline underline-offset-2"
+                            className="min-h-control font-semibold underline underline-offset-2"
                         >
                             {t('pqbl.connection.retry')}
                         </button>
@@ -479,7 +479,7 @@ export default function PqblPage() {
             {/* Setup: dimensione sessione + upload */}
             {phase === 'setup' && (
                 <div className="space-y-6">
-                    <Card className="p-6">
+                    <Card>
                         <p className="text-sm font-semibold text-ink-body mb-4">{t('pqbl.setup.sizeLabel')}</p>
                         <div className="grid grid-cols-3 gap-4">
                             {SESSION_SIZES.map((n) => (
@@ -487,7 +487,7 @@ export default function PqblPage() {
                                     key={n}
                                     onClick={() => setSize(n)}
                                     className={cn(
-                                        'rounded-lg border-2 py-4 text-center transition-colors',
+                                        'min-h-control rounded-control border py-4 text-center transition-colors',
                                         size === n
                                             ? 'border-brand bg-brand-soft text-link'
                                             : 'border-line bg-surface text-ink-muted hover:border-brand-line',
@@ -506,7 +506,7 @@ export default function PqblPage() {
                         onDragLeave={handleDrag}
                         onDrop={handleDrop}
                         className={cn(
-                            'relative flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg transition-colors bg-surface',
+                            'relative flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-card transition-colors bg-surface',
                             isDragging ? 'border-brand bg-brand-soft' : 'border-line-strong hover:border-brand-line',
                             isUploading ? 'pointer-events-none opacity-50' : '',
                         )}
@@ -514,14 +514,14 @@ export default function PqblPage() {
                         {isUploading ? (
                             <div className="flex flex-col items-center animate-pulse space-y-4">
                                 <UploadCloud className="w-12 h-12 text-link animate-bounce" />
-                                <p className="text-lg text-ink">{t('pqbl.upload.analyzing')}</p>
+                                <p className="text-lg font-semibold text-ink">{t('pqbl.upload.analyzing')}</p>
                             </div>
                         ) : (
                             <>
                                 <div className="p-4 rounded-control bg-brand-soft mb-4">
                                     <FileType className="w-8 h-8 text-link" />
                                 </div>
-                                <p className="text-lg text-ink mb-1">{t('pdf.drop')}</p>
+                                <p className="text-lg font-semibold text-ink mb-1">{t('pdf.drop')}</p>
                                 <p className="text-sm text-ink-muted mb-6">{t('pdf.or')}</p>
                                 <input
                                     type="file"
@@ -533,12 +533,12 @@ export default function PqblPage() {
                                         if (file) startUpload(file);
                                     }}
                                 />
-                                <button
+                                <Button
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="min-h-control px-6 py-2 rounded-control bg-brand hover:bg-brand-hover text-ink-on-brand transition-colors text-sm"
+                                    size="lg"
                                 >
                                     {t('pdf.select')}
-                                </button>
+                                </Button>
                             </>
                         )}
                     </div>
@@ -548,7 +548,7 @@ export default function PqblPage() {
 
             {/* Generazione in corso */}
             {phase === 'generating' && (
-                <Card className="p-10 text-center space-y-6">
+                <Card className="p-10 text-center space-y-4">
                     <Loader2 className="w-10 h-10 mx-auto text-link animate-spin" />
                     <h2 className="text-xl font-semibold text-ink">{t('pqbl.generating.title')}</h2>
                     {documentInfo && documentInfo.chunks_total > 0 && (
@@ -584,7 +584,7 @@ export default function PqblPage() {
             {/* Onboarding (R4): le domande non sono un esame */}
             {phase === 'onboarding' && documentInfo && (
                 <div className="space-y-4">
-                    <Card className="p-6 space-y-4">
+                    <Card className="space-y-4">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-control bg-warning-soft flex items-center justify-center">
                                 <Lightbulb className="w-5 h-5 text-warning" />
@@ -593,7 +593,7 @@ export default function PqblPage() {
                         </div>
                         <p className="text-ink-muted leading-relaxed">{documentInfo.onboarding_text}</p>
                     </Card>
-                    <Card className="p-6">
+                    <Card>
                         <div className="flex items-center gap-2 mb-4">
                             <Target className="w-4 h-4 text-link" />
                             <h3 className="text-sm font-semibold text-ink-body">{t('pqbl.onboarding.skills')}</h3>
@@ -609,7 +609,8 @@ export default function PqblPage() {
                     </Card>
                     <Button
                         onClick={startLearningSession}
-                        size="lg" className="w-full text-base"
+                        size="lg"
+                        className="w-full"
                     >
                         {t('pqbl.onboarding.start')}
                     </Button>
@@ -641,7 +642,7 @@ export default function PqblPage() {
                         />
                     </div>
 
-                    <Card className="p-6 space-y-4">
+                    <Card className="space-y-4">
                         <h2 className="text-lg font-semibold text-ink">{currentQuestion.question}</h2>
                         <div className="space-y-4">
                             {currentQuestion.options.map((option) => {
@@ -652,7 +653,7 @@ export default function PqblPage() {
                                         <button
                                             onClick={() => answerOption(option.key)}
                                             className={cn(
-                                                'w-full text-left rounded-lg border-2 px-4 py-4 text-sm transition-colors flex items-start gap-4',
+                                                'w-full min-h-control text-left rounded-control border px-4 py-4 text-sm transition-colors flex items-start gap-4',
                                                 result
                                                     ? result.correct
                                                         ? 'border-success-line bg-success-soft'
@@ -689,7 +690,8 @@ export default function PqblPage() {
                     {currentAnsweredCorrect && (
                         <Button
                             onClick={goNext}
-                            size="lg" className="w-full text-base"
+                            size="lg"
+                        className="w-full"
                         >
                             {currentIndex + 1 < questions.length ? t('pqbl.quiz.next') : t('pqbl.quiz.finish')}
                         </Button>
@@ -700,7 +702,7 @@ export default function PqblPage() {
             {/* Riepilogo sessione (R8) */}
             {phase === 'summary' && summary && (
                 <div className="space-y-4">
-                    <Card className="p-6 space-y-6">
+                    <Card className="space-y-4">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-control bg-success-soft flex items-center justify-center">
                                 <ListChecks className="w-5 h-5 text-success" />
@@ -708,17 +710,17 @@ export default function PqblPage() {
                             <h2 className="text-xl font-semibold text-ink">{t('pqbl.summary.title')}</h2>
                         </div>
                         <div className="grid grid-cols-3 gap-4 text-center">
-                            <div className="rounded-lg bg-surface-sunken p-4">
+                            <div className="rounded-control bg-surface-sunken p-4">
                                 <div className="text-2xl font-semibold text-link">
                                     {summary.first_try_correct}/{summary.total_questions}
                                 </div>
                                 <div className="text-xs text-ink-muted mt-1">{t('pqbl.summary.firstTry')}</div>
                             </div>
-                            <div className="rounded-lg bg-surface-sunken p-4">
+                            <div className="rounded-control bg-surface-sunken p-4">
                                 <div className="text-2xl font-semibold text-ink-body">{summary.answered_questions}</div>
                                 <div className="text-xs text-ink-muted mt-1">{t('pqbl.summary.answered')}</div>
                             </div>
-                            <div className="rounded-lg bg-surface-sunken p-4">
+                            <div className="rounded-control bg-surface-sunken p-4">
                                 <div className="text-2xl font-semibold text-ink-body">{formatTime(summary.estimated_seconds)}</div>
                                 <div className="text-xs text-ink-muted mt-1">{t('pqbl.summary.time')}</div>
                             </div>
@@ -736,22 +738,23 @@ export default function PqblPage() {
                         </div>
                     </Card>
 
-                    <Card className="p-6 space-y-4">
+                    <Card className="space-y-4">
                         <p className="text-sm text-ink-muted">{t('pqbl.summary.finalDesc')}</p>
                         <div className="grid grid-cols-2 gap-4">
                             <Button
                                 onClick={startFinalTest}
-                                size="lg" className="text-base"
+                                size="lg"
                             >
                                 {t('pqbl.summary.finalCta')}
                             </Button>
-                            <button
+                            <Button
                                 onClick={restart}
-                                className="py-4 bg-surface hover:bg-surface-sunken border border-line text-ink-body font-semibold rounded-control transition-colors flex items-center justify-center gap-2"
+                                variant="secondary"
+                                size="lg"
                             >
                                 <RotateCcw className="w-4 h-4" />
                                 {t('pqbl.summary.restart')}
-                            </button>
+                            </Button>
                         </div>
                     </Card>
                 </div>
@@ -760,12 +763,12 @@ export default function PqblPage() {
             {/* Test finale (R7): risposta unica per domanda, feedback alla fine */}
             {phase === 'final' && (
                 <div className="space-y-4">
-                    <Card className="p-6">
+                    <Card>
                         <h2 className="text-xl font-semibold text-ink">{t('pqbl.final.title')}</h2>
                         <p className="text-sm text-ink-muted mt-1">{t('pqbl.final.desc')}</p>
                     </Card>
                     {finalQuestions.map((q, idx) => (
-                        <Card key={q.id} className="p-6 space-y-4">
+                        <Card key={q.id} className="space-y-4">
                             <h3 className="font-semibold text-ink">
                                 {idx + 1}. {q.question}
                             </h3>
@@ -778,7 +781,7 @@ export default function PqblPage() {
                                             setFinalWarning(false);
                                         }}
                                         className={cn(
-                                            'w-full min-h-control text-left rounded-lg border-2 px-4 py-2 text-sm transition-colors flex items-start gap-4',
+                                            'w-full min-h-control text-left rounded-control border px-4 py-2 text-sm transition-colors flex items-start gap-4',
                                             finalAnswers[q.id] === option.key
                                                 ? 'border-brand bg-brand-soft'
                                                 : 'border-line bg-surface hover:border-brand-line',
@@ -793,11 +796,12 @@ export default function PqblPage() {
                     ))}
                     <StickyActions>
                         {finalWarning && (
-                            <p className="text-sm text-warning-ink mb-2 text-center">{t('pqbl.final.unanswered')}</p>
+                            <p className="text-sm text-warning mb-2 text-center">{t('pqbl.final.unanswered')}</p>
                         )}
                         <Button
                             onClick={submitFinalTest}
-                            size="lg" className="w-full text-base"
+                            size="lg"
+                            className="w-full"
                         >
                             {t('pqbl.final.submit')}
                         </Button>
@@ -808,14 +812,14 @@ export default function PqblPage() {
             {/* Risultati test finale */}
             {phase === 'finalResults' && finalResult && (
                 <div className="space-y-4">
-                    <Card className="p-6 text-center space-y-2">
+                    <Card className="text-center space-y-2">
                         <h2 className="text-xl font-semibold text-ink">{t('pqbl.final.score')}</h2>
                         <div className="text-4xl font-semibold text-link">
                             {finalResult.score}/{finalResult.total}
                         </div>
                     </Card>
                     {finalResult.results.map((row, idx) => (
-                        <Card key={row.question_id} className="p-6 space-y-2">
+                        <Card key={row.question_id} className="space-y-2">
                             <h3 className="font-semibold text-ink">{idx + 1}. {row.question}</h3>
                             <div className="flex items-center gap-2 text-sm">
                                 {row.correct
@@ -834,13 +838,15 @@ export default function PqblPage() {
                         </Card>
                     ))}
 
-                    <button
+                    <Button
                         onClick={restart}
-                        className="w-full py-4 bg-surface hover:bg-surface-sunken border border-line text-ink-body font-semibold rounded-control transition-colors flex items-center justify-center gap-2"
+                        variant="secondary"
+                        size="lg"
+                        className="w-full"
                     >
                         <RotateCcw className="w-4 h-4" />
                         {t('pqbl.summary.restart')}
-                    </button>
+                    </Button>
                 </div>
             )}
         </div>

@@ -9,11 +9,14 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { CompassEntry } from '@/components/home/CompassEntry';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { resumeLabel } from '@/lib/resume-label';
 import { PersonalAreaEntry } from '@/components/home/PersonalAreaEntry';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
-import { AlertTriangle, ArrowLeft, BookOpen, ExternalLink, RotateCcw, Snowflake, Sparkles, X } from 'lucide-react';
+import { AlertTriangle, BookOpen, ExternalLink, RotateCcw, Snowflake, Sparkles, X } from 'lucide-react';
 import { QUESTIONNAIRE_LIST, QuestionnaireConfig, QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
@@ -141,21 +144,9 @@ export function ReturningHome({
     const isAdministrationLang = instrumentCatalog?.some((row) => row.available_locales.includes(lang)) ?? false;
     const isUnavailableQuestionnaireLang = lang !== 'it' && instrumentCatalog !== null && !isAdministrationLang;
     return (
-        <div className="flex flex-col gap-5 py-2">
+        <div className="flex flex-col gap-6 py-2">
             <section>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={onOpenIntro}
-                            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-indigo-300 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                        >
-                            <ArrowLeft className="h-4 w-4" />
-                            <span>{t('base.backToIntro')}</span>
-                        </button>
-                        <h1 className="font-display text-3xl font-bold text-slate-900">{t('base.instruments.title')}</h1>
-                    </div>
-                </div>
+                <PageHeader title={t('base.instruments.title')} onBack={onOpenIntro} backLabel={t('base.backToIntro')} />
             </section>
 
             {!isClassContentHidden(access) && currentPath && (
@@ -168,18 +159,18 @@ export function ReturningHome({
             )}
 
             {pausedChat && (
-                <section className="flex items-start gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3" role="status">
-                    <Snowflake className="mt-0.5 h-5 w-5 shrink-0 text-indigo-700" aria-hidden="true" />
+                <section className="flex items-start gap-4 rounded-card border border-brand-line bg-brand-soft p-4" role="status">
+                    <Snowflake className="mt-1 h-5 w-5 shrink-0 text-link" aria-hidden="true" />
                     <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-indigo-900">
+                        <p className="text-sm font-semibold text-link">
                             {t('selector.paused.title', { tool: tf(`q.${pausedChat.questionnaireId}.name`, pausedChat.questionnaireId) })}
                         </p>
-                        <p className="mt-0.5 text-sm text-slate-600">{t('selector.paused.body')}</p>
+                        <p className="mt-1 text-sm text-ink-muted">{t('selector.paused.body')}</p>
                     </div>
                     {/* Riprendere ricarica la pagina: la home legge lo snapshot al mount. */}
                     <a
                         href={resumeHref(frozen.find(row => row.session_id === pausedChat.sessionId) ?? { session_id: pausedChat.sessionId })}
-                        className="inline-flex min-h-[44px] shrink-0 items-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+                        className="inline-flex min-h-control shrink-0 items-center rounded-control bg-brand px-4 py-2 text-sm font-semibold text-ink-on-brand transition-colors hover:bg-brand-hover"
                     >
                         {t('selector.paused.resume')}
                     </a>
@@ -188,7 +179,7 @@ export function ReturningHome({
                             type="button"
                             onClick={onDismissPausedChat}
                             aria-label={t('selector.paused.dismiss')}
-                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-indigo-700 transition-colors hover:bg-indigo-100"
+                            className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control text-link transition-colors hover:bg-brand-soft"
                         >
                             <X className="h-4 w-4" />
                         </button>
@@ -196,25 +187,25 @@ export function ReturningHome({
                 </section>
             )}
 
-            <div id="home-catalog-section" className="flex flex-col gap-5">
+            <div id="home-catalog-section" className="flex flex-col gap-6">
             <section>
                 <CompassEntry />
                 {suggestions.length > 0 && !isUnavailableQuestionnaireLang && (
-                    <section className="mt-5" aria-labelledby="home-suggested-title">
-                        <h2 id="home-suggested-title" className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                            <Sparkles className="h-5 w-5 text-indigo-600" aria-hidden="true" />
+                    <section className="mt-6" aria-labelledby="home-suggested-title">
+                        <h2 id="home-suggested-title" className="flex items-center gap-2 text-lg font-semibold text-ink">
+                            <Sparkles className="h-5 w-5 text-link" aria-hidden="true" />
                             {t('selector.suggested.title')}
                         </h2>
-                        <div className="mt-3 grid gap-3 md:grid-cols-3">
+                        <div className="mt-4 grid gap-4 md:grid-cols-3">
                             {suggestions.map((suggestion) => {
                                 const q = activeInstrumentById.get(suggestion.id);
                                 if (!q) return null;
                                 const paused = suggestion.source === 'paused' ? pausedByTool.get(q.id) : undefined;
-                                const className = 'glass-panel flex flex-col gap-1 p-4 text-left transition-colors hover:border-indigo-300';
+                                const className = 'flex flex-col gap-1 rounded-card border border-line bg-surface p-4 text-left shadow-card transition-colors hover:border-brand-line';
                                 const body = (
                                     <>
-                                        <span className="font-bold text-slate-900">{tf(`q.${q.id}.name`, q.name)}</span>
-                                        <span className="text-sm text-slate-500">
+                                        <span className="font-semibold text-ink">{tf(`q.${q.id}.name`, q.name)}</span>
+                                        <span className="text-sm text-ink-muted">
                                             {suggestion.source === 'paused' ? t('selector.suggested.paused') : suggestion.reason}
                                         </span>
                                     </>
@@ -227,19 +218,15 @@ export function ReturningHome({
                     </section>
                 )}
                 {isUnavailableQuestionnaireLang && (
-                    <section className="mt-5 flex flex-col gap-4 rounded-xl border-2 border-amber-300 bg-amber-50 p-5 sm:flex-row sm:items-center">
-                        <AlertTriangle className="h-7 w-7 shrink-0 text-amber-700" />
+                    <section className="mt-6 flex flex-col gap-4 rounded-card border border-warning-line bg-warning-soft p-6 sm:flex-row sm:items-center">
+                        <AlertTriangle className="h-6 w-6 shrink-0 text-warning" />
                         <div className="flex-1">
-                            <h2 className="font-bold text-amber-950">{t('selector.unavailable.title')}</h2>
-                            <p className="mt-1 text-sm leading-relaxed text-amber-900">{t('selector.unavailable.body')}</p>
+                            <h2 className="font-semibold text-warning-ink">{t('selector.unavailable.title')}</h2>
+                            <p className="mt-1 text-sm leading-relaxed text-warning-ink">{t('selector.unavailable.body')}</p>
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => setLang('en')}
-                            className="inline-flex min-h-[44px] shrink-0 items-center rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-800"
-                        >
+                        <Button variant="secondary" onClick={() => setLang('en')} className="shrink-0">
                             {t('selector.unavailable.switchEnglish')}
-                        </button>
+                        </Button>
                     </section>
                 )}
                 <nav className="mt-4 flex flex-wrap gap-2" aria-label={t('base.categories.label')}>
@@ -247,20 +234,20 @@ export function ReturningHome({
                         <a
                             key={group.id}
                             href={`#tools-${group.id}`}
-                            className="inline-flex min-h-[44px] items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-indigo-300 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                            className="inline-flex min-h-control items-center rounded-full border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-muted transition-colors hover:border-brand-line hover:text-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                         >
                             {t(`base.category.${group.id}`)}
                         </a>
                     ))}
-                    <Link href="/profilo" className="inline-flex min-h-11 items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-700">{t('app.intro.compact.workspace.title')}</Link>
+                    <Link href="/profilo" className="inline-flex min-h-control items-center rounded-full border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-muted hover:border-brand-line hover:text-link">{t('app.intro.compact.workspace.title')}</Link>
                 </nav>
                 {lang !== 'it' && catalogLoading && (
-                    <p className="mt-3 text-sm text-slate-500" role="status">{t('base.catalog.loading')}</p>
+                    <p className="mt-4 text-sm text-ink-muted" role="status">{t('base.catalog.loading')}</p>
                 )}
                 {lang !== 'it' && catalogError && (
-                    <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
+                    <div className="mt-4 flex flex-wrap items-center gap-4 rounded-card border border-warning-line bg-warning-soft p-4 text-sm text-warning-ink" role="alert">
                         <span>{t('base.catalog.error')}</span>
-                        <button type="button" onClick={retryCatalog} className="font-semibold text-amber-950 underline underline-offset-2">
+                        <button type="button" onClick={retryCatalog} className="inline-flex min-h-control items-center font-semibold text-warning-ink underline underline-offset-2">
                             {t('base.catalog.retry')}
                         </button>
                     </div>
@@ -272,7 +259,7 @@ export function ReturningHome({
                             : '/images/intro/paths.png';
                         return (
                         <section key={group.id} id={`tools-${group.id}`} className="scroll-mt-24">
-                            <div className="flex items-center gap-3.5">
+                            <div className="flex items-center gap-4">
                                 <div className="relative h-14 w-14 shrink-0">
                                     <Image
                                         src={categoryImage}
@@ -283,10 +270,10 @@ export function ReturningHome({
                                     />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-bold text-slate-900">{t(`base.category.${group.id}`)}</h2>
+                                    <h2 className="text-lg font-semibold text-ink">{t(`base.category.${group.id}`)}</h2>
                                 </div>
                             </div>
-                            <div className="mt-3 grid gap-3 md:grid-cols-2">
+                            <div className="mt-4 grid gap-4 md:grid-cols-2">
                                 {group.questionnaireIds.map((id) => activeInstrumentById.get(id)).filter((q): q is QuestionnaireConfig => Boolean(q)).map((q) => {
                                     const done = lastCompiledAt[q.id];
                                     const canCompleteQuestionnaire = lang !== 'it'
@@ -296,53 +283,53 @@ export function ReturningHome({
                                     const externalAssessmentUrl = lang === 'it' && !q.agentOnly ? STRATEGIC_COMPETENCES_URLS[q.id] : undefined;
                                     const paused = pausedByTool.get(q.id);
                                     return (
-                                        <article key={q.id} className="glass-panel flex flex-col gap-3 p-5 text-left transition-colors hover:border-indigo-300">
+                                        <Card as="article" key={q.id} className="flex flex-col gap-4 text-left hover:border-brand-line">
                                             <div>
                                                 <span className="flex items-center gap-2">
-                                                    <span className={cn('h-1.5 w-1.5 rounded-full', done ? 'bg-teal-500' : 'bg-slate-300')} />
-                                                    <span className="font-bold text-slate-900">{tf(`q.${q.id}.name`, q.name)}</span>
+                                                    <span className={cn('h-2 w-2 rounded-full', done ? 'bg-brand' : 'bg-line-strong')} />
+                                                    <span className="font-semibold text-ink">{tf(`q.${q.id}.name`, q.name)}</span>
                                                     {canCompleteQuestionnaire && (
-                                                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-2xs font-bold text-amber-700">{t('selector.experimentalBadge')}</span>
+                                                        <span className="rounded-full bg-warning-soft px-2 py-1 text-2xs font-semibold text-warning">{t('selector.experimentalBadge')}</span>
                                                     )}
                                                     {paused && (
-                                                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-2xs font-bold text-indigo-700">
+                                                        <span className="rounded-full bg-brand-soft px-2 py-1 text-2xs font-semibold text-link">
                                                             {paused.updated_at ? t('selector.badge.pausedOn', { date: formatDate(paused.updated_at) }) : t('selector.badge.paused')}
                                                         </span>
                                                     )}
                                                 </span>
-                                                <h3 className="mt-1 text-sm font-medium leading-snug text-slate-600">{tf(`q.${q.id}.fullName`, q.fullName)}</h3>
+                                                <h3 className="mt-1 text-sm leading-snug text-ink-muted">{tf(`q.${q.id}.fullName`, q.fullName)}</h3>
                                             </div>
-                                            <p className="grow text-sm leading-relaxed text-slate-500">{tf(`q.${q.id}.description`, q.description)}</p>
-                                            <span className="font-mono text-xs text-slate-500">
+                                            <p className="grow text-sm leading-relaxed text-ink-muted">{tf(`q.${q.id}.description`, q.description)}</p>
+                                            <span className="font-mono text-xs text-ink-muted">
                                                 {done ? t('base.instrument.doneOn', { date: formatDate(done) }) : t('base.instrument.todo')}
                                             </span>
-                                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                                            <div className="flex flex-wrap items-center gap-2">
                                                 {paused && (
-                                                    <a href={resumeHref(paused)} className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-sm font-semibold text-indigo-800 transition-colors hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
+                                                    <a href={resumeHref(paused)} className="inline-flex min-h-control items-center gap-2 rounded-control border border-brand-line bg-brand-soft px-4 py-2 text-sm font-semibold text-link transition-colors hover:bg-brand-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2">
                                                         <Snowflake className="h-4 w-4" aria-hidden="true" />{t('selector.paused.resume')}
                                                     </a>
                                                 )}
                                                 {externalAssessmentUrl && (
-                                                    <a href={externalAssessmentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
+                                                    <a href={externalAssessmentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-control items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink-body transition-colors hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2">
                                                         {t('selector.openStrategic')}<ExternalLink className="h-4 w-4" />
                                                     </a>
                                                 )}
                                                 {canCompleteQuestionnaire && (
-                                                    <Link href={`/somministrazione/${q.id}/${lang}`} className="inline-flex min-h-[44px] items-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
+                                                    <Link href={`/somministrazione/${q.id}/${lang}`} className="inline-flex min-h-control items-center rounded-control bg-brand px-4 py-2 text-sm font-semibold text-ink-on-brand transition-colors hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2">
                                                         {t('selector.completeQuestionnaire')}
                                                     </Link>
                                                 )}
-                                                <button type="button" onClick={() => onStartInstrument(q)} className={cn('inline-flex min-h-[44px] items-center rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2', canCompleteQuestionnaire ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50' : 'bg-indigo-600 text-white hover:bg-indigo-700')}>
+                                                <Button variant={canCompleteQuestionnaire ? 'secondary' : 'primary'} onClick={() => onStartInstrument(q)}>
                                                     {t(q.agentOnly ? 'base.instrument.startPath' : 'base.instrument.analyze')}
-                                                </button>
-                                                <Link href={`/strumenti/${q.id}`} className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
+                                                </Button>
+                                                <Link href={`/strumenti/${q.id}`} className="inline-flex min-h-control items-center gap-2 rounded-control px-4 py-2 text-sm text-ink-muted transition-colors hover:bg-surface-sunken hover:text-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2">
                                                     <BookOpen className="h-4 w-4" />{t('selector.learn')}
                                                 </Link>
                                             </div>
                                             {externalAssessmentUrl && (
-                                                <p className="text-xs text-slate-500">{t('selector.externalCredentials')}</p>
+                                                <p className="text-xs text-ink-muted">{t('selector.externalCredentials')}</p>
                                             )}
-                                        </article>
+                                        </Card>
                                     );
                                 })}
 
@@ -352,25 +339,25 @@ export function ReturningHome({
                     })}
                 </div>
             </section>
-            <div className="space-y-5">
+            <div className="space-y-6">
             <PersonalAreaEntry />
             {(resumeCount > 0 || resumeEntries.error) && (
                 <section data-testid="home-resume">
-                    <div className="flex items-center gap-3.5">
+                    <div className="flex items-center gap-4">
                         <div className="relative h-14 w-14 shrink-0">
                             <Image src="/images/cards/critical_puzzle.png" alt="" width={56} height={56} className="h-full w-full object-contain" />
                         </div>
-                        <h2 className="text-lg font-bold text-slate-900">{t('frozen.resumeTitle')}</h2>
+                        <h2 className="text-lg font-semibold text-ink">{t('frozen.resumeTitle')}</h2>
                     </div>
                     <ResumeLoadError entries={resumeEntries} />
-                    <div className="mt-3 space-y-2">
+                    <div className="mt-4 space-y-2">
                         {frozen.map((row) => (
                             <ResumeEntry key={row.session_id} deletable={!row.path_id} target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
                                 <a
                                     href={resumeHref(row)}
-                                    className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
+                                    className="flex min-h-control items-center gap-4 rounded-card border border-line bg-surface p-4 text-sm font-semibold text-ink shadow-card transition-colors hover:border-brand-line"
                                 >
-                                    <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
+                                    <RotateCcw className="h-4 w-4 shrink-0 text-link" />
                                     <span className="truncate">{resumeLabel(row.questionnaire_type, row.label, tf)}</span>
                                 </a>
                             </ResumeEntry>
@@ -379,9 +366,9 @@ export function ReturningHome({
                             <ResumeEntry target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${resumeLabel(localResume.instrument, null, tf)}`}>
                                 <a
                                     href={LOCAL_RESUME_HREF}
-                                    className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
+                                    className="flex min-h-control items-center gap-4 rounded-card border border-line bg-surface p-4 text-sm font-semibold text-ink shadow-card transition-colors hover:border-brand-line"
                                 >
-                                    <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
+                                    <RotateCcw className="h-4 w-4 shrink-0 text-link" />
                                     <span className="truncate">{t('header.resume')} · {resumeLabel(localResume.instrument, null, tf)}</span>
                                 </a>
                             </ResumeEntry>
@@ -390,9 +377,9 @@ export function ReturningHome({
                             <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
                                 <a
                                     href={PQBL_RESUME_HREF}
-                                    className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
+                                    className="flex min-h-control items-center gap-4 rounded-card border border-line bg-surface p-4 text-sm font-semibold text-ink shadow-card transition-colors hover:border-brand-line"
                                 >
-                                    <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
+                                    <RotateCcw className="h-4 w-4 shrink-0 text-link" />
                                     <span className="truncate">{t('header.resume')} · {t('pqbl.card.title')}</span>
                                 </a>
                             </ResumeEntry>
@@ -402,16 +389,16 @@ export function ReturningHome({
             )}
 
             {!isUnavailableQuestionnaireLang && upcoming.length > 0 && (
-                <section className="flex flex-col gap-4 rounded-xl border border-dashed border-slate-200 bg-white/60 px-5 py-4 lg:flex-row lg:items-center">
+                <section className="flex flex-col gap-4 rounded-card border border-dashed border-line bg-surface/60 px-6 py-4 lg:flex-row lg:items-center">
                     <div className="shrink-0 lg:w-52">
-                        <h2 className="text-sm font-semibold text-slate-700">{t('selector.upcoming.title')}</h2>
-                        <p className="mt-1 text-xs text-slate-500">{t('selector.upcoming.subtitle')}</p>
+                        <h2 className="text-sm font-semibold text-ink-body">{t('selector.upcoming.title')}</h2>
+                        <p className="mt-1 text-xs text-ink-muted">{t('selector.upcoming.subtitle')}</p>
                     </div>
                     <div className="grid flex-1 gap-2 sm:grid-cols-3">
                         {upcoming.map((q) => (
-                            <div key={q.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2.5">
-                                <span className="text-sm font-semibold text-slate-600">{q.name}</span>
-                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-2xs font-bold text-slate-500">{t('selector.soon')}</span>
+                            <div key={q.id} className="flex items-center justify-between gap-2 rounded-control border border-line bg-surface px-4 py-2">
+                                <span className="text-sm font-semibold text-ink-muted">{q.name}</span>
+                                <span className="rounded-full bg-surface-raised px-2 py-1 text-2xs font-semibold text-ink-muted">{t('selector.soon')}</span>
                             </div>
                         ))}
                     </div>

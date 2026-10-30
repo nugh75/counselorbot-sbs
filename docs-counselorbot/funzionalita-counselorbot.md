@@ -259,6 +259,12 @@ le tre fasi restano le stesse: lettura del profilo, focus ed esempio, azione;
 la scelta personale del focus avviene nell’esperienza e può essere saltata.
 Savickas, Eventi, IDEA e Obiettivi conservano le proprie domande narrative.
 
+Le pagine di questa zona (`/questionario`, `/somministrazione`, `/strumenti/[id]`,
+pQBL, selettore del counselor e somministrazione in app) usano i token semantici
+e le primitive `Button`, `Card` e `Callout` (audit UI 2026-10-30, zona 1):
+spaziature su griglia di 8, due soli pesi, niente maiuscolo né sfocature, campi e
+comandi alti almeno 44px. Testi, passi e comportamento non cambiano.
+
 ## Presentazione, attività e navigazione
 
 La presentazione (`/`) offre quattro ingressi illustrati: **Bussola**, **Analisi
@@ -295,6 +301,16 @@ scheda mostra, quando servono, il segno «In pausa dal…» con Riprendi, il bad
 Sperimentale della compilazione in app e, in italiano, **Compila sul sito** con le
 credenziali; in fondo restano gli strumenti **In preparazione** e, nelle lingue senza
 questionari, l’avviso con il passaggio all’inglese.
+
+La presentazione, «Attività e percorsi», le pagine pubbliche (`/guide`,
+`/guide/dati-riservatezza`, `/privacy`, `/unisciti`, `/login`, `/accesso-locale`,
+`/telegram-link`) e la barra di navigazione con i suoi menu usano i token
+semantici e le primitive `Card`, `Button` e `PageHeader` (audit UI 2026-10-30,
+zona 3): spaziature su griglia di 8, due soli pesi, niente maiuscolo, controlli
+alti almeno 44px. L’eliminazione di un’attività da riprendere chiede conferma
+nella riga stessa invece che con la finestra del browser; il banner
+dell’anteprima di ruolo usa i colori di avviso. Testi, passi e comportamento non
+cambiano.
 
 L’interfaccia non usa emoji né segni testuali come «+», «→» o «✓» nelle etichette:
 ogni simbolo è un’icona SVG (lucide-react). Le azioni dal significato evidente
@@ -508,6 +524,13 @@ differenze rimaste sono nelle trascrizioni di sola lettura (taccuini di prova,
 revisione delle attività dei piani) e nel workspace OpenCode, che sarà eliminato
 invece di essere allineato; il dettaglio
 e l’ordine degli interventi sono in `docs/audits/2026-10-29-chat-ux-remaining-surfaces.md`.
+
+Le pagine `/bussola` e `/assistente`, con il selettore del taccuino nel contesto,
+il taccuino di prova, il richiamo all’abbonamento ChatGPT e il campo del
+diagramma, usano i token semantici e le primitive `Card`, `PageHeader` e
+`Callout` (audit UI 2026-10-30, zona 2): spaziature su griglia di 8, due soli
+pesi, niente maiuscolo né cerchi decorativi, controlli alti almeno 44px. Testi,
+passi e comportamento non cambiano.
 
 - **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti.
   Ascolta ciò che lo studente vuole affrontare e consiglia da quale strumento
@@ -1025,19 +1048,33 @@ Il comportamento è condiviso da chat guidate, Bussola, Assistente e OpenCode,
 anche alla riapertura della cronologia OpenCode. Lo storico già salvato non
 viene riscritto. Casi verificati e limiti della guardia sono descritti in
 `docs/operations/chat-continuation-duplicates.md` (#425).
-Durante la generazione, i blocchi di ragionamento riconoscibili (tag `<think>`, `<thinking>`, `<sto_pensando>` o `<analysis>`, inclusi tag aperti o chiusure orfane) vengono separati dalla risposta. Quando il ragionamento è disattivato, la risposta viene trattenuta fino alla fine per filtrarla prima di mostrarla: può quindi apparire tutta insieme. Il testo privo di segnali riconoscibili non è distinguibile con certezza dalla risposta del modello. Se una risposta risulta vuota, composta da soli spazi o svuotata dalla rimozione del reasoning (oppure in caso di errore vuoto del provider), il sistema evita errori 500/502 o messaggi vuoti e invia un fallback gentile e riflessivo, contestualizzato al passo corrente della chat guidata e nella lingua dell’utente (italiano, inglese, spagnolo, francese, tedesco, svedese), differenziato tra introduzione del tema all'ingresso dello step (o benvenuto nel Patto di Collaborazione) e prosecuzione della riflessione nei turni successivi. I contratti di dialogo escludono cliché terapeutici e meta-disclaimer ripetitivi (come "è un'ipotesi e non una verità", "senza giudizio", "non è un difetto"), affidando la natura non diagnostica al patto iniziale e la formulazione delle ipotesi alla modalità epistemica e alla curiosità fenomenologica naturale.
+Durante la generazione, i blocchi di ragionamento riconoscibili (tag `<think>`, `<thinking>`, `<sto_pensando>`, `<analysis>` o `<reasoning>` e i delimitatori `[THINK]…[/THINK]` e `◁think▷…◁/think▷`, inclusi tag aperti o chiusure orfane) vengono separati dalla risposta. Quando il ragionamento è disattivato, la risposta viene trattenuta fino alla fine per filtrarla prima di mostrarla: può quindi apparire tutta insieme. Il testo privo di segnali riconoscibili non è distinguibile con certezza dalla risposta del modello. Se una risposta risulta vuota, composta da soli spazi o svuotata dalla rimozione del reasoning (oppure in caso di errore vuoto del provider), il sistema evita errori 500/502 o messaggi vuoti e invia un fallback gentile e riflessivo, contestualizzato al passo corrente della chat guidata e nella lingua dell’utente (italiano, inglese, spagnolo, francese, tedesco, svedese), differenziato tra introduzione del tema all'ingresso dello step (o benvenuto nel Patto di Collaborazione) e prosecuzione della riflessione nei turni successivi. I contratti di dialogo escludono cliché terapeutici e meta-disclaimer ripetitivi (come "è un'ipotesi e non una verità", "senza giudizio", "non è un difetto"), affidando la natura non diagnostica al patto iniziale e la formulazione delle ipotesi alla modalità epistemica e alla curiosità fenomenologica naturale.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
 e feedback quando disponibili. Il diagramma di un messaggio appartiene a quel messaggio: ogni nuova risposta ha il suo, mai quello del turno precedente. Dopo il disegno il campo diventa una correzione: si scrive cosa cambiare e il diagramma visibile viene rivisto e salvato come nuova versione; lasciandolo vuoto si rifà da capo (#661). Nei diagrammi gli archi che indicano un ostacolo sono rossi e tutti gli altri verdi (stessa palette in web, PDF e Telegram, temi chiaro e scuro); tratteggio, punta a T e legenda li distinguono anche senza il colore. Il disegno richiede il programma Graphviz: su un'installazione che non lo ha (per esempio un'app desktop senza Graphviz) il riquadro lo dice chiaramente, senza «Riprova», e riporta comunque le relazioni in testo; `GET /api/capabilities` indica se i diagrammi sono disponibili. Il lettore nel menu di navigazione legge il testo visibile,
 con impostazioni di voce e motore (Edge TTS online con filtro PII deterministico obbligatorio oppure Piper su host locale fidato, con dodici voci ONNX incorporate, attivo anche nella configurazione portatile); la correzione della pronuncia è visibile solo
 all’amministratore. Chat guidata, Bussola e Assistente accettano
 registrazione del microfono o file audio: la trascrizione è da controllare, salvo
 invio immediato scelto esplicitamente. In conversazione vocale si avvia e si ferma
-la registrazione; il microfono non riparte da solo. Il riconoscimento è sempre locale:
-l'amministratore sceglie il motore (faster-whisper, predefinito, oppure whisper.cpp,
-più leggero per CPU deboli) e il modello di quel motore nella scheda **Trascrizione audio** del gruppo «Voce e audio».
-Con **Riconoscimento automatico** la lingua è scelta fra le sei supportate e,
-se il riconoscimento è incerto, si usa la lingua dell'interfaccia; il parlato
-viene sempre trascritto, mai tradotto.
+la registrazione; il microfono non riparte da solo. Il riconoscimento è locale per
+impostazione iniziale: l'amministratore sceglie faster-whisper (predefinito) oppure
+whisper.cpp, più leggero per CPU deboli, e il modello nella scheda **Trascrizione audio**
+del gruppo «Voce e audio».
+Può anche scegliere e salvare **OpenRouter** o **Mistral diretto (UE)**, entrambi
+spenti inizialmente: serve la chiave backend già configurata, altrimenti l'opzione
+è disabilitata con spiegazione. L'ID modello online è libero; i default sono
+`mistralai/voxtral-mini-transcribe` e `voxtral-mini-latest`. L'avviso nelle sei
+lingue spiega che **l'audio di tutti gli utenti viene inviato senza anonimizzazione
+al fornitore esterno**: OpenRouter e il provider del modello oppure Mistral diretto.
+OpenRouter non garantisce residenza UE. Per le prove usare solo dati fittizi.
+Le chiavi non arrivano al browser e non si passa automaticamente a un altro motore.
+Il salvataggio globale di motore e modello è riservato agli amministratori anche
+tramite API: il ruolo ricercatore non può cambiare la destinazione dell'audio.
+Con **Riconoscimento automatico** locale la lingua è scelta fra le sei supportate e,
+se il riconoscimento è incerto, si usa la lingua dell'interfaccia; online si invia
+la lingua scelta o quella dell'interfaccia come indicazione al provider, oppure si
+lascia rilevare la lingua senza riserva. Il parlato viene trascritto, mai tradotto.
+L'audio non è archiviato dall'applicazione; il provider applica le proprie condizioni.
+Limiti e contratto: `docs/operations/audio-input.md`.
 
 Le conversazioni guidate con progressi si salvano dopo le risposte per essere
 riprese anche da un altro dispositivo. Congela sessione salva e chiude: si torna ad
@@ -1217,7 +1254,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | --- | --- | --- |
 | Obiettivi | `/profilo/obiettivi` | Organizzare gli obiettivi in una rete, dal perché al come: sopraobiettivi e sottobiettivi, anche con più genitori; toccare un obiettivo per modificarlo in una finestra popup, dove si scrive un nuovo obiettivo o si adotta e personalizza una proposta del catalogo (in creazione restano visibili titolo, motivazione e data di revisione; criteri, priorità, stato e condivisione sono sotto «Più dettagli»); scegliere un metodo (strategie certificate o proprie), pianificare azioni e controlli, collegare prove e lavori; chiudere con un bilancio, che diventa una tappa della Linea del tempo; scaricare il PDF «Percorso dell’obiettivo»; condividere un ramo con i docenti di un gruppo (mai i sopraobiettivi). Su computer anche vista mappa. Completare un’attività non conclude automaticamente un obiettivo: lo stato resta sempre manuale, è la persona a rivederlo. |
 | Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, azioni datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario, collegamenti al Portfolio e la rilettura dell’esperienza (cosa ha funzionato, cosa proverò), che può diventare un obiettivo o un’azione; per le tappe future o senza data compare anche «Cosa programmo»; una legenda spiega i simboli; azioni e obiettivi si aprono sulle loro pagine. Gli incontri della classe o del gruppo che il docente mostra nella linea del tempo (opzione «Mostra nella linea del tempo degli studenti», attiva di default) compaiono sull’asse e nel calendario come «Incontro della classe o del gruppo», con data, ora e luogo oppure «Online», segnati se annullati, e hanno un proprio filtro; quelli individuali compaiono solo alla fascia prenotata dallo studente; non vengono copiati nei dati personali. Sopra la linea, chi è in una classe o in un gruppo trova «Incontri delle tue classi o gruppi»: data, luogo o link, con chi è l’incontro, incontri annullati, la prenotazione delle fasce degli incontri individuali e il pulsante «Ho partecipato» dall’inizio dell’incontro o della propria fascia, quando il docente lascia allo studente la conferma della presenza. |
-| Studiare da un PDF (pQBL) | `/profilo/pqbl` | Caricare un PDF con testo selezionabile (massimo 100 MB; un PDF scansionato richiede OCR/visione su host locale fidato, senza invio di immagini a provider esterni; senza OCR utilizzabile compare un errore nella lingua scelta), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. |
+| Studiare da un PDF (pQBL) | `/profilo/pqbl` | Caricare un PDF con testo selezionabile (massimo 100 MB; un PDF scansionato richiede OCR/visione su host locale fidato, senza invio di immagini a provider esterni; senza OCR utilizzabile compare un errore nella lingua scelta), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. Il codice del servizio pQBL è incluso nel controllo automatico di lint della piattaforma. |
 | Flashcard | `/profilo/flashcard` | Preparare mazzi di domande e risposte, modificarli (il nome del mazzo si cambia direttamente nella pagina: Invio salva, Esc annulla) e ripassare in una sessione di studio, mostrando la risposta e registrando il proprio esito. |
 | Tavolo | `/profilo/tavolo` | Lavorare con materiali, idee e counselor; riaprire Tavoli salvati quando la funzione è abilitata. In cima c’è «I tuoi tavoli salvati» (aprire, rinominare nella riga, eliminare); sotto, in «Crea un nuovo tavolo», la creazione manuale, la composizione con AI e la scelta di counselor e modello, che contano solo per la creazione con AI. |
 | Carte da ordinare | `/profilo/carte` | Raccogliere e ordinare pensieri in più mazzi, usando colonne, modelli e trascinamento; mazzi e colonne si rinominano direttamente nella pagina. Non sono le Flashcard per il ripasso. |
@@ -1464,6 +1501,10 @@ ed esegue la risposta garantendo la continuità della conversazione e del thread
 Il livello richiesto viene normalizzato sulle capacità del catalogo: se l’endpoint
 impone il ragionamento, la piattaforma usa il livello minimo disponibile e registra
 `effort_honored=false`; sugli altri modelli la disattivazione resta reale.
+Quando il passo o la scelta chiede di spegnere il ragionamento, lo studente non lo
+vede comunque: il modello ragiona al livello minimo, ma la chat non mostra né il
+ragionamento nativo né i blocchi inline. Come per gli altri modelli con «Nessuno»,
+la risposta viene trattenuta per filtrarla e compare tutta insieme.
 Il vincolo è esposto anche nell’interfaccia: la scheda del preset e l’elenco dei
 counselor mostrano un’etichetta «Reasoning obbligatorio» e la chat disabilita
 «Nessuno» con un avviso, così la scelta non sembra ignorata.

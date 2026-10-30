@@ -15,7 +15,8 @@ Steps, in order, each fail-closed:
    (``is_trusted_local``); an empty or unknown host is external;
 4. external: texts and context (system prompt, history, RAG, documents) are
    filtered together, then checked for residuals (``ResidualPII``). Images
-   and audio towards an external target are blocked;
+   and audio towards an external target are blocked, except explicitly enabled
+   transcription to the two fixed STT endpoints (raw audio, no text redaction);
 5. transports keep backend credentials, TLS verification, timeouts and limits;
 6. the reply is restored only through the map of this request (P4: only if
    ``restore_authorized`` allows it); logs carry category counts, never text;
@@ -170,6 +171,7 @@ class AIGateway:
                  transport: Callable[[AIRequest], Any] | None = None,
                  text_filter: Callable[[list[str]], list[str]] | None = None,
                  public_content: bool = False,
+                 allow_external_transcription: bool = False,
                  mode: str | None = None,
                  purposes: Callable[[PrivacyContext], tuple[PurposePolicy | None, bool]] | None = None,
                  authorize: Callable[..., Decision] | None = None,
@@ -183,6 +185,8 @@ class AIGateway:
         self.transport = transport
         self.text_filter = text_filter
         self.public_content = public_content is True
+        # Explicit admin-selected STT only; no general exemption for audio/images.
+        self.allow_external_transcription = allow_external_transcription is True
         self.mode = mode if mode in MODES else globals()["mode"]()
         self.purposes = purposes or _resolve_purposes
         self.authorize = authorize or policy.authorize_data_access
@@ -217,16 +221,29 @@ class AIGateway:
         purpose = self._step("purpose", lambda: self._purpose(ctx))
         self._step("authorization", lambda: self._authorize(ctx))
         external = not is_local(request.target)
+        transcription = self.allow_external_transcription and self._external_transcription(request)
         if (external and (request.images or request.audio is not None)
-                and request.kind not in DELIVER_KINDS):
+                and request.kind not in DELIVER_KINDS and not transcription):
             raise EgressBlockedError() from None
-        prepared = self._filter(request, ctx, external, purpose)
+        prepared = Prepared(request, ctx, external, {}, None, False) if transcription \
+            else self._filter(request, ctx, external, purpose)
         self._step("audit", lambda: self.audit(PrivacyEvent(
             self.pid_of(ctx.subject or ""), self.pid_of(ctx.principal.username), ctx.principal.role,
             "ai_transmission", ctx.purpose, request.target.provider, dict(prepared.counts))))
         logger.debug("AI egress %s, %s target, categories %s", request.kind,
                      "external" if external else "local", prepared.counts)
         return prepared
+
+    @staticmethod
+    def _external_transcription(request: AIRequest) -> bool:
+        """Raw audio cannot be text-redacted; restrict the opt-in to two fixed endpoints."""
+        endpoints = {'openrouter': 'https://openrouter.ai/api/v1/audio/transcriptions',
+                     'mistral': 'https://api.mistral.ai/v1/audio/transcriptions'}
+        return (request.kind == 'transcription' and isinstance(request.audio, bytes)
+                and bool(request.audio) and not request.images and not request.texts
+                and not request.attachments_context
+                and request.target.provider in endpoints
+                and request.target.resolved_host == endpoints.get(request.target.provider))
 
     def _step(self, name: str, check: Callable[[], Any]):
         try:

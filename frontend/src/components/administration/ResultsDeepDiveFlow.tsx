@@ -137,7 +137,7 @@ export function ResultsDeepDiveFlow({ pathId, stepId, registerSave, onExit, onCo
   };
   const previous = options?.attempts.filter(item => item.session_id !== session?.session_id) ?? [];
   const history = previous.length > 0 && <details><summary className="cursor-pointer font-semibold">{r('attempts')}</summary>
-    <div className="space-y-3">{previous.map(item => <div key={item.session_id} className="rounded border border-slate-200 p-3">
+    <div className="space-y-4">{previous.map(item => <div key={item.session_id} className="rounded-card border border-line p-4">
       <p>{new Date(item.started_at).toLocaleString(lang)} · {item.result.questionnaire_type}</p>
       {item.completed ? <SessionReport sessionId={item.session_id} questionnaireType={item.result.questionnaire_type} />
         : item.resumable ? <Link href={`/?frozen=${encodeURIComponent(item.session_id)}&from=plan`}>{r('resumeChat')}</Link>
@@ -161,25 +161,25 @@ export function ResultsDeepDiveFlow({ pathId, stepId, registerSave, onExit, onCo
     onFrozen={() => onExit ? onExit() : router.push('/profilo/piani-operativi')}
     onComplete={() => { setCompleted(true); onCompleted?.(); notifyFrozenSessionsChanged(); void deleteFrozenSession(session.session_id).catch(() => {}); }} />{!embedded && history}</div>;
   return <div className="space-y-4">
-    {!embedded && <><Link href="/profilo/piani-operativi">{l('back')}</Link><h1 className="text-xl font-semibold">{l('deepDive')}</h1></>}
+    {!embedded && <><Link href="/profilo/piani-operativi">{l('back')}</Link><h1 className="text-2xl font-semibold">{l('deepDive')}</h1></>}
     {loading && <p role="status">{r('loading')}</p>}
     {failure === 'incomplete' && <Callout variant="warning">{r('missingPlan')}</Callout>}
     {(failure === 'legacy' || options?.legacy_profile) && <Callout variant="warning">{t('q.QPCC.legacyProfile')}</Callout>}
     {(failure === 'legacy' || options?.legacy_profile) && options && <Link
-      className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline" href={options.source_href}>
+      className="inline-flex min-h-control items-center font-semibold text-link underline" href={options.source_href}>
       {r('reenterData')}
     </Link>}
     {failure && failure !== 'incomplete' && failure !== 'legacy' && <Callout variant="danger">{l('error')}{' '}
       <Button variant="secondary" onClick={() => setReload(value => value + 1)}>{l('retry')}</Button></Callout>}
-    {!loading && options && !failure && <Card className="space-y-3 p-4">
+    {!loading && options && !failure && <Card className="space-y-4 p-4">
       <p>{r('intro')}</p>
       {!options.ready ? <>
         <Callout variant="warning">{r(options.personal ? 'missingPersonal' : 'missingPlan')}</Callout>
-        <Link className="inline-flex min-h-[44px] items-center font-semibold text-indigo-700 underline" href={options.source_href}>
+        <Link className="inline-flex min-h-control items-center font-semibold text-link underline" href={options.source_href}>
           {r(options.personal ? 'addResult' : 'completeSource')}</Link>
       </> : <>
         {options.personal && <label className="block text-sm">{r('chooseResult')}
-          <select className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={resultId}
+          <select className="mt-1 block min-h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm" value={resultId}
             onChange={event => setResultId(event.target.value)} disabled={busy}>
             <option value="">{r('chooseResult')}</option>
             {options.results.map(result => <option key={result.id} value={result.id}>

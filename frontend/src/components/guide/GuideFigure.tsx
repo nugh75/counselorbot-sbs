@@ -35,18 +35,18 @@ export function GuideFigure({task, title}: {task: GuideTask; title: string}) {
     if (!image) return null;
     return <figure className="max-w-2xl">
         <button ref={trigger} aria-label={`${l('zoom')}: ${title}`} onClick={() => setZoom(true)}
-            className="block w-full max-w-full cursor-zoom-in overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-left" style={{maxWidth: previewWidth}}>
+            className="block w-full max-w-full cursor-zoom-in overflow-hidden rounded-control border border-line bg-surface-sunken text-left" style={{maxWidth: previewWidth}}>
             <span className="relative block overflow-hidden" style={{aspectRatio: `${image.width * crop[2]} / ${image.height * crop[3]}`}}>
                 <Image src={image} alt={title} width={image.width} height={image.height} unoptimized
                     className="absolute max-w-none" style={{width: `${100 / crop[2]}%`, height: 'auto', left: `${-100 * crop[0] / crop[2]}%`, top: `${-100 * crop[1] / crop[3]}%`}} />
-                {pin && <span aria-hidden="true" className="absolute flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-ochre-600 font-mono text-xs font-bold text-white ring-2 ring-white" style={{left: `${pin.x * 100}%`, top: `${pin.y * 100}%`}}>2</span>}
+                {pin && <span aria-hidden="true" className="absolute flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-move font-mono text-xs font-semibold text-ink-on-brand ring-2 ring-surface" style={{left: `${pin.x * 100}%`, top: `${pin.y * 100}%`}}>2</span>}
             </span>
         </button>
-        <figcaption className="mt-2 text-xs text-slate-600">{l('imageHint')}</figcaption>
+        <figcaption className="mt-2 text-xs text-ink-muted">{l('imageHint')}</figcaption>
         {zoom && <div role="dialog" aria-modal="true" aria-label={title} onClick={() => setZoom(false)}
             className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 p-4 sm:p-8">
             <button ref={close} aria-label={l('close')} onClick={() => setZoom(false)}
-                className="absolute top-3 right-3 z-10 flex h-[48px] w-[48px] items-center justify-center rounded-full bg-white text-slate-900"><X className="h-6 w-6" aria-hidden="true" /></button>
+                className="absolute top-4 right-4 z-10 flex h-[48px] w-[48px] items-center justify-center rounded-full bg-surface text-ink"><X className="h-6 w-6" aria-hidden="true" /></button>
             <div className="relative h-full w-full" onClick={event => event.stopPropagation()}><Image src={image} alt={title} fill unoptimized className="object-contain" /></div>
         </div>}
     </figure>;
