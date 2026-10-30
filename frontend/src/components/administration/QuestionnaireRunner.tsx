@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { BackButton } from '@/components/ui/BackButton';
+import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
+import { Card } from '@/components/ui/Card';
 import { useI18n } from '@/lib/i18n-context';
 import {
     fetchRules,
@@ -258,11 +261,11 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
 
     if (unavailable) {
         return (
-            <section className="glass-panel max-w-xl mx-auto p-8 text-center space-y-4">
-                <h1 className="text-2xl font-bold text-slate-900">{t('admin.run.unavailable.title')}</h1>
-                <p className="text-slate-600">{t('admin.run.unavailable.body')}</p>
+            <Card as="section" className="max-w-xl mx-auto p-8 text-center space-y-4">
+                <h1 className="text-2xl font-semibold text-ink">{t('admin.run.unavailable.title')}</h1>
+                <p className="text-ink-muted">{t('admin.run.unavailable.body')}</p>
                 {unavailable.availableLocales.length > 0 && (
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-ink-muted">
                         {t('admin.run.unavailable.languages').replace(
                             '{langs}',
                             unavailable.availableLocales.join(', '),
@@ -270,22 +273,22 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                     </p>
                 )}
                 <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('admin.run.back')} />
-            </section>
+            </Card>
         );
     }
 
     if (loadFailed) {
         return (
-            <section className="glass-panel max-w-xl mx-auto p-8 text-center space-y-4">
-                <p className="text-slate-600">{t('admin.run.loadError')}</p>
+            <Card as="section" className="max-w-xl mx-auto p-8 text-center space-y-4">
+                <p className="text-ink-muted">{t('admin.run.loadError')}</p>
                 <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('admin.run.back')} />
-            </section>
+            </Card>
         );
     }
 
     if (!rules) {
         return (
-            <div className="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+            <div className="mx-auto max-w-2xl rounded-card border border-line bg-surface p-6 text-sm text-ink-muted">
                 {t('admin.run.loading')}
             </div>
         );
@@ -422,44 +425,44 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
     if (results) {
         const dimensions = [...new Set(results.map((r) => r.dimension))];
         const renderResults = (dimension: string, title: string) => (
-            <section className="space-y-3">
-                <h2 className="text-xl font-bold text-slate-900">{title}</h2>
-                <div className="grid gap-3 md:grid-cols-2">
+            <section className="space-y-4">
+                <h2 className="text-xl font-semibold text-ink">{title}</h2>
+                <div className="grid gap-4 md:grid-cols-2">
                     {results
                         .filter((result) => result.dimension === dimension)
                         .map((result) => (
-                            <article key={result.code} className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
-                                <div className="flex items-start justify-between gap-3">
+                            <article key={result.code} className="rounded-card border border-line bg-surface p-4 space-y-4">
+                                <div className="flex items-start justify-between gap-4">
                                     <div>
-                                        <p className="text-xs font-bold tracking-wide text-indigo-700">{result.code}</p>
-                                        <h3 className="text-sm font-semibold text-slate-900">{result.label}</h3>
+                                        <p className="text-xs font-semibold text-link">{result.code}</p>
+                                        <h3 className="text-sm font-semibold text-ink">{result.label}</h3>
                                     </div>
                                     <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${
                                         result.orientation === 'difficulty' && result.band === 'higher'
-                                            ? 'bg-amber-100 text-amber-900'
-                                            : 'bg-indigo-50 text-indigo-800'
+                                            ? 'bg-warning-soft text-warning-ink'
+                                            : 'bg-brand-soft text-link'
                                     }`}>
                                         {result.band_label}
                                     </span>
                                 </div>
                                 <div>
-                                    <div className="mb-1 flex justify-between text-xs font-semibold text-slate-700">
+                                    <div className="mb-1 flex justify-between text-xs font-semibold text-ink-body">
                                         <span>{t('admin.run.stanineScore')}{result.stanine_is_normed ? '' : ' *'}</span>
-                                        <span className="font-bold text-indigo-700">{result.stanine ?? '—'} / 9</span>
+                                        <span className="font-semibold text-link">{result.stanine ?? '—'} / 9</span>
                                     </div>
-                                    <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                                    <div className="h-2 overflow-hidden rounded-full bg-surface-raised">
                                         <div
                                             className={`h-full rounded-full ${
-                                                result.orientation === 'difficulty' ? 'bg-amber-500' : 'bg-indigo-600'
+                                                result.orientation === 'difficulty' ? 'bg-warning' : 'bg-brand'
                                             }`}
                                             style={{ width: `${(((result.stanine ?? 1) - 1) / 8) * 100}%` }}
                                         />
                                     </div>
-                                    <div className="mt-1.5 flex justify-between text-2xs text-slate-500">
+                                    <div className="mt-2 flex justify-between text-2xs text-ink-muted">
                                         <span>{t('admin.run.rawAverage')}: {result.raw_average.toFixed(2)} / {scaleMax}</span>
                                     </div>
                                 </div>
-                                <p className="text-xs leading-relaxed text-slate-600">{result.interpretation}</p>
+                                <p className="text-xs leading-relaxed text-ink-muted">{result.interpretation}</p>
                             </article>
                         ))}
                 </div>
@@ -476,39 +479,36 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
 
         return (
             <div className="max-w-5xl mx-auto space-y-6">
-                <section className="glass-panel p-6 sm:p-8 space-y-5">
-                    <div className="flex items-center gap-3">
-                        <CheckCircle2 className="w-10 h-10 shrink-0 text-green-600" />
+                <Card as="section" className="sm:p-8 space-y-4">
+                    <div className="flex items-center gap-4">
+                        <CheckCircle2 className="w-10 h-10 shrink-0 text-success" />
                         <div>
-                            <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-bold tracking-wide text-amber-900">
+                            <span className="inline-flex rounded-full bg-warning-soft px-4 py-1 text-xs font-semibold text-warning-ink">
                                 {t('admin.run.testBadge')}
                             </span>
-                            <h1 className="mt-2 text-2xl font-bold text-slate-900">{t('admin.run.submittedTitle')}</h1>
+                            <h1 className="mt-2 text-2xl font-semibold text-ink">{t('admin.run.submittedTitle')}</h1>
                         </div>
                     </div>
-                    <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-4 flex gap-3">
-                        <AlertTriangle className="w-6 h-6 shrink-0 text-amber-700" />
-                        <p className="text-sm leading-relaxed text-amber-950">{t('admin.run.submittedBody')}</p>
-                    </div>
-                    <p className="rounded-md bg-slate-100 px-4 py-3 text-sm leading-relaxed text-slate-700">
+                    <Callout variant="warning">{t('admin.run.submittedBody')}</Callout>
+                    <p className="rounded-control bg-surface-raised px-4 py-4 text-sm leading-relaxed text-ink-body">
                         {t('admin.run.profileMethod')}
                     </p>
-                </section>
+                </Card>
 
                 {dimensions.map((dim) => (
                     <div key={dim}>{renderResults(dim, dimensionTitle(dim))}</div>
                 ))}
 
-                <div className="flex flex-col-reverse justify-between gap-3 sm:flex-row sm:items-center">
+                <div className="flex flex-col-reverse justify-between gap-4 sm:flex-row sm:items-center">
                     <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('admin.run.back')} />
                     <div className="flex gap-2">
                         <Link
                             href={`/?session_id=${createdSessionId}&instrument=${instrument}`}
-                            className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-600 hover:bg-emerald-700 px-5 py-2.5 font-semibold text-white transition-colors"
+                            className="inline-flex min-h-control items-center justify-center gap-2 rounded-control bg-move px-6 py-2 text-sm font-semibold text-ink-on-brand transition-colors hover:bg-move-hover"
                         >
                             {t('admin.run.startChat')}
                         </Link>
-                        <button
+                        <Button
                             type="button"
                             onClick={() => {
                                 setAnswers({});
@@ -516,10 +516,9 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                                 setStartedAt(Date.now());
                                 setMetadata((previous) => ({ ...previous, consent: false }));
                             }}
-                            className="rounded-md bg-indigo-600 px-5 py-2.5 font-semibold text-white hover:bg-indigo-700"
                         >
                             {t('admin.run.restart')}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -530,79 +529,79 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
         <div className="max-w-5xl mx-auto space-y-6">
             <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('admin.run.back')} />
 
-            <header className="glass-panel p-6 space-y-4">
-                <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-bold tracking-wide text-amber-900">
+            <Card as="section" className="space-y-4">
+                <span className="inline-flex rounded-full bg-warning-soft px-4 py-1 text-xs font-semibold text-warning-ink">
                     {t('admin.run.testBadge')}
                 </span>
-                <h1 className="text-2xl font-bold text-slate-900">
+                <h1 className="text-2xl font-semibold text-ink">
                     {rules.instrument.name} ({rules.instrument.code})
                 </h1>
-                <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-4 flex gap-3">
-                    <AlertTriangle className="w-6 h-6 shrink-0 text-amber-700" />
+                <div className="rounded-card border border-warning-line bg-warning-soft p-4 flex gap-4">
+                    <AlertTriangle className="w-6 h-6 shrink-0 text-warning" />
                     <div>
-                        <h2 className="font-bold text-amber-950">{t('admin.run.warningTitle')}</h2>
-                        <p className="mt-1 text-sm leading-relaxed text-amber-900">{t('admin.run.warningBody')}</p>
+                        <h2 className="font-semibold text-warning-ink">{t('admin.run.warningTitle')}</h2>
+                        <p className="mt-1 text-sm leading-relaxed text-warning-ink">{t('admin.run.warningBody')}</p>
                     </div>
                 </div>
-                <p className="text-slate-700 leading-relaxed">{t('admin.run.instructions')}</p>
-                <p className="rounded-md bg-slate-100 px-4 py-3 text-sm text-slate-700">{t('admin.run.privacyNote')}</p>
-            </header>
+                <p className="text-ink-body leading-relaxed">{t('admin.run.instructions')}</p>
+                <p className="rounded-control bg-surface-raised px-4 py-4 text-sm text-ink-body">{t('admin.run.privacyNote')}</p>
+            </Card>
 
-            <section className="glass-panel p-5 space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+            <Card as="section" className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">
+                        <h2 className="text-lg font-semibold text-ink">
                             {t('admin.run.meta.sectionTitle')}
                         </h2>
-                        <p className="mt-1 text-sm text-slate-600">
+                        <p className="mt-1 text-sm text-ink-muted">
                             {t('admin.run.meta.anonHint')}
                         </p>
                     </div>
-                    <span className="rounded-md bg-slate-100 px-3 py-1.5 font-mono text-xs text-slate-600">
+                    <span className="rounded-control bg-surface-raised px-4 py-2 font-mono text-xs text-ink-muted">
                         {versionLabel}
                     </span>
                 </div>
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2">
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">
+                        <span className="text-xs font-semibold text-ink-muted">
                             {t('admin.run.meta.researchCodeLabel')}
                         </span>
                         <input
                             readOnly
                             value={anonymousResearchCode || '...'}
-                            className="mt-1 w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 font-mono text-sm text-slate-700"
+                            className="mt-1 w-full min-h-control rounded-control border border-line-strong bg-surface-raised px-4 py-2 font-mono text-sm text-ink-body"
                         />
-                        <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                        <span className="mt-1 block text-xs leading-relaxed text-ink-muted">
                             {t('admin.run.meta.researchCodeHint')}
                         </span>
                         {codeRequiresLogin && (
                             <a
                                 href={loginHref}
-                                className="mt-2 inline-flex rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+                                className="mt-2 inline-flex min-h-control items-center rounded-control bg-brand px-4 py-2 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover"
                             >
                                 {t('admin.run.meta.loginAction')}
                             </a>
                         )}
                     </label>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">
+                        <span className="text-xs font-semibold text-ink-muted">
                             {t('admin.run.meta.studyCodeLabel')}
                         </span>
                         <input
                             value={metadata.study}
                             onChange={(event) => setMetadata((previous) => ({ ...previous, study: event.target.value }))}
                             placeholder={t('admin.run.meta.studyCodePlaceholder')}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full min-h-control rounded-control border border-line-strong px-4 py-2 text-sm"
                         />
                     </label>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">
+                        <span className="text-xs font-semibold text-ink-muted">
                             {t('admin.run.meta.participationContextLabel')}
                         </span>
                         <select
                             value={metadata.participation_context}
                             onChange={(event) => setMetadata((previous) => ({ ...previous, participation_context: event.target.value }))}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full min-h-control rounded-control border border-line-strong px-4 py-2 text-sm"
                         >
                             <option value="">{t('admin.run.meta.preferNot')}</option>
                             <option value="lesson_classroom">{t('admin.run.meta.contextLesson')}</option>
@@ -616,13 +615,13 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                         </select>
                     </label>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">
+                        <span className="text-xs font-semibold text-ink-muted">
                             {t('admin.run.meta.recruitmentSourceLabel')}
                         </span>
                         <select
                             value={metadata.recruitment_source}
                             onChange={(event) => setMetadata((previous) => ({ ...previous, recruitment_source: event.target.value }))}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full min-h-control rounded-control border border-line-strong px-4 py-2 text-sm"
                         >
                             <option value="">{t('admin.run.meta.preferNot')}</option>
                             <option value="teacher_invitation">{t('admin.run.meta.sourceTeacher')}</option>
@@ -635,13 +634,13 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                         </select>
                     </label>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">
+                        <span className="text-xs font-semibold text-ink-muted">
                             {t('admin.run.meta.ageLabel')}
                         </span>
                         <select
                             value={metadata.age_range}
                             onChange={(event) => setMetadata((previous) => ({ ...previous, age_range: event.target.value }))}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full min-h-control rounded-control border border-line-strong px-4 py-2 text-sm"
                         >
                             <option value="">{t('admin.run.meta.preferNot')}</option>
                             {AGE_BANDS.map((band) => (
@@ -652,13 +651,13 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                         </select>
                     </label>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">
+                        <span className="text-xs font-semibold text-ink-muted">
                             {t('admin.run.meta.genderLabel')}
                         </span>
                         <select
                             value={metadata.gender}
                             onChange={(event) => setMetadata((previous) => ({ ...previous, gender: event.target.value }))}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full min-h-control rounded-control border border-line-strong px-4 py-2 text-sm"
                         >
                             <option value="">{t('admin.run.meta.preferNot')}</option>
                             <option value="female">{t('admin.run.meta.female')}</option>
@@ -667,18 +666,18 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                         </select>
                     </label>
                     <label className="block md:col-span-2">
-                        <span className="text-xs font-semibold uppercase text-slate-500">
+                        <span className="text-xs font-semibold text-ink-muted">
                             {t('admin.run.meta.eduLabel')}
                         </span>
                         <input
                             value={metadata.education_context}
                             onChange={(event) => setMetadata((previous) => ({ ...previous, education_context: event.target.value }))}
                             placeholder={t('admin.run.meta.eduPlaceholder')}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            className="mt-1 w-full min-h-control rounded-control border border-line-strong px-4 py-2 text-sm"
                         />
                     </label>
                 </div>
-                <label className="flex items-start gap-3 rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                <label className="flex items-start gap-4 rounded-control border border-line bg-surface p-4 text-sm text-ink-body">
                     <input
                         type="checkbox"
                         checked={metadata.consent}
@@ -686,16 +685,16 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                             setMetadata((previous) => ({ ...previous, consent: event.target.checked }));
                             setError('');
                         }}
-                        className="mt-1 accent-indigo-600"
+                        className="mt-1 accent-brand"
                     />
                     <span>
                         {t('admin.run.meta.consent')}
                     </span>
                 </label>
-            </section>
+            </Card>
 
             {restoredDraft && (
-                <div className="flex flex-wrap items-center gap-3 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-950" role="status">
+                <div className="flex flex-wrap items-center gap-4 rounded-card border border-info-line bg-info-soft px-4 py-4 text-sm text-info-ink" role="status">
                     <span>{t('admin.run.draftRestored')}</span>
                     <button
                         type="button"
@@ -705,20 +704,20 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                             setRestoredDraft(false);
                             setStartedAt(Date.now());
                         }}
-                        className="font-semibold underline underline-offset-2"
+                        className="min-h-control font-semibold underline underline-offset-2"
                     >
                         {t('admin.run.draftDiscard')}
                     </button>
                 </div>
             )}
 
-            <div className="sticky top-16 z-10 rounded-lg border border-slate-200 bg-white/95 p-4 shadow-sm backdrop-blur">
-                <div className="flex justify-between text-sm font-semibold text-slate-700">
+            <div className="sticky top-16 z-10 rounded-card border border-line bg-surface p-4 shadow-card">
+                <div className="flex justify-between text-sm font-semibold text-ink-body">
                     <span>{answered}/{displayItems.length} {t('admin.run.progress')}</span>
                     <span>{completion}%</span>
                 </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full bg-indigo-600 transition-all" style={{ width: `${completion}%` }} />
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-raised">
+                    <div className="h-full bg-brand transition-all" style={{ width: `${completion}%` }} />
                 </div>
             </div>
 
@@ -727,21 +726,21 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                     <fieldset
                         key={item.number}
                         id={`item-${item.number}`}
-                        className="glass-panel scroll-mt-36 p-4 sm:p-5"
+                        className="rounded-card border border-line bg-surface shadow-card scroll-mt-36 p-4 sm:p-6"
                     >
                         <legend className="sr-only">{item.number}. {item.text}</legend>
-                        <p className="text-sm sm:text-base leading-relaxed text-slate-800">
-                            <span className="mr-2 font-bold text-indigo-700">{item.number}.</span>
+                        <p className="text-sm sm:text-base leading-relaxed text-ink">
+                            <span className="mr-2 font-semibold text-link">{item.number}.</span>
                             {item.text}
                         </p>
                         <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
                             {scaleLabels.map(({ value, label }) => (
                                 <label
                                     key={value}
-                                    className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2.5 text-sm transition-colors ${
+                                    className={`flex min-h-control cursor-pointer items-center gap-2 rounded-control border px-4 py-2 text-sm transition-colors ${
                                         answers[item.number] === value
-                                            ? 'border-indigo-600 bg-indigo-50 text-indigo-900'
-                                            : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-300'
+                                            ? 'border-brand bg-brand-soft text-ink'
+                                            : 'border-line bg-surface text-ink-muted hover:border-brand-line'
                                     }`}
                                 >
                                     <input
@@ -753,7 +752,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                                             setAnswers((previous) => ({ ...previous, [item.number]: value }));
                                             setError('');
                                         }}
-                                        className="accent-indigo-600"
+                                        className="accent-brand"
                                     />
                                     <span><strong>{value}</strong> {label}</span>
                                 </label>
@@ -763,22 +762,22 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                 ))}
 
                 {verification && (
-                    <fieldset className="space-y-3 rounded-md border border-amber-300 bg-amber-50 p-4" disabled={verifying}>
-                        <legend className="px-1 text-sm font-bold text-slate-900">{credentialText(lang, 'verifyTitle')}</legend>
-                        <p className="text-sm text-slate-700">
+                    <fieldset className="space-y-4 rounded-card border border-warning-line bg-warning-soft p-4" disabled={verifying}>
+                        <legend className="px-1 text-sm font-semibold text-ink">{credentialText(lang, 'verifyTitle')}</legend>
+                        <p className="text-sm text-ink-body">
                             {credentialText(lang, 'verifyIntro', { institute: verification.institutionName || verification.institutionCode || '' })}
                         </p>
-                        <div className="grid gap-3 md:grid-cols-2">
-                            <label className="block text-xs font-semibold uppercase text-slate-500">
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <label className="block text-xs font-semibold text-ink-muted">
                                 {credentialText(lang, 'codeLabel')}
                                 <input
                                     value={institutionCode}
                                     autoComplete="off"
                                     onChange={(event) => setInstitutionCode(event.target.value)}
-                                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                    className="mt-1 w-full min-h-control rounded-control border border-line-strong px-4 py-2 text-sm"
                                 />
                             </label>
-                            <label className="block text-xs font-semibold uppercase text-slate-500">
+                            <label className="block text-xs font-semibold text-ink-muted">
                                 {credentialText(lang, 'password')}
                                 <input
                                     type="password"
@@ -786,35 +785,33 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                                     autoComplete="off"
                                     onChange={(event) => setInstitutionPassword(event.target.value)}
                                     onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void verifyInstitution(); } }}
-                                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                    className="mt-1 w-full min-h-control rounded-control border border-line-strong px-4 py-2 text-sm"
                                 />
                             </label>
                         </div>
-                        <p className="text-xs text-slate-600">{credentialText(lang, 'verifyNotice')}</p>
-                        {verifyError && <p role="alert" className="text-sm font-medium text-red-700">{credentialText(lang, verifyError)}</p>}
-                        <button
+                        <p className="text-xs text-ink-muted">{credentialText(lang, 'verifyNotice')}</p>
+                        {verifyError && <p role="alert" className="text-sm font-semibold text-danger-ink">{credentialText(lang, verifyError)}</p>}
+                        <Button
                             type="button"
                             disabled={verifying || !institutionCode.trim() || !institutionPassword}
                             onClick={() => void verifyInstitution()}
-                            className="rounded-md bg-amber-700 px-5 py-2 text-sm font-semibold text-white hover:bg-amber-800 disabled:opacity-60"
+                            variant="accent"
                         >
                             {credentialText(lang, 'verifyAction')}
-                        </button>
+                        </Button>
                     </fieldset>
                 )}
                 {error && (
-                    <p role="alert" className="rounded-md border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
-                        {error}
-                    </p>
+                    <Callout variant="danger">{error}</Callout>
                 )}
                 <div className="flex justify-end pt-2">
-                    <button
+                    <Button
                         type="submit"
                         disabled={submitting || verification !== null}
-                        className="rounded-md bg-indigo-600 px-7 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        size="lg"
                     >
                         {submitting ? t('admin.run.submitting') : t('admin.run.submit')}
-                    </button>
+                    </Button>
                 </div>
             </form>
         </div>

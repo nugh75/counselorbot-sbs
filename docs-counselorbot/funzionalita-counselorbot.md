@@ -259,6 +259,12 @@ le tre fasi restano le stesse: lettura del profilo, focus ed esempio, azione;
 la scelta personale del focus avviene nell’esperienza e può essere saltata.
 Savickas, Eventi, IDEA e Obiettivi conservano le proprie domande narrative.
 
+Le pagine di questa zona (`/questionario`, `/somministrazione`, `/strumenti/[id]`,
+pQBL, selettore del counselor e somministrazione in app) usano i token semantici
+e le primitive `Button`, `Card` e `Callout` (audit UI 2026-10-30, zona 1):
+spaziature su griglia di 8, due soli pesi, niente maiuscolo né sfocature, campi e
+comandi alti almeno 44px. Testi, passi e comportamento non cambiano.
+
 ## Presentazione, attività e navigazione
 
 La presentazione (`/`) offre quattro ingressi illustrati: **Bussola**, **Analisi

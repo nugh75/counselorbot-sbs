@@ -69,15 +69,15 @@ export function InAppAdministrationRunner({
   const complete = items.every((item) => answers[item.item_number] !== undefined);
   return (
     <Card className="space-y-4 p-4" lang={locale}>
-      <p className="text-sm text-slate-600">{l("answerAll")}</p>
+      <p className="text-sm text-ink-muted">{l("answerAll")}</p>
       {items.map((item) => (
         <fieldset key={item.item_number} className="space-y-2">
-          <legend className="font-medium">
+          <legend className="font-semibold">
             {item.item_number}. {item.text ?? ""}
           </legend>
           <div className="flex flex-wrap gap-2">
             {scale.map((value) => (
-              <label key={value} className="inline-flex min-h-11 items-center gap-2 rounded border border-slate-300 px-3">
+              <label key={value} className="inline-flex min-h-control items-center gap-2 rounded-control border border-line-strong px-4">
                 <input
                   type="radio"
                   name={`item-${item.item_number}`}

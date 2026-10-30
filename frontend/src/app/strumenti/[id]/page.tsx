@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
 import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
+import { Card } from '@/components/ui/Card';
 import {
     QUESTIONNAIRES,
     QuestionnaireType,
@@ -68,49 +69,49 @@ export default function InstrumentDetailsPage() {
 
     if (loading || accessLoading) {
         return (
-            <div className="max-w-xl mx-auto glass-panel p-8 text-center space-y-4">
-                <p className="text-sm text-slate-500" role="status">{t('base.catalog.loading')}</p>
-            </div>
+            <Card className="max-w-xl mx-auto p-8 text-center space-y-4">
+                <p className="text-sm text-ink-muted" role="status">{t('base.catalog.loading')}</p>
+            </Card>
         );
     }
 
     if (isClassDisabled) {
         return (
-            <div className="max-w-xl mx-auto glass-panel p-8 text-center space-y-4">
-                <h1 className="text-xl font-bold text-slate-900">{t('detail.disabledForClass.title')}</h1>
-                <p className="text-slate-600">{t('detail.disabledForClass.body')}</p>
-                <div className="flex items-center justify-center gap-3">
+            <Card className="max-w-xl mx-auto p-8 text-center space-y-4">
+                <h1 className="text-2xl font-semibold text-ink">{t('detail.disabledForClass.title')}</h1>
+                <p className="text-ink-muted">{t('detail.disabledForClass.body')}</p>
+                <div className="flex items-center justify-center gap-4">
                     <PreviousPageButton fallbackHref={QUESTIONNAIRE_SELECTION_HREF} />
                 </div>
-            </div>
+            </Card>
         );
     }
 
     if (!questionnaire) {
         return (
-            <div className="max-w-xl mx-auto glass-panel p-8 text-center space-y-4">
-                <h1 className="text-xl font-bold text-slate-900">{t('detail.unavailable.title')}</h1>
-                <p className="text-slate-600">{t('detail.unavailable.body')}</p>
-                <div className="flex items-center justify-center gap-3">
+            <Card className="max-w-xl mx-auto p-8 text-center space-y-4">
+                <h1 className="text-2xl font-semibold text-ink">{t('detail.unavailable.title')}</h1>
+                <p className="text-ink-muted">{t('detail.unavailable.body')}</p>
+                <div className="flex items-center justify-center gap-4">
                     <PreviousPageButton fallbackHref={QUESTIONNAIRE_SELECTION_HREF} />
                 </div>
-            </div>
+            </Card>
         );
     }
 
     return (
         <div className="page-narrow space-y-6">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
                 <PreviousPageButton fallbackHref={QUESTIONNAIRE_SELECTION_HREF} />
                 <ForwardButton href={`/?start=${questionnaire.id}`} label={t('selector.start')} />
             </div>
 
-            <section className="glass-panel p-6 sm:p-8">
-                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-indigo-700">{t('detail.kicker')}</span>
-                <h1 className="font-display mt-1 text-3xl font-bold text-slate-900">{tf(`q.${questionnaire.id}.name`, questionnaire.name)}</h1>
-                <p className="mt-1 text-lg text-slate-700">{tf(`q.${questionnaire.id}.fullName`, questionnaire.fullName)}</p>
-                <p className="mt-3 text-slate-600 leading-relaxed">{tf(`q.${questionnaire.id}.description`, questionnaire.description)}</p>
-            </section>
+            <Card as="section" className="sm:p-8">
+                <span className="text-xs font-semibold text-link">{t('detail.kicker')}</span>
+                <h1 className="font-display mt-1 text-2xl font-semibold text-ink">{tf(`q.${questionnaire.id}.name`, questionnaire.name)}</h1>
+                <p className="mt-1 text-lg text-ink-body">{tf(`q.${questionnaire.id}.fullName`, questionnaire.fullName)}</p>
+                <p className="mt-4 text-ink-muted leading-relaxed">{tf(`q.${questionnaire.id}.description`, questionnaire.description)}</p>
+            </Card>
 
             <div className="grid md:grid-cols-3 gap-6">
                 {(['focus', 'path', 'input'] as const).map((topic) => {
@@ -121,11 +122,11 @@ export default function InstrumentDetailsPage() {
                         : (questionnaire.agentOnly ? t('detail.default.input.agent') : t('detail.default.input.assessment'));
                     return (
                         <div key={topic}>
-                            <span className="block h-0.5 w-10 rounded-full bg-indigo-500" />
-                            <h2 className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
+                            <span className="block h-0.5 w-10 rounded-full bg-brand" />
+                            <h2 className="mt-4 text-sm font-semibold text-ink-muted">
                                 {t(`detail.${topic}.title`)}
                             </h2>
-                            <p className="mt-2 text-sm text-slate-700 leading-relaxed">
+                            <p className="mt-2 text-sm text-ink-body leading-relaxed">
                                 {tf(`detail.${questionnaire.id}.${topic}`, fallbackText)}
                             </p>
                         </div>
@@ -134,18 +135,18 @@ export default function InstrumentDetailsPage() {
             </div>
 
             {inAppAvailable && (
-                <section className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5 flex flex-col md:flex-row md:items-center gap-5">
+                <section className="rounded-card border border-warning-line bg-warning-soft p-6 flex flex-col md:flex-row md:items-center gap-4">
                     <div className="flex-1">
-                        <h2 className="font-semibold text-amber-950">
+                        <h2 className="font-semibold text-warning-ink">
                             {t('detail.assessment.inapp.title')}
                         </h2>
-                        <p className="text-sm text-amber-900 mt-1 leading-relaxed">
+                        <p className="text-sm text-warning-ink mt-1 leading-relaxed">
                             {t('detail.assessment.inapp.body')}
                         </p>
                     </div>
                     <Link
                         href={`/somministrazione/${id}`}
-                        className="inline-flex shrink-0 items-center justify-center rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 transition-colors"
+                        className="inline-flex shrink-0 items-center justify-center min-h-control rounded-control bg-move px-4 py-2 text-sm font-semibold text-ink-on-brand hover:bg-move-hover transition-colors"
                     >
                         {t('detail.assessment.inapp.link')}
                     </Link>
@@ -153,23 +154,23 @@ export default function InstrumentDetailsPage() {
             )}
 
             {assessmentUrl && (
-                <section className="rounded-xl border border-sky-200 bg-sky-50 p-5 flex flex-col md:flex-row md:items-center gap-5">
+                <section className="rounded-card border border-info-line bg-info-soft p-6 flex flex-col md:flex-row md:items-center gap-4">
                     <div className="flex-1">
-                        <h2 className="font-semibold text-slate-900">{t('detail.assessment.title')}</h2>
-                        <p className="text-sm text-slate-700 mt-1 leading-relaxed">{t('detail.assessment.body')}</p>
+                        <h2 className="font-semibold text-ink">{t('detail.assessment.title')}</h2>
+                        <p className="text-sm text-ink-body mt-1 leading-relaxed">{t('detail.assessment.body')}</p>
                     </div>
                     <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
-                        <div className="rounded-md border border-sky-200 bg-white px-4 py-2 text-sm text-slate-700">
-                            {t('detail.assessment.codeLabel')}: <strong className="text-lg text-slate-900">{STRATEGIC_COMPETENCES_CODE}</strong>
+                        <div className="rounded-control border border-info-line bg-surface px-4 py-2 text-sm text-ink-body">
+                            {t('detail.assessment.codeLabel')}: <strong className="text-lg text-ink">{STRATEGIC_COMPETENCES_CODE}</strong>
                         </div>
-                        <div className="rounded-md border border-sky-200 bg-white px-4 py-2 text-sm text-slate-700">
-                            {t('detail.assessment.passwordLabel')}: <strong className="text-lg text-slate-900">{STRATEGIC_COMPETENCES_PASSWORD}</strong>
+                        <div className="rounded-control border border-info-line bg-surface px-4 py-2 text-sm text-ink-body">
+                            {t('detail.assessment.passwordLabel')}: <strong className="text-lg text-ink">{STRATEGIC_COMPETENCES_PASSWORD}</strong>
                         </div>
                         <a
                             href={assessmentUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-300 bg-white px-4 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-100 transition-colors"
+                            className="inline-flex items-center justify-center gap-2 min-h-control rounded-control border border-info-line bg-surface px-4 py-2 text-sm font-semibold text-info-ink hover:bg-brand-soft transition-colors"
                         >
                             {t('detail.assessment.link')}
                             <ExternalLink className="w-4 h-4" />
@@ -178,8 +179,8 @@ export default function InstrumentDetailsPage() {
                 </section>
             )}
 
-            <section className="rounded-xl bg-indigo-50 border border-indigo-100 p-5">
-                <p className="text-sm text-indigo-900">{t('detail.ready')}</p>
+            <section className="rounded-card bg-brand-soft border border-brand-line p-6">
+                <p className="text-sm text-ink">{t('detail.ready')}</p>
             </section>
         </div>
     );

@@ -9,6 +9,8 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { StickyActions } from '@/components/ui/StickyActions';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { AGE_BANDS } from '@/lib/age-bands';
 import { surveyCountries } from '@/lib/survey-countries';
 
@@ -262,13 +264,13 @@ export default function QuestionarioPage() {
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="glass-panel p-8 text-center space-y-6"
+                    className="rounded-card border border-line bg-surface p-8 text-center space-y-6 shadow-card"
                 >
-                    <div className="w-20 h-20 mx-auto rounded-full bg-green-100 flex items-center justify-center">
-                        <CheckCircle className="w-10 h-10 text-green-600" />
+                    <div className="w-20 h-20 mx-auto rounded-full bg-success-soft flex items-center justify-center">
+                        <CheckCircle className="w-10 h-10 text-success" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-800">{t('survey.thanks.title')}</h2>
-                    <p className="text-slate-500">
+                    <h2 className="text-2xl font-semibold text-ink">{t('survey.thanks.title')}</h2>
+                    <p className="text-ink-muted">
                         {t('survey.thanks.body')}
                     </p>
                     <BackButton
@@ -293,20 +295,20 @@ export default function QuestionarioPage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Progresso wizard */}
                     <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                        <div className="flex items-center justify-between text-xs text-ink-muted">
                             <span>{t('survey.wizard.step', { current: wizardStep + 1, total: TOTAL_STEPS })} · {[t('survey.basic.title'), t('survey.tools.title'), t('survey.quant.title'), t('survey.open.title')][wizardStep]}</span>
                             <span>{Math.round(((wizardStep + 1) / TOTAL_STEPS) * 100)}%</span>
                         </div>
-                        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                            <div className="h-full bg-indigo-500 transition-all duration-300" style={{ width: `${((wizardStep + 1) / TOTAL_STEPS) * 100}%` }} />
+                        <div className="h-1.5 bg-line rounded-full overflow-hidden">
+                            <div className="h-full bg-brand transition-all duration-300" style={{ width: `${((wizardStep + 1) / TOTAL_STEPS) * 100}%` }} />
                         </div>
                     </div>
 
                     {/* Passo 1 — Dati di base */}
                     {wizardStep === 0 && (
-                    <div className="glass-panel p-6 space-y-6">
-                        <h2 className="text-xl font-semibold text-slate-800">{t('survey.basic.title')}</h2>
-                        <p className="text-sm text-slate-500">{t('survey.basic.sub')}</p>
+                    <Card className="space-y-6">
+                        <h2 className="text-xl font-semibold text-ink">{t('survey.basic.title')}</h2>
+                        <p className="text-sm text-ink-muted">{t('survey.basic.sub')}</p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <SelectField
@@ -356,57 +358,57 @@ export default function QuestionarioPage() {
                                     onChange={(v) => handleDemographicChange('provenienza', v)}
                                 />
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    <label className="block text-sm font-semibold text-ink-body mb-1">
                                         {t('survey.field.area')}
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.area_studio}
                                         readOnly
-                                        className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-slate-600"
+                                        className="w-full min-h-control px-4 py-2 bg-surface-raised border border-line rounded-control text-ink-muted"
                                     />
                                 </div>
                                 </>
                             )}
                         </div>
-                    </div>
+                    </Card>
                     )}
 
                     {/* Passo 2 — Strumenti */}
                     {wizardStep === 1 && (
-                    <div className="glass-panel p-6 space-y-4">
+                    <Card className="space-y-4">
                         <div>
-                            <h2 className="text-xl font-semibold text-slate-800">{t('survey.tools.title')}</h2>
-                            <p className="text-sm text-slate-500 mt-1">{t('survey.tools.sub')}</p>
+                            <h2 className="text-xl font-semibold text-ink">{t('survey.tools.title')}</h2>
+                            <p className="text-sm text-ink-muted mt-1">{t('survey.tools.sub')}</p>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {TOOL_OPTIONS.map((tool) => {
                                 const checked = formData.strumenti_utilizzati.includes(tool);
                                 return (
                                     <label
                                         key={tool}
-                                        className={`flex items-center gap-3 rounded-md border px-3 py-3 cursor-pointer transition-colors ${checked
-                                            ? 'border-indigo-300 bg-indigo-50 text-indigo-900'
-                                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                                        className={`flex items-center gap-4 rounded-control border px-4 py-4 cursor-pointer transition-colors ${checked
+                                            ? 'border-brand-line bg-brand-soft text-ink'
+                                            : 'border-line bg-surface text-ink-body hover:bg-surface-sunken'
                                             }`}
                                     >
                                         <input
                                             type="checkbox"
                                             checked={checked}
                                             onChange={() => handleToolToggle(tool)}
-                                            className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                                            className="w-4 h-4 text-link border-line-strong rounded focus:ring-focus"
                                         />
-                                        <span className="text-sm font-medium">{tf(`survey.tool.${tool}`, tool)}</span>
+                                        <span className="text-sm">{tf(`survey.tool.${tool}`, tool)}</span>
                                     </label>
                                 );
                             })}
                         </div>
 
                         {counselors.length > 0 && (
-                            <div className="pt-4 border-t border-slate-100">
-                                <h3 className="text-base font-semibold text-slate-800">{t('survey.counselor.title')}</h3>
-                                <p className="text-sm text-slate-500 mt-1 mb-3">{t('survey.counselor.sub')}</p>
+                            <div className="pt-4 border-t border-line">
+                                <h3 className="text-base font-semibold text-ink">{t('survey.counselor.title')}</h3>
+                                <p className="text-sm text-ink-muted mt-1 mb-4">{t('survey.counselor.sub')}</p>
                                 <SelectField
                                     label={t('survey.counselor.label')}
                                     placeholder={t('survey.counselor.placeholder')}
@@ -416,14 +418,14 @@ export default function QuestionarioPage() {
                                 />
                             </div>
                         )}
-                    </div>
+                    </Card>
                     )}
 
                     {/* Passo 3 — Valutazione quantitativa */}
                     {wizardStep === 2 && (
-                    <div className="glass-panel p-6 space-y-6">
-                        <h2 className="text-xl font-semibold text-slate-800">{t('survey.quant.title')}</h2>
-                        <p className="text-sm text-slate-500">
+                    <Card className="space-y-6">
+                        <h2 className="text-xl font-semibold text-ink">{t('survey.quant.title')}</h2>
+                        <p className="text-sm text-ink-muted">
                             {t('survey.quant.sub')}
                         </p>
 
@@ -437,16 +439,16 @@ export default function QuestionarioPage() {
                                 />
                             ))}
                         </div>
-                    </div>
+                    </Card>
                     )}
 
                     {/* Passo 4 — Feedback aperto + consenso */}
                     {wizardStep === 3 && (
                     <>
-                    <div className="glass-panel p-6 space-y-4">
+                    <Card className="space-y-4">
                         <div>
-                            <h2 className="text-xl font-semibold text-slate-800">{t('survey.open.title')}</h2>
-                            <p className="text-sm text-slate-500 mt-1">{t('survey.open.sub')}</p>
+                            <h2 className="text-xl font-semibold text-ink">{t('survey.open.title')}</h2>
+                            <p className="text-sm text-ink-muted mt-1">{t('survey.open.sub')}</p>
                         </div>
                         <textarea
                             value={formData.feedback_aperto}
@@ -454,33 +456,33 @@ export default function QuestionarioPage() {
                             placeholder={t('survey.open.placeholder')}
                             rows={5}
                             maxLength={2000}
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-y"
+                            className="w-full px-4 py-2 bg-surface border border-line-strong rounded-control text-ink focus:ring-2 focus:ring-focus focus:border-brand resize-y"
                         />
-                        <p className="text-xs text-slate-500">{t('survey.open.note')}</p>
-                    </div>
+                        <p className="text-xs text-ink-muted">{t('survey.open.note')}</p>
+                    </Card>
 
                     {/* Consenso */}
-                    <div className="glass-panel p-6 space-y-4">
-                        <label className="flex items-start gap-3 cursor-pointer">
+                    <Card className="space-y-4">
+                        <label className="flex items-start gap-4 cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={consent}
                                 onChange={(e) => setConsent(e.target.checked)}
-                                className="mt-1 w-5 h-5 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                                className="mt-1 w-5 h-5 text-link border-line-strong rounded focus:ring-focus"
                             />
-                            <span className="text-sm text-slate-600">
+                            <span className="text-sm text-ink-muted">
                                 {t('survey.consent')}
                             </span>
                         </label>
 
-                    </div>
+                    </Card>
                     </>
                     )}
 
                     {/* Navigazione wizard: Indietro / Avanti / Invia, ancorata in fondo */}
                     <StickyActions>
-                        {error && <p className="text-red-600 text-sm mb-2 text-center">{error}</p>}
-                        <div className="flex items-center gap-3">
+                        {error && <p className="text-danger text-sm mb-2 text-center">{error}</p>}
+                        <div className="flex items-center gap-4">
                             <BackButton
                                 variant="labelled"
                                 disabled={wizardStep === 0}
@@ -494,13 +496,14 @@ export default function QuestionarioPage() {
                                     label={t('survey.wizard.next')}
                                 />
                             ) : (
-                                <button
+                                <Button
                                     type="submit"
+                                    size="lg"
                                     disabled={isSubmitting || !consent}
-                                    className="ml-auto inline-flex min-h-[44px] items-center gap-2 px-6 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-md transition-colors shadow-md shadow-indigo-600/20"
+                                    className="ml-auto"
                                 >
                                     {isSubmitting ? t('survey.submitting') : (<><Send className="w-4 h-4" /> {t('survey.submit')}</>)}
-                                </button>
+                                </Button>
                             )}
                         </div>
                     </StickyActions>
@@ -528,11 +531,11 @@ function SelectField({
 }) {
     return (
         <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+            <label className="block text-sm font-semibold text-ink-body mb-1">{label}</label>
             <select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full min-h-control px-4 py-2 bg-surface border border-line-strong rounded-control text-ink focus:ring-2 focus:ring-focus focus:border-brand"
             >
                 <option value="">{placeholder}</option>
                 {options.map((opt) => (
@@ -554,8 +557,8 @@ function RatingField({
     onChange: (value: number | null) => void;
 }) {
     return (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b border-slate-100 last:border-0">
-            <span className="text-slate-700 sm:flex-1">{label}</span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-4 border-b border-line last:border-0">
+            <span className="text-ink-body sm:flex-1">{label}</span>
             <div className="flex gap-2">
 
                 {[1, 2, 3, 4, 5].map((n) => (
@@ -563,9 +566,9 @@ function RatingField({
                         key={n}
                         type="button"
                         onClick={() => onChange(n)}
-                        className={`w-10 h-10 text-sm font-medium rounded-md transition-colors ${value === n
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        className={`h-control w-control text-sm rounded-control transition-colors ${value === n
+                            ? 'bg-brand text-ink-on-brand'
+                            : 'bg-surface-raised text-ink-muted hover:bg-line'
                             }`}
                     >
                         {n}
