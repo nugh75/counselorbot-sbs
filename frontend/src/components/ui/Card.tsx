@@ -1,8 +1,8 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-// Wrapper card condiviso sopra l'utility glass-panel (bg + bordo + rounded-xl
-// gia' inclusi). Padding di default p-6; override via className.
+// Wrapper card condiviso sui token semantici (superficie, bordo, raggio e ombra
+// card): cambiano col tema senza remap. Padding di default p-6; override via className.
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
     children: ReactNode;
     className?: string;
@@ -10,6 +10,6 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Card({ children, className, as: Tag = 'div', ...props }: CardProps) {
-    return <Tag className={cn('glass-panel p-6', className)} {...props}>{children}</Tag>;
+    return <Tag className={cn('rounded-card border border-line bg-surface p-6 shadow-card transition-colors duration-150', className)} {...props}>{children}</Tag>;
 }
 

@@ -108,8 +108,13 @@ export default function AdminPage() {
                 { id: 'logs', label: t('admin.tab.logs'), icon: FileText },
                 { id: 'costs', label: t('admin.tab.costs'), icon: Coins },
                 { id: 'benchmark', label: t('admin.tab.benchmark'), icon: Gauge },
-                { id: 'audio', label: t('admin.tab.audio'), icon: Mic },
                 { id: 'promptExperiments', label: { it: 'Esperimenti sui prompt', en: 'Prompt experiments', es: 'Experimentos de prompts', fr: 'Expériences sur les prompts', de: 'Prompt-Experimente', sv: 'Promptexperiment' }[lang], icon: Gauge },
+            ],
+        },
+        {
+            title: t('admin.group.voice'),
+            items: [
+                { id: 'audio', label: t('admin.tab.audio'), icon: Mic },
             ],
         },
         {
