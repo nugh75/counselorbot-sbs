@@ -75,18 +75,6 @@ def generation_details(service) -> dict:
     }
 
 
-# Prompt usato per aggiornare il riassunto rotante della sessione
-SUMMARY_SYSTEM_PROMPT = (
-    "You are an assistant that maintains a rolling summary of the counseling session. "
-    "You will receive the previous summary (if any) and the latest interaction. "
-    "Produce a SINGLE updated summary in MAXIMUM 80 words in Italian that integrates "
-    "the entire journey done so far, including the latest step. "
-    "Use a compact bulleted list. Do NOT add introductions or conclusions. "
-    "IMPORTANT: Do NOT include raw numerical scores or tables of data from the QSA questionnaire. "
-    "Report only the INTERPRETATIONS and ADVICE that emerged from the analysis. "
-    "The result REPLACES the previous summary — do not append, rewrite."
-)
-
 # Mappa chiavi runtime -> variabili d'ambiente (segreti e impostazioni locali).
 ENV_KEY_MAP = {
     **{config_key(provider): env_vars for provider, env_vars in API_KEY_ENV_MAP.items()},
@@ -1058,57 +1046,6 @@ class AIService:
         return vision_service.call(
             self.config, self.db, resolved_provider, resolved_model, prompt,
             image_base64, timeout=timeout, ctx=self.privacy_context())
-
-    # Token massimi per i riassunti (~80 parole → 120 token sono sufficienti)
-    SUMMARY_MAX_TOKENS = 300
-
-    def generate_summary(self, user_message: str, bot_response: str, step_label: str = "", previous_summary: str = "") -> str:
-        """
-        Genera un riassunto rotante aggiornato della sessione.
-        Incorpora il riassunto precedente + l'ultima interazione → produce un unico testo ≤80 parole
-        che SOSTITUISCE il vecchio riassunto (non si accumula).
-        """
-        provider = self.config.get('active_provider', 'openai')
-        model_name = self.config.get('model_name', 'gpt-4o')
-
-        # Per i riassunti usa un modello più leggero/veloce se configurato
-        summary_model = self.config.get('summary_model_name', '') or model_name
-        logger.info(f"generate_summary: provider={provider} model={summary_model}")
-
-        prefix = f"[{step_label}] " if step_label else ""
-        trunc_user = user_message[:1000]
-        trunc_bot = bot_response[:1500]
-
-        if previous_summary:
-            user_msg = (
-                f"RIASSUNTO PRECEDENTE DELLA SESSIONE:\n{previous_summary}\n\n"
-                f"ULTIMA INTERAZIONE {prefix}:\n"
-                f"UTENTE:\n{trunc_user}\n\n"
-                f"ASSISTENTE:\n{trunc_bot}\n\n"
-                f"Aggiorna il riassunto incorporando l'ultima interazione. Massimo 80 parole totali."
-            )
-        else:
-            user_msg = (
-                f"{prefix}Riassumi questa prima interazione:\n\n"
-                f"UTENTE:\n{trunc_user}\n\n"
-                f"ASSISTENTE:\n{trunc_bot}"
-            )
-
-        mt = self.SUMMARY_MAX_TOKENS
-        # Il riassunto e' un task breve: niente reasoning (consumerebbe il budget).
-        self._reasoning_plan = DISABLED_PLAN
-        provider, summary_model = self._apply_budget_lock(provider, summary_model)
-        # Anonimizza il testo verso provider esterni (il riassunto resta con i
-        # placeholder: e' testo interno, mai mostrato allo studente).
-        user_msg, _sp, _h, _prepared = self._anonymize_external(
-            provider, user_msg, SUMMARY_SYSTEM_PROMPT, None, kind="summary", model=summary_model)
-        try:
-            return self._provider(provider)['call'](user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
-        except Exception as e:
-            logger.error("Errore nella generazione del riassunto (%s)", type(e).__name__)
-            # Fallback: troncamento semplice
-            truncated = bot_response[:300].rsplit(' ', 1)[0]
-            return f"{prefix}{truncated}..."
 
     def _call_openai(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         api_key = self._get_api_key('api_key_openai')

@@ -771,19 +771,11 @@ QUESTIONARI_CHAT_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
 # Lo studente carica un PDF; l'AI estrae skill e genera MCQ con feedback
 # formativo per ogni alternativa. Vedi backend/pqbl_generator.py.
 
-DEFAULT_PQBL_SKILL_EXTRACTION_PROMPT = _text("default_pqbl_skill_extraction_prompt")
-
 DEFAULT_PQBL_QUESTION_GENERATION_PROMPT = _text("default_pqbl_question_generation_prompt")
 
 DEFAULT_PQBL_ONBOARDING_TEXT = _text("default_pqbl_onboarding_text")
 
 PQBL_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
-    {
-        "key": "pqbl_skill_extraction_prompt",
-        "label": "pQBL - Prompt Estrazione Skill",
-        "description": "Prompt di sistema per derivare le skill dal PDF caricato (output JSON)",
-        "default": DEFAULT_PQBL_SKILL_EXTRACTION_PROMPT,
-    },
     {
         "key": "pqbl_question_generation_prompt",
         "label": "pQBL - Prompt Generazione Domande",
@@ -1284,8 +1276,6 @@ PELLEREY_COGNITIVE_PROCESSES = _text("pellerey_cognitive_processes")
 PELLEREY_AFFECTIVE_PROCESSES = _text("pellerey_affective_processes")
 
 PELLEREY_ELABORATION = _text("pellerey_elaboration")
-
-PELLEREY_SELFCONTROL = _text("pellerey_selfcontrol")
 
 PELLEREY_MOTIVATION = _text("pellerey_motivation")
 

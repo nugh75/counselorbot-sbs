@@ -264,6 +264,7 @@ import_module("backend.migrations.20261025_credential_deks").migrate(database.en
 import_module("backend.migrations.20261025_privacy_consent").migrate(database.engine)
 import_module("backend.migrations.20261027_class_response_format").migrate(database.engine)
 import_module("backend.migrations.20261028_deep_dive_attempts").migrate(database.engine)
+import_module("backend.migrations.20261031_drop_dead_prompts").migrate(database.engine)
 
 
 @asynccontextmanager

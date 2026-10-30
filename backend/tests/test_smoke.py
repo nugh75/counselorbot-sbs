@@ -162,9 +162,6 @@ class _FakeAIService:
         }
         yield {"type": "content", "text": "RISPOSTA_TEST"}
 
-    def generate_summary(self, *a, **k):
-        return "riassunto test"
-
     def call_vision(self, prompt, image_base64, **kwargs):
         # Il ripiego OCR non e' mai atteso dai test che usano questo finto.
         raise AssertionError("Vision fallback non previsto in _FakeAIService")

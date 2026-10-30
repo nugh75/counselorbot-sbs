@@ -632,32 +632,6 @@ def validate_question_bank(questions: List[dict]) -> List[str]:
 # ---------------------------------------------------------------------------
 # Chunk-by-chunk generation (streaming)
 # ---------------------------------------------------------------------------
-_CHUNK_PROMPT_TEMPLATE = (
-    "You are given an excerpt from a didactic text. "
-    "Identify one specific skill (ability/knowledge) that this excerpt teaches. "
-    "Then generate exactly {n} multiple-choice questions that test that skill.\n\n"
-    "The output MUST be a JSON object with the following structure:\n"
-    "{{\n"
-    '  "skill": "Knowing how to ... (short phrase describing the skill, in the same language as the source)",\n'
-    '  "questions": [\n'
-    "    {{\n"
-    '      "question": "...",\n'
-    '      "options": [\n'
-    '        {{"key": "A", "text": "...", "correct": true, "feedback": "..."}},\n'
-    '        {{"key": "B", "text": "...", "correct": false, "feedback": "..."}},\n'
-    '        {{"key": "C", "text": "...", "correct": false, "feedback": "..."}},\n'
-    '        {{"key": "D", "text": "...", "correct": false, "feedback": "..."}}\n'
-    "      ]\n"
-    "    }}\n"
-    "  ]\n"
-    "}}\n\n"
-    "Rules for each question (R1, R2):\n"
-    "- Exactly one option has correct=true, the other three are plausible distractors.\n"
-    "- Each option has a unique constructive feedback.\n"
-    "- Distractor feedback EXPLAINS THE ERROR without revealing the correct key or quoting the correct answer verbatim.\n"
-    "- Use the same language as the source text.\n\n"
-    "EXCERPT:\n{{text}}"
-)
 
 
 def generate_batch_for_chunk(
