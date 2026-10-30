@@ -46,8 +46,10 @@ def configure_model(client, value, engine=None):
     client.app.dependency_overrides[database.get_db] = lambda: FakeSession(values)
 
 
-def upload(client, content=b'audio', language=None):
+def upload(client, content=b'audio', language=None, fallback=None):
     data = {} if language is None else {'language': language}
+    if fallback is not None:
+        data['fallback_language'] = fallback
     return client.post('/audio/transcribe', files={'audio': ('private-name.wav', content)}, data=data)
 
 
@@ -62,15 +64,16 @@ def test_size_empty_and_language_are_rejected_before_forwarding(client, monkeypa
         assert upload(client, b'').status_code == 400
         assert upload(client, b'1234').status_code == 413
         assert upload(client, b'123', 'xx').status_code == 422
+        assert upload(client, b'123', 'auto', 'xx').status_code == 422
         service.assert_not_called()
 
 
-def forward(client, language=None):
+def forward(client, language=None, fallback=None):
     service = AsyncMock()
     service.post.return_value = httpx.Response(200, json={'text': 'Vorrei organizzare lo studio.', 'language': 'it'})
     with patch.object(audio_input.httpx, 'AsyncClient') as factory:
         factory.return_value.__aenter__.return_value = service
-        response = upload(client, language=language)
+        response = upload(client, language=language, fallback=fallback)
     return response, service.post.call_args
 
 
@@ -78,13 +81,19 @@ def test_audio_stays_on_local_service_and_detected_language_is_reported(client):
     response, (args, kwargs) = forward(client, 'it')
     assert response.json() == {'text': 'Vorrei organizzare lo studio.', 'language': 'it', 'model': 'large-v3-turbo'}
     assert args == ('http://transcription:8000/transcribe',)
-    assert kwargs['data'] == {'language': 'it', 'model': 'large-v3-turbo', 'engine': 'faster-whisper'}
+    assert kwargs['data'] == {'language': 'it', 'fallback_language': 'auto', 'model': 'large-v3-turbo',
+                              'engine': 'faster-whisper'}
     assert kwargs['files']['audio'] == ('recording', b'audio', 'application/octet-stream')
 
 
 def test_language_defaults_to_automatic_detection(client):
     _, (_, kwargs) = forward(client)
     assert kwargs['data']['language'] == 'auto'
+
+
+def test_interface_language_is_forwarded_as_detection_fallback(client):
+    _, (_, kwargs) = forward(client, 'auto', 'it')
+    assert (kwargs['data']['language'], kwargs['data']['fallback_language']) == ('auto', 'it')
 
 
 def test_configured_model_is_used_and_unknown_names_fall_back(client):
