@@ -1,3 +1,4 @@
+import pytest
 from backend.recommendation_blocks import extract, strip_for_display, build_directive, retain_visible
 
 
@@ -156,6 +157,35 @@ def test_answer_envelope_recommendations_are_recorded_within_the_catalogue():
                                     readings=readings, strategies=strategies)
         assert visible == text
         assert selected == expected
+
+
+def _reversed_envelope(answer, recommendations, **dumps):
+    import json
+    return json.dumps({'recommendations': recommendations, 'answer': answer}, ensure_ascii=False, **dumps)
+
+
+@pytest.mark.parametrize('wrap', [
+    lambda body: body,
+    lambda body: ENVELOPE_TEXT + body,
+    lambda body: ENVELOPE_TEXT + '\n```json\n' + body + '\n```',
+], ids=['alone', 'after-prose', 'json-fence'])
+@pytest.mark.parametrize('indent', [None, 1])
+def test_envelope_with_keys_in_any_order_never_reaches_the_student(wrap, indent):
+    raw = wrap(_reversed_envelope(ENVELOPE_TEXT, {'reading': [], 'strategy': ['active']}, indent=indent))
+    for end in range(len(raw) + 1):
+        visible = strip_for_display(raw[:end])
+        assert ENVELOPE_TEXT.startswith(visible.rstrip()), raw[:end][-40:]
+        assert '{' not in visible and 'recommendations' not in visible and '`' not in visible
+    assert strip_for_display(raw) == ENVELOPE_TEXT
+    assert extract(raw, strategies={'active': 'Recupero attivo'}) == (
+        ENVELOPE_TEXT, {'reading': [], 'strategy': ['active']})
+
+
+def test_ordinary_json_with_answer_or_recommendations_keys_stays_visible():
+    for text in ('Esempio:\n```json\n{"recommendations": ["leggi"], "person": "Ada"}\n```',
+                 'Formato: {"recommendations": [], "answer": 42}'):
+        assert strip_for_display(text) == text
+        assert extract(text)[0] == text
 
 
 def test_ordinary_json_and_braces_stay_visible():

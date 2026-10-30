@@ -31,3 +31,18 @@ test('preserves public JSON, code examples, rules, alignment and visible content
     }
     assert.equal(normalizeChatMarkdown('<small>Un dettaglio leggibile.</small>'), 'Un dettaglio leggibile.');
 });
+
+test('shows only the answer of a private envelope, whatever the key order', () => {
+    const answer = 'Risposta visibile.';
+    for (const envelope of [{answer, recommendations: []}, {recommendations: {reading: [], strategy: []}, answer}]) {
+        const body = JSON.stringify(envelope);
+        assert.equal(normalizeChatMarkdown(body), answer);
+        assert.equal(normalizeChatMarkdown(answer + '\n' + body), answer);
+        assert.equal(normalizeChatMarkdown('```json\n' + body + '\n```'), answer);
+        assert.equal(normalizeChatMarkdown('Prima.\n' + JSON.stringify(envelope, null, 1)), 'Prima.\n' + answer);
+    }
+    for (const text of ['{"answer": 42, "recommendations": []}', '{"recommendations": ["leggi"], "person": "Ada"}',
+        '```json\n{"answer": "x", "question": "y"}\n```']) {
+        assert.equal(normalizeChatMarkdown(text), text);
+    }
+});
