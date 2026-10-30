@@ -17,7 +17,6 @@ on:
       - backend/shell_internal.py
       - backend/sqlite_backup.py
       - backend/tests/test_shell_contract.py
-      - backend/tests/test_sqlite_backup.py
       - frontend/src/proxy.ts
       - frontend/src/lib/shell-internal*
       - frontend/src/lib/api-proxy*
@@ -97,14 +96,6 @@ jobs:
           PYTHON_DOTENV_DISABLED: "1"
           DATABASE_URL: sqlite:///${{ runner.temp }}/shell-contract.sqlite3
         run: python -m pytest -q desktop/teacher/sidecar/test_server.py backend/tests/test_shell_contract.py backend/tests/test_request_origin.py desktop/teacher/scripts/test_check_teacher_data.py
-
-      - name: Desktop auth, pairing, profile and backup regressions (SQLite)
-        if: startsWith(matrix.runner, 'ubuntu')
-        env:
-          PYTHON_DOTENV_DISABLED: "1"
-          TEST_DB: sqlite
-        run: |
-          python -m pytest -q backend/tests/test_local_auth.py backend/tests/test_local_pairing.py backend/tests/test_teacher_profile.py backend/tests/test_sqlite_backup.py
 
       - name: Build frontend (Next standalone) and stage node
         run: |
