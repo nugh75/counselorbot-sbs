@@ -1,6 +1,6 @@
 'use client';
 
-import { Archive, BookOpen, ChevronDown, ChevronRight, MessageSquare, RotateCcw, Target, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Archive, BookOpen, ChevronDown, ChevronRight, GitBranch, MessageSquare, RotateCcw, Target, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useId, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 
@@ -25,7 +25,7 @@ import type {
 } from '@/lib/recommendations';
 import { cn } from '@/lib/utils';
 
-type Tab = RecommendationType;
+type Tab = RecommendationType | 'diagram';
 
 interface RecommendationsPanelProps {
     catalog: RecommendationCatalog;
@@ -35,6 +35,10 @@ interface RecommendationsPanelProps {
     onCatalogChange?: (catalog: RecommendationCatalog) => void;
     /** Consegna la domanda alla casella della chat. Non invia: scrive e basta. */
     onDiscuss?: (prompt: string) => void;
+    /** I diagrammi della conversazione, in ordine di disegno. */
+    diagrams?: { id: string; title: string }[];
+    /** Riprende un diagramma nel suo messaggio: non lo ridisegna. */
+    onOpenDiagram?: (id: string) => void;
 }
 
 // Chiave di un intervento in corso o fallito: una card per volta, per tipo.
@@ -46,6 +50,8 @@ export function RecommendationsPanel({
     sessionId,
     onCatalogChange,
     onDiscuss,
+    diagrams = [],
+    onOpenDiagram,
 }: RecommendationsPanelProps) {
     const { t, lang } = useI18n();
 
@@ -53,17 +59,18 @@ export function RecommendationsPanel({
     const [activeTab, setActiveTab] = useState<Tab>(catalog.reading.length ? 'reading' : 'strategy');
     const [pending, setPending] = useState<Record<string, boolean>>({});
     const [failed, setFailed] = useState<Record<string, RecommendationPatch>>({});
-    const [showArchived, setShowArchived] = useState<Record<Tab, boolean>>({ reading: false, strategy: false, advice: false });
+    const [showArchived, setShowArchived] = useState<Record<RecommendationType, boolean>>({ reading: false, strategy: false, advice: false });
 
-    const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ reading: null, strategy: null, advice: null });
+    const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ reading: null, strategy: null, advice: null, diagram: null });
 
     const ids = useId();
     const tabId = (tab: Tab) => `${ids}-tab-${tab}`;
     const panelId = (tab: Tab) => `${ids}-panel-${tab}`;
 
-    const tabs: Tab[] = ['reading', 'strategy', 'advice'];
-    const visibleTab: Tab = catalog[activeTab].length ? activeTab
-        : tabs.find((tab) => catalog[tab].length) ?? activeTab;
+    const tabs: Tab[] = ['reading', 'strategy', 'advice', 'diagram'];
+    const tabSize = (tab: Tab) => tab === 'diagram' ? diagrams.length : catalog[tab].length;
+    const visibleTab: Tab = tabSize(activeTab) ? activeTab
+        : tabs.find((tab) => tabSize(tab)) ?? activeTab;
     const readings = split(catalog.reading);
     const strategies = split(catalog.strategy);
     const advice = split(catalog.advice);
@@ -111,7 +118,7 @@ export function RecommendationsPanel({
         tabRefs.current[next]?.focus();
     };
 
-    if (!catalog.reading.length && !catalog.strategy.length && !catalog.advice.length) return null;
+    if (!tabs.some(tabSize)) return null;
 
     const cardState = (type: RecommendationType, slug: string) => ({
         pending: Boolean(pending[cardKey(type, slug)]),
@@ -155,7 +162,7 @@ export function RecommendationsPanel({
                     <span className="ml-auto rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">{proposedCount}</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1" role="tablist">
+                <div className="grid grid-cols-4 gap-1 rounded-lg bg-slate-100 p-1" role="tablist">
                     <TabButton
                         ref={(node) => { tabRefs.current.reading = node; }}
                         active={visibleTab === 'reading'}
@@ -186,9 +193,39 @@ export function RecommendationsPanel({
                         icon={<MessageSquare className="h-4 w-4 shrink-0" aria-hidden="true" />}
                         onKeyDown={onTabKeys}
                     />
+                    <TabButton
+                        ref={(node) => { tabRefs.current.diagram = node; }}
+                        active={visibleTab === 'diagram'} count={diagrams.length}
+                        id={tabId('diagram')} controls={panelId('diagram')}
+                        label={rec('diagram.tab')} onClick={() => setActiveTab('diagram')}
+                        icon={<GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" />}
+                        onKeyDown={onTabKeys}
+                    />
                 </div>
 
-                {visibleTab === 'reading' ? (
+                {visibleTab === 'diagram' ? (
+                    <div className="space-y-2" role="tabpanel" id={panelId('diagram')} aria-labelledby={tabId('diagram')} tabIndex={0}>
+                        <h4 className="text-sm font-semibold text-slate-700">{rec('diagram.tab')}</h4>
+                        {diagrams.length ? (
+                            <ol className="space-y-1">
+                                {diagrams.map((item) => (
+                                    <li key={item.id}>
+                                        <button
+                                            type="button"
+                                            onClick={() => onOpenDiagram?.(item.id)}
+                                            disabled={!onOpenDiagram}
+                                            aria-label={rec('diagram.open', { title: item.title })}
+                                            className="flex min-h-control w-full items-center gap-2 rounded-control px-3 py-2 text-left text-sm text-ink-body transition-colors hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                        >
+                                            <GitBranch className="h-4 w-4 shrink-0 text-ink-muted" aria-hidden="true" />
+                                            <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ol>
+                        ) : <EmptyState text={rec('diagram.empty')} />}
+                    </div>
+                ) : visibleTab === 'reading' ? (
                     <div
                         className="space-y-2"
                         role="tabpanel"

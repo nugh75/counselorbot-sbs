@@ -6,7 +6,7 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { getSelectedCounselorId } from '@/lib/counselor';
 import { parseDiagramSpec, type DiagramSpec } from '@/lib/diagram-content';
-import { buildDiagramFromMessageRequest, messageDiagramKey } from '@/lib/diagram-request';
+import { buildDiagramFromMessageRequest, messageDiagramId, messageDiagramKey } from '@/lib/diagram-request';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/auth';
 import { diagramRequestLabel } from '@/lib/i18n-diagram';
@@ -169,10 +169,25 @@ export function MessageDiagramButton({
             </div>}
             {diagrams.length > 0 && (
                 <div className="min-w-0 w-full basis-full">
-                    {diagrams.map((diagram, index) => <DiagramBlock key={index} spec={diagram.spec} locale={locale} />)}
+                    {diagrams.map((diagram, index) => <div key={index} id={messageDiagramId(sourceKey, index)} className="scroll-mt-4 rounded-xl transition-shadow">
+                        <DiagramBlock spec={diagram.spec} locale={locale} />
+                    </div>)}
                     <p className="text-2xs text-ink-muted" role="status">{diagramRequestLabel('saved', locale)}</p>
                 </div>
             )}
         </>
     );
+}
+
+/**
+ * Riprende un disegno dalla barra laterale: porta al messaggio che lo contiene,
+ * lo evidenzia un momento e lo apre ingrandito nel visualizzatore della card.
+ */
+export function openMessageDiagram(id: string) {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.scrollIntoView({ block: 'center' });
+    element.classList.add('ring-2', 'ring-focus');
+    window.setTimeout(() => element.classList.remove('ring-2', 'ring-focus'), 2000);
+    element.querySelector<HTMLButtonElement>('button[data-diagram-expand]:not(:disabled)')?.click();
 }
