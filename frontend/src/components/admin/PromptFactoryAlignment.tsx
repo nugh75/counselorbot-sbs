@@ -132,47 +132,47 @@ export function PromptFactoryAlignment({ disabled, stepLabels, onApplied, onBusy
     };
 
     return (
-        <div className="space-y-3 print:hidden">
+        <div className="space-y-4 print:hidden">
             <Button type="button" variant="secondary" disabled={disabled || !!busy}
                 aria-expanded={open} aria-controls={panelId} onClick={loadPreview}>
                 <RefreshCw className="h-4 w-4" aria-hidden="true" />
                 {t('admin.promptAlignment.action')}
             </Button>
-            {disabled && <p className="text-sm text-slate-600" role="status">{t('admin.promptAlignment.drafts')}</p>}
+            {disabled && <p className="text-sm text-ink-muted" role="status">{t('admin.promptAlignment.drafts')}</p>}
             {open && <section id={panelId} aria-label={t('admin.promptAlignment.title')}
-                aria-busy={!!busy} className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
-                <h4 className="font-semibold text-slate-900">{t('admin.promptAlignment.title')}</h4>
-                <p className="text-sm text-slate-600">{t('admin.promptAlignment.help')}</p>
-                {busy && <p role="status" className="text-sm text-slate-600">{t(`admin.promptAlignment.${busy === 'preview' ? 'loading' : 'applying'}`)}</p>}
+                aria-busy={!!busy} className="space-y-4 rounded-lg border border-line bg-surface p-4">
+                <h4 className="font-semibold text-ink">{t('admin.promptAlignment.title')}</h4>
+                <p className="text-sm text-ink-muted">{t('admin.promptAlignment.help')}</p>
+                {busy && <p role="status" className="text-sm text-ink-muted">{t(`admin.promptAlignment.${busy === 'preview' ? 'loading' : 'applying'}`)}</p>}
                 {error && <Callout variant="danger">{t(error)}</Callout>}
-                {applied !== null && <p role="status" className="text-sm font-semibold text-indigo-700">{t('admin.promptAlignment.success', { count: applied })}</p>}
+                {applied !== null && <p role="status" className="text-sm font-semibold text-link">{t('admin.promptAlignment.success', { count: applied })}</p>}
                 {plan && <>
-                    <p className="text-sm font-semibold text-slate-800">{t('admin.promptAlignment.changed', { count: plan.changes.length })}</p>
-                    {!plan.changes.length && <p role="status" className="text-sm text-slate-600">{t('admin.promptAlignment.empty')}</p>}
-                    {plan.changes.map(item => <details key={`${item.scope}/${item.key}`} className="rounded-lg border border-slate-200 p-3">
-                        <summary className="cursor-pointer break-words text-sm font-semibold text-slate-800">
+                    <p className="text-sm font-semibold text-ink">{t('admin.promptAlignment.changed', { count: plan.changes.length })}</p>
+                    {!plan.changes.length && <p role="status" className="text-sm text-ink-muted">{t('admin.promptAlignment.empty')}</p>}
+                    {plan.changes.map(item => <details key={`${item.scope}/${item.key}`} className="rounded-lg border border-line p-4">
+                        <summary className="cursor-pointer break-words text-sm font-semibold text-ink">
                             {itemLabel(item)}
-                            {itemLabel(item) !== item.key && <code className="ml-2 font-mono text-xs font-normal text-slate-600">{item.key}</code>}
+                            {itemLabel(item) !== item.key && <code className="ml-2 font-mono text-xs font-normal text-ink-muted">{item.key}</code>}
                         </summary>
-                        <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
                             {(['before', 'after'] as const).map(side => <div key={side} className="min-w-0 space-y-2">
-                                <h5 className="text-sm font-semibold text-slate-700">{t(`admin.promptAlignment.${side}`)}</h5>
-                                <pre className="max-h-80 overflow-y-auto whitespace-pre-wrap break-words rounded-md bg-slate-50 p-3 font-mono text-xs text-slate-800">{item[side]}</pre>
+                                <h5 className="text-sm font-semibold text-ink-body">{t(`admin.promptAlignment.${side}`)}</h5>
+                                <pre className="max-h-80 overflow-y-auto whitespace-pre-wrap break-words rounded-control bg-surface-sunken p-4 font-mono text-xs text-ink">{item[side]}</pre>
                             </div>)}
                         </div>
                     </details>)}
                     <div className="space-y-2">
-                        <h5 className="text-sm font-semibold text-slate-800">{t('admin.promptAlignment.preserved', { count: plan.preserved.length })}</h5>
-                        {plan.preserved.length > 0 && <ul className="space-y-1 text-sm text-slate-600">
+                        <h5 className="text-sm font-semibold text-ink">{t('admin.promptAlignment.preserved', { count: plan.preserved.length })}</h5>
+                        {plan.preserved.length > 0 && <ul className="space-y-1 text-sm text-ink-muted">
                             {plan.preserved.map(item => <li key={`${item.scope}/${item.key}`} className="break-words">
-                                <span className="font-medium">{itemLabel(item)}</span>
+                                <span className="font-semibold">{itemLabel(item)}</span>
                                 {itemLabel(item) !== item.key && <code className="ml-2 font-mono text-xs">{item.key}</code>}
                                 {' — '}{t(`admin.promptAlignment.${item.reason}`)}
                             </li>)}
                         </ul>}
                     </div>
                     {plan.changes.length > 0 && <>
-                        <p className="text-sm text-slate-600">{t('admin.promptAlignment.review')}</p>
+                        <p className="text-sm text-ink-muted">{t('admin.promptAlignment.review')}</p>
                         <Button type="button" disabled={disabled || !!busy || stale} onClick={apply}>
                             {t('admin.promptAlignment.confirm')}
                         </Button>

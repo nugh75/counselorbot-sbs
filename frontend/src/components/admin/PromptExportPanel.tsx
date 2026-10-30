@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/auth';
 import { Download, FileText } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
+import { Button } from '@/components/ui/Button';
 
 // Ordine di presentazione degli strumenti (gli altri seguono in coda).
 const INSTRUMENT_ORDER = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
@@ -83,47 +84,44 @@ export function PromptExportPanel() {
     return (
         <div className="space-y-4">
             <div>
-                <h2 className="text-lg font-bold text-slate-800">{texts.title}</h2>
-                <p className="mt-1 text-sm text-slate-500">{texts.subtitle}</p>
+                <h2 className="text-lg font-semibold text-ink">{texts.title}</h2>
+                <p className="mt-1 text-sm text-ink-muted">{texts.subtitle}</p>
             </div>
 
-            <div className="glass-panel p-6 space-y-5">
+            <div className="rounded-card border border-line bg-surface shadow-card p-6 space-y-4">
                 <div>
-                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">{texts.perTool}</h3>
+                    <h3 className="text-sm font-semibold text-ink-muted">{texts.perTool}</h3>
                     {instruments.length === 0 ? (
-                        <p className="mt-2 text-sm text-slate-500">{texts.empty}</p>
+                        <p className="mt-2 text-sm text-ink-muted">{texts.empty}</p>
                     ) : (
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                             {instruments.map((instrument) => (
-                                <button
+                                <Button variant="secondary"
                                     key={instrument}
                                     type="button"
                                     onClick={() => void download(instrument)}
                                     disabled={loading !== null}
-                                    className="inline-flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 disabled:opacity-50"
-                                >
+                                    className="justify-between hover:border-brand-line">
                                     <span className="flex items-center gap-2">
-                                        <FileText className="h-4 w-4 text-indigo-600" />
+                                        <FileText className="h-4 w-4 text-brand" />
                                         {instrument}
                                     </span>
-                                    <Download className="h-4 w-4 text-slate-500" />
+                                    <Download className="h-4 w-4 text-ink-muted" />
                                     {loading === instrument && <span className="sr-only">…</span>}
-                                </button>
+                                </Button>
                             ))}
                         </div>
                     )}
                 </div>
 
-                <div className="border-t border-slate-100 pt-4">
-                    <button
+                <div className="border-t border-line pt-4">
+                    <Button
                         type="button"
                         onClick={() => void download()}
-                        disabled={loading !== null}
-                        className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
-                    >
+                        disabled={loading !== null}>
                         <Download className="h-4 w-4" />
                         {loading === '__all__' ? texts.preparing : texts.all}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

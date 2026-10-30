@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Check, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 
 type Lang = 'it' | 'en' | 'es' | 'fr' | 'de' | 'sv';
 
@@ -138,8 +141,8 @@ export function ApprovedStrategiesPanel() {
         }
     };
 
+    const [confirmDelete, setConfirmDelete] = useState<string | number | null>(null);
     const remove = async (id: string) => {
-        if (!window.confirm(t('admin.approvedStrategies.confirmDelete', { id }))) return;
         setError(null);
         try {
             const res = await fetch(`/api/admin/approved-strategies/${encodeURIComponent(id)}`, { method: 'DELETE' });
@@ -151,28 +154,28 @@ export function ApprovedStrategiesPanel() {
         }
     };
 
-    const inputCls = 'h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400';
-    const areaCls = 'min-h-[90px] w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 outline-none focus:border-sky-400';
+    const inputCls = 'h-9 w-full rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-focus';
+    const areaCls = 'min-h-[90px] w-full rounded-control border border-line bg-surface px-2 py-1 text-sm text-ink-body outline-none focus:border-focus';
 
     const renderForm = () => (
-        <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <label className="flex flex-col text-xs font-medium text-slate-500">
+        <div className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">
                     {t('admin.approvedStrategies.field.id')}
                     <input className={inputCls} value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} placeholder="qsa-planning-next-step" />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">
                     {t('admin.approvedStrategies.field.status')}
                     <select className={inputCls} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as FormState['status'] })}>
                         <option value="approved">{t('admin.approvedStrategies.status.approved')}</option>
                         <option value="draft">{t('admin.approvedStrategies.status.draft')}</option>
                     </select>
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">
                     {t('admin.approvedStrategies.field.questionnaires')}
                     <input className={inputCls} value={form.questionnaires} onChange={(e) => setForm({ ...form, questionnaires: e.target.value })} placeholder="QSA, QSAr" />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">
                     {t('admin.approvedStrategies.field.keywords')}
                     <input className={inputCls} value={form.keywords} onChange={(e) => setForm({ ...form, keywords: e.target.value })} placeholder="C2 pianificazione obiettivo" />
                 </label>
@@ -184,13 +187,13 @@ export function ApprovedStrategiesPanel() {
                         key={item}
                         type="button"
                         onClick={() => setLang(item)}
-                        className={`rounded-md border px-2 py-1 text-xs font-medium uppercase ${lang === item ? 'border-indigo-300 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-500'}`}
+                        className={`min-h-control rounded-control border px-2 py-1 text-xs font-semibold ${lang === item ? 'border-brand-line bg-brand-soft text-link' : 'border-line bg-surface text-ink-muted'}`}
                     >
                         {item}
                     </button>
                 ))}
             </div>
-            <label className="mt-2 flex flex-col text-xs font-medium text-slate-500">
+            <label className="mt-2 flex flex-col text-xs font-semibold text-ink-muted">
                 {t('admin.approvedStrategies.field.text', { lang })}
                 <textarea
                     className={areaCls}
@@ -201,76 +204,78 @@ export function ApprovedStrategiesPanel() {
             </label>
 
             <div className="mt-4 flex items-center gap-2">
-                <button type="button" disabled={saving} onClick={() => void save()} className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                <Button type="button" disabled={saving} onClick={() => void save()}>
                     <Check className="h-4 w-4" /> {t('common.save')}
-                </button>
-                <button type="button" onClick={cancel} className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                </Button>
+                <Button variant="secondary" type="button" onClick={cancel}>
                     <X className="h-4 w-4" /> {t('common.cancel')}
-                </button>
+                </Button>
             </div>
         </div>
     );
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex flex-wrap items-end justify-between gap-4 rounded-lg border border-line bg-surface p-4">
                 <div>
-                    <h2 className="text-lg font-bold text-slate-900">{t('admin.approvedStrategies.title')}</h2>
-                    <p className="text-sm text-slate-500">
+                    <h2 className="text-lg font-semibold text-ink">{t('admin.approvedStrategies.title')}</h2>
+                    <p className="text-sm text-ink-muted">
                         {t('admin.approvedStrategies.subtitle', { source: source === 'db' ? t('admin.approvedStrategies.source.db') : t('admin.approvedStrategies.source.file') })}
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <button type="button" onClick={() => void refresh()} aria-label={t('common.refresh')} title={t('common.refresh')} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+                    <Button variant="secondary" type="button" onClick={() => void refresh()} aria-label={t('common.refresh')} title={t('common.refresh')} className="w-control px-0">
                         <RefreshCw className="h-4 w-4" aria-hidden />
-                    </button>
+                    </Button>
                     {editingId === null && (
-                        <button type="button" onClick={startNew} className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700">
+                        <Button type="button" onClick={startNew}>
                             <Plus className="h-4 w-4" /> {t('admin.approvedStrategies.new')}
-                        </button>
+                        </Button>
                     )}
                 </div>
             </div>
 
-            {error && <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+            {error && <Callout variant="danger">{error}</Callout>}
             {editingId === 'new' && renderForm()}
 
-            <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+            <div className="overflow-x-auto rounded-lg border border-line bg-surface">
                 <table className="w-full text-left text-sm">
-                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+                    <thead className="border-b border-line text-xs text-ink-muted">
                         <tr>
-                            <th className="px-3 py-2 font-semibold">{t('admin.approvedStrategies.table.strategy')}</th>
-                            <th className="px-3 py-2 font-semibold">{t('admin.approvedStrategies.table.questionnaires')}</th>
-                            <th className="px-3 py-2 font-semibold">{t('admin.approvedStrategies.table.status')}</th>
-                            <th className="px-3 py-2 font-semibold">{t('admin.approvedStrategies.table.keyword')}</th>
-                            <th className="px-3 py-2 text-right font-semibold">{t('admin.approvedStrategies.table.actions')}</th>
+                            <th className="px-4 py-2 font-semibold">{t('admin.approvedStrategies.table.strategy')}</th>
+                            <th className="px-4 py-2 font-semibold">{t('admin.approvedStrategies.table.questionnaires')}</th>
+                            <th className="px-4 py-2 font-semibold">{t('admin.approvedStrategies.table.status')}</th>
+                            <th className="px-4 py-2 font-semibold">{t('admin.approvedStrategies.table.keyword')}</th>
+                            <th className="px-4 py-2 text-right font-semibold">{t('admin.approvedStrategies.table.actions')}</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {loading && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">{t('common.loading')}</td></tr>}
+                    <tbody className="divide-y divide-line">
+                        {loading && <tr><td colSpan={5} className="px-4 py-6 text-center text-ink-muted">{t('common.loading')}</td></tr>}
                         {!loading && strategies.length === 0 && editingId !== 'new' && (
-                            <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">{t('admin.approvedStrategies.empty')}</td></tr>
+                            <tr><td colSpan={5} className="px-4 py-6 text-center text-ink-muted">{t('admin.approvedStrategies.empty')}</td></tr>
                         )}
                         {strategies.map((strategy) => (
                             editingId === strategy.id ? (
-                                <tr key={strategy.id}><td colSpan={5} className="px-3 py-3">{renderForm()}</td></tr>
+                                <tr key={strategy.id}><td colSpan={5} className="px-4 py-4">{renderForm()}</td></tr>
                             ) : (
                                 <tr key={strategy.id}>
-                                    <td className="px-3 py-2">
-                                        <div className="font-mono text-xs font-semibold text-slate-800">{strategy.id}</div>
-                                        <div className="mt-1 max-w-xl truncate text-xs text-slate-500">{strategy.texts.it || strategy.texts.en || '-'}</div>
+                                    <td className="px-4 py-2">
+                                        <div className="font-mono text-xs font-semibold text-ink">{strategy.id}</div>
+                                        <div className="mt-1 max-w-xl truncate text-xs text-ink-muted">{strategy.texts.it || strategy.texts.en || '-'}</div>
                                     </td>
-                                    <td className="px-3 py-2 text-xs text-slate-500">{(strategy.questionnaires || []).join(', ') || '-'}</td>
-                                    <td className="px-3 py-2">
-                                        <span className={`rounded px-2 py-0.5 text-xs font-medium ${strategy.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                    <td className="px-4 py-2 text-xs text-ink-muted">{(strategy.questionnaires || []).join(', ') || '-'}</td>
+                                    <td className="px-4 py-2">
+                                        <span className={`rounded px-2 py-1 text-xs font-semibold ${strategy.status === 'approved' ? 'bg-success-soft text-success' : 'bg-surface-raised text-ink-muted'}`}>
                                             {strategy.status === 'approved' ? t('admin.approvedStrategies.status.approved') : t('admin.approvedStrategies.status.draft')}
                                         </span>
                                     </td>
-                                    <td className="max-w-xs truncate px-3 py-2 text-xs text-slate-500">{strategy.keywords || '-'}</td>
-                                    <td className="px-3 py-2">
+                                    <td className="max-w-xs truncate px-4 py-2 text-xs text-ink-muted">{strategy.keywords || '-'}</td>
+                                    <td className="px-4 py-2">
                                         <div className="flex justify-end gap-1">
-                                            <button type="button" onClick={() => startEdit(strategy)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900" aria-label={t('admin.approvedStrategies.editAria', { id: strategy.id })}><Pencil className="h-4 w-4" /></button>
-                                            <button type="button" onClick={() => void remove(strategy.id)} className="rounded p-1.5 text-red-500 hover:bg-red-50" aria-label={t('admin.approvedStrategies.deleteAria', { id: strategy.id })}><Trash2 className="h-4 w-4" /></button>
+                                            <button type="button" onClick={() => startEdit(strategy)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-ink-muted hover:bg-surface-raised hover:text-ink" aria-label={t('admin.approvedStrategies.editAria', { id: strategy.id })}><Pencil className="h-4 w-4" /></button>
+                                            {confirmDelete === strategy.id
+                                                ? <ConfirmInline question={t('admin.approvedStrategies.confirmDelete', { id: strategy.id })} onConfirm={() => { setConfirmDelete(null); void remove(strategy.id); }} onCancel={() => setConfirmDelete(null)} />
+                                                : <button type="button" onClick={() => setConfirmDelete(strategy.id)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-danger hover:bg-danger-soft" aria-label={t('admin.approvedStrategies.deleteAria', { id: strategy.id })}><Trash2 className="h-4 w-4" /></button>}
                                         </div>
                                     </td>
                                 </tr>

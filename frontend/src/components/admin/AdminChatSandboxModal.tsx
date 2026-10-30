@@ -38,7 +38,7 @@ export function AdminChatSandboxModal({
 
     return createPortal(
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-2 sm:p-4 backdrop-blur-xs"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-2 sm:p-4"
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) onClose();
             }}
@@ -48,7 +48,7 @@ export function AdminChatSandboxModal({
                 role="dialog"
                 aria-modal="true"
                 aria-label={t('admin.sandbox.title')}
-                className="flex h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-300"
+                className="flex h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-surface shadow-modal border border-line-strong"
             >
                 <AdminChatSandbox
                     instrumentCode={instrumentCode}

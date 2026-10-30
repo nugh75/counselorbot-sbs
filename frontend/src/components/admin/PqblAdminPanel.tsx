@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Button } from '@/components/ui/Button';
 
 // pQBL admin (metodo Jemstedt & Bälter). Stringhe via i18n-admin (admin.pqbl.*).
 // API: vedi backend/routes/pqbl.py (endpoint /admin/pqbl/*).
@@ -55,11 +57,11 @@ export function PqblAdminPanel() {
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-lg font-semibold text-slate-900">{t('admin.pqbl.title')}</h2>
-                <p className="text-sm text-slate-500 mt-1">{t('admin.pqbl.subtitle')}</p>
+                <h2 className="text-lg font-semibold text-ink">{t('admin.pqbl.title')}</h2>
+                <p className="text-sm text-ink-muted mt-1">{t('admin.pqbl.subtitle')}</p>
             </div>
 
-            <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+            <div className="flex flex-wrap gap-2 border-b border-line pb-4">
                 <SubTabButton icon={<FileText className="w-4 h-4" />} label={t('admin.pqbl.tab.documents')} active={sub === 'documents'} onClick={() => setSub('documents')} />
                 <SubTabButton icon={<BarChart3 className="w-4 h-4" />} label={t('admin.pqbl.tab.analytics')} active={sub === 'analytics'} onClick={() => setSub('analytics')} />
                 <SubTabButton icon={<Settings className="w-4 h-4" />} label={t('admin.pqbl.tab.config')} active={sub === 'config'} onClick={() => setSub('config')} />
@@ -77,8 +79,8 @@ function SubTabButton({ icon, label, active, onClick }: { icon: React.ReactNode;
         <button
             onClick={onClick}
             className={cn(
-                'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border',
-                active ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
+                'min-h-control flex items-center gap-2 px-4 py-2 rounded-control text-sm font-semibold transition-colors border',
+                active ? 'bg-brand-soft border-brand-line text-brand' : 'bg-surface border-line text-ink-muted hover:bg-surface-sunken',
             )}
         >
             {icon}
@@ -135,11 +137,11 @@ function ConfigTab() {
         }
     };
 
-    if (loading) return <p className="text-sm text-slate-500">{t('admin.pqbl.loading')}</p>;
-    if (items.length === 0) return <p className="text-sm text-slate-500">{t('admin.pqbl.config.empty')}</p>;
+    if (loading) return <p className="text-sm text-ink-muted">{t('admin.pqbl.loading')}</p>;
+    if (items.length === 0) return <p className="text-sm text-ink-muted">{t('admin.pqbl.config.empty')}</p>;
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-4">
             {items.map(item => {
                 const isModel = item.key === 'pqbl_model';
                 // Descrizione localizzata via i18n-admin; fallback alla descrizione DB (italiana).
@@ -147,27 +149,26 @@ function ConfigTab() {
                 const localizedDesc = t(descI18nKey);
                 const description = localizedDesc === descI18nKey ? item.description : localizedDesc;
                 return (
-                    <div key={item.key} className="rounded-lg border border-slate-200 bg-white p-4">
-                        <div className="flex items-start justify-between gap-3">
+                    <div key={item.key} className="rounded-lg border border-line bg-surface p-4">
+                        <div className="flex items-start justify-between gap-4">
                             <div>
-                                <p className="font-medium text-slate-800 text-sm">
+                                <p className="font-semibold text-ink text-sm">
                                     {item.key}
                                     {item.key.includes('__') && (
-                                        <span className="ml-2 rounded bg-indigo-50 px-1.5 py-0.5 text-2xs font-semibold text-indigo-600 uppercase">
+                                        <span className="ml-2 rounded bg-brand-soft px-2 py-1 text-2xs font-semibold text-brand">
                                             {t('admin.config.editingLang')}: {lang.toUpperCase()}
                                         </span>
                                     )}
                                 </p>
-                                <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+                                <p className="text-xs text-ink-muted mt-1">{description}</p>
                             </div>
-                            <button
+                            <Button
                                 onClick={() => save(item)}
                                 disabled={savingKey === item.key || (drafts[item.key] ?? '') === (item.value || '')}
-                                className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors"
-                            >
+                                className="text-xs">
                                 {savedKey === item.key ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
                                 {savedKey === item.key ? t('admin.pqbl.saved') : t('admin.pqbl.save')}
-                            </button>
+                            </Button>
                         </div>
                         {isModel ? (
                             <input
@@ -175,14 +176,14 @@ function ConfigTab() {
                                 value={drafts[item.key] ?? ''}
                                 onChange={e => setDrafts(d => ({ ...d, [item.key]: e.target.value }))}
                                 placeholder={t('admin.pqbl.config.modelPlaceholder')}
-                                className="mt-3 w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-mono"
+                                className="mt-4 w-full rounded-control border border-line-strong px-4 py-2 text-sm font-mono"
                             />
                         ) : (
                             <textarea
                                 value={drafts[item.key] ?? ''}
                                 onChange={e => setDrafts(d => ({ ...d, [item.key]: e.target.value }))}
                                 rows={item.key.startsWith('pqbl_onboarding_text') ? 4 : 8}
-                                className="mt-3 w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-mono leading-relaxed"
+                                className="mt-4 w-full rounded-control border border-line-strong px-4 py-2 text-sm font-mono leading-relaxed"
                             />
                         )}
                     </div>
@@ -217,42 +218,44 @@ function DocumentsTab() {
         return () => { active.v = false; };
     }, [fetchDocs]);
 
+    const [confirmDelete, setConfirmDelete] = useState<string | number | null>(null);
     const deleteDoc = async (id: string) => {
-        if (!confirm(t('admin.pqbl.docs.confirmDelete'))) return;
         const res = await fetch(`/api/admin/pqbl/documents/${id}`, { method: 'DELETE' });
         if (res.ok) { setExpanded(null); load(); } else alert(t('admin.pqbl.docs.deleteError'));
     };
 
-    if (loading) return <p className="text-sm text-slate-500">{t('admin.pqbl.loading')}</p>;
+    if (loading) return <p className="text-sm text-ink-muted">{t('admin.pqbl.loading')}</p>;
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <p className="text-sm text-slate-500">{t('admin.pqbl.docs.count', { n: docs.length })}</p>
-                <button type="button" onClick={load} aria-label={t('admin.pqbl.refresh')} title={t('admin.pqbl.refresh')} className="tap-icon rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+                <p className="text-sm text-ink-muted">{t('admin.pqbl.docs.count', { n: docs.length })}</p>
+                <Button variant="secondary" type="button" onClick={load} aria-label={t('admin.pqbl.refresh')} title={t('admin.pqbl.refresh')} className="w-control px-0">
                     <RefreshCw className="w-3.5 h-3.5" aria-hidden />
-                </button>
+                </Button>
             </div>
 
-            {docs.length === 0 && <p className="text-sm text-slate-500">{t('admin.pqbl.docs.empty')}</p>}
+            {docs.length === 0 && <p className="text-sm text-ink-muted">{t('admin.pqbl.docs.empty')}</p>}
 
             {docs.map(doc => (
-                <div key={doc.document_id} className="rounded-lg border border-slate-200 bg-white">
-                    <div className="flex items-center gap-3 p-3">
-                        <button onClick={() => setExpanded(e => (e === doc.document_id ? null : doc.document_id))} className="text-slate-500 hover:text-slate-600">
+                <div key={doc.document_id} className="rounded-lg border border-line bg-surface">
+                    <div className="flex items-center gap-4 p-4">
+                        <button onClick={() => setExpanded(e => (e === doc.document_id ? null : doc.document_id))} className="min-h-control text-ink-muted hover:text-ink-muted">
                             {expanded === doc.document_id ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         </button>
                         <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm text-slate-800 truncate">{doc.filename || t('admin.pqbl.docs.noName')}</p>
-                            <p className="text-xs text-slate-500">
+                            <p className="font-semibold text-sm text-ink truncate">{doc.filename || t('admin.pqbl.docs.noName')}</p>
+                            <p className="text-xs text-ink-muted">
                                 {doc.username || t('admin.pqbl.docs.anon')} · {doc.language} · {doc.n_questions} {t('admin.pqbl.docs.questions')} · {doc.n_sessions} {t('admin.pqbl.docs.sessions')}
                                 {doc.created_at ? ` · ${new Date(doc.created_at).toLocaleDateString()}` : ''}
                             </p>
                         </div>
                         <StatusBadge status={doc.status} />
-                        <button onClick={() => deleteDoc(doc.document_id)} className="text-slate-500 hover:text-red-600 p-1" title={t('admin.pqbl.docs.deleteTitle')}>
-                            <Trash2 className="w-4 h-4" />
-                        </button>
+                        {confirmDelete === doc.document_id
+                            ? <ConfirmInline question={t('admin.pqbl.docs.confirmDelete')} onConfirm={() => { setConfirmDelete(null); void deleteDoc(doc.document_id); }} onCancel={() => setConfirmDelete(null)} />
+                            : <button onClick={() => setConfirmDelete(doc.document_id)} className="inline-flex min-h-control min-w-control items-center justify-center text-ink-muted hover:text-danger p-2" title={t('admin.pqbl.docs.deleteTitle')}>
+                                  <Trash2 className="w-4 h-4" />
+                              </button>}
                     </div>
                     {expanded === doc.document_id && <QuestionList documentId={doc.document_id} />}
                 </div>
@@ -264,13 +267,13 @@ function DocumentsTab() {
 function StatusBadge({ status }: { status: string }) {
     const { t } = useI18n();
     const map: Record<string, string> = {
-        ready: 'bg-green-50 text-green-700 border-green-200',
-        processing: 'bg-amber-50 text-amber-700 border-amber-200',
-        error: 'bg-red-50 text-red-700 border-red-200',
+        ready: 'bg-success-soft text-success border-success-line',
+        processing: 'bg-warning-soft text-warning border-warning-line',
+        error: 'bg-danger-soft text-danger-ink border-danger-line',
     };
     const label = t(`admin.pqbl.status.${status}`);
     return (
-        <span className={cn('rounded-full border px-2 py-0.5 text-xs font-medium', map[status] || 'bg-slate-50 text-slate-600 border-slate-200')}>
+        <span className={cn('rounded-full border px-2 py-1 text-xs font-semibold', map[status] || 'bg-surface-sunken text-ink-muted border-line')}>
             {label.startsWith('admin.pqbl.status.') ? status : label}
         </span>
     );
@@ -289,11 +292,11 @@ function QuestionList({ documentId }: { documentId: string }) {
             .finally(() => setLoading(false));
     }, [documentId]);
 
-    if (loading) return <p className="px-4 pb-4 text-sm text-slate-500">{t('admin.pqbl.q.loading')}</p>;
-    if (questions.length === 0) return <p className="px-4 pb-4 text-sm text-slate-500">{t('admin.pqbl.q.empty')}</p>;
+    if (loading) return <p className="px-4 pb-4 text-sm text-ink-muted">{t('admin.pqbl.q.loading')}</p>;
+    if (questions.length === 0) return <p className="px-4 pb-4 text-sm text-ink-muted">{t('admin.pqbl.q.empty')}</p>;
 
     return (
-        <div className="border-t border-slate-100 divide-y divide-slate-100">
+        <div className="border-t border-line divide-y divide-line">
             {questions.map(q => <QuestionEditor key={q.id} question={q} />)}
         </div>
     );
@@ -335,13 +338,13 @@ function QuestionEditor({ question }: { question: PqblQuestion }) {
     };
 
     return (
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-4">
             <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-slate-500">#{question.position + 1}</span>
+                <span className="text-xs font-mono text-ink-muted">#{question.position + 1}</span>
                 <input
                     value={draft.skill}
                     onChange={e => setDraft(d => ({ ...d, skill: e.target.value }))}
-                    className="flex-1 rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-indigo-700"
+                    className="flex-1 rounded-control border border-line px-2 py-1 text-xs font-semibold text-link"
                     placeholder={t('admin.pqbl.q.skillPlaceholder')}
                 />
             </div>
@@ -349,7 +352,7 @@ function QuestionEditor({ question }: { question: PqblQuestion }) {
                 value={draft.question_text}
                 onChange={e => setDraft(d => ({ ...d, question_text: e.target.value }))}
                 rows={2}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-control border border-line-strong px-4 py-2 text-sm"
             />
             <div className="space-y-2">
                 {draft.options.map((o, idx) => (
@@ -366,29 +369,28 @@ function QuestionEditor({ question }: { question: PqblQuestion }) {
                             <input
                                 value={o.text}
                                 onChange={e => setOption(idx, { text: e.target.value })}
-                                className={cn('w-full rounded-md border px-2 py-1 text-sm', o.correct ? 'border-green-300 bg-green-50' : 'border-slate-200')}
+                                className={cn('w-full rounded-control border px-2 py-1 text-sm', o.correct ? 'border-success-line bg-success-soft' : 'border-line')}
                                 placeholder={`${t('admin.pqbl.q.optionPlaceholder')} ${o.key || idx + 1}`}
                             />
                             <input
                                 value={o.feedback || ''}
                                 onChange={e => setOption(idx, { feedback: e.target.value })}
-                                className="w-full rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500"
+                                className="w-full rounded-control border border-line px-2 py-1 text-xs text-ink-muted"
                                 placeholder={t('admin.pqbl.q.feedbackPlaceholder')}
                             />
                         </div>
                     </div>
                 ))}
             </div>
-            <div className="flex items-center gap-3">
-                <button
+            <div className="flex items-center gap-4">
+                <Button
                     onClick={save}
                     disabled={saving}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-40"
-                >
+                    className="text-xs">
                     {saved ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
                     {saved ? t('admin.pqbl.saved') : t('admin.pqbl.q.save')}
-                </button>
-                {error && <span className="text-xs text-red-600">{error}</span>}
+                </Button>
+                {error && <span className="text-xs text-danger">{error}</span>}
             </div>
         </div>
     );
@@ -418,17 +420,17 @@ function AnalyticsTab() {
         return () => { active.v = false; };
     }, [fetchData]);
 
-    if (loading) return <p className="text-sm text-slate-500">{t('admin.pqbl.loading')}</p>;
-    if (!data) return <p className="text-sm text-slate-500">{t('admin.pqbl.analytics.empty')}</p>;
+    if (loading) return <p className="text-sm text-ink-muted">{t('admin.pqbl.loading')}</p>;
+    if (!data) return <p className="text-sm text-ink-muted">{t('admin.pqbl.analytics.empty')}</p>;
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-4">
             <div className="flex justify-end">
-                <button type="button" onClick={load} aria-label={t('admin.pqbl.refresh')} title={t('admin.pqbl.refresh')} className="tap-icon rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+                <Button variant="secondary" type="button" onClick={load} aria-label={t('admin.pqbl.refresh')} title={t('admin.pqbl.refresh')} className="w-control px-0">
                     <RefreshCw className="w-3.5 h-3.5" aria-hidden />
-                </button>
+                </Button>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <StatCard label={t('admin.pqbl.analytics.stat.documents')} value={data.n_documents} />
                 <StatCard label={t('admin.pqbl.analytics.stat.questions')} value={data.n_questions} />
                 <StatCard label={t('admin.pqbl.analytics.stat.sessions')} value={data.n_sessions} />
@@ -438,27 +440,27 @@ function AnalyticsTab() {
             </div>
 
             <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">{t('admin.pqbl.analytics.bySkill')}</h3>
+                <h3 className="text-sm font-semibold text-ink-body mb-2">{t('admin.pqbl.analytics.bySkill')}</h3>
                 {data.by_skill.length === 0 ? (
-                    <p className="text-sm text-slate-500">{t('admin.pqbl.analytics.noAttempts')}</p>
+                    <p className="text-sm text-ink-muted">{t('admin.pqbl.analytics.noAttempts')}</p>
                 ) : (
-                    <div className="overflow-x-auto rounded-lg border border-slate-200">
+                    <div className="overflow-x-auto rounded-lg border border-line">
                         <table className="w-full text-sm">
-                            <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
+                            <thead className="bg-surface-sunken text-ink-muted text-xs">
                                 <tr>
-                                    <th className="text-left px-3 py-2 font-medium">{t('admin.pqbl.analytics.col.skill')}</th>
-                                    <th className="text-right px-3 py-2 font-medium">{t('admin.pqbl.analytics.col.attempts')}</th>
-                                    <th className="text-right px-3 py-2 font-medium">{t('admin.pqbl.analytics.col.correct')}</th>
-                                    <th className="text-right px-3 py-2 font-medium">{t('admin.pqbl.analytics.col.pct')}</th>
+                                    <th className="text-left px-4 py-2 font-semibold">{t('admin.pqbl.analytics.col.skill')}</th>
+                                    <th className="text-right px-4 py-2 font-semibold">{t('admin.pqbl.analytics.col.attempts')}</th>
+                                    <th className="text-right px-4 py-2 font-semibold">{t('admin.pqbl.analytics.col.correct')}</th>
+                                    <th className="text-right px-4 py-2 font-semibold">{t('admin.pqbl.analytics.col.pct')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-line">
                                 {data.by_skill.map(s => (
                                     <tr key={s.skill}>
-                                        <td className="px-3 py-2 text-slate-700">{s.skill}</td>
-                                        <td className="px-3 py-2 text-right text-slate-600">{s.first_try}</td>
-                                        <td className="px-3 py-2 text-right text-slate-600">{s.first_try_correct}</td>
-                                        <td className="px-3 py-2 text-right font-medium text-slate-800">{s.pct}%</td>
+                                        <td className="px-4 py-2 text-ink-body">{s.skill}</td>
+                                        <td className="px-4 py-2 text-right text-ink-muted">{s.first_try}</td>
+                                        <td className="px-4 py-2 text-right text-ink-muted">{s.first_try_correct}</td>
+                                        <td className="px-4 py-2 text-right font-semibold text-ink">{s.pct}%</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -472,9 +474,9 @@ function AnalyticsTab() {
 
 function StatCard({ label, value, highlight }: { label: string; value: number | string; highlight?: boolean }) {
     return (
-        <div className={cn('rounded-lg border p-3', highlight ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-white')}>
-            <p className="text-xs text-slate-500">{label}</p>
-            <p className={cn('text-xl font-bold mt-1', highlight ? 'text-indigo-700' : 'text-slate-900')}>{value}</p>
+        <div className={cn('rounded-lg border p-4', highlight ? 'border-brand-line bg-brand-soft' : 'border-line bg-surface')}>
+            <p className="text-xs text-ink-muted">{label}</p>
+            <p className={cn('text-xl font-semibold mt-1', highlight ? 'text-link' : 'text-ink')}>{value}</p>
         </div>
     );
 }

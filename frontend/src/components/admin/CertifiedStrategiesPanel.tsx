@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Plus, Pencil, Trash2, Check, X, Languages } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { ContentLanguageStatus } from './ContentLanguageStatus';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Button } from '@/components/ui/Button';
 
 // Le sei lingue dell'app: i testi vivono in campi JSON, non in colonne fisse.
 type Lang = 'it' | 'en' | 'es' | 'fr' | 'de' | 'sv';
@@ -199,8 +201,8 @@ export function CertifiedStrategiesPanel() {
         }
     };
 
+    const [confirmDelete, setConfirmDelete] = useState<string | number | null>(null);
     const remove = async (id: number) => {
-        if (!window.confirm(t('admin.certified.confirmDelete'))) return;
         try {
             const res = await fetch(`/api/admin/certified-strategies/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('delete failed');
@@ -210,8 +212,8 @@ export function CertifiedStrategiesPanel() {
         }
     };
 
-    const inputCls = 'h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400';
-    const areaCls = 'min-h-[70px] w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 outline-none focus:border-sky-400';
+    const inputCls = 'h-9 w-full rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-focus';
+    const areaCls = 'min-h-[70px] w-full rounded-control border border-line bg-surface px-2 py-1 text-sm text-ink-body outline-none focus:border-focus';
     const fieldValue = (field: 'name_i18n' | 'recommended_when_i18n' | 'description_i18n') =>
         form[field][lang] ?? '';
     // Una lingua svuotata esce dalla mappa: "non tradotto" e "tradotto in vuoto"
@@ -225,24 +227,24 @@ export function CertifiedStrategiesPanel() {
         });
 
     const renderForm = () => (
-        <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.slug')}
+        <div className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.slug')}
                     <input className={inputCls} value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="focus-c6" />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.status')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.status')}
                     <select className={inputCls} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                         <option value="draft">{t('admin.certified.draft')}</option>
                         <option value="certified">{t('admin.certified.certified')}</option>
                     </select>
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.matchMode')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.matchMode')}
                     <select className={inputCls} value={form.match_mode} onChange={(e) => setForm({ ...form, match_mode: e.target.value })}>
                         <option value="any">{t('admin.certified.matchAny')}</option>
                         <option value="all">{t('admin.certified.matchAll')}</option>
                     </select>
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.order')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.order')}
                     <input className={inputCls} type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
                 </label>
             </div>
@@ -251,10 +253,10 @@ export function CertifiedStrategiesPanel() {
             <div className="mt-4 flex items-center justify-between">
                 <div className="flex gap-1">
                     {LANGS.map((l) => (
-                        <button key={l} type="button" onClick={() => setLang(l)} className={`rounded-md border px-2 py-1 text-xs font-medium uppercase ${lang === l ? 'border-indigo-300 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-500'}`}>{l}</button>
+                        <button key={l} type="button" onClick={() => setLang(l)} className={`min-h-control rounded-control border px-2 py-1 text-xs font-semibold ${lang === l ? 'border-brand-line bg-brand-soft text-link' : 'border-line bg-surface text-ink-muted'}`}>{l}</button>
                     ))}
                 </div>
-                <button type="button" disabled={translating || !form.name_i18n.it?.trim() || !form.slug.trim()} onClick={() => void translate()} className="inline-flex h-8 items-center gap-2 rounded-md border border-indigo-200 bg-white px-3 text-xs font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-50">
+                <button type="button" disabled={translating || !form.name_i18n.it?.trim() || !form.slug.trim()} onClick={() => void translate()} className="inline-flex min-h-control items-center gap-2 rounded-control border border-brand-line bg-surface px-4 text-xs font-semibold text-link hover:bg-brand-soft disabled:opacity-50">
                     <Languages className="h-4 w-4" />{t('admin.certified.translate')}
                 </button>
             </div>
@@ -265,119 +267,121 @@ export function CertifiedStrategiesPanel() {
                     locale={lang}
                 />
             )}
-            <div className="mt-2 space-y-3">
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.name')}
+            <div className="mt-2 space-y-4">
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.name')}
                     <input className={inputCls} value={fieldValue('name_i18n')} onChange={(e) => setField('name_i18n', e.target.value)} />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.recommendedWhen')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.recommendedWhen')}
                     <textarea className={areaCls} value={fieldValue('recommended_when_i18n')} onChange={(e) => setField('recommended_when_i18n', e.target.value)} />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.howTo')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.howTo')}
                     <textarea className={areaCls} value={fieldValue('description_i18n')} onChange={(e) => setField('description_i18n', e.target.value)} />
                 </label>
             </div>
 
             {/* Fattori collegati, raggruppati per strumento */}
             <div className="mt-4">
-                <div className="mb-1 text-xs font-medium text-slate-500">{t('admin.certified.factors')}
-                    {derivedQTypes.length > 0 && <span className="ml-2 inline-flex items-center gap-1 font-normal text-slate-500"><ArrowRight className="h-3 w-3" aria-hidden />{derivedQTypes.join(', ')}</span>}
+                <div className="mb-1 text-xs font-semibold text-ink-muted">{t('admin.certified.factors')}
+                    {derivedQTypes.length > 0 && <span className="ml-2 inline-flex items-center gap-1 font-normal text-ink-muted"><ArrowRight className="h-3 w-3" aria-hidden />{derivedQTypes.join(', ')}</span>}
                 </div>
                 <div className="space-y-2">
                     {Object.entries(factorsByInstrument).map(([code, factors]) => (
-                        <div key={code} className="rounded-md border border-slate-200 bg-white p-2">
-                            <div className="mb-1 text-xs font-semibold text-slate-600">{code}</div>
-                            <div className="flex flex-wrap gap-1.5">
+                        <div key={code} className="rounded-control border border-line bg-surface p-2">
+                            <div className="mb-1 text-xs font-semibold text-ink-muted">{code}</div>
+                            <div className="flex flex-wrap gap-2">
                                 {factors.map((f) => (
-                                    <button key={f.id} type="button" onClick={() => toggleFactor(f.code)} title={f.label_it || ''} className={`rounded-md border px-2 py-1 text-xs font-medium ${form.factor_codes.includes(f.code) ? 'border-indigo-300 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-500'}`}>{f.code}</button>
+                                    <button key={f.id} type="button" onClick={() => toggleFactor(f.code)} title={f.label_it || ''} className={`min-h-control rounded-control border px-2 py-1 text-xs font-semibold ${form.factor_codes.includes(f.code) ? 'border-brand-line bg-brand-soft text-link' : 'border-line bg-surface text-ink-muted'}`}>{f.code}</button>
                                 ))}
                             </div>
                         </div>
                     ))}
-                    {Object.keys(factorsByInstrument).length === 0 && <p className="text-xs text-slate-500">{t('admin.certified.noFactors')}</p>}
+                    {Object.keys(factorsByInstrument).length === 0 && <p className="text-xs text-ink-muted">{t('admin.certified.noFactors')}</p>}
                 </div>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.keywords')}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.keywords')}
                     <input className={inputCls} value={form.keywords} onChange={(e) => setForm({ ...form, keywords: e.target.value })} placeholder="concentrazione distrazione" />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.certifiedBy')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.certifiedBy')}
                     <input className={inputCls} value={form.certified_by} onChange={(e) => setForm({ ...form, certified_by: e.target.value })} />
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.source')}
+                <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.source')}
                     <input className={inputCls} value={form.source_reference} onChange={(e) => setForm({ ...form, source_reference: e.target.value })} />
                 </label>
             </div>
 
             <div className="mt-4 flex items-center gap-4">
-                <label className="flex items-center gap-2 text-sm text-slate-600">
+                <label className="flex items-center gap-2 text-sm text-ink-muted">
                     <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
                     {t('admin.certified.active')}
                 </label>
-                <button type="button" disabled={saving} onClick={() => void save()} className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                <Button type="button" disabled={saving} onClick={() => void save()}>
                     <Check className="h-4 w-4" />{t('admin.certified.save')}
-                </button>
-                <button type="button" onClick={cancel} className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                </Button>
+                <Button variant="secondary" type="button" onClick={cancel}>
                     <X className="h-4 w-4" />{t('admin.certified.cancel')}
-                </button>
+                </Button>
             </div>
         </div>
     );
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex flex-wrap items-end justify-between gap-4 rounded-lg border border-line bg-surface p-4">
                 <div>
-                    <h2 className="text-lg font-bold text-slate-900">{t('admin.certified.title')}</h2>
-                    <p className="text-sm text-slate-500">{t('admin.certified.subtitle')}</p>
+                    <h2 className="text-lg font-semibold text-ink">{t('admin.certified.title')}</h2>
+                    <p className="text-sm text-ink-muted">{t('admin.certified.subtitle')}</p>
                 </div>
                 {editingId === null && (
-                    <button type="button" onClick={startNew} className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700">
+                    <Button type="button" onClick={startNew}>
                         <Plus className="h-4 w-4" />{t('admin.certified.add')}
-                    </button>
+                    </Button>
                 )}
             </div>
 
             {editingId === 'new' && renderForm()}
 
-            <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+            <div className="overflow-x-auto rounded-lg border border-line bg-surface">
                 <table className="w-full text-left text-sm">
-                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+                    <thead className="border-b border-line text-xs text-ink-muted">
                         <tr>
-                            <th className="px-3 py-2 font-semibold">{t('admin.certified.name')}</th>
-                            <th className="px-3 py-2 font-semibold">{t('admin.certified.factors')}</th>
-                            <th className="px-3 py-2 font-semibold">{t('admin.certified.status')}</th>
-                            <th className="px-3 py-2 font-semibold">{t('admin.certified.active')}</th>
-                            <th className="px-3 py-2 text-right font-semibold">{t('admin.certified.actions')}</th>
+                            <th className="px-4 py-2 font-semibold">{t('admin.certified.name')}</th>
+                            <th className="px-4 py-2 font-semibold">{t('admin.certified.factors')}</th>
+                            <th className="px-4 py-2 font-semibold">{t('admin.certified.status')}</th>
+                            <th className="px-4 py-2 font-semibold">{t('admin.certified.active')}</th>
+                            <th className="px-4 py-2 text-right font-semibold">{t('admin.certified.actions')}</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {loading && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">…</td></tr>}
+                    <tbody className="divide-y divide-line">
+                        {loading && <tr><td colSpan={5} className="px-4 py-6 text-center text-ink-muted">…</td></tr>}
                         {!loading && strategies.length === 0 && editingId !== 'new' && (
-                            <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">{t('admin.certified.empty')}</td></tr>
+                            <tr><td colSpan={5} className="px-4 py-6 text-center text-ink-muted">{t('admin.certified.empty')}</td></tr>
                         )}
                         {strategies.map((s) => (
                             editingId === s.id ? (
-                                <tr key={s.id}><td colSpan={5} className="px-3 py-3">{renderForm()}</td></tr>
+                                <tr key={s.id}><td colSpan={5} className="px-4 py-4">{renderForm()}</td></tr>
                             ) : (
                                 <tr key={s.id}>
-                                    <td className="px-3 py-2 font-medium text-slate-800">
+                                    <td className="px-4 py-2 font-semibold text-ink">
                                         {s.name_it || s.slug}
-                                        <span className="ml-2 font-mono text-xs text-slate-500">{s.slug}</span>
+                                        <span className="ml-2 font-mono text-xs text-ink-muted">{s.slug}</span>
                                     </td>
-                                    <td className="px-3 py-2 text-xs text-slate-500">
+                                    <td className="px-4 py-2 text-xs text-ink-muted">
                                         {(s.factor_codes || []).join(s.match_mode === 'all' ? ' + ' : ', ') || '-'}
                                     </td>
-                                    <td className="px-3 py-2">
-                                        <span className={`rounded px-2 py-0.5 text-xs font-medium ${s.status === 'certified' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                    <td className="px-4 py-2">
+                                        <span className={`rounded px-2 py-1 text-xs font-semibold ${s.status === 'certified' ? 'bg-success-soft text-success' : 'bg-surface-raised text-ink-muted'}`}>
                                             {s.status === 'certified' ? t('admin.certified.certified') : t('admin.certified.draft')}
                                         </span>
                                     </td>
-                                    <td className="px-3 py-2">{s.is_active ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-slate-500" />}</td>
-                                    <td className="px-3 py-2">
+                                    <td className="px-4 py-2">{s.is_active ? <Check className="h-4 w-4 text-success" /> : <X className="h-4 w-4 text-ink-muted" />}</td>
+                                    <td className="px-4 py-2">
                                         <div className="flex justify-end gap-1">
-                                            <button type="button" onClick={() => startEdit(s)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil className="h-4 w-4" /></button>
-                                            <button type="button" onClick={() => void remove(s.id)} className="rounded p-1.5 text-red-500 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
+                                            <button type="button" onClick={() => startEdit(s)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-ink-muted hover:bg-surface-raised hover:text-ink"><Pencil className="h-4 w-4" /></button>
+                                            {confirmDelete === s.id
+                                                ? <ConfirmInline question={t('admin.certified.confirmDelete')} onConfirm={() => { setConfirmDelete(null); void remove(s.id); }} onCancel={() => setConfirmDelete(null)} />
+                                                : <button type="button" onClick={() => setConfirmDelete(s.id)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-danger hover:bg-danger-soft"><Trash2 className="h-4 w-4" /></button>}
                                         </div>
                                     </td>
                                 </tr>
