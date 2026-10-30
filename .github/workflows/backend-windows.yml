@@ -39,9 +39,15 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r backend/requirements.txt pytest
+      # The runner image ships PostgreSQL (user postgres, password root), stopped.
+      - name: Start the preinstalled PostgreSQL
+        shell: pwsh
+        run: |
+          Get-Service -Name postgresql* | Set-Service -Status Running -StartupType Automatic
+          & "$env:PGBIN\pg_isready" --timeout=60
       - name: Import the backend and the RAG modules
         env:
-          DATABASE_URL: 'sqlite:///${{ runner.temp }}/backend.db'
+          DATABASE_URL: 'postgresql://postgres:root@localhost:5432/postgres'
           DATA_DIR: '${{ runner.temp }}/data'
           SESSION_MEMORY_DIR: '${{ runner.temp }}/memory'
         run: python -c "import backend.main, backend.rag_index, backend.rag_reindex_job; print('backend imported')"
