@@ -91,9 +91,9 @@ Every product change must update `docs-counselorbot/funzionalita-counselorbot.md
 in the same change. This is live grounding for the CounselorBot Assistant and
 Compass, read per request from the documentation mount. Review the six-language
 interface guide and relevant screenshots whenever behavior or navigation changes.
-After reviewing the content, run `make guidance-refresh`, then `make guidance-check`,
-and commit the state manifest too. CI checks both freshness and documentation
-presence in the change. This gate detects omissions; it does not write or validate
+After reviewing the content, run `make guidance-check`: it fails when the diff
+against `origin/main` touches product sources without touching the guide (no
+state manifest, so PRs never conflict on it). CI runs the same check. This gate detects omissions; it does not write or validate
 feature descriptions automatically. Active database prompt changes use the same
 review contract and the guarded update plan, never startup overwrites.
 See `docs/operations/platform-guidance.md` for runtime, RAG and screenshot details.
