@@ -10,6 +10,7 @@ import { personalAreaImages, type PersonalAreaSlug } from '@/lib/personal-area';
 import { personalSlugEnabled, personalToolAccessText } from '@/lib/personal-tool-access';
 import { usePersonalToolAccess } from '@/lib/use-personal-tool-access';
 import { Callout } from '@/components/ui/Callout';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 // Used by Orientamento and Obiettivi. Editable pages need their exit guards before adoption.
 export function PersonalAreaHeader({ slug }: { slug: PersonalAreaSlug }) {
@@ -17,21 +18,22 @@ export function PersonalAreaHeader({ slug }: { slug: PersonalAreaSlug }) {
     const heading = useRef<HTMLHeadingElement>(null);
     const access = usePersonalToolAccess();
     const l = (key: Parameters<typeof personalAreaText>[1]) => personalAreaText(lang, key);
-    const control = 'inline-flex min-h-[44px] items-center gap-2 rounded-lg px-3 text-sm font-medium hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 dark:hover:bg-slate-800';
+    const control = 'inline-flex min-h-control items-center gap-2 rounded-control px-4 text-sm hover:bg-surface-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
 
     useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [slug]);
 
     return (
-        <header data-personal-area-header className="space-y-5">
+        <header data-personal-area-header className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <Link href="/profilo" className={control}><ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />{l('title')}</Link>
                 <Link href="/privacy" className={control}><ShieldCheck className="h-4 w-4 shrink-0" aria-hidden />{t('privacy.title')}</Link>
             </div>
-            <div className="grid grid-cols-[4rem_1fr] items-center gap-x-4 gap-y-3 sm:grid-cols-[4.5rem_1fr]">
-                <Image src={personalAreaImages[slug]} alt="" width={72} height={72} className="h-16 w-16 object-contain sm:row-span-2 sm:h-18 sm:w-18" />
-                <h1 ref={heading} tabIndex={-1} className="text-2xl font-bold tracking-tight focus:outline-none sm:self-end">{personalAreaName(lang, slug)}</h1>
-                <p className="col-span-2 text-sm text-slate-600 sm:col-span-1 sm:self-start dark:text-slate-400">{personalAreaDescription(lang, slug)}</p>
-            </div>
+            <PageHeader
+                headingRef={heading}
+                title={personalAreaName(lang, slug)}
+                subtitle={personalAreaDescription(lang, slug)}
+                icon={<Image src={personalAreaImages[slug]} alt="" width={72} height={72} className="h-16 w-16 shrink-0 object-contain sm:h-18 sm:w-18" />}
+            />
             {!personalSlugEnabled(access, slug) && <Callout title={personalToolAccessText(lang, 'disabledTitle')}>
                 {personalToolAccessText(lang, 'disabledBody')}
             </Callout>}
