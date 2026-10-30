@@ -1,3 +1,17 @@
+# Handoff 30 ottobre 2026: motori di trascrizione online opzionali
+
+- Branch `feature/online-transcription-engines`, issue #706, milestone **Voice and audio**.
+- OpenRouter e Mistral diretto chiamati dal backend con le chiavi esistenti;
+  faster-whisper resta predefinito, nessun fallback online automatico.
+- Scelta esplicita in Amministrazione, ID modello libero, opzioni disabilitate
+  senza chiave e avvisi sul trasferimento dell'audio grezzo nelle sei lingue.
+- Eccezione gateway limitata ai due endpoint STT; nessuna estensione a immagini,
+  OCR o contesto testuale. Dati di prova fittizi, HTTP simulato.
+- Contratti, verifiche e limiti: `docs/handoff/feature-online-transcription-engines.md`.
+  Nessuna build Docker, avvio dev o database/container di test; nessun deploy/sudo.
+
+---
+
 # Handoff 29 ottobre 2026: guida pratica per azioni
 
 - Branch `feature/guida-operativa-concisa`: `/guide` sostituisce il manuale lungo

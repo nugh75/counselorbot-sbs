@@ -8,7 +8,7 @@ progetto in [02-progettazione](02-progettazione.md) §6. Agente `s63` (Claude Op
 
 `backend/privacy/gateway.py`:
 
-- `AIGateway(config, *, transport=None, text_filter=None, public_content=False, mode=None, purposes=None,
+- `AIGateway(config, *, transport=None, text_filter=None, public_content=False, allow_external_transcription=False, mode=None, purposes=None,
   authorize=None, audit=None, pid_of=None)`.
 - `send(request, ctx) -> AIResponse | Iterator[AIChunk]`: esegue il trasporto passato al costruttore con la
   richiesta filtrata e ripristina la risposta testuale (`chat_stream` → `AIChunk` ripristinati fra i chunk). Senza
@@ -30,7 +30,7 @@ guadagna `target` e `categories_count` (solo conteggi). Lo stub `policy.AIGatewa
 | 1 | finalità attiva con base giuridica (`require_purpose`) | blocca (`PurposeDisabled`, `ConsentMissing`) | valutato e contato, non blocca |
 | 2 | `authorize_data_access(principal, "send_to_ai", subject, purpose)` | blocca (`AccessDenied`) | valutato e contato, non blocca |
 | 3 | target locale solo se loopback o in `PRIVACY_LOCAL_HOSTS`; host vuoto o sconosciuto = esterno | sempre | sempre |
-| 4 | esterno: testi, system prompt, cronologia, RAG e documenti filtrati **insieme** (stessa mappa), poi verifica residui con le regole deterministiche (`ResidualPII`); immagini e audio verso esterni bloccati | motore P4 obbligatorio (`PIIDetectorUnavailable` se assente); pseudonimizza anche in locale per `teacher_noticing`, `research` o `pseudonymize_local` | motore P4 se installato, altrimenti il filtro attuale `pii_ner` (regole + NER locale, `external_pii_fallback`) |
+| 4 | esterno: testi, system prompt, cronologia, RAG e documenti filtrati **insieme** (stessa mappa), poi verifica residui con le regole deterministiche (`ResidualPII`); immagini e audio verso esterni bloccati salvo eccezione STT esplicita (§3) | motore P4 obbligatorio (`PIIDetectorUnavailable` se assente); pseudonimizza anche in locale per `teacher_noticing`, `research` o `pseudonymize_local` | motore P4 se installato, altrimenti il filtro attuale `pii_ner` (regole + NER locale, `external_pii_fallback`) |
 | 5 | credenziali del backend, TLS verificato, timeout e limiti | nei trasporti esistenti; il test statico vieta `verify=False` | idem |
 | 6 | ripristino solo con la mappa della richiesta; con P4 solo se `restore_authorized` lo consente, altrimenti restano i segnaposto; log solo con conteggi | sempre | sempre |
 | 7 | `record_privacy_event("ai_transmission", target, purpose, categories_count)` **prima** dell'invio | blocca (`AuditUnavailable`, `KeyUnavailable`) | valutato e contato, non blocca |
@@ -50,7 +50,37 @@ P4 configurato: oggi bloccherebbe ogni chiamata AI. Decisione dell'utente del 20
 | `embedding` | `embedding_service.embed_texts` (#9) | documenti solo da corpus pubblico (`public_content`, non filtrati); query con `filter_external_query` come filtro del chiamante + verifica residui; `private` mai fuori |
 | `tts` | `voice_reader.speech_text` (lettore `/tts`, #11) e il vecchio `/chat/tts` | redazione deterministica `pii.redact_always` (P6c), nessun ripristino; Piper fidato riceve il testo |
 | `notify` | `telegram_bot.send_message`/`send_photo` (#15) | consegnato com'è: è il canale collegato dall'interessato; finalità, grant ed evento con conteggi; diagrammi generati dal server ammessi |
-| `transcription` | nessun chiamante (audio verso il servizio interno, #12) | audio bloccato |
+| `transcription` | `routes/audio_input.py`, solo con motore online scelto e salvato dall'amministratore | eccezione esplicita per audio grezzo ai due endpoint STT fissi; altrimenti bloccato |
+
+### Trascrizione online opzionale
+
+Aggiornamento del 30 ottobre 2026: `faster-whisper` e `whisper.cpp` restano locali,
+con `faster-whisper` predefinito. L'amministratore può abilitare `openrouter` o
+`mistral`, con chiavi backend già esistenti e avviso nelle sei lingue. **Per le
+prove si usano esclusivamente dati fittizi.** La scelta riguarda microfono,
+file caricati e conversazione vocale di tutti gli utenti.
+
+Il backend chiama `AIGateway(allow_external_transcription=True).prepare(...)`
+solo dopo aver letto il motore online dalla configurazione amministrativa.
+L'eccezione ammette esclusivamente `kind=transcription`, audio `bytes` non vuoto,
+nessuna immagine, nessun testo e nessun contesto allegato, verso:
+
+- OpenRouter: `https://openrouter.ai/api/v1/audio/transcriptions`;
+- Mistral diretto: `https://api.mistral.ai/v1/audio/transcriptions`.
+
+L'audio è inviato **senza anonimizzazione**: il filtro dei testi non può
+redigere una registrazione. Finalità, autorizzazione ed evento prima dell'invio
+seguono i passi 1, 2 e 7 e la modalità `strict`/`transitional`; l'evento contiene
+provider e conteggi vuoti, mai audio, testo trascritto, nome del file o chiave.
+L'eccezione non abilita visione, OCR o altro audio verso destinazioni arbitrarie.
+Redirect e proxy da ambiente sono disabilitati; nessun fallback automatico.
+
+OpenRouter riceve e inoltra al provider del modello selezionato: il percorso
+non garantisce residenza UE. Mistral diretto usa il servizio UE; conservazione,
+riutilizzo e condizioni contrattuali restano quelli del servizio scelto.
+L'applicazione non salva audio né `usage`; la trascrizione segue le normali
+regole della chat solo quando viene inviata. Dettagli di API, limiti e modelli:
+[audio-input.md](../operations/audio-input.md#motori-online-opzionali-spenti-per-impostazione-iniziale).
 
 Correzioni collegate:
 
@@ -105,7 +135,8 @@ filtro; visione esterna senza connessioni; Edge e query embedding solo filtrati.
   (copertura misurata in P2/P3, nomi in prosa non garantiti senza NER). La garanzia dell'E2E riguarda il motore P4,
   non il filtro attuale.
 - L'E2E prova il percorso dei dati, non la qualità del rilevatore (misurata in P3/P4 sul modello vero).
-- `notify` consegna il contenuto a Telegram: trasferimento a un terzo da decidere con il titolare (04-D2, D9).
+- `notify` consegna il contenuto a Telegram; la trascrizione online opzionale invia audio grezzo
+  a OpenRouter/fornitore del modello o Mistral: trasferimenti a terzi da decidere con il titolare (04-D2, D9).
 - `PrivacyContext` usa `guided_chat` e il ruolo `system` per tutte le chiamate; finalità per funzione (es.
   `teacher_noticing`) e ambiti per conversazione arrivano con P9 e con il collegamento della mappa P8 per richiesta.
 - Il passo 5 non è imposto dal gateway sugli SDK: restano i timeout e i limiti dei trasporti esistenti.

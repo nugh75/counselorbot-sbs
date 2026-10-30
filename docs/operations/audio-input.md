@@ -35,7 +35,7 @@ Se il browser blocca la riproduzione automatica, **Riprendi** la avvia con un cl
 Il menu si apre automaticamente in caso di errore per mostrare il problema
 e gli eventuali comandi di recupero.
 Voce, motore, lingua, profilo del counselor e correzioni della pronuncia sono
-gli stessi del lettore audio. Il riconoscimento resta locale; la risposta
+gli stessi del lettore audio. Il riconoscimento usa il motore scelto dall'amministratore; la risposta
 usa Piper oppure il servizio online Edge secondo la preferenza del lettore.
 
 **Tre puntini → Torna a scrivere**, oppure Escape dal pulsante vocale, interrompe audio,
@@ -58,7 +58,9 @@ da solo la lingua parlata, quindi non serve cambiarla passando da una lingua
 all'altra. Le sei lingue (italiano, inglese, spagnolo, francese, tedesco,
 svedese) restano selezionabili: su registrazioni brevi o rumorose una lingua
 scelta a mano è più affidabile del riconoscimento automatico. Se il
-riconoscimento automatico è incerto, si usa la lingua dell'interfaccia. La scelta resta
+riconoscimento automatico locale è incerto, si usa la lingua dell'interfaccia.
+Con un motore online si invia la lingua scelta oppure, in automatico, la lingua
+dell'interfaccia come indicazione; senza riserva il provider rileva la lingua. La scelta resta
 nel browser (`cb_audio_language`), senza sincronizzazione fra dispositivi.
 Il riconoscimento trascrive; non traduce. Il testo può contenere errori,
 soprattutto con nomi propri, rumore o accenti: la modalità con revisione
@@ -66,9 +68,12 @@ permette di correggerli.
 
 ## Limiti e interruzioni
 
-- Massimo **10 MiB e 3 minuti** per audio. Il microfono si ferma un secondo
+- Massimo **10 MiB e 3 minuti** nell'interfaccia per audio. Il microfono si ferma un secondo
   prima del limite, lasciando spazio alla coda della codifica del browser.
-- File comuni supportati: WAV, MP3, M4A/MP4, OGG, WebM e FLAC. Il decoder
+  Il backend verifica i byte anche per i motori online; la durata e il contenuto
+  sono verificati dal decoder locale solo con i motori locali. Con i motori online
+  formati, durata accettata e validità del contenuto dipendono dal provider.
+- File comuni supportati: WAV, MP3, M4A/MP4, OGG, WebM e FLAC. Il decoder locale
   controlla il contenuto, senza fidarsi dell'estensione.
 - Il microfono richiede HTTPS (oppure localhost), il permesso dell'utente e
   un browser con `MediaRecorder`. Senza microfono rimane il caricamento file.
@@ -84,7 +89,7 @@ permette di correggerli.
   Se il testo supera il limite del messaggio, rimane disponibile nel menu
   per accorciarlo: non viene troncato né inviato automaticamente.
 
-## Servizio locale e API
+## Motori di trascrizione e API
 
 `POST /api/audio/transcribe` (frontend) → `POST /audio/transcribe` (backend)
 richiede una sessione autenticata. Riceve multipart con `audio`, `language`
@@ -92,10 +97,57 @@ richiede una sessione autenticata. Riceve multipart con `audio`, `language`
 `fallback_language` (la lingua dell'interfaccia, inviata dal frontend; stessi
 valori, predefinito `auto`: senza riserva) e
 restituisce `{ "text": "...", "language": "it", "model": "large-v3-turbo" }`,
-dove `language` è la lingua riconosciuta. `GET /audio/models`, riservato agli
-amministratori, elenca i modelli disponibili per motore, il motore e il modello attivi.
-La route sostituisce il nome originale del file con `recording` e inoltra
-l'audio esclusivamente a `http://transcription:8000/transcribe`.
+dove `language` è la lingua riconosciuta, se restituita dal provider, altrimenti
+l'indicazione inviata (`auto` se assente). `GET /audio/models`, riservato agli
+amministratori, elenca i modelli locali, motore/modello attivi, default per motore
+e `providers.openrouter.configured` / `providers.mistral.configured` (sola presenza
+della chiave, mai il valore). Il nome originale del file non viene inoltrato.
+Con i motori locali la route invia a `http://transcription:8000/transcribe`;
+con quelli online chiama il provider direttamente dal backend.
+
+### Motori online opzionali (spenti per impostazione iniziale)
+
+In **Amministrazione → Trascrizione audio** sono disponibili anche **OpenRouter**
+e **Mistral diretto (UE)**. Restano spenti finché un amministratore non sceglie e
+salva il motore; `faster-whisper` rimane il predefinito. Ogni opzione online è
+disabilitata con spiegazione se manca la chiave. Si riusano le credenziali del
+backend risolte da `api_secrets.py`: `API_KEY_OPENROUTER` (alias esistente
+`OPENROUTER_API_KEY`) e `API_KEY_MISTRAL`; nessuna nuova variabile segreta.
+L'avviso nelle sei lingue spiega che la scelta vale per tutti gli utenti e invia
+**audio grezzo, senza anonimizzazione**, a un fornitore esterno. Per le prove
+usare esclusivamente registrazioni e frasi fittizie.
+
+| Motore | Richiesta dal backend | Modello iniziale |
+| --- | --- | --- |
+| `openrouter` | `POST https://openrouter.ai/api/v1/audio/transcriptions`, JSON con `model`, `input_audio: {data, format}` (`data` base64 senza prefisso), `language` se nota | `mistralai/voxtral-mini-transcribe` |
+| `mistral` | `POST https://api.mistral.ai/v1/audio/transcriptions`, multipart con `file`, `model`, `language` se nota | `voxtral-mini-latest` |
+
+Il campo ID modello è libero (massimo 200 caratteri, senza spazi o controlli),
+così non richiede un rilascio per nuovi modelli. Il 30 ottobre 2026 il catalogo
+[OpenRouter con filtro transcription](https://openrouter.ai/api/v1/models?output_modalities=transcription)
+ha confermato `mistralai/voxtral-mini-transcribe` e l'alternativa `openai/whisper-1`.
+Contratti verificati sulle fonti ufficiali:
+[OpenRouter](https://openrouter.ai/blog/tutorials/transcription-on-openrouter/) e
+[Mistral](https://docs.mistral.ai/studio/audio/deprecated/speech_to_text/offline_transcription).
+La risposta del provider contiene `text` e può includere `usage`; il backend
+restituisce solo testo, lingua e modello, senza conservare `usage` o l'audio.
+
+Le richieste passano dal gateway privacy (`kind=transcription`) con un'eccezione
+esplicita limitata ai due endpoint HTTPS esatti; finalità, autorizzazione ed
+evento seguono la modalità privacy dell'installazione. Non sono ammesse immagini
+o testo di contesto attraverso questa eccezione. Timeout: connessione 10 s,
+I/O 300 s; redirect e proxy da ambiente disabilitati. Nessun tentativo automatico
+verso altri motori: chiave mancante, errore HTTP o risposta malformata danno
+`503 unavailable`, quota `429` dà `503 busy`, timeout `504 timeout`.
+Il testo degli errori del provider non viene esposto o registrato.
+
+OpenRouter riceve l'audio e lo inoltra al fornitore del modello; non si garantisce
+residenza UE per questo percorso. Mistral diretto usa il servizio UE. Il filtro
+PII testuale non anonimizza il parlato: condizioni di conservazione e trattamento
+sono quelle del fornitore scelto, non quelle del servizio locale. Si veda
+[l'eccezione privacy STT](../privacy/p6-gateway.md#trascrizione-online-opzionale).
+
+### Servizio locale
 
 Il servizio Docker `transcription` esegue
 [faster-whisper](https://github.com/SYSTRAN/faster-whisper) 1.2.1 con
@@ -111,7 +163,7 @@ Motore e modello si scelgono dalla console di amministrazione, scheda
 **Trascrizione audio** (gruppo Monitoraggio), che elenca i modelli presenti
 nell'immagine, quali sono già in memoria e, per ciascuno, una riga su qualità,
 RAM e CPU indicative. Le scelte sono le chiavi di configurazione
-`transcription_engine` (`faster-whisper` predefinito, oppure `whisper.cpp`) e
+`transcription_engine` (`faster-whisper` predefinito, `whisper.cpp`, `openrouter`, `mistral`) e
 `transcription_model`. Un motore sconosciuto ricade su `faster-whisper`; un
 modello che il motore non ha ricade sul predefinito di quel motore
 (`large-v3-turbo` per faster-whisper, `small` per whisper.cpp), senza
@@ -251,7 +303,11 @@ prompt restituiva come parole comuni («QSA» come «questa»).
 Test mirati:
 
 - `backend/tests/test_audio_input.py`: autenticazione, limiti, lingua,
-  inoltro esclusivamente locale ed errori del servizio.
+  inoltro locale, contratti HTTP online simulati, chiavi mancanti, errori
+  sanitizzati e confini dell'eccezione privacy. Nessuna chiamata reale.
+- Da `frontend/`: `node --test --experimental-strip-types src/lib/transcription-models.test.ts`
+  (Node 22): disponibilità con chiave, default per motore, ID libero e avvisi
+  nelle sei lingue, senza dev server.
 - `services/transcription/test_server.py`: decodifica, durata massima,
   parametri del modello, rilascio della risorsa di inferenza e chiamata a
   `whisper-cli` (simulata). La classe `BundledEngineTests` trascrive davvero un
