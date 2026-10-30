@@ -22,6 +22,12 @@ def wav(seconds=1, channels=1, rate=16000):
     return output.getvalue()
 
 
+def detector(*probabilities):
+    model = Mock()
+    model.detect_language.return_value = (probabilities[0][0], probabilities[0][1], list(probabilities))
+    return model
+
+
 def engine(language='fr', text=' Bonjour. '):
     model = Mock()
     model.transcribe.return_value = ([SimpleNamespace(text=text)], SimpleNamespace(language=language))
@@ -62,29 +68,44 @@ class TranscriptionTests(unittest.TestCase):
 
     def test_automatic_language_is_detected_on_the_small_model(self):
         model = engine(language='sv')
-        detector = Mock()
-        detector.detect_language.return_value = ('sv', 0.94, None)
-        with patch.object(server, 'load', Mock(side_effect=lambda name: detector if name == 'small' else model)):
+        small = detector(('sv', 0.94), ('it', 0.02))
+        with patch.object(server, 'load', Mock(side_effect=lambda name: small if name == 'small' else model)):
             result = server.transcribe(UploadFile(io.BytesIO(wav())), 'auto')
         self.assertEqual(model.transcribe.call_args.kwargs['language'], 'sv')
         self.assertEqual(result['language'], 'sv')
         self.assertIn('metakognition', model.transcribe.call_args.kwargs['initial_prompt'])
 
-    def test_an_unsure_detection_is_left_to_the_transcribing_model(self):
+    def test_an_unsure_detection_without_fallback_is_left_to_the_transcribing_model(self):
         model = engine(language='fr')
-        detector = Mock()
-        detector.detect_language.return_value = ('cy', 0.31, None)
-        with patch.object(server, 'load', Mock(side_effect=lambda name: detector if name == 'small' else model)):
+        small = detector(('fr', 0.41), ('it', 0.30))
+        with patch.object(server, 'load', Mock(side_effect=lambda name: small if name == 'small' else model)):
             server.transcribe(UploadFile(io.BytesIO(wav())), 'auto')
         self.assertIsNone(model.transcribe.call_args.kwargs['language'])
         self.assertNotIn('metacognizione', model.transcribe.call_args.kwargs['initial_prompt'])
 
-    def test_the_small_model_detects_for_itself(self):
+    def test_an_unsure_detection_falls_back_to_the_interface_language(self):
         model = engine(language='it')
-        with patch.object(server, 'load', Mock(return_value=model)) as load:
-            server.transcribe(UploadFile(io.BytesIO(wav())), 'auto', 'small')
-        self.assertIsNone(model.transcribe.call_args.kwargs['language'])
-        self.assertEqual([call.args[0] for call in load.call_args_list], ['small'])
+        small = detector(('es', 0.48), ('it', 0.45))
+        with patch.object(server, 'load', Mock(side_effect=lambda name: small if name == 'small' else model)):
+            server.transcribe(UploadFile(io.BytesIO(wav())), 'auto', 'large-v3-turbo', 'faster-whisper', 'it')
+        self.assertEqual(model.transcribe.call_args.kwargs['language'], 'it')
+        self.assertEqual(model.transcribe.call_args.kwargs['task'], 'transcribe')
+        self.assertIn('metacognizione', model.transcribe.call_args.kwargs['initial_prompt'])
+
+    def test_only_supported_languages_compete_in_detection(self):
+        model = engine(language='it')
+        small = detector(('pt', 0.20), ('it', 0.75), ('cy', 0.05))
+        with patch.object(server, 'load', Mock(side_effect=lambda name: small if name == 'small' else model)):
+            server.transcribe(UploadFile(io.BytesIO(wav())), 'auto', 'large-v3-turbo', 'faster-whisper', 'en')
+        self.assertEqual(model.transcribe.call_args.kwargs['language'], 'it')
+
+    def test_the_small_model_also_goes_through_the_thresholded_detector(self):
+        model = engine(language='it')
+        model.detect_language.return_value = ('pt', 0.5, [('pt', 0.5), ('it', 0.4)])
+        with patch.object(server, 'load', Mock(return_value=model)):
+            server.transcribe(UploadFile(io.BytesIO(wav())), 'auto', 'small', 'faster-whisper', 'it')
+        model.detect_language.assert_called_once()
+        self.assertEqual(model.transcribe.call_args.kwargs['language'], 'it')
 
     def test_requests_queue_for_a_slot_before_being_refused(self):
         with patch.object(server, 'load', Mock(return_value=engine())), patch.object(server, 'QUEUE_WAIT', 0.05):
@@ -165,12 +186,29 @@ class WhisperCppTests(unittest.TestCase):
         self.assertNotIn('-tr', args)
         self.assertFalse(os.path.exists(os.path.dirname(args[args.index('-f') + 1])))
 
-    def test_automatic_language_is_left_to_whisper_cpp(self):
+    def test_automatic_language_is_resolved_before_whisper_cpp(self):
+        run, calls = whisper_cli(language='it')
+        small = detector(('es', 0.5), ('it', 0.4))
+        with patch.object(server.subprocess, 'run', run), patch.object(server, 'load', Mock(return_value=small)):
+            result = server.transcribe(UploadFile(io.BytesIO(wav())), 'auto', 'base', 'whisper.cpp', 'it')
+        self.assertEqual(calls[0][calls[0].index('-l') + 1], 'it')
+        self.assertIn('metacognizione', calls[0][calls[0].index('--prompt') + 1])
+        self.assertNotIn('-tr', calls[0])
+        self.assertEqual(result['language'], 'it')
+
+    def test_a_confident_detection_reaches_whisper_cpp(self):
         run, calls = whisper_cli(language='sv')
-        with patch.object(server.subprocess, 'run', run):
-            result = server.transcribe(UploadFile(io.BytesIO(wav())), 'auto', 'base', 'whisper.cpp')
+        with patch.object(server.subprocess, 'run', run), \
+                patch.object(server, 'load', Mock(return_value=detector(('sv', 0.9)))):
+            server.transcribe(UploadFile(io.BytesIO(wav())), 'auto', 'base', 'whisper.cpp', 'it')
+        self.assertEqual(calls[0][calls[0].index('-l') + 1], 'sv')
+
+    def test_whisper_cpp_detects_for_itself_only_without_a_fallback(self):
+        run, calls = whisper_cli(language='sv')
+        with patch.object(server.subprocess, 'run', run), \
+                patch.object(server, 'load', Mock(return_value=detector(('sv', 0.3)))):
+            server.transcribe(UploadFile(io.BytesIO(wav())), 'auto', 'base', 'whisper.cpp')
         self.assertEqual(calls[0][calls[0].index('-l') + 1], 'auto')
-        self.assertEqual(result['language'], 'sv')
 
     def test_whisper_cpp_failures_are_unavailable_and_release_the_slot(self):
         for failure in [whisper_cli(returncode=1)[0], Mock(side_effect=subprocess.TimeoutExpired('whisper-cli', 1)),
