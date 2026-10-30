@@ -313,6 +313,26 @@ def test_site_chat_never_streams_inline_reasoning(monkeypatch, raw, chunk_size):
     assert output[-1]["response"] == "Risposta visibile."
 
 
+def test_continuation_states_remaining_budget_and_pending_private_blocks(monkeypatch):
+    from backend.chat_logic import _apply_response_length_directive
+
+    system = _apply_response_length_directive("Base.", "short", partial_response="parola " * 50)
+    assert "self-contained" not in system and "Write a complete" not in system
+    assert "[RESPONSE LENGTH - CONTINUATION]" in system
+    assert "50 words" in system
+    prompt = continuation_message("Question", "Studia e", system_prompt=(
+        "Rules.\n```recommendations\n{}\n```\nOn the last line put only [[AVANZA_STEP]]."))
+    assert "```recommendations" in prompt and "[[AVANZA_STEP]]" in prompt
+    assert prompt.index("```recommendations") < prompt.index("[[AVANZA_STEP]]")
+    assert json.loads(prompt.splitlines()[-1]) == "Studia e"
+    assert "private" not in continuation_message("Question", "Studia e", system_prompt="Rules.")
+
+    output, ai = _site_stream(monkeypatch, iter([" verifica."]), partial_response="Studia e", response_length="short")
+    system_sent = ai.stream_response.call_args.args[1]
+    assert "self-contained" not in system_sent and "[RESPONSE LENGTH - CONTINUATION]" in system_sent
+    assert output[-1]["response"] == "Studia e verifica."
+
+
 @pytest.mark.parametrize("reason", ["stop", "length"])
 @pytest.mark.parametrize("provider", ["ollama", "openai"])
 def test_provider_token_limit_preserves_partial_output_but_never_reports_success(provider, reason):

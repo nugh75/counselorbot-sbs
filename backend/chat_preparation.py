@@ -357,7 +357,8 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     level_directives = {level: _apply_global_directives("", request.language, db,
         platform_full=platform_full, config_overrides=config,
         reasoning_disabled=reasoning_disabled).strip() for level, config in level_configs.items()}
-    system_prompt = transform(_apply_response_length_directive, system_prompt, effective_response_length)
+    system_prompt = transform(_apply_response_length_directive, system_prompt, effective_response_length,
+                              partial_response=request.partial_response or "")
     system_prompt = transform(_apply_idea_variant_directive, system_prompt, ai_service, request)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
     components = {}

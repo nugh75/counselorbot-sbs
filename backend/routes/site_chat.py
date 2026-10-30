@@ -405,7 +405,8 @@ async def site_chat_stream(
             system_prompt, disabled=True,
             no_reasoning_directive=DEFAULT_NO_REASONING_DIRECTIVE,
         )
-    system_prompt = _apply_response_length_directive(system_prompt, request.response_length)
+    system_prompt = _apply_response_length_directive(system_prompt, request.response_length,
+                                                     partial_response=request.partial_response or "")
     system_prompt = apply_response_format(system_prompt, request.response_format)
     max_tokens = _response_length_max_tokens(request.response_length, request.max_tokens)
     top_k = _top_k(ai_service)

@@ -280,10 +280,24 @@ def _response_length_max_tokens(response_length: Optional[str], legacy_max_token
     return _clamp_max_tokens(legacy_max_tokens)
 
 
-def _apply_response_length_directive(system_prompt: str, response_length: Optional[str]) -> str:
+def _apply_response_length_directive(
+    system_prompt: str, response_length: Optional[str], partial_response: str = "",
+) -> str:
     profile = RESPONSE_LENGTH_PROFILES.get(response_length or "")
     if not profile:
         return system_prompt
+    if partial_response:
+        # La ripresa completa la stessa risposta: un nuovo mandato di risposta
+        # completa porterebbe a ricominciare e a ripetere i blocchi privati.
+        used = len(_VISIBLE_WORD_RE.findall(partial_response))
+        return (
+            f"{system_prompt}\n\n[RESPONSE LENGTH - CONTINUATION] This turn completes an interrupted "
+            f"answer whose visible part already has {used} words. Write only the missing part: about "
+            f"{max(profile['target_words'] - used, 0)} more words, at most {max(profile['max_words'] - used, 0)}; "
+            "if the visible part is nearly complete, close it in one sentence. Do not write a new complete "
+            "answer and do not mention this instruction. The limit applies only to the student-facing "
+            "text, not to private blocks."
+        )
     emphasis = {
         "short": "Compress to the essential: the direct answer, one or two supporting details, "
                  "and no preamble or repetition.",
