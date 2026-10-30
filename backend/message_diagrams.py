@@ -74,7 +74,9 @@ def list_diagrams(db: Session, session_id: str, username: str | None = None) -> 
     )
     if username is not None:
         query = query.filter(models.Log.username == username)
-    latest = {}
+    # Ogni disegno riuscito resta: un nuovo diagramma dello stesso messaggio
+    # si aggiunge ai precedenti invece di sostituirli.
+    diagrams = []
     for row in query.order_by(models.Log.id.asc()).all():
         details = row.details or {}
         source = details.get("source_text")
@@ -85,19 +87,22 @@ def list_diagrams(db: Session, session_id: str, username: str | None = None) -> 
         except DiagramSpecError:
             continue
         key = details.get("source_key") or hashlib.sha256(source.strip().encode()).hexdigest()
-        latest[key] = {
+        diagrams.append({
             "source_key": key,
             "source_text": source.strip(), "instruction": details.get("instruction", ""),
             "spec": spec.model_dump(by_alias=True, exclude_none=True),
-        }
-    return list(latest.values())
+        })
+    return diagrams
 
 
 def attach_message_diagrams(db: Session, session_id: str, messages: list[dict]) -> list[dict]:
-    diagrams = {item["source_text"]: item["spec"] for item in list_diagrams(db, session_id)}
+    diagrams: dict[str, list[dict]] = {}
+    for item in list_diagrams(db, session_id):
+        diagrams.setdefault(item["source_text"], []).append(item["spec"])
     result = []
     for message in messages:
         text = message.get("text") or ""
-        spec = diagrams.get(text.strip()) if message.get("role") == "counselor" else None
-        result.append({**message, "text": text + "\n\n```diagram\n" + json.dumps(spec, ensure_ascii=False) + "\n```"} if spec else dict(message))
+        specs = diagrams.get(text.strip(), []) if message.get("role") == "counselor" else []
+        blocks = "".join("\n\n```diagram\n" + json.dumps(spec, ensure_ascii=False) + "\n```" for spec in specs)
+        result.append({**message, "text": text + blocks} if specs else dict(message))
     return result

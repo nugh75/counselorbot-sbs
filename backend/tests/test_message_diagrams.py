@@ -35,13 +35,26 @@ def test_diagram_survives_new_session_and_attaches_only_to_its_message(db):
     assert list_diagrams(db, "different-session") == []
 
 
-def test_latest_successful_revision_is_restored(db):
-    for title in ("Prima versione", "Ultima versione"):
+def test_a_new_diagram_on_the_same_message_keeps_the_previous_one(db):
+    for title in ("Prima versione", "Seconda versione"):
         save_diagram(db, session_id="session-a", username="alice", source_text="Risposta", instruction=title, spec=diagram(title))
     restored = list_diagrams(db, "session-a", "alice")
-    assert len(restored) == 1
-    assert restored[0]["spec"]["title"] == "Ultima versione"
+    assert [item["spec"]["title"] for item in restored] == ["Prima versione", "Seconda versione"]
     assert list_diagrams(db, "session-a", "bob") == []
+    attached = attach_message_diagrams(db, "session-a", [{"role": "counselor", "text": "Risposta"}])[0]["text"]
+    assert attached.count("```diagram") == 2
+    assert attached.index("Prima versione") < attached.index("Seconda versione")
+
+
+def test_diagrams_of_successive_turns_stay_on_their_messages(db):
+    save_diagram(db, session_id="session-a", username="alice", source_text="Primo turno", instruction="", spec=diagram("Uno"))
+    save_diagram(db, session_id="session-a", username="alice", source_text="Secondo turno", instruction="", spec=diagram("Due"))
+    db.expire_all()
+    assert [item["spec"]["title"] for item in list_diagrams(db, "session-a")] == ["Uno", "Due"]
+    attached = attach_message_diagrams(db, "session-a", [{"role": "counselor", "text": "Primo turno"},
+                                                         {"role": "counselor", "text": "Secondo turno"}])
+    assert "Uno" in attached[0]["text"] and "Due" not in attached[0]["text"]
+    assert "Due" in attached[1]["text"] and "Uno" not in attached[1]["text"]
 
 
 def test_redacted_storage_still_matches_browser_hash_and_pdf_transcript(db, monkeypatch):
