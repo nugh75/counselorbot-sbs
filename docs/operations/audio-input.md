@@ -178,6 +178,34 @@ Gli errori restituiscono `detail`: `empty`/`invalid_audio` (400),
 `unavailable` (502/503) o `timeout` (504, attesa backend massima 300 secondi).
 Una richiesta anonima riceve 401. Non sono esposti dettagli interni del servizio.
 
+### Deploy portabile (Mac da 8 GB)
+
+`docker-compose.portable.yml` include il servizio `transcription` (immagine
+`counselorbot-transcription:latest`, alias di rete `transcription`), con
+**4 CPU e 3 GB di memoria** al posto delle 32 CPU e 8 GiB del Compose
+principale. Il backend parte dopo di lui (`depends_on`, `service_started`).
+I modelli sono inclusi nell'immagine: nessun volume né cache da creare.
+
+Con 3 GB usare **whisper.cpp `base` o `small`**, oppure **faster-whisper
+`small`**; non `large-v3` (~3,5 GB) e, con faster-whisper, nemmeno
+`large-v3-turbo` (~2 GB più `small` residente per la lingua).
+
+Il Compose portabile imposta `TRANSCRIPTION_PRELOAD_MODEL=small`: all'avvio
+resta in memoria solo `small` (~0,5-1 GB) più il rilevatore di lingua, che è
+lo stesso `small`. Senza la variabile il servizio precarica `large-v3-turbo`
+(valore predefinito, invariato in `docker-compose.yml`); `none` non precarica
+nulla oltre al rilevatore. Un modello caricato resta residente: su questo Mac
+in Amministrazione va scelto **whisper.cpp `base` o `small`** oppure
+**faster-whisper `small`**; scegliere `large-v3-turbo` o `large-v3` con
+faster-whisper lo carica e supera il limite di 3 GB (controllare
+`docker inspect --format '{{.State.OOMKilled}}'`).
+
+Ricostruzione dopo una modifica al servizio o al backend:
+
+```bash
+docker compose --env-file .env -f docker-compose.portable.yml up -d --build --no-deps transcription counselorbot-backend
+```
+
 ## Avvio e verifica
 
 ```bash

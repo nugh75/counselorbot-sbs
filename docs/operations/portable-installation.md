@@ -78,6 +78,10 @@ docker compose --env-file .env -f docker-compose.portable.yml ps
 docker compose --env-file .env -f docker-compose.portable.yml logs --tail=100 counselorbot-backend counselorbot-frontend
 ```
 
+Il Compose portabile avvia anche `transcription` (voce in ingresso, 4 CPU e
+3 GB): modelli consigliati e ricostruzione in
+[Messaggi da microfono e file audio](audio-input.md#deploy-portabile-mac-da-8-gb).
+
 `config --quiet` valida la configurazione senza stampare i segreti risolti.
 PostgreSQL non pubblica porte sull'host e il backend parte dopo la readiness
 del DB. Il backend lo raggiunge mediante l'alias privato dedicato

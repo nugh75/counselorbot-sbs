@@ -1,3 +1,4 @@
+import asyncio
 import io
 import json
 import os
@@ -119,6 +120,18 @@ class TranscriptionTests(unittest.TestCase):
             self.assertIs(first, again)
             self.assertEqual([args[0] for args in built], ['/models/small', '/models/large-v3'])
             self.assertEqual(sorted(server.loaded), ['large-v3', 'small'])
+        server.loaded.clear()
+
+    def test_startup_preloads_only_the_configured_model_and_the_detector(self):
+        async def started():
+            async with server.lifespan(server.app):
+                pass
+        for preload, expected in (('large-v3-turbo', ['large-v3-turbo', 'small']),
+                                  ('small', ['small']), ('none', ['small'])):
+            with patch.object(server, 'WhisperModel', Mock()), patch.object(server, 'PRELOAD_MODEL', preload):
+                server.loaded.clear()
+                asyncio.run(started())
+                self.assertEqual(sorted(server.loaded), sorted(expected))
         server.loaded.clear()
 
 

@@ -42,6 +42,29 @@ services:
         aliases:
           - piper
 
+  transcription:
+    build:
+      context: ./services/transcription
+    image: counselorbot-transcription:latest
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    environment:
+      TRANSCRIPTION_PRELOAD_MODEL: small
+    cpus: 4
+    mem_limit: 3g
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
+    networks:
+      default:
+        aliases:
+          - transcription
+
   counselorbot-backend:
     build:
       context: .
@@ -91,6 +114,8 @@ services:
       postgres:
         condition: service_healthy
       piper:
+        condition: service_started
+      transcription:
         condition: service_started
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/auth/me', timeout=5)"]
