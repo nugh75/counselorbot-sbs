@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/auth';
 import { GraduationCap } from 'lucide-react';
 import { useUserAccess } from '@/lib/use-user-access';
 import { isClassContentHidden } from '@/lib/user-access';
+import { Card } from '@/components/ui/Card';
 
 interface TeacherNote {
     id: number;
@@ -39,22 +40,22 @@ export function TeacherNotesCard({ lang }: { lang: string }) {
     if (isClassContentHidden(access) || notes.length === 0) return null;
 
     return (
-        <section className="glass-panel space-y-3 p-5" aria-labelledby="teacher-notes-section">
+        <Card as="section" className="space-y-4 p-6" aria-labelledby="teacher-notes-section">
             <div className="flex items-center gap-2">
-                <GraduationCap className="h-4 w-4 text-slate-500" aria-hidden />
-                <h2 id="teacher-notes-section" className="text-lg font-bold text-slate-800">{texts.title}</h2>
+                <GraduationCap className="h-4 w-4 text-ink-muted" aria-hidden />
+                <h2 id="teacher-notes-section" className="text-lg font-semibold text-ink">{texts.title}</h2>
             </div>
             <ul className="space-y-2">
                 {notes.map((note) => (
-                    <li key={note.id} className="rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                    <li key={note.id} className="rounded-control border border-line bg-surface p-4 text-sm text-ink-body">
                         {note.kind === 'message' ? `[${texts.message}] ` : ''}{note.text}
-                        <div className="mt-1 text-xs text-slate-500">
+                        <div className="mt-1 text-xs text-ink-muted">
                             {note.author_username}
                             {note.created_at ? ` - ${new Date(note.created_at).toLocaleDateString(lang)}` : ''}
                         </div>
                     </li>
                 ))}
             </ul>
-        </section>
+        </Card>
     );
 }

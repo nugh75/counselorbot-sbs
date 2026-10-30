@@ -7,10 +7,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useI18n } from '@/lib/i18n-context';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Button } from '@/components/ui/Button';
 import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
 import { canUsePersonalPage, canUseTeacherAssistant } from '@/lib/roles';
-import { useDarkMode } from '@/lib/use-dark-mode';
 import { toast } from '@/components/ui/Toast';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
@@ -41,6 +42,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList,
     type TooltipContentProps,
 } from 'recharts';
+import { Card } from '@/components/ui/Card';
 
 interface QuestionnaireResult {
     id: number;
@@ -155,7 +157,6 @@ function personalSectionFromPath(pathname: string): PersonalSection | null {
 export default function ProfilePage() {
     const { t, tf, lang } = useI18n();
     const pathname = usePathname();
-    const isDark = useDarkMode();
     const [identity, setIdentity] = useState<Identity | null>(null);
     const [sessions, setSessions] = useState<QuestionnaireResult[]>([]);
     // F03 (lotto 1B): fallire il caricamento non è “nessuna compilazione”.
@@ -365,9 +366,9 @@ export default function ProfilePage() {
             const isStrength = !(type === 'QPCC' && f.code === 'M2') && (inverted ? val <= 3 : val >= 7);
             const isGrowth = !(type === 'QPCC' && f.code === 'M2') && (inverted ? val >= 7 : val <= 3);
             
-            let color = '#ca8a04'; // yellow-600
-            if (isStrength) color = '#16a34a'; // green-600
-            else if (isGrowth) color = '#dc2626'; // red-600
+            let color = 'var(--warning)';
+            if (isStrength) color = 'var(--success)';
+            else if (isGrowth) color = 'var(--danger)';
 
             return {
                 code: f.code,
@@ -378,18 +379,7 @@ export default function ProfilePage() {
         });
     }, [selectedSession, tf]);
 
-    const getTypeColor = (type: string) => {
-        const colors: Record<string, string> = {
-            QSA: 'bg-blue-100 text-blue-700 border-blue-200',
-            QSAr: 'bg-sky-100 text-sky-700 border-sky-200',
-            ZTPI: 'bg-amber-100 text-amber-700 border-amber-200',
-            SAVICKAS: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-            QPCS: 'bg-violet-100 text-violet-700 border-violet-200',
-            QPCC: 'bg-rose-100 text-rose-700 border-rose-200',
-            QAP: 'bg-cyan-100 text-cyan-700 border-cyan-200',
-        };
-        return colors[type] || 'bg-slate-100 text-slate-700 border-slate-200';
-    };
+    const typeBadge = 'bg-surface-raised text-ink-body border-line';
 
     if (loading) {
         return (
@@ -397,7 +387,7 @@ export default function ProfilePage() {
                 <Skeleton className="h-9 w-64" />
                 <Skeleton className="h-24 w-full" />
                 <div className="grid lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-1 space-y-3">
+                    <div className="lg:col-span-1 space-y-4">
                         <Skeleton className="h-20 w-full" />
                         <Skeleton className="h-20 w-full" />
                         <Skeleton className="h-20 w-full" />
@@ -412,17 +402,18 @@ export default function ProfilePage() {
 
     if (!identity) {
         return (
-            <div className="max-w-md mx-auto my-12 p-8 bg-white border border-slate-200 rounded-xl text-center space-y-6 shadow-sm">
-                <h1 className="text-2xl font-bold text-slate-900">{t('profile.loginRequired')}</h1>
-                <p className="text-slate-500 text-sm">
+            <div className="max-w-md mx-auto my-12 p-8 bg-surface border border-line rounded-card text-center space-y-6 shadow-card">
+                <h1 className="text-2xl font-semibold text-ink">{t('profile.loginRequired')}</h1>
+                <p className="text-ink-muted text-sm">
                     {t('profile.loginRequiredDesc')}
                 </p>
-                <button
+                <Button
+                    size="lg"
                     onClick={() => window.location.href = '/'}
-                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition-colors"
+                    className="w-full"
                 >
                     {t('profile.backToHomeToLogin')}
-                </button>
+                </Button>
             </div>
         );
     }
@@ -430,18 +421,19 @@ export default function ProfilePage() {
     // La pagina personale resta vincolata all'autenticazione: ogni utente vede solo i propri dati.
     if (!canUsePersonalPage(identity)) {
         return (
-            <div className="max-w-md mx-auto my-12 p-8 bg-white border border-slate-200 rounded-xl text-center space-y-6 shadow-sm">
-                <div className="mx-auto w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center">
-                    <ShieldAlert className="w-6 h-6 text-amber-600" />
+            <div className="max-w-md mx-auto my-12 p-8 bg-surface border border-line rounded-card text-center space-y-6 shadow-card">
+                <div className="mx-auto w-12 h-12 bg-warning-soft rounded-full flex items-center justify-center">
+                    <ShieldAlert className="w-6 h-6 text-warning" />
                 </div>
-                <h1 className="text-2xl font-bold text-slate-900">{t('profile.restrictedTitle')}</h1>
-                <p className="text-slate-500 text-sm">{t('profile.restrictedDesc')}</p>
-                <button
+                <h1 className="text-2xl font-semibold text-ink">{t('profile.restrictedTitle')}</h1>
+                <p className="text-ink-muted text-sm">{t('profile.restrictedDesc')}</p>
+                <Button
+                    size="lg"
                     onClick={() => window.location.href = '/'}
-                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition-colors"
+                    className="w-full"
                 >
                     {t('profile.backToHomeToLogin')}
-                </button>
+                </Button>
             </div>
         );
     }
@@ -459,18 +451,18 @@ export default function ProfilePage() {
                 <PersonalAreaHome />
             </>}
 
-            {activeSection && ['notebook', 'sessions'].includes(activeSection) && <p className="rounded-lg border border-slate-200 p-3 text-sm text-slate-600">{learningText(lang, 'groupVisibility')}</p>}
+            {activeSection && ['notebook', 'sessions'].includes(activeSection) && <p className="rounded-lg border border-line p-4 text-sm text-ink-muted">{learningText(lang, 'groupVisibility')}</p>}
             {activeSection === 'notebook' && (
             <section className="space-y-4" aria-label={t('profile.about.title')}>
                 <LearnerProfileCard variant="edit" />
                 <TeacherNotesCard lang={lang} />
                 <Link
                     href="/profilo/cambiamenti"
-                    className="glass-panel p-5 block hover:bg-slate-50 transition-colors"
+                    className="block rounded-card border border-line bg-surface p-6 shadow-card hover:bg-surface-sunken transition-colors"
                 >
                     <div>
-                        <h3 className="font-bold text-slate-800">{t('profileChanges.title')}</h3>
-                        <p className="text-sm text-slate-500">{t('profileChanges.cardBody')}</p>
+                        <h3 className="font-semibold text-ink">{t('profileChanges.title')}</h3>
+                        <p className="text-sm text-ink-muted">{t('profileChanges.cardBody')}</p>
                     </div>
                 </Link>
             </section>
@@ -479,41 +471,41 @@ export default function ProfilePage() {
             {activeSection === 'sessions' && (
             <>
             <ActiveActionsCard />
-            <section className="glass-panel p-5 space-y-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
+            <Card as="section" className="p-6 space-y-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-800">
+                        <h2 className="text-lg font-semibold text-ink">
                             {t('profile.myCompilations')}
                         </h2>
-                        <p className="mt-1 text-sm text-slate-500">
+                        <p className="mt-1 text-sm text-ink-muted">
                             {t('profile.sessions.subtitle')}
                         </p>
                     </div>
-                    <span className="text-xs font-semibold text-slate-500">
+                    <span className="text-xs font-semibold text-ink-muted">
                         {filteredSessions.length} / {sessions.length}
                     </span>
                 </div>
                 {sessionsError ? (
-                    <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                    <div role="alert" className="rounded-card border border-danger-line bg-danger-soft p-4 text-sm text-danger-ink">
                         <p>{t('profile.sessions.loadError')}</p>
-                        <button type="button" onClick={() => void loadData()} className="mt-2 min-h-11 rounded-md border border-red-300 bg-white px-3 text-sm font-semibold text-red-700 hover:bg-red-50">{t('lp.retry')}</button>
+                        <button type="button" onClick={() => void loadData()} className="mt-2 min-h-control rounded-control border border-danger-line bg-surface px-4 text-sm font-semibold text-danger-ink hover:bg-danger-soft">{t('lp.retry')}</button>
                     </div>
                 ) : sessions.length === 0 ? (
-                    <div className="text-center py-10 px-4 border border-dashed border-slate-200 rounded-xl bg-white space-y-4">
-                        <p className="text-sm text-slate-500 max-w-xs mx-auto">{t('profile.noSessions')}</p>
+                    <div className="text-center py-10 px-4 border border-dashed border-line rounded-card bg-surface space-y-4">
+                        <p className="text-sm text-ink-muted max-w-xs mx-auto">{t('profile.noSessions')}</p>
                         <Link
                             href="/"
-                            className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                            className="inline-flex min-h-control items-center gap-2 rounded-control bg-brand px-4 py-2 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover transition-colors"
                         >
                             {t('selector.start')}
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid gap-3 lg:grid-cols-[minmax(260px,0.45fr)_minmax(0,1fr)]">
+                    <div className="grid gap-4 lg:grid-cols-[minmax(260px,0.45fr)_minmax(0,1fr)]">
                         <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.sessions.search')}</span>
-                            <div className="mt-1 flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2">
-                                <Search className="h-4 w-4 text-slate-500" />
+                            <span className="text-xs font-semibold text-ink-muted">{t('profile.sessions.search')}</span>
+                            <div className="mt-1 flex min-h-control items-center gap-2 rounded-control border border-line-strong bg-surface px-4 py-2 focus-within:ring-2 focus-within:ring-focus">
+                                <Search className="h-4 w-4 text-ink-muted" />
                                 <input
                                     value={sessionSearch}
                                     disabled={readingDraft.busy}
@@ -527,7 +519,7 @@ export default function ProfilePage() {
                             </div>
                         </label>
                         <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.sessions.active')}</span>
+                            <span className="text-xs font-semibold text-ink-muted">{t('profile.sessions.active')}</span>
                             <select
                                 value={selectedSession?.session_id || ''}
                                 disabled={readingDraft.busy}
@@ -537,7 +529,7 @@ export default function ProfilePage() {
                                     setSelectedSession(next);
                                     setShowDeleteConfirm(null);
                                 }}
-                                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                className="mt-1 w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-focus"
                             >
                                 {filteredSessions.length === 0 && <option value="">{t('profile.sessions.noneFiltered')}</option>}
                                 {filteredSessions.map((session) => (
@@ -549,18 +541,18 @@ export default function ProfilePage() {
                         </label>
                     </div>
                 )}
-            </section>
+            </Card>
 
             <section className="space-y-6" aria-labelledby="selected-session-details">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2 id="selected-session-details" className="text-lg font-bold text-slate-800">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <h2 id="selected-session-details" className="text-lg font-semibold text-ink">
                         <button
                             type="button"
                             aria-expanded={resultExpanded}
                             aria-controls="submission-result-content"
                             disabled={!selectedSession}
                             onClick={() => setResultExpanded(expanded => !expanded)}
-                            className="flex min-h-11 items-center gap-2 rounded-lg text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600 disabled:cursor-default"
+                            className="flex min-h-control items-center gap-2 rounded-lg text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus disabled:cursor-default"
                         >
                             <ChevronDown aria-hidden="true" className={`h-5 w-5 shrink-0 ${resultExpanded ? '' : '-rotate-90'}`} />
                             {t('profile.sessions.resultTitle')}
@@ -574,7 +566,7 @@ export default function ProfilePage() {
                         // serve al supporto e non allo studente.
                         <span
                             title={selectedSession.session_id}
-                            className={`px-3 py-0.5 border text-xs font-bold rounded-full uppercase ${getTypeColor(selectedSession.questionnaire_type)}`}
+                            className={`px-4 py-1 border text-xs font-semibold rounded-full ${typeBadge}`}
                         >
                             {selectedSession.questionnaire_type} · {new Date(selectedSession.submitted_at).toLocaleDateString(lang)}
                         </span>
@@ -582,30 +574,30 @@ export default function ProfilePage() {
                 </div>
                 {selectedSession ? (
                     <>
-                        <div id="submission-result-content" hidden={!resultExpanded} className="glass-panel p-6 space-y-6">
+                        <Card id="submission-result-content" hidden={!resultExpanded} className="p-6 space-y-6">
                             {/* Session Detail Header */}
-                                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
+                                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-4">
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <span className={`px-3 py-0.5 border text-xs font-bold rounded-full uppercase ${getTypeColor(selectedSession.questionnaire_type)}`}>
+                                            <span className={`px-4 py-1 border text-xs font-semibold rounded-full ${typeBadge}`}>
                                                 {selectedSession.questionnaire_type}
                                             </span>
-                                            <span className="text-xs text-slate-500 font-medium">
+                                            <span className="text-xs text-ink-muted">
                                                 {t('profile.submittedOn', { date: new Date(selectedSession.submitted_at).toLocaleString(lang) })}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-slate-500">
+                                        <p className="text-xs text-ink-muted">
                                             {resultProvenanceText(lang, selectedSession)}
                                             {selectedSession.locale ? ` · ${selectedSession.locale.toUpperCase()}` : ''}
                                         </p>
-                                        <p className="text-xs font-mono text-slate-500">
+                                        <p className="text-xs font-mono text-ink-muted">
                                             {t('history.session')} ID: {selectedSession.session_id}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => handleDownloadPdf(selectedSession.session_id, selectedSession.questionnaire_type)}
-                                            className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-600 transition-colors"
+                                            className="inline-flex min-h-control items-center gap-2 px-4 py-2 border border-line hover:bg-surface-sunken rounded-control text-xs font-semibold text-ink-muted transition-colors"
                                             title={t('completed.downloadPdf')}
                                         >
                                             <Download className="w-3.5 h-3.5" />
@@ -613,26 +605,17 @@ export default function ProfilePage() {
                                         </button>
 
                                         {showDeleteConfirm === selectedSession.session_id ? (
-                                            <div className="flex items-center gap-1 bg-red-50 border border-red-100 rounded-lg p-1 animate-fade-in">
-                                                <span className="text-2xs font-semibold text-red-700 px-2">{t('profile.deleteShortConfirm')}</span>
-                                                <button
-                                                    onClick={() => handleDelete(selectedSession.session_id)}
-                                                    disabled={actionLoading === selectedSession.session_id}
-                                                    className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-2xs font-bold"
-                                                >
-                                                    {t('profile.yes')}
-                                                </button>
-                                                <button
-                                                    onClick={() => setShowDeleteConfirm(null)}
-                                                    className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded text-2xs font-medium"
-                                                >
-                                                    {t('profile.no')}
-                                                </button>
-                                            </div>
+                                            <ConfirmInline
+                                                className="animate-fade-in"
+                                                question={t('profile.deleteShortConfirm')}
+                                                busy={actionLoading === selectedSession.session_id}
+                                                onConfirm={() => handleDelete(selectedSession.session_id)}
+                                                onCancel={() => setShowDeleteConfirm(null)}
+                                            />
                                         ) : (
                                             <button
                                                 onClick={() => setShowDeleteConfirm(selectedSession.session_id)}
-                                                className="p-2 border border-red-200 hover:bg-red-50 text-red-600 hover:text-red-700 rounded-lg transition-colors"
+                                                className="inline-flex h-control w-control items-center justify-center border border-danger-line hover:bg-danger-soft text-danger hover:text-danger-ink rounded-control transition-colors"
                                                 title={t('profile.deleteTooltip')}
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -642,18 +625,18 @@ export default function ProfilePage() {
                                 </div>
 
                                 {/* The final guided response is the synthesis for every instrument. */}
-                                <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
-                                    <h3 className="text-sm font-bold text-slate-700">{t('profile.sessionSummary.title')}</h3>
+                                <div className="space-y-4 bg-surface p-4 border border-line rounded-card">
+                                    <h3 className="text-sm font-semibold text-ink-body">{t('profile.sessionSummary.title')}</h3>
                                     {summaryLoading ? (
-                                        <div className="py-4 text-center text-xs text-slate-500">
+                                        <div className="py-4 text-center text-xs text-ink-muted">
                                             {t('profile.sessionSummary.loading')}
                                         </div>
                                     ) : sessionSummary ? (
-                                        <div className="prose prose-sm max-w-none text-slate-700 prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0">
+                                        <div className="prose prose-sm max-w-none text-ink-body prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0">
                                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{sessionSummary}</ReactMarkdown>
                                         </div>
                                     ) : (
-                                        <p className="py-2 text-sm text-slate-500">
+                                        <p className="py-2 text-sm text-ink-muted">
                                             {t('profile.sessionSummary.pending')}
                                         </p>
                                     )}
@@ -661,30 +644,30 @@ export default function ProfilePage() {
 
                                 {/* Render Scores Visual Chart if quantitative */}
                                 {chartData.length > 0 && (
-                                    <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
-                                        <h3 className="text-sm font-bold text-slate-700">{t('profile.factorBreakdown')}</h3>
+                                    <div className="space-y-4 bg-surface p-4 border border-line rounded-card">
+                                        <h3 className="text-sm font-semibold text-ink-body">{t('profile.factorBreakdown')}</h3>
 
                                         <div className="h-64">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#e2e8f0'} />
-                                                    <XAxis dataKey="code" tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} />
-                                                    <YAxis domain={[0, 9]} ticks={[1, 3, 5, 7, 9]} tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} />
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
+                                                    <XAxis dataKey="code" tick={{ fontSize: 11, fill: 'var(--ink-muted)' }} />
+                                                    <YAxis domain={[0, 9]} ticks={[1, 3, 5, 7, 9]} tick={{ fontSize: 11, fill: 'var(--ink-muted)' }} />
                                                     <Tooltip content={(p: TooltipContentProps<number, string>) => {
                                                         if (!p.active || !p.payload?.length) return null;
                                                         const d = p.payload[0].payload;
                                                         return (
-                                                            <div className="bg-white border border-slate-200 shadow-md rounded-lg p-2.5 text-xs max-w-xs">
-                                                                <p className="font-semibold text-slate-800">{d.code} - {d.name}</p>
-                                                                <p className="text-indigo-600 font-bold mt-1">{t('profile.stanineScoreLabel')} {d.value} / 9</p>
+                                                            <div className="bg-surface border border-line shadow-card rounded-lg p-2 text-xs max-w-xs">
+                                                                <p className="font-semibold text-ink">{d.code} - {d.name}</p>
+                                                                <p className="text-link font-semibold mt-1">{t('profile.stanineScoreLabel')} {d.value} / 9</p>
                                                             </div>
                                                         );
                                                     }} />
-                                                    <Bar dataKey="value" maxBarSize={30}>
+                                                    <Bar dataKey="value" maxBarSize={24}>
                                                         {chartData.map((entry, index) => (
                                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                                         ))}
-                                                        <LabelList dataKey="value" position="top" style={{ fontSize: '10px', fill: isDark ? '#cbd5e1' : '#475569', fontWeight: 'bold' }} />
+                                                        <LabelList dataKey="value" position="top" style={{ fontSize: '10px', fill: 'var(--ink-body)', fontWeight: 600 }} />
                                                     </Bar>
                                                 </BarChart>
                                             </ResponsiveContainer>
@@ -693,14 +676,14 @@ export default function ProfilePage() {
                                 )}
 
                                 {selectedSession.questionnaire_type === 'QPCC' && !isReusableProfile('QPCC', selectedSession.scores) && (
-                                    <p className="text-sm text-slate-600">{t('q.QPCC.legacyProfile')}</p>
+                                    <p className="text-sm text-ink-muted">{t('q.QPCC.legacyProfile')}</p>
                                 )}
                                 {/* Detailed Grid of Factors */}
                                 {chartData.length > 0 && selectedSession.scores ? (
-                                    <div className="space-y-3">
-                                        <h3 className="text-sm font-bold text-slate-700">{t('profile.factorEvaluation')}</h3>
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-semibold text-ink-body">{t('profile.factorEvaluation')}</h3>
 
-                                        <div className="grid sm:grid-cols-2 gap-3">
+                                        <div className="grid sm:grid-cols-2 gap-4">
                                             {Object.entries(selectedSession.scores).map(([code, val]) => {
                                                 const config = QUESTIONNAIRES[selectedSession.questionnaire_type as QuestionnaireType];
                                                 const factorDef = config?.factors.find(f => f.code === code);
@@ -709,33 +692,33 @@ export default function ProfilePage() {
                                                 const isStrength = !(selectedSession.questionnaire_type === 'QPCC' && code === 'M2') && (inverted ? val <= 3 : val >= 7);
                                                 const isGrowth = !(selectedSession.questionnaire_type === 'QPCC' && code === 'M2') && (inverted ? val >= 7 : val <= 3);
 
-                                                let badgeColor = 'bg-yellow-50 text-yellow-700 border-yellow-200';
+                                                let badgeColor = 'bg-warning-soft text-warning-ink border-warning-line';
                                                 let evaluation = selectedSession.questionnaire_type === 'QPCC' && code === 'M2' ? t('factor.QPCC.M2.name') : t('profile.normal');
                                                 if (isStrength) {
-                                                    badgeColor = 'bg-green-50 text-green-700 border-green-200';
+                                                    badgeColor = 'bg-success-soft text-success-ink border-success-line';
                                                     evaluation = t('profile.strength');
                                                 } else if (isGrowth) {
-                                                    badgeColor = 'bg-red-50 text-red-700 border-red-200';
+                                                    badgeColor = 'bg-danger-soft text-danger-ink border-danger-line';
                                                     evaluation = t('profile.growth');
                                                 }
 
                                                 return (
-                                                    <div key={code} className="border border-slate-100 rounded-xl p-3 bg-white space-y-1.5 flex flex-col justify-between">
+                                                    <div key={code} className="border border-line rounded-card p-4 bg-surface space-y-2 flex flex-col justify-between">
                                                         <div>
                                                             <div className="flex justify-between items-start gap-2">
-                                                                <span className="font-bold text-xs text-slate-800">{code} - {tf(factorTranslationKey(selectedSession.questionnaire_type, code, 'name'), factorDef?.name || code)}</span>
-                                                                <span className={`px-2 py-0.5 border text-2xs font-semibold rounded-full shrink-0 ${badgeColor}`}>
+                                                                <span className="font-semibold text-xs text-ink">{code} - {tf(factorTranslationKey(selectedSession.questionnaire_type, code, 'name'), factorDef?.name || code)}</span>
+                                                                <span className={`px-2 py-1 border text-2xs font-semibold rounded-full shrink-0 ${badgeColor}`}>
                                                                     {evaluation}
                                                                 </span>
                                                             </div>
                                                             {factorDef?.description && (
-                                                                <p className="text-[11px] text-slate-500 leading-normal mt-1">{tf(factorTranslationKey(selectedSession.questionnaire_type, code, 'desc'), factorDef.description)}</p>
+                                                                <p className="text-[11px] text-ink-muted leading-normal mt-1">{tf(factorTranslationKey(selectedSession.questionnaire_type, code, 'desc'), factorDef.description)}</p>
                                                             )}
                                                         </div>
-                                                        <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-slate-50">
-                                                            <span className="text-sm font-bold text-indigo-700">{val}</span>
-                                                            <span className="text-2xs text-slate-500">{t('profile.stanineLabel')}</span>
-                                                            {inverted && <span className="text-[9px] text-slate-500 italic">{t('profile.invertedShort')}</span>}
+                                                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-line">
+                                                            <span className="text-sm font-semibold text-link">{val}</span>
+                                                            <span className="text-2xs text-ink-muted">{t('profile.stanineLabel')}</span>
+                                                            {inverted && <span className="text-[9px] text-ink-muted italic">{t('profile.invertedShort')}</span>}
                                                         </div>
                                                     </div>
                                                 );
@@ -745,39 +728,39 @@ export default function ProfilePage() {
                                 ) : null}
 
                             {/* Render Chat Conversation */}
-                            <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
-                                <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                    <MessageSquare className="w-4 h-4 text-indigo-600" />
+                            <div className="space-y-4 bg-surface p-4 border border-line rounded-card">
+                                <h3 className="text-sm font-semibold text-ink-body flex items-center gap-2">
+                                    <MessageSquare className="w-4 h-4 text-link" />
                                     {t('profile.conversation.title')}
                                 </h3>
                                 
                                 {convLoading && (
-                                    <div className="py-6 text-center text-xs text-slate-500">
+                                    <div className="py-6 text-center text-xs text-ink-muted">
                                         {t('profile.conversation.loading')}
                                     </div>
                                 )}
                                 
                                 {!convLoading && conversation && conversation.length === 0 && (
-                                    <p className="text-xs text-slate-500 text-center py-4">
+                                    <p className="text-xs text-ink-muted text-center py-4">
                                         {t('profile.conversation.empty')}
                                     </p>
                                 )}
                                 
                                 {!convLoading && conversation && conversation.length > 0 && (
-                                    <div className="max-h-96 overflow-y-auto space-y-3 pr-2 border-l border-slate-100 pl-4 mt-2">
+                                    <div className="max-h-96 overflow-y-auto space-y-4 pr-2 border-l border-line pl-4 mt-2">
                                         {conversation.map((msg, index) => (
                                             <div
                                                 key={index}
                                                 className={`flex flex-col ${msg.role === 'student' ? 'items-end' : 'items-start'}`}
                                             >
-                                                <span className="text-2xs font-semibold text-slate-500 mb-0.5 uppercase tracking-wider">
+                                                <span className="text-2xs font-semibold text-ink-muted mb-1">
                                                     {msg.role === 'student' ? t('profile.conversation.student') : 'CounselorBot'}
                                                 </span>
                                                 <div
-                                                    className={`max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed break-words ${
+                                                    className={`max-w-[85%] rounded-lg px-4 py-2 text-sm leading-relaxed break-words ${
                                                         msg.role === 'student'
-                                                            ? 'bg-indigo-600 text-white prose prose-sm prose-invert prose-p:my-0 prose-headings:my-1 prose-ul:my-0.5 prose-li:my-0'
-                                                            : 'bg-slate-100 text-slate-800 border border-slate-200/60 prose prose-sm prose-p:my-0 prose-headings:my-1 prose-ul:my-0.5 prose-li:my-0'
+                                                            ? 'bg-brand text-ink-on-brand prose prose-sm prose-invert prose-p:my-0 prose-headings:my-1 prose-ul:my-1 prose-li:my-0'
+                                                            : 'bg-surface-raised text-ink border border-line/60 prose prose-sm prose-p:my-0 prose-headings:my-1 prose-ul:my-1 prose-li:my-0'
                                                     }`}
                                                 >
                                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
@@ -787,14 +770,14 @@ export default function ProfilePage() {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </Card>
 
                         <ResultReadingCard key={selectedSession.session_id} sessionId={selectedSession.session_id} questionnaireType={selectedSession.questionnaire_type} scores={selectedSession.scores} onDraftStateChange={onReadingDraftChange} />
                     </>
                 ) : (
-                    <div className="glass-panel p-12 text-center space-y-4 text-slate-500">
-                        <p className="font-medium">{t('profile.selectSession')}</p>
-                    </div>
+                    <Card className="p-12 text-center space-y-4 text-ink-muted">
+                        <p>{t('profile.selectSession')}</p>
+                    </Card>
                 )}
             </section>
 

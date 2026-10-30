@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/auth';
 import { Send } from 'lucide-react';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 interface LinkStatus {
     linked: boolean;
@@ -226,19 +228,19 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
     const linked = !statusError && status?.linked;
 
     return (
-        <section
-            className="glass-panel space-y-3 p-5"
+        <Card as="section"
+            className="space-y-4 p-6"
             aria-labelledby={showHeading ? 'telegram-link-section' : undefined}
             aria-label={showHeading ? undefined : texts.title}
         >
             {showHeading && (
                 <div className="flex items-center gap-2">
-                    <Send className="h-4 w-4 text-slate-500" aria-hidden />
-                    <h2 id="telegram-link-section" className="text-lg font-bold text-slate-800">{texts.title}</h2>
+                    <Send className="h-4 w-4 text-ink-muted" aria-hidden />
+                    <h2 id="telegram-link-section" className="text-lg font-semibold text-ink">{texts.title}</h2>
                 </div>
             )}
-            <p className="text-sm text-slate-500">{texts.subtitle}</p>
-            <p className="text-sm font-medium text-slate-700">
+            <p className="text-sm text-ink-muted">{texts.subtitle}</p>
+            <p className="text-sm text-ink-body">
                 {/* F32: lo stato viene mostrato solo quando è il frutto di una verifica riuscita. */}
                 {!statusError && status
                     ? (linked
@@ -247,9 +249,9 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
                     : ''}
             </p>
             {statusError && (
-                <p role="alert" className="text-sm text-red-800">
+                <p role="alert" className="text-sm text-danger-ink">
                     {statusError && !status ? texts.statusError : ''}
-                    <button type="button" onClick={() => void loadStatus()} className="mt-2 block min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">{texts.retry}</button>
+                    <button type="button" onClick={() => void loadStatus()} className="mt-2 block min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken">{texts.retry}</button>
                 </p>
             )}
             {linked && (
@@ -258,69 +260,67 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
                         type="button"
                         onClick={() => void unlink()}
                         disabled={busy}
-                        className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                        className="min-h-control rounded-control border border-line-strong px-4 py-2 text-sm font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-50"
                     >
                         {texts.unlink}
                     </button>
                 </div>
             )}
             {!linked && (
-                <ol className="space-y-2 text-sm text-slate-700">
-                    <li className="rounded-md border border-slate-200 bg-white p-3">
+                <ol className="space-y-2 text-sm text-ink-body">
+                    <li className="rounded-control border border-line bg-surface p-4">
                         <span className="font-semibold">{texts.step1}.</span>{' '}
                         {botUsername && (
                             <a
                                 href={pending && !expired ? deepLink : `https://t.me/${botUsername}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="ml-1 inline-block rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                                className="ml-1 inline-flex min-h-control items-center rounded-control bg-brand px-4 py-2 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover"
                             >
                                 {texts.openBot}
                             </a>
                         )}
                     </li>
-                    <li className="rounded-md border border-slate-200 bg-white p-3"><span className="font-semibold">{texts.step2}.</span></li>
-                    <li className="rounded-md border border-slate-200 bg-white p-3">
+                    <li className="rounded-control border border-line bg-surface p-4"><span className="font-semibold">{texts.step2}.</span></li>
+                    <li className="rounded-control border border-line bg-surface p-4">
                         <span className="font-semibold">{texts.step3}.</span>{' '}
-                        <button type="button" onClick={() => void loadStatus()} disabled={busy} className="ml-1 min-h-11 rounded-md border border-indigo-300 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50">{texts.verify}</button>
+                        <button type="button" onClick={() => void loadStatus()} disabled={busy} className="ml-1 min-h-control rounded-control border border-brand-line px-4 py-2 text-sm font-semibold text-link hover:bg-brand-soft disabled:opacity-50">{texts.verify}</button>
                     </li>
-                    <li className="text-xs text-slate-500">{texts.verifyHint}</li>
+                    <li className="text-xs text-ink-muted">{texts.verifyHint}</li>
                 </ol>
             )}
             {pending && !expired && (
-                <div className="space-y-2 rounded-md border border-slate-300 bg-white p-3 text-sm text-slate-800" aria-live="polite">
+                <div className="space-y-2 rounded-control border border-line-strong bg-surface p-4 text-sm text-ink" aria-live="polite">
                     <p>{texts.codeHint}</p>
-                    <p className="font-mono text-lg font-bold tracking-widest">/link {pending.code}</p>
+                    <p className="font-mono text-lg font-semibold">/link {pending.code}</p>
                     <p>{texts.codeValid.replace('{minutes}', String(minutesLeft))}</p>
                 </div>
             )}
             {pending && expired && (
-                <p className="text-sm text-amber-700" aria-live="polite">{texts.codeExpired}</p>
+                <p className="text-sm text-warning-ink" aria-live="polite">{texts.codeExpired}</p>
             )}
             {botUsername && (
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-ink-muted">
                     {texts.botHint}{' '}
                     <a
                         href={`https://t.me/${botUsername}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="font-semibold text-indigo-600 hover:underline"
+                        className="font-semibold text-link hover:underline"
                     >
                         @{botUsername}
                     </a>
                 </p>
             )}
-            {error && <p className="text-sm text-red-600">{texts.error}</p>}
+            {error && <p className="text-sm text-danger">{texts.error}</p>}
             <div className="flex gap-2">
-                <button
+                <Button
                     type="button"
                     onClick={() => void generateCode()}
-                    disabled={busy}
-                    className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                >
+                    disabled={busy}>
                     {pending ? texts.newCode : texts.generate}
-                </button>
+                </Button>
             </div>
-        </section>
+        </Card>
     );
 }

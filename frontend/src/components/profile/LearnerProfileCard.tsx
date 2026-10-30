@@ -288,11 +288,11 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     };
 
     if (hidden || dismissed || loading) return null;
-    if (loadFailed) return <div role="alert" className="glass-panel space-y-3 p-5">
-        <p className="text-sm text-red-800">{t('lp.loadError')}</p>
+    if (loadFailed) return <Card role="alert" className="space-y-4 p-6">
+        <p className="text-sm text-danger-ink">{t('lp.loadError')}</p>
         <button type="button" onClick={() => { setLoadFailed(false); setLoading(true); setLoadAttempt(n => n + 1); }}
-            className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">{t('lp.retry')}</button>
-    </div>;
+            className="min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken">{t('lp.retry')}</button>
+    </Card>;
     if (suggestionOnly && (suggestion?.status !== 'ready' || (suggestionHandled && !editing))) return null;
     // Revisione a inizio sessione: se non c'è ancora un profilo si propone
     // l'intake, se c'è si chiede conferma rapida (un click se nulla è cambiato).
@@ -319,17 +319,17 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
 
     const formUi = (
         <div className="space-y-4">
-            <div className="space-y-3">
+            <div className="space-y-4">
                 {CURRENT_FIELDS.map((f) => (
                     <label key={f.key} className="block">
-                        <span className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t(f.labelKey)}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t(f.labelKey)}</span>
                         {f.type === 'select' ? (
                             <select
                                 value={form[f.key] || ''}
                                 onChange={(e) => {
                                     changeForm({ ...form, [f.key]: e.target.value });
                                 }}
-                                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
                             >
                                 <option value="">{t('lp.institution.choose')}</option>
                                 {institutions.map((institution) => (
@@ -350,7 +350,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                                 onChange={(e) => {
                                     changeForm({ ...form, [f.key]: e.target.value });
                                 }}
-                                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
                             />
                         ) : (
                             <AutoGrowTextarea
@@ -360,7 +360,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                                 onChange={(e) => {
                                     changeForm({ ...form, [f.key]: e.target.value });
                                 }}
-                                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
                             />
                         )}
                     </label>
@@ -369,7 +369,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
             {/* Nel percorso i comandi restano anche in cima, fuori dalla Card,
                 per la "prima riga" uniforme alle altre fasi; il Salva in coda
                 evita di risalire tutto il modulo dopo la compilazione. */}
-            <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-3">
+            <div className="flex flex-wrap items-center gap-4 border-t border-line pt-4">
                 {inFlow ? (
                     <ForwardButton
                         onClick={() => void save(saveSource)}
@@ -389,18 +389,18 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                         <X className="w-4 h-4" />
                     </Button>
                 )}
-                {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
+                {saved && <span className="text-sm text-success">{t('lp.saved')}</span>}
             </div>
-            {validationError && <p className="text-sm text-red-600">{validationError}</p>}
+            {validationError && <p className="text-sm text-danger">{validationError}</p>}
         </div>
     );
 
     const summaryUi = (
-        <div className="space-y-3">
+        <div className="space-y-4">
             {filledEntries.map((f) => (
-                <div key={f.key} className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
-                    <div className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t(f.labelKey)}</div>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-800">{f.value}</p>
+                <div key={f.key} className="rounded-lg border border-line bg-surface-sunken/60 p-4">
+                    <div className="text-xs font-semibold text-ink-muted">{t(f.labelKey)}</div>
+                    <p className="mt-1 text-sm leading-relaxed text-ink">{f.value}</p>
                 </div>
             ))}
         </div>
@@ -419,7 +419,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
             {/* "Prima riga" uniforme a tutte le altre fasi: pulsanti fuori dal */}
             {/* frame del taccuino (BackButton + PencilButton + ForwardButton). */}
             {showSummaryRow && (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                     {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
                     <ForwardButton
                         onClick={() => void save('session_start')}
@@ -430,11 +430,11 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                         onClick={() => setEditing(true)}
                         label={t('lp.edit')}
                     />
-                    {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
+                    {saved && <span className="text-sm text-success">{t('lp.saved')}</span>}
                 </div>
             )}
             {inFlow && !showSummaryRow && (
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-4">
                     {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
                     <ForwardButton
                         onClick={() => void save(saveSource)}
@@ -446,47 +446,47 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                             {t('lp.skip')}
                         </Button>
                     )}
-                    {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
+                    {saved && <span className="text-sm text-success">{t('lp.saved')}</span>}
                 </div>
             )}
             {saveStatus === 'error' && (
                 <div role="alert" data-testid="notebook-autosave-status">
                     <span className="inline-flex items-center gap-2">
                         <span className="inline-flex" title={t('lp.autosaveError')} aria-label={t('lp.autosaveError')}>
-                            <AlertCircle className="h-4 w-4 text-red-600" aria-hidden="true" />
+                            <AlertCircle className="h-4 w-4 text-danger" aria-hidden="true" />
                         </span>
                         <Button size="sm" onClick={() => void autosave.current?.flush()}>{t('setup.retry')}</Button>
                     </span>
                 </div>
             )}
-            <Card className="p-5 space-y-4">
+            <Card className="p-6 space-y-4">
             {variant !== 'edit' && !suggestionOnly && (
                 <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-slate-800">{title}</h3>
+                    <h3 className="font-semibold text-ink">{title}</h3>
                 </div>
             )}
             {!suggestionOnly && (
-                <p className="text-sm leading-relaxed text-slate-500">
+                <p className="text-sm leading-relaxed text-ink-muted">
                     {isIntake ? t('lp.intro') : t('lp.reviewIntro')}
                 </p>
             )}
 
             {suggestion?.status === 'ready' && !suggestionHandled && (
-                <section className="rounded-xl border border-ochre-200 bg-ochre-50 p-4" aria-label={t('lp.suggestion.title')}>
-                    <div className="flex items-start gap-3">
-                        <div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-ochre-500" />
+                <section className="rounded-card border border-ochre-200 bg-ochre-50 p-4" aria-label={t('lp.suggestion.title')}>
+                    <div className="flex items-start gap-4">
+                        <div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-move" />
                         <div className="min-w-0 flex-1">
-                            <h4 className="font-display text-base font-semibold text-slate-900">{t('lp.suggestion.title')}</h4>
-                            <p className="mt-1 text-sm leading-relaxed text-slate-600">{t('lp.suggestion.intro')}</p>
-                            <dl className="mt-3 space-y-2">
+                            <h4 className="font-display text-base font-semibold text-ink">{t('lp.suggestion.title')}</h4>
+                            <p className="mt-1 text-sm leading-relaxed text-ink-muted">{t('lp.suggestion.intro')}</p>
+                            <dl className="mt-4 space-y-2">
                                 {(['main_difficulty', 'notes'] as const).map((key) => {
                                     const value = suggestion.data[key]?.trim();
                                     const labelKey = key === 'main_difficulty' ? 'lp.field.difficulty'
                                         : 'lp.field.notes';
                                     return value ? (
                                         <div key={key}>
-                                            <dt className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t(labelKey)}</dt>
-                                            <dd className="mt-0.5 text-sm text-slate-800">{value}</dd>
+                                            <dt className="text-xs font-semibold text-ink-muted">{t(labelKey)}</dt>
+                                            <dd className="mt-1 text-sm text-ink">{value}</dd>
                                         </div>
                                     ) : null;
                                 })}
@@ -501,16 +501,16 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
             )}
 
             {suggestionOnly && !editing ? null : variant === 'review' && !isIntake && !editing ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                     {summaryUi}
                 </div>
             ) : variant === 'edit' && !isIntake && !editing ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                     {summaryUi}
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-4">
                         <Button
                             variant="secondary"
-                            className="w-11 px-0"
+                            className="w-control px-0"
                             onClick={() => setEditing(true)}
                             aria-label={t('lp.edit')}
                             title={t('lp.edit')}
@@ -525,7 +525,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                         </Button>
                         {confirmDelete ? (
                             <span className="inline-flex items-center gap-2 text-sm">
-                                <span className="text-red-600">{t('lp.deleteConfirm')}</span>
+                                <span className="text-danger">{t('lp.deleteConfirm')}</span>
                                 <Button size="sm" variant="danger" onClick={() => void deleteAll()}>{t('lp.delete')}</Button>
                                 <Button size="sm" variant="secondary" onClick={() => setConfirmDelete(false)}>{t('lp.skip')}</Button>
                             </span>
@@ -533,27 +533,27 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                             <Button
                                 variant="ghost"
                                 onClick={() => setConfirmDelete(true)}
-                                className="w-11 px-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                className="w-control px-0 text-danger hover:bg-danger-soft hover:text-danger-ink"
                                 aria-label={t('lp.delete')}
                                 title={t('lp.delete')}
                             >
                                 <Trash2 className="w-4 h-4" aria-hidden />
                             </Button>
                         )}
-                        {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
+                        {saved && <span className="text-sm text-success">{t('lp.saved')}</span>}
                     </div>
                     {showHistory && (
-                        <div className="border-t border-slate-200 pt-3 space-y-3">
-                            {!history?.length && <p className="text-sm text-slate-500">{t('lp.historyEmpty')}</p>}
+                        <div className="border-t border-line pt-4 space-y-4">
+                            {!history?.length && <p className="text-sm text-ink-muted">{t('lp.historyEmpty')}</p>}
                             {history?.map((rev) => (
                                 <div key={rev.id} className="text-sm">
-                                    <div className="text-xs text-slate-500">
+                                    <div className="text-xs text-ink-muted">
                                         {new Date(rev.created_at).toLocaleDateString()} · {rev.source}
                                     </div>
-                                    <ul className="ml-3 mt-0.5 space-y-0.5 text-slate-600">
+                                    <ul className="ml-4 mt-1 space-y-1 text-ink-muted">
                                         {FIELDS.map((f) => {
                                             const value = (rev.data?.[f.key] || '').trim();
-                                            return value ? <li key={f.key}><span className="text-slate-500">{t(f.labelKey)}:</span> {value}</li> : null;
+                                            return value ? <li key={f.key}><span className="text-ink-muted">{t(f.labelKey)}:</span> {value}</li> : null;
                                         })}
                                     </ul>
                                 </div>
@@ -565,7 +565,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                 formUi
             )}
             {showGoalBridge && !suggestionOnly && (form.main_difficulty || '').trim() && (
-                <div className="border-t border-slate-200 pt-3">
+                <div className="border-t border-line pt-4">
                     <Button
                         variant="secondary"
                         onClick={() => {

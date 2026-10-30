@@ -26,8 +26,8 @@ import { filterItems, splitByToday, timelineItems, type TimelineItem, type Timel
 import { TIMELINE_GLYPHS, timelineGlyph, type TimelineGlyph } from '@/lib/timeline-legend';
 import type { SavedWorkspace, TimelineEvent, VisualWorkspace } from '@/lib/visual-tools';
 
-const field = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
-const iconButton = 'h-[44px] w-[44px] shrink-0 p-0';
+const field = 'mt-1 w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-[15px] text-ink';
+const iconButton = 'h-control w-control shrink-0 p-0';
 const FILTER_KEY = 'cb_timeline_filters';
 const KINDS: TimelineItemKind[] = ['milestone', 'action', 'goal', 'appointment', 'meeting'];
 // Kinds that existed before #189: a filter saved then keeps later kinds visible.
@@ -230,13 +230,13 @@ export function PersonalTimeline({ locale }: { locale: string }) {
             const event = timeline.events.find(e => e.id === item.eventId)!;
             if (isGoalReview(event.id)) {
                 const goalId = event.source.startsWith('goal:') ? event.source.slice(5) : '';
-                return <li key={item.key} id={`timeline-${item.key}`} tabIndex={-1} className={`relative min-w-0 rounded-xl border border-slate-200 bg-white p-3 ${isHighlight ? 'ring-2 ring-ochre-500' : ''}`}>
+                return <li key={item.key} id={`timeline-${item.key}`} tabIndex={-1} className={`relative min-w-0 rounded-card border border-line bg-surface p-4 ${isHighlight ? 'ring-2 ring-move' : ''}`}>
                     <span className="flex min-w-0 items-start gap-2">
-                        <span aria-hidden="true" className="mt-1 shrink-0 text-ochre-600"><GlyphIcon glyph={timelineGlyph({ kind: 'event', id: event.id })} /></span>
+                        <span aria-hidden="true" className="mt-1 shrink-0 text-move"><GlyphIcon glyph={timelineGlyph({ kind: 'event', id: event.id })} /></span>
                         <span className="min-w-0">
-                            <span className="block break-words font-medium">{event.title}</span>
-                            <span className="block text-xs text-slate-600">{kindName('milestone')}</span>
-                            {goalId && <Link href={`/profilo/obiettivi?goal=${goalId}`} className="text-sm text-indigo-700 underline">{l('openGoal')}</Link>}
+                            <span className="block break-words">{event.title}</span>
+                            <span className="block text-xs text-ink-muted">{kindName('milestone')}</span>
+                            {goalId && <Link href={`/profilo/obiettivi?goal=${goalId}`} className="text-sm text-link underline">{l('openGoal')}</Link>}
                         </span>
                     </span>
                 </li>;
@@ -248,22 +248,22 @@ export function PersonalTimeline({ locale }: { locale: string }) {
                 highlight={isHighlight} busy={busy} pending={pending} />;
         }
         const body = <span className="flex min-w-0 items-start gap-2">
-            <Icon className="mt-0.5 h-4 w-4 shrink-0 text-ochre-600" aria-hidden="true" />
+            <Icon className="mt-1 h-4 w-4 shrink-0 text-move" aria-hidden="true" />
             <span className="min-w-0">
-                <span className="block break-words font-medium">{item.deadline ? `${l('registrationDeadline')}: ${item.title}` : item.title}</span>
-                <span className="block text-xs text-slate-600">{kindName(item.kind)}{item.kind === 'appointment' && item.start ? ` · ${displayDate(item.start, locale)}` : ''}{item.kind === 'action' && item.stage ? ` · ${l(item.stage)}` : ''}
+                <span className="block break-words">{item.deadline ? `${l('registrationDeadline')}: ${item.title}` : item.title}</span>
+                <span className="block text-xs text-ink-muted">{kindName(item.kind)}{item.kind === 'appointment' && item.start ? ` · ${displayDate(item.start, locale)}` : ''}{item.kind === 'action' && item.stage ? ` · ${l(item.stage)}` : ''}
                     {item.kind === 'meeting' && item.start ? ` · ${displayDate(item.start, locale)} ${item.time ?? ''} · ${item.where ?? classMeetingText(locale, 'online')}${item.status === 'cancelled' ? ` · ${classMeetingText(locale, 'cancelled')}` : ''}` : ''}</span>
             </span>
         </span>;
         const content = item.href
-            ? <Link href={item.href} className="block min-h-11 rounded-xl border border-slate-200 bg-white p-3 text-left focus-visible:outline-2 focus-visible:outline-indigo-600" onClick={() => openItem(item)}>{body}</Link>
-            : <div className="rounded-xl border border-slate-200 bg-white p-3">{body}</div>;
-        return <li key={item.key} id={`timeline-${item.key}`} tabIndex={-1} className={`relative min-w-0 ${isHighlight ? 'ring-2 ring-ochre-500' : ''}`}>{content}</li>;
+            ? <Link href={item.href} className="block min-h-control rounded-card border border-line bg-surface p-4 text-left focus-visible:outline-2 focus-visible:outline-focus" onClick={() => openItem(item)}>{body}</Link>
+            : <div className="rounded-card border border-line bg-surface p-4">{body}</div>;
+        return <li key={item.key} id={`timeline-${item.key}`} tabIndex={-1} className={`relative min-w-0 ${isHighlight ? 'ring-2 ring-move' : ''}`}>{content}</li>;
     });
 
     if (issue === 'loadError' || !work) {
-        return <div className="space-y-3">
-            {issue === 'loadError' && <p role="alert" className="text-sm text-red-800">{l('loadError')} <Button type="button" variant="secondary" onClick={() => void load()}>{l('retry')}</Button></p>}
+        return <div className="space-y-4">
+            {issue === 'loadError' && <p role="alert" className="text-sm text-danger-ink">{l('loadError')} <Button type="button" variant="secondary" onClick={() => void load()}>{l('retry')}</Button></p>}
             {loaded && <TimelineCalendar items={filtered} locale={locale} onOpen={openItem} />}
         </div>;
     }
@@ -271,12 +271,12 @@ export function PersonalTimeline({ locale }: { locale: string }) {
     return <fieldset disabled={pending} className="min-w-0 space-y-4">
         <div className="flex flex-wrap items-center gap-2">
             <Button type="button" variant="secondary" onClick={() => { setActiveEvent('new'); setCreateDirty(false); }} aria-expanded={activeEvent === 'new'}><Plus className="h-4 w-4" aria-hidden="true" />{l('addEvent')}</Button>
-            <Link href="/profilo/azioni?new=1" className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md bg-slate-100 px-3 text-sm font-medium text-slate-800 hover:bg-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"><Plus className="h-4 w-4" aria-hidden="true" />{l('addActivity')}</Link>
-            <Link href="/profilo/obiettivi?new=1" className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md bg-slate-100 px-3 text-sm font-medium text-slate-800 hover:bg-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"><Plus className="h-4 w-4" aria-hidden="true" />{l('addGoal')}</Link>
-            <details className="ml-auto rounded-lg border border-slate-200 bg-white px-3">
-                <summary className="min-h-11 cursor-pointer text-sm font-medium text-indigo-700" aria-label={l('filtersTitle')}>{l('filtersTitle')}</summary>
-                <div className="flex flex-wrap gap-3 py-2">
-                    {KINDS.map(kind => <label key={kind} className="flex min-h-11 items-center gap-2 text-sm">
+            <Link href="/profilo/azioni?new=1" className="inline-flex min-h-control items-center gap-2 rounded-control bg-surface-raised px-4 text-sm text-ink hover:bg-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"><Plus className="h-4 w-4" aria-hidden="true" />{l('addActivity')}</Link>
+            <Link href="/profilo/obiettivi?new=1" className="inline-flex min-h-control items-center gap-2 rounded-control bg-surface-raised px-4 text-sm text-ink hover:bg-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"><Plus className="h-4 w-4" aria-hidden="true" />{l('addGoal')}</Link>
+            <details className="ml-auto rounded-lg border border-line bg-surface px-4">
+                <summary className="min-h-control cursor-pointer text-sm text-link" aria-label={l('filtersTitle')}>{l('filtersTitle')}</summary>
+                <div className="flex flex-wrap gap-4 py-2">
+                    {KINDS.map(kind => <label key={kind} className="flex min-h-control items-center gap-2 text-sm">
                         <input type="checkbox" checked={(filters ?? new Set(KINDS)).has(kind)} onChange={e => {
                             const next = new Set(filters ?? new Set(KINDS));
                             if (e.target.checked) next.add(kind); else next.delete(kind);
@@ -286,14 +286,14 @@ export function PersonalTimeline({ locale }: { locale: string }) {
                 </div>
             </details>
         </div>
-        <ul aria-label={l('timelineLegend')} className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+        <ul aria-label={l('timelineLegend')} className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
             {TIMELINE_GLYPHS.map((glyph, index) => <li key={glyph} className="flex items-center gap-1"><GlyphIcon glyph={glyph} />{l(GLYPH_LABELS[index])}</li>)}
         </ul>
-        {issue && <p role="alert" className="text-sm text-red-800">{l(issue)}{(issue === 'conflict' || issue === 'saveError') && <> <Button type="button" variant="secondary" onClick={() => { if (issue === 'conflict' && window.confirm(l('reloadConfirm'))) void load(); else if (issue === 'saveError') void save(); }}>{l('retry')}</Button></>}</p>}
+        {issue && <p role="alert" className="text-sm text-danger-ink">{l(issue)}{(issue === 'conflict' || issue === 'saveError') && <> <Button type="button" variant="secondary" onClick={() => { if (issue === 'conflict' && window.confirm(l('reloadConfirm'))) void load(); else if (issue === 'saveError') void save(); }}>{l('retry')}</Button></>}</p>}
 
-        {activeEvent === 'new' && <details open className="rounded-xl border border-indigo-200 bg-indigo-50 p-3">
-            <summary className="min-h-11 cursor-pointer font-medium text-indigo-700">{l('addEvent')}</summary>
-            <div className="mt-3 space-y-3">
+        {activeEvent === 'new' && <details open className="rounded-card border border-brand-line bg-brand-soft p-4">
+            <summary className="min-h-control cursor-pointer text-link">{l('addEvent')}</summary>
+            <div className="mt-4 space-y-4">
                 <label className="block text-sm">{l('eventTitle')}<input required maxLength={160} className={field} value={createTitle} onChange={e => { setCreateTitle(e.target.value); setCreateDirty(true); }} /></label>
                 <TimelineDateFields value={createDates} onChange={value => { setCreateDates(value); setCreateDirty(true); }} locale={locale} workspace={false} />
                 <label className="block text-sm">{l('symbol')}<select className={field} value={createSymbol} onChange={e => { setCreateSymbol(e.target.value as TimelineEvent['symbol']); setCreateDirty(true); }}>{(['milestone', 'study', 'work', 'change'] as const).map(key => <option key={key} value={key}>{l(key)}</option>)}</select></label>
@@ -304,37 +304,37 @@ export function PersonalTimeline({ locale }: { locale: string }) {
 
         <TimelineCalendar items={filtered} locale={locale} onOpen={openItem} />
 
-        <ol className="space-y-3">
-            {!items.length && <li className="text-slate-600">{l('timelineEmpty')}</li>}
+        <ol className="space-y-4">
+            {!items.length && <li className="text-ink-muted">{l('timelineEmpty')}</li>}
             {renderSection(past, highlighted)}
-            {(past.length > 0 || future.length > 0) && <li aria-hidden="true" className="relative py-1 text-sm font-semibold text-ochre-700"><span className="absolute -left-[25px] top-3 h-4 w-4 rounded-full bg-ochre-500" />{l('today')} · {displayDate(localToday(), locale)}</li>}
+            {(past.length > 0 || future.length > 0) && <li aria-hidden="true" className="relative py-1 text-sm font-semibold text-move"><span className="absolute -left-[25px] top-4 h-4 w-4 rounded-full bg-move" />{l('today')} · {displayDate(localToday(), locale)}</li>}
             {renderSection(future, highlighted)}
         </ol>
-        {undated.length > 0 && <section aria-label={l('sectionUndated')} className="space-y-3 border-t border-slate-200 pt-3">
-            <h3 className="text-sm font-semibold text-slate-600">{l('sectionUndated')}</h3>
-            <ol className="space-y-3">{renderSection(undated, highlighted)}</ol>
+        {undated.length > 0 && <section aria-label={l('sectionUndated')} className="space-y-4 border-t border-line pt-4">
+            <h3 className="text-sm font-semibold text-ink-muted">{l('sectionUndated')}</h3>
+            <ol className="space-y-4">{renderSection(undated, highlighted)}</ol>
         </section>}
 
         <InstitutionTimelineDates locale={locale} work={work} edit={setWork} />
 
-        {portfolioIssue && <div role="alert" className="text-sm text-red-800">{l('portfolioLoadError')} <Button type="button" variant="secondary" onClick={() => void loadPortfolio()}>{l('retry')}</Button></div>}
-        {timeline.events.length > 0 && <div className="space-y-2 border-t border-slate-200 pt-3">
-            <p className="text-sm text-slate-600">{l('selectedEvents')}: {selectedIds.length} · {l('selectEventsHelp')}</p>
+        {portfolioIssue && <div role="alert" className="text-sm text-danger-ink">{l('portfolioLoadError')} <Button type="button" variant="secondary" onClick={() => void loadPortfolio()}>{l('retry')}</Button></div>}
+        {timeline.events.length > 0 && <div className="space-y-2 border-t border-line pt-4">
+            <p className="text-sm text-ink-muted">{l('selectedEvents')}: {selectedIds.length} · {l('selectEventsHelp')}</p>
             <Button type="button" variant="secondary" disabled={!selectedIds.length} onClick={() => { setCopyOpen(!copyOpen); setCopyTitle(timeline.title); setPreview(null); setSavedItem(null); }}>{l('savePortfolio')}</Button>
         </div>}
-        {copyOpen && <section aria-label={l('savePortfolio')} className="space-y-3 rounded-xl border border-indigo-200 bg-indigo-50 p-3">
+        {copyOpen && <section aria-label={l('savePortfolio')} className="space-y-4 rounded-card border border-brand-line bg-brand-soft p-4">
             <p className="text-sm">{l('snapshotHelp')}</p>
             <label className="block text-sm">{l('snapshotTitle')}<input maxLength={160} className={field} value={copyTitle} onChange={e => { setCopyTitle(e.target.value); setPreview(null); }} /></label>
             <label className="block text-sm">{l('reflection')}<textarea aria-label={l('reflection')} maxLength={1000} rows={2} className={field} value={reflection} onChange={e => { setReflection(e.target.value); setPreview(null); }} /></label>
             <Button type="button" variant="secondary" disabled={!selectedIds.length || !copyTitle.trim()} onClick={() => void prepareCopy()}>{l('preview')}</Button>
-            {preview && <><pre className="whitespace-pre-wrap break-words rounded-md bg-white p-3 font-sans text-sm">{preview.data.title}{'\n\n'}{preview.data.description}</pre><Button type="button" onClick={() => void saveCopy()}>{l('savePortfolio')}</Button></>}
-            {['snapshotTooLong', 'previewError', 'timelineSaveError'].includes(issue) && <p role="alert" className="text-sm text-red-800">{l(issue)}</p>}
+            {preview && <><pre className="whitespace-pre-wrap break-words rounded-control bg-surface p-4 font-sans text-sm">{preview.data.title}{'\n\n'}{preview.data.description}</pre><Button type="button" onClick={() => void saveCopy()}>{l('savePortfolio')}</Button></>}
+            {['snapshotTooLong', 'previewError', 'timelineSaveError'].includes(issue) && <p role="alert" className="text-sm text-danger-ink">{l(issue)}</p>}
             {pending && <p role="status">{l('saving')}</p>}
-            {savedItem && <p role="status">{l('snapshotSaved')} <a className="text-indigo-700 underline" href={`/profilo/portfolio#portfolio-${savedItem}`} target="_blank" rel="noopener noreferrer">{l('openPortfolio')}</a></p>}
+            {savedItem && <p role="status">{l('snapshotSaved')} <a className="text-link underline" href={`/profilo/portfolio#portfolio-${savedItem}`} target="_blank" rel="noopener noreferrer">{l('openPortfolio')}</a></p>}
         </section>}
 
-        <div className="border-t border-slate-200 pt-3">
-            <Tooltip content={l('personalSaveHelp')} side="top"><Button aria-label={l('personalSave')} type="button" className="min-h-11 px-4" disabled={busy || !dirty} onClick={() => void save()}>{l('personalSave')}</Button></Tooltip>
+        <div className="border-t border-line pt-4">
+            <Tooltip content={l('personalSaveHelp')} side="top"><Button aria-label={l('personalSave')} type="button" className="min-h-control px-4" disabled={busy || !dirty} onClick={() => void save()}>{l('personalSave')}</Button></Tooltip>
         </div>
     </fieldset>;
 }
@@ -349,11 +349,11 @@ function MilestoneEditor({ event, locale, open, onOpen, onPatch, onRemove, onSav
     selected: boolean; onSelect: (checked: boolean) => void; highlight: boolean; busy: boolean; pending: boolean;
 }) {
     const l = (key: string) => visualLabel(locale, key);
-    return <li id={`timeline-milestone-${event.id}`} tabIndex={-1} className={`relative min-w-0 rounded-xl bg-white p-3 ${highlight ? 'ring-2 ring-ochre-500' : 'border border-slate-200'}`}>
+    return <li id={`timeline-milestone-${event.id}`} tabIndex={-1} className={`relative min-w-0 rounded-card bg-surface p-4 ${highlight ? 'ring-2 ring-move' : 'border border-line'}`}>
         <details open={open} onToggle={e => { if (e.currentTarget.open && !open) onOpen(); }}>
-            <summary className="min-h-11 cursor-pointer break-words py-2 font-medium text-indigo-700">{event.title}{event.period ? ` · ${event.period}` : ''}</summary>
-            <div className="mt-3 space-y-3">
-                <label className="flex min-h-[44px] items-center gap-2 text-sm"><input type="checkbox" checked={selected} onChange={e => onSelect(e.target.checked)} aria-label={`${l('selectEvent')}: ${event.title}`} /></label>
+            <summary className="min-h-control cursor-pointer break-words py-2 text-link">{event.title}{event.period ? ` · ${event.period}` : ''}</summary>
+            <div className="mt-4 space-y-4">
+                <label className="flex min-h-control items-center gap-2 text-sm"><input type="checkbox" checked={selected} onChange={e => onSelect(e.target.checked)} aria-label={`${l('selectEvent')}: ${event.title}`} /></label>
                 <label className="block text-sm">{l('eventTitle')}<input data-workspace-field required maxLength={160} className={`${field} font-semibold`} value={event.title} onChange={e => onPatch({ title: e.target.value })} /></label>
                 <TimelineDateFields value={event} locale={locale} legacyPeriod={event.period} onChange={value => onPatch({ ...value, period: datePeriod(value) || event.period })} />
                 <label className="block text-sm">{l('symbol')}<select className={field} value={event.symbol} onChange={e => onPatch({ symbol: e.target.value as TimelineEvent['symbol'] })}>{(['milestone', 'study', 'work', 'change'] as const).map(key => <option key={key} value={key}>{l(key)}</option>)}</select></label>
@@ -368,11 +368,11 @@ function MilestoneEditor({ event, locale, open, onOpen, onPatch, onRemove, onSav
                 <label className="block text-sm">{l('diary')}<textarea aria-label={l('diary')} rows={2} maxLength={1000} className={field} value={event.reflection} onChange={e => onPatch({ reflection: e.target.value })} /></label>
                 {event.tense === 'past' && <ExperienceReview event={event} locale={locale} onPatch={review => onPatch({ review })} />}
                 <div className="flex flex-wrap gap-2">
-                    <Tooltip content={l('personalSave')}><Button type="button" variant="secondary" className="min-h-11 px-4" disabled={busy} onClick={onSave}>{l('personalSave')}</Button></Tooltip>
-                    <Tooltip content={`${l('remove')}: ${event.title}`}><Button type="button" variant="ghost" size="md" className="w-11 px-0" aria-label={`${l('remove')}: ${event.title}`} onClick={onRemove}><Trash2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                    <Tooltip content={l('personalSave')}><Button type="button" variant="secondary" className="min-h-control px-4" disabled={busy} onClick={onSave}>{l('personalSave')}</Button></Tooltip>
+                    <Tooltip content={`${l('remove')}: ${event.title}`}><Button type="button" variant="ghost" size="md" className="w-control px-0" aria-label={`${l('remove')}: ${event.title}`} onClick={onRemove}><Trash2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                 </div>
                 <section aria-label={l('linkPortfolio')} className="min-w-0 space-y-2">
-                    {event.portfolio.map(p => <div key={p.id} className="flex items-center justify-between gap-2 rounded-md bg-slate-50 p-2 text-sm">{p.title ? <a className="min-w-0 break-words text-indigo-700 underline" href={`/profilo/portfolio#portfolio-${p.id}`} target="_blank" rel="noopener noreferrer">{p.title}</a> : <span>{l('unavailable')}</span>}<Tooltip content={`${l('unlink')}: ${p.title || l('unavailable')}`}><Button type="button" variant="ghost" className={iconButton} aria-label={`${l('unlink')}: ${p.title || l('unavailable')}`} disabled={pending} onClick={() => onPatch({ portfolio: event.portfolio.filter(item => item.id !== p.id) })}><Unlink className="h-4 w-4" aria-hidden="true" /></Button></Tooltip></div>)}
+                    {event.portfolio.map(p => <div key={p.id} className="flex items-center justify-between gap-2 rounded-control bg-surface-sunken p-2 text-sm">{p.title ? <a className="min-w-0 break-words text-link underline" href={`/profilo/portfolio#portfolio-${p.id}`} target="_blank" rel="noopener noreferrer">{p.title}</a> : <span>{l('unavailable')}</span>}<Tooltip content={`${l('unlink')}: ${p.title || l('unavailable')}`}><Button type="button" variant="ghost" className={iconButton} aria-label={`${l('unlink')}: ${p.title || l('unavailable')}`} disabled={pending} onClick={() => onPatch({ portfolio: event.portfolio.filter(item => item.id !== p.id) })}><Unlink className="h-4 w-4" aria-hidden="true" /></Button></Tooltip></div>)}
                     <label className="block text-sm">{l('linkPortfolio')}<select className={field} value="" disabled={portfolioIssue || event.portfolio.length >= 20} onChange={e => { const p = portfolio.find(item => item.id === Number(e.target.value)); if (p) onPatch({ portfolio: [...event.portfolio, { id: p.id, title: p.title }] }); }}><option value="">—</option>{portfolio.filter(p => !event.portfolio.some(link => link.id === p.id)).map(p => <option key={p.id} value={p.id}>{p.title}</option>)}</select></label>
                     {portfolioIssue && <Button type="button" variant="secondary" onClick={() => void reloadPortfolio()}>{l('retry')}</Button>}
                 </section>

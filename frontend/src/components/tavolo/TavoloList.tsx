@@ -13,6 +13,8 @@ import { useI18n } from '@/lib/i18n-context';
 import { TavoloCompose } from '@/components/tavolo/TavoloCompose';
 import { TavoloCounselor } from '@/components/tavolo/TavoloCounselor';
 import { InlineRename } from '@/components/ui/InlineRename';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Button } from '@/components/ui/Button';
 import {
     createTavolo,
     deleteTavolo,
@@ -47,6 +49,7 @@ export function TavoloList({ showCompose = true, onOpen }: TavoloListProps = {})
     const [message, setMessage] = useState<string | null>(null);
     // F26: rinomina in linea al posto del prompt nativo del browser.
     const [renamingId, setRenamingId] = useState<string | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [counselorId, setCounselorId] = useState<number | undefined>();
     const [aiAvailable, setAiAvailable] = useState(false);
     const counselorChanged = useCallback((id: number | undefined, available: boolean) => {
@@ -112,7 +115,6 @@ export function TavoloList({ showCompose = true, onOpen }: TavoloListProps = {})
         if (busy) return;
         const title = action === 'rename' ? newName ?? '' : null;
         if (action === 'rename' && !title?.trim()) return;
-        if (action === 'delete' && !window.confirm(`${row.title || label('untitled')}\n\n${label('deleteConfirm')}`)) return;
         setBusy(true); setMessage(null);
         try {
             if (action === 'rename') {
@@ -129,56 +131,56 @@ export function TavoloList({ showCompose = true, onOpen }: TavoloListProps = {})
     return (
         <div className="space-y-4">
             {/* F26 (lotto 4): i tavoli salvati vengono prima di configurazione e creazione. */}
-            <h3 className="text-base font-semibold text-slate-900">{label('savedTitle')}</h3>
-            {message && <p role="alert" className="text-sm text-amber-800">{message}</p>}
+            <h3 className="text-base font-semibold text-ink">{label('savedTitle')}</h3>
+            {message && <p role="alert" className="text-sm text-warning-ink">{message}</p>}
 
-            {disabled && <p className="text-sm text-slate-600">{label('notFound')}</p>}
+            {disabled && <p className="text-sm text-ink-muted">{label('notFound')}</p>}
 
             {rows === null && !disabled && (
-                <p className="flex items-center gap-2 text-sm text-slate-600" role="status">
+                <p className="flex items-center gap-2 text-sm text-ink-muted" role="status">
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />{label('loading')}
                 </p>
             )}
-            {rows !== null && rows.length === 0 && !disabled && <p className="text-sm text-slate-600">{label('none')}</p>}
+            {rows !== null && rows.length === 0 && !disabled && <p className="text-sm text-ink-muted">{label('none')}</p>}
 
             <ul className="space-y-2">
                 {rows?.map((row) => (
                     <li key={row.id} className="flex flex-wrap items-center gap-1">
                         <Link href={tableHref(row.id)} onClick={(event) => { if (onOpen) { event.preventDefault(); onOpen(row.id, counselorId); } }}
-                            className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 hover:bg-slate-50">
-                            <Table2 className="h-4 w-4 shrink-0 text-indigo-600" aria-hidden="true" />
-                            <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">
+                            className="flex min-h-14 min-w-0 flex-1 items-center gap-4 rounded-card border border-line bg-surface px-4 py-2 hover:bg-surface-sunken">
+                            <Table2 className="h-4 w-4 shrink-0 text-link" aria-hidden="true" />
+                            <span className="min-w-0 flex-1 truncate text-sm text-ink">
                                 {row.title || label('untitled')}
                             </span>
                             {row.origin_instrument && (
-                                <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+                                <span className="shrink-0 rounded bg-surface-raised px-2 py-1 text-xs text-ink-muted">
                                     {row.origin_instrument}
                                 </span>
                             )}
-                            <span className="shrink-0 text-xs text-indigo-700">{label('openOne')}</span>
+                            <span className="shrink-0 text-xs text-link">{label('openOne')}</span>
                         </Link>
                         {([['rename', Pencil, 'renameTable'], ['delete', Trash2, 'deleteTable']] as const).map(([action, Icon, key]) => (
-                            <button key={action} type="button" disabled={busy} onClick={() => { if (action === 'rename') setRenamingId(row.id); else void manage(row, action); }}
+                            <button key={action} type="button" disabled={busy} onClick={() => { if (action === 'rename') setRenamingId(row.id); else setConfirmDeleteId(row.id); }}
                                 aria-label={`${label(key)}: ${row.title || label('untitled')}`} title={label(key)}
-                                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40">
+                                className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-lg border border-line text-ink-muted hover:bg-surface-sunken disabled:opacity-40">
                                 <Icon className="h-4 w-4" aria-hidden="true" />
                             </button>
                         ))}
+                        {confirmDeleteId === row.id && <div className="w-full flex justify-end"><ConfirmInline question={label('deleteConfirm')} busy={busy} onConfirm={() => { setConfirmDeleteId(null); void manage(row, 'delete'); }} onCancel={() => setConfirmDeleteId(null)} /></div>}
                         {renamingId === row.id && <div className="w-full flex justify-end"><InlineRename value={row.title || ''} maxLength={80} ariaLabel={label('renameTable')} onRename={name => { void manage(row, 'rename', name); setRenamingId(null); }} onCancel={() => setRenamingId(null)} /></div>}
                     </li>
                 ))}
             </ul>
 
-            <div className="space-y-3 border-t border-slate-200 pt-4">
-                <h3 className="text-base font-semibold text-slate-900">{label('createTitle')}</h3>
-                <button type="button" disabled={busy || disabled} onClick={() => void openNew()}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40">
+            <div className="space-y-4 border-t border-line pt-4">
+                <h3 className="text-base font-semibold text-ink">{label('createTitle')}</h3>
+                <Button type="button" disabled={busy || disabled} onClick={() => void openNew()}>
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
                     {label('newOne')}
-                </button>
+                </Button>
                 {showCompose && <TavoloCompose busy={busy || disabled} aiAvailable={aiAvailable} onCompose={composeNew} onOpenExample={openExample} />}
                 <TavoloCounselor busy={busy} onChange={counselorChanged} />
-                <p className="text-sm text-slate-600">{label('modelHint')}</p>
+                <p className="text-sm text-ink-muted">{label('modelHint')}</p>
             </div>
         </div>
     );

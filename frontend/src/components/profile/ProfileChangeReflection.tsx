@@ -10,6 +10,8 @@ import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatConti
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { toast } from '@/components/ui/Toast';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 interface LearnerProfileData {
     context?: string;
@@ -231,44 +233,42 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
         }
     };
 
-    const selectClass = 'mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400';
+    const selectClass = 'mt-1 w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-focus';
 
     const reflectionBlock = (
-        <div className="space-y-3 border-t border-slate-100 pt-3">
+        <div className="space-y-4 border-t border-line pt-4">
             <label className="block">
-                <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profileChanges.reflectionLabel')}</span>
+                <span className="text-xs font-semibold text-ink-muted">{t('profileChanges.reflectionLabel')}</span>
                 <textarea
                     value={note}
                     onChange={(event) => setNote(event.target.value)}
                     rows={4}
-                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
                     placeholder={t('profileChanges.reflectionPlaceholder')}
                 />
             </label>
             <div className="flex flex-wrap gap-2">
-                <button
+                <Button
                     type="button"
                     onClick={() => void saveReflection()}
-                    disabled={saving || !note.trim()}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                >
+                    disabled={saving || !note.trim()}>
                     <Save className="h-4 w-4" />
                     {t('profileChanges.saveReflection')}
-                </button>
+                </Button>
                 <button
                     type="button"
                     onClick={startAssistant}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
+                    className="inline-flex min-h-control items-center gap-2 rounded-control border border-brand-line bg-surface px-4 py-2 text-sm font-semibold text-link hover:bg-brand-soft"
                 >
                     <Bot className="h-4 w-4" />
                     {t('profileChanges.assistantButton')}
                 </button>
             </div>
             {reflections.length > 0 && (
-                <div className="space-y-2 border-t border-slate-100 pt-3">
+                <div className="space-y-2 border-t border-line pt-4">
                     {reflections.slice(0, 3).map((reflection) => (
-                        <div key={reflection.id} className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">
-                            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                        <div key={reflection.id} className="rounded-control bg-surface-sunken p-4 text-sm text-ink-muted">
+                            <div className="text-[11px] font-semibold text-ink-muted">
                                 {new Date(reflection.created_at).toLocaleDateString(lang)}
                             </div>
                             {reflection.note}
@@ -280,18 +280,18 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
     );
 
     return (
-        <section className="glass-panel p-5 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+        <Card as="section" className="p-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-lg font-bold text-slate-800">
+                    <h2 className="text-lg font-semibold text-ink">
                         {t('profileChanges.title')}
                     </h2>
-                    <p className="mt-1 text-sm text-slate-500">{t('profileChanges.subtitle')}</p>
+                    <p className="mt-1 text-sm text-ink-muted">{t('profileChanges.subtitle')}</p>
                 </div>
                 <button
                     type="button"
                     onClick={() => void load()}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                    className="inline-flex min-h-control items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-muted hover:bg-surface-sunken"
                 >
                     <RefreshCw className="h-3.5 w-3.5" />
                     {t('profileChanges.refresh')}
@@ -299,15 +299,15 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             </div>
 
             {loading ? (
-                <div className="text-sm text-slate-500">{t('profileChanges.loading')}</div>
+                <div className="text-sm text-ink-muted">{t('profileChanges.loading')}</div>
             ) : !current ? (
-                <div className="rounded-lg border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
+                <div className="rounded-lg border border-dashed border-line bg-surface p-4 text-sm text-ink-muted">
                     {t('profileChanges.profileEmpty')}
                 </div>
             ) : (
                 <div className="space-y-4">
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profileChanges.selectChange')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t('profileChanges.selectChange')}</span>
                         <select
                             value={revIndex}
                             onChange={(event) => setRevIndex(Number(event.target.value))}
@@ -324,23 +324,23 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                     </label>
 
                     {!previous ? (
-                        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">
+                        <div className="rounded-lg border border-line bg-surface p-4 text-sm text-ink-muted">
                             {t('profileChanges.firstRevision')}
                         </div>
                     ) : changes.length ? (
                         <div className="space-y-2">
                             {changes.map((change) => (
-                                <div key={change.key} className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
-                                    <div className="font-semibold text-slate-800">{change.label}</div>
-                                    <div className="mt-1 space-y-1 text-xs text-slate-500">
-                                        <div><span className="font-semibold text-slate-500">{t('profileChanges.before')}:</span> {change.before || '-'}</div>
-                                        <div><span className="font-semibold text-indigo-500">{t('profileChanges.now')}:</span> {change.after || '-'}</div>
+                                <div key={change.key} className="rounded-lg border border-line bg-surface p-4 text-sm">
+                                    <div className="font-semibold text-ink">{change.label}</div>
+                                    <div className="mt-1 space-y-1 text-xs text-ink-muted">
+                                        <div><span className="font-semibold text-ink-muted">{t('profileChanges.before')}:</span> {change.before || '-'}</div>
+                                        <div><span className="font-semibold text-link">{t('profileChanges.now')}:</span> {change.after || '-'}</div>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">
+                        <div className="rounded-lg border border-line bg-surface p-4 text-sm text-ink-muted">
                             {t('profileChanges.noTextChanges')}
                         </div>
                     )}
@@ -350,16 +350,16 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             )}
 
             {assistantOpen && (
-                <div className="rounded-xl border border-indigo-100 bg-white p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
+                <div className="rounded-card border border-brand-line bg-surface p-4 space-y-4">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-ink">
                         {t('profileChanges.assistantTitle')}
                     </div>
-                    <div className="max-h-80 overflow-y-auto space-y-3 rounded-lg bg-slate-50 p-3">
+                    <div className="max-h-80 overflow-y-auto space-y-4 rounded-lg bg-surface-sunken p-4">
                         {messages.map((message, index) => (
                             <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${message.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-800'}`}>
+                                <div className={`max-w-[85%] rounded-lg px-4 py-2 text-sm ${message.role === 'user' ? 'bg-brand text-ink-on-brand' : 'bg-surface border border-line text-ink'}`}>
                                     {!message.content && message.role === 'assistant' ? (
-                                        <Loader2 className="h-4 w-4 animate-spin text-slate-500" />
+                                        <Loader2 className="h-4 w-4 animate-spin text-ink-muted" />
                                     ) : (
                                         <div className="prose prose-sm max-w-none prose-p:my-1">
                                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
@@ -376,20 +376,18 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                             value={chatInput}
                             onChange={(event) => setChatInput(event.target.value)}
                             rows={2}
-                            className="flex-1 resize-none rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            className="flex-1 resize-none rounded-control border border-line-strong px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
                             placeholder={t('profileChanges.chatPlaceholder')}
                         />
-                        <button
+                        <Button
                             type="button"
                             onClick={() => void sendToAssistant()}
-                            disabled={chatLoading || !chatInput.trim()}
-                            className="inline-flex items-center rounded-md bg-indigo-600 px-4 text-white hover:bg-indigo-700 disabled:opacity-50"
-                        >
+                            disabled={chatLoading || !chatInput.trim()}>
                             {chatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
-        </section>
+        </Card>
     );
 }

@@ -47,7 +47,7 @@ const TINT: Record<TavoloColor, string> = {
     blue: 'border-sky-400 bg-sky-50',
     violet: 'border-violet-400 bg-violet-50',
     pink: 'border-rose-400 bg-rose-50',
-    grey: 'border-slate-400 bg-slate-100',
+    grey: 'border-line-strong bg-surface-raised',
 };
 
 const SIDES: [Position, string][] = [
@@ -58,11 +58,11 @@ const SIDES: [Position, string][] = [
 // gonfia molto piu' di un rettangolo, percio' partono piu' strette. La card
 // d'immagine non ha imbottitura: il file tocca i bordi e il nome sta sotto.
 const SHAPE: Record<TavoloForm, string> = {
-    concept: 'rounded-xl',
+    concept: 'rounded-card',
     action: 'rounded-none',
     decision: 'rounded-none [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)] px-8 py-6',
     outcome: 'rounded-full px-6',
-    image: 'rounded-xl overflow-hidden p-0 flex-col',
+    image: 'rounded-card overflow-hidden p-0 flex-col',
 };
 
 const WIDTH: Record<TavoloForm, string> = {
@@ -88,26 +88,26 @@ function Piece({ data, selected }: NodeProps & { data: PieceData }) {
         <div className={`group relative ${isImage ? 'w-48' : ''}`}>
             <div
                 className={[
-                    'flex min-h-14 items-center justify-center border-2 px-4 py-3 text-center text-sm leading-snug',
+                    'flex min-h-14 items-center justify-center border-2 px-4 py-4 text-center text-sm leading-snug',
                     SHAPE[data.form], WIDTH[data.form],
                     pending
                         // L'accento aspetta: finche' e' una proposta il pezzo dice
                         // di essere una proposta, che e' l'informazione piu' urgente.
-                        ? 'border-dashed border-ochre-400 bg-ochre-50 text-slate-600'
+                        ? 'border-dashed border-ochre-400 bg-ochre-50 text-ink-muted'
                         // Il pezzo che conta si riempie di petrolio invece di
                         // prendere l'ocra: l'ocra qui vuol dire gia' "proposta", e
                         // un accento che sembra una proposta non accentua niente.
                         : data.accent
-                            ? 'border-indigo-700 bg-indigo-600 font-medium text-white'
+                            ? 'border-brand bg-brand text-ink-on-brand'
                             // Lo stato batte il gruppo: una proposta e il punto si
                             // vedono per quello che sono, il colore aspetta.
-                            : `text-slate-800 ${data.color ? TINT[data.color] : 'border-indigo-400 bg-indigo-50'}`,
-                    selected ? 'ring-2 ring-indigo-500 ring-offset-1' : '',
+                            : `text-ink ${data.color ? TINT[data.color] : 'border-brand bg-brand-soft'}`,
+                    selected ? 'ring-2 ring-brand ring-offset-1' : '',
                 ].join(' ')}
             >
                 {SIDES.map(([position, key]) => (
                     <Handle key={key} id={key} type="source" position={position}
-                        className="!h-2 !w-2 !border-0 !bg-slate-400" />
+                        className="!h-2 !w-2 !border-0 !bg-line-strong" />
                 ))}
                 {isImage && data.image && (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -121,7 +121,7 @@ function Piece({ data, selected }: NodeProps & { data: PieceData }) {
                         defaultValue={data.label}
                         maxLength={80}
                         aria-label={data.label}
-                        className="nodrag nowheel w-full rounded border border-indigo-300 bg-white px-1 py-0.5 text-sm text-slate-900"
+                        className="nodrag nowheel w-full rounded border border-brand-line bg-surface px-1 py-1 text-sm text-ink"
                         onKeyDown={(event) => {
                             if (event.key === 'Enter') {
                                 event.preventDefault();
@@ -136,16 +136,16 @@ function Piece({ data, selected }: NodeProps & { data: PieceData }) {
                         onDoubleClick={(event) => event.stopPropagation()}
                     />
                 ) : (
-                    <span className={`flex min-w-0 items-center gap-1.5 ${isImage ? 'px-2 pb-2' : ''} ${data.form === 'decision' ? 'flex-col' : ''}`}>
+                    <span className={`flex min-w-0 items-center gap-2 ${isImage ? 'px-2 pb-2' : ''} ${data.form === 'decision' ? 'flex-col' : ''}`}>
                         {data.image && !isImage && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={tavoloImageUrl(data.image)} alt="" aria-hidden="true"
-                                className={`h-8 w-8 shrink-0 rounded object-cover ${data.accent && data.state !== 'pending' ? 'bg-white p-0.5' : ''}`} />
+                                className={`h-8 w-8 shrink-0 rounded object-cover ${data.accent && data.state !== 'pending' ? 'bg-surface p-1' : ''}`} />
                         )}
                         {!data.image && data.icon && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={iconUrl(data.icon)} alt="" width={20} height={20} aria-hidden="true"
-                                className={`h-5 w-5 shrink-0 ${data.accent && data.state !== 'pending' ? 'rounded bg-white p-0.5' : ''}`} />
+                                className={`h-5 w-5 shrink-0 ${data.accent && data.state !== 'pending' ? 'rounded bg-surface p-1' : ''}`} />
                         )}
                         <span className="break-words">{data.label}</span>
                     </span>
@@ -154,7 +154,7 @@ function Piece({ data, selected }: NodeProps & { data: PieceData }) {
             {data.onDelete && (
                 <button type="button" onClick={() => data.onDelete?.()}
                     aria-label={data.deleteLabel} title={data.deleteLabel}
-                    className={`nodrag absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-500 shadow-sm hover:bg-rose-50 hover:text-rose-600 ${selected || data.editing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'}`}>
+                    className={`nodrag absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-muted shadow-card hover:bg-danger-soft hover:text-danger ${selected || data.editing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'}`}>
                     <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
             )}

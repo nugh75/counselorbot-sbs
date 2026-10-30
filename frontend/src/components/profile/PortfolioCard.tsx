@@ -10,6 +10,8 @@ import { PortfolioTimelineLinks } from './PortfolioTimelineLinks';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { goalApi, GoalError, type PersonalGoal } from '@/lib/goals';
 import { goalText } from '@/lib/i18n-goals';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 // In anteprima le <img> (non passano da fetch) devono puntare all'account di
 // prova: il backend accetta l'impersonazione anche via query param view_as.
@@ -270,35 +272,33 @@ export function PortfolioCard() {
         }
     };
 
-    const inputClass = 'mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400';
+    const inputClass = 'mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus';
 
     return (
-        <section className="glass-panel p-5 space-y-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
+        <Card as="section" className="p-6 space-y-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-lg font-bold text-slate-800">
+                    <h2 className="text-lg font-semibold text-ink">
                         {t('portfolio.title')}
                     </h2>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-ink-muted">
                         {t('portfolio.subtitle')}
                     </p>
                 </div>
-                <button
+                <Button
                     type="button"
-                    onClick={() => setForm({ ...EMPTY_FORM })}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-                >
+                    onClick={() => setForm({ ...EMPTY_FORM })}>
                     <Plus className="h-4 w-4" />
                     {t('portfolio.new')}
-                </button>
+                </Button>
             </div>
 
             {/* Ricerca + filtro categoria */}
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(180px,0.4fr)]">
+            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(180px,0.4fr)]">
                 <label className="block">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('portfolio.search')}</span>
-                    <div className="mt-1 flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2">
-                        <Search className="h-4 w-4 text-slate-500" />
+                    <span className="text-xs font-semibold text-ink-muted">{t('portfolio.search')}</span>
+                    <div className="mt-1 flex min-h-control items-center gap-2 rounded-control border border-line-strong bg-surface px-4 py-2 focus-within:ring-2 focus-within:ring-focus">
+                        <Search className="h-4 w-4 text-ink-muted" />
                         <input
                             value={q}
                             onChange={(event) => setQ(event.target.value)}
@@ -308,8 +308,8 @@ export function PortfolioCard() {
                     </div>
                 </label>
                 <label className="block">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('portfolio.category')}</span>
-                    <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className={`${inputClass} bg-white`}>
+                    <span className="text-xs font-semibold text-ink-muted">{t('portfolio.category')}</span>
+                    <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className={`${inputClass} bg-surface`}>
                         <option value="">{t('portfolio.all')}</option>
                         {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
                     </select>
@@ -318,64 +318,64 @@ export function PortfolioCard() {
 
             {/* Form crea/modifica */}
             {form && (
-                <div className="rounded-xl border border-indigo-100 bg-white p-4 space-y-3">
+                <div className="rounded-card border border-brand-line bg-surface p-4 space-y-4">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-slate-800">{form.id ? t('portfolio.editTitle') : t('portfolio.newTitle')}</h3>
-                        {confirmingClose ? <ConfirmInline question={t('portfolio.discardConfirm')} onConfirm={() => { setConfirmingClose(false); setForm(null); }} onCancel={() => setConfirmingClose(false)} /> : <button type="button" onClick={() => { const original = form.id ? items.find(item => item.id === form.id) : null; const dirty = Boolean(original ? original.title !== form.title || original.description !== form.description || original.category !== form.category || (original.item_date || '') !== form.item_date || original.link !== form.link : form.title.trim() || form.description.trim() || form.category.trim() || form.item_date || form.link); if (dirty) setConfirmingClose(true); else setForm(null); }} className="text-slate-500 hover:text-slate-600" aria-label={t('common.close')}>
+                        <h3 className="text-sm font-semibold text-ink">{form.id ? t('portfolio.editTitle') : t('portfolio.newTitle')}</h3>
+                        {confirmingClose ? <ConfirmInline question={t('portfolio.discardConfirm')} onConfirm={() => { setConfirmingClose(false); setForm(null); }} onCancel={() => setConfirmingClose(false)} /> : <button type="button" onClick={() => { const original = form.id ? items.find(item => item.id === form.id) : null; const dirty = Boolean(original ? original.title !== form.title || original.description !== form.description || original.category !== form.category || (original.item_date || '') !== form.item_date || original.link !== form.link : form.title.trim() || form.description.trim() || form.category.trim() || form.item_date || form.link); if (dirty) setConfirmingClose(true); else setForm(null); }} className="-my-2 inline-flex min-h-control min-w-control items-center justify-center text-ink-muted hover:text-ink" aria-label={t('common.close')}>
                             <X className="h-4 w-4" />
                         </button>}
                     </div>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('portfolio.field.title')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t('portfolio.field.title')}</span>
                         <input value={form.title} onChange={(event) => setField('title', event.target.value)} className={inputClass} />
                     </label>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('portfolio.field.description')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t('portfolio.field.description')}</span>
                         <textarea value={form.description} onChange={(event) => setField('description', event.target.value)} rows={3} className={`${inputClass} resize-y`} />
                     </label>
-                    <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-3">
                         <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('portfolio.field.category')}</span>
+                            <span className="text-xs font-semibold text-ink-muted">{t('portfolio.field.category')}</span>
                             <input value={form.category} onChange={(event) => setField('category', event.target.value)} className={inputClass} placeholder={t('portfolio.field.categoryPlaceholder')} />
                         </label>
                         <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('portfolio.field.date')}</span>
+                            <span className="text-xs font-semibold text-ink-muted">{t('portfolio.field.date')}</span>
                             <input type="date" value={form.item_date} onChange={(event) => setField('item_date', event.target.value)} className={inputClass} />
                         </label>
                         <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('portfolio.field.link')}</span>
+                            <span className="text-xs font-semibold text-ink-muted">{t('portfolio.field.link')}</span>
                             <input value={form.link} onChange={(event) => setField('link', event.target.value)} className={inputClass} placeholder="https://" />
                         </label>
                     </div>
 
                     {/* Immagini */}
                     <div className="space-y-2">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('portfolio.images')}</span>
+                        <span className="text-xs font-semibold text-ink-muted">{t('portfolio.images')}</span>
                         {!form.id ? (
-                            <p className="text-xs text-slate-500">{t('portfolio.saveFirst')}</p>
+                            <p className="text-xs text-ink-muted">{t('portfolio.saveFirst')}</p>
                         ) : (
-                            <div className="flex flex-wrap gap-3">
+                            <div className="flex flex-wrap gap-4">
                                 {form.images.map((img) => (
-                                    <div key={img.id} className="relative h-24 w-24 overflow-hidden rounded-lg border border-slate-200">
+                                    <div key={img.id} className="relative h-24 w-24 overflow-hidden rounded-lg border border-line">
                                         <button
                                             type="button"
                                             onClick={(event) => openImage(event.currentTarget, {
                                                 src: `/api/user/portfolio/${form.id}/images/${img.id}${imageQuerySuffix()}`,
                                                 alt: img.filename || t('portfolio.imageAlt'),
                                             })}
-                                            className="group h-full w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+                                            className="group h-full w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
                                             aria-label={t('portfolio.openImage')}
                                         >
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img src={`/api/user/portfolio/${form.id}/images/${img.id}${imageQuerySuffix()}`} alt={img.filename || t('portfolio.imageAlt')} className="h-full w-full object-cover" />
-                                            <span className="absolute inset-0 flex items-center justify-center bg-slate-950/0 text-white opacity-0 transition group-hover:bg-slate-950/35 group-hover:opacity-100 group-focus-visible:bg-slate-950/35 group-focus-visible:opacity-100">
+                                            <span className="absolute inset-0 flex items-center justify-center bg-slate-950/0 text-ink-on-brand opacity-0 transition group-hover:bg-slate-950/35 group-hover:opacity-100 group-focus-visible:bg-slate-950/35 group-focus-visible:opacity-100">
                                                 <Maximize2 className="h-5 w-5" aria-hidden="true" />
                                             </span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => void deleteImage(img.id)}
-                                            className="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-rose-500 hover:bg-white"
+                                            className="absolute right-1 top-1 rounded-full bg-surface/90 p-1 text-danger hover:bg-surface"
                                             aria-label={t('portfolio.removeImage')}
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />
@@ -386,7 +386,7 @@ export function PortfolioCard() {
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={uploading}
-                                    className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 text-slate-500 hover:bg-slate-50 disabled:opacity-50"
+                                    className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-line-strong text-ink-muted hover:bg-surface-sunken disabled:opacity-50"
                                 >
                                     {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
                                     <span className="text-2xs font-semibold">{t('portfolio.addImage')}</span>
@@ -402,34 +402,32 @@ export function PortfolioCard() {
                         )}
                     </div>
 
-                    <button
+                    <Button
                         type="button"
                         onClick={() => void saveItem()}
-                        disabled={saving || !form.title.trim()}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                    >
+                        disabled={saving || !form.title.trim()}>
                         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                         {t('portfolio.save')}
-                    </button>
+                    </Button>
                 </div>
             )}
 
             {/* Elenco lavori */}
             {loading ? (
-                <div className="text-sm text-slate-500">{t('portfolio.loading')}</div>
+                <div className="text-sm text-ink-muted">{t('portfolio.loading')}</div>
             ) : loadError ? (
-                <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                <div role="alert" className="rounded-card border border-danger-line bg-danger-soft p-4 text-sm text-danger-ink">
                     <p>{t('portfolio.loadError')}</p>
-                    <button type="button" onClick={() => void load()} className="mt-2 min-h-11 rounded-md border border-red-300 bg-white px-3 text-sm font-semibold text-red-700 hover:bg-red-50">{t('lp.retry')}</button>
+                    <button type="button" onClick={() => void load()} className="mt-2 min-h-control rounded-control border border-danger-line bg-surface px-4 text-sm font-semibold text-danger-ink hover:bg-danger-soft">{t('lp.retry')}</button>
                 </div>
             ) : items.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+                <div className="rounded-card border border-dashed border-line-strong bg-surface-sunken p-6 text-center text-sm text-ink-muted">
                     {q || categoryFilter ? t('portfolio.emptyFound') : t('portfolio.emptyYet')}
                 </div>
             ) : (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {items.map((item) => (
-                        <article key={item.id} id={`portfolio-${item.id}`} className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <article key={item.id} id={`portfolio-${item.id}`} className="flex flex-col overflow-hidden rounded-card border border-line bg-surface">
                             {item.images[0] ? (
                                 <button
                                     type="button"
@@ -437,28 +435,28 @@ export function PortfolioCard() {
                                         src: `/api/user/portfolio/${item.id}/images/${item.images[0].id}${imageQuerySuffix()}`,
                                         alt: item.title,
                                     })}
-                                    className="group relative h-32 w-full overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+                                    className="group relative h-32 w-full overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
                                     aria-label={t('portfolio.openImage')}
                                 >
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img src={`/api/user/portfolio/${item.id}/images/${item.images[0].id}${imageQuerySuffix()}`} alt={item.title} className="h-full w-full object-cover" />
-                                    <span className="absolute inset-0 flex items-center justify-center bg-slate-950/0 text-white opacity-0 transition group-hover:bg-slate-950/35 group-hover:opacity-100 group-focus-visible:bg-slate-950/35 group-focus-visible:opacity-100">
+                                    <span className="absolute inset-0 flex items-center justify-center bg-slate-950/0 text-ink-on-brand opacity-0 transition group-hover:bg-slate-950/35 group-hover:opacity-100 group-focus-visible:bg-slate-950/35 group-focus-visible:opacity-100">
                                         <Maximize2 className="h-6 w-6" aria-hidden="true" />
                                     </span>
                                 </button>
                             ) : (
-                                <div className="flex h-32 w-full items-center justify-center bg-slate-50 text-slate-400">
+                                <div className="flex h-32 w-full items-center justify-center bg-surface-sunken text-ink-muted">
                                     <FolderOpen className="h-8 w-8" />
                                 </div>
                             )}
-                            <div className="flex flex-1 flex-col gap-1 p-3">
+                            <div className="flex flex-1 flex-col gap-1 p-4">
                                 <div className="flex items-start justify-between gap-2">
-                                    <h3 className="text-sm font-bold text-slate-800">{item.title}</h3>
+                                    <h3 className="text-sm font-semibold text-ink">{item.title}</h3>
                                     <div className="flex shrink-0 gap-1">
-                                        <button type="button" onClick={() => setForm(toForm(item))} className="tap-icon rounded text-slate-500 hover:bg-slate-50 hover:text-indigo-600" aria-label={t('portfolio.edit')}>
+                                        <button type="button" onClick={() => setForm(toForm(item))} className="tap-icon rounded text-ink-muted hover:bg-surface-sunken hover:text-link" aria-label={t('portfolio.edit')}>
                                             <Pencil className="h-3.5 w-3.5" />
                                         </button>
-                                        <button type="button" onClick={() => setConfirmingDelete(item.id)} className="tap-icon rounded text-slate-500 hover:bg-rose-50 hover:text-rose-600" aria-label={t('portfolio.delete')}>
+                                        <button type="button" onClick={() => setConfirmingDelete(item.id)} className="tap-icon rounded text-ink-muted hover:bg-danger-soft hover:text-danger" aria-label={t('portfolio.delete')}>
                                             <Trash2 className="h-3.5 w-3.5" />
                                         </button>
                                     </div>
@@ -470,14 +468,14 @@ export function PortfolioCard() {
                                         onCancel={() => setConfirmingDelete(null)}
                                     />
                                 )}
-                                <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
-                                    {item.category && <span className="rounded-full bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-600">{item.category}</span>}
+                                <div className="flex flex-wrap items-center gap-2 text-[11px] text-ink-muted">
+                                    {item.category && <span className="rounded-full bg-brand-soft px-2 py-1 font-semibold text-link">{item.category}</span>}
                                     {item.item_date && <span>{new Date(item.item_date).toLocaleDateString(lang)}</span>}
                                 </div>
                                 {(evidenceOf[String(item.id)] ?? []).length > 0 && (
-                                    <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                                    <div className="flex flex-wrap items-center gap-2 text-[11px]">
                                         {(evidenceOf[String(item.id)] ?? []).map((title, index) => (
-                                            <span key={index} className="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
+                                            <span key={index} className="rounded-full bg-success-soft px-2 py-1 font-semibold text-success-ink">
                                                 {t('portfolio.evidenceOf', { title })}
                                             </span>
                                         ))}
@@ -485,33 +483,33 @@ export function PortfolioCard() {
                                 )}
                                 <div>
                                     <button type="button" onClick={() => { setGoalLinkFor(previous => previous === item.id ? null : item.id); setGoalChoice(''); setGoalLinkError(''); }}
-                                        className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-xs font-semibold text-indigo-700 underline hover:text-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                        className="inline-flex min-h-control items-center gap-1 rounded-control px-2 text-xs font-semibold text-link underline hover:text-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                                         aria-expanded={goalLinkFor === item.id}>
                                         <ArrowRight className="h-3.5 w-3.5" aria-hidden />{t('portfolio.linkToGoal')}
                                     </button>
                                     {goalLinkFor === item.id && (
-                                        <div className="mt-2 space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3">
-                                            <label className="block text-xs font-semibold text-slate-600">
+                                        <div className="mt-2 space-y-2 rounded-control border border-line bg-surface-sunken p-4">
+                                            <label className="block text-xs font-semibold text-ink-muted">
                                                 {goalText(lang, 'title')}
-                                                <select className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-sm" value={goalChoice} onChange={e => setGoalChoice(e.target.value)}>
+                                                <select className="mt-1 w-full rounded-control border border-line-strong bg-surface px-2 py-2 text-sm" value={goalChoice} onChange={e => setGoalChoice(e.target.value)}>
                                                     <option value="">—</option>
                                                     {goals.filter(row => row.status === 'active').map(row => <option key={row.id} value={row.id}>{row.title.slice(0, 120)}</option>)}
                                                 </select>
                                             </label>
-                                            {goalLinkError && <p role="alert" className="text-xs text-rose-700">{goalLinkError}</p>}
+                                            {goalLinkError && <p role="alert" className="text-xs text-danger-ink">{goalLinkError}</p>}
                                             <div className="flex gap-2">
-                                                <button type="button" disabled={!goalChoice || goalLinkBusy} onClick={() => void linkToGoal(item.id)}
-                                                    className="min-h-11 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white disabled:opacity-50">{t('portfolio.linkConfirm')}</button>
+                                                <Button type="button" disabled={!goalChoice || goalLinkBusy} onClick={() => void linkToGoal(item.id)}
+                                                    className="min-h-control">{t('portfolio.linkConfirm')}</Button>
                                                 <button type="button" onClick={() => { setGoalLinkFor(null); setGoalChoice(''); setGoalLinkError(''); }}
-                                                    className="min-h-11 rounded-md px-3 text-sm font-medium text-slate-600 hover:bg-white">{t('common.cancel')}</button>
+                                                    className="min-h-control rounded-control px-4 text-sm text-ink-muted hover:bg-surface">{t('common.cancel')}</button>
                                             </div>
                                         </div>
                                     )}
                                 </div>
-                                {item.description && <p className="mt-1 line-clamp-3 text-xs text-slate-500">{item.description}</p>}
+                                {item.description && <p className="mt-1 line-clamp-3 text-xs text-ink-muted">{item.description}</p>}
                                 <PortfolioTimelineLinks itemId={item.id} description={item.description} locale={lang} />
                                 {item.link && (
-                                    <a href={item.link} target="_blank" rel="noopener noreferrer" className="mt-auto pt-1 text-xs font-semibold text-indigo-600 hover:underline">
+                                    <a href={item.link} target="_blank" rel="noopener noreferrer" className="mt-auto pt-1 text-xs font-semibold text-link hover:underline">
                                         {t('portfolio.open')}
                                     </a>
                                 )}
@@ -522,7 +520,7 @@ export function PortfolioCard() {
             )}
             {lightbox && typeof document !== 'undefined' && createPortal(
                 <div
-                    className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-6"
+                    className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-4 sm:p-6"
                     onMouseDown={(event) => {
                         if (event.currentTarget === event.target) setLightbox(null);
                     }}
@@ -534,7 +532,7 @@ export function PortfolioCard() {
                         ref={lightboxCloseRef}
                         type="button"
                         onClick={() => setLightbox(null)}
-                        className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/90 text-slate-700 shadow hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:right-6 sm:top-6"
+                        className="absolute right-4 top-4 z-10 inline-flex h-control w-control items-center justify-center rounded-lg bg-surface/90 text-ink-body shadow-card hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 sm:right-6 sm:top-6"
                         aria-label={t('common.close')}
                         autoFocus
                     >
@@ -549,6 +547,6 @@ export function PortfolioCard() {
                 </div>,
                 document.body,
             )}
-        </section>
+        </Card>
     );
 }

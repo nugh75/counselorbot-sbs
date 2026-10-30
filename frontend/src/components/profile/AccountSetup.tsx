@@ -6,6 +6,7 @@ import { CounselorSelector } from '@/components/questionnaire/CounselorSelector'
 import { LearnerProfileCard } from './LearnerProfileCard';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { fetchAccountPreferences, saveAccountPreferences, safeAccountNext, type AccountPreferences } from '@/lib/account-preferences';
 import { getSelectedCounselorId } from '@/lib/counselor';
 import { useI18n } from '@/lib/i18n-context';
@@ -57,10 +58,9 @@ export function AccountSetup({ counselorOnly = false, onReturn }: { counselorOnl
         finally { setBusy(false); }
     };
     return <div className="page-wide space-y-6">
-        <header><h1 className="font-display text-3xl font-bold text-slate-900">{t(counselorOnly ? 'setup.counselor' : 'setup.title')}</h1>
-            <p className="mt-3 text-slate-600">{t(counselorOnly ? 'setup.counselorBody' : 'setup.body')}</p>
-            {prefs?.counselor_id && !prefs.counselor_ready && <p className="mt-3 text-amber-800" role="status">{t('counselor.unavailable')}</p>}
-            {instrument && <p className="mt-3 text-amber-800" role="status">{t('setup.compatibility', { instrument })}</p>}
+        <header><PageHeader title={t(counselorOnly ? 'setup.counselor' : 'setup.title')} subtitle={t(counselorOnly ? 'setup.counselorBody' : 'setup.body')} />
+            {prefs?.counselor_id && !prefs.counselor_ready && <p className="mt-4 text-warning-ink" role="status">{t('counselor.unavailable')}</p>}
+            {instrument && <p className="mt-4 text-warning-ink" role="status">{t('setup.compatibility', { instrument })}</p>}
         </header>
         {error && <div role="alert"><p>{t('setup.error')}</p><Button onClick={() => setRetry(n => n + 1)}>{t('setup.retry')}</Button></div>}
         {prefs && (counselorOnly || !prefs.counselor_ready ?

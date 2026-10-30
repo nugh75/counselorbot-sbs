@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { isClassContentHidden } from '@/lib/user-access';
 import { useUserAccess } from '@/lib/use-user-access';
+import { Card } from '@/components/ui/Card';
 
 /**
  * #175/#176: when, where or the link of a class or group meeting, the booking of
@@ -51,25 +52,25 @@ export function MeetingDetails({ lang, meeting, attended, onChanged, showTitle =
     };
 
     return <div className="space-y-1 text-sm" data-testid="meeting-details">
-        {showTitle && <p className="font-semibold text-slate-800">{meeting.title}{meeting.group_name ? ` · ${meeting.group_name}` : ''}</p>}
-        <p className={cancelled ? 'text-slate-500 line-through' : 'text-slate-700'}>
+        {showTitle && <p className="font-semibold text-ink">{meeting.title}{meeting.group_name ? ` · ${meeting.group_name}` : ''}</p>}
+        <p className={cancelled ? 'text-ink-muted line-through' : 'text-ink-body'}>
             {[individual ? (mine ? null : m('individual')) : null, m(meeting.mode), meeting.place].filter(Boolean).join(' · ')}
             {!individual && start && <>{' · '}<time dateTime={start}>{meetingWhen(meeting, lang)}</time></>}
         </p>
-        {host && <p className="text-xs text-slate-600">{`${m('with')} ${host}`}</p>}
-        {cancelled && <p className="text-xs font-medium text-slate-600">{m('cancelled')}</p>}
+        {host && <p className="text-xs text-ink-muted">{`${m('with')} ${host}`}</p>}
+        {cancelled && <p className="text-xs text-ink-muted">{m('cancelled')}</p>}
         {!cancelled && meeting.link && <a href={meeting.link} target="_blank" rel="noopener noreferrer"
-            className="inline-flex min-h-[44px] items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline">
+            className="inline-flex min-h-control items-center gap-1 text-xs font-semibold text-link hover:underline">
             <ExternalLink className="h-3.5 w-3.5" aria-hidden />{m('openLink')}</a>}
-        {meeting.description && <p className="whitespace-pre-wrap text-xs text-slate-600">{meeting.description}</p>}
+        {meeting.description && <p className="whitespace-pre-wrap text-xs text-ink-muted">{meeting.description}</p>}
 
         {!cancelled && individual && <div className="space-y-1" data-testid="meeting-booking">
-            {meeting.booking_cancelled && <p role="status" className="text-xs font-medium text-amber-800">{m('bookingCancelled')}</p>}
+            {meeting.booking_cancelled && <p role="status" className="text-xs text-warning-ink">{m('bookingCancelled')}</p>}
             {mine && <p className="text-xs"><span className="font-semibold">{m('yourSlot')}: </span>
                 <time dateTime={mine.starts_at}>{meetingWhen(mine, lang)}</time></p>}
             {freeSlots.length > 0 ? <div className="flex flex-wrap items-end gap-2">
                 <label className="block text-xs"><span className="sr-only">{mine ? m('changeSlot') : m('book')}</span>
-                    <select className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto" value={choice}
+                    <select className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto" value={choice}
                         disabled={busy} onChange={event => setChoice(event.target.value)}>
                         <option value="">{m('chooseSlot')}</option>
                         {freeSlots.map(slot => <option key={slot.id} value={slot.id}>{meetingWhen(slot, lang)}</option>)}
@@ -77,24 +78,24 @@ export function MeetingDetails({ lang, meeting, attended, onChanged, showTitle =
                 <Button variant="secondary" size="sm" disabled={busy || !choice}
                     onClick={() => void call(`/api/user/meetings/${meeting.id}/booking`, 'POST', { slot_id: Number(choice) })}>
                     {mine ? m('changeSlot') : m('book')}</Button>
-            </div> : !mine && <p className="text-xs text-slate-600">{m('noFreeSlots')}</p>}
+            </div> : !mine && <p className="text-xs text-ink-muted">{m('noFreeSlots')}</p>}
             {mine && !started && <Button variant="ghost" size="sm" disabled={busy}
                 onClick={() => void call(`/api/user/meetings/${meeting.id}/booking`, 'DELETE')}>{m('cancelBooking')}</Button>}
         </div>}
 
         {!cancelled && (teacherMark
-            ? <p role="status" className="text-xs font-medium text-emerald-700">{m('confirmedByTeacher')}</p>
+            ? <p role="status" className="text-xs text-success-ink">{m('confirmedByTeacher')}</p>
             : !selfMark
-            ? <p className="text-xs text-slate-500">{attended ? m('attendedDone') : m('teacherConfirms')}</p>
+            ? <p className="text-xs text-ink-muted">{attended ? m('attendedDone') : m('teacherConfirms')}</p>
             : started
             ? <div className="flex flex-wrap items-center gap-2">
-                {attended && <span role="status" className="text-xs font-medium text-emerald-700">{m('attendedDone')}</span>}
+                {attended && <span role="status" className="text-xs text-success-ink">{m('attendedDone')}</span>}
                 <Button variant={attended ? 'ghost' : 'secondary'} size="sm" disabled={busy}
                     onClick={() => void call(`/api/user/meetings/${meeting.id}/attendance`, attended ? 'DELETE' : 'POST')}>
                     {attended ? m('undoAttended') : m('attended')}</Button>
             </div>
-            : <p className="text-xs text-slate-500">{individual && !mine ? m('bookFirst') : m('notStarted')}</p>)}
-        {failure && <p role="alert" className="text-xs font-medium text-red-600">{m(failure)}</p>}
+            : <p className="text-xs text-ink-muted">{individual && !mine ? m('bookFirst') : m('notStarted')}</p>)}
+        {failure && <p role="alert" className="text-xs text-danger">{m(failure)}</p>}
     </div>;
 }
 
@@ -121,13 +122,13 @@ export function StudentMeetings({ lang }: { lang: string }) {
     const { meetings, failed, load } = useStudentMeetings();
     // Students without classes see nothing here; their timeline is unchanged.
     if (!failed && (!meetings || meetings.length === 0)) return null;
-    return <section aria-label={m('timelineTitle')} className="glass-panel space-y-3 p-4">
-        <h2 className="font-semibold text-slate-900">{m('timelineTitle')}</h2>
+    return <Card as="section" aria-label={m('timelineTitle')} className="space-y-4 p-4">
+        <h2 className="font-semibold text-ink">{m('timelineTitle')}</h2>
         {failed && <Callout variant="danger">{m('loadError')} <Button variant="secondary" size="sm" onClick={() => void load()}>{m('retry')}</Button></Callout>}
-        <ul className="space-y-3">
-            {(meetings ?? []).map(row => <li key={row.id} className="rounded-md border border-slate-200 bg-white p-3">
+        <ul className="space-y-4">
+            {(meetings ?? []).map(row => <li key={row.id} className="rounded-control border border-line bg-surface p-4">
                 <MeetingDetails lang={lang} meeting={row} attended={Boolean(row.attended)} onChanged={load} showTitle />
             </li>)}
         </ul>
-    </section>;
+    </Card>;
 }

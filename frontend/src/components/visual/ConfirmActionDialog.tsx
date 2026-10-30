@@ -25,7 +25,7 @@ export function ConfirmActionDialog({ locale, title, onConfirm, onCancel }: {
         ref={ref}
         aria-labelledby={`${id}-question`}
         aria-describedby={`${id}-activity`}
-        className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-md rounded-xl border border-slate-200 bg-white p-5 text-slate-800 shadow-xl backdrop:bg-slate-900/50"
+        className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-md rounded-card border border-line bg-surface p-6 text-ink shadow-pop backdrop:bg-slate-900/50"
         onCancel={event => { event.preventDefault(); onCancel(); }}
         onKeyDown={event => {
             event.stopPropagation();
@@ -39,8 +39,8 @@ export function ConfirmActionDialog({ locale, title, onConfirm, onCancel }: {
         }}
     >
         <h3 id={`${id}-question`} className="text-lg font-semibold">{l('confirmDeleteAction')}</h3>
-        <p id={`${id}-activity`} className="mt-2 break-words text-sm text-slate-600">{title}</p>
-        <div className="mt-5 flex flex-wrap justify-end gap-3">
+        <p id={`${id}-activity`} className="mt-2 break-words text-sm text-ink-muted">{title}</p>
+        <div className="mt-6 flex flex-wrap justify-end gap-4">
             <Button type="button" variant="secondary" autoFocus onClick={onCancel}>{l('deckCancel')}</Button>
             <Button type="button" variant="danger" onClick={onConfirm}>{l('remove')}</Button>
         </div>

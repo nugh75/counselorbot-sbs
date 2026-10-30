@@ -57,33 +57,33 @@ function PersonalResume({ access }: { access: FullUserAccess | null }) {
     const local = resume.localResume && !resume.frozen.some(row => row.session_id === resume.localResume?.sessionId)
         ? resume.localResume : null;
     if (!loading && !failed && !items.length && !frozen.length && !local && !resume.error && !resume.loading) return null;
-    return <section aria-labelledby="personal-resume-title" className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
-        <h2 id="personal-resume-title" className="font-bold text-slate-900">{l('resume')}</h2>
+    return <section aria-labelledby="personal-resume-title" className="rounded-card border border-brand-line bg-brand-soft px-4 py-4">
+        <h2 id="personal-resume-title" className="font-semibold text-ink">{l('resume')}</h2>
         <ResumeLoadError entries={resume} />
-        {loading && <p role="status" className="min-h-11 py-3 text-sm text-slate-600">{l('loading')}</p>}
-        {failed && <div role="alert" className="flex flex-wrap items-center gap-x-3 text-sm text-slate-700">
+        {loading && <p role="status" className="min-h-control py-4 text-sm text-ink-muted">{l('loading')}</p>}
+        {failed && <div role="alert" className="flex flex-wrap items-center gap-x-4 text-sm text-ink-body">
             <p>{l('error')}{items.length > 0 && <> {l('stale')}</>}</p>
             <Button variant="ghost" disabled={loading} onClick={() => { setLoading(true); setAttempt(n => n + 1); }}>{l('retry')}</Button>
         </div>}
-        {(items.length > 0 || frozen.length > 0 || local) && <ul className="mt-1 divide-y divide-indigo-200">
+        {(items.length > 0 || frozen.length > 0 || local) && <ul className="mt-1 divide-y divide-brand-line">
             {frozen.map(row => <li key={`session-${row.session_id}`}>
-                <a href={resumeHref(row)} className="flex min-h-11 items-center gap-3 rounded-md py-2 text-sm text-indigo-700">
+                <a href={resumeHref(row)} className="flex min-h-control items-center gap-4 rounded-control py-2 text-sm text-link">
                     <span className="min-w-0 flex-1 break-words font-semibold">{resumeLabel(row.questionnaire_type, row.label, tf)}</span>
                     <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
                 </a>
             </li>)}
             {local && <li>
-                <a href={LOCAL_RESUME_HREF} className="flex min-h-11 items-center gap-3 rounded-md py-2 text-sm text-indigo-700">
+                <a href={LOCAL_RESUME_HREF} className="flex min-h-control items-center gap-4 rounded-control py-2 text-sm text-link">
                     <span className="min-w-0 flex-1 break-words font-semibold">{t('header.resume')} · {resumeLabel(local.instrument, null, tf)}</span>
                     <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
                 </a>
             </li>}
             {items.map(item => <li key={item.id}>
-                <Link href={item.href} className="flex min-h-11 items-center gap-3 rounded-md py-2 text-sm text-indigo-700">
+                <Link href={item.href} className="flex min-h-control items-center gap-4 rounded-control py-2 text-sm text-link">
                     <span className="min-w-0 flex-1 break-words">
-                        <span className="text-slate-600">{l(item.kind)} · </span><span className="font-semibold">{item.title}</span>
-                        {item.date && <time dateTime={item.date} className="ml-2 text-slate-600">{new Date(`${item.date}T12:00:00`).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' })}</time>}
-                        {item.feedback && <span className="block text-slate-600">{l('feedback')}</span>}
+                        <span className="text-ink-muted">{l(item.kind)} · </span><span className="font-semibold">{item.title}</span>
+                        {item.date && <time dateTime={item.date} className="ml-2 text-ink-muted">{new Date(`${item.date}T12:00:00`).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' })}</time>}
+                        {item.feedback && <span className="block text-ink-muted">{l('feedback')}</span>}
                     </span>
                     <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
                 </Link>
@@ -161,17 +161,17 @@ export function PersonalAreaHome() {
                 className="space-y-6"
             >
                 {groups.map(group => <section key={group.id} aria-labelledby={`personal-group-${group.id}`}>
-                    <h2 id={`personal-group-${group.id}`} className="border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">{personalAreaText(lang, group.id)}</h2>
+                    <h2 id={`personal-group-${group.id}`} className="border-b border-line pb-2 text-lg font-semibold text-ink">{personalAreaText(lang, group.id)}</h2>
                     <nav aria-labelledby={`personal-group-${group.id}`} className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">
                         {group.slugs.map(slug => <Link key={slug} href={`/profilo/${slug}`} aria-labelledby={`personal-link-${slug}`} aria-describedby={`personal-description-${slug}`}
-                            className="group flex min-h-24 items-center gap-3 rounded-xl px-2 py-3 transition-colors hover:bg-slate-50 sm:gap-4">
-                            <Image src={personalAreaImages[slug]} alt="" width={72} height={72} sizes="(min-width: 768px) 72px, 64px" className="h-16 w-16 shrink-0 rounded-md object-contain md:h-18 md:w-18" />
+                            className="group flex min-h-24 items-center gap-4 rounded-card px-2 py-4 transition-colors hover:bg-surface-sunken sm:gap-4">
+                            <Image src={personalAreaImages[slug]} alt="" width={72} height={72} sizes="(min-width: 768px) 72px, 64px" className="h-16 w-16 shrink-0 rounded-control object-contain md:h-18 md:w-18" />
                             <span className="min-w-0 flex-1">
-                                <span id={`personal-link-${slug}`} className="flex items-center gap-2 font-bold text-slate-900 group-hover:text-indigo-700">
+                                <span id={`personal-link-${slug}`} className="flex items-center gap-2 font-semibold text-ink group-hover:text-link">
                                     <span>{personalAreaName(lang, slug)}</span>
                                     {slug === 'classi' && !isClassContentHidden(access) && unreadTotal > 0 && (
                                         <span
-                                            className="inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full bg-ochre-600 px-1.5 text-xs font-semibold text-white"
+                                            className="inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full bg-move px-2 text-xs font-semibold text-ink-on-brand"
                                             aria-label={forumText(lang, 'unreadBadge').replace('{count}', String(unreadTotal))}
                                         >
                                             {unreadTotal}
@@ -179,9 +179,9 @@ export function PersonalAreaHome() {
                                         </span>
                                     )}
                                 </span>
-                                <span id={`personal-description-${slug}`} className="mt-1 block text-sm leading-relaxed text-slate-600">{personalAreaDescription(lang, slug)}</span>
+                                <span id={`personal-description-${slug}`} className="mt-1 block text-sm leading-relaxed text-ink-muted">{personalAreaDescription(lang, slug)}</span>
                             </span>
-                            <ArrowRight className="h-4 w-4 shrink-0 text-slate-500" aria-hidden />
+                            <ArrowRight className="h-4 w-4 shrink-0 text-ink-muted" aria-hidden />
                         </Link>)}
                     </nav>
                 </section>)}

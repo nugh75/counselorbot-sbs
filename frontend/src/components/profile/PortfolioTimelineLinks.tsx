@@ -22,7 +22,7 @@ export function PortfolioTimelineLinks({ itemId, description, locale }: { itemId
     }, [itemId, attempt]);
     return <>
         {failed && <Button type="button" variant="ghost" onClick={() => setAttempt(n => n + 1)}>{l('retry')} · {l('timeline')}</Button>}
-        {data?.snapshot && description && <details><summary className="min-h-[44px] cursor-pointer py-3 text-sm text-indigo-700">{l('viewSnapshot')}</summary><p className="whitespace-pre-wrap break-words text-sm text-slate-700">{description}</p></details>}
-        {data?.links?.map(link => <Link key={`${link.session_id}:${link.event_id}`} className="block min-h-[44px] py-3 text-sm text-indigo-700 underline" href={`/profilo/timeline?event=${encodeURIComponent(link.event_id)}`}>{l('backTimeline')}: {link.title} · {link.timeline_title}</Link>)}
+        {data?.snapshot && description && <details><summary className="min-h-control cursor-pointer py-4 text-sm text-link">{l('viewSnapshot')}</summary><p className="whitespace-pre-wrap break-words text-sm text-ink-body">{description}</p></details>}
+        {data?.links?.map(link => <Link key={`${link.session_id}:${link.event_id}`} className="block min-h-control py-4 text-sm text-link underline" href={`/profilo/timeline?event=${encodeURIComponent(link.event_id)}`}>{l('backTimeline')}: {link.title} · {link.timeline_title}</Link>)}
     </>;
 }

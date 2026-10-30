@@ -19,7 +19,7 @@ export function ActionDateFields({ value, onChange, locale }: {
     return <div className="space-y-2">
         <TimelineDateFields value={value} onChange={onChange} locale={locale} />
         {value.date_mode && <Tooltip content={l('removeDate')}>
-            <Button type="button" variant="ghost" size="md" className="w-11 px-0" aria-label={l('removeDate')}
+            <Button type="button" variant="ghost" size="md" className="w-control px-0" aria-label={l('removeDate')}
                 onClick={() => onChange({ date_mode: null, start_date: null, end_date: null })}>
                 <Trash2 className="h-4 w-4" aria-hidden="true" />
             </Button>
@@ -37,7 +37,7 @@ export function ActionDateSummary({ action, locale }: { action: Action; locale: 
         ? (action.start_date ? display(action.start_date) : null)
         : `${action.start_date ? display(action.start_date) : l('openStart')} → ${action.end_date ? display(action.end_date) : l('openEnd')}`;
     if (!label) return null;
-    return <p className="mt-2 text-sm text-slate-600">
-        {label} · <Link className="underline hover:text-indigo-700" href={`/profilo/timeline?item=action-${action.id}`}>{l('viewOnTimeline')}</Link>
+    return <p className="mt-2 text-sm text-ink-muted">
+        {label} · <Link className="underline hover:text-link" href={`/profilo/timeline?item=action-${action.id}`}>{l('viewOnTimeline')}</Link>
     </p>;
 }

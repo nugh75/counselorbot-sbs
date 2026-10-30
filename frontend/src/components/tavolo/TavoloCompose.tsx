@@ -50,17 +50,17 @@ export function TavoloCompose({ busy, aiAvailable = true, onCompose, onOpenExamp
     const chosen = presets.find((preset) => preset.id === genre);
 
     return (
-        <section className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
-            <h2 className="text-sm font-medium text-slate-800">{label('compose')}</h2>
-            <p className="text-xs text-slate-500">{label('composeHint')}</p>
+        <section className="space-y-2 rounded-lg border border-line bg-surface p-4">
+            <h2 className="text-sm text-ink">{label('compose')}</h2>
+            <p className="text-xs text-ink-muted">{label('composeHint')}</p>
 
             <div role="group" aria-label={label('genre')} className="flex flex-wrap gap-1">
                 {([null, ...PRESET_IDS] as (TavoloPresetId | null)[]).map((id) => (
                     <button key={id ?? 'auto'} type="button" onClick={() => setGenre(id)}
                         aria-pressed={genre === id}
-                        className={`min-h-11 rounded-lg border px-3 text-sm ${genre === id
-                            ? 'border-indigo-500 bg-indigo-50 text-indigo-800'
-                            : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                        className={`min-h-control rounded-lg border px-4 text-sm ${genre === id
+                            ? 'border-brand bg-brand-soft text-link'
+                            : 'border-line text-ink-body hover:bg-surface-sunken'}`}>
                         {id ? label(GENRE_LABEL[id]) : label('genreAuto')}
                     </button>
                 ))}
@@ -72,15 +72,15 @@ export function TavoloCompose({ busy, aiAvailable = true, onCompose, onOpenExamp
                 placeholder={label('composePlaceholder')}
                 rows={3}
                 aria-label={label('compose')}
-                className="w-full rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-800"
+                className="w-full rounded-lg border border-line px-2 py-2 text-sm text-ink"
             />
 
             {chosen && chosen.prompts.length > 0 && (
                 <div className="space-y-1">
-                    <p className="text-xs font-medium text-slate-500">{label('examples')}</p>
+                    <p className="text-xs text-ink-muted">{label('examples')}</p>
                     {chosen.prompts.map((example) => (
                         <button key={example} type="button" onClick={() => setPrompt(example)}
-                            className="block w-full rounded-lg border border-slate-200 px-2 py-2 text-left text-xs text-slate-600 hover:bg-slate-50">
+                            className="block min-h-control w-full rounded-lg border border-line px-2 py-2 text-left text-xs text-ink-muted hover:bg-surface-sunken">
                             {example}
                         </button>
                     ))}
@@ -90,7 +90,7 @@ export function TavoloCompose({ busy, aiAvailable = true, onCompose, onOpenExamp
             <div className="flex gap-2">
                 <button type="button" disabled={busy || !aiAvailable || !prompt.trim()}
                     onClick={() => void onCompose(genre, prompt)}
-                    className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40">
+                    className="inline-flex min-h-control flex-1 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-sm text-ink-on-brand hover:bg-brand-hover disabled:opacity-40">
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                         : <Sparkles className="h-4 w-4" aria-hidden="true" />}
                     {label('composeGo')}
@@ -102,11 +102,11 @@ export function TavoloCompose({ busy, aiAvailable = true, onCompose, onOpenExamp
                 // di titoli, non un bottone, perche' la scelta e' fra tavoli e
                 // non fra aprire e non aprire.
                 <div className="space-y-1">
-                    <p className="text-xs font-medium text-slate-500">{label('readyTables')}</p>
+                    <p className="text-xs text-ink-muted">{label('readyTables')}</p>
                     {chosen.examples.map((example) => (
                         <button key={example.id} type="button" disabled={busy}
                             onClick={() => void onOpenExample(chosen.id, example.id)}
-                            className="block w-full rounded-lg border border-slate-200 px-2 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 disabled:opacity-40">
+                            className="block min-h-control w-full rounded-lg border border-line px-2 py-2 text-left text-xs text-ink-body hover:bg-surface-sunken disabled:opacity-40">
                             {example.title}
                         </button>
                     ))}
