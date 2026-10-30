@@ -55,8 +55,8 @@ export function StudentClassPathsPage() {
     if (loading && paths.length === 0) {
         return (
             <div className="space-y-6">
-                <Skeleton className="h-36 w-full rounded-xl" />
-                <Skeleton className="h-64 w-full rounded-xl" />
+                <Skeleton className="h-36 w-full rounded-card" />
+                <Skeleton className="h-64 w-full rounded-card" />
             </div>
         );
     }
@@ -75,7 +75,7 @@ export function StudentClassPathsPage() {
     if (paths.length === 0) {
         return (
             <Card className="py-12 text-center">
-                <p className="text-sm text-slate-500">{l('studentPathsEmpty')}</p>
+                <p className="text-sm text-ink-muted">{l('studentPathsEmpty')}</p>
             </Card>
         );
     }

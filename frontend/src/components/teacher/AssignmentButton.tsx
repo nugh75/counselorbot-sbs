@@ -19,7 +19,7 @@ type GoalEntry = { id: number; group_id: number | null; status: string; data: { 
 type StrategyRow = { id: number; slug: string; name_it?: string | null; status: string; is_active: boolean };
 type ReadingRow = { id: number; title: string; status: string; is_active: boolean };
 type AttachmentOption = { kind: 'strategy' | 'reading'; id: number; title: string };
-const input = 'w-full min-w-0 rounded-md border border-slate-300 bg-white p-2 text-sm';
+const input = 'w-full min-w-0 rounded-control border border-line-strong bg-surface p-2 text-sm';
 
 // TF6 (#153): the path builder opens the same dialog for its class only. A fixed
 // class delivers to the whole class, the only kind a path step can reference.
@@ -76,10 +76,10 @@ export function AssignmentDialog({ close, saved, classId }: { close: () => void;
     }, []);
     useEffect(() => { dialog.current?.showModal(); void load(); }, [load]);
     return <dialog ref={dialog} aria-labelledby={heading} onClose={close} onCancel={event => { if (busy) event.preventDefault(); }}
-        className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 text-slate-900 shadow-xl backdrop:bg-black/40">
-        <h2 id={heading} className="mb-4 break-words text-xl font-bold">{l('newAssignment')}</h2>
+        className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-card border border-line bg-surface p-6 text-ink shadow-modal backdrop:bg-black/40">
+        <h2 id={heading} className="mb-4 break-words text-xl font-semibold">{l('newAssignment')}</h2>
         {loading && <p role="status">{l('loading')}</p>}
-        {failed && <p role="alert" className="mb-3 text-sm text-red-600">{l('error')} <button type="button" onClick={() => void load()} className="underline">{l('retry')}</button></p>}
+        {failed && <p role="alert" className="mb-4 text-sm text-danger">{l('error')} <button type="button" onClick={() => void load()} className="inline-flex min-h-control items-center underline">{l('retry')}</button></p>}
         {!loading && !failed && !groups.length && <p>{l('emptyTargets')}</p>}
         <form onSubmit={async event => {
             event.preventDefault(); if (!group || !goalId || busy) return;
@@ -97,22 +97,22 @@ export function AssignmentDialog({ close, saved, classId }: { close: () => void;
             } catch { setFailed(true); } finally { setBusy(false); }
         }}>
             <fieldset disabled={busy || loading} className="space-y-4">
-                <label className="block text-sm font-medium">{l('group')}<select aria-label={l('group')} autoFocus required disabled={classId !== undefined} className={input} value={groupId} onChange={e => { setGroupId(e.target.value); setRecipient(''); }}><option value="">{l('choose')}</option>{groups.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
-                <label className="block text-sm font-medium">{l('goal')}<select aria-label={l('goal')} required className={input} value={goalId} onChange={e => setGoalId(e.target.value)}><option value="">{l('chooseGoal')}</option>{visibleGoals.map(row => <option key={row.id} value={row.id}>{row.data.title}</option>)}</select></label>
+                <label className="block text-sm font-semibold">{l('group')}<select aria-label={l('group')} autoFocus required disabled={classId !== undefined} className={input} value={groupId} onChange={e => { setGroupId(e.target.value); setRecipient(''); }}><option value="">{l('choose')}</option>{groups.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
+                <label className="block text-sm font-semibold">{l('goal')}<select aria-label={l('goal')} required className={input} value={goalId} onChange={e => setGoalId(e.target.value)}><option value="">{l('chooseGoal')}</option>{visibleGoals.map(row => <option key={row.id} value={row.id}>{row.data.title}</option>)}</select></label>
                 {group && classId === undefined && <>
-                    <label className="block text-sm font-medium">{l('recipient')}<select aria-label={l('recipient')} className={input} value={recipient} onChange={e => setRecipient(e.target.value)}><option value="">{l('all')} ({group.participants.length})</option>{group.participants.map(person => <option key={person.username} value={person.username}>{person.name} ({person.username})</option>)}</select></label>
-                    {!recipient && <p className="text-sm text-slate-600">{l('current')}</p>}
+                    <label className="block text-sm font-semibold">{l('recipient')}<select aria-label={l('recipient')} className={input} value={recipient} onChange={e => setRecipient(e.target.value)}><option value="">{l('all')} ({group.participants.length})</option>{group.participants.map(person => <option key={person.username} value={person.username}>{person.name} ({person.username})</option>)}</select></label>
+                    {!recipient && <p className="text-sm text-ink-muted">{l('current')}</p>}
                 </>}
-                {group && classId !== undefined && <p className="text-sm text-slate-600">{l('recipients')}: {l('all')} ({group.participants.length}). {l('current')}</p>}
-                {!loading && !attachments.length ? <p className="text-sm"><span className="font-medium">{l('attachments')}</span>
-                    <span className="block text-slate-600">{l('noAttachments')}</span></p> : <label className="block text-sm font-medium">{l('attachments')}<select multiple aria-label={l('attachments')} size={Math.min(6, Math.max(2, attachments.length))} className={input} value={selectedAttachments} onChange={e => setSelectedAttachments(Array.from(e.target.selectedOptions, option => option.value))}>{attachments.map(item => <option key={`${item.kind}:${item.id}`} value={`${item.kind}:${item.id}`}>{l(item.kind)} · {item.title}</option>)}</select></label>}
+                {group && classId !== undefined && <p className="text-sm text-ink-muted">{l('recipients')}: {l('all')} ({group.participants.length}). {l('current')}</p>}
+                {!loading && !attachments.length ? <p className="text-sm"><span className="font-semibold">{l('attachments')}</span>
+                    <span className="block text-ink-muted">{l('noAttachments')}</span></p> : <label className="block text-sm font-semibold">{l('attachments')}<select multiple aria-label={l('attachments')} size={Math.min(6, Math.max(2, attachments.length))} className={input} value={selectedAttachments} onChange={e => setSelectedAttachments(Array.from(e.target.selectedOptions, option => option.value))}>{attachments.map(item => <option key={`${item.kind}:${item.id}`} value={`${item.kind}:${item.id}`}>{l(item.kind)} · {item.title}</option>)}</select></label>}
                 <ActivityToolsPicker lang={lang} options={toolOptions ?? []} value={toolKeys} onChange={setToolKeys}
                     note={!groupId ? activityToolText(lang, 'chooseGroupFirst') : toolOptions?.length === 0 ? activityToolText(lang, 'noTools') : null} />
-                <label className="block text-sm font-medium">{l('instructions')}<textarea rows={3} maxLength={3000} className={input} value={instructions} onChange={e => setInstructions(e.target.value)} /></label>
-                <label className="block text-sm font-medium">{learningText(lang, 'intent')}<select className={input} value={intent} onChange={e => setIntent(e.target.value)}>{(['proposal', 'requested'] as const).map(value => <option key={value} value={value}>{learningText(lang, value)}</option>)}</select></label>
-                <label className="block text-sm font-medium">{learningText(lang, 'dueDate')}<input type="date" className={input} value={dueDate} onChange={e => setDueDate(e.target.value)} /></label>
-                <label className="block text-sm font-medium">{learningText(lang, 'responsePrompt')}<textarea rows={2} maxLength={1500} className={input} value={responsePrompt} onChange={e => setResponsePrompt(e.target.value)} /></label>
-                <div className="flex flex-wrap gap-3">
+                <label className="block text-sm font-semibold">{l('instructions')}<textarea rows={3} maxLength={3000} className={input} value={instructions} onChange={e => setInstructions(e.target.value)} /></label>
+                <label className="block text-sm font-semibold">{learningText(lang, 'intent')}<select className={input} value={intent} onChange={e => setIntent(e.target.value)}>{(['proposal', 'requested'] as const).map(value => <option key={value} value={value}>{learningText(lang, value)}</option>)}</select></label>
+                <label className="block text-sm font-semibold">{learningText(lang, 'dueDate')}<input type="date" className={input} value={dueDate} onChange={e => setDueDate(e.target.value)} /></label>
+                <label className="block text-sm font-semibold">{learningText(lang, 'responsePrompt')}<textarea rows={2} maxLength={1500} className={input} value={responsePrompt} onChange={e => setResponsePrompt(e.target.value)} /></label>
+                <div className="flex flex-wrap gap-4">
                     <Button type="submit" disabled={!group || !goalId || busy}>{l('send')}</Button>
                     <Button type="button" variant="secondary" onClick={close}>{l('cancel')}</Button>
                 </div>
@@ -125,7 +125,7 @@ export function NewAssignmentButton() {
     const { lang } = useI18n(); const [open, setOpen] = useState(false); const [sent, setSent] = useState(false);
     return <>
         <Button type="button" onClick={() => { setSent(false); setOpen(true); }}>{assignmentText(lang, 'newAssignment')}</Button>
-        {sent && <span role="status" className="text-sm text-slate-600">{assignmentText(lang, 'saved')}</span>}
+        {sent && <span role="status" className="text-sm text-ink-muted">{assignmentText(lang, 'saved')}</span>}
         {open && createPortal(<AssignmentDialog close={() => setOpen(false)} saved={() => setSent(true)} />, document.body)}
     </>;
 }

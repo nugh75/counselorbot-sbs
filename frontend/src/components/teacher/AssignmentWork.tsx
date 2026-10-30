@@ -2,13 +2,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { useI18n } from '@/lib/i18n-context';
 import { assignmentText } from '@/lib/i18n-assignments';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { goalApi as request, GoalError, type PersonalGoal } from '@/lib/goals';
 
-const input = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white p-2 text-sm';
+const input = 'mt-1 w-full min-w-0 rounded-control border border-line-strong bg-surface p-2 text-sm';
 type Submission = { text: string; portfolio?: { title: string; description: string } };
 type Work = {
     revision: number; workspace_revision: number; planned: boolean;
@@ -36,7 +37,7 @@ function useDraftGuard(dirty: boolean, lang: string, busy = false) {
 function SharedText({ value }: { value: Submission }) {
     return <div className="space-y-2 whitespace-pre-wrap break-words text-sm">
         {value.text && <p>{value.text}</p>}
-        {value.portfolio && <div className="border-l-2 border-indigo-200 pl-3"><p className="font-semibold">{value.portfolio.title}</p><p>{value.portfolio.description}</p></div>}
+        {value.portfolio && <div className="border-l-2 border-brand-line pl-4"><p className="font-semibold">{value.portfolio.title}</p><p>{value.portfolio.description}</p></div>}
     </div>;
 }
 
@@ -54,6 +55,7 @@ function WorkEditor({ assignmentId, authorName, onDraftStateChange }: { assignme
     const mounted = useRef(false); const inFlight = useRef(false);
     const shareSection = useRef<HTMLDetailsElement>(null);
     const [newAttempt, setNewAttempt] = useState(false);
+    const [confirmWithdraw, setConfirmWithdraw] = useState(false);
     const load = useCallback(async () => {
         setBusy(true); setError(null); setSaved(false);
         try {
@@ -100,65 +102,67 @@ function WorkEditor({ assignmentId, authorName, onDraftStateChange }: { assignme
     const selectedPortfolio = portfolio.find(item => String(item.id) === portfolioId);
     const selectedGoal = goals.find(goal => String(goal.id) === goalId);
     const preview: Submission = { text: shareText, ...(selectedPortfolio ? { portfolio: { title: selectedPortfolio.title, description: selectedPortfolio.description || '' } } : {}) };
-    return <div className="space-y-4 border-t border-slate-200 pt-4">
-        <p className="text-sm text-slate-600">{l('privateWork')}</p>
+    return <div className="space-y-4 border-t border-line pt-4">
+        <p className="text-sm text-ink-muted">{l('privateWork')}</p>
         {busy && <p role="status">{assignmentText(lang, 'loading')}</p>}
         {saved && <p role="status">{l('saved')}</p>}
-        {error != null && <p role="alert" className="text-sm text-red-700">{error instanceof GoalError && error.status === 409 ? l('conflict') : assignmentText(lang, 'error')} <button type="button" className="underline" disabled={busy} onClick={() => { if (!dirty || window.confirm(l('leaveDraft'))) void load(); }}>{l('reload')}</button></p>}
-        {work && <fieldset disabled={busy} className="min-w-0 space-y-5">
-            {!work.planned ? <form className="space-y-3" onSubmit={event => { event.preventDefault(); void mutate('plan', 'POST', { date: date || null }); }}>
+        {error != null && <p role="alert" className="text-sm text-danger">{error instanceof GoalError && error.status === 409 ? l('conflict') : assignmentText(lang, 'error')} <button type="button" className="inline-flex min-h-control items-center underline" disabled={busy} onClick={() => { if (!dirty || window.confirm(l('leaveDraft'))) void load(); }}>{l('reload')}</button></p>}
+        {work && <fieldset disabled={busy} className="min-w-0 space-y-6">
+            {!work.planned ? <form className="space-y-4" onSubmit={event => { event.preventDefault(); void mutate('plan', 'POST', { date: date || null }); }}>
                 {/* F28 (lotto 5A): il passaggio dichiara ciò che crea e ciò che non invia. */}
-                <p className="rounded-md bg-indigo-50 p-3 text-sm text-slate-800">{l('planHelp')}</p>
-                <label className="block text-sm font-medium">{l('planDate')}<input type="date" className={input} value={date} onChange={e => setDate(e.target.value)} /></label>
+                <p className="rounded-control bg-brand-soft p-4 text-sm text-ink">{l('planHelp')}</p>
+                <label className="block text-sm font-semibold">{l('planDate')}<input type="date" className={input} value={date} onChange={e => setDate(e.target.value)} /></label>
                 <Button type="submit">{l('plan')}</Button>
             </form> : <>
-                {work.action && <p className="text-sm font-medium text-indigo-700">{work.action.title} · {visualLabel(lang, work.action.stage)}</p>}
-                {!work.action && <p className="text-sm text-amber-700">{l('missing')}</p>}
-                <nav className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-indigo-700">
-                    {work.action && <Link className="py-2 underline" href="/profilo/azioni">{l('openActivities')}</Link>}
-                    {work.event && <Link className="py-2 underline" href={`/profilo/timeline?event=${encodeURIComponent(work.event.id)}`}>{l('openTimeline')}</Link>}
-                    <Link className="py-2 underline" href="/profilo/portfolio">{l('openPortfolio')}</Link>
+                {work.action && <p className="text-sm font-semibold text-link">{work.action.title} · {visualLabel(lang, work.action.stage)}</p>}
+                {!work.action && <p className="text-sm text-warning">{l('missing')}</p>}
+                <nav className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-link">
+                    {work.action && <Link className="inline-flex min-h-control items-center underline" href="/profilo/azioni">{l('openActivities')}</Link>}
+                    {work.event && <Link className="inline-flex min-h-control items-center underline" href={`/profilo/timeline?event=${encodeURIComponent(work.event.id)}`}>{l('openTimeline')}</Link>}
+                    <Link className="inline-flex min-h-control items-center underline" href="/profilo/portfolio">{l('openPortfolio')}</Link>
                 </nav>
-                {work.linked_goals.length > 0 && <ul className="space-y-1 text-sm">{work.linked_goals.map(goal => <li key={goal.id}><Link className="inline-block py-2 text-indigo-700 underline" href={`/profilo/obiettivi?goal=${goal.id}`}>{goal.title}</Link></li>)}</ul>}
+                {work.linked_goals.length > 0 && <ul className="space-y-1 text-sm">{work.linked_goals.map(goal => <li key={goal.id}><Link className="inline-flex min-h-control items-center text-link underline" href={`/profilo/obiettivi?goal=${goal.id}`}>{goal.title}</Link></li>)}</ul>}
                 {work.action && <form className="space-y-2" onSubmit={async event => {
                     event.preventDefault(); if (!selectedGoal) return;
                     const next = await mutate('goal', 'POST', { revision: work.revision, goal_id: selectedGoal.id, goal_revision: selectedGoal.revision });
                     if (next) { setGoals(rows => rows.map(row => row.id === selectedGoal.id ? { ...row, revision: row.revision + 1 } : row)); setGoalId(''); }
                 }}>
-                    <label className="block text-sm font-medium">{l('goal')}<select className={input} value={goalId} onChange={e => setGoalId(e.target.value)}><option value="">{l('none')}</option>{goals.map(goal => <option key={goal.id} value={goal.id}>{goal.title}</option>)}</select></label>
+                    <label className="block text-sm font-semibold">{l('goal')}<select className={input} value={goalId} onChange={e => setGoalId(e.target.value)}><option value="">{l('none')}</option>{goals.map(goal => <option key={goal.id} value={goal.id}>{goal.title}</option>)}</select></label>
                     <Button type="submit" variant="secondary" disabled={!selectedGoal}>{l('linkGoal')}</Button>
                 </form>}
                 {work.action && <form className="space-y-2" onSubmit={event => { event.preventDefault(); void mutate('reflection', 'PUT', { revision: work.revision, workspace_revision: reflectionRevision, reflection }); }}>
-                    <label className="block text-sm font-medium">{l('reflection')}<textarea className={input} rows={3} maxLength={1000} value={reflection} onChange={e => { setReflection(e.target.value); setSaved(false); }} /></label>
+                    <label className="block text-sm font-semibold">{l('reflection')}<textarea className={input} rows={3} maxLength={1000} value={reflection} onChange={e => { setReflection(e.target.value); setSaved(false); }} /></label>
                     <Button type="submit" variant="secondary" disabled={reflection === (work.event?.reflection ?? work.action.reflection)}>{l('saveReflection')}</Button>
                 </form>}
-                {work.submission && <section className="space-y-3 rounded-lg border border-indigo-200 bg-indigo-50 p-3" aria-label={l('shared')}>
+                {work.submission && <section className="space-y-4 rounded-card border border-brand-line bg-brand-soft p-4" aria-label={l('shared')}>
                     <h4 className="font-semibold">{l('shared')}</h4><SharedText value={work.submission} />
-                    {work.feedback && <div className="space-y-2 border-t border-indigo-200 pt-3"><h5 className="font-semibold">{l('feedback')}</h5><p className="whitespace-pre-wrap text-sm">{work.feedback}</p></div>}
-                    <Button type="button" variant="secondary" onClick={() => { if (window.confirm(l('confirmWithdraw'))) void mutate(`submission?revision=${work.revision}`, 'DELETE'); }}>{l('withdraw')}</Button>
+                    {work.feedback && <div className="space-y-2 border-t border-brand-line pt-4"><h5 className="font-semibold">{l('feedback')}</h5><p className="whitespace-pre-wrap text-sm">{work.feedback}</p></div>}
+                    {confirmWithdraw
+                        ? <ConfirmInline question={l('confirmWithdraw')} busy={busy} onConfirm={() => { setConfirmWithdraw(false); void mutate(`submission?revision=${work.revision}`, 'DELETE'); }} onCancel={() => setConfirmWithdraw(false)} />
+                        : <Button type="button" variant="secondary" onClick={() => setConfirmWithdraw(true)}>{l('withdraw')}</Button>}
                 </section>}
-                {!!work.history?.length && <details className="rounded-lg border border-slate-200 p-3">
+                {!!work.history?.length && <details className="rounded-card border border-line p-4">
                     <summary className="cursor-pointer py-2 font-semibold">{l('history')}</summary>
-                    {work.history.map(item => <div key={item.id} className="space-y-2 border-t border-slate-200 py-3">
-                        {item.submitted_at && <p className="text-xs text-slate-500">{new Date(item.submitted_at).toLocaleString(lang)}</p>}
+                    {work.history.map(item => <div key={item.id} className="space-y-2 border-t border-line py-4">
+                        {item.submitted_at && <p className="text-xs text-ink-muted">{new Date(item.submitted_at).toLocaleString(lang)}</p>}
                         <SharedText value={item.submission} />
                         {item.feedback && <p className="whitespace-pre-wrap text-sm">{item.feedback}</p>}
                     </div>)}
                 </details>}
-                <details ref={shareSection} className="rounded-lg border border-slate-200 p-3">
+                <details ref={shareSection} className="rounded-card border border-line p-4">
                     <summary className="cursor-pointer py-2 font-semibold">{l('submission')}</summary>
-                    <form className="mt-3 space-y-3" onSubmit={event => {
+                    <form className="mt-4 space-y-4" onSubmit={event => {
                         event.preventDefault(); void mutate('submission', 'POST', { revision: work.revision, text: shareText,
                             portfolio_id: selectedPortfolio?.id || null, portfolio_updated_at: selectedPortfolio ? selectedPortfolio.updated_at || selectedPortfolio.created_at : null, new_attempt: newAttempt });
                     }}>
-                        <p className="text-sm text-slate-600">{l('shareHelp')}</p>
+                        <p className="text-sm text-ink-muted">{l('shareHelp')}</p>
                         {reflection && <Button type="button" variant="secondary" onClick={() => setShareText(reflection)}>{l('useReflection')}</Button>}
-                        <label className="block text-sm font-medium">{l('shareText')}<textarea className={input} rows={4} maxLength={3000} value={shareText} onChange={e => { setShareText(e.target.value); setSaved(false); }} /></label>
-                        <label className="block text-sm font-medium">{l('portfolio')}<select className={input} value={portfolioId} onChange={e => setPortfolioId(e.target.value)}><option value="">{l('none')}</option>{portfolio.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
-                        <section className="space-y-2 rounded-md bg-slate-50 p-3" aria-label={l('preview')}><h5 className="text-sm font-semibold">{l('preview')}</h5>
+                        <label className="block text-sm font-semibold">{l('shareText')}<textarea className={input} rows={4} maxLength={3000} value={shareText} onChange={e => { setShareText(e.target.value); setSaved(false); }} /></label>
+                        <label className="block text-sm font-semibold">{l('portfolio')}<select className={input} value={portfolioId} onChange={e => setPortfolioId(e.target.value)}><option value="">{l('none')}</option>{portfolio.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
+                        <section className="space-y-2 rounded-control bg-surface-sunken p-4" aria-label={l('preview')}><h5 className="text-sm font-semibold">{l('preview')}</h5>
                             {/* F29 (lotto 5A): destinatario esplicito e copia che non si aggiorna. */}
-                            {authorName && <p className="text-xs text-slate-600"><strong>{assignmentText(lang, 'recipient')}:</strong> {authorName}</p>}
-                            {work.submitted_at && <p className="text-xs text-slate-500">{l('copyStays')}</p>}
+                            {authorName && <p className="text-xs text-ink-muted"><strong>{assignmentText(lang, 'recipient')}:</strong> {authorName}</p>}
+                            {work.submitted_at && <p className="text-xs text-ink-muted">{l('copyStays')}</p>}
                             <SharedText value={preview} /></section>
                         <Button type="submit" disabled={!shareText.trim() && !selectedPortfolio}>{l('share')}</Button>
                     </form>
@@ -174,16 +178,16 @@ export function AssignmentWork({ assignmentId, authorName, onDraftStateChange }:
         const check = () => { if (window.location.hash === `#assignment-${assignmentId}`) setOpen(true); };
         check(); window.addEventListener('hashchange', check); return () => window.removeEventListener('hashchange', check);
     }, [assignmentId]);
-    return <div className="space-y-3"><Button type="button" variant="secondary" aria-expanded={open} onClick={() => setOpen(true)}>{learningText(lang, 'openWork')}</Button>{open && <WorkEditor key={assignmentId} assignmentId={assignmentId} authorName={authorName} onDraftStateChange={onDraftStateChange} />}</div>;
+    return <div className="space-y-4"><Button type="button" variant="secondary" aria-expanded={open} onClick={() => setOpen(true)}>{learningText(lang, 'openWork')}</Button>{open && <WorkEditor key={assignmentId} assignmentId={assignmentId} authorName={authorName} onDraftStateChange={onDraftStateChange} />}</div>;
 }
 
 function FeedbackEditor({ row, onSave }: { row: SharedWork; onSave: (text: string) => Promise<void> }) {
     const { lang } = useI18n(); const [text, setText] = useState(row.feedback);
     useDraftGuard(text !== row.feedback, lang);
-    return <article className="space-y-3 rounded-lg border border-slate-200 p-3">
+    return <article className="space-y-4 rounded-card border border-line p-4">
         <h4 className="font-semibold">{row.username}</h4>{row.submission && <SharedText value={row.submission} />}
         <form className="space-y-2" onSubmit={event => { event.preventDefault(); void onSave(text); }}>
-            <label className="block text-sm font-medium">{learningText(lang, 'feedback')}<textarea className={input} rows={3} maxLength={3000} required value={text} onChange={e => setText(e.target.value)} /></label>
+            <label className="block text-sm font-semibold">{learningText(lang, 'feedback')}<textarea className={input} rows={3} maxLength={3000} required value={text} onChange={e => setText(e.target.value)} /></label>
             <Button type="submit" disabled={!text.trim()}>{learningText(lang, 'sendFeedback')}</Button>
         </form>
     </article>;
@@ -194,13 +198,13 @@ export function AssignmentSubmissions({ assignmentId }: { assignmentId: number }
     const [error, setError] = useState<unknown>(null); const [busy, setBusy] = useState(false); const [saved, setSaved] = useState(false);
     const base = `/teacher/assignments/${assignmentId}/submissions`;
     const load = async () => { setBusy(true); setError(null); setSaved(false); try { setRows(await request<SharedWork[]>(base)); } catch (e) { setError(e); } finally { setBusy(false); } };
-    return <section className="space-y-3 border-t border-slate-200 pt-3" aria-label={learningText(lang, 'submissions')}>
+    return <section className="space-y-4 border-t border-line pt-4" aria-label={learningText(lang, 'submissions')}>
         <Button type="button" variant="secondary" disabled={busy} onClick={() => void load()}>{learningText(lang, rows ? 'reload' : 'submissions')}</Button>
         {busy && <p role="status">{assignmentText(lang, 'loading')}</p>}
         {saved && <p role="status">{learningText(lang, 'saved')}</p>}
         {error != null && <p role="alert">{error instanceof GoalError && error.status === 409 ? learningText(lang, 'conflict') : assignmentText(lang, 'error')}</p>}
-        {rows?.length === 0 && <p className="text-sm text-slate-600">{learningText(lang, 'noSubmissions')}</p>}
-        <fieldset disabled={busy} className="space-y-3">{rows?.map(row => <FeedbackEditor key={`${row.username}-${row.revision}`} row={row} onSave={async text => {
+        {rows?.length === 0 && <p className="text-sm text-ink-muted">{learningText(lang, 'noSubmissions')}</p>}
+        <fieldset disabled={busy} className="space-y-4">{rows?.map(row => <FeedbackEditor key={`${row.username}-${row.revision}`} row={row} onSave={async text => {
             setBusy(true); setError(null); setSaved(false);
             try { const updated = await request<SharedWork>(`${base}/${encodeURIComponent(row.username)}/feedback`, 'PUT', { revision: row.revision, text }); setRows(previous => previous?.map(item => item.username === row.username ? updated : item) || []); setSaved(true); }
             catch (e) { setError(e); } finally { setBusy(false); }

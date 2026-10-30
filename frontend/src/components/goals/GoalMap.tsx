@@ -16,9 +16,9 @@ const GoalNode = memo(function GoalNode({ data }: NodeProps<Node<GoalNodeData>>)
     const { lang } = useI18n();
     return <div style={{ width: WIDTH }}>
         <Handle type="target" position={Position.Top} isConnectable={false} />
-        <button type="button" onClick={() => data.onOpen(data.goal.id)} className="block w-full rounded-lg border border-slate-300 bg-white p-2 text-left shadow-sm hover:border-indigo-400 focus-visible:outline-2 focus-visible:outline-cyan-600">
+        <button type="button" onClick={() => data.onOpen(data.goal.id)} className="block w-full rounded-control border border-line-strong bg-surface p-2 text-left shadow-card hover:border-brand focus-visible:outline-2 focus-visible:outline-focus">
             <span className="line-clamp-2 break-words text-sm font-semibold">{data.goal.title}</span>
-            <span className="flex items-center gap-1 text-xs text-slate-600">{data.detail}{data.shared && <> · <Users className="h-3 w-3" aria-hidden /><span className="sr-only">{goalText(lang, 'sharedMark')}</span></>}</span>
+            <span className="flex items-center gap-1 text-xs text-ink-muted">{data.detail}{data.shared && <> · <Users className="h-3 w-3" aria-hidden /><span className="sr-only">{goalText(lang, 'sharedMark')}</span></>}</span>
         </button>
         <Handle type="source" position={Position.Bottom} isConnectable={false} />
     </div>;
@@ -46,7 +46,7 @@ export function GoalMap({ goals, all, onOpen }: { goals: PersonalGoal[]; all: Pe
         return { nodes, edges };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- l depends only on lang
     }, [goals, all, lang, onOpen]);
-    return <section aria-label={l('mapLabel')} className="hidden h-[70vh] overflow-hidden rounded-xl border border-slate-200 bg-slate-50 lg:block">
+    return <section aria-label={l('mapLabel')} className="hidden h-[70vh] overflow-hidden rounded-card border border-line bg-surface-sunken lg:block">
         <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.2 }}
             nodesDraggable={false} nodesConnectable={false} nodesFocusable={false} edgesFocusable={false} proOptions={{ hideAttribution: true }}>
             <Background /><Controls showInteractive={false} />

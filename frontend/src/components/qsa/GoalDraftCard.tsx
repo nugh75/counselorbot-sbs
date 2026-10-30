@@ -46,11 +46,11 @@ export function GoalDraftCard({ questionnaireType, sessionId, draft, onChange }:
         finally { setSaving(false); }
     };
 
-    return <section aria-labelledby="goal-draft-title" className="max-h-[60vh] space-y-3 overflow-y-auto border-t border-slate-200 bg-white p-4">
-        <h2 id="goal-draft-title" className="text-sm font-bold text-slate-800">{t('goalDraft.title')}</h2>
-        <p className="text-sm text-slate-600">{t(draft ? 'goalDraft.intro' : 'goalDraft.introEmpty')}</p>
+    return <section aria-labelledby="goal-draft-title" className="max-h-[60vh] space-y-4 overflow-y-auto border-t border-line bg-surface p-4">
+        <h2 id="goal-draft-title" className="text-sm font-semibold text-ink">{t('goalDraft.title')}</h2>
+        <p className="text-sm text-ink-muted">{t(draft ? 'goalDraft.intro' : 'goalDraft.introEmpty')}</p>
         <form onSubmit={e => { e.preventDefault(); void save(); }}>
-            <fieldset disabled={saving || saved} className="space-y-3">
+            <fieldset disabled={saving || saved} className="space-y-4">
                 <Field label={t('goalDraft.field.title')}><input className={input} required maxLength={160} value={form.title} onChange={e => set('title', e.target.value)} /></Field>
                 {(['motivation', 'criteria', 'reflection'] as const).map(key => <Field key={key} label={t(`goalDraft.field.${key}`)}>
                     <textarea className={input} rows={2} maxLength={key === 'motivation' ? 2000 : key === 'criteria' ? 1500 : 3000} value={form[key]} onChange={e => set(key, e.target.value)} />
@@ -59,7 +59,7 @@ export function GoalDraftCard({ questionnaireType, sessionId, draft, onChange }:
                 {!saved && <Button type="submit"><Save className="h-4 w-4" aria-hidden="true" />{t(saving ? 'goalDraft.saving' : 'goalDraft.save')}</Button>}
             </fieldset>
         </form>
-        {saved && <p role="status" className="text-sm text-emerald-700">{t('goalDraft.saved')} <a className="underline" href="/profilo/obiettivi">{t('goalDraft.open')}</a></p>}
+        {saved && <p role="status" className="text-sm text-success">{t('goalDraft.saved')} <a className="underline" href="/profilo/obiettivi">{t('goalDraft.open')}</a></p>}
         {questionnaireType === 'OBIETTIVO_DOCENZA' && <>
             {!catalogDraft && <Button type="button" variant="secondary" disabled={saving || !form.title.trim()} onClick={() => {
                 setCatalogDraft({ title: form.title, description: form.motivation, criteria: form.criteria,

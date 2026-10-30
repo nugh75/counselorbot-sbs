@@ -19,18 +19,18 @@ export function GoalTree({ goals, forest, groups, onOpen, onAddChild }: Props) {
         const { done, total } = progress(goals, goal.id);
         const shares = [...effectiveShares(goals, goal.id).keys()].map(id => groups.find(group => group.id === id)?.name ?? `#${id}`);
         return <li key={node.key} className="space-y-1">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-slate-200 bg-white p-2 sm:p-3">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-card border border-line bg-surface p-2 sm:p-4">
                 {node.children.length > 0
-                    ? <button type="button" aria-expanded={open} aria-label={`${l(open ? 'collapse' : 'expand')} ${goal.title}`} onClick={() => flip(node.key)} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md hover:bg-slate-100">{open ? <ChevronDown className="h-5 w-5" aria-hidden /> : <ChevronRight className="h-5 w-5" aria-hidden />}</button>
-                    : <span className="w-11 shrink-0" aria-hidden />}
-                <button type="button" onClick={() => onOpen(goal.id)} className="min-h-11 min-w-0 flex-1 break-words text-left font-semibold hover:underline">{goal.title}</button>
-                <span className="text-sm text-slate-600">{l(goal.status as GoalTextKey)}{goal.review_date && ` · ${l('reviewDate')}: ${goal.review_date}`}{total > 0 && ` · ${done}/${total} ${l('subgoalsDone')}`}</span>
-                {shares.length > 0 && <span className="inline-flex items-center gap-1 text-sm text-slate-600"><Users className="h-4 w-4" aria-hidden /><span className="sr-only">{l('share')}:</span>{shares.join(', ')}</span>}
+                    ? <button type="button" aria-expanded={open} aria-label={`${l(open ? 'collapse' : 'expand')} ${goal.title}`} onClick={() => flip(node.key)} className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control hover:bg-surface-raised">{open ? <ChevronDown className="h-5 w-5" aria-hidden /> : <ChevronRight className="h-5 w-5" aria-hidden />}</button>
+                    : <span className="w-control shrink-0" aria-hidden />}
+                <button type="button" onClick={() => onOpen(goal.id)} className="min-h-control min-w-0 flex-1 break-words text-left font-semibold hover:underline">{goal.title}</button>
+                <span className="text-sm text-ink-muted">{l(goal.status as GoalTextKey)}{goal.review_date && ` · ${l('reviewDate')}: ${goal.review_date}`}{total > 0 && ` · ${done}/${total} ${l('subgoalsDone')}`}</span>
+                {shares.length > 0 && <span className="inline-flex items-center gap-1 text-sm text-ink-muted"><Users className="h-4 w-4" aria-hidden /><span className="sr-only">{l('share')}:</span>{shares.join(', ')}</span>}
                 <Button type="button" variant="ghost" aria-label={`${l('addSubgoal')}: ${goal.title}`} onClick={() => onAddChild(goal.id)}><Plus className="h-5 w-5" aria-hidden /></Button>
-                {node.otherParents.length > 0 && <p className="flex basis-full items-center gap-1 pl-13 text-xs text-slate-500"><Link2 className="h-3 w-3 shrink-0" aria-hidden />{l('alsoUnder')}: {node.otherParents.map(parent => parent.title).join(', ')}</p>}
-                {node.depth >= 4 && <p className="flex basis-full items-center gap-1 pl-13 text-xs text-slate-500"><CornerDownRight className="h-3 w-3 shrink-0" aria-hidden />{goalFormat(lang, 'level', { n: node.depth + 1 })}</p>}
+                {node.otherParents.length > 0 && <p className="flex basis-full items-center gap-1 pl-13 text-xs text-ink-muted"><Link2 className="h-3 w-3 shrink-0" aria-hidden />{l('alsoUnder')}: {node.otherParents.map(parent => parent.title).join(', ')}</p>}
+                {node.depth >= 4 && <p className="flex basis-full items-center gap-1 pl-13 text-xs text-ink-muted"><CornerDownRight className="h-3 w-3 shrink-0" aria-hidden />{goalFormat(lang, 'level', { n: node.depth + 1 })}</p>}
             </div>
-            {open && node.children.length > 0 && <ul className={`space-y-1 ${node.depth < 3 ? 'pl-3 sm:pl-6' : ''}`}>{node.children.map(render)}</ul>}
+            {open && node.children.length > 0 && <ul className={`space-y-1 ${node.depth < 3 ? 'pl-4 sm:pl-6' : ''}`}>{node.children.map(render)}</ul>}
         </li>;
     };
     return <ul className="space-y-2" aria-label={l('goals')}>{forest.map(render)}</ul>;

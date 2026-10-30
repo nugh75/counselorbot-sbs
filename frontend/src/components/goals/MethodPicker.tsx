@@ -29,10 +29,10 @@ export function MethodPicker({ value, items, onChange, onPractice, disabled, pra
     };
     return <section className="space-y-2" aria-label={l('method')}>
         <h4 className="font-semibold">{l('method')}</h4>
-        {practiceHelp && <p id="goal-practice-help" className="text-sm text-slate-600">{practiceHelp}</p>}
-        <ul className="space-y-1">{value.map(ref => <li key={ref.kind === 'own' ? `o${ref.id}` : `c${ref.slug}`} className="flex items-center gap-2 rounded-md bg-slate-50 px-2">
-            {ref.kind === 'own' ? <PenLine className="h-4 w-4 shrink-0 text-slate-500" aria-hidden /> : <BadgeCheck className="h-4 w-4 shrink-0 text-indigo-700" aria-hidden />}
-            <span className="min-w-0 flex-1 break-words py-2">{titleOf(ref)} <span className="text-xs text-slate-500">({l(ref.kind === 'own' ? 'ownMark' : 'certifiedMark')})</span></span>
+        {practiceHelp && <p id="goal-practice-help" className="text-sm text-ink-muted">{practiceHelp}</p>}
+        <ul className="space-y-1">{value.map(ref => <li key={ref.kind === 'own' ? `o${ref.id}` : `c${ref.slug}`} className="flex items-center gap-2 rounded-control bg-surface-sunken px-2">
+            {ref.kind === 'own' ? <PenLine className="h-4 w-4 shrink-0 text-ink-muted" aria-hidden /> : <BadgeCheck className="h-4 w-4 shrink-0 text-link" aria-hidden />}
+            <span className="min-w-0 flex-1 break-words py-2">{titleOf(ref)} <span className="text-xs text-ink-muted">({l(ref.kind === 'own' ? 'ownMark' : 'certifiedMark')})</span></span>
             {onPractice && <Button type="button" variant="secondary" disabled={disabled || practiceDisabled} aria-describedby={practiceHelp ? "goal-practice-help" : undefined} onClick={() => onPractice(titleOf(ref))}>{l('putInPractice')}</Button>}
             <Button type="button" variant="ghost" disabled={disabled} aria-label={`${l('removeStrategy')}: ${titleOf(ref)}`} title={l('removeStrategy')} onClick={() => onChange(value.filter(v => !sameRef(v, ref)))}><X className="h-4 w-4" aria-hidden /></Button>
         </li>)}</ul>
@@ -44,6 +44,6 @@ export function MethodPicker({ value, items, onChange, onPractice, disabled, pra
             </select></Field></div></div>
         <div className="flex flex-wrap items-end gap-2"><div className="min-w-0 flex-1"><Field label={l('writeStrategy')}>
             <input className={input} maxLength={300} disabled={disabled} value={draft} onChange={e => setDraft(e.target.value)} /></Field></div>
-            <Button type="button" variant="secondary" disabled={disabled || !draft.trim()} className="w-11 px-0" aria-label={l('addStrategy')} title={l('addStrategy')} onClick={() => void write()}><Plus className="h-4 w-4" aria-hidden /></Button></div>
+            <Button type="button" variant="secondary" disabled={disabled || !draft.trim()} className="w-control px-0" aria-label={l('addStrategy')} title={l('addStrategy')} onClick={() => void write()}><Plus className="h-4 w-4" aria-hidden /></Button></div>
     </section>;
 }

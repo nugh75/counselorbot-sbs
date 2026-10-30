@@ -79,16 +79,16 @@ export function PlanActivityFlow({ pathId, stepId }: { pathId: number; stepId: n
     };
     const readOnly = attempt?.state === 'completed';
     return <div className="space-y-4" data-testid="plan-activity">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-card border border-line bg-surface p-4">
             <div className="min-w-0">
                 <Button variant="ghost" onClick={() => void leave()} disabled={busy}>← {l('back')}</Button>
                 <GuideHelpLink task="resume" />
-                {activity && <p className="px-3 text-sm text-slate-600">{activity.path_title} · {activity.position}. {activity.title}</p>}
-                {saveState && !readOnly && <p role="status" className="px-3 text-xs text-slate-600">{l(saveState === 'error' ? 'saveFailed' : saveState === 'saved' ? 'savedActivity' : 'saving')}</p>}
+                {activity && <p className="px-4 text-sm text-ink-muted">{activity.path_title} · {activity.position}. {activity.title}</p>}
+                {saveState && !readOnly && <p role="status" className="px-4 text-xs text-ink-muted">{l(saveState === 'error' ? 'saveFailed' : saveState === 'saved' ? 'savedActivity' : 'saving')}</p>}
             </div>
             {activity && !readOnly && <Button variant="secondary" onClick={() => void leave()}
                 disabled={busy || (!readyToSave && activity.kind !== 'analysis')}>{l(busy ? 'saving' : 'saveExit')}</Button>}
-            {readOnly && <span className="px-3 text-sm font-semibold text-emerald-700">{l('readOnly')}</span>}
+            {readOnly && <span className="px-4 text-sm font-semibold text-success">{l('readOnly')}</span>}
         </div>
         {error && <Callout variant="danger"><p>{l('error')}</p><Button onClick={() => setReload(value => value + 1)}>{l('retry')}</Button></Callout>}
         {!activity && !error && <p role="status">{l('loading')}</p>}

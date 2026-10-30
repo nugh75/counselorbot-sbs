@@ -12,7 +12,7 @@ export function ForumDiscussionLinks({ links, kind, targetId }: {
     const { lang } = useI18n();
     return <div className="flex flex-wrap gap-x-4">{links.filter(link => link.kind === kind && link.id === targetId).map(link =>
         <Link key={link.topic_id} href={`/profilo/classi/${link.group_id}/forum?topic=${link.topic_id}`}
-            className="inline-flex min-h-[44px] items-center text-sm font-semibold text-indigo-700 underline">
+            className="inline-flex min-h-[44px] items-center text-sm font-semibold text-link underline">
             {forumText(lang, 'discuss')}
         </Link>)}</div>;
 }

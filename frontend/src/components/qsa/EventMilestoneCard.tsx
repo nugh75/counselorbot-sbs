@@ -52,27 +52,27 @@ export function EventMilestoneCard({ sessionId, draft }: { sessionId: string; dr
         }
     };
 
-    const inputClass = 'mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400';
-    const label = 'text-xs font-semibold uppercase tracking-wide text-slate-500';
+    const inputClass = 'mt-1 w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus';
+    const label = 'text-xs font-semibold text-ink-muted';
     const text = (key: keyof EventBookletForm, title: string, rows = 2, hint?: string) => (
         <label className="block">
             <span className={label}>{title}</span>
-            {hint && <span className="ml-2 text-xs text-slate-400">{hint}</span>}
+            {hint && <span className="ml-2 text-xs text-ink-muted">{hint}</span>}
             <textarea value={form[key]} rows={rows} disabled={Boolean(saved)} onChange={(event) => set(key, event.target.value)} className={`${inputClass} resize-y`} />
         </label>
     );
 
     return (
-        <section aria-labelledby="event-milestone-title" className="max-h-[60vh] space-y-3 overflow-y-auto border-t border-slate-200 bg-white p-4">
+        <section aria-labelledby="event-milestone-title" className="max-h-[60vh] space-y-4 overflow-y-auto border-t border-line bg-surface p-4">
             <div>
-                <h2 id="event-milestone-title" className="text-sm font-bold text-slate-800">{t('eventMilestone.title')}</h2>
-                <p className="mt-1 text-sm text-slate-600">{t(draft ? 'eventBooklet.intro' : 'eventBooklet.introEmpty')}</p>
+                <h2 id="event-milestone-title" className="text-sm font-semibold text-ink">{t('eventMilestone.title')}</h2>
+                <p className="mt-1 text-sm text-ink-muted">{t(draft ? 'eventBooklet.intro' : 'eventBooklet.introEmpty')}</p>
             </div>
             <label className="block">
                 <span className={label}>{t('eventBooklet.field.title')}</span>
                 <input value={form.title} disabled={Boolean(saved)} onChange={(event) => set('title', event.target.value)} className={inputClass} />
             </label>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
                 <label className="block">
                     <span className={label}>{t('eventBooklet.field.date')}</span>
                     <input type="date" value={form.bio_date} disabled={Boolean(saved)} onChange={(event) => set('bio_date', event.target.value)} className={inputClass} />
@@ -86,23 +86,23 @@ export function EventMilestoneCard({ sessionId, draft }: { sessionId: string; dr
                 </label>
             </div>
             {text('bio_context', t('eventBooklet.field.context'))}
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
                 {text('worked', t('eventBooklet.field.worked'), 3, t('eventBooklet.itemsHint'))}
                 {text('didNotWork', t('eventBooklet.field.didNotWork'), 3, t('eventBooklet.itemsHint'))}
             </div>
             {text('discovery', t('eventBooklet.field.reading'), 3)}
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
                 {text('objective', t('eventBooklet.field.try'))}
                 {text('strategy', t('eventBooklet.field.howWhen'))}
             </div>
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-4">
                 {saved ? (
                     <>
-                        <p role="status" className="text-sm font-semibold text-emerald-700">
+                        <p role="status" className="text-sm font-semibold text-success">
                             {t('eventMilestone.saved')} <a className="underline" href="/profilo/timeline">{t('eventMilestone.open')}</a>
                         </p>
                         {saved.tryNext && (
-                            <a className="text-sm font-semibold text-indigo-700 underline"
+                            <a className="text-sm font-semibold text-link underline"
                                 href={`/profilo/obiettivi?new=1&origin=${encodeURIComponent(`event:${saved.eventId}`)}&title=${encodeURIComponent(saved.tryNext.slice(0, 160))}`}>
                                 {t('eventMilestone.toGoal')}
                             </a>
