@@ -310,34 +310,34 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
             <p className="text-sm text-ink-muted">{l('personalAIHelp')}</p>
         </Card>
         <Card>
-            <h2 className="text-lg font-semibold text-ink">Formato e lunghezza risposte</h2>
-            <p className="text-sm text-ink-muted">Impostazione del docente per la classe: se valorizzata, sostituisce la scelta dello studente in chat.</p>
+            <h2 className="text-lg font-semibold text-ink">{l('responseSettingsTitle')}</h2>
+            <p className="text-sm text-ink-muted">{l('responseSettingsHelp')}</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <label className="flex min-w-0 flex-col gap-1 text-sm text-ink-body">{l('responseFormatLabel')}
                     <select className="min-h-[44px] rounded-control border border-line-strong bg-surface px-2" value={responseFormat ?? ''} disabled={busy}
                         onChange={event => { if (!pending.current) { setResponseFormat((event.target.value || null) as ResponseFormat | null); setNotice(null); } }}>
                         <option value="">{l('studentDefault')}</option>
-                        <option value="standard">Discorsivo</option>
-                        <option value="bullets">Per punti</option>
-                        <option value="table">Tabella</option>
+                        <option value="standard">{l('formatProse')}</option>
+                        <option value="bullets">{l('formatBullets')}</option>
+                        <option value="table">{l('formatTable')}</option>
                     </select>
                 </label>
                 <label className="flex min-w-0 flex-col gap-1 text-sm text-ink-body">{l('responseLengthLabel')}
                     <select className="min-h-[44px] rounded-control border border-line-strong bg-surface px-2" value={responseLength ?? ''} disabled={busy}
                         onChange={event => { if (!pending.current) { setResponseLength((event.target.value || null) as "short" | "medium" | "long" | null); setNotice(null); } }}>
                         <option value="">{l('studentDefault')}</option>
-                        <option value="short">Breve</option>
-                        <option value="medium">Media</option>
-                        <option value="long">Lunga</option>
+                        <option value="short">{l('lengthShort')}</option>
+                        <option value="medium">{l('lengthMedium')}</option>
+                        <option value="long">{l('lengthLong')}</option>
                     </select>
                 </label>
                 <label className="flex min-w-0 flex-col gap-1 text-sm text-ink-body">{l('reasoningLabel')}
                     <select className="min-h-[44px] rounded-control border border-line-strong bg-surface px-2" value={responseReasoning ?? ''} disabled={busy}
                         onChange={event => { if (!pending.current) { setResponseReasoning((event.target.value || null) as "off" | "standard" | "deep" | null); setNotice(null); } }}>
                         <option value="">{l('studentDefault')}</option>
-                        <option value="off">Off</option>
-                        <option value="standard">Standard</option>
-                        <option value="deep">Deep</option>
+                        <option value="off">{l('reasoningOff')}</option>
+                        <option value="standard">{l('reasoningStandard')}</option>
+                        <option value="deep">{l('reasoningDeep')}</option>
                     </select>
                 </label>
             </div>
