@@ -81,3 +81,26 @@ def test_real_model_json_fence_does_not_leak_or_lose_notes():
     ordinary = 'Esempio:\n```json\n{"name": "Ada", "year": 2026}\n```'
     assert strip_for_display(ordinary) == ordinary
     assert extract(ordinary)[0] == ordinary
+
+
+def test_notes_listed_directly_under_recommendations_do_not_leak():
+    # Shape seen in production (Gemini 2.5 Flash): the notes array sits
+    # directly under "recommendations" inside a ```json fence.
+    import json
+    from backend.recommendation_blocks import extract_notes
+    question = 'Che cosa fai quando la concentrazione cala?'
+    reading = 'Forse conosci bene i tuoi obiettivi ma fatichi a mantenerli.'
+    prefix = reading + ' ' + question + '\n'
+    raw = prefix + '```json\n' + json.dumps({'recommendations': [
+        {'kind': 'hypothesis', 'lens': 'C1', 'text': reading},
+        {'kind': 'question', 'text': question},
+    ]}) + '\n```'
+    for end in range(len(prefix), len(raw) + 1):
+        assert strip_for_display(raw[:end]).strip() == prefix.strip()
+    visible, selected = extract(raw)
+    assert visible == prefix.strip()
+    assert selected == {'reading': [], 'strategy': []}
+    notes = extract_notes(raw, visible, advice_allowed=False, hypothesis_allowed=True)
+    assert [note['kind'] for note in notes] == ['hypothesis', 'question']
+    ordinary = 'Esempio:\n```json\n{"recommendations": ["leggi di piu"]}\n```'
+    assert extract(ordinary)[0] == ordinary
