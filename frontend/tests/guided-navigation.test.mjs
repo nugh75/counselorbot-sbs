@@ -9,7 +9,7 @@ const event = value => `data: ${JSON.stringify(value)}\n\n`;
 async function fixture(width, instrument = 'QSA', experience = 'standard') {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
     const page = await context.newPage(); page.setDefaultTimeout(15000);
-    const state = { streams: [], freezes: [], workspaces: 0, errors: [], fail: false, snapshot: null };
+    const state = { streams: [], freezes: [], errors: [], fail: false, snapshot: null };
     page.on('pageerror', error => state.errors.push(error.message));
     await page.addInitScript(({ instrument, experience }) => {
         localStorage.setItem('cb_lang', 'it'); localStorage.setItem('counselorbot_selected_counselor', '1');
@@ -35,10 +35,9 @@ async function fixture(width, instrument = 'QSA', experience = 'standard') {
         else if (url.pathname === '/api/idea/map') data = { spec: null, revision_id: null, missing_roles: [], complete: false, focus: null, owners: {} };
         else if (url.pathname === '/api/idea/reference') return route.fulfill({ status: 404, json: {} });
         else if (url.pathname.endsWith('/recommendations')) data = { reading: [], strategy: [] };
-        else if (url.pathname === '/api/opencode/workspace') { state.workspaces++; data = { key: 'prefs', session_id: 'oc-prefs', api_available: true, needs_seed: false, history: [{ role: 'assistant', content: 'Benvenuto' }] }; }
         else if (url.pathname === '/api/orientation/sessions') data = { session_id: 'compass-prefs', counselor_id: 1, status: 'in_progress', language: 'it', messages: [{ role: 'assistant', content: 'Cosa vuoi affrontare?' }], recommendations: [] };
         else if (url.pathname.endsWith('/message')) { state.streams.push(req.postDataJSON()); data = { session_id: 'compass-prefs', counselor_id: 1, status: 'in_progress', language: 'it', messages: [{ role: 'assistant', content: '| Tema | Passo |\n| --- | --- |\n| Studio | Prova |' }], recommendations: [] }; }
-        else if (['/api/chat/stream', '/api/site-chat/stream', '/api/opencode/workspace/prefs/chat'].includes(url.pathname)) {
+        else if (['/api/chat/stream', '/api/site-chat/stream'].includes(url.pathname)) {
             const body = req.postDataJSON(); state.streams.push(body);
             if (state.fail) return route.fulfill({ status: 503, json: {} });
             if (state.script) {

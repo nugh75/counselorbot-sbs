@@ -51,8 +51,7 @@ async function fixture(width = 390, { initialError = false, experience = 'standa
             data = url.pathname.endsWith('/summary') ? { summary: 'Sintesi disponibile.' } : [{ role: 'counselor', text: 'Conversazione disponibile.' }];
         }
         else if (url.pathname.endsWith('/recommendations')) data = { reading: [], strategy: [] };
-        else if (url.pathname === '/api/opencode/workspace') data = { key: 'recovery', api_available: true, session_id: 'opencode-test', needs_seed: false, history: snapshot.messages.filter(message => message.role !== 'system') };
-        else if (['/api/chat/stream', '/api/site-chat/stream', '/api/opencode/workspace/recovery/chat'].includes(url.pathname)) {
+        else if (['/api/chat/stream', '/api/site-chat/stream'].includes(url.pathname)) {
             control.streams.push(request.postDataJSON());
             if (stepError && stepErrorHTTP && control.streams.length === 1) return route.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ error: 'Private upstream details', error_code: stepError }) });
             if (stepError) return route.fulfill({ contentType: 'text/event-stream', body: control.streams.length === 1
@@ -60,7 +59,7 @@ async function fixture(width = 390, { initialError = false, experience = 'standa
                 : event({ display: 'Risposta recuperata.' }) + event({ done: true, response: 'Risposta recuperata.' }) });
             if (control.streams.length === 2) return route.fulfill({ status: 503, body: '{}' });
             const body = control.streams.length === 1
-                ? event({ session_id: url.pathname.includes('/opencode/') ? 'opencode-test' : 'recovery', conversation_id: 'turn-session' }) + event({ display: 'Studia e' })
+                ? event({ session_id: 'recovery', conversation_id: 'turn-session' }) + event({ display: 'Studia e' })
                     + (incompleteDone ? event({ done: true, incomplete: true, response: 'Studia e' }) : '')
                 : event({ display: 'Studia e verifica.' }) + event({ done: true, response: 'Studia e verifica.', response_id: 'final-response' });
             return route.fulfill({ contentType: 'text/event-stream', body });
@@ -162,12 +161,12 @@ test('personal pages fetch conversation and summary only in compilations', async
     } finally { await context.close(); }
 });
 
-for (const surface of ['site', 'opencode']) {
+for (const surface of ['site', 'guided']) {
     test(`${surface} chat preserves the partial answer across retry failure`, async () => {
-        const { page, context, control } = await fixture(390, { experience: surface === 'opencode' ? 'opencode' : 'standard' });
+        const { page, context, control } = await fixture(390);
         try {
             await page.goto(`${origin}${surface === 'site' ? '/assistente' : '/?frozen=recovery'}`, { waitUntil: 'networkidle' });
-            const input = surface === 'site' ? page.locator('textarea').first() : page.locator('#opencode-composer');
+            const input = surface === 'site' ? page.locator('textarea').first() : page.locator('#guided-composer');
             await input.fill('Come posso studiare?');
             await input.press('Enter');
             await page.getByText('Studia e verifica.', { exact: true }).last().waitFor();

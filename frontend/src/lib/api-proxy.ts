@@ -19,7 +19,7 @@ function cleanHeaders(source: Headers): Headers {
 
 // The standalone routes manifest freezes next.config rewrites at build time.
 // This fallback handler resolves the upstream on every request, after Next has
-// matched the more specific chat/TTS/OpenCode streaming routes.
+// matched the more specific chat/TTS streaming routes.
 export async function proxyAPI(request: Request): Promise<Response> {
     const url = new URL(request.url);
     if (isShellInternalPath(url.pathname)) return new Response(null, { status: 404 });

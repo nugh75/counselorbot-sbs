@@ -53,8 +53,8 @@ test('the signature changes only when something freezable changes', () => {
     );
 });
 
-test('both chat experiences save on a turn and flush when the student leaves', () => {
-    for (const file of ['GuidedChatInterface', 'OpenCodeExperience']) {
+test('the guided chat saves on a turn and flushes when the student leaves', () => {
+    for (const file of ['GuidedChatInterface']) {
         const source = readFileSync(
             new URL(`../components/qsa/${file}.tsx`, import.meta.url),
             'utf8',
@@ -69,17 +69,6 @@ test('both chat experiences save on a turn and flush when the student leaves', (
         // Percorso concluso: chi chiude cancella lo snapshot, non va ricreato.
         assert.match(source, /completedRef\.current = true;/, file);
     }
-});
-
-test('a resumed OpenCode sandbox keeps its PDF and its transcript', () => {
-    const source = readFileSync(
-        new URL('../components/qsa/OpenCodeExperience.tsx', import.meta.url),
-        'utf8',
-    );
-    // Il workspace rigenera documento.md a ogni apertura: senza token il PDF sparisce.
-    assert.match(source, /pdf_token: pdfToken \|\| null,\n\s*\},\n\s*signature,/);
-    // Workspace ripulito dalla GC: si mostra la trascrizione dello snapshot.
-    assert.match(source, /serverHistory\.length \? serverHistory : restoredMessagesRef\.current/);
 });
 
 test('a resumed session does not reopen the phases already in its transcript', () => {

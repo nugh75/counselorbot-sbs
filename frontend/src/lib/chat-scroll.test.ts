@@ -28,7 +28,7 @@ test('the streaming chats scroll their own container, never the page', () => {
     // scrollIntoView senza `block` scrolla ogni antenato fino al viewport. Con
     // un aggiornamento di stato per token questo trascinava l'intera pagina
     // decine di volte al secondo, e lo scroll risultava bloccato.
-    for (const file of ['../components/qsa/GuidedChatInterface.tsx', '../components/qsa/OpenCodeExperience.tsx']) {
+    for (const file of ['../components/qsa/GuidedChatInterface.tsx']) {
         const source = readFileSync(new URL(file, import.meta.url), 'utf8');
         // Lo spostamento chiesto dal lettore ("Riprendi in chat") resta consentito.
         const scroll = source.indexOf('el.scrollTop = el.scrollHeight');

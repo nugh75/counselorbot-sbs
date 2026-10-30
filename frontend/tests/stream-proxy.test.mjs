@@ -50,7 +50,6 @@ test('ordinary APIs reach the same host development backend', async () => {
 for (const [path, upstream] of [
     ['/api/chat/stream', '/chat/stream'],
     ['/api/site-chat/stream', '/site-chat/stream'],
-    ['/api/opencode/workspace/fixture%20key/chat', '/opencode/workspace/fixture%20key/chat'],
     ['/api/tts/stream', '/tts/stream'],
 ]) {
     test(`${path} uses BACKEND_ORIGIN and preserves streaming and identity`, async () => {
