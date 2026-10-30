@@ -36,3 +36,13 @@ export async function messageDiagramKey(sourceText: string): Promise<string> {
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(sourceText.trim()));
     return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
 }
+
+/** Raggruppa i diagrammi per messaggio: un nuovo disegno si aggiunge, non sostituisce. */
+export function addMessageDiagrams<T extends { source_key: string }>(
+    current: Record<string, T[]>,
+    items: T[],
+): Record<string, T[]> {
+    const next = { ...current };
+    for (const item of items) next[item.source_key] = [...(next[item.source_key] || []), item];
+    return next;
+}

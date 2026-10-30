@@ -41,6 +41,7 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
 import { ChatMenuSection, ChatMenuSetting } from '@/components/ui/ChatOptionsMenu';
 import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
+import { addMessageDiagrams } from '@/lib/diagram-request';
 import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
 import { IdeaBranchIntro } from '@/components/qsa/IdeaBranchIntro';
 import { GuidedChatIntro } from '@/components/qsa/GuidedChatIntro';
@@ -570,7 +571,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [goalDraftValue, setGoalDraftValue] = useState<GoalDraft | null>(null);
     const [userMessagesInPhase, setUserMessagesInPhase] = useState(0);
     const [recommendations, setRecommendations] = useState<RecommendationCatalog>(EMPTY_RECOMMENDATIONS);
-    const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
+    const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram[]>>({});
     // Indici dei messaggi con il box "Ragionamento" collassato (toggle per nasconderlo).
     const [hiddenReasoning, setHiddenReasoning] = useState<Set<number>>(new Set());
     const toggleReasoning = (idx: number) => setHiddenReasoning(prev => {
@@ -665,7 +666,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             .then(response => response.ok ? response.json() : [])
             .then((items: SavedMessageDiagram[]) => {
                 if (active && Array.isArray(items)) setSavedDiagrams(previous => ({
-                    ...Object.fromEntries(items.map(item => [item.source_key, item])), ...previous,
+                    ...addMessageDiagrams({}, items), ...previous,
                 }));
             }).catch(() => undefined);
         return () => { active = false; };
@@ -2060,7 +2061,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                                 sessionId={sessionId}
                                                 sourceText={msg.content}
                                                 savedDiagrams={savedDiagrams}
-                                                onSaved={diagram => setSavedDiagrams(previous => ({ ...previous, [diagram.source_key]: diagram }))}
+                                                onSaved={diagram => setSavedDiagrams(previous => addMessageDiagrams(previous, [diagram]))}
                                                 disabled={isLoading}
                                                 renderTrigger={(toggleDiagram, diagramOpen) => <>
                                                     <Tooltip content={t('guided.diagram')}><Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.diagram')} disabled={isLoading} aria-expanded={diagramOpen} onClick={toggleDiagram}>

@@ -21,6 +21,7 @@ import type { ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatSuggestions, ChatTranscript, chatActionButtonClass } from '@/components/ui/ChatShell';
 import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
+import { addMessageDiagrams } from '@/lib/diagram-request';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -169,7 +170,7 @@ export default function AssistentePage() {
     // counselor_id al backend che applichera' la persona al system prompt.
     const [counselorId, setCounselorId] = useState<number | null>(null);
     // Senza una sessione guidata il server non salva i diagrammi: restano qui finché la pagina è aperta.
-    const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
+    const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram[]>>({});
     // Collezioni disponibili (builtin + dinamiche), caricate dal backend.
     const [availableCollections, setAvailableCollections] = useState<CollectionInfo[]>(
         BUILTIN_COLLECTIONS.map((id) => ({ id, label: id, builtin: true })),
@@ -611,7 +612,7 @@ export default function AssistentePage() {
                                             sessionId=""
                                             sourceText={msg.content}
                                             savedDiagrams={savedDiagrams}
-                                            onSaved={diagram => setSavedDiagrams(previous => ({ ...previous, [diagram.source_key]: diagram }))}
+                                            onSaved={diagram => setSavedDiagrams(previous => addMessageDiagrams(previous, [diagram]))}
                                             disabled={loading}
                                             renderTrigger={(toggleDiagram, diagramOpen) => <>
                                                 <Tooltip content={t('guided.diagram')}><Button type="button" variant="ghost" className={chatActionButtonClass} aria-label={t('guided.diagram')} disabled={loading} aria-expanded={diagramOpen} onClick={toggleDiagram}>

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { buildDiagramFromMessageRequest } from './diagram-request.ts';
+import { addMessageDiagrams, buildDiagramFromMessageRequest } from './diagram-request.ts';
 
 test('an on-demand diagram request carries the counselor selected for the chat', () => {
     assert.deepEqual(
@@ -32,4 +32,14 @@ test('a correction sends the visible diagram, an empty request redraws from scra
     assert.deepEqual(buildDiagramFromMessageRequest('Testo', 'it', ' Togli un nodo ', 42, 's', 'Testo', spec).previous_spec, spec);
     // @ts-expect-error -- a minimal spec is enough for the request shape.
     assert.equal('previous_spec' in buildDiagramFromMessageRequest('Testo', 'it', '  ', 42, 's', 'Testo', spec), false);
+});
+
+test('a new diagram joins the earlier ones of its message, other messages keep theirs', () => {
+    const first = { source_key: 'a', title: 'Primo' };
+    const second = { source_key: 'a', title: 'Secondo' };
+    const other = { source_key: 'b', title: 'Altro messaggio' };
+    const loaded = addMessageDiagrams({}, [first, other]);
+    const after = addMessageDiagrams(loaded, [second]);
+    assert.deepEqual(after, { a: [first, second], b: [other] });
+    assert.deepEqual(loaded, { a: [first], b: [other] });
 });
