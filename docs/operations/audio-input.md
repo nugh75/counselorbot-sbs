@@ -57,7 +57,8 @@ L'impostazione iniziale è **Riconoscimento automatico**: il modello riconosce
 da solo la lingua parlata, quindi non serve cambiarla passando da una lingua
 all'altra. Le sei lingue (italiano, inglese, spagnolo, francese, tedesco,
 svedese) restano selezionabili: su registrazioni brevi o rumorose una lingua
-scelta a mano è più affidabile del riconoscimento automatico. La scelta resta
+scelta a mano è più affidabile del riconoscimento automatico. Se il
+riconoscimento automatico è incerto, si usa la lingua dell'interfaccia. La scelta resta
 nel browser (`cb_audio_language`), senza sincronizzazione fra dispositivi.
 Il riconoscimento trascrive; non traduce. Il testo può contenere errori,
 soprattutto con nomi propri, rumore o accenti: la modalità con revisione
@@ -86,8 +87,10 @@ permette di correggerli.
 ## Servizio locale e API
 
 `POST /api/audio/transcribe` (frontend) → `POST /audio/transcribe` (backend)
-richiede una sessione autenticata. Riceve multipart con `audio` e `language`
+richiede una sessione autenticata. Riceve multipart con `audio`, `language`
 (`auto` oppure una delle sei lingue; `auto` è il valore predefinito) e
+`fallback_language` (la lingua dell'interfaccia, inviata dal frontend; stessi
+valori, predefinito `auto`: senza riserva) e
 restituisce `{ "text": "...", "language": "it", "model": "large-v3-turbo" }`,
 dove `language` è la lingua riconosciuta. `GET /audio/models`, riservato agli
 amministratori, elenca i modelli disponibili per motore, il motore e il modello attivi.
@@ -139,8 +142,10 @@ Ogni richiesta scrive l'audio decodificato in un WAV temporaneo sotto `/tmp`,
 avvia `whisper-cli` (beam 5, stesso glossario, otto thread al massimo) e legge
 il risultato JSON; la cartella temporanea viene eliminata subito dopo. Nulla
 resta in memoria fra una richiesta e l'altra: il modello viene mappato dal
-disco a ogni uso. La lingua automatica è riconosciuta da whisper.cpp stesso;
-non c'è filtro VAD (whisper.cpp lo richiederebbe come modello separato).
+disco a ogni uso. Con lingua automatica il servizio riconosce prima la lingua
+con il modello faster-whisper `small` (vedi sotto) e passa a `-l` la lingua così
+risolta; `-l auto` resta solo quando il riconoscimento è incerto e non c'è una
+lingua di riserva. `-tr` (traduzione) non viene mai passato; non c'è filtro VAD (whisper.cpp lo richiederebbe come modello separato).
 Contratto HTTP, limiti, coda e codici di errore sono gli stessi; un errore o un
 timeout del binario (280 secondi) restituisce `unavailable`. I modelli
 faster-whisper restano comunque precaricati all'avvio del servizio.
@@ -156,9 +161,13 @@ QPCS, QPCC, QAP, Savickas e i termini del dominio nella lingua scelta): senza
 quel contesto le sigle venivano trascritte come parole comuni. Con lingua
 automatica il prompt si riduce alle sole sigle, per non influenzare il
 riconoscimento della lingua. La lingua automatica viene riconosciuta dal modello
-`small`, non da quello grande: su un modello grande il solo riconoscimento
-costa quanto l'intera trascrizione. Sotto una probabilità di 0,7 la scelta
-torna al modello che trascrive. Due richieste vengono servite in parallelo e
+`small`, non da quello grande, per ogni motore e modello (anche quando trascrive
+lo stesso `small`): su un modello grande il solo riconoscimento costa quanto
+l'intera trascrizione. Concorrono solo le sei lingue supportate, così un breve
+audio italiano non viene scambiato per una lingua vicina (portoghese, catalano…).
+Sotto una probabilità di 0,7 si usa `fallback_language`; solo senza riserva la
+scelta torna al modello che trascrive. La trascrizione usa sempre
+`task='transcribe'`, mai la traduzione. Due richieste vengono servite in parallelo e
 le altre attendono in coda fino a 90 secondi prima di ricevere `busy`; la
 decodifica dell'audio avviene fuori dalla coda. Thread e worker restano
 contenuti perché ogni modello residente tiene i propri pool in attesa attiva,
