@@ -130,9 +130,9 @@ version-sync:
 version-check:
 	python3 scripts/sync-version.py --check
 
-# Dopo modifiche al prodotto: aggiornare il Markdown e la Guida, poi registrare.
+# Dopo modifiche al prodotto: aggiornare il Markdown e la Guida, poi verificare.
 .PHONY: guidance-check guidance-refresh
 guidance-check:
-	python3 scripts/check-platform-guidance.py --check
+	python3 scripts/check-platform-guidance.py --base origin/main
 guidance-refresh:
-	python3 scripts/check-platform-guidance.py --refresh
+	@echo "guidance-refresh non serve più: nessun manifest da rigenerare (usa make guidance-check)."
