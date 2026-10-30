@@ -141,6 +141,11 @@ async function fixture({width = 1440, teacher = true, pending = false, options =
     });
     return {context, page, state};
 }
+const continueLabel = {it: 'Continua', en: 'Continue', es: 'Continuar', fr: 'Continuer', de: 'Weiter', sv: 'Fortsätt'};
+// A new plan analysis opens on the profile overview, like the normal flow; a resumed pause does not.
+async function passProfile(page, lang = 'it') {
+    await page.getByRole('button', {name: continueLabel[lang], exact: true}).click();
+}
 async function editor(page) {
     await page.goto(`${origin}/docente/piani-operativi`, {waitUntil: 'domcontentloaded'});
     await page.getByRole('button', {name: 'Apri', exact: true}).click();
@@ -239,6 +244,7 @@ test('the plan starts QPCC directly and offers resume and redo after freezing', 
         await page.getByText('Caricamento delle compilazioni…').waitFor();
         assert.equal(await page.getByRole('button', {name: 'Avvia o riprendi l’approfondimento'}).count(), 0);
         releaseStart();
+        await passProfile(page);
         await page.getByRole('button', {name: 'Congela sessione'}).waitFor();
         assert.equal(state.requests.filter(row => row.p.endsWith('/deep-dive') && row.method === 'POST').length, 1);
         assert.equal(await page.getByRole('button', {name: 'Avvia o riprendi l’approfondimento'}).count(), 0);
@@ -261,6 +267,7 @@ test('a single personal result starts without an extra selection', async () => {
         source_href: '/?start=QSA', results: [{id: 8, submitted_at: '2026-09-20T12:00:00Z', locale: 'it'}], session: null}});
     try {
         await page.goto(`${origin}/profilo/piani-operativi/301/20/approfondimento`, {waitUntil: 'domcontentloaded'});
+        await passProfile(page);
         await page.getByRole('button', {name: 'Congela sessione', exact: true}).waitFor();
         assert.equal(await page.getByRole('button', {name: 'Inizia', exact: true}).count(), 0);
         assert.deepEqual(state.requests.filter(row => row.p.endsWith('/deep-dive') && row.method === 'POST').map(row => row.body), [{result_id: 8}]);
@@ -268,6 +275,23 @@ test('a single personal result starts without an extra selection', async () => {
         assert.deepEqual(state.errors, []);
     } finally {await context.close();}
 });
+test('a new plan analysis shows the profile step before the chat and resume skips it', async () => {
+    const {context, page, state} = await fixture({teacher: false, options: {personal: true, ready: true,
+        source_href: '/?start=QSA', results: [{id: 8, submitted_at: '2026-09-20T12:00:00Z', locale: 'it'}], session: null}});
+    try {
+        await page.goto(`${origin}/profilo/piani-operativi/301/20/approfondimento`, {waitUntil: 'domcontentloaded'});
+        await page.getByRole('heading', {name: 'Questionario sulle Strategie di Apprendimento', exact: true}).waitFor();
+        assert.equal(await page.getByRole('button', {name: 'Congela sessione', exact: true}).count(), 0);
+        await page.getByRole('button', {name: 'Continua', exact: true}).click();
+        await page.getByRole('button', {name: 'Congela sessione', exact: true}).click();
+        await page.waitForURL(/\/profilo\/piani-operativi(\?|#|$)/);
+        await page.goto(`${origin}/profilo/piani-operativi/301/20/approfondimento`, {waitUntil: 'domcontentloaded'});
+        await page.getByRole('button', {name: 'Congela sessione', exact: true}).waitFor();
+        assert.equal(await page.getByRole('heading', {name: 'Questionario sulle Strategie di Apprendimento', exact: true}).count(), 0);
+        assert.deepEqual(state.errors, []);
+    } finally {await context.close();}
+});
+
 test('explicit result choice reopens the same frozen session', async () => {
     const {context, page, state} = await fixture({teacher: false, options: {personal: true, ready: true, source_href: '/?start=QSA',
         results: [{id: 7, submitted_at: '2026-09-10T12:00:00Z', locale: 'it'}, {id: 8, submitted_at: '2026-09-20T12:00:00Z', locale: 'en'}], session: null}});
@@ -276,6 +300,7 @@ test('explicit result choice reopens the same frozen session', async () => {
         const start = page.getByRole('button', {name: 'Avvia o riprendi l’approfondimento', exact: true});
         await start.waitFor();assert.equal(await start.isDisabled(), true);
         await page.getByRole('combobox', {name: 'Scegli la compilazione'}).selectOption('8');await start.click();
+        await passProfile(page);
         await page.getByRole('button', {name: 'Congela sessione', exact: true}).waitFor();
         assert.equal(await page.getByRole('button', {name: 'Inizia', exact: true}).count(), 0);
         assert.deepEqual(state.requests.filter(row => row.p.endsWith('/deep-dive') && row.method === 'POST').map(row => row.body), [{result_id: 8}]);
@@ -322,6 +347,7 @@ test('redo from the plan starts a distinct attempt and keeps the earlier report 
         attempts: [{...first, completed: true}]}});
     try {
         await page.goto(`${origin}/profilo/piani-operativi/301/20/approfondimento?attempt=new`, {waitUntil: 'domcontentloaded'});
+        await passProfile(page);
         await page.getByRole('button', {name: 'Congela sessione', exact: true}).waitFor();
         await page.getByRole('button', {name: 'Salva ed esci', exact: true}).waitFor();
         assert.equal(await page.getByRole('button', {name: 'Rifai', exact: true}).count(), 0);
@@ -517,6 +543,7 @@ for (const width of [390, 1440]) test(`completed plan activity can be repeated a
         let card = page.getByTestId('class-path-hero-card');
         await card.getByRole('link', {name: 'Rivedi', exact: true}).waitFor();
         await card.getByRole('link', {name: 'Fai un altro tentativo', exact: true}).click();
+        await passProfile(page);
         await page.getByRole('button', {name: 'Congela sessione', exact: true}).waitFor();
         assert.equal(await page.getByRole('button', {name: 'Inizia', exact: true}).count(), 0);
         const newId = state.options.session.session_id;
@@ -554,6 +581,7 @@ test('result and essential path can be chosen in the plan with no second start p
         await card.getByRole('combobox').first().selectOption('essential');
         await card.getByRole('combobox', {name: 'Scegli la compilazione', exact: true}).selectOption('8');
         await card.getByRole('link', {name: 'Inizia', exact: true}).click();
+        await passProfile(page);
         await page.getByRole('button', {name: 'Congela sessione', exact: true}).waitFor();
         assert.equal(await page.getByRole('button', {name: 'Inizia', exact: true}).count(), 0);
         assert.equal(await page.getByRole('combobox', {name: 'Scegli la compilazione', exact: true}).count(), 0);
@@ -570,6 +598,7 @@ test('new analysis after a new compilation remains the same attempt after reload
         source_href: '/profilo/piani-operativi/301/10', results: [], session: null, attempts: []}});
     try {
         await page.goto(`${origin}/profilo/piani-operativi/301/20?attempt=new`, {waitUntil: 'domcontentloaded'});
+        await passProfile(page);
         await page.getByRole('button', {name: 'Congela sessione', exact: true}).waitFor();
         const firstId = state.options.session.session_id;
         assert.equal(new URL(page.url()).searchParams.get('attempt'), firstId);
@@ -588,6 +617,7 @@ for (const lang of ['it','en','es','fr','de','sv']) test(`chat popup shares the 
     await page.addInitScript(lang => {localStorage.setItem('cb_lang',lang);},lang);
     try {
         await page.goto(`${origin}/profilo/piani-operativi/301/20`);
+        await passProfile(page, lang);
         const trigger=page.getByRole('button',{name:guidedIntroText(lang,'openGuide'),exact:true});
         await trigger.waitFor();
         const input=page.locator('#guided-composer');await input.fill('Draft');

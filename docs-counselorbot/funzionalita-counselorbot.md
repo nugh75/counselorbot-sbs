@@ -1222,6 +1222,9 @@ La somministrazione termina con **Salva risultati**. Quando il piano prevede
 un approfondimento separato, **Vai all’approfondimento** apre quel passo senza
 richiedere di riscrivere i punteggi. L’analisi usa l’ultima compilazione valida
 del passo collegato; un altro tentativo di analisi riutilizza i risultati.
+Una nuova analisi mostra prima il prospetto del profilo (punti di forza, aree di
+crescita e punteggi per fattore) e apre la chat con **Continua**, come nel
+percorso normale; la ripresa di una conversazione in pausa va dritta alla chat.
 Le bozze non inviate si salvano sul server e si riprendono anche da un altro
 browser. La verifica delle credenziali dell’istituto rimane necessaria per
 confermare i risultati; password e autorizzazioni non fanno parte della bozza.
