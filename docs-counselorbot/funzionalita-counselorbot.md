@@ -3205,3 +3205,8 @@ Le finestre proteggono le bozze alla chiusura, mantengono il focus e chiedono
 conferma prima di scartare modifiche o ricaricare una revisione in conflitto.
 La Guida interfaccia descrive questo comportamento nelle sei lingue. Contratto
 e verifiche: `docs/operations/independent-plan-steps.md`.
+
+**Controllo documentazione (interno, nessun effetto visibile).** Il controllo
+`make guidance-check` non usa più un manifest con hash globale: confronta il diff
+con `origin/main` e richiede l'aggiornamento di questo Markdown quando cambiano
+sorgenti di prodotto. Nessuna modifica a funzionalità o Guida interfaccia.
