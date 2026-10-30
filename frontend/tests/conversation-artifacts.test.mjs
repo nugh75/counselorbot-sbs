@@ -205,6 +205,7 @@ test('recommendation actions save per item, retry, and hand a prompt to the comp
         await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
         await page.getByRole('button', { name: 'Per te', exact: true }).click();
         await panel.getByRole('tab', { name: /Strategie/ }).click();
+        assert.equal(await panel.getByRole('tabpanel').getByRole('heading', { level: 4 }).first().innerText(), 'Strategie', 'the selected section names itself under the tabs');
         let release;
         const blocked = new Promise(resolve => { release = resolve; });
         await page.route('**/api/session/fixture/recommendations/**', async route => {
