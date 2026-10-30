@@ -1451,7 +1451,8 @@ impone il ragionamento, la piattaforma usa il livello minimo disponibile e regis
 `effort_honored=false`; sugli altri modelli la disattivazione resta reale.
 Quando il passo o la scelta chiede di spegnere il ragionamento, lo studente non lo
 vede comunque: il modello ragiona al livello minimo, ma la chat non mostra né il
-ragionamento nativo né i blocchi inline.
+ragionamento nativo né i blocchi inline. Come per gli altri modelli con «Nessuno»,
+la risposta viene trattenuta per filtrarla e compare tutta insieme.
 Il vincolo è esposto anche nell’interfaccia: la scheda del preset e l’elenco dei
 counselor mostrano un’etichetta «Reasoning obbligatorio» e la chat disabilita
 «Nessuno» con un avviso, così la scelta non sembra ignorata.
