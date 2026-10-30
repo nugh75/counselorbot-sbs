@@ -31,8 +31,8 @@ Sbloccare il portachiavi, aggiornare lo stato e applicare le credenziali.
 
 Le voci coprono tutti i provider di `backend/api_secrets.py`: OpenAI, Anthropic,
 Gemini, Mistral, OpenRouter, Groq, Cerebras, DeepSeek, Together, Fireworks,
-DeepInfra e OmniRoute. OpenCode e `PRIVACY_KEK` sono voci riservate: la loro
-conservazione non abilita OpenCode nel profilo docente né il Privacy Layer.
+DeepInfra e OmniRoute. `PRIVACY_KEK` è una voce riservata: la sua
+conservazione non abilita il Privacy Layer.
 Non viene generata o ruotata automaticamente una KEK.
 
 Il supervisore legge il portachiavi a ogni costruzione dell'ambiente backend.

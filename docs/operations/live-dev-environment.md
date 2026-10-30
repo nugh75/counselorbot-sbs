@@ -195,10 +195,10 @@ Il proxy `/api/*` di Next in dev va a `http://127.0.0.1:8002` grazie a
 stessa variabile non esiste e il rewrite resta su `http://backend:8000`
 (nome servizio Compose), quindi la configurazione di produzione non cambia.
 
-Chat guidata, chat del sito, OpenCode e voce usano lo stesso resolver del backend
+Chat guidata, chat del sito e voce usano lo stesso resolver del backend
 del rewrite: `BACKEND_ORIGIN` ha precedenza, quindi `BACKEND_INTERNAL_URL`, quindi
 il nome servizio Docker. Il rewrite generale viene dopo le route dinamiche per
-conservare lo streaming di OpenCode. Dopo un aggiornamento delle route o della
+conservare lo streaming. Dopo un aggiornamento delle route o della
 configurazione Next, riavviare il solo frontend dev con il comando abituale.
 
 ### Test isolati dei proxy HTTP e streaming

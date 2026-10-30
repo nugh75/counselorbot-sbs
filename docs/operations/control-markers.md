@@ -25,7 +25,7 @@ streaming una coda ancora a metà (`[[AVAN`).
    e patch: il testo visibile non li contiene più. Il client li riceve a parte nel
    campo `control_signals` della risposta (o dell'evento `done`). Una risposta
    fatta del solo segnale è completa anche senza testo visibile (niente nuovo
-   tentativo, niente errore). La chat del sito e OpenCode passano dallo stesso filtro.
+   tentativo, niente errore). La chat del sito passa dallo stesso filtro.
 2. **Streaming** — ogni evento `display` è filtrato, anche a metà segnale.
 3. **Persistenza** — log, memoria di sessione e trascritto ricevono solo il testo visibile.
 4. **Rilettura** — i log scritti prima di questo filtro passano da

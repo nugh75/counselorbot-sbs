@@ -14,7 +14,7 @@ ramo `feature/portable-labform-install`. Non rimuovere volumi o dati esistenti.
 
 | Area | Evidenza nella sorgente | Impatto e intervento |
 | --- | --- | --- |
-| Compose upstream | `docker-compose.yml`: reti esterne `proxy-network`, `ai4educ-console_default`; mount `/var/lib/cloudflared-agent`, `/home/nugh75/.cache/ai4educ-opencode` | Il file dipende dall'ambiente Linux originale. Usare il Compose portabile autonomo, con volumi nominati e rete Console configurabile. |
+| Compose upstream | `docker-compose.yml`: reti esterne `proxy-network`, `ai4educ-console_default`; mount `/var/lib/cloudflared-agent` (rimosso con OpenCode) | Il file dipende dall'ambiente Linux originale. Usare il Compose portabile autonomo, con volumi nominati e rete Console configurabile. |
 | PostgreSQL | Versione 15; `5435:5432` upstream; backend esegue `create_all` all'import di `backend/main.py` | Mantenere il DB interno, aggiungere readiness del DB e avviare il backend soltanto dopo. Un worker evita seeding simultaneo nella prima installazione. |
 | DNS del database sulla rete condivisa | Al primo avvio il nome generico `postgres` risolveva al PostgreSQL della Console, su un'altra rete del backend; le credenziali distinte hanno impedito l'accesso | La connessione usa ora l'alias dedicato `counselorbot-portable-postgres` sulla sola rete privata. Risoluzione verificata sul database dell'app; nessun dato della Console modificato. |
 | Bootstrap | `backend/main.py`: migrazioni e seed idempotenti di config, strumenti, counselor | Nessun dump di produzione necessario per un'installazione nuova. Il seed locale `admin/admin123` non è un login: l'identità arriva da forward-auth. |
@@ -27,7 +27,7 @@ ramo `feature/portable-labform-install`. Non rimuovere volumi o dati esistenti.
 | Audio | `services/transcription/Dockerfile`: tre modelli Whisper scaricati in build; Piper: dodici voci | Lo stack portabile iniziale esclude questi servizi. Trascrizione locale e Piper richiedono installazione dedicata e risorse adeguate. Edge TTS dipende dalla rete. |
 | Traduzioni counselor | `backend/counselor_i18n.py`: Ollama best-effort | Disabilitare i tentativi automatici nella configurazione senza Ollama; le descrizioni disponibili restano utilizzabili. |
 | Thread guard | `backend/thread_guard_seed.py`: preset Ollama, attivazione predefinita `false` | Lasciarlo disattivato; non renderlo un prerequisito della chat. |
-| OpenCode e prompt lab | Socket/workspace del runtime Linux e modello Ollama; Compose prompt lab separato | Non inclusi nell'installazione portabile iniziale. Richiedono un runtime dedicato e configurazione verificata. |
+| Prompt lab | Modello Ollama; Compose prompt lab separato | Non inclusi nell'installazione portabile iniziale. Richiedono un runtime dedicato e configurazione verificata. |
 | Sync amministratori | `backend/admin_sync.py`: `AI4AUTH_ADMIN_TOKEN` | Sincronizzazione best-effort dei contatti ricerca, distinta dal login. Senza endpoint e token compatibili, disabilitarla. |
 | Test | `backend/tests/test_smoke.py` importa `backend.main` prima dell'override DB | Eseguire i test con `DATABASE_URL` già puntato a un DB separato. I benchmark Ollama/OpenRouter effettuano chiamate reali. |
 | Dipendenze frontend | Audit npm produzione del lockfile iniziale: 9 vulnerabilità, di cui 3 critical, 4 high e 2 moderate; Next.js iniziale `16.1.3` | Correggere le dipendenze vulnerabili prima della pubblicazione e ripetere audit, lint e build. La versione suggerita dall'audit per Next.js è `16.3.8`; registrare l'esito finale nel handoff. |

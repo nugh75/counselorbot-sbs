@@ -35,7 +35,7 @@ di domande del passo. Non aggiunge turni obbligatori né condizioni per avanzare
 | Savickas | Restano le cinque domande narrative previste. Il sostegno può operare nei follow-up disponibili, senza sostituire la domanda principale. Nessuna lettura di punteggi o profilo aggiunta. |
 | QSA essenziale | I compiti specifici delle tre fasi prevalgono; la sintesi non aggiunge domande. L'autointerrogazione non diventa un ulteriore turno. |
 
-Presentazioni e patti sono esclusi. IDEA, Eventi, Obiettivi, OpenCode e chat
+Presentazioni e patti sono esclusi. IDEA, Eventi, Obiettivi e chat
 libera non ricevono questa strategia. La fase volontaria `questions` dei sette
 percorsi riceve il sostegno adattivo, senza ripartire dal percorso.
 

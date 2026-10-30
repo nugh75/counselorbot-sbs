@@ -170,8 +170,7 @@ final guided step; if you leave, starting again resumes the same session.
 **pQBL** (`/profilo/pqbl`) generates practice questions and formative feedback from a study
 PDF. It is separate from the questionnaires and event conversations. Session
 reports and Timeline milestones can be exported as PDF. The combined analysis becomes
-available with QSA or QSAr plus ZTPI plus SAVICKAS results. An optional OpenCode
-workspace offers another conversation experience. The AI supports reflection;
+available with QSA or QSAr plus ZTPI plus SAVICKAS results. The AI supports reflection;
 it does not make decisions, adopt goals or submit work on your behalf.
 
 ## Current personal tools and saving

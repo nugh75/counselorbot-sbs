@@ -125,7 +125,7 @@ TEACHER_PRACTICE_BASE_URL=http://127.0.0.1:3141 node --test tests/teacher-practi
 
 Limiti:
 
-- Telegram e OpenCode non hanno il popover Opzioni e non offrono la scelta; la
+- Telegram non ha il popover Opzioni e non offrono la scelta; la
   chat dell'Assistente non usa il taccuino.
 - La trascrizione, i punteggi e la memoria sono quelli della sessione del
   docente (sono parte della simulazione). Le sessioni in prova non compaiono
