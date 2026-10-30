@@ -6,6 +6,7 @@ import { useI18n } from '@/lib/i18n-context';
 
 interface ServiceModel {
     id: string;
+    engine?: string;
     loaded: boolean;
     bytes: number | null;
 }
@@ -14,14 +15,29 @@ interface ModelStatus {
     active: string;
     default: string;
     key: string;
+    engine: string;
+    default_engine: string;
+    engine_key: string;
+    default_models: Record<string, string>;
     available: ServiceModel[];
     reachable: boolean;
 }
+
+// Indicative weight on a CPU-only host: RAM while transcribing and relative CPU load.
+const WEIGHT: Record<string, Record<string, [string, string]>> = {
+    'faster-whisper': { small: ['~1 GB', 'medium'], 'large-v3-turbo': ['~2 GB', 'high'], 'large-v3': ['~3.5 GB', 'veryHigh'] },
+    'whisper.cpp': { base: ['~0.3 GB', 'low'], small: ['~0.6 GB', 'medium'], 'large-v3-turbo': ['~1.2 GB', 'high'] },
+};
+
+const engineOf = (model: ServiceModel) => model.engine || 'faster-whisper';
+const hintKey = (engine: string, id: string) => engine === 'whisper.cpp' ? `admin.audio.cpp.${id}` : `admin.audio.model.${id}`;
+const formatBytes = (bytes: number) => bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.round(bytes / 1e6)} MB`;
 
 export function AudioModelsPanel() {
     const { t } = useI18n();
     const [status, setStatus] = useState<ModelStatus | null>(null);
     const [selected, setSelected] = useState('');
+    const [engine, setEngine] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState<'idle' | 'saved' | 'error'>('idle');
@@ -35,6 +51,7 @@ export function AudioModelsPanel() {
             const body: ModelStatus = await response.json();
             setStatus(body);
             setSelected(body.active);
+            setEngine(body.engine);
         } catch (error) {
             console.error('Failed to load transcription models', error);
             setSaved('error');
@@ -50,12 +67,14 @@ export function AudioModelsPanel() {
         setSaving(true);
         setSaved('idle');
         try {
-            const response = await fetch('/api/admin/config', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key: status.key, value: selected }),
-            });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            for (const [key, value] of [[status.engine_key, engine], [status.key, selected]]) {
+                const response = await fetch('/api/admin/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key, value }),
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            }
             setSaved('saved');
             await load();
         } catch (error) {
@@ -69,9 +88,16 @@ export function AudioModelsPanel() {
     if (loading) return <div className="glass-panel p-6 text-sm text-slate-500">{t('admin.audio.loading')}</div>;
 
     // Without the service the saved name is still the only choice we can offer.
-    const models: ServiceModel[] = status?.available.length
+    const all: ServiceModel[] = status?.available.length
         ? status.available
-        : [{ id: status?.active || '', loaded: false, bytes: null }];
+        : [{ id: status?.active || '', engine: status?.engine, loaded: false, bytes: null }];
+    const engines = Object.keys(status?.default_models || { 'faster-whisper': '' });
+    const models = all.filter((model) => engineOf(model) === engine);
+    const chooseEngine = (next: string) => {
+        setEngine(next);
+        const offered = all.filter((model) => engineOf(model) === next).map((model) => model.id);
+        if (!offered.includes(selected)) setSelected(status?.default_models[next] || offered[0] || '');
+    };
 
     return (
         <div className="glass-panel space-y-5 p-6">
@@ -90,11 +116,34 @@ export function AudioModelsPanel() {
             )}
 
             <fieldset className="rounded-md border border-slate-200 bg-white p-4">
+                <legend className="px-1 text-sm font-semibold text-slate-900">{t('admin.audio.engine')}</legend>
+                <p className="text-sm text-slate-500">{t('admin.audio.engineHint')}</p>
+                <div className="mt-3 space-y-2">
+                    {engines.map((name) => (
+                        <label key={name} className="flex items-start gap-3 rounded-md border border-slate-200 p-3 text-sm">
+                            <input
+                                type="radio"
+                                name="transcription-engine"
+                                value={name}
+                                checked={engine === name}
+                                onChange={() => chooseEngine(name)}
+                                className="mt-0.5 h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <span>
+                                <span className="block font-semibold text-slate-900">{name}</span>
+                                <span className="mt-1 block text-slate-500">{t(`admin.audio.engine.${name}`)}</span>
+                            </span>
+                        </label>
+                    ))}
+                </div>
+            </fieldset>
+
+            <fieldset className="rounded-md border border-slate-200 bg-white p-4">
                 <legend className="px-1 text-sm font-semibold text-slate-900">{t('admin.audio.model')}</legend>
                 <p className="text-sm text-slate-500">{t('admin.audio.modelHint')}</p>
                 <div className="mt-3 space-y-2">
                     {models.map((model) => (
-                        <label key={model.id} className="flex items-start gap-3 rounded-md border border-slate-200 p-3 text-sm">
+                        <label key={`${engine}-${model.id}`} className="flex items-start gap-3 rounded-md border border-slate-200 p-3 text-sm">
                             <input
                                 type="radio"
                                 name="transcription-model"
@@ -105,10 +154,11 @@ export function AudioModelsPanel() {
                             />
                             <span>
                                 <span className="block font-semibold text-slate-900">{model.id}</span>
-                                <span className="mt-1 block text-slate-500">{t(`admin.audio.model.${model.id}`)}</span>
+                                <span className="mt-1 block text-slate-500">{t(hintKey(engine, model.id))}</span>
                                 <span className="mt-1 block text-xs text-slate-400">
-                                    {model.bytes ? `${(model.bytes / 1e9).toFixed(1)} GB · ` : ''}
-                                    {model.loaded ? t('admin.audio.loaded') : t('admin.audio.notLoaded')}
+                                    {model.bytes ? `${formatBytes(model.bytes)} · ` : ''}
+                                    {WEIGHT[engine]?.[model.id] ? `RAM ${WEIGHT[engine][model.id][0]} · ${t(`admin.audio.cpu.${WEIGHT[engine][model.id][1]}`)} · ` : ''}
+                                    {engine === 'whisper.cpp' ? t('admin.audio.perRequest') : model.loaded ? t('admin.audio.loaded') : t('admin.audio.notLoaded')}
                                 </span>
                             </span>
                         </label>
@@ -120,7 +170,7 @@ export function AudioModelsPanel() {
                 <button
                     type="button"
                     onClick={save}
-                    disabled={saving || !selected || selected === status?.active}
+                    disabled={saving || !selected || (selected === status?.active && engine === status?.engine)}
                     className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                 >
                     <Save className="h-4 w-4" />{t('admin.audio.save')}

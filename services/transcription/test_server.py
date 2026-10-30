@@ -1,4 +1,7 @@
 import io
+import json
+import os
+import subprocess
 import unittest
 import wave
 from types import SimpleNamespace
@@ -40,7 +43,8 @@ class TranscriptionTests(unittest.TestCase):
         upload = UploadFile(io.BytesIO(wav()))
         with patch.object(server, 'load', Mock(return_value=model)) as load:
             result = server.transcribe(upload, 'fr', 'large-v3')
-        self.assertEqual(result, {'text': 'Bonjour.', 'language': 'fr', 'model': 'large-v3', 'duration': 1.0})
+        self.assertEqual(result, {'text': 'Bonjour.', 'language': 'fr', 'model': 'large-v3',
+                                  'engine': 'faster-whisper', 'duration': 1.0})
         self.assertTrue(upload.file.closed)
         self.assertEqual(load.call_args.args, ('large-v3',))
         self.assertEqual(model.transcribe.call_args.kwargs['task'], 'transcribe')
@@ -116,6 +120,98 @@ class TranscriptionTests(unittest.TestCase):
             self.assertEqual([args[0] for args in built], ['/models/small', '/models/large-v3'])
             self.assertEqual(sorted(server.loaded), ['large-v3', 'small'])
         server.loaded.clear()
+
+
+def whisper_cli(language='it', text=' Vorrei organizzare lo studio. ', returncode=0):
+    """Stands in for the binary: writes the JSON file it was asked for."""
+    calls = []
+
+    def run(args, **kwargs):
+        calls.append(args)
+        output = args[args.index('-of') + 1] + '.json'
+        with open(output, 'w') as out:
+            json.dump({'result': {'language': language}, 'transcription': [{'text': text}]}, out)
+        return subprocess.CompletedProcess(args, returncode)
+    return run, calls
+
+
+class WhisperCppTests(unittest.TestCase):
+    def test_whisper_cpp_keeps_the_contract_and_leaves_no_files(self):
+        run, calls = whisper_cli()
+        upload = UploadFile(io.BytesIO(wav()))
+        with patch.object(server.subprocess, 'run', run), patch.object(server, 'load') as load:
+            result = server.transcribe(upload, 'it', 'small', 'whisper.cpp')
+        self.assertEqual(result, {'text': 'Vorrei organizzare lo studio.', 'language': 'it', 'model': 'small',
+                                  'engine': 'whisper.cpp', 'duration': 1.0})
+        load.assert_not_called()
+        self.assertTrue(upload.file.closed)
+        args = calls[0]
+        self.assertEqual(args[args.index('-m') + 1], server.CPP_MODELS['small'])
+        self.assertEqual(args[args.index('-l') + 1], 'it')
+        self.assertIn('metacognizione', args[args.index('--prompt') + 1])
+        self.assertNotIn('-tr', args)
+        self.assertFalse(os.path.exists(os.path.dirname(args[args.index('-f') + 1])))
+
+    def test_automatic_language_is_left_to_whisper_cpp(self):
+        run, calls = whisper_cli(language='sv')
+        with patch.object(server.subprocess, 'run', run):
+            result = server.transcribe(UploadFile(io.BytesIO(wav())), 'auto', 'base', 'whisper.cpp')
+        self.assertEqual(calls[0][calls[0].index('-l') + 1], 'auto')
+        self.assertEqual(result['language'], 'sv')
+
+    def test_whisper_cpp_failures_are_unavailable_and_release_the_slot(self):
+        for failure in [whisper_cli(returncode=1)[0], Mock(side_effect=subprocess.TimeoutExpired('whisper-cli', 1)),
+                        Mock(side_effect=FileNotFoundError())]:
+            with patch.object(server.subprocess, 'run', failure), self.assertRaises(HTTPException) as error:
+                server.transcribe(UploadFile(io.BytesIO(wav())), 'it', 'small', 'whisper.cpp')
+            self.assertEqual((error.exception.status_code, error.exception.detail), (503, 'unavailable'))
+        for _ in range(server.SLOTS):
+            self.assertTrue(server.slot.acquire(blocking=False))
+        for _ in range(server.SLOTS):
+            server.slot.release()
+
+    def test_models_belong_to_their_engine(self):
+        for model, engine in [('large-v3', 'whisper.cpp'), ('base', 'faster-whisper')]:
+            with self.assertRaises(HTTPException) as error:
+                server.transcribe(UploadFile(io.BytesIO(wav())), 'it', model, engine)
+            self.assertEqual(error.exception.status_code, 422)
+
+    def test_model_list_names_the_engine_and_skips_missing_ggml_files(self):
+        with patch.object(server, 'CPP_MODELS', {'base': __file__, 'small': '/missing.bin'}):
+            listed = server.models()['models']
+        self.assertEqual([(m['engine'], m['id']) for m in listed], [
+            ('faster-whisper', 'small'), ('faster-whisper', 'large-v3-turbo'), ('faster-whisper', 'large-v3'),
+            ('whisper.cpp', 'base')])
+
+
+@unittest.skipUnless(os.path.exists(server.WHISPER_CLI), 'needs the built image: models and whisper-cli are bundled there')
+class BundledEngineTests(unittest.TestCase):
+    """Real inference inside the image. TRANSCRIPTION_SAMPLE_WAV may point to a spoken
+    sample; without it a synthetic tone only checks the contract end to end."""
+    def sample(self):
+        path = os.environ.get('TRANSCRIPTION_SAMPLE_WAV')
+        if path:
+            with open(path, 'rb') as audio:
+                return audio.read()
+        import numpy as np
+        tone = (np.sin(np.arange(16000 * 2) * 2 * np.pi * 220 / 16000) * 8000).astype('<i2')
+        output = io.BytesIO()
+        with wave.open(output, 'wb') as audio:
+            audio.setnchannels(1)
+            audio.setsampwidth(2)
+            audio.setframerate(16000)
+            audio.writeframes(tone.tobytes())
+        return output.getvalue()
+
+    def test_both_engines_transcribe_a_short_wav(self):
+        expected = os.environ.get('TRANSCRIPTION_SAMPLE_WORD', '').lower()
+        for engine, model in [('faster-whisper', 'small'), ('whisper.cpp', 'base'), ('whisper.cpp', 'small')]:
+            with self.subTest(engine=engine, model=model):
+                result = server.transcribe(UploadFile(io.BytesIO(self.sample())), 'it', model, engine)
+                self.assertEqual((result['engine'], result['model'], result['language']), (engine, model, 'it'))
+                self.assertIsInstance(result['text'], str)
+                if expected:
+                    self.assertIn(expected, result['text'].lower())
 
 
 if __name__ == '__main__':

@@ -1,9 +1,14 @@
 """Local, transient speech transcription. Audio is never retained."""
+import json
+import os
+import subprocess
+import tempfile
+import wave
 from contextlib import asynccontextmanager
 from io import BytesIO
 from pathlib import Path
 from threading import BoundedSemaphore, Lock
-from typing import Literal
+from typing import Annotated, Literal
 
 import av
 import numpy as np
@@ -20,7 +25,16 @@ DETECTOR = 'small'
 DETECTION_CONFIDENCE = 0.7
 MODELS = {'small': '/models/small', 'large-v3-turbo': '/models/turbo', 'large-v3': '/models/large-v3'}
 DEFAULT_MODEL = 'large-v3-turbo'
-Model = Literal['small', 'large-v3-turbo', 'large-v3']
+# whisper.cpp: quantized ggml models for weak CPUs, run by the pinned whisper-cli binary.
+# Each request starts the binary, which maps the model from disk: nothing stays resident.
+CPP_MODELS = {'base': '/models/ggml/ggml-base-q5_1.bin', 'small': '/models/ggml/ggml-small-q5_1.bin',
+              'large-v3-turbo': '/models/ggml/ggml-large-v3-turbo-q5_0.bin'}
+WHISPER_CLI = '/usr/local/bin/whisper-cli'
+CPP_TIMEOUT = 280
+ENGINES = {'faster-whisper': MODELS, 'whisper.cpp': CPP_MODELS}
+DEFAULT_ENGINE = 'faster-whisper'
+Engine = Literal['faster-whisper', 'whisper.cpp']
+Model = Literal['base', 'small', 'large-v3-turbo', 'large-v3']
 Language = Literal['auto', 'it', 'en', 'es', 'fr', 'de', 'sv']
 # Whisper writes what it expects to hear: without a domain prompt the questionnaire
 # acronyms come back as ordinary words ("QSA" as "questa", "ZTPI" as "se ti pi").
@@ -101,17 +115,49 @@ def health():
     return {'status': 'ready', 'loaded': sorted(loaded)}
 
 
+def size(path: Path) -> int | None:
+    return path.stat().st_size if path.exists() else None
+
+
 @app.get('/models')
 def models():
-    return {'default': DEFAULT_MODEL, 'models': [
-        {'id': name, 'loaded': name in loaded,
-         'bytes': Path(path, 'model.bin').stat().st_size if Path(path, 'model.bin').exists() else None}
-        for name, path in MODELS.items()]}
+    return {'default': DEFAULT_MODEL, 'default_engine': DEFAULT_ENGINE, 'models': [
+        {'id': name, 'engine': 'faster-whisper', 'loaded': name in loaded, 'bytes': size(Path(path, 'model.bin'))}
+        for name, path in MODELS.items()] + [
+        {'id': name, 'engine': 'whisper.cpp', 'loaded': False, 'bytes': size(Path(path))}
+        for name, path in CPP_MODELS.items() if Path(path).exists()]}
+
+
+def transcribe_cpp(samples: np.ndarray, language: str, model: str) -> tuple[str, str]:
+    """whisper-cli reads a 16 kHz mono WAV and writes JSON; both live in /tmp only
+    for the length of the request."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source, output = Path(tmp, 'audio.wav'), Path(tmp, 'out')
+        with wave.open(str(source), 'wb') as out:
+            out.setnchannels(1)
+            out.setsampwidth(2)
+            out.setframerate(SAMPLE_RATE)
+            out.writeframes((samples * 32768).clip(-32768, 32767).astype('<i2').tobytes())
+        try:
+            run = subprocess.run(
+                [WHISPER_CLI, '-m', CPP_MODELS[model], '-f', str(source), '-l', language,
+                 '-t', str(min(THREADS, os.cpu_count() or 1)), '-bs', '5',
+                 '--prompt', GLOSSARY.get(language, GLOSSARY['auto']), '-np', '-oj', '-of', str(output)],
+                capture_output=True, timeout=CPP_TIMEOUT)
+            if run.returncode:
+                raise ValueError('whisper-cli failed')
+            result = json.loads(output.with_suffix('.json').read_text(errors='replace'))
+            text = ' '.join(part['text'].strip() for part in result['transcription']).strip()
+            return text, result['result']['language']
+        except (OSError, ValueError, KeyError, TypeError, subprocess.TimeoutExpired):
+            raise HTTPException(503, 'unavailable') from None
 
 
 @app.post('/transcribe')
 def transcribe(audio: UploadFile = File(...), language: Language = Form('auto'),
-               model: Model = Form(DEFAULT_MODEL)):
+               model: Annotated[Model, Form()] = DEFAULT_MODEL, engine: Annotated[Engine, Form()] = DEFAULT_ENGINE):
+    if model not in ENGINES[engine]:
+        raise HTTPException(422, 'unsupported_model')
     try:
         data = audio.file.read(MAX_BYTES + 1)
         if len(data) > MAX_BYTES:
@@ -125,6 +171,10 @@ def transcribe(audio: UploadFile = File(...), language: Language = Form('auto'),
     if not slot.acquire(timeout=QUEUE_WAIT):
         raise HTTPException(503, 'busy')
     try:
+        if engine == 'whisper.cpp':
+            text, spoken = transcribe_cpp(samples, language, model)
+            return {'text': text, 'language': spoken, 'model': model, 'engine': engine,
+                    'duration': round(len(samples) / SAMPLE_RATE, 2)}
         if language != 'auto':
             spoken = language
         elif model == DETECTOR:
@@ -136,7 +186,7 @@ def transcribe(audio: UploadFile = File(...), language: Language = Form('auto'),
             beam_size=5, vad_filter=True, condition_on_previous_text=False,
             initial_prompt=GLOSSARY.get(spoken or 'auto', GLOSSARY['auto']))
         text = ' '.join(segment.text.strip() for segment in segments).strip()
-        return {'text': text, 'language': info.language, 'model': model,
+        return {'text': text, 'language': info.language, 'model': model, 'engine': engine,
                 'duration': round(len(samples) / SAMPLE_RATE, 2)}
     finally:
         slot.release()

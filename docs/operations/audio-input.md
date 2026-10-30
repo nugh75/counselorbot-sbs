@@ -90,7 +90,7 @@ richiede una sessione autenticata. Riceve multipart con `audio` e `language`
 (`auto` oppure una delle sei lingue; `auto` è il valore predefinito) e
 restituisce `{ "text": "...", "language": "it", "model": "large-v3-turbo" }`,
 dove `language` è la lingua riconosciuta. `GET /audio/models`, riservato agli
-amministratori, elenca i modelli disponibili e quello attivo.
+amministratori, elenca i modelli disponibili per motore, il motore e il modello attivi.
 La route sostituisce il nome originale del file con `recording` e inoltra
 l'audio esclusivamente a `http://transcription:8000/transcribe`.
 
@@ -104,12 +104,46 @@ CTranslate2 4.8.2 e tre modelli multilingue inclusi nell'immagine:
 | `large-v3-turbo` | [deepdml/faster-whisper-large-v3-turbo-ct2, rev. 4df90f7](https://huggingface.co/deepdml/faster-whisper-large-v3-turbo-ct2/tree/4df90f75321148c3a29a9e2351b7ddf8f5b115a8) | predefinito: qualità alta, tempi vicini a `small` |
 | `large-v3` | [Systran/faster-whisper-large-v3, rev. edaa852](https://huggingface.co/Systran/faster-whisper-large-v3/tree/edaa852ec7e145841d8ffdb056a99866b5f0a478) | qualità massima, nettamente più lento su CPU |
 
-Il modello attivo si sceglie dalla console di amministrazione, scheda
+Motore e modello si scelgono dalla console di amministrazione, scheda
 **Trascrizione audio** (gruppo Monitoraggio), che elenca i modelli presenti
-nell'immagine e quali sono già in memoria. La scelta è la chiave di
-configurazione `transcription_model`; un valore sconosciuto ricade sul
-predefinito senza interrompere il servizio. Un modello si carica al primo uso
+nell'immagine, quali sono già in memoria e, per ciascuno, una riga su qualità,
+RAM e CPU indicative. Le scelte sono le chiavi di configurazione
+`transcription_engine` (`faster-whisper` predefinito, oppure `whisper.cpp`) e
+`transcription_model`. Un motore sconosciuto ricade su `faster-whisper`; un
+modello che il motore non ha ricade sul predefinito di quel motore
+(`large-v3-turbo` per faster-whisper, `small` per whisper.cpp), senza
+interrompere il servizio. Con faster-whisper un modello si carica al primo uso
 e resta residente.
+
+### Motore whisper.cpp
+
+Per CPU deboli il servizio include anche
+[whisper.cpp](https://github.com/ggml-org/whisper.cpp) v1.9.5 (commit
+`d1be6fd`), compilato nell'immagine come binario statico `whisper-cli`
+(senza OpenMP, ottimizzato per la CPU dell'host di build), con modelli
+quantizzati ggml da
+[ggerganov/whisper.cpp, rev. 5359861](https://huggingface.co/ggerganov/whisper.cpp/tree/5359861c739e955e79d9a303bcbc70fb988958b1),
+verificati con SHA-256 durante la build:
+
+| id | file | peso | RAM indicativa |
+| --- | --- | --- | --- |
+| `base` | `ggml-base-q5_1.bin` | 60 MB | ~0,3 GB, il più leggero, meno preciso |
+| `small` | `ggml-small-q5_1.bin` | 190 MB | ~0,6 GB, predefinito del motore |
+| `large-v3-turbo` | `ggml-large-v3-turbo-q5_0.bin` | 574 MB | ~1,2 GB, qualità alta ma lento su CPU modeste |
+
+Per faster-whisper i valori indicativi sono ~1 GB (`small`), ~2 GB
+(`large-v3-turbo`) e ~3,5 GB (`large-v3`), più il modello `small` residente
+per il riconoscimento della lingua.
+
+Ogni richiesta scrive l'audio decodificato in un WAV temporaneo sotto `/tmp`,
+avvia `whisper-cli` (beam 5, stesso glossario, otto thread al massimo) e legge
+il risultato JSON; la cartella temporanea viene eliminata subito dopo. Nulla
+resta in memoria fra una richiesta e l'altra: il modello viene mappato dal
+disco a ogni uso. La lingua automatica è riconosciuta da whisper.cpp stesso;
+non c'è filtro VAD (whisper.cpp lo richiederebbe come modello separato).
+Contratto HTTP, limiti, coda e codici di errore sono gli stessi; un errore o un
+timeout del binario (280 secondi) restituisce `unavailable`. I modelli
+faster-whisper restano comunque precaricati all'avvio del servizio.
 
 Il Dockerfile include i modelli durante la build; durante l'uso non scarica
 modelli, non contatta fornitori esterni e non usa chiavi API. PyAV decodifica
@@ -163,6 +197,15 @@ host, con `large-v3-turbo` già caricato e campioni sintetici italiani:
 
 Il costo quasi fisso è la finestra da 30 secondi dell'encoder; il
 riconoscimento automatico aggiunge il passaggio sul modello piccolo.
+Con un campione italiano di 3,4 secondi (voce sintetica macOS), lingua
+indicata, container di prova con 8 CPU su un host già carico: whisper.cpp
+`base` ~3,4 s, `small` ~12 s, `large-v3-turbo` ~34 s; faster-whisper `small`
+~10 s. Tutti hanno trascritto la frase correttamente (`base` ha perso
+l'apostrofo). Su CPU ampie whisper.cpp non è più veloce: il suo vantaggio è la
+memoria (nessun modello residente, file quantizzati più piccoli) e `base` per
+le macchine più deboli. Immagine: +827 MB di strati (modelli ggml 824 MB,
+binario 2,7 MB).
+
 Sono prove funzionali, non una stima garantita per registrazioni lunghe
 né una valutazione dell'accuratezza del riconoscimento. Il glossario ha
 corretto, sugli stessi campioni, le sigle che il modello piccolo senza
@@ -173,7 +216,14 @@ Test mirati:
 - `backend/tests/test_audio_input.py`: autenticazione, limiti, lingua,
   inoltro esclusivamente locale ed errori del servizio.
 - `services/transcription/test_server.py`: decodifica, durata massima,
-  parametri del modello e rilascio della risorsa di inferenza.
+  parametri del modello, rilascio della risorsa di inferenza e chiamata a
+  `whisper-cli` (simulata). La classe `BundledEngineTests` trascrive davvero un
+  WAV breve con entrambi i motori e gira solo dentro l'immagine, dove binario e
+  modelli sono inclusi; altrove viene saltata. `TRANSCRIPTION_SAMPLE_WAV` e
+  `TRANSCRIPTION_SAMPLE_WORD` indicano un campione parlato e una parola attesa.
+- Da `frontend/`: `node --test tests/admin-transcription-engine.test.mjs`
+  verifica la scelta di motore e modello in amministrazione contro un frontend
+  su 127.0.0.1:3163 (`TRANSCRIPTION_ENGINE_BASE_URL` per cambiarlo).
 - Da `frontend/`: `node --test tests/audio-input.test.mjs` verifica
   revisione, invio immediato, persistenza della preferenza, annullamento,
   errori, turni vocali con testo visibile, completamento delle risposte,
