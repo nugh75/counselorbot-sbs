@@ -406,6 +406,19 @@ pagina con `Skeleton`; aggiornare la guardia dark mode quando tocca il remap.
 
 ---
 
+## 9. Principi visivi da applicare in tutta la migrazione (decisione del proprietario, 2026-10-30)
+
+Valgono per i token del passo 2 e per ogni PR del passo 3; i conteggi sono di `frontend/src` al 2026-10-30.
+
+1. **Spaziature su griglia di 8.** Solo multipli di 8 px (in Tailwind: 2, 4, 6, 8, 10, 12…; 1 = 4 px solo dentro i controlli). Oggi ci sono 2353 usi di passi fuori griglia (`*-1.5`, `*-2.5`, `*-3`, `*-5`, `*-7`…).
+2. **Una sola palette neutra, niente gradienti e niente glow.** Colore solo per il marchio e i quattro stati. Oggi: 7 gradienti, 3 effetti glow/blur.
+3. **Icone uniformi.** Solo `lucide-react` (già la sola libreria, 198 import), stile lineare; nessuna emoji come icona (3 file da verificare).
+4. **Tipografia sobria: al massimo due pesi, niente maiuscolo.** Pesi ammessi: `font-normal` e `font-semibold` (oggi anche 617 `font-medium`, 356 `font-bold`, 1 `font-extrabold`). Niente `uppercase` (oggi 265 usi, compresi i titoli dei passi come «PROFILO»).
+5. **Numeri e indicatori essenziali.** Valori senza badge vistosi, decorazioni o punti esclamativi; quando ha senso, con il confronto rispetto al periodo precedente.
+6. **Grafici essenziali.** Linee sottili, colori tenui dalla palette, assi e etichette leggibili; niente barre enormi o multicolore.
+
+Ogni PR di migrazione dichiara nel corpo quali principi applica e i conteggi prima/dopo della propria zona.
+
 ## Appendice — come rifare i conteggi
 
 Tutti in sola lettura da `frontend/src`, test esclusi:
