@@ -3,13 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Mic, Save } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-
-interface ServiceModel {
-    id: string;
-    engine?: string;
-    loaded: boolean;
-    bytes: number | null;
-}
+import { isOnlineTranscription, modelForEngine, transcriptionAvailable, validTranscriptionModel, type TranscriptionModel, type TranscriptionProviders } from '@/lib/transcription-models';
 
 interface ModelStatus {
     active: string;
@@ -19,8 +13,9 @@ interface ModelStatus {
     default_engine: string;
     engine_key: string;
     default_models: Record<string, string>;
-    available: ServiceModel[];
+    available: TranscriptionModel[];
     reachable: boolean;
+    providers?: TranscriptionProviders;
 }
 
 // Indicative weight on a CPU-only host: RAM while transcribing and relative CPU load.
@@ -29,7 +24,7 @@ const WEIGHT: Record<string, Record<string, [string, string]>> = {
     'whisper.cpp': { base: ['~0.3 GB', 'low'], small: ['~0.6 GB', 'medium'], 'large-v3-turbo': ['~1.2 GB', 'high'] },
 };
 
-const engineOf = (model: ServiceModel) => model.engine || 'faster-whisper';
+const engineOf = (model: TranscriptionModel) => model.engine || 'faster-whisper';
 const hintKey = (engine: string, id: string) => engine === 'whisper.cpp' ? `admin.audio.cpp.${id}` : `admin.audio.model.${id}`;
 const formatBytes = (bytes: number) => bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.round(bytes / 1e6)} MB`;
 
@@ -63,11 +58,11 @@ export function AudioModelsPanel() {
     useEffect(() => { load(); }, [load]);
 
     const save = async () => {
-        if (!status) return;
+        if (!status || !validTranscriptionModel(selected) || !transcriptionAvailable(engine, status.providers)) return;
         setSaving(true);
         setSaved('idle');
         try {
-            for (const [key, value] of [[status.engine_key, engine], [status.key, selected]]) {
+            for (const [key, value] of [[status.engine_key, engine], [status.key, selected.trim()]]) {
                 const response = await fetch('/api/admin/config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -88,15 +83,15 @@ export function AudioModelsPanel() {
     if (loading) return <div className="glass-panel p-6 text-sm text-slate-500">{t('admin.audio.loading')}</div>;
 
     // Without the service the saved name is still the only choice we can offer.
-    const all: ServiceModel[] = status?.available.length
+    const all: TranscriptionModel[] = status?.available.length
         ? status.available
         : [{ id: status?.active || '', engine: status?.engine, loaded: false, bytes: null }];
     const engines = Object.keys(status?.default_models || { 'faster-whisper': '' });
+    const online = isOnlineTranscription(engine);
     const models = all.filter((model) => engineOf(model) === engine);
     const chooseEngine = (next: string) => {
         setEngine(next);
-        const offered = all.filter((model) => engineOf(model) === next).map((model) => model.id);
-        if (!offered.includes(selected)) setSelected(status?.default_models[next] || offered[0] || '');
+        setSelected(modelForEngine(next, selected, all, status?.default_models || {}));
     };
 
     return (
@@ -111,7 +106,7 @@ export function AudioModelsPanel() {
                 </div>
             </div>
 
-            {status && !status.reachable && (
+            {status && !status.reachable && !online && (
                 <p role="alert" className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{t('admin.audio.unreachable')}</p>
             )}
 
@@ -126,21 +121,38 @@ export function AudioModelsPanel() {
                                 name="transcription-engine"
                                 value={name}
                                 checked={engine === name}
+                                disabled={!transcriptionAvailable(name, status?.providers)}
+                                aria-describedby={!transcriptionAvailable(name, status?.providers) ? `audio-key-${name}` : undefined}
                                 onChange={() => chooseEngine(name)}
                                 className="mt-0.5 h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-500"
                             />
                             <span>
                                 <span className="block font-semibold text-slate-900">{name}</span>
                                 <span className="mt-1 block text-slate-500">{t(`admin.audio.engine.${name}`)}</span>
+                                {!transcriptionAvailable(name, status?.providers) && (
+                                    <span id={`audio-key-${name}`} className="mt-1 block text-amber-800">
+                                        {t('admin.audio.keyMissing').replace('{provider}', name === 'openrouter' ? 'OpenRouter' : 'Mistral')}
+                                    </span>
+                                )}
                             </span>
                         </label>
                     ))}
                 </div>
             </fieldset>
 
+            {online && <p role="alert" className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{t('admin.audio.externalWarning')}</p>}
+
             <fieldset className="rounded-md border border-slate-200 bg-white p-4">
                 <legend className="px-1 text-sm font-semibold text-slate-900">{t('admin.audio.model')}</legend>
-                <p className="text-sm text-slate-500">{t('admin.audio.modelHint')}</p>
+                <p className="text-sm text-slate-500">{t(online ? 'admin.audio.onlineModelHint' : 'admin.audio.modelHint')}</p>
+                {online ? (
+                    <label className="mt-3 block text-sm text-slate-700">
+                        {t('admin.audio.modelId')}
+                        <input type="text" value={selected} onChange={event => setSelected(event.target.value)}
+                            maxLength={200} spellCheck={false} autoComplete="off"
+                            className="mt-1 block w-full rounded-md border border-slate-300 p-2" />
+                    </label>
+                ) : (
                 <div className="mt-3 space-y-2">
                     {models.map((model) => (
                         <label key={`${engine}-${model.id}`} className="flex items-start gap-3 rounded-md border border-slate-200 p-3 text-sm">
@@ -164,13 +176,14 @@ export function AudioModelsPanel() {
                         </label>
                     ))}
                 </div>
+                )}
             </fieldset>
 
             <div className="flex items-center gap-3">
                 <button
                     type="button"
                     onClick={save}
-                    disabled={saving || !selected || (selected === status?.active && engine === status?.engine)}
+                    disabled={!status || saving || !validTranscriptionModel(selected) || !transcriptionAvailable(engine, status.providers) || (selected.trim() === status.active && engine === status.engine)}
                     className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                 >
                     <Save className="h-4 w-4" />{t('admin.audio.save')}
