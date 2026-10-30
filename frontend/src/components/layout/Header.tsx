@@ -31,7 +31,7 @@ const LINK_ICONS: Record<HeaderLinkKey, LucideIcon> = {
     admin: Settings,
 };
 
-const SEPARATOR = 'mx-1 h-5 w-px shrink-0 bg-slate-200 dark:bg-slate-700';
+const SEPARATOR = 'mx-1 h-5 w-px shrink-0 bg-line';
 
 export function Header() {
     const { t } = useI18n();
@@ -85,12 +85,12 @@ export function Header() {
     return (
         <TooltipProvider delayDuration={300}>
             <header className="console-header fixed top-0 left-0 right-0 z-50">
-                <div className="page-wide h-full flex items-center gap-3 px-3 sm:gap-4 sm:px-6">
-                    <div className="flex shrink-0 items-center gap-3 min-w-0">
+                <div className="page-wide h-full flex items-center gap-4 px-4 sm:gap-4 sm:px-6">
+                    <div className="flex shrink-0 items-center gap-4 min-w-0">
                         <Image src="/images/platform/bussola.png" alt="" width={32} height={32} className="h-8 w-8 shrink-0 object-contain" />
                         {/* CounselorBot e' il brand principale: titolo grande -> home. */}
                         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-                        <a href="/" className="font-display block -m-2 p-2 text-lg sm:text-2xl font-bold text-slate-900 whitespace-nowrap hover:opacity-80 transition-opacity leading-none" aria-label={t('nav.homeAria')}>
+                        <a href="/" className="font-display block -m-2 p-2 text-lg sm:text-2xl font-semibold text-ink whitespace-nowrap hover:opacity-80 transition-opacity leading-none" aria-label={t('nav.homeAria')}>
                             CounselorBot
                         </a>
                     </div>
@@ -98,8 +98,8 @@ export function Header() {
                     {nav.loading ? (
                         // Riserva lo spazio mentre l'identità arriva: niente layout shift.
                         <div className="hidden items-center gap-1 lg:flex" aria-hidden="true">
-                            <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /></span>
-                            <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /></span>
+                            <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-line" /></span>
+                            <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-line" /></span>
                         </div>
                     ) : workInline}
 

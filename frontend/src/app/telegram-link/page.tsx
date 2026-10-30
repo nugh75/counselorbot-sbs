@@ -98,25 +98,25 @@ function TelegramLinkInner() {
                 sizes="96px"
                 className="h-24 w-24 object-contain"
             />
-            <h1 className="text-2xl font-bold text-slate-800">{texts.title}</h1>
-            {error && <p className="text-sm text-red-600">{texts.error}</p>}
-            {!error && !code && <p className="text-sm text-slate-500">{texts.loading}</p>}
+            <h1 className="text-2xl font-semibold text-ink">{texts.title}</h1>
+            {error && <p className="text-sm text-danger">{texts.error}</p>}
+            {!error && !code && <p className="text-sm text-ink-muted">{texts.loading}</p>}
             {code && (
                 <>
-                    <p className="text-sm text-slate-600">{texts.ready}</p>
+                    <p className="text-sm text-ink-muted">{texts.ready}</p>
                     {deepLink && (
                         <a
                             href={deepLink}
-                            className="rounded-md bg-indigo-600 px-6 py-3 text-base font-semibold text-white hover:bg-indigo-700"
+                            className="inline-flex min-h-control items-center rounded-control bg-brand px-6 py-2 text-base font-semibold text-ink-on-brand hover:bg-brand-hover"
                         >
                             {texts.back}
                         </a>
                     )}
-                    <div className="rounded-md border border-slate-300 bg-white p-4 text-sm text-slate-800">
+                    <div className="rounded-control border border-line-strong bg-surface p-4 text-sm text-ink">
                         <p>{texts.manual}</p>
-                        <p className="mt-1 font-mono text-lg font-bold tracking-widest">/link {code}</p>
+                        <p className="mt-1 font-mono text-lg font-semibold">/link {code}</p>
                     </div>
-                    <p className="text-xs text-slate-500">{texts.expires}</p>
+                    <p className="text-xs text-ink-muted">{texts.expires}</p>
                 </>
             )}
         </main>

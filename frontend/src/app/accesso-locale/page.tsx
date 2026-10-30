@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
+import { Card } from '@/components/ui/Card';
 
 // Riscatto del link monouso generato dal guscio desktop (ADR-0002 §3.3).
 // Il token viaggia nel frammento (`#t=...`), che il browser non manda al
@@ -57,10 +58,10 @@ export default function LocalAccessPage() {
 
     return (
         <section className="page-narrow py-16" aria-live="polite">
-            <div className="glass-panel p-8 text-center">
-                <h1 className="text-2xl font-bold text-slate-900">{t('localAuth.title')}</h1>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">{message}</p>
-            </div>
+            <Card className="p-8 text-center">
+                <h1 className="text-2xl font-semibold text-ink">{t('localAuth.title')}</h1>
+                <p className="mt-4 text-sm leading-relaxed text-ink-muted">{message}</p>
+            </Card>
         </section>
     );
 }

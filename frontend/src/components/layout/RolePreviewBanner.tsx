@@ -27,15 +27,15 @@ export function RolePreviewBanner() {
     const roleLabel = t(ROLE_KEY[account.role]);
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-3 bg-amber-500 px-4 py-2 text-sm font-semibold text-amber-950 shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-4 border-t border-warning-line bg-warning-soft px-4 py-2 text-sm font-semibold text-warning-ink shadow-pop">
             <Eye className="h-4 w-4 shrink-0" />
             <span>{t('rolePreview.banner', { name: account.name, role: roleLabel })}</span>
             <button
                 type="button"
                 onClick={exit}
-                className="inline-flex items-center gap-1 rounded-md bg-amber-950/90 px-3 py-1 text-xs font-bold text-amber-50 hover:bg-amber-950"
+                className="inline-flex min-h-control items-center gap-1 rounded-control border border-warning-line bg-surface px-4 text-xs font-semibold text-warning-ink hover:bg-surface-sunken"
             >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-4 w-4" />
                 {t('rolePreview.exit')}
             </button>
         </div>

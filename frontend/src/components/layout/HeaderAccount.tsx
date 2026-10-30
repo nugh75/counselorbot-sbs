@@ -13,7 +13,7 @@ import { FlagIcon } from './FlagIcon';
 import { MotionToggle } from './MotionToggle';
 import { ThemeToggle } from './ThemeToggle';
 
-const ROW = 'flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100';
+const ROW = 'flex min-h-control w-full items-center gap-2 px-4 py-2 text-left text-sm text-ink-body hover:bg-surface-raised';
 
 type Account = { label: string; detail: string | null; title: string } | null;
 
@@ -44,10 +44,10 @@ export function HeaderAccount({ account, servicesHref, servicesLabel, logoutHref
             >
                 {account ? <User className="h-4 w-4 shrink-0" /> : <FlagIcon code={currentLanguage.code} className="h-4 w-6 shrink-0" />}
                 <span className="min-w-16 max-w-28 truncate xl:max-w-40">{account ? account.label : t('header.preferences')}</span>
-                <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                <ChevronDown className="h-4 w-4 shrink-0" />
             </button>
             {open && (
-                <div id="account-panel" className="header-panel absolute right-0 top-full z-[60] mt-2 max-h-[calc(100dvh-4.5rem)] w-72 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+                <div id="account-panel" className="header-panel absolute right-0 top-full z-[60] mt-2 max-h-[calc(100dvh-4.5rem)] w-72 overflow-y-auto rounded-control border border-line bg-surface py-1 shadow-pop">
                     <AccountItems
                         account={account}
                         servicesHref={servicesHref}
@@ -78,31 +78,31 @@ export function AccountItems({ account, servicesHref, servicesLabel, logoutHref,
     return (
         <>
             {account && (
-                <div className="border-b border-slate-100 px-3 py-2">
-                    <div className="truncate text-sm font-semibold text-slate-800" title={account.title}>{account.label}</div>
-                    {account.detail && <div className="truncate text-xs text-slate-500">{account.detail}</div>}
+                <div className="border-b border-line px-4 py-2">
+                    <div className="truncate text-sm font-semibold text-ink" title={account.title}>{account.label}</div>
+                    {account.detail && <div className="truncate text-xs text-ink-muted">{account.detail}</div>}
                 </div>
             )}
             {servicesHref && (
-                <a href={servicesHref} className={cn(ROW, 'border-b border-slate-100')} onClick={onNavigate}>
+                <a href={servicesHref} className={cn(ROW, 'border-b border-line')} onClick={onNavigate}>
                     <LayoutGrid className="h-4 w-4 shrink-0" />
                     <span className="truncate">{servicesLabel}</span>
                 </a>
             )}
-            <Link href="/privacy" className={cn(ROW, 'border-b border-slate-100')} onClick={onNavigate}>
+            <Link href="/privacy" className={cn(ROW, 'border-b border-line')} onClick={onNavigate}>
                 <ShieldCheck className="h-4 w-4 shrink-0" />
                 <span className="truncate">{t('privacy.title')}</span>
             </Link>
             <div role="group" aria-label={t('header.preferences')}>
                 {account && (
-                    <div className="px-3 pb-1 pt-2 text-2xs font-semibold uppercase tracking-wide text-slate-500" aria-hidden="true">
+                    <div className="px-4 pb-1 pt-2 text-2xs font-semibold text-ink-muted" aria-hidden="true">
                         {t('header.preferences')}
                     </div>
                 )}
                 <ThemeToggle labelled />
                 <MotionToggle labelled />
                 <VoiceReaderMenuEntry className={ROW} onActivate={onNavigate} getOpener={getOpener} />
-                <div className="px-3 pb-1 pt-2 text-2xs font-semibold uppercase tracking-wide text-slate-500" aria-hidden="true">
+                <div className="px-4 pb-1 pt-2 text-2xs font-semibold text-ink-muted" aria-hidden="true">
                     {t('nav.language')}
                 </div>
                 <div className="grid grid-cols-2 gap-1 px-2 pb-2">
@@ -114,8 +114,8 @@ export function AccountItems({ account, servicesHref, servicesLabel, logoutHref,
                             aria-pressed={language.code === lang}
                             lang={language.code}
                             className={cn(
-                                'flex min-h-[44px] items-center gap-2 rounded-md px-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-100',
-                                language.code === lang && 'bg-indigo-50 font-semibold ring-1 ring-indigo-200 dark:bg-indigo-950',
+                                'flex min-h-control items-center gap-2 rounded-control px-2 text-left text-sm text-ink-body transition-colors hover:bg-surface-raised',
+                                language.code === lang && 'bg-brand-soft font-semibold ring-1 ring-brand-line',
                             )}
                         >
                             <FlagIcon code={language.code} className="h-4 w-6 shrink-0" />
@@ -125,7 +125,7 @@ export function AccountItems({ account, servicesHref, servicesLabel, logoutHref,
                 </div>
             </div>
             {logoutHref && (
-                <a href={logoutHref} className={cn(ROW, 'border-t border-slate-100')} onClick={onNavigate}>
+                <a href={logoutHref} className={cn(ROW, 'border-t border-line')} onClick={onNavigate}>
                     <LogOut className="h-4 w-4 shrink-0" />
                     <span className="truncate">{t('header.signOut')}</span>
                 </a>
@@ -147,7 +147,7 @@ export function SignInLink({ pathname, row = false }: { pathname: string; row?: 
             href={loginHref(pathname)}
             // La query (es. /admin?tab=logs) non passa da usePathname: si legge al click.
             onClick={(event) => { event.currentTarget.href = loginHref(`${location.pathname}${location.search}${location.hash}`); }}
-            className={row ? cn(ROW, 'border-t border-slate-100 font-semibold text-indigo-700') : 'console-topbar-action shrink-0 font-semibold text-indigo-700'}
+            className={row ? cn(ROW, 'border-t border-line font-semibold text-link') : 'console-topbar-action shrink-0 font-semibold text-link'}
         >
             <LogIn className="h-4 w-4 shrink-0" />
             <span className={row ? 'truncate' : 'whitespace-nowrap'}>{t('header.signIn')}</span>

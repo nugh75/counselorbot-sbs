@@ -16,7 +16,7 @@ export function HeaderInstrument() {
 
     return (
         <span
-            className="flex min-w-0 items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-medium text-slate-700"
+            className="flex min-w-0 items-center rounded-full border border-line bg-surface-sunken px-4 py-1 text-sm text-ink-body"
             title={name}
         >
             <span className="max-w-28 truncate sm:max-w-40">{name}</span>

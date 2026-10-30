@@ -105,18 +105,18 @@ export default function PrivacyPage() {
                 subtitle={t('privacy.subtitle')}
                 backHref="/profilo"
                 backLabel={t('privacy.back')}
-                icon={<ShieldCheck className="h-7 w-7 text-indigo-600" aria-hidden />}
+                icon={<ShieldCheck className="h-7 w-7 text-link" aria-hidden />}
             />
 
             <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+                <span className="inline-flex items-center gap-1 rounded-full border border-warning-line bg-warning-soft px-2 py-1 text-xs font-semibold text-warning-ink">
                     {t('privacy.documents.validation')}: {t('privacy.documents.validationBadge') || validationStatus}
                 </span>
-                <p className="text-xs text-slate-600">{t('privacy.documents.validationHint')}</p>
+                <p className="text-xs text-ink-muted">{t('privacy.documents.validationHint')}</p>
             </div>
 
             {loading ? (
-                <p role="status" className="flex items-center gap-2 text-sm text-slate-600">
+                <p role="status" className="flex items-center gap-2 text-sm text-ink-muted">
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                     {t('privacy.loading')}
                 </p>
@@ -133,7 +133,7 @@ export default function PrivacyPage() {
                             <p>{t('privacy.signInBody')}</p>
                             <a
                                 href={ai4authLoginUrl('/privacy')}
-                                className="mt-3 inline-flex min-h-11 items-center rounded-md bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700"
+                                className="mt-4 inline-flex min-h-control items-center rounded-control bg-brand px-4 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover"
                             >
                                 {t('privacy.signIn')}
                             </a>
@@ -143,7 +143,7 @@ export default function PrivacyPage() {
                     {choicesError && (
                         <Callout variant="danger" title={t('privacy.purposes.error')}>
                             <p>{t('privacy.purposes.error.generic')}</p>
-                            <Button variant="secondary" size="sm" className="mt-3" onClick={() => void loadSelf()}>{t('privacy.retry')}</Button>
+                            <Button variant="secondary" size="sm" className="mt-4" onClick={() => void loadSelf()}>{t('privacy.retry')}</Button>
                         </Callout>
                     )}
 
@@ -172,8 +172,8 @@ export default function PrivacyPage() {
                 </>
             )}
 
-            <p className="text-xs text-slate-500">
-                <Link href="/guide" className="underline underline-offset-2 hover:text-indigo-700">{t('nav.guide')}</Link>
+            <p className="text-xs text-ink-muted">
+                <Link href="/guide" className="underline underline-offset-2 hover:text-link">{t('nav.guide')}</Link>
             </p>
         </div>
     );

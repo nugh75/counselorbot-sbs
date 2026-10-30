@@ -68,7 +68,7 @@ export function OrientationGate({ children }: { children: React.ReactNode }) {
     }, [pathname, router]);
 
     if (checking) {
-        return <div className="mx-auto mt-16 h-1 w-24 overflow-hidden rounded-full bg-slate-200" aria-busy="true"><span className="block h-full w-1/2 animate-pulse rounded-full bg-indigo-500" /></div>;
+        return <div className="mx-auto mt-16 h-1 w-24 overflow-hidden rounded-full bg-line" aria-busy="true"><span className="block h-full w-1/2 animate-pulse rounded-full bg-brand" /></div>;
     }
     return children;
 }

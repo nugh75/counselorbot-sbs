@@ -148,8 +148,8 @@ export default function JoinPage() {
                 <PageHeader
                     title={l(active ? 'activeTitle' : 'pendingTitle')}
                     icon={active
-                        ? <UserRoundCheck className="h-7 w-7 text-indigo-600" aria-hidden />
-                        : <ShieldCheck className="h-7 w-7 text-amber-700" aria-hidden />}
+                        ? <UserRoundCheck className="h-7 w-7 text-link" aria-hidden />
+                        : <ShieldCheck className="h-7 w-7 text-warning" aria-hidden />}
                 />
                 <Callout variant={active ? 'success' : 'warning'} title={l(active ? 'activeTitle' : 'pendingTitle')}>
                     {l(active ? 'activeBody' : 'pendingBody', { pseudonym: result.pseudonym })}
@@ -158,8 +158,8 @@ export default function JoinPage() {
                     <Card>
                         <section aria-labelledby="personal-code-heading" className="space-y-4">
                             <div>
-                                <h2 id="personal-code-heading" className="text-lg font-bold text-slate-800">{l('personalCodeTitle')}</h2>
-                                <p className="mt-1 text-sm text-slate-600">{l('personalCodeHint')}</p>
+                                <h2 id="personal-code-heading" className="text-lg font-semibold text-ink">{l('personalCodeTitle')}</h2>
+                                <p className="mt-1 text-sm text-ink-muted">{l('personalCodeHint')}</p>
                             </div>
                             <div className="flex flex-col gap-2 sm:flex-row">
                                 <label htmlFor="paired-personal-code" className="sr-only">{l('personalCodeLabel')}</label>
@@ -168,19 +168,19 @@ export default function JoinPage() {
                                     readOnly
                                     value={formatPersonalCode(result.personalCode)}
                                     onFocus={event => event.target.select()}
-                                    className="min-h-11 min-w-0 flex-1 rounded-md border border-indigo-200 bg-indigo-50 px-3 text-center font-mono text-xl font-bold tracking-widest text-indigo-950"
+                                    className="min-h-control min-w-0 flex-1 rounded-control border border-brand-line bg-brand-soft px-4 text-center font-mono text-xl font-semibold text-link"
                                 />
                                 <Button type="button" variant="secondary" onClick={() => void copyCode()}>
                                     {copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
                                     {l(copied ? 'copied' : 'copy')}
                                 </Button>
                             </div>
-                            <label className="flex min-h-11 items-center gap-3 text-sm text-slate-700">
+                            <label className="flex min-h-control items-center gap-4 text-sm text-ink-body">
                                 <input
                                     type="checkbox"
                                     checked={codeSaved}
                                     onChange={event => setCodeSaved(event.target.checked)}
-                                    className="h-4 w-4 rounded-xs border-slate-300 text-indigo-600"
+                                    className="h-4 w-4 rounded-xs border-line-strong text-link"
                                 />
                                 {l('savedCode')}
                             </label>
@@ -204,7 +204,7 @@ export default function JoinPage() {
             <PageHeader
                 title={l('pageTitle')}
                 subtitle={l('pageSubtitle')}
-                icon={<KeyRound className="h-7 w-7 text-indigo-600" aria-hidden />}
+                icon={<KeyRound className="h-7 w-7 text-link" aria-hidden />}
             />
             {!keyFromLink && <Callout variant="info">{l('missingKey')}</Callout>}
             {error && <Callout variant="danger">{error}</Callout>}
@@ -212,10 +212,10 @@ export default function JoinPage() {
             <Card>
                 <form onSubmit={event => void handlePair(event)} className="space-y-4" aria-labelledby="pair-heading">
                     <div>
-                        <h2 id="pair-heading" className="text-lg font-bold text-slate-800">{l('pairTitle')}</h2>
-                        <p className="mt-1 text-sm text-slate-600">{l('pairHint')}</p>
+                        <h2 id="pair-heading" className="text-lg font-semibold text-ink">{l('pairTitle')}</h2>
+                        <p className="mt-1 text-sm text-ink-muted">{l('pairHint')}</p>
                     </div>
-                    <label htmlFor="class-pairing-key" className="block text-sm font-semibold text-slate-700">
+                    <label htmlFor="class-pairing-key" className="block text-sm font-semibold text-ink-body">
                         {l('classKeyLabel')}
                         <input
                             id="class-pairing-key"
@@ -227,11 +227,11 @@ export default function JoinPage() {
                             autoComplete="off"
                             spellCheck={false}
                             aria-describedby={keyFromLink ? 'class-key-origin' : undefined}
-                            className="mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-sm text-slate-900"
+                            className="mt-1 min-h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 font-mono text-sm text-ink"
                         />
                     </label>
-                    {keyFromLink && <p id="class-key-origin" className="text-xs text-slate-500">{l('keyFromLink')}</p>}
-                    <label htmlFor="pair-pseudonym" className="block text-sm font-semibold text-slate-700">
+                    {keyFromLink && <p id="class-key-origin" className="text-xs text-ink-muted">{l('keyFromLink')}</p>}
+                    <label htmlFor="pair-pseudonym" className="block text-sm font-semibold text-ink-body">
                         {l('pseudonymLabel')}
                         <input
                             id="pair-pseudonym"
@@ -241,10 +241,10 @@ export default function JoinPage() {
                             onChange={event => setPseudonym(event.target.value)}
                             placeholder={l('pseudonymPlaceholder')}
                             autoComplete="off"
-                            className="mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-900"
+                            className="mt-1 min-h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-base text-ink"
                         />
                     </label>
-                    <label htmlFor="pair-device-label" className="block text-sm font-semibold text-slate-700">
+                    <label htmlFor="pair-device-label" className="block text-sm font-semibold text-ink-body">
                         {l('deviceLabel')}
                         <input
                             id="pair-device-label"
@@ -253,7 +253,7 @@ export default function JoinPage() {
                             onChange={event => setDeviceLabel(event.target.value)}
                             placeholder={l('devicePlaceholder')}
                             autoComplete="off"
-                            className="mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-900"
+                            className="mt-1 min-h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-base text-ink"
                         />
                     </label>
                     <Button type="submit" variant="accent" disabled={busy !== null || !classKey.trim() || !pseudonym.trim()}>
@@ -266,10 +266,10 @@ export default function JoinPage() {
             <Card>
                 <form onSubmit={event => void handleRecover(event)} className="space-y-4" aria-labelledby="recover-heading">
                     <div>
-                        <h2 id="recover-heading" className="text-lg font-bold text-slate-800">{l('recoverTitle')}</h2>
-                        <p className="mt-1 text-sm text-slate-600">{l('recoverHint')}</p>
+                        <h2 id="recover-heading" className="text-lg font-semibold text-ink">{l('recoverTitle')}</h2>
+                        <p className="mt-1 text-sm text-ink-muted">{l('recoverHint')}</p>
                     </div>
-                    <label htmlFor="recovery-personal-code" className="block text-sm font-semibold text-slate-700">
+                    <label htmlFor="recovery-personal-code" className="block text-sm font-semibold text-ink-body">
                         {l('personalCodeLabel')}
                         <input
                             id="recovery-personal-code"
@@ -281,7 +281,7 @@ export default function JoinPage() {
                             autoComplete="off"
                             autoCapitalize="characters"
                             spellCheck={false}
-                            className="mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-lg uppercase tracking-widest text-slate-900"
+                            className="mt-1 min-h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 font-mono text-lg text-ink"
                         />
                     </label>
                     <Button type="submit" variant="secondary" disabled={busy !== null || !personalCode.trim()}>
