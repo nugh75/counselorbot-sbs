@@ -725,7 +725,11 @@ ipotesi aperte che lo studente è libero di confermare, correggere o rifiutare.
 Nel blocco privato `recommendations` il modello può dichiarare note di tipo `hypothesis`
 (con campo facoltativo `lens` vincolato ai fattori dello step corrente). Il blocco resta
 privato anche quando il modello lo scrive come fence `json` con l'elenco delle note
-direttamente sotto `recommendations`: non compare nella risposta e le note vengono registrate. Al turno successivo,
+direttamente sotto `recommendations`: non compare nella risposta e le note vengono registrate.
+Se il modello avvolge la risposta in un oggetto JSON nudo `{"answer": ..., "recommendations": ...}`
+(anche dopo lo stesso testo in prosa, in streaming o in un turno di continuazione), lo studente
+vede solo il testo di `answer`, senza duplicati, e le raccomandazioni dichiarate lì passano
+dallo stesso filtro sul catalogo del turno. Al turno successivo,
 la risposta dello studente viene accoppiata deterministicamente all'ipotesi aperta (`status`
 passa ad `answered` con salvataggio di `payload.reply`, limitato a 240 caratteri). Lo stato
 del filo (`thread_state`: `introduced`, `exploring`, `hypothesis_open`, `hypothesis_answered`)

@@ -36,6 +36,11 @@ _TAG_BLOCK_RE = re.compile(r"<recommendations(?:\s[^>]*)?>(.*?)</recommendations
 _TAG_OPEN_RE = re.compile(r"<recommendations(?:\s[^>]*)?>", re.IGNORECASE)
 _PARTIAL_TAG_RE = re.compile(r"(?:^|\n)<([A-Za-z]*)$")
 _JSON_OPEN_RE = re.compile(r"```json[ \t]*\r?\n", re.IGNORECASE)
+# Alcuni modelli (Gemini 2.5 Flash, turni di continuazione) avvolgono la
+# risposta in {"answer": ..., "recommendations": ...}, spesso dopo lo stesso
+# testo in prosa e senza recinto: l'answer e' la risposta visibile.
+_ENVELOPE_RE = re.compile(r'(?:```(?:json)?[ \t]*\r?\n?)?\{\s*"answer"\s*:\s*"')
+_PARTIAL_ENVELOPE_RE = re.compile(r'\{\s*(?:"(?:a(?:n(?:s(?:w(?:e(?:r(?:"\s*:?\s*)?)?)?)?)?)?)?)?$')
 
 
 def _unwrap(data):
@@ -110,7 +115,7 @@ def strip_for_display(text: str) -> str:
     """Nasconde il blocco completo, aperto o ancora in streaming."""
     if not text:
         return text
-    cleaned, payloads = _remove_blocks(text)
+    cleaned, payloads = _remove_blocks(text, final=False)
     if payloads:
         cleaned = cleaned.strip()
     open_match = min((match for pattern in (_OPEN_BLOCK_RE, _TAG_OPEN_RE)
@@ -150,7 +155,7 @@ def extract(
     if not text:
         return "", _selection([], [])
 
-    cleaned, payloads = _remove_blocks(text)
+    cleaned, payloads = _remove_blocks(text, final=True)
     open_match = min((match for pattern in (_OPEN_BLOCK_RE, _TAG_OPEN_RE)
                       if (match := pattern.search(cleaned))), key=lambda match: match.start(), default=None)
     if open_match:
@@ -193,8 +198,66 @@ def _selection(reading: list[str], strategy: list[str]) -> dict[str, list[str]]:
     return {"reading": reading, "strategy": strategy}
 
 
-def _remove_blocks(text: str) -> tuple[str, list[str]]:
+def _json_string_prefix(text: str, start: int) -> str:
+    """Decodifica la stringa JSON che parte da `start`, anche se ancora troncata."""
+    end, escaped = start, False
+    while end < len(text) and (escaped or text[end] != '"'):
+        escaped = not escaped and text[end] == "\\"
+        end += 1
+    raw = text[start:end]
+    for cut in range(len(raw), max(len(raw) - 6, 0) - 1, -1):
+        try:
+            return json.loads(f'"{raw[:cut]}"')
+        except ValueError:
+            continue
+    return ""
+
+
+def _envelope_payload(value) -> str | None:
+    """Raccomandazioni dell'involucro nella forma del blocco privato."""
+    if isinstance(value, dict):
+        return json.dumps(value)
+    if not isinstance(value, list) or not value:
+        return None
+    # Lista senza tipo: gli id passano dalla whitelist di ciascun catalogo.
+    ids = [item if isinstance(item, str) else item.get("id") or item.get("slug")
+           for item in value if isinstance(item, (str, dict))]
+    ids = [slug for slug in ids if isinstance(slug, str)]
+    return json.dumps({"reading": ids, "strategy": ids})
+
+
+def _unwrap_envelope(text: str, *, final: bool) -> tuple[str, list[str]]:
+    """Sostituisce l'involucro {"answer": ...} con la sua answer, senza duplicare il testo."""
+    from .chat_continuation import merge_continuation
+
+    match = _ENVELOPE_RE.search(text)
+    if not match:
+        partial = None if final else _PARTIAL_ENVELOPE_RE.search(text)
+        return (text[:partial.start()].rstrip() if partial else text), []
+    prefix = text[:match.start()]
+    brace = text.index("{", match.start())
+    try:
+        data, end = json.JSONDecoder().raw_decode(text, brace)
+    except ValueError:
+        data = None
+    if isinstance(data, dict) and isinstance(data.get("answer"), str):
+        answer, rest = data["answer"], re.sub(r"^\s*```", "", text[end:])
+        payload = _envelope_payload(data.get("recommendations"))
+    else:
+        answer, rest, payload = _json_string_prefix(text, match.end()), "", None
+    head = prefix.rstrip()
+    if not head or answer.startswith(head):
+        visible = answer if final or len(answer) >= len(head) else head
+    elif head.startswith(answer.rstrip()):
+        visible = head
+    else:
+        visible = merge_continuation(prefix, answer, final=final)
+    return visible + rest, [payload] if payload else []
+
+
+def _remove_blocks(text: str, *, final: bool = True) -> tuple[str, list[str]]:
     """Toglie i blocchi chiusi e restituisce il loro contenuto grezzo."""
+    text, envelope = _unwrap_envelope(text, final=final)
     payloads: list[str] = []
 
     def _take(match: re.Match) -> str:
@@ -208,7 +271,7 @@ def _remove_blocks(text: str) -> tuple[str, list[str]]:
         return match.group(0)
 
     cleaned = _TAG_BLOCK_RE.sub(_take, BLOCK_RE.sub(_take, text))
-    return _JSON_BLOCK_RE.sub(_take_json, cleaned), payloads
+    return _JSON_BLOCK_RE.sub(_take_json, cleaned), payloads + envelope
 
 
 def _first_valid(payloads: list[str]) -> dict | None:

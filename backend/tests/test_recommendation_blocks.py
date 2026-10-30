@@ -104,3 +104,61 @@ def test_notes_listed_directly_under_recommendations_do_not_leak():
     assert [note['kind'] for note in notes] == ['hypothesis', 'question']
     ordinary = 'Esempio:\n```json\n{"recommendations": ["leggi di piu"]}\n```'
     assert extract(ordinary)[0] == ordinary
+
+
+# Shape seen in production (Gemini 2.5 Flash, QSAr factor step, continuation
+# turn): the reply in prose, then the same reply again inside a bare
+# {"answer", "recommendations"} object with no fence.
+ENVELOPE_TEXT = ('Ora vediamo i Fattori Affettivi del tuo profilo QSAr.\n\n'
+                 'Poi c\'è Volizione, con un punteggio di 7 su 9, che indica una tua "Forza". '
+                 'Questi sono i tuoi Fattori Affettivi.')
+
+
+def _envelope(answer, recommendations):
+    import json
+    return json.dumps({'answer': answer, 'recommendations': recommendations}, ensure_ascii=False)
+
+
+def test_bare_answer_envelope_after_the_same_text_never_reaches_the_student():
+    raw = ENVELOPE_TEXT + _envelope(ENVELOPE_TEXT, [])
+    for end in range(len(ENVELOPE_TEXT), len(raw) + 1):
+        visible = strip_for_display(raw[:end])
+        assert visible == ENVELOPE_TEXT, raw[:end][-40:]
+    assert extract(raw) == (ENVELOPE_TEXT, {'reading': [], 'strategy': []})
+
+
+def test_answer_envelope_alone_streams_its_answer_only():
+    raw = _envelope(ENVELOPE_TEXT, [])
+    for end in range(len(raw) + 1):
+        visible = strip_for_display(raw[:end])
+        assert ENVELOPE_TEXT.startswith(visible), raw[:end][-40:]
+        assert '{' not in visible and '"answer"' not in visible
+    assert strip_for_display(raw) == ENVELOPE_TEXT
+    assert extract('```json\n' + raw + '\n```')[0] == ENVELOPE_TEXT
+
+
+def test_answer_envelope_keeps_a_continuation_suffix():
+    head = 'Studia ogni giorno e'
+    assert extract(head + _envelope(' verifica i progressi.', []))[0] == head + ' verifica i progressi.'
+
+
+def test_answer_envelope_recommendations_are_recorded_within_the_catalogue():
+    readings = {'book': 'Il libro della prova'}
+    strategies = {'active': 'Recupero attivo'}
+    text = 'Prova il Recupero attivo e leggi Il libro della prova.'
+    for recommendations, expected in (
+        ({'reading': ['book'], 'strategy': ['active', 'foreign']}, {'reading': ['book'], 'strategy': ['active']}),
+        (['active', 'book', 'foreign'], {'reading': ['book'], 'strategy': ['active']}),
+        ([{'id': 'active'}, {'slug': 'book'}], {'reading': ['book'], 'strategy': ['active']}),
+        ([], {'reading': [], 'strategy': []}),
+    ):
+        visible, selected = extract(text + '\n' + _envelope(text, recommendations),
+                                    readings=readings, strategies=strategies)
+        assert visible == text
+        assert selected == expected
+
+
+def test_ordinary_json_and_braces_stay_visible():
+    for text in ('Usa la formula {a + b}.', 'Esempio:\n```json\n{"name": "Ada"}\n```', 'Un insieme {1, 2}'):
+        assert strip_for_display(text) == text
+        assert extract(text)[0] == text
