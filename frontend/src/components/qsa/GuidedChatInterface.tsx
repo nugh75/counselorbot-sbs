@@ -252,7 +252,7 @@ const SAVICKAS_FALLBACK_STEPS: StepDef[] = [
         label: "6. Sintesi Narrativa e Piano d'Azione",
         system_prompt_mode: 'savickas-summary',
         color_theme: 'purple',
-        prompt: 'Produci la sintesi finale: tema centrale, risorse, ostacoli, ipotesi di direzione e piano 7/30/90 giorni.',
+        prompt: 'Produci la sintesi finale: tema centrale, risorse, ostacoli, ipotesi di direzione, azioni e scadenze solo se concordate dallo studente.',
     },
 ];
 
