@@ -130,7 +130,10 @@ def test_qpcc_and_qap_summaries_keep_their_domain_and_shared_output_safeguards()
     # uno solo, il percorso gemello resta indietro senza segnali.
     qpcc = _default_for("prompt_qpcc_summary")
     qap = _default_for("prompt_qap_summary")
-    assert '[CANONICAL QPCC CONTRACT]' in qpcc
+    # Il contratto canonico QPCC lo aggiunge il codice col solo scope del passo (#751, A06).
+    from backend.qpcc import directive
+    assert '[CANONICAL QPCC CONTRACT]' not in qpcc
+    assert '[CANONICAL QPCC CONTRACT]' in directive('qpcc-sintesi')
     assert 'ten' in qpcc and 'QPCC' not in qap
     for text in (qpcc, qap):
         assert '[[AVANZA_STEP]]' in text

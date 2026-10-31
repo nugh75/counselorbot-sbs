@@ -685,8 +685,11 @@ def _brief_candidates(message: str, history: list[dict[str, str]] | None, lang: 
 def _factor_line(db: Session, tool_id: str) -> str:
     """I fattori che lo strumento riporta: e' la parte concreta del "a che serve"."""
     if tool_id == 'QPCC':
-        from .qpcc import directive
-        return directive()
+        # Solo i fatti: il contratto dell'intervista QPCC non vale per la Bussola (#751, B05).
+        from .qpcc import FACTORS, INVERTED
+        return "Factors it reports: " + "; ".join(
+            f"{f['code']} {f['labels']['en']}{' (reverse-scored)' if f['code'] in INVERTED else ''}" for f in FACTORS
+        ) + "."
     rows = (
         db.query(models.Factor)
         .filter(models.Factor.instrument_code == tool_id)

@@ -282,6 +282,25 @@ Le letture di prova certificate al primo avvio sono 15 saggi e articoli del
 catalogo su studio, motivazione, orientamento e competenze strategiche
 (`backend/strategies_step.py`); romanzi e film restano in bozza.
 
+**Contenuti dei percorsi allineati (#751).** Nella chat guidata QPCC i fattori
+del passo li dichiara solo il codice: i prompt fissi di intervista e sintesi non
+elencano più le dieci scale come «correnti». La sintesi Savickas di riserva usa
+solo azioni e scadenze concordate, senza piano fisso a 7, 30 e 90 giorni. Nel
+percorso Obiettivo docenza la bozza dell'obiettivo descrive le attività per la
+classe, la prova e il criterio; in Obiettivo studio restano primi passi e piano
+se-allora. La scheda QPCC della Bussola è solo descrittiva (cosa guarda, cosa si
+ottiene, quando serve, cosa non fa) e la riga dei fattori elenca le dieci scale
+senza il contratto dell'intervista. Al primo avvio le schede salvate rimaste alla
+struttura vecchia (QPCC a «cinque aree», Obiettivo studio e docenza a «sette
+passi») prendono il testo attuale; una scheda riscritta poi dall'admin resta com'è.
+Nell'Assistente (collezione competenze) strumenti, lingue e requisiti
+dell'analisi combinata (almeno 2 tra QSA, QSAr e ZTPI) sono generati dal codice;
+il contesto salvato tiene solo le attribuzioni. La domanda suggerita sugli ambiti
+di competenza strategica non ne indica più il numero, nelle sei lingue. I prompt
+cambiati (`prompt_qpcc_interview`, `prompt_qpcc_summary`,
+`site_chat_platform_context`) si riallineano con «Allinea prompt di fabbrica»,
+anche dove erano stati personalizzati.
+
 Le pagine di questa zona (`/questionario`, `/somministrazione`, `/strumenti/[id]`,
 pQBL, selettore del counselor e somministrazione in app) usano i token semantici
 e le primitive `Button`, `Card` e `Callout` (audit UI 2026-10-30, zona 1):
