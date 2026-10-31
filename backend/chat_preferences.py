@@ -12,7 +12,9 @@ def apply_response_format(prompt: str, response_format: str | None) -> str:
         "bullets": "Use concise Markdown bullet points, bold key ideas, and make priorities and practical actions easy to find.",
         "table": "Use compact Markdown tables for comparisons and summaries, with at most three short columns; the factor profile tables keep their four columns. Keep personal questions and dialogue in brief prose outside the table; do not force a table when there is nothing to compare or summarize.",
     }
-    if response_format not in instructions or "[VISIBLE RESPONSE FORMAT]" in prompt:
+    # Il blocco si riconosce dalla sua intestazione: il contratto del turno nomina
+    # [VISIBLE RESPONSE FORMAT] in una frase e non deve impedirne l'aggiunta (#750).
+    if response_format not in instructions or "[VISIBLE RESPONSE FORMAT]\n" in prompt:
         return prompt
     return prompt + "\n\n[VISIBLE RESPONSE FORMAT]\n" + instructions[response_format] + (
         " This controls presentation only: preserve meaning, sources, required content, language and the response-length budget. "

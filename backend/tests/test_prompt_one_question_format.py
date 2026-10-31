@@ -51,6 +51,12 @@ def test_the_chosen_format_wins_over_the_prose_default():
         assert "the IDEA final plan stays numbered" in text
 
 
+def test_the_contract_naming_the_format_block_does_not_suppress_it():
+    prompt = apply_response_format(_contract(advice_allowed=False), "bullets")
+    assert "Use concise Markdown bullet points" in prompt
+    assert apply_response_format(prompt, "bullets").count("[VISIBLE RESPONSE FORMAT]\n") == 1
+
+
 def test_profile_tables_keep_four_columns():
     table = apply_response_format("base", "table")
     assert "at most three short columns" in table
