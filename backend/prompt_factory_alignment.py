@@ -69,6 +69,9 @@ FORCED_FACTORY_KEYS = {
         # #749: i passi sui fattori e le sintesi non danno strategie (A07, A08, A13).
         "prompt_second_level", "prompt_qpcs_summary", "prompt_qpcc_summary",
         "prompt_qap_summary", "prompt_meta_QSA_sl-social", "prompt_qpcs_analysis",
+        # #751: QPCC senza i fattori fissi del passo (A06), contesto dell'Assistente
+        # senza i fatti che ora genera il codice (C07).
+        "prompt_qpcc_interview", "site_chat_platform_context",
     },
     # #749: sintesi senza strategie nuove, passo ZTPI descrittivo.
     "guided_step": {"sl-synthesis", "qsar-synthesis", "ztpi-btp", "qpcs-sintesi", "qpcc-sintesi", "qap-sintesi"},
