@@ -17,6 +17,8 @@ import { ModelContextSettings } from '@/components/admin/ModelContextSettings';
 import { getAuthUrls } from '@/lib/auth';
 import { SectionFilter, type SectionFilterGroup } from '@/components/admin/SectionFilter';
 import { PromptMap } from '@/components/admin/PromptMap';
+import { PromptHealthPanel, notifyPromptSaved } from '@/components/admin/PromptHealthPanel';
+import { isPromptConfigKey } from '@/lib/prompt-health';
 import { ModelSearchSelect } from '@/components/admin/ModelSearchSelect';
 import { validModelId } from '@/lib/model-search';
 import { systemAIText } from '@/lib/i18n-system-ai';
@@ -575,6 +577,7 @@ export function ConfigForm() {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             setSavedConfigs(previous => [...previous.filter(c => c.key !== item.key), item]);
             showToast('success', t('admin.config.saved'));
+            if (isPromptConfigKey(item.key)) void notifyPromptSaved(`config:${item.key}`);
             return true;
         } catch (error) {
             console.error('Failed to save config', error);
@@ -717,6 +720,8 @@ export function ConfigForm() {
             <PromptFactoryAlignment disabled={hasUnsavedChanges}
                 stepLabels={Object.fromEntries(guidedSteps.map(step => [step.id, `${step.questionnaire_type} — ${step.label_i18n?.[lang] || step.label}`]))}
                 onApplied={applyFactoryResult} onBusyChange={setFactoryAlignmentBusy} />
+
+            <PromptHealthPanel />
 
             <fieldset disabled={factoryAlignmentBusy} className="contents">
             {/* Filtro di sezione: impostazioni e strumenti raggruppati */}
