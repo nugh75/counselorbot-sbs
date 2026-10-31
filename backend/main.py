@@ -139,6 +139,7 @@ from .routes import practice_notebooks as practice_notebook_routes
 from .routes import presets as presets_routes
 from .routes import privacy as privacy_routes
 from .routes import prompt_audit as prompt_audit_routes
+from .routes import prompt_health as prompt_health_routes
 from .routes import prompt_experiments as prompt_experiments_routes
 from .routes import rag_docs as rag_docs_routes
 from .routes import readings as readings_routes
@@ -344,6 +345,10 @@ async def lifespan(app: FastAPI):
                 pass
 
     asyncio.create_task(_build_rag())
+
+    # Controllo statico dei prompt (#760): solo avvisi, mai bloccante.
+    from .prompt_health import run_at_startup as _prompt_health_at_startup
+    asyncio.get_event_loop().run_in_executor(None, _prompt_health_at_startup)
     yield
 
 
@@ -2172,6 +2177,7 @@ app.include_router(pqbl_routes.router)
 app.include_router(presets_routes.router)
 app.include_router(benchmark_routes.router)
 app.include_router(prompt_audit_routes.router)
+app.include_router(prompt_health_routes.router)
 app.include_router(counselors_routes.router)
 app.include_router(approved_strategies_routes.router)
 app.include_router(certified_strategies_routes.router)

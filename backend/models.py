@@ -1897,6 +1897,20 @@ class PromptRevision(Base):
     created_at = Column(UTCDateTime, server_default=func.now(), index=True)
 
 
+class PromptHealthRun(Base):
+    """Result of the static prompt health check, stored by the hash of the texts it read (#760)."""
+
+    __tablename__ = "prompt_health_runs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    texts_hash = Column(String, nullable=False, index=True)
+    check_version = Column(Integer, nullable=False)
+    trigger = Column(String, nullable=False)  # startup | manual | save
+    findings = Column(JSON, nullable=False)
+    counts = Column(JSON, nullable=False)
+    created_at = Column(UTCDateTime, server_default=func.now())
+
+
 class PromptExperimentDecision(Base):
     """Production receipt, committed atomically with a human-approved prompt write."""
 
