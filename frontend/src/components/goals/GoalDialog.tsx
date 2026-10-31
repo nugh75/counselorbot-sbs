@@ -84,6 +84,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
     const actionPrefill = target.kind === 'edit' ? target.prefill?.action : undefined;
     useEffect(() => {
         if (!actionPrefill || !goal) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot prefill handed over by the parent: opens the <details> element and clears the parent's target
         setAction({ title: actionPrefill, detail: '', date: '' }); setMode('view');
         if (actionDetails.current) actionDetails.current.open = true;
         onTarget({ ...target, prefill: undefined });
@@ -97,6 +98,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
     // B4: the review step. `onSaved` is deferred while the step is up (saving bumps the
     // revision, which would remount this body through bodyKey and drop the after-bridges).
     if (mode === 'review' && goal) {
+        // eslint-disable-next-line react-hooks/refs -- the post-review row is held on purpose without re-rendering (see comment above); it only applies on the next render
         return <GoalReviewStep goal={held.current ?? goal} onDone={row => { held.current = row; }}
             onCancel={() => { flush(null); setMode('view'); }}
             onNavigate={next => { flush(null); onNavigate(next); }} onDirty={onDirty} onReload={onReload} />;

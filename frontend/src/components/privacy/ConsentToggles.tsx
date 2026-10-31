@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Loader2, ShieldCheck, ShieldQuestion } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
@@ -58,10 +58,10 @@ export function ConsentToggles({ purposes, documents, choices, canEdit, choicesL
     const { lang, t } = useI18n();
     const [drafts, setDrafts] = useState<Record<string, boolean>>({});
     const [initial, setInitial] = useState<Record<string, boolean>>({});
-    const [saving, setSaving] = useState<string | null>(null);
-    const [feedback, setFeedback] = useState<Feedback | null>(null);
-
-    useEffect(() => {
+    // Le scelte salvate riallineano gli interruttori quando arrivano o cambiano.
+    const [switchSource, setSwitchSource] = useState<{ purposes: typeof purposes; choices: typeof choices } | null>(null);
+    if (switchSource?.purposes !== purposes || switchSource?.choices !== choices) {
+        setSwitchSource({ purposes, choices });
         const next: Record<string, boolean> = {};
         for (const purpose of purposes) {
             const choice = currentChoice(choices, purpose.key);
@@ -69,7 +69,9 @@ export function ConsentToggles({ purposes, documents, choices, canEdit, choicesL
         }
         setDrafts(next);
         setInitial(next);
-    }, [purposes, choices]);
+    }
+    const [saving, setSaving] = useState<string | null>(null);
+    const [feedback, setFeedback] = useState<Feedback | null>(null);
 
     const save = async (purpose: PrivacyPurpose) => {
         const document = documentForPurpose(purpose, documents);

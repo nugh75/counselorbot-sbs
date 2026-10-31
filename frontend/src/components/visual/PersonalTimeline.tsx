@@ -25,6 +25,7 @@ import { datePeriod, eventDates, localToday, validTimelineDates, type TimelineDa
 import { filterItems, splitByToday, timelineItems, type TimelineItem, type TimelineItemKind } from '@/lib/timeline-items';
 import { TIMELINE_GLYPHS, timelineGlyph, type TimelineGlyph } from '@/lib/timeline-legend';
 import type { SavedWorkspace, TimelineEvent, VisualWorkspace } from '@/lib/visual-tools';
+import { useClientValue } from '@/lib/use-client-value';
 
 const field = 'mt-1 w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-[15px] text-ink';
 const iconButton = 'h-control w-control shrink-0 p-0';
@@ -42,9 +43,11 @@ const isGoalReview = (id: string) => id.startsWith('goal-review-');
 type Preview = { title: string; description: string; preview_hash: string };
 type SnapshotPayload = { revision: number; event_ids: string[]; title: string; reflection: string; language: string };
 
-const readFilters = (): Set<TimelineItemKind> => {
+const readStoredFilters = (): string | null => {
+    try { return localStorage.getItem(FILTER_KEY); } catch { return null; }
+};
+const parseFilters = (raw: string | null): Set<TimelineItemKind> => {
     try {
-        const raw = localStorage.getItem(FILTER_KEY);
         if (raw) {
             const saved = JSON.parse(raw) as TimelineItemKind[] | { visible: TimelineItemKind[] };
             if (Array.isArray(saved)) {
@@ -74,7 +77,11 @@ export function PersonalTimeline({ locale }: { locale: string }) {
     const [createSymbol, setCreateSymbol] = useState<TimelineEvent['symbol']>('milestone');
     const [createReflection, setCreateReflection] = useState('');
     const [createDirty, setCreateDirty] = useState(false);
-    const [filters, setFilters] = useState<Set<TimelineItemKind> | null>(null);
+    // Filtri salvati nel browser (null nel render del server), finché non se ne sceglie uno.
+    const storedFilters = useClientValue(readStoredFilters, null);
+    const savedFilters = useMemo(() => storedFilters === null ? null : parseFilters(storedFilters), [storedFilters]);
+    const [chosenFilters, setFilters] = useState<Set<TimelineItemKind> | null>(null);
+    const filters = chosenFilters ?? savedFilters;
     const [selected, setSelected] = useState<string[] | null>(null);
     const [copyOpen, setCopyOpen] = useState(false);
     const [copyTitle, setCopyTitle] = useState('');
@@ -120,7 +127,6 @@ export function PersonalTimeline({ locale }: { locale: string }) {
     }, []);
     useEffect(() => { const controller = new AbortController(); void loadPortfolio(controller.signal); return () => controller.abort(); }, [loadPortfolio]);
 
-    useEffect(() => { if (!filters) setFilters(readFilters()); }, [filters]);
     const chooseFilters = (next: Set<TimelineItemKind>) => {
         setFilters(next);
         try { localStorage.setItem(FILTER_KEY, JSON.stringify({ visible: [...next] })); } catch { /* per-viewer convenience only */ }

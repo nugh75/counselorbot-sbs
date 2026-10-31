@@ -34,9 +34,14 @@ export function PlanActivityFlow({ pathId, stepId }: { pathId: number; stepId: n
         save.current = callback;
         if (callback) setReadyToSave(true);
     }, []);
+    const activityKey = `${pathId}:${stepId}:${reload}`;
+    const [loadedActivityKey, setLoadedActivityKey] = useState(activityKey);
+    if (loadedActivityKey !== activityKey) {
+        setLoadedActivityKey(activityKey);
+        setError(false);
+    }
     useEffect(() => {
         let active = true;
-        setError(false);
         void (async () => {
             const response = await apiFetch(`/api/user/paths/${pathId}/steps/${stepId}/activity`);
             if (!response.ok) throw new Error('activity');

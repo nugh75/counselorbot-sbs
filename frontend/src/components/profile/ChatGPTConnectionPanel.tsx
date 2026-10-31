@@ -9,6 +9,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { chatgptRequest, notifyChatGPTChange, type ChatGPTStatus } from '@/lib/chatgpt';
 import { getViewAsAccount } from '@/lib/auth';
 import { currentDeviceOs, type DeviceOs } from '@/lib/device-os';
+import { useClientValue } from '@/lib/use-client-value';
 
 type LinkCode = { pairing_code: string; expires_at: string };
 
@@ -21,12 +22,11 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
     const [errorKey, setErrorKey] = useState('');
     const [notice, setNotice] = useState('');
     const [copied, setCopied] = useState('');
-    const [origin, setOrigin] = useState('');
-    const [preview, setPreview] = useState(false);
+    const origin = useClientValue(() => window.location.origin, '');
+    const preview = useClientValue(() => Boolean(getViewAsAccount()), false);
     // #134: the helper offered first follows the user's computer.
-    const [device, setDevice] = useState<DeviceOs>('unknown');
+    const device = useClientValue<DeviceOs>(currentDeviceOs, 'unknown');
     const [now, setNow] = useState(() => Date.now());
-    useEffect(() => { setDevice(currentDeviceOs()); }, []);
     useEffect(() => {
         if (!link) return;
         const tick = setInterval(() => setNow(Date.now()), 1000);
@@ -41,8 +41,7 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
 
     useEffect(() => {
         const controller = new AbortController();
-        setOrigin(window.location.origin);
-        if (getViewAsAccount()) { setPreview(true); return; }
+        if (getViewAsAccount()) return;
         const refreshStatus = () => {
             void chatgptRequest<ChatGPTStatus>('', 'GET', undefined, controller.signal).then(next => {
                 setStatus(next);

@@ -22,6 +22,12 @@ export function MeetingDetails({ lang, meeting, attended, onChanged, showTitle =
     const m = (key: ClassMeetingTextKey) => classMeetingText(lang, key);
     const [busy, setBusy] = useState(false);
     const [failure, setFailure] = useState<'error' | 'slotTaken' | null>(null);
+    // Clock for «has it started?», refreshed every half minute while the details are open.
+    const [now, setNow] = useState(() => Date.now());
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 30_000);
+        return () => clearInterval(timer);
+    }, []);
     const [choice, setChoice] = useState('');
     const cancelled = meeting.status === 'cancelled';
     const individual = meeting.kind === 'individual';
@@ -30,7 +36,7 @@ export function MeetingDetails({ lang, meeting, attended, onChanged, showTitle =
     const freeSlots = slots.filter(slot => slot.id !== meeting.booking_slot_id);
     // Attendance starts with the meeting, or with the student's own slot.
     const start = individual ? mine?.starts_at ?? null : meeting.starts_at;
-    const started = start !== null && new Date(start).getTime() <= Date.now();
+    const started = start !== null && new Date(start).getTime() <= now;
     const host = meetingHost(meeting);
     const selfMark = meeting.attendance_mode !== 'teacher';
     // The teacher's mark is taken back from the register only.

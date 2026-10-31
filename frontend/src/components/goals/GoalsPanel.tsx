@@ -14,6 +14,7 @@ import { GoalDialog, type DialogTarget } from './GoalDialog';
 import { GoalMap } from './GoalMap';
 import { GoalTree } from './GoalTree';
 import { GoalIssue } from './GoalUI';
+import { useClientValue } from '@/lib/use-client-value';
 
 const VIEW_KEY = 'cb_goals_view';
 const readView = (): 'list' | 'map' => { try { return localStorage.getItem(VIEW_KEY) === 'map' ? 'map' : 'list'; } catch { return 'list'; } };
@@ -44,8 +45,8 @@ export function GoalsPanel() {
     const [goals, setGoals] = useState<PersonalGoal[]>([]); const [catalog, setCatalog] = useState<CatalogEntry[]>([]); const [groups, setGroups] = useState<GoalGroup[]>([]);
     const [loading, setLoading] = useState(true); const [error, setError] = useState<unknown>(null);
     const [target, setTarget] = useState<DialogTarget | null>(null); const [catalogOpen, setCatalogOpen] = useState(false);
-    const [saved, setSaved] = useState(false); const [showClosed, setShowClosed] = useState(false); const [view, setView] = useState<'list' | 'map'>('list');
-    useEffect(() => { setView(readView()); }, []);
+    const [saved, setSaved] = useState(false); const [showClosed, setShowClosed] = useState(false); const [chosenView, setView] = useState<'list' | 'map' | null>(null);
+    const storedView = useClientValue(readView, 'list'); const view = chosenView ?? storedView;
     const chooseView = (next: 'list' | 'map') => { setView(next); try { localStorage.setItem(VIEW_KEY, next); } catch { /* per-viewer convenience only */ } };
     const load = useCallback(async (): Promise<PersonalGoal[]> => {
         setLoading(true); setError(null);

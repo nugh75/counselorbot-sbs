@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, FolderPlus, GraduationCap, Image as ImageIcon, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -40,10 +40,13 @@ export function FlashcardsPage() {
     const [draftImage, setDraftImage] = useState('');
     const [pickingImageId, setPickingImageId] = useState<string | null>(null);
     const [confirming, setConfirming] = useState<string | null>(null);
+    // Latest values for the serialized auto-save, updated after each commit.
     const workRef = useRef(work);
-    workRef.current = work;
     const savedRef = useRef(saved);
-    savedRef.current = saved;
+    useLayoutEffect(() => {
+        workRef.current = work;
+        savedRef.current = saved;
+    });
     const saveChain = useRef<Promise<void>>(Promise.resolve());
     const dirty = JSON.stringify(work) !== JSON.stringify(saved.workspace);
 
@@ -90,7 +93,7 @@ export function FlashcardsPage() {
         return () => window.removeEventListener('beforeunload', prevent);
     }, [dirty]);
 
-    const edit = useCallback((next: FlashcardWorkspace) => setWork(next), []);
+    const edit = useCallback((update: (current: FlashcardWorkspace) => FlashcardWorkspace) => setWork(update), []);
     const openDeck = (deck: FlashcardDeck) => { setOpenDeckId(deck.id); setView('deck'); setStudy(null); };
     // Opening a deck goes straight into study mode: the full card list (with
     // the backs) stays hidden behind the explicit “Edit” action.
@@ -109,7 +112,7 @@ export function FlashcardsPage() {
     const studyCard = study && studyDeck ? studyDeck.cards.find(c => c.id === study.order[study.index]) ?? null : null;
     const answer = useCallback((status: FlashcardStatus) => {
         if (!study || !studyCard) return;
-        edit(setCardStatus(workRef.current, study.deckId, studyCard.id, status));
+        edit(current => setCardStatus(current, study.deckId, studyCard.id, status));
         setStudy(previous => previous ? { ...previous, index: previous.index + 1, flipped: false, known: previous.known + (status === 'known' ? 1 : 0), review: previous.review + (status === 'review' ? 1 : 0) } : previous);
     }, [study, studyCard, edit]);
     useEffect(() => {
@@ -127,7 +130,7 @@ export function FlashcardsPage() {
 
     const applyImage = (imageId: string | null) => {
         if (pickingImageId === 'draft') setDraftImage(imageId || '');
-        else if (pickingImageId) edit(updateCard(workRef.current, openDeckId!, pickingImageId, { image: imageId }));
+        else if (pickingImageId) edit(current => updateCard(current, openDeckId!, pickingImageId, { image: imageId }));
         setPickingImageId(null);
     };
     const removeButton = (id: string, name: string, action: () => void, labelKey = 'deleteDeck') => confirming === id
@@ -158,7 +161,7 @@ export function FlashcardsPage() {
                             <div className="mt-2 flex flex-wrap items-center gap-2 self-end">
                                 <Tooltip content={l('study')}><Button type="button" variant="secondary" className="min-h-control gap-1 px-4" aria-label={`${l('study')}: ${deck.title}`} disabled={!deck.cards.length} onClick={() => { openDeck(deck); startStudy(deck); }}>{l('study')}</Button></Tooltip>
                                 <Tooltip content={l('editDeck')}><Button type="button" variant="ghost" className="h-control w-control p-0" aria-label={`${l('editDeck')}: ${deck.title}`} onClick={() => openDeck(deck)}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                                {removeButton(`deck:${deck.id}`, deck.title, () => { edit(removeDeck(workRef.current, deck.id)); setStudy(null); })}
+                                {removeButton(`deck:${deck.id}`, deck.title, () => { edit(current => removeDeck(current, deck.id)); setStudy(null); })}
                             </div>
                         </article>;
                     })}
@@ -167,25 +170,25 @@ export function FlashcardsPage() {
         </section>}
 
         {view === 'deck' && currentDeck && <section aria-label={currentDeck.title} className="space-y-4">
-            {study ? <StudyView study={study} deck={studyDeck} card={studyCard} onFlip={() => setStudy(s => s ? { ...s, flipped: true } : s)} onAnswer={answer} onExit={() => setStudy(null)} onRestart={() => { const deck = workRef.current.decks.find(d => d.id === study.deckId); if (deck) startStudy(deck, true); }} /> : <>
+            {study ? <StudyView study={study} deck={studyDeck} card={studyCard} onFlip={() => setStudy(s => s ? { ...s, flipped: true } : s)} onAnswer={answer} onExit={() => setStudy(null)} onRestart={() => { const deck = work.decks.find(d => d.id === study.deckId); if (deck) startStudy(deck, true); }} /> : <>
                 <div className="flex flex-wrap items-center gap-2">
                     <Tooltip content={l('backToDecks')}><Button type="button" variant="secondary" className={buttonClass} aria-label={l('backToDecks')} onClick={() => { setView('list'); setOpenDeckId(null); }}><ArrowLeft className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                    {renamingDeck && <InlineRename value={currentDeck.title} maxLength={100} ariaLabel={l('renameDeck')} onRename={name => { edit(renameDeck(workRef.current, currentDeck.id, name)); setRenamingDeck(false); }} onCancel={() => setRenamingDeck(false)} />}
+                    {renamingDeck && <InlineRename value={currentDeck.title} maxLength={100} ariaLabel={l('renameDeck')} onRename={name => { edit(current => renameDeck(current, currentDeck.id, name)); setRenamingDeck(false); }} onCancel={() => setRenamingDeck(false)} />}
                         {!renamingDeck && <h2 className="min-w-0 break-words font-semibold text-ink">{currentDeck.title} <span className="font-mono text-sm text-ink-muted">{currentDeck.cards.length}</span></h2>}
                     <div className="ml-auto flex flex-wrap items-center gap-1">
                         <Tooltip content={l('study')}><Button type="button" variant="secondary" className="min-h-control gap-2 px-4" aria-label={l('study')} disabled={!currentDeck.cards.length} onClick={() => startStudy(currentDeck)}>{l('study')}</Button></Tooltip>
                         {confirming === `reset:${currentDeck.id}`
-                            ? <ConfirmInline question={`${l('resetProgress')}: "${currentDeck.title}"?`} onConfirm={() => { setConfirming(null); edit(resetDeckProgress(workRef.current, currentDeck.id)); }} onCancel={() => setConfirming(null)} />
+                            ? <ConfirmInline question={`${l('resetProgress')}: "${currentDeck.title}"?`} onConfirm={() => { setConfirming(null); edit(current => resetDeckProgress(current, currentDeck.id)); }} onCancel={() => setConfirming(null)} />
                             : <Tooltip content={l('resetProgress')}><Button type="button" variant="secondary" className={buttonClass} aria-label={l('resetProgress')} disabled={!currentDeck.cards.length} onClick={() => setConfirming(`reset:${currentDeck.id}`)}><RotateCcw className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
                         <Tooltip content={l('renameDeck')}><Button type="button" variant="ghost" className={buttonClass} aria-label={l('renameDeck')} onClick={() => setRenamingDeck(previous => !previous)}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                        {work.decks.length > 1 && removeButton(`deck:${currentDeck.id}`, currentDeck.title, () => { edit(removeDeck(workRef.current, currentDeck.id)); setView('list'); setOpenDeckId(null); })}
+                        {work.decks.length > 1 && removeButton(`deck:${currentDeck.id}`, currentDeck.title, () => { edit(current => removeDeck(current, currentDeck.id)); setView('list'); setOpenDeckId(null); })}
                     </div>
                 </div>
                 <details open={!currentDeck.cards.length || Boolean(draftFront)} className="rounded-card border border-line bg-surface-sunken p-4"><summary className="min-h-control cursor-pointer py-4 text-link">{l('addCard')}</summary>
                     <form className="space-y-2 rounded-card border border-line bg-surface-sunken p-4" onSubmit={event => {
                         event.preventDefault();
                         if (!draftFront.trim() || !draftBack.trim()) return;
-                        edit(addCard(workRef.current, currentDeck.id, { front: draftFront.trim(), back: draftBack.trim(), image: draftImage || null }, crypto.randomUUID()));
+                        edit(current => addCard(current, currentDeck.id, { front: draftFront.trim(), back: draftBack.trim(), image: draftImage || null }, crypto.randomUUID()));
                         setDraftFront(''); setDraftBack(''); setDraftImage('');
                     }}>
                         <label className="block text-sm">{l('frontLabel')}<textarea required maxLength={FRONT_MAX} rows={2} value={draftFront} onChange={e => setDraftFront(e.target.value)} className={`${inputClass} mt-1`} /></label>
@@ -209,7 +212,7 @@ export function FlashcardsPage() {
                 {!currentDeck.cards.length ? <p className="py-6 text-center text-ink-muted">{l('emptyDeck')}</p> : (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{currentDeck.cards.map(card => <article key={card.id} className="group/card flex flex-col rounded-card border border-line bg-surface p-4 shadow-card">
                         <div className="mb-2 flex items-center justify-between gap-2">
-                            <button type="button" onClick={() => edit(updateCard(workRef.current, currentDeck.id, card.id, { status: card.status === 'known' ? 'review' : card.status === 'review' ? null : 'known' }))} aria-label={l('statusNone')}
+                            <button type="button" onClick={() => edit(current => updateCard(current, currentDeck.id, card.id, { status: card.status === 'known' ? 'review' : card.status === 'review' ? null : 'known' }))} aria-label={l('statusNone')}
                                 className={`inline-flex min-h-control items-center gap-1 rounded-full px-2 py-1 text-xs ${card.status === 'known' ? 'bg-success-soft text-success-ink' : card.status === 'review' ? 'bg-warning-soft text-warning-ink' : 'bg-surface-raised text-ink-muted'}`}>
                                 {card.status === 'known' ? <><Check className="h-3 w-3" aria-hidden="true" />{l('knownLabel')}</> : card.status === 'review' ? <><RotateCcw className="h-3 w-3" aria-hidden="true" />{l('reviewLabel')}</> : l('statusNone')}
                             </button>
@@ -217,11 +220,11 @@ export function FlashcardsPage() {
                                 <button type="button" onClick={() => setPickingImageId(card.id)} className="flex h-control w-control items-center justify-center rounded-lg border border-line bg-surface-sunken text-ink-muted hover:border-brand-line hover:text-link" aria-label={card.image ? l('changeImage') : l('addImage')} title={card.image ? l('changeImage') : l('addImage')}>
                                     {card.image ? <img src={tavoloImageUrl(card.image)} alt="" className="h-6 w-6 object-contain" /> : <ImageIcon className="h-4 w-4" aria-hidden="true" />}
                                 </button>
-                                {removeButton(`card:${card.id}`, card.front, () => edit(removeCard(workRef.current, currentDeck.id, card.id)), 'deleteCard')}
+                                {removeButton(`card:${card.id}`, card.front, () => edit(current => removeCard(current, currentDeck.id, card.id)), 'deleteCard')}
                             </div>
                         </div>
-                        <label className="block text-sm">{l('frontLabel')}<textarea maxLength={FRONT_MAX} rows={2} value={card.front} onChange={e => edit(updateCard(workRef.current, currentDeck.id, card.id, { front: e.target.value }))} className={`${inputClass} mt-1`} /></label>
-                        <label className="mt-2 block text-sm">{l('backLabel')}<textarea maxLength={BACK_MAX} rows={3} value={card.back} onChange={e => edit(updateCard(workRef.current, currentDeck.id, card.id, { back: e.target.value }))} className={`${inputClass} mt-1`} /></label>
+                        <label className="block text-sm">{l('frontLabel')}<textarea maxLength={FRONT_MAX} rows={2} value={card.front} onChange={e => edit(current => updateCard(current, currentDeck.id, card.id, { front: e.target.value }))} className={`${inputClass} mt-1`} /></label>
+                        <label className="mt-2 block text-sm">{l('backLabel')}<textarea maxLength={BACK_MAX} rows={3} value={card.back} onChange={e => edit(current => updateCard(current, currentDeck.id, card.id, { back: e.target.value }))} className={`${inputClass} mt-1`} /></label>
                     </article>)}</div>
                 )}
             </>}
@@ -236,11 +239,11 @@ export function FlashcardsPage() {
                     </div>
                     <label className="block text-sm text-ink-body" htmlFor={`${id}-deck-name`}>{l('deckName')}</label>
                     <input id={`${id}-deck-name`} type="text" maxLength={100} value={deckName} onChange={e => setDeckName(e.target.value)} onKeyDown={e => {
-                        if (e.key === 'Enter' && deckName.trim()) { edit(addDeck(workRef.current, crypto.randomUUID(), deckName.trim())); setDeckName(''); setDialogOpen(false); }
+                        if (e.key === 'Enter' && deckName.trim()) { edit(current => addDeck(current, crypto.randomUUID(), deckName.trim())); setDeckName(''); setDialogOpen(false); }
                     }} className={`${inputClass} mt-1`} />
                     <div className="mt-6 flex justify-end gap-2">
                         <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>{l('deckCancel')}</Button>
-                        <Button type="button" disabled={!deckName.trim()} onClick={() => { edit(addDeck(workRef.current, crypto.randomUUID(), deckName.trim())); setDeckName(''); setDialogOpen(false); }}>{l('deckCreate')}</Button>
+                        <Button type="button" disabled={!deckName.trim()} onClick={() => { edit(current => addDeck(current, crypto.randomUUID(), deckName.trim())); setDeckName(''); setDialogOpen(false); }}>{l('deckCreate')}</Button>
                     </div>
                 </div>
             </div>, document.body)}

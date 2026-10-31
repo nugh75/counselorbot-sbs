@@ -26,9 +26,11 @@ export function GoalCatalogEditor({ initialData }: { initialData?: CatalogData }
         catch (e) { setError(e); } finally { setLoading(false); }
     }, []);
     useEffect(() => { void load(); }, [load]);
+    const sharedKey = `${sharedGroup}:${sharedAttempt}`; const [sharedKeyShown, setSharedKeyShown] = useState(sharedKey);
+    if (sharedKeyShown !== sharedKey) { setSharedKeyShown(sharedKey); setShared([]); setSharedError(null); setSharedLoading(Boolean(sharedGroup)); }
     useEffect(() => {
-        if (!sharedGroup) { setShared([]); return; }
-        let active = true; setSharedLoading(true); setShared([]); setSharedError(null);
+        if (!sharedGroup) return;
+        let active = true;
         void goalApi<SharedGoal[]>(`/teacher/groups/${sharedGroup}/goals`).then(result => { if (active) setShared(result); }).catch(e => { if (active) setSharedError(e); }).finally(() => { if (active) setSharedLoading(false); });
         return () => { active = false; };
     }, [sharedGroup, sharedAttempt]);

@@ -11,6 +11,7 @@ import { fetchAccountPreferences, saveAccountPreferences, safeAccountNext, type 
 import { getSelectedCounselorId } from '@/lib/counselor';
 import { useI18n } from '@/lib/i18n-context';
 import { personalAreaName } from '@/lib/i18n-personal-area';
+import { useClientValue } from '@/lib/use-client-value';
 
 export function AccountSetup({ counselorOnly = false, onReturn }: { counselorOnly?: boolean; onReturn?: () => void }) {
     const router = useRouter();
@@ -19,13 +20,14 @@ export function AccountSetup({ counselorOnly = false, onReturn }: { counselorOnl
     const [error, setError] = useState(false);
     const [busy, setBusy] = useState(false);
     const [retry, setRetry] = useState(0);
-    const [instrument, setInstrument] = useState<string | undefined>();
+    const embedded = Boolean(onReturn);
+    const instrument = useClientValue<string | null>(() => {
+        const params = new URLSearchParams(embedded ? '' : window.location.search);
+        const destination = new URL(safeAccountNext(params.get('next')), window.location.origin);
+        return params.get('instrument') ?? destination.searchParams.get('start') ?? destination.searchParams.get('instrument');
+    }, null) ?? undefined;
     useEffect(() => {
         let active = true;
-        setError(false);
-        const params = new URLSearchParams(onReturn ? '' : window.location.search);
-        const destination = new URL(safeAccountNext(params.get('next')), window.location.origin);
-        setInstrument(params.get('instrument') ?? destination.searchParams.get('start') ?? destination.searchParams.get('instrument') ?? undefined);
         void fetchAccountPreferences().then(async p => {
             if (!active) return;
             setPrefs(p);
@@ -62,7 +64,7 @@ export function AccountSetup({ counselorOnly = false, onReturn }: { counselorOnl
             {prefs?.counselor_id && !prefs.counselor_ready && <p className="mt-4 text-warning-ink" role="status">{t('counselor.unavailable')}</p>}
             {instrument && <p className="mt-4 text-warning-ink" role="status">{t('setup.compatibility', { instrument })}</p>}
         </header>
-        {error && <div role="alert"><p>{t('setup.error')}</p><Button onClick={() => setRetry(n => n + 1)}>{t('setup.retry')}</Button></div>}
+        {error && <div role="alert"><p>{t('setup.error')}</p><Button onClick={() => { setError(false); setRetry(n => n + 1); }}>{t('setup.retry')}</Button></div>}
         {prefs && (counselorOnly || !prefs.counselor_ready ?
             <>
             {!prefs.counselor_ready && <Callout>

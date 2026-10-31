@@ -163,6 +163,21 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
     // e un nodo senza misura resta `visibility: hidden`: la tela si disegnava e
     // non si vedeva niente. Qui il grafo resta l'autorita' su cosa c'e' e dove
     // sta, ma la misura di prima viaggia con lui.
+    const removePiece = (id: string) => {
+        onChange({
+            ...graph,
+            nodes: graph.nodes.filter((node) => node.id !== id),
+            edges: graph.edges.filter((edge) => edge.from !== id && edge.to !== id),
+        });
+        setSelected(null);
+    };
+
+    const patchNode = (id: string, change: Partial<{ label: string; form: TavoloForm; color: TavoloColor | null; icon: string | null; image: string | null }>) =>
+        onChange({
+            ...graph,
+            nodes: graph.nodes.map((node) => (node.id === id ? { ...node, ...change } : node)),
+        });
+
     const [nodes, setNodes, onNodesChange] = useNodesState<Node<PieceData>>([]);
     useEffect(() => {
         setNodes((previous) => {
@@ -268,26 +283,11 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
         setSelected({ kind: 'node', id });
     };
 
-    const removePiece = (id: string) => {
-        onChange({
-            ...graph,
-            nodes: graph.nodes.filter((node) => node.id !== id),
-            edges: graph.edges.filter((edge) => edge.from !== id && edge.to !== id),
-        });
-        setSelected(null);
-    };
-
     const removeSelected = () => {
         if (!selected) return;
         if (selected.kind === 'node') removePiece(selected.id);
         else removeEdge(selected.id);
     };
-
-    const patchNode = (id: string, change: Partial<{ label: string; form: TavoloForm; color: TavoloColor | null; icon: string | null; image: string | null }>) =>
-        onChange({
-            ...graph,
-            nodes: graph.nodes.map((node) => (node.id === id ? { ...node, ...change } : node)),
-        });
 
     // L'accento e' uno solo: accentare un pezzo sposta l'enfasi invece di
     // aggiungerne una. Due punti sul tavolo non sono un punto.
