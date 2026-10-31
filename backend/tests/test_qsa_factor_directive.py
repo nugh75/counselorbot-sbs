@@ -314,16 +314,17 @@ def test_step_allows_practical_advice():
     assert _step_allows_practical_advice(None) is False
     assert _step_allows_practical_advice("") is False
     assert _step_allows_practical_advice("intro") is False
-    # second-level / generic (e varianti qsar): emettono il piano pratico
-    assert _step_allows_practical_advice("second-level") is True
+    # Passi di secondo livello e follow-up: analizzano; le strategie arrivano
+    # nel passo «Strategie e consigli» (#749).
+    assert _step_allows_practical_advice("second-level") is False
+    assert _step_allows_practical_advice("qsar-second-level") is False
+    assert _step_allows_practical_advice("factor-qa") is False
+    assert _step_allows_practical_advice("qsar-factor-qa") is False
+    # generic (chat libera e varianti qsar) e il passo strategie danno il piano pratico
     assert _step_allows_practical_advice("generic") is True
-    assert _step_allows_practical_advice("qsar-second-level") is True
     assert _step_allows_practical_advice("qsar-generic") is True
-    # follow-up in-step: lo studente chiede attivamente -> advice consentito
-    assert _step_allows_practical_advice("factor-qa") is True
-    assert _step_allows_practical_advice("qsar-factor-qa") is True
     # case-insensitive + whitespace
-    assert _step_allows_practical_advice("  Second-Level  ") is True
+    assert _step_allows_practical_advice("  Strategies  ") is True
 
 
 def test_qa_defaults_require_depth_on_request():
@@ -348,8 +349,9 @@ def test_conversational_mode_detection():
 
 
 def test_certified_strategy_budget_is_distributed_across_steps():
-    assert _default_certified_strategy_limit("second-level", "sl-motivation") == 1
-    assert _default_certified_strategy_limit("qsar-second-level", "qsar-emotions") == 1
+    assert _default_certified_strategy_limit("second-level", "sl-motivation") == 0
+    assert _default_certified_strategy_limit("qsar-second-level", "qsar-emotions") == 0
+    assert _default_certified_strategy_limit("strategies", "sl-strategies") > 1
     assert _default_certified_strategy_limit("factor", "cognitive") == 0
     assert _default_certified_strategy_limit("factor-qa", "sl-motivation") == 0
     assert _default_certified_strategy_limit("second-level", "sl-synthesis") == 0
@@ -360,15 +362,17 @@ def test_non_advice_steps_disable_strategy_sources():
     factor = apply_advice_retrieval_policy(enabled, "factor", "cognitive")
     follow_up = apply_advice_retrieval_policy(enabled, "factor-qa", "sl-motivation")
     thematic = apply_advice_retrieval_policy(enabled, "second-level", "sl-motivation")
+    strategies = apply_advice_retrieval_policy(enabled, "strategies", "sl-strategies")
     assert factor["approved_strategies"] is False and factor["certified_strategies"] is False
     assert follow_up["approved_strategies"] is False and follow_up["certified_strategies"] is False
-    assert thematic["approved_strategies"] is True and thematic["certified_strategies"] is True
+    assert thematic["approved_strategies"] is False and thematic["certified_strategies"] is False
+    assert strategies["approved_strategies"] is True and strategies["certified_strategies"] is True
 
 
 def test_advice_distribution_directive_is_binding_and_idempotent():
     out = _apply_advice_distribution_directive("BASE")
-    assert "at most ONE new practical recommendation" in out
-    assert "one priority with one concrete action" in out
+    assert "no fixed number per reply" in out
+    assert "one concrete action for each factor" in out
     assert _apply_advice_distribution_directive(out) == out
 
 

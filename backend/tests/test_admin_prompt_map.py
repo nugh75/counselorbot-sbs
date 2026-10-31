@@ -437,7 +437,7 @@ def test_step_skills_match_the_runtime_bindings():
         assert next(e for e in other["skills"] if e["slug"] == "concept-diagram")["blocked"] == []
         assert "binding_off" in by_slug["profile-comparison"]["blocked"]
         assert by_slug["certified-advice"]["binding"] == "all"
-        assert by_slug["certified-advice"]["conditions"] == {"intents": ["advice", "guided"]}
+        assert by_slug["certified-advice"]["conditions"] == {"intents": ["advice", "guided", "strategies"]}
         assert "approved-strategies" not in by_slug
         assert _map(_client(), "QPCS")["skills_engine"] == {"enabled": False}
     finally:

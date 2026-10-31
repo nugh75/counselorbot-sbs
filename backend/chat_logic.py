@@ -46,6 +46,7 @@ from .prompt_config import (
     DEFAULT_QSAR_GUIDED_STEPS,
     DEFAULT_SAVICKAS_GUIDED_STEPS,
     DEFAULT_SYSTEM_PROMPT_GENERIC,
+    STRATEGIES_STEP_MODE,
     DEFAULT_ZTPI_GUIDED_STEPS,
     GUIDED_PHASE_ALIASES,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
@@ -1221,26 +1222,38 @@ def _should_include_step_analysis_context(system_prompt_mode: Optional[str]) -> 
 
 # ponytail: advice-gated modes listed once; add here if a new second-level mode appears
 _ADVICE_PROMPT_MODES = {
-    "second-level", "qsar-second-level", "generic", "qsar-generic",
-    # Follow-up in-step: lo studente chiede attivamente, quindi il materiale
-    # pratico certificato è consentito anche dentro gli step fattore.
-    "factor-qa", "qsar-factor-qa",
-    # Sintesi degli altri strumenti ("Sintesi e Piano d'Azione"): lo step chiede
-    # esplicitamente un piano pratico, quindi deve poter attingere al catalogo
-    # certificato invece di far improvvisare il modello. Gli step di analisi e
-    # intervista restano interpretativi, come `factor` nel QSA.
-    "qpcs-summary", "qpcc-summary", "qap-summary", "savickas-summary", "obiettivo-summary",
+    "generic", "qsar-generic", STRATEGIES_STEP_MODE,
+    # Sintesi dei percorsi senza passo «Strategie e consigli»: lo step chiede
+    # un piano pratico, quindi deve poter attingere al catalogo certificato
+    # invece di far improvvisare il modello.
+    "savickas-summary", "obiettivo-summary",
+}
+
+# Passi dei percorsi a fattori che hanno il passo «Strategie e consigli» (#749):
+# analizzano soltanto, anche quando lo studente chiede una strategia. La
+# richiesta viene rimandata al passo che le da'.
+_ANALYSIS_ONLY_MODES = {
+    "factor", "factor-qa", "second-level",
+    "qsar-factor", "qsar-factor-qa", "qsar-second-level",
+    "ztpi-factor", "ztpi-btp",
+    "qpcs-factor", "qpcs-analysis", "qpcs-summary",
+    "qpcc-factor", "qpcc-interview", "qpcc-summary",
+    "qap-factor", "qap-interview", "qap-summary",
 }
 
 _NO_NEW_ADVICE_STEP_IDS = {"sl-synthesis", "qsar-synthesis", "questions"}
+QUESTIONS_STEP_ID = "questions"
+
+# Candidati certificati per turno nel passo «Strategie e consigli» e nelle
+# richieste esplicite della fase domande: nessun limite di una per risposta,
+# solo un tetto al materiale recuperato (decisione 2.4).
+STRATEGIES_CANDIDATE_LIMIT = 6
 
 _ADVICE_DISTRIBUTION_DIRECTIVE = (
-    "\n\n[ADVICE DISTRIBUTION] In this step, provide at most ONE new practical "
-    "recommendation. Offer it only when the current score profile contains a meaningful "
-    "improvement target. Present it as one priority with one concrete action; do not split "
-    "it into multiple habits, alternatives, daily and weekly actions, or extra tips. "
-    "Then ask whether the student wants a second option or prefers to try this one first: "
-    "one action stays the default, another arrives only if they ask for it."
+    "\n\n[ADVICE DISTRIBUTION] Offer practical strategies only for meaningful improvement "
+    "targets in the current score profile, with no fixed number per reply: one concrete action "
+    "for each factor that deserves work, treated together. Do not split one action into "
+    "multiple habits, alternatives or extra tips. Further options arrive when the student asks."
 )
 
 _FOLLOW_UP_ADVICE_DIRECTIVE = (
@@ -1259,7 +1272,13 @@ def _step_allows_practical_advice(step_mode: Optional[str], step_id: Optional[st
     """
     if (step_id or "").strip().lower() in _NO_NEW_ADVICE_STEP_IDS:
         return False
-    return (step_mode or "").strip().lower() in _ADVICE_PROMPT_MODES
+    mode = (step_mode or "").strip().lower()
+    return mode in _ADVICE_PROMPT_MODES and mode not in _ANALYSIS_ONLY_MODES
+
+
+def is_analysis_only_mode(step_mode: Optional[str]) -> bool:
+    """Passo di un percorso con «Strategie e consigli»: rimanda le richieste."""
+    return (step_mode or "").strip().lower() in _ANALYSIS_ONLY_MODES
 
 
 def _apply_advice_distribution_directive(system_prompt: str) -> str:
@@ -1915,8 +1934,8 @@ def _apply_certified_advice_directive(system_prompt: str, questionnaire_type: st
         "study strategies:\n"
         "- use only the items listed under [CERTIFIED_STRATEGIES] in [KNOWLEDGE];\n"
         "- adapt wording to the student, but do not invent new actions outside that list;\n"
-        "- if one certified item is listed for the current step, use it as the single practical recommendation;\n"
-        "- if no certified item is listed, you may draw the practical step from the approved support strategies in [KNOWLEDGE]; stay interpretive only if neither is available;\n"
+        "- use the certified items that fit the factors to improve, one concrete action for each factor, with no fixed number;\n"
+        "- if no certified item fits a factor, you may draw the practical step from the approved support strategies in [KNOWLEDGE]; stay interpretive only if neither is available;\n"
         "- do not mention these source rules to the student."
     )
 
@@ -2608,10 +2627,7 @@ def _retrieved_context(
                 "excluded_strategy_ids": sorted(excluded_certified_strategy_ids or set()),
                 "excluded_reading_ids": sorted(shown_reading_ids),
             },
-            intent=skills_intents.classify(
-                request.message or "",
-                guided=bool(request.internal_message or (request.use_phase_prompt and not (request.message or "").strip())),
-            ),
+            intent=student_intent(request, step_mode),
             session_id=session_id,
             username=username,
             practice_notebook_id=practice_notebook_id,
@@ -2794,7 +2810,18 @@ def _default_certified_strategy_limit(
     advice_requested: bool = False,
 ) -> int:
     mode = (step_mode or "").strip().lower()
-    if (step_id or "").strip().lower() in _NO_NEW_ADVICE_STEP_IDS:
+    step = (step_id or "").strip().lower()
+    if mode == STRATEGIES_STEP_MODE:
+        return STRATEGIES_CANDIDATE_LIMIT
+    if mode in _ANALYSIS_ONLY_MODES:
+        # I passi sui fattori analizzano: la strategia arriva nel passo
+        # «Strategie e consigli», anche se lo studente la chiede prima.
+        return 0
+    if step == QUESTIONS_STEP_ID:
+        # Fase domande: nessuna proposta di iniziativa, ma una richiesta
+        # esplicita ha risposta (C03).
+        return STRATEGIES_CANDIDATE_LIMIT if advice_requested else 0
+    if step in _NO_NEW_ADVICE_STEP_IDS:
         # Veto per step: la sintesi ricapitola, non introduce consigli nuovi,
         # nemmeno su richiesta esplicita.
         return 0
@@ -2816,12 +2843,27 @@ def is_advice_follow_up(request) -> bool:
     richiesta di consiglio la riconosce il classificatore delle skill."""
     if not str(getattr(request, "phase", "") or "").strip():
         return False
+    return student_intent(request) == "advice"
+
+
+def student_intent(request, step_mode: Optional[str] = None) -> str:
+    """Intento del turno letto solo sul messaggio dello studente (C01).
+
+    Il frontend e Telegram reinviano le istruzioni del passo insieme alla
+    risposta: classificarle faceva leggere "reading or strategy" come una
+    richiesta. Un turno tecnico (apertura del passo, messaggio interno) e'
+    `guided`. Nel passo «Strategie e consigli» strategie e letture valgono
+    sempre, salvo un'intenzione piu' specifica (confronto, chiarimento...)."""
     if getattr(request, "use_phase_prompt", False) or getattr(request, "internal_message", False):
-        return False
-    message = str(getattr(request, "message", "") or "").strip()
-    if not message:
-        return False
-    return skills_intents.classify(message) == "advice"
+        intent = "guided"
+    else:
+        clean = extract_clean_student_message(
+            getattr(request, "message", None), getattr(request, "memory_message", None)
+        )
+        intent = skills_intents.classify(clean) if clean else ""
+    if (step_mode or "").strip().lower() == STRATEGIES_STEP_MODE and intent in {"", "guided", "advice", "reading"}:
+        return "strategies"
+    return intent
 
 
 def _coerce_certified_strategy_limit(value, default: int) -> int:
@@ -2829,7 +2871,7 @@ def _coerce_certified_strategy_limit(value, default: int) -> int:
         limit = int(value)
     except (TypeError, ValueError):
         return default
-    return max(0, min(1, limit))
+    return max(0, min(max(1, default), limit))
 
 
 def get_prompt_component_options(

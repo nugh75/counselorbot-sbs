@@ -67,7 +67,8 @@ def test_fresh_detailed_paths_have_prompts_labels_and_questions_in_six_languages
     for table in (models.Config.__table__, models.GuidedStep.__table__, models.GuidedStepQuestion.__table__):
         table.create(engine)
     with Session(engine) as db:
-        for steps, expected in ((DEFAULT_QAP_GUIDED_STEPS, 7), (DEFAULT_QPCC_GUIDED_STEPS, 8)):
+        # Con il passo «Strategie e consigli» (#749).
+        for steps, expected in ((DEFAULT_QAP_GUIDED_STEPS, 8), (DEFAULT_QPCC_GUIDED_STEPS, 9)):
             assert len(steps) == expected
             for step in steps:
                 assert step['prompt'] and all(step['label_i18n'].get(lang) for lang in ('en', 'es', 'fr', 'de', 'sv'))

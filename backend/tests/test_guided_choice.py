@@ -142,7 +142,8 @@ def test_previous_factory_qa_prompts_align_explicitly_while_custom_text_is_prese
     with artifact_session() as db:
         for key, value in old.items():
             db.add(models.Config(key=key, value=value))
-        custom = models.Config(key='prompt_qpcs_analysis', value='ADMIN PERSONALISED TEXT')
+        # prompt_qpcs_analysis is a forced key since #749: use a key the alignment preserves.
+        custom = models.Config(key='prompt_qpcc_interview', value='ADMIN PERSONALISED TEXT')
         db.add(custom)
         db.flush()
         plan = prompt_factory_alignment.make_plan(db)

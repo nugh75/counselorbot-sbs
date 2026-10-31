@@ -99,7 +99,7 @@ def test_interview_step_prompts_enforce_single_question():
 def test_qpcc_interview_steps_have_avanza_step_and_single_question():
     """Tutti gli step di approfondimento QPCC hanno [[AVANZA_STEP]] e prescrizione
     di singola domanda su singolo aspetto."""
-    interview_steps = [s for s in prompt_config.DEFAULT_QPCC_GUIDED_STEPS if s["id"] not in ("qpcc-intro", "qpcc-profilo", "qpcc-sintesi")]
+    interview_steps = [s for s in prompt_config.DEFAULT_QPCC_GUIDED_STEPS if s["id"] not in ("qpcc-intro", "qpcc-profilo", "qpcc-sintesi", "qpcc-strategie")]
     assert len(interview_steps) == 5
     for step in interview_steps:
         prompt = step["prompt"]

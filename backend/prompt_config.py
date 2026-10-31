@@ -91,6 +91,12 @@ DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL = (
 
 DEFAULT_SYSTEM_PROMPT_GUIDED_QUESTIONS = _text("default_system_prompt_guided_questions")
 
+# Passo «Strategie e consigli»: chiude l'analisi dei percorsi a fattori. I passi
+# precedenti analizzano soltanto; qui le strategie e le letture arrivano di
+# iniziativa per i fattori da migliorare e su richiesta (#749).
+STRATEGIES_STEP_MODE = "strategies"
+DEFAULT_SYSTEM_PROMPT_STRATEGIES = _text("default_system_prompt_strategies")
+
 DEFAULT_GUIDED_TEXT_QUESTIONS_PHASE_BANNER = "--- Fase finale: Riflessione e Strategie ---"
 
 DEFAULT_GUIDED_TEXT_QUESTIONS_INTRO = (
@@ -411,6 +417,12 @@ SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "label": "Prompt Secondo Livello",
         "description": "Prompt di sistema per la modalità analisi di secondo livello",
         "default": DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL,
+    },
+    {
+        "key": "prompt_strategies",
+        "label": "Prompt Strategie e consigli",
+        "description": "Prompt di sistema del passo «Strategie e consigli», dopo la sintesi: strategie e letture di iniziativa per i fattori da migliorare e su richiesta",
+        "default": DEFAULT_SYSTEM_PROMPT_STRATEGIES,
     },
     {
         "key": "prompt_factor_qa",
@@ -1256,6 +1268,7 @@ MODE_TO_SYSTEM_PROMPT_KEY: Dict[str, str] = {
     "qpcc-summary": "prompt_qpcc_summary",
     "qap-interview": "prompt_qap_interview",
     "qap-summary": "prompt_qap_summary",
+    STRATEGIES_STEP_MODE: "prompt_strategies",
 }
 
 
@@ -1475,6 +1488,20 @@ META_SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "label": "QSAr Synthesis - Contesto Pellerey",
         "description": "Sintesi integrata per QSAr",
         "default": _text("qsar_meta_synthesis"),
+    },
+    # Passo «Strategie e consigli» (#749): l'autodirezione lega metodo e scopo,
+    # il quadro delle strategie da proporre.
+    {
+        "key": "prompt_meta_QSA_sl-strategies",
+        "label": "QSA Strategie e consigli - Contesto Pellerey",
+        "description": "Autodirezione: autodeterminazione e autoregolazione come quadro delle strategie",
+        "default": PELLEREY_SELF_DIRECTION,
+    },
+    {
+        "key": "prompt_meta_QSAR_qsar-strategies",
+        "label": "QSAr Strategie e consigli - Contesto Pellerey",
+        "description": "Autodirezione: autodeterminazione e autoregolazione come quadro delle strategie",
+        "default": PELLEREY_SELF_DIRECTION,
     },
     # ZTPI per-step meta prompts
     {
@@ -2796,6 +2823,61 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
                  'fr': "6. Synthèse et Plan d'Action",
                  'de': '6. Synthese und Aktionsplan',
                  'sv': '6. Syntes och handlingsplan'}}]
+
+
+# --- Passo «Strategie e consigli» dei percorsi a fattori (#749) ---
+# Ultimo passo del percorso, subito dopo la sintesi e prima della fase fissa
+# «Domande e Approfondimenti». Nessun codice fattore nel prompt: lo scoping per
+# passo resta sull'intero profilo.
+STRATEGIES_STEP_LABEL = "Strategie e consigli"
+STRATEGIES_STEP_LABEL_I18N = {
+    "en": "Strategies and advice",
+    "es": "Estrategias y consejos",
+    "fr": "Stratégies et conseils",
+    "de": "Strategien und Tipps",
+    "sv": "Strategier och råd",
+}
+STRATEGIES_STEP_IDS = {
+    "QSA": "sl-strategies", "QSAr": "qsar-strategies", "ZTPI": "ztpi-strategies",
+    "QPCS": "qpcs-strategie", "QPCC": "qpcc-strategie", "QAP": "qap-strategie",
+}
+_STRATEGIES_STEP_PROFILE = {
+    "QSA": "my learning strategies profile (QSA)",
+    "QSAr": "my learning strategies profile (QSAr)",
+    "ZTPI": "my time perspective profile (ZTPI)",
+    "QPCS": "my strategic competences profile (QPCS)",
+    "QPCC": "my profile of competences and beliefs (QPCC)",
+    "QAP": "my career adaptability profile (QAP)",
+}
+
+
+def strategies_step(questionnaire_type: str, sort_order: int) -> Dict:
+    # Il numero del passo nell'etichetta segue la posizione, come negli altri.
+    return {
+        "id": STRATEGIES_STEP_IDS[questionnaire_type],
+        "sort_order": sort_order,
+        "label": f"{sort_order}. {STRATEGIES_STEP_LABEL}",
+        "prompt": (
+            f"Open the Strategies and advice step. The analysis of {_STRATEGIES_STEP_PROFILE[questionnaire_type]} "
+            "is complete. Starting from the factors that emerged as areas to improve in my profile and in "
+            "our conversation, propose practical strategies, one concrete action for each factor worth "
+            "working on, and suggest a reading when one fits. Then ask me which one I want to try first."
+        ),
+        "system_prompt_mode": STRATEGIES_STEP_MODE,
+        "questionnaire_type": questionnaire_type,
+        "color_theme": "amber",
+        "label_i18n": {lang: f"{sort_order}. {label}" for lang, label in STRATEGIES_STEP_LABEL_I18N.items()},
+    }
+
+
+for _steps_list, _questionnaire_type in (
+    (DEFAULT_GUIDED_STEPS, "QSA"), (DEFAULT_QSAR_GUIDED_STEPS, "QSAr"),
+    (DEFAULT_ZTPI_GUIDED_STEPS, "ZTPI"), (DEFAULT_QPCS_GUIDED_STEPS, "QPCS"),
+    (DEFAULT_QPCC_GUIDED_STEPS, "QPCC"), (DEFAULT_QAP_GUIDED_STEPS, "QAP"),
+):
+    _steps_list.append(strategies_step(
+        _questionnaire_type, max(step["sort_order"] for step in _steps_list) + 1,
+    ))
 
 
 # Factory entry-turn component policy from the QSA guide. Database overrides

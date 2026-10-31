@@ -198,5 +198,25 @@
     "certified_strategies": false,
     "shared_responses": false,
     "certified_strategy_limit": 0
+  },
+  "sl-strategies": {
+    "system_prompt": true,
+    "step_prompt": true,
+    "cognitive_factors": true,
+    "affective_factors": true,
+    "other_scores": false,
+    "knowledge": true,
+    "history": true,
+    "counselor": true,
+    "metadata": true,
+    "profile": true,
+    "student_booklet": true,
+    "rag_counselorbot": false,
+    "rag_competenzestrategiche": false,
+    "rag_questionari": false,
+    "approved_strategies": true,
+    "certified_strategies": true,
+    "shared_responses": false,
+    "certified_strategy_limit": 6
   }
 }

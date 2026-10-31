@@ -64,9 +64,12 @@ def test_qsa_factory_covers_the_ten_guide_steps_and_keeps_the_synthesis_veto():
     the synthesis veto and the descriptive boundary.
     """
     steps, _ = guide_prompts()
-    assert len(steps) == len(config.DEFAULT_GUIDED_STEPS) == 10
-    assert {step["id"] for step in config.DEFAULT_GUIDED_STEPS} == set(steps)
-    by_id = {step["id"]: step for step in config.DEFAULT_GUIDED_STEPS}
+    # The «Strategie e consigli» step (#749) postdates the guide.
+    guide_steps = [step for step in config.DEFAULT_GUIDED_STEPS
+                   if step["system_prompt_mode"] != config.STRATEGIES_STEP_MODE]
+    assert len(steps) == len(guide_steps) == 10
+    assert {step["id"] for step in guide_steps} == set(steps)
+    by_id = {step["id"]: step for step in guide_steps}
     assert all(step["prompt"] for step in by_id.values())
     assert by_id["sl-synthesis"]["prompt"].endswith(config.SYNTHESIS_ADVICE_DIRECTIVE)
     for step_id in ("cognitive", "affective"):
@@ -82,7 +85,9 @@ def test_qsa_system_and_pedagogical_prompts_cover_the_guide():
     # These four defaults were already reworded after the guide was written on
     # the base commit. The independently authored meta prompts still match
     # exactly; for the reworded ones, only presence and non-emptiness are kept.
-    reworded_after_guide = {"prompt_intro", "prompt_factor", "prompt_second_level", "prompt_factor_qa"}
+    # The social meta lost its practical tips to the strategy catalogue (#749, A08).
+    reworded_after_guide = {"prompt_intro", "prompt_factor", "prompt_second_level", "prompt_factor_qa",
+                            "prompt_meta_QSA_sl-social"}
     for key, expected in prompts.items():
         if key.startswith("prompt_qsar_"):
             continue
