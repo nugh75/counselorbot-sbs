@@ -1,7 +1,7 @@
 """Profilo di installazione `COUNSELORBOT_PROFILE` (ADR-0001, F1-07).
 
 `teacher-pc` (app docente) disattiva le funzioni di laboratorio escluse in
-Fase 1: Prompt Lab, Telegram, OpenCode, Console sync, helper ChatGPT, Piper.
+Fase 1: Prompt Lab, Telegram, Console sync, helper ChatGPT, Piper.
 Le loro rotte rispondono 404 e i loro worker non partono; il codice resta
 nella madre.
 """

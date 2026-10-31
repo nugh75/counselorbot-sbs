@@ -61,7 +61,6 @@ async function fixture(width, phase = 'intro', options = {}) {
             if (!control.copies.has(body.request_id)) control.copies.set(body.request_id, { item_id: 92 });
             data = control.copies.get(body.request_id);
         } else if (url.pathname.endsWith('/timeline-links')) data = { links: [], snapshot: false };
-        else if (url.pathname === '/api/opencode/workspace') data = { key: 'fixture', api_available: true, session_id: 'opencode-fixture', needs_seed: false, history: [{ role: 'assistant', content: reply }] };
         else if (url.pathname === '/api/session/fixture/visual-tools/personal') {
             if (control.failPersonal) return route.fulfill({ status: 503, body: '{}' });
             if (request.method() === 'POST') {

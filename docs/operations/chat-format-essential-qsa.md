@@ -11,12 +11,11 @@ Il formato non modifica punteggi, fonti, strumenti, blocchi strutturati o mappe 
 - Chat guidate (inclusa Idea): menu a tre punti accanto alla scrittura.
 - Bussola: lo stesso menu. I messaggi del counselor ora supportano Markdown e tabelle.
 - Assistente e riflessione sui cambiamenti del taccuino: accanto alla scrittura.
-- OpenCode, modalità chat: sopra la scrittura.
 
-Le etichette sono disponibili nelle sei lingue. Le chat guidate e OpenCode
+Le etichette sono disponibili nelle sei lingue. Le chat guidate
 conservano il formato nello snapshot sul server; le altre superfici lo ricordano
 nella sessione del browser (per conversazione nella Bussola).
-Non sono introdotti controlli nel terminale OpenCode o nel bot Telegram.
+Non sono introdotti controlli nel bot Telegram.
 
 ## Percorso essenziale
 
@@ -48,7 +47,7 @@ nel riepilogo/PDF; un approfondimento successivo invalida la sintesi precedente.
 ## Contratti API
 
 - `response_format`: `standard | bullets | table`, predefinito `standard`, per
-  `ChatRequest`, `SiteChatRequest`, `OpencodeChatRequest` e messaggi Bussola.
+  `ChatRequest`, `SiteChatRequest` e messaggi Bussola.
 - `guided_path`: `complete | essential`, predefinito `complete`, per chat guidata
   e audit. `essential` richiede `questionnaire_type=QSA` e una fase essenziale valida;
   combinazioni incompatibili restituiscono 422.
@@ -66,7 +65,7 @@ Backend: `test_chat_preferences.py`, `test_chat_preparation.py`,
 Frontend: test delle librerie, TypeScript, ESLint sui file modificati, controllo
 traduzioni e build Next.js. `frontend/tests/chat-preferences.test.mjs` verifica
 nel browser selezione, tre risposte, ripresa, errore, approfondimento, QSAr,
-OpenCode, Bussola e Assistente su API simulate. Impostare `CHAT_PREFS_BASE_URL`
+Bussola e Assistente su API simulate. Impostare `CHAT_PREFS_BASE_URL`
 per usare il frontend da verificare; predefinito `http://127.0.0.1:3101`.
 
 Ricostruzione: `docker compose up -d --build backend frontend`.

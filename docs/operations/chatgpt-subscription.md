@@ -396,7 +396,6 @@ scaduto. Dopo un ripristino mantenere coerenti chiave e identificatore di host.
 | Sintesi, diagrammi, tavolo, domande pQBL | Stesso servizio AI personale; nessun token trasferito ad agenti |
 | RAG / embeddings | Servizio locale/configurato; nessun embedding OAuth |
 | OCR/parser di importazione QSA | Configurazione dell’installazione separata dal collegamento personale |
-| OpenCode / terminale | Bloccati con preferenza personale attiva; scegliere il modello dell’installazione |
 | Audio, Files API, strumenti OpenAI ospitati | Nessuna nuova capacità OAuth aggiunta |
 | Anteprima prompt | Struttura Responses senza token, prima del filtro PII; nessuna inferenza nella simulazione |
 

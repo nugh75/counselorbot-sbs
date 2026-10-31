@@ -291,7 +291,7 @@ const PREFIX_SIDEBAR: Record<string, string> = {
 
 // --- Score formatters per questionnaire type ---
 
-function buildScoresFormatter(
+export function buildScoresFormatter(
     questionnaireType: string,
     factorName: (code: string, fallback: string) => string,
 ): (scores: Record<string, number>) => string {

@@ -200,7 +200,7 @@ DEFAULT_ASSISTANT_QUESTIONS: dict[str, list[str]] = {
         "Come posso usare il portfolio su CounselorBot?",
         "Come nasce un obiettivo da un risultato?",
         "Che cos'e' l'analisi combinata dei questionari?",
-        "Come funziona l'esperienza OpenCode?",
+        "Come posso cambiare il formato delle risposte della chat?",
         "Che cos'e' il pQBL (pure Question-Based Learning)?",
         "Come si carica un profilo da PDF o foto?",
         "E' possibile usare i questionari in italiano?",

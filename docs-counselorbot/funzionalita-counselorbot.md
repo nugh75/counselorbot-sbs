@@ -34,15 +34,13 @@ rigenerazione del codice personale in `/docente/dispositivi`. Se il tunnel non
 ha un indirizzo pubblico, il link generato viene segnalato e va rigenerato.
 Sul PC il docente è amministratore; l'amministrazione
 risponde solo dal PC, mai dal tunnel (i controlli del profilo docente sono
-caricati solo quando servono, così il forum resta isolato). Prompt Lab, Telegram, OpenCode, l'assistente
+caricati solo quando servono, così il forum resta isolato). Prompt Lab, Telegram, l'assistente
 ChatGPT, le voci Piper e la sincronizzazione con Console non sono disponibili
 nell'app. Gli installer desktop vengono distribuiti nelle Release GitHub.
 Le chiamate API generali del frontend ora scelgono il backend a ogni richiesta,
 tramite un handler dinamico: lo stesso bundle raggiunge la porta assegnata dal
 guscio, anche dopo un riavvio. Restano la firma dell'origine e il blocco delle
 rotte interne; i percorsi specifici per lo streaming mantengono i propri handler.
-L'upgrade WebSocket passa al backend prima del fallback API (OpenCode rimane
-escluso dal desktop).
 Le funzioni web descritte qui continuano a riferirsi all'installazione corrente.
 I bundle desktop `v2.0.x` usano PostgreSQL 15 incorporato per le nuove installazioni
 (layout 2, contratto 2); `v0.1.1` resta SQLite/layout 1. L'import automatico dei
@@ -55,8 +53,8 @@ Il valore salvato non viene mostrato. **Testa connessione** verifica la bozza
 inserita oppure la chiave salvata senza generare risposte AI; non salva la
 bozza e svuota il campo. OpenAI, Anthropic, Gemini, OpenRouter, Mistral, Groq,
 Cerebras e DeepSeek hanno un test remoto; gli altri fornitori indicano quando
-la verifica non è disponibile. OpenCode e Privacy KEK sono voci riservate e
-non attivano le rispettive funzioni. **Applica e riavvia servizi** rende effettive
+la verifica non è disponibile. Privacy KEK è una voce riservata e
+non attiva il Privacy Layer. **Applica e riavvia servizi** rende effettive
 le modifiche interrompendo le richieste locali in corso. Le chiavi passano al
 backend in memoria, senza file `.env`; le prove automatiche non accedono al
 portachiavi reale. Restano i limiti sperimentali dell'app descritti sopra.
@@ -522,9 +520,24 @@ Markdown, composer, impostazioni, audio, checklist) è in
 **Audit delle altre chat (#659).** Sandbox admin, chat dei piani operativi e
 chat dei taccuini di prova sono la chat guidata e seguono già lo standard. Le
 differenze rimaste sono nelle trascrizioni di sola lettura (taccuini di prova,
-revisione delle attività dei piani) e nel workspace OpenCode, che sarà eliminato
-invece di essere allineato; il dettaglio
+revisione delle attività dei piani); il workspace OpenCode è stato eliminato
+invece di essere allineato. Il dettaglio
 e l’ordine degli interventi sono in `docs/audits/2026-10-29-chat-ux-remaining-surfaces.md`.
+
+**Chat libera senza OpenCode (#676).** Dopo il profilo si sceglie ancora tra
+«Chat Guidata» e «Chat libera con AI» (con «Ricorda questa modalità»). La chat
+libera è una conversazione aperta sul profilo, senza passi né fasi: usa lo stesso
+percorso `/chat/stream` della chat guidata, con i modelli e i fornitori
+configurati dall’amministrazione (anche con l’abbonamento ChatGPT personale), gli
+stessi elementi di chat (bolle, menu Opzioni con formato, lunghezza e ragionamento,
+voce, diagrammi, salvataggio automatico e «Riprendi») e il profilo con i punteggi
+nel contesto di ogni turno. Non esistono più il workspace OpenCode, il terminale
+di ripiego, la visualizzazione affiancata del PDF e i file di lavoro
+(`documento.md`, `memoria.md`, `appunti.md`); il PDF caricato serve solo a
+estrarre i punteggi e non ne viene conservata una copia. Le sessioni salvate con
+OpenCode si riaprono come chat libera. Nella chat libera non c’è il pannello dei
+consigli di lettura e strategie. Tra le domande suggerite dell’Assistente quella
+sull’esperienza OpenCode è sostituita da una sul formato delle risposte della chat.
 
 Le pagine `/bussola` e `/assistente`, con il selettore del taccuino nel contesto,
 il taccuino di prova, il richiamo all’abbonamento ChatGPT e il campo del
@@ -997,7 +1010,7 @@ sintesi: chiarimenti e approfondimenti scelti restano nella fase corrente, che
 si chiude sul segnale del counselor quando la scelta è risolta. Non va esteso a
 QSAr o agli altri questionari. I due percorsi sugli obiettivi hanno la propria versione
 essenziale, in tre fasi brevi che si chiudono quando il risultato è pronto o quando
-la persona sceglie di proseguire. L’esperienza OpenCode è un’alternativa quando disponibile.
+la persona sceglie di proseguire.
 
 Per chi ha ruolo docente, ricercatore o amministratore, la scelta compare in due
 testi: nella scheda **Impostazioni della conversazione** prima di avviare e nel
@@ -1048,7 +1061,7 @@ Anche la modifica di un profilo QPCC richiede i dieci fattori canonici con stani
 intere 1–9: profili legacy, incompleti o misti vengono rifiutati senza salvare.
 Al termine della chat guidata (sia reale sia su taccuino di prova), la schermata finale di completamento è lineare e priva di scelte dispersive: mostra l’avvenuto completamento con il riepilogo testuale della sintesi emersa e offre due sole azioni chiare: il download diretto del report PDF completo (che scarica il documento e riporta alla pagina principale) e il pulsante per tornare direttamente alla pagina principale, azzerando le selezioni di sessione ed evitando schermate o bivi intermedi. Per le sessioni di prova, la schermata e il download del PDF restano riservati al docente proprietario o all’amministratore, senza registrare compilazioni reali degli studenti.
 
-Durante le attese prolungate, chat guidate, Bussola, Assistente, OpenCode e lettura
+Durante le attese prolungate, chat guidate, Bussola, Assistente e lettura
 vocale mantengono attivo il collegamento con un segnale ogni 15 secondi di silenzio.
 Il segnale non aggiunge testo o audio e non indica che la risposta sia completa.
 Questo evita il taglio per inattività osservato sul tunnel di prova mentre
@@ -1063,8 +1076,7 @@ un'apertura riconoscibile, la nuova risposta sostituisce quella parziale:
 il testo non viene accodato due volte, anche se il modello cambia poi alcune
 frasi. Nel frattempo resta visibile il testo ricevuto. Una semplice eco senza
 avanzamento rimane recuperabile e non viene salvata come risposta completata.
-Il comportamento è condiviso da chat guidate, Bussola, Assistente e OpenCode,
-anche alla riapertura della cronologia OpenCode. Lo storico già salvato non
+Il comportamento è condiviso da chat guidate, Bussola e Assistente. Lo storico già salvato non
 viene riscritto. Casi verificati e limiti della guardia sono descritti in
 `docs/operations/chat-continuation-duplicates.md` (#425).
 Durante la generazione, i blocchi di ragionamento riconoscibili (tag `<think>`, `<thinking>`, `<sto_pensando>`, `<analysis>` o `<reasoning>` e i delimitatori `[THINK]…[/THINK]` e `◁think▷…◁/think▷`, inclusi tag aperti o chiusure orfane) vengono separati dalla risposta. Quando il ragionamento è disattivato, la risposta viene trattenuta fino alla fine per filtrarla prima di mostrarla: può quindi apparire tutta insieme. Il testo privo di segnali riconoscibili non è distinguibile con certezza dalla risposta del modello. Se una risposta risulta vuota, composta da soli spazi o svuotata dalla rimozione del reasoning (oppure in caso di errore vuoto del provider), il sistema evita errori 500/502 o messaggi vuoti e invia un fallback gentile e riflessivo, contestualizzato al passo corrente della chat guidata e nella lingua dell’utente (italiano, inglese, spagnolo, francese, tedesco, svedese), differenziato tra introduzione del tema all'ingresso dello step (o benvenuto nel Patto di Collaborazione) e prosecuzione della riflessione nei turni successivi. I contratti di dialogo escludono cliché terapeutici e meta-disclaimer ripetitivi (come "è un'ipotesi e non una verità", "senza giudizio", "non è un difetto"), affidando la natura non diagnostica al patto iniziale e la formulazione delle ipotesi alla modalità epistemica e alla curiosità fenomenologica naturale.
@@ -1211,8 +1223,7 @@ La registrazione resta disponibile per ricollegare lo stesso account. Dopo
 averlo scollegato, **Collega un altro account ChatGPT** azzera la registrazione.
 
 La modalità copre chat native, Bussola, sintesi e strumenti testuali che usano
-il servizio AI autenticato. OpenCode richiede la scelta esplicita del modello
-dell’installazione: le credenziali personali non passano agli agenti. RAG ed
+il servizio AI autenticato. RAG ed
 OCR continuano a usare i servizi dell’installazione. OpenAI elabora i messaggi:
 `store: false` non garantisce assenza di conservazione presso il fornitore;
 il filtro locale dei dati personali segue la configurazione esistente.
@@ -2091,7 +2102,7 @@ declares, including stored short and context-level variants of an instrument
 prompt; a raw prompt selection whose instrument cannot be determined is refused
 to students), questionnaire submission, scoring and PDF upload, completion and
 progress records of guided chats, resuming a suspended session, Idea map
-changes and source searches, and OpenCode workspaces. Uploading a questionnaire
+changes and source searches. Uploading a questionnaire
 PDF and recording guided-chat progress now require signing in; the first
 progress record of a new session binds it to its user, so another account cannot
 write to it. Results,

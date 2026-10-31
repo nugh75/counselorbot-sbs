@@ -90,7 +90,7 @@ modifica. Le nuove versioni QA/Obiettivo conservano le impronte precedenti per
 l'allineamento esplicito.
 
 Limite residuo della suite browser completa `chat-preferences.test.mjs`: quattro
-casi precedenti (QSAr, OpenCode, Bussola, Assistente) selezionano ancora il formato
+casi precedenti (QSAr, Bussola, Assistente) selezionano ancora il formato
 Tabella, già rimosso dal selettore nella base `fdeb1e89` (sono offerti Discorsivo e
 Per punti). Restano falliti; la verifica di questa funzionalità usa i cinque casi
 sopra. Nessuna valutazione qualitativa con un modello effettivo è stata eseguita.

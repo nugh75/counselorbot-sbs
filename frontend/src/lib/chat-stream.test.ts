@@ -127,7 +127,7 @@ test('SSE chunks can split CRLF and UTF-8 without corrupting a completed answer'
     assert.equal((await streamChat({}, () => {})).response, 'Perché?');
 });
 
-for (const endpoint of ['/api/chat/stream', '/api/site-chat/stream', '/api/opencode/workspace/cb-12345678/chat']) {
+for (const endpoint of ['/api/chat/stream', '/api/site-chat/stream']) {
     test(`${endpoint} ignores heartbeat comments across byte boundaries`, async (t) => {
         const ping = ': ping\n\n';
         const body = ping + event({ session_id: 's1' }) + ping + event({ display: 'Perché?' })

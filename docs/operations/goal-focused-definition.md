@@ -142,8 +142,8 @@ Dopo merge e deploy (passo manuale, nessun sudo):
 Struttura delle fasi sulle installazioni esistenti, **senza scritture nel DB**:
 
 - `*-patto`, `*-smart`, `*-sfida` non sono più nei default; le righe restano e
-  vengono tenute fuori dal percorso (interfaccia, contesto del percorso, export
-  OpenCode) solo se il loro testo è di fabbrica (hash registrato o revisione
+  vengono tenute fuori dal percorso (interfaccia, contesto del percorso)
+  solo se il loro testo è di fabbrica (hash registrato o revisione
   seed/migration, nessuna revisione admin). Uno step personalizzato resta, con
   la sua etichetta. Le installazioni nuove seminano solo le sei righe nuove.
 - Le etichette di fabbrica precedenti (italiano e traduzioni) si leggono come

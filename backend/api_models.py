@@ -123,23 +123,6 @@ class PqblQuestionUpdate(schemas.BaseModel):
     options: Optional[list] = None  # [{key, text, correct, feedback}]
 
 
-class OpencodeWorkspaceRequest(schemas.BaseModel):
-    workspace_id: str
-    questionnaire_type: str
-    scores: dict
-    pdf_token: Optional[str] = None
-    locale: Optional[str] = "it"
-
-
-class OpencodeChatRequest(schemas.BaseModel):
-    partial_response: str = Field(default="", max_length=60000)
-    session_id: str
-    message: str = ""
-    seed: bool = False
-    response_length: Optional[Literal["short", "medium", "long"]] = None
-    response_format: ResponseFormat = "standard"
-
-
 CounselorRecommendationRequest = schemas.CounselorRecommendationRequest
 CounselorRecommendationResponse = schemas.CounselorRecommendationResponse
 

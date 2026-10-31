@@ -39,7 +39,6 @@ async function fixture({ width = 390, height = 844, touch = true, locale = 'it',
         else if (url.pathname === '/api/orientation/status') data = { required: false };
         else if (url.pathname === '/api/session/frozen') data = [{ ...snapshot, label: 'QSA · Organizzare lo studio' }];
         else if (url.pathname === '/api/session/frozen/design-fixture') data = snapshot;
-        else if (url.pathname === '/api/opencode/workspace') data = { key: 'design-fixture', api_available: true, session_id: 'opencode-fixture', needs_seed: false, history: snapshot.messages.filter(message => message.role !== 'system') };
         else if (url.pathname === '/api/qsa/guided-ui-texts') data = { guided_steps: [{ id: 'intro', label: 'Introduzione', sort_order: 1, system_prompt_mode: 'qsa-intro', suggested_questions: ['Come funziona questo percorso?'] }] };
         else if (url.pathname.endsWith('/recommendations')) data = { reading: [], strategy: [] };
         return route.fulfill({ contentType: 'application/json', body: JSON.stringify(data) });
@@ -75,22 +74,6 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1280, 720],
             assert.ok(next.y >= 60 && next.y + next.height <= height, 'step navigation remains visible');
             const size = await page.locator('.chat-message p').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize));
             assert.ok(size >= 15, `message reading size: ${size}`);
-            assert.deepEqual(errors, []);
-        } finally { await context.close(); }
-    });
-}
-
-for (const [width, height] of [[320, 568], [1280, 720]]) {
-    test(`OpenCode keeps writing visible at ${width}x${height}`, async () => {
-        const { page, context, errors } = await fixture({ width, height, experience: 'opencode' });
-        try {
-            await page.goto(`${origin}/?frozen=design-fixture`, { waitUntil: 'networkidle' });
-            await page.locator('#opencode-composer').waitFor();
-            await settled(page);
-            const box = await page.locator('#opencode-composer').boundingBox();
-            assert.ok(box.y >= 60 && box.y + box.height <= height, `composer fits: ${JSON.stringify(box)}`);
-            const log = await page.locator('.min-h-chat > .overflow-y-auto').evaluate(el => ({ visible: el.clientHeight, total: el.scrollHeight }));
-            assert.ok(log.visible >= 110 && log.total > log.visible, `messages scroll internally: ${JSON.stringify(log)}`);
             assert.deepEqual(errors, []);
         } finally { await context.close(); }
     });

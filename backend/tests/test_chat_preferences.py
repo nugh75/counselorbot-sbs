@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 from backend import schemas
 from backend.ai_service import AIService
-from backend.api_models import ChatRequest, SiteChatRequest, OpencodeChatRequest
+from backend.api_models import ChatRequest, SiteChatRequest
 from backend.chat_preparation import prepare_chat_turn
 from backend.qsa_essential import PHASES, validate_path
 from backend.routes.frozen_sessions import freeze_session, get_frozen_session
@@ -16,7 +16,7 @@ from backend.tests.artifact_database import artifact_session
 
 
 @pytest.mark.parametrize('model,required', [
-    (ChatRequest, {}), (SiteChatRequest, {}), (OpencodeChatRequest, {'session_id': 'test'}),
+    (ChatRequest, {}), (SiteChatRequest, {}),
     (MessageRequest, {'message': 'Help me choose'}),
 ])
 def test_format_is_a_closed_api_choice(model, required):

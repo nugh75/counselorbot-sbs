@@ -327,7 +327,7 @@ def test_prompt_audit_and_runtime_share_the_same_contract(runtime, step, entry):
     assert prepared.components["turn_contract"] in audited["envelope"]["system_prompt_final"]
 
 
-@pytest.mark.parametrize("qtype", ["IDEA", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE", "OBIETTIVO_STUDIO", "OBIETTIVO_DOCENZA", "OPENCODE"])
+@pytest.mark.parametrize("qtype", ["IDEA", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE", "OBIETTIVO_STUDIO", "OBIETTIVO_DOCENZA"])
 def test_other_tools_do_not_receive_the_questionnaire_strategy(qtype):
     for phase in ("qpcs-profilo", "qpcs-comunicazione", "qpcs-sintesi"):
         assert "[SELF-QUESTIONING]" not in turn_contract(

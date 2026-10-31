@@ -39,7 +39,7 @@ test('live resource links, student navigation, archive/revoke and departure', as
         const aiRequests = [];
         for (const current of [teacherPage, page]) {
             current.on('request', request => {
-                if (request.method() === 'POST' && /\/api\/(chat|site-chat|orientation|opencode)/.test(new URL(request.url()).pathname)) aiRequests.push(request.url());
+                if (request.method() === 'POST' && /\/api\/(chat|site-chat|orientation)/.test(new URL(request.url()).pathname)) aiRequests.push(request.url());
             });
             await current.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
             await current.route('**/api/orientation/status', route => route.fulfill({ json: { required: false } }));

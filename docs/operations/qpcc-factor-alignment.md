@@ -62,7 +62,7 @@ da insicurezza/inadeguatezza. A1–A3: alto = maggiore difficoltà dichiarata.
 M2: orientamento all’io, interpretato nel contesto, senza classificarlo come
 forza/crescita. Nel profilo la scala di M2 è grigia e neutra, con una nota
 visibile accanto alla barra e una voce dedicata nella legenda: il punteggio
-resta quello calcolato e l’assenza di fascia non è un errore. UI, sidebar, PDF, OpenCode e bande delle strategie rispettano
+resta quello calcolato e l’assenza di fascia non è un errore. UI, sidebar, PDF e bande delle strategie rispettano
 queste differenze. Nella vista QPCC, l’assenza di fattori nella fascia di forza
 non viene descritta come equilibrio globale o assenza di valori estremi. Il bug
 generico è registrato nel Diario; gli altri strumenti mantengono il comportamento
@@ -74,7 +74,7 @@ richiede una revisione editoriale, senza ricertificazione automatica.
 API nuove compilazioni e repertorio di prova: esattamente i dieci codici con
 stanine intere 1–9; profili K, misti, incompleti e valori fuori scala → 422.
 L’estrazione da PDF richiede gli stessi dieci fattori. Chat e ripresa congelata
-rifiutano i profili K con 409 `qpcc_legacy_profile`; OpenCode li rifiuta con 422.
+rifiutano i profili K con 409 `qpcc_legacy_profile`.
 I nomi del profilo vengono ricostruiti lato server e non accettati come etichette
 QSA inviate dal client. I punteggi nel messaggio sono limitati ai fattori del passo.
 

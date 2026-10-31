@@ -26,7 +26,9 @@ export interface FrozenSessionSummary {
     questionnaire_type: string;
     label?: string | null;
     current_phase: string;
-    experience?: 'standard' | 'opencode' | null;
+    // 'opencode' è il valore degli snapshot salvati prima della rimozione del
+    // workspace: si legge come 'free'.
+    experience?: 'standard' | 'free' | 'opencode' | null;
     updated_at?: string | null;
     // Solo in prova: il taccuino dello studente simulato (area docente).
     practice_notebook_id?: number | null;
@@ -46,7 +48,6 @@ export interface FrozenSessionDetail extends FrozenSessionSummary {
     // Chat docenza: classi scelte per questa sessione (vuoto negli snapshot precedenti).
     group_ids?: number[];
     reasoning_effort?: 'off' | 'standard' | 'deep' | null;
-    pdf_token?: string | null;
 }
 
 export interface FrozenSessionSnapshot {
@@ -59,7 +60,7 @@ export interface FrozenSessionSnapshot {
     current_phase: string;
     scores: Record<string, number>;
     counselor_id: number | null;
-    experience: 'standard' | 'opencode';
+    experience: 'standard' | 'free';
     locale: string;
     response_format?: ResponseFormat;
     guided_path?: GuidedPath;
@@ -68,13 +69,8 @@ export interface FrozenSessionSnapshot {
     notebook_context?: 'student' | 'teacher' | 'practice' | 'none';
     practice_notebook_id?: number;
     group_ids?: number[];
-    // Solo la chat guidata: la sandbox OpenCode parla con il proprio agente e
-    // non ha una leva sul ragionamento.
     reasoning_effort?: 'off' | 'standard' | 'deep';
     label: string;
-    // Solo la sandbox OpenCode: il workspace rigenera `documento.md` a ogni
-    // apertura, quindi senza il token la ripresa perderebbe il PDF del profilo.
-    pdf_token?: string | null;
 }
 
 // Notifica l'header (che monta una sola volta e non rivede il fetch iniziale)

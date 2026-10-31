@@ -192,9 +192,9 @@ function MultiSelectFilter({
     );
 }
 
-const DEFAULT_ACTIONS = ['chat_message', 'site_chat', 'opencode_chat', 'chat_error'];
-const DEFAULT_PROVIDERS = ['openai', 'anthropic', 'gemini', 'mistral', 'openrouter', 'omniroute', 'ollama', 'llamacpp', 'opencode', 'unknown'];
-const DEFAULT_QUESTIONNAIRES = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA', 'IDEA', 'SITE', 'OPENCODE'];
+const DEFAULT_ACTIONS = ['chat_message', 'site_chat', 'chat_error'];
+const DEFAULT_PROVIDERS = ['openai', 'anthropic', 'gemini', 'mistral', 'openrouter', 'omniroute', 'ollama', 'llamacpp', 'unknown'];
+const DEFAULT_QUESTIONNAIRES = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA', 'IDEA', 'SITE'];
 
 function asObject(details: LogEntry['details']): LogDetails {
     if (!details) return {};

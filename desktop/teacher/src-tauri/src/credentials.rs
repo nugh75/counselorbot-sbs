@@ -71,12 +71,6 @@ pub const PROVIDERS: &[Provider] = &[
     Provider { id: "fireworks", label: "Fireworks", env: &["API_KEY_FIREWORKS", "FIREWORKS_API_KEY"], endpoint: None },
     Provider { id: "deepinfra", label: "DeepInfra", env: &["API_KEY_DEEPINFRA", "DEEPINFRA_API_KEY"], endpoint: None },
     Provider { id: "omniroute", label: "OmniRoute", env: &["OMNIROUTE_API_KEY", "API_KEY_OMNIROUTE"], endpoint: None },
-    Provider {
-        id: "opencode",
-        label: "OpenCode (riservata, escluso dal profilo docente)",
-        env: &["OPENCODE_API_KEY"],
-        endpoint: None,
-    },
     Provider { id: "privacy_kek", label: "Privacy KEK (riservata)", env: &["PRIVACY_KEK"], endpoint: None },
 ];
 
@@ -378,7 +372,6 @@ mod tests {
         }
         assert!(credentials.backend_env().unwrap().iter().all(|(_, value)| value.is_empty()));
         assert!(credentials.test("openai", None).is_err());
-        assert!(credentials.test("opencode", Some(SENTINEL.into())).is_err());
     }
 
     struct LockedStore;
