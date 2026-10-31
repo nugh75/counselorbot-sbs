@@ -12,8 +12,8 @@ import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
-import { QUESTIONNAIRES, getQuestionnaire } from '@/lib/questionnaires';
+import { ZTPIFactorCode, ZTPI_FACTORS } from '@/lib/ztpi-model';
+import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { ChatProviderError } from '@/lib/chat-stream';
 import { canSelectPhase, emptyCheckpoint, emptyNavigation, explorationPayload, type ExplorationEvent, type GuidedCheckpoint } from '@/lib/guided-navigation';
@@ -51,6 +51,7 @@ import { IdeaTabs } from '@/components/qsa/IdeaTabs';
 import { IdeaBranchTree } from '@/components/qsa/IdeaBranchTree';
 import { useIsDesktop } from '@/lib/use-desktop';
 import { RecommendationsPanel } from '@/components/qsa/RecommendationsPanel';
+import { ProfileScoresPanel, useScoreGroups } from '@/components/qsa/ProfileScoresPanel';
 import { ChatWorkspace } from '@/components/qsa/ChatWorkspace';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { EventMilestoneCard } from '@/components/qsa/EventMilestoneCard';
@@ -278,17 +279,6 @@ const FIXED_CONCLUSION_ID = 'conclusion';
 
 type OpeningVoice = { onPartial: (text: string) => void; resolve: (text?: string) => void };
 
-// --- Sidebar section labels per prefix ---
-
-const PREFIX_SIDEBAR: Record<string, string> = {
-    C: 'text-blue-600',
-    A: 'text-purple-600',
-    T: 'text-amber-600',
-    S: 'text-purple-600',
-    K: 'text-indigo-600',
-    AD: 'text-green-600',
-};
-
 // --- Score formatters per questionnaire type ---
 
 export function buildScoresFormatter(
@@ -343,58 +333,6 @@ export function buildScoresFormatter(
             .join('\n');
         return `PROFILO ${questionnaireType} DELLO STUDENTE:\n${blocks}`;
     };
-}
-
-// --- Color helpers for sidebar compact bars ---
-
-function getScoreColor(
-    code: string,
-    score: number,
-    invertedSet: Set<string>,
-    questionnaireType: string
-): string {
-    if (questionnaireType === 'QPCC' && code === 'M2') return 'bg-slate-500';
-    if (questionnaireType === 'ZTPI' && code.startsWith('T')) {
-        return getZTPIAlignmentColorClass(code as ZTPIFactorCode, score);
-    }
-
-    const isInverted = invertedSet.has(code);
-    if (score <= 3) return isInverted ? 'bg-green-500' : 'bg-red-500';
-    if (score <= 6) return 'bg-yellow-500';
-    return isInverted ? 'bg-red-500' : 'bg-green-500';
-}
-
-function CompactScoreBar({
-    code,
-    factorName,
-    score,
-    invertedSet,
-    questionnaireType,
-}: {
-    code: string;
-    factorName: string;
-    score: number;
-    invertedSet: Set<string>;
-    questionnaireType: string;
-}) {
-    const color = getScoreColor(code, score, invertedSet, questionnaireType);
-    const width = (score / 9) * 100;
-
-    return (
-        <div className="space-y-1">
-            {/* Il nome dice qualcosa a chi legge, la sigla no: resta nel title,
-                per chi confronta la pastiglia col profilo o col PDF. */}
-            <div className="text-2xs leading-tight text-slate-600 break-words" title={`${code} (${factorName})`}>
-                <span className="font-semibold">{factorName}</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${width}%` }} />
-                </div>
-                <span className="w-4 text-2xs font-bold text-slate-600">{score}</span>
-            </div>
-        </div>
-    );
 }
 
 // --- Main Component ---
@@ -618,25 +556,13 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const completedRef = useRef(false);
 
     // Derived from questionnaire config
-    const questionnaire = useMemo(() => getQuestionnaire(questionnaireType), [questionnaireType]);
-    const invertedSet = useMemo(() => new Set(questionnaire?.invertedFactors || []), [questionnaire]);
     const formatScoresForPrompt = useMemo(
         () => buildScoresFormatter(questionnaireType, (code, fallback) => tf(factorTranslationKey(questionnaireType, code, 'name'), fallback)),
         [questionnaireType, tf],
     );
 
     // Score groups for sidebar
-    const scoreGroups = useMemo(() => {
-        if (!questionnaire) return [];
-        return questionnaire.factorPrefix.map(prefix => ({
-            prefix,
-            label: questionnaire.id === 'QPCC' ? t(`dimension.QPCC.${prefix}`) : PREFIX_SIDEBAR[prefix] ? t(`sidebar.${prefix}`) : prefix,
-            colorClass: PREFIX_SIDEBAR[prefix] || 'text-slate-600',
-            entries: Object.entries(scores)
-                .filter(([k]) => k.startsWith(prefix))
-                .sort(([a], [b]) => a.localeCompare(b)),
-        }));
-    }, [scores, questionnaire, t]);
+    const scoreGroups = useScoreGroups(questionnaireType, scores);
 
     useEffect(() => {
         const el = messagesRef.current;
@@ -1935,35 +1861,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 /></div>
 
                 {/* Scores Display */}
-                {hasScoreEntries && (
-                    <div hidden={mobilePanel !== null && mobilePanel !== 'scores'} className="glass-panel overflow-hidden">
-                        <div id="guided-scores-panel" className="space-y-3 p-4">
-                            <div className="hidden items-center gap-2 text-sm font-semibold text-slate-700 lg:flex">
-                                <BarChart3 className="w-4 h-4" />
-                                {t('guided.scores')}
-                            </div>
-
-                            {scoreGroups.map((group, idx) => (
-                                <div key={group.prefix} className={cn("space-y-1.5", idx > 0 && "pt-2 border-t border-slate-100")}>
-                                    <div className={cn("text-2xs font-medium uppercase", group.colorClass)}>{group.label}</div>
-                                    {group.entries.map(([code, score]) => (
-                                        <CompactScoreBar
-                                            key={code}
-                                            code={code}
-                                            factorName={tf(
-                                                factorTranslationKey(questionnaireType, code, 'name'),
-                                                questionnaire?.factors?.find((factor) => factor.code === code)?.name || code,
-                                            )}
-                                            score={score}
-                                            invertedSet={invertedSet}
-                                            questionnaireType={questionnaireType}
-                                        />
-                                    ))}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                <ProfileScoresPanel questionnaireType={questionnaireType} groups={scoreGroups}
+                    hidden={mobilePanel !== null && mobilePanel !== 'scores'} />
             </>}>
             {openPanel => <>
                 {isIdea && !activeExploration && navigation.explorations.length > 0 && <div className="flex flex-wrap gap-2 border-b border-slate-200 px-3 py-2">

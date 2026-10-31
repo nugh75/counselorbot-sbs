@@ -62,6 +62,7 @@ from .chat_logic import (
     is_guided_chat,
     previous_certified_strategy_ids,
     step_has_improvement_target,
+    student_intent,
 )
 from .chat_preferences import apply_response_format
 from .event_booklet import is_event_instrument
@@ -71,7 +72,9 @@ from .idea_map import IDEA_INSTRUMENT
 from .journey_context import SYNTHESIS_STEPS, journey_context, session_evidence
 from .memory_service import session_memory
 from .guided_step_label_i18n import resolve_step_label, strip_step_ordinal
-from .prompt_config import STRATEGIES_STEP_MODE, SYSTEM_PROMPT_DEFAULTS, WELCOME_PHASE_IDS
+from .prompt_config import (
+    DEFAULT_FREE_CHAT_CONTRACT, FREE_CHAT_MODE, STRATEGIES_STEP_MODE, SYSTEM_PROMPT_DEFAULTS, WELCOME_PHASE_IDS,
+)
 from .prompt_contract import (
     QUESTIONNAIRE_DIALOGUES,
     objective_focus_stage,
@@ -161,6 +164,12 @@ def _recommendation_candidates(
             if slug in by_slug
         }
     return readings, strategies
+
+
+def free_chat_contract(configs: dict, language: str) -> str:
+    """Contratto di turno della chat libera (#754): sostituisce quello dei passi."""
+    text = (configs.get("prompt_free_chat_contract") or "").strip() or DEFAULT_FREE_CHAT_CONTRACT
+    return f"{text}\nResponse language: {language}."
 
 
 def is_hypothesis_allowed(*, questionnaire_type: str, phase: str | None, is_synthesis: bool) -> bool:
@@ -261,6 +270,8 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     conversation_id = conversation_id_for(session_id, request.conversation_id)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
     step_label = step.label if step else ""
+    # Chat libera (#754): nessun passo, prompt e contratto di turno propri.
+    free_chat = request.mode == FREE_CHAT_MODE and step is None
     questionnaire_type = step.questionnaire_type if step else (request.questionnaire_type or "")
     request = request.copy(update={"questionnaire_type": questionnaire_type})
     if questionnaire_type.upper() == 'QPCC':
@@ -377,7 +388,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     system_prompt = transform(_apply_idea_variant_directive, system_prompt, ai_service, request)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
     components = {}
-    advice_requested = is_advice_follow_up(request)
+    advice_requested = is_advice_follow_up(request) or (free_chat and student_intent(request) == "advice")
     component_flags = get_prompt_component_flags(
         db, questionnaire_type, request.phase, advice_requested=advice_requested,
     )
@@ -425,8 +436,9 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         is_follow_up = _is_conversational_mode(step_mode)
         # Nel passo «Strategie e consigli» il catalogo resta aperto anche senza
         # un fattore da migliorare: lo studente puo' sempre chiedere.
+        # Chat libera: la strategia arriva solo quando lo studente la chiede.
         include_advice = advice_requested or step_mode == STRATEGIES_STEP_MODE or (
-            allows_advice and not is_follow_up and step_has_improvement_target(
+            not free_chat and allows_advice and not is_follow_up and step_has_improvement_target(
                 component_scores_context, questionnaire_type, request.language, phase_codes
             )
         )
@@ -536,6 +548,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     )
     system_prompt = transform(recommendation_blocks.apply_directive,
         system_prompt, reading_candidates, strategy_candidates, idea=questionnaire_type == IDEA_INSTRUMENT,
+        guided=not free_chat,
     )
     descriptive = is_description_phase(
         questionnaire_type, description_phase, description_mode if active_exploration else (step.system_prompt_mode if step else None),
@@ -559,6 +572,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         idea=questionnaire_type == IDEA_INSTRUMENT,
         hypothesis_allowed=hypothesis_allowed,
         example_lens=example_lens,
+        guided=not free_chat,
     )
     conversation_tail = _recommendation_service.conversation_context(
         db, session_id=session_id, username=identity.get("username", ""),
@@ -699,12 +713,12 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
             reflection_stage = "area"
         elif request.phase == "questions":
             reflection_stage = "follow-up"
-    guided_choice = bool(
+    guided_choice = not free_chat and bool(
         active_exploration or step or essential or questionnaire_type == IDEA_INSTRUMENT
         or (request.phase and db.query(models.GuidedStep).filter_by(
             questionnaire_type=questionnaire_type).first())
     )
-    contract = turn_contract(
+    contract = free_chat_contract(configs, request.language or "it") if free_chat else turn_contract(
         language=request.language or "it", questionnaire_type=questionnaire_type,
         strategies_step_label=(_strategies_step_label(db, questionnaire_type, request.language or "it")
                                if is_analysis_only_mode(step_mode) else None),

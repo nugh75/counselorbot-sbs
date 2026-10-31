@@ -2,11 +2,11 @@
 
 // Chat libera: una conversazione aperta sul profilo, senza passi né fasi. Parla
 // con lo stesso /api/chat/stream della chat guidata (modelli, fornitori e
-// counselor scelti dall'amministrazione) e usa gli stessi elementi di chat; il
-// server la prepara come ogni chat fuori dal percorso, con profilo e punteggi
-// nel contesto.
+// counselor scelti dall'amministrazione) e usa gli stessi elementi di chat e la
+// stessa barra laterale, senza il percorso. Il mode `free` dà al server il
+// prompt e il contratto di turno propri della chat libera (#754).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { GitBranch, Mic, Snowflake } from 'lucide-react';
+import { BarChart3, BookOpen, GitBranch, Mic, PanelLeft, Snowflake } from 'lucide-react';
 import { ChatGPTUsageBadge } from '@/components/profile/ChatGPTUsageBadge';
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 import { AudioInput } from '@/components/ui/AudioInput';
@@ -20,13 +20,15 @@ import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
 import { ChatMenuSection } from '@/components/ui/ChatOptionsMenu';
 import { ChatResponseSettings } from '@/components/ui/ChatResponseSettings';
 import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatTranscript } from '@/components/ui/ChatShell';
-import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
+import { MessageDiagramButton, openMessageDiagram, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
 import { toast } from '@/components/ui/Toast';
 import { Tooltip } from '@/components/ui/Tooltip';
 import type { ReasoningEffort } from '@/components/ui/ReasoningSelector';
 import type { ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { buildScoresFormatter } from '@/components/qsa/GuidedChatInterface';
 import { ChatWorkspace } from '@/components/qsa/ChatWorkspace';
+import { ProfileScoresPanel, useScoreGroups } from '@/components/qsa/ProfileScoresPanel';
+import { RecommendationsPanel } from '@/components/qsa/RecommendationsPanel';
 import { GuideHelpLink } from '@/components/guide/GuideHelpLink';
 import { apiFetch } from '@/lib/auth';
 import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, shouldAutoFreeze } from '@/lib/auto-freeze';
@@ -35,10 +37,12 @@ import { isNearBottom } from '@/lib/chat-scroll';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { chatErrorText } from '@/lib/i18n-personal-api';
 import { diagramContentForSpeech } from '@/lib/diagram-content';
-import { addMessageDiagrams } from '@/lib/diagram-request';
+import { addMessageDiagrams, messageDiagramList } from '@/lib/diagram-request';
 import { factorTranslationKey } from '@/lib/questionnaires';
 import { freezeSession, type FrozenSessionDetail, type FrozenSessionMessage, type FrozenSessionSnapshot } from '@/lib/frozen-session';
 import { stripControlMarkersForDisplay } from '@/lib/control-markers';
+import { EMPTY_RECOMMENDATIONS, normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
+import { useIsDesktop } from '@/lib/use-desktop';
 import type { ResponseFormat } from '@/lib/chat-preferences';
 import type { Lang } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n-context';
@@ -77,6 +81,8 @@ export function FreeChatInterface({
     const [responseFormat, setResponseFormat] = useState<ResponseFormat>(restored?.response_format ?? initialResponseFormat);
     const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(restored?.reasoning_effort ?? initialReasoningEffort);
     const [savedDiagrams, setSavedDiagrams] = useState<SavedMessageDiagram[]>([]);
+    const [recommendations, setRecommendations] = useState<RecommendationCatalog>(EMPTY_RECOMMENDATIONS);
+    const desktop = useIsDesktop();
     const [audioBusy, setAudioBusy] = useState(false);
     const [voiceMode, setVoiceMode] = useState(false);
     const [voiceOptionsContainer, setVoiceOptionsContainer] = useState<HTMLDivElement | null>(null);
@@ -92,12 +98,26 @@ export function FreeChatInterface({
         [questionnaireType, tf],
     );
     const diagramsByMessage = useMemo(() => addMessageDiagrams({}, savedDiagrams), [savedDiagrams]);
+    const scoreGroups = useScoreGroups(questionnaireType, scores);
+    const hasScoreEntries = scoreGroups.some(group => group.entries.length > 0);
+    const resourceCount = recommendations.reading.length + recommendations.strategy.length;
 
     useEffect(() => () => requestRef.current?.abort(), []);
     useEffect(() => {
         const el = messagesRef.current;
         if (el && stickToBottom.current) el.scrollTop = el.scrollHeight;
     }, [messages]);
+    // Consigli della sessione (letture, strategie, consigli): stesso catalogo
+    // della chat guidata, aggiornato a ogni turno dalla risposta del server.
+    useEffect(() => {
+        let active = true;
+        setRecommendations(EMPTY_RECOMMENDATIONS);
+        if (sessionId) void apiFetch(`/api/session/${encodeURIComponent(sessionId)}/recommendations?lang=${activeLocale}`)
+            .then(response => response.ok ? response.json() : null)
+            .then(payload => { if (active && payload) setRecommendations(normalizeRecommendationCatalog(payload)); })
+            .catch(() => undefined);
+        return () => { active = false; };
+    }, [sessionId, activeLocale]);
     useEffect(() => {
         let active = true;
         setSavedDiagrams([]);
@@ -127,12 +147,12 @@ export function FreeChatInterface({
             return copy;
         });
         try {
-            // Nessuna `phase`: il server tratta il turno come chat fuori dal
-            // percorso. Il profilo viaggia come contesto di ogni turno.
+            // Nessuna `phase` e mode `free`: il server usa il prompt e il
+            // contratto della chat libera. Il profilo viaggia come contesto.
             const result = await streamChat({
                 message: userMessage,
                 memory_message: userMessage,
-                mode: 'generic',
+                mode: 'free',
                 session_id: sessionId,
                 conversation_id: conversationId,
                 questionnaire_type: questionnaireType,
@@ -147,6 +167,7 @@ export function FreeChatInterface({
             controller.signal,
             (reasoning) => { if (reasoningEffort !== 'off') updateLast({ reasoning }); });
             if (result.conversation_id) setConversationId(result.conversation_id);
+            if (result.recommendations) setRecommendations(normalizeRecommendationCatalog(result.recommendations));
             const text = (result.response || '').trim();
             if (text) updateLast({
                 content: text,
@@ -233,7 +254,7 @@ export function FreeChatInterface({
     const awaitingAssistantBubble = lastMessage?.role === 'assistant' && !lastMessage.content.trim();
     const liveAnnouncement = isLoading ? t('guided.processing') : lastMessage?.role === 'assistant' ? lastMessage.content : '';
 
-    const options = (
+    const options = (openPanel: (panel?: 'scores' | 'resources') => void) => (
         <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'options')}>
             {close => <div className="divide-y divide-slate-200">
                 <ChatMenuSection title={chatLayoutLabel(activeLocale, 'menuActions')}>
@@ -243,6 +264,20 @@ export function FreeChatInterface({
                     </button>}
                     {!voiceMode && <AudioSendOption compact />}
                     <AudioLanguageOption compact />
+                </ChatMenuSection>
+                {/* Come nella chat guidata, senza la voce Percorso. */}
+                <ChatMenuSection title={chatLayoutLabel(activeLocale, 'menuShow')}>
+                    {desktop && <button type="button" className={messageActionClass} onClick={() => { close(); openPanel(); }}>
+                        <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{chatLayoutLabel(activeLocale, 'panel')}
+                        {resourceCount > 0 && <span className="ml-auto text-xs">{resourceCount}</span>}
+                    </button>}
+                    {!desktop && hasScoreEntries && <button type="button" className={messageActionClass} onClick={() => { close(); openPanel('scores'); }}>
+                        <BarChart3 className="h-4 w-4 shrink-0" aria-hidden="true" />{t('guided.scores')}
+                    </button>}
+                    {!desktop && resourceCount > 0 && <button type="button" className={messageActionClass} aria-label={t('recommendations.title')} onClick={() => { close(); openPanel('resources'); }}>
+                        <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />{t('recommendations.title')}
+                        <span className="ml-auto text-xs">{resourceCount}</span>
+                    </button>}
                 </ChatMenuSection>
                 <ChatResponseSettings locale={activeLocale}
                     format={{ value: responseFormat, onChange: setResponseFormat, disabled: isLoading }}
@@ -274,15 +309,30 @@ export function FreeChatInterface({
                         </Button>
                     </nav>
                 }
-                sidebar={() => <div className="p-3 text-sm text-slate-600">
-                    <p className="mb-2 font-semibold text-slate-800">{t('guided.scores')}</p>
-                    <ul className="space-y-1">
-                        {Object.entries(scores).sort(([a], [b]) => a.localeCompare(b)).map(([code, value]) => (
-                            <li key={code} className="flex justify-between gap-2"><span>{code}</span><span className="tabular-nums">{value}</span></li>
-                        ))}
-                    </ul>
-                </div>}>
-                {() => <>
+                sidebar={(closePanel, mobilePanel) => <>
+                    <div hidden={mobilePanel !== null && mobilePanel !== 'resources'}><RecommendationsPanel
+                        expanded={mobilePanel === 'resources'}
+                        catalog={recommendations}
+                        sessionId={sessionId}
+                        onCatalogChange={setRecommendations}
+                        diagrams={messageDiagramList(savedDiagrams)}
+                        onOpenDiagram={id => {
+                            closePanel();
+                            window.requestAnimationFrame(() => openMessageDiagram(id));
+                        }}
+                        onDiscuss={prompt => {
+                            closePanel();
+                            setInput(previous => previous.trim() ? `${previous}\n\n${prompt}` : prompt);
+                            window.requestAnimationFrame(() => {
+                                document.getElementById('free-composer')?.focus();
+                                document.getElementById('free-composer')?.scrollIntoView({ block: 'nearest' });
+                            });
+                        }}
+                    /></div>
+                    <ProfileScoresPanel questionnaireType={questionnaireType} groups={scoreGroups}
+                        hidden={mobilePanel !== null && mobilePanel !== 'scores'} />
+                </>}>
+                {openPanel => <>
                     <ChatTranscript
                         ref={messagesRef}
                         announcement={liveAnnouncement}
@@ -334,7 +384,7 @@ export function FreeChatInterface({
                     <form onSubmit={handleSend} className="border-t border-slate-100 bg-white">
                         <div className="p-3 sm:p-4">
                             <div className="relative flex items-end gap-2">
-                                {options}
+                                {options(openPanel)}
                                 <ChatComposerInput
                                     id="free-composer"
                                     hidden={voiceMode}
