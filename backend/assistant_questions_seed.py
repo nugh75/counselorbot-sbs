@@ -73,7 +73,7 @@ DEFAULT_ASSISTANT_QUESTIONS: dict[str, list[str]] = {
         "Come si collega l'autovalutazione allo sviluppo delle competenze?",
         "Qual e' il ruolo del portfolio digitale nella riflessione su di se'?",
         "Cosa si intende per apprendimento permanente (lifelong learning)?",
-        "Quali sono gli otto ambiti di competenza strategica?",
+        "Quali sono gli ambiti di competenza strategica?",
     ],
     "fw_articoli": [
         "Quali pubblicazioni recenti ci sono sulle competenze strategiche?",
@@ -324,6 +324,25 @@ DEFAULT_ASSISTANT_QUESTIONS: dict[str, list[str]] = {
 }
 
 
+# Domande di default riscritte: la riga salvata col testo vecchio prende quello
+# nuovo invece di restare accanto (decisione 5.1 dell'audit dei prompt).
+RETIRED_QUESTIONS = {
+    # #751, B07: gli ambiti sono sette nei testi teorici, otto qui; il numero esce.
+    ("fw_teoria", "it", "Quali sono gli otto ambiti di competenza strategica?"):
+        "Quali sono gli ambiti di competenza strategica?",
+    ("fw_teoria", "en", "What are the eight areas of strategic competence?"):
+        "What are the areas of strategic competence?",
+    ("fw_teoria", "es", "¿Cuáles son los ocho ámbitos de competencia estratégica?"):
+        "¿Cuáles son los ámbitos de competencia estratégica?",
+    ("fw_teoria", "fr", "Quels sont les huit domaines de compétence stratégique ?"):
+        "Quels sont les domaines de compétence stratégique ?",
+    ("fw_teoria", "de", "Welches sind die acht Bereiche der strategischen Kompetenz?"):
+        "Welches sind die Bereiche der strategischen Kompetenz?",
+    ("fw_teoria", "sv", "Vilka är de åtta områdena för strategisk kompetens?"):
+        "Vilka är områdena för strategisk kompetens?",
+}
+
+
 def seed_assistant_questions(db, models) -> None:
     """Inserisce le domande di default (it) mancanti. Idempotente."""
     import json
@@ -337,11 +356,25 @@ def seed_assistant_questions(db, models) -> None:
         except Exception:
             pass
 
+    rows = db.query(models.AssistantQuestion).all()
+    current = {(row.topic, row.language, row.text) for row in rows}
+    inserted = False
+    for row in rows:
+        new_text = RETIRED_QUESTIONS.get((row.topic, row.language, row.text))
+        if new_text is None:
+            continue
+        if (row.topic, row.language, new_text) in current:
+            db.delete(row)
+        else:
+            row.text = new_text
+            current.add((row.topic, row.language, new_text))
+        inserted = True
+    if inserted:
+        db.flush()
     existing = {
         (row.topic, row.language, row.text)
         for row in db.query(models.AssistantQuestion).all()
     }
-    inserted = False
 
     # 1. Seed Italiano
     for topic, questions in DEFAULT_ASSISTANT_QUESTIONS.items():

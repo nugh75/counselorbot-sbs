@@ -242,6 +242,27 @@ def _filter_single_instrument_results(question: str, results: list[dict]) -> lis
     ]
 
 
+def _platform_facts() -> str:
+    """Strumenti, lingue e requisiti dell'analisi combinata letti dal codice (#751, C07).
+
+    Il contesto salvato in Amministrazione tiene solo le attribuzioni: i fatti
+    che il codice cambia non possono restare indietro in una copia.
+    """
+    from ..content_versions import APP_LOCALES
+    from ..cross_synthesis import MIN_INSTRUMENTS, SCORED_INSTRUMENTS
+    from ..orientation import TOOL_GROUPS
+
+    groups = "; ".join(f"{label.split(' - ')[0].lower()}: {', '.join(ids)}" for label, ids in TOOL_GROUPS)
+    return (
+        "PLATFORM FACTS (generated from the running code, always current):\n"
+        f"- This platform (CounselorBot) hosts these tools. {groups}.\n"
+        f"- Interface and guided chat languages: {', '.join(APP_LOCALES)}. Which questionnaires can be filled "
+        "in item by item, and in which language, depends on the language versions published for each one.\n"
+        f"- A combined analysis is available when at least {MIN_INSTRUMENTS} of {', '.join(SCORED_INSTRUMENTS)} "
+        "have a result."
+    )
+
+
 def _resolve_site_prompt(ai_service: AIService, audience: str, collection: str = COLLECTION_COMPETENZE,
                          platform_reference: str | None = None) -> str:
     audience = audience if audience in SITE_CHAT_MODE_TO_PROMPT_KEY else "studente"
@@ -270,7 +291,8 @@ def _resolve_site_prompt(ai_service: AIService, audience: str, collection: str =
     else:
         key = SITE_CHAT_MODE_TO_PROMPT_KEY[audience]
         prompt = ai_service.config.get(key, _AUDIENCE_DEFAULT_PROMPT[audience])
-        ctx = ai_service.config.get("site_chat_platform_context", DEFAULT_SITE_CHAT_PLATFORM_CONTEXT)
+        ctx = _platform_facts() + "\n\n" + ai_service.config.get(
+            "site_chat_platform_context", DEFAULT_SITE_CHAT_PLATFORM_CONTEXT)
         card = ai_service.config.get("site_chat_knowledge_card", DEFAULT_SITE_CHAT_KNOWLEDGE_CARD)
     preamble = "\n\n".join(p.strip() for p in (ctx, card) if p and p.strip())
     if preamble:
