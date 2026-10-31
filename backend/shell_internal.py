@@ -33,11 +33,11 @@ def ping():
 
 @router.post("/backup")
 def backup():
-    """Effettua un backup verificato a caldo di SQLite per il guscio (F1-05j, F1-16)."""
-    from .sqlite_backup import create_backup
+    """Backup PostgreSQL verificato (pg_dump) prima di ogni aggiornamento (F1-16, #738)."""
+    from .postgres_backup import create_backup
     try:
         path = create_backup()
-        return {"status": "ok", "path": str(path) if path else None}
+        return {"status": "ok", "path": str(path)}
     except Exception as exc:
         return JSONResponse({"status": "error", "detail": str(exc)}, status_code=500)
 

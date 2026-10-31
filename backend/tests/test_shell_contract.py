@@ -49,9 +49,9 @@ def test_internal_answers_the_shell(shell_secret):
     assert response.json() == {"status": "ok"}
 
 
-def test_internal_backup_triggers_sqlite_backup(shell_secret, monkeypatch, tmp_path):
-    backup_file = tmp_path / "sqlite-backup.sqlite3"
-    monkeypatch.setattr("backend.sqlite_backup.create_backup", lambda: backup_file)
+def test_internal_backup_triggers_postgres_backup(shell_secret, monkeypatch, tmp_path):
+    backup_file = tmp_path / "postgres-backup.dump"
+    monkeypatch.setattr("backend.postgres_backup.create_backup", lambda: backup_file)
     response = _client().post("/internal/backup", headers={"X-CounselorBot-Shell-Secret": shell_secret})
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "path": str(backup_file)}
@@ -60,7 +60,7 @@ def test_internal_backup_triggers_sqlite_backup(shell_secret, monkeypatch, tmp_p
 def test_internal_backup_returns_500_on_error(shell_secret, monkeypatch):
     def _fail():
         raise RuntimeError("Disk full")
-    monkeypatch.setattr("backend.sqlite_backup.create_backup", _fail)
+    monkeypatch.setattr("backend.postgres_backup.create_backup", _fail)
     response = _client().post("/internal/backup", headers={"X-CounselorBot-Shell-Secret": shell_secret})
     assert response.status_code == 500
     assert response.json() == {"status": "error", "detail": "Disk full"}

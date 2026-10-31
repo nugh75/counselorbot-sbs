@@ -536,6 +536,11 @@ impl Supervisor {
         env.extend(self.config.data.backend_env());
         // Override the legacy data-directory URL after adding its path variables.
         env.push(("DATABASE_URL".into(), database_url));
+        if self.config.postgres_enabled {
+            // #738: the pre-update backup runs the bundled pg_dump/pg_restore.
+            let bin = self.config.resources.join("postgresql").join("bin");
+            env.push(("COUNSELORBOT_PG_BIN_DIR".into(), bin.to_string_lossy().into_owned()));
+        }
         env.extend(self.config.credentials.backend_env().map_err(|message| Failure::Fatal(message, None))?);
         // Bundled desktop startup must not load operator .env files.
         env.push(("PYTHON_DOTENV_DISABLED".into(), "1".into()));
@@ -1451,6 +1456,20 @@ mod tests {
         let spec = supervisor.backend_spec(32101).unwrap_or_else(|_| panic!("backend spec"));
         let urls: Vec<_> = spec.env.iter().filter(|(name, _)| name == "DATABASE_URL").collect();
         assert_eq!(urls.last().unwrap().1, url);
+        std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
+    }
+
+    #[test]
+    fn postgres_backend_receives_the_bundled_binaries_for_backups() {
+        let mut supervisor = supervisor("postgres-bin");
+        let bin_dir = |s: &Supervisor| {
+            let spec = s.backend_spec(32101).unwrap_or_else(|_| panic!("backend spec"));
+            spec.env.into_iter().find(|(name, _)| name == "COUNSELORBOT_PG_BIN_DIR").map(|(_, value)| value)
+        };
+        assert!(bin_dir(&supervisor).is_none());
+        supervisor.config.postgres_enabled = true;
+        let expected = supervisor.config.resources.join("postgresql").join("bin");
+        assert_eq!(bin_dir(&supervisor).as_deref(), Some(expected.to_string_lossy().as_ref()));
         std::fs::remove_dir_all(&supervisor.config.data.root).unwrap();
     }
 
