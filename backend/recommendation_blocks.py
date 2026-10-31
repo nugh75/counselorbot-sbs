@@ -82,7 +82,7 @@ def _private_data(data) -> bool:
 
 
 def build_directive(
-    readings: Mapping[str, str], strategies: Mapping[str, str], *, idea: bool = False,
+    readings: Mapping[str, str], strategies: Mapping[str, str], *, idea: bool = False, guided: bool = True,
 ) -> str:
     """Direttiva di turno: vale solo per i candidati di questo turno."""
     if not readings and not strategies:
@@ -117,13 +117,18 @@ def build_directive(
     if idea:
         directive = directive.replace(
             "before any [[AVANZA_STEP]] marker line, which stays last", "before the final idea patch")
+    elif not guided:
+        # Chat libera (#754): nessun passo, quindi nessun marcatore da nominare.
+        directive = directive.replace(
+            " and before any [[AVANZA_STEP]] marker line, which stays last", ", at the very end")
     return directive
 
 
 def apply_directive(
     system_prompt: str, readings: Mapping[str, str], strategies: Mapping[str, str], *, idea: bool = False,
+    guided: bool = True,
 ) -> str:
-    directive = build_directive(readings, strategies, idea=idea)
+    directive = build_directive(readings, strategies, idea=idea, guided=guided)
     if not directive or "[RECOMMENDATION LOG]" in system_prompt or directive.strip() in system_prompt:
         return system_prompt
     return f"{system_prompt.rstrip()}\n\n{directive}"
@@ -386,10 +391,12 @@ def _whitelist(values, allowed: Mapping[str, str]) -> list[str]:
     return selected
 
 
-def notes_directive(*, advice_allowed: bool, idea: bool = False, hypothesis_allowed: bool = False, example_lens: str = "A5") -> str:
+def notes_directive(*, advice_allowed: bool, idea: bool = False, hypothesis_allowed: bool = False, example_lens: str = "A5",
+                    guided: bool = True) -> str:
     """Log concrete proposals, reflective questions and interpretive hypotheses without certifying them."""
     position = ("before the final idea patch" if idea else
-                "after the visible reply and before any [[AVANZA_STEP]] marker line, which stays last")
+                "after the visible reply and before any [[AVANZA_STEP]] marker line, which stays last" if guided else
+                "after the visible reply, at the very end")
     kinds = "question, advice or hypothesis" if hypothesis_allowed else "question or advice"
     hyp_sentence = (
         " and one interpretive reading offered as an open hypothesis (with optional lens: factor code)"
