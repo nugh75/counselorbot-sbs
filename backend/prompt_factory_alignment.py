@@ -69,9 +69,15 @@ FORCED_FACTORY_KEYS = {
         # #749: i passi sui fattori e le sintesi non danno strategie (A07, A08, A13).
         "prompt_second_level", "prompt_qpcs_summary", "prompt_qpcc_summary",
         "prompt_qap_summary", "prompt_meta_QSA_sl-social", "prompt_qpcs_analysis",
+        # #750: le sintesi Obiettivi possono chiudere con una domanda (A04);
+        # l'area QPCS si apre con una definizione breve (A10).
+        "prompt_obiettivo_summary",
     },
     # #749: sintesi senza strategie nuove, passo ZTPI descrittivo.
-    "guided_step": {"sl-synthesis", "qsar-synthesis", "ztpi-btp", "qpcs-sintesi", "qpcc-sintesi", "qap-sintesi"},
+    "guided_step": {
+        "sl-synthesis", "qsar-synthesis", "ztpi-btp", "qpcs-sintesi", "qpcc-sintesi", "qap-sintesi",
+        "obbstudio-final", "obbdocenza-final",  # #750: sintesi con una domanda finale (A04)
+    },
 }
 
 
