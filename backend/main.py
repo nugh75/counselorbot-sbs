@@ -1502,7 +1502,8 @@ def _run_seed_and_migrations():
 
         # Seed delle spiegazioni lunghe degli strumenti usate dalla Bussola.
         # Testi in inglese (istruzioni per il modello) e modificabili dagli admin:
-        # il seed crea solo le voci mancanti.
+        # il seed crea le voci mancanti e riallinea solo quelle rimaste alla
+        # struttura vecchia (STALE_BRIEF_MARKERS).
         from .tool_brief_seed import seed_tool_briefs
         created_briefs = seed_tool_briefs(db, models)
         if created_briefs:
