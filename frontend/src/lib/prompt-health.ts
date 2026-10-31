@@ -142,11 +142,14 @@ export function otherSentence(finding: PromptHealthFinding, promptId: string): P
 
 export type PromptCellStatus = 'ok' | 'warning' | 'error' | 'unused';
 
+/** Avvisi legati ai turni (percorso · passo · modalità) invece che ai singoli prompt. */
+const SURFACE_CODES = new Set(['rule_conflict', 'assembly_failed', 'llm_contradiction']);
+
 /** Stato di una casella percorso x passo; gli avvisi segnati come voluti non contano. */
 export function cellStatus(step: { prompts: string[]; surfaces: string[] }, findings: PromptHealthFinding[]): PromptCellStatus {
     const prompts = new Set(step.prompts);
     const surfaces = new Set(step.surfaces);
-    const relevant = findings.filter(finding => !finding.ack && (finding.code === 'rule_conflict' || finding.code === 'assembly_failed'
+    const relevant = findings.filter(finding => !finding.ack && (SURFACE_CODES.has(finding.code)
         ? finding.surfaces.some(surface => surfaces.has(surface))
         : finding.prompts.some(prompt => prompts.has(prompt))));
     if (relevant.some(finding => finding.code === 'step_without_prompt' || finding.code === 'empty_prompt')) return 'unused';
@@ -198,4 +201,54 @@ export function codeIssueUrl(finding: PromptHealthFinding, message: string): str
     ].join('\n');
     const params = new URLSearchParams({ title: `fix: ${message}`, body });
     return `${PROMPT_HEALTH_REPO}/issues/new?${params.toString()}`;
+}
+
+// --- Controllo con un modello (#763) -------------------------------------------------
+
+export interface PromptHealthLlmSettings {
+    provider: string;
+    model: string;
+    configured: boolean;
+    providers: string[];
+    max_calls_per_run: number;
+}
+
+export interface PromptHealthLlmEstimate {
+    configured: boolean;
+    combinations: number;
+    cached: number;
+    calls: number;
+    max_calls_per_run: number;
+    input_tokens: number;
+    output_tokens: number;
+    cost_usd: number | null;
+}
+
+export interface PromptHealthLlmRun {
+    calls: number;
+    failed: number;
+    cached: number;
+    remaining: number;
+    findings: PromptHealthFinding[];
+}
+
+/** Riscrittura proposta dal modello per un prompt: testo prima e dopo. */
+export interface PromptHealthProposal { prompt_id: string; before: string; after: string }
+
+/** «Proponi correzione»: serve almeno una frase in un prompt modificabile. */
+export function canPropose(finding: PromptHealthFinding): boolean {
+    const editable = new Set(compareTargets(finding));
+    return finding.sentences.some(sentence => editable.has(sentence.prompt));
+}
+
+/** Avvisi del controllo statico e del modello in un solo elenco, senza doppioni. */
+export function mergeFindings(first: PromptHealthFinding[], second: PromptHealthFinding[]): PromptHealthFinding[] {
+    const seen = new Set(first.map(finding => finding.id));
+    return [...first, ...second.filter(finding => !seen.has(finding.id) && seen.add(finding.id))];
+}
+
+/** Costo stimato leggibile, o null se il modello non è a listino. */
+export function estimateCost(usd: number | null): string | null {
+    if (usd == null) return null;
+    return usd < 0.01 ? '< $0.01' : `$${usd.toFixed(2)}`;
 }
