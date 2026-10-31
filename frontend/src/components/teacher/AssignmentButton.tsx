@@ -36,8 +36,9 @@ export function AssignmentDialog({ close, saved, classId }: { close: () => void;
     const [loading, setLoading] = useState(true); const [failed, setFailed] = useState(false); const [busy, setBusy] = useState(false);
     // #174: personal tools enabled for the chosen class or group.
     const [toolOptions, setToolOptions] = useState<string[] | null>(null); const [toolKeys, setToolKeys] = useState<string[]>([]);
+    const [toolsGroupId, setToolsGroupId] = useState(groupId);
+    if (toolsGroupId !== groupId) { setToolsGroupId(groupId); setToolKeys([]); setToolOptions(null); }
     useEffect(() => {
-        setToolKeys([]); setToolOptions(null);
         if (!groupId) return;
         let current = true;
         apiFetch(`/api/teacher/groups/${groupId}/settings`).then(async res => {

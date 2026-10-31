@@ -69,6 +69,12 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
     const [confirmCancel, setConfirmCancel] = useState<number | null>(null);
     const [registerOf, setRegisterOf] = useState<number | null>(null);
     const [loaded, setLoaded] = useState(false);
+    // Clock for «has it started?» in the list, refreshed every half minute.
+    const [now, setNow] = useState(() => Date.now());
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 30_000);
+        return () => clearInterval(timer);
+    }, []);
     const initialOpened = useRef(false);
     const [slotDrafts, setSlotDrafts] = useState<Record<number, boolean>>({});
     const liveForm = useRef({dirty: false, busy: false});
@@ -305,7 +311,7 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                 <p className="text-ink-muted">{[row.kind === 'individual' ? m('individual') : meetingWhen(row, lang), m(row.mode), row.place ?? row.link,
                     meetingHost(row) ? `${m('with')} ${meetingHost(row)}` : null].filter(Boolean).join(' · ')}</p>
                 {/* Attendance means something only once a scheduled meeting has started. */}
-                {row.status === 'scheduled' && (row.kind === 'individual' || (row.starts_at && new Date(row.starts_at).getTime() <= Date.now()))
+                {row.status === 'scheduled' && (row.kind === 'individual' || (row.starts_at && new Date(row.starts_at).getTime() <= now))
                     && <p className="text-xs text-ink-muted">{`${row.attendance_count ?? 0} ${m('attendances')}`}
                         {(row.group_ids?.length ?? 0) > 1 && ` (${(row.group_ids ?? []).map((id, index) =>
                             `${row.group_names?.[index] ?? id}: ${row.attendance_by_group?.[String(id)] ?? 0}`).join(' · ')})`}</p>}

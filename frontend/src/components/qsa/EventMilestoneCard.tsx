@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Save } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
@@ -26,9 +26,11 @@ export function EventMilestoneCard({ sessionId, draft }: { sessionId: string; dr
 
     // La bozza arriva con l'ultimo turno della sintesi: finche' la persona non
     // ha salvato, il modulo la segue.
-    useEffect(() => {
-        if (!saved) setForm(formFromDraft(draft));
-    }, [draft, saved]);
+    const [formDraft, setFormDraft] = useState(draft);
+    if (!saved && formDraft !== draft) {
+        setFormDraft(draft);
+        setForm(formFromDraft(draft));
+    }
 
     const set = (key: keyof EventBookletForm, value: string) => setForm((previous) => ({ ...previous, [key]: value }));
 

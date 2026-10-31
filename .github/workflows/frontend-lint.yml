@@ -1,0 +1,41 @@
+name: Frontend lint
+on:
+  push:
+    branches: [main]
+    paths: ['frontend/**', '.github/workflows/frontend-lint.yml']
+  pull_request:
+    paths: ['frontend/**', '.github/workflows/frontend-lint.yml']
+permissions:
+  contents: read
+jobs:
+  eslint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      # Errors still allowed while the loader refactor is pending (#773).
+      # Lower it as errors are fixed; at 0 any ESLint error fails the job.
+      ESLINT_MAX_ERRORS: '78'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run i18n:check
+      - name: ESLint (fails when errors exceed ESLINT_MAX_ERRORS)
+        run: |
+          npx eslint -f json -o eslint.json || true
+          node -e '
+            const report = require("./eslint.json");
+            const errors = report.reduce((n, f) => n + f.errorCount, 0);
+            const warnings = report.reduce((n, f) => n + f.warningCount, 0);
+            const max = Number(process.env.ESLINT_MAX_ERRORS);
+            for (const f of report) for (const m of f.messages) if (m.severity === 2)
+              console.log(`${f.filePath.split("/frontend/")[1]}:${m.line} ${m.ruleId}`);
+            console.log(`ESLint: ${errors} errors (max ${max}), ${warnings} warnings`);
+            if (errors > max) process.exit(1);
+          '

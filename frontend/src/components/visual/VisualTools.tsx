@@ -131,6 +131,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     }, [personal, tab, loaded]);
     useEffect(() => {
         if (!personal || tab !== 'board' || !loaded || !openCreate) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot `?new` hand-off: opens the form, strips the URL param and focuses its input
         setCreateOpen(true);
         stripNewParam();
         const frame = requestAnimationFrame(() => {
@@ -157,11 +158,12 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
         element?.focus({ preventScroll: true }); element?.scrollIntoView({ block: 'nearest' });
     });
     const launch = () => { opener.current = document.activeElement as HTMLElement; setOpen(true); };
+    const requestEventId = request?.eventId;
     const load = useCallback(async () => {
         const generation = ++loadGeneration.current;
         setBusy(true); setIssue('');
         try {
-            const response = await apiFetch(personal ? `${endpoint}?${new URLSearchParams({ lang: locale, ...(legacySession ? { legacy_session: legacySession } : {}), ...(request?.eventId ? { event: request.eventId } : {}) })}` : endpoint, { signal: AbortSignal.timeout(15000) });
+            const response = await apiFetch(personal ? `${endpoint}?${new URLSearchParams({ lang: locale, ...(legacySession ? { legacy_session: legacySession } : {}), ...(requestEventId ? { event: requestEventId } : {}) })}` : endpoint, { signal: AbortSignal.timeout(15000) });
             if (!response.ok) throw new Error();
             const result: SavedWorkspace & { focus_event?: string } = await response.json();
             setFocusEvent(result.focus_event);
@@ -169,7 +171,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
             setSaved(result); setWork(result.workspace); setHistory([]); setLoaded(true);
         } catch { if (generation === loadGeneration.current) setIssue('loadError'); }
         finally { if (generation === loadGeneration.current) setBusy(false); }
-    }, [endpoint, personal, locale, legacySession, request?.eventId]);
+    }, [endpoint, personal, locale, legacySession, requestEventId]);
 
     useEffect(() => { if (open && !loaded) void load(); }, [open, loaded, load]);
     useEffect(() => {
@@ -183,6 +185,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     useEffect(() => {
         if (!request) return;
         opener.current = document.activeElement as HTMLElement;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the dialog only after recording the element that had focus, to restore it on close
         setTab(fixedTab ?? request.tab); setOpen(true);
     }, [fixedTab, request]);
     useEffect(() => {

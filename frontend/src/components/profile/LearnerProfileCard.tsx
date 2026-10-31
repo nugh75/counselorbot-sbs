@@ -250,6 +250,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
         if (!note) return;
         noteAppliedRef.current = true;
         const notes = [form.notes, note].filter(Boolean).join('\n\n');
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot `?note=` hand-off from the URL, consumed with replaceState once the profile has loaded
         if (notes.length > NOTES_MAX_CHARS) { setValidationError(t('lp.noteTooLong')); return; }
         changeForm({ ...form, notes });
         url.searchParams.delete('note');

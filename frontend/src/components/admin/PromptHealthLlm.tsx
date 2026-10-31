@@ -44,10 +44,15 @@ export function PromptHealthLlm({ onFindings }: { onFindings: (findings: PromptH
     }, []);
 
     // Stessa sorgente degli altri selettori di modello: i modelli serviti dal fornitore.
+    const [modelsProvider, setModelsProvider] = useState(provider);
+    if (modelsProvider !== provider) {
+        setModelsProvider(provider);
+        if (provider) setModelsLoading(true);
+        else setModels([]);
+    }
     useEffect(() => {
-        if (!provider) { setModels([]); return; }
+        if (!provider) return;
         const controller = new AbortController();
-        setModelsLoading(true);
         apiFetch(`/api/admin/models?provider=${encodeURIComponent(provider)}`, { signal: controller.signal })
             .then(response => (response.ok ? response.json() : { models: [] }))
             .then((value: { models?: string[] }) => setModels(value.models ?? []))

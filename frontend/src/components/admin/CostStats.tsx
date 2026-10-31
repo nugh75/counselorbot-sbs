@@ -139,19 +139,12 @@ export function CostStats() {
         return { monthly, yearly: monthly * 12, costPerInteraction, totalInteractions };
     }, [data, estUsers, intPerUser]);
 
-    useEffect(() => {
-        if (data && eurRate === '') setEurRate(String(data.usd_eur_rate || 0.92));
-    }, [data, eurRate]);
-
-    useEffect(() => {
-        if (data && budgetInput === '') setBudgetInput(String(data.monthly_budget_usd || 0));
-    }, [data, budgetInput]);
-
-    useEffect(() => {
-        if (data && intPerUser === '' && data.avg_turns_per_user > 0) {
-            setIntPerUser(String(Math.round(data.avg_turns_per_user)));
-        }
-    }, [data, intPerUser]);
+    // Campi vuoti: si riempiono con i valori del server appena arrivano.
+    if (data && eurRate === '') setEurRate(String(data.usd_eur_rate || 0.92));
+    if (data && budgetInput === '') setBudgetInput(String(data.monthly_budget_usd || 0));
+    if (data && intPerUser === '' && data.avg_turns_per_user > 0) {
+        setIntPerUser(String(Math.round(data.avg_turns_per_user)));
+    }
 
     const saveBudget = useCallback(async () => {
         setSavingBudget(true);

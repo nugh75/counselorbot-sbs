@@ -143,7 +143,7 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(false);
     const [statusError, setStatusError] = useState(false);
-    const [, setTick] = useState(0);
+    const [now, setNow] = useState(() => Date.now());
 
     const loadStatus = useCallback(async () => {
         // F03: un errore di rete non è “non collegato” — è un errore con Riprova.
@@ -169,7 +169,7 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
     // Aggiorna il conto alla rovescia della scadenza ogni mezzo minuto.
     useEffect(() => {
         if (!pending) return;
-        const timer = setInterval(() => setTick(value => value + 1), 30_000);
+        const timer = setInterval(() => setNow(Date.now()), 30_000);
         return () => clearInterval(timer);
     }, [pending]);
 
@@ -191,7 +191,7 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
     const deepLink = botUsername
         ? `https://t.me/${botUsername}${pending ? `?start=l_${pending.code}` : ''}`
         : '';
-    const minutesLeft = pending ? Math.max(0, Math.ceil((pending.expiresAt - Date.now()) / 60_000)) : 0;
+    const minutesLeft = pending ? Math.max(0, Math.ceil((pending.expiresAt - now) / 60_000)) : 0;
     const expired = Boolean(pending) && minutesLeft <= 0;
 
     const generateCode = async () => {
@@ -202,7 +202,9 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
             if (!res.ok) throw new Error('link-code failed');
             const payload = await res.json() as { code: string; expires_in_minutes?: number };
             const minutes = payload.expires_in_minutes ?? 10;
-            setPending({ code: payload.code, expiresAt: Date.now() + minutes * 60_000 });
+            const issuedAt = Date.now();
+            setNow(issuedAt);
+            setPending({ code: payload.code, expiresAt: issuedAt + minutes * 60_000 });
         } catch {
             setError(true);
         } finally {

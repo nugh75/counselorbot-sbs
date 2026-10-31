@@ -84,18 +84,16 @@ export function TrainingDatasetPanel() {
     const filters = useMemo(() => ({ instrument: 'QSA', locale, phase, status }), [locale, phase, status]);
     const selected = examples.find((item) => item.id === selectedId) || examples[0] || null;
 
-    useEffect(() => {
+    // Le bozze seguono l'esempio selezionato (o il primo) quando cambiano elenco o selezione.
+    const [draftSource, setDraftSource] = useState<{ examples: TrainingExample[]; selectedId: typeof selectedId } | null>(null);
+    if (draftSource?.examples !== examples || draftSource?.selectedId !== selectedId) {
         const nextSelected = examples.find((item) => item.id === selectedId) || examples[0] || null;
-        if (!nextSelected) {
-            setSelectedId(null);
-            setDraftAnswer('');
-            setDraftNotes('');
-            return;
-        }
-        setSelectedId(nextSelected.id);
-        setDraftAnswer(nextSelected.assistant_answer);
-        setDraftNotes(nextSelected.review_notes || '');
-    }, [examples, selectedId]);
+        const nextId = nextSelected?.id ?? null;
+        setDraftSource({ examples, selectedId: nextId });
+        setSelectedId(nextId);
+        setDraftAnswer(nextSelected?.assistant_answer ?? '');
+        setDraftNotes(nextSelected?.review_notes || '');
+    }
 
     const load = async () => {
         setLoading(true);

@@ -400,6 +400,24 @@ function authJsonHeaders(): Record<string, string> {
 
 // --- Component ---
 
+// Mappature segnaposto salvate in configurazione, o quelle predefinite.
+function placeholderMappingsFrom(configs: ConfigItem[]): Record<string, [string, string]> {
+    const raw = configs.find(c => c.key === 'placeholder_language_mappings')?.value || '';
+    if (raw) {
+        try {
+            const parsed = JSON.parse(raw);
+            const norm: Record<string, [string, string]> = {};
+            for (const [code, val] of Object.entries(parsed)) {
+                if (Array.isArray(val) && val.length === 2) {
+                    norm[code] = [String(val[0]), String(val[1])];
+                }
+            }
+            if (Object.keys(norm).length > 0) return norm;
+        } catch { /* fallback */ }
+    }
+    return { ...DEFAULT_PLACEHOLDERS };
+}
+
 export function ConfigForm() {
     const { t, lang } = useI18n();
     const [configs, setConfigs] = useState<ConfigItem[]>([]);
@@ -433,7 +451,12 @@ export function ConfigForm() {
 
     // Dynamic guided steps
     const [guidedSteps, setGuidedSteps] = useState<GuidedStep[]>([]);
-    const [placeholderDraft, setPlaceholderDraft] = useState<Record<string, [string, string]>>({});
+    const [placeholderDraft, setPlaceholderDraft] = useState<Record<string, [string, string]>>(() => placeholderMappingsFrom(configs));
+    const [placeholderConfigs, setPlaceholderConfigs] = useState(configs);
+    if (placeholderConfigs !== configs) {
+        setPlaceholderConfigs(configs);
+        setPlaceholderDraft(placeholderMappingsFrom(configs));
+    }
 
     const openSection = (nextSection: string) => {
         setSection(nextSection);
@@ -509,31 +532,17 @@ export function ConfigForm() {
         && !apiKeyStatuses.find(item => item.provider === activeProvider)?.configured;
 
     useEffect(() => { fetchConfigs(); }, []);
+    const liveModelsAvailable = Boolean(activeProvider) && !activeKeyMissing;
+    const [liveModelsWereAvailable, setLiveModelsWereAvailable] = useState(liveModelsAvailable);
+    if (liveModelsWereAvailable !== liveModelsAvailable) {
+        setLiveModelsWereAvailable(liveModelsAvailable);
+        if (!liveModelsAvailable) setLiveModels([]);
+    }
     useEffect(() => {
-        if (!activeProvider || activeKeyMissing) { setLiveModels([]); return; }
+        if (!activeProvider || activeKeyMissing) return;
         void fetchModels(activeProvider);
         return () => modelRequest.current?.abort();
     }, [activeProvider, activeKeyMissing]);
-
-    useEffect(() => {
-        const raw = getConfigValue('placeholder_language_mappings');
-        if (raw) {
-            try {
-                const parsed = JSON.parse(raw);
-                const norm: Record<string, [string, string]> = {};
-                for (const [code, val] of Object.entries(parsed)) {
-                    if (Array.isArray(val) && val.length === 2) {
-                        norm[code] = [String(val[0]), String(val[1])];
-                    }
-                }
-                if (Object.keys(norm).length > 0) {
-                    setPlaceholderDraft(norm);
-                    return;
-                }
-            } catch { /* fallback */ }
-        }
-        setPlaceholderDraft({ ...DEFAULT_PLACEHOLDERS });
-    }, [configs]);
 
     // Opzioni della tendina: modelli live se disponibili, altrimenti fallback statico.
     // Il modello attivo viene sempre incluso così resta selezionato anche se non in elenco.

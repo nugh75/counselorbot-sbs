@@ -211,6 +211,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
         const id = planIdFromHash(window.location.hash);
         const node = id ? document.getElementById(`plan-${id}`) : null;
         if (!node) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- needs the rendered plan node from the `#plan-<id>` link before focusing it
         setFocusedPlanId(id);
         node.scrollIntoView({ block: 'start' });
         node.focus();

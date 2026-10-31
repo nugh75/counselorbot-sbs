@@ -31,10 +31,14 @@ export function NewDeckDialog({ open, locale, onCancel, onCreate }: Props) {
     const [name, setName] = useState('');
     const [type, setType] = useState<DeckType>('reflection');
 
+    const [wasOpen, setWasOpen] = useState(open);
+    if (wasOpen !== open) {
+        setWasOpen(open);
+        if (open) { setName(''); setType('reflection'); }
+    }
+
     useEffect(() => {
         if (!open) return;
-        setName('');
-        setType('reflection');
         nameRef.current?.focus();
         const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onCancel(); };
         window.addEventListener('keydown', onKey);

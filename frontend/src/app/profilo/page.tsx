@@ -336,16 +336,13 @@ export default function ProfilePage() {
     }, [lang]);
     const filteredSessions = useMemo(() => sessions.filter(session => matchesSearch(session, sessionSearch)), [sessions, sessionSearch, matchesSearch]);
 
-    useEffect(() => {
-        if (filteredSessions.length === 0) {
-            if (selectedSession !== null) setSelectedSession(null);
-            return;
-        }
-        if (!selectedSession || !filteredSessions.some((session) => session.session_id === selectedSession.session_id)) {
-            setSelectedSession(filteredSessions[0]);
-            setShowDeleteConfirm(null);
-        }
-    }, [filteredSessions, selectedSession]);
+    // La selezione segue l'elenco filtrato: si corregge durante il render, prima che si veda.
+    if (filteredSessions.length === 0) {
+        if (selectedSession !== null) setSelectedSession(null);
+    } else if (!selectedSession || !filteredSessions.some((session) => session.session_id === selectedSession.session_id)) {
+        setSelectedSession(filteredSessions[0]);
+        setShowDeleteConfirm(null);
+    }
 
     const formatSessionOption = (session: QuestionnaireResult) => {
         const submitted = new Date(session.submitted_at).toLocaleString(lang);

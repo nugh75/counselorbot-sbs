@@ -24,13 +24,15 @@ export function InstitutePasswordReveal({ institute, onForbidden }: {
     const pending = useRef<AbortController | null>(null);
     const account = useRef(getViewAsAccount()?.username);
     useEffect(() => () => { pending.current?.abort(); }, []);
-    useEffect(() => {
-        // A saved replacement (or metadata edit) invalidates any revealed copy.
+    // A saved replacement (or metadata edit) invalidates any revealed copy.
+    const [revealedRevision, setRevealedRevision] = useState(institute.revision);
+    if (revealedRevision !== institute.revision) {
+        setRevealedRevision(institute.revision);
         setPassword(null);
         setVisible(false);
         setMissing(false);
         setError(false);
-    }, [institute.revision]);
+    }
 
     const toggle = async () => {
         if (visible) {

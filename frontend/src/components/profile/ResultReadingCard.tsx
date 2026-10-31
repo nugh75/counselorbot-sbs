@@ -69,9 +69,14 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores, onDraf
         return row;
     }, [sessionId, questionnaireType]);
 
+    const readingKey = `${sessionId}:${questionnaireType}:${lang}`;
+    const [loadedReadingKey, setLoadedReadingKey] = useState(readingKey);
+    if (loadedReadingKey !== readingKey) {
+        setLoadedReadingKey(readingKey);
+        setLoading(true);
+    }
     useEffect(() => {
         let active = true;
-        setLoading(true);
         loadReading()
             .then((row) => {
                 if (!active) return;

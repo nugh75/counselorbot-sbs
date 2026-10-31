@@ -203,12 +203,14 @@ export default function AssistentePage() {
 
     // Se cambio collection o audience e il topic selezionato non e' piu
     // disponibile nella nuova combinazione, ripristina il primo visibile.
-    useEffect(() => {
+    const topicScope = `${collection}:${audience}`;
+    const [checkedTopicScope, setCheckedTopicScope] = useState(topicScope);
+    if (checkedTopicScope !== topicScope) {
+        setCheckedTopicScope(topicScope);
         if (!topicIds.includes(selectedTopicId) && topicIds.length > 0) {
             setSelectedTopicId(topicIds[0]);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [collection, audience]);
+    }
 
     // Audience derivata dal ruolo: se l'admin e' in "view as", segue il profilo
     // di prova (studente -> 'studente'; docente/ricercatore -> 'docente'); per

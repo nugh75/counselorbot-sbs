@@ -141,7 +141,8 @@ export function RagDocsPanel() {
 
     useEffect(() => { void loadCollections(); }, [loadCollections]);
     useEffect(() => { if (selected) void loadDocs(selected); }, [selected, loadDocs]);
-    useEffect(() => { setPreview(null); }, [selected]);
+    const [previewCollection, setPreviewCollection] = useState(selected);
+    if (previewCollection !== selected) { setPreviewCollection(selected); setPreview(null); }
 
     const currentCollection = collections.find((c) => c.id === selected);
 

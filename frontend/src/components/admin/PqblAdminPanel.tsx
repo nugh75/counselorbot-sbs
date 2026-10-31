@@ -99,13 +99,17 @@ function ConfigTab() {
     const [savingKey, setSavingKey] = useState<string | null>(null);
     const [savedKey, setSavedKey] = useState<string | null>(null);
 
+    const [loadedLang, setLoadedLang] = useState(lang);
+    if (loadedLang !== lang) {
+        setLoadedLang(lang);
+        setLoading(true);
+    }
     useEffect(() => {
         // pqbl_onboarding_text è mostrato allo studente: si edita la variante della
         // lingua selezionata (chiave suffissata, stesso schema di guided_text_i18n).
         const keys = PQBL_CONFIG_KEYS.map(k =>
             k === 'pqbl_onboarding_text' && lang !== 'it' ? `${k}__${lang}` : k,
         );
-        setLoading(true);
         fetch('/api/admin/config')
             .then(r => r.json())
             .then((all: ConfigItem[]) => {

@@ -125,6 +125,8 @@ export default function PqblPage() {
     const sessionLanguageRef = useRef(lang);
     const pollingFailuresRef = useRef(0);
     const restoreAttemptedRef = useRef(false);
+    // Lingua della sessione ripristinata, per l'avviso nel render (il ref serve alle richieste).
+    const [restoredLanguage, setRestoredLanguage] = useState(lang);
 
     const stopPolling = useCallback(() => {
         if (pollRef.current) {
@@ -194,6 +196,8 @@ export default function PqblPage() {
         const saved = loadPqblProgress<PersistedPqblProgress>();
         if (saved?.version === 1 && saved.phase !== 'setup') {
             sessionLanguageRef.current = saved.language || lang;
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot restore of saved progress from localStorage after hydration
+            setRestoredLanguage(saved.language || lang);
             setPhase(saved.phase);
             setSize(saved.size);
             setDocumentInfo(saved.documentInfo);
@@ -451,7 +455,7 @@ export default function PqblPage() {
                 </div>
             )}
 
-            {restoredProgress && lang !== sessionLanguageRef.current && (
+            {restoredProgress && lang !== restoredLanguage && (
                 <Callout variant="info" title={t('pqbl.resume.languageTitle')}>
                     {t('pqbl.resume.languageBody')}
                 </Callout>

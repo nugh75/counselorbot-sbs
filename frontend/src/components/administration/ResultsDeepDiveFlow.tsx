@@ -44,9 +44,14 @@ export function ResultsDeepDiveFlow({ pathId, stepId, registerSave, onExit, onCo
   const owner = useRef<string | null>(null);
   const pending = useRef(false);
   const attemptId = useRef<string | null>(null);
+  const loadKey = `${pathId}:${stepId}:${reload}`;
+  const [shownLoadKey, setShownLoadKey] = useState(loadKey);
+  if (shownLoadKey !== loadKey) {
+    setShownLoadKey(loadKey);
+    setLoading(true); setOptions(null); setSession(null); setSnapshot(null); setFailure(null); setResultId('');
+  }
   useEffect(() => {
     let active = true;
-    setLoading(true); setOptions(null); setSession(null); setSnapshot(null); setFailure(null); setResultId('');
     void (async () => {
       try {
         const identity = await getIdentity();

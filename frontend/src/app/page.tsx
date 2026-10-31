@@ -142,9 +142,11 @@ export default function Home() {
     // cima, così chi ci arriva sa cosa è successo e come tornare indietro.
     const [pausedChat, setPausedChat] = useState<PausedChat | null>(null);
     // L'avviso vale solo per l'atterraggio dopo il fiocco: uscire dalla pagina lo chiude.
-    useEffect(() => {
+    const [pausedChatStep, setPausedChatStep] = useState(step);
+    if (pausedChatStep !== step) {
+        setPausedChatStep(step);
         if (step !== 'base') setPausedChat(null);
-    }, [step]);
+    }
     const [savedResults, setSavedResults] = useState<SavedResult[] | null>(null);
     const [notebookUpdatedAt, setNotebookUpdatedAt] = useState<string | null | undefined>(undefined);
     const [studentPaths, setStudentPaths] = useState<StudentClassPath[] | null>(null);
@@ -170,6 +172,8 @@ export default function Home() {
     const [ready, setReady] = useState(false);
     const entryClaimed = useRef(false);
     const practiceProfileEntry = useRef<number | null>(null);
+    // Copia per il render del solo «c'è un profilo di pratica»: il ref resta per i gestori.
+    const [practiceEntryActive, setPracticeEntryActive] = useState(false);
     const practiceProfileHref = useRef<string | null>(null);
     // Cronologia del percorso: un'entrata per passo, così Indietro e Avanti del
     // browser (e la gesture di ritorno) si muovono dentro il percorso invece di
@@ -316,14 +320,13 @@ export default function Home() {
     // atterra direttamente sulla schermata base con il percorso hero in evidenza;
     // altrimenti atterra sulla presentazione iniziale.
     useEffect(() => {
+        // Decide la schermata d'ingresso una volta sola, leggendo il ref condiviso con gli
+        // ingressi da link: spostarlo nel render richiederebbe di rifare la macchina d'ingresso.
         if (ready || entryClaimed.current) return;
         if (!identity?.authenticated) return;
         if (savedResults === null || notebookUpdatedAt === undefined || studentPaths === null) return;
-        if (studentPaths.length > 0) {
-            setStep('base');
-        } else {
-            setStep('intro');
-        }
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot entry decision guarded by the entryClaimed ref (see comment above)
+        setStep(studentPaths.length > 0 ? 'base' : 'intro');
         setReady(true);
     }, [ready, identity, savedResults, notebookUpdatedAt, studentPaths]);
 
@@ -434,6 +437,7 @@ export default function Home() {
         const frozenParam = params.get('frozen');
         if (frozenParam) {
             entryClaimed.current = true;
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot read of the entry URL, consumed by replaceState right after
             setFromPlan(params.get('from') === 'plan');
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
             void (async () => {
@@ -685,6 +689,7 @@ export default function Home() {
                     if (!result) throw new Error('Unavailable practice profile');
                     practiceScores = result.scores;
                     practiceProfileEntry.current = notebookId;
+                    setPracticeEntryActive(true);
                     practiceProfileHref.current = practiceResultChatHref(result);
                     storePracticeNotebookId(notebookId);
                     storeNotebookContext('practice');
@@ -714,6 +719,7 @@ export default function Home() {
         setPlanOrigin(null);
         setFromPlan(false);
         practiceProfileEntry.current = null;
+        setPracticeEntryActive(false);
         practiceProfileHref.current = null;
         setPausedChat(null);
         setSelectedQuestionnaire(questionnaire);
@@ -1095,7 +1101,7 @@ export default function Home() {
                             onReasoningChange={handleReasoningChange}
                             onBack={goBack}
                             onStart={handleStartInteraction}
-                            showModeChoice={!practiceProfileEntry.current && experiencePrefForInstrument(selectedQuestionnaire.id, getExperiencePref()) === null}
+                            showModeChoice={!practiceEntryActive && experiencePrefForInstrument(selectedQuestionnaire.id, getExperiencePref()) === null}
                             experience={experience}
                             onExperienceChange={setExperience}
                             rememberExperience={rememberExperience}
