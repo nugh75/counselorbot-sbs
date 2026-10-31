@@ -5,6 +5,10 @@ CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
 
+La versione `v2.1.0` (note in `docs/releases/v2.1.0.md`) porta nel bundle desktop le
+correzioni della chat, il passo «Strategie e consigli», la chat libera separata, la
+pagina «Salute dei prompt» e il backup PostgreSQL prima degli aggiornamenti.
+
 La patch desktop `v2.0.2` allinea la versione del bundle, del backend e del
 frontend: gli errori iniziali vengono mostrati senza crash e gli inviti locali
 usano il pannello di abbinamento. Un profilo SQLite richiede ancora una
