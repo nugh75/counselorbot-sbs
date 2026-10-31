@@ -94,7 +94,8 @@ jobs:
       - name: Sidecar entrypoint tests (Python)
         env:
           PYTHON_DOTENV_DISABLED: "1"
-          DATABASE_URL: sqlite:///${{ runner.temp }}/shell-contract.sqlite3
+          # PostgreSQL only since #735; these contracts never open a connection.
+          DATABASE_URL: postgresql://shell:contract@127.0.0.1:1/shell_contract
         run: python -m pytest -q desktop/teacher/sidecar/test_server.py backend/tests/test_shell_contract.py backend/tests/test_request_origin.py desktop/teacher/scripts/test_check_teacher_data.py
 
       - name: Build frontend (Next standalone) and stage node
