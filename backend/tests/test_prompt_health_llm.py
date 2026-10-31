@@ -214,6 +214,19 @@ def test_propose_correction_rewrites_only_the_conflicting_sentences(db, monkeypa
     assert custom_step.prompt == CUSTOM, "a proposal is never saved"
 
 
+@pytest.fixture(autouse=True)
+def _restore_shared_app():
+    """Leave the shared app as found: other suites install their overrides at import."""
+    import backend.main as main_module
+    from backend.routes import prompt_health as routes
+    overrides = dict(main_module.app.dependency_overrides)
+    hooks = (routes._rerun_after_save, routes._session_factory)
+    yield
+    main_module.app.dependency_overrides.clear()
+    main_module.app.dependency_overrides.update(overrides)
+    routes._rerun_after_save, routes._session_factory = hooks
+
+
 def _client():
     from backend import main as main_module
     from backend.routes import prompt_health as routes
