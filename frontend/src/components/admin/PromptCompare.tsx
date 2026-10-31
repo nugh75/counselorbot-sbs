@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { GitCompare, Plus, RefreshCw, RotateCcw, Save, X } from 'lucide-react';
+import { Check, GitCompare, Plus, RefreshCw, RotateCcw, Save, Sparkles, X } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { Button } from '@/components/ui/Button';
@@ -9,8 +9,8 @@ import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import {
-    findingRanges, highlightSegments, lineDiff, messageParams, otherSentence, promptLabel,
-    type PromptHealthFinding, type PromptHealthRange,
+    canPropose, findingRanges, highlightSegments, lineDiff, mergeFindings, messageParams, otherSentence, promptLabel,
+    type PromptHealthFinding, type PromptHealthProposal, type PromptHealthRange,
 } from '@/lib/prompt-health';
 import { cn } from '@/lib/utils';
 
@@ -89,11 +89,11 @@ function HighlightedEditor({ value, onChange, ranges, describedBy, label, onCare
     </div>;
 }
 
-function DiffView({ before, after }: { before: string; after: string }) {
+function DiffView({ before, after, title }: { before: string; after: string; title?: string }) {
     const { t } = useI18n();
     const lines = useMemo(() => lineDiff(before, after), [before, after]);
     return <div className="space-y-1">
-        <p className="text-xs font-semibold text-ink-muted">{t('admin.promptHealth.compare.diffTitle')}</p>
+        <p className="text-xs font-semibold text-ink-muted">{title ?? t('admin.promptHealth.compare.diffTitle')}</p>
         <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-control border border-line bg-surface-sunken p-2 text-xs leading-relaxed text-ink-body">
             {lines.map((line, index) => <div key={index} className={cn(line.type === 'del' && 'bg-danger-soft text-danger-ink line-through',
                 line.type === 'add' && 'bg-success-soft text-success-ink')}>
@@ -112,14 +112,19 @@ interface PanelState {
     error?: boolean;
 }
 
-function ComparePanel({ panel, findings, checking, focus, onDraft, onRemove, onSaved }: {
+function ComparePanel({ panel, findings, checking, focus, proposal, proposing, onDraft, onRemove, onSaved, onPropose, onAccept, onDiscard }: {
     panel: PanelState;
     findings: PromptHealthFinding[];
     checking: boolean;
     focus: string | null;
+    proposal: PromptHealthProposal | null;
+    proposing: boolean;
     onDraft: (value: string) => void;
     onRemove: () => void;
     onSaved: (card: PromptCard, findings?: PromptHealthFinding[]) => void;
+    onPropose: (finding: PromptHealthFinding) => void;
+    onAccept: () => void;
+    onDiscard: () => void;
 }) {
     const { t } = useI18n();
     const message = useFindingMessage();
@@ -229,7 +234,12 @@ function ComparePanel({ panel, findings, checking, focus, onDraft, onRemove, onS
                                 {t('admin.promptHealth.compare.against', { prompt: promptLabel(other.prompt) })} «{other.text}»
                             </p>}
                             {finding.ack && <p className="text-xs text-ink-muted">{t('admin.promptHealth.ack.marked')}: {finding.ack.note}</p>}
-                            {range && <Button type="button" variant="ghost" size="sm" onClick={() => select(range)}>{t('admin.promptHealth.compare.show')}</Button>}
+                            <div className="flex flex-wrap gap-2">
+                                {range && <Button type="button" variant="ghost" size="sm" onClick={() => select(range)}>{t('admin.promptHealth.compare.show')}</Button>}
+                                {canPropose(finding) && <Button type="button" variant="ghost" size="sm" disabled={proposing} onClick={() => onPropose(finding)}>
+                                    <Sparkles className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.action.propose')}
+                                </Button>}
+                            </div>
                         </li>;
                     })}
                 </ol>}
@@ -254,6 +264,17 @@ function ComparePanel({ panel, findings, checking, focus, onDraft, onRemove, onS
                 {status === 'restored' && <Callout variant="success">{t('admin.promptHealth.compare.restored')}</Callout>}
                 {status === 'error' && <Callout variant="danger">{t('admin.promptHealth.compare.saveError')}</Callout>}
             </div>
+            {proposal && <div className="space-y-2 rounded-control border border-line-strong bg-surface p-2">
+                <DiffView before={proposal.before} after={proposal.after} title={t('admin.promptHealth.propose.title', { prompt: promptLabel(panel.id) })} />
+                <div className="flex flex-wrap gap-2">
+                    <Button type="button" onClick={() => { onDraft(proposal.after); onAccept(); setStatus(null); }}>
+                        <Check className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.propose.accept')}
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={onDiscard}>
+                        <X className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.propose.discard')}
+                    </Button>
+                </div>
+            </div>}
             {diff && card.factory != null && <DiffView before={card.factory} after={draft} />}
         </>}
     </Card>;
@@ -264,9 +285,13 @@ function ComparePanel({ panel, findings, checking, focus, onDraft, onRemove, onS
  * passaggi in conflitto in rosso, avvisi ricalcolati sulla bozza prima di
  * salvare. Ogni prompt si salva da solo e il salvataggio non è mai bloccato.
  */
-export function PromptCompare({ initial, focus, paths, knownPrompts, onClose, onChanged }: {
+export function PromptCompare({ initial, focus, propose = false, llmFindings = [], paths, knownPrompts, onClose, onChanged }: {
     initial: string[];
     focus: string | null;
+    /** Aperto da «Proponi correzione»: chiede subito la proposta per l'avviso `focus` (#763). */
+    propose?: boolean;
+    /** Contraddizioni trovate dal modello: evidenziate come gli altri avvisi. */
+    llmFindings?: PromptHealthFinding[];
     paths: PromptHealthPath[];
     knownPrompts: string[];
     onClose: () => void;
@@ -285,6 +310,9 @@ export function PromptCompare({ initial, focus, paths, knownPrompts, onClose, on
     const [toAdd, setToAdd] = useState('');
     const [recheck, setRecheck] = useState(0);
     const request = useRef<AbortController | null>(null);
+    const message = useFindingMessage();
+    const [proposals, setProposals] = useState<Record<string, PromptHealthProposal>>({});
+    const [proposeStatus, setProposeStatus] = useState<'loading' | 'none' | 'error' | 'notConfigured' | 'accepted' | null>(null);
 
     // Schede dei prompt: testo salvato, testo di fabbrica, avvisi dell'ultimo controllo.
     const ids = panels.map(panel => panel.id).join('|');
@@ -331,6 +359,43 @@ export function PromptCompare({ initial, focus, paths, knownPrompts, onClose, on
         // eslint-disable-next-line react-hooks/exhaustive-deps -- le bozze sono nella chiave
     }, [draftKey, surface, loaded, recheck, ids]);
     useEffect(() => () => request.current?.abort(), []);
+
+    // «Proponi correzione» (#763): il modello riscrive le frasi in conflitto sulle bozze correnti; niente viene salvato.
+    const requestProposal = useCallback(async (finding: PromptHealthFinding) => {
+        setProposeStatus('loading');
+        try {
+            const involved = new Set(finding.sentences.map(sentence => sentence.prompt));
+            const current = Object.fromEntries(panels.filter(panel => panel.card?.editable && involved.has(panel.id)).map(panel => [panel.id, panel.draft]));
+            const explanation = typeof finding.params.explanation === 'string' ? finding.params.explanation : message(finding);
+            const response = await apiFetch('/api/admin/prompt-health/llm/propose', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sentences: finding.sentences.map(({ prompt, text }) => ({ prompt, text })), explanation, drafts: current }),
+            });
+            if (response.status === 409) { setProposeStatus('notConfigured'); return; }
+            if (!response.ok) throw new Error('propose');
+            const result: { proposals: PromptHealthProposal[] } = await response.json();
+            setProposals(Object.fromEntries(result.proposals.map(item => [item.prompt_id, item])));
+            setProposeStatus(result.proposals.length ? null : 'none');
+        } catch {
+            setProposeStatus('error');
+        }
+    }, [panels, message]);
+
+    const dropProposal = (id: string) => setProposals(current => {
+        const next = { ...current };
+        delete next[id];
+        return next;
+    });
+
+    const allFindings = useMemo(() => mergeFindings(findings, llmFindings), [findings, llmFindings]);
+    const proposed = useRef(false);
+    useEffect(() => {
+        if (!propose || !focus || !loaded || proposed.current) return;
+        const finding = allFindings.find(item => item.id === focus);
+        if (!finding) return;
+        proposed.current = true;
+        void requestProposal(finding);
+    }, [propose, focus, loaded, allFindings, requestProposal]);
 
     const add = () => {
         const id = toAdd.trim();
@@ -387,12 +452,23 @@ export function PromptCompare({ initial, focus, paths, knownPrompts, onClose, on
             </Button>
             {checking && <span className="text-sm text-ink-muted">{t('admin.promptHealth.compare.checking')}</span>}
             {checkError && <span className="text-sm text-danger-ink">{t('admin.promptHealth.compare.checkError')}</span>}
+            {proposeStatus === 'loading' && <span className="text-sm text-ink-muted">{t('admin.promptHealth.propose.loading')}</span>}
+        </div>
+        <div role="status">
+            {proposeStatus === 'none' && <Callout variant="info">{t('admin.promptHealth.propose.none')}</Callout>}
+            {proposeStatus === 'error' && <Callout variant="danger">{t('admin.promptHealth.propose.error')}</Callout>}
+            {proposeStatus === 'notConfigured' && <Callout variant="info">{t('admin.promptHealth.propose.notConfigured')}</Callout>}
+            {proposeStatus === 'accepted' && <Callout variant="success">{t('admin.promptHealth.propose.accepted')}</Callout>}
         </div>
 
         {panels.length === 0 && <Callout variant="info">{t('admin.promptHealth.compare.empty')}</Callout>}
         <div className={cn('grid gap-4', panels.length === 2 && 'lg:grid-cols-2', panels.length === 3 && 'lg:grid-cols-2 xl:grid-cols-3')}>
             {panels.map(panel => <ComparePanel key={panel.id} panel={panel} checking={checking} focus={focus}
-                findings={findings.filter(finding => finding.prompts.includes(panel.id))}
+                findings={allFindings.filter(finding => finding.prompts.includes(panel.id))}
+                proposal={proposals[panel.id] ?? null} proposing={proposeStatus === 'loading'}
+                onPropose={finding => void requestProposal(finding)}
+                onAccept={() => { dropProposal(panel.id); setProposeStatus('accepted'); }}
+                onDiscard={() => dropProposal(panel.id)}
                 onDraft={value => setPanels(current => current.map(item => item.id === panel.id ? { ...item, draft: value } : item))}
                 onRemove={() => setPanels(current => current.filter(item => item.id !== panel.id))}
                 onSaved={savedCard} />)}

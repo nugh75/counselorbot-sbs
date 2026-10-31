@@ -37,7 +37,7 @@ test('counter colour follows the most severe finding; long lists are shortened',
 test('every finding code has a message and a suggested fix in the six languages', () => {
     const codes = ['rule_conflict', 'unregistered_prompt', 'empty_prompt', 'step_without_prompt', 'unmarked_difference',
         'factory_update_pending', 'rules_unverified', 'unknown_placeholder', 'unknown_factor', 'unknown_step',
-        'number_mismatch', 'assembly_failed'];
+        'number_mismatch', 'assembly_failed', 'llm_contradiction'];
     const keys = Object.keys(PROMPT_HEALTH_DICTS.it).sort();
     for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv'] as const) {
         assert.deepEqual(Object.keys(PROMPT_HEALTH_DICTS[lang]).sort(), keys, lang);

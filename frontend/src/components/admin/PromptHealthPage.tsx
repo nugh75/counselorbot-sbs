@@ -1,20 +1,21 @@
 'use client';
 
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, CircleSlash, Columns3, ExternalLink, FileText, Flag, RefreshCw, RotateCcw, Undo2, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CircleSlash, Columns3, ExternalLink, FileText, Flag, RefreshCw, RotateCcw, Sparkles, Undo2, XCircle } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { PromptHealthLlm } from '@/components/admin/PromptHealthLlm';
 import { PromptUsagePanel } from '@/components/admin/PromptUsagePanel';
 import {
     PromptCompare, SEVERITY_TEXT, loadPromptCard, postJson, useFindingMessage,
     type PromptCard, type PromptHealthPath, type PromptHealthStep,
 } from '@/components/admin/PromptCompare';
 import {
-    cellStatus, codeIssueUrl, compareTargets, promptLabel, visibleSurfaces,
+    canPropose, cellStatus, codeIssueUrl, compareTargets, mergeFindings, promptLabel, visibleSurfaces,
     type PromptCellStatus, type PromptHealthFinding, type PromptHealthRun,
 } from '@/lib/prompt-health';
 import { cn } from '@/lib/utils';
@@ -26,12 +27,13 @@ const STATUS: Record<PromptCellStatus, { icon: typeof CheckCircle2; className: s
     unused: { icon: CircleSlash, className: 'border-line bg-surface-sunken text-ink-muted' },
 };
 
-type CompareRequest = { prompts: string[]; focus: string | null; key: number };
+type CompareRequest = { prompts: string[]; focus: string | null; propose: boolean; key: number };
+type OpenCompare = (prompts: string[], focus: string | null, propose?: boolean) => void;
 
 /** Azioni su un avviso (#761). Nessuna blocca un salvataggio. */
 function FindingActions({ finding, onCompare, onChanged }: {
     finding: PromptHealthFinding;
-    onCompare: (prompts: string[], focus: string | null) => void;
+    onCompare: OpenCompare;
     onChanged: () => void;
 }) {
     const { t } = useI18n();
@@ -95,9 +97,13 @@ function FindingActions({ finding, onCompare, onChanged }: {
                 <ExternalLink className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.action.codeIssue')}
                 <span className="sr-only">{t('admin.promptHealth.newWindow')}</span>
             </a>}
-            <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={recheck}>
+            {canPropose(finding) && <Button type="button" variant="secondary" size="sm" onClick={() => onCompare(compareTargets(finding), finding.id, true)}>
+                <Sparkles className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.action.propose')}
+            </Button>}
+            {/* Le contraddizioni del modello si aggiornano da sole quando cambia una delle frasi. */}
+            {finding.code !== 'llm_contradiction' && <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={recheck}>
                 <RefreshCw className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.action.recheck')}
-            </Button>
+            </Button>}
         </div>
         {noteOpen && !finding.ack && <div id={noteId} className="space-y-2">
             <label htmlFor={`${noteId}-note`} className="text-xs font-semibold text-ink-body">{t('admin.promptHealth.ack.note')}</label>
@@ -115,7 +121,7 @@ function FindingActions({ finding, onCompare, onChanged }: {
 
 function FindingCard({ finding, onCompare, onChanged }: {
     finding: PromptHealthFinding;
-    onCompare: (prompts: string[], focus: string | null) => void;
+    onCompare: OpenCompare;
     onChanged: () => void;
 }) {
     const { t } = useI18n();
@@ -146,7 +152,7 @@ function FindingCard({ finding, onCompare, onChanged }: {
 /** Scheda di un prompt: dove arriva, differenza dalla fabbrica, avvisi aperti. */
 function PromptCardView({ id, onCompare, onChanged, onClose }: {
     id: string;
-    onCompare: (prompts: string[], focus: string | null) => void;
+    onCompare: OpenCompare;
     onChanged: () => void;
     onClose: () => void;
 }) {
@@ -219,10 +225,13 @@ function PathMap({ paths, findings, selected, onSelect }: {
     </div>;
 }
 
-async function fetchHealth(): Promise<{ run: PromptHealthRun | null; paths: PromptHealthPath[] }> {
-    const [health, map] = await Promise.all([apiFetch('/api/admin/prompt-health'), apiFetch('/api/admin/prompt-health/map')]);
+async function fetchHealth(): Promise<{ run: PromptHealthRun | null; paths: PromptHealthPath[]; llm: PromptHealthFinding[] }> {
+    const [health, map, llm] = await Promise.all([apiFetch('/api/admin/prompt-health'), apiFetch('/api/admin/prompt-health/map'),
+        apiFetch('/api/admin/prompt-health/llm')]);
     if (!health.ok || !map.ok) throw new Error('load');
-    return { run: (await health.json()).run, paths: (await map.json()).paths };
+    // Le contraddizioni del modello (#763) vengono dalla memoria: nessuna chiamata qui.
+    const llmFindings: PromptHealthFinding[] = llm.ok ? (await llm.json()).findings : [];
+    return { run: (await health.json()).run, paths: (await map.json()).paths, llm: llmFindings };
 }
 
 /** Pagina «Salute dei prompt» (#761): mappa, schede, avvisi con azioni, confronto. */
@@ -235,15 +244,17 @@ export function PromptHealthPage() {
     const [step, setStep] = useState<PromptHealthStep | null>(null);
     const [cardId, setCardId] = useState<string | null>(null);
     const [compare, setCompare] = useState<CompareRequest | null>(null);
+    const [llmFindings, setLlmFindings] = useState<PromptHealthFinding[]>([]);
     const [showAcked, setShowAcked] = useState(false);
 
     const load = useCallback(() => fetchHealth().then(state => {
         setRun(state.run);
         setPaths(state.paths);
+        setLlmFindings(state.llm);
         setError(false);
     }).catch(() => setError(true)), []);
     useEffect(() => {
-        fetchHealth().then(state => { setRun(state.run); setPaths(state.paths); }).catch(() => setError(true));
+        fetchHealth().then(state => { setRun(state.run); setPaths(state.paths); setLlmFindings(state.llm); }).catch(() => setError(true));
     }, []);
 
     const runNow = async () => {
@@ -258,12 +269,13 @@ export function PromptHealthPage() {
         }
     };
 
-    const openCompare = useCallback((prompts: string[], focus: string | null) => {
-        setCompare(current => ({ prompts, focus, key: (current?.key ?? 0) + 1 }));
+    const openCompare = useCallback<OpenCompare>((prompts, focus, propose = false) => {
+        setCompare(current => ({ prompts, focus, propose, key: (current?.key ?? 0) + 1 }));
         window.requestAnimationFrame(() => document.getElementById('prompt-health-compare')?.scrollIntoView({ block: 'start' }));
     }, []);
 
-    const findings = useMemo(() => run?.findings ?? [], [run]);
+    const findings = useMemo(() => mergeFindings(run?.findings ?? [], llmFindings), [run, llmFindings]);
+    const llmOpen = llmFindings.filter(finding => !finding.ack).length;
     const open = findings.filter(finding => !finding.ack);
     const acked = findings.filter(finding => finding.ack);
     const knownPrompts = useMemo(() => [...new Set([
@@ -293,6 +305,8 @@ export function PromptHealthPage() {
             </div>
         </Card>
 
+        <PromptHealthLlm onFindings={setLlmFindings} />
+
         <Card as="section" aria-labelledby="prompt-health-map" className="space-y-3">
             <h2 id="prompt-health-map" className="text-lg font-semibold text-ink-strong">{t('admin.promptHealth.map.title')}</h2>
             <p className="text-sm text-ink-muted">{t('admin.promptHealth.map.help')}</p>
@@ -314,12 +328,14 @@ export function PromptHealthPage() {
         {cardId && <PromptCardView key={cardId} id={cardId} onCompare={openCompare} onChanged={load} onClose={() => setCardId(null)} />}
 
         {compare && <div id="prompt-health-compare" className="scroll-mt-4">
-            <PromptCompare key={compare.key} initial={compare.prompts} focus={compare.focus} paths={paths} knownPrompts={knownPrompts}
+            <PromptCompare key={compare.key} initial={compare.prompts} focus={compare.focus} propose={compare.propose}
+                llmFindings={llmFindings} paths={paths} knownPrompts={knownPrompts}
                 onClose={() => setCompare(null)} onChanged={load} />
         </div>}
 
         <Card as="section" aria-labelledby="prompt-health-findings" className="space-y-3">
             <h2 id="prompt-health-findings" className="text-lg font-semibold text-ink-strong">{t('admin.promptHealth.findings.title')}</h2>
+            {llmOpen > 0 && <p className="text-sm text-ink-body">{t('admin.promptHealth.llm.found', { count: llmOpen })}</p>}
             {run && open.length === 0 && <Callout variant="success">{t('admin.promptHealth.empty')}</Callout>}
             {open.length > 0 && <ul className="space-y-2">{open.map(finding => <FindingCard key={finding.id} finding={finding} onCompare={openCompare} onChanged={load} />)}</ul>}
             {acked.length > 0 && <div className="space-y-2">
