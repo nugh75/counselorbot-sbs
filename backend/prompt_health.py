@@ -23,6 +23,7 @@ import json
 import logging
 import re
 from collections import defaultdict
+from contextlib import contextmanager
 from functools import lru_cache
 
 from sqlalchemy.orm import Session
@@ -39,7 +40,7 @@ from .prompt_registry import (
 
 logger = logging.getLogger(__name__)
 
-CHECK_VERSION = 1
+CHECK_VERSION = 2  # 2: sentence positions, token sentences (#761)
 KEEP_RUNS = 20
 HIGH, MEDIUM, LOW = "high", "medium", "low"
 SEVERITY_RANK = {HIGH: 0, MEDIUM: 1, LOW: 2}
@@ -197,19 +198,25 @@ def _text_findings(db: Session, texts: dict[str, str]) -> list[dict]:
                 findings.append(_finding("rules_unverified", LOW, [pid], sentences=[
                     {"prompt": pid, "text": r.evidence, "field": r.field} for r in missing]))
         # Placeholders the consumer does not resolve.
-        unknown = sorted({a or b for a, b in _PLACEHOLDER_RE.findall(text)} - set(entry.placeholders) - {"counselor_name"})
+        written = {}
+        for match in _PLACEHOLDER_RE.finditer(text):
+            written.setdefault(match.group(1) or match.group(2), match.group(0))
+        unknown = sorted(set(written) - set(entry.placeholders) - {"counselor_name"})
         if unknown:
-            findings.append(_finding("unknown_placeholder", MEDIUM, [pid], params={"names": unknown}))
+            findings.append(_finding("unknown_placeholder", MEDIUM, [pid], params={"names": unknown},
+                                     sentences=[{"prompt": pid, "text": written[name]} for name in unknown]))
         # References unknown to the code.
         instrument = _meta_instrument(key, instruments) if key.startswith("prompt_meta_") else owner.get(pid)
         if instrument and factors(instrument):
             allowed = factors(instrument)
             bad = sorted({c for c in _FACTOR_RE.findall(text) if c.upper() not in allowed} - entry.known_refs)
             if bad:
-                findings.append(_finding("unknown_factor", MEDIUM, [pid], params={"codes": bad, "instrument": instrument}))
+                findings.append(_finding("unknown_factor", MEDIUM, [pid], params={"codes": bad, "instrument": instrument},
+                                         sentences=[{"prompt": pid, "text": code} for code in bad]))
         bad_steps = sorted({s for s in _STEP_REF_RE.findall(text) if s not in known_steps})
         if bad_steps:
-            findings.append(_finding("unknown_step", LOW, [pid], params={"steps": bad_steps}))
+            findings.append(_finding("unknown_step", LOW, [pid], params={"steps": bad_steps},
+                                     sentences=[{"prompt": pid, "text": step} for step in bad_steps]))
         if instrument and kind == "guided_step":
             path_steps = [s for s in steps if s.questionnaire_type == instrument
                           and not s.id.endswith("-intro") and s.system_prompt_mode != "strategies"]
@@ -352,9 +359,9 @@ def _conflict_findings(db: Session, texts: dict[str, str], turns=None) -> list[d
     failures = []
     for surface, payload in (_turns(db) if turns is None else turns):
         try:
-            text = assembled_request(db, payload)
+            with db.begin_nested():  # a failed turn rolls back only itself (drafts stay applied)
+                text = assembled_request(db, payload)
         except Exception as exc:  # the check must never break: report and go on
-            db.rollback()
             failures.append((surface, type(exc).__name__))
             continue
         phase = payload.get("phase")
@@ -393,7 +400,11 @@ def compute_findings(db: Session, texts: dict[str, str] | None = None) -> list[d
     texts = active_texts(db) if texts is None else texts
     findings = _registration_findings(texts) + _text_findings(db, texts) + _conflict_findings(db, texts)
     unique = {f["id"]: f for f in findings}
-    return sorted(unique.values(), key=lambda f: (SEVERITY_RANK[f["severity"]], f["code"], f["prompts"]))
+    return annotate(sorted(unique.values(), key=_sort_key), texts)
+
+
+def _sort_key(finding: dict):
+    return SEVERITY_RANK[finding["severity"]], finding["code"], finding["prompts"]
 
 
 def _counts(findings: list[dict]) -> dict:
@@ -403,13 +414,79 @@ def _counts(findings: list[dict]) -> dict:
     return {**counts, "total": len(findings)}
 
 
-def serialize(run: models.PromptHealthRun | None, *, current_hash: str | None = None) -> dict | None:
+# --- Positions (#761) -------------------------------------------------------------
+
+def locate(text: str, needle: str) -> tuple[int, int] | None:
+    """First position of `needle` in `text`: as a whole token, then anywhere, then ignoring case."""
+    if not needle or not text:
+        return None
+    match = re.search(r"(?<!\w)" + re.escape(needle) + r"(?!\w)", text)
+    if match:
+        return match.start(), match.end()
+    start = text.find(needle)
+    if start < 0:
+        start = text.lower().find(needle.lower())
+    return (start, start + len(needle)) if start >= 0 else None
+
+
+def annotate(findings: list[dict], texts: dict[str, str]) -> list[dict]:
+    """Add the exact position of each sentence in the text it was read from, and
+    which prompts of the finding can be edited (`editable`) or still carry the
+    factory text (`factory`, the ones to fix in the code). Not part of the id."""
+    for finding in findings:
+        for sentence in finding["sentences"]:
+            found = locate(texts.get(sentence["prompt"], ""), sentence["text"])
+            sentence["start"], sentence["end"] = found if found else (None, None)
+        finding["editable"] = [pid for pid in finding["prompts"] if pid in texts]
+        finding["factory"] = [
+            pid for pid in finding["prompts"]
+            if pid.startswith("code:") or (pid in texts and (entry := _entry_for(pid)) is not None
+                                           and texts[pid] == (factory_text(entry) or ""))
+        ]
+    return findings
+
+
+# --- Marked as intended (#761) ------------------------------------------------------
+
+def acks(db: Session) -> dict[str, dict]:
+    return {
+        row.finding_id: {"note": row.note or "", "author": row.author,
+                         "created_at": row.created_at.isoformat() if row.created_at else None}
+        for row in db.query(models.PromptHealthAck).all()
+    }
+
+
+def set_ack(db: Session, finding_id: str, note: str, author: str | None) -> None:
+    row = db.get(models.PromptHealthAck, finding_id)
+    if row is None:
+        db.add(models.PromptHealthAck(finding_id=finding_id, note=note, author=author))
+    else:
+        row.note, row.author = note, author
+    db.commit()
+
+
+def clear_ack(db: Session, finding_id: str) -> None:
+    db.query(models.PromptHealthAck).filter(models.PromptHealthAck.finding_id == finding_id).delete()
+    db.commit()
+
+
+def with_acks(findings: list[dict], marked: dict[str, dict]) -> list[dict]:
+    return [{**finding, "ack": marked.get(finding["id"])} for finding in findings]
+
+
+def serialize(run: models.PromptHealthRun | None, *, current_hash: str | None = None,
+              marked: dict[str, dict] | None = None) -> dict | None:
+    """Run as JSON. Findings marked as intended keep their note and leave the counter."""
     if run is None:
         return None
+    marked = marked or {}
+    findings = with_acks(run.findings or [], marked)
+    counts = _counts([f for f in findings if not f["ack"]])
+    counts["acknowledged"] = len(findings) - counts["total"]
     return {
         "id": run.id, "texts_hash": run.texts_hash, "trigger": run.trigger,
         "created_at": run.created_at.isoformat() if run.created_at else None,
-        "counts": run.counts or {}, "findings": run.findings or [],
+        "counts": counts, "findings": findings,
         "current": current_hash is None or current_hash == run.texts_hash,
     }
 
@@ -459,19 +536,197 @@ def check_prompt(db: Session, prompt_id: str) -> list[dict]:
     instrument that owns it; a shared prompt rebuilds every turn.
     """
     texts = active_texts(db)
-    kind, _, key = prompt_id.partition(":")
-    if kind == "guided_step":
-        turns = list(_turns(db, step_filter=key))
-    else:
-        owner = _instrument_of(db).get(prompt_id)
-        if owner is None and key.startswith("prompt_meta_"):
-            owner = _meta_instrument(key, {s.questionnaire_type for s in db.query(models.GuidedStep).all()})
-        turns = list(_turns(db, instrument_filter=owner)) if owner else None
-    findings = _registration_findings(texts) + _text_findings(db, texts) + _conflict_findings(db, texts, turns)
+    findings = _findings_for(db, texts, [prompt_id], _turns_for(db, [prompt_id]))
     previous = latest_run(db)
     known = {f["id"] for f in (previous.findings or [])} if previous is not None else set()
-    unique = {f["id"]: f for f in findings if prompt_id in f["prompts"] and f["id"] not in known}
-    return sorted(unique.values(), key=lambda f: (SEVERITY_RANK[f["severity"]], f["code"], f["prompts"]))
+    return [f for f in findings if f["id"] not in known]
+
+
+def _turns_for(db: Session, prompt_ids) -> list | None:
+    """Turns that can receive any of the prompts: their own step or owning instrument.
+
+    None (every turn) when one of them is shared by several instruments.
+    """
+    turns: dict[str, dict] = {}
+    owners = None
+    for prompt_id in prompt_ids:
+        kind, _, key = prompt_id.partition(":")
+        if kind == "guided_step":
+            turns.update(_turns(db, step_filter=key))
+            continue
+        if owners is None:
+            owners = _instrument_of(db)
+        owner = owners.get(prompt_id)
+        if owner is None and key.startswith("prompt_meta_"):
+            owner = _meta_instrument(key, {s.questionnaire_type for s in db.query(models.GuidedStep).all()})
+        if owner is None:
+            return None
+        turns.update(_turns(db, instrument_filter=owner))
+    return list(turns.items())
+
+
+def _findings_for(db: Session, texts: dict[str, str], prompt_ids, turns) -> list[dict]:
+    """Findings that involve any of the prompts, computed on `texts` for `turns` only."""
+    findings = _registration_findings(texts) + _text_findings(db, texts) + _conflict_findings(db, texts, turns)
+    wanted = set(prompt_ids)
+    unique = {f["id"]: f for f in findings if wanted & set(f["prompts"])}
+    return annotate(sorted(unique.values(), key=_sort_key), texts)
+
+
+# --- Compare screen (#761) ------------------------------------------------------------
+
+def _scope_key(prompt_id: str) -> tuple[str, str]:
+    kind, _, key = prompt_id.partition(":")
+    if kind not in ("config", "guided_step") or not key:
+        raise ValueError("not an editable prompt")
+    return kind, key
+
+
+def _live_row(db: Session, prompt_id: str):
+    kind, key = _scope_key(prompt_id)
+    if kind == "config":
+        if not is_prompt_config_key(key):
+            raise ValueError("not a prompt key")
+        return db.query(models.Config).filter(models.Config.key == key).first(), "value"
+    return db.query(models.GuidedStep).filter(models.GuidedStep.id == key).first(), "prompt"
+
+
+@contextmanager
+def _sandbox(db: Session):
+    """A session whose writes are always rolled back: drafts are evaluated, never saved."""
+    connection = db.get_bind().connect()
+    outer = connection.begin()
+    session = Session(bind=connection, join_transaction_mode="create_savepoint", autoflush=False)
+    try:
+        yield session
+    finally:
+        session.close()
+        outer.rollback()
+        connection.close()
+
+
+def evaluate(db: Session, *, drafts: dict[str, str] | None = None, prompt_ids=(), surface: str | None = None) -> dict:
+    """Findings of unsaved drafts (or of saved prompts, «Ricontrolla»), with positions in the draft.
+
+    The drafts are written in a transaction that is rolled back, as if the
+    admin saved them, then only the affected turns are rebuilt: the selected
+    `surface` (path · step · mode) or the turns that receive the prompts.
+    With a surface, `assembled` is that turn's request as the model would get it.
+    """
+    drafts = drafts or {}
+    wanted = list(dict.fromkeys([*prompt_ids, *drafts]))
+    with _sandbox(db) as session:
+        for prompt_id, text in drafts.items():
+            row, field = _live_row(session, prompt_id)
+            if row is None:
+                raise LookupError(prompt_id)
+            setattr(row, field, text)
+            kind, key = _scope_key(prompt_id)
+            prompt_revisions.record(session, kind, key, text, prompt_revisions.ORIGIN_ADMIN, author="draft")
+        session.flush()
+        texts = active_texts(session)
+        if surface:
+            turns = [(label, payload) for label, payload in _all_turns(session) if label == surface]
+            if not turns:
+                raise LookupError(surface)
+        else:
+            turns = _turns_for(session, wanted)
+        findings = _findings_for(session, texts, wanted, turns)
+        assembled = None
+        if surface:
+            try:
+                assembled = assembled_request(session, turns[0][1])
+            except Exception as exc:  # shown as a finding already
+                logger.info("Prompt health: turn %s not assembled: %s", surface, exc)
+    return {"findings": with_acks(findings, acks(db)), "assembled": assembled,
+            "prompt_ids": wanted, "surface": surface}
+
+
+def save_prompt(db: Session, prompt_id: str, text: str, author: str | None) -> None:
+    """Save one prompt as the admin's text. Never blocked by findings."""
+    row, field = _live_row(db, prompt_id)
+    if row is None:
+        raise LookupError(prompt_id)
+    setattr(row, field, text)
+    kind, key = _scope_key(prompt_id)
+    prompt_revisions.record(db, kind, key, text, prompt_revisions.ORIGIN_ADMIN, author=author)
+    db.commit()
+
+
+def restore_factory(db: Session, prompt_id: str, author: str | None) -> str:
+    """Put the factory text back. The prompt becomes factory-owned again: later
+    factory updates reach it through the alignment."""
+    entry = _entry_for(prompt_id)
+    factory = factory_text(entry) if entry is not None else None
+    if factory is None:
+        raise LookupError(prompt_id)
+    row, field = _live_row(db, prompt_id)
+    if row is None:
+        raise LookupError(prompt_id)
+    setattr(row, field, factory)
+    kind, key = _scope_key(prompt_id)
+    last = prompt_revisions.latest(db, kind, key)
+    if last is None or last.value != factory or last.origin == prompt_revisions.ORIGIN_ADMIN:
+        db.add(models.PromptRevision(scope=kind, target_key=key, value=factory, author=author,
+                                     origin=prompt_revisions.ORIGIN_MIGRATION, note="ripristino testo di fabbrica"))
+    db.commit()
+    return factory
+
+
+def _surface_prompt_ids(step, owners_keys) -> list[str]:
+    from .chat_logic import (
+        _system_prompt_key,
+        guided_step_follow_up_mode,
+        guided_step_system_prompt_key,
+    )
+    ids = [f"guided_step:{step.id}", f"config:{guided_step_system_prompt_key(step)}",
+           f"config:{_system_prompt_key(guided_step_follow_up_mode(step), step.id, step)}"]
+    for key in (f"prompt_meta_{step.questionnaire_type.upper()}", f"prompt_meta_{step.questionnaire_type.upper()}_{step.id}"):
+        if key in owners_keys:
+            ids.append(f"config:{key}")
+    return list(dict.fromkeys(ids))
+
+
+def turn_map(db: Session) -> list[dict]:
+    """Paths x steps: the prompts that compose each step and its turns (path · step · mode)."""
+    from .prompt_map import INSTRUMENT_ORDER
+    config_keys = {key for (key,) in db.query(models.Config.key).all()}
+    by_instrument: dict[str, list[dict]] = defaultdict(list)
+    for step in db.query(models.GuidedStep).order_by(models.GuidedStep.sort_order, models.GuidedStep.id).all():
+        by_instrument[step.questionnaire_type].append({
+            "id": step.id, "label": step.label or step.id,
+            "prompts": _surface_prompt_ids(step, config_keys),
+            "surfaces": [f"{step.questionnaire_type} · {step.id} · {mode}" for mode in ("entry", "follow_up", "advice")],
+        })
+    ordered = [i for i in INSTRUMENT_ORDER if i in by_instrument] + sorted(i for i in by_instrument if i not in INSTRUMENT_ORDER)
+    return [{"instrument": instrument, "steps": by_instrument[instrument]} for instrument in ordered]
+
+
+def prompt_card(db: Session, prompt_id: str) -> dict:
+    """One prompt: text, factory text, where it arrives and its findings in the latest run."""
+    entry = _entry_for(prompt_id) if ":" in prompt_id else None
+    kind, _, key = prompt_id.partition(":")
+    if entry is None and kind not in ("config", "guided_step"):
+        raise LookupError(prompt_id)
+    text = None
+    if kind in ("config", "guided_step"):
+        row, field = _live_row(db, prompt_id)
+        if row is None:
+            raise LookupError(prompt_id)
+        text = getattr(row, field) or ""
+    factory = factory_text(entry) if entry is not None else None
+    run = latest_run(db)
+    findings = [f for f in (run.findings if run else []) if prompt_id in f["prompts"]]
+    turns = _turns_for(db, [prompt_id]) if kind in ("config", "guided_step") else None
+    return {
+        "id": prompt_id, "kind": kind, "text": text, "factory": factory, "editable": text is not None,
+        "differs_from_factory": factory is not None and text is not None and text != factory,
+        "customised": text is not None and prompt_revisions.is_admin_owned(db, kind, key),
+        "consumer": entry.consumer if entry else None, "app_surfaces": list(entry.surfaces) if entry else [],
+        # Turns that can receive it; None when it is shared by every path.
+        "surfaces": None if turns is None else [label for label, _ in turns],
+        "findings": with_acks(findings, acks(db)),
+    }
 
 
 def run_at_startup() -> None:

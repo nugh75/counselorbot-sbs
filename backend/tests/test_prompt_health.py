@@ -274,6 +274,122 @@ def test_admin_api_lists_findings_and_never_blocks_a_save():
         db.close()
 
 
+
+# --- Phase 2 (#761): positions, draft evaluation, acknowledgements, restore -------
+
+def test_findings_carry_the_exact_position_of_each_sentence():
+    db = _Session()
+    try:
+        text = "Read C1 with the student. Close by asking exactly THREE open questions about study habits."
+        with _Edit(db, "guided_step", "sl-elaboration", text, admin=True):
+            findings = prompt_health.check_prompt(db, "guided_step:sl-elaboration")
+    finally:
+        db.close()
+    conflict = next(f for f in findings if f["code"] == "rule_conflict")
+    own = next(s for s in conflict["sentences"] if s["prompt"] == "guided_step:sl-elaboration")
+    assert text[own["start"]:own["end"]] == "exactly THREE open questions"
+    contract = next(s for s in conflict["sentences"] if s["prompt"] == "code:turn_contract")
+    assert contract["start"] is None, "code prompts have no editable text"
+    assert conflict["editable"] == ["guided_step:sl-elaboration"]
+
+
+def test_token_findings_point_at_the_wrong_tokens():
+    db = _Session()
+    try:
+        text = "Read C1 and C9 together, greet {student_name}."
+        with _Edit(db, "guided_step", "sl-elaboration", text, admin=True):
+            by_code = {f["code"]: f for f in prompt_health.check_prompt(db, "guided_step:sl-elaboration")}
+    finally:
+        db.close()
+    factor = by_code["unknown_factor"]["sentences"][0]
+    assert text[factor["start"]:factor["end"]] == "C9"
+    placeholder = by_code["unknown_placeholder"]["sentences"][0]
+    assert text[placeholder["start"]:placeholder["end"]] == "{student_name}"
+
+
+def test_draft_is_evaluated_without_saving_and_highlights_follow_the_draft():
+    db = _Session()
+    original = db.query(models.GuidedStep).filter(models.GuidedStep.id == "sl-elaboration").first().prompt
+    revisions = db.query(models.PromptRevision).count()
+    try:
+        draft = "Read C1 with the student.\nClose by asking exactly THREE open questions."
+        result = prompt_health.evaluate(db, drafts={"guided_step:sl-elaboration": draft},
+                                        surface="QSA · sl-elaboration · entry")
+        conflict = next(f for f in result["findings"] if f["code"] == "rule_conflict")
+        own = next(s for s in conflict["sentences"] if s["prompt"] == "guided_step:sl-elaboration")
+        assert draft[own["start"]:own["end"]] == "exactly THREE open questions"
+        assert "exactly THREE open questions" in result["assembled"], "the turn is assembled with the draft"
+        # A draft is never an unmarked difference: saving it makes it the admin's text.
+        assert not any(f["code"] == "unmarked_difference" for f in result["findings"])
+        # The factory text of the same prompt has no conflict on that turn.
+        clean = prompt_health.evaluate(db, prompt_ids=["guided_step:sl-elaboration"], surface="QSA · sl-elaboration · entry")
+        assert not any(f["code"] == "rule_conflict" for f in clean["findings"])
+    finally:
+        db.close()
+    db = _Session()
+    try:
+        assert db.query(models.GuidedStep).filter(models.GuidedStep.id == "sl-elaboration").first().prompt == original
+        assert db.query(models.PromptRevision).count() == revisions, "evaluation never writes"
+    finally:
+        db.close()
+
+
+def test_turn_map_lists_steps_with_their_prompts_and_turns():
+    db = _Session()
+    try:
+        paths = prompt_health.turn_map(db)
+    finally:
+        db.close()
+    qsa = next(p for p in paths if p["instrument"] == "QSA")
+    step = next(s for s in qsa["steps"] if s["id"] == "sl-elaboration")
+    assert "guided_step:sl-elaboration" in step["prompts"]
+    assert step["surfaces"] == ["QSA · sl-elaboration · entry", "QSA · sl-elaboration · follow_up",
+                                "QSA · sl-elaboration · advice"]
+
+
+def test_admin_api_compare_actions():
+    client = _client()
+    run = client.post("/admin/prompt-health/run").json()["run"]
+    finding = run["findings"][0]
+    total = run["counts"]["total"]
+
+    # Mark as intended: excluded from the counter, note kept, can be undone.
+    acked = client.post("/admin/prompt-health/acks", json={"finding_id": finding["id"], "note": "Voluto: il contratto prevale."})
+    assert acked.status_code == 200, acked.text
+    latest = client.get("/admin/prompt-health").json()["run"]
+    assert latest["counts"]["total"] == total - 1 and latest["counts"]["acknowledged"] == 1
+    marked = next(f for f in latest["findings"] if f["id"] == finding["id"])
+    assert marked["ack"]["note"] == "Voluto: il contratto prevale."
+    assert client.delete(f"/admin/prompt-health/acks/{finding['id']}").status_code == 200
+    assert client.get("/admin/prompt-health").json()["run"]["counts"]["total"] == total
+
+    # Prompt card: text, factory text, findings, turns where it arrives.
+    card = client.get("/admin/prompt-health/prompt", params={"id": "guided_step:savickas-intro"}).json()
+    assert card["text"] == card["factory"] and card["differs_from_factory"] is False
+    assert any(f["code"] == "number_mismatch" for f in card["findings"])
+    assert card["surfaces"] and card["editable"] is True
+
+    # Draft evaluation, save (warn only) and restore of the factory text.
+    draft = "Greet {student_name}."
+    evaluated = client.post("/admin/prompt-health/evaluate", json={"drafts": {"config:prompt_meta_QSA": draft}})
+    assert evaluated.status_code == 200, evaluated.text
+    assert "unknown_placeholder" in {f["code"] for f in evaluated.json()["findings"]}
+    saved = client.post("/admin/prompt-health/save", json={"prompt_id": "config:prompt_meta_QSA", "text": draft})
+    assert saved.status_code == 200, saved.text
+    assert "unknown_placeholder" in {f["code"] for f in saved.json()["findings"]}
+    assert client.get("/admin/prompt-health/prompt", params={"id": "config:prompt_meta_QSA"}).json()["text"] == draft
+    restored = client.post("/admin/prompt-health/restore-factory", json={"prompt_id": "config:prompt_meta_QSA"})
+    assert restored.status_code == 200, restored.text
+    card = client.get("/admin/prompt-health/prompt", params={"id": "config:prompt_meta_QSA"}).json()
+    assert card["text"] == card["factory"] and card["customised"] is False
+    assert client.post("/admin/prompt-health/save", json={"prompt_id": "code:turn_contract", "text": "x"}).status_code == 422
+    assert client.get("/admin/prompt-health/map").json()["paths"]
+    db = _Session()
+    db.query(models.PromptRevision).filter(models.PromptRevision.target_key == "prompt_meta_QSA").delete()
+    db.commit()
+    db.close()
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

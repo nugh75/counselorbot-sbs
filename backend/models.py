@@ -1911,6 +1911,17 @@ class PromptHealthRun(Base):
     created_at = Column(UTCDateTime, server_default=func.now())
 
 
+class PromptHealthAck(Base):
+    """A prompt health finding the owner marked as intended, with a note (#761). Excluded from the counter."""
+
+    __tablename__ = "prompt_health_acks"
+
+    finding_id = Column(String, primary_key=True)
+    note = Column(Text, nullable=False, default="")
+    author = Column(String, nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
+
+
 class PromptExperimentDecision(Base):
     """Production receipt, committed atomically with a human-approved prompt write."""
 
