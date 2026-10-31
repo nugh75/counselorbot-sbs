@@ -560,9 +560,21 @@ nel contesto di ogni turno. Non esistono più il workspace OpenCode, il terminal
 di ripiego, la visualizzazione affiancata del PDF e i file di lavoro
 (`documento.md`, `memoria.md`, `appunti.md`); il PDF caricato serve solo a
 estrarre i punteggi e non ne viene conservata una copia. Le sessioni salvate con
-OpenCode si riaprono come chat libera. Nella chat libera non c’è il pannello dei
-consigli di lettura e strategie. Tra le domande suggerite dell’Assistente quella
+OpenCode si riaprono come chat libera. Tra le domande suggerite dell’Assistente quella
 sull’esperienza OpenCode è sostituita da una sul formato delle risposte della chat.
+
+**Chat libera: barra laterale e prompt propri (#754).** La barra laterale della
+chat libera è quella della chat guidata senza il percorso a passi: le barre
+colorate dei punteggi, raggruppate per area con i nomi dei fattori, e il
+riquadro Consigli con le linguette letture, strategie, consigli e diagrammi.
+Su telefono si aprono dal menu Opzioni («Punteggi», «Consigli»). Le risposte
+seguono un prompt di sistema e un contratto di turno propri della chat libera,
+modificabili in Amministrazione come gli altri prompt («Prompt Chat libera»,
+«Contratto di turno Chat libera»): il counselor risponde prima alla domanda
+dello studente, fa al massimo una domanda per risposta (anche nessuna), non
+parla di passi o fasi, usa profilo e punteggi come contesto e propone strategie
+o letture solo quando lo studente le chiede o servono alla domanda. Il formato
+scelto in chat resta valido.
 
 Le pagine `/bussola` e `/assistente`, con il selettore del taccuino nel contesto,
 il taccuino di prova, il richiamo all’abbonamento ChatGPT e il campo del
