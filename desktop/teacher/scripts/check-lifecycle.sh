@@ -137,8 +137,14 @@ if $full; then
     [ "$code" = 200 ] && ok "/api/health verso backend a porta dinamica" || fail "/api/health: $code"
     # A URL in cloudflared's log alone does not prove the public route works.
     # Allow time for Cloudflare to connect the origin; reject HTML/error pages.
+    # Alternate system DNS and DNS-over-HTTPS: a lookup made before the new
+    # trycloudflare.com name exists can stay negatively cached by the runner.
+    tunnel_attempt=0
     tunnel_health_ok() {
-        curl -sf -m 5 "$(field r.tunnel_url)/api/health" | node -e '
+        local dns=()
+        tunnel_attempt=$((tunnel_attempt + 1))
+        [ $((tunnel_attempt % 2)) = 0 ] && dns=(--doh-url https://1.1.1.1/dns-query)
+        curl -sf -m 5 ${dns[@]+"${dns[@]}"} "$(field r.tunnel_url)/api/health" | node -e '
             let body = "";
             process.stdin.on("data", chunk => body += chunk);
             process.stdin.on("end", () => {
@@ -148,7 +154,7 @@ if $full; then
                 } catch { process.exit(1); }
             });'
     }
-    wait_for 90 tunnel_health_ok && ok "health pubblico attraverso il quick tunnel" || fail "health pubblico del tunnel"
+    wait_for 180 tunnel_health_ok && ok "health pubblico attraverso il quick tunnel" || fail "health pubblico del tunnel"
     code=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$backend_port/telegram/bot-info")
     [ "$code" = 404 ] && ok "Telegram escluso da teacher-pc" || fail "Telegram: $code"
 fi

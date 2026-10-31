@@ -48,6 +48,7 @@ async function panel(failure) {
         if (failure?.(command)) throw Error('echo-synthetic-secret');
         if (command === 'credential_status') return [
           { id: 'openai', label: 'OpenAI', configured, testable: true },
+          { id: 'together', label: 'Together', configured: false, testable: false },
         ];
         if (command === 'save_credential') configured = true;
         if (command === 'remove_credential') configured = false;
