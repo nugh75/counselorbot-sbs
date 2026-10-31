@@ -28,6 +28,19 @@ def load_known_failures(path=KNOWN_FAILURES_FILE):
     return {line for line in lines if line}
 
 
+
+@pytest.fixture(autouse=True)
+def _no_background_prompt_usage(monkeypatch):
+    """Keep the prompt usage recorder (#762) off the test connection.
+
+    Chat routes hand each turn to a background thread that opens
+    `database.write_session()`. Suites that bind sessions to one shared
+    connection with savepoints would see that thread race the request on the
+    same connection. test_prompt_usage.py runs the write inline instead.
+    """
+    from backend import prompt_usage
+    monkeypatch.setattr(prompt_usage, "_spawn", lambda target: None)
+
 def pytest_addoption(parser):
     parser.addoption("--failures-out", default=None, help="write the sorted failing node ids to this file")
     parser.addoption("--strict-known-failures", action="store_true",
