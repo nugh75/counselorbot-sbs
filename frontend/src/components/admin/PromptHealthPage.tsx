@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { PromptUsagePanel } from '@/components/admin/PromptUsagePanel';
 import {
     PromptCompare, SEVERITY_TEXT, loadPromptCard, postJson, useFindingMessage,
     type PromptCard, type PromptHealthPath, type PromptHealthStep,
@@ -307,6 +308,8 @@ export function PromptHealthPage() {
                 </ul>
             </div>}
         </Card>
+
+        <PromptUsagePanel onOpen={setCardId} />
 
         {cardId && <PromptCardView key={cardId} id={cardId} onCompare={openCompare} onChanged={load} onClose={() => setCardId(null)} />}
 

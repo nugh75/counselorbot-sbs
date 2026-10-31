@@ -590,6 +590,7 @@ def _identity_for(username: str, db: Session | None = None, *, is_admin: bool | 
         "is_admin": admin,
         "is_researcher": False,
         "authenticated": bool(username),
+        "channel": "telegram",  # prompt health counts Telegram turns apart (#762)
     }
 
 

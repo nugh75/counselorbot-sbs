@@ -18,7 +18,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from .. import auth, control_markers, database, model_pricing, models, personal_api, pii
+from .. import auth, control_markers, database, model_pricing, models, personal_api, pii, prompt_usage
 from ..ai_service import AIError, AIService, generation_details
 from ..api_models import SiteChatRequest
 from ..chat_continuation import continuation_message, merge_continuation
@@ -449,6 +449,8 @@ async def site_chat_stream(
     )
 
     cat_weights, aud_weights, max_per_source, min_score = _retrieval_params(ai_service)
+    usage_plan = prompt_usage.safe_plan("assistant", system_prompt, ai_service.config, step=collection,
+                                        language=request.language or "it")
     # Retrieval and dispatch use the loaded config and independent short DB
     # operations. Release POST's BEGIN IMMEDIATE before embeddings/provider I/O.
     db.commit()
@@ -457,6 +459,7 @@ async def site_chat_stream(
     def _log_and_persist(answer: str, sources: list[str], results: list[dict], usage: dict | None = None) -> str | None:
         """Logga l'interazione, aggiorna la memoria conversazionale e crea il
         candidato per il 'mi piace'. Ritorna response_id (per l'evento done)."""
+        prompt_usage.observe(usage_plan, answer)
         actual_provider = getattr(ai_service, "last_provider", None) or provider
         actual_model = getattr(ai_service, "last_model", None) or model
         plan_getter = getattr(ai_service, "_plan", None)

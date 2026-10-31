@@ -1922,6 +1922,24 @@ class PromptHealthAck(Base):
     created_at = Column(UTCDateTime, server_default=func.now())
 
 
+class PromptUsageTurn(Base):
+    """Prompts assembled in one real chat turn and the defects found in its reply (#762).
+
+    Only registry ids, text hashes and defect codes: never the prompt text, the
+    conversation or who wrote it. Rows older than the retention are deleted.
+    """
+
+    __tablename__ = "prompt_usage_turns"
+
+    id = Column(Integer, primary_key=True)
+    created_at = Column(UTCDateTime, nullable=False, server_default=func.now(), index=True)
+    surface = Column(String, nullable=False)       # guided | telegram | free_chat | assistant | bussola
+    instrument = Column(String, nullable=True)
+    step = Column(String, nullable=True)
+    prompts = Column(JSON, nullable=False)          # [[prompt id, sha256 prefix], ...]
+    defects = Column(JSON, nullable=False)          # ["too_many_questions", ...]
+
+
 class PromptExperimentDecision(Base):
     """Production receipt, committed atomically with a human-approved prompt write."""
 
