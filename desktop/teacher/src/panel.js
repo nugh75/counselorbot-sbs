@@ -441,7 +441,7 @@ async function initUpdater() {
   applyBtn.onclick = async () => {
     applyBtn.disabled = true;
     applyBtn.textContent = 'Aggiornamento in corso…';
-    notice.textContent = 'Esecuzione backup di sicurezza SQLite e applicazione aggiornamento…';
+    notice.textContent = 'Esecuzione backup di sicurezza del database e applicazione aggiornamento…';
 
     try {
       const res = await invoke('apply_update');

@@ -43,8 +43,9 @@ guscio, anche dopo un riavvio. Restano la firma dell'origine e il blocco delle
 rotte interne; i percorsi specifici per lo streaming mantengono i propri handler.
 Le funzioni web descritte qui continuano a riferirsi all'installazione corrente.
 I bundle desktop `v2.0.x` usano PostgreSQL 15 incorporato per le nuove installazioni
-(layout 2, contratto 2); `v0.1.1` resta SQLite/layout 1. L'import automatico dei
-profili SQLite e il backup/restore PostgreSQL nell'updater restano da integrare:
+(layout 2, contratto 2); `v0.1.1` resta SQLite/layout 1. L'updater esegue un backup
+PostgreSQL verificato (pg_dump) prima di ogni aggiornamento; import automatico dei
+profili SQLite e ripristino guidato restano da integrare:
 la disponibilità del runtime non completa i gate per l'uso con dati reali.
 
 Il guscio desktop ha un pannello **Chiavi API**: inserimento mascherato,
@@ -64,7 +65,7 @@ come scaricare i bundle CI Mac Apple Silicon/Intel, Windows x64 e Linux deb,
 verificare SHA-256 e installare. Il pannello offre il Quick Tunnel temporaneo
 con link/QR, senza dominio o Console portable. La predisposizione al tunnel
 nominativo resta inattiva. Sono presenti **Aggiornamenti applicazione**
-con canale stabile/beta e backup SQLite verificato prima dell'update. Gli snapshot
+con canale stabile/beta e backup PostgreSQL verificato prima dell'update. Gli snapshot
 non includono tutti i file e le chiavi. La CI produce installer e manifest come
 artifact: la pubblicazione nelle Release resta da completare prima di usare
 l'updater. Il token del tunnel è conservato localmente, distinto dal portachiavi
@@ -3417,3 +3418,15 @@ e verifiche: `docs/operations/independent-plan-steps.md`.
 `make guidance-check` non usa più un manifest con hash globale: confronta il diff
 con `origin/main` e richiede l'aggiornamento di questo Markdown quando cambiano
 sorgenti di prodotto. Nessuna modifica a funzionalità o Guida interfaccia.
+
+### Backup PostgreSQL prima degli aggiornamenti desktop
+
+Nell'app docente, **Aggiorna ora (con backup preventivo)** ora crea davvero una
+copia del database prima di installare: sui profili PostgreSQL l'aggiornamento
+si fermava con «Percorso backup non restituito dal backend». Il backend esegue
+`pg_dump` con i binari inclusi nell'app, verifica la copia con `pg_restore` e la
+salva in `backups/` della cartella dati (ultime 7 copie, file
+`postgres-<data>-<id>.dump`). Se la copia non riesce l'aggiornamento non parte.
+Il messaggio del pannello parla ora di «backup di sicurezza del database».
+Rimosso il vecchio modulo di backup SQLite, non più usato. Nessuna modifica alla
+Guida interfaccia. Procedura: `docs/operations/desktop-postgres-backups.md`.

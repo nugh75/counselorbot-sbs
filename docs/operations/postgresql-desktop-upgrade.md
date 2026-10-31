@@ -2,7 +2,7 @@
 
 Stato: **procedura target, non ancora disponibile nei bundle**. I bundle `v0.1.1`
 usano SQLite, layout 1 e `desktop_contract = 1`; le loro procedure restano in
-[backup SQLite](sqlite-backups.md) e [guscio docente](desktop-teacher-shell.md).
+[backup PostgreSQL](desktop-postgres-backups.md) e [guscio docente](desktop-teacher-shell.md).
 Il riferimento normativo è [ADR-0004](../architecture/adr/0004-postgresql-only-runtime-and-desktop-layout-2.md).
 Non eseguire questa procedura con dati reali finché i gate di accettazione non sono completi.
 

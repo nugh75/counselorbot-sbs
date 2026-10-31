@@ -1,9 +1,9 @@
-//! Integrazione con l'updater di Tauri v2 e backup preventivo SQLite (F1-16).
+//! Integrazione con l'updater di Tauri v2 e backup preventivo PostgreSQL (F1-16, #738).
 //!
 //! Canali supportati: `stable` (predefinito) e `beta`.
 //! Manifest endpoint configurabili tramite canale o variabile `COUNSELORBOT_UPDATER_URL`.
 //! Prima di applicare qualsiasi aggiornamento viene sempre eseguito un backup verificato
-//! del database SQLite (F1-05j). Se il backup fallisce, l'aggiornamento non viene scaricato né applicato.
+//! del database PostgreSQL (pg_dump, `backend/postgres_backup.py`). Se il backup fallisce, l'aggiornamento non viene scaricato né applicato.
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -109,7 +109,7 @@ pub async fn apply_update(
     app: tauri::AppHandle,
     state: tauri::State<'_, Arc<supervisor::Handle>>,
 ) -> Result<String, String> {
-    // 1. REQUISITO OBBLIGATORIO: Backup automatico SQLite prima di aggiornare.
+    // 1. REQUISITO OBBLIGATORIO: backup automatico PostgreSQL prima di aggiornare.
     // Se il backup fallisce, l'aggiornamento non parte.
     let backup_path = state.backup_db().map_err(|err| {
         format!("Backup preventivo del database fallito ({err}). Aggiornamento annullato per sicurezza.")

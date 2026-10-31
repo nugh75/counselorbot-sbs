@@ -15,7 +15,7 @@ on:
       - VERSION
       - .github/workflows/desktop-teacher.yml
       - backend/shell_internal.py
-      - backend/sqlite_backup.py
+      - backend/postgres_backup.py
       - backend/tests/test_shell_contract.py
       - frontend/src/proxy.ts
       - frontend/src/lib/shell-internal*

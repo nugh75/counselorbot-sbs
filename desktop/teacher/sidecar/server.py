@@ -42,7 +42,7 @@ def parse_args(argv=None):
     parser.add_argument("--port", type=int, default=int(os.getenv("PORT", "8000")))
     parser.add_argument("--lifeline", action="store_true", help="fermati quando stdin si chiude")
     parser.add_argument("--minimal", action="store_true", help="senza lifespan (solo smoke test)")
-    parser.add_argument("--backup", action="store_true", help="effettua un backup di SQLite ed esci")
+    parser.add_argument("--backup", action="store_true", help="effettua un backup di PostgreSQL (pg_dump) ed esci")
     return parser.parse_args(argv)
 
 
@@ -109,7 +109,7 @@ def watch_stdin(server, stdin=None, grace=STOP_GRACE_SECONDS, exit_now=os._exit)
 def main(argv=None):
     args = parse_args(argv)
     if args.backup:
-        from backend.sqlite_backup import create_backup
+        from backend.postgres_backup import create_backup
         try:
             path = create_backup()
             print(f"backup: {path}", flush=True)
