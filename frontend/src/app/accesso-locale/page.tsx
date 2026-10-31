@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { Card } from '@/components/ui/Card';
+import { useClientValue } from '@/lib/use-client-value';
 
 // Riscatto del link monouso generato dal guscio desktop (ADR-0002 §3.3).
 // Il token viaggia nel frammento (`#t=...`), che il browser non manda al
@@ -17,14 +18,13 @@ function tokenFromHash(hash: string): string {
 
 export default function LocalAccessPage() {
     const { t } = useI18n();
-    const [state, setState] = useState<State>('checking');
+    // null finché il frammento non è leggibile (render del server e idratazione).
+    const token = useClientValue<string | null>(() => tokenFromHash(window.location.hash), null);
+    const [redeemState, setState] = useState<State>('checking');
+    const state: State = token === '' ? 'missing' : redeemState;
 
     useEffect(() => {
-        const token = tokenFromHash(window.location.hash);
-        if (!token) {
-            setState('missing');
-            return;
-        }
+        if (!token) return;
         let active = true;
         void (async () => {
             try {
@@ -46,7 +46,7 @@ export default function LocalAccessPage() {
             }
         })();
         return () => { active = false; };
-    }, []);
+    }, [token]);
 
     const message = state === 'missing'
         ? t('localAuth.missingToken')

@@ -50,11 +50,13 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
     useEffect(() => { void reloadKept(); }, [reloadKept, version]);
 
     // Cambiare ramo cambia il lavoro: i risultati di prima non c'entrano piu'.
-    useEffect(() => {
+    const [resultsFocus, setResultsFocus] = useState(focus);
+    if (resultsFocus !== focus) {
+        setResultsFocus(focus);
         setResults(null);
         setTouched(false);
         setFailed(false);
-    }, [focus]);
+    }
 
     useEffect(() => {
         if (touched || !focus) return;

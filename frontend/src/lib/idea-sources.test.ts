@@ -31,6 +31,6 @@ test('sources belong to the branch in hand, not to the session', () => {
     const source = panel();
     assert.match(source, /fetchIdeaKeptSources\(sessionId, focus\)/);
     // Cambiando ramo i risultati di prima non restano sullo schermo.
-    assert.match(source, /setResults\(null\);[\s\S]{0,120}\}, \[focus\]\);/);
+    assert.match(source, /if \(resultsFocus !== focus\) \{[\s\S]{0,80}setResults\(null\);/);
     assert.match(chat(), /<IdeaSourcesPanel[\s\S]{0,240}focus=\{ideaMove\?\.focus \?\? null\}/);
 });

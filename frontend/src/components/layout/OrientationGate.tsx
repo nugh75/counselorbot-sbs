@@ -19,6 +19,9 @@ export function OrientationGate({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const [checking, setChecking] = useState(!gateSettled);
 
+    // Il cancello sincronizza lo stato con un esito a livello di modulo e con la rotta
+    // corrente (che non si legge nel render del server): resta un effetto.
+    /* eslint-disable react-hooks/set-state-in-effect -- route-driven gate synced with module-level state (see above) */
     useEffect(() => {
         if (gateSettled) {
             setChecking(false);
@@ -66,6 +69,7 @@ export function OrientationGate({ children }: { children: React.ReactNode }) {
         })();
         return () => { active = false; };
     }, [pathname, router]);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     if (checking) {
         return <div className="mx-auto mt-16 h-1 w-24 overflow-hidden rounded-full bg-line" aria-busy="true"><span className="block h-full w-1/2 animate-pulse rounded-full bg-brand" /></div>;

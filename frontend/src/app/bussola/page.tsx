@@ -46,6 +46,7 @@ import { canUseTeacherAssistant } from '@/lib/roles';
 import { useUserAccess } from '@/lib/use-user-access';
 import { isToolAllowed } from '@/lib/user-access';
 import { notebookContextPayload, readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId, type NotebookContextChoice } from '@/lib/notebook-context';
+import { useClientValue } from '@/lib/use-client-value';
 
 function safeNextHref(): string | null {
     if (typeof window === 'undefined') return null;
@@ -83,7 +84,7 @@ export default function BussolaPage() {
     const [completing, setCompleting] = useState(false);
     const [input, setInput] = useState('');
     const [error, setError] = useState('');
-    const [nextHref, setNextHref] = useState<string | null>(null);
+    const nextHref = useClientValue(safeNextHref, null);
     const [atFork, setAtFork] = useState(false);
     const endRef = useRef<HTMLDivElement>(null);
     const leavingRef = useRef(false);
@@ -160,7 +161,6 @@ export default function BussolaPage() {
 
     useEffect(() => {
         let active = true;
-        setNextHref(safeNextHref());
         void (async () => {
             try {
                 const status = await fetchOrientationStatus();

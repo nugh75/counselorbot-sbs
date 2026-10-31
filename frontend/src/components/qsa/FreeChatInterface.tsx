@@ -109,18 +109,27 @@ export function FreeChatInterface({
     }, [messages]);
     // Consigli della sessione (letture, strategie, consigli): stesso catalogo
     // della chat guidata, aggiornato a ogni turno dalla risposta del server.
+    const recommendationsKey = `${sessionId}:${activeLocale}`;
+    const [shownRecommendationsKey, setShownRecommendationsKey] = useState(recommendationsKey);
+    if (shownRecommendationsKey !== recommendationsKey) {
+        setShownRecommendationsKey(recommendationsKey);
+        setRecommendations(EMPTY_RECOMMENDATIONS);
+    }
     useEffect(() => {
         let active = true;
-        setRecommendations(EMPTY_RECOMMENDATIONS);
         if (sessionId) void apiFetch(`/api/session/${encodeURIComponent(sessionId)}/recommendations?lang=${activeLocale}`)
             .then(response => response.ok ? response.json() : null)
             .then(payload => { if (active && payload) setRecommendations(normalizeRecommendationCatalog(payload)); })
             .catch(() => undefined);
         return () => { active = false; };
     }, [sessionId, activeLocale]);
+    const [diagramsSessionId, setDiagramsSessionId] = useState(sessionId);
+    if (diagramsSessionId !== sessionId) {
+        setDiagramsSessionId(sessionId);
+        setSavedDiagrams([]);
+    }
     useEffect(() => {
         let active = true;
-        setSavedDiagrams([]);
         if (sessionId) void apiFetch(`/api/session/${encodeURIComponent(sessionId)}/diagrams`)
             .then(response => response.ok ? response.json() : [])
             .then((items: SavedMessageDiagram[]) => {
