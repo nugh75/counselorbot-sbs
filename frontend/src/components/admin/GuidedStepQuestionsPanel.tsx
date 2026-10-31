@@ -107,17 +107,17 @@ export function GuidedStepQuestionsPanel() {
     }, [filterQuestionnaire]);
 
     // Automatically correct step_id in form if questionnaire_type changes
-    useEffect(() => {
-        const allowed = STEPS_BY_QUESTIONNAIRE[form.questionnaire_type] ?? [];
-        if (allowed.length > 0 && !allowed.includes(form.step_id)) {
-            setForm((f) => ({ ...f, step_id: allowed[0] }));
-        }
-    }, [form.questionnaire_type, form.step_id]);
+    const allowedFormSteps = STEPS_BY_QUESTIONNAIRE[form.questionnaire_type] ?? [];
+    if (allowedFormSteps.length > 0 && !allowedFormSteps.includes(form.step_id)) {
+        setForm((f) => ({ ...f, step_id: allowedFormSteps[0] }));
+    }
 
     // Automatically correct step in filter if questionnaire changes
-    useEffect(() => {
+    const [stepFilterQuestionnaire, setStepFilterQuestionnaire] = useState(filterQuestionnaire);
+    if (stepFilterQuestionnaire !== filterQuestionnaire) {
+        setStepFilterQuestionnaire(filterQuestionnaire);
         setFilterStep('all');
-    }, [filterQuestionnaire]);
+    }
 
     const startNew = () => {
         const lang = filterLang === 'all' ? 'it' : filterLang;

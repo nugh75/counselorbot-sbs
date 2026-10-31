@@ -394,6 +394,7 @@ export function PromptCompare({ initial, focus, propose = false, llmFindings = [
         const finding = allFindings.find(item => item.id === focus);
         if (!finding) return;
         proposed.current = true;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot `?propose` deep link: starts the proposal request once the findings have loaded
         void requestProposal(finding);
     }, [propose, focus, loaded, allFindings, requestProposal]);
 

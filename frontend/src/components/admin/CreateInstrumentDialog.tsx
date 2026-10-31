@@ -85,16 +85,25 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
 
-    // Focus restore & opener element reference
-    useEffect(() => {
+    // Ogni apertura riparte da un modulo pulito (anche se il dialogo nasce già aperto).
+    const [wasOpen, setWasOpen] = useState(false);
+    if (wasOpen !== open) {
+        setWasOpen(open);
         if (open) {
-            openerRef.current = document.activeElement as HTMLElement | null;
             setCurrentStep(1);
             setForm(INITIAL_WIZARD_FORM);
             setCodeError('');
             setNameError('');
             setSubmitError('');
             setShowTranslations(false);
+            setLoadingCounselors(true);
+        }
+    }
+
+    // Focus restore & opener element reference
+    useEffect(() => {
+        if (open) {
+            openerRef.current = document.activeElement as HTMLElement | null;
         } else if (openerRef.current?.isConnected) {
             openerRef.current.focus({ preventScroll: true });
         }
@@ -103,7 +112,6 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
     // Carica counselor disponibili all'apertura
     useEffect(() => {
         if (!open) return;
-        setLoadingCounselors(true);
         apiFetch('/api/admin/counselors')
             .then(res => res.ok ? res.json() : [])
             .then((data: CounselorSummary[]) => {

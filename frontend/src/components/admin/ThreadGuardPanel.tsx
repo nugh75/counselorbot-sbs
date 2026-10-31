@@ -137,10 +137,10 @@ export function ThreadGuardPanel() {
             setIsProviderActive(updated.is_provider_active);
             setActiveProviders(updated.active_providers || []);
             setStatus('saved');
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to save thread guard config', error);
             setStatus('error');
-            setErrorMessage(error?.message || t('admin.threadGuard.saveError'));
+            setErrorMessage((error as { message?: string } | null)?.message || t('admin.threadGuard.saveError'));
         } finally {
             setSaving(false);
         }

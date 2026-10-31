@@ -432,7 +432,7 @@ export function PromptExperimentsPanel() {
                 max_minutes: Math.max(1, Math.floor(Number(form.max_minutes) || 60)),
             };
             const res = await apiFetch(BASE, { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(body) });
-            if (res.status === 401 || res.status === 403) { window.location.href = '/'; return; }
+            if (res.status === 401 || res.status === 403) { window.location.assign('/'); return; }
             if (!res.ok) throw await parseError(res);
             const exp = await res.json() as Experiment;
             setShowForm(false);
@@ -676,6 +676,7 @@ export function PromptExperimentsPanel() {
                                 <td className="px-4 py-2"><StateBadge value={exp.state} map={C.states} kind="state" /></td>
                                 <td className="px-4 py-2 text-xs text-ink-muted">{fmtTime(exp.created_at)}</td>
                                 <td className="px-4 py-2 text-right">
+                                    {/* eslint-disable-next-line react-hooks/refs -- false positive: openDetail touches refs only when clicked, never during render */}
                                     <Button size="sm" variant="secondary" onClick={() => openDetail(exp.id)}>{C.open}</Button>
                                 </td>
                             </tr>
