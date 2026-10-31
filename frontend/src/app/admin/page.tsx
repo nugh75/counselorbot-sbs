@@ -34,6 +34,7 @@ import { RagDocsPanel } from '@/components/admin/RagDocsPanel';
 import { TavoloImagesPanel } from '@/components/admin/TavoloImagesPanel';
 import { GuidedStepQuestionsPanel } from '@/components/admin/GuidedStepQuestionsPanel';
 import { PromptExportPanel } from '@/components/admin/PromptExportPanel';
+import { PromptHealthPage } from '@/components/admin/PromptHealthPage';
 import { UsersSummaryPanel } from '@/components/admin/UsersSummaryPanel';
 import { AudioModelsPanel } from '@/components/admin/AudioModelsPanel';
 import { getRealIdentity } from '@/lib/auth';
@@ -77,6 +78,7 @@ export default function AdminPage() {
                 { id: 'assistantQuestions', label: t('admin.tab.assistantQuestions'), icon: MessageCircleQuestion },
                 { id: 'guidedStepQuestions', label: t('admin.tab.guidedStepQuestions'), icon: MessageCircleQuestion },
                 { id: 'promptExport', label: t('admin.tab.promptExport'), icon: Download },
+                { id: 'promptHealth', label: t('admin.tab.promptHealth'), icon: ShieldAlert },
                 { id: 'ragDocs', label: t('admin.tab.ragDocs'), icon: FolderOpen },
                 { id: 'tavoloImages', label: t('admin.tab.tavoloImages'), icon: ImageIcon },
             ],
@@ -291,6 +293,7 @@ export default function AdminPage() {
                         {activeTab === 'assistantQuestions' && <AssistantQuestionsPanel />}
                         {activeTab === 'guidedStepQuestions' && <GuidedStepQuestionsPanel />}
                         {activeTab === 'promptExport' && <PromptExportPanel />}
+                        {activeTab === 'promptHealth' && <PromptHealthPage />}
                         {activeTab === 'ragDocs' && <RagDocsPanel />}
                         {activeTab === 'tavoloImages' && <TavoloImagesPanel />}
                         {activeTab === 'audio' && <AudioModelsPanel />}
