@@ -15,6 +15,7 @@ import { parseForumDiscussionLinks } from '@/lib/forum';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
 import { parseActivityTools, type ActivityTool } from '@/lib/activity-tools';
 import { ActivityToolsList } from './ActivityTools';
+import { useClientValue } from '@/lib/use-client-value';
 
 // F31: l'interfaccia è esportata per il blocco "Assegnazioni della classe"
 // dentro la scheda gruppo di /docente/classi (GroupAssignments).
@@ -68,10 +69,17 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
     }, [teacher]);
     useEffect(() => { void load(); if (teacher) window.addEventListener('teacher-assignments-changed', load); return () => window.removeEventListener('teacher-assignments-changed', load); }, [load, teacher]);
     // F27: un link diretto #assignment-N apre quel dettaglio anche se la lista cambia.
-    useEffect(() => {
-        const match = window.location.hash.match(/^#assignment-(\d+)$/);
-        if (match) setOpenId(Number(match[1]));
-    }, []);
+    // F30: il collegamento dal gruppo porta ?group=Nome e preimposta il filtro.
+    // Letti una volta dall'URL d'ingresso (null finché non c'è il browser); i cambi
+    // successivi di hash passano dal gestore `hashchange`, con la guardia sulle bozze.
+    const entryAssignment = useClientValue(() => Number(window.location.hash.match(/^#assignment-(\d+)$/)?.[1] ?? 0), null);
+    const entryGroup = useClientValue(() => new URLSearchParams(window.location.search).get('group') ?? '', null);
+    const [entryApplied, setEntryApplied] = useState(false);
+    if (!entryApplied && entryAssignment !== null && entryGroup !== null) {
+        setEntryApplied(true);
+        if (entryAssignment) setOpenId(entryAssignment);
+        if (entryGroup) setGroupFilter(entryGroup);
+    }
     useEffect(() => {
         const previousUrl = window.location.href;
         const check = () => {
@@ -85,11 +93,6 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
         };
         window.addEventListener('hashchange', check); return () => window.removeEventListener('hashchange', check);
     }, [draft, lang, openId]);
-    // F30: il collegamento dal gruppo porta ?group=Nome e preimposta il filtro.
-    useEffect(() => {
-        const group = new URLSearchParams(window.location.search).get('group');
-        if (group) setGroupFilter(group);
-    }, []);
     const groups = useMemo(() => [...new Set(rows.map(row => row.group_name))], [rows]);
     const visible = useMemo(() => rows.filter(row =>
         (!groupFilter || row.group_name === groupFilter)

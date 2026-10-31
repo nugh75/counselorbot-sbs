@@ -183,7 +183,9 @@ export function ClassOverviewTab({
     useDraftGuard(isDirty, l('discard'), { blocked: saveBusy });
 
     // Sync form when group changes externally and user has not typed unsaved edits
-    useEffect(() => {
+    const [syncedGroup, setSyncedGroup] = useState(group);
+    if (syncedGroup !== group) {
+        setSyncedGroup(group);
         if (!isDirty) {
             setName(group.name);
             setSchool(group.school ?? '');
@@ -193,7 +195,7 @@ export function ClassOverviewTab({
             setMethodologies(group.methodologies ?? '');
             setVisible(group.context_visible_to_students);
         }
-    }, [group, isDirty]);
+    }
 
     // Copy to clipboard helper
     const copy = async (key: string, text: string) => {

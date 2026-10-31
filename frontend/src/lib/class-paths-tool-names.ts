@@ -8,7 +8,7 @@ export function resolveClassPathToolName(toolKey: string, lang: string): string 
     // Personal tool keys (goals, actions, timeline…) are not personal-area slugs: name them like class settings do.
     if (key in classSettingsTexts) return classSettingsText(lang, key as keyof typeof classSettingsTexts);
     try {
-        const personal = personalAreaName(lang as Lang, key as any);
+        const personal = personalAreaName(lang as Lang, key as Parameters<typeof personalAreaName>[1]);
         if (personal) return personal;
     } catch {
         // Not a personal area slug

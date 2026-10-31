@@ -70,6 +70,7 @@ export function useClassGroupEditors(groups: StudentGroup[] | undefined, reloadG
             };
         }
         for (const [id, request] of pending.current) if (!next[id]) { request.abort(); pending.current.delete(id); }
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- reconciles editor state with refs of in-flight requests and readbacks, which render cannot read
         publish(next);
         if (reread) reloadRef.current();
     }, [groups, publish]);
