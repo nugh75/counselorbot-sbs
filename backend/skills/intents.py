@@ -26,7 +26,7 @@ _PATTERNS = {
     ),
     "reading": re.compile(
         r"\b(lettur|libro|articol|bibliograf|fonte|fonti|read|book|article|source|"
-        r"lectura|livro|lecture|livre|lesen|buch|quelle|lasa|bok|kalla)"
+        r"lectura|livro|lecture|livre|lesen|buch|quellen?\b|lasa|bok|kalla)"
     ),
     # Domanda puntuale su qualcosa che sta fuori dal profilo: un'opera, una
     # persona, un termine. Copre sia la richiesta su un'opera ("di cosa parla",
@@ -77,7 +77,19 @@ _PATTERNS = {
         r"otra\s+(?:accion|opcion|idea|sugerencia)|"
         r"une\s+autre\s+(?:action|option|idee|suggestion)|"
         r"noch\s+eine[nrs]?\s+(?:aktion|option|idee|vorschlag)|"
-        r"en\s+till\b|ett\s+till\b|annat\s+forslag)"
+        r"en\s+till\b|ett\s+till\b|annat\s+forslag|"
+        # Richiesta esplicita di una strategia o di suggerimenti (C02), anche la
+        # domanda suggerita dall'app: un verbo di richiesta o un interrogativo
+        # vicino a "strategia/tecnica/suggerimento". "La mia strategia e'..."
+        # non e' una richiesta.
+        r"(?:suggeri|suggest|propo|dammi|datemi|dimmi|indica|give\s+me|tell\s+me|"
+        r"sugier|sugerir|dame|dime|suggere|donne|vorschlag|schlag|gib\s+mir|nenn|"
+        r"foresla|ge\s+mig|tips(?:a)?\s+mig)\w*(?:\s+\S+){0,4}?\s+"
+        r"(?:e?strateg|tecnic|technique|technik|teknik|suggeriment|tips?\b|tipps?\b|consejo|astuce)|"
+        r"(?:strateg|technik|tipps?\b)\w*\s+(?:\S+\s+){0,3}?vorschlag|"
+        r"(?:che|que)\s+(?:e?strateg|tecnic)|"
+        r"(?:quali|quale|what|which|any|cuales|cual|quelles?|welche|vilka|vilken)\s+"
+        r"(?:\S+\s+){0,2}(?:e?strateg|tecnic|technique|technik|teknik|tips?\b|tipps?\b|consejos|astuces))"
     ),
     # Oltre alle domande esplicite di significato, il chiarimento copre anche il
     # disorientamento: "mi sento perso", "non so da dove partire", "non mi torna".
@@ -142,7 +154,8 @@ _NEGATED_PATTERNS = {
     ),
     "advice": re.compile(
         r"\b(?:non\s+(?:voglio\s+)?consigl|non\s+(?:darmi|datemi|consigliarmi)|"
-        r"senza\s+consigl|(?:do\s+not|don't)\s+(?:give|offer|recommend|suggest)\b(?:\s+me)?|without\s+advice)"
+        r"senza\s+consigl|(?:do\s+not|don't|dont)\s+(?:give|offer|recommend|suggest)\b(?:\s+me)?|without\s+advice|"
+        r"non\s+(?:darmi|datemi|suggerirmi|propormi|voglio)\s+(?:\S+\s+){0,2}(?:strateg|tecnic|suggeriment))"
     ),
 }
 
@@ -175,7 +188,9 @@ def asks_about_platform(message: str) -> bool:
 
 # Valori che `classify` puo' restituire (oltre a ""): li usa la validazione
 # delle condizioni `intents` delle skill.
-KNOWN_INTENTS = ("compare", "referral", "factual", "reading", "advice", "clarify", "guided")
+# `strategies` lo assegna la chat nel passo «Strategie e consigli»: li' strategie
+# e letture valgono in ogni turno, non solo su richiesta.
+KNOWN_INTENTS = ("compare", "referral", "factual", "reading", "advice", "clarify", "guided", "strategies")
 
 
 def classify(message: str, *, guided: bool = False) -> str:
