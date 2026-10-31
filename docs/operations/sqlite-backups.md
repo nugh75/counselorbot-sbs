@@ -118,7 +118,6 @@ screenshot sono stati rivisti: non cambia alcun percorso o controllo utente.
 
 ```sh
 ~/.pyenv/versions/3.11.9/bin/python -m pytest backend/tests/test_sqlite_backup.py
-TEST_DB=sqlite ~/.pyenv/versions/3.11.9/bin/python -m pytest backend/tests/test_sqlite_backup.py
 python3 scripts/check-sql-portability.py
 make guidance-check
 ```

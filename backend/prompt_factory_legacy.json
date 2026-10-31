@@ -29,9 +29,6 @@
     "pqbl_question_generation_prompt": [
       "3650fe0b59a9c89060391507557ef2b6b95f59a3e0dae7b256a5c7cf6b4074cf"
     ],
-    "pqbl_skill_extraction_prompt": [
-      "4cfc1bd4280dc04b8d43982551810867b945a9e059fac9597ae47046881295d1"
-    ],
     "prompt_counselorbot_chat_docente": [
       "7b453d2646e9a52653d63abe98d99ba4de3b789191a038c6c85500817ec58ea6"
     ],
@@ -275,7 +272,8 @@
     "prompt_qsar_second_level": [
       "4c788e191c72b76e5dbd9ac21e09f543b03e9641ef7752512ef37dad36b976ec",
       "d32a360e088b279207a51c3ef8a615d3504ff16f371027d5ba5eeee30c0f2d68",
-      "5ea38237fbca678bc4ae72152d792b10c21f5f0cc9169e1e0e70069f75d8d718"
+      "5ea38237fbca678bc4ae72152d792b10c21f5f0cc9169e1e0e70069f75d8d718",
+      "ee82fbcd03f50db94fbf5eb3ac645915b3844cfb7777c3d99956c2c7b32cedc0"
     ],
     "prompt_savickas_interview": [
       "5b95b156c3dcd05ee98e61b759f7ece2e036913b0d622c57de30f98b1cc19f10"

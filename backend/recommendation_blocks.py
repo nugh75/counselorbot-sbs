@@ -36,10 +36,19 @@ _TAG_BLOCK_RE = re.compile(r"<recommendations(?:\s[^>]*)?>(.*?)</recommendations
 _TAG_OPEN_RE = re.compile(r"<recommendations(?:\s[^>]*)?>", re.IGNORECASE)
 _PARTIAL_TAG_RE = re.compile(r"(?:^|\n)<([A-Za-z]*)$")
 _JSON_OPEN_RE = re.compile(r"```json[ \t]*\r?\n", re.IGNORECASE)
+# Gemini 2.5 Flash, apertura di passo QPCC: il blocco arriva come JSON nudo o in
+# un recinto senza nome, anche in testa alla risposta.
+_BARE_OPEN_RE = re.compile(r'(?:```[ \t]*\r?\n[ \t]*)?\{(?=\s*")')
+_BARE_CLOSE_RE = re.compile(r"\s*```")
+_PARTIAL_BARE_RE = re.compile(r'(?:```[ \t]*\r?\n[ \t]*)?(?:\{\s*(?:"(\w*)("?))?)?')
+_PRIVATE_KEYS = ("recommendations", "reading", "strategy", "notes")
 # Alcuni modelli (Gemini 2.5 Flash, turni di continuazione) avvolgono la
 # risposta in {"answer": ..., "recommendations": ...}, spesso dopo lo stesso
 # testo in prosa e senza recinto: l'answer e' la risposta visibile.
 _ENVELOPE_RE = re.compile(r'(?:```(?:json)?[ \t]*\r?\n?)?\{\s*"answer"\s*:\s*"')
+# Stesso involucro con le chiavi in ordine inverso: {"recommendations": ..., "answer": ...}.
+_REVERSED_ENVELOPE_RE = re.compile(r'(?:```(?:json)?[ \t]*\r?\n?)?\{\s*"recommendations"\s*:\s*')
+_ANSWER_KEY_RE = re.compile(r'\s*,\s*"answer"\s*:\s*"')
 _PARTIAL_ENVELOPE_RE = re.compile(r'\{\s*(?:"(?:a(?:n(?:s(?:w(?:e(?:r(?:"\s*:?\s*)?)?)?)?)?)?)?)?$')
 
 
@@ -48,7 +57,10 @@ def _unwrap(data):
     (forma prodotta da alcuni modelli) vale come {"notes": [...]}."""
     if isinstance(data, dict) and set(data) == {"recommendations"}:
         data = data["recommendations"]
-        if isinstance(data, list) and data and all(isinstance(item, dict) and "kind" in item for item in data):
+        if isinstance(data, dict) and "kind" in data:
+            data = [data]
+        # Anche la lista vuota: {"recommendations": []} e' il blocco privato vuoto.
+        if isinstance(data, list) and all(isinstance(item, dict) and "kind" in item for item in data):
             data = {"notes": data}
     return data
 
@@ -58,6 +70,10 @@ def _private_json(raw: str) -> bool:
         data = json.loads(raw)
     except ValueError:
         return False
+    return _private_data(data)
+
+
+def _private_data(data) -> bool:
     data = _unwrap(data)
     return bool(isinstance(data, dict) and data and set(data) <= {"reading", "strategy", "notes"}
                 and ("notes" in data or {"reading", "strategy"} <= set(data))
@@ -89,7 +105,8 @@ def build_directive(
     lines.append(
         "Rules: use these exact ids and nothing else; never invent an id; leave an "
         "array empty when you recommended nothing from that catalogue; write the "
-        "block once, at the very end of the message. Candidates are not yet shown in "
+        "block once, after the visible reply and before any [[AVANZA_STEP]] marker line, which "
+        "stays last. Candidates are not yet shown in "
         "the panel: only this declaration adds them. Select an item only when the "
         "visible response actually proposes it; never select a rejected item or one "
         "awaiting clarification. Name each selected work or strategy in the visible "
@@ -98,7 +115,8 @@ def build_directive(
     )
     directive = "\n".join(lines)
     if idea:
-        directive = directive.replace("at the very end of the message", "after the visible reply and before the final idea patch")
+        directive = directive.replace(
+            "before any [[AVANZA_STEP]] marker line, which stays last", "before the final idea patch")
     return directive
 
 
@@ -127,6 +145,9 @@ def strip_for_display(text: str) -> str:
     for match in _JSON_OPEN_RE.finditer(cleaned):
         if "```" not in cleaned[match.end():]:
             return cleaned[:match.start()].rstrip()
+    partial_bare = _partial_bare(cleaned)
+    if partial_bare is not None:
+        return cleaned[:partial_bare].rstrip()
     trailing_fence = re.search(r'(?:^|\n)`{1,3}$', cleaned)
     if trailing_fence and cleaned[:trailing_fence.start()].count('```') % 2 == 0:
         return re.sub(r'(?:^|\n)`{1,3}$', '', cleaned).rstrip()
@@ -226,16 +247,33 @@ def _envelope_payload(value) -> str | None:
     return json.dumps({"reading": ids, "strategy": ids})
 
 
+def _reversed_envelope(text: str) -> tuple[int | None, int | None]:
+    """Inizio dell'involucro con "recommendations" per prima chiave e della sua answer.
+
+    Vale solo quando dopo le raccomandazioni arriva la chiave "answer": un JSON
+    ordinario con altre chiavi resta testo.
+    """
+    for match in _REVERSED_ENVELOPE_RE.finditer(text):
+        try:
+            _, end = json.JSONDecoder().raw_decode(text, match.end())
+        except ValueError:
+            continue
+        if answer := _ANSWER_KEY_RE.match(text, end):
+            return match.start(), answer.end()
+    return None, None
+
+
 def _unwrap_envelope(text: str, *, final: bool) -> tuple[str, list[str]]:
     """Sostituisce l'involucro {"answer": ...} con la sua answer, senza duplicare il testo."""
     from .chat_continuation import merge_continuation
 
     match = _ENVELOPE_RE.search(text)
-    if not match:
+    start, answer_start = (match.start(), match.end()) if match else _reversed_envelope(text)
+    if start is None:
         partial = None if final else _PARTIAL_ENVELOPE_RE.search(text)
         return (text[:partial.start()].rstrip() if partial else text), []
-    prefix = text[:match.start()]
-    brace = text.index("{", match.start())
+    prefix = text[:start]
+    brace = text.index("{", start)
     try:
         data, end = json.JSONDecoder().raw_decode(text, brace)
     except ValueError:
@@ -244,7 +282,7 @@ def _unwrap_envelope(text: str, *, final: bool) -> tuple[str, list[str]]:
         answer, rest = data["answer"], re.sub(r"^\s*```", "", text[end:])
         payload = _envelope_payload(data.get("recommendations"))
     else:
-        answer, rest, payload = _json_string_prefix(text, match.end()), "", None
+        answer, rest, payload = _json_string_prefix(text, answer_start), "", None
     head = prefix.rstrip()
     if not head or answer.startswith(head):
         visible = answer if final or len(answer) >= len(head) else head
@@ -271,7 +309,55 @@ def _remove_blocks(text: str, *, final: bool = True) -> tuple[str, list[str]]:
         return match.group(0)
 
     cleaned = _TAG_BLOCK_RE.sub(_take, BLOCK_RE.sub(_take, text))
-    return _JSON_BLOCK_RE.sub(_take_json, cleaned), payloads + envelope
+    cleaned = _remove_bare(_JSON_BLOCK_RE.sub(_take_json, cleaned), payloads)
+    return cleaned, payloads + envelope
+
+
+def _remove_bare(text: str, payloads: list[str]) -> str:
+    """Toglie il JSON privato nudo o in un recinto senza nome; il resto resta."""
+    parts, pos = [], 0
+    for match in _BARE_OPEN_RE.finditer(text):
+        if match.start() < pos:
+            continue
+        brace = match.end() - 1
+        try:
+            data, end = json.JSONDecoder().raw_decode(text, brace)
+        except ValueError:
+            continue
+        if not _private_data(data):
+            continue
+        if match.group(0).startswith("```") and (close := _BARE_CLOSE_RE.match(text, end)):
+            end = close.end()
+        payloads.append(text[brace:end])
+        parts.append(text[pos:match.start()])
+        pos = end
+    return "".join(parts) + text[pos:]
+
+
+def _partial_bare(text: str) -> int | None:
+    """Inizio di un JSON privato nudo ancora in arrivo, da non mostrare."""
+    for match in _PARTIAL_BARE_RE.finditer(text):
+        if not match.group(0):
+            continue
+        key, closed = match.group(1), match.group(2)
+        fenced = match.group(0).startswith("```")
+        if match.end() == len(text):
+            if "{" not in match.group(0):
+                # Recinto senza nome appena aperto: si aspetta di vedere cosa contiene.
+                if fenced and text[:match.start()].count("```") % 2 == 0:
+                    return match.start()
+                continue
+            if not closed and any(name.startswith(key or "") for name in _PRIVATE_KEYS):
+                return match.start()
+            if closed and key in _PRIVATE_KEYS:
+                return match.start()
+            continue
+        if closed and key in _PRIVATE_KEYS:
+            try:
+                json.JSONDecoder().raw_decode(text, text.index("{", match.start()))
+            except ValueError:
+                return match.start()
+    return None
 
 
 def _first_valid(payloads: list[str]) -> dict | None:
@@ -302,7 +388,8 @@ def _whitelist(values, allowed: Mapping[str, str]) -> list[str]:
 
 def notes_directive(*, advice_allowed: bool, idea: bool = False, hypothesis_allowed: bool = False, example_lens: str = "A5") -> str:
     """Log concrete proposals, reflective questions and interpretive hypotheses without certifying them."""
-    position = "before the final idea patch" if idea else "at the very end"
+    position = ("before the final idea patch" if idea else
+                "after the visible reply and before any [[AVANZA_STEP]] marker line, which stays last")
     kinds = "question, advice or hypothesis" if hypothesis_allowed else "question or advice"
     hyp_sentence = (
         " and one interpretive reading offered as an open hypothesis (with optional lens: factor code)"

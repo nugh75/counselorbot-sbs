@@ -156,7 +156,7 @@ class CredentialStore:
 
 
 def ensure_keys():
-    """Pre-create credential DEKs outside request write transactions (SQLite)."""
+    """Pre-create credential DEKs outside request write transactions."""
     if dek_enabled():
         from . import chatgpt_connections, institution_password, personal_api
         for store in (personal_api.storage, chatgpt_connections.storage, institution_password.storage):

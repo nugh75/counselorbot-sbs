@@ -12,30 +12,24 @@ from sqlalchemy.orm import sessionmaker
 
 from backend import auth, database, models
 from backend.routes import orientation_recommendation
-from backend.tests.artifact_database import TEST_DB, sqlite_engine
 
 
 @pytest.fixture
 def app(tmp_path):
-    schema = None
-    if TEST_DB == 'sqlite':
-        engine = sqlite_engine(tmp_path / 'orientation.sqlite')
-        models.Base.metadata.create_all(engine)
-    else:
-        url = os.environ['DATABASE_URL']
-        assert url == 'postgresql://c5_test@127.0.0.1:18650/counselorbot_test'
-        schema = 'orientation_' + uuid.uuid4().hex
-        engine = create_engine(url)
-        with engine.begin() as connection:
-            connection.execute(text(f'CREATE SCHEMA "{schema}"'))
-        @event.listens_for(engine, 'connect')
-        def set_schema(connection, _):
-            connection.autocommit = True
-            with connection.cursor() as cursor:
-                cursor.execute(f'SET search_path TO "{schema}"')
-            connection.autocommit = False
-        engine.dispose()
-        models.Base.metadata.create_all(engine)
+    url = os.environ['DATABASE_URL']
+    assert url == 'postgresql://c5_test@127.0.0.1:18650/counselorbot_test'
+    schema = 'orientation_' + uuid.uuid4().hex
+    engine = create_engine(url)
+    with engine.begin() as connection:
+        connection.execute(text(f'CREATE SCHEMA "{schema}"'))
+    @event.listens_for(engine, 'connect')
+    def set_schema(connection, _):
+        connection.autocommit = True
+        with connection.cursor() as cursor:
+            cursor.execute(f'SET search_path TO "{schema}"')
+        connection.autocommit = False
+    engine.dispose()
+    models.Base.metadata.create_all(engine)
     factory = sessionmaker(bind=engine)
     with factory() as db:
         group = models.StudentGroup(name='Synthetic', code='SYN-C', owner_username='teacher')

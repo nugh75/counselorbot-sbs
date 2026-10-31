@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/Button';
 // API: vedi backend/routes/pqbl.py (endpoint /admin/pqbl/*).
 
 const PQBL_CONFIG_KEYS = [
-    'pqbl_skill_extraction_prompt',
     'pqbl_question_generation_prompt',
     'pqbl_onboarding_text',
     'pqbl_model',

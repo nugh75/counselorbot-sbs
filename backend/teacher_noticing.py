@@ -95,7 +95,7 @@ def ask_json(ai, prompt: str, system: str, label: str, **kwargs) -> dict | None:
     """Risposta JSON del modello; un secondo tentativo se la prima e' vuota, tagliata o illeggibile."""
     for attempt in (1, 2):
         try:
-            answer = ai.get_response(prompt, system, "generic", **kwargs)
+            answer = ai.get_response(prompt, system, "generic", json_mode=True, **kwargs)
         except Exception as exc:
             logger.warning("%s: model call failed (attempt %s): %s", label, attempt, exc)
             continue

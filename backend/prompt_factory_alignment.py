@@ -59,6 +59,26 @@ def factory_owned(db, scope, key, value, *, legacy=None, cached=False):
     return versioned_factory or digest(value) in legacy[group].get(key, [])
 
 
+# Testi di fabbrica che il proprietario ha deciso di riscrivere anche dove
+# l'admin li aveva personalizzati (audit di coerenza dei prompt, decisione 5.1).
+# L'allineamento li sovrascrive una volta: quando una revisione registra gia' il
+# nuovo testo, le modifiche successive dell'admin tornano a essere conservate.
+FORCED_FACTORY_KEYS = {
+    "config": {"prompt_qsar_second_level"},  # #748: B01, D04
+    "guided_step": set(),
+}
+
+
+def _forced(db, scope, key, after):
+    if key not in FORCED_FACTORY_KEYS[scope]:
+        return False
+    return db.query(models.PromptRevision.id).filter(
+        models.PromptRevision.scope == scope,
+        models.PromptRevision.target_key == key,
+        models.PromptRevision.value == after,
+    ).first() is None
+
+
 def make_plan(db, *, lock_rows=False):
     legacy = _read_legacy()
     configs, steps = factory_catalog()
@@ -79,7 +99,7 @@ def make_plan(db, *, lock_rows=False):
             if scope == "guided_step" and (row.questionnaire_type or "").upper() != steps[key]["questionnaire_type"].upper():
                 preserved.append({"scope": scope, "key": key, "reason": "different_instrument"})
                 continue
-            if not factory_owned(db, scope, key, before, legacy=legacy):
+            if not factory_owned(db, scope, key, before, legacy=legacy) and not _forced(db, scope, key, after):
                 preserved.append({"scope": scope, "key": key, "reason": "personalised"})
                 continue
             changes.append({"scope": scope, "key": key, "before": before, "after": after,

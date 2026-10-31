@@ -739,10 +739,14 @@ Nel blocco privato `recommendations` il modello può dichiarare note di tipo `hy
 (con campo facoltativo `lens` vincolato ai fattori dello step corrente). Il blocco resta
 privato anche quando il modello lo scrive come fence `json` con l'elenco delle note
 direttamente sotto `recommendations`: non compare nella risposta e le note vengono registrate.
-Se il modello avvolge la risposta in un oggetto JSON nudo `{"answer": ..., "recommendations": ...}`
-(anche dopo lo stesso testo in prosa, in streaming o in un turno di continuazione), lo studente
+Se il modello avvolge la risposta in un oggetto JSON nudo `{"answer": ..., "recommendations": ...}`,
+con le due chiavi in qualunque ordine (anche dopo lo stesso testo in prosa, in streaming o in un turno di continuazione), lo studente
 vede solo il testo di `answer`, senza duplicati, e le raccomandazioni dichiarate lì passano
-dallo stesso filtro sul catalogo del turno. Al turno successivo,
+dallo stesso filtro sul catalogo del turno. Lo stesso vale per il blocco scritto come JSON
+nudo o in un recinto senza lingua, anche in testa alla risposta (per esempio all'apertura di un
+passo guidato, anche in modalità voce): `{"recommendations": []}` e le sue varianti con una nota
+o un elenco di note non compaiono mai, né in streaming né nel testo salvato, e le note valide
+vengono registrate. Un JSON ordinario resta visibile. Al turno successivo,
 la risposta dello studente viene accoppiata deterministicamente all'ipotesi aperta (`status`
 passa ad `answered` con salvataggio di `payload.reply`, limitato a 240 caratteri). Lo stato
 del filo (`thread_state`: `introduced`, `exploring`, `hypothesis_open`, `hypothesis_answered`)
@@ -751,6 +755,18 @@ viene iniettato il blocco compatto `[REFLECTION THREAD]` (entro 500 caratteri). 
 degli step successivi, il Session Ledger include la cronologia delle letture proposte con le
 relative risposte dello studente e la direttiva di considerare la versione dello studente
 come riferimento primario senza mai riproporre letture rifiutate o corrette.
+
+Ogni risposta segue un solo ordine: prima il testo visibile, poi gli eventuali blocchi privati
+(`recommendations`, bozza del libretto `booklet`, bozza dell'obiettivo `goal`, patch `idea`) e, quando
+lo step si chiude, il marcatore `[[AVANZA_STEP]]` da solo sull'ultima riga, dopo i blocchi. Nella
+mappa IDEA le frecce usano sempre `source` e `target`. Quando una risposta interrotta viene ripresa,
+il modello riceve un contratto apposito: le parole ancora disponibili rispetto alla lunghezza scelta e
+l'elenco dei blocchi privati ancora dovuti, invece della richiesta di una nuova risposta completa.
+Nell'Assistente il ragionamento che il modello scrive nel testo (`<think>…`) viene tolto mentre la
+risposta arriva, prima del display e della lettura a voce, come nella chat guidata. Il formato JSON
+di trasporto (Ollama, DeepSeek) lo chiede solo il codice che si aspetta un JSON (pQBL, osservazioni
+della classe, Tavolo, diagrammi, traduzioni): la frase «return only JSON» dentro un documento citato o
+nel messaggio dello studente non cambia più il formato della risposta.
 
 Nella sintesi di fine percorso (`journey_context`), la riduzione bounded dell'evidenza include
 la regola esplicita di preservazione delle ipotesi (`preserve_hypotheses=True` per tutti i dialoghi
@@ -816,17 +832,15 @@ stato sostituito da un criterio qualitativo di comprensione orientato all'agire 
 a circa cinque scambi: il chatbot resta nell'area finché lo studente la sviluppa, esplorando cosa fa,
 come sceglie e quali conseguenze ne derivano, e chiude il passaggio quando emerge un modo concreto di
 agire e lo studente ha risposto a una lettura di esso, oppure su richiesta esplicita o al raggiungimento
-del tetto massimo di scambi. I testi di step e i prompt di sistema d'intervista (QPCC, QAP, Savickas,
+della scelta della persona. I testi di step e i prompt di sistema d'intervista (QPCC, QAP, Savickas,
 Evento e QPCS) e i relativi hash legacy in `prompt_factory_legacy.json` garantiscono piena continuità,
 prevenzione dei loop conversazionali e compatibilità con l'allineamento dei prompt di fabbrica.
-A livello applicativo, la chiusura dello step è garantita anche lato server (`backend/step_closure.py`
-integrato in `backend/routes/chat.py` per chiamate sincrone e streaming SSE): se il modello non emette
-spontaneamente il marcatore `[[AVANZA_STEP]]` entro il tetto di sicurezza configurato (predefinito a 5
-scambi dell'assistente nello step, escludendo i passi di introduzione e le sintesi finali/farewell),
-il backend appende automaticamente il marcatore in coda alla risposta prima dell'estrazione dei segnali
-di controllo e aggiorna la memoria di sessione (`completed_step=True`). Il frontend riceve quindi il
-segnale `AVANZA_STEP` nei `control_signals`, abilitando l'avanzamento allo step successivo senza dipendere
-unicamente dalla decisione probabilistica del modello LLM.
+Il numero di scambi non fa mai avanzare lo step da solo: il backend non aggiunge il marcatore
+`[[AVANZA_STEP]]`. Ogni tot scambi dell'assistente nello step (soglia `step_safety_threshold`,
+predefinita a 5, esclusi i passi di introduzione e le sintesi finali) `backend/step_closure.py`
+aggiunge al prompt un promemoria di scelta: il counselor riassume in breve ciò che è emerso e offre
+UNA scelta tra continuare l'approfondimento e riprendere il percorso, rispettando la scelta già fatta.
+Finché la scelta è in sospeso o si esplora il tema scelto, il modello non emette il marcatore.
 
 
 ### Envelope snello, deduplicazione e divieto di elenchi puntati
@@ -2371,13 +2385,15 @@ ZTPI e Savickas. Le proposte AI aiutano a riflettere, non sono diagnosi o decisi
 vincolanti. Le funzioni disabilitate o non autorizzate non vanno presentate come
 accessibili a ogni account. L’assistente deve indicare la pagina e il prossimo
 passo utile, senza inventare pulsanti o promettere azioni eseguite automaticamente.
-Gli aggiornamenti tecnici delle dipendenze del server non cambiano funzioni, dati salvati o esportazioni descritti in questa guida. Per la compilazione containerizzata di produzione del frontend in Docker, il comando di build adotta esplicitamente Webpack (`next build --webpack`) e disabilita la telemetria Next.js (`NEXT_TELEMETRY_DISABLED=1`) per prevenire timeout e deadlock IPC sotto emulazione o vincoli di memoria.
+Gli aggiornamenti tecnici delle dipendenze del server non cambiano funzioni, dati salvati o esportazioni descritti in questa guida. Lo stesso vale per gli aggiornamenti di sicurezza del frontend (Next.js 16.4.3, Zod 4.6.7 e correzioni di dipendenze transitive): nessuna pagina o funzione cambia. Per la compilazione containerizzata di produzione del frontend in Docker, il comando di build adotta esplicitamente Webpack (`next build --webpack`) e disabilita la telemetria Next.js (`NEXT_TELEMETRY_DISABLED=1`) per prevenire timeout e deadlock IPC sotto emulazione o vincoli di memoria.
 
 Per l'istanza di prova è disponibile una modalità hot reload: `scripts/dev-test-instance.sh` avvia il frontend con `next dev` e il backend con `uvicorn --reload`, montando il codice nel container. Le modifiche a pagine, componenti e codice Python si vedono senza ricostruire l'immagine; restano le stesse porte e lo stesso URL pubblico. Non è una modalità di produzione: espone informazioni di debug e va usata solo senza dati reali. Dettagli e comandi in `docs/operations/test-instance-hot-reload.md`.
 
 La piattaforma ha una sola versione, scritta nel file `VERSION` alla radice del repository e propagata a tutto ciò che la porta: `frontend/package.json` e `frontend/package-lock.json`, `backend/version.py` (esposto da `GET /version` e nei metadati OpenAPI) e, per l'app desktop docente, `desktop/teacher/package.json` e `desktop/teacher/package-lock.json`, `desktop/teacher/src-tauri/tauri.conf.json`, la versione del pacchetto in `desktop/teacher/src-tauri/Cargo.toml` e la voce del crate `counselorbot-teacher` in `Cargo.lock`. `scripts/sync-version.py` aggiorna solo righe di versione, mai le versioni delle dipendenze, e `make version-check` più il workflow `version.yml` includono anche i metadati desktop nell'allineamento: l'installer e i manifest updater riportano la stessa versione. Non cambia funzioni, dati salvati o permessi. Procedura di rilascio in `docs/operations/release.md`.
 
 I bundle desktop correnti, inclusa `v0.1.1`, usano un database SQLite su file (ADR-0003, layout 1). Il successivo ADR-0004 decide PostgreSQL 15 unico come architettura target, con SQLite limitato all'import legacy, ma tale migrazione non è ancora consegnata. Su SQLite il backend attiva il giornale WAL, l'attesa fino a 5 secondi quando il file è occupato, le chiavi esterne (stesse cancellazioni a cascata di Postgres) e `synchronous=NORMAL`; le richieste che scrivono (`POST`, `PUT`, `PATCH`, `DELETE`) e i lavori in background prendono subito il lock di scrittura (`BEGIN IMMEDIATE`), le letture no. Con una versione di SQLite precedente alla 3.35 il backend non parte (codice di uscita 3). Le colonne che l'avvio aggiunge ai database già esistenti vengono create solo se mancano, con la stessa procedura condivisa su SQLite e Postgres: il backend parte su un file SQLite nuovo e riparte sullo stesso file senza errori. Tutte le date e gli orari memorizzati, comprese le sessioni dell'accesso locale, vengono gestiti con fuso orario UTC (`UTCDateTime`), garantendo calcoli e confronti temporali corretti sia su SQLite sia su Postgres senza modificare lo schema Postgres di produzione. Server e installazione portable restano su Postgres senza cambiamenti di funzioni, dati o permessi.
+
+Dal 30/10/2026 (#679) il backend non supporta più SQLite come database dell'applicazione: sono stati rimossi la configurazione del motore SQLite (WAL, `BEGIN IMMEDIATE`, controllo di versione), i lock in processo, la ricostruzione delle tabelle SQLite all'avvio, il converter SQLite→PostgreSQL e lo script `migrate_data.py`. Server, portable e nuove app desktop (layout 2) usano solo PostgreSQL: nessuna funzione, dato o permesso cambia. Resta il solo backup pre-aggiornamento dei vecchi profili desktop SQLite (`backend/sqlite_backup.py`), ancora richiesto dal guscio desktop. Nessuna modifica ai controlli della Guida interfaccia.
 
 Le build desktop in preparazione per `2.0.0` includono PostgreSQL 15.12
 incorporato (distribuzione 15.12.1), senza richiedere un server installato a
@@ -2398,15 +2414,13 @@ La guida interfaccia nelle sei lingue è stata rivista senza cambiamenti di
 navigazione; procedure e limiti: `docs/operations/desktop-ci-recovery.md`.
 
 
-Chat, Assistente e lettura vocale rilasciano esplicitamente la transazione della richiesta prima di iniziare lo stream; i log finali e i salvataggi usano transazioni brevi. Anche le verifiche del budget e delle credenziali ChatGPT chiudono la propria sessione prima della risposta del provider. Un benchmark ripetibile simula 30 studenti con stream sintetici, salvataggi concorrenti e attività in background, verificando l'assenza di errori di lock, l'avanzamento delle letture e l'integrità dei dati. Misure e limiti della simulazione sono in `docs/operations/sqlite-load-concurrency.md`: non misurano la velocità di un provider LLM reale. Guida interfaccia e screenshot nelle sei lingue rivisti, senza nuovi controlli o testi utente.
+Chat, Assistente e lettura vocale rilasciano esplicitamente la transazione della richiesta prima di iniziare lo stream; i log finali e i salvataggi usano transazioni brevi. Anche le verifiche del budget e delle credenziali ChatGPT chiudono la propria sessione prima della risposta del provider. Guida interfaccia e screenshot nelle sei lingue rivisti, senza nuovi controlli o testi utente.
 
-Le statistiche dei costi settimanali, mensili e annuali funzionano anche su SQLite, con le stesse settimane ISO e gli stessi filtri per provider e modello di Postgres. L'inizializzazione degli obiettivi, le impostazioni API personali, i collegamenti ChatGPT e i segnalibri di lettura del forum gestiscono inserimenti ripetuti senza duplicati su entrambi i motori. Nei nuovi database SQLite, le prenotazioni incontro cancellate non impediscono una nuova prenotazione; solo quelle attive restano univoche. Contratto tecnico e limiti: `docs/operations/runtime-sql-compatibility.md`. Nessuna modifica ai controlli della Guida interfaccia.
-
-Quando un'app desktop si aggiorna, il backend confronta all'avvio i controlli di coerenza (CHECK) delle tabelle del file SQLite esistente con quelli della nuova versione e, se diversi, ricostruisce la tabella conservando righe, collegamenti e indici: per esempio un tipo di passo nuovo del percorso di classe non viene più rifiutato da un controllo vecchio. Le migrazioni future possono cambiare vincoli, nullabilità e tipi anche su SQLite con la stessa ricostruzione. Su un file nuovo o già aggiornato non cambia nulla; server e portable (Postgres) sono invariati. Contratto tecnico: `docs/operations/sqlite-schema-updates.md`. Nessuna modifica ai controlli della Guida interfaccia.
+L'inizializzazione degli obiettivi, le impostazioni API personali, i collegamenti ChatGPT e i segnalibri di lettura del forum gestiscono inserimenti ripetuti senza duplicati; le prenotazioni incontro cancellate non impediscono una nuova prenotazione, solo quelle attive restano univoche. Contratto tecnico e limiti: `docs/operations/runtime-sql-compatibility.md`. Nessuna modifica ai controlli della Guida interfaccia.
 
 Per le app desktop è integrato il modulo di backup SQLite pre-aggiornamento: il guscio desktop esegue automaticamente un backup coerente e verificato del database SQLite (invocando la rotta protetta `POST /internal/backup` se il backend è avviato, oppure il sidecar con `--backup` se è fermo) prima di scaricare o applicare qualsiasi aggiornamento software. Se il backup non va a buon fine, l'aggiornamento viene abortito tassativamente per prevenire corruzioni o perdite di dati. I backup mantengono le ultime 7 copie con rotazione protetta nella cartella `backups` dei dati (`DATA_DIR` o `COUNSELORBOT_BACKUP_DIR`). Nel pannello di controllo dell'app docente è disponibile la sezione «Aggiornamenti software» con selezione del canale (stabile o beta), verifica disponibilità e applicazione con feedback immediato del backup di sicurezza. Procedura tecnica e rollback: `docs/operations/desktop-teacher-shell.md` e `docs/operations/sqlite-backups.md`. Guida interfaccia e screenshot nelle sei lingue rivisti, senza variazioni.
 
-Le operazioni concorrenti sulla stessa risorsa (per esempio salvataggi della timeline, obiettivi e impostazioni AI personali o del recupero documenti) usano ora lock di transazione anche su SQLite: il lock si libera alla conclusione della transazione. Poiché questi lock SQLite funzionano dentro un solo processo, il backend rifiuta configurazioni note con più worker. Il contratto tecnico e i controlli sono descritti in `docs/operations/transaction-locks.md`; l’integrazione desktop completa resta in sviluppo.
+Le operazioni concorrenti sulla stessa risorsa (per esempio salvataggi della timeline, obiettivi e impostazioni AI personali o del recupero documenti) usano lock di transazione PostgreSQL (advisory lock), liberati alla conclusione della transazione. Il contratto tecnico e i controlli sono descritti in `docs/operations/transaction-locks.md`.
 
 Per le future app desktop il frontend stabilisce l'origine di ogni richiesta verso il server: «tunnel» se arriva da Internet attraverso Cloudflare (studenti), «locale» se arriva dal PC del docente. Il server la accetta solo se è firmata con il segreto che l'app genera a ogni avvio; senza firma valida la tratta sempre come «tunnel», cioè con le restrizioni più severe. Intestazioni di origine inviate da un browser vengono scartate. Nelle installazioni server attuali (Docker) il segreto non esiste: nessuna funzione, dato o permesso cambia. Contratto in `docs/architecture/adr/0002-desktop-phase-1-contracts.md` §2.7.
 

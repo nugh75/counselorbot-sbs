@@ -9,7 +9,7 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
-from sqlalchemy import DateTime, cast, func, or_
+from sqlalchemy import cast, func, or_
 from sqlalchemy import text as sa_text
 from sqlalchemy.orm import Session
 from sqlalchemy.types import Text
@@ -34,7 +34,7 @@ from ..api_secrets import (
     resolve_api_secrets,
 )
 from ..content_versions import CATALOG_CONTENT_TYPES, CONTENT_TYPES, ContentVersionError
-from ..db_compat import is_sqlite, xact_lock
+from ..db_compat import xact_lock
 from ..dynamic_registry import invalidate_instrument_cache
 from ..local_llm import LLAMACPP_KEY_CONFIG
 from ..training_dataset import (
@@ -218,7 +218,7 @@ def _apply_log_filters(
             raise HTTPException(status_code=400, detail="to_date non valido (usa ISO 8601)")
     if search:
         # Ricerca case-insensitive nel JSON details (CAST details AS TEXT).
-        # SQLite: details e' gia' TEXT; Postgres: e' JSON, serve il cast.
+        # details e' JSON: serve il cast.
         like = f"%{search.lower()}%"
         q = q.filter(cast(models.Log.details, Text).ilike(like))
     return q
@@ -681,15 +681,7 @@ def _cost_period_aggregate(db: Session, unit: str, filt: dict) -> list[dict]:
 
     Calcolato su tutta la storia (i filtri data sono azzerati dal chiamante),
     rispettando gli altri filtri (provider/modello/questionario/...)."""
-    if is_sqlite(db):
-        # SQLite >= 3.35: avoid the newer ISO-week strftime directives.
-        # Moving back six days then forward to Monday includes Monday itself.
-        modifiers = {"week": ("-6 days", "weekday 1"),
-                     "month": ("start of month",), "year": ("start of year",)}
-        period_col = func.strftime("%Y-%m-%d 00:00:00", models.Log.timestamp,
-                                   *modifiers[unit], type_=DateTime())
-    else:
-        period_col = func.date_trunc(unit, models.Log.timestamp)
+    period_col = func.date_trunc(unit, models.Log.timestamp)
     q = db.query(
         period_col.label("period"),
         func.coalesce(func.sum(models.Log.cost_usd), 0.0).label("cost"),

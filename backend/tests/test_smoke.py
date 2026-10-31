@@ -162,9 +162,6 @@ class _FakeAIService:
         }
         yield {"type": "content", "text": "RISPOSTA_TEST"}
 
-    def generate_summary(self, *a, **k):
-        return "riassunto test"
-
     def call_vision(self, prompt, image_base64, **kwargs):
         # Il ripiego OCR non e' mai atteso dai test che usano questo finto.
         raise AssertionError("Vision fallback non previsto in _FakeAIService")
@@ -5178,7 +5175,7 @@ def test_pqbl_json_repair_and_question_salvaging():
     class MockAI:
         def __init__(self):
             self.config = {}
-        def get_response(self, user_msg, sys_prompt, mode, max_tokens, provider=None, model=None):
+        def get_response(self, user_msg, sys_prompt, mode, max_tokens, provider=None, model=None, json_mode=False):
             return truncated_json
             
     ai_mock = MockAI()

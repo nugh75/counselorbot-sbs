@@ -986,7 +986,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     reading_candidates = prepared.reading_candidates
     strategy_candidates = prepared.strategy_candidates
     system_prompt_final = prepared.system_prompt_final
-    full_message = continuation_message(prepared.full_message, request.partial_response)
+    full_message = continuation_message(prepared.full_message, request.partial_response, system_prompt_final)
     history = prepared.history
     sanitize = prepared.sanitize
     session_memory.update_context(
