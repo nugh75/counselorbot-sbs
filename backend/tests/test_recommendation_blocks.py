@@ -1,3 +1,4 @@
+import pytest
 from backend.recommendation_blocks import extract, strip_for_display, build_directive, retain_visible
 
 
@@ -158,6 +159,35 @@ def test_answer_envelope_recommendations_are_recorded_within_the_catalogue():
         assert selected == expected
 
 
+def _reversed_envelope(answer, recommendations, **dumps):
+    import json
+    return json.dumps({'recommendations': recommendations, 'answer': answer}, ensure_ascii=False, **dumps)
+
+
+@pytest.mark.parametrize('wrap', [
+    lambda body: body,
+    lambda body: ENVELOPE_TEXT + body,
+    lambda body: ENVELOPE_TEXT + '\n```json\n' + body + '\n```',
+], ids=['alone', 'after-prose', 'json-fence'])
+@pytest.mark.parametrize('indent', [None, 1])
+def test_envelope_with_keys_in_any_order_never_reaches_the_student(wrap, indent):
+    raw = wrap(_reversed_envelope(ENVELOPE_TEXT, {'reading': [], 'strategy': ['active']}, indent=indent))
+    for end in range(len(raw) + 1):
+        visible = strip_for_display(raw[:end])
+        assert ENVELOPE_TEXT.startswith(visible.rstrip()), raw[:end][-40:]
+        assert '{' not in visible and 'recommendations' not in visible and '`' not in visible
+    assert strip_for_display(raw) == ENVELOPE_TEXT
+    assert extract(raw, strategies={'active': 'Recupero attivo'}) == (
+        ENVELOPE_TEXT, {'reading': [], 'strategy': ['active']})
+
+
+def test_ordinary_json_with_answer_or_recommendations_keys_stays_visible():
+    for text in ('Esempio:\n```json\n{"recommendations": ["leggi"], "person": "Ada"}\n```',
+                 'Formato: {"recommendations": [], "answer": 42}'):
+        assert strip_for_display(text) == text
+        assert extract(text)[0] == text
+
+
 def test_ordinary_json_and_braces_stay_visible():
     for text in ('Usa la formula {a + b}.', 'Esempio:\n```json\n{"name": "Ada"}\n```', 'Un insieme {1, 2}'):
         assert strip_for_display(text) == text
@@ -205,3 +235,19 @@ def test_ordinary_bare_json_and_unlabelled_code_stay_visible():
                  'Esempio:\n```\n{"name": "Ada"}\n```'):
         assert strip_for_display(text) == text
         assert extract(text)[0] == text
+
+
+def test_private_blocks_share_one_order_with_the_step_marker_last():
+    # A02: visible text, then private blocks, then [[AVANZA_STEP]] alone on the last line.
+    from backend.event_booklet import DIRECTIVE as booklet
+    from backend.goal_draft import DIRECTIVE as goal
+    from backend.prompt_contract import turn_contract
+    from backend.recommendation_blocks import notes_directive
+
+    contract = turn_contract(language='it', questionnaire_type='QSA', phase='cognitive', advice_allowed=True)
+    assert 'private blocks, and the [[AVANZA_STEP]] marker' in contract
+    for text in (build_directive({'book': 'Libro'}, {}), notes_directive(advice_allowed=True), booklet, goal):
+        assert 'very end' not in text
+        assert 'marker line' in text
+    for text in (build_directive({'book': 'Libro'}, {}, idea=True), notes_directive(advice_allowed=True, idea=True)):
+        assert 'before the final idea patch' in text and 'AVANZA_STEP' not in text

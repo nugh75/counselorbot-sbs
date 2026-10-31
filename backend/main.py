@@ -264,6 +264,7 @@ import_module("backend.migrations.20261025_credential_deks").migrate(database.en
 import_module("backend.migrations.20261025_privacy_consent").migrate(database.engine)
 import_module("backend.migrations.20261027_class_response_format").migrate(database.engine)
 import_module("backend.migrations.20261028_deep_dive_attempts").migrate(database.engine)
+import_module("backend.migrations.20261031_drop_dead_prompts").migrate(database.engine)
 
 
 @asynccontextmanager
@@ -1033,6 +1034,7 @@ def _run_seed_and_migrations():
                 apply_english_skill_instructions_policy,
                 apply_event_paths_policy,
                 apply_idea_concept_policy,
+                apply_idea_edge_keys_policy,
                 apply_idea_focus_policy,
                 apply_idea_wayfinder_policy,
                 apply_obiettivo_engine_policy,
@@ -1056,6 +1058,7 @@ def _run_seed_and_migrations():
             diagram_semantic_icons_changed = apply_diagram_semantic_icons_policy(db)
             diagram_factor_symbols_changed = apply_diagram_factor_symbols_policy(db)
             idea_changed = apply_idea_focus_policy(db)
+            idea_edges_changed = apply_idea_edge_keys_policy(db)
             event_paths_changed = apply_event_paths_policy(db)
             obiettivo_engine_changed = apply_obiettivo_engine_policy(db)
             idea_concept_changed = apply_idea_concept_policy(db)
@@ -1065,7 +1068,8 @@ def _run_seed_and_migrations():
                     or i18n_changed or english_changed or diagram_changed
                     or diagram_icons_changed or diagram_mapping_changed
                     or diagram_shapes_changed
-                    or diagram_symbol_changed or idea_changed or idea_concept_changed or wayfinder_changed
+                    or diagram_symbol_changed or idea_changed or idea_edges_changed
+                    or idea_concept_changed or wayfinder_changed
                     or diagram_semantic_icons_changed
                     or diagram_factor_symbols_changed
                     or budget_changed or event_paths_changed or obiettivo_engine_changed):

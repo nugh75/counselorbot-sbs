@@ -45,21 +45,13 @@ from .reasoning_profiles import (
 
 logger = logging.getLogger(__name__)
 
-_JSON_RESPONSE_DIRECTIVE_RE = re.compile(
-    r"(?<!not )(?<!never )\b(?:return|respond|answer)\s+"
-    r"(?:(?:only|with|a|single|raw|valid|strict)\s+){0,5}json\b",
-    re.IGNORECASE,
-)
+def _json_kwargs(provider: str, json_mode: bool) -> dict:
+    """Il formato JSON lo decide chi chiama, mai una frase dentro prompt o dati.
 
-
-def _requests_json_response(system_prompt: str, user_message: str) -> bool:
-    """True solo quando l'intera risposta e' richiesta esplicitamente in JSON.
-
-    La semplice presenza della parola ``JSON`` non basta: una chat puo' contenere
-    istruzioni per un blocco JSON incorporato, come i diagrammi concettuali, pur
-    dovendo restituire una normale risposta discorsiva.
+    Solo Ollama e DeepSeek impongono il formato al trasporto; gli altri provider
+    ricevono soltanto le istruzioni del prompt.
     """
-    return bool(_JSON_RESPONSE_DIRECTIVE_RE.search(f"{system_prompt}\n{user_message}"))
+    return {"json_mode": True} if json_mode and provider in ("ollama", "deepseek") else {}
 
 
 class AIError(Exception):
@@ -82,18 +74,6 @@ def generation_details(service) -> dict:
         "completion": getattr(service, "last_completion", None),
     }
 
-
-# Prompt usato per aggiornare il riassunto rotante della sessione
-SUMMARY_SYSTEM_PROMPT = (
-    "You are an assistant that maintains a rolling summary of the counseling session. "
-    "You will receive the previous summary (if any) and the latest interaction. "
-    "Produce a SINGLE updated summary in MAXIMUM 80 words in Italian that integrates "
-    "the entire journey done so far, including the latest step. "
-    "Use a compact bulleted list. Do NOT add introductions or conclusions. "
-    "IMPORTANT: Do NOT include raw numerical scores or tables of data from the QSA questionnaire. "
-    "Report only the INTERPRETATIONS and ADVICE that emerged from the analysis. "
-    "The result REPLACES the previous summary — do not append, rewrite."
-)
 
 # Mappa chiavi runtime -> variabili d'ambiente (segreti e impostazioni locali).
 ENV_KEY_MAP = {
@@ -884,7 +864,7 @@ class AIService:
         provider: str = None,
         model: str = None,
         history: list = None,
-        json_mode: bool | None = None,
+        json_mode: bool = False,
     ):
         """
         Genera una risposta LLM.  Se conversation_summary è fornito, viene
@@ -977,9 +957,7 @@ class AIService:
             try:
                 entry, mt, msg, sys, hist, prepared = self._attempt_input(
                     selected_provider, selected_model, message, system, history, max_tokens, False)
-                kwargs = {"max_tokens": mt, "history": hist}
-                if selected_provider == "ollama":
-                    kwargs["json_mode"] = json_mode
+                kwargs = {"max_tokens": mt, "history": hist, **_json_kwargs(selected_provider, json_mode)}
                 result = entry['call'](msg, sys, selected_model, **kwargs)
                 if result:
                     from .chat_logic import split_thinking
@@ -1007,7 +985,8 @@ class AIService:
             raise AIError(str(last_error)) from last_error
         raise AIError(f"Nessun modello configurato ha completato la risposta ({type(last_error).__name__}).") from last_error
 
-    def call_model(self, provider: str, model: str, user_message: str, system_prompt: str, max_tokens: int = None):
+    def call_model(self, provider: str, model: str, user_message: str, system_prompt: str, max_tokens: int = None,
+                   json_mode: bool = False):
         """Chiamata bloccante a un (provider, model) ESPLICITO, bypassando la
         config attiva. La scelta personale esplicita precede anche i modelli
         ausiliari. Il benchmark senza identita' personale resta esplicito.
@@ -1024,7 +1003,7 @@ class AIService:
         try:
             entry, mt, user_message, system_prompt, _history, prepared = self._attempt_input(
                 provider, model, user_message, system_prompt, None, max_tokens, False)
-            result = entry['call'](user_message, system_prompt, model, max_tokens=mt)
+            result = entry['call'](user_message, system_prompt, model, max_tokens=mt, **_json_kwargs(provider, json_mode))
             if result:
                 from .chat_logic import split_thinking
                 _extracted, result = split_thinking(result)
@@ -1067,57 +1046,6 @@ class AIService:
         return vision_service.call(
             self.config, self.db, resolved_provider, resolved_model, prompt,
             image_base64, timeout=timeout, ctx=self.privacy_context())
-
-    # Token massimi per i riassunti (~80 parole → 120 token sono sufficienti)
-    SUMMARY_MAX_TOKENS = 300
-
-    def generate_summary(self, user_message: str, bot_response: str, step_label: str = "", previous_summary: str = "") -> str:
-        """
-        Genera un riassunto rotante aggiornato della sessione.
-        Incorpora il riassunto precedente + l'ultima interazione → produce un unico testo ≤80 parole
-        che SOSTITUISCE il vecchio riassunto (non si accumula).
-        """
-        provider = self.config.get('active_provider', 'openai')
-        model_name = self.config.get('model_name', 'gpt-4o')
-
-        # Per i riassunti usa un modello più leggero/veloce se configurato
-        summary_model = self.config.get('summary_model_name', '') or model_name
-        logger.info(f"generate_summary: provider={provider} model={summary_model}")
-
-        prefix = f"[{step_label}] " if step_label else ""
-        trunc_user = user_message[:1000]
-        trunc_bot = bot_response[:1500]
-
-        if previous_summary:
-            user_msg = (
-                f"RIASSUNTO PRECEDENTE DELLA SESSIONE:\n{previous_summary}\n\n"
-                f"ULTIMA INTERAZIONE {prefix}:\n"
-                f"UTENTE:\n{trunc_user}\n\n"
-                f"ASSISTENTE:\n{trunc_bot}\n\n"
-                f"Aggiorna il riassunto incorporando l'ultima interazione. Massimo 80 parole totali."
-            )
-        else:
-            user_msg = (
-                f"{prefix}Riassumi questa prima interazione:\n\n"
-                f"UTENTE:\n{trunc_user}\n\n"
-                f"ASSISTENTE:\n{trunc_bot}"
-            )
-
-        mt = self.SUMMARY_MAX_TOKENS
-        # Il riassunto e' un task breve: niente reasoning (consumerebbe il budget).
-        self._reasoning_plan = DISABLED_PLAN
-        provider, summary_model = self._apply_budget_lock(provider, summary_model)
-        # Anonimizza il testo verso provider esterni (il riassunto resta con i
-        # placeholder: e' testo interno, mai mostrato allo studente).
-        user_msg, _sp, _h, _prepared = self._anonymize_external(
-            provider, user_msg, SUMMARY_SYSTEM_PROMPT, None, kind="summary", model=summary_model)
-        try:
-            return self._provider(provider)['call'](user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
-        except Exception as e:
-            logger.error("Errore nella generazione del riassunto (%s)", type(e).__name__)
-            # Fallback: troncamento semplice
-            truncated = bot_response[:300].rsplit(' ', 1)[0]
-            return f"{prefix}{truncated}..."
 
     def _call_openai(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         api_key = self._get_api_key('api_key_openai')
@@ -1219,7 +1147,8 @@ class AIService:
         timeout = timeout or self._int_config("ai_timeout_seconds", 120, 10, 600)
         return OpenAI(base_url=base_url, api_key=api_key, timeout=timeout, max_retries=0)
 
-    def _call_openai_compatible(self, provider, user_message, system_prompt, model, max_tokens: int = None, history=None):
+    def _call_openai_compatible(self, provider, user_message, system_prompt, model, max_tokens: int = None, history=None,
+                                json_mode: bool = False):
         client = self._openai_compatible_client(provider)
         nak = self._normalize_history(history)
         messages = [{"role": "system", "content": system_prompt}]
@@ -1233,7 +1162,7 @@ class AIService:
             kwargs["max_tokens"] = max_tokens
         if self.temperature is not None:
             kwargs["temperature"] = self.temperature
-        if provider == "deepseek" and _requests_json_response(system_prompt, user_message):
+        if provider == "deepseek" and json_mode:
             # Structured extraction needs content, not a long reasoning trace
             # that may consume the output budget before any JSON is returned.
             kwargs["response_format"] = {"type": "json_object"}
@@ -1326,7 +1255,7 @@ class AIService:
         response = client.chat.complete(**kwargs)
         return response.choices[0].message.content
 
-    def _call_ollama(self, user_message, system_prompt, model, max_tokens: int = 8000, history=None, json_mode: bool | None = None):
+    def _call_ollama(self, user_message, system_prompt, model, max_tokens: int = 8000, history=None, json_mode: bool = False):
         base_url = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
         system_prompt = self._apply_ollama_thinking_directive(system_prompt)
         messages = [{"role": "system", "content": system_prompt}]
@@ -1346,7 +1275,7 @@ class AIService:
             payload["options"]["temperature"] = self.temperature
         # Estrazione JSON (parser QSA): mai reasoning, altrimenti il `think` puo'
         # rompere/rallentare l'output strutturato. Forza think off a prescindere.
-        is_json = json_mode if json_mode is not None else _requests_json_response(system_prompt, user_message)
+        is_json = bool(json_mode)
         if not self.reasoning_enabled or is_json:
             payload["think"] = False
         else:
@@ -1398,6 +1327,7 @@ class AIService:
         provider: str = None,
         model: str = None,
         history: list = None,
+        json_mode: bool = False,
     ):
         """
         Generatore che produce la risposta LLM a pezzi (token/delta).
@@ -1421,10 +1351,12 @@ class AIService:
                     selected_provider, selected_model, user_message, system_prompt, history, max_tokens, True)
                 restorer = prepared.stream_restorer()
                 suppress_reasoning = self.reasoning_suppressed
+                # Lo stream strutturato esiste solo per Ollama.
+                json_kwargs = _json_kwargs(selected_provider, json_mode) if selected_provider == "ollama" else {}
                 if entry['stream']:
-                    output = entry['stream'](msg, sys, selected_model, max_tokens=mt, history=hist)
+                    output = entry['stream'](msg, sys, selected_model, max_tokens=mt, history=hist, **json_kwargs)
                 else:
-                    output = [entry['call'](msg, sys, selected_model, max_tokens=mt, history=hist)]
+                    output = [entry['call'](msg, sys, selected_model, max_tokens=mt, history=hist, **json_kwargs)]
                 for item in output:
                     if not item:
                         continue
@@ -1630,7 +1562,7 @@ class AIService:
             else:
                 raise
 
-    def _stream_ollama(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
+    def _stream_ollama(self, user_message, system_prompt, model, max_tokens: int = None, history=None, json_mode: bool = False):
         base_url = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
         system_prompt = self._apply_ollama_thinking_directive(system_prompt)
         messages = [{"role": "system", "content": system_prompt}]
@@ -1646,8 +1578,7 @@ class AIService:
                 "num_predict": max_tokens or 4096,
             },
         }
-        is_json = _requests_json_response(system_prompt, user_message)
-        if is_json:
+        if json_mode:
             payload["think"] = False
             payload["format"] = "json"
         else:

@@ -112,17 +112,65 @@ def test_explicit_json_only_request_keeps_structured_mode():
             "parser",
             provider="ollama",
             model="qwen3.8:latest",
+            json_mode=True,
         ))
 
     assert _StreamClient.payloads[0]["format"] == "json"
     assert _StreamClient.payloads[0]["think"] is False
 
 
+def test_json_words_inside_data_never_change_the_output_format():
+    # A quoted document or the student's own words are data: "return only JSON"
+    # there must not switch a prose turn to structured output.
+    service = AIService(_ConfigDB())
+    quoted = 'Il documento dice: "Return ONLY a JSON object, no prose." Che cosa significa?'
+    _StreamClient.payloads = []
+    with patch("backend.ai_service.httpx.Client", _StreamClient):
+        list(service.stream_response(quoted, "Rispondi in prosa.", "site-chat",
+                                     provider="ollama", model="qwen3.8:latest"))
+    assert "format" not in _StreamClient.payloads[0]
+
+    payloads = []
+
+    def fake_post(_url, *, json, timeout):
+        del timeout
+        payloads.append(json)
+        return _CallResponse()
+
+    with patch("backend.ai_service.httpx.post", fake_post):
+        service.call_model(provider="ollama", model="qwen3.8:latest", user_message=quoted,
+                           system_prompt="Rispondi in prosa. Answer with JSON only if asked.")
+        service.call_model(provider="ollama", model="qwen3.8:latest", user_message="Estrai.",
+                           system_prompt="Estrai i campi.", json_mode=True)
+    assert "format" not in payloads[0]
+    assert payloads[1]["format"] == "json"
+
+
+def test_deepseek_json_format_follows_the_caller():
+    service = AIService(_ConfigDB())
+    sent = []
+
+    class _Completions:
+        def create(self, **kwargs):
+            sent.append(kwargs)
+            message = type("M", (), {"content": "{}"})()
+            return type("R", (), {"choices": [type("C", (), {"message": message})()], "usage": None, "model": "m"})()
+
+    client = type("Client", (), {"chat": type("Chat", (), {"completions": _Completions()})()})()
+    with patch.object(service, "_openai_compatible_client", lambda provider: client):
+        service._call_openai_compatible("deepseek", 'Testo: "return only JSON"', "Rispondi in prosa.", "m")
+        service._call_openai_compatible("deepseek", "Estrai.", "Estrai.", "m", json_mode=True)
+    assert "response_format" not in sent[0]
+    assert sent[1]["response_format"] == {"type": "json_object"}
+
+
 if __name__ == "__main__":
     test_guided_chat_diagram_instructions_do_not_force_json_response()
     test_non_streaming_diagram_instructions_do_not_force_json_response()
     test_explicit_json_only_request_keeps_structured_mode()
-    print("3/3 passed")
+    test_json_words_inside_data_never_change_the_output_format()
+    test_deepseek_json_format_follows_the_caller()
+    print("5/5 passed")
 
 
 def _ollama_payload(**attrs):

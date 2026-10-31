@@ -24,6 +24,7 @@ from ..api_models import SiteChatRequest
 from ..chat_continuation import continuation_message, merge_continuation
 from ..chat_logic import (
     DEFAULT_NO_REASONING_DIRECTIVE,
+    ThinkStreamSplitter,
     _apply_language_directive,
     _apply_reasoning_directive,
     _apply_response_length_directive,
@@ -213,6 +214,22 @@ _INSTRUMENT_QUERY_PATTERNS = {
 }
 
 
+def _without_inline_thinking(stream):
+    """Separa il ragionamento inline (<think>...) prima di display, limite parole e voce.
+
+    Stesso separatore della chat guidata: un provider che scrive il ragionamento
+    nel contenuto non deve farlo comparire nemmeno per un istante.
+    """
+    splitter = ThinkStreamSplitter()
+    for item in stream:
+        if isinstance(item, dict) and item.get("type") in ("usage", "reasoning"):
+            yield item
+            continue
+        text = item.get("text") if isinstance(item, dict) else item
+        yield from splitter.feed(text or "")
+    yield from splitter.flush()
+
+
 def _filter_single_instrument_results(question: str, results: list[dict]) -> list[dict]:
     """Per richieste esplicite su un solo strumento esclude chunk estranei."""
     mentioned = [code for code, pattern in _INSTRUMENT_QUERY_PATTERNS.items() if pattern.search(question)]
@@ -388,7 +405,8 @@ async def site_chat_stream(
             system_prompt, disabled=True,
             no_reasoning_directive=DEFAULT_NO_REASONING_DIRECTIVE,
         )
-    system_prompt = _apply_response_length_directive(system_prompt, request.response_length)
+    system_prompt = _apply_response_length_directive(system_prompt, request.response_length,
+                                                     partial_response=request.partial_response or "")
     system_prompt = apply_response_format(system_prompt, request.response_format)
     max_tokens = _response_length_max_tokens(request.response_length, request.max_tokens)
     top_k = _top_k(ai_service)
@@ -558,7 +576,8 @@ async def site_chat_stream(
         usage_info = None
         previous_display = request.partial_response
         try:
-            for item in ai_service.stream_response(full_message, system_prompt, "site-chat", max_tokens=max_tokens):
+            for item in _without_inline_thinking(
+                    ai_service.stream_response(full_message, system_prompt, "site-chat", max_tokens=max_tokens)):
                 if isinstance(item, dict) and item.get("type") == "usage":
                     usage_info = item.get("usage")
                     continue

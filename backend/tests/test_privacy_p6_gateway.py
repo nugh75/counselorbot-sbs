@@ -344,8 +344,7 @@ def test_no_corpus_value_reaches_the_provider_in_clear(strict, wire, monkeypatch
     reply = ai.get_response(message, system, "generic", history=history)
     streamed = "".join(item["text"] for item in ai.stream_response(message, system, "generic", history=history)
                        if item.get("type") == "content")
-    ai.generate_summary(message, "Risposta sintetica", "step")
-    assert len(wire.bodies) == 3 and set(wire.hosts) == {"api.openai.com"}
+    assert len(wire.bodies) == 2 and set(wire.hosts) == {"api.openai.com"}
     assert leaked(rows, wire.strings()) == []
     # Restored for the authorized student: only generalized values stay as categories.
     assert not NUMBERED.search(reply) and not NUMBERED.search(streamed)

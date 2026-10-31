@@ -181,14 +181,13 @@ def test_user_target_overrides_counselor_and_never_falls_back(client, db, stream
         else: service.get_response('hello', 'system', 'generic')
 
 
-def test_direct_calls_and_summaries_use_personal_model(client, db):
+def test_direct_calls_use_personal_model(client, db):
     save(client)
     service = AIService(db, username='alice')
     models_seen = []
     service._providers['openai']['call'] = lambda m, s, model, **k: models_seen.append(model) or 'result'
     assert service.call_model('anthropic', 'system-model', 'message', 'system') == 'result'
-    assert service.generate_summary('message', 'answer') == 'result'
-    assert models_seen == ['own-model', 'own-model']
+    assert models_seen == ['own-model']
     assert AIService(db, username='bob').personal_target is None
 
 

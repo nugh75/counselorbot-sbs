@@ -387,7 +387,9 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
                      'Edges use source and target. Node status is mentioned, defined, delimited or related. '
                      'Never use nodes/edges or from/to as patch keys. Keep the patch complete and closed.')
     else:
-        lines.append("Private blocks follow the visible reply; never describe their syntax to the student.")
+        lines.append("Order every reply the same way: the visible text first, then any private blocks, and the "
+                     "[[AVANZA_STEP]] marker, when the step closes, alone on the very last line after them. "
+                     "Never describe their syntax to the student.")
     if guided_choice:
         from .prompt_config import GUIDED_CHOICE_DIRECTIVE
         lines.append(GUIDED_CHOICE_DIRECTIVE)

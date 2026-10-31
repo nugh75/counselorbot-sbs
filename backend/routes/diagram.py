@@ -305,6 +305,7 @@ async def diagram_from_message(
                         user_message=_spec_request(request, previous),
                         system_prompt=system_prompt,
                         max_tokens=2400,
+                        json_mode=True,
                     ),
                     timeout=remaining,
                 )

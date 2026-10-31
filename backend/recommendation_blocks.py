@@ -46,6 +46,9 @@ _PRIVATE_KEYS = ("recommendations", "reading", "strategy", "notes")
 # risposta in {"answer": ..., "recommendations": ...}, spesso dopo lo stesso
 # testo in prosa e senza recinto: l'answer e' la risposta visibile.
 _ENVELOPE_RE = re.compile(r'(?:```(?:json)?[ \t]*\r?\n?)?\{\s*"answer"\s*:\s*"')
+# Stesso involucro con le chiavi in ordine inverso: {"recommendations": ..., "answer": ...}.
+_REVERSED_ENVELOPE_RE = re.compile(r'(?:```(?:json)?[ \t]*\r?\n?)?\{\s*"recommendations"\s*:\s*')
+_ANSWER_KEY_RE = re.compile(r'\s*,\s*"answer"\s*:\s*"')
 _PARTIAL_ENVELOPE_RE = re.compile(r'\{\s*(?:"(?:a(?:n(?:s(?:w(?:e(?:r(?:"\s*:?\s*)?)?)?)?)?)?)?)?$')
 
 
@@ -102,7 +105,8 @@ def build_directive(
     lines.append(
         "Rules: use these exact ids and nothing else; never invent an id; leave an "
         "array empty when you recommended nothing from that catalogue; write the "
-        "block once, at the very end of the message. Candidates are not yet shown in "
+        "block once, after the visible reply and before any [[AVANZA_STEP]] marker line, which "
+        "stays last. Candidates are not yet shown in "
         "the panel: only this declaration adds them. Select an item only when the "
         "visible response actually proposes it; never select a rejected item or one "
         "awaiting clarification. Name each selected work or strategy in the visible "
@@ -111,7 +115,8 @@ def build_directive(
     )
     directive = "\n".join(lines)
     if idea:
-        directive = directive.replace("at the very end of the message", "after the visible reply and before the final idea patch")
+        directive = directive.replace(
+            "before any [[AVANZA_STEP]] marker line, which stays last", "before the final idea patch")
     return directive
 
 
@@ -242,16 +247,33 @@ def _envelope_payload(value) -> str | None:
     return json.dumps({"reading": ids, "strategy": ids})
 
 
+def _reversed_envelope(text: str) -> tuple[int | None, int | None]:
+    """Inizio dell'involucro con "recommendations" per prima chiave e della sua answer.
+
+    Vale solo quando dopo le raccomandazioni arriva la chiave "answer": un JSON
+    ordinario con altre chiavi resta testo.
+    """
+    for match in _REVERSED_ENVELOPE_RE.finditer(text):
+        try:
+            _, end = json.JSONDecoder().raw_decode(text, match.end())
+        except ValueError:
+            continue
+        if answer := _ANSWER_KEY_RE.match(text, end):
+            return match.start(), answer.end()
+    return None, None
+
+
 def _unwrap_envelope(text: str, *, final: bool) -> tuple[str, list[str]]:
     """Sostituisce l'involucro {"answer": ...} con la sua answer, senza duplicare il testo."""
     from .chat_continuation import merge_continuation
 
     match = _ENVELOPE_RE.search(text)
-    if not match:
+    start, answer_start = (match.start(), match.end()) if match else _reversed_envelope(text)
+    if start is None:
         partial = None if final else _PARTIAL_ENVELOPE_RE.search(text)
         return (text[:partial.start()].rstrip() if partial else text), []
-    prefix = text[:match.start()]
-    brace = text.index("{", match.start())
+    prefix = text[:start]
+    brace = text.index("{", start)
     try:
         data, end = json.JSONDecoder().raw_decode(text, brace)
     except ValueError:
@@ -260,7 +282,7 @@ def _unwrap_envelope(text: str, *, final: bool) -> tuple[str, list[str]]:
         answer, rest = data["answer"], re.sub(r"^\s*```", "", text[end:])
         payload = _envelope_payload(data.get("recommendations"))
     else:
-        answer, rest, payload = _json_string_prefix(text, match.end()), "", None
+        answer, rest, payload = _json_string_prefix(text, answer_start), "", None
     head = prefix.rstrip()
     if not head or answer.startswith(head):
         visible = answer if final or len(answer) >= len(head) else head
@@ -366,7 +388,8 @@ def _whitelist(values, allowed: Mapping[str, str]) -> list[str]:
 
 def notes_directive(*, advice_allowed: bool, idea: bool = False, hypothesis_allowed: bool = False, example_lens: str = "A5") -> str:
     """Log concrete proposals, reflective questions and interpretive hypotheses without certifying them."""
-    position = "before the final idea patch" if idea else "at the very end"
+    position = ("before the final idea patch" if idea else
+                "after the visible reply and before any [[AVANZA_STEP]] marker line, which stays last")
     kinds = "question, advice or hypothesis" if hypothesis_allowed else "question or advice"
     hyp_sentence = (
         " and one interpretive reading offered as an open hypothesis (with optional lens: factor code)"

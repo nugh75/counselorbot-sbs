@@ -143,6 +143,7 @@ def test_slow_fallback_returns_service_error(generate, monkeypatch):
 
 @pytest.mark.parametrize('provider,prompt,structured', [
     ('deepseek', diagram.SPEC_ONLY_SYSTEM_PROMPT, True),
+    ('deepseek', diagram.SPEC_ONLY_SYSTEM_PROMPT, False),
     ('deepseek', 'Explain the topic; include a diagram JSON block if useful.', False),
     ('groq', diagram.SPEC_ONLY_SYSTEM_PROMPT, False),
 ])
@@ -157,7 +158,9 @@ def test_deepseek_json_extraction_requests_content_without_thinking(monkeypatch,
 
     client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
     monkeypatch.setattr(ai, '_openai_compatible_client', lambda provider: client)
-    reply = ai._call_openai_compatible(provider, 'Un piano aiuta a iniziare.', prompt, 'deepseek-v4-flash', max_tokens=2400)
+    # The caller decides the format; JSON wording in the prompt never does (C06).
+    reply = ai._call_openai_compatible(provider, 'Un piano aiuta a iniziare.', prompt, 'deepseek-v4-flash',
+                                       max_tokens=2400, json_mode=structured)
     assert json.loads(reply) == SPEC
     if structured:
         assert calls[0]['response_format'] == {'type': 'json_object'}
