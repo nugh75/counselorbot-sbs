@@ -60,7 +60,7 @@ cloudflared può sopravvivere fino al lancio successivo. Il backend/frontend
 sono comunque fermati dalla chiusura di stdin.
 
 Codice backend 3: errore dati e indicazione di ripristino; 4: altra porta;
-crash: fino a tre riavvii per sidecar in cinque minuti. Il ripristino dei backup è descritto in [sqlite-backups.md](sqlite-backups.md). stdout/stderr vanno direttamente nei file; rotazione
+crash: fino a tre riavvii per sidecar in cinque minuti. Il ripristino dei backup è descritto in [desktop-postgres-backups.md](desktop-postgres-backups.md). stdout/stderr vanno direttamente nei file; rotazione
 all'apertura sopra 10 MB, cinque file. L'esportazione diagnostica comprende
 log sanitizzati, layout e versione, escludendo DB, credenziali e registri runtime.
 Con P13 il testo libero viene omesso anche nei log storici: lo ZIP conserva
@@ -146,9 +146,9 @@ usare i PID del report e il lancio successivo sulla stessa cartella di prova.
   espone `POST /internal/local-auth/teacher-link` e `/local-auth/redeem`, ma
   la chiamata del guscio e la pagina `/accesso-locale` restano da collegare.
   F1-08 gestisce il portachiavi, F1-15 la matrice CI di packaging DMG/NSIS/deb
-  con checksum SHA-256 e F1-16 l'updater con backup preventivo SQLite.
+  con checksum SHA-256 e F1-16 l'updater con backup preventivo PostgreSQL (#738).
 
-## Aggiornamenti automatici e backup SQLite preventivo (F1-16)
+## Aggiornamenti automatici e backup PostgreSQL preventivo (F1-16, #738)
 
 Il guscio desktop integra `tauri-plugin-updater` per la verifica e l'applicazione
 degli aggiornamenti dell'applicazione docente.
@@ -175,12 +175,12 @@ npx @tauri-apps/cli signer generate -w ~/.tauri/counselorbot.key
 - **Comportamento CI**: Se il secret `TAURI_SIGNING_PRIVATE_KEY` non è presente nel repository, la CI stampa un avviso chiaro nel log del job (`::warning::TAURI_SIGNING_PRIVATE_KEY non configurata...`) e compila gli installer saltando la firma e la generazione degli archivi dell'updater, senza fallire silenziosamente né bloccare la pipeline.
 - **Manifest CI**: Il job `manifest` nel workflow `.github/workflows/desktop-teacher.yml` esegue `desktop/teacher/scripts/generate-update-manifest.py` raccogliendo i bundle firmati e generando `latest.json` e `latest-beta.json` come artifact. Il workflow non pubblica gli asset nelle Release: serve ancora il passaggio del responsabile del rilascio, insieme agli installer e agli archivi firmati. I soli artifact non rendono operativo l'updater.
 
-### Backup automatico preventivo del database SQLite
+### Backup automatico preventivo del database PostgreSQL
 
 Prima di scaricare o applicare qualsiasi aggiornamento, il guscio invoca `POST /internal/backup` verso il backend (oppure avvia il processo sidecar con `--backup` se il backend è fermo):
-- Utilizza il meccanismo di snapshot online consistente e verificato con `PRAGMA integrity_check` definito in `backend/sqlite_backup.py` (F1-05j).
+- Esegue `pg_dump` (formato custom) con i binari del bundle (`COUNSELORBOT_PG_BIN_DIR`) e verifica l'archivio con `pg_restore` prima di pubblicarlo (`backend/postgres_backup.py`, [dettagli](desktop-postgres-backups.md)).
 - Il backup viene salvato nella cartella `backups/` della cartella dati utente (`layout.json`).
-- **Se il backup fallisce per qualsiasi motivo (es. disco pieno, fallimento integrity check), l'aggiornamento viene abortito immediatamente e non viene applicato alcun pacchetto.**
+- **Se il backup fallisce per qualsiasi motivo (es. disco pieno, `pg_dump` non trovato o archivio illeggibile), l'aggiornamento viene abortito immediatamente e non viene applicato alcun pacchetto.**
 
 ### Procedura di Rollback e Ripristino
 
@@ -190,17 +190,12 @@ In caso di problemi con una nuova versione dell'applicazione:
    - Scaricare l'installer della versione precedente dalle GitHub Releases (file `.dmg` su macOS, installer `.exe` su Windows, pacchetto `.deb` su Linux).
    - Reinstallare la versione precedente dell'applicazione sovrascrivendo l'applicazione corrente.
 
-2. **Ripristino del database SQLite (se migrato o corrotto)**:
+2. **Ripristino del database PostgreSQL (se migrato o corrotto)**:
    - Chiudere completamente l'applicazione CounselorBot Docente.
    - Individuare l'ultimo backup valido nella cartella `backups/` del profilo utente:
      - Linux: `~/.local/share/org.ai4educ.counselorbot.teacher/backups/`
      - macOS: `~/Library/Application Support/org.ai4educ.counselorbot.teacher/backups/`
      - Windows: `%LOCALAPPDATA%\org.ai4educ.counselorbot.teacher\backups\`
-   - I file di backup hanno formato `sqlite-<identificatore>-<dataUTC>-<uuid>.sqlite3`.
-   - Utilizzare la procedura di ripristino verificata offline descritta in [`sqlite-backups.md`](sqlite-backups.md):
-     ```python
-     from backend.sqlite_backup import restore_backup
-     restore_backup("/percorso/.../backups/sqlite-....sqlite3", database_stopped=True)
-     ```
-   - Impostare `DATABASE_URL` sul database del profilo e `COUNSELORBOT_BACKUP_DIR` sulla sua cartella `backups/`. Conservare anche file caricati e chiavi separatamente; non cancellare manualmente WAL/SHM.
+   - I file di backup hanno formato `postgres-<dataUTC>-<uuid>.dump`.
+   - Ripristinare con `pg_restore` del bundle seguendo [`desktop-postgres-backups.md`](desktop-postgres-backups.md#ripristino-assistito). Conservare anche file caricati e chiavi separatamente.
    - Riavviare CounselorBot Docente.

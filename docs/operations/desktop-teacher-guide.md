@@ -187,7 +187,7 @@ Vedere [P6](../privacy/p6-gateway.md) e il [profilo DPIA L2](../privacy/desktop-
 
 In **Aggiornamenti applicazione**, scegliere **Stabile** (normalmente) o **Beta**
 (sperimentale), poi **Verifica aggiornamenti**. **Aggiorna ora (con backup preventivo)**
-crea e verifica uno snapshot SQLite prima dell'installazione. Se il backup fallisce,
+crea e verifica una copia del database PostgreSQL prima dell'installazione. Se il backup fallisce,
 l'aggiornamento si ferma. Non aggiornare durante una lezione.
 
 La CI attuale produce installer e manifest come artifact; non li pubblica ancora
