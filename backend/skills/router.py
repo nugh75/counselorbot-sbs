@@ -1,7 +1,8 @@
 """Selezione delle skill: regole prima, LLM solo sul residuo.
 
 Le skill `always` e `support` passano sempre. Le `primary` sono comportamenti
-alternativi: ne passa al massimo una, anche quando sono soltanto due. Le vecchie
+alternativi: ne passa al massimo una, anche quando sono soltanto due, salvo nel
+passo «Strategie e consigli», dove consigli e letture vanno insieme. Le vecchie
 `optional` mantengono il comportamento a soglia per compatibilita'.
 Qualunque problema (servizio assente, timeout, risposta non parsabile) degrada
 sul fallback deterministico: prime K per sort_order.
@@ -41,7 +42,9 @@ def select(candidates: list[SkillBinding], ctx: SkillContext) -> tuple[list[Skil
 
     trace = []
     selected_primary = primary
-    if len(primary) > 1:
+    # Nel passo «Strategie e consigli» strategie e letture sono lo stesso
+    # comportamento: passano entrambe, senza scegliere (#749).
+    if len(primary) > 1 and ctx.intent != "strategies":
         fallback = sorted(primary, key=lambda b: (b.sort_order, b.slug))[:1]
         chosen = _llm_select(primary, ctx, 1)
         if chosen is None:

@@ -5,6 +5,7 @@ non viene sovrascritto. Lo step speciale ``questions`` rappresenta la fase
 fissa "Domande e Approfondimenti" dei percorsi non-Savickas.
 """
 
+from .prompt_config import STRATEGIES_STEP_IDS
 from .questionnaire_description import (
     COMPREHENSION_SUGGESTIONS,
     DESCRIPTION_STEPS,
@@ -470,6 +471,33 @@ for _instrument, _steps in DEFAULT_GUIDED_STEP_QUESTIONS.items():
             _steps[_step_id] = list(COMPREHENSION_SUGGESTIONS['it'])
 
 
+# Passo «Strategie e consigli» (#749): le stesse domande in ogni percorso a
+# fattori, nelle sei lingue. La seconda e' la richiesta di strategia che il
+# classificatore deve riconoscere (C02).
+STRATEGIES_STEP_QUESTIONS: dict[str, list[str]] = {
+    "it": ["Da quale fattore conviene partire?",
+           "Puoi suggerirmi una strategia semplice da usare subito?",
+           "C'è un libro che mi può aiutare?"],
+    "en": ["Which factor should I start from?",
+           "Can you suggest a simple strategy I can use right away?",
+           "Is there a book that could help me?"],
+    "es": ["¿Por qué factor conviene empezar?",
+           "¿Puedes sugerirme una estrategia sencilla para usar ya?",
+           "¿Hay algún libro que me pueda ayudar?"],
+    "fr": ["Par quel facteur vaut-il mieux commencer ?",
+           "Peux-tu me suggérer une stratégie simple à utiliser tout de suite ?",
+           "Y a-t-il un livre qui pourrait m'aider ?"],
+    "de": ["Mit welchem Faktor fange ich am besten an?",
+           "Kannst du mir eine einfache Strategie vorschlagen, die ich sofort nutzen kann?",
+           "Gibt es ein Buch, das mir helfen kann?"],
+    "sv": ["Vilken faktor är bäst att börja med?",
+           "Kan du föreslå en enkel strategi som jag kan använda direkt?",
+           "Finns det en bok som kan hjälpa mig?"],
+}
+for _questionnaire_type, _step_id in STRATEGIES_STEP_IDS.items():
+    DEFAULT_GUIDED_STEP_QUESTIONS[_questionnaire_type][_step_id] = list(STRATEGIES_STEP_QUESTIONS["it"])
+
+
 def seed_guided_step_questions(db, models) -> None:
     """Inserisce le domande di default mancanti per questionario/step/lingua."""
 
@@ -483,6 +511,10 @@ def seed_guided_step_questions(db, models) -> None:
                 translations = json.load(f).get("guided_step_questions", {})
         except Exception:
             pass
+    for questionnaire_type, step_id in STRATEGIES_STEP_IDS.items():
+        translations.setdefault(questionnaire_type, {})[step_id] = {
+            lang: list(texts) for lang, texts in STRATEGIES_STEP_QUESTIONS.items() if lang != "it"
+        }
 
     changed = False
     for questionnaire_type, step_questions in DEFAULT_GUIDED_STEP_QUESTIONS.items():
@@ -566,7 +598,8 @@ def seed_response_openings(db, models) -> int:
             continue
         if is_description_phase(step.questionnaire_type, step.id, step.system_prompt_mode):
             continue
-        if step.sort_order == 0 or "summary" in step.system_prompt_mode or "sintesi" in step.id or "synthesis" in step.id:
+        if step.sort_order == 0 or "summary" in step.system_prompt_mode or "sintesi" in step.id or "synthesis" in step.id \
+                or step.system_prompt_mode == "strategies":
             continue
         existing = db.query(models.GuidedStepQuestion).filter(
             models.GuidedStepQuestion.questionnaire_type == step.questionnaire_type,

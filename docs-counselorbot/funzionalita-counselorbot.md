@@ -257,6 +257,31 @@ le tre fasi restano le stesse: lettura del profilo, focus ed esempio, azione;
 la scelta personale del focus avviene nell’esperienza e può essere saltata.
 Savickas, Eventi, IDEA e Obiettivi conservano le proprie domande narrative.
 
+**Passo «Strategie e consigli».** Nei percorsi a fattori (QSA, QSAr, ZTPI,
+QPCS, QPCC, QAP) dopo la sintesi c'è il passo «Strategie e consigli» (sei
+lingue), prima di **Domande e Approfondimenti**. I passi sui fattori e le
+sintesi analizzano soltanto: se lo studente chiede una strategia prima, il
+counselor gli dice in una frase che arriverà in «Strategie e consigli» e
+continua l'analisi. Nel passo nuovo il counselor propone di sua iniziativa
+strategie per i fattori da migliorare e le dà anche su richiesta, senza limite
+di una per risposta: una azione concreta per ogni fattore su cui lavorare,
+dal catalogo delle strategie certificate o, se per un fattore non ce n'è una,
+dalle strategie approvate di supporto. Nello stesso passo propone letture:
+si possono proporre e citare le opere del catalogo delle letture certificate e
+i documenti trovati per il turno, mai titoli a memoria. **Domande e
+Approfondimenti** resta la fase delle domande libere: lì una strategia arriva
+solo se lo studente la chiede. Il riconoscimento della richiesta legge solo il
+messaggio dello studente (non le istruzioni del passo che il sito e Telegram
+reinviano), riconosce le richieste di strategie nelle sei lingue, compresa la
+domanda suggerita dall'app, e vale per la web chat e per Telegram. Il passo
+entra una volta negli impianti già popolati, dopo l'ultimo passo del percorso:
+gli altri passi non cambiano id né posizione, quindi le sessioni in corso
+riprendono da dove erano; l'amministratore può modificarne il prompt dal pannello
+dei prompt per passo (`prompt_strategies` e il prompt del passo) o toglierlo.
+Le letture di prova certificate al primo avvio sono 15 saggi e articoli del
+catalogo su studio, motivazione, orientamento e competenze strategiche
+(`backend/strategies_step.py`); romanzi e film restano in bozza.
+
 Le pagine di questa zona (`/questionario`, `/somministrazione`, `/strumenti/[id]`,
 pQBL, selettore del counselor e somministrazione in app) usano i token semantici
 e le primitive `Button`, `Card` e `Callout` (audit UI 2026-10-30, zona 1):

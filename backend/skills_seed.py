@@ -32,7 +32,7 @@ CERTIFIED_ADVICE_INSTRUCTIONS_EN = """## Student advice contract
 
 - Use only the certified strategies supplied in the context block.
 - Connect the advice to the student's request and profile without diagnostic labels.
-- Propose one concrete, bounded and verifiable action; a second strategy may appear only as support.
+- Propose one concrete, bounded and verifiable action for each factor that deserves work; there is no fixed number per reply.
 - Briefly explain why it is relevant and invite the student to verify its usefulness.
 - Never show internal identifiers or present the advice as a prescription.
 - If no relevant certified strategy is available, do not force advice.
@@ -198,6 +198,7 @@ IDEA_WAYFINDER_POLICY_MARKER = "skills_idea_wayfinder_v1"
 IDEA_CONCEPT_POLICY_MARKER = "skills_idea_concept_v1"
 SKILLS_BUDGET_POLICY_MARKER = "skills_total_budget_6500_v1"
 IDEA_EDGE_KEYS_POLICY_MARKER = "skills_idea_edge_keys_v1"
+STRATEGIES_STEP_POLICY_MARKER = "skills_strategies_step_v1"
 # Valori di serie precedenti: le installazioni ferme su uno di questi non
 # hanno mai regolato il tetto a mano, e sono le uniche da aggiornare.
 PREVIOUS_TOTAL_MAX_CHARS = ("3000", "4500")
@@ -277,7 +278,7 @@ SKILL_SEEDS = [
             "del profilo: da usare quando lo studente lavora su un'area di crescita."
         ),
         "instructions_i18n": SKILL_INSTRUCTIONS_I18N["certified-advice"],
-        "conditions": {"intents": ["advice", "guided"]},
+        "conditions": {"intents": ["advice", "guided", "strategies"]},
         "handler": "certified_strategies",
         "handler_params": {"limit": 2},
         "routing": "primary",
@@ -307,7 +308,7 @@ SKILL_SEEDS = [
         "name": "Guida a letture pertinenti",
         "description": "Suggerisce letture verificabili quando lo studente chiede fonti o approfondimenti.",
         "instructions_i18n": SKILL_INSTRUCTIONS_I18N["reading-guide"],
-        "conditions": {"intents": ["reading"]},
+        "conditions": {"intents": ["reading", "strategies"]},
         # L'handler consegna la whitelist delle fonti realmente recuperate: il
         # divieto di inventare riferimenti diventa cosi' un filtro, non solo una
         # direttiva al modello.
@@ -1030,6 +1031,44 @@ def apply_skills_budget_policy(db) -> bool:
     ))
     db.commit()
     return updated
+
+
+def apply_strategies_step_policy(db) -> bool:
+    """Passo «Strategie e consigli» (#749): consigli certificati e letture.
+
+    Una tantum e sovrascrivendo (decisione 5.1): nel passo le strategie e le
+    letture valgono in ogni turno, e il contratto dei consigli non ha piu' il
+    limite di una strategia per risposta.
+    """
+    marker = db.query(models.Config).filter(
+        models.Config.key == STRATEGIES_STEP_POLICY_MARKER
+    ).first()
+    if marker is not None:
+        return False
+
+    seed_skills(db)
+    seeds = {seed["slug"]: seed for seed in SKILL_SEEDS}
+    for slug in ("certified-advice", "reading-guide"):
+        skill = db.query(models.Skill).filter(models.Skill.slug == slug).first()
+        if skill is None:
+            continue
+        conditions = dict(skill.conditions or {})
+        intents = list(conditions.get("intents") or seeds[slug]["conditions"]["intents"])
+        if "strategies" not in intents:
+            intents.append("strategies")
+        conditions["intents"] = intents
+        skill.conditions = conditions
+        canonical = SKILL_INSTRUCTIONS_I18N.get(slug)
+        if canonical is not None:
+            skill.instructions_i18n = dict(canonical)
+
+    db.add(models.Config(
+        key=STRATEGIES_STEP_POLICY_MARKER,
+        value="applied",
+        description="Migrazione una tantum: passo «Strategie e consigli» per consigli e letture.",
+    ))
+    db.commit()
+    return True
 
 
 def seed_skills(db) -> bool:

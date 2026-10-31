@@ -189,11 +189,15 @@ def test_profile_history_keeps_previous_compilation_of_same_instrument():
 # --- Politica dei consigli per step -----------------------------------------
 
 def test_synthesis_steps_can_deliver_certified_advice():
-    """Gli step "Sintesi e Piano d'Azione" chiedono un piano: il catalogo deve
-    essere disponibile, altrimenti il modello lo improvvisa."""
-    for step_mode in ("qpcs-summary", "qpcc-summary", "qap-summary", "savickas-summary"):
+    """Le sintesi dei percorsi senza passo «Strategie e consigli» chiedono un
+    piano: il catalogo deve essere disponibile. Nei percorsi a fattori le
+    strategie arrivano nel passo che segue la sintesi (#749)."""
+    for step_mode in ("savickas-summary", "obiettivo-summary"):
         assert _default_certified_strategy_limit(step_mode) == 1, step_mode
         assert _step_allows_practical_advice(step_mode) is True, step_mode
+    for step_mode in ("qpcs-summary", "qpcc-summary", "qap-summary"):
+        assert _default_certified_strategy_limit(step_mode) == 0, step_mode
+        assert _step_allows_practical_advice(step_mode) is False, step_mode
 
 
 def test_analysis_and_interview_steps_stay_interpretive():
@@ -207,17 +211,19 @@ def _follow_up(message: str, phase: str = "cognitive"):
     return SimpleNamespace(phase=phase, use_phase_prompt=False, internal_message=False, message=message)
 
 
-def test_advice_request_in_a_follow_up_opens_the_catalog():
-    """Lo studente chiede un consiglio dentro uno step interpretativo: una sola
-    strategia certificata, cosi' la risposta non e' improvvisata."""
+def test_advice_request_in_a_follow_up_is_deferred_to_the_strategies_step():
+    """Lo studente chiede un consiglio dentro uno step interpretativo: la
+    richiesta e' riconosciuta, ma la strategia arriva nel passo «Strategie e
+    consigli» (#749); fuori dai percorsi a fattori resta una sola strategia."""
     request = _follow_up("Puoi darmi un consiglio concreto su come migliorare?")
     assert is_advice_follow_up(request) is True
-    assert _default_certified_strategy_limit("factor", "cognitive", True) == 1
-    assert _default_certified_strategy_limit("qpcs-analysis", "qpcs-emozioni", True) == 1
+    assert _default_certified_strategy_limit("factor", "cognitive", True) == 0
+    assert _default_certified_strategy_limit("qpcs-analysis", "qpcs-emozioni", True) == 0
+    assert _default_certified_strategy_limit("savickas-interview", "savickas-q1", True) == 1
     flags = apply_advice_retrieval_policy(
         {"certified_strategies": True}, "factor", "cognitive", advice_requested=True
     )
-    assert flags["certified_strategies"] is True
+    assert flags["certified_strategies"] is False
 
 
 def test_only_an_explicit_advice_request_opens_the_catalog():
@@ -234,13 +240,16 @@ def test_only_an_explicit_advice_request_opens_the_catalog():
 
 
 def test_synthesis_veto_survives_an_explicit_advice_request():
-    for step_id in ("sl-synthesis", "qsar-synthesis", "questions"):
+    for step_id in ("sl-synthesis", "qsar-synthesis"):
         assert _default_certified_strategy_limit("second-level", step_id, True) == 0
+    # La fase domande risponde a una richiesta esplicita (C03).
+    assert _default_certified_strategy_limit("generic", "questions") == 0
+    assert _default_certified_strategy_limit("generic", "questions", True) > 0
 
 
 def test_qsa_synthesis_still_introduces_no_new_advice():
     assert _default_certified_strategy_limit("second-level", "sl-synthesis") == 0
-    assert _default_certified_strategy_limit("second-level", "qsa-c1") == 1
+    assert _default_certified_strategy_limit("second-level", "qsa-c1") == 0
 
 
 # --- Catalogo certificato e traduzioni --------------------------------------

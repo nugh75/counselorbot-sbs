@@ -1508,6 +1508,69 @@ DEFAULT_CERTIFIED_STRATEGIES.extend([{'slug': 'qsa-life-personal-commitment',
                       'Adattamento editoriale circoscritto: docs/handoff/w4b-strategie-azione-vita.md.',
   'sort_order': 203}])
 
+# Consigli pratici che stavano nel quadro teorico Pellerey della dimensione
+# sociale (audit A08): ora sono voci del catalogo, in bozza finche' un admin non
+# le approva. Il quadro resta solo descrittivo.
+PELLEREY_SOCIAL_SOURCE = (
+    "Pellerey et al. (2013), Imparare a dirigere se stessi, cap. 2.11 e Parte Terza, "
+    "cap. 3.4.5; gia' nel quadro teorico del passo «Dimensione sociale» (prompt_meta_QSA_sl-social)."
+)
+
+DEFAULT_CERTIFIED_STRATEGIES.extend([
+    {
+        "slug": "qsa-social-one-peer",
+        "name_it": "Studiare con un compagno di fiducia",
+        "recommended_when_it": "Quando C4 (disponibilita' alla collaborazione) e' un'area di crescita.",
+        "description_it": (
+            "Comincia in piccolo: studia con UN compagno di fiducia su UN argomento preciso, con una "
+            "struttura chiara. Ognuno spiega meta' dell'argomento, poi vi fate domande a vicenda."
+        ),
+        "factor_codes": ["C4"],
+        "questionnaire_types": ["QSA"],
+        "keywords": "C4 collaborazione compagno studio a coppie spiegare domande",
+        "certified_by": "Spostata dal quadro teorico Pellerey (audit A08), da approvare",
+        "source_reference": PELLEREY_SOCIAL_SOURCE,
+        "status": "draft",
+        "sort_order": 210,
+    },
+    {
+        "slug": "qsa-social-peer-tutoring",
+        "name_it": "Spiegare un concetto a un compagno",
+        "recommended_when_it": "Quando C4 (disponibilita' alla collaborazione) e' un'area di crescita.",
+        "description_it": (
+            "Prova il tutoraggio tra pari: spiega un concetto difficile a un compagno che fa fatica. "
+            "Spiegare a qualcun altro e' uno dei modi piu' efficaci per imparare."
+        ),
+        "factor_codes": ["C4"],
+        "questionnaire_types": ["QSA"],
+        "keywords": "C4 tutoraggio tra pari spiegare compagno insegnare",
+        "certified_by": "Spostata dal quadro teorico Pellerey (audit A08), da approvare",
+        "source_reference": PELLEREY_SOCIAL_SOURCE,
+        "status": "draft",
+        "sort_order": 211,
+    },
+    {
+        "slug": "qsa-social-structured-group",
+        "name_it": "Un lavoro di gruppo strutturato",
+        "recommended_when_it": (
+            "Quando C4 (disponibilita' alla collaborazione) e' un'area di crescita e il lavoro di "
+            "gruppo e' stato un'esperienza negativa."
+        ),
+        "description_it": (
+            "Se il lavoro di gruppo e' andato male, provane uno strutturato: ruoli chiari, un obiettivo "
+            "comune e una responsabilita' individuale per ciascuno, invece di «lavorare insieme e vedere»."
+        ),
+        "factor_codes": ["C4"],
+        "questionnaire_types": ["QSA"],
+        "keywords": "C4 gruppo cooperativo ruoli obiettivo comune responsabilita",
+        "certified_by": "Spostata dal quadro teorico Pellerey (audit A08), da approvare",
+        "source_reference": PELLEREY_SOCIAL_SOURCE,
+        "status": "draft",
+        "sort_order": 212,
+    },
+])
+
+
 def seed_certified_strategies(db, models_module) -> int:
     """Crea le strategie certificate mancanti e ritorna quante righe ha inserito."""
     inserted = 0

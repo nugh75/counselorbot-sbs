@@ -64,8 +64,14 @@ def factory_owned(db, scope, key, value, *, legacy=None, cached=False):
 # L'allineamento li sovrascrive una volta: quando una revisione registra gia' il
 # nuovo testo, le modifiche successive dell'admin tornano a essere conservate.
 FORCED_FACTORY_KEYS = {
-    "config": {"prompt_qsar_second_level"},  # #748: B01, D04
-    "guided_step": set(),
+    "config": {
+        "prompt_qsar_second_level",  # #748: B01, D04
+        # #749: i passi sui fattori e le sintesi non danno strategie (A07, A08, A13).
+        "prompt_second_level", "prompt_qpcs_summary", "prompt_qpcc_summary",
+        "prompt_qap_summary", "prompt_meta_QSA_sl-social", "prompt_qpcs_analysis",
+    },
+    # #749: sintesi senza strategie nuove, passo ZTPI descrittivo.
+    "guided_step": {"sl-synthesis", "qsar-synthesis", "ztpi-btp", "qpcs-sintesi", "qpcc-sintesi", "qap-sintesi"},
 }
 
 

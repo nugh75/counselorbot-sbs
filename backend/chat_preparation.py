@@ -28,12 +28,14 @@ from .chat_logic import (
     _apply_global_directives,
     _apply_qsa_factor_directive,
     _apply_response_length_directive,
+    _coerce_certified_strategy_limit,
     _conversational_retrieval_tail,
     _instrument_meta_system_prompt,
     _is_conversational_mode,
     _is_intro_step_mode,
     _is_strategy_questionnaire,
     _phase_factor_codes,
+    _qsa_factor_names,
     _reasoning_disabled_for,
     _resolve_system_prompt,
     _resolve_user_message_for_chat,
@@ -56,6 +58,7 @@ from .chat_logic import (
     get_prompt_component_options,
     instruction_parts,
     is_advice_follow_up,
+    is_analysis_only_mode,
     is_guided_chat,
     previous_certified_strategy_ids,
     step_has_improvement_target,
@@ -67,7 +70,8 @@ from .i18n_fields import localized
 from .idea_map import IDEA_INSTRUMENT
 from .journey_context import SYNTHESIS_STEPS, journey_context, session_evidence
 from .memory_service import session_memory
-from .prompt_config import SYSTEM_PROMPT_DEFAULTS, WELCOME_PHASE_IDS
+from .guided_step_label_i18n import resolve_step_label, strip_step_ordinal
+from .prompt_config import STRATEGIES_STEP_MODE, SYSTEM_PROMPT_DEFAULTS, WELCOME_PHASE_IDS
 from .prompt_contract import (
     QUESTIONNAIRE_DIALOGUES,
     objective_focus_stage,
@@ -217,6 +221,17 @@ def _retrieval_queries(step_label: str, message: str, scores_context: str, tail:
     if not external_embedding:
         return query, None
     return query, " ".join(part for part in (step_label, message, tail) if part and part.strip())
+
+def _strategies_step_label(db, questionnaire_type: str, language: str) -> str | None:
+    """Nome del passo «Strategie e consigli» del percorso, se il percorso lo ha."""
+    step = (
+        db.query(models.GuidedStep)
+        .filter(models.GuidedStep.questionnaire_type == questionnaire_type,
+                models.GuidedStep.system_prompt_mode == STRATEGIES_STEP_MODE)
+        .first()
+    )
+    return strip_step_ordinal(resolve_step_label(step, language)) if step else None
+
 
 def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
                       c_persona="", counselor_name=None, include_retrieval=True,
@@ -383,7 +398,8 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     )
     if component_overrides:
         if "certified_strategy_limit" in component_overrides:
-            component_options["certified_strategy_limit"] = max(0, min(1, int(component_overrides["certified_strategy_limit"])))
+            component_options["certified_strategy_limit"] = _coerce_certified_strategy_limit(
+                component_overrides["certified_strategy_limit"], component_options["certified_strategy_limit"])
         if isinstance(component_overrides.get("allowed_strategies"), list):
             component_flags["allowed_strategies"] = component_overrides["allowed_strategies"]
             component_options["allowed_strategies"] = component_overrides["allowed_strategies"]
@@ -407,13 +423,20 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     if include_analysis_context and component_scores_context:
         allows_advice = _step_allows_practical_advice(step_mode, request.phase)
         is_follow_up = _is_conversational_mode(step_mode)
-        include_advice = advice_requested or (
+        # Nel passo «Strategie e consigli» il catalogo resta aperto anche senza
+        # un fattore da migliorare: lo studente puo' sempre chiedere.
+        include_advice = advice_requested or step_mode == STRATEGIES_STEP_MODE or (
             allows_advice and not is_follow_up and step_has_improvement_target(
                 component_scores_context, questionnaire_type, request.language, phase_codes
             )
         )
+        # Il passo «Strategie e consigli» non nomina fattori: i fattori da
+        # migliorare si leggono sull'intero profilo.
+        profile_codes = phase_codes
+        if step_mode == STRATEGIES_STEP_MODE and not profile_codes and _is_strategy_questionnaire(questionnaire_type):
+            profile_codes = set(_qsa_factor_names(request.language, questionnaire_type))
         system_prompt = transform(_apply_current_step_score_profile_directive,
-            system_prompt, questionnaire_type, request.language, component_scores_context, phase_codes, include_advice,
+            system_prompt, questionnaire_type, request.language, component_scores_context, profile_codes, include_advice,
             factor_names=competence_factor_names(db, questionnaire_type, request.language),
         )
         if include_advice:
@@ -424,7 +447,8 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         else:
             component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
             component_options["certified_strategy_limit"] = 0
-    elif include_analysis_context and _is_strategy_questionnaire(questionnaire_type) and not advice_requested:
+    elif (include_analysis_context and _is_strategy_questionnaire(questionnaire_type) and not advice_requested
+          and step_mode != STRATEGIES_STEP_MODE):
         component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
         component_options["certified_strategy_limit"] = 0
     model_message = (
@@ -682,6 +706,8 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     )
     contract = turn_contract(
         language=request.language or "it", questionnaire_type=questionnaire_type,
+        strategies_step_label=(_strategies_step_label(db, questionnaire_type, request.language or "it")
+                               if is_analysis_only_mode(step_mode) else None),
         phase=request.phase, advice_allowed=bool(not descriptive and component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),
         synthesis=bool(is_synthesis), reflection_stage=reflection_stage,
         objective_stage=objective_focus_stage(request.phase),

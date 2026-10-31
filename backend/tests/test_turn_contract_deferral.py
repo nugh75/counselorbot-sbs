@@ -42,7 +42,7 @@ def test_the_refusal_bans_formulas_justification_and_comparisons():
 def test_a_step_that_may_advise_carries_none_of_it():
     text = _contract(advice_allowed=True)
     assert "which later step" not in text
-    assert "Offer at most ONE new practical action" in text
+    assert "Offer new practical actions only from the certified candidates" in text
 
 
 def test_the_contract_forbids_reciting_itself():

@@ -1040,6 +1040,7 @@ def _run_seed_and_migrations():
                 apply_reading_and_translations_policy,
                 apply_skills_budget_policy,
                 apply_specialized_skills_policy,
+                apply_strategies_step_policy,
                 seed_skill_configs,
                 seed_skills,
             )
@@ -1063,6 +1064,7 @@ def _run_seed_and_migrations():
             idea_concept_changed = apply_idea_concept_policy(db)
             wayfinder_changed = apply_idea_wayfinder_policy(db)
             budget_changed = apply_skills_budget_policy(db)
+            strategies_changed = apply_strategies_step_policy(db)
             if (configs_changed or skills_changed or policy_changed or specialized_changed
                     or i18n_changed or english_changed or diagram_changed
                     or diagram_icons_changed or diagram_mapping_changed
@@ -1071,7 +1073,8 @@ def _run_seed_and_migrations():
                     or idea_concept_changed or wayfinder_changed
                     or diagram_semantic_icons_changed
                     or diagram_factor_symbols_changed
-                    or budget_changed or event_paths_changed or obiettivo_engine_changed):
+                    or budget_changed or event_paths_changed or obiettivo_engine_changed
+                    or strategies_changed):
                 logger.info("Seed skill completato")
         except Exception as e:
             logger.warning(f"Seed skill fallito: {e}")
@@ -1426,6 +1429,8 @@ def _run_seed_and_migrations():
                     saved = None
                 if isinstance(saved, dict):
                     current_limit = saved.get("certified_strategy_limit")
+                    if step.system_prompt_mode == "strategies":
+                        continue
                     is_thematic = step.system_prompt_mode in {"second-level", "qsar-second-level"}
                     target_limit = 0 if step.id in {"sl-synthesis", "qsar-synthesis"} or not is_thematic else 1
                     if isinstance(current_limit, (int, float)) and current_limit > target_limit:
@@ -1450,6 +1455,12 @@ def _run_seed_and_migrations():
         # sono toccati: restano in italiano nel DB e il frontend serve le altre
         # lingue via i18n. Vedi backend/legacy_italian_prompts.py.
         _migrate_prompts_to_english(db)
+
+        # One-off: passo «Strategie e consigli» dopo la sintesi nei percorsi a
+        # fattori gia' popolati (#749). Gli altri passi non si spostano.
+        from .strategies_step import ensure_strategies_steps
+        if ensure_strategies_steps(db):
+            logger.info("Passo «Strategie e consigli» aggiunto ai percorsi esistenti")
 
         # One-off: traduci in inglese le persona dei counselor e introduci il
         # placeholder {{counselor_name}} (persona + intro di sezione del gruppo
@@ -1509,6 +1520,10 @@ def _run_seed_and_migrations():
         inserted = seed_certified_readings(db, models)
         if inserted:
             logger.info("Seeded certified readings catalog: %s voci in bozza", inserted)
+        from .strategies_step import certify_test_readings
+        certified_readings = certify_test_readings(db)
+        if certified_readings:
+            logger.info("Letture di prova certificate: %s", certified_readings)
 
         # Seed domande suggerite dell'assistente docenti (it). Idempotente:
         # salta se la tabella contiene già righe.

@@ -60,6 +60,10 @@ def directive(phase=None):
     from .questionnaire_description import is_description_phase
     if is_description_phase('QPCC', phase):
         return canonical + 'Read these scales and their supplied stanines; follow [QUESTIONNAIRE DESCRIPTION] for questions and depth.'
+    from .prompt_config import STRATEGIES_STEP_IDS
+    if phase == STRATEGIES_STEP_IDS['QPCC']:
+        # Passo «Strategie e consigli»: non e' un'area da esplorare (#749).
+        return canonical + 'Use work/job-seeking examples relevant to the person. Retain only agreed timeframes.'
     return canonical + (
         'Stay with this area while the student is developing it: exactly ONE open question per turn on a single aspect, never a list of questions. '
         'Questions are thoughtful, open prompts to help the person self-reflect and self-interrogate, never an interrogation or quiz. '

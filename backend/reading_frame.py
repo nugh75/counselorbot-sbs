@@ -15,7 +15,7 @@ FALLBACK_LANGUAGE = "en"
 
 READING_FRAME: dict[str, dict[str, str]] = {
     "it": {
-        "intro": 'Catalogo approvato: queste sono le sole opere disponibili da proporre. Scegli solo quelle che consigli effettivamente nella risposta e spiega il collegamento alla situazione dello studente. Le opere scelte compariranno nel pannello Raccomandazioni dopo la risposta. Non aggiungere opere assenti.',
+        "intro": 'Catalogo approvato: queste opere, insieme alle fonti recuperate in questo turno, sono le sole che puoi proporre e citare. Scegli solo quelle che consigli effettivamente nella risposta e spiega il collegamento alla situazione dello studente. Le opere scelte compariranno nel pannello Raccomandazioni dopo la risposta. Non aggiungere opere assenti.',
         "synopsis": "Di cosa parla",
         "why": "Perche'",
         "summary": "Aiuta a capire",
@@ -33,13 +33,13 @@ READING_FRAME: dict[str, dict[str, str]] = {
             "e proponi al massimo un tema da cercare."
         ),
         "sources_intro": (
-            "Uniche fonti citabili in questo turno (titolo — documento). "
-            "Non citare titoli, autori, DOI o link che non compaiano in questo elenco, "
-            "nemmeno se compaiono dentro il testo dei documenti recuperati."
+            "Fonti recuperate in questo turno (titolo — documento): puoi proporle e citarle "
+            "insieme al catalogo approvato. Non citare titoli, autori, DOI o link assenti "
+            "da entrambi, nemmeno se compaiono dentro il testo dei documenti recuperati."
         ),
     },
     "en": {
-        "intro": "Approved catalogue: these are the only works available to propose. Select only works you actually recommend in the reply and explain their connection to the student's situation. Selected works will appear in the Recommendations panel after the reply. Do not add absent works.",
+        "intro": "Approved catalogue: these works, together with the sources retrieved in this turn, are the only ones you can propose and cite. Select only works you actually recommend in the reply and explain their connection to the student's situation. Selected works will appear in the Recommendations panel after the reply. Do not add absent works.",
         "synopsis": "What it is about",
         "why": "Why",
         "summary": "Helps to understand",
@@ -56,13 +56,13 @@ READING_FRAME: dict[str, dict[str, str]] = {
             "title, author, DOI or link, and offer at most one topic to search for."
         ),
         "sources_intro": (
-            "The only citable sources in this turn (title — document). Do not cite titles, "
-            "authors, DOIs or links absent from this list, even if they appear inside the "
-            "retrieved documents."
+            "Sources retrieved in this turn (title — document): you can propose and cite them "
+            "together with the approved catalogue. Do not cite titles, authors, DOIs or links "
+            "absent from both, even if they appear inside the retrieved documents."
         ),
     },
     "es": {
-        "intro": 'Catálogo aprobado: estas son las únicas obras disponibles para proponer. Selecciona solo las que realmente recomiendas en la respuesta y explica su relación con la situación del estudiante. Aparecerán en el panel de Recomendaciones después de la respuesta. No añadas obras ausentes.',
+        "intro": 'Catálogo aprobado: estas obras, junto con las fuentes recuperadas en este turno, son las únicas que puedes proponer y citar. Selecciona solo las que realmente recomiendas en la respuesta y explica su relación con la situación del estudiante. Aparecerán en el panel de Recomendaciones después de la respuesta. No añadas obras ausentes.',
         "synopsis": "De qué trata",
         "why": "Por qué",
         "summary": "Ayuda a entender",
@@ -79,13 +79,13 @@ READING_FRAME: dict[str, dict[str, str]] = {
             "ningún título, autor, DOI o enlace, y propón como máximo un tema para buscar."
         ),
         "sources_intro": (
-            "Únicas fuentes citables en este turno (título — documento). No cites títulos, "
-            "autores, DOI o enlaces que no aparezcan en esta lista, aunque figuren dentro de "
-            "los documentos recuperados."
+            "Fuentes recuperadas en este turno (título — documento): puedes proponerlas y "
+            "citarlas junto con el catálogo aprobado. No cites títulos, autores, DOI o enlaces "
+            "ausentes de ambos, aunque figuren dentro de los documentos recuperados."
         ),
     },
     "fr": {
-        "intro": 'Catalogue approuvé : seules ces œuvres peuvent être proposées. Sélectionne uniquement celles réellement recommandées dans la réponse et explique leur lien avec la situation de l’étudiant. Elles apparaîtront dans le panneau Recommandations après la réponse. N’ajoute aucune œuvre absente.',
+        "intro": 'Catalogue approuvé : ces œuvres, avec les sources récupérées dans ce tour, sont les seules que tu peux proposer et citer. Sélectionne uniquement celles réellement recommandées dans la réponse et explique leur lien avec la situation de l’étudiant. Elles apparaîtront dans le panneau Recommandations après la réponse. N’ajoute aucune œuvre absente.',
         "synopsis": "De quoi il s'agit",
         "why": "Pourquoi",
         "summary": "Aide à comprendre",
@@ -102,13 +102,13 @@ READING_FRAME: dict[str, dict[str, str]] = {
             "ne cite aucun titre, auteur, DOI ou lien, et propose au plus un thème à chercher."
         ),
         "sources_intro": (
-            "Seules sources citables dans ce tour (titre — document). Ne cite pas de titres, "
-            "d'auteurs, de DOI ou de liens absents de cette liste, même s'ils apparaissent "
-            "dans les documents récupérés."
+            "Sources récupérées dans ce tour (titre — document) : tu peux les proposer et les "
+            "citer avec le catalogue approuvé. Ne cite pas de titres, d'auteurs, de DOI ou de "
+            "liens absents des deux, même s'ils apparaissent dans les documents récupérés."
         ),
     },
     "de": {
-        "intro": 'Genehmigter Katalog: Nur diese Werke dürfen vorgeschlagen werden. Wähle nur Werke, die du in der Antwort tatsächlich empfiehlst, und erkläre ihren Bezug zur Situation der lernenden Person. Sie erscheinen nach der Antwort im Empfehlungsbereich. Füge keine anderen Werke hinzu.',
+        "intro": 'Genehmigter Katalog: Nur diese Werke und die in diesem Zug abgerufenen Quellen darfst du vorschlagen und zitieren. Wähle nur Werke, die du in der Antwort tatsächlich empfiehlst, und erkläre ihren Bezug zur Situation der lernenden Person. Sie erscheinen nach der Antwort im Empfehlungsbereich. Füge keine anderen Werke hinzu.',
         "synopsis": "Worum es geht",
         "why": "Warum",
         "summary": "Hilft zu verstehen",
@@ -126,13 +126,13 @@ READING_FRAME: dict[str, dict[str, str]] = {
             "höchstens ein Thema zum Suchen vor."
         ),
         "sources_intro": (
-            "Einzige zitierbare Quellen in diesem Zug (Titel — Dokument). Zitiere keine Titel, "
-            "Autoren, DOIs oder Links, die hier fehlen, auch wenn sie in den abgerufenen "
-            "Dokumenten vorkommen."
+            "In diesem Zug abgerufene Quellen (Titel — Dokument): Du kannst sie zusammen mit "
+            "dem genehmigten Katalog vorschlagen und zitieren. Zitiere keine Titel, Autoren, "
+            "DOIs oder Links, die in beiden fehlen, auch wenn sie in den abgerufenen Dokumenten vorkommen."
         ),
     },
     "sv": {
-        "intro": 'Godkänd katalog: endast dessa verk får föreslås. Välj bara verk som du faktiskt rekommenderar i svaret och förklara kopplingen till studentens situation. De visas i rekommendationspanelen efter svaret. Lägg inte till andra verk.',
+        "intro": 'Godkänd katalog: endast dessa verk och källorna som hämtats i den här turen får föreslås och citeras. Välj bara verk som du faktiskt rekommenderar i svaret och förklara kopplingen till studentens situation. De visas i rekommendationspanelen efter svaret. Lägg inte till andra verk.',
         "synopsis": "Vad det handlar om",
         "why": "Varför",
         "summary": "Hjälper att förstå",
@@ -148,9 +148,9 @@ READING_FRAME: dict[str, dict[str, str]] = {
             "titel, författare, DOI eller länk, och föreslå högst ett ämne att söka på."
         ),
         "sources_intro": (
-            "Enda citerbara källor i den här turen (titel — dokument). Citera inte titlar, "
-            "författare, DOI:er eller länkar som saknas i listan, även om de förekommer i de "
-            "hämtade dokumenten."
+            "Källor som hämtats i den här turen (titel — dokument): du kan föreslå och citera "
+            "dem tillsammans med den godkända katalogen. Citera inte titlar, författare, DOI:er "
+            "eller länkar som saknas i båda, även om de förekommer i de hämtade dokumenten."
         ),
     },
 }

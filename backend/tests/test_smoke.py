@@ -2153,43 +2153,49 @@ def test_prompt_audit_live_scopes_certified_strategies_to_qsa_second_level_step(
         "- A1: 8/9", "- A2: 6/9", "- A3: 5/9", "- A4: 8/9",
         "- A5: 3/9", "- A6: 3/9", "- A7: 7/9",
     ])
-    r = client.post("/admin/prompt-audit/live", json={
-        "questionnaire_type": "QSA",
-        "language": "it",
-        "phase": "sl-motivation",
-        "mode": "second-level",
-        "use_phase_prompt": True,
-        "scores_context": scores_context,
-        "session_id": "prompt-audit-certified-scoped",
-        "max_tokens": 700,
-        "include_knowledge": True,
-        "include_history": False,
-        "component_flags": {
-            "allowed_strategies": [
-                "test-certified-c1-out-of-step",
-                "test-certified-a4-out-of-step",
-                "test-certified-a6-in-step",
-                "test-certified-a5-in-step",
-            ],
-        },
-    })
-    assert r.status_code == 200, r.text
-    body = r.json()
+    def audit(phase, mode):
+        r = client.post("/admin/prompt-audit/live", json={
+            "questionnaire_type": "QSA",
+            "language": "it",
+            "phase": phase,
+            "mode": mode,
+            "use_phase_prompt": True,
+            "scores_context": scores_context,
+            "session_id": "prompt-audit-certified-scoped",
+            "max_tokens": 700,
+            "include_knowledge": True,
+            "include_history": False,
+            "component_flags": {
+                "allowed_strategies": [
+                    "test-certified-c1-out-of-step",
+                    "test-certified-a4-out-of-step",
+                    "test-certified-a6-in-step",
+                    "test-certified-a5-in-step",
+                ],
+            },
+        })
+        assert r.status_code == 200, r.text
+        return r.json()
+
+    # Il passo di secondo livello analizza soltanto: le strategie arrivano nel
+    # passo «Strategie e consigli» (#749).
+    body = audit("sl-motivation", "second-level")
+    assert not body["knowledge"]["certified_strategy_ids"]
+    assert "[CERTIFIED ADVICE]" not in body["envelope"]["system_prompt_final"]
+    assert "[CURRENT STEP FACTORS] Allowed factor codes for this answer: A2, A5, A6" in body["envelope"]["system_prompt_final"]
+    assert "[CURRENT STEP SCORE PROFILE]" in body["envelope"]["system_prompt_final"]
+    assert "A5 (Mancanza di perseveranza): 3/9 = Forza" in body["envelope"]["system_prompt_final"]
+
+    body = audit("sl-strategies", "strategies")
     certified_ids = body["knowledge"]["certified_strategy_ids"]
-    assert len(certified_ids) == 1
     assert "test-certified-a6-in-step" in certified_ids
     # A5=3 e' una forza nel QSA: una strategia dichiarata per A5 area di
     # crescita non deve entrare come intervento pratico.
     assert "test-certified-a5-in-step" not in certified_ids
-    assert "test-certified-c1-out-of-step" not in certified_ids
-    assert "test-certified-a4-out-of-step" not in certified_ids
     assert "[CERTIFIED_STRATEGIES]" in body["knowledge"]["context"]
-    assert "Ruolo: intervento principale" in body["knowledge"]["context"]
     assert "[CERTIFIED ADVICE]" in body["envelope"]["system_prompt_final"]
-    assert "[CURRENT STEP FACTORS] Allowed factor codes for this answer: A2, A5, A6" in body["envelope"]["system_prompt_final"]
-    assert "[CURRENT STEP SCORE PROFILE]" in body["envelope"]["system_prompt_final"]
-    assert "A5 (Mancanza di perseveranza): 3/9 = Forza" in body["envelope"]["system_prompt_final"]
-    assert "Primary improvement targets: A6 (Percezione di competenza)" in body["envelope"]["system_prompt_final"]
+    assert "Primary improvement targets:" in body["envelope"]["system_prompt_final"]
+    assert "A6 (Percezione di competenza)" in body["envelope"]["system_prompt_final"]
 
 
 def test_prompt_audit_certified_strategy_limit_can_disable_injection():
@@ -4298,9 +4304,11 @@ def test_questionnaire_result_summary_uses_final_guided_step_for_every_instrumen
             session_id = f"summary-{questionnaire_type.lower()}-{uuid.uuid4().hex[:8]}"
             session_ids.append(session_id)
             with _TestSession() as db:
+                # La sintesi, non il passo «Strategie e consigli» che la segue (#749).
                 final_step = (
                     db.query(models.GuidedStep)
-                    .filter(models.GuidedStep.questionnaire_type == questionnaire_type)
+                    .filter(models.GuidedStep.questionnaire_type == questionnaire_type,
+                            models.GuidedStep.system_prompt_mode != "strategies")
                     .order_by(models.GuidedStep.sort_order.desc(), models.GuidedStep.id.desc())
                     .first()
                 )
@@ -6805,15 +6813,16 @@ def test_skills_chat_uses_certified_advice_only_for_every_supported_instrument()
     assert created.status_code == 200, created.text
 
     for questionnaire_type in SEEDED_INSTRUMENTS:
+        # Nei percorsi a fattori le strategie arrivano nel passo «Strategie e consigli» (#749).
         guided_case = {
             "QSA": {
-                "mode": "second-level",
-                "phase": "sl-motivation",
+                "mode": "strategies",
+                "phase": "sl-strategies",
                 "scores_context": "PROFILO QSA DELLO STUDENTE:\n- A6: 3/9",
             },
             "QSAr": {
-                "mode": "qsar-second-level",
-                "phase": "qsar-motivation",
+                "mode": "strategies",
+                "phase": "qsar-strategies",
                 "scores_context": "PROFILO QSAr DELLO STUDENTE:\n- A2r: 3/9",
             },
         }.get(questionnaire_type, {
@@ -6837,7 +6846,8 @@ def test_skills_chat_uses_certified_advice_only_for_every_supported_instrument()
         # The stub makes no proposal: candidates stay available to the model,
         # but do not become user recommendations merely by being retrieved.
         assert body["certified_strategy_ids"] == []
-        assert len(_latest_log_details(f"skills-policy-{questionnaire_type.lower()}")["certified_strategy_ids"]) == 1, (
+        # Nessun limite di una strategia nel passo «Strategie e consigli» (#749).
+        assert strategy_slug in _latest_log_details(f"skills-policy-{questionnaire_type.lower()}")["certified_strategy_ids"], (
             questionnaire_type,
             body,
         )
@@ -6994,7 +7004,7 @@ def test_skills_preview_policy_is_active_for_every_supported_instrument():
             if db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first() is None:
                 db.add(models.GuidedStep(
                     id=step_id, sort_order=999, label="Smoke advice step",
-                    prompt="Smoke advice step prompt", system_prompt_mode="second-level",
+                    prompt="Smoke advice step prompt", system_prompt_mode="strategies",
                     color_theme="slate", questionnaire_type=questionnaire_type,
                 ))
         db.commit()

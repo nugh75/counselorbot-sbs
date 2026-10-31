@@ -1,1 +1,1 @@
-[SYNTHESIS ADVICE] This synthesis consolidates the path already completed. Do not introduce a new study strategy or a new action. If useful, identify at most ONE priority among the actions already discussed and explain briefly why it deserves attention first.
+[SYNTHESIS ADVICE] This synthesis consolidates the path already completed. Do not introduce a new study strategy or a new action: the Strategies and advice step that follows proposes them. If useful, name the area that deserves attention first and explain briefly why.

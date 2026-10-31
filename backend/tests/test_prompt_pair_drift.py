@@ -134,7 +134,7 @@ def test_qpcc_and_qap_summaries_keep_their_domain_and_shared_output_safeguards()
     assert 'ten' in qpcc and 'QPCC' not in qap
     for text in (qpcc, qap):
         assert '[[AVANZA_STEP]]' in text
-        assert 'certified candidate' in text
+        assert 'Strategies and advice step' in text
         assert 'agreed timeframes' in text
 
 
