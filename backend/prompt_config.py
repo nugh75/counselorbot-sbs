@@ -123,7 +123,8 @@ DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR_QA = (
 
 DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL = (
     "Provide an integrated analysis of the short-form QSAr factors "
-    "of the study method, connecting the relevant results and proposing practical guidance. "
+    "of the study method, connecting the relevant results, without practical actions: the "
+    "Strategies and advice step at the end of the path proposes them. "
     "Avoid diagnoses and do not use opening greetings. Start directly with the requested analysis."
     + DEFAULT_FACTOR_INTERPLAY_QSAR
     + DEFAULT_SECOND_LEVEL_METHOD
@@ -1961,7 +1962,7 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
             "with balance and responsibility; "
             "'present fatalistic' = the feeling of being unable to influence events and resignation. "
             "Do not reveal to the user any formulas, conversions or technical parameters. "
-            "Keep this comparison descriptive; the subsequent Questions and Exploration phase can take up personal experience and actions."
+            "Keep this comparison descriptive, without practical actions: the Strategies and advice step that follows takes them up."
         ),
         "system_prompt_mode": "ztpi-btp",
         "color_theme": "purple",
@@ -2506,7 +2507,7 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
             "the student sees the whole picture. THEN integrate their self-assessment results "
             "into an overall reading (perceived strengths and areas they feel less sure about, "
             "treating the scores as reference points, not judgements), with recurring resources, "
-            "areas to work on and actions the student already agreed to. Offer at most ONE new practical suggestion when this step permits it and a certified candidate supports it; otherwise consolidate existing actions. End with a "
+            "areas to work on and actions the student already agreed to. Add no new practical suggestion: the Strategies and advice step that follows proposes them. End with a "
             "reflection question. On the last line put only [[AVANZA_STEP]]."
         ),
         "system_prompt_mode": "qpcs-summary",
@@ -2660,8 +2661,8 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
             'Distinguish M2 ego orientation from capability and causal attributions. Summarise '
             'resources and difficulties grounded in the conversation; distinguish counselor '
             'proposals from the person’s commitments and keep only agreed timeframes. If the '
-            'person rejected any reading or strategy earlier, do not reintroduce it. At most '
-            'ONE new practical suggestion only when permitted and supported by a certified candidate. '
+            'person rejected any reading or strategy earlier, do not reintroduce it. Add no new '
+            'practical suggestion: the Strategies and advice step that follows proposes them. '
             'End with one reflection question and [[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-summary',
   'color_theme': 'slate',
@@ -2785,8 +2786,8 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
   'label': "6. Sintesi e Piano d'Azione",
   'prompt': 'Final summary of the QAP path: integrate what emerged across the 4 resources (future '
             "orientation, control, curiosity, confidence) and build a portrait of the student's career "
-            'adaptability (strengths and areas for growth, in words, without scores), with ONE practical '
-            'suggestion, and points to review it at 7, 30 and 90 days. On the last line put only '
+            'adaptability (strengths and areas for growth, in words, without scores). Add no new practical '
+            'suggestion: the Strategies and advice step that follows proposes them. On the last line put only '
             '[[AVANZA_STEP]].',
   'system_prompt_mode': 'qap-summary',
   'color_theme': 'purple',
