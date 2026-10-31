@@ -146,9 +146,15 @@ export function PromptHealthPanel() {
             {error && <Callout variant="danger">{t('admin.promptHealth.loadError')}</Callout>}
             {!error && !run && <Callout variant="info">{t('admin.promptHealth.never')}</Callout>}
             {run && !run.current && <Callout variant="warning">{t('admin.promptHealth.stale')}</Callout>}
-            <Button type="button" variant="secondary" disabled={busy} onClick={runNow}>
-                {busy ? t('admin.promptHealth.running') : t('admin.promptHealth.run')}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" disabled={busy} onClick={runNow}>
+                    {busy ? t('admin.promptHealth.running') : t('admin.promptHealth.run')}
+                </Button>
+                {/* Caricamento completo: la scheda attiva si legge dall'URL solo all'avvio. */}
+                <a href="/admin?tab=promptHealth" className="inline-flex min-h-control items-center rounded-control border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink-body hover:bg-surface-sunken">
+                    {t('admin.promptHealth.page.open')}
+                </a>
+            </div>
             {run && (run.findings.length === 0
                 ? <Callout variant="success">{t('admin.promptHealth.empty')}</Callout>
                 : <ul className="space-y-2">{run.findings.map(finding => <FindingItem key={finding.id} finding={finding} />)}</ul>)}

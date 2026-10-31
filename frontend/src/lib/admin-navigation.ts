@@ -4,7 +4,7 @@
 export const ADMIN_TABS = [
     'assistantManager', 'config', 'logs', 'costs', 'presets', 'benchmark', 'promptExperiments', 'counselors',
     'approvedStrategies', 'toolBriefs', 'threadGuard', 'certifiedStrategies', 'certifiedReadings', 'orientationReferrals',
-    'skills', 'assistantQuestions', 'guidedStepQuestions', 'promptExport', 'ragDocs', 'tavoloImages', 'audio', 'surveys',
+    'skills', 'assistantQuestions', 'guidedStepQuestions', 'promptExport', 'promptHealth', 'ragDocs', 'tavoloImages', 'audio', 'surveys',
     'results', 'questionnaires', 'validation', 'researchContacts', 'administrationPlans', 'groupsClasses', 'usersSummary',
     'training', 'pqbl', 'rolePreview',
 ] as const;
