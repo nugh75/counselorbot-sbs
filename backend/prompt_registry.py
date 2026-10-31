@@ -25,7 +25,8 @@ TELEGRAM = "telegram"      # the same pipeline driven from Telegram
 FREE_CHAT = "free_chat"    # free conversation on the profile
 ASSISTANT = "assistant"    # CounselorBot Assistant (site chat collections)
 AUXILIARY = "auxiliary"    # one-shot generators (cross synthesis, pQBL)
-SURFACES = (GUIDED, TELEGRAM, FREE_CHAT, ASSISTANT, AUXILIARY)
+BUSSOLA = "bussola"        # Compass orientation guide (prompt built in code)
+SURFACES = (GUIDED, TELEGRAM, FREE_CHAT, ASSISTANT, AUXILIARY, BUSSOLA)
 
 # --- Assembly order (slots of the request built by chat_preparation) --------
 ORDER_SYSTEM = 10      # system prompt resolved from step/mode
@@ -327,6 +328,11 @@ _CODE_ENTRIES = (
         id="code:format_rule", kind="code", key="FORMAT_RULE", consumer="backend.prompt_contract:turn_contract",
         surfaces=_GUIDED, order=ORDER_FORMAT, marker="Write in the format chosen in the chat",
         rules=(_r("format", "chosen", "Write in the format chosen in the chat, given in [VISIBLE RESPONSE FORMAT]"),),
+    ),
+    PromptEntry(
+        id="code:bussola_guide", kind="code", key="bussola_guide", consumer="backend.orientation:analyze_turn",
+        surfaces=(BUSSOLA,), order=ORDER_SYSTEM, marker="You are CounselorBot's neutral orientation guide",
+        label="Compass orientation guide",
     ),
 )
 

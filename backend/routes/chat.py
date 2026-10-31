@@ -74,6 +74,7 @@ from ..chat_logic import (
     strip_thinking,
 )
 from ..chat_preparation import practice_notebook_id_for_turn, prepare_chat_turn
+from .. import prompt_usage
 from ..class_path_completion import record_guided_chat_completion
 from ..diagram_blocks import strip_for_speech
 from ..guided_explorations import restore_owned_snapshot
@@ -196,6 +197,26 @@ def _resolve_counselor(db, counselor_id):
             reasoning_budget = preset.reasoning_budget
             reasoning_effort = getattr(preset, "reasoning_effort", None)
     return provider, model, counselor.persona, counselor.name, disable_thinking, reasoning_budget, reasoning_effort
+
+
+def _usage_plan(prepared, request, ai_service, identity):
+    """Prompts assembled in this turn, for the prompt health page (#762). No query."""
+    if request.preview:
+        return None
+    prompt_key = getattr(prepared, "prompt_key", None)
+    if identity.get("channel") == "telegram":
+        surface = "telegram"
+    elif prompt_key == "prompt_free_chat":
+        surface = "free_chat"
+    else:
+        surface = "guided"
+    envelope = f"{getattr(prepared, 'system_prompt_final', '')}\n\n{getattr(prepared, 'full_message', '')}"
+    return prompt_usage.safe_plan(
+        surface, envelope, getattr(ai_service, "config", None) or {},
+        instrument=getattr(prepared, "questionnaire_type", None), step=request.phase,
+        step_text=getattr(getattr(prepared, "step", None), "prompt", None), language=request.language,
+        always=(prompt_key,) if prompt_key else (),
+    )
 
 
 def _watch_thread(prepared, request, db, *, session_id, username, effective_message,
@@ -847,6 +868,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             build_log_envelope(system_prompt_final, full_message, history)
         )
     if not request.preview:
+        prompt_usage.observe(_usage_plan(prepared, request, ai_service, identity), response_content,
+                             control_signals=control_signals, strategy_ids=recommended["strategy"])
         log_entry = models.Log(
             session_id=session_id,
             conversation_id=conversation_id,
@@ -1008,6 +1031,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     step_title = localized(step, "label", request.language) if step else ""
     step_order = step.sort_order if step else None
     guard_step_prompt = getattr(getattr(prepared, "step", None), "prompt", "") or ""
+    usage_plan = _usage_plan(prepared, request, ai_service, identity)
     db.commit()
     db.close()
 
@@ -1015,9 +1039,12 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         response_content: str,
         usage: dict | None = None,
         recommended: dict[str, list[str]] | None = None,
+        control_signals=(),
     ) -> str | None:
         if request.preview:
             return None
+        prompt_usage.observe(usage_plan, response_content, control_signals=control_signals or (),
+                             strategy_ids=(recommended or {}).get("strategy", []))
         provider = getattr(ai_service, "last_provider", None) or c_provider or ai_service.config.get("active_provider", "unknown")
         model = getattr(ai_service, "last_model", None) or c_model or ai_service.config.get("model_name", "unknown")
         plan_getter = getattr(ai_service, "_plan", None)
@@ -1359,7 +1386,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 exploration_id=request.exploration.id if request.exploration else None,
             )
 
-            response_id = _log_stream(response_content, usage_info, recommended)
+            response_id = _log_stream(response_content, usage_info, recommended, control_signals)
             recommendations_for_response: dict[str, list[dict]] = {"reading": [], "strategy": []}
             if not request.preview:
                 recommendation_db = database.write_session()
@@ -1436,7 +1463,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     transcript_user=_transcript_user,
                     exploration_id=request.exploration.id if request.exploration else None,
                 )
-                response_id = _log_stream(response_content, usage_info, recommended)
+                response_id = _log_stream(response_content, usage_info, recommended, control_signals)
                 yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': (recommended or {}).get('strategy', []), 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': {'reading': [], 'strategy': []}, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals or []})}\n\n"
                 return
 
