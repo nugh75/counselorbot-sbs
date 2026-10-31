@@ -4,6 +4,8 @@ import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, ArrowDownRight, ArrowRight, ChevronDown, ChevronRight, ChevronUp, Layers, Pencil, Play, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { notifyPromptSaved } from '@/components/admin/PromptHealthPanel';
+import { promptHealthId } from '@/lib/prompt-health';
 import { apiFetch } from '@/lib/auth';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview } from '@/components/admin/PromptRequestPreview';
@@ -250,6 +252,8 @@ function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
                 method: request.method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request.body),
             });
             if (!response.ok) throw new Error('save');
+            // Solo avvisi (#760): il controllo parte dopo il salvataggio e non lo blocca.
+            if (!isComponents && (!multilingual || language === 'it')) void notifyPromptSaved(promptHealthId(entry));
             onSaved();
         } catch {
             setError(t('admin.promptMap.saveError'));
