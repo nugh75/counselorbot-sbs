@@ -1922,6 +1922,20 @@ class PromptHealthAck(Base):
     created_at = Column(UTCDateTime, server_default=func.now())
 
 
+class PromptHealthLlmResult(Base):
+    """Contradictions a model found in one assembled request (#763), cached by
+    the hash of check version, model, language and request text."""
+
+    __tablename__ = "prompt_health_llm_results"
+
+    cache_key = Column(String, primary_key=True)
+    provider = Column(String, nullable=False)
+    model = Column(String, nullable=False)
+    surfaces = Column(JSON, nullable=False)
+    contradictions = Column(JSON, nullable=False)
+    created_at = Column(UTCDateTime, server_default=func.now(), index=True)
+
+
 class PromptExperimentDecision(Base):
     """Production receipt, committed atomically with a human-approved prompt write."""
 
