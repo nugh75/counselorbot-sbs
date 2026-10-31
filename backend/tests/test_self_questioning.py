@@ -362,7 +362,7 @@ def test_essential_path_keeps_its_fixed_tasks_and_question_free_summary(runtime)
         assert directive(phase) in prepared.system_prompt_final
         assert "add no steps or required turns" in prepared.components["turn_contract"].lower()
         if phase == QSA_PHASES[-1]:
-            assert "Do not ask another question" in prepared.system_prompt_final
+            assert "End with at most ONE open question" in prepared.system_prompt_final
             assert "When the step permits a closing question" in prepared.components["turn_contract"]
 
 

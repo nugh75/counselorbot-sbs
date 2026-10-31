@@ -54,7 +54,7 @@ def test_preparation_resolves_virtual_steps_and_keeps_format_separate_from_lengt
         assert result.effective_response_length == 'short'
         assert result.questionnaire_type == 'QSA'
         if phase == PHASES[-1]:
-            assert 'Do not ask another question' in result.system_prompt_final
+            assert 'End with at most ONE open question' in result.system_prompt_final
             assert 'journey_coverage' in result.components
         assert not db.new and not db.dirty
 
