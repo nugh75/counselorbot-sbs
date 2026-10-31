@@ -579,9 +579,21 @@ nel contesto di ogni turno. Non esistono più il workspace OpenCode, il terminal
 di ripiego, la visualizzazione affiancata del PDF e i file di lavoro
 (`documento.md`, `memoria.md`, `appunti.md`); il PDF caricato serve solo a
 estrarre i punteggi e non ne viene conservata una copia. Le sessioni salvate con
-OpenCode si riaprono come chat libera. Nella chat libera non c’è il pannello dei
-consigli di lettura e strategie. Tra le domande suggerite dell’Assistente quella
+OpenCode si riaprono come chat libera. Tra le domande suggerite dell’Assistente quella
 sull’esperienza OpenCode è sostituita da una sul formato delle risposte della chat.
+
+**Chat libera: barra laterale e prompt propri (#754).** La barra laterale della
+chat libera è quella della chat guidata senza il percorso a passi: le barre
+colorate dei punteggi, raggruppate per area con i nomi dei fattori, e il
+riquadro Consigli con le linguette letture, strategie, consigli e diagrammi.
+Su telefono si aprono dal menu Opzioni («Punteggi», «Consigli»). Le risposte
+seguono un prompt di sistema e un contratto di turno propri della chat libera,
+modificabili in Amministrazione come gli altri prompt («Prompt Chat libera»,
+«Contratto di turno Chat libera»): il counselor risponde prima alla domanda
+dello studente, fa al massimo una domanda per risposta (anche nessuna), non
+parla di passi o fasi, usa profilo e punteggi come contesto e propone strategie
+o letture solo quando lo studente le chiede o servono alla domanda. Il formato
+scelto in chat resta valido.
 
 Le pagine `/bussola` e `/assistente`, con il selettore del taccuino nel contesto,
 il taccuino di prova, il richiamo all’abbonamento ChatGPT e il campo del
@@ -871,6 +883,8 @@ lezioni, studio con i compagni). Le righe del database ferme al testo di fabbric
 aggiornano con «Allinea prompt di fabbrica»; quelle personalizzate restano invariate.
 
 Nei percorsi a intervista qualitativa (QPCC, QAP, Savickas, Evento Significativo, Obiettivi di apprendimento) e nelle analisi dimensionali (QPCS, QSA, QSAr, ZTPI), i testi dei prompt di step prescrivono tassativamente la formulazione di **esattamente una sola domanda aperta per turno su un singolo aspetto** (vietando elenchi puntati o domande multiple a raffica), rimandando altri aspetti ai turni successivi solo se necessari. In tutti i percorsi e nei contratti universali di piattaforma (`turn_contract` e `INTRO_ALLOWED_QUESTIONS`), le domande dell'assistente sono definite espressamente come **spunti aperti per facilitare l'auto-interrogazione della persona** sulla propria esperienza, scelte, strategie e risorse, mai come un interrogatorio asimmetrico o un questionario direttivo («io ti faccio domande mirate e tu rispondi»). Il chatbot **fornisce chiarimenti o spiegazioni su concetti, scale e meccanismi esclusivamente in due situazioni**: quando la persona li richiede espressamente o quando il modello rileva dall'intervento dell'utente che qualcosa detto in precedenza è stato frainteso o non compreso bene; al di fuori di questi due casi è vietato dispensare lezioni teoriche, dissertazioni o spiegazioni non richieste. È altresì vietato in tutte le introduzioni e turni di chat l'uso di formule retoriche di contrasto («non è... ma...», es. «non è un giudizio ma un'opportunità», «non misura quanto vali ma raccoglie...») e di cliché terapeutici o meta-disclaimer difensivi («senza giudizio / non con giudizio», «non misura quanto vali», «non ci sono risposte giuste o sbagliate», «autopercezioni non verdetti», «non ti farò domande del questionario», «non è un test o un voto», «etichette fisse», «è un'ipotesi non una verità», «non è una diagnosi», «non è un difetto»). Nel percorso QPCC di Pellerey–Orio, il contratto canonico in codice (`qpcc.directive()`) e i testi di step trattano i punteggi dichiarati esclusivamente come autopercezioni e ipotesi esplorative da verificare insieme alla persona, mai come diagnosi, etichette o fatti oggettivi; è vietato attribuire emozioni o stati affettivi (come ansia o insicurezza) non esplicitamente nominati dalla persona ed è obbligatorio accogliere immediatamente il rifiuto di una lettura o di una strategia abbandonandola senza riproporla.
+
+**Domande e formato delle risposte (coerenza dei prompt, ottobre 2026).** Ogni risposta pone al massimo una domanda: quando il passo propone un'azione, quella domanda riguarda l'azione (tenerla, adattarla, provarla), non una riflessione in più. Anche l'apertura della fase «Domande e Approfondimenti» pone una sola domanda; le altre arrivano nelle risposte successive. Le sintesi finali (Obiettivi e percorso QSA essenziale compresi) possono chiudere con una domanda aperta, ad esempio sul futuro dello studente, mai con un elenco. Il formato visibile segue l'opzione scelta in chat: **Discorsivo** dà prosa, **Puntato** elenchi puntati; senza scelta vale la prosa. Il piano finale di IDEA resta numerato e le tabelle dei profili dei fattori mantengono quattro colonne (le altre tabelle al massimo tre); le domande non diventano mai un elenco. Quando un passo apre una nuova area QPCS, il chatbot la definisce in una o due frasi; altre spiegazioni arrivano solo su richiesta. Questi testi di fabbrica cambiati vengono riallineati anche dove l'amministratore li aveva personalizzati, con «Allinea prompt di fabbrica».
 Il budget numerico rigido di turni («at most two follow-ups», «two or three questions in total») è
 stato sostituito da un criterio qualitativo di comprensione orientato all'agire con tetto di sicurezza
 a circa cinque scambi: il chatbot resta nell'area finché lo studente la sviluppa, esplorando cosa fa,

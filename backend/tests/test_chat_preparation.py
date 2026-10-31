@@ -170,6 +170,53 @@ def test_free_chat_without_a_phase_carries_the_profile_and_no_step():
         assert 'C1' in prepared.system_prompt_final and '7' in prepared.system_prompt_final
 
 
+def test_free_chat_turn_uses_its_own_prompt_and_contract_and_no_step_prompts():
+    # #754: the free chat sends mode `free` without a phase. It gets the free chat
+    # system prompt and turn contract, never the step prompts or the step contract.
+    from backend.prompt_config import (
+        DEFAULT_FREE_CHAT_CONTRACT, DEFAULT_SYSTEM_PROMPT_FREE_CHAT, DEFAULT_SYSTEM_PROMPT_GENERIC,
+        GUIDED_CHOICE_DIRECTIVE,
+    )
+    _ensure_guided_steps("QSA")
+    db = _TestSession()
+    try:
+        ai = AIService(db)
+        ai.config.update(active_provider='ollama', model_name='test-local')
+        request = ChatRequest(
+            message='Come leggo il mio punteggio C1?', mode='free', questionnaire_type='QSA',
+            scores_context='- C1: 7/9\n- C2: 2/9', language='it', session_id='free-chat-754', response_format='bullets',
+        )
+        prepared = prepare_chat_turn(db, ai, request, 'free-chat-754', {'username': 'free'},
+                                     include_retrieval=False, include_history=False)
+        final = prepared.system_prompt_final
+        assert prepared.prompt_key == 'prompt_free_chat'
+        assert DEFAULT_SYSTEM_PROMPT_FREE_CHAT[:80] in final
+        assert DEFAULT_SYSTEM_PROMPT_GENERIC not in final
+        assert DEFAULT_FREE_CHAT_CONTRACT.splitlines()[1] in final
+        assert 'Response language: it.' in final
+        assert '[TURN CONTRACT]' not in final
+        assert '[[AVANZA_STEP]]' not in final
+        assert '[GUIDED PATH]' not in final
+        assert GUIDED_CHOICE_DIRECTIVE.strip()[:60] not in final
+        assert '[ADVICE DISTRIBUTION]' not in final
+        for step in db.query(models.GuidedStep).filter_by(questionnaire_type='QSA').all():
+            assert not step.prompt or step.prompt.strip()[:80] not in final, step.id
+        assert prepared.step_label in (None, '')
+        assert 'C1' in final and '7' in final
+    finally:
+        db.close()
+
+
+def test_free_chat_contract_is_editable_in_administration():
+    from backend.chat_preparation import free_chat_contract
+    from backend.prompt_config import ALL_CONFIG_TEXT_DEFINITIONS, DEFAULT_FREE_CHAT_CONTRACT, MODE_TO_SYSTEM_PROMPT_KEY
+    keys = {item['key'] for item in ALL_CONFIG_TEXT_DEFINITIONS}
+    assert {'prompt_free_chat', 'prompt_free_chat_contract'} <= keys
+    assert MODE_TO_SYSTEM_PROMPT_KEY['free'] == 'prompt_free_chat'
+    assert free_chat_contract({}, 'en').startswith(DEFAULT_FREE_CHAT_CONTRACT)
+    assert free_chat_contract({'prompt_free_chat_contract': 'Custom rules.'}, 'en') == 'Custom rules.\nResponse language: en.'
+
+
 def test_invalid_phase_is_preview_only():
     with artifact_session() as db:
         payload = schemas.PromptAuditRequest(use_phase_prompt=True, phase='missing-step', include_knowledge=False)

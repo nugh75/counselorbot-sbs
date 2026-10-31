@@ -173,7 +173,7 @@ def test_synthesis_contract_fixes_subject_level_and_unchecked_criterion():
     for text in (teaching, learning):
         assert "it must be the level of the verb you use" in text
         assert "does not check a requirement the objective names" in text
-        assert "no reflective questions" in text
+        assert "at most ONE open question" in text
         assert "formulate questions about themselves" in text
     follow_up = contract("OBIETTIVO_DOCENZA", "obbdocenza-final", "synthesis", False)
     assert "answer only that message" in follow_up
@@ -187,4 +187,4 @@ def test_final_steps_and_summary_prompt_carry_the_same_rules():
     assert "[[AVANZA_STEP]]" not in final_docenza
     summary = prompt_config.DEFAULT_SYSTEM_PROMPT_OBIETTIVO_SUMMARY
     assert "never the teacher" in summary and "[[AVANZA_STEP]]" not in summary
-    assert "no reflective questions" in summary
+    assert "at most ONE open question" in summary

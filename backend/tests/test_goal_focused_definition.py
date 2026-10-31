@@ -173,7 +173,7 @@ def test_factory_steps_check_gaps_instead_of_interrogating():
                 assert "only [[AVANZA_STEP]]" in prompt and "ask whether to go on" in prompt, suffix
                 assert "say in one short sentence" in prompt, suffix
             if suffix == "final":
-                assert "do not use the step marker" in prompt and "no reflective questions" in prompt
+                assert "do not use the step marker" in prompt and "at most ONE open question" in prompt
     assert "the proof will ask" in STEPS["obbdocenza-piano"]["prompt"]
 
 
@@ -260,7 +260,7 @@ def test_essential_stages_close_on_evidence_not_on_a_count(phases):
     assert "already well defined, restate it, and put only [[AVANZA_STEP]]" in directive(define, entry=True)
     assert "Do not write the summary" in directive(plan)
     assert "do not emit [[AVANZA_STEP]]" in directive(summary)
-    assert "Do not ask another question" in directive(summary, entry=True)
+    assert "End with at most ONE open question" in directive(summary, entry=True)
     assert all(advances_on_signal(phase) for phase in phases)
 
 

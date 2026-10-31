@@ -97,6 +97,12 @@ DEFAULT_SYSTEM_PROMPT_GUIDED_QUESTIONS = _text("default_system_prompt_guided_que
 STRATEGIES_STEP_MODE = "strategies"
 DEFAULT_SYSTEM_PROMPT_STRATEGIES = _text("default_system_prompt_strategies")
 
+# Chat libera (#754): conversazione aperta sul profilo, fuori dal percorso.
+# Prompt di sistema e contratto di turno propri, senza istruzioni di passo.
+FREE_CHAT_MODE = "free"
+DEFAULT_SYSTEM_PROMPT_FREE_CHAT = _text("default_system_prompt_free_chat")
+DEFAULT_FREE_CHAT_CONTRACT = _text("default_free_chat_contract")
+
 DEFAULT_GUIDED_TEXT_QUESTIONS_PHASE_BANNER = "--- Fase finale: Riflessione e Strategie ---"
 
 DEFAULT_GUIDED_TEXT_QUESTIONS_INTRO = (
@@ -423,6 +429,18 @@ SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "label": "Prompt Strategie e consigli",
         "description": "Prompt di sistema del passo «Strategie e consigli», dopo la sintesi: strategie e letture di iniziativa per i fattori da migliorare e su richiesta",
         "default": DEFAULT_SYSTEM_PROMPT_STRATEGIES,
+    },
+    {
+        "key": "prompt_free_chat",
+        "label": "Prompt Chat libera",
+        "description": "Prompt di sistema della chat libera sul profilo, fuori dal percorso a passi: risponde prima alla domanda dello studente, profilo e punteggi come contesto",
+        "default": DEFAULT_SYSTEM_PROMPT_FREE_CHAT,
+    },
+    {
+        "key": "prompt_free_chat_contract",
+        "label": "Contratto di turno Chat libera",
+        "description": "Regole di ogni turno della chat libera, al posto del contratto dei passi: al massimo una domanda per risposta, nessun passo o marcatore, strategie e letture solo se pertinenti o richieste",
+        "default": DEFAULT_FREE_CHAT_CONTRACT,
     },
     {
         "key": "prompt_factor_qa",
@@ -1245,6 +1263,7 @@ MODE_TO_SYSTEM_PROMPT_KEY: Dict[str, str] = {
     "factor-qa": "prompt_factor_qa",
     "second-level": "prompt_second_level",
     "generic": "prompt_generic",
+    FREE_CHAT_MODE: "prompt_free_chat",
     "qsar-factor": "prompt_qsar_factor",
     "qsar-factor-qa": "prompt_qsar_factor_qa",
     "qsar-second-level": "prompt_qsar_second_level",

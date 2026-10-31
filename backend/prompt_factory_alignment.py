@@ -72,9 +72,15 @@ FORCED_FACTORY_KEYS = {
         # #751: QPCC senza i fattori fissi del passo (A06), contesto dell'Assistente
         # senza i fatti che ora genera il codice (C07).
         "prompt_qpcc_interview", "site_chat_platform_context",
+        # #750: le sintesi Obiettivi possono chiudere con una domanda (A04);
+        # l'area QPCS si apre con una definizione breve (A10).
+        "prompt_obiettivo_summary",
     },
     # #749: sintesi senza strategie nuove, passo ZTPI descrittivo.
-    "guided_step": {"sl-synthesis", "qsar-synthesis", "ztpi-btp", "qpcs-sintesi", "qpcc-sintesi", "qap-sintesi"},
+    "guided_step": {
+        "sl-synthesis", "qsar-synthesis", "ztpi-btp", "qpcs-sintesi", "qpcc-sintesi", "qap-sintesi",
+        "obbstudio-final", "obbdocenza-final",  # #750: sintesi con una domanda finale (A04)
+    },
 }
 
 

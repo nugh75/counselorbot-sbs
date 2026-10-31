@@ -19,6 +19,7 @@ from backend.chat_logic import (
 )
 from backend.prompt_contract import (
     FACILITATION_SENTINEL,
+    FORMAT_RULE,
     SELF_QUESTIONING_SENTINEL,
     OBJECTIVE_FOCUS_SENTINEL,
     turn_contract,
@@ -166,25 +167,14 @@ def test_absence_of_site_guide_rag_chunks_in_guided_chats(runtime_db, monkeypatc
     assert "Site Guide Chunk" not in retrieved_text
 
 
-def test_no_bullet_rule_in_interviews_and_guided_contracts():
-    # 1. turn_contract includes the explicit no-bullet directive
-    contract_text = turn_contract(
-        language="it",
-        questionnaire_type="QPCS",
-        phase="qpcs-area1",
-        advice_allowed=False,
+def test_format_rule_in_interviews_and_guided_contracts():
+    # #750 (A01): the format chosen in the chat wins; without it, prose.
+    texts = (
+        turn_contract(language="it", questionnaire_type="QPCS", phase="qpcs-area1", advice_allowed=False),
+        _facilitation_contract("area"),
+        _self_questioning_contract("area"),
+        _objective_focus_contract("OBIETTIVO_STUDIO", "definition"),
     )
-    assert "Never use bullet points, numbered lists or itemized options" in contract_text
-    assert "fluid, natural prose with at most ONE open question per turn" in contract_text
-
-    # 2. _facilitation_contract includes no-bullet directive
-    fac_text = _facilitation_contract("area")
-    assert "Never use bullet points or numbered lists: converse in fluid, natural prose with a single open question per turn." in fac_text
-
-    # 3. _self_questioning_contract includes no-bullet directive
-    self_q_text = _self_questioning_contract("area")
-    assert "Never use bullet points or numbered lists: maintain a fluid conversational dialogue in continuous prose with a single open question." in self_q_text
-
-    # 4. _objective_focus_contract includes no-bullet directive
-    obj_text = _objective_focus_contract("OBIETTIVO_STUDIO", "definition")
-    assert "Never use bullet points or numbered lists: write in fluid conversational prose." in obj_text
+    for text in texts:
+        assert FORMAT_RULE in text
+        assert "Never use bullet points" not in text

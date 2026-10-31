@@ -46,6 +46,7 @@ from .prompt_config import (
     DEFAULT_QSAR_GUIDED_STEPS,
     DEFAULT_SAVICKAS_GUIDED_STEPS,
     DEFAULT_SYSTEM_PROMPT_GENERIC,
+    FREE_CHAT_MODE,
     STRATEGIES_STEP_MODE,
     DEFAULT_ZTPI_GUIDED_STEPS,
     GUIDED_PHASE_ALIASES,
@@ -1223,6 +1224,9 @@ def _should_include_step_analysis_context(system_prompt_mode: Optional[str]) -> 
 # ponytail: advice-gated modes listed once; add here if a new second-level mode appears
 _ADVICE_PROMPT_MODES = {
     "generic", "qsar-generic", STRATEGIES_STEP_MODE,
+    # Chat libera (#754): stesso catalogo della chat generica, ma una
+    # strategia arriva solo se lo studente la chiede (chat_preparation).
+    FREE_CHAT_MODE,
     # Sintesi dei percorsi senza passo «Strategie e consigli»: lo step chiede
     # un piano pratico, quindi deve poter attingere al catalogo certificato
     # invece di far improvvisare il modello.
@@ -3213,7 +3217,10 @@ def build_context_envelope(
         db.query(models.GuidedStep).filter(models.GuidedStep.id == (step_id or request.phase)).first()
         if (step_id or request.phase) else None
     )
-    if getattr(request, "guided_path", "complete") == "essential" and questionnaire_type in _ESSENTIAL_PATH_DESCRIPTIONS:
+    if getattr(request, "mode", None) == FREE_CHAT_MODE and current_step is None:
+        # Chat libera (#754): nessun percorso, quindi niente posizione ne' regole di avanzamento.
+        guided_path = ""
+    elif getattr(request, "guided_path", "complete") == "essential" and questionnaire_type in _ESSENTIAL_PATH_DESCRIPTIONS:
         from .qsa_essential import navigation_context
         guided_path = _ESSENTIAL_PATH_DESCRIPTIONS[questionnaire_type] + "\n" + navigation_context(request.phase)
     else:
