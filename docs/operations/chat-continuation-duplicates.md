@@ -40,7 +40,7 @@ completa più breve. Un'eco senza alcun avanzamento restituisce un errore
 recuperabile e non salva un turno riuscito.
 
 La stessa funzione serve chat guidate/Bussola (`/chat/stream`), Assistente
-(`/site-chat/stream`), chat OpenCode e ripristino della cronologia OpenCode.
+(`/site-chat/stream`).
 Filtri dei blocchi privati, segnali di controllo e salvataggio lavorano sul
 testo riunito. I log guidati registrano `continuation_prefix_chars`, anche
 senza attivare la registrazione integrale dei prompt.
@@ -71,7 +71,7 @@ Nel portabile la build usa
 `--build-arg PYTHON_BASE_IMAGE=mirror.gcr.io/library/python:3.10-slim`.
 La suite controlla chunk da 1, 17 e 4096 caratteri, ripartenze esatte e
 riscritture, eco senza progresso, errori a metà ripresa, salvataggio singolo
-di testo e candidato, segnali di controllo e cronologia OpenCode.
+di testo e candidato, segnali di controllo e cronologia.
 Esito: **99 test passati**, con avvisi di deprecazione già presenti.
 Anche i **15 test** del lettore SSE passano:
 `cd frontend && node --test --experimental-strip-types src/lib/chat-stream.test.ts`.

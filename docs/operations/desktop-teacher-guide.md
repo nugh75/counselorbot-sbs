@@ -103,8 +103,8 @@ fuori da una conversazione: interrompe le richieste in corso. Una rimozione dive
 effettiva nel backend dopo questo riavvio o alla prossima apertura.
 
 Se il portachiavi è bloccato, sbloccarlo nella sessione di sistema e usare
-**Aggiorna stato**. Non copiare le chiavi in file o nella diagnostica. Le voci
-OpenCode e Privacy KEK sono riservate e non attivano queste funzioni. Dettagli:
+**Aggiorna stato**. Non copiare le chiavi in file o nella diagnostica. La voce
+Privacy KEK è riservata e non attiva queste funzioni. Dettagli:
 [chiavi API](desktop-api-keys.md).
 
 ## 4. Collegare il PC alla rete degli studenti
@@ -291,7 +291,7 @@ nel nuovo. Il portachiavi OS resta separato. Per riusare il vecchio profilo,
 chiudere app e servizi, conservare separatamente anche il nuovo profilo, rimettere
 quello vecchio nel percorso originale e usare il bundle precedente compatibile.
 
-Prompt Lab, Telegram, OpenCode, helper ChatGPT, Piper e sincronizzazione Console
+Prompt Lab, Telegram, helper ChatGPT, Piper e sincronizzazione Console
 sono esclusi dal profilo docente. Le funzioni della piattaforma web non sono tutte
 presenti nel desktop. Riferimenti tecnici: [guscio](desktop-teacher-shell.md),
 [piano desktop](../architecture/desktop-apps-plan.md), [privacy](../privacy/README.md).

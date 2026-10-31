@@ -85,7 +85,7 @@ DB rows.
 
 - **Session memory** (`memory_service.py`): per-session rolling conversational Markdown
   memory on disk, thread-safe. Expires after 2 hours. Tracks state, facts, preferences,
-  goals, external notes (synced from the OpenCode `appunti.md`), and the last 16
+  goals, external notes (a legacy section, no longer synced), and the last 16
   episodes. Background cleanup loop and log retention loop.
 - **Strategy memory** (`strategy_memory.py` + `knowledge/approved_strategies.md`):
   knowledge base of editorially-approved learning strategies, retrieved by relevance
@@ -158,14 +158,6 @@ activity never automatically achieves a goal. `/profilo/timeline` holds the shar
 personal activity/calendar/diary workspace. `/profilo/assegnazioni` connects teacher
 deliveries to planning, private reflection, explicit response sharing and feedback.
 Goal adoption and sharing remain explicit; the AI cannot perform them for the person.
-
-### Alternative experience — OpenCode
-
-The student can opt into a workspace-based self-analysis (`/opencode`): an isolated
-per-workspace container with a live terminal PTY (browser xterm.js over WebSocket),
-working documents (`documento.md`, `appunti.md`, `guida-questionario.md`,
-`memoria.md`), and a headless OpenCode API. Supports the six interface languages; logs
-under `opencode_chat`. Bash and webfetch are denied in the sandbox.
 
 ### pQBL (pure Question-Based Learning)
 
@@ -317,8 +309,6 @@ remain administrative capabilities, not permissions granted by catalog editing.
 - **Logs and retention**: conversation logs support PII redaction; configurable retention
   (default: `retention_days` days) with manual run; PII report endpoint. Disk-based
   session memory expires automatically. GDPR-compliant session deletion.
-- **OpenCode sandbox**: bash and webfetch are denied in the per-workspace container; the
-  PTY is accessible only over an authenticated WebSocket keyed by workspace.
 - **Data on PostgreSQL**: no SQLite in production; tests run against a dedicated
   `counselorbot_test` database to ensure dialect fidelity.
 ## Current personal tools and saving

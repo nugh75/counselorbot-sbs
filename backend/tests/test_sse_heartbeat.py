@@ -1,10 +1,9 @@
 """SSE transport regressions without a database, provider or 15-second sleeps."""
 import asyncio
-from contextlib import asynccontextmanager
 import json
 import threading
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -172,11 +171,11 @@ def test_sync_disconnect_returns_promptly_and_closes_after_the_pending_next():
     asyncio.run(asyncio.wait_for(check(), 3))
 
 
-@pytest.mark.parametrize("route", ["chat", "site_chat", "voice_reader", "opencode"])
+@pytest.mark.parametrize("route", ["chat", "site_chat", "voice_reader"])
 def test_routes_flush_headers_and_first_frame_before_slow_work(monkeypatch, route):
     from backend.ai_service import AIError
-    from backend.api_models import ChatRequest, SiteChatRequest, OpencodeChatRequest
-    from backend.routes import chat, site_chat, voice_reader, opencode
+    from backend.api_models import ChatRequest, SiteChatRequest
+    from backend.routes import chat, site_chat, voice_reader
 
     monkeypatch.setattr(sse, "HEARTBEAT_INTERVAL", .005)
     sent, calls = [], []
@@ -214,14 +213,6 @@ def test_routes_flush_headers_and_first_frame_before_slow_work(monkeypatch, rout
             await asyncio.sleep(.001)
         return {"type": "chunk", "index": 0, "audio": "YQ==", "words": []}
 
-    @asynccontextmanager
-    async def slow_connection(*a, **kw):
-        assert_flushed()
-        while not release.is_set():
-            await asyncio.sleep(.001)
-        raise RuntimeError("synthetic OpenCode failure")
-        yield  # make this a synthetic streaming context manager
-
     async def check():
         if route == "chat":
             monkeypatch.setattr(chat, "_resolve_counselor", lambda *a: (None,) * 7)
@@ -248,16 +239,6 @@ def test_routes_flush_headers_and_first_frame_before_slow_work(monkeypatch, rout
         elif route == "voice_reader":
             monkeypatch.setattr(voice_reader, "synthesize", slow_synthesis)
             response = await voice_reader.stream(voice_reader.ReaderRequest(text="Test"), db=db)
-        else:
-            monkeypatch.setattr(opencode, "_require_direct_chat", lambda *a: None)
-            monkeypatch.setattr(opencode.class_access, "require_tool", lambda *a: None)
-            monkeypatch.setattr(opencode, "_workspace_instrument", lambda *a: "")
-            monkeypatch.setattr(opencode, "_workspace_session_id", lambda *a: "test-session")
-            monkeypatch.setattr(opencode, "_get_api_instance", lambda *a: {"url": "http://unused"})
-            monkeypatch.setattr(opencode, "_api_auth", lambda *a: None)
-            monkeypatch.setattr(opencode, "_api_json", AsyncMock())
-            monkeypatch.setattr(opencode.httpx, "AsyncClient", lambda **kw: slow_connection())
-            response = await opencode.chat_opencode("cb-12345678", OpencodeChatRequest(session_id="test-session", message="Test"), identity={}, db=db)
         assert calls == []
         assert response.headers["x-accel-buffering"] == "no"
         assert "no-transform" in response.headers["cache-control"]

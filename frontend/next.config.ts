@@ -34,7 +34,7 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    // Resolve dynamic streaming routes (including OpenCode) before the general
+    // Resolve dynamic streaming routes before the general
     // API rewrite, which otherwise buffers their upstream event stream.
     return { beforeFiles: [], afterFiles: [], fallback: [
       {

@@ -57,7 +57,7 @@ Non sostituisce il portachiavi OS delle chiavi provider del pannello desktop.
 Prima di attivarlo occorrono custodia e recupero verificati **[DA VALIDARE]**;
 conservare le vecchie chiavi finché servono righe o backup legacy. Vedere [P12](p12-chiavi-fernet.md).
 
-Telegram, OpenCode, Prompt Lab, helper ChatGPT, Piper e Console sync sono esclusi
+Telegram, Prompt Lab, helper ChatGPT, Piper e Console sync sono esclusi
 da `teacher-pc`. Non includerli come servizi attivi nella descrizione L2.
 Un modello locale non esclude altre uscite (Cloudflare, Edge TTS, provider scelti).
 Non dichiarare che tutti i dati restano sul PC o che il DB è interamente cifrato.

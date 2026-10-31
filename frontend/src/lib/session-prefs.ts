@@ -4,7 +4,7 @@
 // "indietro" o dalla schermata iniziale — ma non si ripetono a ogni strumento.
 
 export type InputMethodPref = 'manual' | 'upload';
-export type ExperiencePref = 'standard' | 'opencode';
+export type ExperiencePref = 'standard' | 'free';
 export type ResponseLengthPref = 'short' | 'medium' | 'long';
 export type ReasoningPref = 'off' | 'standard' | 'deep';
 
@@ -43,12 +43,15 @@ export function setInputMethodPref(value: InputMethodPref | null): void {
     write(METHOD_KEY, value);
 }
 
+// 'opencode' è il valore salvato prima che la chat libera passasse dal percorso
+// standard: oggi significa la stessa cosa di 'free'.
 export function getExperiencePref(): ExperiencePref | null {
-    return read(EXPERIENCE_KEY, ['standard', 'opencode'] as const);
+    const value = read(EXPERIENCE_KEY, ['standard', 'free', 'opencode'] as const);
+    return value === 'opencode' ? 'free' : value;
 }
 
-// Idea offre due esperienze sostanzialmente diverse (mappa grafica e workspace
-// OpenCode): la scelta va mostrata a ogni nuova sessione, anche se altrove è
+// Idea offre due esperienze sostanzialmente diverse (mappa grafica e chat
+// libera): la scelta va mostrata a ogni nuova sessione, anche se altrove è
 // stata ricordata una modalità.
 export function experiencePrefForInstrument(
     instrument: string,

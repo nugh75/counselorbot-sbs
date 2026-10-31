@@ -10,7 +10,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { Callout } from '@/components/ui/Callout';
 
 interface PDFUploaderProps {
-    onUploadComplete: (scores: Record<string, number>, pdfToken?: string) => void;
+    onUploadComplete: (scores: Record<string, number>) => void;
     questionnaire: QuestionnaireConfig;
     onBack?: () => void;
 }
@@ -85,9 +85,8 @@ export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUplo
             
             const data: unknown = await response.json();
             if (data && typeof data === 'object') {
-                const { pdf_token, ...scores } = data as Record<string, unknown>;
-                if (isScoreMap(scores)) {
-                    onUploadComplete(scores, typeof pdf_token === 'string' ? pdf_token : undefined);
+                if (isScoreMap(data)) {
+                    onUploadComplete(data);
                 } else {
                     throw new Error('Invalid scores returned by extractor');
                 }

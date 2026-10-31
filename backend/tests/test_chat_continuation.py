@@ -7,7 +7,7 @@ import pytest
 from pydantic import ValidationError
 from fastapi import BackgroundTasks, HTTPException
 
-from backend.api_models import ChatRequest, SiteChatRequest, OpencodeChatRequest
+from backend.api_models import ChatRequest, SiteChatRequest
 from backend.chat_continuation import continuation_message, merge_continuation
 from backend.routes import chat, site_chat
 from backend.ai_service import AIService, AIError
@@ -18,18 +18,11 @@ async def events(response):
 
 
 @pytest.mark.parametrize("model,values", [
-    (ChatRequest, {}), (SiteChatRequest, {}), (OpencodeChatRequest, {"session_id": "s"}),
+    (ChatRequest, {}), (SiteChatRequest, {}),
 ])
 def test_partial_answer_is_bounded_at_the_api_boundary(model, values):
     with pytest.raises(ValidationError):
         model(**values, partial_response="x" * 60001)
-
-
-def test_opencode_chat_request_accepts_response_length():
-    req = OpencodeChatRequest(session_id="s", message="ciao", response_length="short")
-    assert req.response_length == "short"
-    with pytest.raises(ValidationError):
-        OpencodeChatRequest(session_id="s", response_length="extra")
 
 
 def test_chat_request_accepts_reasoning_effort():
@@ -365,29 +358,6 @@ def _assert_provider_finish(items, reason):
     else:
         output.extend(items)
     assert "".join(i.get("text", "") for i in output if i["type"] == "content") == "C6: attenzione."
-
-
-@pytest.mark.parametrize('partial,suffix,expected', [
-    ('Studia e', ' verifica.', 'Studia e verifica.'),
-    (PARTIAL, REWRITTEN, REWRITTEN),
-])
-def test_opencode_restore_hides_internal_continuation_turn_and_joins_answer(tmp_path, monkeypatch, partial, suffix, expected):
-    from backend.routes import opencode
-
-    workspace = tmp_path / "test"
-    workspace.mkdir()
-    (workspace / ".opencode-session").write_text("ses_test123")
-    monkeypatch.setattr(opencode, "OPENCODE_WS_ROOT", str(tmp_path))
-    turns = [("user", "Come studio?"), ("assistant", partial),
-             ("user", continuation_message("Come studio?", partial)), ("assistant", suffix)]
-
-    async def api(config, method, path, **kwargs):
-        return [{"info": {"role": role}, "parts": [{"type": "text", "text": text}]} for role, text in turns] if path.endswith("/message?directory=%2Fwork") else {}
-
-    monkeypatch.setattr(opencode, "_api_json", api)
-    _, history, needs_seed = asyncio.run(opencode._ensure_opencode_session("test", {}))
-    assert history == [{"role": "user", "content": "Come studio?"}, {"role": "assistant", "content": expected}]
-    assert not needs_seed
 
 
 @pytest.mark.parametrize("chunk_size", [1, 23, 4096])

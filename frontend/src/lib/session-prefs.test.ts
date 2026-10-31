@@ -7,11 +7,11 @@ import test from 'node:test';
 import { experiencePrefForInstrument } from './session-prefs.ts';
 
 test('Idea always asks which interaction mode to use', () => {
-    assert.equal(experiencePrefForInstrument('IDEA', 'opencode'), null);
+    assert.equal(experiencePrefForInstrument('IDEA', 'free'), null);
     assert.equal(experiencePrefForInstrument('IDEA', 'standard'), null);
 });
 
 test('other instruments can reuse the remembered interaction mode', () => {
-    assert.equal(experiencePrefForInstrument('QSA', 'opencode'), 'opencode');
+    assert.equal(experiencePrefForInstrument('QSA', 'free'), 'free');
     assert.equal(experiencePrefForInstrument('QSA', 'standard'), 'standard');
 });

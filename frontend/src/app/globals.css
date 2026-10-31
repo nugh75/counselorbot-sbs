@@ -145,7 +145,7 @@
   /* Raggio angoli globale: angoli tondi su tutta l'interfaccia (rounded-sm/md/lg/xl). */
   --radius: 0.75rem;
 
-  /* Altezza viewport condivisa per le superfici di chat (guided / assistente / opencode).
+  /* Altezza viewport condivisa per le superfici di chat (guided / assistente).
      svh evita salti su mobile; dvh viene usato dove supportato per seguire le chrome del browser. */
   --chat-h: calc(100svh - 9rem - env(safe-area-inset-bottom, 0px));
   --chat-mobile-h: min(32rem, var(--chat-h));
@@ -338,7 +338,7 @@
 .chat-viewport form { flex-shrink: 0; }
 .chat-viewport textarea { font-size: 1.066667rem; }
 
-/* In OpenCode's stacked layout the conversation precedes the score panel. */
+/* In the stacked layout the conversation precedes the score panel. */
 @media (max-width: 1279px) {
   .chat-viewport > .flex > .min-h-chat { order: -1; flex: none; }
 }

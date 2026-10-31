@@ -24,16 +24,11 @@ import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
 import { ChatViewport } from '@/components/qsa/ChatViewport';
 import { cn } from '@/lib/utils';
 import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
+import { FreeChatInterface } from '@/components/qsa/FreeChatInterface';
 import { ChatSettingsCard } from '@/components/qsa/ChatSettingsCard';
 import { SessionReport } from '@/components/qsa/SessionReport';
 import { ReturningHome } from '@/components/home/ReturningHome';
-import dynamic from 'next/dynamic';
-
-const OpenCodeExperience = dynamic(
-    () => import('@/components/qsa/OpenCodeExperience').then((mod) => mod.OpenCodeExperience),
-    { ssr: false }
-);
-import { MessageSquare, Terminal, LogIn } from 'lucide-react';
+import { MessageSquare, MessagesSquare, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { FlowStepper } from '@/components/ui/FlowStepper';
@@ -93,6 +88,10 @@ function generateUUID() {
     });
 }
 
+// Gli snapshot salvati prima della rimozione del workspace OpenCode portano
+// 'opencode': oggi è la chat libera.
+const freeExperience = (value: string | null | undefined) => value === 'free' || value === 'opencode';
+
 export default function Home() {
     const { t, lang } = useI18n();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
@@ -119,8 +118,7 @@ export default function Home() {
     // finiscono nel repertorio del taccuino, mai tra le Compilazioni.
     const [scoreOrigin, setScoreOrigin] = useState<'new' | 'own' | 'practice'>('new');
     const [sessionId, setSessionId] = useState<string>('');
-    const [pdfToken, setPdfToken] = useState<string | undefined>(undefined);
-    const [experience, setExperience] = useState<'standard' | 'opencode' | null>(null);
+    const [experience, setExperience] = useState<'standard' | 'free' | null>(null);
     const [rememberExperience, setRememberExperience] = useState(() => getExperiencePref() !== null);
     const [responseLength, setResponseLength] = useState<ResponseLength>(() => getResponseLengthPref());
     const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(() => getReasoningPref());
@@ -256,7 +254,6 @@ export default function Home() {
             setSelectedQuestionnaire(null);
             setScores(null);
             setScoreOrigin('new');
-            setPdfToken(undefined);
             setSessionId('');
             setExperience(null);
             setStep(target);
@@ -331,7 +328,7 @@ export default function Home() {
     }, [ready, identity, savedResults, notebookUpdatedAt, studentPaths]);
 
     // Apre la chat con la modalità già scelta in passato; Idea fa eccezione,
-    // perché mappa grafica e OpenCode devono restare una scelta esplicita.
+    // perché mappa grafica e chat libera devono restare una scelta esplicita.
     const beginInteraction = useCallback((sid: string, instrument: string) => {
         if (practiceProfileEntry.current !== null) {
             storePracticeNotebookId(practiceProfileEntry.current);
@@ -470,14 +467,11 @@ export default function Home() {
                     if (counselor.id != null) setSelectedCounselorId(counselor.id);
                     setSessionId(snapshot.session_id);
                     setScores(snapshot.scores || {});
-                    // La sandbox OpenCode si congela come la chat guidata: riaprirla
+                    // La chat libera si congela come la guidata: riaprirla
                     // in modalità guidata mostrerebbe un percorso che non è il suo.
-                    setExperience(snapshot.experience === 'opencode' ? 'opencode' : 'standard');
+                    setExperience(freeExperience(snapshot.experience) ? 'free' : 'standard');
                     if (snapshot.response_length) setResponseLength(snapshot.response_length);
                     if (snapshot.reasoning_effort) setReasoningEffort(snapshot.reasoning_effort);
-                    // La sandbox rigenera `documento.md` a ogni apertura: senza il
-                    // token il PDF del profilo sparirebbe dal workspace.
-                    setPdfToken(snapshot.pdf_token || undefined);
                     setFrozenSnapshot(snapshot);
                     setPlanOrigin(snapshot.path_id && snapshot.path_step_id ? {pathId: snapshot.path_id, stepId: snapshot.path_step_id} : null);
                     setStep('interaction');
@@ -536,14 +530,14 @@ export default function Home() {
                         if (counselor.id != null) setSelectedCounselorId(counselor.id);
                         setSessionId(r.sessionId);
                         setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
-                        setExperience(r.experience);
+                        setExperience(freeExperience(r.experience) ? 'free' : 'standard');
                         // Prefer the owned server snapshot: it retains the essential path and format.
                         try {
                             const snapshot = await getFrozenSession(r.sessionId);
                             if (snapshot) {
                                 setFrozenSnapshot(snapshot);
                                 setScores(snapshot.scores || {});
-                                setExperience(snapshot.experience === 'opencode' ? 'opencode' : 'standard');
+                                setExperience(freeExperience(snapshot.experience) ? 'free' : 'standard');
                                 if (snapshot.response_length) setResponseLength(snapshot.response_length);
                                 if (snapshot.reasoning_effort) setReasoningEffort(snapshot.reasoning_effort);
                             }
@@ -583,7 +577,6 @@ export default function Home() {
             setSelectedQuestionnaire(null);
             setScores(null);
             setScoreOrigin('new');
-            setPdfToken(undefined);
             setSessionId('');
             setExperience(null);
             setStep(view === 'intro' ? 'intro' : 'base');
@@ -708,7 +701,6 @@ export default function Home() {
             setSelectedInstrumentId(questionnaire.id);
             setScores(practiceScores);
             setScoreOrigin(practiceScores ? 'practice' : 'new');
-            setPdfToken(undefined);
             setSessionId('');
             setExperience(practiceScores ? 'standard' : null);
             void prepareInstrument(questionnaire, practiceScores);
@@ -728,7 +720,6 @@ export default function Home() {
         setSelectedInstrumentId(questionnaire.id);
         setScores(null);
         setScoreOrigin('new');
-        setPdfToken(undefined);
         setSessionId('');
         setExperience(null);
         void prepareInstrument(questionnaire, null);
@@ -753,9 +744,8 @@ export default function Home() {
         setStep('dashboard');
     };
 
-    const handleUploadComplete = (data: Record<string, number>, token?: string) => {
+    const handleUploadComplete = (data: Record<string, number>) => {
         setScores(data);
-        setPdfToken(token);
         setStep('dashboard');
     };
 
@@ -865,7 +855,7 @@ export default function Home() {
     };
 
     // Spazio di ragionamento: stessa logica della lunghezza. Vale per la chat
-    // guidata; la sandbox OpenCode parla con il proprio agente e non lo usa.
+    // guidata e per la chat libera.
     const handleReasoningChange = (value: ReasoningEffort) => {
         setReasoningEffort(value);
         setReasoningPref(value);
@@ -874,7 +864,7 @@ export default function Home() {
     // Scelta modalità chat: registra la preferenza, ricorda se richiesto e
     // registra il punto di ripresa (header "Riprendi"). La scheda Impostazioni
     // chiama questa prima di avviare, così la scelta fatta lì vale come qui.
-    const chooseExperience = (exp: 'standard' | 'opencode') => {
+    const chooseExperience = (exp: 'standard' | 'free') => {
         setExperience(exp);
         if (selectedQuestionnaire?.id !== 'IDEA') setExperiencePref(rememberExperience ? exp : null);
         if (selectedQuestionnaire) {
@@ -907,7 +897,6 @@ export default function Home() {
         setScores(null);
         setScoreOrigin('new');
         setSelectedQuestionnaire(null);
-        setPdfToken(undefined);
         setExperience(null);
         setStep(homeStep());
     };
@@ -1138,8 +1127,8 @@ export default function Home() {
                                                 <MessageSquare className="w-4 h-4" />
                                                 {t('guided.mode.guided')}
                                             </Button>
-                                            <Button variant="secondary" onClick={() => chooseExperience('opencode')} className="w-full">
-                                                <Terminal className="w-4 h-4" />
+                                            <Button variant="secondary" onClick={() => chooseExperience('free')} className="w-full">
+                                                <MessagesSquare className="w-4 h-4" />
                                                 {t('guided.mode.sandbox')}
                                             </Button>
                                         </div>
@@ -1182,21 +1171,25 @@ export default function Home() {
                                 </ChatViewport>
                             ) : (
                                 <ChatViewport>
-                                <OpenCodeExperience
+                                <FreeChatInterface
                                     counselorId={sessionCounselorId}
                                     scores={scores}
-                                    questionnaire={selectedQuestionnaire}
-                                    pdfToken={pdfToken}
+                                    questionnaireType={selectedQuestionnaire.id}
                                     sessionId={sessionId}
                                     locale={lang}
                                     onComplete={handleInteractionComplete}
-                                    initialResponseFormat={frozenSnapshot?.response_format}
-                                    responseLength={responseLength}
-                                    restoredMessages={
-                                        frozenSnapshot?.session_id === sessionId
-                                            ? frozenSnapshot.messages
-                                            : undefined
-                                    }
+                                    frozenSnapshot={frozenSnapshot}
+                                    initialResponseLength={responseLength}
+                                    initialReasoningEffort={reasoningEffort}
+                                    initialResponseFormat={responseFormat}
+                                    reasoningCapable={reasoningCapable}
+                                    reasoningMandatory={reasoningMandatory}
+                                    onFrozen={() => {
+                                        setPausedChat({ sessionId, questionnaireId: selectedQuestionnaire.id });
+                                        setResume(null);
+                                        setFrozenSnapshot(null);
+                                        setStep('base');
+                                    }}
                                 />
                                 </ChatViewport>
                             )}

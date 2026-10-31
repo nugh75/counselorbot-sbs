@@ -192,5 +192,5 @@ guidata, la cui sessione può avere una lingua diversa dall'interfaccia.
 - Diagramma: in Bussola e Assistente il disegno resta finché la pagina è
   aperta; solo nella chat guidata è salvato con la sessione (#658, #661).
 - Pollice su/giù: solo chat guidata e Assistente (voto unico, «Grazie!»).
-- Altre chat (sandbox, piani, taccuini di prova, OpenCode): vedi
+- Altre chat (sandbox, piani, taccuini di prova): vedi
   `docs/audits/2026-10-29-chat-ux-remaining-surfaces.md` (#659).

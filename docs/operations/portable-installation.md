@@ -233,7 +233,7 @@ raggiungimento del limite.
 | Thread guard | Disattivato inizialmente; il preset di fabbrica richiede Ollama. |
 | Trascrizione audio locale e Piper | Servizi esclusi dallo stack portabile iniziale; installazione e risorse dedicate necessarie. |
 | Edge TTS | Richiede connessione al servizio esterno e collaudo separato. |
-| OpenCode e prompt lab | Runtime, socket, workspace e modelli non inclusi; nessuna promessa di disponibilità. |
+| Prompt lab | Runtime e modelli non inclusi; nessuna promessa di disponibilità. |
 
 Ollama remoto è un'opzione futura per mantenere le funzioni implementate,
 non un prerequisito che questa procedura installa sul Mac.

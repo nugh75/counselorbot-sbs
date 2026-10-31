@@ -154,6 +154,22 @@ def test_only_the_synthesis_opens_on_life_and_work():
         db.close()
 
 
+def test_free_chat_without_a_phase_carries_the_profile_and_no_step():
+    # The free chat sends no `phase`: it is prepared like any chat outside the
+    # guided path, with the scores in the context and no step instructions.
+    with artifact_session() as db:
+        ai = AIService(db)
+        ai.config.update(active_provider='ollama', model_name='test-local')
+        request = ChatRequest(
+            message='Come leggo il mio punteggio C1?', mode='generic', questionnaire_type='QSA',
+            scores_context='- C1: 7/9\n- C2: 2/9', language='it', session_id='free-chat', response_format='bullets',
+        )
+        prepared = prepare_chat_turn(db, ai, request, 'free-chat', {'username': 'free'}, include_retrieval=False, include_history=False)
+        assert prepared.step_label in (None, '')
+        assert prepared.effective_message == 'Come leggo il mio punteggio C1?'
+        assert 'C1' in prepared.system_prompt_final and '7' in prepared.system_prompt_final
+
+
 def test_invalid_phase_is_preview_only():
     with artifact_session() as db:
         payload = schemas.PromptAuditRequest(use_phase_prompt=True, phase='missing-step', include_knowledge=False)

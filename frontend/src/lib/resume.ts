@@ -5,7 +5,7 @@
 export interface ResumePoint {
     instrument: string;
     sessionId: string;
-    experience: 'standard' | 'opencode';
+    experience: 'standard' | 'free';
     counselorId: number | null;
 }
 

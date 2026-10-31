@@ -6,13 +6,12 @@
 // sparisce mai: se il counselor scelto non lo supporta la riga resta con la
 // spiegazione, invece di farsi mancare senza spiegazioni.
 import { Button } from '@/components/ui/Button';
-import { useState } from 'react';
 import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
-import { MessageSquare, Terminal } from 'lucide-react';
+import { MessageSquare, MessagesSquare } from 'lucide-react';
 import { chatPreferenceLabel, type ResponseFormat } from '@/lib/chat-preferences';
 import { useI18n } from '@/lib/i18n-context';
 import { ChatGPTUsageBadge } from '@/components/profile/ChatGPTUsageBadge';
@@ -32,8 +31,8 @@ interface ChatSettingsCardProps {
     // Scelta modalità (guidata vs chat libera), assorbita dalla scheda che prima
     // viveva in una schermata separata: la logica resta in page.tsx.
     showModeChoice?: boolean;
-    experience?: 'standard' | 'opencode' | null;
-    onExperienceChange?: (value: 'standard' | 'opencode') => void;
+    experience?: 'standard' | 'free' | null;
+    onExperienceChange?: (value: 'standard' | 'free') => void;
     rememberExperience?: boolean;
     onRememberChange?: (checked: boolean) => void;
 }
@@ -57,11 +56,10 @@ export function ChatSettingsCard({
     onRememberChange,
 }: ChatSettingsCardProps) {
     const { t, lang } = useI18n();
-    const [subscription, setSubscription] = useState(false);
 
     return (
         <div className="mx-auto w-full max-w-md space-y-4">
-            <ChatGPTUsageBadge onSubscription={setSubscription} />
+            <ChatGPTUsageBadge />
             {onBack && <button type="button" onClick={onBack} className="min-h-11 text-sm text-slate-600">{t('nav.back')}</button>}
             <fieldset className="glass-panel space-y-4 p-5" data-testid="chat-settings">
                 <legend className="px-1 font-semibold text-slate-800">{t('chatSettings.title')}</legend>
@@ -82,12 +80,11 @@ export function ChatSettingsCard({
                                 {t('guided.mode.guided')}
                             </Button>
                             <Button
-                                variant={experience === 'opencode' ? 'primary' : 'secondary'}
-                                disabled={subscription}
-                                aria-pressed={experience === 'opencode'}
-                                onClick={() => onExperienceChange?.('opencode')}
+                                variant={experience === 'free' ? 'primary' : 'secondary'}
+                                aria-pressed={experience === 'free'}
+                                onClick={() => onExperienceChange?.('free')}
                             >
-                                <Terminal className="w-4 h-4" />
+                                <MessagesSquare className="w-4 h-4" />
                                 {t('guided.mode.sandbox')}
                             </Button>
                         </div>
@@ -135,8 +132,7 @@ export function ChatSettingsCard({
                     <AudioLanguageOption />
                 </div>
 
-                {subscription && showModeChoice && <p className="text-xs text-slate-600">{t('chatgpt.errors.unsupported')}</p>}
-                <Button onClick={onStart} disabled={starting || (showModeChoice && !experience) || (subscription && experience === 'opencode')} className="w-full">{t('chatSettings.start')}</Button>
+                <Button onClick={onStart} disabled={starting || (showModeChoice && !experience)} className="w-full">{t('chatSettings.start')}</Button>
             </fieldset>
         </div>
     );

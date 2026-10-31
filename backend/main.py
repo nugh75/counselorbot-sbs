@@ -128,7 +128,6 @@ from .routes import learner_profile as learner_profile_routes
 from .routes import local_llm as local_llm_routes
 from .routes import memory as memory_routes
 from .routes import milestones as milestones_routes
-from .routes import opencode as opencode_routes
 from .routes import orientation as orientation_routes
 from .routes import orientation_referrals as orientation_referrals_routes
 from .routes import path_templates as path_templates_routes
@@ -2169,7 +2168,6 @@ app.include_router(readings_routes.router)
 app.include_router(milestones_routes.router)
 app.include_router(personal_strategies_routes.router)
 app.include_router(pqbl_routes.router)
-app.include_router(opencode_routes.router, dependencies=[Depends(install_profile.require_lab_features)])
 app.include_router(presets_routes.router)
 app.include_router(benchmark_routes.router)
 app.include_router(prompt_audit_routes.router)

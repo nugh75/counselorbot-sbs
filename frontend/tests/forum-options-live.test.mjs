@@ -26,7 +26,7 @@ test('live F3 options, pending privacy, approve/reject, timed mute and forum dis
         const errors = []; const aiRequests = [];
         for (const tab of [page, pupil]) {
             tab.on('pageerror', error => errors.push(error.message));
-            tab.on('request', request => { if (request.method() === 'POST' && /\/api\/(chat|site-chat|orientation|opencode)/.test(new URL(request.url()).pathname)) aiRequests.push(request.url()); });
+            tab.on('request', request => { if (request.method() === 'POST' && /\/api\/(chat|site-chat|orientation)/.test(new URL(request.url()).pathname)) aiRequests.push(request.url()); });
             await tab.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
             await tab.route('**/api/orientation/status', route => route.fulfill({ json: { required: false } }));
         }

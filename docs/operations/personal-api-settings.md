@@ -100,7 +100,7 @@ In sviluppo host/Codespaces, chat e prova connessione usano lo stesso backend:
 Una vecchia versione delle route streaming ignorava `BACKEND_ORIGIN` e cercava
 l’host Docker anche se le API normali funzionavano. Aggiornare il frontend e
 riavviare `next dev` dopo il pull; non occorre una nuova impostazione server.
-Il rewrite generale è un fallback dopo le route dinamiche, anche per OpenCode.
+Il rewrite generale è un fallback dopo le route dinamiche.
 Le presentazioni QSA/QSAr disattivano il ragionamento anche per ID/modalità legacy;
 gli step di analisi conservano la scelta dell’utente. Nessun prompt DB è riscritto.
 
@@ -208,7 +208,7 @@ memorizzabili in cache. Le API amministrative restano riservate al vero amminist
 Chat, Bussola, Assistente, studio da PDF, sintesi, analisi combinata, Tavolo e
 diagrammi rispettano la scelta personale. La generazione pQBL conserva il counselor
 scelto anche in background. Servizi locali, OCR, embedding, trascrizione, voce,
-benchmark e OpenCode restano su configurazione di sistema.
+benchmark restano su configurazione di sistema.
 
 Per distribuire serve il normale aggiornamento e ricostruzione delle immagini,
 senza sudo o modifiche nginx per questa funzione con il proxy esistente.

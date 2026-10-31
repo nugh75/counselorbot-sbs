@@ -1160,9 +1160,8 @@ class PortfolioItemResponse(BaseModel):
 FROZEN_SESSION_TYPES = DynamicInstrumentSet(HISTORIC_INSTRUMENT_CODES)
 FROZEN_SESSION_MAX_MESSAGES = 400
 FROZEN_SESSION_MAX_CONTENT_CHARS = 20000
-# Il PDF del profilo caricato per la sandbox OpenCode: il workspace rigenera
-# `documento.md` a ogni apertura, quindi senza questo token una sessione ripresa
-# perderebbe il testo del PDF. Stesso formato accettato da routes/opencode.py.
+# Token del PDF del profilo salvato negli snapshot delle sessioni congelate
+# prima della rimozione del workspace OpenCode: ancora accettato in lettura.
 FROZEN_SESSION_PDF_TOKEN_RE = re.compile(r"^[a-f0-9]{32}$")
 
 

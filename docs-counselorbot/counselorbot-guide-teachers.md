@@ -227,8 +227,7 @@ cannot change this installation-wide setting.
 Session data and profiles are managed by the platform; interaction logging supports
 monitoring and research with PII redaction, configurable retention, and GDPR-compliant
 session deletion. Production data lives on PostgreSQL 15; tests run against a dedicated
-`counselorbot_test` database. The OpenCode workspace sandbox denies bash and webfetch
-and exposes the PTY only over an authenticated WebSocket.
+`counselorbot_test` database.
 ## Current personal tools and saving
 
 PDF study is at `/profilo/pqbl`, beside Flashcards (`/profilo/flashcard`).

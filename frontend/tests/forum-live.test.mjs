@@ -36,7 +36,7 @@ test('live discussion, student reply, read marker, departure and inactive archiv
         const page = await student.newPage();
         const aiRequests = [];
         page.on('request', request => {
-            if (request.method() === 'POST' && /\/api\/(chat|site-chat|orientation|opencode)/.test(new URL(request.url()).pathname)) aiRequests.push(request.url());
+            if (request.method() === 'POST' && /\/api\/(chat|site-chat|orientation)/.test(new URL(request.url()).pathname)) aiRequests.push(request.url());
         });
         await page.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
         // Only unrelated onboarding is bypassed. Forum and membership changes
@@ -94,7 +94,7 @@ test('live moderation: hide/restore, author edit/delete, lock, pin and log', asy
         const page = await student.newPage();
         const aiRequests = [];
         page.on('request', request => {
-            if (request.method() === 'POST' && /\/api\/(chat|site-chat|orientation|opencode)/.test(new URL(request.url()).pathname)) aiRequests.push(request.url());
+            if (request.method() === 'POST' && /\/api\/(chat|site-chat|orientation)/.test(new URL(request.url()).pathname)) aiRequests.push(request.url());
         });
         await page.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
         await page.route('**/api/orientation/status', route => route.fulfill({ json: { required: false } }));

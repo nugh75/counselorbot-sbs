@@ -248,7 +248,7 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   Zoom, esportazione, animazioni e aiuto si aprono in un menu sovrapposto,
   senza sottrarre altezza al disegno. Il pannello inferiore appare solo per
   un concetto selezionato, la lettura passo-passo o il testo alternativo.
-  In OpenCode, sotto 1280px, la conversazione
+  Nel layout impilato, sotto 1280px, la conversazione
   precede il pannello dei punteggi, che resta disponibile scorrendo la pagina.
 - **Focus**: anello `2px` petrol con `outline-offset: 2px` su tutti gli
   interattivi, via `:focus-visible`. Non si rimuove.

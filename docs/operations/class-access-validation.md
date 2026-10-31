@@ -50,8 +50,6 @@ Guarded (start/write):
 | `POST /qsa/audit` | request instrument, before the completion log |
 | `POST /memory/event` | event instrument and the step's instrument; **authenticated user required**; 403 when the session is recorded (result, frozen session or log) under another username; a fresh session id is started by the caller |
 | Idea `POST /idea/reference`, `/idea/map/patch`, `/idea/branch`, `/idea/node`, `/idea/node/edit`, `/idea/branch/arrange`, `/idea/reopen`, `/idea/focus`, `/idea/conclude`, `/idea/sources`, `/idea/sources/search` | `IDEA` |
-| OpenCode `POST /opencode/workspace` | requested instrument, before files or the agent start |
-| OpenCode `POST /opencode/workspace/{key}/chat`, `/reset`, `/sync-memory` | instrument recorded when the workspace started |
 
 Not guarded (decision 8: existing data stays readable and removable): results,
 conversations, PDFs, the frozen list, freeze and delete; Idea reads
@@ -59,8 +57,7 @@ conversations, PDFs, the frozen list, freeze and delete; Idea reads
 `/idea/branches`, `/idea/next-step`, `/idea/reference`, `/idea/sources`, source
 PDFs), exports of an existing map (`POST /idea/map/portfolio`,
 `/idea/map/notebook`) and deletions (`DELETE /idea/reference`, `/idea/branch`,
-`/idea/sources/{id}`); OpenCode `abort` (stopping a running turn is always
-allowed). Personal tools, Bussola, Assistant and Telegram call `require_tool`
+`/idea/sources/{id}`). Personal tools, Bussola, Assistant and Telegram call `require_tool`
 in their own slices (#91, #92, #94): Telegram currently writes flow results
 before its guarded chat turn (review N3, owned by #94).
 

@@ -149,5 +149,4 @@ Main backend route groups:
 - `/user/learner-profile`, `/user/portfolio`, `/user/student-booklets`, `/user/certified-strategies`
 - `/site-chat/*`
 - `/pqbl/*`
-- `/opencode/*`
 - `/admin/*`

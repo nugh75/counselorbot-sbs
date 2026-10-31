@@ -14,7 +14,6 @@ una soglia universale di 60 secondi o uno stesso codice HTTP 524.
 | `/chat/stream` | sincrono | sessione e conversazione |
 | `/site-chat/stream` | sincrono | sessione e conversazione |
 | `/tts/stream` | asincrono | segmenti e voce (`init`) |
-| `/opencode/workspace/{key}/chat` | asincrono | sessione |
 
 - Ogni **15 secondi di silenzio** invia il commento esatto `: ping\n\n`.
   Gli eventi applicativi riavviano il conteggio: nessun ping aggiuntivo serve

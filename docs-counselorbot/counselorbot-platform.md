@@ -60,7 +60,6 @@ In guided chat, the step bar goes back, repeats or advances. The three-dot menu
 beside the composer contains tools, response format, independent response length and Freeze session. Message
 controls offer listening and diagrams. Sessions with conversation progress save
 after replies; the home page and navigation provide Resume. Freeze saves and closes.
-An optional OpenCode workspace provides an alternative conversation experience.
 
 ## Student area: terminology and organization
 

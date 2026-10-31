@@ -24,7 +24,7 @@ Milestone GitHub: «Document retrieval without Ollama (Oct 2026)».
   (bug registrato).
 - **Il problema non riguarda solo gli embedding.** OCR QSA/pQBL, traduzioni,
   NER PII, thread guard, il modello predefinito della Bussola, il ripiego per
-  budget, Prompt Lab e OpenCode sono cablati su Ollama. In parte sono già
+  budget e Prompt Lab sono cablati su Ollama. In parte sono già
   disattivati o documentati nell'installazione portabile.
 - **Raccomandazione:** BM25 in memoria sempre attivo, nessun nuovo motore di
   database. Embedding via API configurabile (Ollama | API | nessuno), fusione
@@ -77,7 +77,6 @@ modificare il codice.
 | Traduzione degli strumenti | `backend/instrument_translation.py:41`; `scripts/translate_instruments.py` | Script amministrativo | **E** | No |
 | Thread guard | `backend/thread_guard_seed.py:13-35`; `routes/chat.py:176` | Giudice di coerenza per turno | — (disattivato di default) | Sì (preset modificabile) |
 | Prompt Lab | `backend/prompt_lab/gateway.py:17`, `local_models.py:25`, `snapshots.py:58` | Banco prove dei prompt | **B** per scelta (solo Ollama) | No |
-| OpenCode | `backend/routes/opencode.py:992` | Agente sperimentale | **B** (escluso dal portabile) | No |
 | Classificazione locale/esterno | `routes/presets.py:19`, `routes/counselors.py:49`, `routes/tavolo.py:476`, `counselor_identity.py:508`, `schemas.py:1377` | Etichette e privacy | — (solo confronto di stringhe) | n/a |
 | Parametri di contesto e ragionamento | `model_context.py:99`, `reasoning_profiles.py:69-97`, `prompt_audit.py:657`, `chat_logic.py:617` | Profili per famiglia di modelli | — | n/a |
 | Benchmark QSA | `backend/benchmark_service.py:19` | Benchmark admin | **E** (chiamate reali) | n/a |
