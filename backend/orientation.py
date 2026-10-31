@@ -16,7 +16,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
-from . import models, personal_api
+from . import models, personal_api, prompt_usage
 from .ai_service import AIError, AIService
 from .chat_preferences import apply_response_format
 from .platform_guidance import platform_guidance_context
@@ -883,8 +883,11 @@ You only advise: never write, edit or fill in the student's Notebook, readings, 
             history=safe_history,
             json_mode=False,
         )
+        usage_plan = prompt_usage.safe_plan("bussola", system_prompt, service.config, language=lang)
         try:
-            return _clean_analysis(_extract_json_object(raw), fallback, allowed_tool_ids)
+            analysis = _clean_analysis(_extract_json_object(raw), fallback, allowed_tool_ids)
+            prompt_usage.observe(usage_plan, analysis.reply)
+            return analysis
         except (ValueError, json.JSONDecodeError):
             # Testo libero (JSON non forzato): la risposta vale per intero. Gli
             # strumenti si leggono prima nella risposta stessa, dove il modello
@@ -897,6 +900,7 @@ You only advise: never write, edit or fill in the student's Notebook, readings, 
                 {"id": tool_id, "reason": f"{_REASON_PREFIX[lang]} ({tool_id})."}
                 for tool_id in named
             ] or fallback.recommendations
+            prompt_usage.observe(usage_plan, reply)
             return OrientationAnalysis(reply or fallback.reply, recommendations)
     except (AIError, ValueError, TypeError, json.JSONDecodeError) as exc:
         logger.warning("Bussola AI non disponibile, uso fallback deterministico: %s", exc)
