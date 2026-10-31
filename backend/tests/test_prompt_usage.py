@@ -16,6 +16,7 @@ from unittest.mock import patch
 from urllib.parse import urlsplit, urlunsplit
 
 import psycopg2
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from starlette.testclient import TestClient
@@ -247,6 +248,16 @@ def test_report_without_traffic_lists_nothing_as_unused():
 
 ADMIN = {"email": "admin@example.test", "username": "admin", "name": "Admin", "groups": ["admins"],
          "is_admin": True, "is_researcher": True, "authenticated": True}
+
+
+@pytest.fixture(autouse=True)
+def _restore_shared_app():
+    """Leave the shared app as found: other suites install their overrides at import."""
+    import backend.main as main_module
+    overrides = dict(main_module.app.dependency_overrides)
+    yield
+    main_module.app.dependency_overrides.clear()
+    main_module.app.dependency_overrides.update(overrides)
 
 
 def _client(identity=ADMIN):

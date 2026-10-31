@@ -14,6 +14,7 @@ os.environ.setdefault("ADMIN_SYNC_DISABLED", "1")
 from urllib.parse import urlsplit, urlunsplit
 
 import psycopg2
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from starlette.testclient import TestClient
@@ -214,6 +215,19 @@ def test_conflict_shows_both_sentences_side_by_side():
         assert any("sl-elaboration" in surface for surface in conflict["surfaces"])
     finally:
         db.close()
+
+
+@pytest.fixture(autouse=True)
+def _restore_shared_app():
+    """Leave the shared app as found: other suites install their overrides at import."""
+    import backend.main as main_module
+    from backend.routes import prompt_health as routes
+    overrides = dict(main_module.app.dependency_overrides)
+    hooks = (routes._rerun_after_save, routes._session_factory)
+    yield
+    main_module.app.dependency_overrides.clear()
+    main_module.app.dependency_overrides.update(overrides)
+    routes._rerun_after_save, routes._session_factory = hooks
 
 
 def _client():
