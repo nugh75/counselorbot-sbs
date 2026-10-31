@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { apiFetch, getIdentity } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n-context";
@@ -125,7 +125,7 @@ export function AdministrationStepFlow({
     return pending;
   };
   const flushOnLeave = useRef<() => Promise<void>>(async () => {});
-  flushOnLeave.current = () => flushDraft({keepalive: true});
+  useLayoutEffect(() => { flushOnLeave.current = () => flushDraft({keepalive: true}); });
   useEffect(() => {
     const leave = () => { void flushOnLeave.current().catch(() => {}); };
     window.addEventListener('pagehide', leave);

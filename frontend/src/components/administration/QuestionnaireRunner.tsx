@@ -31,6 +31,7 @@ import {
     withInstitutionGrant,
     type VerificationRequest,
 } from '@/lib/institution-credentials';
+import { useClientValue } from '@/lib/use-client-value';
 
 const QUESTIONNAIRE_SELECTION_HREF = '/?view=home';
 
@@ -141,7 +142,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
     const [loadFailed, setLoadFailed] = useState(false);
     const [anonymousResearchCode, setAnonymousResearchCode] = useState('');
     const [codeRequiresLogin, setCodeRequiresLogin] = useState(false);
-    const [loginHref, setLoginHref] = useState('/login');
+    const loginHref = useClientValue(() => authLoginHref(`${window.location.pathname}${window.location.search}`), '/login');
     // Invio in corso: il comando resta fermo finché lo scoring non risponde.
     const [submitting, setSubmitting] = useState(false);
     // Institute verification: the grant lives only in memory, never in URLs or storage.
@@ -166,7 +167,6 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
 
     useEffect(() => {
         let cancelled = false;
-        setLoginHref(authLoginHref(`${window.location.pathname}${window.location.search}`));
         fetchAnonymousResearchCode().then(({ code: serverCode, authenticated }) => {
             if (cancelled) return;
             setCodeRequiresLogin(!authenticated);
@@ -186,11 +186,16 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
 
     // La lingua della somministrazione e' quella dell'interfaccia: cambiarla
     // ricarica lo strumento, e se in quella lingua non e' certificato lo dice.
-    useEffect(() => {
-        let cancelled = false;
+    const rulesKey = `${instrument}:${lang}`;
+    const [shownRulesKey, setShownRulesKey] = useState(rulesKey);
+    if (shownRulesKey !== rulesKey) {
+        setShownRulesKey(rulesKey);
         setRules(null);
         setUnavailable(null);
         setLoadFailed(false);
+    }
+    useEffect(() => {
+        let cancelled = false;
         fetchRules(instrument, lang)
             .then((result) => {
                 if (cancelled) return;
@@ -207,6 +212,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
     useEffect(() => {
         const draft = loadAdministrationDraft(instrument, lang);
         if (!draft) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- restores the localStorage draft after hydration (not readable during the server render)
         setAnswers(draft.answers);
         setMetadata((current) => ({ ...current, ...draft.metadata, consent: current.consent }));
         setRestoredDraft(true);
