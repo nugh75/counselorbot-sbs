@@ -94,8 +94,10 @@ jobs:
       - name: Sidecar entrypoint tests (Python)
         env:
           PYTHON_DOTENV_DISABLED: "1"
-          DATABASE_URL: sqlite:///${{ runner.temp }}/shell-contract.sqlite3
-        run: python -m pytest -q desktop/teacher/sidecar/test_server.py backend/tests/test_shell_contract.py backend/tests/test_request_origin.py desktop/teacher/scripts/test_check_teacher_data.py
+        # backend/tests/test_shell_contract.py imports backend.main, which runs
+        # migrations against PostgreSQL (the only dialect since #735): it runs
+        # in backend-db.yml, which has a PostgreSQL service.
+        run: python -m pytest -q desktop/teacher/sidecar/test_server.py backend/tests/test_request_origin.py desktop/teacher/scripts/test_check_teacher_data.py
 
       - name: Build frontend (Next standalone) and stage node
         run: |

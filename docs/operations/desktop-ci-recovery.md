@@ -87,3 +87,23 @@ assistita del converter e dei backup/restore PostgreSQL nell'updater resta un
 prerequisito per offrire l'upgrade da v0.1.1. Vedere
 [contratto di upgrade](postgresql-desktop-upgrade.md). La CI verde da sola non
 certifica una migrazione dei dati reali né una release pronta alla pubblicazione.
+
+## Ripristino del 31 ottobre 2026 (#768)
+
+Dal 30/10 `desktop-teacher.yml` falliva su tutte e quattro le piattaforme,
+sempre nei passi di test, prima di arrivare alla build:
+
+- **Test pannello Node** («Cannot read properties of undefined (reading
+  'querySelectorAll')»): la rimozione di OpenCode (#739) aveva tolto dal mock
+  di `credentials.test.js` l'unico provider senza verifica remota, mentre
+  l'ultima asserzione legge ancora la seconda riga. Il mock usa ora Together
+  (anch'esso senza endpoint di verifica nel registro nativo).
+- **Test Python del sidecar**: con il passo a solo PostgreSQL (#735) un
+  `DATABASE_URL` `sqlite://` non è più accettato, e importare `backend.main`
+  esegue le migrazioni, quindi richiede un server PostgreSQL reale.
+  `backend/tests/test_shell_contract.py` resta in `backend-db.yml`, che ha il
+  servizio PostgreSQL; il passo desktop esegue i test del sidecar che non
+  aprono connessioni.
+
+Esito del run [41225437805](https://github.com/nugh75/counselorbot-sbs/actions/runs/41225437805):
+macOS arm64, macOS x64, Windows e Linux verdi, con installer, lifecycle e manifest.
