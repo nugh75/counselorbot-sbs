@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from .event_booklet import DIRECTIVE as EVENT_BOOKLET_DIRECTIVE
 from .event_booklet import is_event_instrument
-from .goal_draft import DIRECTIVE as GOAL_DRAFT_DIRECTIVE
+from .goal_draft import directive as goal_draft_directive
 from .goal_draft import is_goal_instrument
 from .questionnaire_description import CONTRACT as DESCRIPTION_CONTRACT
 
@@ -368,7 +368,7 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
         if is_event_instrument(questionnaire_type):
             lines.append(EVENT_BOOKLET_DIRECTIVE)
         elif is_goal_instrument(questionnaire_type):
-            lines.append(GOAL_DRAFT_DIRECTIVE)
+            lines.append(goal_draft_directive(questionnaire_type))
     if questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES and reflection_stage:
         if facilitation_contract_enabled:
             if FACILITATION_SENTINEL not in existing_prompt:

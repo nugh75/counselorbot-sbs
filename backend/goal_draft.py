@@ -29,7 +29,15 @@ _OPEN_BLOCK_RE = re.compile(r"```goal\b[^\n]*(?:\n|$)", re.IGNORECASE)
 _PARTIAL_FENCE_RE = re.compile(r"(?:^|\n)`{1,3}([A-Za-z]*)[ \t]*$")
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
-DIRECTIVE = (
+# Il piano salvato segue la sintesi mostrata: personale per lo studio,
+# didattico per la classe (#751, B06).
+_PLAN = {
+    "OBIETTIVO_STUDIO": "the first steps and the if-then plan as agreed",
+    "OBIETTIVO_DOCENZA": ("the class activities as agreed, and the proof with its criterion and check "
+                          "moment if one was chosen"),
+}
+
+_DIRECTIVE = (
     "[GOAL DRAFT] After the visible summary and before the final marker line, append one "
     "private block that the person never sees. It pre-fills a personal-goal draft, which they "
     "review before saving. Use only what the person actually said or agreed in this path:\n"
@@ -42,11 +50,19 @@ DIRECTIVE = (
     "will be able to Y...'), at most 160 characters, never a bare mental-state verb; motivation = "
     "the starting area and why the objective matters to the person; criteria = how success is "
     "seen and measured (the Mager criterion: how much, how well, by when), including the proof "
-    "they chose; reflection = the first steps and the if-then plan as agreed; review_date = "
+    "they chose; reflection = {plan}; review_date = "
     "YYYY-MM-DD only if the person gave a day, otherwise empty. Write the values in the "
     "language of the conversation. Leave a value empty when the person did not say it. Never "
     "mention the block to the person."
 )
+
+
+def directive(questionnaire_type: str | None) -> str:
+    plan = _PLAN.get((questionnaire_type or "").upper(), _PLAN["OBIETTIVO_STUDIO"])
+    return _DIRECTIVE.replace("{plan}", plan)
+
+
+DIRECTIVE = directive("OBIETTIVO_STUDIO")
 
 
 def is_goal_instrument(questionnaire_type: str | None) -> bool:
