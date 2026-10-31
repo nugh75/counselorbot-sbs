@@ -14,6 +14,22 @@ FACILITATION_SENTINEL = "[FACILITATION]"
 SELF_QUESTIONING_SENTINEL = "[SELF-QUESTIONING]"
 GUIDED_CHOICE_SENTINEL = "[GUIDED CHOICE]"
 
+# Formato visibile (#750, A01): vale l'opzione scelta in chat (Discorsivo o
+# Puntato); senza scelta, prosa. Il piano finale IDEA e le tabelle dei profili
+# mantengono la loro forma.
+FORMAT_RULE = (
+    "Write in the format chosen in the chat, given in [VISIBLE RESPONSE FORMAT] (prose for "
+    "Discursive, concise bullet points for Bulleted); without it, write fluid conversational prose. "
+    "The factor profile tables keep their columns and the IDEA final plan stays numbered. "
+    "Never turn questions or options into a list."
+)
+# Apertura di un'area o di un fattore (#750, A10): la definizione breve chiesta
+# dal passo non e' una spiegazione non richiesta.
+SHORT_DEFINITION = (
+    "Exception: when a step opens a new area or factor and its instructions ask for it, "
+    "give a short definition of one or two sentences."
+)
+
 
 def _self_questioning_contract(stage: str) -> str:
     """Question wording only; existing steps, core questions and navigation win."""
@@ -71,7 +87,8 @@ def _self_questioning_contract(stage: str) -> str:
         "and at most ONE main question per turn. "
         "Your questions are open prompts to support the person's own self-inquiry into their choices, actions and resources, NOT an interview or questionnaire where you quiz and they answer. "
         "Provide explanations about concepts, scales or profile mechanisms only when the person explicitly asks for them; never volunteer unsolicited lectures or explanations. "
-        "Never use bullet points or numbered lists: maintain a fluid conversational dialogue in continuous prose with a single open question. "
+        + SHORT_DEFINITION + " "
+        + FORMAT_RULE + " A single open question. "
         "Never recite meta-disclaimers or therapeutic clichés (do NOT say 'senza giudizio', 'non con giudizio', 'non misura quanto vali', 'non ci sono risposte giuste o sbagliate', 'autopercezioni non verdetti', 'non ti farò domande del questionario', 'etichette fisse', 'è un\'ipotesi non una verità', 'non è una diagnosi', 'non è un difetto', or 'io ti faccio domande mirate, tu rispondi'). "
         "Support the person's own interpretation "
         "without imposing judgments or diagnoses, or presuming emotions or needs. "
@@ -138,8 +155,7 @@ def _facilitation_contract(stage: str, thread_state: str | None = None) -> str:
         "Conduct an internal value-check on every turn (ensuring your response is coherent with what the student reported, advances "
         "understanding of choices, and respects autonomy); use an explicit check only when proposing a key hypothesis, before a synthesis, "
         "or when a misalignment appears. Never presume emotional states; treat brief answers as communication style or fatigue, not resistance. "
-        "Never use bullet points or numbered lists: converse in fluid, natural prose with a single open question per turn. "
-        "At most ONE main question per turn. " + task + suffix
+        + FORMAT_RULE + " At most ONE main question per turn. " + task + suffix
     )
 
 
@@ -172,7 +188,7 @@ def _objective_focus_contract(questionnaire_type: str, stage: str, entry: bool =
     # chieste a ogni passaggio, obiettivo ripetuto a ogni turno, gergo).
     conduct = (
         "Use everyday words and ONE main question per turn; when a word may be unclear, add a "
-        "short example of possible answers. Never use bullet points or numbered lists: write in fluid conversational prose. "
+        "short example of possible answers. " + FORMAT_RULE + " "
         "Build the objective only from what the person said: "
         "a detail taken from the notebook"
         + (" or the class context" if teaching else "")
@@ -206,7 +222,7 @@ def _objective_focus_contract(questionnaire_type: str, stage: str, entry: bool =
             + "When you name a Bloom level, it must be the level of the verb you use ('create' is "
             "creating, 'use' or 'carry out' is applying). If the agreed proof or criterion does not "
             "check a requirement the objective names, say so as an open point instead of hiding it. "
-            "Ask no further question and no reflective questions. " + no_self_questions
+            "End with at most ONE open question, never a list of questions. " + no_self_questions
             + ("" if entry else " If the person writes after the final objective, answer only "
                "that message and restate the objective only if they change it.")
         )
@@ -338,8 +354,9 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
         "on their experience, choices and resources—never an interrogation, procedural interview, or quiz ('io ti faccio domande mirate e tu rispondi'). ") +
         "Provide explanations or clarifications in two situations only: (1) when the person explicitly asks for an explanation or clarification, or "
         "(2) when you understand from their message that they misunderstood something you said. "
+        + SHORT_DEFINITION + " "
         "In all other situations, never volunteer unsolicited theoretical lectures, dissertations or unrequested explanations. "
-        "Never use bullet points, numbered lists or itemized options: converse in fluid, natural prose with at most ONE open question per turn. "
+        + FORMAT_RULE + " At most ONE open question per turn. "
         "Never use rhetorical 'non è... ma...' formulas (e.g. 'non è un giudizio ma un\\'opportunità', 'non misura quanto vali ma...', 'non è un voto ma...'). "
         "Never recite defensive or moralizing disclaimers (never say 'senza giudizio', 'non con giudizio', 'non misura quanto vali', 'non ci sono risposte giuste o sbagliate', 'autopercezioni non verdetti', 'non ti farò domande del questionario', 'non è un test o un voto', 'etichette fisse', 'è un\'ipotesi non una verità', 'non è una diagnosi', 'non è un difetto', 'la domanda non è se sei bravo o no'). "
         "State uncertainty when evidence is missing; distinguish what the student reported "
@@ -354,7 +371,9 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
         ("Offer new practical actions only from the certified candidates supplied for this turn or, when "
          "none fits a factor, from the approved support strategies supplied in [KNOWLEDGE]: one concrete "
          "action for each factor that deserves work, with no fixed number per reply. "
-         "If none fits, clarify the need or reflect without inventing an action.") if advice_allowed else
+         "If none fits, clarify the need or reflect without inventing an action. "
+         "When you offer an action, the one question is about that action (keep, adapt or try it), "
+         "not a separate reflective question.") if advice_allowed else
         "Introduce no new practical action in this turn. You may clarify actions already "
         f"discussed. If the student asks for one, {later_step} Do not present the wait as a separate "
         "occasion or a later date. One or two sentences, no formulas, no justifying how the "

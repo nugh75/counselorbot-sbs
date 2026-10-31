@@ -10,7 +10,7 @@ def apply_response_format(prompt: str, response_format: str | None) -> str:
     instructions = {
         "standard": "Use short conversational paragraphs with restrained emphasis on key words.",
         "bullets": "Use concise Markdown bullet points, bold key ideas, and make priorities and practical actions easy to find.",
-        "table": "Use compact Markdown tables for comparisons and summaries, with at most three short columns. Keep personal questions and dialogue in brief prose outside the table; do not force a table when there is nothing to compare or summarize.",
+        "table": "Use compact Markdown tables for comparisons and summaries, with at most three short columns; the factor profile tables keep their four columns. Keep personal questions and dialogue in brief prose outside the table; do not force a table when there is nothing to compare or summarize.",
     }
     if response_format not in instructions or "[VISIBLE RESPONSE FORMAT]" in prompt:
         return prompt
