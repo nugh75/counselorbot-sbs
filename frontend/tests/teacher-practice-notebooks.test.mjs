@@ -13,7 +13,7 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
     page.setDefaultTimeout(20000);
     const errors = [];
     const requests = [];
-    const store = { nextId: 2, nextResultId: 2, results: [], rows: [{ id: 1, title: 'Giulia, 3ª liceo', data: { main_difficulty: 'Ansia da verifica' }, group_ids: [], archived_at: null }] };
+    const store = { nextId: 2, nextResultId: 2, results: [], listFailure: null, rows: [{ id: 1, title: 'Giulia, 3ª liceo', data: { main_difficulty: 'Ansia da verifica' }, group_ids: [], archived_at: null }] };
     const snapshots = new Map();
     page.on('pageerror', e => errors.push(e.message));
     await page.addInitScript(({ lang, initStorage }) => {
@@ -54,9 +54,13 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
             return route.fulfill({ contentType: 'text/event-stream', body: stream({ conversation_id: 'practice-demo' }) + stream({ display: reply }) + stream({ done: true, response: reply, conversation_id: 'practice-demo' }) });
         }
         if (url.pathname === '/api/admin/groups') return json([
-            { id: 31, name: '3B', school: 'Liceo Demo', context_visible_to_students: true, is_active: true },
-            { id: 32, name: '4A', school: null, context_visible_to_students: false, is_active: true },
+            { id: 31, name: '3B', code: 'GR-FIX31', school: 'Liceo Demo', context_visible_to_students: true, is_active: true, members_count: 0 },
+            { id: 32, name: '4A', code: 'GR-FIX32', school: null, context_visible_to_students: false, is_active: true, members_count: 1 },
         ]);
+        if (url.pathname === '/api/teacher/groups/32/settings') return json({ group_id: 32, revision: 1, disabled_tool_keys: [], tools: [] });
+        if (url.pathname === '/api/admin/groups/32/students') return json({
+            students: [{ username: 'iscritto.fixture', telegram_linked: false, learner_profile: null, results: [] }],
+        });
         if (url.pathname === '/api/user/account-preferences') return json({ counselor_ready: true, notebook_ready: true, counselor_id: 1 });
         if (url.pathname === '/api/orientation/status') return json(compass
             ? { required: true, completed: false, in_progress_session_id: 'b1', latest_session_id: 'b1' }
@@ -71,6 +75,7 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
                 store.rows.unshift(row);
                 return json(row, 201);
             }
+            if (store.listFailure) return json({ detail: 'fixture error' }, store.listFailure);
             const all = url.searchParams.get('include_archived') === 'true';
             return json(store.rows.filter(row => all || !row.archived_at));
         }
@@ -300,7 +305,7 @@ test('il docente associa classi a un taccuino di prova e vede quali non sono con
     const { errors, requests, store } = await prepare(page);
     await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
     await page.locator('[data-practice-notebook="1"]').getByRole('button', { name: 'Modifica' }).click();
-    const classes = page.getByRole('group', { name: 'Classi dello studente' });
+    const classes = page.getByRole('group', { name: 'Classi per la simulazione' });
     await classes.getByRole('checkbox', { name: /3B — Liceo Demo/ }).check();
     await classes.getByRole('checkbox', { name: /4A/ }).check();
     assert.ok(await classes.getByText('contesto non condiviso con gli studenti: non entra nella chat').isVisible());
@@ -311,9 +316,50 @@ test('il docente associa classi a un taccuino di prova e vede quali non sono con
     const card = page.locator('[data-practice-notebook="1"]');
     assert.ok(await card.getByText('3B — Liceo Demo').isVisible());
     assert.ok(await card.getByText('contesto non condiviso con gli studenti: non entra nella chat').isVisible());
+
+    store.rows.unshift(
+        { id: 2, title: 'Simulato in un’altra classe', data: {}, group_ids: [31], archived_at: null },
+        { id: 3, title: 'Simulato archiviato', data: {}, group_ids: [32], archived_at: '2026-10-06T09:00:00Z' },
+    );
+    await page.goto(`${origin}/docente/classi/32?tab=students`, { waitUntil: 'networkidle' });
+    const practiceStudents = page.getByRole('region', { name: 'Studenti di prova' });
+    const notebook = practiceStudents.getByRole('link', { name: 'Giulia, 3ª liceo' });
+    await notebook.waitFor();
+    assert.deepEqual(await practiceStudents.getByRole('listitem').allTextContents(), ['Giulia, 3ª liceo']);
+    const participants = page.locator('[data-class-results-panel]');
+    await participants.getByRole('button', { name: 'Elenco partecipanti', exact: true }).click();
+    assert.ok(await participants.getByText('iscritto.fixture', { exact: true }).isVisible());
+    assert.equal(await participants.getByText('Giulia, 3ª liceo').count(), 0);
+    assert.equal(await participants.getByRole('heading', { name: 'Partecipanti', exact: true })
+        .locator('xpath=following-sibling::span').textContent(), '1');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+
+    await notebook.click();
+    await page.waitForURL('**/docente/taccuini-prova#practice-notebook-1');
+    await page.waitForFunction(() => document.activeElement?.id === 'practice-notebook-1');
+    assert.ok(await card.getByRole('heading', { name: 'Chat guidate di prova' }).isVisible());
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(errors, []);
     await page.close();
+});
+
+test('la classe distingue un errore di caricamento dei taccuini da un elenco vuoto', async () => {
+    const page = await browser.newPage();
+    try {
+        const { store } = await prepare(page);
+        store.listFailure = 500;
+        await page.goto(`${origin}/docente/classi/32?tab=students`, { waitUntil: 'networkidle' });
+        const practiceStudents = page.getByRole('region', { name: 'Studenti di prova' });
+        await practiceStudents.getByRole('alert').getByText('Impossibile caricare i taccuini di prova.').waitFor();
+        await page.locator('[data-class-results-panel]').getByRole('heading', { name: 'Partecipanti', exact: true }).waitFor();
+
+        store.listFailure = null;
+        await practiceStudents.getByRole('button', { name: 'Riprova' }).click();
+        await practiceStudents.getByText(/Per collegare un profilo/).waitFor();
+        assert.equal(await practiceStudents.getByRole('link').getAttribute('href'), '/docente/taccuini-prova');
+    } finally {
+        await page.close();
+    }
 });
 
 test('il repertorio: profilo generato e ritoccato, poi eliminato', async () => {

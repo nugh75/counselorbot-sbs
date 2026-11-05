@@ -2349,6 +2349,11 @@ mostra in qualsiasi momento, anche dopo «Concludi», e per quelle in corso **Ri
 conversazione** permette di proseguire. I punteggi inseriti in chat restano nei
 **Profili nei questionari** con l’indicazione «da una chat in prova».
 
+Dalla scheda della classe, **Partecipanti e risultati** contiene il riquadro
+**Studenti di prova**. Vi ritrovi i tuoi taccuini attivi in cui hai selezionato
+quella classe in **Classi per la simulazione**. Il nome apre il taccuino
+corrispondente nella Palestra. Il conteggio dei partecipanti riguarda gli iscritti.
+
 Il Taccuino del docente è un’autodescrizione del ruolo e della pratica abituale,
 con sei campi **facoltativi** su una sola colonna, come il taccuino dello studente (la nota in testa alla pagina ricorda le scelte Predefinito, Studente, Docente, Prova e Nessuno), nell’ordine: discipline abituali, esperienza di
 insegnamento sintetica, come insegno di solito, panoramica dei miei incarichi e
