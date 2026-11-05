@@ -1,3 +1,21 @@
+# Studenti di prova nella scheda della classe
+
+- Branch `fix/studenti-prova-classe`. La scheda **Partecipanti e risultati**
+  mostra i taccuini attivi già collegati nel riquadro privato **Studenti di
+  prova**. Il nome porta a chat e profili nel taccuino corrispondente.
+- La Palestra usa **Classi per la simulazione** nelle sei lingue. Le iscrizioni
+  effettive continuano a determinare il conteggio dei partecipanti.
+- Build Docker frontend e TypeScript riusciti. Tre verifiche Playwright con
+  fixture anonime su container isolato coprono associazione, filtro, conteggio,
+  apertura del taccuino, accesso e riprova. Controlli i18n e guidance superati.
+- Suite unitaria con 779 casi passati e un errore già riprodotto su `origin/main`
+  nel compositore di Idea. La fixture browser precedente per l'eliminazione
+  attende la rimozione senza usare la conferma in linea.
+- Container di verifica fermato. Contratto in
+  `docs/operations/teacher-practice-notebooks.md`.
+
+---
+
 # Handoff 30 ottobre 2026: motori di trascrizione online opzionali
 
 - Branch `feature/online-transcription-engines`, issue #706, milestone **Voice and audio**.

@@ -36,7 +36,7 @@ simulato.
  │ ▸ Archiviati (n)   [Ripristina] [Elimina]          │
  └────────────────────────────────────────────────────┘
  Editor inline: Nome* + campi del taccuino studente (lp.field.*), una colonna
-                Classi dello studente: [x] 3B — Liceo   [x] 4A
+                Classi per la simulazione: [x] 3B — Liceo   [x] 4A
                                        «contesto non condiviso: non entra»
                 [Salva] [Annulla]   — nessun autosalvataggio
 
@@ -70,6 +70,12 @@ Envelope del turno (modalità prova):
   con `context_visible_to_students`, con lo stesso blocco e lo stesso tetto
   (600) di `class_context_for_student`; mai in IDEA né nella Bussola. Le
   iscrizioni del docente come partecipante non entrano.
+- **Scheda della classe**. In **Partecipanti e risultati**, il riquadro
+  **Studenti di prova** legge dall'API dei taccuini i profili attivi del docente
+  con quella classe tra i `group_ids` salvati. Il nome apre il taccuino nella
+  Palestra con le sue chat e i suoi profili nei questionari. La visibilità del
+  contesto in chat è indipendente dal riquadro. Iscrizioni, conteggio e risultati
+  dei partecipanti continuano a usare i dati della classe.
 - **Repertorio di prove** `TeacherPracticeResult` (`teacher_practice_results`,
   tabella nuova): `notebook_id`, owner, strumento (QSA, QSAr, ZTPI, QPCS, QPCC,
   QAP), punteggi 1–9 (≤60 fattori), `session_id`, `source`

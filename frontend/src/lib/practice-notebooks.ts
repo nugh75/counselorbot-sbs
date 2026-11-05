@@ -34,6 +34,10 @@ export interface PracticeNotebook {
     updated_at?: string | null;
 }
 
+export function practiceNotebookAnchor(id: number): string {
+    return `practice-notebook-${id}`;
+}
+
 export function parsePracticeNotebooks(payload: unknown): PracticeNotebook[] {
     if (!Array.isArray(payload)) return [];
     return payload.filter((row): row is PracticeNotebook =>

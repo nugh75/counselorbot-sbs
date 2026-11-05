@@ -17,6 +17,7 @@ import {
     PRACTICE_FIELD_MAX_CHARS,
     PRACTICE_NOTEBOOK_FIELDS,
     PRACTICE_TITLE_MAX_CHARS,
+    practiceNotebookAnchor,
     type PracticeNotebook,
     type PracticeNotebookData,
 } from '@/lib/practice-notebooks';
@@ -123,6 +124,15 @@ export function PracticeNotebooks() {
 
     const active = (notebooks ?? []).filter((notebook) => !notebook.archived_at);
     const archived = (notebooks ?? []).filter((notebook) => notebook.archived_at);
+    const notebooksLoaded = notebooks !== null;
+    useEffect(() => {
+        if (!notebooksLoaded) return;
+        const anchor = window.location.hash.slice(1);
+        if (!anchor.startsWith('practice-notebook-')) return;
+        const heading = document.getElementById(anchor);
+        heading?.focus({ preventScroll: true });
+        heading?.scrollIntoView();
+    }, [notebooksLoaded]);
 
     const editor = (current: Draft) => (
         <form data-practice-notebook-editor className="space-y-4 rounded-lg border border-brand-line bg-surface p-4" onSubmit={(event) => { event.preventDefault(); void save(); }}>
@@ -220,7 +230,7 @@ export function PracticeNotebooks() {
                     <li key={notebook.id} data-practice-notebook={notebook.id}>
                         {draft?.id === notebook.id ? editor(draft) : (
                             <article className="space-y-4 rounded-lg border border-line bg-surface p-4">
-                                <h2 className="text-base font-semibold text-ink">{notebook.title}</h2>
+                                <h2 id={practiceNotebookAnchor(notebook.id)} tabIndex={-1} className="scroll-mt-24 text-base font-semibold text-ink">{notebook.title}</h2>
                                 {summary(notebook)}
                                 {classSummary(notebook)}
                                 <PracticeChats notebookId={notebook.id} openChats={chats?.filter((chat) => chat.practice_notebook_id === notebook.id) ?? null} openChatsFailed={chatsFailed} />
