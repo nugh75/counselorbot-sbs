@@ -384,6 +384,68 @@ def test_api_keeps_only_the_teachers_own_or_shared_classes():
         assert client.put(f"/teacher/practice-notebooks/{created['id']}", json={"title": "G."}).json()["group_ids"] == [own_private.id]
 
 
+def test_class_reads_shared_profiles_and_checks_teacher_access_on_each_read():
+    with artifact_session() as db:
+        own_shared, _, co_taught, foreign = _groups(db)
+        db.add(models.GroupShare(group_id=co_taught.id, shared_with_username="t3", granted_by_username="t2"))
+        practice = _seed_teacher(db)
+        practice.group_ids = [str(co_taught.id), own_shared.id]
+        db.add_all([
+            models.TeacherPracticeNotebook(owner_username="t2", title="Privato", group_ids=[]),
+            models.TeacherPracticeNotebook(owner_username="t9", title="Fuori classe", group_ids=[co_taught.id]),
+        ])
+        db.commit()
+
+        def teacher(username, **extra):
+            return _app(db, {**TEACHER, "username": username, **extra}, practice_notebooks.router)
+
+        class_url = f"/teacher/groups/{co_taught.id}/practice-notebooks"
+        expected = [{"id": practice.id, "title": practice.title, "data": practice.data}]
+        for username in ("t1", "t2", "t3"):
+            response = teacher(username).get(class_url)
+            assert response.json() == expected
+            assert response.headers["cache-control"] == "private, no-store"
+        assert teacher("t9").get(class_url).status_code == 403
+        assert teacher("t9", is_admin=True).get(class_url).status_code == 403
+        assert _app(db, STUDENT, practice_notebooks.router).get(class_url).status_code == 403
+        assert teacher("t3").get(f"/teacher/groups/{foreign.id}/practice-notebooks").status_code == 403
+        assert teacher("t3").get(f"/teacher/practice-notebooks/{practice.id}/chats").status_code == 404
+        assert teacher("t3").get(f"/teacher/practice-notebooks/{practice.id}/results").status_code == 404
+        assert db.query(models.GroupMembership).count() == 0
+
+        db.query(models.GroupShare).filter_by(group_id=co_taught.id, shared_with_username="t3").delete()
+        db.commit()
+        assert teacher("t3").get(class_url).status_code == 403
+        db.query(models.GroupShare).filter_by(group_id=co_taught.id, shared_with_username="t1").delete()
+        db.commit()
+        assert teacher("t2").get(class_url).json() == []
+
+
+def test_practice_class_toggle_updates_one_class_and_reports_inaccessible_classes():
+    with artifact_session() as db:
+        own_shared, own_private, _, foreign = _groups(db)
+        practice = _seed_teacher(db)
+        practice.group_ids = [own_shared.id]
+        db.commit()
+        client = _app(db, TEACHER, practice_notebooks.router)
+        base = f"/teacher/practice-notebooks/{practice.id}"
+        toggle_url = f"{base}/classes/{own_private.id}"
+        class_url = f"/teacher/groups/{own_private.id}/practice-notebooks"
+        assert client.put(f"{base}/classes/{foreign.id}", json={"linked": True}).status_code == 404
+        for _ in range(2):
+            saved = client.put(toggle_url, json={"linked": True})
+            assert saved.status_code == 200
+            assert saved.json()["group_ids"] == [own_shared.id, own_private.id]
+        assert [item["id"] for item in client.get(class_url).json()] == [practice.id]
+        assert client.put(toggle_url, json={"linked": False}).json()["group_ids"] == [own_shared.id]
+        assert client.get(class_url).json() == []
+
+        client.put(toggle_url, json={"linked": True})
+        client.put(base, json={"archived": True})
+        assert client.get(class_url).json() == []
+        assert client.put(toggle_url, json={"linked": True}).status_code == 404
+
+
 def test_practice_class_context_mirrors_what_a_real_student_receives():
     with artifact_session() as db:
         own_shared, own_private, co_taught, foreign = _groups(db)

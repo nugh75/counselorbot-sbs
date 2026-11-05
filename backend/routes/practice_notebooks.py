@@ -2,17 +2,17 @@
 
 Studenti immaginari con cui il docente si allena nelle chat guidate (vedi
 `practice_notebooks.py` per l'uso nel contesto). Ruolo: docenti, ricercatori,
-admin (come il taccuino docente). Ogni taccuino e' visibile solo al suo
-proprietario: un id altrui risponde 404, come uno inesistente. Nessun limite
-al numero di taccuini.
+admin (come il taccuino docente). I docenti della classe possono leggere il
+profilo simulato collegato. La gestione, le chat e il repertorio richiedono
+la proprietà del taccuino.
 """
 
 import uuid
 from datetime import UTC, datetime, timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, select
+from fastapi import APIRouter, Depends, HTTPException, Response
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas
@@ -23,15 +23,12 @@ from .survey import _session_conversation_messages
 router = APIRouter()
 
 
-def _owned(db: Session, username: str, notebook_id: int) -> models.TeacherPracticeNotebook:
-    notebook = (
-        db.query(models.TeacherPracticeNotebook)
-        .filter(
-            models.TeacherPracticeNotebook.id == notebook_id,
-            models.TeacherPracticeNotebook.owner_username == username,
-        )
-        .first()
+def _owned(db: Session, username: str, notebook_id: int, *, for_update: bool = False) -> models.TeacherPracticeNotebook:
+    query = db.query(models.TeacherPracticeNotebook).filter(
+        models.TeacherPracticeNotebook.id == notebook_id,
+        models.TeacherPracticeNotebook.owner_username == username,
     )
+    notebook = (query.with_for_update() if for_update else query).first()
     if notebook is None:
         raise HTTPException(status_code=404, detail="Practice notebook not found")
     return notebook
@@ -57,6 +54,27 @@ async def list_practice_notebooks(
     return query.order_by(
         models.TeacherPracticeNotebook.created_at.desc(), models.TeacherPracticeNotebook.id.desc(),
     ).all()
+
+
+@router.get("/teacher/groups/{group_id}/practice-notebooks", response_model=List[schemas.ClassPracticeNotebookResponse])
+async def list_class_practice_notebooks(
+    group_id: int,
+    response: Response,
+    current_user: dict = Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    group = visible_group_for_teacher(db, current_user["username"], group_id)
+    if group is None:
+        raise HTTPException(status_code=403, detail="Class access denied")
+
+    response.headers["Cache-Control"] = "private, no-store"
+    notebook = models.TeacherPracticeNotebook
+    co_teachers = select(models.GroupShare.shared_with_username).where(models.GroupShare.group_id == group.id)
+    rows = db.query(notebook).filter(
+        notebook.archived_at.is_(None),
+        or_(notebook.owner_username == group.owner_username, func.lower(notebook.owner_username).in_(co_teachers)),
+    ).order_by(notebook.created_at.desc(), notebook.id.desc())
+    return [row for row in rows if group.id in schemas.normalize_practice_group_ids(row.group_ids)]
 
 
 @router.post("/teacher/practice-notebooks", response_model=schemas.PracticeNotebookResponse, status_code=201)
@@ -99,6 +117,29 @@ async def update_practice_notebook(
             notebook.archived_at = datetime.now(UTC)
         elif not payload.archived:
             notebook.archived_at = None
+    db.commit()
+    db.refresh(notebook)
+    return notebook
+
+
+@router.put("/teacher/practice-notebooks/{notebook_id}/classes/{group_id}", response_model=schemas.PracticeNotebookResponse)
+async def set_practice_notebook_class(
+    notebook_id: int,
+    group_id: int,
+    payload: schemas.PracticeNotebookClassUpdate,
+    current_user: dict = Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    username = current_user["username"]
+    notebook = _owned(db, username, notebook_id, for_update=True)
+    if notebook.archived_at is not None or visible_group_for_teacher(db, username, group_id) is None:
+        raise HTTPException(status_code=404, detail="Active notebook or class not found")
+    group_ids = schemas.normalize_practice_group_ids(notebook.group_ids)
+    if payload.linked and group_id not in group_ids:
+        group_ids.append(group_id)
+    elif not payload.linked:
+        group_ids = [value for value in group_ids if value != group_id]
+    notebook.group_ids = group_ids
     db.commit()
     db.refresh(notebook)
     return notebook

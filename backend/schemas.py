@@ -869,7 +869,7 @@ def _practice_notebook_data(value: Any) -> Dict[str, str]:
     return data
 
 
-def _practice_group_ids(value: Any) -> List[int]:
+def normalize_practice_group_ids(value: Any) -> List[int]:
     """Id interi positivi, senza duplicati, nell'ordine dato."""
     ids: List[int] = []
     for item in value if isinstance(value, list) else []:
@@ -889,7 +889,7 @@ class PracticeNotebookCreate(BaseModel):
 
     @validator("group_ids", pre=True)
     def _clean_group_ids(cls, v):
-        return _practice_group_ids(v)
+        return normalize_practice_group_ids(v)
 
     @validator("title", pre=True)
     def _trim_title(cls, v):
@@ -908,7 +908,7 @@ class PracticeNotebookUpdate(BaseModel):
 
     @validator("group_ids", pre=True)
     def _clean_group_ids(cls, v):
-        return None if v is None else _practice_group_ids(v)
+        return None if v is None else normalize_practice_group_ids(v)
 
     @validator("title", pre=True)
     def _trim_title(cls, v):
@@ -917,6 +917,10 @@ class PracticeNotebookUpdate(BaseModel):
     @validator("data", pre=True)
     def _known_fields(cls, v):
         return None if v is None else _practice_notebook_data(v)
+
+
+class PracticeNotebookClassUpdate(BaseModel):
+    linked: bool
 
 
 # Strumenti con punteggi per fattore (scala 1-9): gli unici con un profilo.
@@ -986,6 +990,19 @@ class PracticeResultResponse(BaseModel):
         from_attributes = True
 
 
+class ClassPracticeNotebookResponse(BaseModel):
+    id: int
+    title: str
+    data: Dict[str, str]
+
+    @validator("data", pre=True)
+    def _known_fields(cls, v):
+        return _practice_notebook_data(v)
+
+    class Config:
+        from_attributes = True
+
+
 class PracticeNotebookResponse(BaseModel):
     id: int
     title: str
@@ -997,7 +1014,7 @@ class PracticeNotebookResponse(BaseModel):
 
     @validator("group_ids", pre=True)
     def _stored_group_ids(cls, v):
-        return _practice_group_ids(v)
+        return normalize_practice_group_ids(v)
 
     class Config:
         from_attributes = True
@@ -1258,7 +1275,7 @@ class FrozenSessionCreate(BaseModel):
 
     @validator("group_ids", pre=True)
     def _clean_group_ids(cls, v):
-        return _practice_group_ids(v)
+        return normalize_practice_group_ids(v)
 
     @validator("questionnaire_type", pre=True)
     def _known_questionnaire(cls, v):

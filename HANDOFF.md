@@ -1,3 +1,22 @@
+# Taccuini di prova condivisi nella classe
+
+- Branch `fix/taccuini-prova-condivisi`, issue #783. La Palestra mostra le
+  classi attive proprie e in co-docenza e salva subito la singola spunta
+  dei taccuini esistenti. La creazione salva le spunte insieme al profilo.
+- **Partecipanti e risultati** apre i profili simulati direttamente nella
+  classe. L'API verifica l'accesso di chi legge e di chi ha creato il
+  taccuino. Chat, trascrizioni e repertorio sono riservati al proprietario.
+- Build Docker backend e frontend, TypeScript, i18n e guidance passati.
+  Sei verifiche API su PostgreSQL isolato e tre Playwright sul container
+  frontend con fixture anonime. Container di prova fermati.
+- Le suite più ampie hanno rilevato i quattro casi del backend già nel
+  ratchet PostgreSQL, il test del compositore di Idea e il lint del
+  caricamento del taccuino già segnalati su `main`.
+- Distribuire backend e frontend dopo il merge. Contratto in
+  `docs/operations/teacher-practice-notebooks.md`.
+
+---
+
 # Studenti di prova nella scheda della classe
 
 - Branch `fix/studenti-prova-classe`. La scheda **Partecipanti e risultati**
