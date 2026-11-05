@@ -37,6 +37,12 @@ export const practiceNotebookApi = {
     async remove(id: number): Promise<void> {
         await json(await apiFetch(`${BASE}/${id}`, { method: 'DELETE' }));
     },
+    async setClass(id: number, groupId: number, linked: boolean): Promise<PracticeNotebook> {
+        return json(await apiFetch(`${BASE}/${id}/classes/${groupId}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ linked }),
+        }));
+    },
     async results(id: number, questionnaireType?: string, signal?: AbortSignal): Promise<PracticeResult[]> {
         const query = questionnaireType ? `?questionnaire_type=${encodeURIComponent(questionnaireType)}` : '';
         return parsePracticeResults(await json<unknown>(await apiFetch(`${BASE}/${id}/results${query}`, { signal })));

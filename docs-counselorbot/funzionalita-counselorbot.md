@@ -2337,8 +2337,8 @@ salvataggio esplicito: i comandi Salva e Annulla sono presenti in testa e in cod
 all'editor nelle sei lingue ufficiali, con conferma prima di scartare modifiche non
 salvate sia per Annulla sia per l'uscita dalla pagina; gli elementi si archiviano,
 ripristinano ed eliminano (con conferma). Gli archiviati non compaiono nelle
-Opzioni della chat. Sono visibili solo al docente che li ha creati e non
-contengono né toccano dati di studenti reali: la pagina invita a non inserirne.
+Opzioni della chat. Il docente che li ha creati gestisce taccuino, chat e
+risultati di prova. La pagina invita a usare solo dati inventati.
 
 I risultati di una chat guidata in prova si ritrovano nella scheda dello studente
 simulato (Issue #244): dalla home dell’Area docenti, «Entra nella Palestra di prova»
@@ -2350,9 +2350,11 @@ conversazione** permette di proseguire. I punteggi inseriti in chat restano nei
 **Profili nei questionari** con l’indicazione «da una chat in prova».
 
 Dalla scheda della classe, **Partecipanti e risultati** contiene il riquadro
-**Studenti di prova**. Vi ritrovi i tuoi taccuini attivi in cui hai selezionato
-quella classe in **Classi per la simulazione**. Il nome apre il taccuino
-corrispondente nella Palestra. Il conteggio dei partecipanti riguarda gli iscritti.
+**Studenti di prova**. I docenti della classe possono aprire e leggere lì i
+profili simulati attivi collegati. Nella Palestra la spunta **Classi per la
+simulazione** è visibile su ogni taccuino attivo e si salva subito per i profili
+già creati. Per un nuovo profilo si salva insieme al taccuino. Il conteggio
+dei partecipanti riguarda gli iscritti.
 
 Il Taccuino del docente è un’autodescrizione del ruolo e della pratica abituale,
 con sei campi **facoltativi** su una sola colonna, come il taccuino dello studente (la nota in testa alla pagina ricorda le scelte Predefinito, Studente, Docente, Prova e Nessuno), nell’ordine: discipline abituali, esperienza di

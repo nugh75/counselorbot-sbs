@@ -2,12 +2,11 @@
 
 // Taccuini studente di prova: il docente crea studenti immaginari, li modifica,
 // li archivia o li elimina. Si scelgono poi dalle Opzioni della chat guidata o
-// della Bussola («Prova»). Salvataggio esplicito, nessun autosalvataggio.
+// della Bussola («Prova»). Le spunte dei profili esistenti si salvano subito.
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { apiFetch } from '@/lib/auth';
 import { listFrozenSessions, type FrozenSessionSummary } from '@/lib/frozen-session';
 import { useI18n } from '@/lib/i18n-context';
 import { useDraftGuard } from '@/lib/use-draft-guard';
@@ -24,11 +23,12 @@ import {
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { PracticeChats } from './PracticeChats';
+import { PracticeNotebookSummary } from './PracticeNotebookSummary';
 import { PracticeRepertoire } from './PracticeRepertoire';
+import { parseClassGroups } from './class-group-types';
+import { useTeacherResource } from './useTeacherResource';
 
 type Draft = { id: number | 'new'; title: string; values: PracticeNotebookData; groupIds: number[] };
-// Classi gestite dal docente (stesso elenco della chat docenza).
-type ClassGroup = { id: number; name: string; school?: string | null; context_visible_to_students?: boolean; is_active?: boolean };
 
 const primary = 'min-h-control rounded-control bg-brand px-4 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover disabled:opacity-50';
 const secondary = 'min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-50';
@@ -43,31 +43,21 @@ export function PracticeNotebooks() {
     const [busy, setBusy] = useState(false);
     const [confirmRemove, setConfirmRemove] = useState<number | null>(null);
     const [error, setError] = useState('');
+    const [classSaveError, setClassSaveError] = useState<number | null>(null);
     useDraftGuard(dirty || busy, learningText(lang, 'leaveDraft'), { blocked: busy, preserveFocus: true });
 
     const load = useCallback(async () => {
-        setLoadFailed(false);
         try {
             setNotebooks(await practiceNotebookApi.list(true));
+            setLoadFailed(false);
         } catch {
             setLoadFailed(true);
         }
     }, []);
     useEffect(() => { void load(); }, [load]);
 
-    const [groups, setGroups] = useState<ClassGroup[] | null>(null);
-    const [groupsFailed, setGroupsFailed] = useState(false);
-    useEffect(() => {
-        const controller = new AbortController();
-        apiFetch('/api/admin/groups', { signal: controller.signal })
-            .then(async (response) => {
-                if (!response.ok) throw new Error('groups');
-                const rows: unknown = await response.json();
-                setGroups(Array.isArray(rows) ? (rows as ClassGroup[]).filter((group) => group.is_active !== false) : []);
-            })
-            .catch(() => { if (!controller.signal.aborted) setGroupsFailed(true); });
-        return () => controller.abort();
-    }, []);
+    const classGroups = useTeacherResource('/api/admin/groups?own=true', parseClassGroups);
+    const groups = classGroups.data?.filter(group => group.is_active);
     // Chat guidate di prova ancora aperte (autosalvate): il docente le ritrova
     // sotto lo studente simulato e le riapre come dall'header.
     const [chats, setChats] = useState<FrozenSessionSummary[] | null>(null);
@@ -77,8 +67,6 @@ export function PracticeNotebooks() {
             .then((rows) => setChats(rows.filter((row) => row.practice_notebook_id != null)))
             .catch(() => setChatsFailed(true));
     }, []);
-
-    const groupName = (group: ClassGroup) => group.school ? `${group.name} — ${group.school}` : group.name;
 
     const run = async (action: () => Promise<unknown>) => {
         if (busy) return false;
@@ -114,12 +102,34 @@ export function PracticeNotebooks() {
 
     const save = async () => {
         if (!draft || !draft.title.trim()) return;
-        // Senza elenco classi (errore di caricamento) le associazioni salvate restano.
-        const groupIds = groups === null ? undefined : draft.groupIds;
-        const ok = await run(() => draft.id === 'new'
-            ? practiceNotebookApi.create(draft.title, draft.values, groupIds ?? [])
-            : practiceNotebookApi.update(draft.id, { title: draft.title, values: draft.values, groupIds }));
-        if (ok) { setDraft(null); setDirty(false); }
+        let incomplete = false;
+        const ok = await run(async () => {
+            if (draft.id === 'new') {
+                const saved = await practiceNotebookApi.create(draft.title, draft.values, draft.groupIds);
+                incomplete = draft.groupIds.some(id => !saved.group_ids.includes(id));
+            } else {
+                await practiceNotebookApi.update(draft.id, { title: draft.title, values: draft.values });
+            }
+        });
+        if (ok) {
+            setDraft(null);
+            setDirty(false);
+            if (incomplete) setError(l('classSaveError'));
+        }
+    };
+
+    const saveClass = async (notebookId: number, groupId: number, linked: boolean) => {
+        if (busy) return;
+        setBusy(true);
+        setClassSaveError(null);
+        try {
+            const saved = await practiceNotebookApi.setClass(notebookId, groupId, linked);
+            setNotebooks(rows => rows?.map(row => row.id === notebookId ? saved : row) ?? null);
+        } catch {
+            setClassSaveError(notebookId);
+        } finally {
+            setBusy(false);
+        }
     };
 
     const active = (notebooks ?? []).filter((notebook) => !notebook.archived_at);
@@ -134,6 +144,32 @@ export function PracticeNotebooks() {
         heading?.scrollIntoView();
     }, [notebooksLoaded]);
 
+    const classSelection = (groupIds: number[], onChange: (groupId: number, linked: boolean) => void, notebookId?: number) => (
+        <fieldset className="min-w-0 space-y-2" disabled={busy}>
+            <legend className="text-xs font-semibold text-ink-muted">{l('classes')}</legend>
+            <p className="text-xs text-ink-muted">{l('classesHint')}</p>
+            {notebookId !== undefined && <p className="text-xs text-ink-muted">{l('classesAutosave')}</p>}
+            {classGroups.loading && <p role="status" className="text-xs text-ink-muted">{t('common.loading')}</p>}
+            {(classGroups.failed || classGroups.forbidden) && <div role="alert" className="text-xs text-danger">
+                <p>{l('classesError')}</p>
+                <button type="button" onClick={() => void classGroups.reload()} className={secondary}>{l('retry')}</button>
+            </div>}
+            {groups && !groups.length && <p className="text-xs text-ink-muted">{l('noClasses')}</p>}
+            {groups?.map(group => (
+                <label key={group.id} className="flex min-h-control items-start gap-2 text-sm text-ink-body">
+                    <input type="checkbox" className="mt-1" checked={groupIds.includes(group.id)}
+                        onChange={event => onChange(group.id, event.target.checked)} />
+                    <span>
+                        {group.school ? `${group.name} — ${group.school}` : group.name}
+                        {!group.context_visible_to_students && <span className="block text-xs text-ink-muted">{l('notShared')}</span>}
+                    </span>
+                </label>
+            ))}
+            {notebookId !== undefined && classSaveError === notebookId && <p role="alert" className="text-xs text-danger">{l('classSaveError')}</p>}
+            <Link href="/docente/classi" className="inline-flex min-h-control items-center text-xs font-semibold text-link underline underline-offset-2">{l('manageClasses')}</Link>
+        </fieldset>
+    );
+
     const editor = (current: Draft) => (
         <form data-practice-notebook-editor className="space-y-4 rounded-lg border border-brand-line bg-surface p-4" onSubmit={(event) => { event.preventDefault(); void save(); }}>
             <div>
@@ -143,6 +179,9 @@ export function PracticeNotebooks() {
                     className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm" />
                 <p id="practice-notebook-title-hint" className="mt-1 text-xs text-ink-muted">{l('nameHint')}</p>
             </div>
+            {current.id === 'new' && classSelection(current.groupIds, (groupId, linked) => edit({
+                groupIds: linked ? [...current.groupIds, groupId] : current.groupIds.filter(id => id !== groupId),
+            }))}
             <div className="grid gap-4">
                 {PRACTICE_NOTEBOOK_FIELDS.map((field) => (
                     <div key={field.key}>
@@ -154,60 +193,12 @@ export function PracticeNotebooks() {
                     </div>
                 ))}
             </div>
-            <fieldset className="min-w-0 space-y-2">
-                <legend className="text-xs font-semibold text-ink-muted">{l('classes')}</legend>
-                <p className="text-xs text-ink-muted">{l('classesHint')}</p>
-                {groupsFailed && <p role="alert" className="text-xs text-danger">{l('classesError')}</p>}
-                {groups !== null && !groups.length && <p className="text-xs text-ink-muted">{l('noClasses')}</p>}
-                {groups?.map((group) => (
-                    <label key={group.id} className="flex min-h-control items-start gap-2 text-sm text-ink-body">
-                        <input type="checkbox" className="mt-1" checked={current.groupIds.includes(group.id)}
-                            onChange={(event) => edit({ groupIds: event.target.checked
-                                ? [...current.groupIds, group.id]
-                                : current.groupIds.filter((id) => id !== group.id) })} />
-                        <span>
-                            {groupName(group)}
-                            {!group.context_visible_to_students && <span className="block text-xs text-warning">{l('notShared')}</span>}
-                        </span>
-                    </label>
-                ))}
-                <Link href="/docente/classi" className="inline-flex min-h-control items-center text-xs font-semibold text-link underline underline-offset-2">{l('manageClasses')}</Link>
-            </fieldset>
             <div className="flex flex-wrap items-center gap-4">
                 <button type="submit" disabled={busy || !current.title.trim()} className={primary}>{l('save')}</button>
                 <button type="button" disabled={busy} onClick={closeDraft} className={secondary}>{l('cancel')}</button>
             </div>
         </form>
     );
-
-    const classSummary = (notebook: PracticeNotebook) => {
-        const linked = (groups ?? []).filter((group) => notebook.group_ids.includes(group.id));
-        if (!linked.length) return null;
-        return (
-            <div className="text-sm">
-                <p className="font-semibold text-ink-muted">{l('classes')}</p>
-                <ul className="text-ink-body">
-                    {linked.map((group) => <li key={group.id}>
-                        {groupName(group)}
-                        {!group.context_visible_to_students && <span className="block text-xs text-warning">{l('notShared')}</span>}
-                    </li>)}
-                </ul>
-            </div>
-        );
-    };
-
-    const summary = (notebook: PracticeNotebook) => {
-        const filled = PRACTICE_NOTEBOOK_FIELDS.filter((field) => (notebook.data[field.key] ?? '').trim());
-        if (!filled.length) return <p className="text-sm text-ink-muted">{l('noFields')}</p>;
-        return (
-            <dl className="grid gap-2 text-sm">
-                {filled.map((field) => <div key={field.key}>
-                    <dt className="font-semibold text-ink-muted">{t(field.labelKey)}</dt>
-                    <dd className="whitespace-pre-line text-ink-body">{notebook.data[field.key]}</dd>
-                </div>)}
-            </dl>
-        );
-    };
 
     return (
         <div data-practice-notebooks className="space-y-4">
@@ -228,21 +219,21 @@ export function PracticeNotebooks() {
             <ul className="space-y-4">
                 {active.map((notebook) => (
                     <li key={notebook.id} data-practice-notebook={notebook.id}>
-                        {draft?.id === notebook.id ? editor(draft) : (
-                            <article className="space-y-4 rounded-lg border border-line bg-surface p-4">
-                                <h2 id={practiceNotebookAnchor(notebook.id)} tabIndex={-1} className="scroll-mt-24 text-base font-semibold text-ink">{notebook.title}</h2>
-                                {summary(notebook)}
-                                {classSummary(notebook)}
+                        <article className="space-y-4 rounded-lg border border-line bg-surface p-4">
+                            <h2 id={practiceNotebookAnchor(notebook.id)} tabIndex={-1} className="scroll-mt-24 break-words text-base font-semibold text-ink">{notebook.title}</h2>
+                            {classSelection(notebook.group_ids, (groupId, linked) => void saveClass(notebook.id, groupId, linked), notebook.id)}
+                            {draft?.id === notebook.id ? editor(draft) : <>
+                                <PracticeNotebookSummary data={notebook.data} />
                                 <PracticeChats notebookId={notebook.id} openChats={chats?.filter((chat) => chat.practice_notebook_id === notebook.id) ?? null} openChatsFailed={chatsFailed} />
                                 <PracticeRepertoire notebookId={notebook.id} />
                                 <div className="flex flex-wrap gap-2">
                                     <button type="button" disabled={busy} className={secondary}
-                                        onClick={() => openDraft({ id: notebook.id, title: notebook.title, values: { ...notebook.data }, groupIds: [...notebook.group_ids] })}>{l('edit')}</button>
+                                        onClick={() => openDraft({ id: notebook.id, title: notebook.title, values: { ...notebook.data }, groupIds: [] })}>{l('edit')}</button>
                                     <button type="button" disabled={busy} className={secondary}
                                         onClick={() => void run(() => practiceNotebookApi.update(notebook.id, { archived: true }))}>{l('archive')}</button>
                                 </div>
-                            </article>
-                        )}
+                            </>}
+                        </article>
                     </li>
                 ))}
             </ul>

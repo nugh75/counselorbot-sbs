@@ -823,9 +823,8 @@ class TeacherPracticeNotebook(Base):
     """Taccuino studente di prova: uno studente immaginario del docente.
 
     Il docente lo sceglie dalle Opzioni di una chat guidata per allenarsi a
-    condurla. Appartiene solo al docente, non e' mai letto per altri utenti e
-    non tocca le tabelle dello studente. Modificabile in place (non e' un
-    modello del discente reale), archiviabile ed eliminabile.
+    condurla. Il proprietario gestisce il taccuino. Il profilo simulato è
+    leggibile dai docenti delle classi associate e usa una tabella dedicata.
     """
 
     __tablename__ = "teacher_practice_notebooks"

@@ -26,6 +26,7 @@ simulato.
  │ [+ Nuovo taccuino di prova]                        │
  │ ┌ «Giulia, 3ª liceo» ───────────────────────────┐  │
  │ │ Classe: 3ª liceo · Difficoltà: ansia verifiche│  │
+ │ │ Classi per la simulazione [x] 3B   [ ] 4A   │  │
  │ │ Chat guidate di prova                         │  │
  │ │  QSA · in corso  [Trascrizione] [Riapri]      │  │
  │ │  QSA · conclusa  [Trascrizione]               │  │
@@ -36,9 +37,9 @@ simulato.
  │ ▸ Archiviati (n)   [Ripristina] [Elimina]          │
  └────────────────────────────────────────────────────┘
  Editor inline: Nome* + campi del taccuino studente (lp.field.*), una colonna
-                Classi per la simulazione: [x] 3B — Liceo   [x] 4A
-                                       «contesto non condiviso: non entra»
-                [Salva] [Annulla]   — nessun autosalvataggio
+                [Salva] [Annulla]
+ Le spunte restano visibili anche nell'editor. Per un nuovo profilo si
+ salvano con il taccuino, per uno esistente si salvano singolarmente.
 
 Popover Opzioni (chat guidata e Bussola), solo docenti/ricercatori/admin:
  Taccuino nel contesto  [Predefinito][Studente][Docente][Prova][Nessuno]
@@ -64,18 +65,22 @@ Envelope del turno (modalità prova):
   creata da `create_all`; `group_ids` aggiunta alle tabelle esistenti all'avvio
   (`ALTER TABLE … ADD COLUMN IF NOT EXISTS group_ids JSON NOT NULL DEFAULT '[]'`).
   Nessun limite al numero di taccuini.
-- **Classi**: salvate solo se attive e del docente o condivise con lui
-  (`teacher_context.visible_group_for_teacher`), le altre si scartano. In chat
+- **Classi**. La Palestra elenca le classi attive proprie e in co-docenza
+  con `GET /admin/groups?own=true`. Per i taccuini esistenti
+  `PUT /teacher/practice-notebooks/{id}/classes/{group_id}` salva la singola
+  spunta con `linked: true|false`. Il server verifica classe e proprietà,
+  serializza gli aggiornamenti sul taccuino e segnala l'accesso revocato.
+  I salvataggi completi mantengono la compatibilità con i client precedenti. In chat
   `class_context_for_practice` le riverifica a ogni turno e passa solo quelle
   con `context_visible_to_students`, con lo stesso blocco e lo stesso tetto
   (600) di `class_context_for_student`; mai in IDEA né nella Bussola. Le
   iscrizioni del docente come partecipante non entrano.
 - **Scheda della classe**. In **Partecipanti e risultati**, il riquadro
-  **Studenti di prova** legge dall'API dei taccuini i profili attivi del docente
-  con quella classe tra i `group_ids` salvati. Il nome apre il taccuino nella
-  Palestra con le sue chat e i suoi profili nei questionari. La visibilità del
-  contesto in chat è indipendente dal riquadro. Iscrizioni, conteggio e risultati
-  dei partecipanti continuano a usare i dati della classe.
+  **Studenti di prova** mostra i taccuini attivi già collegati alla classe.
+  Il profilo si apre nel riquadro. `GET /teacher/groups/{group_id}/practice-notebooks`
+  restituisce nome e campi del profilo al proprietario della classe e ai
+  co-docenti. L'accesso del lettore e dell'autore viene verificato a ogni
+  richiesta. Iscrizioni e conteggio riguardano i partecipanti effettivi.
 - **Repertorio di prove** `TeacherPracticeResult` (`teacher_practice_results`,
   tabella nuova): `notebook_id`, owner, strumento (QSA, QSAr, ZTPI, QPCS, QPCC,
   QAP), punteggi 1–9 (≤60 fattori), `session_id`, `source`
@@ -109,8 +114,9 @@ Envelope del turno (modalità prova):
 - **Persistenza scelta**: localStorage (`cb-notebook-context`,
   `cb-practice-notebook-id`) e snapshot della sessione congelata
   (`notebook_context`, `practice_notebook_id`).
-- **Privacy**: i taccuini di prova sono del docente, non vengono mai letti per
-  altri utenti e non toccano tabelle dello studente.
+- **Privacy**. La spunta condivide i campi del profilo simulato con i docenti
+  della classe. Gestione del taccuino, chat, trascrizioni e repertorio dei
+  questionari sono riservati all'autore.
 
 ## Verifica
 
