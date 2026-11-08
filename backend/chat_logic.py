@@ -1249,7 +1249,9 @@ _ANALYSIS_ONLY_MODES = {
     "qap-factor", "qap-interview", "qap-summary",
 }
 
-_NO_NEW_ADVICE_STEP_IDS = {"sl-synthesis", "qsar-synthesis", "questions"}
+# «Cosa non ha funzionato» dell'Evento significativo: i consigli spettano a «La
+# prossima volta»; una richiesta esplicita viene rimandata a quel passo.
+_NO_NEW_ADVICE_STEP_IDS = {"sl-synthesis", "qsar-synthesis", "questions", "evstudio-criticita", "evprof-criticita"}
 QUESTIONS_STEP_ID = "questions"
 
 # Candidati certificati per turno nel passo «Strategie e consigli» e nelle

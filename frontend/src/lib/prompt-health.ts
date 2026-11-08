@@ -37,6 +37,8 @@ export interface PromptHealthFinding {
     editable?: string[];
     factory?: string[];
     ack?: PromptHealthAck | null;
+    /** Numero univoco nello storico dei problemi, mai riusato. */
+    number?: number | null;
     sources?: { id: string; kind: string; consumer: string | null; factory_source: string | null }[];
 }
 
@@ -49,7 +51,7 @@ export function hasCodeSource(finding: PromptHealthFinding): boolean {
 export function findingBrief(finding: PromptHealthFinding, message: string,
     sourceNames = { code: 'APPLICATION CODE', prompt: 'SAVED PROMPT' }): string {
     return [
-        message, `ID: ${finding.id} · ${finding.code} · ${finding.severity}`,
+        message, `${finding.number ? `Problem #${finding.number} · ` : ''}ID: ${finding.id} · ${finding.code} · ${finding.severity}`,
         '', ...finding.sentences.flatMap(sentence => [
             `[${sentence.prompt}] · ${sentence.prompt.startsWith('code:') ? sourceNames.code : sourceNames.prompt}`,
             sentence.text,
@@ -68,6 +70,16 @@ export function findingBrief(finding: PromptHealthFinding, message: string,
             source.factory_source ? `Factory [${source.id}]: ${source.factory_source}` : '',
         ]).filter(Boolean),
     ].join('\n');
+}
+
+/** Una voce dello storico: ultima istantanea del problema e il suo stato. */
+export interface PromptHealthProblem extends PromptHealthFinding {
+    number: number;
+    source: 'static' | 'llm';
+    status: 'open' | 'resolved';
+    first_seen_at: string | null;
+    last_seen_at: string | null;
+    resolved_at: string | null;
 }
 
 export interface PromptHealthRun {
