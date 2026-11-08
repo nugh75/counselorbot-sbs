@@ -36,9 +36,18 @@ class PromptAckRequest(BaseModel):
 _session_factory = None  # tests point the background checks at their database
 
 
-def _llm_after_change(prompt_id: str) -> None:
+def _llm_after_change(prompt_id: str, identity: dict) -> None:
     """LLM contradiction check of a changed prompt (#763): only with a chosen model."""
-    prompt_health_llm.run_after_change(_session_factory or database.SessionLocal, prompt_id)
+    prompt_health_llm.run_after_change(_session_factory or database.SessionLocal, prompt_id, identity)
+
+
+def _bind_checker(db: Session, identity: dict, language: str = "it") -> None:
+    from ..chatgpt_connections import bind_identity
+    bind_identity(db, identity, language)
+
+
+def _checker_actor(identity: dict) -> dict:
+    return {key: identity.get(key) for key in ("username", "authenticated", "is_admin", "groups")}
 
 
 def _rerun_after_save() -> None:
@@ -75,7 +84,7 @@ def check_saved_prompt(payload: PromptCheckRequest, background: BackgroundTasks,
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     background.add_task(_rerun_after_save)
-    background.add_task(_llm_after_change, payload.prompt_id)
+    background.add_task(_llm_after_change, payload.prompt_id, _checker_actor(current_user))
     return {"prompt_id": payload.prompt_id, "new": findings}
 
 
@@ -124,7 +133,7 @@ def save_prompt_text(payload: PromptSaveRequest, background: BackgroundTasks,
     except (LookupError, ValueError) as exc:
         raise _not_found(exc) from exc
     background.add_task(_rerun_after_save)
-    background.add_task(_llm_after_change, payload.prompt_id)
+    background.add_task(_llm_after_change, payload.prompt_id, _checker_actor(current_user))
     return {"prompt_id": payload.prompt_id, "findings": findings}
 
 
@@ -137,7 +146,7 @@ def restore_factory_text(payload: PromptCheckRequest, background: BackgroundTask
     except (LookupError, ValueError) as exc:
         raise _not_found(exc) from exc
     background.add_task(_rerun_after_save)
-    background.add_task(_llm_after_change, payload.prompt_id)
+    background.add_task(_llm_after_change, payload.prompt_id, _checker_actor(current_user))
     return {"prompt_id": payload.prompt_id, "text": text}
 
 
@@ -191,6 +200,7 @@ def _not_configured() -> HTTPException:
 @router.get("/admin/prompt-health/llm/settings")
 def llm_settings(current_user=Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     """Model of the LLM check (none by default) and the providers usable with the configured APIs."""
+    _bind_checker(db, current_user)
     return {**prompt_health_llm.settings(db), "providers": prompt_health_llm.available_providers(db),
             "max_calls_per_run": prompt_health_llm.MAX_CALLS_PER_RUN}
 
@@ -199,13 +209,17 @@ def llm_settings(current_user=Depends(auth.get_current_active_admin), db: Sessio
 def save_llm_settings(payload: LlmSettingsRequest, current_user=Depends(auth.get_current_active_admin),
                       db: Session = Depends(get_db)):
     """Choose the model, or clear both fields to switch the LLM check off."""
+    _bind_checker(db, current_user)
     provider, model = payload.provider.strip(), payload.model.strip()
     if bool(provider) != bool(model) or (provider and provider not in prompt_health_llm.available_providers(db)):
         raise HTTPException(status_code=422, detail="provider_not_available")
     if model and not re.match(r"^[\w.:/@+-]+$", model):
         raise HTTPException(status_code=422, detail="invalid model id")
-    return {**prompt_health_llm.save_settings(db, provider, model), "providers": prompt_health_llm.available_providers(db),
-            "max_calls_per_run": prompt_health_llm.MAX_CALLS_PER_RUN}
+    try:
+        saved = prompt_health_llm.save_settings(db, provider, model)
+    except prompt_health_llm.NotConfigured as exc:
+        raise _not_configured() from exc
+    return {**saved, "providers": prompt_health_llm.available_providers(db), "max_calls_per_run": prompt_health_llm.MAX_CALLS_PER_RUN}
 
 
 @router.get("/admin/prompt-health/llm")
@@ -218,12 +232,14 @@ def llm_findings(current_user=Depends(auth.get_current_active_admin), db: Sessio
 def llm_estimate(payload: LlmRunRequest, current_user=Depends(auth.get_current_active_admin),
                  db: Session = Depends(get_db)):
     """Calls a run would make (the rest is cached), with tokens and cost when known."""
+    _bind_checker(db, current_user, payload.language or "it")
     return prompt_health_llm.estimate(db, _prompt_ids(payload.prompt_ids), payload.language)
 
 
 @router.post("/admin/prompt-health/llm/run")
 def llm_run(payload: LlmRunRequest, current_user=Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     """Run the LLM check now (on request), at most `max_calls_per_run` calls."""
+    _bind_checker(db, current_user, payload.language or "it")
     try:
         result = prompt_health_llm.run(db, _prompt_ids(payload.prompt_ids), payload.language)
     except prompt_health_llm.NotConfigured as exc:
@@ -236,6 +252,7 @@ def llm_run(payload: LlmRunRequest, current_user=Depends(auth.get_current_active
 def llm_propose(payload: LlmProposeRequest, current_user=Depends(auth.get_current_active_admin),
                 db: Session = Depends(get_db)):
     """«Proponi correzione»: rewrite of the conflicting sentences, as a diff to accept. Nothing is saved."""
+    _bind_checker(db, current_user)
     _prompt_ids(list(payload.drafts))
     try:
         return prompt_health_llm.propose(db, sentences=[s.model_dump() for s in payload.sentences],

@@ -34,6 +34,7 @@ CHARS_PER_TOKEN = 4
 SEVERITIES = {prompt_health.HIGH, prompt_health.MEDIUM, prompt_health.LOW}
 LANGUAGES = {"it": "Italian", "en": "English", "es": "Spanish", "fr": "French", "de": "German", "sv": "Swedish"}
 REQUEST_PROMPT = "code:request"  # a quote found in the request but in no editable prompt
+CHATGPT_PROVIDER = "openai_chatgpt"
 
 CHECK_SYSTEM = """You review the instructions an AI counsellor receives in one turn.
 Find contradictions of meaning: two passages that cannot both be followed in the same reply
@@ -63,14 +64,73 @@ class NotConfigured(Exception):
 
 # --- Settings -----------------------------------------------------------------------
 
+def _chatgpt_choice(db: Session) -> dict:
+    from . import chatgpt_connections as accounts
+    from .personal_ai_audience import allowed
+    username = accounts.owner(db)
+    active = bool(username and accounts.enabled(db) and allowed(db, "chatgpt", username))
+    model = accounts.preference(db) if active else None
+    return {"available": bool(model), "model": model or "", "enabled": active}
+
+
+def _personal_key(db: Session) -> str | None:
+    from .chatgpt_connections import owner
+    username = owner(db)
+    # This namespace is excluded from the generic admin config endpoints.
+    return "chatgpt_prompt_health_" + prompt_health._digest(username) if username else None
+
+
+def _installation_service(db: Session):
+    """An explicit API selection must not inherit the caller's personal routing."""
+    from .ai_service import AIService
+    marker = object()
+    previous = db.info.get("chatgpt_username", marker)
+    db.info["chatgpt_username"] = None
+    try:
+        return AIService(db)
+    finally:
+        if previous is marker:
+            db.info.pop("chatgpt_username", None)
+        else:
+            db.info["chatgpt_username"] = previous
+
+
 def settings(db: Session) -> dict:
     rows = dict(db.query(models.Config.key, models.Config.value).filter(models.Config.key.in_(SETTING_KEYS)).all())
     provider = (rows.get(SETTING_KEYS[0]) or "").strip()
     model = (rows.get(SETTING_KEYS[1]) or "").strip()
-    return {"provider": provider, "model": model, "configured": bool(provider and model)}
+    chatgpt = _chatgpt_choice(db)
+    key = _personal_key(db)
+    personal = db.get(models.Config, key) if key else None
+    if personal is not None:
+        if personal.value:
+            return {"provider": CHATGPT_PROVIDER, "model": chatgpt["model"] or personal.value,
+                    "configured": chatgpt["available"], "billing": "subscription", "chatgpt": chatgpt}
+        provider = model = ""
+    return {"provider": provider, "model": model, "configured": bool(provider and model),
+            "billing": "api", "chatgpt": chatgpt}
 
 
 def save_settings(db: Session, provider: str, model: str) -> dict:
+    key = _personal_key(db)
+    personal = db.get(models.Config, key) if key else None
+    if provider == CHATGPT_PROVIDER:
+        choice = _chatgpt_choice(db)
+        if not key or not choice["available"] or model != choice["model"]:
+            raise NotConfigured()
+        if personal is None:
+            db.add(models.Config(key=key, value=model, description="Personal ChatGPT prompt health choice"))
+        else:
+            personal.value = model
+        db.commit()
+        return settings(db)
+    if personal is not None and not provider:
+        # Turning off this person's subscription leaves installation APIs alone.
+        personal.value = ""
+        db.commit()
+        return settings(db)
+    if personal is not None:
+        db.delete(personal)
     for key, value in zip(SETTING_KEYS, (provider.strip(), model.strip())):
         row = db.get(models.Config, key)
         if row is None:
@@ -83,17 +143,28 @@ def save_settings(db: Session, provider: str, model: str) -> dict:
 
 def available_providers(db: Session) -> list[str]:
     """Providers usable with the configured APIs (same rule as the other model pickers)."""
-    from .ai_service import LOCAL_PROVIDERS, AIService, provider_available
+    from .ai_service import LOCAL_PROVIDERS, provider_available
     from .api_secrets import API_KEY_ENV_MAP
-    config = AIService(db).config
+    config = _installation_service(db).config
     names = list(dict.fromkeys([*API_KEY_ENV_MAP, "omniroute", *sorted(LOCAL_PROVIDERS)]))
-    return [name for name in names if provider_available(config, name)]
+    providers = [name for name in names if provider_available(config, name)]
+    if _chatgpt_choice(db)["available"]:
+        providers.append(CHATGPT_PROVIDER)
+    return providers
 
 
 def _call_model(db: Session, provider: str, model: str, system: str, user: str) -> str:
     """The only place that reaches a model (replaced by a fake in the tests)."""
     from .ai_service import AIService
-    return AIService(db).call_model(provider, model, user, system, max_tokens=MAX_OUTPUT_TOKENS, json_mode=True)
+    if provider == CHATGPT_PROVIDER:
+        from .chatgpt_connections import owner
+        selected = settings(db)
+        if not selected["configured"] or selected["provider"] != provider or selected["model"] != model:
+            raise NotConfigured()
+        service = AIService(db, username=owner(db))
+    else:
+        service = _installation_service(db)
+    return service.call_model(provider, model, user, system, max_tokens=MAX_OUTPUT_TOKENS, json_mode=True)
 
 
 # --- Combinations ---------------------------------------------------------------------
@@ -144,7 +215,7 @@ def estimate(db: Session, prompt_ids=(), language: str | None = None) -> dict:
     to_call = [c for c in combos if keys[c["hash"]] not in cached]
     input_tokens = sum((len(CHECK_SYSTEM) + len(c["text"])) // CHARS_PER_TOKEN for c in to_call)
     output_tokens = EXPECTED_OUTPUT_TOKENS * len(to_call)
-    price = price_for(current["provider"], current["model"]) if current["configured"] else None
+    price = price_for(current["provider"], current["model"]) if current["configured"] and current["billing"] != "subscription" else None
     cost = round(input_tokens / 1e6 * price[0] + output_tokens / 1e6 * price[1], 4) if price else None
     return {
         **current, "combinations": len(combos), "cached": len(combos) - len(to_call), "calls": len(to_call),
@@ -328,10 +399,12 @@ def propose(db: Session, *, sentences: list[dict], explanation: str, drafts: dic
             "model": current["model"]}
 
 
-def run_after_change(session_factory, prompt_id: str) -> None:
+def run_after_change(session_factory, prompt_id: str, identity: dict | None = None) -> None:
     """Background check of a prompt just changed; only when a model is chosen."""
     db = session_factory()
     try:
+        from .chatgpt_connections import bind_identity
+        bind_identity(db, identity)
         if settings(db)["configured"]:
             result = run(db, [prompt_id])
             logger.info("Prompt health LLM after change of %s: %s calls, %s failed", prompt_id, result["calls"], result["failed"])

@@ -26,7 +26,7 @@ const codeOnly = {
     sources: [{ id: 'code:request', kind: 'code', consumer: null, factory_source: null }], params: { explanation: 'Opposite list rules.' },
 };
 
-async function fixture({ width = 1440, lang = 'it', dark = false, clipboardFailure = false, failLoad = false } = {}) {
+async function fixture({ width = 1440, lang = 'it', dark = false, clipboardFailure = false, failLoad = false, sourceCase = false } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 1000 }, reducedMotion: 'reduce' });
     const page = await context.newPage();
     page.setDefaultTimeout(20000);
@@ -57,7 +57,14 @@ async function fixture({ width = 1440, lang = 'it', dark = false, clipboardFailu
             { id: 'sl-social', label: 'Collaborazione', label_i18n: { en: 'Collaboration' }, prompts: ['guided_step:sl-social'], surfaces: ['QSA · sl-social · entry'] },
             { id: 'sl-intro', label: 'Presentazione', label_i18n: { en: 'Introduction' }, prompts: ['guided_step:sl-intro'], surfaces: ['QSA · sl-intro · entry'] },
         ] }] };
-        if (path === '/api/admin/prompt-health/llm') data = { findings: [codeOnly] };
+        if (path === '/api/admin/prompt-health/llm') data = { findings: [sourceCase ? { ...codeOnly, sentences: [
+            { prompt: 'code:request', text: 'Do not produce a reasoning block, analysis, plan, checklist or meta-commentary.', code_location: { status: 'matched', more: 0, matches: [
+                { file: 'backend/chat_logic.py', line: 532, symbol: 'DEFAULT_NO_REASONING_DIRECTIVE', readers: [{ file: 'backend/chat_logic.py', line: 718, symbol: '_apply_global_directives' }] },
+            ] } },
+            { prompt: 'code:request', text: 'In EVERY visible reply, weave in one short, natural orientation sentence.', code_location: { status: 'matched', more: 0, matches: [
+                { file: 'backend/prompts/guided_choice_directive.md', line: 2, symbol: 'GUIDED_CHOICE_DIRECTIVE', definition: { file: 'backend/prompt_config.py', line: 30, symbol: 'GUIDED_CHOICE_DIRECTIVE' }, readers: [{ file: 'backend/prompt_contract.py', line: 422, symbol: 'turn_contract' }] },
+            ] } },
+        ] } : codeOnly] };
         if (path === '/api/admin/prompt-health/llm/settings') data = { provider: 'openrouter', model: 'test/fixture', configured: true, providers: ['openrouter'], max_calls_per_run: 20 };
         if (path === '/api/admin/models') data = { models: ['test/fixture'] };
         if (path === '/api/admin/prompt-health/usage') data = { days: 30, turns: 0, retention_days: 90, tracking_since: null, partial: false, prompts: [], steps: [], never_used: [] };
@@ -85,7 +92,7 @@ for (const width of [390, 1440]) test(`prompt health ${width}px: human names, ev
         await issue.locator(':scope > summary').click();
         await issue.getByText('Regole del turno di conversazione', { exact: true }).waitFor();
         await issue.getByText('QSA · Collaborazione', { exact: true }).waitFor();
-        assert.ok(await issue.getByText('Origine: codice · modifica nel repository', { exact: true }).isVisible());
+        assert.ok(await issue.getByText('CODICE DELL’APPLICAZIONE', { exact: true }).isVisible());
         assert.ok(await issue.getByText('Origine: prompt · modifica da questa pagina', { exact: true }).isVisible());
         await issue.getByText('Prepara un intervento nel codice', { exact: true }).click();
         await issue.getByRole('button', { name: 'Copia per un agente di sviluppo', exact: true }).click();
@@ -158,6 +165,30 @@ test('load failures remain explicit and do not claim the prompts are coherent', 
     try {
         await f.page.getByText('Impossibile caricare gli avvisi sui prompt.', { exact: true }).waitFor();
         assert.equal(await f.page.getByText('Nessun problema rilevato dai controlli disponibili.', { exact: true }).count(), 0);
+        assert.deepEqual(f.writes, []);
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+
+test('code origins show file, line and function beside each quote and in the copied brief', async () => {
+    const f = await fixture({ sourceCase: true });
+    try {
+        const issue = f.page.locator('details[name="prompt-health-open"]').filter({ hasText: 'Opposite list rules.' });
+        await issue.locator(':scope > summary').click();
+        assert.equal(await issue.getByText('CODICE DELL’APPLICAZIONE', { exact: true }).count(), 2);
+        const python = issue.getByRole('link', { name: /backend\/chat_logic.py · riga 532/ });
+        await python.waitFor();
+        assert.match(await python.getAttribute('href'), /blob\/main\/backend\/chat_logic.py#L532$/);
+        assert.ok(await issue.getByText('DEFAULT_NO_REASONING_DIRECTIVE', { exact: true }).isVisible());
+        assert.ok(await issue.getByText('_apply_global_directives', { exact: true }).isVisible());
+        assert.ok(await issue.getByRole('link', { name: /backend\/prompts\/guided_choice_directive.md · riga 2/ }).isVisible());
+        assert.ok(await issue.getByText('turn_contract', { exact: true }).isVisible());
+        await issue.getByText('Prepara un intervento nel codice', { exact: true }).click();
+        await issue.getByRole('button', { name: 'Copia per un agente di sviluppo', exact: true }).click();
+        const brief = await f.page.evaluate(() => window.fixtureClipboard);
+        for (const value of ['CODICE DELL’APPLICAZIONE', 'backend/chat_logic.py:532', 'backend/prompts/guided_choice_directive.md:2', '_apply_global_directives', 'turn_contract']) assert.ok(brief.includes(value), value);
+        assert.ok(!brief.includes('origine precisa non è ancora identificata'));
         assert.deepEqual(f.writes, []);
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }

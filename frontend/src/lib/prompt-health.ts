@@ -2,6 +2,12 @@
 
 export type PromptHealthSeverity = 'high' | 'medium' | 'low';
 
+export interface PromptCodeLocation { file: string; line: number; symbol: string }
+export interface PromptCodeReference extends PromptCodeLocation {
+    readers: PromptCodeLocation[];
+    definition?: PromptCodeLocation;
+}
+
 export interface PromptHealthSentence {
     prompt: string;
     text: string;
@@ -10,6 +16,7 @@ export interface PromptHealthSentence {
     /** Posizione nel testo da cui è stato letto (#761); null per i prompt nel codice. */
     start?: number | null;
     end?: number | null;
+    code_location?: { status: 'matched' | 'ambiguous' | 'unknown'; matches: PromptCodeReference[]; more: number };
 }
 
 export interface PromptHealthAck {
@@ -39,10 +46,21 @@ export function hasCodeSource(finding: PromptHealthFinding): boolean {
 }
 
 /** Explicit evidence for a human to review before handing it to a coding agent. */
-export function findingBrief(finding: PromptHealthFinding, message: string): string {
+export function findingBrief(finding: PromptHealthFinding, message: string,
+    sourceNames = { code: 'APPLICATION CODE', prompt: 'SAVED PROMPT' }): string {
     return [
         message, `ID: ${finding.id} · ${finding.code} · ${finding.severity}`,
-        '', ...finding.sentences.map(sentence => `[${sentence.prompt}]\n${sentence.text}`),
+        '', ...finding.sentences.flatMap(sentence => [
+            `[${sentence.prompt}] · ${sentence.prompt.startsWith('code:') ? sourceNames.code : sourceNames.prompt}`,
+            sentence.text,
+            ...(sentence.code_location?.matches ?? []).flatMap(reference => [
+                `File: ${reference.file}:${reference.line} · ${reference.symbol}`,
+                ...(reference.definition ? [`Definition: ${reference.definition.file}:${reference.definition.line} · ${reference.definition.symbol}`] : []),
+                ...reference.readers.map(reader => `Used by: ${reader.file}:${reader.line} · ${reader.symbol}`),
+            ]),
+            ...(sentence.code_location?.status === 'ambiguous' ? ['Multiple literal matches: verify which source builds this request.'] : []),
+            ...(sentence.code_location?.more ? [`Additional literal matches: ${sentence.code_location.more}`] : []),
+        ]),
         '', ...finding.prompts.map(id => `Prompt: ${id}`),
         ...finding.surfaces.map(surface => `Turn: ${surface}`),
         ...(finding.sources ?? []).flatMap(source => [
@@ -208,6 +226,13 @@ export function lineDiff(before: string, after: string): DiffLine[] {
 
 export const PROMPT_HEALTH_REPO = 'https://github.com/nugh75/counselorbot-sbs';
 
+/** Only links to source files in this repository, never arbitrary API-provided URLs. */
+export function codeReferenceUrl(location: PromptCodeLocation): string | null {
+    if (!/^backend\/[\w/.-]+\.(py|md)$/.test(location.file) || location.file.split('/').includes('..')
+        || !Number.isInteger(location.line) || location.line < 1) return null;
+    return `${PROMPT_HEALTH_REPO}/blob/main/${location.file}#L${location.line}`;
+}
+
 /** «Da correggere nel codice»: issue GitHub precompilata per un avviso sul testo di fabbrica. */
 export function codeIssueUrl(finding: PromptHealthFinding, message: string): string {
     const body = [
@@ -231,6 +256,8 @@ export interface PromptHealthLlmSettings {
     configured: boolean;
     providers: string[];
     max_calls_per_run: number;
+    billing?: 'api' | 'subscription';
+    chatgpt?: { available: boolean; enabled: boolean; model: string };
 }
 
 export interface PromptHealthLlmEstimate {
@@ -242,6 +269,7 @@ export interface PromptHealthLlmEstimate {
     input_tokens: number;
     output_tokens: number;
     cost_usd: number | null;
+    billing?: 'api' | 'subscription';
 }
 
 export interface PromptHealthLlmRun {

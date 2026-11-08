@@ -59,6 +59,19 @@ def test_code_prompt_card_and_cached_findings_have_real_repository_references():
         db.close()
 
 
+def test_cached_findings_gain_per_sentence_locations_without_changing_ids_or_acks():
+    finding = {"id": "cached-reference", "prompts": ["code:request"], "sentences": [
+        {"prompt": "code:request", "text": "Do not produce a reasoning block, analysis, plan, checklist or meta-commentary."},
+        {"prompt": "code:request", "text": "In EVERY visible reply, weave in one short, natural orientation sentence: what we are exploring now, why it matters to this step, and what comes next."},
+    ]}
+    note = {"note": "Existing decision"}
+    cached = prompt_health.with_acks([finding], {finding["id"]: note})[0]
+    assert cached["id"] == finding["id"] and cached["ack"] == note
+    assert cached["sentences"][0]["code_location"]["matches"][0]["file"] == "backend/chat_logic.py"
+    assert cached["sentences"][1]["code_location"]["matches"][0]["file"] == "backend/prompts/guided_choice_directive.md"
+    assert all("code_location" not in sentence for sentence in finding["sentences"])
+
+
 def _recreate_database():
     conn = psycopg2.connect(_admin_url)
     try:
