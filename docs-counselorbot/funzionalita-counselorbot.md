@@ -770,6 +770,8 @@ attivazione e limiti delle verifiche: `docs/operations/guided-chat-choice.md`.
 
 **Introduzione della chat guidata (#409).** Al primo ingresso in una chat guidata, IDEA compresa (non anteprima, non sessione congelata), in cima alla conversazione compare una breve scheda uguale per tutti gli strumenti: cosa fa la chat (un tema alla volta, nessuna risposta giusta o sbagliata), quanto dura (circa 20–40 minuti per una prima conversazione, salvataggio automatico dopo ogni risposta), cosa fare (rispondere con parole proprie e inviare con Invio, continuare a scrivere per approfondire), dove stanno i pulsanti avanti/indietro (nella barra sotto la finestra della chat, sulla destra, su desktop, in una barra sotto la casella di scrittura su mobile; non in IDEA) e come chiudere (concludere all’ultimo passaggio o «Congela sessione» dai tre punti). Si chiude con «Ho capito» e non ricompare (preferenza nel browser). Testi in sei lingue.
 
+Nel primo turno dei percorsi a punteggio (QSA, QSAr, ZTPI, QPCS, QPCC, QAP) il counselor può nominare i fattori e le aree che il percorso esplorerà, ma non menziona né interpreta alcun risultato: nessun punteggio, livello o tabella (novembre 2026, «Allinea prompt di fabbrica» per i testi di fabbrica).
+
 **Guida in popup dalla chat guidata.** «Apri la guida» mostra scopo, tre passaggi e nota della stessa scheda breve di `/guide`: eventi significativi per i due percorsi evento, obiettivi per OBIETTIVO_STUDIO e conversazione per gli altri strumenti. Si chiude con Esc, X o clic sullo sfondo; il focus torna al pulsante. «Apri la guida completa» apre la procedura pertinente in una nuova scheda, conservando conversazione e bozza.
 
 Nelle chat guidate dei questionari, anche con Iride, dopo la lettura del profilo
