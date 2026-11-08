@@ -680,3 +680,25 @@ if __name__ == "__main__":
             print(f"FAIL {t.__name__}: {exc}")
     print(f"\n{len(tests) - failed}/{len(tests)} passed")
     raise SystemExit(1 if failed else 0)
+
+
+def test_the_single_factor_rule_appears_only_in_single_factor_steps():
+    # Prompt health #53: the rule for a one-factor step was injected into three-factor steps.
+    from backend.chat_logic import _apply_current_step_factor_scope_directive
+    many = _apply_current_step_factor_scope_directive("Base.", "QSA", {"C1", "C5", "C7"})
+    one = _apply_current_step_factor_scope_directive("Base.", "QSA", {"A5"})
+    assert "Allowed factor codes for this answer: C1, C5, C7." in many
+    assert "factor interplay" not in many
+    assert "explain the single factor" in one
+
+
+def test_the_factor_reference_is_not_called_mandatory():
+    # Prompt health #51: "Mandatory reference" read as an order to cite every listed factor.
+    text = _apply_qsa_factor_directive("BASE", "QSA", "it")
+    assert "Code and name reference:" in text and "Mandatory reference" not in text
+
+
+def test_an_explicit_request_to_move_on_ends_the_depth_choice():
+    # Prompt health #32: "advance on request" against "no marker while exploring".
+    from backend.prompt_config import GUIDED_CHOICE_DIRECTIVE
+    assert "unless the person explicitly asks to move on: that request is their choice." in GUIDED_CHOICE_DIRECTIVE

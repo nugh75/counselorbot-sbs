@@ -1167,7 +1167,8 @@ def _guided_path_context(db, questionnaire_type: str, current_step_id: str | Non
         "for the next step, reply with exactly [[AVANZA_STEP]] so the interface can advance "
         "without asking again. The next step opening supplies the visible orientation. "
         "Do not explain the marker. "
-        "Emit no advance marker while awaiting a depth choice or continuing the chosen exploration. "
+        "Emit no advance marker while awaiting a depth choice or continuing the chosen exploration, "
+        "unless the student explicitly asks to move on: that request is their choice. "
         "Opening agreement and final-step rules still apply."
     )
     lines.append(
@@ -1588,7 +1589,7 @@ def _apply_qsa_factor_directive(
         "code and name from the reference below. After that, in the same reply, the "
         "code alone is enough: the reader has already met the name, and repeating it "
         "at every mention turns the answer into a form. "
-        f"Mandatory reference: {examples}.\n\n"
+        f"Code and name reference: {examples}.\n\n"
         "[INTERPRETATION TABLE] Scale 1-9. Assign each factor the label of its "
         "score band by reading ITS OWN row below; the labels are already in the "
         "student's language. The inversion is already resolved per factor: do NOT "
@@ -1620,15 +1621,20 @@ def _apply_current_step_factor_scope_directive(system_prompt: str, questionnaire
     if not _is_strategy_questionnaire(questionnaire_type) or not allowed_codes or "[CURRENT STEP FACTORS]" in system_prompt:
         return system_prompt
     allowed = ", ".join(sorted(allowed_codes))
-    return (
+    directive = (
         f"{system_prompt}\n\n"
         f"[CURRENT STEP FACTORS] Allowed factor codes for this answer: {allowed}. "
         "Do not mention, analyse or use any other QSA/QSAr factor code or factor "
-        "name in this answer. If a second-level instruction asks for factor "
-        "interplay but this step has only one allowed factor, do not create "
-        "interplay with other factors; explain the single factor and give any "
-        "practical advice only from certified strategies for that same factor."
+        "name in this answer."
     )
+    if len(allowed_codes) == 1:
+        # Only a single-factor step needs the rule; elsewhere it reads as a condition that never applies.
+        directive += (
+            " If a second-level instruction asks for factor interplay, do not create "
+            "interplay with other factors; explain the single factor and give any "
+            "practical advice only from certified strategies for that same factor."
+        )
+    return directive
 
 
 # ZTPI: bande operative del profilo bilanciato per fattore su scala 1-9

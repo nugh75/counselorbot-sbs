@@ -20,7 +20,13 @@ def test_a_step_that_cannot_advise_is_told_how_to_say_so():
     text = _contract(advice_allowed=False)
     assert "what this step is for" in text
     assert "which later step" in text
-    assert "separate occasion or a later date" in text
+    # Prompt health #34: "do not present the wait as a separate occasion" contradicted
+    # naming the later step; only another session or day is ruled out.
+    assert "Do not suggest another session or a later date." in text
+    assert "separate occasion" not in text
+    assert "without giving the strategy now" in turn_contract(
+        language="it", questionnaire_type="QSA", phase="cognitive", advice_allowed=False, synthesis=False,
+        strategies_step_label="Strategie e consigli")
 
 
 def test_the_rule_gives_no_sentence_to_copy():

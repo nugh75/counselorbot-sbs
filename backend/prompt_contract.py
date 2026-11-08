@@ -343,7 +343,7 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
     descriptive = reflection_stage == "profile"
     later_step = (
         f"say plainly that strategies and readings come in the «{strategies_step_label}» step at the end "
-        "of the path, then continue this step's analysis."
+        "of the path, then continue this step's analysis without giving the strategy now."
         if strategies_step_label else
         "say plainly what this step is for and which later step takes that request up, naming it."
     )
@@ -377,8 +377,8 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
          "When you offer an action, the one question is about that action (keep, adapt or try it), "
          "not a separate reflective question.") if advice_allowed else
         "Introduce no new practical action in this turn. You may clarify actions already "
-        f"discussed. If the student asks for one, {later_step} Do not present the wait as a separate "
-        "occasion or a later date. One or two sentences, no formulas, no justifying how the "
+        f"discussed. If the student asks for one, {later_step} Do not suggest another "
+        "session or a later date. One or two sentences, no formulas, no justifying how the "
         "path is built, and never compare the student with anyone else.",
     ]
     if questionnaire_type == "IDEA":
