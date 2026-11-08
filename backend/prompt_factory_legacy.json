@@ -91,7 +91,8 @@
     "prompt_intro": [
       "c7e6cae57a1ca5b5df7a5bcd9dc9ba49ad1bd097e76ce5de04ecfc93fe5dfd45",
       "ed415d0e637e3dbca57e7e51a2f4a448feab2d7e9a7f0871d986cd04179c9a56",
-      "3af9f18d951a5a10da0c999a05fe32bad7bcf3fca52ac632e05dc842c8b3c00d"
+      "3af9f18d951a5a10da0c999a05fe32bad7bcf3fca52ac632e05dc842c8b3c00d",
+      "eb74d2fa2ab3e41960589afb93c67b1042c593f8af7411c26cb8dc23d3c499f8"
     ],
     "prompt_meta_EVENTO_PROFESSIONALE": [
       "c9defec59311cc7aa617578cefaaf047eea609c8d0d6e79f0a8037d61ecde22a"
@@ -238,7 +239,8 @@
     "prompt_qap_welcome": [
       "205c0def2bbc87fc5cde60d172350af8fa1743b77e036b36a7f4a0008614bf82",
       "c8e5218a762eabbc7207608eaa3e606f92afc05e0e3568edc3bd09153d21778a",
-      "babbd2d0f470f0dec157b08a637a27d4b11ba6095f7be68a5635f1919f2f7be6"
+      "babbd2d0f470f0dec157b08a637a27d4b11ba6095f7be68a5635f1919f2f7be6",
+      "de5be5caa762cf24346f68f6d24d444ce85f9efa91865723415d70a7101894dc"
     ],
     "prompt_qpcc_factor": [
       "559b3a566b679db86347fcb9190bb1a75865ec306a2c508d3bd16d762c6bbeac",
@@ -279,7 +281,8 @@
     "prompt_qpcs_welcome": [
       "8d4ab67d4d66bacbf077a8024ff615b839c6e6bd946039b20c9aeef1734cce36",
       "809606574577ae2dda9213e3380194744931bedea563198185e6a4b4a49f2a4e",
-      "58dfff0d3cf33a3be02abc12d217205c81009c7b8710db50ed7a888aee30ad75"
+      "58dfff0d3cf33a3be02abc12d217205c81009c7b8710db50ed7a888aee30ad75",
+      "6e32c538e59c100c1bafa3ae288190451e8d25911f7707d8dc23f74c428eb8ee"
     ],
     "prompt_qsar_factor": [
       "0ec4e6bd6b74cae722b157991e1bde05450d214f81243d57b487c978335741ab",
@@ -300,7 +303,8 @@
     "prompt_qsar_intro": [
       "6b6ba426cd1300bd92c672638f6003311e773220514641a7dd5e61bf672b78e6",
       "36df9b264509cdc800c17159a5a23c3e15328666320760c42d37924d68feb081",
-      "2ab87ded7b2baaa9f2608259b32e5e374e85f7f066efd148458744cab8fcfc20"
+      "2ab87ded7b2baaa9f2608259b32e5e374e85f7f066efd148458744cab8fcfc20",
+      "a6962d9275a90fe547f170faf6c4eec0fb3c51317687f395b8636e5b3558d214"
     ],
     "prompt_qsar_second_level": [
       "4c788e191c72b76e5dbd9ac21e09f543b03e9641ef7752512ef37dad36b976ec",
@@ -345,7 +349,8 @@
     "prompt_ztpi_intro": [
       "6aad84e395d7cee5fb5ddd6daf7448190268eb3d0aaf46d065e7a773556f8d86",
       "9272d89303d93825ea6b4e52424814d447711c5a5ba4dd4eeb242a4aed5b782f",
-      "bd13755f5e474f210788bee9a1e75ecbac8b5b4b7bf1e839cba04435e530fa8b"
+      "bd13755f5e474f210788bee9a1e75ecbac8b5b4b7bf1e839cba04435e530fa8b",
+      "7a8e01acb708f5b2f30d8ccc493fd3f89553a84a6061ac9e00d10540b365deff"
     ],
     "questionari_chat_context": [
       "ebaa2492c8223d2eee9ec071498159f59467a293d6466ace6f1f65ae935d0d96"
