@@ -266,8 +266,10 @@ Savickas, Eventi, IDEA e Obiettivi conservano le proprie domande narrative.
 QPCS, QPCC, QAP) dopo la sintesi c'è il passo «Strategie e consigli» (sei
 lingue), prima di **Domande e Approfondimenti**. I passi sui fattori e le
 sintesi analizzano soltanto: se lo studente chiede una strategia prima, il
-counselor gli dice in una frase che arriverà in «Strategie e consigli» e
-continua l'analisi. Nel passo nuovo il counselor propone di sua iniziativa
+counselor gli dice in una frase che arriverà in «Strategie e consigli», senza
+darla subito e senza parlare di un altro incontro o di un altro giorno, e
+continua l'analisi. Se durante un approfondimento lo studente chiede di andare
+avanti, la sua richiesta vale come scelta e il percorso avanza. Nel passo nuovo il counselor propone di sua iniziativa
 strategie per i fattori da migliorare e le dà anche su richiesta, senza limite
 di una per risposta: una azione concreta per ogni fattore su cui lavorare,
 dal catalogo delle strategie certificate o, se per un fattore non ce n'è una,
