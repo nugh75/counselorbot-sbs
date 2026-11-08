@@ -977,7 +977,9 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
 
 ## Percorsi guidati senza punteggi
 
-- **Savickas**: intervista narrativa sulla costruzione del percorso professionale.
+- **Savickas**: intervista narrativa sulla costruzione del percorso professionale. La
+  presentazione la descrive come cinque domande seguite da una sintesi con piano d’azione,
+  come i passi che lo studente vede (dopo il patto di collaborazione).
 - **Idea**: esplora un’idea, una decisione, un progetto o un concetto concreto; produce
   una Mappa cumulativa della sessione, distinta da Profilo, Taccuino e Lettura.
 - **Evento significativo di studio** (`EVENTO_STUDIO`) e **Evento significativo
