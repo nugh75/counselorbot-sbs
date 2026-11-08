@@ -868,6 +868,7 @@ il divieto di value-check e le regole rigide sulla domanda.
 Nei passi con un solo fattore l’ipotesi nasce da come quel fattore si vede nello studio dello
 studente, senza inventare relazioni con altri fattori; dalla combinazione dei fattori solo quando
 il passo ne ha due o più (novembre 2026, «Allinea prompt di fabbrica» per i testi di fabbrica).
+In ogni passo QSA il counselor cita e usa solo i fattori del passo, ciascuno con codice e nome alla prima menzione; nelle domande di approfondimento di un passo con un solo fattore resta su quel fattore (novembre 2026).
 Nei passi QSA di secondo livello le tensioni fra fattori fanno parte dell’ipotesi da verificare insieme senza una domanda in più; in «Autocontrollo e concentrazione» il verso di lettura è esplicito (C2 alto = punto di forza, C3 e C6 alti = aree di crescita); la domanda finale su cosa fa abitualmente lo studente è riflessiva, non una richiesta di consigli né una domanda su un episodio.
 Se lo studente esprime disagio, il bot lo riconosce e lo nomina senza attenuarlo, ma questo non apre ai consigli pratici nei passi che li escludono; nei turni senza consigli le note di sessione registrano solo la domanda riflessiva, non un suggerimento (novembre 2026).
 La direttiva `[DEPTH ON REQUEST]` orienta l'approfondimento verso l'agire e le scelte dello studente
