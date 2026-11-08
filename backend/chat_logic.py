@@ -521,10 +521,10 @@ DEFAULT_THINKING_DIRECTIVE = (
     "ONE single block at the very beginning, wrapped exactly in <think> and "
     "</think> tags, and keep it concise (a few short lines). After </think>, write "
     "the student-facing answer directly: it must NOT contain your plan, your "
-    "checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor "
+    "checklist, phrases like (in any language) 'Internal activation', 'I need to', 'I have the scores', nor "
     "any meta-commentary about what you are doing. Never start the visible answer "
-    "with a preparatory checklist such as 'Devo analizzare', 'Identificare il filo "
-    "rosso', 'Strutturare i contenuti' or 'Proporre azioni concrete'. Never expose "
+    "with a preparatory checklist (in any language) such as 'I need to analyse', 'Identify the common "
+    "thread', 'Structure the content' or 'Propose concrete actions'. Never expose "
     "reasoning outside the <think> block."
 )
 
