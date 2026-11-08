@@ -77,3 +77,8 @@ test('code links only open valid backend source locations on this repository', (
     for (const file of ['https://outside.example/file.py', 'backend/../secret.py', '/private/secret.py', 'backend/.env']) assert.equal(codeReferenceUrl({ file, line: 2, symbol: '' }), null);
     for (const line of [0, -1, 1.2, Infinity]) assert.equal(codeReferenceUrl({ file: 'backend/chat_logic.py', line, symbol: '' }), null);
 });
+
+test('a shared sentence names every prompt that contains it in the brief', () => {
+    const brief = findingBrief({ ...llm, sentences: [{ prompt: 'config:prompt_second_level', text: 'Shared block.', also_in: ['config:prompt_cross_synthesis'] }] }, 'Review');
+    assert.ok(brief.includes('Also in: config:prompt_cross_synthesis'));
+});

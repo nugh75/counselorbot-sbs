@@ -545,6 +545,14 @@ def test_retired_factory_steps_are_not_part_of_the_checked_path():
         db.close()
 
 
+def test_second_level_hypothesis_does_not_require_a_combination_in_single_factor_steps():
+    """Problem #4: [SECOND-LEVEL METHOD] asked for a combination where [FACTOR INTERPLAY] forbids one."""
+    from backend.prompt_config import SECOND_LEVEL_METHOD_TEXT
+    assert "emerges from the combination of these factors" not in SECOND_LEVEL_METHOD_TEXT
+    assert "from their combination only when the step has two or more factors" in SECOND_LEVEL_METHOD_TEXT
+    assert "in a single-factor step" in SECOND_LEVEL_METHOD_TEXT and "without inventing relationships" in SECOND_LEVEL_METHOD_TEXT
+
+
 def test_savickas_intro_names_its_questions_and_synthesis_in_english():
     """Problem #2: "in five steps" against six numbered steps plus the agreement."""
     from backend.prompt_config import _SAVICKAS_INTRO_FLOW, DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTRO, SAVICKAS_INTRO_STEP_PROMPT

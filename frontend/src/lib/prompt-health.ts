@@ -17,6 +17,8 @@ export interface PromptHealthSentence {
     start?: number | null;
     end?: number | null;
     code_location?: { status: 'matched' | 'ambiguous' | 'unknown'; matches: PromptCodeReference[]; more: number };
+    /** Altri prompt salvati che contengono la stessa frase (blocchi condivisi). */
+    also_in?: string[];
 }
 
 export interface PromptHealthAck {
@@ -55,6 +57,7 @@ export function findingBrief(finding: PromptHealthFinding, message: string,
         '', ...finding.sentences.flatMap(sentence => [
             `[${sentence.prompt}] · ${sentence.prompt.startsWith('code:') ? sourceNames.code : sourceNames.prompt}`,
             sentence.text,
+            ...(sentence.also_in?.length ? [`Also in: ${sentence.also_in.join(', ')}`] : []),
             ...(sentence.code_location?.matches ?? []).flatMap(reference => [
                 `File: ${reference.file}:${reference.line} · ${reference.symbol}`,
                 ...(reference.definition ? [`Definition: ${reference.definition.file}:${reference.definition.line} · ${reference.definition.symbol}`] : []),
