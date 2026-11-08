@@ -176,6 +176,35 @@ def test_findings_follow_the_current_texts(db, fake, custom_step):
     assert prompt_health_llm.current_findings(db) == []
 
 
+@pytest.mark.parametrize("mixed_source", [False, True])
+def test_code_only_contradictions_are_visible_and_expire_with_the_request(db, monkeypatch, custom_step, mixed_source):
+    """Code/code and code/prompt evidence expires when its request changes."""
+    quote_b = QUOTE_B if mixed_source else "Never answer as a list."
+    request_text = f"Always answer as a list. {quote_b}"
+    combo = {"hash": prompt_health._digest(request_text), "text": request_text,
+             "surfaces": ["QSA · sl-social · entry"]}
+    monkeypatch.setattr(prompt_health_llm, "combinations", lambda *_args, **_kwargs: [combo])
+    fake = FakeModel(answer=json.dumps({"contradictions": [{
+        "quote_a": "Always answer as a list.", "quote_b": quote_b,
+        "severity": "high", "explanation": "The two generated rules disagree.",
+    }]}))
+    monkeypatch.setattr(prompt_health_llm, "_call_model", fake)
+    prompt_health_llm.save_settings(db, "openrouter", "test/cheap-model")
+
+    findings = prompt_health_llm.run(db, language="en")["findings"]
+    assert len(findings) == 1
+    assert findings[0]["editable"] == ([STEP] if mixed_source else [])
+    assert findings[0]["prompts"] == (["code:request", STEP] if mixed_source else ["code:request"])
+    assert len(findings[0]["sentences"]) == 2
+    assert len(fake.calls) == 1
+
+    # A code change invalidates the old evidence, without asking the model again.
+    combo["text"] = "Always answer as a list."
+    combo["hash"] = prompt_health._digest(combo["text"])
+    assert prompt_health_llm.current_findings(db) == []
+    assert len(fake.calls) == 1
+
+
 def test_failed_or_malformed_answers_are_not_cached(db, monkeypatch, custom_step):
     prompt_health_llm.save_settings(db, "openrouter", "test/cheap-model")
     broken = FakeModel(answer="not json at all")

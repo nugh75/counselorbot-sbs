@@ -109,6 +109,8 @@ def _finding(code, severity, prompts, *, surfaces=(), sentences=(), params=None)
 
 def _entry_for(prompt_id: str):
     kind, _, key = prompt_id.partition(":")
+    if kind == "code":
+        return REGISTRY.get(prompt_id)
     return config_entry(key) if kind == "config" else step_entry(key)
 
 
@@ -443,6 +445,7 @@ def annotate(findings: list[dict], texts: dict[str, str]) -> list[dict]:
             if pid.startswith("code:") or (pid in texts and (entry := _entry_for(pid)) is not None
                                            and texts[pid] == (factory_text(entry) or ""))
         ]
+        finding["sources"] = finding_sources(finding)
     return findings
 
 
@@ -471,7 +474,20 @@ def clear_ack(db: Session, finding_id: str) -> None:
 
 
 def with_acks(findings: list[dict], marked: dict[str, dict]) -> list[dict]:
-    return [{**finding, "ack": marked.get(finding["id"])} for finding in findings]
+    # Add source references at read time too, so stored runs need no migration.
+    return [{**finding, "sources": finding_sources(finding), "ack": marked.get(finding["id"])} for finding in findings]
+
+
+def finding_sources(finding: dict) -> list[dict]:
+    """Repository references only; an unmapped request fragment has no invented source."""
+    sources = []
+    ids = dict.fromkeys([*finding["prompts"], *[s["prompt"] for s in finding["sentences"]]])
+    for pid in ids:
+        entry = _entry_for(pid)
+        sources.append({"id": pid, "kind": pid.partition(":")[0],
+                        "consumer": entry.consumer if entry else None,
+                        "factory_source": entry.factory if entry else None})
+    return sources
 
 
 def serialize(run: models.PromptHealthRun | None, *, current_hash: str | None = None,
