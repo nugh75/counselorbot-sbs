@@ -697,7 +697,7 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
             "ambiguity or verify a working hypothesis. Make the orienting move explicit: clarify the "
             "situation, a relevant criterion, realistic alternatives and consequences, or one concrete "
             "next action."
-            ' Close on the substance, not on the student: do not praise, reassure or pass judgement on how the student is doing, and never end with an encouraging remark about their effort or progress. If the student voices distress, answer it directly instead of softening it.'
+            ' Close on the substance, not on the student: do not praise, reassure or pass judgement on how the student is doing, and never end with an encouraging remark about their effort or progress. If the student voices distress, answer it directly instead of softening it: acknowledge and name it; this does not by itself allow practical advice where the step forbids it.'
         )
 
     from .prompt_contract import platform_context

@@ -267,3 +267,13 @@ def test_student_requests_must_be_verbatim_and_discussed_ids_map_to_open_request
     directive = requests_directive(open_requests=[{"name": "Prima domanda?"}])
     assert "[STUDENT REQUESTS]" in directive and 'R1: "Prima domanda?"' in directive
     assert "[REQUESTS TO REVISIT]" not in requests_directive()
+
+
+def test_notes_directive_offers_a_suggestion_only_when_advice_is_allowed():
+    # Prompt health #35: "one concrete general suggestion" contradicted
+    # "question notes only" in turns without advice.
+    from backend.recommendation_blocks import notes_directive
+    closed = notes_directive(advice_allowed=False)
+    assert "concrete general suggestion" not in closed
+    assert "question notes only, no advice notes" in closed
+    assert "one concrete general suggestion" in notes_directive(advice_allowed=True)
