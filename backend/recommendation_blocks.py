@@ -415,8 +415,8 @@ def notes_directive(*, advice_allowed: bool, idea: bool = False, hypothesis_allo
         "\n\n[SESSION NOTES] In the same private ```recommendations JSON block "
         f"(create it if absent), add a notes array. Each entry has kind ({kinds}) "
         "and text: copy ONE complete sentence verbatim from your visible reply, including "
-        "punctuation. At most one open reflective question addressed to the student and "
-        "one concrete general suggestion actually proposed in this turn"
+        "punctuation. At most one open reflective question addressed to the student"
+        + (" and one concrete general suggestion actually proposed in this turn" if advice_allowed else "")
         + hyp_sentence
         + ". Do not log rhetorical questions, examples, rejected proposals, books or certified strategies "
         "again as notes. These notes are not certified strategies and never authorize "

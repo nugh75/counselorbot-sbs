@@ -865,6 +865,7 @@ Nei passi con un solo fattore l’ipotesi nasce da come quel fattore si vede nel
 studente, senza inventare relazioni con altri fattori; dalla combinazione dei fattori solo quando
 il passo ne ha due o più (novembre 2026, «Allinea prompt di fabbrica» per i testi di fabbrica).
 Nei passi QSA di secondo livello le tensioni fra fattori fanno parte dell’ipotesi da verificare insieme senza una domanda in più; in «Autocontrollo e concentrazione» il verso di lettura è esplicito (C2 alto = punto di forza, C3 e C6 alti = aree di crescita); la domanda finale su cosa fa abitualmente lo studente è riflessiva, non una richiesta di consigli né una domanda su un episodio.
+Se lo studente esprime disagio, il bot lo riconosce e lo nomina senza attenuarlo, ma questo non apre ai consigli pratici nei passi che li escludono; nei turni senza consigli le note di sessione registrano solo la domanda riflessiva, non un suggerimento (novembre 2026).
 La direttiva `[DEPTH ON REQUEST]` orienta l'approfondimento verso l'agire e le scelte dello studente
 anziché imporre un aneddoto scolastico preconfezionato dal modello;
 in sintesi, `[PERSPECTIVE]` offre il nesso con taccuino e portfolio come domanda aperta

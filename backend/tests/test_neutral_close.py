@@ -25,5 +25,11 @@ def test_distress_is_still_answered_rather_than_softened():
     assert "distress" in _directive()
 
 
+def test_answering_distress_does_not_unlock_advice():
+    # Prompt health #38: answering distress directly was read as permission to
+    # give practical advice in steps that forbid it.
+    assert "does not by itself allow practical advice where the step forbids it" in _directive()
+
+
 def test_the_opening_rule_survives():
     assert "Never open with ritual acknowledgements" in _directive()
