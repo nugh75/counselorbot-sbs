@@ -579,7 +579,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
     useEffect(() => {
         let active = true;
-        setRecommendations({ reading: [], strategy: [], advice: [] });
+        setRecommendations({ reading: [], strategy: [], advice: [], request: [] });
         if (!sessionId) return () => { active = false; };
 
         void apiFetch(`/api/session/${encodeURIComponent(sessionId)}/recommendations?lang=${activeLocale}`)

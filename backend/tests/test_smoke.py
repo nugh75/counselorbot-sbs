@@ -2789,7 +2789,7 @@ def test_chat_message_returns_the_sessions_recommendation_catalog():
     })
 
     assert r.status_code == 200, r.text
-    assert r.json()["recommendations"] == {"reading": [], "strategy": [], "advice": []}
+    assert r.json()["recommendations"] == {"reading": [], "strategy": [], "advice": [], "request": []}
 
 
 

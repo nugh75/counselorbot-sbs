@@ -164,7 +164,7 @@ def test_list_for_session_orders_by_turn():
 def test_list_for_session_empty_session():
     db = _TestSession()
     result = list_for_session(db, session_id=f"{PREFIX}-nope", username="stud")
-    assert result == {"reading": [], "strategy": [], "advice": []}
+    assert result == {"reading": [], "strategy": [], "advice": [], "request": []}
     db.close()
 
 

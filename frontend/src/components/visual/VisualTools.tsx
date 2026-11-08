@@ -81,7 +81,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [loaded, setLoaded] = useState(false);
     const [busy, setBusy] = useState(false);
     const [issue, setIssue] = useState('');
-    const [catalog, setCatalog] = useState<RecommendationCatalog>({ reading: [], strategy: [], advice: [] });
+    const [catalog, setCatalog] = useState<RecommendationCatalog>({ reading: [], strategy: [], advice: [], request: [] });
     const [draftTitle, setDraftTitle] = useState('');
     const [draftDetail, setDraftDetail] = useState('');
     const [draftSource, setDraftSource] = useState('');

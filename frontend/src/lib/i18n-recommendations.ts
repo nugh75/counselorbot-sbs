@@ -11,6 +11,19 @@ type Dict = typeof it;
 export type RecommendationTextKey = keyof Dict;
 
 const it = {
+    "request.tab": "Da riprendere",
+    "request.help": "Le tue domande e richieste: alla fine del percorso il counselor riprende quelle ancora aperte.",
+    "request.empty": "Nessuna domanda da riprendere.",
+    "request.open": "Da riprendere",
+    "request.discussed": "Discussa",
+    "request.discussedInTalk": "Discussa nella conversazione",
+    "request.close": "Segna come discussa",
+    "request.reopen": "Riapri",
+    "request.remove": "Rimuovi",
+    "request.add.label": "Aggiungi una domanda da riprendere alla fine",
+    "request.add.placeholder": "Scrivi una domanda…",
+    "request.add.submit": "Aggiungi",
+    "request.byStudent": "Aggiunta da te",
     "advice.select": "Voglio provarlo",
     "advice.tried": "Provato",
     "advice.tab": "Consigli e domande",
@@ -53,6 +66,19 @@ const it = {
 };
 
 const en: Dict = {
+    "request.tab": "To revisit",
+    "request.help": "Your questions and requests: at the end of the path the counsellor takes up the ones still open.",
+    "request.empty": "No questions to revisit.",
+    "request.open": "To revisit",
+    "request.discussed": "Discussed",
+    "request.discussedInTalk": "Discussed in the conversation",
+    "request.close": "Mark as discussed",
+    "request.reopen": "Reopen",
+    "request.remove": "Remove",
+    "request.add.label": "Add a question to revisit at the end",
+    "request.add.placeholder": "Write a question…",
+    "request.add.submit": "Add",
+    "request.byStudent": "Added by you",
     "advice.select": "I want to try it",
     "advice.tried": "Tried",
     "advice.tab": "Advice and questions",
@@ -95,6 +121,19 @@ const en: Dict = {
 };
 
 const es: Dict = {
+    "request.tab": "Para retomar",
+    "request.help": "Tus preguntas y peticiones: al final del recorrido el orientador retoma las que siguen abiertas.",
+    "request.empty": "No hay preguntas para retomar.",
+    "request.open": "Para retomar",
+    "request.discussed": "Tratada",
+    "request.discussedInTalk": "Tratada en la conversación",
+    "request.close": "Marcar como tratada",
+    "request.reopen": "Reabrir",
+    "request.remove": "Quitar",
+    "request.add.label": "Añade una pregunta para retomar al final",
+    "request.add.placeholder": "Escribe una pregunta…",
+    "request.add.submit": "Añadir",
+    "request.byStudent": "Añadida por ti",
     "advice.select": "Quiero probarlo",
     "advice.tried": "Probado",
     "advice.tab": "Consejos y preguntas",
@@ -137,6 +176,19 @@ const es: Dict = {
 };
 
 const fr: Dict = {
+    "request.tab": "À reprendre",
+    "request.help": "Tes questions et demandes : à la fin du parcours, le conseiller reprend celles encore ouvertes.",
+    "request.empty": "Aucune question à reprendre.",
+    "request.open": "À reprendre",
+    "request.discussed": "Abordée",
+    "request.discussedInTalk": "Abordée dans la conversation",
+    "request.close": "Marquer comme abordée",
+    "request.reopen": "Rouvrir",
+    "request.remove": "Retirer",
+    "request.add.label": "Ajoute une question à reprendre à la fin",
+    "request.add.placeholder": "Écris une question…",
+    "request.add.submit": "Ajouter",
+    "request.byStudent": "Ajoutée par toi",
     "advice.select": "Je veux essayer",
     "advice.tried": "Essayé",
     "advice.tab": "Conseils et questions",
@@ -179,6 +231,19 @@ const fr: Dict = {
 };
 
 const de: Dict = {
+    "request.tab": "Später besprechen",
+    "request.help": "Deine Fragen und Wünsche: Am Ende des Wegs greift der Berater die noch offenen auf.",
+    "request.empty": "Keine Fragen zum Besprechen.",
+    "request.open": "Offen",
+    "request.discussed": "Besprochen",
+    "request.discussedInTalk": "Im Gespräch besprochen",
+    "request.close": "Als besprochen markieren",
+    "request.reopen": "Wieder öffnen",
+    "request.remove": "Entfernen",
+    "request.add.label": "Frage für das Ende hinzufügen",
+    "request.add.placeholder": "Schreib eine Frage…",
+    "request.add.submit": "Hinzufügen",
+    "request.byStudent": "Von dir hinzugefügt",
     "advice.select": "Möchte ich ausprobieren",
     "advice.tried": "Ausprobiert",
     "advice.tab": "Tipps und Fragen",
@@ -221,6 +286,19 @@ const de: Dict = {
 };
 
 const sv: Dict = {
+    "request.tab": "Att ta upp",
+    "request.help": "Dina frågor och önskemål: i slutet av vägen tar vägledaren upp de som fortfarande är öppna.",
+    "request.empty": "Inga frågor att ta upp.",
+    "request.open": "Att ta upp",
+    "request.discussed": "Diskuterad",
+    "request.discussedInTalk": "Diskuterad i samtalet",
+    "request.close": "Markera som diskuterad",
+    "request.reopen": "Öppna igen",
+    "request.remove": "Ta bort",
+    "request.add.label": "Lägg till en fråga att ta upp i slutet",
+    "request.add.placeholder": "Skriv en fråga…",
+    "request.add.submit": "Lägg till",
+    "request.byStudent": "Tillagd av dig",
     "advice.select": "Jag vill prova",
     "advice.tried": "Provat",
     "advice.tab": "Råd och frågor",

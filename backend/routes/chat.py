@@ -20,7 +20,7 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
@@ -566,6 +566,8 @@ def _record_recommendations(
     step_id: str | None = None,
     step_order: int | None = None,
     user_message: str | None = None,
+    requests: list[dict] | None = None,
+    discussed: list[str] | None = None,
 ) -> dict[str, list[dict]]:
     """Persist the items the completed turn actually recommended.
 
@@ -645,6 +647,20 @@ def _record_recommendations(
         _recommendation_service.record(
             db, session_id=session_id, username=username,
             recommendation_type="advice", payloads=stamped, turn_index=turn_index,
+        )
+
+    if requests:
+        # Every question of the student goes in the list; one answered in full now is already discussed.
+        stamped = [{**{k: v for k, v in item.items() if k != "answered"}, "step_id": step_id or "",
+                    "step_order": step_order} for item in requests]
+        _recommendation_service.record(
+            db, session_id=session_id, username=username,
+            recommendation_type="request", payloads=stamped, turn_index=turn_index,
+        )
+    for slug in [*(item["slug"] for item in requests or [] if item.get("answered")), *(discussed or [])]:
+        _recommendation_service.set_state(
+            db, session_id=session_id, username=username, recommendation_type="request", slug=slug,
+            status="closed", closed_by="conversation",
         )
 
     return _recommendation_service.list_for_session(
@@ -919,6 +935,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             step_id=request.phase or "",
             step_order=step.sort_order if step else None,
             user_message=user_message_to_couple,
+            requests=recommendation_blocks.extract_requests(raw_recommendations, user_message_to_couple),
+            discussed=recommendation_blocks.extract_discussed(raw_recommendations, getattr(prepared, "open_request_slugs", [])),
         )
         _watch_thread(prepared, request, db, session_id=session_id,
                       username=identity.get("username") if identity else "",
@@ -1410,6 +1428,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                         step_id=request.phase or "",
                         step_order=step_order,
                         user_message=user_message_to_couple,
+                        requests=recommendation_blocks.extract_requests(raw_recommendations, user_message_to_couple),
+                        discussed=recommendation_blocks.extract_discussed(raw_recommendations, getattr(prepared, "open_request_slugs", [])),
                     )
                 except Exception as exc:
                     logger.warning("Recommendation persistence failed for %s: %s", session_id, exc)
@@ -1770,6 +1790,54 @@ async def get_session_recommendations(
         db, session_id=session_id, username=username,
         language=_normalize_language(lang) if lang else None,
     )
+
+
+class StudentRequestCreate(BaseModel):
+    """A question the student adds by hand to the list to revisit at the end."""
+
+    text: str = Field(..., min_length=1, max_length=300)
+    step_id: str | None = Field(None, max_length=100)
+
+
+@router.post("/session/{session_id}/requests")
+async def add_session_request(
+    session_id: str,
+    payload: StudentRequestCreate,
+    lang: str | None = None,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Add a question to the student's own list; returns the updated sidebar."""
+    username = identity.get("username", "") if identity else ""
+    if not username:
+        raise HTTPException(status_code=403, detail="Serve un profilo per aggiornare le raccomandazioni")
+    try:
+        row = _recommendation_service.add_request(db, session_id=session_id, username=username,
+                                                  text=payload.text, step_id=payload.step_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if row is None:
+        raise HTTPException(status_code=400, detail="Richiesta vuota")
+    return _recommendation_service.list_for_session(
+        db, session_id=session_id, username=username, language=_normalize_language(lang) if lang else None)
+
+
+@router.delete("/session/{session_id}/requests/{slug}")
+async def delete_session_request(
+    session_id: str,
+    slug: str,
+    lang: str | None = None,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Remove one question from the student's own list."""
+    username = identity.get("username", "") if identity else ""
+    if not username:
+        raise HTTPException(status_code=403, detail="Serve un profilo per aggiornare le raccomandazioni")
+    if not _recommendation_service.delete_request(db, session_id=session_id, username=username, slug=slug):
+        raise HTTPException(status_code=404, detail="Richiesta non trovata")
+    return _recommendation_service.list_for_session(
+        db, session_id=session_id, username=username, language=_normalize_language(lang) if lang else None)
 
 
 class RecommendationStateUpdate(BaseModel):

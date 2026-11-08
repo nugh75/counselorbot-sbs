@@ -30,6 +30,7 @@ async function fixture(width, phase = 'intro', options = {}) {
     const catalog = {
         advice: [{ slug: 'question-one', kind: 'question', name: 'Quale episodio ti viene in mente?', status: 'proposed' }, { slug: 'advice-one', kind: 'advice', name: 'Riserva dieci minuti al progetto.', status: 'proposed' }],
         reading: [{ slug: 'test-book', title: 'Libro per la prova', why: 'Collegato al metodo di studio.', synopsis: 'SINOSSI COMPLETA DEL LIBRO', where: 'https://example.invalid/libro', languages: ['it', 'en'], warning: 'AVVERTENZA DEL LIBRO', status: 'proposed' }],
+        request: [{ slug: 'req-one', kind: 'request', source: 'counselor', name: 'Posso avere un consiglio sul metodo?', status: 'proposed', step_order: 1 }],
         strategy: [{ slug: 'test-strategy', name: 'Recupero attivo', description: 'Chiudi il testo e scrivi tre concetti.', recommended_when: 'Quando vuoi verificare cosa ricordi.', status: 'proposed' }],
     };
     page.on('pageerror', error => control.errors.push(error.message));
@@ -59,6 +60,14 @@ async function fixture(width, phase = 'intro', options = {}) {
         else if (url.pathname === '/api/chat/stream') return route.fulfill({ contentType: 'text/event-stream', body: 'data: {"done":true,"response":"Proseguiamo."}\n\n' });
         else if (url.pathname === '/api/session/fixture/diagrams') data = control.saved;
         else if (url.pathname === '/api/session/fixture/recommendations') data = catalog;
+        else if (url.pathname === '/api/session/fixture/requests' && request.method() === 'POST') {
+            catalog.request = [...catalog.request, { slug: 'req-added', kind: 'request', source: 'student', name: request.postDataJSON().text, status: 'proposed' }];
+            data = catalog;
+        } else if (url.pathname.startsWith('/api/session/fixture/requests/') && request.method() === 'DELETE') {
+            const slug = decodeURIComponent(url.pathname.split('/').pop());
+            catalog.request = catalog.request.filter(item => item.slug !== slug);
+            data = catalog;
+        }
         else if (url.pathname.startsWith('/api/session/fixture/recommendations/')) {
             if (control.failPatch) return route.fulfill({ status: 503, body: '{}' });
             const [, , , , , type, slug] = url.pathname.split('/');
@@ -639,6 +648,35 @@ for (const width of [390, 1440]) {
             assert.equal(await page.getByRole('dialog').locator('svg g.node').count(), 12);
             await page.keyboard.press('Escape');
             await page.getByRole('dialog').waitFor({ state: 'detached' });
+            assert.deepEqual(control.errors, []);
+        } finally { await context.close(); }
+    });
+}
+
+
+for (const width of [390, 1440]) {
+    test(`student requests to revisit can be added, discussed and removed at ${width}px`, async () => {
+        const { page, context, control } = await fixture(width);
+        try {
+            const panel = page.locator('#guided-recommendations-panel');
+            if (!await panel.isVisible()) {
+                await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
+                await page.getByRole('button', { name: 'Per te', exact: true }).click();
+            }
+            await panel.getByRole('tab', { name: /Da riprendere/ }).click();
+            await panel.getByText('Posso avere un consiglio sul metodo?', { exact: true }).waitFor();
+            await panel.getByLabel('Aggiungi una domanda da riprendere alla fine').fill('  Come gestisco   l’ansia?  ');
+            await panel.getByRole('button', { name: 'Aggiungi', exact: true }).click();
+            await panel.getByText('Come gestisco l’ansia?', { exact: true }).waitFor();
+            assert.ok(await panel.getByText(/Aggiunta da te/).isVisible());
+            const added = control.requests.find(item => item.path === '/api/session/fixture/requests' && item.method === 'POST');
+            assert.deepEqual(added.body, { text: 'Come gestisco l’ansia?' });
+            await panel.getByRole('button', { name: 'Segna come discussa', exact: true }).first().click();
+            await panel.getByText('Discussa', { exact: false }).first().waitFor();
+            await panel.getByRole('button', { name: 'Rimuovi', exact: true }).last().click();
+            await panel.getByText('Come gestisco l’ansia?', { exact: true }).waitFor({ state: 'detached' });
+            const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+            assert.equal(overflow, false);
             assert.deepEqual(control.errors, []);
         } finally { await context.close(); }
     });
