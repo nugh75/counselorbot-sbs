@@ -1,3 +1,15 @@
+# Salute dei prompt — S1
+
+- Branch `feature/prompt-health-management`: problemi prima degli strumenti,
+  nomi leggibili, origine delle frasi e percorsi distinti per prompt e codice.
+- Riepilogo copiabile per un agente; nessun invio automatico. Corrette le
+  contraddizioni codice/codice nascoste e i riferimenti alle regole nel codice.
+- Verifiche e stato corrente in `docs/handoff/feature-prompt-health-management.md`;
+  fixture isolate su 3186 in `docs/operations/live-dev-environment.md`.
+- Nessun deploy, intervento desktop, sudo o accesso a dati/runtime di produzione.
+
+---
+
 # Taccuini di prova condivisi nella classe
 
 - Branch `fix/taccuini-prova-condivisi`, issue #783. La Palestra mostra le

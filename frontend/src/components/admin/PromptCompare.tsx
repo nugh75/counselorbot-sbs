@@ -13,8 +13,9 @@ import {
     type PromptHealthFinding, type PromptHealthProposal, type PromptHealthRange,
 } from '@/lib/prompt-health';
 import { cn } from '@/lib/utils';
+import { usePromptName, useSurfaceName } from './PromptHealthLabels';
 
-export interface PromptHealthStep { id: string; label: string; prompts: string[]; surfaces: string[] }
+export interface PromptHealthStep { id: string; label: string; label_i18n?: Record<string, string>; prompts: string[]; surfaces: string[] }
 export interface PromptHealthPath { instrument: string; steps: PromptHealthStep[] }
 
 export interface PromptCard {
@@ -112,8 +113,9 @@ interface PanelState {
     error?: boolean;
 }
 
-function ComparePanel({ panel, findings, checking, focus, proposal, proposing, onDraft, onRemove, onSaved, onPropose, onAccept, onDiscard }: {
+function ComparePanel({ panel, paths, findings, checking, focus, proposal, proposing, onDraft, onRemove, onSaved, onPropose, onAccept, onDiscard }: {
     panel: PanelState;
+    paths: PromptHealthPath[];
     findings: PromptHealthFinding[];
     checking: boolean;
     focus: string | null;
@@ -128,6 +130,7 @@ function ComparePanel({ panel, findings, checking, focus, proposal, proposing, o
 }) {
     const { t } = useI18n();
     const message = useFindingMessage();
+    const name = usePromptName(paths);
     const listId = useId();
     const textarea = useRef<HTMLTextAreaElement>(null);
     const [active, setActive] = useState<number | null>(null);
@@ -198,7 +201,8 @@ function ComparePanel({ panel, findings, checking, focus, proposal, proposing, o
     return <Card as="section" aria-labelledby={`${listId}-title`} className="min-w-0 space-y-3 p-4">
         <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
-                <h3 id={`${listId}-title`} className="break-words font-mono text-sm font-semibold text-ink-strong">{promptLabel(panel.id)}</h3>
+                <h3 id={`${listId}-title`} className="break-words text-sm font-semibold text-ink-strong">{name(panel.id)}</h3>
+                <details className="text-xs text-ink-muted"><summary className="cursor-pointer">{t('admin.promptHealth.resolve.references')}</summary><p className="break-words font-mono">{panel.id}</p></details>
                 {card && <p className="text-xs text-ink-muted">
                     {card.customised ? t('admin.promptHealth.card.customised') : card.differs_from_factory ? t('admin.promptHealth.card.differs') : t('admin.promptHealth.card.factory')}
                     {dirty && <> · <span className="font-semibold text-warning-ink">{t('admin.promptHealth.compare.unsaved')}</span></>}
@@ -231,7 +235,7 @@ function ComparePanel({ panel, findings, checking, focus, proposal, proposing, o
                                 </span>{' '}{message(finding)}
                             </p>
                             {other && <p className="break-words text-xs text-ink-muted">
-                                {t('admin.promptHealth.compare.against', { prompt: promptLabel(other.prompt) })} «{other.text}»
+                                {t('admin.promptHealth.compare.against', { prompt: name(other.prompt) })} «{other.text}»
                             </p>}
                             {finding.ack && <p className="text-xs text-ink-muted">{t('admin.promptHealth.ack.marked')}: {finding.ack.note}</p>}
                             <div className="flex flex-wrap gap-2">
@@ -298,6 +302,8 @@ export function PromptCompare({ initial, focus, propose = false, llmFindings = [
     onChanged: () => void;
 }) {
     const { t } = useI18n();
+    const name = usePromptName(paths);
+    const surfaceName = useSurfaceName(paths);
     const titleId = useId();
     const addId = useId();
     const surfaceId = useId();
@@ -428,7 +434,7 @@ export function PromptCompare({ initial, focus, propose = false, llmFindings = [
                     className="min-h-control w-full rounded-control border border-line bg-surface px-3 text-sm text-ink-body">
                     <option value="">{t('admin.promptHealth.compare.contextAll')}</option>
                     {paths.map(path => <optgroup key={path.instrument} label={path.instrument}>
-                        {path.steps.flatMap(step => step.surfaces).map(item => <option key={item} value={item}>{item}</option>)}
+                        {path.steps.flatMap(step => step.surfaces).map(item => <option key={item} value={item}>{surfaceName(item)}</option>)}
                     </optgroup>)}
                 </select>
             </div>
@@ -438,7 +444,7 @@ export function PromptCompare({ initial, focus, propose = false, llmFindings = [
                     <input id={addId} list={`${addId}-list`} value={toAdd} onChange={event => setToAdd(event.target.value)}
                         disabled={panels.length >= 3} placeholder={t('admin.promptHealth.compare.addPlaceholder')}
                         className="min-h-control min-w-0 flex-1 rounded-control border border-line bg-surface px-3 font-mono text-sm text-ink-body" />
-                    <datalist id={`${addId}-list`}>{knownPrompts.map(id => <option key={id} value={id} />)}</datalist>
+                    <datalist id={`${addId}-list`}>{knownPrompts.map(id => <option key={id} value={id}>{name(id)}</option>)}</datalist>
                     <Button type="button" variant="secondary" onClick={add} disabled={panels.length >= 3 || !toAdd.trim()}>
                         <Plus className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.compare.addButton')}
                     </Button>
@@ -464,7 +470,7 @@ export function PromptCompare({ initial, focus, propose = false, llmFindings = [
 
         {panels.length === 0 && <Callout variant="info">{t('admin.promptHealth.compare.empty')}</Callout>}
         <div className={cn('grid gap-4', panels.length === 2 && 'lg:grid-cols-2', panels.length === 3 && 'lg:grid-cols-2 xl:grid-cols-3')}>
-            {panels.map(panel => <ComparePanel key={panel.id} panel={panel} checking={checking} focus={focus}
+            {panels.map(panel => <ComparePanel key={panel.id} panel={panel} paths={paths} checking={checking} focus={focus}
                 findings={allFindings.filter(finding => finding.prompts.includes(panel.id))}
                 proposal={proposals[panel.id] ?? null} proposing={proposeStatus === 'loading'}
                 onPropose={finding => void requestProposal(finding)}

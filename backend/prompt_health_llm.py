@@ -98,13 +98,15 @@ def _call_model(db: Session, provider: str, model: str, system: str, user: str) 
 
 # --- Combinations ---------------------------------------------------------------------
 
-def combinations(db: Session, prompt_ids=()) -> list[dict]:
+def combinations(db: Session, prompt_ids=(), *, surfaces: set[str] | None = None) -> list[dict]:
     """Distinct assembled requests of the turns the prompts enter (every turn when none given)."""
     turns = prompt_health._turns_for(db, list(prompt_ids)) if prompt_ids else None
     if turns is None:
         turns = list(prompt_health._all_turns(db))
     groups: dict[str, dict] = {}
     for surface, payload in turns:
+        if surfaces is not None and surface not in surfaces:
+            continue
         try:
             with db.begin_nested():
                 text = prompt_health.assembled_request(db, payload)
@@ -260,11 +262,28 @@ def current_findings(db: Session, texts: dict[str, str] | None = None) -> list[d
     texts = prompt_health.active_texts(db) if texts is None else texts
     merged: dict[str, dict] = {}
     rows = db.query(models.PromptHealthLlmResult).order_by(models.PromptHealthLlmResult.created_at.desc()).all()
+    # A code fragment has no editable text to check. Validate its complete request
+    # against the cached hash instead, rebuilding only the affected turns, once.
+    code_rows = [row for row in rows if any(
+        REQUEST_PROMPT in (item.get("prompt_a", REQUEST_PROMPT), item.get("prompt_b", REQUEST_PROMPT))
+        for item in row.contradictions or [])]
+    current_code_requests = combinations(db, surfaces={s for row in code_rows for s in row.surfaces or []}) if code_rows else []
+    code_surfaces: dict[tuple[str, str], dict[str, set[str]]] = {}
     for row in rows:
         for item in row.contradictions or []:
             pa, pb = item.get("prompt_a", REQUEST_PROMPT), item.get("prompt_b", REQUEST_PROMPT)
-            if pa == pb == REQUEST_PROMPT:
-                continue  # neither quote is in a prompt the owner can change
+            surfaces = row.surfaces or []
+            if REQUEST_PROMPT in (pa, pb):
+                model_key = (row.provider, row.model)
+                if model_key not in code_surfaces:
+                    code_surfaces[model_key] = {
+                        _cache_key(row.provider, row.model, language, combo["hash"]): set(combo["surfaces"])
+                        for combo in current_code_requests for language in LANGUAGES
+                    }
+                valid = code_surfaces[model_key].get(row.cache_key, set())
+                surfaces = [surface for surface in surfaces if surface in valid]
+                if not surfaces:
+                    continue  # the request changed, so its old code quotes are no longer evidence
             if any(pid != REQUEST_PROMPT and not _in_text(quote, texts.get(pid, ""))
                    for pid, quote in ((pa, item["quote_a"]), (pb, item["quote_b"]))):
                 continue  # one of the sentences was changed: the contradiction is gone
@@ -273,7 +292,7 @@ def current_findings(db: Session, texts: dict[str, str] | None = None) -> list[d
                                              sentences=[{"prompt": p1, "text": q1}, {"prompt": p2, "text": q2}],
                                              params={"model": row.model})
             kept = merged.setdefault(finding["id"], {**finding, "params": {**finding["params"], "explanation": item["explanation"]}})
-            kept["surfaces"].extend(s for s in row.surfaces or [] if s not in kept["surfaces"])
+            kept["surfaces"].extend(s for s in surfaces if s not in kept["surfaces"])
     findings = sorted(merged.values(), key=prompt_health._sort_key)
     return prompt_health.annotate(findings, texts)
 

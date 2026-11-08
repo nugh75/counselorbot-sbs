@@ -1,24 +1,25 @@
 'use client';
 
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, CircleSlash, Columns3, ExternalLink, FileText, Flag, RefreshCw, RotateCcw, Sparkles, Undo2, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CircleSlash, Columns3, RefreshCw, XCircle } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
-import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { PromptHealthLlm } from '@/components/admin/PromptHealthLlm';
 import { PromptUsagePanel } from '@/components/admin/PromptUsagePanel';
 import {
-    PromptCompare, SEVERITY_TEXT, loadPromptCard, postJson, useFindingMessage,
+    PromptCompare, loadPromptCard, postJson,
     type PromptCard, type PromptHealthPath, type PromptHealthStep,
 } from '@/components/admin/PromptCompare';
 import {
-    canPropose, cellStatus, codeIssueUrl, compareTargets, mergeFindings, promptLabel, visibleSurfaces,
+    cellStatus, hasCodeSource, mergeFindings, visibleSurfaces,
     type PromptCellStatus, type PromptHealthFinding, type PromptHealthRun,
 } from '@/lib/prompt-health';
 import { cn } from '@/lib/utils';
+import { FindingCard } from './PromptHealthFinding';
+import { usePromptName, useSurfaceName } from './PromptHealthLabels';
 
 const STATUS: Record<PromptCellStatus, { icon: typeof CheckCircle2; className: string }> = {
     ok: { icon: CheckCircle2, className: 'border-success-line bg-success-soft text-success-ink' },
@@ -30,142 +31,26 @@ const STATUS: Record<PromptCellStatus, { icon: typeof CheckCircle2; className: s
 type CompareRequest = { prompts: string[]; focus: string | null; propose: boolean; key: number };
 type OpenCompare = (prompts: string[], focus: string | null, propose?: boolean) => void;
 
-/** Azioni su un avviso (#761). Nessuna blocca un salvataggio. */
-function FindingActions({ finding, onCompare, onChanged }: {
-    finding: PromptHealthFinding;
-    onCompare: OpenCompare;
-    onChanged: () => void;
-}) {
-    const { t } = useI18n();
-    const message = useFindingMessage();
-    const noteId = useId();
-    const [noteOpen, setNoteOpen] = useState(false);
-    const [note, setNote] = useState('');
-    const [restoring, setRestoring] = useState<string | null>(null);
-    const [busy, setBusy] = useState(false);
-    const [result, setResult] = useState<'still' | 'gone' | 'error' | null>(null);
-    const editable = finding.editable ?? [];
-    const factory = new Set(finding.factory ?? []);
-    const customised = editable.filter(id => !factory.has(id));
-    const run = async (action: () => Promise<void>) => {
-        setBusy(true);
-        try { await action(); } catch { setResult('error'); } finally { setBusy(false); }
-    };
-    const mark = () => run(async () => {
-        await postJson('/api/admin/prompt-health/acks', { finding_id: finding.id, note });
-        setNoteOpen(false);
-        onChanged();
-    });
-    const unmark = () => run(async () => {
-        const response = await apiFetch(`/api/admin/prompt-health/acks/${finding.id}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('ack');
-        onChanged();
-    });
-    const restore = (id: string) => run(async () => {
-        setRestoring(null);
-        await postJson('/api/admin/prompt-health/restore-factory', { prompt_id: id });
-        onChanged();
-    });
-    const recheck = () => run(async () => {
-        const prompts = editable.length ? editable : finding.prompts.filter(id => !id.startsWith('code:'));
-        const response = await postJson<{ findings: PromptHealthFinding[] }>('/api/admin/prompt-health/evaluate', { prompt_ids: prompts.slice(0, 3) });
-        setResult(response.findings.some(item => item.id === finding.id) ? 'still' : 'gone');
-    });
-
-    return <div className="space-y-2">
-        <div className="flex flex-wrap gap-2">
-            {editable.length > 0 && <Button type="button" variant="secondary" size="sm" onClick={() => onCompare([editable[0]], finding.id)}>
-                <FileText className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.action.open')}
-            </Button>}
-            {editable.length > 0 && <Button type="button" variant="secondary" size="sm" onClick={() => onCompare(compareTargets(finding), finding.id)}>
-                <Columns3 className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.action.compare')}
-            </Button>}
-            {customised.map(id => restoring === id
-                ? <ConfirmInline key={id} question={t('admin.promptHealth.compare.restoreConfirm')} onConfirm={() => restore(id)} onCancel={() => setRestoring(null)} busy={busy} />
-                : <Button key={id} type="button" variant="secondary" size="sm" disabled={busy} onClick={() => setRestoring(id)}>
-                    <RotateCcw className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.action.restore')}{customised.length > 1 ? `: ${promptLabel(id)}` : ''}
-                </Button>)}
-            {finding.ack
-                ? <Button type="button" variant="secondary" size="sm" disabled={busy} onClick={unmark}>
-                    <Undo2 className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.action.unmark')}
-                </Button>
-                : <Button type="button" variant="secondary" size="sm" aria-expanded={noteOpen} aria-controls={noteId} onClick={() => setNoteOpen(value => !value)}>
-                    <Flag className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.action.mark')}
-                </Button>}
-            {factory.size > 0 && <a href={codeIssueUrl(finding, message(finding))} target="_blank" rel="noopener noreferrer"
-                className="inline-flex min-h-8 items-center gap-1 rounded-control border border-line bg-surface px-4 py-1 text-xs font-semibold text-ink-body hover:bg-surface-sunken">
-                <ExternalLink className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.action.codeIssue')}
-                <span className="sr-only">{t('admin.promptHealth.newWindow')}</span>
-            </a>}
-            {canPropose(finding) && <Button type="button" variant="secondary" size="sm" onClick={() => onCompare(compareTargets(finding), finding.id, true)}>
-                <Sparkles className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.action.propose')}
-            </Button>}
-            {/* Le contraddizioni del modello si aggiornano da sole quando cambia una delle frasi. */}
-            {finding.code !== 'llm_contradiction' && <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={recheck}>
-                <RefreshCw className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.action.recheck')}
-            </Button>}
-        </div>
-        {noteOpen && !finding.ack && <div id={noteId} className="space-y-2">
-            <label htmlFor={`${noteId}-note`} className="text-xs font-semibold text-ink-body">{t('admin.promptHealth.ack.note')}</label>
-            <textarea id={`${noteId}-note`} value={note} onChange={event => setNote(event.target.value)} rows={2} maxLength={2000}
-                className="w-full rounded-control border border-line bg-surface p-2 text-sm text-ink-body" />
-            <Button type="button" size="sm" disabled={busy} onClick={mark}>{t('admin.promptHealth.ack.save')}</Button>
-        </div>}
-        <div role="status">
-            {result === 'still' && <p className="text-xs text-warning-ink">{t('admin.promptHealth.recheck.still')}</p>}
-            {result === 'gone' && <p className="text-xs text-success-ink">{t('admin.promptHealth.recheck.gone')}</p>}
-            {result === 'error' && <p className="text-xs text-danger-ink">{t('admin.promptHealth.compare.checkError')}</p>}
-        </div>
-    </div>;
-}
-
-function FindingCard({ finding, onCompare, onChanged }: {
-    finding: PromptHealthFinding;
-    onCompare: OpenCompare;
-    onChanged: () => void;
-}) {
-    const { t } = useI18n();
-    const message = useFindingMessage();
-    const { shown, hidden } = visibleSurfaces(finding.surfaces);
-    return <li className="space-y-2 rounded-control border border-line bg-surface p-4">
-        <p className="text-sm text-ink-body">
-            <span className={cn('font-semibold', SEVERITY_TEXT[finding.severity])}>{t(`admin.promptHealth.severity.${finding.severity}`)}</span>
-            {' · '}<span className="font-semibold">{message(finding)}</span>
-        </p>
-        {finding.sentences.length > 0 && <div className={cn('grid gap-2', finding.sentences.length > 1 && 'md:grid-cols-2')}>
-            {finding.sentences.map(sentence => <blockquote key={`${sentence.prompt}:${sentence.text}`}
-                className="rounded-control border border-line bg-surface-sunken p-2 text-sm text-ink-body">
-                <p className="mb-1 break-words font-mono text-xs text-ink-muted">{promptLabel(sentence.prompt)}</p>
-                <p className="break-words underline decoration-danger decoration-wavy underline-offset-4">«{sentence.text}»</p>
-            </blockquote>)}
-        </div>}
-        {finding.sentences.length === 0 && finding.prompts.length > 0 && <p className="break-words font-mono text-xs text-ink-muted">{finding.prompts.map(promptLabel).join(' · ')}</p>}
-        {shown.length > 0 && <p className="break-words text-xs text-ink-muted">
-            {t('admin.promptHealth.where')}: {shown.join('; ')}{hidden > 0 ? ` ${t('admin.promptHealth.more', { count: hidden })}` : ''}
-        </p>}
-        <p className="text-xs text-ink-muted"><span className="font-semibold">{t('admin.promptHealth.fix')}:</span> {t(`admin.promptHealth.fix.${finding.code}`)}</p>
-        {finding.ack && <p className="text-xs text-ink-muted"><span className="font-semibold">{t('admin.promptHealth.ack.marked')}:</span> {finding.ack.note || '—'}</p>}
-        <FindingActions finding={finding} onCompare={onCompare} onChanged={onChanged} />
-    </li>;
-}
-
 /** Scheda di un prompt: dove arriva, differenza dalla fabbrica, avvisi aperti. */
-function PromptCardView({ id, onCompare, onChanged, onClose }: {
+function PromptCardView({ id, paths, onCompare, onChanged, onClose }: {
     id: string;
+    paths: PromptHealthPath[];
     onCompare: OpenCompare;
     onChanged: () => void;
     onClose: () => void;
 }) {
     const { t } = useI18n();
     const titleId = useId();
+    const name = usePromptName(paths);
+    const surfaceName = useSurfaceName(paths);
     const [card, setCard] = useState<PromptCard | null>(null);
     const [error, setError] = useState(false);
     // Il genitore usa `key={id}`: ogni prompt monta una scheda nuova.
     useEffect(() => { loadPromptCard(id).then(setCard).catch(() => setError(true)); }, [id]);
-    const where = card?.surfaces ? visibleSurfaces(card.surfaces, 6) : null;
+    const where = card?.surfaces ? visibleSurfaces(card.surfaces.map(surfaceName), 6) : null;
     return <Card as="section" aria-labelledby={titleId} className="space-y-3">
         <div className="flex flex-wrap items-start gap-2">
-            <h3 id={titleId} className="min-w-0 flex-1 break-words font-mono text-base font-semibold text-ink-strong">{promptLabel(id)}</h3>
+            <h3 id={titleId} className="min-w-0 flex-1 break-words text-base font-semibold text-ink-strong">{name(id)}</h3>
             <Button type="button" variant="ghost" onClick={onClose}>{t('admin.promptHealth.close')}</Button>
         </div>
         {error && <Callout variant="danger">{t('admin.promptHealth.compare.loadError')}</Callout>}
@@ -184,7 +69,7 @@ function PromptCardView({ id, onCompare, onChanged, onClose }: {
             </Button>}
             {card.findings.length === 0
                 ? <Callout variant="success">{t('admin.promptHealth.card.noFindings')}</Callout>
-                : <ul className="space-y-2">{card.findings.map(finding => <FindingCard key={finding.id} finding={finding} onCompare={onCompare} onChanged={onChanged} />)}</ul>}
+                : <ul className="space-y-2">{card.findings.map(finding => <FindingCard key={finding.id} finding={finding} paths={paths} onCompare={onCompare} onChanged={onChanged} />)}</ul>}
         </>}
     </Card>;
 }
@@ -196,7 +81,7 @@ function PathMap({ paths, findings, selected, onSelect }: {
     selected: string | null;
     onSelect: (step: PromptHealthStep) => void;
 }) {
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     return <div className="space-y-3">
         <ul className="flex flex-wrap gap-3 text-xs text-ink-muted" aria-label={t('admin.promptHealth.map.legend')}>
             {(Object.keys(STATUS) as PromptCellStatus[]).map(status => {
@@ -215,7 +100,7 @@ function PathMap({ paths, findings, selected, onSelect }: {
                             className={cn('inline-flex min-h-control items-center gap-1 rounded-control border px-3 text-xs font-semibold', className,
                                 selected === step.id && 'ring-2 ring-brand')}>
                             <Icon className="h-4 w-4" aria-hidden="true" />
-                            <span className="font-mono">{step.id}</span>
+                            <span>{step.label_i18n?.[lang] || step.label}</span>
                             <span className="sr-only">: {t(`admin.promptHealth.status.${status}`)}</span>
                         </button>
                     </li>;
@@ -246,6 +131,8 @@ export function PromptHealthPage() {
     const [compare, setCompare] = useState<CompareRequest | null>(null);
     const [llmFindings, setLlmFindings] = useState<PromptHealthFinding[]>([]);
     const [showAcked, setShowAcked] = useState(false);
+    const [filter, setFilter] = useState<'all' | 'code' | 'prompts'>('all');
+    const name = usePromptName(paths);
 
     const load = useCallback(() => fetchHealth().then(state => {
         setRun(state.run);
@@ -274,10 +161,15 @@ export function PromptHealthPage() {
         window.requestAnimationFrame(() => document.getElementById('prompt-health-compare')?.scrollIntoView({ block: 'start' }));
     }, []);
 
-    const findings = useMemo(() => mergeFindings(run?.findings ?? [], llmFindings), [run, llmFindings]);
+    const findings = useMemo(() => {
+        const rank = { high: 0, medium: 1, low: 2 };
+        return mergeFindings(run?.findings ?? [], llmFindings).sort((a, b) => rank[a.severity] - rank[b.severity]);
+    }, [run, llmFindings]);
     const llmOpen = llmFindings.filter(finding => !finding.ack).length;
     const open = findings.filter(finding => !finding.ack);
     const acked = findings.filter(finding => finding.ack);
+    const codeCount = open.filter(hasCodeSource).length;
+    const visible = open.filter(finding => filter === 'all' || (filter === 'code' ? hasCodeSource(finding) : !hasCodeSource(finding)));
     const knownPrompts = useMemo(() => [...new Set([
         ...paths.flatMap(path => path.steps.flatMap(item => item.prompts)),
         ...findings.flatMap(finding => finding.editable ?? []),
@@ -288,8 +180,9 @@ export function PromptHealthPage() {
             <h2 id="prompt-health-title" className="text-xl font-semibold text-ink-strong">{t('admin.promptHealth.page.title')}</h2>
             <p className="text-sm text-ink-muted">{t('admin.promptHealth.page.help')}</p>
             {run && <p className="text-sm text-ink-body">
-                {t('admin.promptHealth.count', { count: run.counts.total ?? 0 })}
-                {(run.counts.acknowledged ?? 0) > 0 && ` · ${t('admin.promptHealth.ack.count', { count: run.counts.acknowledged ?? 0 })}`}
+                {t('admin.promptHealth.overview.open', { count: open.length })}
+                {` · ${t('admin.promptHealth.overview.code', { count: codeCount })}`}
+                {acked.length > 0 && ` · ${t('admin.promptHealth.ack.count', { count: acked.length })}`}
                 {run.created_at && ` · ${t('admin.promptHealth.checkedAt', { date: new Date(run.created_at).toLocaleString(lang) })}`}
             </p>}
             {error && <Callout variant="danger">{t('admin.promptHealth.loadError')}</Callout>}
@@ -297,7 +190,7 @@ export function PromptHealthPage() {
             {run && !run.current && <Callout variant="warning">{t('admin.promptHealth.stale')}</Callout>}
             <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="secondary" disabled={busy} onClick={runNow}>
-                    <RefreshCw className="h-4 w-4" aria-hidden="true" />{busy ? t('admin.promptHealth.running') : t('admin.promptHealth.run')}
+                    <RefreshCw className="h-4 w-4" aria-hidden="true" />{busy ? t('admin.promptHealth.running') : t('admin.promptHealth.overview.checkRules')}
                 </Button>
                 <Button type="button" variant="secondary" onClick={() => openCompare([], null)}>
                     <Columns3 className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.compare.title')}
@@ -305,27 +198,26 @@ export function PromptHealthPage() {
             </div>
         </Card>
 
-        <PromptHealthLlm onFindings={setLlmFindings} />
-
-        <Card as="section" aria-labelledby="prompt-health-map" className="space-y-3">
-            <h2 id="prompt-health-map" className="text-lg font-semibold text-ink-strong">{t('admin.promptHealth.map.title')}</h2>
-            <p className="text-sm text-ink-muted">{t('admin.promptHealth.map.help')}</p>
-            <PathMap paths={paths} findings={findings} selected={step?.id ?? null} onSelect={setStep} />
-            {step && <div className="space-y-2 rounded-control border border-line bg-surface-sunken p-4">
-                <p className="text-sm font-semibold text-ink-body">{t('admin.promptHealth.map.stepPrompts', { step: step.label })}</p>
-                <ul className="flex flex-wrap gap-2">
-                    {step.prompts.map(id => <li key={id}>
-                        <Button type="button" variant="secondary" size="sm" onClick={() => setCardId(id)} aria-pressed={cardId === id}>
-                            <span className="font-mono">{promptLabel(id)}</span>
-                        </Button>
-                    </li>)}
-                </ul>
+        <Card as="section" aria-labelledby="prompt-health-findings" className="space-y-3">
+            <h2 id="prompt-health-findings" className="text-lg font-semibold text-ink-strong">{t('admin.promptHealth.findings.title')}</h2>
+            <p className="text-sm text-ink-muted">{t('admin.promptHealth.overview.help')}</p>
+            <div role="group" className="flex flex-wrap gap-2" aria-label={t('admin.promptHealth.filter.label')}>
+                {(['all', 'code', 'prompts'] as const).map(value => <Button key={value} type="button" variant={filter === value ? 'primary' : 'secondary'}
+                    size="sm" aria-pressed={filter === value} onClick={() => setFilter(value)}>{t(`admin.promptHealth.filter.${value}`)}</Button>)}
+            </div>
+            {llmOpen > 0 && <p className="text-sm text-ink-body">{t('admin.promptHealth.llm.found', { count: llmOpen })}</p>}
+            {run && open.length === 0 && <Callout variant="success">{t('admin.promptHealth.empty')}</Callout>}
+            {visible.length > 0 && <ul className="space-y-2">{visible.map(finding => <FindingCard key={finding.id} finding={finding} paths={paths} group="prompt-health-open" onCompare={openCompare} onChanged={load} />)}</ul>}
+            {open.length > 0 && visible.length === 0 && <Callout variant="info">{t('admin.promptHealth.filter.empty')}</Callout>}
+            {acked.length > 0 && <div className="space-y-2">
+                <Button type="button" variant="ghost" aria-expanded={showAcked} onClick={() => setShowAcked(value => !value)}>
+                    {t('admin.promptHealth.ack.count', { count: acked.length })}
+                </Button>
+                {showAcked && <ul className="space-y-2">{acked.map(finding => <FindingCard key={finding.id} finding={finding} paths={paths} onCompare={openCompare} onChanged={load} />)}</ul>}
             </div>}
         </Card>
 
-        <PromptUsagePanel onOpen={setCardId} />
-
-        {cardId && <PromptCardView key={cardId} id={cardId} onCompare={openCompare} onChanged={load} onClose={() => setCardId(null)} />}
+        {cardId && <PromptCardView key={cardId} id={cardId} paths={paths} onCompare={openCompare} onChanged={load} onClose={() => setCardId(null)} />}
 
         {compare && <div id="prompt-health-compare" className="scroll-mt-4">
             <PromptCompare key={compare.key} initial={compare.prompts} focus={compare.focus} propose={compare.propose}
@@ -333,17 +225,31 @@ export function PromptHealthPage() {
                 onClose={() => setCompare(null)} onChanged={load} />
         </div>}
 
-        <Card as="section" aria-labelledby="prompt-health-findings" className="space-y-3">
-            <h2 id="prompt-health-findings" className="text-lg font-semibold text-ink-strong">{t('admin.promptHealth.findings.title')}</h2>
-            {llmOpen > 0 && <p className="text-sm text-ink-body">{t('admin.promptHealth.llm.found', { count: llmOpen })}</p>}
-            {run && open.length === 0 && <Callout variant="success">{t('admin.promptHealth.empty')}</Callout>}
-            {open.length > 0 && <ul className="space-y-2">{open.map(finding => <FindingCard key={finding.id} finding={finding} onCompare={openCompare} onChanged={load} />)}</ul>}
-            {acked.length > 0 && <div className="space-y-2">
-                <Button type="button" variant="ghost" aria-expanded={showAcked} onClick={() => setShowAcked(value => !value)}>
-                    {t('admin.promptHealth.ack.count', { count: acked.length })}
-                </Button>
-                {showAcked && <ul className="space-y-2">{acked.map(finding => <FindingCard key={finding.id} finding={finding} onCompare={openCompare} onChanged={load} />)}</ul>}
-            </div>}
-        </Card>
+        <details className="rounded-card border border-line bg-surface p-6">
+            <summary className="cursor-pointer text-lg font-semibold text-ink-strong">{t('admin.promptHealth.map.title')}</summary>
+            <div className="mt-4 space-y-3">
+                <p className="text-sm text-ink-muted">{t('admin.promptHealth.map.help')}</p>
+                <PathMap paths={paths} findings={findings} selected={step?.id ?? null} onSelect={setStep} />
+                {step && <div className="space-y-2 rounded-control border border-line bg-surface-sunken p-4">
+                    <p className="text-sm font-semibold text-ink-body">{t('admin.promptHealth.map.stepPrompts', { step: step.label_i18n?.[lang] || step.label })}</p>
+                    <ul className="flex flex-wrap gap-2">
+                        {step.prompts.map(id => <li key={id}>
+                            <Button type="button" variant="secondary" size="sm" onClick={() => setCardId(id)} aria-pressed={cardId === id}>
+                                <span>{name(id)}</span>
+                            </Button>
+                        </li>)}
+                    </ul>
+                </div>}
+            </div>
+        </details>
+
+        <details className="rounded-card border border-line bg-surface p-6">
+            <summary className="cursor-pointer text-lg font-semibold text-ink-strong">{t('admin.promptHealth.llm.title')}</summary>
+            <div className="mt-4"><PromptHealthLlm onFindings={setLlmFindings} /></div>
+        </details>
+        <details className="rounded-card border border-line bg-surface p-6">
+            <summary className="cursor-pointer text-lg font-semibold text-ink-strong">{t('admin.promptUsage.title')}</summary>
+            <div className="mt-4"><PromptUsagePanel onOpen={setCardId} /></div>
+        </details>
     </div>;
 }

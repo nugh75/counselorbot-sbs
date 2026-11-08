@@ -42,6 +42,23 @@ KNOWN_BASELINE = {
 }
 
 
+def test_code_prompt_card_and_cached_findings_have_real_repository_references():
+    db = _Session()
+    try:
+        card = prompt_health.prompt_card(db, "code:turn_contract")
+        assert card["consumer"] == "backend.prompt_contract:turn_contract"
+        assert card["editable"] is False
+        finding = {"id": "source-test", "prompts": ["code:turn_contract", "code:request", "guided_step:sl-social"],
+                   "sentences": []}
+        # Read-time enrichment also covers runs stored before source metadata existed.
+        sources = prompt_health.with_acks([finding], {})[0]["sources"]
+        assert sources[0]["consumer"] == "backend.prompt_contract:turn_contract"
+        assert sources[1]["consumer"] is None and sources[1]["factory_source"] is None
+        assert sources[2]["factory_source"].startswith("prompt_config.")
+    finally:
+        db.close()
+
+
 def _recreate_database():
     conn = psycopg2.connect(_admin_url)
     try:

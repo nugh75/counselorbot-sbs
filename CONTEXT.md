@@ -3,6 +3,7 @@
 <!-- ai4educ:context-template v1.0 -->
 
 ## Quick Reference
+- **Salute dei prompt (S1)**: problemi in primo piano, nomi leggibili e due strade: modifica del prompt nell’istanza o riepilogo copiabile per un agente sul repository. Origini codice distinte dalla fabbrica, anche contraddizioni codice/codice; mappa, modello e statistiche espandibili. Fixture senza backend su 3186: `docs/operations/live-dev-environment.md`. Handoff: `docs/handoff/feature-prompt-health-management.md`.
 - **Guida pratica**: `/guide` organizza l'aiuto per azioni, con ricerca locale, sei argomenti studente/docente e schede con tre passaggi. Una procedura alla volta, ruoli e integrazioni filtrati, vecchi segnalibri compatibili; popup della chat e aiuti contestuali usano gli stessi contenuti. Contratto e verifiche: `docs/operations/concise-guide.md`.
 - **Flusso attività dei piani**: contratto di stato e azioni dal server, tentativi persistiti già all’apertura, bozze questionario con revisione, accesso diretto e ritorno al passo. Compilazione e analisi separate; storico e lettura delle conversazioni. `docs/operations/plan-activity-flow.md`.
 - **Tentativi nei piani e forum**: Inizia/Riprendi/Rifai distinguono sessioni e stato; le analisi conservano i tentativi precedenti e la ripetizione è idempotente. Il forum usa la spunta dello studente, indipendente dai messaggi. Migrazione, compatibilità e rollback: `docs/operations/operational-plan-questionnaire-chats.md` e `docs/operations/path-forum-validation.md`.
