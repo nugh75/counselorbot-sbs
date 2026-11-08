@@ -3,7 +3,7 @@
 ## Stato
 - Agente s1-prompt-health; task Diario 80b9b6f3-9580-421f-816f-e792224ce133.
 - Worktree dedicato; branch feature/prompt-health-management, partito allineato a origin/main.
-- Backend committato: 1516918c; UI e documentazione pronte per il secondo commit, poi push e PR.
+- Completo: backend 1516918c, UI 829f2d52; PR https://github.com/nugh75/counselorbot-sbs/pull/785 aperta, senza merge.
 
 ## Fatto
 - Scope approvato: problemi prima degli strumenti; modifica del prompt o del codice.
@@ -23,8 +23,9 @@
 - Npm locale completato; tentativi parziali conservati nella .tmp ignorata del worktree.
 
 ## Prossimi passi
-- Commit backend e UI separati; push, PR sulla board CounselorBot e notifica immediata.
-- Aggiornare questo handoff con la PR; chiudere il task Diario solo dopo il completamento.
+- Revisione del proprietario sulla PR #785, board CounselorBot.
+- Notifica PR richiesta: pending/no-timoniere; canale mobile disattivato. Nessuna consegna confermata.
+- Rilascio desktop e issue #775–#779 restano coordinati separatamente; nessun deploy incluso.
 
 ## Blocchi e rischi
 - Nessun accesso a produzione, dati reali, segreti, .env, sudo, deploy o rilascio desktop.
