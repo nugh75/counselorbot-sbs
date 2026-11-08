@@ -126,6 +126,8 @@ def _facilitation_contract(stage: str, thread_state: str | None = None) -> str:
             "such questions fragment experience into isolated anecdotes without awareness of process. "
             "Instead, inquire into choices, actions and consequences (e.g. 'Faced with this difficulty, what do you usually do? How do you choose to move, "
             "and what consequences does this way of proceeding have on your work?'). "
+            "Asking what the student usually does in a recurring situation (e.g. when attention drops or before exams) is a question about habits, "
+            "not a temporal-situational one, and it is not a request for advice. "
             "Depth of exploration depends on the understanding reached, not on a rigid turn count: recognize (1) when a concrete experience emerges, "
             "(2) when the student begins to understand how their choices and actions operate, and (3) when enough elements exist for a synthesis. "
             "When these conditions are met, or if the student asks to move on, bridge forward to the next area without dragging the exchange. "
