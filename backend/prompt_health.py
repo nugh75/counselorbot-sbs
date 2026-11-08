@@ -24,8 +24,10 @@ import logging
 import re
 from collections import defaultdict
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from functools import lru_cache
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from . import models, prompt_registry, prompt_revisions
@@ -475,10 +477,78 @@ def clear_ack(db: Session, finding_id: str) -> None:
     db.commit()
 
 
-def with_acks(findings: list[dict], marked: dict[str, dict]) -> list[dict]:
+def with_acks(findings: list[dict], marked: dict[str, dict], numbers: dict[str, int] | None = None) -> list[dict]:
     # Add source references at read time too, so stored runs need no migration.
+    numbers = numbers or {}
     return [{**finding, "sentences": [sentence_with_locations(sentence) for sentence in finding["sentences"]],
-             "sources": finding_sources(finding), "ack": marked.get(finding["id"])} for finding in findings]
+             "sources": finding_sources(finding), "ack": marked.get(finding["id"]),
+             "number": numbers.get(finding["id"])} for finding in findings]
+
+
+# --- Problem history ------------------------------------------------------------------
+
+PROBLEM_SOURCES = ("static", "llm")
+_SNAPSHOT_KEYS = ("id", "code", "severity", "prompts", "surfaces", "sentences", "params")
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def track_problems(db: Session, findings: list[dict], source: str) -> dict[str, int]:
+    """Record a complete result of one source in the history; returns finding id -> number.
+
+    New findings get the next number, findings seen again keep theirs (reopening
+    if they had disappeared), open problems of this source that are absent are
+    marked resolved. Only call it with a complete result, never a partial check.
+    """
+    if source not in PROBLEM_SOURCES:
+        raise ValueError(source)
+    now = _now()
+    current = {finding["id"]: finding for finding in findings}
+    rows = {row.finding_id: row for row in db.query(models.PromptHealthProblem).filter(
+        (models.PromptHealthProblem.finding_id.in_(list(current)))
+        | ((models.PromptHealthProblem.source == source) & models.PromptHealthProblem.resolved_at.is_(None))).all()}
+    for finding_id, finding in current.items():
+        snapshot = {key: finding.get(key) for key in _SNAPSHOT_KEYS}
+        row = rows.get(finding_id)
+        if row is None:
+            row = models.PromptHealthProblem(finding_id=finding_id, source=source, code=finding["code"],
+                                             severity=finding["severity"], finding=snapshot,
+                                             first_seen_at=now, last_seen_at=now)
+            try:
+                with db.begin_nested():  # a concurrent request may number it first
+                    db.add(row)
+            except IntegrityError:
+                row = db.query(models.PromptHealthProblem).filter_by(finding_id=finding_id).one()
+            rows[finding_id] = row
+        row.severity, row.finding, row.last_seen_at, row.resolved_at = finding["severity"], snapshot, now, None
+    for row in rows.values():
+        if row.source == source and row.finding_id not in current and row.resolved_at is None:
+            row.resolved_at = now
+    db.commit()
+    return {finding_id: row.number for finding_id, row in rows.items() if finding_id in current}
+
+
+def problem_numbers(db: Session, finding_ids) -> dict[str, int]:
+    """Numbers already assigned, without recording anything (partial or draft checks)."""
+    ids = list(dict.fromkeys(finding_ids))
+    if not ids:
+        return {}
+    return dict(db.query(models.PromptHealthProblem.finding_id, models.PromptHealthProblem.number)
+                .filter(models.PromptHealthProblem.finding_id.in_(ids)).all())
+
+
+def problem_history(db: Session, marked: dict[str, dict] | None = None) -> list[dict]:
+    """Every problem ever found, newest number first, open or resolved."""
+    marked = acks(db) if marked is None else marked
+    iso = lambda value: value.isoformat() if value else None
+    return [{
+        **(row.finding or {}), "id": row.finding_id, "number": row.number, "source": row.source,
+        "code": row.code, "severity": row.severity, "status": "resolved" if row.resolved_at else "open",
+        "first_seen_at": iso(row.first_seen_at), "last_seen_at": iso(row.last_seen_at),
+        "resolved_at": iso(row.resolved_at), "ack": marked.get(row.finding_id),
+    } for row in db.query(models.PromptHealthProblem).order_by(models.PromptHealthProblem.number.desc()).all()]
 
 
 def finding_sources(finding: dict) -> list[dict]:
@@ -494,12 +564,12 @@ def finding_sources(finding: dict) -> list[dict]:
 
 
 def serialize(run: models.PromptHealthRun | None, *, current_hash: str | None = None,
-              marked: dict[str, dict] | None = None) -> dict | None:
+              marked: dict[str, dict] | None = None, numbers: dict[str, int] | None = None) -> dict | None:
     """Run as JSON. Findings marked as intended keep their note and leave the counter."""
     if run is None:
         return None
     marked = marked or {}
-    findings = with_acks(run.findings or [], marked)
+    findings = with_acks(run.findings or [], marked, numbers)
     counts = _counts([f for f in findings if not f["ack"]])
     counts["acknowledged"] = len(findings) - counts["total"]
     return {
@@ -522,6 +592,7 @@ def run_check(db: Session, *, trigger: str = "manual", force: bool = False) -> t
     current_hash = texts_hash(db, texts)
     previous = latest_run(db)
     if previous is not None and previous.texts_hash == current_hash and not force:
+        track_problems(db, previous.findings or [], "static")
         return previous, previous
     findings = compute_findings(db, texts)
     run = models.PromptHealthRun(texts_hash=current_hash, check_version=CHECK_VERSION, trigger=trigger,
@@ -535,6 +606,7 @@ def run_check(db: Session, *, trigger: str = "manual", force: bool = False) -> t
             synchronize_session=False)
     db.commit()
     db.refresh(run)
+    track_problems(db, findings, "static")
     return run, previous
 
 
@@ -745,7 +817,7 @@ def prompt_card(db: Session, prompt_id: str) -> dict:
         "consumer": entry.consumer if entry else None, "app_surfaces": list(entry.surfaces) if entry else [],
         # Turns that can receive it; None when it is shared by every path.
         "surfaces": None if turns is None else [label for label, _ in turns],
-        "findings": with_acks(findings, acks(db)),
+        "findings": with_acks(findings, acks(db), problem_numbers(db, [f["id"] for f in findings])),
     }
 
 

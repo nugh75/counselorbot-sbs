@@ -64,15 +64,25 @@ def _rerun_after_save() -> None:
 @router.get("/admin/prompt-health")
 def latest_prompt_health(current_user=Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     """Latest stored run; `current` is false when the texts changed since it was computed."""
-    return {"run": prompt_health.serialize(prompt_health.latest_run(db), current_hash=prompt_health.texts_hash(db),
-                                           marked=prompt_health.acks(db))}
+    run = prompt_health.latest_run(db)
+    numbers = prompt_health.track_problems(db, run.findings or [], "static") if run is not None else {}
+    return {"run": prompt_health.serialize(run, current_hash=prompt_health.texts_hash(db),
+                                           marked=prompt_health.acks(db), numbers=numbers)}
 
 
 @router.post("/admin/prompt-health/run")
 def run_prompt_health(current_user=Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     """Run the check now; an unchanged text hash reuses the stored run."""
     run, previous = prompt_health.run_check(db, trigger="manual")
-    return {"run": prompt_health.serialize(run, marked=prompt_health.acks(db)), "new": prompt_health.new_findings(run, previous)}
+    numbers = prompt_health.problem_numbers(db, [finding["id"] for finding in run.findings or []])
+    return {"run": prompt_health.serialize(run, marked=prompt_health.acks(db), numbers=numbers),
+            "new": prompt_health.new_findings(run, previous)}
+
+
+@router.get("/admin/prompt-health/problems")
+def prompt_health_problems(current_user=Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    """History of every problem found, each with its unique number, open or resolved."""
+    return {"problems": prompt_health.problem_history(db)}
 
 
 @router.post("/admin/prompt-health/check-prompt")
@@ -225,7 +235,9 @@ def save_llm_settings(payload: LlmSettingsRequest, current_user=Depends(auth.get
 @router.get("/admin/prompt-health/llm")
 def llm_findings(current_user=Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     """Cached contradictions still present in the current texts. Never calls the model."""
-    return {"findings": prompt_health.with_acks(prompt_health_llm.current_findings(db), prompt_health.acks(db))}
+    findings = prompt_health_llm.current_findings(db)
+    numbers = prompt_health.track_problems(db, findings, "llm")
+    return {"findings": prompt_health.with_acks(findings, prompt_health.acks(db), numbers)}
 
 
 @router.post("/admin/prompt-health/llm/estimate")
@@ -244,7 +256,8 @@ def llm_run(payload: LlmRunRequest, current_user=Depends(auth.get_current_active
         result = prompt_health_llm.run(db, _prompt_ids(payload.prompt_ids), payload.language)
     except prompt_health_llm.NotConfigured as exc:
         raise _not_configured() from exc
-    result["findings"] = prompt_health.with_acks(result["findings"], prompt_health.acks(db))
+    numbers = prompt_health.track_problems(db, result["findings"], "llm")
+    result["findings"] = prompt_health.with_acks(result["findings"], prompt_health.acks(db), numbers)
     return result
 
 

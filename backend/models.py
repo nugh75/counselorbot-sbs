@@ -1921,6 +1921,26 @@ class PromptHealthAck(Base):
     created_at = Column(UTCDateTime, server_default=func.now())
 
 
+class PromptHealthProblem(Base):
+    """History of every prompt health problem ever found, with a unique number that is never reused.
+
+    A problem is a finding id: it reopens with the same number when it comes back.
+    `resolved_at` is set when a complete check of its source no longer reports it.
+    """
+
+    __tablename__ = "prompt_health_problems"
+
+    number = Column(Integer, primary_key=True, autoincrement=True)
+    finding_id = Column(String, nullable=False, unique=True, index=True)
+    source = Column(String, nullable=False)  # static | llm
+    code = Column(String, nullable=False)
+    severity = Column(String, nullable=False)
+    finding = Column(JSON, nullable=False)  # last snapshot: prompts, sentences, surfaces, params
+    first_seen_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
+    last_seen_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
+    resolved_at = Column(UTCDateTime, nullable=True, index=True)
+
+
 class PromptHealthLlmResult(Base):
     """Contradictions a model found in one assembled request (#763), cached by
     the hash of check version, model, language and request text."""

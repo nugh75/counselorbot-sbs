@@ -19,6 +19,7 @@ import {
 } from '@/lib/prompt-health';
 import { cn } from '@/lib/utils';
 import { FindingCard } from './PromptHealthFinding';
+import { PromptHealthHistory } from './PromptHealthHistory';
 import { usePromptName, useSurfaceName } from './PromptHealthLabels';
 
 const STATUS: Record<PromptCellStatus, { icon: typeof CheckCircle2; className: string }> = {
@@ -131,6 +132,7 @@ export function PromptHealthPage() {
     const [compare, setCompare] = useState<CompareRequest | null>(null);
     const [llmFindings, setLlmFindings] = useState<PromptHealthFinding[]>([]);
     const [showAcked, setShowAcked] = useState(false);
+    const [showHistory, setShowHistory] = useState(false);
     const [filter, setFilter] = useState<'all' | 'code' | 'prompts'>('all');
     const name = usePromptName(paths);
 
@@ -243,6 +245,10 @@ export function PromptHealthPage() {
             </div>
         </details>
 
+        <details className="rounded-card border border-line bg-surface p-6" onToggle={event => setShowHistory(event.currentTarget.open)}>
+            <summary className="cursor-pointer text-lg font-semibold text-ink-strong">{t('admin.promptHealth.history.title')}</summary>
+            {showHistory && <div className="mt-4"><PromptHealthHistory /></div>}
+        </details>
         <details className="rounded-card border border-line bg-surface p-6">
             <summary className="cursor-pointer text-lg font-semibold text-ink-strong">{t('admin.promptHealth.llm.title')}</summary>
             <div className="mt-4"><PromptHealthLlm onFindings={setLlmFindings} /></div>

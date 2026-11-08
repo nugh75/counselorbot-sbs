@@ -439,3 +439,51 @@ if __name__ == "__main__":
         if name.startswith("test_"):
             fn()
             print("ok", name)
+
+
+# --- Problem history: unique numbers, never reused --------------------------------
+
+def _synthetic(ident, severity="medium"):
+    return {"id": ident, "code": "rule_conflict", "severity": severity, "prompts": ["guided_step:fixture"],
+            "surfaces": [], "sentences": [{"prompt": "guided_step:fixture", "text": f"Synthetic {ident}."}], "params": {}}
+
+
+def test_problem_history_numbers_each_problem_once_and_tracks_resolution():
+    db = _Session()
+    try:
+        db.query(models.PromptHealthProblem).delete()
+        db.commit()
+        first = prompt_health.track_problems(db, [_synthetic("hist-a"), _synthetic("hist-b")], "static")
+        assert sorted(first.values()) == [first["hist-a"], first["hist-a"] + 1]
+        llm = prompt_health.track_problems(db, [_synthetic("hist-llm", "high")], "llm")
+        # A complete static result without hist-b resolves it and leaves the other source alone.
+        again = prompt_health.track_problems(db, [_synthetic("hist-a", "high")], "static")
+        assert again == {"hist-a": first["hist-a"]}
+        rows = {row["id"]: row for row in prompt_health.problem_history(db, {})}
+        assert rows["hist-b"]["status"] == "resolved" and rows["hist-b"]["resolved_at"]
+        assert rows["hist-a"]["status"] == "open" and rows["hist-a"]["severity"] == "high"
+        assert rows["hist-llm"]["status"] == "open" and rows["hist-llm"]["number"] == llm["hist-llm"]
+        # A problem that comes back reopens with its own number; numbers are never reused.
+        back = prompt_health.track_problems(db, [_synthetic("hist-a"), _synthetic("hist-b"), _synthetic("hist-c")], "static")
+        assert back["hist-b"] == first["hist-b"] and back["hist-c"] > llm["hist-llm"]
+        history = prompt_health.problem_history(db, {})
+        assert [row["number"] for row in history] == sorted((row["number"] for row in history), reverse=True)
+        assert {row["id"]: row["status"] for row in history}["hist-b"] == "open"
+        assert history[0]["sentences"][0]["text"] == "Synthetic hist-c."
+        assert prompt_health.problem_numbers(db, ["hist-a", "unknown"]) == {"hist-a": first["hist-a"]}
+    finally:
+        db.query(models.PromptHealthProblem).delete()
+        db.commit()
+        db.close()
+
+
+def test_admin_api_numbers_findings_and_lists_the_history():
+    client = _client()
+    client.post("/admin/prompt-health/run")
+    run = client.get("/admin/prompt-health").json()["run"]
+    numbers = [finding["number"] for finding in run["findings"]]
+    assert numbers and all(isinstance(number, int) for number in numbers) and len(set(numbers)) == len(numbers)
+    assert client.get("/admin/prompt-health").json()["run"]["findings"][0]["number"] == numbers[0]
+    history = client.get("/admin/prompt-health/problems").json()["problems"]
+    listed = {row["number"]: row for row in history}
+    assert all(listed[number]["status"] == "open" and listed[number]["source"] == "static" for number in numbers)

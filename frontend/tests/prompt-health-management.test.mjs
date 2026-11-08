@@ -51,7 +51,7 @@ async function fixture({ width = 1440, lang = 'it', dark = false, clipboardFailu
         if (path === '/api/admin/prompt-health') {
             if (failLoad) return route.fulfill({ status: 503, json: { detail: 'synthetic failure' } });
             data = { run: { id: 1, created_at: '2026-11-08T10:00:00Z', current: true, counts: { total: 2 },
-                findings: [mixed, promptOnly, { ...promptOnly, id: '4444444444444444', ack: { note: 'Scelta concordata' } }] } };
+                findings: [{ ...mixed, number: 12 }, promptOnly, { ...promptOnly, id: '4444444444444444', ack: { note: 'Scelta concordata' } }] } };
         }
         if (path === '/api/admin/prompt-health/map') data = { paths: [{ instrument: 'QSA', steps: [
             { id: 'sl-social', label: 'Collaborazione', label_i18n: { en: 'Collaboration' }, prompts: ['guided_step:sl-social'], surfaces: ['QSA · sl-social · entry'] },
@@ -66,6 +66,10 @@ async function fixture({ width = 1440, lang = 'it', dark = false, clipboardFailu
             ] } },
         ] } : codeOnly] };
         if (path === '/api/admin/prompt-health/llm/settings') data = { provider: 'openrouter', model: 'test/fixture', configured: true, providers: ['openrouter'], max_calls_per_run: 20 };
+        if (path === '/api/admin/prompt-health/problems') data = { problems: [
+            { ...promptOnly, id: '5555555555555555', number: 13, source: 'static', status: 'resolved', first_seen_at: '2026-11-01T10:00:00Z', last_seen_at: '2026-11-05T10:00:00Z', resolved_at: '2026-11-06T10:00:00Z' },
+            { ...mixed, number: 12, source: 'static', status: 'open', first_seen_at: '2026-11-01T10:00:00Z', last_seen_at: '2026-11-08T10:00:00Z', resolved_at: null },
+        ] };
         if (path === '/api/admin/models') data = { models: ['test/fixture'] };
         if (path === '/api/admin/prompt-health/usage') data = { days: 30, turns: 0, retention_days: 90, tracking_since: null, partial: false, prompts: [], steps: [], never_used: [] };
         if (path === '/api/admin/prompt-health/prompt') data = {
@@ -189,6 +193,29 @@ test('code origins show file, line and function beside each quote and in the cop
         const brief = await f.page.evaluate(() => window.fixtureClipboard);
         for (const value of ['CODICE DELL’APPLICAZIONE', 'backend/chat_logic.py:532', 'backend/prompts/guided_choice_directive.md:2', '_apply_global_directives', 'turn_contract']) assert.ok(brief.includes(value), value);
         assert.ok(!brief.includes('origine precisa non è ancora identificata'));
+        assert.deepEqual(f.writes, []);
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+
+test('each problem shows its unique number and the history keeps resolved problems', async () => {
+    const f = await fixture();
+    try {
+        const issue = f.page.locator('details[name="prompt-health-open"]').filter({ hasText: /Problema n\.\s12\b/ });
+        await issue.waitFor();
+        assert.equal(await issue.count(), 1);
+        await f.page.getByText('Storico dei problemi', { exact: true }).click();
+        const history = f.page.getByRole('list', { name: 'Storico dei problemi' });
+        await history.waitFor();
+        const items = history.locator(':scope > li');
+        assert.equal(await items.count(), 2);
+        assert.match(await items.nth(0).innerText(), /Problema n\. 13[\s\S]*Non più rilevato il/);
+        assert.match(await items.nth(1).innerText(), /Problema n\. 12[\s\S]*Aperto/);
+        await issue.locator(':scope > summary').click();
+        await issue.getByText('Prepara un intervento nel codice', { exact: true }).click();
+        await issue.getByRole('button', { name: 'Copia per un agente di sviluppo', exact: true }).click();
+        assert.ok((await f.page.evaluate(() => window.fixtureClipboard)).includes('Problem #12 · ID: 1111111111111111'));
         assert.deepEqual(f.writes, []);
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
