@@ -323,6 +323,12 @@ def _source(quote: str, texts: dict[str, str]) -> str:
     return REQUEST_PROMPT
 
 
+def _also_in(quote: str, source: str, texts: dict[str, str]) -> list[str]:
+    """Other saved prompts that contain the same sentence: shared blocks reach several prompts,
+    so the first match alone can point the owner at the wrong one."""
+    return [pid for pid in sorted(texts) if pid != source and texts[pid] and _in_text(quote, texts[pid])]
+
+
 def current_findings(db: Session, texts: dict[str, str] | None = None) -> list[dict]:
     """Cached contradictions still present in the current texts, merged across turns.
 
@@ -365,6 +371,10 @@ def current_findings(db: Session, texts: dict[str, str] | None = None) -> list[d
             kept = merged.setdefault(finding["id"], {**finding, "params": {**finding["params"], "explanation": item["explanation"]}})
             kept["surfaces"].extend(s for s in surfaces if s not in kept["surfaces"])
     findings = sorted(merged.values(), key=prompt_health._sort_key)
+    for finding in findings:
+        for sentence in finding["sentences"]:
+            if sentence["prompt"] != REQUEST_PROMPT:
+                sentence["also_in"] = _also_in(sentence["text"], sentence["prompt"], texts)
     return prompt_health.annotate(findings, texts)
 
 

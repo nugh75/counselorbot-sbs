@@ -110,6 +110,9 @@ export function FindingCard({ finding, paths, group, onCompare, onChanged }: {
                             : <p className="text-xs font-semibold text-ink-muted">{t('admin.promptHealth.source.editable')}</p>}
                         <p className="break-words underline decoration-danger decoration-wavy underline-offset-4">«{sentence.text}»</p>
                         {sentence.prompt.startsWith('code:') && <CodeReferences sentence={sentence} />}
+                        {sentence.also_in && sentence.also_in.length > 0 && <p className="break-words text-xs text-ink-muted">
+                            <span className="font-semibold">{t('admin.promptHealth.reference.alsoIn')}:</span> {sentence.also_in.map(name).join('; ')}
+                        </p>}
                     </blockquote>)}
                 </div>}
                 <p className="text-sm text-ink-body"><span className="font-semibold">{t('admin.promptHealth.fix')}:</span> {t(`admin.promptHealth.fix.${finding.code}`)}</p>

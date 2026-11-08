@@ -421,3 +421,23 @@ def test_admin_api_can_choose_the_active_subscription_without_an_api_key(db, act
     estimate = client.post("/admin/prompt-health/llm/estimate", json={}).json()
     assert estimate["billing"] == "subscription" and estimate["cost_usd"] is None
     assert client.put("/admin/prompt-health/llm/settings", json={"provider": prompt_health_llm.CHATGPT_PROVIDER, "model": "gpt-another-account"}).status_code == 409
+
+
+def test_a_sentence_shared_by_several_prompts_lists_all_of_them(db, fake, custom_step):
+    """Problem #4: a shared block was attributed to the first prompt in alphabetical order only."""
+    prompt_health_llm.save_settings(db, "openrouter", "test/cheap-model")
+    prompt_health_llm.run(db, [STEP])
+    other = db.query(models.GuidedStep).filter(models.GuidedStep.id == "intro").first()
+    before = other.prompt
+    try:
+        other.prompt = f"{before}\n{QUOTE_B}"
+        db.commit()
+        finding = prompt_health_llm.current_findings(db)[0]
+        shared = next(s for s in finding["sentences"] if s["text"] == QUOTE_B)
+        assert shared["prompt"] == STEP and shared["also_in"] == ["guided_step:intro"]
+        assert all(s["also_in"] == [] for s in finding["sentences"] if s["text"] != QUOTE_B)
+    finally:
+        db.rollback()
+        other = db.query(models.GuidedStep).filter(models.GuidedStep.id == "intro").first()
+        other.prompt = before
+        db.commit()

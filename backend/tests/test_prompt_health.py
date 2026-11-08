@@ -523,3 +523,11 @@ def test_retired_factory_steps_are_not_part_of_the_checked_path():
         db.query(models.GuidedStep).filter(models.GuidedStep.id.in_(ids)).delete(synchronize_session=False)
         db.commit()
         db.close()
+
+
+def test_second_level_hypothesis_does_not_require_a_combination_in_single_factor_steps():
+    """Problem #4: [SECOND-LEVEL METHOD] asked for a combination where [FACTOR INTERPLAY] forbids one."""
+    from backend.prompt_config import SECOND_LEVEL_METHOD_TEXT
+    assert "emerges from the combination of these factors" not in SECOND_LEVEL_METHOD_TEXT
+    assert "from their combination only when the step has two or more factors" in SECOND_LEVEL_METHOD_TEXT
+    assert "in a single-factor step" in SECOND_LEVEL_METHOD_TEXT and "without inventing relationships" in SECOND_LEVEL_METHOD_TEXT
