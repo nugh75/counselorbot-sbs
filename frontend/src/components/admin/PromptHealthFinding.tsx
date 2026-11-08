@@ -92,6 +92,7 @@ export function FindingCard({ finding, paths, group, onCompare, onChanged }: {
     return <li className="rounded-control border border-line bg-surface p-4">
         <details name={group}>
             <summary className="cursor-pointer space-y-1 text-sm text-ink-body">
+                {finding.number && <><span className="font-mono font-semibold text-ink-strong">{t('admin.promptHealth.problem.number', { number: finding.number })}</span>{' · '}</>}
                 <span className={cn('font-semibold', SEVERITY_TEXT[finding.severity])}>{t(`admin.promptHealth.severity.${finding.severity}`)}</span>
                 {' · '}<span className="font-semibold">{message(finding)}</span>
                 <span className="mt-1 block text-xs text-ink-muted">{t(code ? 'admin.promptHealth.resolve.hasCode' : 'admin.promptHealth.resolve.promptsOnly')}</span>
