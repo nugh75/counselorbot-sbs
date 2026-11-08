@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Check, GitCompare, Plus, RefreshCw, RotateCcw, Save, Sparkles, X } from 'lucide-react';
+import { Check, GitCompare, RefreshCw, RotateCcw, Save, Sparkles, X } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { Button } from '@/components/ui/Button';
@@ -313,7 +313,6 @@ export function PromptCompare({ initial, focus, propose = false, llmFindings = [
     const [assembled, setAssembled] = useState<string | null>(null);
     const [checking, setChecking] = useState(false);
     const [checkError, setCheckError] = useState(false);
-    const [toAdd, setToAdd] = useState('');
     const [recheck, setRecheck] = useState(0);
     const request = useRef<AbortController | null>(null);
     const message = useFindingMessage();
@@ -404,12 +403,21 @@ export function PromptCompare({ initial, focus, propose = false, llmFindings = [
         void requestProposal(finding);
     }, [propose, focus, loaded, allFindings, requestProposal]);
 
-    const add = () => {
-        const id = toAdd.trim();
+    // Two or three prompts, chosen from the known list: no free-text ids.
+    const add = (id: string) => {
         if (!id || panels.length >= 3 || panels.some(panel => panel.id === id)) return;
         setPanels(current => [...current, { id, card: null, draft: '' }]);
-        setToAdd('');
     };
+    const choices = useMemo(() => {
+        const groups: Record<'guided' | 'config' | 'code', { id: string; label: string }[]> = { guided: [], config: [], code: [] };
+        for (const id of knownPrompts) {
+            if (panels.some(panel => panel.id === id)) continue;
+            const group = id.startsWith('guided_step:') ? 'guided' : id.startsWith('code:') ? 'code' : 'config';
+            groups[group].push({ id, label: name(id) });
+        }
+        for (const list of Object.values(groups)) list.sort((a, b) => a.label.localeCompare(b.label));
+        return groups;
+    }, [knownPrompts, panels, name]);
 
     const savedCard = (card: PromptCard, fresh?: PromptHealthFinding[]) => {
         setPanels(current => current.map(item => item.id === card.id ? { ...item, card, draft: card.text ?? '' } : item));
@@ -440,15 +448,14 @@ export function PromptCompare({ initial, focus, propose = false, llmFindings = [
             </div>
             <div className="space-y-1">
                 <label htmlFor={addId} className="text-sm font-semibold text-ink-body">{t('admin.promptHealth.compare.add')}</label>
-                <div className="flex gap-2">
-                    <input id={addId} list={`${addId}-list`} value={toAdd} onChange={event => setToAdd(event.target.value)}
-                        disabled={panels.length >= 3} placeholder={t('admin.promptHealth.compare.addPlaceholder')}
-                        className="min-h-control min-w-0 flex-1 rounded-control border border-line bg-surface px-3 font-mono text-sm text-ink-body" />
-                    <datalist id={`${addId}-list`}>{knownPrompts.map(id => <option key={id} value={id}>{name(id)}</option>)}</datalist>
-                    <Button type="button" variant="secondary" onClick={add} disabled={panels.length >= 3 || !toAdd.trim()}>
-                        <Plus className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.compare.addButton')}
-                    </Button>
-                </div>
+                <select id={addId} value="" onChange={event => add(event.target.value)} disabled={panels.length >= 3}
+                    className="min-h-control w-full rounded-control border border-line bg-surface px-3 text-sm text-ink-body">
+                    <option value="">{t('admin.promptHealth.compare.addPlaceholder')}</option>
+                    {(['guided', 'config', 'code'] as const).filter(group => choices[group].length).map(group =>
+                        <optgroup key={group} label={t(`admin.promptHealth.compare.group.${group}`)}>
+                            {choices[group].map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                        </optgroup>)}
+                </select>
                 {panels.length >= 3 && <p className="text-xs text-ink-muted">{t('admin.promptHealth.compare.max')}</p>}
             </div>
         </div>
@@ -469,6 +476,7 @@ export function PromptCompare({ initial, focus, propose = false, llmFindings = [
         </div>
 
         {panels.length === 0 && <Callout variant="info">{t('admin.promptHealth.compare.empty')}</Callout>}
+        {panels.length === 1 && <Callout variant="info">{t('admin.promptHealth.compare.min')}</Callout>}
         <div className={cn('grid gap-4', panels.length === 2 && 'lg:grid-cols-2', panels.length === 3 && 'lg:grid-cols-2 xl:grid-cols-3')}>
             {panels.map(panel => <ComparePanel key={panel.id} panel={panel} paths={paths} checking={checking} focus={focus}
                 findings={allFindings.filter(finding => finding.prompts.includes(panel.id))}

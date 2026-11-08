@@ -220,3 +220,25 @@ test('each problem shows its unique number and the history keeps resolved proble
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
 });
+
+test('prompts to compare are picked from a dropdown, two or three at a time', async () => {
+    const f = await fixture();
+    try {
+        const issue = f.page.locator('details[name="prompt-health-open"]').first();
+        await issue.locator(':scope > summary').click();
+        await issue.getByRole('button', { name: 'Esamina e correggi il prompt', exact: true }).click();
+        const editor = f.page.locator('#prompt-health-compare');
+        await editor.getByRole('heading', { name: 'QSA · Collaborazione', exact: true }).waitFor();
+        const picker = editor.getByRole('combobox', { name: 'Aggiungi un prompt', exact: true });
+        assert.equal(await editor.getByRole('textbox', { name: 'Aggiungi un prompt', exact: true }).count(), 0);
+        const panels = await editor.getByRole('heading', { level: 3 }).count();
+        if (panels < 2) await editor.getByText('il confronto è tra due o tre prompt', { exact: false }).waitFor();
+        assert.equal(await picker.locator('optgroup[label="Passi guidati"] option', { hasText: 'QSA · Presentazione' }).count(), 1);
+        assert.equal(await picker.locator('option', { hasText: 'QSA · Collaborazione' }).count(), 0, 'prompts already open are not offered');
+        await picker.selectOption('guided_step:sl-intro');
+        await editor.getByRole('heading', { name: 'QSA · Presentazione', exact: true }).waitFor();
+        assert.equal(await editor.getByText('il confronto è tra due o tre prompt', { exact: false }).count(), 0);
+        assert.equal(await picker.inputValue(), '');
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
