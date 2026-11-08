@@ -561,3 +561,11 @@ def test_savickas_intro_names_its_questions_and_synthesis_in_english():
         assert "five questions, followed by a closing synthesis and action plan" in text
     for italian in ("non è", "senza giudizio", "risposte giuste", "ti faccio domande"):
         assert italian not in _SAVICKAS_INTRO_FLOW
+
+
+def test_intro_invitation_never_adds_a_second_question():
+    """Problem #3: "at most ONE question" vs an invitation to start that could become a second one."""
+    from backend.prompt_config import ALL_CONFIG_TEXT_DEFINITIONS
+    intro = {item["key"]: item["default"] for item in ALL_CONFIG_TEXT_DEFINITIONS}["prompt_intro"]
+    assert "phrased as a statement and not as a question" in intro
+    assert "the invitation must not add another" in intro
