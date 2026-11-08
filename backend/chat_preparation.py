@@ -768,11 +768,16 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     open_request_items = []
     if not free_chat and "[STUDENT REQUESTS]" not in system_prompt_final:
         # Every guided turn logs the student's requests; the final step takes up the open ones.
-        if is_synthesis:
+        is_strategies_step = step_mode == STRATEGIES_STEP_MODE
+        # Synthesis takes up what it can answer; strategy requests wait for «Strategie e consigli».
+        advice_step_label = (_strategies_step_label(db, questionnaire_type, request.language or "it")
+                             if is_synthesis and not is_strategies_step else None)
+        if is_synthesis or is_strategies_step:
             open_request_items = _recommendation_service.open_requests(
                 db, session_id=session_id, username=identity.get("username", ""))
         system_prompt_final += recommendation_blocks.requests_directive(
-            open_requests=open_request_items, idea=questionnaire_type == IDEA_INSTRUMENT)
+            open_requests=open_request_items, idea=questionnaire_type == IDEA_INSTRUMENT,
+            advice_step_label=advice_step_label)
     if descriptive:
         # Last phase instruction also governs DB depth texts and essential directives.
         system_prompt_final += "\n\n" + contract

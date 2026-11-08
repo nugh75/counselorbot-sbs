@@ -139,6 +139,43 @@ def test_student_manages_own_list_and_final_step_takes_up_open_requests(monkeypa
         _cleanup(sid)
 
 
+def test_strategy_requests_stay_open_after_synthesis_and_reach_the_strategies_step(monkeypatch):
+    # In paths with «Strategie e consigli», synthesis cannot give strategies:
+    # it leaves strategy requests open and the strategies step takes them up.
+    sid = 'requests-strategies'
+    from backend import chat_preparation
+    monkeypatch.setattr(chat_preparation, '_strategies_step_label', lambda *_: 'Strategie e consigli')
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    try:
+        client.post(f'/session/{sid}/requests', json={'text': 'Mi dai una strategia per concentrarmi?'})
+        prompts = []
+        _capture_ai(monkeypatch, 'Sintesi del percorso.\n```recommendations\n{"requests": []}\n```', prompts)
+        response = client.post('/chat', json={
+            'session_id': sid, 'message': 'Facciamo la sintesi.', 'mode': 'factor-qa', 'phase': 'sl-synthesis',
+            'questionnaire_type': 'QSA', 'language': 'it',
+        })
+        assert response.status_code == 200, response.text
+        synthesis = next(prompt for prompt in prompts if '[REQUESTS TO REVISIT]' in prompt)
+        assert 'belong to the «Strategie e consigli» step that follows' in synthesis
+        assert response.json()['recommendations']['request'][0]['status'] == 'proposed'
+
+        prompts.clear()
+        raw = 'Ecco una strategia per la concentrazione.\n```recommendations\n{"discussed": ["R1"]}\n```'
+        _capture_ai(monkeypatch, raw, prompts)
+        response = client.post('/chat', json={
+            'session_id': sid, 'message': 'Passiamo alle strategie.', 'mode': 'strategies', 'phase': 'sl-strategies',
+            'questionnaire_type': 'QSA', 'language': 'it',
+        })
+        assert response.status_code == 200, response.text
+        final = next(prompt for prompt in prompts if '[REQUESTS TO REVISIT]' in prompt)
+        assert 'R1: "Mi dai una strategia per concentrarmi?"' in final
+        assert 'belong to the' not in final
+        item = response.json()['recommendations']['request'][0]
+        assert item['status'] == 'closed' and item['closed_by'] == 'conversation'
+    finally:
+        _cleanup(sid)
+
+
 def test_requests_of_another_student_are_never_listed_or_changed():
     sid = 'requests-owner'
     from backend import recommendation_service
