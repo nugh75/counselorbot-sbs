@@ -711,6 +711,7 @@ def turn_map(db: Session) -> list[dict]:
     for step in db.query(models.GuidedStep).order_by(models.GuidedStep.sort_order, models.GuidedStep.id).all():
         by_instrument[step.questionnaire_type].append({
             "id": step.id, "label": step.label or step.id,
+            "label_i18n": step.label_i18n or {},
             "prompts": _surface_prompt_ids(step, config_keys),
             "surfaces": [f"{step.questionnaire_type} · {step.id} · {mode}" for mode in ("entry", "follow_up", "advice")],
         })

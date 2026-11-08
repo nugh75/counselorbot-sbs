@@ -3,7 +3,7 @@
 ## Stato
 - Agente s1-prompt-health; task Diario 80b9b6f3-9580-421f-816f-e792224ce133.
 - Worktree dedicato; branch feature/prompt-health-management, partito allineato a origin/main.
-- Implementazione e verifiche complete; preparazione commit separati, push e PR senza merge.
+- Backend committato: 1516918c; UI e documentazione pronte per il secondo commit, poi push e PR.
 
 ## Fatto
 - Scope approvato: problemi prima degli strumenti; modifica del prompt o del codice.
@@ -32,7 +32,7 @@
   2e5a5441-a078-4cb3-8f95-0a8ae4e165e4 (consumer); sync not-linked, nessuna issue creata a mano.
 - Fuori scope: default Docker Python 3.10 incompatibile con datetime.UTC; bug LOCAL
   efc2ea65-2cb3-4502-9511-999bb8d7a87b confermato. Per i test usato build arg Python 3.12.
-- Container S1 frontend su 127.0.0.1:3186 e PostgreSQL di test da fermare prima della consegna.
+- Container S1 frontend e PostgreSQL fermati; nessun processo di sviluppo lasciato attivo.
 
 ## Bug non registrati
 - Nessuno; i tentativi con task già associato sono stati ripetuti senza quel collegamento.

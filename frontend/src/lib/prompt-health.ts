@@ -30,6 +30,26 @@ export interface PromptHealthFinding {
     editable?: string[];
     factory?: string[];
     ack?: PromptHealthAck | null;
+    sources?: { id: string; kind: string; consumer: string | null; factory_source: string | null }[];
+}
+
+/** Code is an actual request fragment, not simply an unchanged factory prompt. */
+export function hasCodeSource(finding: PromptHealthFinding): boolean {
+    return [...finding.prompts, ...finding.sentences.map(sentence => sentence.prompt)].some(id => id.startsWith('code:'));
+}
+
+/** Explicit evidence for a human to review before handing it to a coding agent. */
+export function findingBrief(finding: PromptHealthFinding, message: string): string {
+    return [
+        message, `ID: ${finding.id} · ${finding.code} · ${finding.severity}`,
+        '', ...finding.sentences.map(sentence => `[${sentence.prompt}]\n${sentence.text}`),
+        '', ...finding.prompts.map(id => `Prompt: ${id}`),
+        ...finding.surfaces.map(surface => `Turn: ${surface}`),
+        ...(finding.sources ?? []).flatMap(source => [
+            source.consumer ? `Consumer [${source.id}]: ${source.consumer}` : '',
+            source.factory_source ? `Factory [${source.id}]: ${source.factory_source}` : '',
+        ]).filter(Boolean),
+    ].join('\n');
 }
 
 export interface PromptHealthRun {

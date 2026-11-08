@@ -644,3 +644,15 @@ poi `docker run --name counselorbot-s12-frontend-test -e BACKEND_ORIGIN=http://1
 Usare le stesse suite con API simulate; nessun volume o DB applicativo collegato.
 Arresto: `docker stop counselorbot-s12-frontend-test`. Il tag e il container sono
 riservati alle verifiche e non sostituiscono i servizi di produzione.
+
+
+## Salute dei prompt — fixture S1 su 3186
+
+- Avvio con Node 22 e dipendenze frontend installate: `bash scripts/dev-prompt-health-tests.sh`.
+- Il frontend ascolta su `127.0.0.1:3186`; il backend punta a `http://127.0.0.1:9` e non viene avviato.
+- URL di prova: `http://127.0.0.1:3186/admin?tab=promptHealth`. Nessun database o file `.env`: autenticazione e API vengono sostituite dal test browser con dati sintetici. La pagina aperta fuori dal test non dispone di un backend.
+- Test: `cd frontend && node --test tests/prompt-health-management.test.mjs`; `PROMPT_HEALTH_BASE_URL` permette di cambiare origine e `PROMPT_HEALTH_SCREENSHOT_DIR` abilita screenshot sintetici.
+- Copertura: telefono/desktop e tema scuro, conteggio unico, filtri, origine codice/prompt, confronto, copia del riepilogo e ripiego manuale, inglese ed errore di caricamento. Nessuna chiamata a modelli reali.
+- Su SSH: `ssh -N -L 3186:127.0.0.1:3186 <utente>@<server>`, poi `http://localhost:3186`.
+- Arresto dello script: Ctrl-C nel terminale che lo esegue. Per i container S1: `docker stop counselorbot-s1-prompt-health-frontend counselorbot-s1-prompt-health-postgres`.
+- Build backend di verifica: `docker build --build-arg PYTHON_BASE_IMAGE=python:3.12-slim -f backend/Dockerfile -t counselorbot-s1-prompt-health-backend:test .`. Il default Python 3.10 non supporta l’importazione preesistente di `datetime.UTC`; non usare immagini o dati di produzione.
