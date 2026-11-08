@@ -6,6 +6,7 @@ what other suites leave in `counselorbot_test`. No model is called.
 
     python -m pytest backend/tests/test_prompt_health.py
 """
+import contextlib
 import os
 
 os.environ.setdefault("COUNSELOR_TRANSLATE_DISABLED", "1")
@@ -35,9 +36,7 @@ INSTRUMENTS = (
 
 # Findings on the factory texts of today's main, reviewed in PR #760. The list
 # can only shrink: fix the prompt, then remove its line.
-KNOWN_BASELINE = {
-    ("number_mismatch", ("guided_step:savickas-intro",)),
-}
+KNOWN_BASELINE: set = set()
 
 
 def test_code_prompt_card_and_cached_findings_have_real_repository_references():
@@ -389,7 +388,23 @@ def test_turn_map_lists_steps_with_their_prompts_and_turns():
                                 "QSA · sl-elaboration · advice"]
 
 
+@contextlib.contextmanager
+def _synthetic_finding():
+    """The factory texts have no findings left: an unregistered prompt gives the API tests one."""
+    db = _Session()
+    try:
+        with _Edit(db, "config", "prompt_custom_unregistered", "Say hello."):
+            yield
+    finally:
+        db.close()
+
+
 def test_admin_api_compare_actions():
+    with _synthetic_finding():
+        _compare_actions()
+
+
+def _compare_actions():
     client = _client()
     run = client.post("/admin/prompt-health/run").json()["run"]
     finding = run["findings"][0]
@@ -408,7 +423,7 @@ def test_admin_api_compare_actions():
     # Prompt card: text, factory text, findings, turns where it arrives.
     card = client.get("/admin/prompt-health/prompt", params={"id": "guided_step:savickas-intro"}).json()
     assert card["text"] == card["factory"] and card["differs_from_factory"] is False
-    assert any(f["code"] == "number_mismatch" for f in card["findings"])
+    assert card["findings"] == []  # problem #2 fixed: the intro no longer states a wrong step count
     assert card["surfaces"] and card["editable"] is True
 
     # Draft evaluation, save (warn only) and restore of the factory text.
@@ -476,6 +491,11 @@ def test_problem_history_numbers_each_problem_once_and_tracks_resolution():
 
 
 def test_admin_api_numbers_findings_and_lists_the_history():
+    with _synthetic_finding():
+        _numbers_and_history()
+
+
+def _numbers_and_history():
     client = _client()
     client.post("/admin/prompt-health/run")
     run = client.get("/admin/prompt-health").json()["run"]
@@ -531,3 +551,13 @@ def test_second_level_hypothesis_does_not_require_a_combination_in_single_factor
     assert "emerges from the combination of these factors" not in SECOND_LEVEL_METHOD_TEXT
     assert "from their combination only when the step has two or more factors" in SECOND_LEVEL_METHOD_TEXT
     assert "in a single-factor step" in SECOND_LEVEL_METHOD_TEXT and "without inventing relationships" in SECOND_LEVEL_METHOD_TEXT
+
+
+def test_savickas_intro_names_its_questions_and_synthesis_in_english():
+    """Problem #2: "in five steps" against six numbered steps plus the agreement."""
+    from backend.prompt_config import _SAVICKAS_INTRO_FLOW, DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTRO, SAVICKAS_INTRO_STEP_PROMPT
+    for text in (DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTRO, SAVICKAS_INTRO_STEP_PROMPT):
+        assert "in five steps" not in text
+        assert "five questions, followed by a closing synthesis and action plan" in text
+    for italian in ("non è", "senza giudizio", "risposte giuste", "ti faccio domande"):
+        assert italian not in _SAVICKAS_INTRO_FLOW

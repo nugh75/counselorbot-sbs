@@ -129,7 +129,7 @@ this turn must do. Do that; do not run the whole path.
 - `id` never changes and is never reused. Re-adding an id updates that node.
 
 ```idea
-{"add_nodes":[{"id":"t1","label":"Non so se ho tempo","role":"constraint","status":"mentioned"}],
+{"add_nodes":[{"id":"t1","label":"I am not sure I have time","role":"constraint","status":"mentioned"}],
  "add_edges":[{"source":"t1","target":"idea","kind":"weakens"}],
  "update":[{"id":"idea","status":"defined"}]}
 ```

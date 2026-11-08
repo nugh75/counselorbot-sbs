@@ -5,8 +5,8 @@ Verifies:
 2. Feature flag enabled: turn_contract injects [FACILITATION] instead of [SELF-QUESTIONING].
 3. Pedagogical invariants:
    - Metacognitive questioning on choices, actions, and consequences.
-   - Elimination of ceremonial pleasantries ('Grazie per aver condiviso', 'Capisco', 'Certo.').
-   - Elimination of situational anecdotes / temporal fragmentation ('qual è il momento in cui', 'momento recente').
+   - Elimination of ceremonial pleasantries ('Thank you for sharing', 'I understand', 'Sure.').
+   - Elimination of situational anecdotes / temporal fragmentation ('when is the moment', 'recent moment').
    - Flexible depth based on 3 understanding conditions, not a rigid turn count.
    - Two-level value-check (continuous internal check, explicit check only at key junctures).
    - Never forcing insight: readings as open hypotheses the student can confirm, correct, or reject.
@@ -93,11 +93,11 @@ def test_facilitation_contract_pedagogical_invariants_across_stages():
 
         # No ceremonial pleasantries, therapeutic clichés or meta-disclaimers
         assert "never use ceremonial pleasantries" in contract.lower()
-        assert "grazie per aver condiviso" in contract.lower()
-        assert "certo." in contract.lower()
-        assert "è un'ipotesi, non una verità" in contract.lower()
-        assert "senza giudizio" in contract.lower()
-        assert "non è una diagnosi" in contract.lower()
+        assert "thank you for sharing" in contract.lower()
+        assert "sure." in contract.lower()
+        assert "it is a hypothesis, not a truth" in contract.lower()
+        assert "without judgement" in contract.lower()
+        assert "this is not a diagnosis" in contract.lower()
         assert "step 0" in contract.lower()
 
         # Never force insight
@@ -118,13 +118,13 @@ def test_area_stage_focuses_on_choices_actions_and_consequences_not_anecdotes():
 
     # Inquires into actions, choices, consequences
     assert "choices, actions and consequences" in contract.lower()
-    assert "che cosa fai di solito" in contract.lower()
-    assert "conseguenze" in contract.lower()
+    assert "what do you usually do" in contract.lower()
+    assert "consequences does this way of proceeding" in contract.lower()
 
     # Rejects temporal/situational fragmentation
     assert "do not ask temporal-situational questions" in contract.lower()
-    assert "qual è il momento" in contract.lower()
-    assert "momento recente" in contract.lower()
+    assert "when is the moment" in contract.lower()
+    assert "recent moment" in contract.lower()
 
     # 3 understanding conditions for flexible depth
     assert "depth of exploration depends on the understanding reached" in contract.lower()
@@ -200,3 +200,13 @@ def test_journey_context_preserves_hypotheses_rule():
     assert any("Preserve the counselor's readings and the student's response to each" in p for p in captured_prompts)
     assert any("Never present a rejected reading as agreed." in p for p in captured_prompts)
 
+
+
+def test_contract_examples_are_written_in_english():
+    """Every model instruction is English, examples included (owner rule, Nov 2026)."""
+    from backend.prompt_contract import turn_contract
+    contract = turn_contract(language="it", questionnaire_type="QSA", phase="sl-social", advice_allowed=False,
+                             facilitation_contract_enabled=True)
+    for italian in ("senza giudizio", "non è", "quanto vali", "risposte giuste", "ipotesi", "Grazie", "qual è"):
+        assert italian not in contract, italian
+    assert "in any language" in contract
