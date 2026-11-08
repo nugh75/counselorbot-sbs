@@ -110,6 +110,7 @@ def db():
         session.rollback()
         session.query(models.PromptHealthLlmResult).delete()
         session.query(models.Config).filter(models.Config.key.in_(prompt_health_llm.SETTING_KEYS)).delete()
+        session.query(models.Config).filter(models.Config.key.like("chatgpt_prompt_health_%")).delete(synchronize_session=False)
         session.commit()
         session.close()
 
@@ -323,3 +324,100 @@ def test_saving_a_prompt_runs_the_check_only_when_a_model_is_chosen(db, fake, cu
 def test_startup_never_runs_the_llm_check():
     import inspect
     assert "prompt_health_llm" not in inspect.getsource(prompt_health.run_at_startup)
+
+
+def _bind_admin(db, username):
+    from backend.chatgpt_connections import bind_identity
+    bind_identity(db, {"authenticated": True, "username": username, "is_admin": True, "groups": ["admins"]})
+
+
+@pytest.fixture
+def active_plans(monkeypatch):
+    from backend import chatgpt_connections as accounts
+    plans = {"alice": "gpt-alice-plan", "bob": "gpt-bob-plan", "admin": "gpt-admin-plan"}
+    monkeypatch.setattr(accounts, "enabled", lambda _db=None: True)
+    monkeypatch.setattr(accounts, "preference", lambda db: plans.get(accounts.owner(db)))
+    return plans
+
+
+def test_chatgpt_selection_is_personal_and_does_not_replace_installation_apis(db, active_plans):
+    provider = prompt_health_llm.CHATGPT_PROVIDER
+    prompt_health_llm.save_settings(db, "openrouter", "test/system")
+    _bind_admin(db, "alice")
+    selected = prompt_health_llm.save_settings(db, provider, "gpt-alice-plan")
+    assert selected["configured"] and selected["billing"] == "subscription"
+    assert db.query(models.Config).filter_by(key=prompt_health_llm.SETTING_KEYS[0]).one().value == "openrouter"
+    key = prompt_health_llm._personal_key(db)
+    assert key.startswith("chatgpt_") and "alice" not in key
+
+    _bind_admin(db, "bob")
+    assert prompt_health_llm.settings(db)["provider"] == "openrouter"
+    with pytest.raises(prompt_health_llm.NotConfigured):
+        prompt_health_llm.save_settings(db, provider, "gpt-alice-plan")
+    prompt_health_llm.save_settings(db, provider, "gpt-bob-plan")
+    _bind_admin(db, "alice")
+    assert prompt_health_llm.settings(db)["model"] == "gpt-alice-plan"
+    # Personal model changes are followed without changing counseling preferences here.
+    active_plans["alice"] = "gpt-alice-new"
+    assert prompt_health_llm.settings(db)["model"] == "gpt-alice-new"
+    active_plans.pop("alice")
+    assert prompt_health_llm.settings(db)["configured"] is False
+    with pytest.raises(prompt_health_llm.NotConfigured):
+        prompt_health_llm.run(db)
+    prompt_health_llm.save_settings(db, "", "")
+    assert prompt_health_llm.settings(db)["configured"] is False
+    _bind_admin(db, "bob")
+    assert prompt_health_llm.settings(db)["model"] == "gpt-bob-plan"
+
+
+def test_explicit_api_check_does_not_inherit_personal_routing_and_chatgpt_never_falls_back(db, active_plans, monkeypatch):
+    from backend import ai_service, chatgpt_connections as accounts
+    constructed, calls = [], []
+
+    class Service:
+        def __init__(self, session, username=None):
+            constructed.append((accounts.owner(session), username))
+
+        def call_model(self, provider, model, *args, **kwargs):
+            calls.append((provider, model))
+            if provider == prompt_health_llm.CHATGPT_PROVIDER:
+                raise RuntimeError("synthetic subscription unavailable")
+            return "synthetic API result"
+
+    monkeypatch.setattr(ai_service, "AIService", Service)
+    _bind_admin(db, "alice")
+    assert prompt_health_llm._call_model(db, "openrouter", "test/system", "instructions", "text") == "synthetic API result"
+    assert constructed == [(None, None)] and accounts.owner(db) == "alice"
+    prompt_health_llm.save_settings(db, prompt_health_llm.CHATGPT_PROVIDER, "gpt-alice-plan")
+    with pytest.raises(RuntimeError):
+        prompt_health_llm._call_model(db, prompt_health_llm.CHATGPT_PROVIDER, "gpt-alice-plan", "instructions", "text")
+    assert constructed[-1] == ("alice", "alice")
+    assert calls == [("openrouter", "test/system"), (prompt_health_llm.CHATGPT_PROVIDER, "gpt-alice-plan")]
+
+
+def test_background_check_binds_only_the_prompt_editors_identity(db, active_plans, monkeypatch):
+    from backend import chatgpt_connections as accounts
+    _bind_admin(db, "alice")
+    prompt_health_llm.save_settings(db, prompt_health_llm.CHATGPT_PROVIDER, "gpt-alice-plan")
+    actors = []
+    def capture(session, ids):
+        actors.append((accounts.owner(session), prompt_health_llm.settings(session)["model"]))
+        return {"calls": 0, "failed": 0}
+    monkeypatch.setattr(prompt_health_llm, "run", capture)
+    identity = {"username": "alice", "authenticated": True, "is_admin": True, "groups": ["admins"]}
+    prompt_health_llm.run_after_change(_Session, STEP, identity)
+    prompt_health_llm.run_after_change(_Session, STEP, {**identity, "username": "bob"})
+    assert actors == [("alice", "gpt-alice-plan")]
+
+
+def test_admin_api_can_choose_the_active_subscription_without_an_api_key(db, active_plans, monkeypatch):
+    client = _client()
+    monkeypatch.setattr(prompt_health_llm, "available_providers", lambda session: [prompt_health_llm.CHATGPT_PROVIDER] if prompt_health_llm._chatgpt_choice(session)["available"] else [])
+    choice = client.get("/admin/prompt-health/llm/settings").json()
+    assert choice["chatgpt"]["available"] and choice["chatgpt"]["model"] == "gpt-admin-plan"
+    response = client.put("/admin/prompt-health/llm/settings", json={"provider": prompt_health_llm.CHATGPT_PROVIDER, "model": "gpt-admin-plan"})
+    assert response.status_code == 200 and response.json()["billing"] == "subscription"
+    monkeypatch.setattr(prompt_health_llm, "combinations", lambda *_args, **_kwargs: [])
+    estimate = client.post("/admin/prompt-health/llm/estimate", json={}).json()
+    assert estimate["billing"] == "subscription" and estimate["cost_usd"] is None
+    assert client.put("/admin/prompt-health/llm/settings", json={"provider": prompt_health_llm.CHATGPT_PROVIDER, "model": "gpt-another-account"}).status_code == 409

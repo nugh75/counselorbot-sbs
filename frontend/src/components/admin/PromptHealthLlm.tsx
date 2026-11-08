@@ -15,6 +15,7 @@ import {
 } from '@/lib/prompt-health';
 
 const SELECT_CLASS = 'min-h-control w-full rounded-control border border-line bg-surface px-3 text-sm text-ink-body';
+const CHATGPT_PROVIDER = 'openai_chatgpt';
 
 /**
  * Controllo con un modello (#763): il proprietario sceglie fornitore e modello
@@ -47,11 +48,12 @@ export function PromptHealthLlm({ onFindings }: { onFindings: (findings: PromptH
     const [modelsProvider, setModelsProvider] = useState(provider);
     if (modelsProvider !== provider) {
         setModelsProvider(provider);
-        if (provider) setModelsLoading(true);
+        if (provider && provider !== CHATGPT_PROVIDER) setModelsLoading(true);
+        else if (provider === CHATGPT_PROVIDER) setModelsLoading(false);
         else setModels([]);
     }
     useEffect(() => {
-        if (!provider) return;
+        if (!provider || provider === CHATGPT_PROVIDER) return;
         const controller = new AbortController();
         apiFetch(`/api/admin/models?provider=${encodeURIComponent(provider)}`, { signal: controller.signal })
             .then(response => (response.ok ? response.json() : { models: [] }))
@@ -110,36 +112,43 @@ export function PromptHealthLlm({ onFindings }: { onFindings: (findings: PromptH
 
     const changed = !!settings && (provider !== settings.provider || model !== settings.model);
     const cost = estimate ? estimateCost(estimate.cost_usd) : null;
+    const subscription = provider === CHATGPT_PROVIDER;
 
     return <Card as="section" aria-labelledby={titleId} className="space-y-3">
         <h2 id={titleId} className="text-lg font-semibold text-ink-strong">{t('admin.promptHealth.llm.title')}</h2>
         <p className="text-sm text-ink-muted">{t('admin.promptHealth.llm.help')}</p>
         {status === 'loadError' && <Callout variant="danger">{t('admin.promptHealth.loadError')}</Callout>}
-        {settings && settings.providers.length === 0 && <Callout variant="info">{t('admin.promptHealth.llm.noProviders')}</Callout>}
+        {settings && settings.providers.length === 0 && !subscription && <Callout variant="info">{t('admin.promptHealth.llm.noSources')}</Callout>}
         {settings && <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1">
                 <label htmlFor={providerId} className="text-sm font-semibold text-ink-body">{t('admin.promptHealth.llm.provider')}</label>
                 <select id={providerId} value={provider} className={SELECT_CLASS}
-                    onChange={event => { setProvider(event.target.value); setModel(''); }}>
+                    onChange={event => { setProvider(event.target.value); setModel(event.target.value === CHATGPT_PROVIDER ? settings.chatgpt?.model ?? '' : ''); }}>
                     <option value="">{t('admin.promptHealth.llm.providerNone')}</option>
-                    {settings.providers.map(name => <option key={name} value={name}>{name}</option>)}
+                    {[...new Set([...settings.providers, CHATGPT_PROVIDER])].map(name => <option key={name} value={name}>{name === CHATGPT_PROVIDER ? t('admin.promptHealth.llm.subscription') : name}</option>)}
                 </select>
             </div>
             <div className="space-y-1">
                 <label htmlFor="prompt_health_llm_model" className="text-sm font-semibold text-ink-body">{t('admin.promptHealth.llm.model')}</label>
-                <ModelSearchSelect key={provider} id="prompt_health_llm_model" models={models} value={model} onChange={setModel}
-                    disabled={!provider} loading={modelsLoading} emptyLabel={t('admin.promptHealth.llm.modelEmpty')} />
+                {subscription ? <input id="prompt_health_llm_model" value={model} readOnly className={SELECT_CLASS}
+                    placeholder={t('admin.promptHealth.llm.subscriptionModelMissing')} />
+                    : <ModelSearchSelect key={provider} id="prompt_health_llm_model" models={models} value={model} onChange={setModel}
+                        disabled={!provider} loading={modelsLoading} emptyLabel={t('admin.promptHealth.llm.modelEmpty')} />}
             </div>
         </div>}
-        {settings && <p className="text-xs text-ink-muted">{t('admin.promptHealth.llm.costHint')}</p>}
+        {settings && <p className="text-xs text-ink-muted">{t(subscription ? 'admin.promptHealth.llm.subscriptionHint' : 'admin.promptHealth.llm.costHint')}</p>}
+        {settings && subscription && <div className="space-y-2 text-sm text-ink-body">
+            {!settings.chatgpt?.available && <Callout variant="info">{t(settings.chatgpt?.enabled ? 'admin.promptHealth.llm.subscriptionActivate' : 'admin.promptHealth.llm.subscriptionEnable')}</Callout>}
+            <a href="/profilo/api-personali#chatgpt" className="text-link underline">{t('admin.promptHealth.llm.subscriptionManage')}</a>
+        </div>}
         {settings && <div className="flex flex-wrap gap-2">
-            <Button type="button" disabled={busy !== null || !changed || !provider || !model} onClick={() => save({ provider, model })}>
+            <Button type="button" disabled={busy !== null || !changed || !provider || !model || (subscription && !settings.chatgpt?.available)} onClick={() => save({ provider, model })}>
                 <Save className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.llm.save')}
             </Button>
-            {settings.configured && <Button type="button" variant="secondary" disabled={busy !== null} onClick={() => save({ provider: '', model: '' })}>
+            {settings.provider && <Button type="button" variant="secondary" disabled={busy !== null} onClick={() => save({ provider: '', model: '' })}>
                 <Power className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.llm.off')}
             </Button>}
-            <Button type="button" variant="secondary" disabled={busy !== null || !settings.configured} onClick={runEstimate}>
+            <Button type="button" variant="secondary" disabled={busy !== null || !settings.configured || changed} onClick={runEstimate}>
                 <Calculator className="h-4 w-4" aria-hidden="true" />{t('admin.promptHealth.llm.estimate')}
             </Button>
             <Button type="button" variant="secondary" disabled={busy !== null || !settings.configured || changed} onClick={run}>
@@ -153,7 +162,7 @@ export function PromptHealthLlm({ onFindings }: { onFindings: (findings: PromptH
                     combinations: estimate.combinations, cached: estimate.cached, calls: estimate.calls,
                     max: estimate.max_calls_per_run, tokens: estimate.input_tokens + estimate.output_tokens,
                 })}
-                {' · '}{cost ? t('admin.promptHealth.llm.cost', { cost }) : t('admin.promptHealth.llm.costUnknown')}
+                {' · '}{estimate.billing === 'subscription' ? t('admin.promptHealth.llm.subscriptionQuota') : cost ? t('admin.promptHealth.llm.cost', { cost }) : t('admin.promptHealth.llm.costUnknown')}
             </p>}
             {result && <p className="text-sm text-ink-body">
                 {t('admin.promptHealth.llm.result', { calls: result.calls, cached: result.cached, failed: result.failed })}

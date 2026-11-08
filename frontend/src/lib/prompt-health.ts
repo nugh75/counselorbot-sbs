@@ -256,6 +256,8 @@ export interface PromptHealthLlmSettings {
     configured: boolean;
     providers: string[];
     max_calls_per_run: number;
+    billing?: 'api' | 'subscription';
+    chatgpt?: { available: boolean; enabled: boolean; model: string };
 }
 
 export interface PromptHealthLlmEstimate {
@@ -267,6 +269,7 @@ export interface PromptHealthLlmEstimate {
     input_tokens: number;
     output_tokens: number;
     cost_usd: number | null;
+    billing?: 'api' | 'subscription';
 }
 
 export interface PromptHealthLlmRun {
