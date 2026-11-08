@@ -59,3 +59,8 @@ def test_the_contract_forbids_reciting_itself():
     assert "not material for the reply" in text
     assert "never reuse their wording" in text
     assert "not material for the reply" in _contract(advice_allowed=False)
+
+
+def test_deferring_is_the_direct_answer():
+    # Prompt health #63: "answer directly" against "defer the strategy".
+    assert "saying so is the direct answer" in _contract(advice_allowed=False)

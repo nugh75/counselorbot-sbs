@@ -33,3 +33,8 @@ def test_answering_distress_does_not_unlock_advice():
 
 def test_the_opening_rule_survives():
     assert "Never open with ritual acknowledgements" in _directive()
+
+
+def test_an_invitation_to_start_is_not_an_encouraging_close():
+    # Prompt health #67: the intro closes with an invitation to start the first step.
+    assert "an invitation to start or continue a step is not such a remark." in _directive()
