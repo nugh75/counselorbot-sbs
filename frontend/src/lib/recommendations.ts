@@ -3,7 +3,7 @@
 // Node nei test): la chiamata di rete vive nel pannello, qui c'e' solo la forma
 // dei dati e cio' che si puo' verificare da solo.
 
-export type RecommendationType = 'reading' | 'strategy' | 'advice';
+export type RecommendationType = 'reading' | 'strategy' | 'advice' | 'request';
 
 // Lo stato e' scelto dallo studente, non dal modello: "proposta" e' il punto di
 // partenza, "archiviata" non cancella nulla e resta recuperabile.
@@ -57,10 +57,21 @@ export interface AdviceRecommendation extends RecommendationBase {
     step_order?: number | null;
 }
 
+/** Domanda o richiesta dello studente da riprendere alla fine: aperta (`proposed`) o discussa (`closed`). */
+export interface StudentRequest extends RecommendationBase {
+    recommendation_type?: 'request';
+    name?: string;
+    kind?: 'request';
+    source?: 'counselor' | 'student';
+    closed_by?: 'student' | 'conversation' | null;
+    step_order?: number | null;
+}
+
 export interface RecommendationCatalog {
     reading: ReadingRecommendation[];
     strategy: StrategyRecommendation[];
     advice: AdviceRecommendation[];
+    request: StudentRequest[];
 }
 
 export interface RecommendationPatch {
@@ -72,6 +83,7 @@ export const EMPTY_RECOMMENDATIONS: RecommendationCatalog = {
     reading: [],
     strategy: [],
     advice: [],
+    request: [],
 };
 
 function normalizeStatus(value: unknown): RecommendationStatus {
@@ -109,12 +121,13 @@ function normalizeBucket<T extends { slug: string }>(value: unknown): T[] {
 
 export function normalizeRecommendationCatalog(value: unknown): RecommendationCatalog {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
-        return { reading: [], strategy: [], advice: [] };
+        return { reading: [], strategy: [], advice: [], request: [] };
     }
     return {
         advice: normalizeBucket<AdviceRecommendation>(Reflect.get(value, 'advice')),
         reading: normalizeBucket<ReadingRecommendation>(Reflect.get(value, 'reading')),
         strategy: normalizeBucket<StrategyRecommendation>(Reflect.get(value, 'strategy')),
+        request: normalizeBucket<StudentRequest>(Reflect.get(value, 'request')),
     };
 }
 
@@ -124,6 +137,17 @@ export function recommendationPatchUrl(
     slug: string,
 ): string {
     return `/api/session/${encodeURIComponent(sessionId)}/recommendations/${type}/${encodeURIComponent(slug)}`;
+}
+
+export function studentRequestUrl(sessionId: string, slug?: string): string {
+    const base = `/api/session/${encodeURIComponent(sessionId)}/requests`;
+    return slug ? `${base}/${encodeURIComponent(slug)}` : base;
+}
+
+/** Testo da aggiungere a mano: spazi compattati, vuoto o troppo lungo = null. */
+export function studentRequestText(value: string): string | null {
+    const text = value.split(/\s+/).filter(Boolean).join(' ');
+    return text && text.length <= 300 ? text : null;
 }
 
 // --- Provenienza -----------------------------------------------------------

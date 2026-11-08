@@ -1,6 +1,6 @@
 'use client';
 
-import { Archive, BookOpen, ChevronDown, ChevronRight, GitBranch, MessageSquare, RotateCcw, Target, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Archive, BookOpen, ChevronDown, ChevronRight, GitBranch, ListTodo, MessageSquare, RotateCcw, Target, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
 import { useId, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 
@@ -14,6 +14,8 @@ import {
     normalizeRecommendationCatalog,
     provenanceKind,
     recommendationPatchUrl,
+    studentRequestText,
+    studentRequestUrl,
 } from '@/lib/recommendations';
 import type {
     AdviceRecommendation,
@@ -22,6 +24,7 @@ import type {
     RecommendationPatch,
     RecommendationType,
     StrategyRecommendation,
+    StudentRequest,
 } from '@/lib/recommendations';
 import { cn } from '@/lib/utils';
 
@@ -59,22 +62,23 @@ export function RecommendationsPanel({
     const [activeTab, setActiveTab] = useState<Tab>(catalog.reading.length ? 'reading' : 'strategy');
     const [pending, setPending] = useState<Record<string, boolean>>({});
     const [failed, setFailed] = useState<Record<string, RecommendationPatch>>({});
-    const [showArchived, setShowArchived] = useState<Record<RecommendationType, boolean>>({ reading: false, strategy: false, advice: false });
+    const [showArchived, setShowArchived] = useState<Record<RecommendationType, boolean>>({ reading: false, strategy: false, advice: false, request: false });
 
-    const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ reading: null, strategy: null, advice: null, diagram: null });
+    const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ reading: null, strategy: null, advice: null, request: null, diagram: null });
 
     const ids = useId();
     const tabId = (tab: Tab) => `${ids}-tab-${tab}`;
     const panelId = (tab: Tab) => `${ids}-panel-${tab}`;
 
-    const tabs: Tab[] = ['reading', 'strategy', 'advice', 'diagram'];
+    const tabs: Tab[] = ['reading', 'strategy', 'advice', 'request', 'diagram'];
     const tabSize = (tab: Tab) => tab === 'diagram' ? diagrams.length : catalog[tab].length;
     const visibleTab: Tab = tabSize(activeTab) ? activeTab
         : tabs.find((tab) => tabSize(tab)) ?? activeTab;
     const readings = split(catalog.reading);
     const strategies = split(catalog.strategy);
     const advice = split(catalog.advice);
-    const proposedCount = readings.open.length + strategies.open.length + advice.open.length;
+    const openRequests = catalog.request.filter((item) => item.status === 'proposed');
+    const proposedCount = readings.open.length + strategies.open.length + advice.open.length + openRequests.length;
     const rec = (key: RecommendationTextKey, vars?: Record<string, string | number>) => recommendationText(key, lang, vars);
 
     // Le azioni si mostrano solo se possono davvero salvare: senza sessione o
@@ -102,6 +106,27 @@ export function RecommendationsPanel({
             onCatalogChange(normalizeRecommendationCatalog(await response.json()));
         } catch {
             setFailed((state) => ({ ...state, [key]: patch }));
+        } finally {
+            setPending((state) => ({ ...state, [key]: false }));
+        }
+    };
+
+    // Lista «da riprendere»: aggiungere e togliere sono dello studente, lo stato passa dal PATCH comune.
+    const changeRequests = async (method: 'POST' | 'DELETE', slug?: string, text?: string) => {
+        if (!sessionId || !onCatalogChange) return false;
+        const key = cardKey('request', slug || 'new');
+        setPending((state) => ({ ...state, [key]: true }));
+        try {
+            const response = await apiFetch(`${studentRequestUrl(sessionId, slug)}?lang=${lang}`, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: method === 'POST' ? JSON.stringify({ text }) : undefined,
+            });
+            if (!response.ok) throw new Error(String(response.status));
+            onCatalogChange(normalizeRecommendationCatalog(await response.json()));
+            return true;
+        } catch {
+            return false;
         } finally {
             setPending((state) => ({ ...state, [key]: false }));
         }
@@ -194,6 +219,14 @@ export function RecommendationsPanel({
                         onKeyDown={onTabKeys}
                     />
                     <TabButton
+                        ref={(node) => { tabRefs.current.request = node; }}
+                        active={visibleTab === 'request'} count={openRequests.length}
+                        id={tabId('request')} controls={panelId('request')}
+                        label={rec('request.tab')} onClick={() => setActiveTab('request')}
+                        icon={<ListTodo className="h-4 w-4 shrink-0" aria-hidden="true" />}
+                        onKeyDown={onTabKeys}
+                    />
+                    <TabButton
                         ref={(node) => { tabRefs.current.diagram = node; }}
                         active={visibleTab === 'diagram'} count={diagrams.length}
                         id={tabId('diagram')} controls={panelId('diagram')}
@@ -224,6 +257,23 @@ export function RecommendationsPanel({
                                 ))}
                             </ol>
                         ) : <EmptyState text={rec('diagram.empty')} />}
+                    </div>
+                ) : visibleTab === 'request' ? (
+                    <div className="space-y-2" role="tabpanel" id={panelId('request')} aria-labelledby={tabId('request')} tabIndex={0}>
+                        <h4 className="text-sm font-semibold text-slate-700">{rec('request.tab')}</h4>
+                        <p className="text-xs text-slate-600">{rec('request.help')}</p>
+                        {catalog.request.length ? (
+                            <ul className="space-y-2">
+                                {catalog.request.map((item) => (
+                                    <RequestCard key={item.slug} item={item} canAct={canAct}
+                                        onPatch={(patch) => void sendPatch('request', item.slug, patch)}
+                                        onRemove={() => void changeRequests('DELETE', item.slug)}
+                                        {...cardState('request', item.slug)} />
+                                ))}
+                            </ul>
+                        ) : <EmptyState text={rec('request.empty')} />}
+                        {canAct ? <AddRequest pending={Boolean(pending[cardKey('request', 'new')])}
+                            onAdd={(text) => changeRequests('POST', undefined, text)} /> : null}
                     </div>
                 ) : visibleTab === 'reading' ? (
                     <div
@@ -302,6 +352,66 @@ export function RecommendationsPanel({
                 )}
             </div>
         </section>
+    );
+}
+
+function RequestCard({ item, canAct, pending, failed, onRetry, onPatch, onRemove }: CardControls & { item: StudentRequest; onRemove: () => void }) {
+    const { lang } = useI18n();
+    const rec = (key: RecommendationTextKey, vars?: Record<string, string | number>) => recommendationText(key, lang, vars);
+    const open = item.status === 'proposed';
+    const label: RecommendationTextKey = open ? 'request.open'
+        : item.closed_by === 'conversation' ? 'request.discussedInTalk' : 'request.discussed';
+    const phase = typeof item.step_order === 'number' ? ` \u00b7 ${item.step_order}` : '';
+    return (
+        <li className="rounded-lg border border-slate-200 bg-white p-3">
+            <p className={`text-2xs font-semibold ${open ? 'text-indigo-700' : 'text-slate-500'}`}>
+                {rec(label)}{phase}{item.source === 'student' ? ` \u00b7 ${rec('request.byStudent')}` : ''}
+            </p>
+            <p className="mt-1 break-words text-xs leading-relaxed text-slate-700">{item.name || item.slug}</p>
+            {canAct ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                    <button type="button" disabled={pending} onClick={() => onPatch({ status: open ? 'closed' : 'proposed' })}
+                        className="min-h-9 rounded-md border border-slate-200 px-2.5 text-xs font-semibold text-indigo-700 disabled:opacity-60">
+                        {rec(open ? 'request.close' : 'request.reopen')}
+                    </button>
+                    <button type="button" disabled={pending} onClick={onRemove}
+                        className="inline-flex min-h-9 items-center gap-1 rounded-md px-2.5 text-xs font-semibold text-slate-600 disabled:opacity-60">
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />{rec('request.remove')}
+                    </button>
+                </div>
+            ) : null}
+            {failed ? <p role="alert" className="text-xs text-red-700">{rec('error')} <button type="button" onClick={onRetry} className="min-h-9 underline">{rec('retry')}</button></p> : null}
+        </li>
+    );
+}
+
+function AddRequest({ pending, onAdd }: { pending: boolean; onAdd: (text: string) => Promise<boolean> }) {
+    const { lang } = useI18n();
+    const rec = (key: RecommendationTextKey) => recommendationText(key, lang);
+    const inputId = useId();
+    const [value, setValue] = useState('');
+    const [failed, setFailed] = useState(false);
+    const text = studentRequestText(value);
+    return (
+        <form className="space-y-1" onSubmit={async (event) => {
+            event.preventDefault();
+            if (!text) return;
+            const saved = await onAdd(text);
+            setFailed(!saved);
+            if (saved) setValue('');
+        }}>
+            <label htmlFor={inputId} className="block text-xs font-semibold text-slate-700">{rec('request.add.label')}</label>
+            <div className="flex gap-2">
+                <input id={inputId} value={value} maxLength={300} onChange={(event) => setValue(event.target.value)}
+                    placeholder={rec('request.add.placeholder')}
+                    className="min-h-9 min-w-0 flex-1 rounded-md border border-slate-200 px-2 text-xs text-slate-700" />
+                <button type="submit" disabled={pending || !text}
+                    className="min-h-9 shrink-0 rounded-md border border-slate-200 px-2.5 text-xs font-semibold text-indigo-700 disabled:opacity-60">
+                    {rec('request.add.submit')}
+                </button>
+            </div>
+            {failed ? <p role="alert" className="text-xs text-red-700">{rec('error')}</p> : null}
+        </form>
     );
 }
 

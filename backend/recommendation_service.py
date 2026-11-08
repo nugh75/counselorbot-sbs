@@ -30,7 +30,10 @@ from .i18n_fields import localized
 
 logger = logging.getLogger(__name__)
 
-RECOMMENDATION_TYPES = ("reading", "strategy", "advice")
+RECOMMENDATION_TYPES = ("reading", "strategy", "advice", "request")
+# Domande e richieste dello studente da riprendere alla fine del percorso: come
+# una domanda, `proposed` = aperta e `closed` = discussa.
+REQUEST_MAX_CHARS = 300
 # `proposed` = mostrata dal counselor; le altre le sceglie lo studente.
 RECOMMENDATION_STATUSES = (
     "proposed", "selected", "tried", "dismissed", "closed", "stale",
@@ -173,7 +176,7 @@ def set_state(
     if row is None:
         return None
     payload = dict(row.payload or {})
-    is_question = payload.get("kind") == "question"
+    is_question = payload.get("kind") in ("question", "request")
     is_hypothesis = payload.get("kind") == "hypothesis"
     if is_question and status is not None and status not in QUESTION_STATUSES:
         raise ValueError("Question status must be proposed, closed or stale")
@@ -224,7 +227,7 @@ def list_for_session(
     dello studente restano quelli salvati.
     """
     if not session_id or not username:
-        return {"reading": [], "strategy": [], "advice": []}
+        return {"reading": [], "strategy": [], "advice": [], "request": []}
     rows = (
         db.query(models.RecommendationHistory)
         .filter(
@@ -238,7 +241,7 @@ def list_for_session(
         .all()
     )
 
-    result: dict[str, list[dict]] = {"reading": [], "strategy": [], "advice": []}
+    result: dict[str, list[dict]] = {"reading": [], "strategy": [], "advice": [], "request": []}
     for row in rows:
         item = {
             "slug": row.slug,
@@ -348,6 +351,41 @@ def couple_hypothesis_reply(
 
 
 # --- helpers ---
+def add_request(db: Session, *, session_id: str, username: str, text: str, step_id: str | None = None,
+                turn_index: int | None = None) -> models.RecommendationHistory | None:
+    """A question the student adds by hand to the list to revisit at the end."""
+    from .recommendation_blocks import request_slug
+    text = " ".join((text or "").split())
+    if not session_id or not username or not text:
+        return None
+    if len(text) > REQUEST_MAX_CHARS:
+        raise ValueError("Request too long")
+    rows = record(db, session_id=session_id, username=username, recommendation_type="request",
+                  payloads=[{"slug": request_slug(text), "name": text, "kind": "request", "source": "student",
+                             "step_id": step_id or ""}], turn_index=turn_index)
+    return rows[0] if rows else None
+
+
+def delete_request(db: Session, *, session_id: str, username: str, slug: str) -> bool:
+    """Remove one request of this student from the list; other types are never touched."""
+    deleted = db.query(models.RecommendationHistory).filter(
+        models.RecommendationHistory.session_id == session_id,
+        models.RecommendationHistory.username == username,
+        models.RecommendationHistory.recommendation_type == "request",
+        models.RecommendationHistory.slug == slug,
+    ).delete(synchronize_session=False)
+    db.commit()
+    return bool(deleted)
+
+
+def open_requests(db: Session, *, session_id: str, username: str) -> list[dict]:
+    """Requests still to discuss, oldest first (the order gives the R1, R2... ids)."""
+    if not session_id or not username:
+        return []
+    return [item for item in list_for_session(db, session_id=session_id, username=username)["request"]
+            if item.get("status") == DEFAULT_STATUS]
+
+
 def _state_fields(source: dict | None) -> dict:
     """Stato e giudizio normalizzati; quello che non c'e' legge il default."""
     source = source or {}

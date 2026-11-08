@@ -74,7 +74,7 @@ senza un nuovo servizio. Alternative considerate e scartate come «quarto livell
 | `idea_references` (`:1476`) | testo estratto da documenti caricati (fino a 24.000 caratteri) | |
 | `tavoli` / `tavolo_revisions` / `tavolo_images` (`:1794-1856`), `idea_map_revisions` (`:1453`) | lavori dello studente | |
 | `forum_posts` (`:2165`), `class_meeting_*` (`:2001-2103`), `assignment_work` (`:640`) | contributi e presenze | |
-| `recommendation_history` (`:955`) | cosa è stato consigliato a chi | |
+| `recommendation_history` (`:955`) | cosa è stato consigliato a chi; domande dello studente da riprendere (testo verbatim, `recommendation_type=request`) | |
 | `local_sessions`, `class_pairing_codes` | ADR-0002 §3.2, §4.1 (F1-06/F1-13, non ancora su `main`) | solo hash dei token |
 
 Nessuna colonna di contenuto è cifrata a livello applicativo, a parte §8. Su L1 la cifratura a riposo dipende dal

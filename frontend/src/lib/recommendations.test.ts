@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { linkedSegments, normalizeRecommendationCatalog, provenanceKind, recommendationPatchUrl, safeHttpUrl } from './recommendations.ts';
+import { linkedSegments, normalizeRecommendationCatalog, provenanceKind, recommendationPatchUrl, safeHttpUrl, studentRequestText, studentRequestUrl } from './recommendations.ts';
 
 test('normalizeRecommendationCatalog keeps valid items and deduplicates slugs', () => {
     const result = normalizeRecommendationCatalog({
@@ -23,8 +23,8 @@ test('normalizeRecommendationCatalog keeps valid items and deduplicates slugs', 
 });
 
 test('normalizeRecommendationCatalog returns an empty catalog for invalid input', () => {
-    assert.deepEqual(normalizeRecommendationCatalog(undefined), { reading: [], strategy: [], advice: [] });
-    assert.deepEqual(normalizeRecommendationCatalog([]), { reading: [], strategy: [], advice: [] });
+    assert.deepEqual(normalizeRecommendationCatalog(undefined), { reading: [], strategy: [], advice: [], request: [] });
+    assert.deepEqual(normalizeRecommendationCatalog([]), { reading: [], strategy: [], advice: [], request: [] });
 });
 
 test('a choice already made survives a reload, an unknown one falls back to proposed', () => {
@@ -133,4 +133,15 @@ test('a retired question and its step survive normalisation', () => {
 test('an unknown status still falls back to proposed', () => {
     const catalog = normalizeRecommendationCatalog({ advice: [{ slug: 'q3', kind: 'question', status: 'boh' }] });
     assert.equal(catalog.advice[0].status, 'proposed');
+});
+
+test('student requests are normalized and their urls and texts are safe', () => {
+    const catalog = normalizeRecommendationCatalog({ request: [{ slug: 'req-1', name: 'Quanto dura?', status: 'closed', closed_by: 'conversation' }, { slug: '' }] });
+    assert.equal(catalog.request.length, 1);
+    assert.equal(catalog.request[0].status, 'closed');
+    assert.equal(studentRequestUrl('s 1'), '/api/session/s%201/requests');
+    assert.equal(studentRequestUrl('s1', 'req/1'), '/api/session/s1/requests/req%2F1');
+    assert.equal(studentRequestText('  Come   faccio?  '), 'Come faccio?');
+    assert.equal(studentRequestText('   '), null);
+    assert.equal(studentRequestText('x'.repeat(301)), null);
 });
