@@ -42,7 +42,7 @@ def test_directive_appends_think_block():
     assert out.startswith("BASE")
     assert "[THINKING]" in out
     assert "<think>" in out and "</think>" in out
-    assert "Attivazione interna" in out  # vietata esplicitamente nel visibile
+    assert "Internal activation" in out and "in any language" in out  # explicitly forbidden in the visible reply
 
 
 def test_split_block_basic():
