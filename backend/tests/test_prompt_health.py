@@ -61,7 +61,7 @@ def test_code_prompt_card_and_cached_findings_have_real_repository_references():
 
 def test_cached_findings_gain_per_sentence_locations_without_changing_ids_or_acks():
     finding = {"id": "cached-reference", "prompts": ["code:request"], "sentences": [
-        {"prompt": "code:request", "text": "Do not write internal working notes addressed to yourself, such as a plan, a checklist or phrases like"},
+        {"prompt": "code:request", "text": "Do not write internal working notes addressed to yourself, such as a plan, a checklist or phrases that"},
         {"prompt": "code:request", "text": "In EVERY visible reply, weave in one short, natural orientation sentence: what we are exploring now, why it matters to this step, and what comes next."},
     ]}
     note = {"note": "Existing decision"}

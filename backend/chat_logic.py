@@ -531,8 +531,9 @@ DEFAULT_THINKING_DIRECTIVE = (
 DEFAULT_NO_REASONING_DIRECTIVE = (
     "[NO REASONING] Do not produce a private reasoning block. Do not output "
     "<think>, <thinking> or <sto_pensando> tags. Do not write internal working "
-    "notes addressed to yourself, such as a plan, a checklist or phrases like "
-    "'Devo analizzare', 'Identifico', 'Ho i punteggi' or 'Strutturo'. Start "
+    "notes addressed to yourself, such as a plan, a checklist or phrases that "
+    "announce your own process ('I need to analyse', 'I identify', 'I have the "
+    "scores', 'I will structure'), in any language. Start "
     "directly with the student-facing answer. You may explain to the student, in "
     "plain language, the steps and evidence that led to a conclusion; orientation "
     "requested by the task is part of that answer. If the task requires a private "

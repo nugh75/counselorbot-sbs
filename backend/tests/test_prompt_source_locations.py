@@ -3,7 +3,7 @@ from pathlib import Path
 
 from backend.prompt_source_locations import _collect, _locate, code_locations, sentence_with_locations
 
-NO_REASONING = "Do not write internal working notes addressed to yourself, such as a plan, a checklist or phrases like"
+NO_REASONING = "Do not write internal working notes addressed to yourself, such as a plan, a checklist or phrases that"
 ORIENTATION = "In EVERY visible reply, weave in one short, natural orientation sentence: what we are exploring now, why it matters to this step, and what comes next."
 
 

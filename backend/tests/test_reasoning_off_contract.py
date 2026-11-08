@@ -304,3 +304,9 @@ def test_reasoning_off_forbids_private_notes_but_allows_student_facing_explanati
     assert "meta-commentary" not in directive
     assert "<think>" in directive and "internal working notes addressed to yourself" in directive
     assert "explain to the student" in directive and "orientation requested by the task is part of that answer" in directive
+
+
+def test_reasoning_off_directive_is_written_only_in_english():
+    # Instructions sent to the model are always English; examples included.
+    for italian in ("Devo", "Identifico", "punteggi", "Strutturo"):
+        assert italian not in DEFAULT_NO_REASONING_DIRECTIVE
