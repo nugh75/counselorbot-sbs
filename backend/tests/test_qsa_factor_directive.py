@@ -702,3 +702,18 @@ def test_an_explicit_request_to_move_on_ends_the_depth_choice():
     # Prompt health #32: "advance on request" against "no marker while exploring".
     from backend.prompt_config import GUIDED_CHOICE_DIRECTIVE
     assert "unless the person explicitly asks to move on: that request is their choice." in GUIDED_CHOICE_DIRECTIVE
+
+
+def test_the_step_scope_names_what_to_use_rather_than_banning_any_other():
+    # Prompt health #58/#59: "do not mention any other factor" was read as "mention no factor",
+    # clashing with the rule that names each factor with its code on first mention.
+    from backend.chat_logic import _apply_current_step_factor_scope_directive
+    text = _apply_current_step_factor_scope_directive("Base.", "QSA", {"C1", "C2"})
+    assert "Mention, analyse and use only the factors in this list" in text
+    assert "any other QSA/QSAr factor" not in text
+
+
+def test_follow_up_improvement_areas_keep_to_a_single_factor_step():
+    # Prompt health #61.
+    from backend.prompt_config import _text
+    assert "in a single-factor step, keep to that factor." in _text("default_system_prompt_factor_qa")

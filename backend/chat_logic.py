@@ -1624,8 +1624,8 @@ def _apply_current_step_factor_scope_directive(system_prompt: str, questionnaire
     directive = (
         f"{system_prompt}\n\n"
         f"[CURRENT STEP FACTORS] Allowed factor codes for this answer: {allowed}. "
-        "Do not mention, analyse or use any other QSA/QSAr factor code or factor "
-        "name in this answer."
+        "Mention, analyse and use only the factors in this list, with the labels below; "
+        "leave every QSA/QSAr factor outside the list unmentioned in this answer."
     )
     if len(allowed_codes) == 1:
         # Only a single-factor step needs the rule; elsewhere it reads as a condition that never applies.
