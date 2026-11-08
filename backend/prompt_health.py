@@ -151,6 +151,13 @@ def _meta_instrument(key: str, instruments: set[str]) -> str | None:
     return None
 
 
+def _path_steps(db: Session) -> list:
+    """Guided steps that really are in a path: retired Objective steps still on factory text are not."""
+    from .obiettivo_layout import active_guided_steps
+    return active_guided_steps(db, db.query(models.GuidedStep)
+                               .order_by(models.GuidedStep.sort_order, models.GuidedStep.id).all())
+
+
 def _text_findings(db: Session, texts: dict[str, str]) -> list[dict]:
     from .prompt_factory_alignment import factory_owned
     from .telegram_state import allowed_factor_codes
@@ -158,6 +165,7 @@ def _text_findings(db: Session, texts: dict[str, str]) -> list[dict]:
     findings = []
     steps = db.query(models.GuidedStep).all()
     instruments = {s.questionnaire_type for s in steps}
+    active_steps = _path_steps(db)
     step_ids = {s.id for s in steps}
     known_steps = step_ids | set(prompt_registry.prompt_config.GUIDED_PHASE_ALIASES)
     from .qsa_essential import _ESSENTIAL_PATHS, _FOLLOWUP_PHASES
@@ -223,7 +231,7 @@ def _text_findings(db: Session, texts: dict[str, str]) -> list[dict]:
             findings.append(_finding("unknown_step", LOW, [pid], params={"steps": bad_steps},
                                      sentences=[{"prompt": pid, "text": step} for step in bad_steps]))
         if instrument and kind == "guided_step":
-            path_steps = [s for s in steps if s.questionnaire_type == instrument
+            path_steps = [s for s in active_steps if s.questionnaire_type == instrument
                           and not s.id.endswith("-intro") and s.system_prompt_mode != "strategies"]
             for match in _STEP_COUNT_RE.finditer(text):
                 if _number(match.group(1)) != len(path_steps):
@@ -326,7 +334,7 @@ def _all_turns(db: Session):
     from .qsa_essential import _ESSENTIAL_PATHS
 
     steps_by = defaultdict(list)
-    for step in db.query(models.GuidedStep).order_by(models.GuidedStep.sort_order, models.GuidedStep.id).all():
+    for step in _path_steps(db):
         steps_by[step.questionnaire_type].append(step)
     ordered = [i for i in INSTRUMENT_ORDER if i in steps_by] + sorted(i for i in steps_by if i not in INSTRUMENT_ORDER)
     for instrument in ordered:
@@ -783,7 +791,7 @@ def turn_map(db: Session) -> list[dict]:
     from .prompt_map import INSTRUMENT_ORDER
     config_keys = {key for (key,) in db.query(models.Config.key).all()}
     by_instrument: dict[str, list[dict]] = defaultdict(list)
-    for step in db.query(models.GuidedStep).order_by(models.GuidedStep.sort_order, models.GuidedStep.id).all():
+    for step in _path_steps(db):
         by_instrument[step.questionnaire_type].append({
             "id": step.id, "label": step.label or step.id,
             "label_i18n": step.label_i18n or {},

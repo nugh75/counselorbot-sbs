@@ -485,3 +485,41 @@ def test_admin_api_numbers_findings_and_lists_the_history():
     history = client.get("/admin/prompt-health/problems").json()["problems"]
     listed = {row["number"]: row for row in history}
     assert all(listed[number]["status"] == "open" and listed[number]["source"] == "static" for number in numbers)
+
+
+# --- Retired Objective steps (#1 in production) ------------------------------------
+
+def test_retired_factory_steps_are_not_part_of_the_checked_path():
+    """obbdocenza-patto/smart/sfida stay in old databases but the path hides them while
+    they keep factory text: the step count, the turns and the map follow the real path."""
+    retired = {"patto": 0, "smart": 3, "sfida": 4}
+    db = _Session()
+    try:
+        for suffix, order in retired.items():
+            step_id = f"obbdocenza-{suffix}"
+            db.add(models.GuidedStep(id=step_id, questionnaire_type="OBIETTIVO_DOCENZA", sort_order=order,
+                                     label=suffix, prompt=f"Previous factory text of {suffix}.",
+                                     system_prompt_mode="obiettivo-interview", color_theme="blue"))
+            db.flush()
+            prompt_revisions.record(db, "guided_step", step_id, f"Previous factory text of {suffix}.",
+                                    prompt_revisions.ORIGIN_SEED)
+        db.commit()
+        intro = ("number_mismatch", ("guided_step:obbdocenza-intro",))
+        assert intro not in _codes(prompt_health.compute_findings(db))
+        mapped = {step["id"] for path in prompt_health.turn_map(db) for step in path["steps"]}
+        turns = {payload.get("phase") for _, payload in prompt_health._all_turns(db)}
+        assert not {f"obbdocenza-{suffix}" for suffix in retired} & (mapped | turns)
+
+        # An administrator's step stays in the path, so it counts again.
+        prompt_revisions.record(db, "guided_step", "obbdocenza-smart", "Previous factory text of smart.",
+                                prompt_revisions.ORIGIN_ADMIN, author="admin")
+        db.commit()
+        assert intro in _codes(prompt_health.compute_findings(db))
+        assert "obbdocenza-smart" in {step["id"] for path in prompt_health.turn_map(db) for step in path["steps"]}
+    finally:
+        db.rollback()
+        ids = [f"obbdocenza-{suffix}" for suffix in retired]
+        db.query(models.PromptRevision).filter(models.PromptRevision.target_key.in_(ids)).delete(synchronize_session=False)
+        db.query(models.GuidedStep).filter(models.GuidedStep.id.in_(ids)).delete(synchronize_session=False)
+        db.commit()
+        db.close()
