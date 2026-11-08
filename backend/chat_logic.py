@@ -529,12 +529,15 @@ DEFAULT_THINKING_DIRECTIVE = (
 )
 
 DEFAULT_NO_REASONING_DIRECTIVE = (
-    "[NO REASONING] Do not produce a reasoning block, analysis, plan, checklist or "
-    "meta-commentary. Do not output <think>, <thinking> or <sto_pensando> tags. "
-    "Do not begin with phrases such as 'Devo analizzare', 'Identifico', 'Ho i "
-    "punteggi' or 'Strutturo'. Start directly with the student-facing answer and "
-    "decide silently. If the task requires a private structured block, emit only "
-    "the exact block requested by the task, outside the visible answer."
+    "[NO REASONING] Do not produce a private reasoning block. Do not output "
+    "<think>, <thinking> or <sto_pensando> tags. Do not write internal working "
+    "notes addressed to yourself, such as a plan, a checklist or phrases like "
+    "'Devo analizzare', 'Identifico', 'Ho i punteggi' or 'Strutturo'. Start "
+    "directly with the student-facing answer. You may explain to the student, in "
+    "plain language, the steps and evidence that led to a conclusion; orientation "
+    "requested by the task is part of that answer. If the task requires a private "
+    "structured block, emit only the exact block requested by the task, outside "
+    "the visible answer."
 )
 
 _DIRECTIVE_BLOCK_RE = re.compile(
