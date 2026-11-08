@@ -1,40 +1,37 @@
-# S1 — Salute dei prompt
+# S1 — Salute dei prompt: riferimenti al codice
 
 ## Stato
-- Agente s1-prompt-health; task Diario 80b9b6f3-9580-421f-816f-e792224ce133 concluso.
-- PR #785 MERGED; main aggiornato a 1f12e776, branch feature locale eliminato.
-- Deploy pubblico autorizzato dal proprietario ed eseguito su counselorbot.labform.net l’8 novembre 2026.
-- Registro operativo su branch docs/prompt-health-deploy; nessuna modifica al codice dopo il merge.
+- Branch feature/prompt-health-code-references da origin/main 7a1dd0e0; worktree dedicato.
+- Seguito autorizzato dal proprietario: codice chiaramente distinto dai prompt, file/funzione/riga visibili.
+- PR #785 e registro deploy #786 già uniti; produzione al precedente deploy 1f12e776.
+- Nessuna modifica alle regole del counseling: questo seguito aggiunge riferimenti e presentazione.
+- Incluso anche il controllo LLM con abbonamento ChatGPT personale per amministratore (#788), commit separato.
 
 ## Fatto
-- Problemi per gravità, conteggio unico, filtri e nomi leggibili nelle sei lingue.
-- Origine codice/prompt distinta dalla fabbrica; confronto e riepilogo copiabile per un agente.
-- Corrette contraddizioni codice/codice nascoste e riferimenti errati ai consumer.
-- Evidenze del codice invalidate al cambio della richiesta senza chiamare il modello.
-- Mappa, modello e uso reale espandibili; note, ripristino e ricontrollo conservati.
-- Ricostruite e ricreate solo le immagini/container portable backend e frontend da main 1f12e776.
-- Backup privato PostgreSQL: portable/data/backups/counselorbot/2026-11-08-s1-prompt-health/postgres.dump.
+- Localizzate le due citazioni dello screenshot: chat_logic.DEFAULT_NO_REASONING_DIRECTIVE
+  e prompts/guided_choice_directive.md, caricato in prompt_config e usato da prompt_contract.turn_contract.
+- Aggiunto indice locale dei letterali Python e dei Markdown di fabbrica, senza eseguire i costruttori.
+- File/riga, funzione/costante e usi collegati aggiunti alle singole frasi anche in lettura da cache.
+- Corrispondenze multiple e origini sconosciute esplicite: nessun file inventato, nessuna nuova chiamata AI.
+- Badge CODICE DELL’APPLICAZIONE e riferimenti visibili sotto ogni citazione; inclusi nel riepilogo copiabile.
+- Link al repository vincolati a file backend e righe positive; main distinto dalla versione installata.
 
 ## Verifiche
-- Prima del merge: 34 test backend, 16 unitari frontend, 5 browser, TypeScript, lint, i18n e guidance verdi.
-- Build production frontend (webpack e TypeScript) e backend Python 3.12 riuscite.
-- Hash dei due moduli prompt_health nel backend attivo identici ai sorgenti di main.
-- Dopo il deploy: 5 test browser verdi sull’immagine attiva (:3108), tutte le API simulate.
-- Cinque container portable healthy; frontend locale HTTP 200, dominio pubblico HTTP 302 verso SSO.
-- Backup: 3.425.185 byte, elenco pg_restore verificato; spazio libero su / circa 19 GiB.
+- Backend (Python 3.12, Postgres sintetico): 33 test verdi su source_locations, prompt_health e prompt_health_llm.
+- Frontend: 18 unitari, 6 browser sintetici (:3186, API simulate), i18n, eslint verdi.
+- tsc: solo errori preesistenti sui moduli .png (next-env.d.ts assente nel worktree); build production non eseguita.
+- Guida funzionalità aggiornata; check-platform-guidance allineato.
 
 ## Prossimi passi
-- Il proprietario può ricaricare /admin?tab=promptHealth con il proprio accesso.
-- Notifica PR #785 pending/no-timoniere; nessuna consegna confermata, mobile disattivato.
-- Rilascio desktop e issue #775–#779 restano coordinati separatamente.
+- PR aperta sulla board CounselorBot (issue #787 riferimenti, #788 abbonamento ChatGPT); merge al proprietario.
+- Dopo il merge: deploy portable backend+frontend (--no-deps), nessun sudo necessario.
 
 ## Blocchi e rischi
-- Segreti e dati mai stampati; backup non ispezionato; volumi e configurazione Console/nginx preservati.
-- Nessun sudo necessario; update_nginx.sh non eseguito. Riavvio dei due servizi, interruzione non misurata.
-- Modifica preesistente .timoniere.json preservata nel checkout principale; container S1 di prova fermati.
-- Tag rollback non creati: vecchi ID immagini non disponibili nello store; backup DB conservato.
-- Bug LOCAL confermati: 6fabbcce-110e-4971-907f-1f3b66028897 e 2e5a5441-a078-4cb3-8f95-0a8ae4e165e4.
-- Default Docker Python 3.10 fuori scope: efc2ea65-2cb3-4502-9511-999bb8d7a87b; mantenuto runtime 3.12.
+- Solo repository e dati sintetici per questo seguito; nessun accesso ai dati o segreti della produzione.
+- L’indice prova una corrispondenza letterale, non ricostruisce una traccia di chiamate del singolo turno.
+- Le righe derivano dai sorgenti installati; GitHub apre il ramo main, che può avanzare.
+- La correzione delle contraddizioni di contenuto resta separata, come le issue #775–#779 e il desktop.
+- S1 iniziale concluso nel Diario (80b9b6f3-9580-421f-816f-e792224ce133); seguito in lavorazione.
 
 ## Bug non registrati
-- Nessuno; registrazioni LOCAL non collegate a issue, nessuna issue creata manualmente.
+- Nessuno; la mancata localizzazione generica è lo scope di questa estensione, non un difetto riprodotto.
