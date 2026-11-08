@@ -60,6 +60,7 @@ async function fixture(width, phase = 'intro', options = {}) {
         else if (url.pathname === '/api/chat/stream') return route.fulfill({ contentType: 'text/event-stream', body: 'data: {"done":true,"response":"Proseguiamo."}\n\n' });
         else if (url.pathname === '/api/session/fixture/diagrams') data = control.saved;
         else if (url.pathname === '/api/session/fixture/recommendations') data = catalog;
+        else if (url.pathname === '/api/session/fixture/requests/revisit') data = { request: options.revisit ? catalog.request.filter(item => item.status === 'proposed') : [] };
         else if (url.pathname === '/api/session/fixture/requests' && request.method() === 'POST') {
             catalog.request = [...catalog.request, { slug: 'req-added', kind: 'request', source: 'student', name: request.postDataJSON().text, status: 'proposed' }];
             data = catalog;
@@ -681,3 +682,20 @@ for (const width of [390, 1440]) {
         } finally { await context.close(); }
     });
 }
+
+
+test('a request to revisit starts a turn dedicated to it', async () => {
+    const { page, context, control } = await fixture(390, 'intro', { revisit: true });
+    try {
+        const bar = page.getByTestId('revisit-requests');
+        await bar.getByText('Domande da riprendere (1)').waitFor();
+        await bar.getByText('Posso avere un consiglio sul metodo?', { exact: true }).waitFor();
+        await bar.getByRole('button', { name: 'Riprendi', exact: true }).click();
+        await page.getByText('Proseguiamo.').last().waitFor();
+        const sent = control.requests.find(item => item.path === '/api/chat/stream');
+        assert.equal(sent.body.revisit_request, 'req-one');
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+        assert.equal(overflow, false);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});

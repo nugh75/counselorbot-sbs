@@ -62,6 +62,8 @@ export interface StudentRequest extends RecommendationBase {
     recommendation_type?: 'request';
     name?: string;
     kind?: 'request';
+    // Classified by the thread guard: advice waits for «Strategie e consigli».
+    request_kind?: 'advice' | 'question' | null;
     source?: 'counselor' | 'student';
     closed_by?: 'student' | 'conversation' | null;
     step_order?: number | null;
