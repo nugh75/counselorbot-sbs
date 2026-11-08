@@ -29,6 +29,7 @@ from functools import lru_cache
 from sqlalchemy.orm import Session
 
 from . import models, prompt_registry, prompt_revisions
+from .prompt_source_locations import sentence_with_locations
 from .prompt_registry import (
     REGISTRY,
     Rule,
@@ -439,6 +440,7 @@ def annotate(findings: list[dict], texts: dict[str, str]) -> list[dict]:
         for sentence in finding["sentences"]:
             found = locate(texts.get(sentence["prompt"], ""), sentence["text"])
             sentence["start"], sentence["end"] = found if found else (None, None)
+        finding["sentences"] = [sentence_with_locations(sentence) for sentence in finding["sentences"]]
         finding["editable"] = [pid for pid in finding["prompts"] if pid in texts]
         finding["factory"] = [
             pid for pid in finding["prompts"]
@@ -475,7 +477,8 @@ def clear_ack(db: Session, finding_id: str) -> None:
 
 def with_acks(findings: list[dict], marked: dict[str, dict]) -> list[dict]:
     # Add source references at read time too, so stored runs need no migration.
-    return [{**finding, "sources": finding_sources(finding), "ack": marked.get(finding["id"])} for finding in findings]
+    return [{**finding, "sentences": [sentence_with_locations(sentence) for sentence in finding["sentences"]],
+             "sources": finding_sources(finding), "ack": marked.get(finding["id"])} for finding in findings]
 
 
 def finding_sources(finding: dict) -> list[dict]:

@@ -7,19 +7,54 @@ import { useI18n } from '@/lib/i18n-context';
 import { Button } from '@/components/ui/Button';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { postJson, SEVERITY_TEXT, useFindingMessage, type PromptHealthPath } from './PromptCompare';
-import { canPropose, compareTargets, findingBrief, hasCodeSource, promptLabel, visibleSurfaces, type PromptHealthFinding } from '@/lib/prompt-health';
+import { canPropose, codeReferenceUrl, compareTargets, findingBrief, hasCodeSource, promptLabel, visibleSurfaces,
+    type PromptCodeLocation, type PromptHealthFinding, type PromptHealthSentence } from '@/lib/prompt-health';
 import { cn } from '@/lib/utils';
 import { usePromptName, useSurfaceName } from './PromptHealthLabels';
 
 type OpenCompare = (prompts: string[], focus: string | null, propose?: boolean) => void;
+
+function SourceLink({ location }: { location: PromptCodeLocation }) {
+    const { t } = useI18n();
+    const url = codeReferenceUrl(location);
+    const label = t('admin.promptHealth.reference.location', { file: location.file, line: location.line });
+    return url ? <a href={url} target="_blank" rel="noopener noreferrer" title={t('admin.promptHealth.reference.github')}
+        className="block break-all font-mono text-xs text-link underline">{label}<span className="sr-only"> · {t('admin.promptHealth.newWindow')}</span></a>
+        : <span className="block break-all font-mono text-xs">{label}</span>;
+}
+
+function CodeReferences({ sentence }: { sentence: PromptHealthSentence }) {
+    const { t } = useI18n();
+    const location = sentence.code_location;
+    return <div className="space-y-2 border-t border-line pt-2 text-xs text-ink-body">
+        <p className="font-semibold">{t('admin.promptHealth.reference.title')}</p>
+        {!location?.matches.length ? <p className="text-ink-muted">{t('admin.promptHealth.reference.unknown')}</p> : <>
+            <p className="text-ink-muted">{t(location.status === 'ambiguous' ? 'admin.promptHealth.reference.ambiguous' : 'admin.promptHealth.reference.matched')}</p>
+            <ul className="space-y-3">{location.matches.map(reference => <li key={`${reference.file}:${reference.line}:${reference.symbol}`} className="space-y-1">
+                <SourceLink location={reference} />
+                {reference.symbol && <p className="break-all"><span className="font-semibold">{t('admin.promptHealth.reference.symbol')}:</span> <code>{reference.symbol}</code></p>}
+                {reference.definition && <div><p className="font-semibold">{t('admin.promptHealth.reference.definition')}</p><SourceLink location={reference.definition} /></div>}
+                {reference.readers.slice(0, 3).map(reader => <div key={`${reader.file}:${reader.line}`} className="space-y-1">
+                    <p className="break-all"><span className="font-semibold">{t('admin.promptHealth.reference.usedBy')}:</span> <code>{reader.symbol}</code></p>
+                    <SourceLink location={reader} />
+                </div>)}
+                {reference.readers.length > 3 && <p className="text-ink-muted">{t('admin.promptHealth.reference.more', { count: reference.readers.length - 3 })}</p>}
+            </li>)}</ul>
+            {location.more > 0 && <p className="text-ink-muted">{t('admin.promptHealth.reference.more', { count: location.more })}</p>}
+        </>}
+    </div>;
+}
 
 function CodeBrief({ finding }: { finding: PromptHealthFinding }) {
     const { t } = useI18n();
     const message = useFindingMessage();
     const [status, setStatus] = useState<'copied' | 'manual' | null>(null);
     const briefId = useId();
-    const unknown = finding.prompts.includes('code:request') ? `\n\n${t('admin.promptHealth.brief.unknown')}` : '';
-    const brief = `${t('admin.promptHealth.brief.instructions')}\n\n${findingBrief(finding, message(finding))}${unknown}`;
+    const unknown = finding.sentences.some(sentence => sentence.prompt.startsWith('code:') && !sentence.code_location?.matches.length)
+        ? `\n\n${t('admin.promptHealth.brief.unknown')}` : '';
+    const brief = `${t('admin.promptHealth.brief.instructions')}\n\n${findingBrief(finding, message(finding), {
+        code: t('admin.promptHealth.source.codeBadge'), prompt: t('admin.promptHealth.source.editable'),
+    })}${unknown}`;
     const copy = async () => {
         try { await navigator.clipboard.writeText(brief); setStatus('copied'); }
         catch { setStatus('manual'); }
@@ -69,8 +104,11 @@ export function FindingCard({ finding, paths, group, onCompare, onChanged }: {
                     {finding.sentences.map((sentence, index) => <blockquote key={`${sentence.prompt}:${index}`}
                         className="min-w-0 space-y-2 rounded-control border border-line bg-surface-sunken p-3 text-sm text-ink-body">
                         <p className="break-words font-semibold">{name(sentence.prompt)}</p>
-                        <p className="text-xs font-semibold text-ink-muted">{t(sentence.prompt.startsWith('code:') ? 'admin.promptHealth.source.code' : 'admin.promptHealth.source.editable')}</p>
+                        {sentence.prompt.startsWith('code:')
+                            ? <p><span className="inline-block rounded-control border border-info-line bg-info-soft px-2 py-1 text-xs font-bold text-info-ink">{t('admin.promptHealth.source.codeBadge')}</span></p>
+                            : <p className="text-xs font-semibold text-ink-muted">{t('admin.promptHealth.source.editable')}</p>}
                         <p className="break-words underline decoration-danger decoration-wavy underline-offset-4">«{sentence.text}»</p>
+                        {sentence.prompt.startsWith('code:') && <CodeReferences sentence={sentence} />}
                     </blockquote>)}
                 </div>}
                 <p className="text-sm text-ink-body"><span className="font-semibold">{t('admin.promptHealth.fix')}:</span> {t(`admin.promptHealth.fix.${finding.code}`)}</p>

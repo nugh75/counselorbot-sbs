@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { canPropose, cellStatus, estimateCost, findingBrief, hasCodeSource, mergeFindings } from './prompt-health.ts';
+import { canPropose, cellStatus, codeReferenceUrl, estimateCost, findingBrief, hasCodeSource, mergeFindings } from './prompt-health.ts';
 
 // Contradiction found by the model (#763): quotes with positions, surfaces where it happens.
 const llm = {
@@ -60,4 +60,20 @@ test('coding-agent brief includes exact evidence, turn and real repository refer
         assert.ok(brief.includes(evidence), evidence);
     }
     assert.ok(!brief.includes('null'));
+});
+
+test('each quoted code instruction keeps its file, line, symbol and readers in the brief', () => {
+    const brief = findingBrief({ ...llm, sentences: [{
+        prompt: 'code:request', text: 'Synthetic source instruction.', code_location: {
+            status: 'matched' as const, more: 0, matches: [{ file: 'backend/chat_logic.py', line: 532,
+                symbol: 'DEFAULT_NO_REASONING_DIRECTIVE', readers: [{ file: 'backend/chat_logic.py', line: 718, symbol: '_apply_global_directives' }] }],
+        },
+    }] }, 'Review this rule', { code: 'CODICE DELL’APPLICAZIONE', prompt: 'PROMPT SALVATO' });
+    for (const value of ['CODICE DELL’APPLICAZIONE', 'backend/chat_logic.py:532', 'DEFAULT_NO_REASONING_DIRECTIVE', 'backend/chat_logic.py:718', '_apply_global_directives']) assert.ok(brief.includes(value), value);
+});
+
+test('code links only open valid backend source locations on this repository', () => {
+    assert.equal(codeReferenceUrl({ file: 'backend/prompts/guided_choice_directive.md', line: 2, symbol: 'GUIDED_CHOICE_DIRECTIVE' }), 'https://github.com/nugh75/counselorbot-sbs/blob/main/backend/prompts/guided_choice_directive.md#L2');
+    for (const file of ['https://outside.example/file.py', 'backend/../secret.py', '/private/secret.py', 'backend/.env']) assert.equal(codeReferenceUrl({ file, line: 2, symbol: '' }), null);
+    for (const line of [0, -1, 1.2, Infinity]) assert.equal(codeReferenceUrl({ file: 'backend/chat_logic.py', line, symbol: '' }), null);
 });
