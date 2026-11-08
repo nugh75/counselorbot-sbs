@@ -3,7 +3,7 @@ from pathlib import Path
 
 from backend.prompt_source_locations import _collect, _locate, code_locations, sentence_with_locations
 
-NO_REASONING = "Do not produce a reasoning block, analysis, plan, checklist or meta-commentary."
+NO_REASONING = "Do not write internal working notes addressed to yourself, such as a plan, a checklist or phrases that"
 ORIENTATION = "In EVERY visible reply, weave in one short, natural orientation sentence: what we are exploring now, why it matters to this step, and what comes next."
 
 
@@ -14,7 +14,7 @@ def test_real_screenshot_quotes_point_to_python_constant_and_versioned_markdown(
     assert location["file"] == "backend/chat_logic.py"
     assert location["symbol"] == "DEFAULT_NO_REASONING_DIRECTIVE"
     source = Path(location["file"]).read_text().splitlines()
-    assert '"[NO REASONING] Do not produce' in source[location["line"] - 1]
+    assert '"[NO REASONING] Do not produce a private reasoning block' in source[location["line"] - 1]
     assert any(reader["symbol"] == "_apply_global_directives" for reader in location["readers"])
 
     second = code_locations(ORIENTATION)

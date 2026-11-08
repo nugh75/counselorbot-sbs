@@ -1560,7 +1560,10 @@ non li indica). Il livello prevale su quello del preset del counselor e vale sol
 per le fonti personali; se ChatGPT rifiuta il livello, risponde con il proprio
 predefinito invece di fallire. Se il modello impone il ragionamento, la scheda
 lo segnala, «Nessuno» non è selezionabile e la chat usa il livello più basso
-disponibile. La lista counselor mostra il modello
+disponibile. Con «Nessuno» il modello non apre un blocco di ragionamento privato e
+non scrive appunti di lavoro rivolti a sé stesso, ma può spiegare allo studente,
+in parole semplici, i passaggi e le evidenze che lo portano a una conclusione;
+la frase di orientamento dei percorsi guidati fa parte della risposta. La lista counselor mostra il modello
 assegnato nell’account. Le scelte non cambiano i counselor dell’istituzione.
 **Usa le mie API o il mio ChatGPT** e **Salva associazioni e utilizzo** attivano
 le scelte; la disattivazione torna ai modelli dell’istituto, conservando tutte

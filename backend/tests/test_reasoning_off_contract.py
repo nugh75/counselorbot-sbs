@@ -295,3 +295,18 @@ def test_openai_effort_uses_the_resolved_preset_effort():
         enabled=True, reasoning_budget=16000, max_tokens=18000, effort="max",
     )
     assert ai._openai_reasoning_effort("o3") == "high"
+
+
+def test_reasoning_off_forbids_private_notes_but_allows_student_facing_explanations():
+    # Prompt health 063d3888eb53d468: a bare "meta-commentary" ban clashed with
+    # [GUIDED CHOICE] orientation; only self-addressed working notes are forbidden.
+    directive = DEFAULT_NO_REASONING_DIRECTIVE
+    assert "meta-commentary" not in directive
+    assert "<think>" in directive and "internal working notes addressed to yourself" in directive
+    assert "explain to the student" in directive and "orientation requested by the task is part of that answer" in directive
+
+
+def test_reasoning_off_directive_is_written_only_in_english():
+    # Instructions sent to the model are always English; examples included.
+    for italian in ("Devo", "Identifico", "punteggi", "Strutturo"):
+        assert italian not in DEFAULT_NO_REASONING_DIRECTIVE
