@@ -310,3 +310,20 @@ if __name__ == "__main__":
             print(f"FAIL {test.__name__}: {exc}")
     print(f"\n{len(tests) - failed}/{len(tests)} passed")
     raise SystemExit(1 if failed else 0)
+
+
+def test_advice_request_in_what_did_not_work_is_deferred_to_the_next_time_step():
+    """Prompt health 6a005cfa85e5e278: «No advice yet» in «Cosa non ha funzionato»
+    wins over an explicit request; the contract defers it to a later step."""
+    from backend.prompt_contract import turn_contract
+    for step_id in ("evstudio-criticita", "evprof-criticita"):
+        assert _default_certified_strategy_limit("evento-interview", step_id, True) == 0
+        flags = apply_advice_retrieval_policy({"certified_strategies": True, "approved_strategies": True},
+                                              "evento-interview", step_id, advice_requested=True)
+        assert flags["certified_strategies"] is False and flags["approved_strategies"] is False
+    assert _default_certified_strategy_limit("evento-interview", "evstudio-prossima", True) == 1
+    contract = turn_contract(language="it", questionnaire_type="EVENTO_STUDIO", phase="evstudio-criticita",
+                             advice_allowed=False)
+    assert "Introduce no new practical action in this turn" in contract
+    assert "which later step takes that request up" in contract
+    assert "Offer new practical actions only from the certified candidates" not in contract

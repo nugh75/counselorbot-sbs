@@ -36,8 +36,6 @@ INSTRUMENTS = (
 # Findings on the factory texts of today's main, reviewed in PR #760. The list
 # can only shrink: fix the prompt, then remove its line.
 KNOWN_BASELINE = {
-    ("rule_conflict", ("code:turn_contract", "guided_step:evprof-criticita")),
-    ("rule_conflict", ("code:turn_contract", "guided_step:evstudio-criticita")),
     ("number_mismatch", ("guided_step:savickas-intro",)),
 }
 
@@ -166,9 +164,9 @@ def test_baseline_of_factory_texts_matches_the_reviewed_list():
     finally:
         db.close()
     assert _codes(findings) == KNOWN_BASELINE, sorted(_codes(findings))
-    conflict = next(f for f in findings if f["code"] == "rule_conflict")
-    assert len(conflict["sentences"]) == 2 and all(s["text"] for s in conflict["sentences"])
-    assert conflict["surfaces"], "a conflict names the turns where it happens"
+    for conflict in (f for f in findings if f["code"] == "rule_conflict"):
+        assert len(conflict["sentences"]) == 2 and all(s["text"] for s in conflict["sentences"])
+        assert conflict["surfaces"], "a conflict names the turns where it happens"
 
 
 def test_run_is_stored_by_text_hash_and_reused():

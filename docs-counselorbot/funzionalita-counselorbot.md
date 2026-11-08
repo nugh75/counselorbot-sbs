@@ -983,6 +983,8 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
   prossima volta), seguiti dalla sintesi al passo 7. La sintesi è una bozza di
   tappa della Linea del tempo da rivedere e salvare esplicitamente; ciò che si
   proverà la prossima volta può diventare un obiettivo. Non sono eventi del calendario.
+  Nel passo delle difficoltà il counselor non propone consigli, nemmeno se lo
+  studente li chiede: dice che se ne parlerà nel passo «La prossima volta».
 - **Il mio obiettivo di apprendimento** (`OBIETTIVO_STUDIO`): definisce un obiettivo.
   Il percorso completo ha un passaggio iniziale (presentazione e accordo, confermato
   con «Accetto») e cinque fasi che dicono che cosa si fa: *Cosa voglio imparare*,
