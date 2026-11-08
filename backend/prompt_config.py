@@ -883,7 +883,7 @@ DEFAULT_SYSTEM_PROMPT_INTRO = (
     "In this turn:\n"
     + _SCORE_BASED_INTRO_FLOW
     + "\n"
-    "Do NOT yet: mention any score, factor, factor code, or table. This is only the "
+    "Do NOT yet mention or interpret any result: no score, level, or table. You may name the factors and areas the path will explore. This is only the "
     "welcome, not the analysis."
 ) + INTRO_ALLOWED_QUESTIONS
 
@@ -894,7 +894,7 @@ DEFAULT_SYSTEM_PROMPT_QSAR_INTRO = (
     "In this turn:\n"
     + _SCORE_BASED_INTRO_FLOW
     + "\n"
-    "Do NOT yet: mention any score, factor, factor code, or table. This is only the "
+    "Do NOT yet mention or interpret any result: no score, level, or table. You may name the factors and areas the path will explore. This is only the "
     "welcome, not the analysis."
 ) + INTRO_ALLOWED_QUESTIONS
 
@@ -905,7 +905,7 @@ DEFAULT_SYSTEM_PROMPT_ZTPI_INTRO = (
     "In this turn:\n"
     + _SCORE_BASED_INTRO_FLOW
     + "\n"
-    "Do NOT yet: mention any score, factor, or table. This is only the "
+    "Do NOT yet mention or interpret any result: no score, level, or table. You may name the factors and areas the path will explore. This is only the "
     "welcome, not the analysis."
 ) + INTRO_ALLOWED_QUESTIONS
 
@@ -971,7 +971,7 @@ DEFAULT_SYSTEM_PROMPT_QPCS_INTRO = (
     "In this turn:\n"
     + _SCORE_BASED_INTRO_FLOW
     + "\n"
-    "Do NOT yet: mention any score, factor, or table. This is only the "
+    "Do NOT yet mention or interpret any result: no score, level, or table. You may name the factors and areas the path will explore. This is only the "
     "welcome, not the reflection."
 ) + INTRO_ALLOWED_QUESTIONS
 
@@ -984,7 +984,7 @@ DEFAULT_SYSTEM_PROMPT_QPCC_INTRO = (
     "- Mention that the path takes about 20-30 minutes and that your conversation is confidential.\n"
     "- Propose this way of working as a collaboration agreement and ask for explicit acceptance before beginning.\n"
     "- Keep the tone natural, authentic, respectful and human. Do NOT lecture on psychometric theory, authors (Pellerey, Orio), 63 items, dimensions or scales; do NOT use patronizing formulas, meta-disclaimers or rigid interview phrasing (never say, in any language, 'it does not measure your worth', 'there are no right or wrong answers', 'with curiosity, not judgement' / 'without judgement', 'I will not ask you 63 questions', 'I will not assign scores', 'self-perceptions, not verdicts', 'fixed labels', 'I ask targeted questions, you answer').\n"
-    "- Do NOT yet: mention any score, factor, factor code, or table. This is only the welcome and agreement, not the reflection."
+    "- Do NOT yet mention or interpret any result: no score, level, or table. You may name the factors and areas the path will explore. This is only the welcome and agreement, not the reflection."
 ) + INTRO_ALLOWED_QUESTIONS
 
 DEFAULT_SYSTEM_PROMPT_QAP_INTRO = (
@@ -993,7 +993,7 @@ DEFAULT_SYSTEM_PROMPT_QAP_INTRO = (
     "In this turn:\n"
     + _SCORE_BASED_INTRO_FLOW
     + "\n"
-    "Do NOT yet: mention any score, factor, or table. This is only the "
+    "Do NOT yet mention or interpret any result: no score, level, or table. You may name the factors and areas the path will explore. This is only the "
     "welcome, not the path."
 ) + INTRO_ALLOWED_QUESTIONS
 
