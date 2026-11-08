@@ -569,3 +569,16 @@ def test_intro_invitation_never_adds_a_second_question():
     intro = {item["key"]: item["default"] for item in ALL_CONFIG_TEXT_DEFINITIONS}["prompt_intro"]
     assert "phrased as a statement and not as a question" in intro
     assert "the invitation must not add another" in intro
+
+
+def test_qsa_second_level_steps_remove_the_ambiguities_found_by_the_model():
+    """Problems #5-#9 (Nov 2026): verify-together is not a question, factor directions are explicit,
+    the closing habit question is neither advice nor a temporal-situational question."""
+    from backend.prompt_config import _text
+    from backend.prompt_contract import _facilitation_contract
+    assert "without adding a question for it" in _text("qsa_step_sl_elaboration")
+    selfcontrol = _text("qsa_step_sl_selfcontrol")
+    assert "C2 is read directly (a high score is a strength)" in selfcontrol
+    assert "Respect the inverted direction of C3 and C6 (a high score is a growth area)" in selfcontrol
+    assert "a reflective one and not a request for advice" in _text("qsa_step_sl_emotions")
+    assert "is a question about habits, not a temporal-situational one" in _facilitation_contract("area")

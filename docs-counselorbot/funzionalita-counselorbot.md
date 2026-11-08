@@ -864,6 +864,7 @@ il divieto di value-check e le regole rigide sulla domanda.
 Nei passi con un solo fattore l’ipotesi nasce da come quel fattore si vede nello studio dello
 studente, senza inventare relazioni con altri fattori; dalla combinazione dei fattori solo quando
 il passo ne ha due o più (novembre 2026, «Allinea prompt di fabbrica» per i testi di fabbrica).
+Nei passi QSA di secondo livello le tensioni fra fattori fanno parte dell’ipotesi da verificare insieme senza una domanda in più; in «Autocontrollo e concentrazione» il verso di lettura è esplicito (C2 alto = punto di forza, C3 e C6 alti = aree di crescita); la domanda finale su cosa fa abitualmente lo studente è riflessiva, non una richiesta di consigli né una domanda su un episodio.
 La direttiva `[DEPTH ON REQUEST]` orienta l'approfondimento verso l'agire e le scelte dello studente
 anziché imporre un aneddoto scolastico preconfezionato dal modello;
 in sintesi, `[PERSPECTIVE]` offre il nesso con taccuino e portfolio come domanda aperta
