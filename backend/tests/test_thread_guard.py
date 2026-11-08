@@ -153,7 +153,7 @@ def test_notes_of_nothing_render_nothing():
 
 
 # --- storage and staleness ---
-from backend import database, models, recommendation_service  # noqa: E402
+from backend import database, models, recommendation_blocks, recommendation_service  # noqa: E402
 from backend.tests.artifact_database import artifact_session  # noqa: E402
 
 SESSION = "guard-fixture"
@@ -807,3 +807,76 @@ def test_open_hypotheses_section_rendering():
     assert '1. (step 2) "Forse tendi a rimandare l inizio"' in rendered
     assert thread_guard._open_hypotheses_section([]) == ''
 
+
+
+# --- le richieste dello studente da riprendere alla fine ---------------------------
+def _requests_verdict(requests=None, status=None):
+    return thread_guard.parse(json.dumps({
+        "on_thread": {"ok": True, "note": None}, "question_fit": {"ok": True, "note": None},
+        "advice_grounded": {"ok": True, "note": None},
+        "requests": requests or [], "request_status": status or [],
+    }))
+
+
+def _requests(db):
+    return {item['name']: item for item in recommendation_service.list_for_session(
+        db, session_id=SESSION, username=STUDENT)['request']}
+
+
+def test_the_judge_adds_a_request_without_question_mark_only_if_it_is_verbatim(db):
+    message = 'Vorrei una strategia per concentrarmi meglio. Grazie'
+    verdict = _requests_verdict([
+        {'text': 'Vorrei una strategia per concentrarmi meglio.', 'kind': 'advice', 'answered': False},
+        {'text': 'Mi spieghi il punteggio di C3?', 'kind': 'question', 'answered': False},
+    ])
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn='t', verdict=verdict,
+                       open_requests=[], student_message=message, step_id='sl-selfcontrol')
+    items = _requests(db)
+    assert set(items) == {'Vorrei una strategia per concentrarmi meglio.'}
+    item = items['Vorrei una strategia per concentrarmi meglio.']
+    assert item['request_kind'] == 'advice' and item['status'] == 'proposed'
+    assert item['step_id'] == 'sl-selfcontrol'
+
+
+def test_the_judge_classifies_and_closes_listed_requests(db):
+    recommendation_service.add_request(db, session_id=SESSION, username=STUDENT, text='Quanto dura il percorso?')
+    recommendation_service.add_request(db, session_id=SESSION, username=STUDENT, text='Mi dai un metodo?')
+    # One outer transaction gives both rows the same created_at: fix the order the judge saw.
+    by_name = {item['name']: item for item in recommendation_service.open_requests(db, session_id=SESSION, username=STUDENT)}
+    listed = [by_name['Quanto dura il percorso?'], by_name['Mi dai un metodo?']]
+    verdict = _requests_verdict(status=[
+        {'index': 1, 'kind': 'question', 'addressed': True},
+        {'index': 2, 'kind': 'advice', 'addressed': False},
+        {'index': 9, 'kind': 'advice', 'addressed': True},
+    ])
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn='t', verdict=verdict,
+                       open_requests=listed, student_message='')
+    items = _requests(db)
+    assert items['Quanto dura il percorso?']['status'] == 'closed'
+    assert items['Quanto dura il percorso?']['closed_by'] == 'conversation'
+    assert items['Mi dai un metodo?']['status'] == 'proposed'
+    assert items['Mi dai un metodo?']['request_kind'] == 'advice'
+    assert items['Mi dai un metodo?']['source'] == 'student'
+
+
+def test_a_request_already_listed_by_the_net_is_only_classified(db):
+    recommendation_service.record(db, session_id=SESSION, username=STUDENT, recommendation_type='request',
+                                  payloads=[{'slug': recommendation_blocks.request_slug('Come mi concentro?'),
+                                             'name': 'Come mi concentro?', 'kind': 'request', 'source': 'counselor'}])
+    verdict = _requests_verdict([{'text': 'Come mi concentro?', 'kind': 'advice', 'answered': False}])
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn='t', verdict=verdict,
+                       open_requests=[], student_message='Come mi concentro?')
+    items = _requests(db)
+    assert list(items) == ['Come mi concentro?'] and items['Come mi concentro?']['request_kind'] == 'advice'
+
+
+def test_the_judge_sees_the_full_student_message_and_the_numbered_requests():
+    text = 'parola ' * 60 + 'Mi dai una strategia?'
+    assert 'Mi dai una strategia?' in thread_guard._student_message_section(text)
+    rendered = thread_guard._open_requests_section([
+        {'slug': 'r', 'name': 'Quanto dura?', 'request_kind': None},
+        {'slug': 's', 'name': 'Un metodo?', 'request_kind': 'advice'},
+    ])
+    assert '1. (kind unknown) "Quanto dura?"' in rendered and '2. (kind advice) "Un metodo?"' in rendered
+    assert thread_guard._student_message_section('') == '' and thread_guard._open_requests_section([]) == ''
+    assert '"request_status"' in thread_guard.SYSTEM_PROMPT and 'copied verbatim' in thread_guard.SYSTEM_PROMPT

@@ -253,20 +253,15 @@ def test_private_blocks_share_one_order_with_the_step_marker_last():
         assert 'before the final idea patch' in text and 'AVANZA_STEP' not in text
 
 
-def test_student_requests_must_be_verbatim_and_discussed_ids_map_to_open_requests():
-    from backend.recommendation_blocks import extract_discussed, extract_requests, requests_directive
-    raw = 'Risposta.\n```recommendations\n{"requests": [{"text": "Quanto  dura il percorso?", "answered": true}, ' \
-          '{"text": "Inventata dal modello?", "answered": false}, {"text": "corto"}], "discussed": ["R2", "r1", "R7", "x"]}\n```'
-    found = extract_requests(raw, "Ciao. Quanto dura il percorso? Grazie")
-    assert [(item["name"], item["answered"], item["kind"]) for item in found] == [("Quanto dura il percorso?", True, "request")]
-    assert found[0]["slug"].startswith("req-")
-    assert extract_requests(raw, None) == []
-    assert extract_discussed(raw, ["req-a", "req-b"]) == ["req-b", "req-a"]
-    assert extract_discussed(raw, []) == []
+def test_every_question_of_the_student_reaches_the_list_without_a_model():
+    from backend.recommendation_blocks import question_sentences
+    found = question_sentences("Ciao. Quanto  dura il percorso? Grazie! Mi dai una strategia?\nOk? Vorrei un metodo.")
+    assert [item["name"] for item in found] == ["Quanto dura il percorso?", "Mi dai una strategia?"]
+    assert all(item["slug"].startswith("req-") and item["kind"] == "request" for item in found)
+    assert question_sentences(None) == [] and question_sentences("Nessuna domanda.") == []
+    # Private blocks a model may still write are never shown.
+    raw = 'Risposta.\n```recommendations\n{"requests": [], "discussed": ["R1"]}\n```'
     assert extract(raw)[0] == "Risposta."
-    directive = requests_directive(open_requests=[{"name": "Prima domanda?"}])
-    assert "[STUDENT REQUESTS]" in directive and 'R1: "Prima domanda?"' in directive
-    assert "[REQUESTS TO REVISIT]" not in requests_directive()
 
 
 def test_notes_directive_offers_a_suggestion_only_when_advice_is_allowed():

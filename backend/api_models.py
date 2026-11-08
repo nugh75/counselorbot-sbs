@@ -57,6 +57,8 @@ class ChatRequest(schemas.BaseModel):
     # Taccuino studente di prova del docente (solo con notebook_context
     # "practice"): il server verifica ruolo e proprieta' a ogni turno.
     practice_notebook_id: Optional[int] = None
+    # Slug of an open request in «Da riprendere»: the server builds the turn that takes it up.
+    revisit_request: Optional[str] = Field(default=None, max_length=64)
     # Modalità sandbox / anteprima admin: sessione effimera, nessun log, statistica o raccomandazione persistita
     preview: bool = False
 

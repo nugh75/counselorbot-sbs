@@ -70,7 +70,8 @@ import {
 import { freezeSession, type FrozenSessionDetail, type FrozenSessionSnapshot } from '@/lib/frozen-session';
 import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, phasesAlreadyOpened, shouldAutoFreeze } from '@/lib/auto-freeze';
 import { diagramContentForSpeech } from '@/lib/diagram-content';
-import { EMPTY_RECOMMENDATIONS, normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
+import { EMPTY_RECOMMENDATIONS, normalizeRecommendationCatalog, type RecommendationCatalog, type StudentRequest } from '@/lib/recommendations';
+import { RevisitRequestsBar } from './RevisitRequestsBar';
 
 import { ChatResponseSettings } from '@/components/ui/ChatResponseSettings';
 import { ADVANCE_STEP, stripControlMarkers, stripControlMarkersForDisplay } from '@/lib/control-markers';
@@ -606,6 +607,33 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const adoptRecommendations = (catalog: RecommendationCatalog | undefined) => {
         if (catalog) setRecommendations(normalizeRecommendationCatalog(catalog));
     };
+
+    // The thread guard adds and closes requests a few seconds after the reply.
+    useEffect(() => {
+        if (isLoading || !sessionId || preview) return;
+        const timer = window.setTimeout(() => {
+            void apiFetch(`/api/session/${encodeURIComponent(sessionId)}/recommendations?lang=${activeLocale}`)
+                .then(async (response) => response.ok ? response.json() : null)
+                .then((payload) => { if (payload) setRecommendations(normalizeRecommendationCatalog(payload)); })
+                .catch(() => undefined);
+        }, 8000);
+        return () => window.clearTimeout(timer);
+    }, [isLoading, sessionId, preview, activeLocale]);
+
+    const [revisitItems, setRevisitItems] = useState<StudentRequest[]>([]);
+    const revisitSlugRef = useRef<string | null>(null);
+    useEffect(() => {
+        let active = true;
+        if (!sessionId || preview || essential || activeExploration || !currentPhase) {
+            setRevisitItems([]);
+            return () => { active = false; };
+        }
+        void apiFetch(`/api/session/${encodeURIComponent(sessionId)}/requests/revisit?phase=${encodeURIComponent(currentPhase)}`)
+            .then(async (response) => response.ok ? response.json() : null)
+            .then((payload) => { if (active) setRevisitItems(Array.isArray(payload?.request) ? payload.request : []); })
+            .catch(() => undefined);
+        return () => { active = false; };
+    }, [sessionId, preview, essential, activeExploration, currentPhase, recommendations]);
 
     useEffect(() => {
         if (!isIdea || !sessionId) {
@@ -1285,7 +1313,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 ...notebookPayload,
                 idea_budget: isIdea ? ideaBudget : undefined,
                 preview: preview ? true : undefined,
+                revisit_request: revisitSlugRef.current ?? undefined,
             };
+            revisitSlugRef.current = null;
             if (scoresContextOverride || essential) {
                 chatPayload.scores_context = scoresContextOverride ?? formatScoresForPrompt(scores);
             }
@@ -2028,6 +2058,13 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
                 <ChatContinuation locale={activeLocale} {...continuation} />
                 {/* Input Area */}
+                {!activeExploration && !voiceMode && (
+                    <RevisitRequestsBar items={revisitItems} locale={activeLocale} disabled={isLoading}
+                        onRevisit={(item) => {
+                            revisitSlugRef.current = item.slug;
+                            void handleSend({ preventDefault: () => undefined }, item.name || '');
+                        }} />
+                )}
                 {currentPhase === FIXED_CONCLUSION_ID && !activeExploration && !voiceMode && isEventInstrument(questionnaireType) && (
                     <EventMilestoneCard sessionId={sessionId} draft={eventBookletDraft} />
                 )}

@@ -2,7 +2,7 @@
 import json
 import pytest
 from backend.tests.test_smoke import client, main, auth, _FakeAIService, _fake_user_identity, _TestSession
-from backend import models
+from backend import models, recommendation_service
 
 
 @pytest.mark.parametrize('stream', [False, True])
@@ -68,18 +68,13 @@ def _cleanup(sid):
 
 
 @pytest.mark.parametrize('stream', [False, True])
-def test_student_requests_are_logged_verbatim_and_answered_ones_are_already_discussed(monkeypatch, stream):
-    message = 'Posso avere un consiglio sul metodo? E quanto dura il percorso?'
+def test_every_question_of_the_student_is_logged_by_the_server(monkeypatch, stream):
+    # The list no longer depends on a private block the model may not write.
+    message = 'Posso avere un consiglio sul metodo? E quanto dura il percorso? Vorrei capire.'
     reply = 'Il percorso ha pochi passi; il metodo lo vediamo più avanti.'
-    block = {'requests': [
-        {'text': 'Posso avere un consiglio sul metodo?', 'answered': False},
-        {'text': 'E quanto dura il percorso?', 'answered': True},
-        {'text': 'Una domanda che lo studente non ha mai scritto?', 'answered': False},
-    ]}
-    raw = reply + '\n```recommendations\n' + json.dumps(block) + '\n```'
     sid = 'requests-stream' if stream else 'requests-sync'
     prompts = []
-    _capture_ai(monkeypatch, raw, prompts)
+    _capture_ai(monkeypatch, reply, prompts)
     main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
     try:
         response = client.post('/chat/stream' if stream else '/chat', json={
@@ -89,23 +84,21 @@ def test_student_requests_are_logged_verbatim_and_answered_ones_are_already_disc
         if stream:
             events = [json.loads(line[6:]) for line in response.text.splitlines() if line.startswith('data: ')]
             body = next(event for event in events if event.get('done'))
-            assert all('requests' not in event.get('display', '') for event in events)
         else:
             body = response.json()
         assert body['response'] == reply
-        assert any('[STUDENT REQUESTS]' in prompt for prompt in prompts)
-        assert not any('[REQUESTS TO REVISIT]' in prompt for prompt in prompts)
-        items = {item['name']: item for item in body['recommendations']['request']}
+        assert not any('[STUDENT REQUESTS]' in prompt or '[REQUESTS TO REVISIT]' in prompt for prompt in prompts)
+        with _TestSession() as db:
+            items = {item['name']: item for item in recommendation_service.list_for_session(
+                db, session_id=sid, username='student')['request']}
         assert set(items) == {'Posso avere un consiglio sul metodo?', 'E quanto dura il percorso?'}
-        assert items['Posso avere un consiglio sul metodo?']['status'] == 'proposed'
-        assert items['E quanto dura il percorso?']['status'] == 'closed'
-        assert items['E quanto dura il percorso?']['closed_by'] == 'conversation'
+        assert all(item['status'] == 'proposed' for item in items.values())
     finally:
         _cleanup(sid)
 
 
-def test_student_manages_own_list_and_final_step_takes_up_open_requests(monkeypatch):
-    sid = 'requests-final'
+def test_student_manages_own_list():
+    sid = 'requests-own'
     main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
     try:
         added = client.post(f'/session/{sid}/requests', json={'text': 'Come gestisco l’ansia prima degli esami?'})
@@ -120,60 +113,70 @@ def test_student_manages_own_list_and_final_step_takes_up_open_requests(monkeypa
         assert closed['request'][0]['status'] == 'closed' and closed['request'][0]['closed_by'] == 'student'
         reopened = client.patch(f'/session/{sid}/recommendations/request/{first["slug"]}', json={'status': 'proposed'}).json()
         assert reopened['request'][0]['status'] == 'proposed'
-
-        # Final step: the open request reaches the model as R1 and is closed when declared discussed.
-        reply = 'Riprendiamo la tua domanda sull’ansia prima degli esami.'
-        raw = reply + '\n```recommendations\n' + json.dumps({'requests': [], 'discussed': ['R1', 'R9']}) + '\n```'
-        prompts = []
-        _capture_ai(monkeypatch, raw, prompts)
-        response = client.post('/chat', json={
-            'session_id': sid, 'message': 'Ok, chiudiamo.', 'mode': 'factor-qa', 'phase': 'sl-synthesis',
-            'questionnaire_type': 'QSA', 'language': 'it',
-        })
-        assert response.status_code == 200, response.text
-        assert any('[REQUESTS TO REVISIT]' in prompt and 'R1: "Come gestisco l’ansia prima degli esami?"' in prompt
-                   for prompt in prompts)
-        item = response.json()['recommendations']['request'][0]
-        assert item['status'] == 'closed' and item['closed_by'] == 'conversation'
     finally:
         _cleanup(sid)
 
 
-def test_strategy_requests_stay_open_after_synthesis_and_reach_the_strategies_step(monkeypatch):
-    # In paths with «Strategie e consigli», synthesis cannot give strategies:
-    # it leaves strategy requests open and the strategies step takes them up.
-    sid = 'requests-strategies'
-    from backend import chat_preparation
-    monkeypatch.setattr(chat_preparation, '_strategies_step_label', lambda *_: 'Strategie e consigli')
+_REVISIT_STEPS = [
+    {'id': 'zz-synthesis', 'mode': 'qpcs-summary', 'order': 1},
+    {'id': 'zz-strategies', 'mode': 'strategies', 'order': 2},
+]
+
+
+def _seed_revisit_path():
+    with _TestSession() as db:
+        for step in _REVISIT_STEPS:
+            db.merge(models.GuidedStep(id=step['id'], sort_order=step['order'], label=step['id'], prompt='Step.',
+                                       system_prompt_mode=step['mode'], questionnaire_type='QPCS'))
+        db.commit()
+
+
+def _drop_revisit_path():
+    with _TestSession() as db:
+        db.query(models.GuidedStep).filter(models.GuidedStep.id.in_(['zz-synthesis', 'zz-strategies'])).delete()
+        db.commit()
+
+
+def test_open_requests_are_taken_up_in_dedicated_turns_of_the_right_step(monkeypatch):
+    sid = 'requests-revisit'
+    _seed_revisit_path()
     main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
     try:
-        client.post(f'/session/{sid}/requests', json={'text': 'Mi dai una strategia per concentrarmi?'})
-        prompts = []
-        _capture_ai(monkeypatch, 'Sintesi del percorso.\n```recommendations\n{"requests": []}\n```', prompts)
-        response = client.post('/chat', json={
-            'session_id': sid, 'message': 'Facciamo la sintesi.', 'mode': 'factor-qa', 'phase': 'sl-synthesis',
-            'questionnaire_type': 'QSA', 'language': 'it',
-        })
-        assert response.status_code == 200, response.text
-        synthesis = next(prompt for prompt in prompts if '[REQUESTS TO REVISIT]' in prompt)
-        assert 'belong to the «Strategie e consigli» step that follows' in synthesis
-        assert response.json()['recommendations']['request'][0]['status'] == 'proposed'
+        with _TestSession() as db:
+            for text, kind in (('Quanto dura il percorso?', 'question'), ('Mi dai una strategia?', 'advice'),
+                               ('Non classificata?', None)):
+                row = recommendation_service.add_request(db, session_id=sid, username='student', text=text)
+                if kind:
+                    recommendation_service.set_request_kind(db, session_id=sid, username='student',
+                                                            slug=row.slug, kind=kind)
+        synthesis = client.get(f'/session/{sid}/requests/revisit', params={'phase': 'zz-synthesis'}).json()['request']
+        assert [item['name'] for item in synthesis] == ['Quanto dura il percorso?']
+        strategies = client.get(f'/session/{sid}/requests/revisit', params={'phase': 'zz-strategies'}).json()['request']
+        assert [item['name'] for item in strategies] == [
+            'Quanto dura il percorso?', 'Mi dai una strategia?', 'Non classificata?']
+        assert client.get(f'/session/{sid}/requests/revisit', params={'phase': 'cognitive'}).json()['request'] == []
 
-        prompts.clear()
-        raw = 'Ecco una strategia per la concentrazione.\n```recommendations\n{"discussed": ["R1"]}\n```'
-        _capture_ai(monkeypatch, raw, prompts)
-        response = client.post('/chat', json={
-            'session_id': sid, 'message': 'Passiamo alle strategie.', 'mode': 'strategies', 'phase': 'sl-strategies',
-            'questionnaire_type': 'QSA', 'language': 'it',
-        })
+        advice = strategies[1]
+        refused = client.post('/chat', json={'session_id': sid, 'message': '', 'mode': 'qpcs-summary',
+                                             'phase': 'zz-synthesis', 'questionnaire_type': 'QPCS',
+                                             'language': 'it', 'revisit_request': advice['slug']})
+        assert refused.status_code == 409
+
+        prompts = []
+        _capture_ai(monkeypatch, 'Ecco una strategia per concentrarti.', prompts)
+        response = client.post('/chat', json={'session_id': sid, 'message': 'ignored', 'mode': 'strategies',
+                                              'phase': 'zz-strategies', 'questionnaire_type': 'QPCS',
+                                              'language': 'it', 'revisit_request': advice['slug']})
         assert response.status_code == 200, response.text
-        final = next(prompt for prompt in prompts if '[REQUESTS TO REVISIT]' in prompt)
-        assert 'R1: "Mi dai una strategia per concentrarmi?"' in final
-        assert 'belong to the' not in final
-        item = response.json()['recommendations']['request'][0]
-        assert item['status'] == 'closed' and item['closed_by'] == 'conversation'
+        assert any('[REVISIT REQUEST]' in prompt and '"Mi dai una strategia?"' in prompt for prompt in prompts)
+        assert not any('ignored' in prompt for prompt in prompts)
+        items = {item['name']: item for item in response.json()['recommendations']['request']}
+        assert items['Mi dai una strategia?']['status'] == 'closed'
+        assert items['Mi dai una strategia?']['closed_by'] == 'conversation'
+        assert items['Quanto dura il percorso?']['status'] == 'proposed'
     finally:
         _cleanup(sid)
+        _drop_revisit_path()
 
 
 def test_requests_of_another_student_are_never_listed_or_changed():

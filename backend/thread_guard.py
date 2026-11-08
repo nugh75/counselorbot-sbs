@@ -98,6 +98,9 @@ class Verdict(BaseModel):
     answered: list[int] = []
     # Gli esiti delle ipotesi interpretative identificate nel turno.
     hypotheses: list[dict] = []
+    # Le richieste dello studente: nuove dal suo messaggio, e lo stato di quelle aperte.
+    requests: list[dict] = []
+    request_status: list[dict] = []
 
 
 def parse(raw: str | None) -> Verdict | None:
@@ -189,13 +192,18 @@ def turn_hash(user_text: str, bot_text: str) -> str:
 
 def store(db, *, session_id: str, username: str, turn: str, verdict: Verdict | None,
           open_questions: list[dict] | None = None,
-          open_hypotheses: list[dict] | None = None) -> list[str]:
+          open_hypotheses: list[dict] | None = None,
+          open_requests: list[dict] | None = None,
+          student_message: str = "", step_id: str | None = None) -> list[str]:
     """Write the verdict and return the lines that will actually be injected."""
     lines = notes(verdict)
     _close_answered(db, session_id=session_id, username=username,
                     verdict=verdict, open_questions=open_questions or [])
     _close_hypotheses(db, session_id=session_id, username=username,
                       verdict=verdict, open_hypotheses=open_hypotheses or [])
+    _apply_requests(db, session_id=session_id, username=username, verdict=verdict,
+                    open_requests=open_requests or [], student_message=student_message,
+                    step_id=step_id)
     previous = _latest_row(db, session_id)
     if previous is not None:
         already = {_key(line) for line in _stored_notes(previous)}
@@ -263,7 +271,7 @@ def _key(line: str) -> str:
 
 
 # --- input ---
-MAX_INPUT_CHARS = 2500
+MAX_INPUT_CHARS = 3600
 # Ogni sezione ha il suo tetto invece di un taglio unico in fondo: la lezione
 # del budget delle skill e' che un blocco che non entra sparisce in silenzio, e
 # qui a sparire sarebbe proprio il materiale su cui il giudizio si regge.
@@ -282,6 +290,8 @@ def build_input(
     advice_ids: list[str] | None = None, candidate_ids: list[str] | None = None,
     open_questions: list[dict] | None = None,
     open_hypotheses: list[dict] | None = None,
+    open_requests: list[dict] | None = None,
+    student_message: str = "",
 ) -> str:
     """What the judge sees. Deliberately small.
 
@@ -299,6 +309,8 @@ def build_input(
         _advice(advice_ids or [], candidate_ids or []),
         _open_questions_section(open_questions or []),
         _open_hypotheses_section(open_hypotheses or []),
+        _student_message_section(student_message),
+        _open_requests_section(open_requests or []),
     ]
     return "\n\n".join(section for section in sections if section)[:MAX_INPUT_CHARS]
 
@@ -413,7 +425,7 @@ PRESET_KEY = "thread_guard_preset_id"
 # Un giudizio non vale un turno: oltre questo il verdetto arriverebbe comunque
 # tardi, e il turno seguente lo scarterebbe come stantio.
 TIMEOUT_SECONDS = 45
-MAX_VERDICT_TOKENS = 400
+MAX_VERDICT_TOKENS = 700
 # Un verdetto e' un oggetto JSON piccolo: la traccia di ragionamento consuma il
 # budget senza migliorarlo, e col giudice grande ha prodotto un turno andato in
 # timeout e un verdetto illeggibile. Spento sempre, qualunque preset dica.
@@ -435,7 +447,9 @@ Reply with one JSON object and nothing else:
  "advice_grounded": {"ok": true, "note": null},
  "interpretation_open": {"ok": true, "note": null},
  "answered": [],
- "hypotheses": []}
+ "hypotheses": [],
+ "requests": [],
+ "request_status": []}
 
 on_thread - false only if the counselor lost the thread: it neither took up what
 the student raised nor tied it back to the mandate.
@@ -453,6 +467,16 @@ hypotheses - list of objects {"index": N, "outcome": "confirmed" | "corrected" |
 OPEN HYPOTHESES addressed in this exchange: confirmed (student explicitly agreed or validated the reading),
 corrected (student qualified or refined it in their own words), or rejected (student disagreed or pushed back).
 Empty when no hypothesis was addressed or whenever you are unsure: never guess.
+requests - every question or request the student makes in STUDENT MESSAGE that is not already listed
+in OPEN STUDENT REQUESTS: objects {"text": "...", "kind": "advice" | "question", "answered": true | false}.
+text is ONE complete question or request copied verbatim from STUDENT MESSAGE, never paraphrased.
+kind is advice when the student asks for a strategy, advice, a method, a reading or what to do; otherwise
+question. answered is true only when the counselor's reply in this exchange fully answered it.
+Empty when the section is absent or the student asked nothing.
+request_status - objects {"index": N, "kind": "advice" | "question", "addressed": true | false} for the
+OPEN STUDENT REQUESTS: give kind for every request listed with unknown kind, and addressed true only when
+the counselor's reply in this exchange took that request up and answered it in substance. When unsure,
+addressed is false: a request closed by mistake is never discussed.
 
 The mandate frames the conversation; it is not a checklist. Answering what the
 student explicitly asked for is never off mandate: a turn that does so is on_thread
@@ -642,6 +666,9 @@ def evaluate(
     # l'input e la chiusura c'e' di mezzo una chiamata a modello.
     asked = open_questions(db, session_id=session_id, username=username, step_id=step_id)
     hypos = open_hypotheses(db, session_id=session_id, username=username, step_id=step_id)
+    pending_requests = recommendation_service.open_requests(
+        db, session_id=session_id, username=username)[-MAX_JUDGED_REQUESTS:]
+    student = _safe(_student_text(db, session_id))
     try:
         raw = call(
             provider=provider, model=model,
@@ -652,6 +679,8 @@ def evaluate(
                 advice_ids=advice_ids, candidate_ids=candidate_ids,
                 open_questions=asked,
                 open_hypotheses=hypos,
+                open_requests=pending_requests,
+                student_message=student,
             ),
             system_prompt=SYSTEM_PROMPT,
         )
@@ -663,7 +692,8 @@ def evaluate(
         logger.info("Thread guard returned no readable verdict (%s/%s)", provider, model)
         return []
     return store(db, session_id=session_id, username=username, turn=turn, verdict=verdict,
-                 open_questions=asked, open_hypotheses=hypos)
+                 open_questions=asked, open_hypotheses=hypos,
+                 open_requests=pending_requests, student_message=student, step_id=step_id)
 
 
 def schedule(**kwargs) -> None:
@@ -842,3 +872,94 @@ def _close_hypotheses(db, *, session_id: str, username: str, verdict: Verdict | 
         except ValueError:
             logger.info("Thread guard could not update hypothesis %s", slug)
 
+
+
+# --- le richieste dello studente da riprendere alla fine ------------------------
+MAX_JUDGED_REQUESTS = 6
+_STUDENT_MESSAGE_CHARS = 900
+
+
+def _student_text(db, session_id: str) -> str:
+    """What the student typed in the judged turn; empty on platform turns."""
+    row = (
+        db.query(models.Log)
+        .filter(models.Log.session_id == session_id, models.Log.action == "chat_message")
+        .order_by(models.Log.id.desc())
+        .first()
+    )
+    return ((row.details or {}).get("user_input") or "").strip() if row else ""
+
+
+def _student_message_section(text: str) -> str:
+    if not text:
+        return ""
+    return "STUDENT MESSAGE (the judged turn, in full)\n" + _clip(text, _STUDENT_MESSAGE_CHARS)
+
+
+def _open_requests_section(items: list[dict]) -> str:
+    if not items:
+        return ""
+    lines = ["OPEN STUDENT REQUESTS (asked earlier or in this message, not yet discussed)"]
+    for index, item in enumerate(items, start=1):
+        kind = item.get("request_kind") or "unknown"
+        lines.append(f'{index}. (kind {kind}) "{_safe(item.get("name", ""))}"')
+    return "\n".join(lines)
+
+
+def _apply_requests(db, *, session_id: str, username: str, verdict: Verdict | None,
+                    open_requests: list[dict], student_message: str, step_id: str | None) -> None:
+    """Adds, classifies and closes the student's requests from the verdict.
+
+    A new request is kept only if its text is really in the student's message:
+    the judge transcribes, it does not get to invent what the student asked.
+    """
+    from .recommendation_blocks import MAX_REQUESTS_PER_TURN, normalized, request_slug
+
+    if verdict is None:
+        return
+    for item in verdict.request_status:
+        index = item.get("index") if isinstance(item, dict) else None
+        if not isinstance(index, int) or not 1 <= index <= len(open_requests):
+            continue
+        slug = open_requests[index - 1]["slug"]
+        recommendation_service.set_request_kind(
+            db, session_id=session_id, username=username, slug=slug, kind=str(item.get("kind") or ""))
+        if item.get("addressed") is True:
+            recommendation_service.set_state(
+                db, session_id=session_id, username=username, recommendation_type="request",
+                slug=slug, status="closed", closed_by="conversation")
+    message_words = " " + normalized(student_message) + " "
+    # Riletto adesso, non all'avvio: nello stream le domande col punto
+    # interrogativo vengono registrate mentre il giudice sta ancora rispondendo.
+    known = {item["slug"] for item in recommendation_service.list_for_session(
+        db, session_id=session_id, username=username)["request"]}
+    seen: set[str] = set()
+    added = 0
+    for item in verdict.requests:
+        if added == MAX_REQUESTS_PER_TURN:
+            break
+        if not isinstance(item, dict):
+            continue
+        text = " ".join(str(item.get("text") or "").split())
+        words = normalized(text)
+        if not 8 <= len(text) <= 300 or not words or " " + words + " " not in message_words:
+            continue
+        slug = request_slug(text)
+        if slug in seen:
+            continue
+        seen.add(slug)
+        kind = item.get("kind") if item.get("kind") in recommendation_service.REQUEST_KINDS else None
+        if slug in known:
+            # Already listed (the question-mark net, or the student by hand): classify it only.
+            recommendation_service.set_request_kind(
+                db, session_id=session_id, username=username, slug=slug, kind=kind or "")
+        else:
+            recommendation_service.record(
+                db, session_id=session_id, username=username, recommendation_type="request",
+                payloads=[{"slug": slug, "name": text, "kind": "request", "source": "counselor",
+                           "request_kind": kind, "step_id": step_id or ""}])
+            added += 1
+        if item.get("answered") is True:
+            recommendation_service.set_state(
+                db, session_id=session_id, username=username, recommendation_type="request",
+                slug=slug, status="closed", closed_by="conversation")
