@@ -386,6 +386,53 @@ def open_requests(db: Session, *, session_id: str, username: str) -> list[dict]:
             if item.get("status") == DEFAULT_STATUS]
 
 
+REQUEST_KINDS = ("advice", "question")
+
+
+def set_request_kind(db: Session, *, session_id: str, username: str, slug: str, kind: str) -> None:
+    """Whether a request asks for a strategy, advice or reading, or is a question."""
+    if kind not in REQUEST_KINDS:
+        return
+    row = db.query(models.RecommendationHistory).filter(
+        models.RecommendationHistory.session_id == session_id,
+        models.RecommendationHistory.username == username,
+        models.RecommendationHistory.recommendation_type == "request",
+        models.RecommendationHistory.slug == slug,
+    ).first()
+    if row is None or (row.payload or {}).get("request_kind") == kind:
+        return
+    row.payload = {**(row.payload or {}), "request_kind": kind}
+    db.add(row)
+    db.commit()
+
+
+def revisit_here(db: Session, *, session_id: str, username: str, step_id: str | None) -> list[dict]:
+    """Open requests to take up in this step, oldest first.
+
+    Questions are taken up in the synthesis; requests for strategies, advice or
+    readings, and those never classified, wait for «Strategie e consigli» when
+    the path has it. Any other step takes up none.
+    """
+    from .journey_context import SYNTHESIS_STEPS
+    from .prompt_config import STRATEGIES_STEP_MODE
+
+    step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first() if step_id else None
+    if step is None:
+        return []
+    mode = step.system_prompt_mode or ""
+    is_strategies = mode == STRATEGIES_STEP_MODE
+    if not is_strategies and step.id not in SYNTHESIS_STEPS and not mode.endswith("-summary"):
+        return []
+    items = open_requests(db, session_id=session_id, username=username)
+    if is_strategies:
+        return items
+    has_strategies = db.query(models.GuidedStep.id).filter(
+        models.GuidedStep.questionnaire_type == step.questionnaire_type,
+        models.GuidedStep.system_prompt_mode == STRATEGIES_STEP_MODE,
+    ).first() is not None
+    return [item for item in items if not has_strategies or item.get("request_kind") == "question"]
+
+
 def _state_fields(source: dict | None) -> dict:
     """Stato e giudizio normalizzati; quello che non c'e' legge il default."""
     source = source or {}
@@ -412,6 +459,8 @@ def _carry_over(payload: dict, previous: dict | None) -> dict:
             payload["outcome"] = previous["outcome"]
         if not payload.get("lens") and previous.get("lens"):
             payload["lens"] = previous["lens"]
+        if not payload.get("request_kind") and previous.get("request_kind"):
+            payload["request_kind"] = previous["request_kind"]
     # La provenienza dice perche' la voce era entrata: un turno che non la porta
     # non e' una smentita di quella gia' registrata.
     if not payload.get("matched_on") and (previous or {}).get("matched_on"):
