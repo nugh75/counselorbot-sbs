@@ -114,6 +114,15 @@
   --color-brand-hover: var(--brand-hover);
   --color-brand-soft: var(--brand-soft);
   --color-brand-line: var(--brand-line);
+  --color-role-teacher-soft: var(--role-teacher-soft);
+  --color-role-teacher-line: var(--role-teacher-line);
+  --color-role-teacher-muted: var(--role-teacher-muted);
+  --color-role-student-soft: var(--role-student-soft);
+  --color-role-student-line: var(--role-student-line);
+  --color-role-student-muted: var(--role-student-muted);
+  --color-role-test-soft: var(--role-test-soft);
+  --color-role-test-line: var(--role-test-line);
+  --color-role-test-muted: var(--role-test-muted);
   --color-link: var(--link);
   --color-move: var(--move);
   --color-move-hover: var(--move-hover);
@@ -208,6 +217,19 @@
   --brand-soft: var(--color-indigo-50);
   --brand-line: var(--color-indigo-200);
   --link: var(--color-indigo-700);
+  /* Colori di ruolo (variante C: solo card e badge). Studente = petrol di marchio;
+     docente = crema limone (tonalita' ~55, lontana da amber/ocra); studente di
+     prova = celestino. `-muted` e' il testo secondario sulla tinta: slate-600,
+     perche' slate-500 sulle tinte chiare non arriva a 4.5:1. */
+  --role-teacher-soft: #f8f5d7;
+  --role-teacher-line: #e0d89a;
+  --role-teacher-muted: var(--color-slate-600);
+  --role-student-soft: var(--brand-soft);
+  --role-student-line: var(--brand-line);
+  --role-student-muted: var(--color-slate-600);
+  --role-test-soft: #e2f1fb;
+  --role-test-line: #a9cfe8;
+  --role-test-muted: var(--color-slate-600);
   --move: var(--color-ochre-600);
   --move-hover: var(--color-ochre-700);
   /* Stati, dai colori di Callout.tsx. */
@@ -671,6 +693,13 @@ h1.text-3xl {
   --brand-soft: #103f42;
   --brand-line: #1f7376;
   --link: #8fcfd1;
+  --role-teacher-soft: #2b2910;
+  --role-teacher-line: #5a5320;
+  --role-teacher-muted: #cbd5e1;
+  --role-student-muted: #cbd5e1;
+  --role-test-soft: #0e3149;
+  --role-test-line: #2a6288;
+  --role-test-muted: #cbd5e1;
   --info: #8fcfd1;
   --info-soft: #103f42;
   --info-line: #1f7376;

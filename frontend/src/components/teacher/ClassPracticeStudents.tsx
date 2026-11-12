@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
+import { RoleBadge } from '@/components/ui/RoleBadge';
 import { useI18n } from '@/lib/i18n-context';
 import { practiceNotebookText } from '@/lib/i18n-practice-notebooks';
 import { parsePracticeNotebooks } from '@/lib/practice-notebooks';
@@ -33,6 +34,7 @@ export function ClassPracticeStudents({ groupId }: { groupId: number }) {
                         <details>
                             <summary className="min-h-control cursor-pointer break-words py-3 text-sm font-semibold text-ink">
                                 {notebook.title}
+                                <RoleBadge role="test" className="ml-2 align-middle">{l('testStudentBadge')}</RoleBadge>
                             </summary>
                             <div className="pb-4 pl-4">
                                 <PracticeNotebookSummary data={notebook.data} />
