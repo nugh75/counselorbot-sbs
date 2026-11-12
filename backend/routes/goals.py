@@ -32,6 +32,7 @@ from ..goals import (
 )
 from ..pdf_generator import generate_goal_path_pdf
 from ..personal_timeline import ensure_personal_timeline
+from ..test_accounts import real_membership
 from ..visual_tools import SavePersonalWorkspace, load_workspace, save_workspace
 from .groups import _require_visible_group, _visible_group_query
 
@@ -302,7 +303,7 @@ def shared_goals(group_id: int, db: Session = Depends(database.get_db), user=Dep
     group = _require_visible_group(db, user, group_id)
     if not group.is_active:
         raise HTTPException(404, 'Group unavailable')
-    members = db.query(models.GroupMembership.username).filter_by(group_id=group_id)
+    members = db.query(models.GroupMembership.username).filter_by(group_id=group_id).filter(real_membership())
     seeds = [i for (i,) in db.query(models.PersonalGoal.id).filter(
         models.PersonalGoal.shared_group_id == group_id, models.PersonalGoal.username.in_(members))]
     # Sharing a goal shares its whole branch below it, never the ancestors above it.

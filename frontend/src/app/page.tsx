@@ -39,7 +39,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { Card } from '@/components/ui/Card';
 import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker';
 import { canUseTeacherAssistant } from '@/lib/roles';
-import { readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId } from '@/lib/notebook-context';
+import { isPracticeRun, readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId } from '@/lib/notebook-context';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 import { practiceResultChatHref } from '@/lib/practice-notebooks';
 import { apiFetch, getIdentity, loginHref, type Identity } from '@/lib/auth';
@@ -352,7 +352,8 @@ export default function Home() {
         setSessionId(newSessionId);
         setScores({});
 
-        if (!existingSessionId) {
+        // In prova il docente non crea un risultato vuoto sul proprio account (#835).
+        if (!existingSessionId && !isPracticeRun(canUseTeacherAssistant(identity), readStoredNotebookContext())) {
             addCompletedProfile(questionnaire.id, newSessionId, {});
             try {
                 const response = await apiFetch('/api/questionnaire-result', {
@@ -374,7 +375,7 @@ export default function Home() {
         }
 
         beginInteraction(newSessionId, questionnaire.id);
-    }, [beginInteraction]);
+    }, [beginInteraction, identity]);
 
     // Verifica il counselor per questo strumento prima di avviare il percorso.
     const prepareInstrument = useCallback(async (questionnaire: QuestionnaireConfig | null, currentScores: Record<string, number> | null, resumeSid?: string) => {

@@ -1137,6 +1137,20 @@ server accetta solo un taccuino del docente stesso e non archiviato, riverifican
 ruolo a ogni turno: un taccuino archiviato o eliminato non viene sostituito da dati
 reali, il contesto resta senza taccuino. Uno studente non può usare taccuini di prova.
 
+**Dati di prova fuori dai dati reali (#835, novembre 2026).** Gli studenti di prova,
+gli account dimostrativi dell’anteprima admin (`studente.demo`, `docente.demo` e gli
+altri) e l’account del docente proprietario non contano come studenti della classe:
+restano fuori dal numero di iscritti, dagli elenchi studenti della classe e del
+piano, dal noticing di classe, dal consiglio di classe, dagli obiettivi condivisi e
+dal consiglio orientativo. Il link d’invito non iscrive più il proprietario della
+classe né un account dimostrativo (risposta 403, la pagina mostra il messaggio di
+codice non valido). Statistiche ed export dei log admin escludono i turni delle chat
+di prova e degli account dimostrativi; il visualizzatore dei log e i costi li
+mostrano ancora, perché sono chiamate reali. Avviare in prova uno strumento senza
+punteggi (SAVICKAS, percorsi evento, Obiettivo, IDEA) non crea più un risultato
+vuoto sull’account del docente. Le righe già esistenti restano nel database e sono
+escluse in lettura.
+
 Sotto ogni taccuino di prova, **Profili nei questionari** permette di creare,
 generare, modificare ed eliminare profili fittizi QSA, QSAr, ZTPI, QPCS, QPCC e
 QAP. Il pulsante **Salva**, con icona di salvataggio, persiste i punteggi sia

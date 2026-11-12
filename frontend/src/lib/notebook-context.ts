@@ -53,3 +53,9 @@ export function notebookContextPayload(isTeacher: boolean, choice: NotebookConte
     if (choice === 'practice') return practiceId ? { notebook_context: 'practice', practice_notebook_id: practiceId } : { notebook_context: 'practice' };
     return { notebook_context: choice };
 }
+
+// Il docente sta provando con uno studente di prova: nulla va salvato come
+// risultato del suo account (#835).
+export function isPracticeRun(isTeacher: boolean, choice: NotebookContextChoice): boolean {
+    return isTeacher && choice === 'practice';
+}

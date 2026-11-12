@@ -3,6 +3,7 @@
 <!-- ai4educ:context-template v1.0 -->
 
 ## Quick Reference
+- **Dati di prova fuori dai dati reali (#835)**: `backend/test_accounts.py` è l’unico punto (`real_membership()` per le query su `GroupMembership`, `real_log()` per statistiche/export dei log, `is_test_member`). Esclusi in lettura account demo dell’anteprima e proprietario della classe; il link d’invito non li iscrive (403). Nessuna migrazione: le righe esistenti restano.
 - **Salute dei prompt (S1)**: problemi in primo piano, nomi leggibili e due strade: modifica del prompt nell’istanza o riepilogo copiabile per un agente sul repository. Origini codice distinte dalla fabbrica, anche contraddizioni codice/codice; mappa, modello e statistiche espandibili. Fixture senza backend su 3186: `docs/operations/live-dev-environment.md`. Handoff: `docs/handoff/feature-prompt-health-management.md`.
 - **Guida pratica**: `/guide` organizza l'aiuto per azioni, con ricerca locale, sei argomenti studente/docente e schede con tre passaggi. Una procedura alla volta, ruoli e integrazioni filtrati, vecchi segnalibri compatibili; popup della chat e aiuti contestuali usano gli stessi contenuti. Contratto e verifiche: `docs/operations/concise-guide.md`.
 - **Flusso attività dei piani**: contratto di stato e azioni dal server, tentativi persistiti già all’apertura, bozze questionario con revisione, accesso diretto e ritorno al passo. Compilazione e analisi separate; storico e lettura delle conversazioni. `docs/operations/plan-activity-flow.md`.

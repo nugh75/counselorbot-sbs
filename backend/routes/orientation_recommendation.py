@@ -16,6 +16,7 @@ from .. import auth, database, db_compat, models, orientation_recommendation, pd
 from ..group_visibility import _username
 from ..privacy.types import PrivacyRole
 from ..request_origin import request_origin
+from ..test_accounts import real_membership
 from .groups import _require_visible_group
 
 router = APIRouter()
@@ -61,7 +62,7 @@ def _members(db: Session, group_id: int) -> list:
     return [
         username
         for (username,) in db.query(models.GroupMembership.username)
-        .filter(models.GroupMembership.group_id == group_id)
+        .filter(models.GroupMembership.group_id == group_id, real_membership())
         .distinct()
     ]
 
@@ -70,7 +71,8 @@ def _find_member_row(db: Session, group_id: int, username: str, *, allow_histori
     """I documenti storici restano leggibili, ma solo gli iscritti sono modificabili."""
     member = (
         db.query(models.GroupMembership.username)
-        .filter(models.GroupMembership.group_id == group_id, models.GroupMembership.username == username)
+        .filter(models.GroupMembership.group_id == group_id, models.GroupMembership.username == username,
+                real_membership())
         .first()
     )
     row = (
