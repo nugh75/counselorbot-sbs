@@ -32,6 +32,7 @@ from ..group_visibility import (
 )
 from ..institution_access import require_institution_teacher
 from ..reading_audience import AUDIENCE_BANDS
+from ..test_accounts import is_test_member, real_membership
 from ..user_names import store_user_display_name
 
 router = APIRouter()
@@ -93,7 +94,7 @@ def _require_institution_membership(db: Session, identity, group: models.Student
 
 
 def _members_count(db: Session, group_id: int) -> int:
-    return db.query(models.GroupMembership).filter(models.GroupMembership.group_id == group_id).count()
+    return db.query(models.GroupMembership).filter(models.GroupMembership.group_id == group_id, real_membership()).count()
 
 
 
@@ -299,7 +300,7 @@ async def list_admin_classes(search: str = "", owner: str = "", institution_id: 
     for row in db.query(models.GroupShare).filter(models.GroupShare.group_id.in_(ids)).order_by(models.GroupShare.shared_with_username):
         shares.setdefault(row.group_id, []).append(row.shared_with_username)
     counts = dict(db.query(models.GroupMembership.group_id, func.count(models.GroupMembership.id)).filter(
-        models.GroupMembership.group_id.in_(ids)).group_by(models.GroupMembership.group_id).all())
+        models.GroupMembership.group_id.in_(ids), real_membership()).group_by(models.GroupMembership.group_id).all())
     result = []
     for group in groups:
         row = settings.get(group.id)
@@ -925,7 +926,7 @@ async def get_group_students(
     principal = principal_from_identity(current_user)
     members = (
         db.query(models.GroupMembership)
-        .filter(models.GroupMembership.group_id == group.id)
+        .filter(models.GroupMembership.group_id == group.id, real_membership())
         .order_by(models.GroupMembership.username)
         .all()
     )
@@ -1167,6 +1168,9 @@ async def join_group(
     )
     if not group:
         raise HTTPException(status_code=404, detail="Classe non trovata")
+    if is_test_member(current_user["username"], group.owner_username):
+        # Owner and view-as demo accounts are not students of the class (#835).
+        raise HTTPException(status_code=403, detail="group_join_not_a_student")
     already_member = (
         db.query(models.GroupMembership.id)
         .filter(

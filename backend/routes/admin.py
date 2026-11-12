@@ -37,6 +37,7 @@ from ..content_versions import CATALOG_CONTENT_TYPES, CONTENT_TYPES, ContentVers
 from ..db_compat import xact_lock
 from ..dynamic_registry import invalidate_instrument_cache
 from ..local_llm import LLAMACPP_KEY_CONFIG
+from ..test_accounts import real_log
 from ..training_dataset import (
     APPROVED_EXPORT_STATUSES,
     VALID_REVIEW_STATUSES,
@@ -576,6 +577,7 @@ async def logs_stats(
         model=model, paid_only=paid_only, cost_min=cost_min, cost_max=cost_max,
         feedback=feedback, phase=phase, mode=mode, has_pii=has_pii,
     )
+    base = base.filter(real_log())  # #835: no practice or demo turns in statistics
 
     total = base.count()
     distinct_sessions = (
@@ -1096,6 +1098,7 @@ async def export_logs(
         model=model, paid_only=paid_only, cost_min=cost_min, cost_max=cost_max,
         feedback=feedback, phase=phase, mode=mode, has_pii=has_pii,
     )
+    query = query.filter(real_log())  # #835: no practice or demo turns in exports
     order_col = models.Log.timestamp.asc() if (sort or "desc").lower() == "asc" else models.Log.timestamp.desc()
     logs = query.order_by(order_col).limit(10000).all()
     _prepare_log_response(db, logs, current_user=current_user)

@@ -12,6 +12,7 @@ from datetime import UTC, datetime, timedelta, timezone
 from . import models
 from .ai_service import AIService
 from .teacher_noticing import KINDS, ask_json, noticing
+from .test_accounts import real_membership
 
 CLASS_NOTICING_ACTION = "class_noticing"
 CLASS_NOTICING_PROMPT_VERSION = 1
@@ -32,7 +33,7 @@ def _session_key(group_id: int) -> str:
 def class_results(db, group, instrument: str | None, days: int | None):
     from .privacy.authz import is_resource_in_group_scope
     from .privacy.types import ResourceRef
-    members = [row.username for row in db.query(models.GroupMembership).filter_by(group_id=group.id)]
+    members = [row.username for row in db.query(models.GroupMembership).filter_by(group_id=group.id).filter(real_membership())]
     query = db.query(models.QuestionnaireResult).filter(models.QuestionnaireResult.username.in_(members))
     if instrument:
         query = query.filter(models.QuestionnaireResult.questionnaire_type == instrument)

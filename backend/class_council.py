@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .goals import descendant_ids
+from .test_accounts import real_membership
 
 PDF_SUMMARY_ACTION = "questionnaire_pdf_summary"  # routes.survey
 
@@ -19,7 +20,7 @@ def _members(db: Session, group_id: int) -> list[str]:
     return [
         username
         for (username,) in db.query(models.GroupMembership.username)
-        .filter(models.GroupMembership.group_id == group_id)
+        .filter(models.GroupMembership.group_id == group_id, real_membership())
         .distinct()
         .order_by(models.GroupMembership.username)
     ]

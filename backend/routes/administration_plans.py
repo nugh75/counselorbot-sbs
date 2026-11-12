@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from .. import administration_context, auth, database, models, schemas, scoring_service
 from ..reading_audience import AUDIENCE_BANDS
+from ..test_accounts import is_test_member, real_membership
 from ..user_names import store_user_display_name
 
 router = APIRouter()
@@ -640,6 +641,8 @@ async def get_administration_plan_students(
     from .learner_profile import _latest_revision
 
     plan = _require_visible_plan(db, current_user, plan_id)
+    group = db.get(models.StudentGroup, plan.group_id) if plan.group_id else None
+    plan_owner = group.owner_username if group else None
     results = (
         db.query(models.QuestionnaireResult)
         .filter(models.QuestionnaireResult.administration_plan_id == plan.id)
@@ -648,12 +651,12 @@ async def get_administration_plan_students(
     )
     by_student: dict[str, list[models.QuestionnaireResult]] = {}
     for result in results:
-        if result.username:
+        if result.username and not is_test_member(result.username, plan_owner):
             by_student.setdefault(result.username, []).append(result)
     if plan.group_id:
         members = (
             db.query(models.GroupMembership)
-            .filter(models.GroupMembership.group_id == plan.group_id)
+            .filter(models.GroupMembership.group_id == plan.group_id, real_membership())
             .all()
         )
         for member in members:
