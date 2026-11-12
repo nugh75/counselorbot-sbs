@@ -1,11 +1,13 @@
 # Handoff — research #829 (test students today)
 ## Stato
-In corso: audit read-only del codice. Branch research/test-students-today (mai mergiato).
+Completo. #829 chiuso, mappa #828 aggiornata. Branch research/test-students-today (mai mergiato, nessuna PR).
 ## Fatto
-- Trovati: account demo view-as (backend/auth.py), taccuini di prova del docente (practice notebooks), classi/iscrizioni.
+- docs/research/test-students-today.md (5 sezioni, file:line), pushato.
+- Commento di risoluzione su #829; riga sotto "Decisions so far" in #828.
+- 3 bug sospetti registrati nel diario.
 ## Verifiche
-- Nessun test: solo lettura codice.
+- Solo lettura codice; nessun test eseguito, nessun cambio al prodotto.
 ## Prossimi passi
-- Strumenti non punteggiati, perdite nelle statistiche, colori; scrivere docs/research/test-students-today.md; commit/push; commento+chiusura #829; mappa #828.
+- Nessuno per questo ticket (sblocca #830, #832, #833: non lanciati).
 ## Blocchi e rischi
-- Nessuno.
+- Nessuno. Bug non registrati: nessuno.
