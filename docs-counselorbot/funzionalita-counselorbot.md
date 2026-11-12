@@ -1137,9 +1137,18 @@ server accetta solo un taccuino del docente stesso e non archiviato, riverifican
 ruolo a ogni turno: un taccuino archiviato o eliminato non viene sostituito da dati
 reali, il contesto resta senza taccuino. Uno studente non può usare taccuini di prova.
 
-**Aggiungere uno studente per email (#836, novembre 2026).** Nella panoramica
-della classe, sotto «Invito studenti», il docente scrive l’email di uno studente
-e preme «Aggiungi». L’invito resta «in attesa» nell’elenco sotto il campo, dove
+**Gestione della classe in tre blocchi (#838, novembre 2026).** Nella scheda
+«Partecipanti e risultati» della classe i blocchi sono, in ordine: studenti reali
+(con il campo «Aggiungi studente per email», tinta studente), inviti in attesa (tinta
+crema del docente) e studenti di prova (tinta celestina, con badge «Studente di
+prova»). Gli studenti di prova sono i taccuini di prova del docente collegati alla
+classe: non sono iscritti e non entrano in nessun conteggio. Nessuna classe di prova
+separata; un docente non ha campi nuovi, solo nome e profili salvati. Si tingono solo
+card e badge, in tema chiaro e scuro.
+
+**Aggiungere uno studente per email (#836, novembre 2026).** Nella scheda
+«Partecipanti e risultati» della classe (blocco studenti reali) il docente scrive l’email di uno studente
+e preme «Aggiungi». L’invito resta «in attesa» nel blocco «Inviti in attesa», dove
 il docente può inviarlo, inviarlo di nuovo o annullarlo. Counselorbot non spedisce
 email: «Invia» apre il programma di posta del docente con il link della classe
 già scritto. Lo studente apre il link, accede o si registra su ai4auth con quella

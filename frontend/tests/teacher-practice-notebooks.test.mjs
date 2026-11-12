@@ -66,6 +66,7 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
         if (url.pathname === '/api/admin/groups/32/students') return json({
             students: [{ username: 'iscritto.fixture', telegram_linked: false, learner_profile: null, results: [] }],
         });
+        if (url.pathname === '/api/admin/groups/32/invitations') return json([{ id: 1, email: 'attesa@example.org', invited_by: 'fixture', created_at: null, sent_at: null }]);
         if (url.pathname === '/api/user/account-preferences') return json({ counselor_ready: true, notebook_ready: true, counselor_id: 1 });
         if (url.pathname === '/api/orientation/status') return json(compass
             ? { required: true, completed: false, in_progress_session_id: 'b1', latest_session_id: 'b1' }
@@ -347,7 +348,16 @@ test('le spunte della Palestra salvano subito il taccuino che si legge nella cla
     );
     await page.goto(`${origin}/docente/classi/32?tab=students`, { waitUntil: 'networkidle' });
     const practiceStudents = page.getByRole('region', { name: 'Studenti di prova' });
-    const notebook = practiceStudents.getByText('Giulia, 3ª liceo', { exact: true });
+    // #838: real students (with the add-by-email field), pending invitations, test students.
+    const blocks = page.locator('section[aria-labelledby^="class-"]');
+    assert.deepEqual(await blocks.evaluateAll(nodes => nodes.map(node => node.getAttribute('aria-labelledby'))),
+        ['class-real-students-heading', 'class-pending-invitations-heading', 'class-practice-students-heading']);
+    assert.equal(await blocks.first().getByLabel('Email dello studente').count(), 1);
+    const pending = page.getByRole('region', { name: 'Inviti in attesa' });
+    assert.ok(await pending.getByText('attesa@example.org', { exact: true }).isVisible());
+    const tint = locator => locator.evaluate(node => getComputedStyle(node).backgroundColor);
+    assert.notEqual(await tint(practiceStudents), await tint(pending));
+    const notebook = practiceStudents.locator('summary').filter({ hasText: 'Giulia, 3ª liceo' });
     await notebook.click();
     assert.equal(await practiceStudents.getByRole('listitem').count(), 1);
     assert.ok(await practiceStudents.getByText('Ansia da verifica', { exact: true }).isVisible());
