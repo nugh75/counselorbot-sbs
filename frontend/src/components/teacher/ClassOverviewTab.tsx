@@ -31,6 +31,7 @@ import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { getClassCoverUrl } from '@/lib/class-cover-presets';
 import { ClassImageModal } from './ClassImageModal';
+import { ClassEmailInvitations } from './ClassEmailInvitations';
 import { ClassPairingSection } from './ClassPairingSection';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -563,6 +564,8 @@ export function ClassOverviewTab({
                     <p className="text-xs text-ink-muted">
                         {learningText(lang, 'groupVisibility')}
                     </p>
+
+                    <ClassEmailInvitations groupId={group.id} groupName={group.name} webLink={webLink} />
                 </section>
             </Card>}
 
