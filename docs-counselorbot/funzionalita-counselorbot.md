@@ -1658,6 +1658,14 @@ salvata. I dettagli di attivazione automatica e ripristino sono in
 
 ## Docenti, ricercatori e amministrazione
 
+**Colori di ruolo (#834).** Tre tinte morbide distinguono le aree, solo su card e
+badge (pagina e header restano neutri, sia in tema chiaro sia scuro): petrol per lo
+studente (invariato), crema per l’Area docenti, celestino per gli studenti di prova.
+La card «Palestra» dell’Area docenti ha la tinta crema e il badge «Area docenti»; i
+taccuini di prova (pagina `/docente/taccuini-prova` ed elenco nella classe) hanno
+la tinta celestino e il badge «Studente di prova». I badge hanno sempre icona e
+testo, e il testo secondario sulle tinte è scurito per restare sopra 4,5:1 (WCAG AA).
+
 Le pagine dell’Area docenti (classi, percorsi, incontri, palestra, taccuini,
 risorse, istituti, dispositivi, orientamento) e la barra delle classi della chat
 degli obiettivi didattici usano i token semantici e le primitive `PageHeader`,

@@ -167,7 +167,7 @@ Decisione del proprietario, dettagliata nella §9 dell'audit
 `docs/audits/ui-consistency-audit-2026-10-30.md`:
 
 1. Spaziature su griglia di 8 (passi Tailwind 2, 4, 6, 8…; 1 solo dentro i controlli).
-2. Una sola palette neutra, niente gradienti né glow: colore solo per marchio e stati.
+2. Una sola palette neutra, niente gradienti né glow: colore solo per marchio, stati e ruoli (§2.8).
 3. Icone solo `lucide-react`, lineari; nessuna emoji come icona.
 4. Al massimo due pesi (`font-normal`, `font-semibold`), niente `uppercase`.
 5. Numeri e indicatori essenziali, senza badge vistosi.
@@ -176,6 +176,40 @@ Decisione del proprietario, dettagliata nella §9 dell'audit
 `frontend/src/lib/ui-primitives-tokens.test.ts` fa rispettare 2 e 4 (più niente
 hex, niente `h-11` e niente classi di palette grezze) alle primitive `Button`,
 `Card`, `PageHeader`, `Callout`; le pagine si allineano zona per zona.
+
+### 2.8 Colori di ruolo (#834)
+
+Tre ruoli, tre tinte morbide, **solo su card e badge** (variante C di #831): pagina
+e header restano neutri. Token in `globals.css` (`:root` + blocco `.dark`), utility
+`bg-role-<ruolo>-soft`, `border-role-<ruolo>-line`, `text-role-<ruolo>-muted`.
+
+| Ruolo | Chiaro soft / line | Scuro soft / line | Note |
+| --- | --- | --- | --- |
+| `student` | = `brand-soft` / `brand-line` | idem (remap `brand-*`) | il petrol attuale, invariato |
+| `teacher` (crema) | `#f8f5d7` / `#e0d89a` | `#2b2910` / `#5a5320` | limone-avorio (tonalità ~55°): lontano da `amber-50` (avviso) e `ochre-50` (movimento); in scuro è oliva, non il bruno di amber/ocra |
+| `test` (celestino) | `#e2f1fb` / `#a9cfe8` | `#0e3149` / `#2a6288` | studenti di prova creati dal docente |
+
+Il colore non è mai l'unico canale: `RoleBadge` (`components/ui/RoleBadge.tsx`)
+ha sempre icona (`GraduationCap`, `UserRound`, `FlaskConical`) + testo.
+
+**Testo secondario sulle tinte.** `ink-muted` (`slate-500`) sulle tinte chiare
+arriva a 4.3:1: sotto AA. Su una card di ruolo il muted è `slate-600` in chiaro e
+`slate-300` in scuro (`--role-<ruolo>-muted`); su un contenitore si imposta
+`[--ink-muted:var(--role-<ruolo>-muted)]` e i figli con `text-ink-muted` si
+adeguano.
+
+Contrasti (WCAG, testo su tinta; tutti ≥ 4.5:1):
+
+| Sfondo | ink | corpo | muted di ruolo | link |
+| --- | --- | --- | --- | --- |
+| crema chiaro `#f8f5d7` | 16.18 | 9.39 | 6.87 | 8.51 |
+| studente chiaro `#e9f2f2` | 15.68 | 9.10 | 6.66 | 8.25 |
+| celestino chiaro `#e2f1fb` | 15.48 | 8.98 | 6.57 | 8.14 |
+| crema scuro `#2b2910` | 14.06 | 9.91 | 9.91 | 8.42 |
+| studente scuro `#103f42` | 11.08 | 7.81 | 7.81 | 6.63 |
+| celestino scuro `#0e3149` | 12.91 | 9.10 | 9.10 | 7.73 |
+
+`frontend/src/lib/role-colours.test.ts` verifica ≥ 4.5:1 sui token.
 
 ---
 
