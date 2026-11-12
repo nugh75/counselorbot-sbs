@@ -3,7 +3,7 @@
 import { isReusableProfile } from '@/lib/questionnaires';
 
 import { useState, useEffect } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 import { QuestionnaireConfig, supportsProfileUpload } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
@@ -16,6 +16,7 @@ import { canUseTeacherAssistant } from '@/lib/roles';
 import { readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId } from '@/lib/notebook-context';
 import type { PracticeNotebook, PracticeResult } from '@/lib/practice-notebooks';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
+import { RoleBadge } from '@/components/ui/RoleBadge';
 
 // Selezione del metodo di inserimento per il questionario.
 // Stesso pattern del QuestionnaireSelector / CounselorSelector:
@@ -23,7 +24,9 @@ import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 // freccia in alto e si torna indietro con la freccia. Nessun testo
 // introduttivo: il FlowStepper in alto descrive già la fase.
 // 'practice': un profilo del repertorio del taccuino di prova scelto.
-type Method = 'manual' | 'upload' | 'resume' | 'practice';
+// Strumenti senza punteggi (#837): 'test-student' avvia la chat sul taccuino
+// dello studente di prova scelto, 'own' sul proprio account.
+export type Method = 'manual' | 'upload' | 'resume' | 'practice' | 'test-student' | 'own';
 
 interface SavedResult {
     id: number;
@@ -49,11 +52,13 @@ interface Option {
 export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMethodSelectorProps) {
     const { t } = useI18n();
     const hasProfileUpload = questionnaire ? supportsProfileUpload(questionnaire.id) : false;
+    // Strumento senza punteggi: la schermata serve solo a scegliere per chi è la chat.
+    const unscored = questionnaire?.agentOnly === true;
     const manualDescription = questionnaire
         ? t('method.manual.descTpl', { name: questionnaire.name, codes: questionnaire.factors.map(f => f.code).join(', ') })
         : t('method.manual.descNoQ');
     const [remember, setRemember] = useState(() => getInputMethodPref() !== null);
-    const [selected, setSelected] = useState<Method | null>(null);
+    const [selectedState, setSelected] = useState<Method | null>(null);
     const [savedResults, setSavedResults] = useState<SavedResult[]>([]);
     const [chosenResultId, setChosenResultId] = useState<number | null>(null);
     // Docente in prova: studente simulato scelto (lo stesso delle Opzioni della
@@ -65,6 +70,13 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
     const [practiceResults, setPracticeResults] = useState<PracticeResult[]>([]);
     const [chosenPracticeResultId, setChosenPracticeResultId] = useState<number | null>(null);
     const practiceNotebook = practiceNotebooks.find((notebook) => notebook.id === practiceId) ?? null;
+    // Senza punteggi c'è sempre una scelta: lo studente di prova se è scelto, altrimenti il proprio account.
+    const selected: Method | null = unscored && (selectedState === null || (selectedState === 'test-student' && !practiceNotebook))
+        ? (practiceNotebook ? 'test-student' : 'own')
+        : selectedState;
+    // «Nuovo studente di prova…»: solo il nome, il profilo si completa nella Palestra.
+    const [newName, setNewName] = useState<string | null>(null);
+    const [createError, setCreateError] = useState(false);
 
     useEffect(() => {
         let active = true;
@@ -92,6 +104,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
         setPracticeId(id);
         setChosenPracticeResultId(null);
         if (selected === 'practice') setSelected(null);
+        if (unscored) setSelected(id !== null ? 'test-student' : 'own');
         if (id !== null) {
             storeNotebookContext('practice');
             storePracticeNotebookId(id);
@@ -100,9 +113,23 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
         }
     };
 
+    const createPractice = async () => {
+        const title = newName?.trim();
+        if (!title) return;
+        setCreateError(false);
+        try {
+            const created = await practiceNotebookApi.create(title, {});
+            setPracticeNotebooks((rows) => [created, ...rows]);
+            setNewName(null);
+            changePractice(created.id);
+        } catch {
+            setCreateError(true);
+        }
+    };
+
     useEffect(() => {
         let cancelled = false;
-        if (!questionnaire) {
+        if (!questionnaire || unscored) {
             queueMicrotask(() => { if (!cancelled) setSavedResults([]); });
             return () => { cancelled = true; };
         }
@@ -117,9 +144,17 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
             })
             .catch(() => { if (!cancelled) setSavedResults([]); });
         return () => { cancelled = true; };
-    }, [questionnaire]);
+    }, [questionnaire, unscored]);
 
-    const options: Option[] = [
+    const options: Option[] = unscored ? [
+        ...(practiceNotebook ? [{
+            key: 'test-student' as Method,
+            title: t('method.chat.practice.title', { name: practiceNotebook.title }),
+            desc: t('method.chat.practice.desc'),
+            badge: t('method.practice.badge'),
+        }] : []),
+        { key: 'own', title: t('method.chat.own.title'), desc: t('method.chat.own.desc') },
+    ] : [
         { key: 'manual', title: t('method.manual.title'), desc: manualDescription },
         ...(hasProfileUpload ? [{
             key: 'upload' as Method,
@@ -143,19 +178,26 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
 
     const renderCard = (opt: Option) => {
         const isSelected = selected === opt.key;
+        const isTest = opt.key === 'test-student';
         const cardClass = cn(
             'relative flex flex-col items-start justify-center p-8 h-56 rounded-lg border text-left transition-colors w-full',
-            isSelected
+            isTest
+                ? cn('border-role-test-line bg-role-test-soft cursor-pointer', isSelected && 'ring-2 ring-indigo-400')
+                : opt.key === 'own'
+                ? cn('border-role-teacher-line bg-role-teacher-soft cursor-pointer', isSelected && 'ring-2 ring-indigo-400')
+                : isSelected
                 ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-300'
                 : 'bg-white border-slate-200 hover:border-indigo-200 cursor-pointer'
         );
-        const badge = opt.badge && (
+        const badge = opt.badge && (isTest ? (
+            <div className="absolute top-4 left-4"><RoleBadge role="test">{opt.badge}</RoleBadge></div>
+        ) : (
             <div className="absolute top-4 left-4">
                 <span className="px-2 py-1 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
                     {opt.badge}
                 </span>
             </div>
-        );
+        ));
         const check = isSelected && (
             <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
                 <Check className="h-3.5 w-3.5" />
@@ -164,7 +206,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
         const body = (
             <>
                 <h3 className="text-xl font-semibold mb-2 text-slate-900">{opt.title}</h3>
-                <p className="text-sm text-slate-600">{opt.desc}</p>
+                <p className={cn('text-sm', isTest ? 'text-role-test-muted' : opt.key === 'own' ? 'text-role-teacher-muted' : 'text-slate-600')}>{opt.desc}</p>
             </>
         );
 
@@ -289,6 +331,10 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
         } else if (selected === 'practice') {
             const result = practiceResults.find((r) => r.id === chosenPracticeResultId);
             if (result) onSelect('practice', { sessionId: result.session_id, scores: result.scores });
+        } else if (selected === 'own' && readStoredNotebookContext() === 'practice') {
+            // Con i propri dati la chat non deve leggere il taccuino rimasto in memoria.
+            storeNotebookContext('default');
+            onSelect('own');
         } else {
             onSelect(selected, undefined, remember);
         }
@@ -307,18 +353,39 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
             {/* E' la schermata che chiede i punteggi: qui la domanda "e dove li
                 prendo?" arriva davvero, e finora non aveva risposta. */}
             {questionnaire && <QuestionnaireLink instrument={questionnaire.id} className="max-w-5xl" />}
-            {isTeacher && practiceNotebooks.length > 0 && (
-                <div data-practice-student className="max-w-5xl space-y-1 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
+            {isTeacher && (practiceNotebooks.length > 0 || unscored) && (
+                <div data-practice-student className={cn('max-w-5xl space-y-2 rounded-lg border p-3 text-sm text-slate-700',
+                    practiceNotebook ? 'border-role-test-line bg-role-test-soft text-ink' : 'border-slate-200 bg-white')}>
                     <label className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold">{t('method.practice.student')}</span>
-                        <select value={practiceNotebook ? String(practiceNotebook.id) : ''}
-                            onChange={(event) => changePractice(event.target.value ? Number(event.target.value) : null)}
-                            className="min-h-11 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 text-sm">
+                        <select value={newName !== null ? 'new' : practiceNotebook ? String(practiceNotebook.id) : ''}
+                            onChange={(event) => {
+                                if (event.target.value === 'new') { setNewName(''); setCreateError(false); return; }
+                                setNewName(null);
+                                changePractice(event.target.value ? Number(event.target.value) : null);
+                            }}
+                            className="min-h-11 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900">
                             <option value="">{t('method.practice.none')}</option>
                             {practiceNotebooks.map((notebook) => <option key={notebook.id} value={notebook.id}>{notebook.title}</option>)}
+                            <option value="new">{t('method.practice.new')}</option>
                         </select>
                     </label>
-                    {practiceNotebook && <p className="text-xs text-slate-500">{t('method.practice.saveHint', { name: practiceNotebook.title })}</p>}
+                    {newName !== null && (
+                        <form data-practice-new className="flex flex-wrap items-center gap-2"
+                            onSubmit={(event) => { event.preventDefault(); void createPractice(); }}>
+                            <input autoFocus aria-label={t('method.practice.newName')} placeholder={t('method.practice.newName')}
+                                value={newName} onChange={(event) => setNewName(event.target.value)} maxLength={120}
+                                className="min-h-11 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900" />
+                            <button type="submit" disabled={!newName.trim()}
+                                className="inline-flex min-h-11 items-center gap-1 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white disabled:opacity-50">
+                                <Plus className="h-4 w-4" aria-hidden />{t('method.practice.create')}
+                            </button>
+                            <button type="button" onClick={() => { setNewName(null); setCreateError(false); }}
+                                className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700">{t('common.cancel')}</button>
+                            {createError && <p role="alert" className="w-full text-xs text-red-700">{t('method.practice.createError')}</p>}
+                        </form>
+                    )}
+                    {practiceNotebook && !unscored && <p className="text-xs text-role-test-muted">{t('method.practice.saveHint', { name: practiceNotebook.title })}</p>}
                 </div>
             )}
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-5xl">
@@ -328,7 +395,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
                     </div>
                 ))}
             </div>
-            {selected !== 'resume' && selected !== 'practice' && (
+            {!unscored && selected !== 'resume' && selected !== 'practice' && (
                 <label className="flex min-h-11 items-center gap-3 text-sm text-slate-600">
                     <input type="checkbox" checked={remember} onChange={event => setRemember(event.target.checked)} className="h-4 w-4 accent-indigo-600" />
                     {t('method.remember')}

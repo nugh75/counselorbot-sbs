@@ -17,7 +17,7 @@ import {
 import { fetchInstruments } from '@/lib/instruments-api';
 import type { PausedChat } from '@/lib/catalog-status';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
-import { InputMethodSelector } from '@/components/qsa/InputMethodSelector';
+import { InputMethodSelector, type Method as InputMethod } from '@/components/qsa/InputMethodSelector';
 import { ScoreInputForm } from '@/components/qsa/ScoreInputForm';
 import { PDFUploader } from '@/components/qsa/PDFUploader';
 import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
@@ -406,6 +406,11 @@ export default function Home() {
             }
             setSelectedCounselorId(counselor.id);
             if (isAgentOnly(questionnaire)) {
+                // Il docente sceglie prima per chi è la chat: studente di prova o sé stesso (#837).
+                if (!resumeSid && canUseTeacherAssistant(identity)) {
+                    setStep('method-select');
+                    return;
+                }
                 await startAgentOnlyQuestionnaire(questionnaire, resumeSid);
                 return;
             }
@@ -427,7 +432,7 @@ export default function Home() {
             }
             setStep('method-select');
         } finally { setPreparingInstrument(false); }
-    }, [lang, router, savedResults, startAgentOnlyQuestionnaire, t]);
+    }, [identity, lang, router, savedResults, startAgentOnlyQuestionnaire, t]);
 
     useEffect(() => {
         if (entryClaimed.current || !identity?.authenticated) return;
@@ -732,7 +737,12 @@ export default function Home() {
         void prepareInstrument(questionnaire, null);
     };
 
-    const handleMethodSelect = (method: 'manual' | 'upload' | 'resume' | 'practice', resumeData?: { sessionId: string; scores: Record<string, number> }, remember = false) => {
+    const handleMethodSelect = (method: InputMethod, resumeData?: { sessionId: string; scores: Record<string, number> }, remember = false) => {
+        // Strumento senza punteggi: la scelta (taccuino di prova o account) è già memorizzata.
+        if (method === 'test-student' || method === 'own') {
+            if (selectedQuestionnaire) void startAgentOnlyQuestionnaire(selectedQuestionnaire);
+            return;
+        }
         if (method === 'resume' || method === 'practice') {
             if (!resumeData) return;
             setScores(resumeData.scores);
