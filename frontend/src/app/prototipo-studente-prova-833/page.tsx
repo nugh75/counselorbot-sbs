@@ -15,6 +15,21 @@ const TOOL = 'SAVICKAS – Career construction interview (unscored guided chat)'
 const VARIANTS = ['A', 'B', 'C'] as const;
 const NAMES: Record<string, string> = { A: 'Same screen as questionnaires', B: 'Notebook cards', C: 'Search / create bar' };
 
+const PATHS: Record<string, string> = {
+  flask: 'M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3',
+  teacher: 'M3 5h18v11H3zM8 20h8M12 16v4',
+  student: 'M2 9l10-5 10 5-10 5zM6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5',
+  plus: 'M12 5v14M5 12h14',
+  right: 'M5 12h14M13 6l6 6-6 6',
+  left: 'M19 12H5M11 6l-6 6 6 6',
+  check: 'M5 12l5 5 9-10',
+  sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',
+  moon: 'M20 14A8 8 0 0 1 10 4a8 8 0 1 0 10 10z',
+};
+function Ic({ n }: { n: string }) {
+  return <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-3px', marginRight: 4 }}><path d={PATHS[n]} /></svg>;
+}
+
 const css = `
 .p833{--t-soft:#e2f1fb;--t-line:#a9cfe8;--t-ink:#0b3a57;--t-mut:#33566f;--bg:#fff;--fg:#0f172a;--mut:#475569;--bd:#cbd5e1;--cream:#f8f5d7;--cl:#e0d89a;--s-soft:#e9f2f2;--s-line:#a0cccd;
  background:var(--bg);color:var(--fg);min-height:100vh;padding:16px 16px 96px;font-family:system-ui,sans-serif}
@@ -35,7 +50,7 @@ const css = `
 .p833 .sel{outline:3px solid var(--t-ink)}
 .p833 pre{font-size:12px;background:#0f172a;color:#cbd5e1;border-radius:8px;padding:10px;overflow:auto}
 .p833 .bar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:center;background:#111;color:#fff;border-radius:99px;padding:8px 14px;box-shadow:0 4px 20px #0008;z-index:99;font-size:13px}
-.p833 .bar button{background:none;border:0;color:#fff;font-size:18px;cursor:pointer;padding:4px 8px}
+.p833 .bar button svg{margin:0}.p833 .bar button{background:none;border:0;color:#fff;font-size:18px;cursor:pointer;padding:4px 8px}
 `;
 
 type S = { students: Student[]; chosen: number | 'self' | null; started: boolean; log: string[] };
@@ -48,7 +63,7 @@ function Result({ s }: { s: S }) {
         <div className={`card ${st ? 'test' : 'teach'}`}>
           <b>Chat started</b> · {TOOL}
           <div style={{ margin: '6px 0' }}>
-            {st ? <span className="badge">🧪 Test student: {st.name}</span> : <span className="badge">Teacher's own account (no notebook)</span>}
+            {st ? <span className="badge"><Ic n="flask" />Test student: {st.name}</span> : <span className="badge">Teacher's own account (no notebook)</span>}
           </div>
           <div className="mut">
             {st ? `[SIMULATION] notice in prompt · [PROFILE] = notebook "${st.name}" · transcript saved to that notebook, not to the teacher.` : 'Today\'s behaviour: empty-score result saved under the teacher.'}
@@ -91,7 +106,7 @@ function VariantA({ s, set }: { s: S; set: (p: Partial<S>, l: string) => void })
           }}>
             <option value="">— none (use my own account) —</option>
             {s.students.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-            <option value="new">＋ New test student…</option>
+            <option value="new">New test student…</option>
           </select>
         </label>
         {st && <p className="mut">Chat and notes will be saved in the notebook of {st.name}.</p>}
@@ -105,7 +120,7 @@ function VariantA({ s, set }: { s: S; set: (p: Partial<S>, l: string) => void })
         </div>
         <div className={`card ${method === 'none' ? 'sel' : ''}`}><b>Start with my own data</b><p className="mut">Current behaviour for unscored tools.</p></div>
       </div>
-      <button className="b go" onClick={() => set({ started: true }, 'continue')} disabled={method === 'practice' && !st}>Continue →</button>
+      <button className="b go" onClick={() => set({ started: true }, 'continue')} disabled={method === 'practice' && !st}>Continue<Ic n="right" /></button>
     </>
   );
 }
@@ -122,17 +137,17 @@ function VariantB({ s, set }: { s: S; set: (p: Partial<S>, l: string) => void })
         </button>
         {s.students.map((x) => (
           <button key={x.id} className={`card test ${s.chosen === x.id ? 'sel' : ''}`} style={{ textAlign: 'left', cursor: 'pointer' }} onClick={() => set({ chosen: x.id, started: false }, `pick ${x.name}`)}>
-            <span className="badge">🧪 Test student</span><div style={{ fontWeight: 700, marginTop: 6 }}>{x.name}</div>
+            <span className="badge"><Ic n="flask" />Test student</span><div style={{ fontWeight: 700, marginTop: 6 }}>{x.name}</div>
             <div className="mut">{x.meta}</div><div className="mut">{x.notes} notes · {x.chats} chats</div>
           </button>
         ))}
         <div className="card" style={{ borderStyle: 'dashed' }}>
           {creating ? <NewForm onCancel={() => setCreating(false)} onCreate={(n, m) => {
             const id = Date.now(); set({ students: [...s.students, { id, name: n, meta: m, notes: 0, chats: 0 }], chosen: id, started: false }, `create ${n}`); setCreating(false);
-          }} /> : <button className="b" style={{ width: '100%' }} onClick={() => setCreating(true)}>＋ New test student</button>}
+          }} /> : <button className="b" style={{ width: '100%' }} onClick={() => setCreating(true)}><Ic n="plus" /> New test student</button>}
         </div>
       </div>
-      <button className="b go" disabled={s.chosen === null} onClick={() => set({ started: true }, 'start')}>Start chat →</button>
+      <button className="b go" disabled={s.chosen === null} onClick={() => set({ started: true }, 'start')}>Start chat<Ic n="right" /></button>
     </>
   );
 }
@@ -149,23 +164,23 @@ function VariantC({ s, set }: { s: S; set: (p: Partial<S>, l: string) => void })
         <b>Start with…</b>
         {st ? (
           <div className="card test" style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span><span className="badge">🧪 Test student</span> <b>{st.name}</b></span>
+            <span><span className="badge"><Ic n="flask" />Test student</span> <b>{st.name}</b></span>
             <button className="b" onClick={() => set({ chosen: null, started: false }, 'clear')}>Change</button>
           </div>
         ) : (
           <>
             <input style={{ marginTop: 8 }} placeholder="Type a test student name, or a new one…" value={q} onChange={(e) => setQ(e.target.value)} />
             <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
-              {hits.map((x) => <button key={x.id} className="b test" style={{ textAlign: 'left' }} onClick={() => { set({ chosen: x.id, started: false }, `pick ${x.name}`); setQ(''); }}>🧪 {x.name} <span className="mut">· {x.meta}</span></button>)}
+              {hits.map((x) => <button key={x.id} className="b test" style={{ textAlign: 'left' }} onClick={() => { set({ chosen: x.id, started: false }, `pick ${x.name}`); setQ(''); }}><Ic n="flask" />{x.name} <span className="mut">· {x.meta}</span></button>)}
               {q.trim() && !exact && <button className="b go" onClick={() => {
                 const id = Date.now(); set({ students: [...s.students, { id, name: q.trim(), meta: 'new profile', notes: 0, chats: 0 }], chosen: id, started: false }, `create ${q}`); setQ('');
-              }}>＋ Create “{q.trim()}” as new test student</button>}
-              <button className="b" style={{ textAlign: 'left' }} onClick={() => set({ chosen: 'self', started: false }, 'self')}>Skip: use my own account {s.chosen === 'self' && '✓'}</button>
+              }}><Ic n="plus" /> Create “{q.trim()}” as new test student</button>}
+              <button className="b" style={{ textAlign: 'left' }} onClick={() => set({ chosen: 'self', started: false }, 'self')}>Skip: use my own account {s.chosen === 'self' && <Ic n="check" />}</button>
             </div>
           </>
         )}
       </div>
-      <button className="b go" disabled={s.chosen === null} onClick={() => set({ started: true }, 'start')}>Start chat →</button>
+      <button className="b go" disabled={s.chosen === null} onClick={() => set({ started: true }, 'start')}>Start chat<Ic n="right" /></button>
     </>
   );
 }
@@ -193,9 +208,9 @@ function Proto() {
       <div className="wrap">
         <div className="badge" style={{ justifySelf: 'start' }}>PROTOTYPE #833 · mock data · throwaway</div>
         <div className="grid">
-          <div className="card teach"><span className="badge" style={{ background: 'transparent' }}>👩‍🏫 Teacher area</span><div className="mut">Cream: teacher cards (this screen)</div></div>
-          <div className="card test"><span className="badge">🧪 Test student</span><div className="mut">Celestino: notebooks, chats</div></div>
-          <div className="card stud"><span className="badge" style={{ background: 'transparent' }}>🎓 Student area</span><div className="mut">Petrol: unchanged</div></div>
+          <div className="card teach"><span className="badge" style={{ background: 'transparent' }}><Ic n="teacher" />Teacher area</span><div className="mut">Cream: teacher cards (this screen)</div></div>
+          <div className="card test"><span className="badge"><Ic n="flask" />Test student</span><div className="mut">Celestino: notebooks, chats</div></div>
+          <div className="card stud"><span className="badge" style={{ background: 'transparent' }}><Ic n="student" />Student area</span><div className="mut">Petrol: unchanged</div></div>
         </div>
         <div className="card teach"><h1 style={{ fontSize: 20, fontWeight: 700 }}>{TOOL}</h1>
         <p className="mut" style={{ marginTop: 4 }}>You are in the teacher area: pick who this chat is simulated for.</p></div>
@@ -203,8 +218,8 @@ function Proto() {
         <Result s={s} />
       </div>
       <div className="bar">
-        <button onClick={() => go(-1)}>←</button><span>{v} ({NAMES[v]})</span><button onClick={() => go(1)}>→</button>
-        <button onClick={() => setDark(!dark)} title="light/dark">{dark ? '☀' : '☾'}</button>
+        <button onClick={() => go(-1)}><Ic n="left" /></button><span>{v} ({NAMES[v]})</span><button onClick={() => go(1)}><Ic n="right" /></button>
+        <button onClick={() => setDark(!dark)} title="light/dark"><Ic n={dark ? 'sun' : 'moon'} /></button>
       </div>
     </div>
   );
