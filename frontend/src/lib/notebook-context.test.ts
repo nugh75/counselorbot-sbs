@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { notebookContextPayload, readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId } from './notebook-context.ts';
+import { isPracticeRun, notebookContextPayload, readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId } from './notebook-context.ts';
 
 // localStorage minimo (il modulo legge window.localStorage in modo difensivo).
 class MemoryStorage {
@@ -59,4 +59,11 @@ test('il payload del turno: mai per i non docenti, mai default, id solo in prova
     assert.deepEqual(notebookContextPayload(true, 'practice', 3), { notebook_context: 'practice', practice_notebook_id: 3 });
     // Prova senza taccuino: il server non trova nulla e svuota il profilo.
     assert.deepEqual(notebookContextPayload(true, 'practice', null), { notebook_context: 'practice' });
+});
+
+test('in prova il docente non salva risultati sul proprio account (#835)', () => {
+    assert.equal(isPracticeRun(true, 'practice'), true);
+    assert.equal(isPracticeRun(false, 'practice'), false);
+    assert.equal(isPracticeRun(true, 'teacher'), false);
+    assert.equal(isPracticeRun(true, 'default'), false);
 });
