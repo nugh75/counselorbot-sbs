@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
+import { RoleBadge } from '@/components/ui/RoleBadge';
 import { listFrozenSessions, type FrozenSessionSummary } from '@/lib/frozen-session';
 import { useI18n } from '@/lib/i18n-context';
 import { useDraftGuard } from '@/lib/use-draft-guard';
@@ -219,7 +220,8 @@ export function PracticeNotebooks() {
             <ul className="space-y-4">
                 {active.map((notebook) => (
                     <li key={notebook.id} data-practice-notebook={notebook.id}>
-                        <article className="space-y-4 rounded-lg border border-line bg-surface p-4">
+                        <article className="space-y-4 rounded-lg border border-role-test-line bg-role-test-soft p-4 [--ink-muted:var(--role-test-muted)]">
+                            <RoleBadge role="test">{l('testStudentBadge')}</RoleBadge>
                             <h2 id={practiceNotebookAnchor(notebook.id)} tabIndex={-1} className="scroll-mt-24 break-words text-base font-semibold text-ink">{notebook.title}</h2>
                             {classSelection(notebook.group_ids, (groupId, linked) => void saveClass(notebook.id, groupId, linked), notebook.id)}
                             {draft?.id === notebook.id ? editor(draft) : <>

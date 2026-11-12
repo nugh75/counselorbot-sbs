@@ -15,6 +15,7 @@ const texts = {
         'Jedes Notizbuch beschreibt eine erfundene lernende Person. Wählen Sie in den Optionen eines begleiteten Chats oder des Kompasses „Übung“ und das Notizbuch: Das Gespräch nutzt die simulierte Person statt Ihrer Daten, und das Modell erhält die ausdrückliche Anweisung, dass es sich um eine Simulation zu Ihrer Übung handelt. Geben Sie keine Daten echter Lernender ein.',
         'Varje anteckningsbok beskriver en påhittad elev. Välj ”Övning” och anteckningsboken i Alternativ i en vägledd chatt eller i kompassen: samtalet använder den simulerade eleven i stället för dina uppgifter, och modellen får en uttrycklig instruktion om att det är en simulering för din övning. Ange inte uppgifter om riktiga elever.',
     ],
+    testStudentBadge: ['Studente di prova', 'Test student', 'Estudiante de prueba', 'Étudiant de test', 'Testperson', 'Testelev'],
     create: ['Nuovo taccuino di prova', 'New practice notebook', 'Nuevo cuaderno de práctica', 'Nouveau carnet d’entraînement', 'Neues Übungs-Notizbuch', 'Ny övningsanteckningsbok'],
     name: ['Nome dello studente immaginario', 'Imaginary student’s name', 'Nombre del estudiante imaginario', 'Nom de l’étudiant imaginaire', 'Name der erfundenen Person', 'Den påhittade elevens namn'],
     nameHint: [
