@@ -819,6 +819,146 @@ async def delete_group_share(
     return {"ok": True, "deleted": share_id}
 
 
+# --- Inviti per email (#836) --------------------------------------------------
+# The teacher types an email; the student signs in or signs up through ai4auth
+# (own password) and the invitation is accepted when that email opens the class
+# link. Only there: ai4auth password signup does not verify the email, so the
+# class code stays required. Counselorbot sends no email: the teacher sends the
+# link from their own mail client. Local provider: students have no email.
+
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def _require_email_invitations():
+    if auth.local_provider_enabled():
+        raise HTTPException(status_code=404, detail="email_invitations_unavailable")
+
+
+def _serialize_invitation(invitation: models.GroupInvitation) -> dict:
+    return {
+        "id": invitation.id,
+        "email": invitation.email,
+        "invited_by": invitation.invited_by,
+        "created_at": invitation.created_at.isoformat() if invitation.created_at else None,
+        "sent_at": invitation.sent_at.isoformat() if invitation.sent_at else None,
+    }
+
+
+def _require_pending_invitation(db: Session, group_id: int, invitation_id: int) -> models.GroupInvitation:
+    invitation = db.query(models.GroupInvitation).filter(
+        models.GroupInvitation.id == invitation_id,
+        models.GroupInvitation.group_id == group_id,
+        models.GroupInvitation.accepted_at.is_(None),
+    ).first()
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invito non trovato")
+    return invitation
+
+
+def accept_invitation(db: Session, identity: dict, group: models.StudentGroup) -> bool:
+    """Enrol the signed-in user if `group` invited their email; True if accepted."""
+    email = (identity.get("email") or "").strip().lower()
+    username = identity.get("username")
+    if not email or not username:
+        return False
+    if is_test_member(username, group.owner_username):
+        return False  # #835: owner and demo accounts never become students.
+    invitation = db.query(models.GroupInvitation).filter(
+        models.GroupInvitation.group_id == group.id,
+        models.GroupInvitation.email == email,
+        models.GroupInvitation.accepted_at.is_(None),
+    ).first()
+    if not invitation:
+        return False
+    ensure_membership(db, group.id, username, "teacher")
+    invitation.accepted_at = datetime.now(UTC)
+    invitation.accepted_username = username
+    return True
+
+
+@router.get("/admin/groups/{group_id}/invitations")
+async def list_group_invitations(
+    group_id: int,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Pending email invitations of a visible class."""
+    _require_email_invitations()
+    _require_visible_group(db, current_user, group_id)
+    rows = (
+        db.query(models.GroupInvitation)
+        .filter(models.GroupInvitation.group_id == group_id, models.GroupInvitation.accepted_at.is_(None))
+        .order_by(models.GroupInvitation.created_at.asc(), models.GroupInvitation.id.asc())
+        .all()
+    )
+    return [_serialize_invitation(row) for row in rows]
+
+
+@router.post("/admin/groups/{group_id}/invitations", status_code=201)
+async def create_group_invitation(
+    group_id: int,
+    payload: schemas.GroupInvitationCreate,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Invite one email to the class; the teacher never sets a password."""
+    _require_email_invitations()
+    group = _require_visible_group(db, current_user, group_id)
+    email = (payload.email or "").strip().lower()
+    if not EMAIL_RE.match(email):
+        raise HTTPException(status_code=400, detail="invalid_email")
+    invitation = db.query(models.GroupInvitation).filter(
+        models.GroupInvitation.group_id == group.id,
+        models.GroupInvitation.email == email,
+    ).first()
+    if invitation and invitation.accepted_at is None:
+        raise HTTPException(status_code=409, detail="invitation_already_pending")
+    if invitation:  # accepted before (e.g. the student left): pending again
+        invitation.accepted_at = None
+        invitation.accepted_username = None
+        invitation.sent_at = None
+        invitation.invited_by = _username(current_user) or ""
+    else:
+        invitation = models.GroupInvitation(group_id=group.id, email=email, invited_by=_username(current_user) or "")
+        db.add(invitation)
+    db.commit()
+    db.refresh(invitation)
+    return _serialize_invitation(invitation)
+
+
+@router.post("/admin/groups/{group_id}/invitations/{invitation_id}/sent")
+async def mark_group_invitation_sent(
+    group_id: int,
+    invitation_id: int,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Record that the teacher (re)sent the link from their mail client."""
+    _require_email_invitations()
+    _require_visible_group(db, current_user, group_id)
+    invitation = _require_pending_invitation(db, group_id, invitation_id)
+    invitation.sent_at = datetime.now(UTC)
+    db.commit()
+    db.refresh(invitation)
+    return _serialize_invitation(invitation)
+
+
+@router.delete("/admin/groups/{group_id}/invitations/{invitation_id}")
+async def cancel_group_invitation(
+    group_id: int,
+    invitation_id: int,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Cancel a pending invitation: that email no longer joins automatically."""
+    _require_email_invitations()
+    _require_visible_group(db, current_user, group_id)
+    invitation = _require_pending_invitation(db, group_id, invitation_id)
+    db.delete(invitation)
+    db.commit()
+    return {"ok": True, "deleted": invitation_id}
+
+
 # --- Dashboard classe: studenti, transcript, note, messaggi ------------------
 
 def _require_student_result(db, current_user, group_id, username, **result_filter):
@@ -1180,6 +1320,7 @@ async def join_group(
         .first()
         is not None
     )
+    accept_invitation(db, current_user, group)  # invited email: joined_via="teacher"
     ensure_membership(db, group.id, current_user["username"], "web")
     db.commit()
     return {"group_id": group.id, "code": group.code, "name": group.name, "already_member": already_member}
