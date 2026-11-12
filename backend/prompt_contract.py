@@ -350,7 +350,8 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
     lines = [
         "[TURN CONTRACT]",
         f"Current task: {questionnaire_type or 'counselor chat'}, {phase or 'free conversation'}. Response language: {language}.",
-        "Answer the current request directly. Ask at most ONE focused question, then wait. " +
+        "Answer the current request directly (when it belongs to a later step, saying so is the direct answer). "
+        "Ask at most ONE focused question, then wait. " +
         ("Questions in this phase serve optional understanding of factors, scales and scores. " if descriptive else
         "Questions across the interaction are open reflective prompts to help the person self-reflect and self-interrogate "
         "on their experience, choices and resources—never an interrogation, procedural interview, or quiz ('I ask targeted questions and you answer'). ") +

@@ -13,7 +13,8 @@
     ],
     "directive_conversation_quality": [
       "2c6b64ccf75a544f699eab8e100c7bc738e7bd5ec7a66388e0b582f2bc4ee3b4",
-      "ae62d230ed7553fc62577671d62ead37076b0dcb4eef6653b70347ddee9527a3"
+      "ae62d230ed7553fc62577671d62ead37076b0dcb4eef6653b70347ddee9527a3",
+      "a17dc82f24775565dc1757b159421bcca4015486d14c7001372f3e206b39a7f2"
     ],
     "directive_language": [
       "55d0c15de6a69a4ad2b4ad65ed3eb2bc1f0bb4fb20efe4d9ef5fc976bfaff5c8"
@@ -60,7 +61,9 @@
     ],
     "prompt_factor": [
       "ccbe86796a79729944f66bb5bb8baa85a0ea3923070003598aeaa8f332bcf2c3",
-      "1ef8ea8ad37de38c64ab3d37d87129c17a49abf49348a723310c6967f6be357f"
+      "1ef8ea8ad37de38c64ab3d37d87129c17a49abf49348a723310c6967f6be357f",
+      "4d1881f4ee74e0a003911907be0a0687ad1c73aab8a73c6fc489aff4efad2401",
+      "8514e2fcc1933cd33226604af02a8a0c70671666154f448dec5090a093e1ff59"
     ],
     "prompt_factor_qa": [
       "30c58cd1a2b8fee153938018bb74c4222d41c4652144a135015a0816788b78ec",

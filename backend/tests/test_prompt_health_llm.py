@@ -94,6 +94,13 @@ class FakeModel:
         return json.dumps({"contradictions": []})
 
 
+@pytest.fixture(autouse=True)
+def no_waits(monkeypatch):
+    waits = []
+    monkeypatch.setattr(prompt_health_llm, "_sleep", waits.append)
+    return waits
+
+
 @pytest.fixture
 def fake(monkeypatch):
     model = FakeModel()
@@ -441,3 +448,36 @@ def test_a_sentence_shared_by_several_prompts_lists_all_of_them(db, fake, custom
         other = db.query(models.GuidedStep).filter(models.GuidedStep.id == "intro").first()
         other.prompt = before
         db.commit()
+
+
+class RateLimitError(Exception):
+    pass
+
+
+def test_calls_are_paced_and_a_rate_limit_is_waited_out(db, monkeypatch, custom_step, no_waits):
+    prompt_health_llm.save_settings(db, "openrouter", "test/cheap-model")
+    answers = iter([RateLimitError("429"), json.dumps({"contradictions": []})])
+
+    def throttled(*args, **kwargs):
+        answer = next(answers, json.dumps({"contradictions": []}))
+        if isinstance(answer, Exception):
+            raise RuntimeError("Errore AI") from answer
+        return answer
+    monkeypatch.setattr(prompt_health_llm, "_call_model", throttled)
+    result = prompt_health_llm.run(db, [STEP])
+    assert result["failed"] == 0 and result["calls"] > 0
+    assert prompt_health_llm.RATE_LIMIT_WAITS[0] in no_waits
+    assert no_waits.count(prompt_health_llm.CALL_INTERVAL_SECONDS) == result["calls"] - 1
+
+
+def test_a_persistent_rate_limit_stops_the_run_and_leaves_the_rest(db, monkeypatch, custom_step, no_waits):
+    prompt_health_llm.save_settings(db, "openrouter", "test/cheap-model")
+    total = prompt_health_llm.estimate(db, [STEP])["calls"]
+
+    def refused(*args, **kwargs):
+        raise RuntimeError("Errore AI") from RateLimitError("429")
+    monkeypatch.setattr(prompt_health_llm, "_call_model", refused)
+    result = prompt_health_llm.run(db, [STEP])
+    assert result["calls"] == 0 and result["failed"] == 1
+    assert result["remaining"] == total - 1
+    assert no_waits == list(prompt_health_llm.RATE_LIMIT_WAITS)

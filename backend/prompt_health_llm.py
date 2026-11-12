@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import time
 
 from sqlalchemy.orm import Session
 
@@ -27,6 +28,10 @@ logger = logging.getLogger(__name__)
 CHECK_VERSION = 1
 SETTING_KEYS = ("llm_contradiction_provider", "llm_contradiction_model")
 MAX_CALLS_PER_RUN = 20
+# Providers throttle bursts: a gap between calls, and a few waits when they refuse one.
+CALL_INTERVAL_SECONDS = 1.5
+RATE_LIMIT_WAITS = (5, 15)
+_sleep = time.sleep
 KEEP_RESULTS = 2000
 MAX_OUTPUT_TOKENS = 1500
 EXPECTED_OUTPUT_TOKENS = 400
@@ -167,6 +172,32 @@ def _call_model(db: Session, provider: str, model: str, system: str, user: str) 
     return service.call_model(provider, model, user, system, max_tokens=MAX_OUTPUT_TOKENS, json_mode=True)
 
 
+class _RateLimited(Exception):
+    pass
+
+
+def _is_rate_limit(exc: BaseException) -> bool:
+    cause = exc
+    while cause is not None:
+        if type(cause).__name__ == "RateLimitError" or getattr(cause, "status_code", None) == 429:
+            return True
+        cause = cause.__cause__
+    return "RateLimitError" in str(exc)
+
+
+def _call_with_backoff(db: Session, current: dict, system: str, text: str) -> str:
+    for wait in (*RATE_LIMIT_WAITS, None):
+        try:
+            return _call_model(db, current["provider"], current["model"], system, text)
+        except Exception as exc:
+            if not _is_rate_limit(exc):
+                raise
+            if wait is None:
+                raise _RateLimited() from exc
+            _sleep(wait)
+    raise _RateLimited()
+
+
 # --- Combinations ---------------------------------------------------------------------
 
 def combinations(db: Session, prompt_ids=(), *, surfaces: set[str] | None = None) -> list[dict]:
@@ -281,11 +312,19 @@ def run(db: Session, prompt_ids=(), language: str | None = None) -> dict:
     to_call = [c for c in combos if keys[c["hash"]] not in cached]
     system = CHECK_SYSTEM.replace("{language}", LANGUAGES[language])
     texts = prompt_health.active_texts(db)
-    calls = failed = 0
-    for combo in to_call[:MAX_CALLS_PER_RUN]:
+    calls = failed = attempted = 0
+    for index, combo in enumerate(to_call[:MAX_CALLS_PER_RUN]):
+        if index:
+            _sleep(CALL_INTERVAL_SECONDS)
+        attempted += 1
         try:
-            answer = _call_model(db, current["provider"], current["model"], system, combo["text"])
+            answer = _call_with_backoff(db, current, system, combo["text"])
             found = _with_sources(_contradictions(answer, combo["text"]), texts)
+        except _RateLimited:
+            # Still refused after waiting: stop here, the rest stays for the next run.
+            failed += 1
+            logger.warning("Prompt health LLM: rate limited on %s, run stopped", combo["surfaces"][0])
+            break
         except Exception as exc:  # the check never breaks a save: count it and go on
             failed += 1
             logger.warning("Prompt health LLM: %s on %s", type(exc).__name__, combo["surfaces"][0])
@@ -298,7 +337,7 @@ def run(db: Session, prompt_ids=(), language: str | None = None) -> dict:
     _prune(db)
     return {
         **current, "calls": calls, "failed": failed, "cached": len(combos) - len(to_call),
-        "remaining": max(0, len(to_call) - MAX_CALLS_PER_RUN), "combinations": len(combos),
+        "remaining": max(0, len(to_call) - attempted), "combinations": len(combos),
         "findings": current_findings(db),
     }
 
