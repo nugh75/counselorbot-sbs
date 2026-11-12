@@ -94,6 +94,14 @@ Envelope del turno (modalità prova):
   dal repertorio. In prova `skills.handlers.load_profile_results` legge il
   repertorio (id risolto con ruolo e proprietà in `chat_preparation`) e la
   Bussola elenca gli strumenti del repertorio senza punteggi.
+- **Strumenti senza punteggi (#837)**: per un docente (`canUseTeacherAssistant`)
+  `prepareInstrument` porta gli strumenti `agentOnly` a `method-select` (non alla
+  ripresa con `resumeSid`). `InputMethodSelector` con `questionnaire.agentOnly` mostra
+  il selettore dello studente (anche senza taccuini, con «Nuovo studente di prova…» →
+  `POST /teacher/practice-notebooks` col solo titolo) e le schede `test-student` /
+  `own`. La scelta resta in `cb-notebook-context`/`cb-practice-notebook-id`; `own`
+  riporta il contesto a `default`. `startAgentOnlyQuestionnaire` non salva
+  `QuestionnaireResult` in prova (#835); i turni portano `practice_notebook_id`.
 - **API** (`auth.get_current_plan_manager`, owner verificato, altrui = 404):
   `GET /teacher/practice-notebooks[?include_archived=true]`,
   `POST /teacher/practice-notebooks`, `PUT /teacher/practice-notebooks/{id}`
