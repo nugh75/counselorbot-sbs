@@ -772,6 +772,7 @@ Makefile                    Prompt testing shortcuts
 
 ## Notes
 - `GEMINI.md` describes a separate "3-layer agent" philosophy for agent workflows — not the app's runtime architecture
+- **Agent planning skills**: `.claude/skills/wayfinder` (from mattpocock/skills, with `grilling`, `domain-modeling`, `research`, `prototype`) charts a large effort as a GitHub map issue (`wayfinder:map`) with decision tickets as sub-issues (`wayfinder:research|prototype|grilling|task`); tracker operations in `docs/agents/issue-tracker.md`. Unrelated to the app's `profile-wayfinder` chat skill.
 - `EVENTO_STUDIO`/`EVENTO_PROFESSIONALE` summaries are saved as past milestones in the timeline (no dimensions); the private ```booklet block keeps its name
 - `prompt_test.py` runs inside the backend container via `docker exec` with env vars for all parameters
 - Log retention: configurable via `logFullRetentionDays` config key, with manual `retention-run` trigger
