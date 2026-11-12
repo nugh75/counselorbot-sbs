@@ -16,12 +16,15 @@ const VARIANTS = ['A', 'B', 'C'] as const;
 const NAMES: Record<string, string> = { A: 'Same screen as questionnaires', B: 'Notebook cards', C: 'Search / create bar' };
 
 const css = `
-.p833{--t-soft:#e2f1fb;--t-line:#a9cfe8;--t-ink:#0b3a57;--t-mut:#33566f;--bg:#fff;--fg:#0f172a;--mut:#475569;--bd:#cbd5e1;--cream:#f8f5d7;--cl:#e0d89a;
+.p833{--t-soft:#e2f1fb;--t-line:#a9cfe8;--t-ink:#0b3a57;--t-mut:#33566f;--bg:#fff;--fg:#0f172a;--mut:#475569;--bd:#cbd5e1;--cream:#f8f5d7;--cl:#e0d89a;--s-soft:#e9f2f2;--s-line:#a0cccd;
  background:var(--bg);color:var(--fg);min-height:100vh;padding:16px 16px 96px;font-family:system-ui,sans-serif}
-.p833.dark{--t-soft:#0e3149;--t-line:#2a6288;--t-ink:#d7ecfb;--t-mut:#a9c8de;--bg:#0b1117;--fg:#e5edf3;--mut:#9fb0bd;--bd:#334155;--cream:#2b2910;--cl:#5a5320}
+.p833.dark{--t-soft:#0e3149;--t-line:#2a6288;--t-ink:#d7ecfb;--t-mut:#a9c8de;--bg:#0b1117;--fg:#e5edf3;--mut:#9fb0bd;--bd:#334155;--cream:#2b2910;--cl:#5a5320;--s-soft:#103f42;--s-line:#1f7376}
 .p833 .wrap{max-width:880px;margin:0 auto;display:grid;gap:14px}
 .p833 .card{border:1px solid var(--bd);border-radius:10px;padding:14px}
 .p833 .test{background:var(--t-soft);border-color:var(--t-line);color:var(--t-ink)}
+.p833 .teach{background:var(--cream);border-color:var(--cl)}
+.p833 .stud{background:var(--s-soft);border-color:var(--s-line)}
+.p833 .teach .mut,.p833 .stud .mut{color:var(--mut)}
 .p833 .test .mut{color:var(--t-mut)}.p833 .mut{color:var(--mut);font-size:13px}
 .p833 .badge{display:inline-block;border-radius:99px;padding:2px 10px;font-size:12px;font-weight:600;background:var(--t-soft);border:1px solid var(--t-line);color:var(--t-ink)}
 .p833 button.b{min-height:44px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--fg);padding:0 14px;cursor:pointer;font-size:14px}
@@ -42,7 +45,7 @@ function Result({ s }: { s: S }) {
   return (
     <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
       {s.started && (
-        <div className={`card ${st ? 'test' : ''}`}>
+        <div className={`card ${st ? 'test' : 'teach'}`}>
           <b>Chat started</b> · {TOOL}
           <div style={{ margin: '6px 0' }}>
             {st ? <span className="badge">🧪 Test student: {st.name}</span> : <span className="badge">Teacher's own account (no notebook)</span>}
@@ -189,8 +192,13 @@ function Proto() {
       <style>{css}</style>
       <div className="wrap">
         <div className="badge" style={{ justifySelf: 'start' }}>PROTOTYPE #833 · mock data · throwaway</div>
-        <h1 style={{ fontSize: 20, fontWeight: 700 }}>{TOOL}</h1>
-        <p className="mut">Before starting: pick an existing test student notebook or create one (same notebook as the scored questionnaires).</p>
+        <div className="grid">
+          <div className="card teach"><span className="badge" style={{ background: 'transparent' }}>👩‍🏫 Teacher area</span><div className="mut">Cream: teacher cards (this screen)</div></div>
+          <div className="card test"><span className="badge">🧪 Test student</span><div className="mut">Celestino: notebooks, chats</div></div>
+          <div className="card stud"><span className="badge" style={{ background: 'transparent' }}>🎓 Student area</span><div className="mut">Petrol: unchanged</div></div>
+        </div>
+        <div className="card teach"><h1 style={{ fontSize: 20, fontWeight: 700 }}>{TOOL}</h1>
+        <p className="mut" style={{ marginTop: 4 }}>You are in the teacher area: pick who this chat is simulated for.</p></div>
         <V key={v} s={s} set={set} />
         <Result s={s} />
       </div>
