@@ -30,7 +30,14 @@ export function ClassEmailInvitations({ groupId, groupName, webLink }: { groupId
         }
     }, [base]);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        let active = true;
+        apiFetch(base)
+            .then(res => (res.ok ? res.json() : null))
+            .then(data => { if (active && data) setInvitations(data); })
+            .catch(() => undefined);
+        return () => { active = false; };
+    }, [base]);
 
     const run = async (action: () => Promise<Response>, onOk?: () => void) => {
         setBusy(true);
