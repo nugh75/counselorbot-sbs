@@ -1137,6 +1137,22 @@ server accetta solo un taccuino del docente stesso e non archiviato, riverifican
 ruolo a ogni turno: un taccuino archiviato o eliminato non viene sostituito da dati
 reali, il contesto resta senza taccuino. Uno studente non può usare taccuini di prova.
 
+**Aggiungere uno studente per email (#836, novembre 2026).** Nella panoramica
+della classe, sotto «Invito studenti», il docente scrive l’email di uno studente
+e preme «Aggiungi». L’invito resta «in attesa» nell’elenco sotto il campo, dove
+il docente può inviarlo, inviarlo di nuovo o annullarlo. Counselorbot non spedisce
+email: «Invia» apre il programma di posta del docente con il link della classe
+già scritto. Lo studente apre il link, accede o si registra su ai4auth con quella
+email e sceglie da solo la password; il docente non imposta né vede mai una
+password. Quando lo studente apre il link con quell’email entra nella classe
+come «aggiunto dal docente» e l’invito sparisce dall’elenco. Il proprietario
+della classe e gli account dimostrativi non vengono mai iscritti. Limiti: ai4auth
+non offre un invito né la creazione di un utente senza password, e la
+registrazione con password non verifica l’email; per questo l’invito si accetta
+solo aprendo il link della classe (serve il codice), non al semplice accesso. Il
+link della classe resta valido anche per chi non è invitato, come prima. Nell’app desktop (fornitore locale) gli
+studenti non hanno email: resta l’abbinamento e la sezione non compare.
+
 **Dati di prova fuori dai dati reali (#835, novembre 2026).** Gli studenti di prova,
 gli account dimostrativi dell’anteprima admin (`studente.demo`, `docente.demo` e gli
 altri) e l’account del docente proprietario non contano come studenti della classe:
