@@ -49,7 +49,7 @@ export function ClassPracticeStudents({ groupId }: { groupId: number }) {
     }
 
     return (
-        <Card as="section" aria-labelledby="class-practice-students-heading" className="space-y-3">
+        <Card as="section" aria-labelledby="class-practice-students-heading" className="space-y-3 border-role-test-line bg-role-test-soft [--ink-muted:var(--role-test-muted)]">
             <h2 id="class-practice-students-heading" className="text-lg font-semibold text-ink">{l('classPracticeStudents')}</h2>
             <p className="text-sm text-ink-muted">{l('classPracticeStudentsHint')}</p>
             {content}

@@ -26,8 +26,7 @@ import { ClassOverviewTab } from './ClassOverviewTab';
 import { ClassCouncilTab } from './ClassCouncilTab';
 import { OrientationTab } from './OrientationTab';
 import { ClassNoticingTab } from './ClassNoticingTab';
-import { ClassPracticeStudents } from './ClassPracticeStudents';
-import { PlanStudentsPanel } from '@/components/admin/PlanStudentsPanel';
+import { ClassStudentsTab } from './ClassStudentsTab';
 import { useTeacherAccessState } from './useTeacherAccessState';
 import { useTeacherResource } from './useTeacherResource';
 import { parseClassGroups } from './class-group-types';
@@ -458,8 +457,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
         </div>
         <div id="class-panel-students" role="tabpanel" aria-labelledby="class-tab-students" hidden={tab !== 'students'} tabIndex={0} className="space-y-6">
             {tab === 'students' && <>
-                <ClassPracticeStudents groupId={groupId} />
-                <PlanStudentsPanel base={`/api/admin/groups/${groupId}`} withNotes />
+                <ClassStudentsTab groupId={groupId} groupName={group.name} groupCode={group.code} />
             </>}
         </div>
         <div id="class-panel-noticing" role="tabpanel" aria-labelledby="class-tab-noticing" hidden={tab !== 'noticing'} tabIndex={0}>
