@@ -1,7 +1,7 @@
 # Handoff — feature/add-student-by-email-836 (#836)
 
 ## Stato
-In corso: implementazione fatta, verifiche in esecuzione.
+Completo: test verdi, commit, PR aperta (vedi sotto).
 
 ## Fatto
 - Tabella `group_invitations` (email minuscola unica per classe, `sent_at`, `accepted_at`); `create_all`, nessuna migrazione.
@@ -17,12 +17,12 @@ In corso: implementazione fatta, verifiche in esecuzione.
 - Desktop (fornitore locale): studenti senza email, resta l’abbinamento; sezione nascosta.
 
 ## Verifiche
-- `backend/tests/test_group_invitations.py` + `test_test_data_exclusion.py` (Postgres di test isolato).
+- `backend/tests/test_group_invitations.py` + `test_test_data_exclusion.py`: 14/14 (Postgres di test isolato, poi rimosso).
 - `frontend/src/lib/class-invitations.test.ts` 2/2; class-settings/groups-directory/class-council 17/17; `tsc` pulito (salvo PNG dei guide, solo per assenza di `next-env.d.ts` nel worktree).
 - `make guidance-check` ok.
 
 ## Prossimi passi
-Commit, push, PR verso main.
+Merge della PR da parte dell’utente; deploy con rebuild --no-deps di backend e frontend.
 
 ## Blocchi e rischi
 - Il link della classe resta aperto a chiunque abbia il codice, come prima.
