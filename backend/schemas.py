@@ -1703,6 +1703,11 @@ class GroupJoinRequest(BaseModel):
     code: str
 
 
+class GroupInvitationCreate(BaseModel):
+    """Email of the student the teacher invites to the class (#836)."""
+    email: str
+
+
 class ClassForumOptions(BaseModel):
     """Both forum options are sent together (F3, #104)."""
     model_config = {"extra": "forbid"}

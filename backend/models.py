@@ -1487,6 +1487,27 @@ class GroupMembership(Base):
     created_at = Column(UTCDateTime, server_default=func.now())
 
 
+class GroupInvitation(Base):
+    """Teacher invitation of one email to a class (#836).
+
+    Pending until a signed-in user with that email (ai4auth Remote-Email) opens
+    the class link; then a GroupMembership(joined_via="teacher") is
+    created. Cancel deletes the row. No password is ever stored here.
+    """
+
+    __tablename__ = "group_invitations"
+    __table_args__ = (UniqueConstraint("group_id", "email", name="uq_group_invitation_email"),)
+
+    id = Column(Integer, primary_key=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), index=True, nullable=False)
+    email = Column(String, index=True, nullable=False)  # lower-case
+    invited_by = Column(String, nullable=False)
+    created_at = Column(UTCDateTime, server_default=func.now())
+    sent_at = Column(UTCDateTime, nullable=True)  # last time the teacher (re)sent the link
+    accepted_at = Column(UTCDateTime, nullable=True)
+    accepted_username = Column(String, nullable=True)
+
+
 class ClassPairingCode(Base):
     """Class pairing key of the desktop teacher app (ADR-0002 §4.1); only the key's SHA-256."""
 
