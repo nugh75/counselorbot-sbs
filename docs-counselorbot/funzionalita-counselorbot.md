@@ -1167,6 +1167,19 @@ punteggi (SAVICKAS, percorsi evento, Obiettivo, IDEA) non crea più un risultato
 vuoto sull’account del docente. Le righe già esistenti restano nel database e sono
 escluse in lettura.
 
+**Studente di prova negli strumenti senza punteggi (#837, novembre 2026).** Prima di
+una chat guidata senza punteggi (SAVICKAS, percorsi evento, Obiettivo, IDEA) il docente
+vede la stessa schermata di scelta dei questionari con punteggi: in alto il selettore
+**Studente simulato** con i suoi taccuini di prova e la voce **Nuovo studente di
+prova…**, che chiede solo il nome e lo crea subito (il profilo si completa poi nella
+Palestra); sotto due schede, **Inizia come «nome»** (celestino, badge «Prova») e
+**Inizia con i miei dati** (crema), poi **Continua**. Con lo studente di prova la chat
+usa il suo taccuino come profilo, che per questi strumenti parte vuoto, e la
+conversazione si ritrova sotto quel taccuino, non sull’account del docente; con i
+propri dati la chat parte come prima, anche se nel browser era rimasto un taccuino di
+prova. Gli studenti vedono il percorso di sempre, senza la schermata; la ripresa di una
+sessione già avviata non la ripropone.
+
 Sotto ogni taccuino di prova, **Profili nei questionari** permette di creare,
 generare, modificare ed eliminare profili fittizi QSA, QSAr, ZTPI, QPCS, QPCC e
 QAP. Il pulsante **Salva**, con icona di salvataggio, persiste i punteggi sia

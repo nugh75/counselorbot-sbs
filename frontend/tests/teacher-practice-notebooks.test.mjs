@@ -507,6 +507,68 @@ test('avvio in prova con punteggi nuovi: vanno nel repertorio, non tra le compil
     await page.close();
 });
 
+// Strumenti senza punteggi (#837): stessa schermata del metodo, con lo studente di prova.
+async function openUnscoredChat(page, message) {
+    await page.getByRole('button', { name: 'Chat Guidata', exact: true }).click();
+    const start = page.getByRole('button', { name: 'Inizia', exact: true });
+    await Promise.race([start.waitFor(), page.locator('#guided-composer').waitFor()]);
+    if (await start.isVisible()) await start.click();
+    await page.locator('#guided-composer').fill(message);
+    await page.locator('#guided-composer').press('Enter');
+    // SAVICKAS avvolge la risposta dello studente nelle istruzioni del passo.
+    await page.getByRole('log').getByText(message).last().waitFor();
+}
+
+test('strumento senza punteggi: il docente crea uno studente di prova e la chat gira sul suo taccuino', async () => {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const { errors, requests } = await prepare(page, { initStorage: { counselorbot_selected_counselor: '1' } });
+    await page.goto(`${origin}/?start=OBIETTIVO_DOCENZA`, { waitUntil: 'domcontentloaded' });
+    const student = page.locator('[data-practice-student]');
+    await student.getByRole('combobox').selectOption('new');
+    await student.getByRole('textbox', { name: 'Nome dello studente di prova' }).fill('Marta, quarta');
+    await student.getByRole('button', { name: 'Crea' }).click();
+    await page.getByRole('button', { name: /Inizia come «Marta, quarta»/ }).waitFor();
+    const created = requests.find(r => r.method === 'POST' && r.path === '/api/teacher/practice-notebooks');
+    assert.equal(created.body.title, 'Marta, quarta');
+    assert.equal(await student.getByRole('combobox').inputValue(), '2');
+    assert.equal(await page.evaluate(() => localStorage.getItem('cb-notebook-context')), 'practice');
+    assert.equal(await page.evaluate(() => localStorage.getItem('cb-practice-notebook-id')), '2');
+    assert.equal(await page.locator('[data-role-badge="test"]').count(), 1);
+    await page.getByRole('button', { name: 'Continua', exact: true }).click();
+    await openUnscoredChat(page, 'Provo come Marta');
+    const turn = requests.filter(r => r.path === '/api/chat/stream').at(-1).body;
+    assert.equal(turn.questionnaire_type, 'OBIETTIVO_DOCENZA');
+    assert.equal(turn.notebook_context, 'practice');
+    assert.equal(turn.practice_notebook_id, 2);
+    // Nulla sull'account del docente.
+    assert.equal(requests.filter(r => r.method === 'POST' && r.path === '/api/questionnaire-result').length, 0);
+    assert.deepEqual(errors, []);
+    await page.close();
+});
+
+test('strumento senza punteggi: «Nessuno» avvia la chat sul proprio account anche con un taccuino ricordato', async () => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1050 } });
+    const { errors, requests } = await prepare(page, { initStorage: {
+        counselorbot_selected_counselor: '1', 'cb-notebook-context': 'practice', 'cb-practice-notebook-id': '1',
+    } });
+    await page.goto(`${origin}/?start=SAVICKAS`, { waitUntil: 'domcontentloaded' });
+    const student = page.locator('[data-practice-student]');
+    await page.getByRole('button', { name: /Inizia come «Giulia, 3ª liceo»/ }).waitFor();
+    assert.equal(await student.getByRole('combobox').inputValue(), '1');
+    await student.getByRole('combobox').selectOption('');
+    assert.equal(await page.getByRole('button', { name: /Inizia come/ }).count(), 0);
+    assert.equal(await page.getByRole('button', { name: /Inizia con i miei dati/ }).getAttribute('aria-pressed'), 'true');
+    await page.getByRole('button', { name: 'Continua', exact: true }).click();
+    await openUnscoredChat(page, 'Provo con i miei dati');
+    const turn = requests.filter(r => r.path === '/api/chat/stream').at(-1).body;
+    assert.equal(turn.questionnaire_type, 'SAVICKAS');
+    assert.notEqual(turn.notebook_context, 'practice');
+    assert.equal(turn.practice_notebook_id, undefined);
+    assert.equal(requests.filter(r => r.method === 'POST' && r.path === '/api/questionnaire-result').length, 1);
+    assert.deepEqual(errors, []);
+    await page.close();
+});
+
 const qapProfile = { id: 91, notebook_id: 1, questionnaire_type: 'QAP', scores: { AD1: 8, AD2: 3, AD3: 6, AD4: 4 }, session_id: 'profile-91', source: 'generated', created_at: '2026-10-13T08:00:00Z' };
 
 test('dal profilo: nuova chat guidata, turni e ripresa usano il taccuino e i punteggi corretti', async () => {
