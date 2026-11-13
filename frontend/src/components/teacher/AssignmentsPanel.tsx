@@ -141,7 +141,7 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
         {!loading && !failed && !visible.length && <p className="text-sm text-ink-muted">{rows.length > 0 && (groupFilter || kindFilter || intentFilter || statusFilter) ? w('filterEmpty') : l(teacher ? 'emptySent' : 'emptyReceived')}</p>}
         {!failed && visible.map(row => {
             const open = teacher || openId === row.id;
-            return <Card as="article" key={row.id} id={`assignment-${row.id}`} className="scroll-mt-24 space-y-4 break-words p-4 sm:p-6">
+            return <Card as="article" variant="flat" key={row.id} id={`assignment-${row.id}`} className="scroll-mt-24 space-y-4 break-words">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <p className="text-xs font-semibold text-ink-muted">{l(row.source_kind)} · {row.group_name} · {new Date(row.created_at).toLocaleDateString(lang)}</p>
                     {!teacher && <Button variant="secondary" type="button" disabled={draft.busy} aria-expanded={open} onClick={() => toggle(row.id)}>{open ? w('closeDetail') : w('openDetail')}</Button>}
