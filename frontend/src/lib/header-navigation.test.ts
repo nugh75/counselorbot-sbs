@@ -71,12 +71,12 @@ test('links keep their order, destinations and groups', () => {
 });
 
 const PREDICATES: [string, ProfileKey, Record<string, unknown>][] = [
-    ['guest', 'A', { links: ['instruments', 'guide'], classView: false, account: null, services: null }],
-    ['student without classes', 'S', { links: ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile'], classView: false, services: null }],
-    ['student whose class turns the Assistant off', 'S1', { links: ['instruments', 'orientation', 'guide', 'presentation', 'profile'], classView: true }],
-    ['student whose classes turn the Compass off', 'S2', { links: ['instruments', 'assistant', 'guide', 'presentation', 'profile'], classView: true }],
-    ['student in the full view', 'Sall', { links: ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile'], classView: true }],
-    ['teacher', 'D', { links: ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile', 'teacher-panel'], classView: false, services: null }],
+    ['guest', 'A', { links: ['instruments', 'guide'], account: null, services: null }],
+    ['student without classes', 'S', { links: ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile'], services: null }],
+    ['student whose class turns the Assistant off', 'S1', { links: ['instruments', 'orientation', 'guide', 'presentation', 'profile'] }],
+    ['student whose classes turn the Compass off', 'S2', { links: ['instruments', 'assistant', 'guide', 'presentation', 'profile'] }],
+    ['student in the full view', 'Sall', { links: ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile'] }],
+    ['teacher', 'D', { links: ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile', 'teacher-panel'], services: null }],
     ['researcher', 'R', { links: ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile', 'teacher-panel', 'admin'], services: 'portal' }],
     ['admin', 'M', { links: ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile', 'teacher-panel', 'admin'], services: 'manager' }],
 ];
@@ -84,7 +84,7 @@ const PREDICATES: [string, ProfileKey, Record<string, unknown>][] = [
 for (const [name, key, expected] of PREDICATES) {
     test(`navigation predicates for the ${name}`, () => {
         const navigation = nav(key);
-        const actual: Record<string, unknown> = { links: keys(navigation), classView: navigation.classView, account: navigation.account, services: navigation.services };
+        const actual: Record<string, unknown> = { links: keys(navigation), account: navigation.account, services: navigation.services };
         for (const field of Object.keys(expected)) assert.deepEqual(actual[field], expected[field], field);
     });
 }
@@ -125,7 +125,6 @@ test('a failed identity read is a guest, a failed access read filters nothing', 
     assert.equal(guest.authenticated, false);
     const unfiltered = nav('S1', { access: null });
     assert.deepEqual(keys(unfiltered), ['instruments', 'orientation', 'assistant', 'guide', 'presentation', 'profile']);
-    assert.equal(unfiltered.classView, false);
 });
 
 // getIdentity() applies the role preview: is_admin false, the previewed groups.

@@ -62,19 +62,19 @@ export const PROFILES = {
     S1: {
         identity: person('studente.classe', 'Studente Classe', ['studenti']),
         access: restricted(ONE_CLASS, [...STUDENT_TOOLS.filter(key => key !== 'pqbl' && key !== 'SAVICKAS'), 'bussola']),
-        expect: { instruments: true, bussola: true, assistant: false, student: true, teacher: false, admin: false, services: null, view: ['Tutti gli strumenti', 'Classe Terza B'] },
+        expect: { instruments: true, bussola: true, assistant: false, student: true, teacher: false, admin: false, services: null, view: ['Senza classe', 'Classe Terza B'] },
     },
     // Union of two classes that turns the Compass off.
     S2: {
         identity: person('studente.classi', 'Studente Due Classi', ['studenti']),
         access: restricted(TWO_CLASSES, [...STUDENT_TOOLS, 'assistant']),
-        expect: { instruments: true, bussola: false, assistant: true, student: true, teacher: false, admin: false, services: null, view: ['Tutti gli strumenti', 'Le mie classi', 'Classe Terza B', 'Classe Laboratorio'] },
+        expect: { instruments: true, bussola: false, assistant: true, student: true, teacher: false, admin: false, services: null, view: ['Senza classe', 'Le mie classi', 'Classe Terza B', 'Classe Laboratorio'] },
     },
     // Same student in the full view: no class filter, the selector stays.
     Sall: {
         identity: person('studente.tutto', 'Studente Vista Completa', ['studenti']),
         access: unrestricted(TWO_CLASSES, 'all'),
-        expect: { instruments: true, bussola: true, assistant: true, student: true, teacher: false, admin: false, services: null, view: ['Tutti gli strumenti', 'Le mie classi', 'Classe Terza B', 'Classe Laboratorio'] },
+        expect: { instruments: true, bussola: true, assistant: true, student: true, teacher: false, admin: false, services: null, view: ['Senza classe', 'Le mie classi', 'Classe Terza B', 'Classe Laboratorio'] },
     },
     D: {
         identity: person('docente.sintetico', 'Docente Sintetico', ['docenti']),
@@ -98,7 +98,8 @@ export const LABELS = {
     home: 'Torna alla home',
     menu: 'Menu',
     counselor: 'Scegli il counselor',
-    view: 'Vista attiva',
+    // The class dropdown lives at the top of /profilo, never in the navbar (#851).
+    view: 'Scegli la tua classe',
     // Same label in the bar and in the «Menu» panel (P5).
     instruments: 'Attività e percorsi',
     bussola: 'Bussola',
@@ -173,8 +174,7 @@ function resumeBlock({ rows = [], error = false }) {
 }
 
 // Ordered accessible names of the visible navbar controls. Below 1024px: `bar`
-// outside the «Menu» panel, `menu` inside it once opened (P5: class view, then
-// the titled groups Area → Supporto → Conversazione → Account/Preferenze, the
+// outside the «Menu» panel, `menu` inside it once opened (P5: the titled groups Area → Supporto → Conversazione → Account/Preferenze, the
 // resume rows only once their sub-panel is open with `resumeOpen`). From 1024px
 // (P4) there is no «Menu»: `areas` lists the «Area» selector panel (null when a
 // single area is a plain link) and `account` the account panel («Preferenze»
@@ -205,7 +205,6 @@ export function expectedNavbar(profileKey, width, { resume = { rows: [], error: 
         ...(expect.teacher ? [LABELS.teacher] : []),
         ...(expect.admin ? [LABELS.admin] : []),
     ];
-    const view = auth && expect.view.length > 0 ? [LABELS.view] : [];
     // Account panel (P4), also the last group of the «Menu» panel (P5).
     const accountItems = [
         ...(expect.services ? [LABELS.services] : []),
@@ -216,7 +215,7 @@ export function expectedNavbar(profileKey, width, { resume = { rows: [], error: 
 
     if (!compact) {
         const areaEntry = areaItems.length > 1 ? [area ?? LABELS.area] : areaItems;
-        const bar = [LABELS.home, ...areaEntry, ...tools, LABELS.guide, ...view];
+        const bar = [LABELS.home, ...areaEntry, ...tools, LABELS.guide];
         if (auth) bar.push(LABELS.counselor);
         if (resumeVisible) bar.push(LABELS.resume);
         bar.push(account ? LABELS.account(account) : LABELS.preferences);
@@ -224,7 +223,7 @@ export function expectedNavbar(profileKey, width, { resume = { rows: [], error: 
         return { bar, menu: null, areas: areaItems.length > 1 ? areaItems : null, account: accountItems };
     }
 
-    const menu = [...view, ...areaItems, ...tools, LABELS.guide];
+    const menu = [...areaItems, ...tools, LABELS.guide];
     if (auth) menu.push(LABELS.counselor);
     if (resumeVisible) menu.push(LABELS.resume, ...(resumeOpen ? resumeBlock(resume) : []));
     menu.push(...accountItems);

@@ -13,7 +13,6 @@ import type { Identity } from './auth';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant } from './roles.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { classViewOptions } from './class-view.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { isToolAllowed, type UserAccess } from './user-access.ts';
 
@@ -49,8 +48,6 @@ export interface HeaderNavigation {
     loading: boolean;
     authenticated: boolean;
     links: HeaderLink[];
-    // Student with classes: the active view selector.
-    classView: boolean;
     // Name on the account menu trigger and in the «Menu» panel: an identifier,
     // never a second door to /profilo (the «Area studente» entry is the one).
     // `detail` is the email or username shown under the name when it differs.
@@ -98,7 +95,7 @@ export const HEADER_LINKS: readonly (HeaderLink & { visible: Visible })[] = [
 ];
 
 export function headerNavigation(input: HeaderNavigationInput): HeaderNavigation {
-    const { identity, access } = input;
+    const { identity } = input;
     const isAuthenticated = Boolean(identity?.authenticated);
     const label = identity?.name || identity?.email || identity?.username;
     const detail = [identity?.email, identity?.username].find((value) => value && value !== label) ?? null;
@@ -106,7 +103,6 @@ export function headerNavigation(input: HeaderNavigationInput): HeaderNavigation
         loading: identity === undefined,
         authenticated: isAuthenticated,
         links: identity === undefined ? [] : HEADER_LINKS.filter((link) => link.visible(input)),
-        classView: isAuthenticated && classViewOptions(access).length > 0,
         account: label ? {
             label,
             detail,
