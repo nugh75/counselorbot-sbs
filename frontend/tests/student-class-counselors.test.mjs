@@ -109,7 +109,7 @@ test('A student whose account counselor is disallowed meets the selector with al
         prefs: { counselor_id: 2, counselor_ready: false, notebook_ready: true, setup_completed: true },
     });
     try {
-        await f.page.goto(`${origin}/?view=questionnaires`, { waitUntil: 'networkidle' });
+        await f.page.goto(`${origin}/?start=SAVICKAS`, { waitUntil: 'networkidle' });
         await f.page.waitForURL(/\/counselor\?next=/);
         await f.page.getByText('Clio').first().waitFor();
         assert.equal(await f.page.getByText('Giulio').count(), 0);

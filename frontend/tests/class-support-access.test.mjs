@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
-import { classSettingsText } from '../src/lib/i18n-class-settings.js';
+import { classSettingsText } from '../src/lib/i18n-class-settings.ts';
 
 const origin = new URL(process.env.CLASS_SUPPORT_BASE_URL || 'http://127.0.0.1:3172').origin;
 let browser;
@@ -35,8 +35,8 @@ for (const width of [390, 1440]) {
     test(`Disabled Compass and Assistant disappear from header and menu at ${width}px`, async () => {
         const f = await fixture({ width });
         try {
-            await f.page.goto(`${origin}/?view=questionnaires`, { waitUntil: 'domcontentloaded' });
-            await f.page.locator('header').getByRole('button', { name: 'Menu', exact: true }).click();
+            await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
+            if (width < 1024) await f.page.locator('header').getByRole('button', { name: 'Menu', exact: true }).click();
             assert.equal(await f.page.locator('header a[href="/bussola"]').count(), 0);
             assert.equal(await f.page.locator('header a[href="/assistente"]').count(), 0);
             assert.ok(await f.page.locator('header a[href="/guide"]').count() > 0);
@@ -50,8 +50,7 @@ for (const keys of [['QSA', 'bussola'], ['QSA', 'assistant'], ['QSA', 'bussola',
     test(`Support toggles are independent: ${keys.join(', ')}`, async () => {
         const f = await fixture({ keys });
         try {
-            await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
-            await f.page.locator('header').getByRole('button', { name: 'Menu', exact: true }).waitFor();
+            await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
             await f.page.locator('header a[href="/guide"]').first().waitFor();
             // Access is ready when the catalog has rendered its enabled tool.
             await f.page.getByRole('heading', { name: 'Activities and paths', exact: true }).waitFor();
@@ -64,9 +63,9 @@ for (const keys of [['QSA', 'bussola'], ['QSA', 'assistant'], ['QSA', 'bussola',
 test('A student with Compass disabled reaches the catalog without an orientation redirect', async () => {
     const f = await fixture({ required: false });
     try {
-        await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
         await f.page.getByRole('heading', { name: 'Activities and paths', exact: true }).waitFor();
-        assert.equal(new URL(f.page.url()).pathname, '/');
+        assert.equal(new URL(f.page.url()).pathname, '/profilo');
         assert.equal(await f.page.locator('a[href^="/bussola"]').count(), 0);
         await f.page.goto(`${origin}/?view=intro`, { waitUntil: 'domcontentloaded' });
         await f.page.getByTestId('intro-screen').waitFor();

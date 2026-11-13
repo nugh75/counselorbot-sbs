@@ -267,15 +267,14 @@ async function createFixture({
     return { context, page, errors, doneCalls, setPaths: paths => { currentPaths = JSON.parse(JSON.stringify(paths)); } };
 }
 
-test('returning to the home refreshes a started plan chat', async () => {
+test('returning to the Student area refreshes a started plan chat', async () => {
     const step = {id: 106, path_id: 1, position: 1, step_type: 'guided_results_chat', tool_key: '',
         title: 'Analisi QPCC', state: 'not_done', start_href: '/profilo/piani-operativi/1/106/approfondimento', can_self_mark: false};
     const path = {...samplePath1, steps: [step], next_step_id: 106, done: 0, total: 1};
     const f = await createFixture({paths: [path]});
     try {
-        await f.page.goto(`${origin}/?view=home`, {waitUntil: 'domcontentloaded'});
+        await f.page.goto(`${origin}/profilo`, {waitUntil: 'domcontentloaded'});
         const card = f.page.getByTestId('class-path-hero-card');
-        await card.getByRole('button', {name: 'Inizio anno'}).click();
         await card.getByRole('link', {name: 'Inizia'}).waitFor();
         f.setPaths([{...path, steps: [{...step, attempt_state: 'in_progress'}]}]);
         await f.page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
@@ -344,7 +343,7 @@ test('completed assignment opens a blank new attempt without withdrawing the sha
     } finally { await f.context.close(); }
 });
 
-test('student home resumes questionnaire and guided chats alongside personal work', async () => {
+test('Student area resumes questionnaire and guided chats alongside personal work', async () => {
     const frozen = [
         { session_id: 'qsa-1', questionnaire_type: 'QSA', label: 'QSA — Profilo', current_phase: 'intro' },
         { session_id: 'sav-1', questionnaire_type: 'SAVICKAS', label: 'SAVICKAS — Storia', current_phase: 'intro' },
@@ -372,14 +371,17 @@ test('teacher messages and class meetings follow the active view', async () => {
     });
     try {
         await f.page.goto(`${origin}/profilo/taccuino`);
-        const selector = f.page.locator('select').first();
         const note = f.page.getByText('Messaggio della classe', { exact: false });
         await note.waitFor();
-        await selector.selectOption('all');
+        await f.page.goto(`${origin}/profilo`);
+        await f.page.getByLabel('Scegli la tua classe').selectOption('all');
+        await f.page.goto(`${origin}/profilo/taccuino`);
         await note.waitFor({ state: 'detached' });
         await f.page.goto(`${origin}/profilo/timeline`);
         assert.equal(await f.page.getByText('Incontro della classe', { exact: true }).count(), 0);
-        await f.page.locator('select').first().selectOption('classes');
+        await f.page.goto(`${origin}/profilo`);
+        await f.page.getByLabel('Scegli la tua classe').selectOption('classes');
+        await f.page.goto(`${origin}/profilo/timeline`);
         await f.page.getByText('Incontro della classe', { exact: true }).first().waitFor();
         await f.page.goto(`${origin}/profilo/taccuino`);
         await note.waitFor();
@@ -407,7 +409,7 @@ test('an administrator enrolled in a class sees the plan after selecting the cla
     } finally { await f.context.close(); }
 });
 
-test('all tools hides class content and switching back restores it without reloading', async () => {
+test('the no-class view hides class content and switching back restores it without reloading', async () => {
     const f = await createFixture({ assignments: [{ id: 1, snapshot: { title: 'Compito della classe' }, due_date: null }] });
     try {
         // Prevent image and prefetch requests from filling the browser's
@@ -429,7 +431,7 @@ test('all tools hides class content and switching back restores it without reloa
             await f.page.goto(`${origin}${path}`, { waitUntil: 'commit' });
             await f.page.getByText('Per vedere i contenuti della classe, scegli una classe nel selettore Scegli la tua classe.').waitFor();
         }
-        await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
         await f.page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).waitFor();
         assert.equal(await hero.count(), 0);
         await f.page.locator('select').first().selectOption('classes');
@@ -440,7 +442,7 @@ test('all tools hides class content and switching back restores it without reloa
     } finally { await f.context.close(); }
 });
 
-test('student home includes a locally interrupted chat when no saved copy exists', async () => {
+test('Student area includes a locally interrupted chat when no saved copy exists', async () => {
     const f = await createFixture({ paths: [], initialStorage: {
         counselorbot_resume: JSON.stringify({ instrument: 'QSA', sessionId: 'local-1', experience: 'standard', counselorId: 1 }),
     } });
@@ -454,13 +456,13 @@ test('student home includes a locally interrupted chat when no saved copy exists
     } finally { await f.context.close(); }
 });
 
-test('Home with active class path: heading first, folded plan, catalog always visible', async () => {
+test('Student area with a class plan: heading, open plan, then the instrument catalog', async () => {
     const f = await createFixture({ paths: [samplePath1], lang: 'it' });
     try {
-        await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
 
         // The page heading comes first, the plan immediately below it.
-        const heading = f.page.getByRole('heading', { name: 'Attività e percorsi', exact: true });
+        const heading = f.page.getByRole('heading', { name: 'Area studente', exact: true });
         const heroCard = f.page.locator('[data-testid="class-path-hero-card"]');
         await heroCard.waitFor({ state: 'visible' });
         const headingBox = await heading.boundingBox();
@@ -469,17 +471,10 @@ test('Home with active class path: heading first, folded plan, catalog always vi
 
         // Subtitle shows class name
         assert.ok((await heroCard.innerText()).toLowerCase().includes('3b liceo'));
-        // Title shows path title and starts folded
-        const planToggle = heroCard.getByRole('button', { name: 'Inizio anno', exact: true });
-        assert.equal(await planToggle.getAttribute('aria-expanded'), 'false');
-        assert.equal(await heroCard.getByText('Compilazione QSA').count(), 0);
-        // A folded plan still shows its progress.
+        // The only plan is open and shows the current step and its progress.
+        await heroCard.getByRole('heading', { name: 'Inizio anno', exact: true }).waitFor();
         assert.ok((await heroCard.innerText()).includes('1 di 3 completati'));
 
-        // Expanding the plan reveals the current step (step 102), with ochre styling and ▶.
-        // A done step reopens; a chat start remembers the way back to the plan.
-        await planToggle.click();
-        assert.equal(await planToggle.getAttribute('aria-expanded'), 'true');
         assert.equal(await heroCard.getByRole('link', { name: 'Riapri' }).getAttribute('href'), '/bussola');
         assert.equal(await heroCard.getByRole('link', { name: 'Inizia' }).first().getAttribute('href'), '/?start=QSA&from=plan&path_id=1&path_step_id=102');
         const currentStep = heroCard.getByText('Compilazione QSA');
@@ -489,9 +484,10 @@ test('Home with active class path: heading first, folded plan, catalog always vi
 
         // The rest of the page is never folded: no catalog toggle, catalog visible.
         assert.equal(await f.page.locator('[data-testid="toggle-catalog-btn"]').count(), 0);
-        const catalogSection = f.page.locator('#home-catalog-section');
+        const catalogSection = f.page.locator('#profile-instrument-catalog');
         await catalogSection.waitFor({ state: 'visible' });
         assert.equal(await catalogSection.getAttribute('hidden'), null);
+        assert.ok(heroBox.y < (await catalogSection.boundingBox()).y);
 
         assert.deepEqual(f.errors, []);
     } finally {
@@ -499,11 +495,10 @@ test('Home with active class path: heading first, folded plan, catalog always vi
     }
 });
 
-test('Home without active class path: hero card absent, catalog open normally', async () => {
+test('Student area without a class plan: the instrument catalog is visible', async () => {
     const f = await createFixture({ paths: [], lang: 'it' });
     try {
-        // Without active path and with learner profile, user opens /?view=home (base step)
-        await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
 
         // Hero card is NOT rendered
         const heroCard = f.page.locator('[data-testid="class-path-hero-card"]');
@@ -514,7 +509,7 @@ test('Home without active class path: hero card absent, catalog open normally', 
         assert.equal(await toggleBtn.count(), 0);
 
         // Catalog is open normally and visible
-        const catalogSection = f.page.locator('#home-catalog-section');
+        const catalogSection = f.page.locator('#profile-instrument-catalog');
         await catalogSection.waitFor({ state: 'visible' });
         assert.equal(await catalogSection.getAttribute('hidden'), null);
 
@@ -524,11 +519,11 @@ test('Home without active class path: hero card absent, catalog open normally', 
     }
 });
 
-test('Home with several paths: every plan listed and folded', async () => {
+test('Student area with several paths: the priority plan starts open', async () => {
     // samplePath1 has due date 2026-10-15; samplePath2 has due date 2026-11-10.
     const f = await createFixture({ paths: [samplePath2, samplePath1], lang: 'it' });
     try {
-        await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
 
         const list = f.page.locator('[data-testid="class-path-hero-list"]');
         const cards = list.locator('[data-testid="class-path-hero-card"]');
@@ -537,9 +532,9 @@ test('Home with several paths: every plan listed and folded', async () => {
 
         const first = list.getByRole('button', { name: 'Inizio anno', exact: true });
         const second = list.getByRole('button', { name: 'Percorso Autunno', exact: true });
-        assert.equal(await first.getAttribute('aria-expanded'), 'false');
+        assert.equal(await first.getAttribute('aria-expanded'), 'true');
         assert.equal(await second.getAttribute('aria-expanded'), 'false');
-        assert.equal(await cards.nth(0).getByText('Compilazione QSA').count(), 0);
+        await cards.nth(0).getByText('Compilazione QSA').waitFor({ state: 'visible' });
         assert.equal(await cards.nth(1).getByText('Obiettivi di studio').count(), 0);
         // A folded plan still shows its progress.
         assert.ok((await cards.nth(1).innerText()).includes('0 di 1 completati'));
@@ -548,8 +543,8 @@ test('Home with several paths: every plan listed and folded', async () => {
         assert.equal(await second.getAttribute('aria-expanded'), 'true');
         await cards.nth(1).getByText('Obiettivi di studio').waitFor({ state: 'visible' });
         await first.click();
-        assert.equal(await first.getAttribute('aria-expanded'), 'true');
-        await cards.nth(0).getByText('Compilazione QSA').waitFor({ state: 'visible' });
+        assert.equal(await first.getAttribute('aria-expanded'), 'false');
+        await cards.nth(0).getByText('Compilazione QSA').waitFor({ state: 'hidden' });
 
         const allPathsLink = list.getByRole('link', { name: /Vedi tutti i piani operativi/i });
         assert.equal(await allPathsLink.getAttribute('href'), '/profilo/piani-operativi');
@@ -565,11 +560,10 @@ test('Home with several paths: every plan listed and folded', async () => {
 test('Self-marking on hero card calls API and updates step state', async () => {
     const f = await createFixture({ paths: [samplePath1], lang: 'it' });
     try {
-        await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
 
         const heroCard = f.page.locator('[data-testid="class-path-hero-card"]');
         await heroCard.waitFor({ state: 'visible' });
-        await heroCard.getByRole('button', { name: 'Inizio anno', exact: true }).click();
 
         // Step 103 (timeline) has can_self_mark = true and state not_done
         const markDoneBtn = heroCard.getByRole('button', { name: 'Segna come completato' });
