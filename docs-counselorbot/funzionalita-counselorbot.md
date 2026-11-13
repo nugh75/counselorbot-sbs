@@ -1745,6 +1745,15 @@ studente (`/profilo`) e dei gruppi dell’Area docenti (`/docente`) usano lo ste
 (`EntrySection` e `EntryLink`): titolo con filetto, due colonne, illustrazione, nome,
 descrizione, freccia. Nessuna modifica visibile per l’utente.
 
+**Area docenti come elenco piatto (#865, novembre 2026).** In `/docente` Progettazione
+didattica, Le mie classi, Palestra, Prova gli strumenti e Risorse sono voci dello stesso
+elenco, senza riquadri colorati né schede: Progettazione didattica è una voce
+(Obiettivi per la classe), «Le mie classi» una sola voce verso `/docente/classi`,
+«Prova gli strumenti» una voce per strumento con la sua illustrazione. Ogni strumento
+si avvia sempre da `/?start=<id>` (scelta tra studente di prova e dati propri). I colori
+di ruolo restano solo sui badge. L’elenco delle classi attive non è più nella home:
+si trova in «Le mie classi».
+
 **Colori di ruolo (#834).** Tre tinte morbide distinguono le aree, solo su card e
 badge (pagina e header restano neutri, sia in tema chiaro sia scuro): petrol per lo
 studente (invariato), crema per l’Area docenti, celestino per gli studenti di prova.
