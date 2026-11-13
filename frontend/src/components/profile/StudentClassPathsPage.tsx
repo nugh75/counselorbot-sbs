@@ -74,7 +74,7 @@ export function StudentClassPathsPage() {
 
     if (paths.length === 0) {
         return (
-            <Card className="py-12 text-center">
+            <Card variant="flat" className="py-12 text-center">
                 <p className="text-sm text-ink-muted">{l('studentPathsEmpty')}</p>
             </Card>
         );

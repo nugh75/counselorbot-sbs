@@ -36,6 +36,6 @@ export function TeacherMeetingsPage() {
                 {active.map(row => <option key={row.id} value={row.id}>{row.institution_name ? `${row.name} · ${row.institution_name}` : row.name}</option>)}
             </select>
         </label>
-        <Card><ClassMeetingsManager key={group.id} lang={lang} groupId={group.id} /></Card>
+        <Card variant="flat"><ClassMeetingsManager key={group.id} lang={lang} groupId={group.id} /></Card>
     </div>;
 }

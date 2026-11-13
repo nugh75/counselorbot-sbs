@@ -130,11 +130,11 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
                 </p>
             )}
             {!loading && !loadError && classes.length === 0 && (
-                <Card><p className="text-sm text-ink-muted">{l(groupId === undefined ? 'noDevices' : 'noClassDevices')}</p></Card>
+                <Card variant="flat"><p className="text-sm text-ink-muted">{l(groupId === undefined ? 'noDevices' : 'noClassDevices')}</p></Card>
             )}
 
             {classes.map(group => (
-                <Card key={group.group_id}>
+                <Card key={group.group_id} variant="flat">
                     <section aria-labelledby={`device-class-${group.group_id}`} className="space-y-4">
                         <h2 id={`device-class-${group.group_id}`} className="border-b border-line pb-4 text-lg font-semibold text-ink">
                             {group.group_name}

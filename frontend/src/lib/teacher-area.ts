@@ -1,6 +1,6 @@
 // Struttura dell'Area docenti, speculare a personal-area.ts: slugs raggruppati
 // per scopo, immagini d'ingresso e testi in i18n-teacher-area.ts.
-export const teacherAreaSlugs = ['istituti', 'classi', 'compilazioni', 'piani-operativi', 'incontri', 'assegnazioni', 'catalogo-obiettivi', 'strategie', 'materiali', 'risorse', 'orientamento', 'somministrazioni', 'taccuino', 'taccuini-prova'] as const;
+export const teacherAreaSlugs = ['istituti', 'classi', 'compilazioni', 'piani-operativi', 'incontri', 'assegnazioni', 'catalogo-obiettivi', 'strategie', 'materiali', 'risorse', 'orientamento', 'somministrazioni', 'dispositivi', 'taccuino', 'taccuini-prova'] as const;
 export type TeacherAreaSlug = (typeof teacherAreaSlugs)[number];
 
 export const teacherAreaGroups = [
@@ -24,4 +24,5 @@ export const teacherAreaImages: Record<TeacherAreaSlug, string> = {
     risorse: '/images/cards/library_hall.png',
     orientamento: '/images/platform/bussola.png',
     somministrazioni: '/images/platform/eventi.png',
+    dispositivi: '/images/platform/classi.png',
 };
