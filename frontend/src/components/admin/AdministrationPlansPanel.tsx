@@ -11,6 +11,7 @@ import { credentialText, type CredentialTextKey } from '@/lib/i18n-institution-c
 import { PlanStudentsPanel } from './PlanStudentsPanel';
 import { Button } from '@/components/ui/Button';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Card } from '@/components/ui/Card';
 
 type LocaleCode = 'it' | 'en' | 'es' | 'sv';
 
@@ -517,7 +518,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
     const inputCls = 'mt-1 h-9 w-full rounded-control border border-line-strong bg-surface px-4 text-sm text-ink outline-none focus:border-brand';
 
     const renderForm = () => (
-        <section className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+        <Card as="section" variant="flat">
             <div className="space-y-4">
                 {replacingPlan && <p role="status" className="rounded-control border border-warning-line bg-warning-soft p-4 text-sm text-warning-ink">{t('admin.ap.replaceHint', {title: replacingPlan.title})}</p>}
                 <label className="block text-xs font-semibold text-ink-muted">
@@ -529,7 +530,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                     />
                 </label>
 
-                <section className="rounded-control border border-line bg-surface p-4">
+                <section className="border-t border-line pt-4">
                     <h3 className="text-xs font-semibold text-ink-muted">{t('admin.ap.section.details')}</h3>
                     <div className="mt-4 grid gap-4 md:grid-cols-3">
                         <label className="text-xs font-semibold text-ink-muted">
@@ -570,7 +571,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                     </div>
                 </section>
 
-                <section className="rounded-control border border-line bg-surface p-4">
+                <section className="border-t border-line pt-4">
                     <h3 className="text-xs font-semibold text-ink-muted">{t('admin.ap.section.schedule')}</h3>
                     <div className="mt-4 grid gap-4 md:grid-cols-2">
                         <label className="text-xs font-semibold text-ink-muted">
@@ -584,7 +585,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                     </div>
                 </section>
 
-                <section className="rounded-control border border-line bg-surface p-4">
+                <section className="border-t border-line pt-4">
                     <h3 className="text-xs font-semibold text-ink-muted">{c('planInstitute')}</h3>
                     <p className="text-xs text-ink-muted mt-2">{c('planInstituteHelp')}</p>
                     {editingPlan?.institution_link_state === 'needs_reconciliation' && (
@@ -618,7 +619,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                         </label>
                     )}
                 </section>
-                <section className="rounded-control border border-line bg-surface p-4">
+                <section className="border-t border-line pt-4">
                     <h3 className="text-xs font-semibold text-ink-muted">{t('admin.ap.section.researchers')}</h3>
                     <div className="mt-4 grid gap-4 lg:grid-cols-2">
                         <section>
@@ -655,7 +656,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                     </div>
                 </section>
 
-                <section className="rounded-control border border-line bg-surface p-4">
+                <section className="border-t border-line pt-4">
                     <h3 className="text-xs font-semibold text-ink-muted">{t('admin.ap.section.notes')}</h3>
                     <label className="mt-4 block text-xs font-semibold text-ink-muted">
                         {t('admin.ap.notes')}
@@ -686,12 +687,12 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                     {t('admin.ap.cancel')}
                 </Button>
             </div>
-        </section>
+        </Card>
     );
 
     return (
         <div className="space-y-4">
-            <section className="rounded-lg border border-line bg-surface p-4">
+            <section>
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <h2 className="text-lg font-semibold text-ink">{t('admin.ap.title')}</h2>
@@ -717,15 +718,15 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                     </div>
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-control border border-line bg-surface-sunken p-4">
+                    <div>
                         <p className="text-xs font-semibold text-ink-muted">{t('admin.ap.stats.total')}</p>
                         <p className="mt-1 text-2xl font-semibold text-ink">{stats.total}</p>
                     </div>
-                    <div className="rounded-control border border-line bg-surface-sunken p-4">
+                    <div>
                         <p className="text-xs font-semibold text-ink-muted">{t('admin.ap.stats.active')}</p>
                         <p className="mt-1 text-2xl font-semibold text-success">{stats.active}</p>
                     </div>
-                    <div className="rounded-control border border-line bg-surface-sunken p-4">
+                    <div>
                         <p className="text-xs font-semibold text-ink-muted">{t('admin.ap.stats.responses')}</p>
                         <p className="mt-1 text-2xl font-semibold text-link">{stats.responses}</p>
                     </div>
@@ -749,28 +750,28 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                 </div>
             )}
 
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div>
                 {loading && (
-                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
+                    <p className="border-t border-line py-8 text-center text-ink-muted">
                         {t('admin.ap.loading')}
-                    </section>
+                    </p>
                 )}
                 {!loading && plans.length === 0 && editingId !== 'new' && (
-                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
+                    <p className="border-t border-line py-8 text-center text-ink-muted">
                         {t('admin.ap.empty')}
-                    </section>
+                    </p>
                 )}
                 {!loading && plans.length > 0 && filteredPlans.length === 0 && (
-                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
+                    <p className="border-t border-line py-8 text-center text-ink-muted">
                         {t('admin.ap.noResults')}
-                    </section>
+                    </p>
                 )}
                 {filteredPlans.map((plan) => (
                     editingId === plan.id ? (
-                        <div key={plan.id} className="xl:col-span-2">{renderForm()}</div>
+                        <div key={plan.id}>{renderForm()}</div>
                     ) : (
-                        <section key={plan.id} id={`plan-${plan.id}`} tabIndex={-1}
-                            className={`rounded-lg border bg-surface p-4 shadow-card ${focusedPlanId === plan.id ? 'border-brand-line ring-2 ring-brand-line' : 'border-line'}`}>
+                        <Card as="section" variant="flat" key={plan.id} id={`plan-${plan.id}`} tabIndex={-1}
+                            className={focusedPlanId === plan.id ? 'ring-2 ring-brand-line' : undefined}>
                             <div className="flex flex-wrap items-start justify-between gap-4">
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
@@ -815,7 +816,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                                 </div>
                             </div>
 
-                            <div className="mt-4 rounded-control border border-brand-line bg-brand-soft p-4">
+                            <div className="mt-4">
                                 <p className="text-xs font-semibold text-link">{t('admin.ap.code')}</p>
                                 <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
                                     <code className="w-full rounded-control border border-brand-line bg-surface px-4 py-2 text-lg font-semibold text-link">
@@ -859,12 +860,12 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                             </div>
 
                             {plan.notes && (
-                                <p className="mt-4 rounded-control border border-line bg-surface-sunken p-4 text-sm leading-relaxed text-ink-muted">
+                                <p className="mt-4 text-sm leading-relaxed text-ink-muted">
                                     {plan.notes}
                                 </p>
                             )}
 
-                            <div className="mt-4 rounded-control border border-line bg-surface-sunken p-4">
+                            <div className="mt-4">
                                 <div className="flex items-start gap-4">
                                     <QrThumb value={collectionUrl(plan)} />
                                     <div className="min-w-0 flex-1">
@@ -917,7 +918,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                                 </div>
                             </div>
                             {studentsOpenId === plan.id && <PlanStudentsPanel base={`/api/admin/administration-plans/${plan.id}`} />}
-                        </section>
+                        </Card>
                     )
                 ))}
             </div>
