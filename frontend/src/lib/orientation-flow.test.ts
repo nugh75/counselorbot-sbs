@@ -5,11 +5,11 @@ import test from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { orientationGateBypass, orientationToolHref, safeOrientationNext } from './tool-catalog.ts';
 
-test('Bussola links only to tools in the shared catalog', () => {
-    assert.equal(orientationToolHref('QSA'), '/?start=QSA');
-    assert.equal(orientationToolHref('IDEA'), '/?start=IDEA');
+test('Bussola opens tools with the Student area experience', () => {
+    assert.equal(orientationToolHref('QSA'), '/?start=QSA&from=student');
+    assert.equal(orientationToolHref('IDEA'), '/?start=IDEA&from=student');
     assert.equal(orientationToolHref('pqbl'), '/profilo/pqbl');
-    assert.equal(orientationToolHref('unknown'), '/?view=home');
+    assert.equal(orientationToolHref('unknown'), '/profilo');
 });
 
 test('the return destination stays inside the app and outside Bussola', () => {
@@ -33,27 +33,16 @@ test('local student pairing is not interrupted by orientation', () => {
     assert.equal(orientationGateBypass('/unisciti'), true);
 });
 
-test('the landing shows before the gate, and its only way forward is the compass', () => {
-    // Chi entra per la prima volta -- anche come ospite, che per il cancello è
-    // uno studente come gli altri -- veniva spedito alla Bussola senza aver
-    // letto che cos'è questo posto.
-    assert.equal(orientationGateBypass('/'), true);
-    assert.equal(orientationGateBypass('/', ''), true);
-    // I collegamenti che entrano dritti nel percorso restano al di qua.
-    assert.equal(orientationGateBypass('/', '?view=questionnaires'), false);
+test('role landing and the explicit introduction bypass the tool orientation gate', () => {
+    for (const search of ['', '?view=home', '?view=questionnaires', '?view=intro']) {
+        assert.equal(orientationGateBypass('/', search), true);
+    }
     assert.equal(orientationGateBypass('/', '?start=IDEA'), false);
-    // E il tasto della presentazione porta sempre alla Bussola: mai al
-    // vecchio catalogo strumenti (questionnaire-select), ora tolto.
     const source = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
-    const handler = source.slice(source.indexOf('const startFromIntro'), source.indexOf('const homeStep'));
-    assert.doesNotMatch(handler, /questionnaire-select/);
+    const handler = source.slice(source.indexOf('const startFromIntro'), source.indexOf('const returnToStudentArea'));
     assert.match(handler, /router\.push\('\/bussola'\)/);
     assert.match(source, /<IntroScreen onStart=\{startFromIntro\}/);
 });
-
-
-
-
 
 test('the Compass header carries no feature blurbs', () => {
     const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');

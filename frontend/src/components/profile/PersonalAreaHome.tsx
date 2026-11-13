@@ -24,7 +24,8 @@ import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 import { useRouter } from 'next/navigation';
 import { InstrumentCatalog } from '@/components/home/InstrumentCatalog';
-import { lastCompiledByTool } from '@/lib/catalog-status';
+import { lastCompiledByTool, takePausedChat, type PausedChat } from '@/lib/catalog-status';
+import { instrumentStartHref } from '@/lib/home-entry';
 
 function PersonalResume({ access }: { access: FullUserAccess | null }) {
     const { lang, tf, t } = useI18n();
@@ -116,6 +117,7 @@ function PersonalResume({ access }: { access: FullUserAccess | null }) {
 export function PersonalAreaHome() {
     const { lang, t } = useI18n();
     const router = useRouter();
+    const [pausedChat, setPausedChat] = useState<PausedChat | null>(null);
     const [lastCompiledAt, setLastCompiledAt] = useState<Record<string, string>>({});
     const [unreadTotal, setUnreadTotal] = useState(0);
     const [paths, setPaths] = useState<StudentClassPath[]>([]);
@@ -124,6 +126,21 @@ export function PersonalAreaHome() {
     const groups = personalAreaGroups
         .map(group => ({ id: group.id, slugs: group.slugs.filter(slug => personalSlugEnabled(access, slug)) }))
         .filter(group => group.slugs.length > 0);
+
+    useEffect(() => {
+        let active = true;
+        queueMicrotask(() => {
+            if (active) setPausedChat(takePausedChat());
+        });
+        return () => { active = false; };
+    }, []);
+
+    // The student area mounts after identity resolution, so the browser may
+    // have tried to scroll before a bookmarked section was in the document.
+    useEffect(() => {
+        const anchor = window.location.hash.slice(1);
+        document.getElementById(anchor)?.scrollIntoView();
+    }, []);
 
     const loadPaths = useCallback(async () => {
         const version = ++pathsVersion.current;
@@ -192,7 +209,9 @@ export function PersonalAreaHome() {
                 <InstrumentCatalog
                     id="profile-instrument-catalog"
                     lastCompiledAt={lastCompiledAt}
-                    onStartInstrument={q => router.push(`/?start=${encodeURIComponent(q.id)}`)}
+                    onStartInstrument={q => router.push(instrumentStartHref(q.id, true))}
+                    pausedChat={pausedChat}
+                    onDismissPausedChat={() => setPausedChat(null)}
                 />
             </section>
 

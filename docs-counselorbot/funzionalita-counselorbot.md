@@ -316,42 +316,50 @@ comandi alti almeno 44px. Testi, passi e comportamento non cambiano.
 
 ## Presentazione, attività e navigazione
 
-La presentazione (`/`) offre quattro ingressi illustrati: **Bussola**, **Analisi
+Dopo l'accesso la radice `/` porta all'area del proprio ruolo: docenti, ricercatori
+e amministratori all'**Area docente** (`/docente`), tutti gli altri all'**Area
+studente** (`/profilo`). Lo stesso vale per i vecchi indirizzi `/?view=home`,
+`/?view=questionnaires` e `/strumenti`: conservano gli altri parametri della query
+e l'eventuale ancora e scelgono l'area in base al ruolo. `/strumenti` non è più un
+reindirizzamento permanente, così il ruolo viene risolto a ogni visita. La
+**Presentazione** resta raggiungibile da «Presentazione» nel menu Area o da
+`/?view=intro`; i suoi collegamenti portano all'Area studente.
+
+La presentazione offre quattro ingressi illustrati: **Bussola**, **Analisi
 questionari**, **Percorsi guidati**, **Area studente e strumenti**. La Bussola
 consiglia da quale strumento partire e non somministra questionari né produce
-punteggi. Il collegamento
-“Vedi tutte le attività e i percorsi” apre il catalogo (`/?view=home`). Subito sotto,
+punteggi.
+Subito sotto,
 un riquadro illustrato in evidenza, **Dicci com’è andata**, apre il **Questionario di
 gradimento** (`/questionario`), tradotto nelle sei lingue; chi non ha ancora
 effettuato l’accesso lo trova sotto il pulsante «Accedi a CounselorBot». Il
 questionario non è più nella barra di navigazione né nel pannello Menu.
 L’illustrazione del riquadro è decorativa: il titolo e la descrizione accanto ne
-portano il significato, anche per gli screen reader. Nel catalogo
-viene prima la Bussola, poi le analisi dei questionari, i percorsi guidati e l’Area
+portano il significato, anche per gli screen reader. Nell'Area studente
+viene prima la Bussola, poi le analisi dei questionari, i percorsi guidati e l'Area
 personale e strumenti. QSA, QSAr, ZTPI, QPCS, QPCC e QAP restano nelle analisi
 anche con categorie storiche errate; i percorsi standard restano tra i percorsi
 guidati e gli strumenti personalizzati seguono la categoria configurata.
 Nella vista di classe, se lo studente appartiene a una classe con almeno un piano
-operativo pubblicato, la pagina «Attività e percorsi» (`/?view=home`) mostra i piani sotto il titolo,
+operativo pubblicato, l'Area studente mostra i piani sotto il titolo,
 chiusi inizialmente e apribili singolarmente. Il catalogo degli strumenti rimane
 visibile sotto i piani. **Riprendi un’attività** è in fondo, con l’immagine del puzzle;
 le attività interrotte sono raggiungibili anche dalla navigazione.
-Il vecchio catalogo strumenti separato non c’è più: i suoi elementi sono in
-**Attività e percorsi** (`/?view=home`; anche i vecchi link `/?view=questionnaires`
-portano qui). Anche il vecchio URL `/strumenti` (con o senza slash finale)
-reindirizza in modo permanente (HTTP 308) a `/?view=home`, conservando gli altri
-parametri della query e l’eventuale ancora; `view=home` prevale su un vecchio
-parametro `view`. Le schede `/strumenti/<codice>` restano ai loro indirizzi e il
-collegamento «Vai agli strumenti» dopo un invito `/gruppo?g=...` apre ancora
-`/?view=home`. Sotto la Bussola, **Consigliati per te** propone fino a tre strumenti:
-prima quelli con una chat in pausa, poi quelli indicati dall’ultima Bussola, esclusi
+I vecchi link `/?view=questionnaires` e `/?view=home` portano all'area del ruolo,
+come la radice; `view=home` prevale su un vecchio parametro `view`. Le schede
+`/strumenti/<codice>` restano ai loro indirizzi e avviano lo strumento con
+l'esperienza studente; il collegamento «Vai agli strumenti» dopo un invito
+`/gruppo?g=...` apre il catalogo dell'Area studente. Chi non ha effettuato
+l'accesso vede la scheda di accesso e, dopo l'accesso, torna alla pagina richiesta.
+Sotto la Bussola, **Consigliati per te** propone fino a tre strumenti:
+prima quelli con una chat in pausa, poi quelli indicati dall'ultima Bussola, esclusi
 gli strumenti già compilati; senza questi segnali la sezione non compare. Ogni
 scheda mostra, quando servono, il segno «In pausa dal…» con Riprendi, il badge
 Sperimentale della compilazione in app e, in italiano, **Compila sul sito** con le
 credenziali; in fondo restano gli strumenti **In preparazione** e, nelle lingue senza
 questionari, l’avviso con il passaggio all’inglese.
 
-La presentazione, «Attività e percorsi», le pagine pubbliche (`/guide`,
+La presentazione, l'Area studente, le pagine pubbliche (`/guide`,
 `/guide/dati-riservatezza`, `/privacy`, `/unisciti`, `/login`, `/accesso-locale`,
 `/telegram-link`) e la barra di navigazione con i suoi menu usano i token
 semantici e le primitive `Card`, `Button` e `PageHeader` (audit UI 2026-10-30,
@@ -1414,7 +1422,9 @@ rende nuovamente disponibili le associazioni. Queste funzioni sono state distrib
 L’Area studente (`/profilo`) mostra **Attività e percorsi** dopo gli eventuali
 piani di classe. Qui trovi Bussola, consigli, gruppi di strumenti con «Compila
 sul sito» e Dettagli, e gli strumenti in preparazione. Il catalogo segue la vista
-di classe e ogni scheda avvia lo strumento selezionato con i dati personali.
+di classe e ogni scheda avvia lo strumento con l’esperienza studente. Dopo il
+congelamento di una chat guidata l’avviso della chat in pausa compare qui, una
+volta sola.
 
 Segue **Da riprendere** con chat guidate, analisi sospese e il progresso di
 **Studiare da un PDF** del browser corrente. L’eliminazione di un punto di
