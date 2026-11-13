@@ -1733,6 +1733,11 @@ guidati e **Obiettivi per la classe**). Ogni voce apre lo strumento con il colle
 studente di prova (celestino) oppure i propri dati (crema). Il blocco è visibile a docenti,
 ricercatori e amministratori.
 
+**Elenco comune delle pagine di area (#862, novembre 2026).** Le voci illustrate dell’Area
+studente (`/profilo`) e dei gruppi dell’Area docenti (`/docente`) usano lo stesso componente
+(`EntrySection` e `EntryLink`): titolo con filetto, due colonne, illustrazione, nome,
+descrizione, freccia. Nessuna modifica visibile per l’utente.
+
 **Colori di ruolo (#834).** Tre tinte morbide distinguono le aree, solo su card e
 badge (pagina e header restano neutri, sia in tema chiaro sia scuro): petrol per lo
 studente (invariato), crema per l’Area docenti, celestino per gli studenti di prova.
