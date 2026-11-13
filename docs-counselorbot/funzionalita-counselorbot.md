@@ -346,7 +346,9 @@ chiusi inizialmente e apribili singolarmente. Il catalogo degli strumenti rimane
 visibile sotto i piani. **Riprendi un’attività** è in fondo, con l’immagine del puzzle;
 le attività interrotte sono raggiungibili anche dalla navigazione.
 I vecchi link `/?view=questionnaires` e `/?view=home` portano all'area del ruolo,
-come la radice; `view=home` prevale su un vecchio parametro `view`. Le schede
+come la radice; `view=home` prevale su un vecchio parametro `view`. Non esiste più
+una pagina comune degli strumenti separata dall'Area studente: il catalogo
+«Attività e percorsi» è solo quello dell'Area studente. Le schede
 `/strumenti/<codice>` restano ai loro indirizzi e avviano lo strumento con
 l'esperienza studente; il collegamento «Vai agli strumenti» dopo un invito
 `/gruppo?g=...` apre il catalogo dell'Area studente. Chi non ha effettuato
@@ -384,10 +386,10 @@ indietro e la navigazione permettono di tornare alle pagine precedenti.
 Da 1024 px la testata mostra per primo il selettore **Area**: per chi ha fatto
 accesso include **Presentazione** e **Area studente**, e aggiunge **Area docente**
 e **Area amministrazione** secondo il ruolo. Presentazione apre la pagina iniziale
-anche quando si è già in «Attività e percorsi».
+anche quando si è già nell'Area studente.
 Il selettore mostra il nome dell’area in cui ci si trova (per esempio «Area
-docente» dentro `/docente`). Seguono le icone di **Attività e percorsi**,
-**Bussola**, **Assistente** e **Guida**: il nome appare come suggerimento al
+docente» dentro `/docente`). Seguono le icone di **Bussola**,
+**Assistente** e **Guida**: il nome appare come suggerimento al
 passaggio del puntatore o al focus ed è disponibile agli screen reader.
 A destra, separato, il gruppo della conversazione (strumento scelto, counselor,
 **Riprendi un’attività** quando ci sono attività da riprendere) e il menu
@@ -1264,8 +1266,8 @@ L'audio non è archiviato dall'applicazione; il provider applica le proprie cond
 Limiti e contratto: `docs/operations/audio-input.md`.
 
 Le conversazioni guidate con progressi si salvano dopo le risposte per essere
-riprese anche da un altro dispositivo. Congela sessione salva e chiude: si torna ad
-**Attività e percorsi**, che in cima avvisa che la chat è in pausa e offre Riprendi. La ripresa
+riprese anche da un altro dispositivo. Congela sessione salva e chiude: si torna
+all'**Area studente**, dove il catalogo in cima avvisa che la chat è in pausa e offre Riprendi. La ripresa
 riporta percorso e conversazione, ma non garantisce memoria illimitata del modello.
 Eliminare un punto di ripresa non elimina i risultati del questionario o gli altri
 lavori. Il progresso PDF, invece, è locale al browser.
@@ -1419,12 +1421,12 @@ filtri: categorie con lo stesso nome restano distinte tra istituti. Ogni contenu
 nasconde il filtro senza cancellare i contenuti o i collegamenti; ripristinarla
 rende nuovamente disponibili le associazioni. Queste funzioni sono state distribuite in produzione il 23 settembre 2026.
 
-L’Area studente (`/profilo`) mostra **Attività e percorsi** dopo gli eventuali
-piani di classe. Qui trovi Bussola, consigli, gruppi di strumenti con «Compila
-sul sito» e Dettagli, e gli strumenti in preparazione. Il catalogo segue la vista
-di classe e ogni scheda avvia lo strumento con l’esperienza studente. Dopo il
-congelamento di una chat guidata l’avviso della chat in pausa compare qui, una
-volta sola.
+L’Area studente (`/profilo`) è l’unico posto del catalogo: mostra **Attività e
+percorsi** dopo gli eventuali piani di classe. Qui trovi Bussola, consigli,
+gruppi di strumenti con «Compila sul sito» e Dettagli, e gli strumenti in
+preparazione. Il catalogo segue la vista di classe e ogni scheda avvia lo
+strumento con l’esperienza studente. Dopo il congelamento di una chat guidata
+l’avviso della chat in pausa compare qui, una volta sola.
 
 Segue **Da riprendere** con chat guidate, analisi sospese e il progresso di
 **Studiare da un PDF** del browser corrente. L’eliminazione di un punto di
