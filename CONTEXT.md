@@ -225,9 +225,8 @@ invisible. When adding an instrument, walk this list:
 |---|---|---|
 | `frontend/src/lib/questionnaires.ts` | `QuestionnaireType`, `QUESTIONNAIRES` | the instrument does not exist |
 | `content_language_versions` | una riga per lingua, via `derive_instrument_versions` | non somministrabile in nessuna lingua |
-| `frontend/src/components/questionnaire/QuestionnaireSelector.tsx` | `ACTIVE_QUESTIONNAIRES` | shown as "coming soon", not selectable |
-| `frontend/src/app/page.tsx` | `STARTABLE_QUESTIONNAIRES` | deep link `?q=` ignored |
-| `frontend/src/lib/tool-catalog.ts` | `resolveActiveStudentTools` | the Student area does not offer it |
+| `frontend/src/lib/tool-catalog.ts` | `ACTIVE_QUESTIONNAIRE_IDS` and tool categories | missing from the Student area catalog |
+| `frontend/src/lib/tool-catalog.ts` | `isStartableQuestionnaireId` | the instrument deep link cannot start |
 | `frontend/src/app/strumenti/[id]/page.tsx` | `AVAILABLE_INSTRUMENTS` | `/strumenti/<id>` 404s |
 | `backend/chat_logic.py` | `_ensure_questionnaire_guided_steps` | no guided steps are ever seeded |
 | `backend/routes/memory.py` | `MEMORY_QUESTIONNAIRE_TYPES` | the session memory drops every turn |
