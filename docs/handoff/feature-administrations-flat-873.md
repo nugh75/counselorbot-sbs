@@ -1,7 +1,7 @@
 # Handoff — feature/administrations-flat-873 (#873)
 
 ## Stato
-In corso: struttura piatta completa di `AdministrationPlansPanel.tsx`; verifiche e PR.
+Completato: PR #880 aperta (non mergiata).
 
 ## Fatto
 - Header e contatori senza riquadri (nessun `rounded-lg`, nessun box `surface-sunken`).
@@ -19,10 +19,11 @@ In corso: struttura piatta completa di `AdministrationPlansPanel.tsx`; verifiche
 ## Verifiche
 - `node --test tests/flat-area-subpages.test.mjs` (node 22): 5/5.
 - `node --test --experimental-strip-types src/lib/admin-system-zone-tokens.test.ts`: 4/4.
-- eslint/tsc: vedi PR. Nessun controllo visivo (nessun dev server).
+- eslint locale: 0 errori (2 warning preesistenti); CI eslint e documentation: pass.
+- `make guidance-check`: pass. tsc non eseguito (volume lento). Nessun controllo visivo (nessun dev server).
 
 ## Prossimi passi
 - Controllo visivo su tunnel quando possibile.
 
 ## Blocchi e rischi
-- Worktree senza `node_modules`: symlink temporaneo al checkout principale per eslint/tsc, rimosso alla fine.
+- Worktree senza `node_modules`: symlink temporaneo al checkout principale per eslint, rimosso.
