@@ -1324,6 +1324,9 @@ Ha una sola voce, **API e ChatGPT** (`/profilo/api-personali`,
 abilitati per l’installazione. Se nessuna delle due funzioni è attiva, la sezione
 non compare.
 
+La pagina e l’hub Risorse del docente (Strategie e Materiali) hanno un aspetto piatto: connessioni,
+impostazioni e controfigure sono righe separate da un filetto, senza riquadri annidati; nessun cambio di funzione.
+
 ### Abbonamento personale ChatGPT (opzionale)
 
 L’amministratore apre **Area amministrazione → Configurazione & Prompt → Generale → API personali e ChatGPT** e preme
