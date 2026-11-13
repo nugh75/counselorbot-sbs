@@ -346,6 +346,12 @@ Hanno ora l'intestazione illustrata dell'area: Dispositivi (nuova voce `disposit
 dell'Area docenti, con le sue briciole di pane), Orientamento del docente, Cambiamenti
 e il forum di classe dello studente.
 
+**Elenchi docente piatti (#868).** `/docente/classi` (e le classi di un istituto) elenca
+ogni classe come voce dell'elenco condiviso (nome, stato, codice, partecipanti, scuola,
+proprietario) invece di un riquadro con ombra; la copia del codice e le scorciatoie alle
+schede restano nella pagina della classe. Gli istituti e le assegnazioni usano la `Card`
+piatta per ogni riga; moduli e finestre di dialogo non cambiano.
+
 **Illustrazioni degli strumenti (#863).** Ogni strumento ha un’illustrazione piatta
 in SVG (QSA, QSAr, QPCS, QPCC, ZTPI, QAP, Savickas, eventi e obiettivi di studio e
 professionali, obiettivo di docenza, idea), con colori chiari e scuri tramite le
