@@ -7,6 +7,7 @@ import { ExternalLink } from 'lucide-react';
 import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { Card } from '@/components/ui/Card';
+import ToolIllustration from '@/components/ui/ToolIllustration';
 import {
     QUESTIONNAIRES,
     QuestionnaireType,
@@ -102,17 +103,27 @@ export default function InstrumentDetailsPage() {
 
     return (
         <div className="page-narrow space-y-6">
-            <div className="flex items-center gap-4">
-                <PreviousPageButton fallbackHref={QUESTIONNAIRE_SELECTION_HREF} />
-                <ForwardButton href={instrumentStartHref(questionnaire.id, true)} label={t('selector.start')} />
-            </div>
+            <PreviousPageButton fallbackHref={QUESTIONNAIRE_SELECTION_HREF} />
 
-            <Card as="section" className="sm:p-8">
-                <span className="text-xs font-semibold text-link">{t('detail.kicker')}</span>
-                <h1 className="font-display mt-1 text-2xl font-semibold text-ink">{tf(`q.${questionnaire.id}.name`, questionnaire.name)}</h1>
-                <p className="mt-1 text-lg text-ink-body">{tf(`q.${questionnaire.id}.fullName`, questionnaire.fullName)}</p>
-                <p className="mt-4 text-ink-muted leading-relaxed">{tf(`q.${questionnaire.id}.description`, questionnaire.description)}</p>
-            </Card>
+            <section className="flex flex-wrap items-center gap-6">
+                <ToolIllustration id={questionnaire.id} category={questionnaire.agentOnly ? 'guided' : 'assessment'} className="h-28 w-28 shrink-0 object-contain" />
+                <div className="min-w-0 flex-1">
+                    <span className="text-xs font-semibold text-link">{t('detail.kicker')}</span>
+                    <h1 className="font-display mt-1 text-2xl font-semibold text-ink">{tf(`q.${questionnaire.id}.name`, questionnaire.name)}</h1>
+                    <p className="mt-1 text-lg text-ink-body">{tf(`q.${questionnaire.id}.fullName`, questionnaire.fullName)}</p>
+                    <p className="mt-4 text-ink-muted leading-relaxed">{tf(`q.${questionnaire.id}.description`, questionnaire.description)}</p>
+                </div>
+            </section>
+
+            {/* Start and "Compila sul sito" live here, not in the Student area list (#864). */}
+            <div className="flex flex-wrap items-center gap-4">
+                <ForwardButton href={instrumentStartHref(questionnaire.id, true)} label={t(questionnaire.agentOnly ? 'base.instrument.startPath' : 'base.instrument.analyze')} />
+                {assessmentUrl && !questionnaire.agentOnly && (
+                    <a href={assessmentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-control items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink-body transition-colors hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2">
+                        {t('selector.openStrategic')}<ExternalLink className="h-4 w-4" />
+                    </a>
+                )}
+            </div>
 
             <div className="grid md:grid-cols-3 gap-6">
                 {(['focus', 'path', 'input'] as const).map((topic) => {

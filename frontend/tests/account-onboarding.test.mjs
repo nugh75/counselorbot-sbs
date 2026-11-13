@@ -407,12 +407,12 @@ for (const width of [390, 1440]) {
         const { page, context, prefs } = await fixture({ width, incompatible: true });
         try {
             await page.goto(`${origin}/?view=questionnaires`);
-            const qsa = page.locator('#profile-instrument-catalog article').filter({ has: page.getByText('QSA', { exact: true }) }).first();
-            await qsa.getByRole('button', { name: 'Analizza i risultati', exact: true }).click();
+            await page.locator('#tools-assessment a[href="/strumenti/QSA"]').click();
+            await page.getByRole('link', { name: 'Analizza i risultati', exact: true }).click();
             await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).waitFor();
             await page.getByRole('button', { name: 'Indietro', exact: true }).click();
             await page.locator('#profile-instrument-catalog').waitFor();
-            await page.locator('a[href="/strumenti/QSA"]').waitFor();
+            await page.locator('#tools-assessment a[href="/strumenti/QSA"]').waitFor();
             assert.equal(prefs.counselor_id, 1);
             assert.equal(await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).count(), 0);
         } finally { await context.close(); }
@@ -423,11 +423,11 @@ test('instrument details return to the actual catalog rather than the home scree
     const { page, context } = await fixture();
     try {
         await page.goto(`${origin}/?view=questionnaires`);
-        await page.locator('a[href="/strumenti/QSA"]').click();
+        await page.locator('#tools-assessment a[href="/strumenti/QSA"]').click();
         await page.waitForURL(/\/strumenti\//);
         await page.getByRole('button', { name: 'Indietro', exact: true }).click();
         await page.locator('#profile-instrument-catalog').waitFor();
-        await page.locator('a[href="/strumenti/QSA"]').waitFor();
+        await page.locator('#tools-assessment a[href="/strumenti/QSA"]').waitFor();
     } finally { await context.close(); }
 });
 
@@ -528,7 +528,7 @@ for (const width of [390, 1440]) {
             await page.goto(`${origin}/?view=intro`);
             await page.getByTestId('intro-screen').getByRole('link', { name: 'Vedi tutte le attività e i percorsi', exact: true }).click();
             await page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).waitFor();
-            assert.equal(await page.locator('#profile-instrument-catalog article').count(), 11);
+            assert.equal(await page.locator('#profile-instrument-catalog :is(#tools-assessment, #tools-guided) a[href^="/strumenti/"]').count(), 11);
             assert.deepEqual(errors, []);
         } finally { await context.close(); }
     });

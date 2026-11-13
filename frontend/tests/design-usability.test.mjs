@@ -127,12 +127,12 @@ test('the Student area groups the catalog before the resume list and personal to
     } finally { await context.close(); }
 });
 
-test('a guided tool starts from its card in the Student area', async () => {
+test('a guided tool starts from its tool page opened from the Student area', async () => {
     const { page, context } = await fixture();
     try {
         await page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
-        const savickas = page.locator('#tools-guided article').filter({ has: page.locator('a[href="/strumenti/SAVICKAS"]') });
-        await savickas.getByRole('button', { name: 'Avvia il percorso', exact: true }).click();
+        await page.locator('#tools-guided a[href="/strumenti/SAVICKAS"]').click();
+        await page.getByRole('link', { name: 'Avvia il percorso', exact: true }).click();
         await page.getByText('Il tuo taccuino è ancora aggiornato?', { exact: true }).waitFor();
     } finally { await context.close(); }
 });
@@ -147,8 +147,9 @@ test('mobile menu targets reach 44px and dark surfaces retain readable colours',
         await page.keyboard.press('Escape');
         assert.equal(await page.locator('#mobile-menu').count(), 0);
         await settled(page);
-        const colours = await page.locator('#profile-instrument-catalog article').first().evaluate(el => ({ bg: getComputedStyle(el).backgroundColor, text: getComputedStyle(el.querySelector('h3')).color }));
-        assert.deepEqual(colours, { bg: 'rgb(30, 41, 59)', text: 'rgb(203, 213, 225)' });
+        // Flat entry list: no card background, title in the dark-mode ink colour.
+        const colours = await page.locator('#tools-assessment a[href^="/strumenti/"]').first().evaluate(el => ({ bg: getComputedStyle(el).backgroundColor, text: getComputedStyle(el.querySelector('[id^="tool-link-"]')).color }));
+        assert.deepEqual(colours, { bg: 'rgba(0, 0, 0, 0)', text: 'rgb(248, 250, 252)' });
     } finally { await context.close(); }
 });
 

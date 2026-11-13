@@ -371,11 +371,18 @@ l'esperienza studente; il collegamento «Vai agli strumenti» dopo un invito
 l'accesso vede la scheda di accesso e, dopo l'accesso, torna alla pagina richiesta.
 Sotto la Bussola, **Consigliati per te** propone fino a tre strumenti:
 prima quelli con una chat in pausa, poi quelli indicati dall'ultima Bussola, esclusi
-gli strumenti già compilati; senza questi segnali la sezione non compare. Ogni
-scheda mostra, quando servono, il segno «In pausa dal…» con Riprendi, il badge
-Sperimentale della compilazione in app e, in italiano, **Compila sul sito** con le
-credenziali; in fondo restano gli strumenti **In preparazione** e, nelle lingue senza
-questionari, l’avviso con il passaggio all’inglese.
+gli strumenti già compilati; senza questi segnali la sezione non compare.
+**Elenco piatto degli strumenti (#864).** Consigli, «Analisi questionari» e
+«Percorsi guidati» usano lo stesso elenco delle pagine personali: illustrazione
+dello strumento, nome, descrizione e freccia, senza schede e senza filtri a pillola.
+Sotto la descrizione una riga piccola dice «Compilato il…» o «In pausa dal…».
+Ogni voce apre la pagina dello strumento `/strumenti/<codice>`, che ora ha
+l’illustrazione, il pulsante di avvio («Analizza i risultati» o «Avvia il
+percorso», con l’esperienza studente come prima) e, in italiano, **Compila sul
+sito** con le credenziali e la compilazione in app quando è disponibile. Un consiglio
+con una chat in pausa riprende direttamente la chat. In fondo restano gli strumenti
+**In preparazione** e, nelle lingue senza questionari, l’avviso con il passaggio
+all’inglese; l’avviso della chat in pausa resta un avviso.
 
 La presentazione, l'Area studente, le pagine pubbliche (`/guide`,
 `/guide/dati-riservatezza`, `/privacy`, `/unisciti`, `/login`, `/accesso-locale`,
@@ -1439,12 +1446,13 @@ rende nuovamente disponibili le associazioni. Queste funzioni sono state distrib
 
 L’Area studente (`/profilo`) è l’unico posto del catalogo: mostra **Attività e
 percorsi** dopo gli eventuali piani di classe. Qui trovi Bussola, consigli,
-gruppi di strumenti con «Compila sul sito» e Dettagli, e gli strumenti in
-preparazione. Il catalogo segue la vista di classe e ogni scheda avvia lo
-strumento con l’esperienza studente. Dopo il congelamento di una chat guidata
+gli strumenti in due sezioni («Analisi questionari», «Percorsi guidati») come
+elenco piatto, e gli strumenti in preparazione. Il catalogo segue la vista di
+classe; ogni voce apre la pagina dello strumento, dove stanno l’avvio con
+l’esperienza studente e «Compila sul sito». Dopo il congelamento di una chat guidata
 l’avviso della chat in pausa compare qui, una volta sola.
 
-Segue **Da riprendere** con chat guidate, analisi sospese e il progresso di
+Segue **Da riprendere**, anch’esso come elenco piatto, con chat guidate, analisi sospese e il progresso di
 **Studiare da un PDF** del browser corrente. L’eliminazione di un punto di
 ripresa chiede conferma nella stessa riga. I tentativi dei piani restano gestiti
 dal piano. La sezione mostra anche fino a tre attività collegate a obiettivi
