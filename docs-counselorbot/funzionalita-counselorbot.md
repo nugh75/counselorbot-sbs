@@ -359,6 +359,11 @@ piatta), le sezioni del modulo divise da filetti invece che da riquadri annidati
 codice, note e link/QR senza box colorati. Campi, badge di stato e avvisi restano
 invariati; nessun cambio di comportamento.
 
+**Forum e Cambiamenti piatti (#876).** Il forum di classe (elenco argomenti, discussione,
+registro, coda di moderazione) e `/profilo/cambiamenti` usano la `Card` piatta: sezioni
+separate da filetti, nessun riquadro dentro un riquadro (modifiche, riflessioni e assistente
+senza box). Compositore, campi, finestre e avvisi restano invariati; nessun cambio di comportamento.
+
 **Illustrazioni degli strumenti (#863).** Ogni strumento ha un’illustrazione piatta
 in SVG (QSA, QSAr, QPCS, QPCC, ZTPI, QAP, Savickas, eventi e obiettivi di studio e
 professionali, obiettivo di docenza, idea), con colori chiari e scuri tramite le
