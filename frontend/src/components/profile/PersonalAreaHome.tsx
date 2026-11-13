@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Image from 'next/image';
 import { PersonalAIConnections } from '@/components/profile/PersonalAIConnections';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
@@ -15,6 +14,7 @@ import { enabledResumeItems, personalSlugEnabled } from '@/lib/personal-tool-acc
 import { useUserAccess } from '@/lib/use-user-access';
 import { isClassContentHidden, type UserAccess as FullUserAccess } from '@/lib/user-access';
 import { Button } from '@/components/ui/Button';
+import { EntryLink, EntrySection } from '@/components/ui/EntryList';
 import { ClassPathHeroList } from '@/components/profile/ClassPathHeroList';
 import { parseStudentClassPaths, selectCurrentClassPath, type StudentClassPath } from '@/lib/class-paths';
 import { classPathText } from '@/lib/i18n-class-paths';
@@ -221,31 +221,19 @@ export function PersonalAreaHome() {
                 id="personal-catalog-section"
                 className="space-y-6"
             >
-                {groups.map(group => <section key={group.id} aria-labelledby={`personal-group-${group.id}`}>
-                    <h2 id={`personal-group-${group.id}`} className="border-b border-line pb-2 text-lg font-semibold text-ink">{personalAreaText(lang, group.id)}</h2>
-                    <nav aria-labelledby={`personal-group-${group.id}`} className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">
-                        {group.slugs.map(slug => <Link key={slug} href={`/profilo/${slug}`} aria-labelledby={`personal-link-${slug}`} aria-describedby={`personal-description-${slug}`}
-                            className="group flex min-h-24 items-center gap-4 rounded-card px-2 py-4 transition-colors hover:bg-surface-sunken sm:gap-4">
-                            <Image src={personalAreaImages[slug]} alt="" width={72} height={72} sizes="(min-width: 768px) 72px, 64px" className="h-16 w-16 shrink-0 rounded-control object-contain md:h-18 md:w-18" />
-                            <span className="min-w-0 flex-1">
-                                <span id={`personal-link-${slug}`} className="flex items-center gap-2 font-semibold text-ink group-hover:text-link">
-                                    <span>{personalAreaName(lang, slug)}</span>
-                                    {slug === 'classi' && !isClassContentHidden(access) && unreadTotal > 0 && (
-                                        <span
-                                            className="inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full bg-move px-2 text-xs font-semibold text-ink-on-brand"
-                                            aria-label={forumText(lang, 'unreadBadge').replace('{count}', String(unreadTotal))}
-                                        >
-                                            {unreadTotal}
-                                            <span className="sr-only"> {forumText(lang, 'unreadBadge').replace('{count}', String(unreadTotal))}</span>
-                                        </span>
-                                    )}
-                                </span>
-                                <span id={`personal-description-${slug}`} className="mt-1 block text-sm leading-relaxed text-ink-muted">{personalAreaDescription(lang, slug)}</span>
+                {groups.map(group => <EntrySection key={group.id} id={`personal-group-${group.id}`} title={personalAreaText(lang, group.id)}>
+                    {group.slugs.map(slug => <EntryLink key={slug} idPrefix="personal" id={slug} href={`/profilo/${slug}`} image={personalAreaImages[slug]}
+                        name={personalAreaName(lang, slug)} description={personalAreaDescription(lang, slug)}
+                        badge={slug === 'classi' && !isClassContentHidden(access) && unreadTotal > 0 ? (
+                            <span
+                                className="inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full bg-move px-2 text-xs font-semibold text-ink-on-brand"
+                                aria-label={forumText(lang, 'unreadBadge').replace('{count}', String(unreadTotal))}
+                            >
+                                {unreadTotal}
+                                <span className="sr-only"> {forumText(lang, 'unreadBadge').replace('{count}', String(unreadTotal))}</span>
                             </span>
-                            <ArrowRight className="h-4 w-4 shrink-0 text-ink-muted" aria-hidden />
-                        </Link>)}
-                    </nav>
-                </section>)}
+                        ) : undefined} />)}
+                </EntrySection>)}
                 <PersonalAIConnections area="profilo" />
             </div>
         </div>
