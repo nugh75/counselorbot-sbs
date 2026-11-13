@@ -3,6 +3,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, FolderPlus, GraduationCap, Image as ImageIcon, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -145,15 +146,15 @@ export function FlashcardsPage() {
         </div>}
 
         {view === 'list' && <section aria-label={l('myDecks')} className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4 border-b border-line pb-2">
                 <h2 className="flex items-center gap-2 font-semibold text-ink"><GraduationCap className="h-4 w-4 text-link" aria-hidden="true" />{l('myDecks')}</h2>
                 <Tooltip content={l('newDeck')}><Button type="button" variant="secondary" className="min-h-control gap-2 px-4" aria-label={l('newDeck')} disabled={work.decks.length >= 20} onClick={() => { setDeckName(''); setDialogOpen(true); }}><FolderPlus className="h-4 w-4" aria-hidden="true" />{l('newDeck')}</Button></Tooltip>
             </div>
-            {work.decks.length === 0 ? <p className="rounded-card border border-line bg-surface-sunken p-6 text-center text-ink-muted">{l('emptyDecks')}</p> : (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {work.decks.length === 0 ? <p className="py-6 text-center text-ink-muted">{l('emptyDecks')}</p> : (
+                <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
                     {work.decks.map(deck => {
                         const progress = deckProgress(deck);
-                        return <article key={deck.id} className="flex flex-col rounded-card border border-line bg-surface p-4 shadow-card transition-shadow hover:shadow-card">
+                        return <Card as="article" variant="flat" key={deck.id} className="flex flex-col py-4">
                             <button type="button" className="min-h-control text-left" aria-label={`${l('study')}: ${deck.title}`} onClick={() => openDeckForStudy(deck)}>
                                 <h3 className="break-words font-semibold text-ink">{deck.title} <span className="font-mono text-sm text-ink-muted">{deck.cards.length}</span></h3>
                                 <p className="mt-1 flex items-center gap-1 text-xs text-ink-muted"><span className="inline-flex items-center gap-1 text-success"><Check className="h-3 w-3" aria-hidden="true" /><span className="sr-only">{l('knownLabel')}</span>{progress.known}</span> · <span className="inline-flex items-center gap-1 text-warning"><RotateCcw className="h-3 w-3" aria-hidden="true" /><span className="sr-only">{l('reviewLabel')}</span>{progress.review}</span> · {progress.fresh}</p>
@@ -163,7 +164,7 @@ export function FlashcardsPage() {
                                 <Tooltip content={l('editDeck')}><Button type="button" variant="ghost" className="h-control w-control p-0" aria-label={`${l('editDeck')}: ${deck.title}`} onClick={() => openDeck(deck)}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                 {removeButton(`deck:${deck.id}`, deck.title, () => { edit(current => removeDeck(current, deck.id)); setStudy(null); })}
                             </div>
-                        </article>;
+                        </Card>;
                     })}
                 </div>
             )}
@@ -184,8 +185,8 @@ export function FlashcardsPage() {
                         {work.decks.length > 1 && removeButton(`deck:${currentDeck.id}`, currentDeck.title, () => { edit(current => removeDeck(current, currentDeck.id)); setView('list'); setOpenDeckId(null); })}
                     </div>
                 </div>
-                <details open={!currentDeck.cards.length || Boolean(draftFront)} className="rounded-card border border-line bg-surface-sunken p-4"><summary className="min-h-control cursor-pointer py-4 text-link">{l('addCard')}</summary>
-                    <form className="space-y-2 rounded-card border border-line bg-surface-sunken p-4" onSubmit={event => {
+                <details open={!currentDeck.cards.length || Boolean(draftFront)} className="border-y border-line"><summary className="min-h-control cursor-pointer py-4 text-link">{l('addCard')}</summary>
+                    <form className="space-y-2 pb-4" onSubmit={event => {
                         event.preventDefault();
                         if (!draftFront.trim() || !draftBack.trim()) return;
                         edit(current => addCard(current, currentDeck.id, { front: draftFront.trim(), back: draftBack.trim(), image: draftImage || null }, crypto.randomUUID()));
@@ -210,7 +211,7 @@ export function FlashcardsPage() {
                     </form>
                 </details>
                 {!currentDeck.cards.length ? <p className="py-6 text-center text-ink-muted">{l('emptyDeck')}</p> : (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{currentDeck.cards.map(card => <article key={card.id} className="group/card flex flex-col rounded-card border border-line bg-surface p-4 shadow-card">
+                    <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">{currentDeck.cards.map(card => <Card as="article" variant="flat" key={card.id} className="group/card flex flex-col py-4">
                         <div className="mb-2 flex items-center justify-between gap-2">
                             <button type="button" onClick={() => edit(current => updateCard(current, currentDeck.id, card.id, { status: card.status === 'known' ? 'review' : card.status === 'review' ? null : 'known' }))} aria-label={l('statusNone')}
                                 className={`inline-flex min-h-control items-center gap-1 rounded-full px-2 py-1 text-xs ${card.status === 'known' ? 'bg-success-soft text-success-ink' : card.status === 'review' ? 'bg-warning-soft text-warning-ink' : 'bg-surface-raised text-ink-muted'}`}>
@@ -225,7 +226,7 @@ export function FlashcardsPage() {
                         </div>
                         <label className="block text-sm">{l('frontLabel')}<textarea maxLength={FRONT_MAX} rows={2} value={card.front} onChange={e => edit(current => updateCard(current, currentDeck.id, card.id, { front: e.target.value }))} className={`${inputClass} mt-1`} /></label>
                         <label className="mt-2 block text-sm">{l('backLabel')}<textarea maxLength={BACK_MAX} rows={3} value={card.back} onChange={e => edit(current => updateCard(current, currentDeck.id, card.id, { back: e.target.value }))} className={`${inputClass} mt-1`} /></label>
-                    </article>)}</div>
+                    </Card>)}</div>
                 )}
             </>}
         </section>}
@@ -286,7 +287,7 @@ function StudyView({ study, deck, card, onFlip, onAnswer, onExit, onRestart }: {
     const reviewLeft = deck?.cards.filter(c => c.status === 'review') ?? [];
 
     if (done) {
-        return <section className="rounded-card border border-line bg-surface p-6 text-center shadow-card">
+        return <section className="py-6 text-center">
             <h3 className="text-lg font-semibold text-ink">{l('sessionDone')}</h3>
             <p className="mt-4 flex items-center justify-center gap-6 text-sm">
                 <span className="inline-flex items-center gap-1 text-success"><Check className="h-4 w-4" aria-hidden="true" />{l('knownLabel')}: {study.known}</span>
