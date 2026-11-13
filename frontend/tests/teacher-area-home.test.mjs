@@ -43,7 +43,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     const { errors } = await prepare(page);
     await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
     await page.getByRole('heading', { level: 2, name: 'Progettazione didattica' }).waitFor();
-    await page.locator('[data-testid="didactic-design-cta"]').waitFor();
+    await page.locator('[data-testid="teacher-didactic-design-section"]').waitFor();
     // intestazioni di gruppo in ordine: Didattica, Le mie classi, Classe e assegnazioni, Palestra, Prova gli strumenti, Profilo docente, Cataloghi
     const h2 = await page.getByRole('heading', { level: 2 }).allTextContents();
     assert.deepEqual(h2.slice(0, 7), [
@@ -58,31 +58,23 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     // Prova gli strumenti: ogni voce apre /?start=<id>, incluso OBIETTIVO_DOCENZA
     const tryTools = page.locator('[data-testid="teacher-try-tools-section"]');
     await tryTools.waitFor();
-    assert.equal(await page.locator('[data-testid="try-tool-QSA"]').getAttribute('href'), '/?start=QSA');
-    assert.equal(await page.locator('[data-testid="try-tool-OBIETTIVO_DOCENZA"]').getAttribute('href'), '/?start=OBIETTIVO_DOCENZA');
+    assert.equal(await tryTools.locator('a[href="/?start=QSA"]').getAttribute('href'), '/?start=QSA');
+    assert.equal(await tryTools.locator('a[href="/?start=OBIETTIVO_DOCENZA"]').getAttribute('href'), '/?start=OBIETTIVO_DOCENZA');
     // Sezione Le mie classi (zero-state con mock vuoto)
     await page.locator('[data-testid="teacher-my-classes-section"]').waitFor();
-    const manageLink = page.locator('[data-testid="my-classes-manage-all-link"]');
-    assert.equal(await manageLink.getAttribute('href'), '/docente/classi');
-    const manageBox = await manageLink.boundingBox();
-    assert.ok(manageBox && manageBox.height >= 44, 'my classes manage link meets 44px touch target');
-
-    await page.locator('[data-testid="my-classes-zero-state"]').waitFor();
-    const createFirstCta = page.locator('[data-testid="my-classes-create-first-cta"]');
-    assert.equal(await createFirstCta.getAttribute('href'), '/docente/classi');
-    const createFirstBox = await createFirstCta.boundingBox();
-    assert.ok(createFirstBox && createFirstBox.height >= 44, 'create first class CTA meets 44px touch target');
+    // «Le mie classi» è una sola voce verso /docente/classi, senza schede né zero-state
+    const classesLink = page.locator('[data-testid="teacher-my-classes-section"] a');
+    assert.equal(await classesLink.count(), 1);
+    assert.equal(await classesLink.getAttribute('href'), '/docente/classi');
+    assert.equal(await page.locator('[data-testid="my-classes-zero-state"]').count(), 0);
 
     // Sezione Palestra di prova e simulazione (sandbox protetto con CTA >= 44px)
     await page.locator('[data-testid="teacher-practice-gym-section"]').waitFor();
-    const gymCard = page.locator('[data-testid="practice-gym-card"]');
-    assert.ok(await gymCard.isVisible());
-    const practiceCta = page.locator('[data-testid="practice-gym-cta"]');
-    assert.equal(await practiceCta.getAttribute('href'), '/docente/taccuini-prova');
-    const practiceCtaBox = await practiceCta.boundingBox();
-    assert.ok(practiceCtaBox && practiceCtaBox.height >= 44, 'practice gym CTA meets 44px touch target');
-    assert.ok((await gymCard.textContent()).includes('Simulazione protetta'));
-    assert.ok((await gymCard.textContent()).includes('Nessun impatto sulle classi reali'));
+    const gym = page.locator('[data-testid="teacher-practice-gym-section"]');
+    assert.equal(await gym.locator('a').count(), 1);
+    assert.equal(await gym.locator('a').getAttribute('href'), '/docente/taccuini-prova');
+    assert.ok((await gym.textContent()).includes('Simulazione protetta'));
+    assert.ok((await gym.textContent()).includes('Nessun impatto sulle classi reali'));
 
     // Sezione Profilo professionale del docente (Taccuino separato dalla palestra e collocato nel terzo pilastro)
     await page.locator('[data-testid="teacher-profile-notebook-section"]').waitFor();
@@ -92,18 +84,16 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     const notebookBox = await notebookLink.boundingBox();
     assert.ok(gymBox && notebookBox && notebookBox.y > gymBox.y, 'teacher notebook is separated and placed in professional profile below practice gym');
 
-    // La hero di progettazione didattica include l'azione primaria e i link al catalogo e ai percorsi
+    // Progettazione didattica: una sola voce, OBIETTIVO_DOCENZA
+    assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a').count(), 1);
     assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a[href="/?start=OBIETTIVO_DOCENZA"]').count(), 1);
-    assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a[href="/docente/catalogo-obiettivi"]').count(), 1);
-    assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a[href="/docente/piani-operativi"]').count(), 1);
-    const ctaBox = await page.locator('[data-testid="didactic-design-cta"]').boundingBox();
-    assert.ok(ctaBox && ctaBox.height >= 44, 'didactic design CTA meets 44px touch target');
     // Sezione Libreria e risorse didattiche accorpata
     await page.locator('[data-testid="teacher-resources-library-section"]').waitFor();
-    const resourcesLink = page.locator('[data-testid="teacher-resources-main-link"]');
-    assert.equal(await resourcesLink.getAttribute('href'), '/docente/risorse');
-    assert.equal(await page.locator('[data-testid="teacher-resources-strategies-link"]').getAttribute('href'), '/docente/strategie');
-    assert.equal(await page.locator('[data-testid="teacher-resources-materials-link"]').getAttribute('href'), '/docente/materiali');
+    for (const href of ['/docente/catalogo-obiettivi', '/docente/risorse', '/docente/strategie', '/docente/materiali']) {
+        assert.equal(await page.locator(`[data-testid="teacher-resources-library-section"] a[href="${href}"]`).count(), 1, href);
+    }
+    // niente riquadri: nessun elemento con ombra o bordo di scheda nella home
+    assert.equal(await page.locator('[data-teacher-area-home] .shadow-card').count(), 0);
 
     // link illustrati dei gruppi e del flusso didattico
     for (const href of ['/docente/classi', '/docente/piani-operativi', '/docente/incontri', '/docente/assegnazioni', '/docente/catalogo-obiettivi', '/docente/risorse', '/docente/strategie', '/docente/materiali', '/docente/orientamento', '/docente/somministrazioni']) {
@@ -124,67 +114,6 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     await page.close();
 }
 
-// 1b. Sezione Le mie classi: rendering card attive, metadati e link all'Hub
-{
-    const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
-    const { errors } = await prepare(page);
-    await page.route('**/api/admin/groups', route => route.fulfill({
-        status: 200, contentType: 'application/json', body: JSON.stringify([
-            { id: 101, name: '3A Informatica', code: 'GR-INFO3A', school: 'IIS Volta', is_active: true, members_count: 22 },
-            { id: 102, name: '4B Liceo Scientifico', code: 'GR-LS4B', institution_name: 'Liceo Da Vinci', is_active: true, members_count: 1 },
-            { id: 103, name: 'Classe Inattiva', code: 'GR-INACT', is_active: false, members_count: 15 },
-        ]),
-    }));
-    await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
-    await page.locator('[data-testid="teacher-my-classes-section"]').waitFor();
-    assert.equal(await page.locator('[data-testid="my-class-card-101"]').count(), 1);
-    assert.equal(await page.locator('[data-testid="my-class-card-102"]').count(), 1);
-    assert.equal(await page.locator('[data-testid="my-class-card-103"]').count(), 0);
-
-    const card1 = page.locator('[data-testid="my-class-card-101"]');
-    assert.ok((await card1.textContent()).includes('3A Informatica'));
-    assert.ok((await card1.textContent()).includes('22'));
-    assert.ok((await card1.textContent()).includes('GR-INFO3A'));
-    assert.ok((await card1.textContent()).includes('IIS Volta'));
-
-    const hubLink = page.locator('[data-testid="my-class-hub-link-101"]');
-    assert.equal(await hubLink.getAttribute('href'), '/docente/classi/101');
-    const hubBox = await hubLink.boundingBox();
-    assert.ok(hubBox && hubBox.height >= 44, 'class hub link meets 44px touch target');
-
-    const card2 = page.locator('[data-testid="my-class-card-102"]');
-    assert.ok((await card2.textContent()).includes('1 studente'));
-    assert.ok((await card2.textContent()).includes('Liceo Da Vinci'));
-
-    assert.deepEqual(errors, []);
-    await page.close();
-}
-
-// 1c. Sezione Le mie classi: gestione errori e retry
-{
-    const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
-    const { errors } = await prepare(page);
-    let attempts = 0;
-    await page.route('**/api/admin/groups', route => {
-        attempts++;
-        if (attempts === 1) {
-            return route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ detail: 'fail' }) });
-        }
-        return route.fulfill({
-            status: 200, contentType: 'application/json', body: JSON.stringify([
-                { id: 201, name: 'Classe Recuperata', code: 'GR-REC01', is_active: true, members_count: 12 },
-            ]),
-        });
-    });
-    await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
-    await page.locator('[role="alert"]').waitFor();
-    assert.ok((await page.locator('[role="alert"]').textContent()).includes('Impossibile caricare'));
-    await page.getByRole('button', { name: 'Riprova' }).click();
-    await page.locator('[data-testid="my-class-card-201"]').waitFor();
-    assert.equal(await page.locator('[data-testid="my-class-card-201"]').count(), 1);
-    await page.close();
-}
-
 // 2. Ogni sottopagina mostra la sua intestazione e il pannello atteso
 for (const [slug, h1, marker] of [
     ['classi', 'Gruppi e classi', 'Gruppi e classi che gestisco'],
@@ -200,7 +129,7 @@ for (const [slug, h1, marker] of [
     await page.getByText(marker, { exact: true }).first().waitFor();
     // Torna all'Area docenti
     await page.getByRole('link', { name: 'Area docenti' }).first().click();
-    await page.locator('[data-testid="didactic-design-cta"]').waitFor();
+    await page.locator('[data-testid="teacher-didactic-design-section"]').waitFor();
     assert.deepEqual(errors, []);
     await page.close();
 }
@@ -240,7 +169,7 @@ for (const [slug, marker] of [
     const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
     const { errors } = await prepare(page, { teacher: false, researcher: true });
     await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
-    await page.locator('[data-testid="didactic-design-cta"]').waitFor();
+    await page.locator('[data-testid="teacher-didactic-design-section"]').waitFor();
     assert.equal(await page.locator('a[href="/docente/somministrazioni"]').count(), 1);
     assert.equal(await page.locator('a[href="/docente/orientamento"]').count(), 0);
     assert.equal(await page.locator('[data-testid="teacher-profile-notebook-section"] a').first().getAttribute('href'), '/docente/taccuino');
