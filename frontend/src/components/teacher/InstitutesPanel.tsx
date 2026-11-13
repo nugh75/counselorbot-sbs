@@ -104,7 +104,7 @@ export function InstitutesPanel() {
     return <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4"><p className="max-w-2xl text-sm text-ink-muted">{l('duplicateHint')}</p><Button disabled={editor !== undefined || joining} onClick={() => setEditor(null)}>{l('create')}</Button></div>
         {editor !== undefined && <InstituteEditor key={editor?.id ?? 'new'} initial={editor} onSaved={() => { setEditor(undefined); reload(); }} onCancel={() => { setEditor(undefined); reload(); }} />}
-        <Card><section aria-labelledby="institute-directory" className="space-y-4">
+        <Card variant="flat"><section aria-labelledby="institute-directory" className="space-y-4">
             <h2 id="institute-directory" className="font-semibold">{l('directory')}</h2><p className="text-sm text-ink-muted">{l('joinHint')}</p>
             <label className="block text-sm">{l('search')}<input type="search" className={input} value={query} disabled={joining} onChange={event => { setQuery(event.target.value); setOffset(0); setSelected(''); }} /></label>
             {directory.failed ? <Callout variant="danger"><p>{l('loadError')}</p><Button onClick={() => void directory.reload()}>{l('reload')}</Button></Callout> : <>
@@ -118,7 +118,7 @@ export function InstitutesPanel() {
             {own.loading && <TeacherLoading />}
             {own.failed && <Callout variant="danger"><p>{l('loadError')}</p><Button onClick={() => void own.reload()}>{l('reload')}</Button></Callout>}
             {!own.loading && !own.failed && own.data?.length === 0 && <p>{l('empty')}</p>}
-            {own.data?.map(row => <Card key={row.id}><div className="flex flex-wrap items-center justify-between gap-4"><Link href={`/docente/istituti/${row.id}`} className="min-h-control break-words font-semibold text-link">{row.name}</Link><Button variant="secondary" disabled={editor !== undefined || joining} onClick={() => setEditor(row)}>{l('edit')}</Button></div><p className="text-sm text-ink-muted">{l('credentials')}: {l(row.credentials_configured ? 'configured' : 'missing')}{row.institution_code && <> · {credentialText(lang, 'codeLabel')}: <span className="font-mono">{row.institution_code}</span></>}</p>
+            {own.data?.map(row => <Card key={row.id} variant="flat" className="space-y-2"><div className="flex flex-wrap items-center justify-between gap-4"><Link href={`/docente/istituti/${row.id}`} className="min-h-control break-words font-semibold text-link">{row.name}</Link><Button variant="secondary" disabled={editor !== undefined || joining} onClick={() => setEditor(row)}>{l('edit')}</Button></div><p className="text-sm text-ink-muted">{l('credentials')}: {l(row.credentials_configured ? 'configured' : 'missing')}{row.institution_code && <> · {credentialText(lang, 'codeLabel')}: <span className="font-mono">{row.institution_code}</span></>}</p>
                 {row.credentials_configured && <InstitutePasswordReveal institute={row} onForbidden={() => setForbidden(true)} />}
                 {credentialsFor === row.id
                     ? <InstituteCredentialsEditor institute={row} onSaved={() => { setCredentialsFor(null); reload(); }} onCancel={() => setCredentialsFor(null)} />
