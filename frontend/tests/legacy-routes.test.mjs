@@ -10,14 +10,19 @@ after(async () => { await browser?.close(); });
 
 for (const pathname of ['/strumenti', '/strumenti/']) {
     for (const search of ['', `?${query}`, `?view=intro&${query}`]) {
-        test(`HTTP 308: ${pathname}${search}`, async () => {
+        test(`HTTP 307: ${pathname}${search}`, async () => {
             let current = new URL(pathname + search, origin);
             let redirects = 0;
+            let temporary = 0;
             while (true) {
                 const response = await fetch(current, { redirect: 'manual' });
                 await response.text();
                 if (response.status === 200) break;
-                assert.equal(response.status, 308);
+                // `/strumenti/` first loses the slash with a 308; the catalog
+                // redirect itself must stay temporary.
+                assert.ok([307, 308].includes(response.status));
+                if (response.status === 307) temporary++;
+                else assert.equal(current.pathname, '/strumenti/');
                 assert.ok(++redirects <= 2, 'no redirect loop (at most slash normalization + catalog)');
                 const location = response.headers.get('location');
                 assert.ok(location);
@@ -32,6 +37,7 @@ for (const pathname of ['/strumenti', '/strumenti/']) {
                 assert.deepEqual([...actual], [...preserved]);
             }
             assert.ok(redirects > 0);
+            assert.ok(temporary > 0, 'the catalog redirect is temporary');
             assert.equal(current.pathname, '/');
             assert.equal(current.searchParams.get('view'), 'home');
         });
@@ -105,27 +111,27 @@ test('browser keeps the anchor and Back/Forward follows the HTTP redirect', asyn
     } finally { await context.close(); }
 });
 
-test('redirect renders the catalog and instrument deep links still render details', async () => {
+test('redirect renders the student catalog and instrument deep links still render details', async () => {
     const { context, page } = await fixture();
     try {
         await page.goto(`${origin}/strumenti`);
         await page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).waitFor();
-        await page.locator('#home-catalog-section').waitFor();
+        await page.locator('#profile-instrument-catalog').waitFor();
         await page.goto(`${origin}/strumenti/QSA?source=legacy#details`);
         await page.getByRole('heading', { name: 'QSA', exact: true }).waitFor();
         assert.equal(page.url(), `${origin}/strumenti/QSA?source=legacy#details`);
     } finally { await context.close(); }
 });
 
-test('group invitation still links directly to the home catalog', async () => {
+test('group invitation still links directly to the student catalog', async () => {
     const { context, page } = await fixture();
     try {
         await page.goto(`${origin}/gruppo?g=fixture`);
         const link = page.getByRole('link', { name: 'Vai agli strumenti', exact: true });
         await link.waitFor();
-        assert.equal(await link.getAttribute('href'), '/?view=home');
+        assert.equal(await link.getAttribute('href'), '/profilo#profile-instrument-catalog');
         await link.click();
         await page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).waitFor();
-        await page.locator('#home-catalog-section').waitFor();
+        await page.locator('#profile-instrument-catalog').waitFor();
     } finally { await context.close(); }
 });

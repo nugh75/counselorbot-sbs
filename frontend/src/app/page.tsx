@@ -27,7 +27,6 @@ import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
 import { FreeChatInterface } from '@/components/qsa/FreeChatInterface';
 import { ChatSettingsCard } from '@/components/qsa/ChatSettingsCard';
 import { SessionReport } from '@/components/qsa/SessionReport';
-import { ReturningHome } from '@/components/home/ReturningHome';
 import { MessageSquare, MessagesSquare } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -58,11 +57,10 @@ import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/Reasoni
 import { fetchAccountPreferences, saveAccountPreferences } from '@/lib/account-preferences';
 import { isStartableQuestionnaireId } from '@/lib/tool-catalog';
 import { enterStep, startTrail, stepAtDepth, type Trail } from '@/lib/flow-history';
-import { parseStudentClassPaths, type StudentClassPath } from '@/lib/class-paths';
 import { administrationStepText } from '@/lib/i18n-administration-steps';
 
 
-type Step = 'intro' | 'base' | 'counselor-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'chat-settings' | 'interaction' | 'completed' | 'farewell';
+type Step = 'intro' | 'counselor-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'chat-settings' | 'interaction' | 'completed' | 'farewell';
 
 // Compilazioni già salvate: servono a sapere se c'è qualcosa da riusare prima
 // di saltare la scelta del metodo di inserimento.
@@ -138,23 +136,6 @@ function HomeFlow() {
     const [frozenSnapshot, setFrozenSnapshot] = useState<FrozenSessionDetail | null>(null);
     const [planOrigin, setPlanOrigin] = useState<{ pathId: number; stepId: number } | null>(null);
     const [savedResults, setSavedResults] = useState<SavedResult[] | null>(null);
-    const [studentPaths, setStudentPaths] = useState<StudentClassPath[] | null>(null);
-    const studentPathsRequest = useRef(0);
-
-    const loadStudentPaths = useCallback(async () => {
-        const request = ++studentPathsRequest.current;
-        try {
-            const res = await apiFetch('/api/user/paths');
-            if (res.ok) {
-                const data = await res.json();
-                if (request === studentPathsRequest.current) setStudentPaths(parseStudentClassPaths(data));
-            } else {
-                if (request === studentPathsRequest.current) setStudentPaths([]);
-            }
-        } catch {
-            if (request === studentPathsRequest.current) setStudentPaths([]);
-        }
-    }, []);
     // La schermata è pronta quando abbiamo consumato l'ingresso da link.
     const [ready, setReady] = useState(false);
     const practiceProfileEntry = useRef<number | null>(null);
@@ -181,22 +162,6 @@ function HomeFlow() {
             .catch(() => { if (alive) setSavedResults([]); });
         return () => { alive = false; };
     }, [identity]);
-
-    // Browser back/forward can restore this page from cache after a plan chat
-    // starts or is paused. Reload its steps when the user returns to the home.
-    useEffect(() => {
-        if (!identity?.authenticated || step !== 'base') return;
-        const refresh = () => { if (document.visibilityState === 'visible') void loadStudentPaths(); };
-        refresh();
-        window.addEventListener('pageshow', refresh);
-        window.addEventListener('focus', refresh);
-        document.addEventListener('visibilitychange', refresh);
-        return () => {
-            window.removeEventListener('pageshow', refresh);
-            window.removeEventListener('focus', refresh);
-            document.removeEventListener('visibilitychange', refresh);
-        };
-    }, [identity, step, loadStudentPaths]);
 
     // Un'entrata di cronologia per ogni passo, dal secondo in poi: la prima è
     // quella con cui la pagina è stata aperta e va lasciata al browser.
@@ -243,7 +208,7 @@ function HomeFlow() {
     // deve mostrarne uno rimasto da un percorso precedente. Il counselor invece
     // resta scelto: è la preferenza che evita di ripetere la fase ogni volta.
     useEffect(() => {
-        if (step === 'intro' || step === 'base') {
+        if (step === 'intro') {
             setSelectedInstrumentId(null);
         }
     }, [step]);
@@ -670,24 +635,6 @@ function HomeFlow() {
         })();
     }, [identity, lang, query, prepareInstrument, returnToStudentArea, router, t]);
 
-    // Tutti gli ingressi riusano le preferenze dell’account.
-    const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
-        studentEntry.current = false;
-        setStudentFlow(false);
-        setPlanOrigin(null);
-        setFromPlan(false);
-        practiceProfileEntry.current = null;
-        setPracticeEntryActive(false);
-        practiceProfileHref.current = null;
-        setSelectedQuestionnaire(questionnaire);
-        setSelectedInstrumentId(questionnaire.id);
-        setScores(null);
-        setScoreOrigin('new');
-        setSessionId('');
-        setExperience(null);
-        void prepareInstrument(questionnaire, null);
-    };
-
     const handleMethodSelect = (method: InputMethod, resumeData?: { sessionId: string; scores: Record<string, number> }, remember = false) => {
         // Strumento senza punteggi: la scelta (taccuino di prova o account) è già memorizzata.
         if (method === 'test-student' || method === 'own') {
@@ -920,18 +867,6 @@ function HomeFlow() {
         );
     }
 
-    // Ultima compilazione per strumento: alimenta lo stato nella schermata
-    // percorso e il badge nel selettore.
-    const lastCompiledAt = (savedResults ?? []).reduce<Partial<Record<QuestionnaireType, string>>>((acc, row) => {
-        const type = row.questionnaire_type as QuestionnaireType;
-        if (!QUESTIONNAIRES[type]) return acc;
-        const current = acc[type];
-        if (!current || new Date(row.submitted_at).getTime() > new Date(current).getTime()) {
-            acc[type] = row.submitted_at;
-        }
-        return acc;
-    }, {});
-
     const flowStages = ['CounselorBot', t('flow.select'), t('flow.input'), t('flow.profile'), t('flow.settings'), t('flow.chat'), t('flow.done')];
     const stageIndex = step === 'intro' ? 0
         : step === 'counselor-select' ? 1
@@ -940,7 +875,7 @@ function HomeFlow() {
 
     return (
         <div className={cn("page-wide", step === 'interaction' ? "space-y-4" : "space-y-8")}>
-            {step !== 'intro' && step !== 'base' && step !== 'interaction' && (
+            {step !== 'intro' && step !== 'interaction' && (
                 <FlowStepper steps={flowStages} current={stageIndex} />
             )}
 
@@ -958,17 +893,6 @@ function HomeFlow() {
                     {/* Step: Intro */}
                     {step === 'intro' && (
                         <IntroScreen onStart={startFromIntro} />
-                    )}
-
-                    {/* Step: percorso — schermata iniziale di chi è già passato di qui */}
-                    {step === 'base' && (
-                        <ReturningHome
-                            lastCompiledAt={lastCompiledAt}
-                            onStartInstrument={handleQuestionnaireSelect}
-                            onOpenIntro={() => setStep('intro')}
-                            paths={studentPaths}
-                            onRefreshPaths={loadStudentPaths}
-                        />
                     )}
 
                     {step === 'counselor-select' && counselorRequest && (

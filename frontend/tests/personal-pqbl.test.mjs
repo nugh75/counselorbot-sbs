@@ -39,18 +39,17 @@ async function fixture(width, locale = 'it', resume = false) {
 }
 
 for (const width of [390, 1440]) {
-    test(`home, student area and legacy PDF links preserve resume at ${width}px`, async () => {
+    test(`Student area and legacy PDF links preserve resume at ${width}px`, async () => {
         const { page, context, errors } = await fixture(width, 'it', true);
         try {
-            await page.goto(`${origin}/?view=home`);
-            const personal = page.getByTestId('personal-area-entry');
-            const resume = page.getByTestId('home-resume');
+            await page.goto(`${origin}/profilo`);
+            const resume = page.locator('section[aria-labelledby="personal-resume-title"]');
             await resume.waitFor();
             assert.equal(await page.getByRole('heading', { name: 'Allenamento', exact: true }).count(), 0);
-            const positions = await Promise.all([page.getByTestId('compass-entry'), page.locator('#tools-assessment'), page.locator('#tools-guided'), personal, resume].map(locator => locator.boundingBox()));
+            const sections = [page.getByTestId('compass-entry'), page.locator('#tools-assessment'),
+                page.locator('#tools-guided'), resume, page.locator('#personal-catalog-section')];
+            const positions = await Promise.all(sections.map(locator => locator.boundingBox()));
             assert.ok(positions.every((box, i) => i === 0 || box.y >= positions[i - 1].y + positions[i - 1].height));
-            await page.getByTestId('compass-entry').locator('img').evaluate(img => img.decode());
-            await page.screenshot({ path: `/tmp/personal-home-${width}.png`, fullPage: true });
             const resumeLink = resume.getByRole('link', { name: /Studiare da un PDF/ });
             assert.equal(await resumeLink.getAttribute('href'), '/profilo/pqbl');
             await resumeLink.click();
@@ -92,14 +91,10 @@ for (const [locale, title] of [['it', 'Studiare da un PDF'], ['en', 'Study from 
             await page.getByRole('heading', { name: title, exact: true }).waitFor();
             assert.equal(await page.locator('input[type="file"]').count(), 1);
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-            await page.goto(`${origin}/?view=questionnaires`);
-            await page.getByTestId('personal-area-entry').waitFor();
-            assert.equal(await page.locator('main a[href="/profilo/pqbl"]').count(), 0);
-            await page.getByTestId('personal-area-entry').getByRole('link').click();
-            await page.waitForURL('**/profilo');
-            await page.goto(`${origin}/?view=home`);
-            await page.getByTestId('personal-area-entry').waitFor();
-            assert.equal(await page.getByTestId('home-resume').count(), 0);
+            await page.goto(`${origin}/profilo`);
+            await page.locator('#profile-instrument-catalog').waitFor();
+            assert.equal(await page.locator('#profile-instrument-catalog a[href="/profilo/pqbl"]').count(), 0);
+            assert.equal(await page.locator('section[aria-labelledby="personal-resume-title"] a[href="/profilo/pqbl"]').count(), 0);
             assert.deepEqual(errors, []);
         } finally { await context.close(); }
     });

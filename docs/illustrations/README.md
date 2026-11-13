@@ -6,7 +6,7 @@ Le tre immagini già presenti nella pagina iniziale (`profiles`, `paths`, `pract
 
 | File | Soggetto | Dove si usa |
 |---|---|---|
-| [01](01-home-categories.md) | Catalogo strumenti (rientro) | `/` — `ReturningHome`, categorie di card |
+| [01](01-home-categories.md) | Catalogo strumenti | `/profilo` — `InstrumentCatalog`, categorie di card |
 | [02](02-bussola.md) | Bussola | `/bussola`, intro orientamento |
 | [03](03-counselor.md) | Scelta counselor | `/counselor`, card di selezione |
 | [04](04-guided-chat.md) | Chat guidata | entry strumenti dialogici |

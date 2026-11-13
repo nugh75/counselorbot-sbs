@@ -1,7 +1,7 @@
-# 01 — ReturningHome: categorie di strumenti
+# 01 — Catalogo dell'Area studente: categorie di strumenti
 
 Target file: `frontend/public/images/home-categories.png`
-Context: `/` per chi è già passato (componente `ReturningHome`), dove le famiglie di strumenti sono card solo testuali.
+Context: `/profilo` nell'Area studente (`InstrumentCatalog`), dove le famiglie di strumenti sono card solo testuali.
 
 Il soggetto deve coprire in un'unica immagine l'idea di catalogo di strumenti: questionari con punteggi, interviste guidate, eventi significativi e la chat libera Idea, senza raffigurare ognuno in dettaglio.
 

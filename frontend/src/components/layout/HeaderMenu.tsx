@@ -64,9 +64,6 @@ export function HeaderMenu({ links, current, pathname, resumeEntries, authentica
                         event.preventDefault();
                         window.dispatchEvent(new CustomEvent('cb-navigate-intro'));
                     }
-                    if (link.key === 'instruments' && pathname === '/') {
-                        window.dispatchEvent(new CustomEvent('cb-navigate-home'));
-                    }
                 }}
             >
                 <Icon className="h-4 w-4 shrink-0" />

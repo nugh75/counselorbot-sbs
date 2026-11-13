@@ -113,37 +113,26 @@ for (const width of [768, 1024, 1280, 1440]) {
     });
 }
 
-test('activity catalog starts with Compass and ends with resume', async () => {
+test('the Student area groups the catalog before the resume list and personal tools', async () => {
     const { page, context } = await fixture();
     try {
-        await page.goto(`${origin}/?view=home`, { waitUntil: 'networkidle' });
-        const catalog = await page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).boundingBox();
-        const personal = await page.getByTestId('personal-area-entry').boundingBox();
-        const compass = await page.getByTestId('compass-entry').boundingBox();
-        const assessment = await page.locator('#tools-assessment').boundingBox();
-        const resume = await page.getByTestId('home-resume').boundingBox();
-        assert.ok(catalog.y < compass.y && compass.y < assessment.y && assessment.y < personal.y && personal.y < resume.y);
-        assert.equal(await page.locator('main details').count(), 0);
-        assert.equal(await page.getByText('Rivedi la presentazione iniziale', { exact: true }).count(), 0);
-        assert.equal(await page.locator('main article').count(), 11);
+        await page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
+        const catalog = page.locator('#profile-instrument-catalog');
+        const resume = page.locator('section[aria-labelledby="personal-resume-title"]');
+        await resume.getByText('QSA · Organizzare lo studio', { exact: true }).waitFor();
+        const positions = await Promise.all([page.getByTestId('compass-entry'), catalog.locator('#tools-assessment'),
+            catalog.locator('#tools-guided'), resume, page.locator('#personal-catalog-section')].map(locator => locator.boundingBox()));
+        assert.ok(positions.every((box, i) => i === 0 || box.y >= positions[i - 1].y + positions[i - 1].height));
         assert.equal(await page.getByRole('heading', { name: 'Allenamento', exact: true }).count(), 0);
-        await page.getByRole('button', { name: 'Torna alla presentazione', exact: true }).click();
-        await page.getByTestId('intro-screen').waitFor();
     } finally { await context.close(); }
 });
 
-test('selecting a tool at the bottom keeps its name and Continue visible', async () => {
+test('a guided tool starts from its card in the Student area', async () => {
     const { page, context } = await fixture();
     try {
-        await page.goto(`${origin}/?view=questionnaires`, { waitUntil: 'networkidle' });
-        assert.equal(await page.getByRole('button', { name: /^Idea/ }).getByText('Chat libera', { exact: true }).count(), 1);
-        await page.getByRole('button', { name: /^SAVICKAS/ }).click();
-        const button = page.getByRole('button', { name: 'Continua', exact: true });
-        const box = await button.boundingBox();
-        assert.ok(box.y >= 60 && box.y + box.height < 844);
-        assert.equal(await button.isEnabled(), true);
-        assert.ok(await button.locator('..').getByText('SAVICKAS', { exact: true }).isVisible());
-        await button.click();
+        await page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
+        const savickas = page.locator('#tools-guided article').filter({ has: page.locator('a[href="/strumenti/SAVICKAS"]') });
+        await savickas.getByRole('button', { name: 'Avvia il percorso', exact: true }).click();
         await page.getByText('Il tuo taccuino è ancora aggiornato?', { exact: true }).waitFor();
     } finally { await context.close(); }
 });
@@ -158,7 +147,7 @@ test('mobile menu targets reach 44px and dark surfaces retain readable colours',
         await page.keyboard.press('Escape');
         assert.equal(await page.locator('#mobile-menu').count(), 0);
         await settled(page);
-        const colours = await page.locator('main article').first().evaluate(el => ({ bg: getComputedStyle(el).backgroundColor, text: getComputedStyle(el.querySelector('h4')).color }));
+        const colours = await page.locator('#profile-instrument-catalog article').first().evaluate(el => ({ bg: getComputedStyle(el).backgroundColor, text: getComputedStyle(el.querySelector('h3')).color }));
         assert.deepEqual(colours, { bg: 'rgb(30, 41, 59)', text: 'rgb(203, 213, 225)' });
     } finally { await context.close(); }
 });

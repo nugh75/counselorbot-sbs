@@ -35,7 +35,7 @@ rimangono compatibili.
   si trova nella scheda del piano, fuori dalla chat.
 - Il menu Da riprendere integra lo stesso stato dei piani, comprese le bozze
   senza snapshot. Deduplica le sessioni locali/salvate ed esclude i tentativi
-  conclusi; la vista Tutti gli strumenti nasconde quelli di classe.
+  conclusi; la vista «Senza classe» nasconde quelli di classe.
 
 ## Questionari e altre attività
 
@@ -44,7 +44,7 @@ se esiste un passo di analisi collegato, offre Vai all’approfondimento. L’an
 usa l’ultima compilazione valida del passo di origine.
 Come nel percorso normale, una nuova analisi mostra prima il passo Profilo
 (prospetto dei punteggi per fattore) e apre la chat con Continua. La ripresa di
-una conversazione in pausa salta il prospetto, come `/?frozen=` nella home.
+una conversazione in pausa salta il prospetto, come i link `/?frozen=` dal catalogo.
 Ripetere un’analisi riusa il risultato; una nuova compilazione raccoglie dati nuovi.
 Nell’editor e nei modelli si può scegliere un questionario del piano o una
 compilazione personale. La navigazione indipendente conserva questi collegamenti
