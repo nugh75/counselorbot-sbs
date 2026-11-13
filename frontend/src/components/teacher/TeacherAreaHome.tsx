@@ -8,6 +8,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { DidacticDesignSection } from './DidacticDesignSection';
 import { MyClassesSection } from './MyClassesSection';
 import { PracticeGymSection } from './PracticeGymSection';
+import { TryToolsSection } from './TryToolsSection';
 import { TeacherResourcesSection } from './TeacherResourcesSection';
 import { teacherAreaName, teacherAreaDescription, teacherAreaText } from '@/lib/i18n-teacher-area';
 import { teacherAreaGroups, teacherAreaImages, type TeacherAreaSlug } from '@/lib/teacher-area';
@@ -66,6 +67,7 @@ export function TeacherAreaHome({ teacher, institutes }: { teacher: boolean; ins
 
             {/* 2. Palestra di simulazione e prova */}
             <PracticeGymSection />
+            <TryToolsSection />
 
             {/* 3. Profilo e Risorse */}
             <section aria-labelledby="teacher-profile-notebook-heading" data-testid="teacher-profile-notebook-section">

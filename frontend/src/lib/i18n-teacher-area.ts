@@ -326,6 +326,22 @@ const labels = {
         'Chats und Ergebnisse der Übungs-Lernenden',
         'Övningselevernas chattar och resultat',
     ],
+    tryToolsTitle: [
+        'Prova gli strumenti',
+        'Try the tools',
+        'Prueba las herramientas',
+        'Essayer les outils',
+        'Werkzeuge ausprobieren',
+        'Prova verktygen',
+    ],
+    tryToolsDescription: [
+        'Avvia uno strumento: potrai sceglierlo con uno studente di prova o con i tuoi dati.',
+        'Start a tool: you can run it with a test student or with your own data.',
+        'Inicia una herramienta: podrás usarla con un estudiante de prueba o con tus propios datos.',
+        'Lancez un outil : vous pourrez l’utiliser avec un étudiant de test ou avec vos propres données.',
+        'Starten Sie ein Werkzeug: Sie können es mit einer Testperson oder mit Ihren eigenen Daten nutzen.',
+        'Starta ett verktyg: du kan köra det med en testelev eller med dina egna uppgifter.',
+    ],
     teacherProfileHeading: [
         'Profilo professionale del docente',
         'Teacher professional profile',
