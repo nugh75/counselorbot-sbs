@@ -47,3 +47,16 @@ export function suggestTools(input: {
     for (const rec of input.orientation) add({ id: rec.id, source: 'orientation', reason: rec.reason });
     return out;
 }
+
+// Ultima compilazione per strumento (ISO), dai risultati salvati dell'utente:
+// alimenta il pallino e la data nelle schede del catalogo.
+export function lastCompiledByTool(rows: { questionnaire_type: string; submitted_at: string }[]): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const row of rows) {
+        const current = out[row.questionnaire_type];
+        if (!current || new Date(row.submitted_at).getTime() > new Date(current).getTime()) {
+            out[row.questionnaire_type] = row.submitted_at;
+        }
+    }
+    return out;
+}

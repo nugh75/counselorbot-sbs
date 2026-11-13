@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node direct typescript execution requires extension
-import { latestPausedByTool, suggestTools } from './catalog-status.ts';
+import { lastCompiledByTool, latestPausedByTool, suggestTools } from './catalog-status.ts';
 
 test('each tool keeps its most recent paused session', () => {
     const paused = latestPausedByTool([
@@ -46,4 +46,14 @@ test('suggestions skip completed and inactive tools and stop at three', () => {
 
 test('no signal means no suggestions', () => {
     assert.deepEqual(suggestTools({ activeIds: ['QSA'], completed: [], paused: [], orientation: [] }), []);
+});
+
+test('lastCompiledByTool keeps the latest submission per tool', () => {
+    assert.deepEqual(lastCompiledByTool([
+        { questionnaire_type: 'QSA', submitted_at: '2026-09-01T10:00:00Z' },
+        { questionnaire_type: 'QSA', submitted_at: '2026-10-01T10:00:00Z' },
+        { questionnaire_type: 'ZTPI', submitted_at: '2026-08-01T10:00:00Z' },
+        { questionnaire_type: 'QSA', submitted_at: '2026-09-15T10:00:00Z' },
+    ]), { QSA: '2026-10-01T10:00:00Z', ZTPI: '2026-08-01T10:00:00Z' });
+    assert.deepEqual(lastCompiledByTool([]), {});
 });
