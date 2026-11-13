@@ -1,43 +1,36 @@
 # Handoff — Timoniere Counselorbot
-Agente: `t-copilota-5mmx` (Claude Opus) · Pane: `wT:pT` · Branch: `docs/service-agent-profiles`
-Aggiornato: 29 ottobre 2026, Europe/Stockholm.
+Agente: `t-copilota-usmx` (Claude Fable 5.2) · Pane: `wV:p4` · Workspace Herdr: `wV`
+Aggiornato: 13 novembre 2026, Europe/Stockholm.
 
 ## Stato
-- Codex senza crediti (29/10, ~14:00): Timoniere sostituito da Claude Opus; `ex-t-copilota-hnup` resta su `wT:pN` solo per consultazione.
-- `srv-stato` e `srv-deploy` rilanciati su Claude Sonnet (`claude-sonnet-5-5`) nelle stesse pane; `s1-consiglio-orientativo` chiuso (PR #664 MERGED, task fatto).
-- PR #667 MERGED, #653 chiusa; lo stesso Opus lavora sulla #654, sette issue successive da avviare.
-- Altre modifiche al prodotto e deploy richiedono un ordine esplicito.
+- Feedback tutor (aggiungere studenti, studenti di prova, gestione classe, colori di ruolo) concluso: issue #834–#838 chiuse, PR #839–#843 unite, main a `f307b564`.
+- Deploy unico su portable (counselorbot.labform.net) eseguito il 13/11 alle 00:57: backend e frontend ricostruiti, 5 container healthy.
+- Nessun subagente builder attivo; resta solo `srv-deploy` (Sonnet, pane `wV:p9`, task persistente `47f38ff3-2374-4e78-999e-30822d554d19`).
 
 ## Fatto
-- PR #665 MERGED verificata; main aggiornato, branch locale precedente eliminato.
-- Nomi verificati: Timoniere `wT:pT`; `s1-consiglio-orientativo` chiuso.
-- Diario: 33 issue aperte rappresentate, sei task conclusi e tre incarichi superati annullati.
-- PR #662, #663 e #664 registrate come integrate; #664 MERGED verificata su GitHub.
-- Due obiettivi raggiunti; nove gruppi di backlog aggiunti senza attivare la sync automatica.
-- #653: browser 4/4 e voce 7/7, TS/lint OK; quattro recovery e dodici i18n preesistenti documentati da Opus.
-- `s3-chat-ux-opus` avviato alle 12:00:00 CET su `wT:pP`, tab `S3: Chat UX (Opus)`.
-- PR #667 MERGED verificata (`1eeddc57`); main aggiornato, branch locale #653 eliminato con -d.
-- `srv-stato`: tab `S: srv-stato`, pane `wT:pS`, letture Herdr/GitHub verificate dopo ripresa.
-- `srv-deploy`: tab `S: srv-deploy`, pane `wT:pR`, inventario Docker in sola lettura completato.
-- Entrambi T0 Claude Sonnet (prima Codex `gpt-6.1-terra` low); worktree documentali separati, non contesti build.
-- Task persistenti: stato `792f65ea-d615-4226-a3a7-6dd0cd6033bb`, deploy `47f38ff3-2374-4e78-999e-30822d554d19`.
+- Skill wayfinder e dipendenze nel repo (PR #827) e nello store skill della Console.
+- Mappa wayfinder #828 e ticket #829–#833 chiusi con le decisioni dell'utente.
+- #834 colori di ruolo (PR #839): studente = colore attuale, docente = crema, studente di prova = celestino; solo schede e badge.
+- #835 dati di prova esclusi da conteggi, statistiche ed export (PR #840).
+- #836 il docente aggiunge uno studente per email (PR #841): tabella `group_invitations`; l'invito è accettato quando quell'email apre il link della classe.
+- #837 taccuino dello studente di prova negli strumenti senza punteggi (PR #842).
+- #838 gestione classe in tre blocchi: studenti, inviti in attesa, studenti di prova (PR #843).
+- Deploy della PR #825 (12/11) e deploy finale (13/11), backup `predeploy-20261113-005017.sql.gz`.
 
 ## Verifiche
-- CLI vive, modelli e consegne corroborati; monitor legge diario, Herdr e GitHub.
-- Docker: servizi principali Counselorbot/Console healthy, restart count 0 al primo inventario.
-- Nessun deploy, rebuild, riavvio, sudo o modifica di dati eseguito creando i servizi.
-- Config/prompt/ricevute locali: directory dati Console `service-agents/Counselorbot/`.
+- Check non desktop verdi su ogni PR prima del merge; `tests (postgres)` verde su #840 e #841.
+- Dopo il deploy: tabella `group_invitations` presente, log backend puliti, sito 302 verso auth, piano prompt di fabbrica vuoto.
+- Le PR #839, #842, #843 sono state controllate dagli agenti a 390px, tema chiaro e scuro; nessuna prova manuale in produzione.
 
 ## Prossimi passi
-- Nuove deleghe: Claude (Sonnet per compiti semplici, Opus per T2), niente Codex finché la quota non torna.
-- Monitorare #654; nessun revisore automatico, #667 unita senza revisione su scelta dell'utente.
-- Task #654: `ee7368f4-eada-416f-9f8b-2afae5e34f47`, branch `feature/chat-ux-markdown-654`; worktree precedente riusato.
-- Aggiornare srv-stato ai checkpoint e ogni 30 minuti durante il coordinamento attivo, solo quando disponibile.
-- Servizi persistenti: lasciare i task in corso anche se il singolo turno è idle/done.
-- Dopo il merge della nuova slice: #655–#661. PR #666 servizi ancora aperta; `docs/operations/service-agents.md`.
+- Prova dell'utente in produzione: invito per email, studente di prova in uno strumento senza punteggi, schermata classe.
+- Deploy solo a un passaggio significativo, mai dopo ogni merge.
+- Deleghe: Sonnet per T0/T1, Opus per T2; niente Codex, nessun revisore automatico.
 
 ## Blocchi e rischi
-- Ambiente del Timoniere eredita `HERDR_PANE_ID=wT:p6`: usare esplicitamente `wT:pT` nei bootstrap.
-- Bug locali: `8bdf9684` (pane ereditato), `5d245396` (CI), `aee61291` (duplicati storici).
-- Milestone #12/#26: contatori divergenti; #83 aperta nella #21 chiusa. Issue e milestone invariate.
-- Sette task storici da verificare, autopilot invariato; Docker non ha un mandato di intervento autonomo.
+- Counselorbot non spedisce email: ai4auth non ha un'API di invito, il docente invia il link dal proprio programma di posta. L'invio dal server sarebbe un lavoro nuovo.
+- ai4auth non verifica l'email alla registrazione con password: per questo l'invito vale solo passando dal link della classe.
+- Il check `documentation` sull'evento push può fallire quando l'ultimo commit non tocca la guida; fa fede quello sulla PR.
+- Worktree usa e getta rimasti: `Counselorbot-wt-research-829`, `-proto-831`, `-proto-833` (branch mai uniti).
+- `journal-cli notify` non recapita (repo senza cartella): best effort.
+- `.timoniere.json` modificato nel checkout principale, non toccato.
