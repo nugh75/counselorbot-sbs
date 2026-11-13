@@ -346,6 +346,13 @@ Hanno ora l'intestazione illustrata dell'area: Dispositivi (nuova voce `disposit
 dell'Area docenti, con le sue briciole di pane), Orientamento del docente, Cambiamenti
 e il forum di classe dello studente.
 
+**Somministrazioni piatte (#873).** `/docente/somministrazioni` (e la stessa scheda
+in `/admin`) segue l'aspetto piatto: intestazione e contatori senza riquadri, ogni
+somministrazione e il modulo di creazione/modifica separati da un filetto (`Card`
+piatta), le sezioni del modulo divise da filetti invece che da riquadri annidati,
+codice, note e link/QR senza box colorati. Campi, badge di stato e avvisi restano
+invariati; nessun cambio di comportamento.
+
 **Illustrazioni degli strumenti (#863).** Ogni strumento ha un’illustrazione piatta
 in SVG (QSA, QSAr, QPCS, QPCC, ZTPI, QAP, Savickas, eventi e obiettivi di studio e
 professionali, obiettivo di docenza, idea), con colori chiari e scuri tramite le
