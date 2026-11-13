@@ -189,7 +189,7 @@ for (const width of [390, 1440]) {
             await page.getByRole('button', { name: /Counselor 2/ }).click();
             assert.equal(prefs.counselor_id, 1);
             await page.getByRole('button', { name: 'Continua', exact: true }).click();
-            await page.waitForURL(`${origin}/`);
+            await page.waitForURL(`${origin}/profilo`);
             assert.equal(prefs.counselor_id, 2);
             await page.evaluate(() => localStorage.removeItem('counselorbot_selected_counselor'));
             await page.reload();
@@ -275,7 +275,7 @@ test('failed counselor save keeps the previous account preference and can be ret
         assert.equal(prefs.counselor_id, 1);
         await page.unroute('**/api/user/account-preferences');
         await page.getByRole('button', { name: 'Continua', exact: true }).click();
-        await page.waitForURL(`${origin}/`);
+        await page.waitForURL(`${origin}/profilo`);
         assert.equal(prefs.counselor_id, 2);
     } finally { await context.close(); }
 });
@@ -347,11 +347,11 @@ for (const width of [390, 1440]) {
     test(`compact illustrated introduction and optional details at ${width}px`, async () => {
         const { page, context, errors } = await fixture({ width, noHistory: true, prefs: { counselor_id: null, counselor_ready: false, notebook_ready: false, setup_completed: false } });
         try {
-            await page.goto(`${origin}/`);
+            await page.goto(`${origin}/?view=intro`);
             const start = page.getByRole('button', { name: 'Apri Bussola', exact: true });
             await start.waitFor();
             assert.equal(await start.count(), 1);
-            const tools = page.getByRole('button', { name: 'Vedi tutte le attività e i percorsi', exact: true });
+            const tools = page.getByRole('link', { name: 'Vedi tutte le attività e i percorsi', exact: true });
             await tools.waitFor();
             assert.equal(await tools.count(), 1);
             const intro = page.getByTestId('intro-screen');
@@ -407,11 +407,12 @@ for (const width of [390, 1440]) {
         const { page, context, prefs } = await fixture({ width, incompatible: true });
         try {
             await page.goto(`${origin}/?view=questionnaires`);
-            await page.getByRole('heading', { name: 'QSA', exact: true }).click();
-            await page.getByRole('button', { name: 'Continua', exact: true }).click();
+            const qsa = page.locator('#profile-instrument-catalog article').filter({ has: page.getByText('QSA', { exact: true }) }).first();
+            await qsa.getByRole('button', { name: 'Analizza i risultati', exact: true }).click();
             await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).waitFor();
             await page.getByRole('button', { name: 'Indietro', exact: true }).click();
-            await page.getByRole('button', { name: /^QSA\s/ }).waitFor();
+            await page.locator('#profile-instrument-catalog').waitFor();
+            await page.locator('a[href="/strumenti/QSA"]').waitFor();
             assert.equal(prefs.counselor_id, 1);
             assert.equal(await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).count(), 0);
         } finally { await context.close(); }
@@ -425,8 +426,8 @@ test('instrument details return to the actual catalog rather than the home scree
         await page.locator('a[href="/strumenti/QSA"]').click();
         await page.waitForURL(/\/strumenti\//);
         await page.getByRole('button', { name: 'Indietro', exact: true }).click();
-        await page.getByRole('heading', { name: 'QSA', exact: true }).waitFor();
-        assert.equal(await page.getByRole('button', { name: 'Continua', exact: true }).count(), 1);
+        await page.locator('#profile-instrument-catalog').waitFor();
+        await page.locator('a[href="/strumenti/QSA"]').waitFor();
     } finally { await context.close(); }
 });
 
@@ -434,7 +435,7 @@ for (const [locale, width, dark, title] of [['de', 320, true, 'Fragebogenanalyse
     test(`illustrated introduction remains readable in ${locale} at ${width}px, dark=${dark}`, async () => {
         const { page, context, errors } = await fixture({ width, locale, dark, noHistory: true, prefs: { counselor_id: null, counselor_ready: false, notebook_ready: false, setup_completed: false } });
         try {
-            await page.goto(`${origin}/`);
+            await page.goto(`${origin}/?view=intro`);
             const intro = page.getByTestId('intro-screen');
             await intro.getByRole('heading', { name: title, exact: true }).waitFor();
             assert.equal(await intro.locator('article').count(), 4);
@@ -517,18 +518,17 @@ for (const width of [390, 1440]) {
             await page.emulateMedia({ reducedMotion: width >= 640 ? 'no-preference' : 'reduce' });
             for (const [label, target] of [['Esplora le analisi', 'tools-assessment'], ['Esplora i percorsi', 'tools-guided']]) {
                 await page.goto(`${origin}/?view=intro`);
-                await page.getByTestId('intro-screen').getByRole('button', { name: label, exact: true }).click();
+                await page.getByTestId('intro-screen').getByRole('link', { name: label, exact: true }).click();
                 await page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).waitFor();
                 await page.waitForFunction(id => {
                     const box = document.getElementById(id)?.getBoundingClientRect();
                     return box && box.top >= 0 && box.top < innerHeight / 2;
                 }, target);
-                await page.getByRole('button', { name: 'Torna alla presentazione', exact: true }).click();
-                await page.getByTestId('intro-screen').waitFor();
             }
-            await page.getByTestId('intro-screen').getByRole('button', { name: 'Vedi tutte le attività e i percorsi', exact: true }).click();
+            await page.goto(`${origin}/?view=intro`);
+            await page.getByTestId('intro-screen').getByRole('link', { name: 'Vedi tutte le attività e i percorsi', exact: true }).click();
             await page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).waitFor();
-            assert.equal(await page.locator('main article').count(), 11);
+            assert.equal(await page.locator('#profile-instrument-catalog article').count(), 11);
             assert.deepEqual(errors, []);
         } finally { await context.close(); }
     });
