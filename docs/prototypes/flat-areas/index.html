@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototipo aree uniformi</title>
+<style>
+:root{
+  --surface:#ffffff;--surface-sunken:#f1f5f9;--page:#f8fafc;
+  --ink:#0f172a;--ink-body:#334155;--ink-muted:#64748b;
+  --line:#e2e8f0;--line-strong:#cbd5e1;
+  --link:#0f6b6e;--brand:#0f6b6e;--brand-soft:#e3f3f2;--brand-line:#9fd3d1;
+  --teacher-soft:#f8f5d7;--teacher-line:#e0d89a;--test-soft:#e2f1fb;--test-line:#a9cfe8;
+  --warn-soft:#fffbeb;--warn-line:#fcd34d;--warn-ink:#78350f;
+  --nav:#0f172a;--nav-ink:#e2e8f0;
+  /* illustration palette */
+  --i-out:#24343a;--i-paper:#ffffff;--i-teal:#2a9d96;--i-teal2:#1f5f63;--i-orange:#f2994a;--i-yellow:#f2c94c;--i-cream:#f6efe0;--i-sky:#bfe3f2;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --surface:#1e293b;--surface-sunken:#162132;--page:#0f172a;
+  --ink:#f8fafc;--ink-body:#cbd5e1;--ink-muted:#94a3b8;
+  --line:#334155;--line-strong:#475569;
+  --link:#8fcfd1;--brand:#1f7376;--brand-soft:#103f42;--brand-line:#1f7376;
+  --teacher-soft:#2b2910;--teacher-line:#5a5320;--test-soft:#0e3149;--test-line:#2a6288;
+  --warn-soft:#3a2206;--warn-line:#b45309;--warn-ink:#fcd34d;
+  --nav:#111c2d;--nav-ink:#e2e8f0;
+  --i-out:#1b262b;--i-paper:#f4f7f8;--i-cream:#e9e1cf;
+}}
+:root[data-theme="dark"]{
+  --surface:#1e293b;--surface-sunken:#162132;--page:#0f172a;
+  --ink:#f8fafc;--ink-body:#cbd5e1;--ink-muted:#94a3b8;
+  --line:#334155;--line-strong:#475569;
+  --link:#8fcfd1;--brand:#1f7376;--brand-soft:#103f42;--brand-line:#1f7376;
+  --teacher-soft:#2b2910;--teacher-line:#5a5320;--test-soft:#0e3149;--test-line:#2a6288;
+  --warn-soft:#3a2206;--warn-line:#b45309;--warn-ink:#fcd34d;
+  --nav:#111c2d;--nav-ink:#e2e8f0;
+  --i-out:#1b262b;--i-paper:#f4f7f8;--i-cream:#e9e1cf;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--ink-body);font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:inherit;text-decoration:none}
+.nav{position:sticky;top:0;z-index:5;background:var(--nav);color:var(--nav-ink);border-bottom:1px solid var(--line)}
+.nav-in{max-width:1080px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brandname{font-weight:700;font-size:20px;display:flex;align-items:center;gap:8px;margin-right:8px}
+.pill{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:3px;font-size:14px;color:var(--nav-ink);border:1px solid transparent;background:transparent;cursor:pointer}
+.pill[aria-current="page"]{background:#ffffff1a;border-color:#ffffff26;font-weight:600}
+.spacer{flex:1}
+.tgl{font-size:13px}
+.proto-note{max-width:1080px;margin:12px auto 0;padding:0 16px;font-size:13px;color:var(--ink-muted)}
+.proto-note b{color:var(--ink)}
+main{max-width:1080px;margin:0 auto;padding:16px 16px 64px}
+.pagehead{display:flex;align-items:center;gap:16px;margin:12px 0 24px}
+.pagehead h1{margin:0;font-size:26px;color:var(--ink)}
+.pagehead p{margin:2px 0 0;color:var(--ink-muted);font-size:14px}
+.classpick{display:flex;flex-direction:column;gap:6px;margin:0 0 28px;max-width:420px}
+.classpick label{font-size:14px;font-weight:600;color:var(--ink)}
+select{min-height:44px;border-radius:3px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:0 12px;font:inherit}
+section.grp{margin:0 0 32px}
+section.grp>h2{margin:0;padding-bottom:8px;border-bottom:1px solid var(--line);font-size:18px;font-weight:600;color:var(--ink)}
+section.grp>.sub{margin:4px 0 0;font-size:13px;color:var(--ink-muted)}
+.grid{display:grid;gap:4px 24px;margin-top:8px}
+@media(min-width:768px){.grid{grid-template-columns:1fr 1fr}}
+.entry{display:flex;align-items:center;gap:16px;min-height:96px;padding:16px 4px;border-bottom:1px solid transparent}
+.entry:hover{border-bottom-color:var(--line)}
+.entry:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+.entry .ill{width:64px;height:64px;flex:none;display:flex;align-items:center;justify-content:center}
+@media(min-width:768px){.entry .ill{width:72px;height:72px}}
+.entry .ill img,.entry .ill svg{width:100%;height:100%;object-fit:contain}
+.entry .txt{flex:1;min-width:0}
+.entry .ttl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:600;color:var(--ink)}
+.entry:hover .ttl{color:var(--link)}
+.entry .dsc{display:block;margin-top:2px;font-size:14px;color:var(--ink-muted)}
+.entry .meta{display:block;margin-top:4px;font-size:12px;color:var(--ink-muted)}
+.entry .meta .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--brand);margin-right:6px;vertical-align:1px}
+.entry .arr{flex:none;width:16px;height:16px;color:var(--ink-muted)}
+.badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:2px 8px;border-radius:2px;border:1px solid}
+.b-test{background:var(--test-soft);border-color:var(--test-line);color:var(--ink)}
+.b-teacher{background:var(--teacher-soft);border-color:var(--teacher-line);color:var(--ink)}
+.b-new{background:var(--brand-soft);border-color:var(--brand-line);color:var(--link)}
+.b-draft{background:var(--warn-soft);border-color:var(--warn-line);color:var(--warn-ink)}
+.notice{display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:0;border:1px solid var(--brand-line);background:var(--brand-soft);margin:0 0 28px}
+.notice b{color:var(--link)}
+.notice p{margin:2px 0 0;font-size:14px;color:var(--ink-muted)}
+.back{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--link);margin:8px 0 4px}
+.toolhead{display:flex;gap:20px;align-items:center;margin:8px 0 20px;flex-wrap:wrap}
+.toolhead .ill{width:112px;height:112px}
+.toolhead h1{margin:0;font-size:26px;color:var(--ink)}
+.toolhead .full{color:var(--ink-muted);font-size:14px}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0 28px}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 20px;border-radius:3px;font-weight:600;font-size:14px;cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.callout{border-left:3px solid var(--brand-line);padding:4px 0 4px 12px;color:var(--ink-muted);font-size:14px;margin:0 0 24px}
+.hint{font-size:12px;color:var(--ink-muted);margin-top:6px}
+.legend{max-width:1080px;margin:0 auto;padding:0 16px 40px;font-size:13px;color:var(--ink-muted)}
+.legend ul{margin:6px 0 0 18px;padding:0}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="nav-in">
+    <span class="brandname"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>CounselorBot</span>
+    <a class="pill" href="#studente" data-nav="studente"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Area studente</a>
+    <a class="pill" href="#docente" data-nav="docente"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Area docente</a>
+    <span class="spacer"></span>
+    <button class="pill tgl" id="theme" type="button">Tema: automatico</button>
+  </div>
+</header>
+<p class="proto-note"><b>Prototipo usa e getta</b> (#848 follow-up): dati finti, nessun collegamento al backend. Le illustrazioni degli strumenti sono <b>bozze</b> per mostrare lo stile, non le definitive.</p>
+<main id="app"></main>
+<div class="legend" id="legend"></div>
+
+<script>
+const ARROW='<svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+// ---- draft illustrations (flat, outlined, same palette as the existing PNGs) ----
+const S=(b)=>`<svg viewBox="0 0 96 96" aria-hidden="true" fill="none" stroke="var(--i-out)" stroke-width="2.5" stroke-linejoin="miter" stroke-linecap="butt">${b}</svg>`;
+const clip=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="var(--i-paper)"/><rect x="${x+w/2-9}" y="${y-5}" width="18" height="10" rx="2" fill="var(--i-teal2)"/>`;
+const ILL={
+ QSA:S(`${clip(18,16,48,64)}<path d="M28 34l4 4 7-8M28 50l4 4 7-8M28 66l4 4 7-8" stroke="var(--i-teal)"/><path d="M44 35h14M44 51h14M44 67h10"/><circle cx="72" cy="62" r="14" fill="var(--i-yellow)"/><path d="M66 62c2-6 10-6 12 0M68 68h8"/>`),
+ QSAr:S(`${clip(22,20,42,54)}<path d="M31 38l4 4 7-8M31 55l4 4 7-8" stroke="var(--i-teal)"/><path d="M46 39h10M46 56h8"/><path d="M72 30l-8 18h9l-7 18" fill="var(--i-orange)" stroke="var(--i-out)"/>`),
+ QPCS:S(`${clip(14,18,46,62)}<path d="M24 38h26M24 48h20M24 58h24M24 68h14"/><path d="M70 22l5 11 12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1z" fill="var(--i-yellow)"/>`),
+ QPCC:S(`${clip(14,18,46,62)}<path d="M24 38h26M24 48h20M24 58h24"/><circle cx="70" cy="58" r="17" fill="var(--i-sky)"/><path d="M70 45v4M70 67v4M57 58h4M79 58h4"/><path d="M76 52l-4 9-8 3 4-9z" fill="var(--i-orange)"/>`),
+ ZTPI:S(`<circle cx="44" cy="50" r="28" fill="var(--i-paper)"/><path d="M44 30v20l14 8" stroke="var(--i-teal2)" stroke-width="3.5"/><path d="M20 26a32 32 0 0 1 12-8" stroke="var(--i-orange)" stroke-width="4"/><path d="M76 52a32 32 0 0 1-6 18" stroke="var(--i-teal)" stroke-width="4"/><path d="M66 20h20l-6 10h-8z" fill="var(--i-yellow)"/><path d="M72 30l-6 10h20l-6-10" fill="var(--i-cream)"/>`),
+ QAP:S(`<path d="M16 66c10-2 14-14 24-14s14 10 24 8 12-14 16-18" stroke="var(--i-teal)" stroke-width="4"/><rect x="14" y="24" width="22" height="22" rx="2" fill="var(--i-yellow)"/><rect x="40" y="16" width="22" height="22" rx="2" fill="var(--i-sky)"/><rect x="64" y="58" width="20" height="20" rx="2" fill="var(--i-orange)"/><rect x="38" y="62" width="20" height="20" rx="2" fill="var(--i-paper)"/>`),
+ SAVICKAS:S(`<rect x="12" y="20" width="44" height="30" rx="2" fill="var(--i-paper)"/><path d="M22 50l-4 10 12-10"  fill="var(--i-paper)"/><path d="M22 31h24M22 39h16"/><rect x="42" y="42" width="42" height="30" rx="2" fill="var(--i-teal)"/><path d="M72 72l6 10-14-10" fill="var(--i-teal)"/><path d="M52 53h22M52 61h14" stroke="var(--i-paper)"/><circle cx="74" cy="22" r="8" fill="var(--i-yellow)"/>`),
+ EVENTO_STUDIO:S(`<path d="M14 30c10-4 20-4 34 2v46c-14-6-24-6-34-2z" fill="var(--i-paper)"/><path d="M82 30c-10-4-20-4-34 2v46c14-6 24-6 34-2z" fill="var(--i-cream)"/><path d="M22 42h18M22 52h14M56 42h18M56 52h12"/><circle cx="70" cy="22" r="10" fill="var(--i-orange)"/><path d="M66 22l3 3 6-6" stroke="var(--i-paper)"/>`),
+ EVENTO_PROFESSIONALE:S(`<rect x="14" y="34" width="60" height="42" rx="2" fill="var(--i-teal)"/><path d="M34 34v-8h20v8"/><path d="M14 52h60" stroke="var(--i-paper)"/><rect x="40" y="48" width="8" height="8" rx="2" fill="var(--i-yellow)"/><circle cx="76" cy="26" r="10" fill="var(--i-orange)"/><path d="M72 26l3 3 6-6" stroke="var(--i-paper)"/>`),
+ OBIETTIVO_STUDIO:S(`<circle cx="44" cy="52" r="28" fill="var(--i-paper)"/><circle cx="44" cy="52" r="18" fill="var(--i-sky)"/><circle cx="44" cy="52" r="8" fill="var(--i-orange)"/><path d="M44 52l32-32" stroke="var(--i-teal2)" stroke-width="3"/><path d="M70 14l6 6 8-2-6-6z" fill="var(--i-teal)"/>`),
+ OBIETTIVO_DOCENZA:S(`<rect x="10" y="16" width="56" height="40" rx="2" fill="var(--i-teal2)"/><path d="M20 30h20M20 40h28" stroke="var(--i-paper)"/><path d="M30 56l-6 20M46 56l6 20"/><circle cx="70" cy="62" r="16" fill="var(--i-paper)"/><circle cx="70" cy="62" r="9" fill="var(--i-yellow)"/><circle cx="70" cy="62" r="3" fill="var(--i-orange)"/>`),
+ IDEA:S(`<path d="M44 14a22 22 0 0 1 13 40v8H31v-8a22 22 0 0 1 13-40z" fill="var(--i-yellow)"/><path d="M33 68h22M35 76h18"/><circle cx="76" cy="30" r="6" fill="var(--i-teal)"/><circle cx="80" cy="62" r="6" fill="var(--i-sky)"/><path d="M58 38l12-6M58 50l16 8" stroke="var(--i-teal2)"/>`),
+};
+const TOOLS={
+ QSA:['QSA','Questionario sulle Strategie di Apprendimento','Analisi delle strategie cognitive e affettive di apprendimento','q'],
+ QSAr:['QSAr','QSA ridotto','Versione ridotta del QSA per valutazioni rapide','q'],
+ QPCS:['QPCS','Percezione delle proprie Competenze Strategiche','Inserisci i valori dei fattori e ottieni un’analisi guidata delle competenze strategiche','q'],
+ QPCC:['QPCC','Percezione delle proprie Competenze e Convinzioni','Inserisci i valori dei fattori e ottieni un’analisi guidata di competenze e convinzioni','q'],
+ ZTPI:['ZTPI','Zimbardo Time Perspective Inventory','Valutazione della prospettiva temporale secondo Zimbardo','q'],
+ QAP:['QAP','Questionario sull’Adattabilità Professionale','Inserisci i valori delle 4 risorse e ottieni un’analisi guidata dell’adattabilità professionale','q'],
+ SAVICKAS:['Intervista Savickas','Career Construction Interview','Percorso narrativo guidato con le 5 domande della Career Construction Interview','g'],
+ EVENTO_STUDIO:['Evento significativo di studio','','Rileggi un episodio di studio: fatti, cosa ha funzionato, cosa provare la prossima volta','g'],
+ EVENTO_PROFESSIONALE:['Evento significativo professionale','','Rileggi un episodio di lavoro o tirocinio: fatti, cosa ha funzionato, cosa provare','g'],
+ OBIETTIVO_STUDIO:['Il mio obiettivo di apprendimento','','Trasforma un desiderio vago in un obiettivo specifico e sfidante','g'],
+ IDEA:['Idea','','Metti a fuoco un’idea ancora informe con una mappa che cresce con la conversazione','g'],
+ OBIETTIVO_DOCENZA:['Obiettivi per la mia classe','','Imposta un obiettivo didattico e allinealo ad attività e valutazione','d'],
+};
+const DONE={QSA:'Compilato il 3 nov',ZTPI:'Compilato il 28 ott'};
+const img=(f)=>`<img src="img/${f}.png" alt="">`;
+const entry=({href,ill,title,desc,meta,badge})=>`<a class="entry" href="${href}"><span class="ill">${ill}</span><span class="txt"><span class="ttl">${title}${badge||''}</span><span class="dsc">${desc}</span>${meta?`<span class="meta"><span class="dot"></span>${meta}</span>`:''}</span>${ARROW}</a>`;
+const group=(title,items,sub)=>`<section class="grp"><h2>${title}</h2>${sub?`<p class="sub">${sub}</p>`:''}<nav class="grid">${items.map(entry).join('')}</nav></section>`;
+const toolEntry=(id,from)=>{const t=TOOLS[id];return{href:`#strumento/${id}/${from}`,ill:ILL[id],title:t[0],desc:t[2],meta:from==='studente'?DONE[id]:'',badge:''};};
+const P=(slug,title,desc,f,extra={})=>({href:'#pagina/'+slug,ill:img(f),title,desc,...extra});
+
+function studente(){
+  return `
+  <div class="pagehead"><div><h1>Area studente</h1><p>Strumenti, percorsi e le tue pagine personali.</p></div></div>
+  <div class="classpick"><label for="cls">Scegli la tua classe</label>
+    <select id="cls"><option>3B Liceo Scientifico</option><option>Le mie classi</option><option>Senza classe</option></select></div>
+  ${group('Piani operativi',[P('piani','Piani operativi','Segui le tappe proposte dai tuoi docenti per la tua classe.','chat-guidata')])}
+  ${group('Questionari',Object.keys(TOOLS).filter(k=>TOOLS[k][3]==='q').map(k=>toolEntry(k,'studente')))}
+  ${group('Percorsi guidati',Object.keys(TOOLS).filter(k=>TOOLS[k][3]==='g').map(k=>toolEntry(k,'studente')))}
+  ${group('Da riprendere',[
+     {href:'#strumento/SAVICKAS/studente',ill:ILL.SAVICKAS,title:'Intervista Savickas',desc:'Passo 3 di 7: i modelli di ruolo',meta:'In pausa dal 10 nov'},
+     {href:'#strumento/OBIETTIVO_STUDIO/studente',ill:ILL.OBIETTIVO_STUDIO,title:'Il mio obiettivo di apprendimento',desc:'Bozza dell’obiettivo da completare',meta:'In pausa dal 6 nov'}])}
+  ${group('Il mio spazio',[
+     P('taccuino','Taccuino','Racconta il tuo contesto, gli interessi e il modo di apprendere.','su-di-me'),
+     P('cambiamenti','Cambiamenti','Confronta ciò che hai scritto e rifletti sui cambiamenti.','self_reflection'),
+     P('compilazioni','Risultati e conversazioni','Ritrova i risultati dei questionari e i dialoghi collegati.','compilazioni'),
+     P('analisi','Analisi Combinata dei Profili','Lettura integrata tra gli strumenti compilati (QSA, QSAr, ZTPI)','profiles')])}
+  ${group('Il mio percorso',[
+     P('obiettivi','Obiettivi','Scegli che cosa vuoi raggiungere e il prossimo passo.','focus_goal'),
+     P('azioni','Azioni','Organizza quello che vuoi fare, stai facendo o hai provato.','bacheca-azioni'),
+     P('timeline','Linea del tempo','Guarda nel tempo tappe, attività, obiettivi e appuntamenti.','linea-del-tempo')])}
+  ${group('Studiare e ragionare',[
+     P('pqbl','Studiare da un PDF','Lavora sul tuo materiale attraverso domande e feedback.','practice'),
+     P('carte','Carte da ordinare','Raggruppa idee e riflessioni.','carte-ordinare'),
+     P('confronto','Confrontare alternative','Valuta possibilità diverse secondo i tuoi criteri.','confronto'),
+     P('tavolo','Tavolo','Costruisci e rivedi diagrammi di lavoro.','tavolo')])}
+  ${group('La mia classe',[
+     P('classi','Le mie classi','Messaggi, forum e incontri delle tue classi.','classi'),
+     P('assegnazioni','Assegnazioni','Le attività che i docenti ti hanno proposto.','assegnazioni')])}`;
+}
+function docente(){
+  return `
+  <div class="pagehead"><div><h1>Area docente</h1><p>Classi, prove con studenti immaginari e risorse.</p></div></div>
+  ${group('Progettazione didattica',[toolEntry('OBIETTIVO_DOCENZA','docente')])}
+  ${group('Classe',[
+     P('classi','Le mie classi','Crea classi, invita studenti e segui il loro lavoro.','classi'),
+     P('piani','Piani operativi','Prepara le tappe da proporre alla classe.','percorsi-classe'),
+     P('assegnazioni','Assegnazioni','Proponi attività e raccogli il lavoro degli studenti.','assegnazioni'),
+     P('incontri','Incontri','Pianifica e ritrova gli incontri con la classe.','incontri'),
+     P('compilazioni','Compilazioni','Risultati dei questionari compilati dagli studenti.','compilazioni')])}
+  ${group('Palestra',[
+     P('taccuini-prova','Studenti di prova','Crea studenti immaginari per provare gli strumenti.','chat-guidata',{badge:' <span class="badge b-test">prova</span>'}),
+     P('feedback','Proposte e feedback','Rivedi le conversazioni di prova e le proposte.','feedback-docente')])}
+  ${group('Prova gli strumenti',Object.keys(TOOLS).filter(k=>k!=='OBIETTIVO_DOCENZA').map(k=>toolEntry(k,'docente')),'Avvia uno strumento come studente di prova o con i tuoi dati.')}
+  ${group('Profilo',[P('taccuino','Taccuino del docente','Materie, esperienza e metodologie che usi in classe.','su-di-me',{badge:' <span class="badge b-teacher">docente</span>'})])}
+  ${group('Risorse',[
+     P('catalogo','Catalogo obiettivi','Obiettivi pronti da adattare alla tua classe.','focus_goal'),
+     P('strategie','Strategie','Strategie e letture certificate.','mind_mapping'),
+     P('materiali','Materiali','Materiali da condividere con la classe.','library_hall')])}
+  ${group('Ricerca',[
+     P('somministrazioni','Somministrazioni','Raccogli questionari compilati fuori dalla chat.','eventi'),
+     P('orientamento','Orientamento','Consiglio di orientamento formativo.','bussola')])}`;
+}
+function strumento(id,from){
+  const t=TOOLS[id]; const fromLabel=from==='docente'?'Area docente':'Area studente';
+  const isQ=t[3]==='q';
+  const start=from==='docente'
+   ? `<a class="btn primary" href="#">Inizia come studente di prova</a><a class="btn" href="#">Inizia con i miei dati</a>`
+   : `<a class="btn primary" href="#">Inizia</a>`;
+  return `
+  <a class="back" href="#${from}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>${fromLabel}</a>
+  <div class="toolhead"><span class="ill">${ILL[id]}</span><div><h1>${t[0]}</h1>${t[1]?`<div class="full">${t[1]}</div>`:''}<p style="margin:6px 0 0;max-width:640px">${t[2]}</p>${from==='studente'&&DONE[id]?`<div class="hint">${DONE[id]}</div>`:''}</div></div>
+  <div class="actions">${start}${isQ?`<a class="btn" href="#">Compila sul sito</a>`:''}<a class="btn" href="#">Dettagli e fonti</a></div>
+  ${isQ?`<p class="callout">«Compila sul sito» ora sta qui, nella pagina dello strumento, e non più nell’elenco (Q2).</p>`:''}
+  ${group('Pagine collegate',[
+     P('compilazioni','Risultati e conversazioni','Le tue compilazioni di questo strumento.','compilazioni'),
+     P('analisi','Analisi Combinata dei Profili','Leggi questo risultato insieme agli altri.','profiles')])}`;
+}
+function pagina(slug){
+  return `<a class="back" href="javascript:history.back()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Indietro</a>
+  <div class="pagehead"><div><h1>${slug}</h1><p>Pagina interna: stessa intestazione; il contenuto si allinea nel passo 4 del piano (ricerca sulle 44 sottopagine).</p></div></div>`;
+}
+const LEG={
+ studente:`<b>Cosa guardare</b><ul><li>Un solo stile per tutto: titolo di sezione con linea, voci su due colonne, illustrazione, titolo, descrizione, freccia.</li><li>Questionari e percorsi guidati sono voci come le altre (niente schede, niente filtri a pillola, Q3). Lo stato «Compilato il…» è una riga piccola.</li><li>«Scegli la tua classe» in cima; «Senza classe» al posto di «Tutti gli strumenti».</li></ul>`,
+ docente:`<b>Cosa guardare</b><ul><li>Progettazione, classi e palestra non sono più riquadri colorati: sono voci dell’elenco.</li><li>«Le mie classi» è una sola voce (Q4).</li><li>«Prova gli strumenti» usa lo stesso elenco del catalogo studente. I colori di ruolo restano solo sui badge.</li></ul>`,
+ strumento:`<b>Pagina dello strumento</b><ul><li>Si apre dalla voce dell’elenco. Qui stanno i pulsanti, incluso «Compila sul sito» (Q2).</li><li>Dall’Area docente compaiono «studente di prova» e «i miei dati».</li></ul>`,
+};
+function render(){
+  const h=(location.hash||'#studente').slice(1).split('/');
+  const app=document.getElementById('app'); let key=h[0];
+  if(key==='docente') app.innerHTML=docente();
+  else if(key==='strumento') app.innerHTML=strumento(h[1],h[2]||'studente');
+  else if(key==='pagina') app.innerHTML=pagina(h[1]);
+  else {key='studente'; app.innerHTML=studente();}
+  document.getElementById('legend').innerHTML=LEG[key]||'';
+  const area=key==='strumento'?(h[2]||'studente'):key;
+  document.querySelectorAll('[data-nav]').forEach(a=>a.toggleAttribute('aria-current',a.dataset.nav===area));
+  document.querySelectorAll('[data-nav]').forEach(a=>a.dataset.nav===area?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
+  window.scrollTo(0,0);
+}
+addEventListener('hashchange',render); render();
+const modes=['automatico','chiaro','scuro']; let m=0;
+try{m=Math.max(0,modes.indexOf(localStorage.getItem('proto-theme')||'automatico'))}catch(e){}
+function applyTheme(){const r=document.documentElement; if(m===0) r.removeAttribute('data-theme'); else r.setAttribute('data-theme',m===1?'light':'dark'); document.getElementById('theme').textContent='Tema: '+modes[m]; try{localStorage.setItem('proto-theme',modes[m])}catch(e){}}
+document.getElementById('theme').onclick=()=>{m=(m+1)%3;applyTheme()}; applyTheme();
+</script>
+</body>
+</html>
