@@ -346,6 +346,14 @@ Hanno ora l'intestazione illustrata dell'area: Dispositivi (nuova voce `disposit
 dell'Area docenti, con le sue briciole di pane), Orientamento del docente, Cambiamenti
 e il forum di classe dello studente.
 
+**Studiare da un PDF senza schede annidate (#874).** `/profilo/pqbl` usa solo la
+`Card` piatta: impostazione, generazione, introduzione, domande, riepilogo, test finale
+e risultati sono sezioni separate da un filetto. Nel riepilogo i tre numeri sono cifre
+semplici e i punteggi per competenza un elenco separato da filetti; le icone dei titoli
+non hanno più il riquadro colorato. Restano riquadrati l'area di caricamento del PDF, i
+pulsanti di risposta, i riscontri delle risposte e gli avvisi. Il progresso salvato nel
+browser e il flusso non cambiano.
+
 **Illustrazioni degli strumenti (#863).** Ogni strumento ha un’illustrazione piatta
 in SVG (QSA, QSAr, QPCS, QPCC, ZTPI, QAP, Savickas, eventi e obiettivi di studio e
 professionali, obiettivo di docenza, idea), con colori chiari e scuri tramite le
