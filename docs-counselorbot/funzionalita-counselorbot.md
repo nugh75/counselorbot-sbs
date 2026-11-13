@@ -346,6 +346,19 @@ Hanno ora l'intestazione illustrata dell'area: Dispositivi (nuova voce `disposit
 dell'Area docenti, con le sue briciole di pane), Orientamento del docente, Cambiamenti
 e il forum di classe dello studente.
 
+**Elenchi docente piatti (#868).** `/docente/classi` (e le classi di un istituto) elenca
+ogni classe come voce dell'elenco condiviso (nome, stato, codice, partecipanti, scuola,
+proprietario) invece di un riquadro con ombra; la copia del codice e le scorciatoie alle
+schede restano nella pagina della classe. Gli istituti e le assegnazioni usano la `Card`
+piatta per ogni riga; moduli e finestre di dialogo non cambiano.
+
+**Somministrazioni piatte (#873).** `/docente/somministrazioni` (e la stessa scheda
+in `/admin`) segue l'aspetto piatto: intestazione e contatori senza riquadri, ogni
+somministrazione e il modulo di creazione/modifica separati da un filetto (`Card`
+piatta), le sezioni del modulo divise da filetti invece che da riquadri annidati,
+codice, note e link/QR senza box colorati. Campi, badge di stato e avvisi restano
+invariati; nessun cambio di comportamento.
+
 **Studiare da un PDF senza schede annidate (#874).** `/profilo/pqbl` usa solo la
 `Card` piatta: impostazione, generazione, introduzione, domande, riepilogo, test finale
 e risultati sono sezioni separate da un filetto. Nel riepilogo i tre numeri sono cifre
@@ -1324,6 +1337,9 @@ Ha una sola voce, **API e ChatGPT** (`/profilo/api-personali`,
 `/docente/api-personali`), che riunisce le API personali e l’abbonamento ChatGPT
 abilitati per l’installazione. Se nessuna delle due funzioni è attiva, la sezione
 non compare.
+
+La pagina e l’hub Risorse del docente (Strategie e Materiali) hanno un aspetto piatto: connessioni,
+impostazioni e controfigure sono righe separate da un filetto, senza riquadri annidati; nessun cambio di funzione.
 
 ### Abbonamento personale ChatGPT (opzionale)
 

@@ -34,3 +34,10 @@ test('dispositivi slug has name, description and image in every language', () =>
         assert.ok(teacherAreaDescription(lang, 'dispositivi'));
     }
 });
+
+test('administrations panel is flat: plans and form use the flat Card, no nested boxes', () => {
+    const source = read('components/admin/AdministrationPlansPanel.tsx');
+    assert.equal([...source.matchAll(/<Card as="section" variant="flat"/g)].length, 2);
+    assert.doesNotMatch(source, /<Card(?![^>]*variant="flat")[^>]*>/);
+    assert.doesNotMatch(source, /rounded-lg|shadow-card|bg-brand-soft\/40|bg-surface-sunken p-4|rounded-control border border-line bg-surface p-4/);
+});

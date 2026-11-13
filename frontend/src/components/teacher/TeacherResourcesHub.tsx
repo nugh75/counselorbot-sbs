@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { BookOpen, Sparkles, Library } from 'lucide-react';
+import { BookOpen, Sparkles } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { teacherAreaText } from '@/lib/i18n-teacher-area';
 import { CertifiedStrategiesPanel } from '@/components/admin/CertifiedStrategiesPanel';
@@ -41,21 +41,7 @@ export function TeacherResourcesHub({ defaultTab }: { defaultTab?: ResourcesTab 
 
     return (
         <div className="space-y-6" data-testid="teacher-resources-hub">
-            <div className="rounded-card border border-brand-line bg-brand-soft p-4 sm:p-6 shadow-card">
-                <div className="flex items-start gap-4 sm:gap-4">
-                    <div className="rounded-card bg-brand/10 p-2 text-link">
-                        <Library className="h-6 w-6" aria-hidden />
-                    </div>
-                    <div className="space-y-1">
-                        <h2 className="text-base font-semibold text-ink sm:text-lg">
-                            {l('resources')}
-                        </h2>
-                        <p className="text-xs leading-relaxed text-ink-muted sm:text-sm">
-                            {l('resourcesHubDescription')}
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <p className="text-sm leading-relaxed text-ink-muted">{l('resourcesHubDescription')}</p>
 
             {/* Tab navigation */}
             <div className="border-b border-line" role="tablist" aria-label={l('resources')}>
@@ -68,10 +54,10 @@ export function TeacherResourcesHub({ defaultTab }: { defaultTab?: ResourcesTab 
                         aria-selected={activeTab === 'strategie'}
                         data-testid="tab-strategie"
                         onClick={() => handleTabChange('strategie')}
-                        className={`inline-flex min-h-[44px] items-center gap-2 rounded-t-xl px-4 py-2 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                        className={`inline-flex min-h-[44px] items-center gap-2 px-4 py-2 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
                             activeTab === 'strategie'
-                                ? 'border-b-2 border-brand bg-surface text-link shadow-card'
-                                : 'text-ink-muted hover:bg-surface-raised hover:text-ink'
+                                ? 'border-b-2 border-brand text-link'
+                                : 'text-ink-muted hover:text-ink'
                         }`}
                     >
                         <Sparkles className={`h-4 w-4 shrink-0 ${activeTab === 'strategie' ? 'text-link' : 'text-ink-muted'}`} aria-hidden />
@@ -86,10 +72,10 @@ export function TeacherResourcesHub({ defaultTab }: { defaultTab?: ResourcesTab 
                         aria-selected={activeTab === 'materiali'}
                         data-testid="tab-materiali"
                         onClick={() => handleTabChange('materiali')}
-                        className={`inline-flex min-h-[44px] items-center gap-2 rounded-t-xl px-4 py-2 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                        className={`inline-flex min-h-[44px] items-center gap-2 px-4 py-2 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
                             activeTab === 'materiali'
-                                ? 'border-b-2 border-brand bg-surface text-link shadow-card'
-                                : 'text-ink-muted hover:bg-surface-raised hover:text-ink'
+                                ? 'border-b-2 border-brand text-link'
+                                : 'text-ink-muted hover:text-ink'
                         }`}
                     >
                         <BookOpen className={`h-4 w-4 shrink-0 ${activeTab === 'materiali' ? 'text-link' : 'text-ink-muted'}`} aria-hidden />
