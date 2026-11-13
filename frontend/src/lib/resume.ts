@@ -7,6 +7,7 @@ export interface ResumePoint {
     sessionId: string;
     experience: 'standard' | 'free';
     counselorId: number | null;
+    fromStudent?: boolean;
 }
 
 const KEY = 'counselorbot_resume';

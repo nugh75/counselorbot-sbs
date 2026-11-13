@@ -55,6 +55,7 @@ interface FreeChatInterfaceProps {
     locale?: string;
     onComplete: () => void;
     onFrozen?: () => void;
+    studentFlow?: boolean;
     onBack?: () => void;
     frozenSnapshot?: FrozenSessionDetail | null;
     initialResponseLength?: ResponseLength;
@@ -67,7 +68,7 @@ interface FreeChatInterfaceProps {
 export function FreeChatInterface({
     counselorId, scores, questionnaireType, sessionId, locale, onComplete, onFrozen, onBack, frozenSnapshot,
     initialResponseLength = 'medium', initialReasoningEffort = 'standard', initialResponseFormat = 'standard',
-    reasoningCapable = true, reasoningMandatory = false,
+    reasoningCapable = true, reasoningMandatory = false, studentFlow = false,
 }: FreeChatInterfaceProps) {
     const { t, tf, lang } = useI18n();
     const activeLocale: Lang = (locale as Lang | undefined) ?? lang;
@@ -204,6 +205,7 @@ export function FreeChatInterface({
         scores,
         counselor_id: counselorId,
         experience: 'free',
+        notebook_context: studentFlow ? 'student' : undefined,
         conversation_id: conversationId,
         locale: activeLocale,
         response_length: responseLength,

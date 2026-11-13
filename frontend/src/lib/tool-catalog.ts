@@ -1,5 +1,7 @@
 import type { InstrumentSummary } from './instruments-api';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { hasHomeToolEntry, instrumentStartHref } from './home-entry.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { isToolAllowed, type UserAccess } from './user-access.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { QUESTIONNAIRE_LIST, buildDynamicQuestionnaireConfig, type QuestionnaireConfig, type QuestionnaireType } from './questionnaires.ts';
@@ -134,9 +136,9 @@ export function getDynamicToolCategories(
 }
 
 export function orientationToolHref(id: string): string {
-    if (isStartableQuestionnaireId(id)) return `/?start=${encodeURIComponent(id)}`;
+    if (isStartableQuestionnaireId(id)) return instrumentStartHref(id, true);
     if (id === 'pqbl') return '/profilo/pqbl';
-    return '/?view=home';
+    return '/profilo';
 }
 
 export function safeOrientationNext(value: string | null): string | null {
@@ -162,18 +164,11 @@ export function orientationSkippedThisVisit(): boolean {
 }
 
 export function orientationGateBypass(pathname: string, search = ''): boolean {
-    const exemptPaths = ['/inizia', '/counselor', '/profilo', '/pqbl', '/bussola', '/login', '/logout', '/accesso-locale', '/unisciti', '/register', '/guide', '/telegram-link', '/questionario'];
+    const exemptPaths = ['/inizia', '/counselor', '/profilo', '/pqbl', '/bussola', '/login', '/logout', '/accesso-locale', '/unisciti', '/gruppo', '/register', '/guide', '/telegram-link', '/questionario'];
     if (exemptPaths.some((path) => pathname.startsWith(path))) return true;
     if (pathname !== '/') return false;
     const params = new URLSearchParams(search);
-    // Riprese di una sessione: il cancello le lasciava gia' passare.
-    if (params.get('frozen') || params.get('resume') || params.get('session_id')) return true;
-    // La radice nuda e' la presentazione, e chi arriva per la prima volta deve
-    // vederla: prima il cancello lo spediva alla Bussola senza che avesse letto
-    // che cos'e' questo posto -- anche chi entra come ospite, che e' uno
-    // studente come gli altri per il cancello. Dalla presentazione l'unica via
-    // avanti e' il tasto, e il tasto porta alla Bussola: passare di qui non e'
-    // saltarla.
-    // I collegamenti che entrano dritti nel percorso restano al di qua.
-    return !params.get('view') && !params.get('start');
+    // L'atterraggio per ruolo e la Presentazione non richiedono la Bussola.
+    // Per gli ingressi agli strumenti, le riprese vanno direttamente alla chat.
+    return !hasHomeToolEntry(params) || Boolean(params.get('frozen') || params.get('resume') || params.get('session_id'));
 }

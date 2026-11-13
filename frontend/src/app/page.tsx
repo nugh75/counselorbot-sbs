@@ -2,9 +2,9 @@
 
 import { isReusableProfile } from '@/lib/questionnaires';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     QUESTIONNAIRES,
@@ -15,7 +15,7 @@ import {
     buildFallbackQuestionnaireConfig,
 } from '@/lib/questionnaires';
 import { fetchInstruments } from '@/lib/instruments-api';
-import type { PausedChat } from '@/lib/catalog-status';
+import { rememberPausedChat } from '@/lib/catalog-status';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { InputMethodSelector, type Method as InputMethod } from '@/components/qsa/InputMethodSelector';
 import { ScoreInputForm } from '@/components/qsa/ScoreInputForm';
@@ -28,12 +28,12 @@ import { FreeChatInterface } from '@/components/qsa/FreeChatInterface';
 import { ChatSettingsCard } from '@/components/qsa/ChatSettingsCard';
 import { SessionReport } from '@/components/qsa/SessionReport';
 import { ReturningHome } from '@/components/home/ReturningHome';
-import { MessageSquare, MessagesSquare, LogIn } from 'lucide-react';
+import { MessageSquare, MessagesSquare } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { FlowStepper } from '@/components/ui/FlowStepper';
 import { IntroScreen } from '@/components/home/IntroScreen';
-import { FeedbackEntry } from '@/components/home/FeedbackEntry';
+import { SignInCard } from '@/components/home/SignInCard';
 import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
 import { Card } from '@/components/ui/Card';
@@ -42,7 +42,8 @@ import { canUseTeacherAssistant } from '@/lib/roles';
 import { isPracticeRun, readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId } from '@/lib/notebook-context';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 import { practiceResultChatHref } from '@/lib/practice-notebooks';
-import { apiFetch, getIdentity, loginHref, type Identity } from '@/lib/auth';
+import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
+import { hasHomeToolEntry, homeLandingHref, instrumentStartHref } from '@/lib/home-entry';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, setActiveSessionCounselorId } from '@/lib/counselor';
 import { experiencePrefForInstrument, getExperiencePref, getInputMethodPref, getReasoningPref, getResponseLengthPref, setExperiencePref, setInputMethodPref, setReasoningPref, setResponseLengthPref } from '@/lib/session-prefs';
 import type { ResponseFormat } from '@/lib/chat-preferences';
@@ -93,21 +94,19 @@ function generateUUID() {
 const freeExperience = (value: string | null | undefined) => value === 'free' || value === 'opencode';
 
 export default function Home() {
+    return <Suspense><HomeFlow /></Suspense>;
+}
+
+function HomeFlow() {
     const { t, lang } = useI18n();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
     const router = useRouter();
     const [step, setStep] = useState<Step>('intro');
     // Started from an operational plan step: the final screen leads back there.
     const [fromPlan, setFromPlan] = useState(false);
-    const [toolsAnchor, setToolsAnchor] = useState<string | null>(null);
-
-    // Il catalogo strumenti (step 'base') viene aperto anche dalla presentazione:
-    // La sezione richiesta viene raggiunta al termine della transizione:
-    // AnimatePresence può ritardare il montaggio del catalogo.
-    const openTools = (anchor?: string) => {
-        setStep('base');
-        setToolsAnchor(anchor ?? null);
-    };
+    const query = useSearchParams().toString();
+    const studentEntry = useRef(false);
+    const [studentFlow, setStudentFlow] = useState(false);
     const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<QuestionnaireConfig | null>(null);
     const [counselorRequest, setCounselorRequest] = useState<{
         questionnaire: QuestionnaireConfig; scores: Record<string, number> | null; resumeSid?: string; previousId: number | null;
@@ -138,17 +137,7 @@ export default function Home() {
     const [sessionCounselorId, setSessionCounselorId] = useState<number | null>(null);
     const [frozenSnapshot, setFrozenSnapshot] = useState<FrozenSessionDetail | null>(null);
     const [planOrigin, setPlanOrigin] = useState<{ pathId: number; stepId: number } | null>(null);
-    // Chat appena congelata col fiocco: «Attività e percorsi» la ricorda in
-    // cima, così chi ci arriva sa cosa è successo e come tornare indietro.
-    const [pausedChat, setPausedChat] = useState<PausedChat | null>(null);
-    // L'avviso vale solo per l'atterraggio dopo il fiocco: uscire dalla pagina lo chiude.
-    const [pausedChatStep, setPausedChatStep] = useState(step);
-    if (pausedChatStep !== step) {
-        setPausedChatStep(step);
-        if (step !== 'base') setPausedChat(null);
-    }
     const [savedResults, setSavedResults] = useState<SavedResult[] | null>(null);
-    const [notebookUpdatedAt, setNotebookUpdatedAt] = useState<string | null | undefined>(undefined);
     const [studentPaths, setStudentPaths] = useState<StudentClassPath[] | null>(null);
     const studentPathsRequest = useRef(0);
 
@@ -166,11 +155,8 @@ export default function Home() {
             if (request === studentPathsRequest.current) setStudentPaths([]);
         }
     }, []);
-    // Schermata iniziale decisa: un link diretto (?frozen, ?start, ...) la
-    // rivendica subito, altrimenti si sceglie fra intro e percorso quando i
-    // dati dello studente sono arrivati.
+    // La schermata è pronta quando abbiamo consumato l'ingresso da link.
     const [ready, setReady] = useState(false);
-    const entryClaimed = useRef(false);
     const practiceProfileEntry = useRef<number | null>(null);
     // Copia per il render del solo «c'è un profilo di pratica»: il ref resta per i gestori.
     const [practiceEntryActive, setPracticeEntryActive] = useState(false);
@@ -181,7 +167,6 @@ export default function Home() {
     // deciso dal browser, che non deve accodare una nuova entrata.
     const trailRef = useRef<Trail<Step> | null>(null);
     const movingRef = useRef(false);
-    const hasCompletedQuestionnaires = (savedResults?.length ?? 0) > 0;
 
     useEffect(() => {
         getIdentity().then(setIdentity);
@@ -194,13 +179,8 @@ export default function Home() {
             .then((res) => (res.ok ? res.json() : []))
             .then((rows: unknown) => { if (alive) setSavedResults(Array.isArray(rows) ? (rows as SavedResult[]) : []); })
             .catch(() => { if (alive) setSavedResults([]); });
-        apiFetch('/api/user/learner-profile')
-            .then((res) => (res.ok ? res.json() : null))
-            .then((rev: { created_at?: string } | null) => { if (alive) setNotebookUpdatedAt(rev?.created_at ?? null); })
-            .catch(() => { if (alive) setNotebookUpdatedAt(null); });
-        void loadStudentPaths();
         return () => { alive = false; };
-    }, [identity, loadStudentPaths]);
+    }, [identity]);
 
     // Browser back/forward can restore this page from cache after a plan chat
     // starts or is paused. Reload its steps when the user returns to the home.
@@ -254,24 +234,10 @@ export default function Home() {
     }, []);
 
     useEffect(() => {
-        const navigate = (target: 'base' | 'intro') => {
-            setSelectedQuestionnaire(null);
-            setScores(null);
-            setScoreOrigin('new');
-            setSessionId('');
-            setExperience(null);
-            setStep(target);
-            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
-        };
-        const onNavigateHome = () => navigate('base');
-        const onNavigateIntro = () => navigate('intro');
-        window.addEventListener('cb-navigate-home', onNavigateHome);
+        const onNavigateIntro = () => router.push('/?view=intro');
         window.addEventListener('cb-navigate-intro', onNavigateIntro);
-        return () => {
-            window.removeEventListener('cb-navigate-home', onNavigateHome);
-            window.removeEventListener('cb-navigate-intro', onNavigateIntro);
-        };
-    }, []);
+        return () => window.removeEventListener('cb-navigate-intro', onNavigateIntro);
+    }, [router]);
 
     // Sull'intro nessuno strumento è ancora in corso: il chip nell'header non
     // deve mostrarne uno rimasto da un percorso precedente. Il counselor invece
@@ -281,13 +247,6 @@ export default function Home() {
             setSelectedInstrumentId(null);
         }
     }, [step]);
-
-    // Un link diretto porta già dove deve: la scelta fra presentazione e
-    // percorso non deve sovrascriverlo.
-    const claimEntry = useCallback(() => {
-        entryClaimed.current = true;
-        setReady(true);
-    }, []);
 
     // Il tasto della presentazione. Il primo passo del percorso è la Bussola,
     // non uno strumento: la scheda apre sempre la chat di orientamento, anche
@@ -310,25 +269,18 @@ export default function Home() {
         })();
     };
 
-    // Dove si torna a percorso finito: al percorso se c'è una storia o un percorso di classe,
-    // alla presentazione se è la prima volta senza percorsi.
-    const homeStep = (): Step => (
-        hasCompletedQuestionnaires || notebookUpdatedAt || (studentPaths?.length ?? 0) > 0 ? 'base' : 'intro'
-    );
+    const returnToStudentArea = useCallback(() => { router.replace('/profilo'); }, [router]);
+    const returnToArea = () => {
+        if (planOrigin) {
+            router.replace(`/profilo/piani-operativi/${planOrigin.pathId}/${planOrigin.stepId}`);
+            return;
+        }
+        router.replace(canUseTeacherAssistant(identity) && !studentEntry.current && !fromPlan ? '/docente' : '/profilo');
+    };
 
-    // Schermata iniziale: se lo studente appartiene a una classe con percorsi pubblicati,
-    // atterra direttamente sulla schermata base con il percorso hero in evidenza;
-    // altrimenti atterra sulla presentazione iniziale.
-    useEffect(() => {
-        // Decide la schermata d'ingresso una volta sola, leggendo il ref condiviso con gli
-        // ingressi da link: spostarlo nel render richiederebbe di rifare la macchina d'ingresso.
-        if (ready || entryClaimed.current) return;
-        if (!identity?.authenticated) return;
-        if (savedResults === null || notebookUpdatedAt === undefined || studentPaths === null) return;
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot entry decision guarded by the entryClaimed ref (see comment above)
-        setStep(studentPaths.length > 0 ? 'base' : 'intro');
-        setReady(true);
-    }, [ready, identity, savedResults, notebookUpdatedAt, studentPaths]);
+    // I link consumati dalla chat tolgono la query con replaceState; il ref
+    // conserva quel valore per distinguere il consumo da un nuovo ingresso.
+    const entryQuery = useRef<string | null>(null);
 
     // Apre la chat con la modalità già scelta in passato; Idea fa eccezione,
     // perché mappa grafica e chat libera devono restare una scelta esplicita.
@@ -342,7 +294,7 @@ export default function Home() {
         // Se la preferenza non è memorizzata resta la scelta fatta nella scheda
         // Impostazioni; null solo se nessuna delle due parla (retrocompatibilità).
         setExperience((current) => pref ?? current);
-        if (pref) setResume({ instrument, sessionId: sid, experience: pref, counselorId: getSelectedCounselorId() });
+        if (pref) setResume({ instrument, sessionId: sid, experience: pref, counselorId: getSelectedCounselorId(), fromStudent: studentEntry.current });
         setStep('interaction');
     }, []);
 
@@ -353,7 +305,7 @@ export default function Home() {
         setScores({});
 
         // In prova il docente non crea un risultato vuoto sul proprio account (#835).
-        if (!existingSessionId && !isPracticeRun(canUseTeacherAssistant(identity), readStoredNotebookContext())) {
+        if (!existingSessionId && !isPracticeRun(!studentEntry.current && canUseTeacherAssistant(identity), readStoredNotebookContext())) {
             addCompletedProfile(questionnaire.id, newSessionId, {});
             try {
                 const response = await apiFetch('/api/questionnaire-result', {
@@ -380,7 +332,7 @@ export default function Home() {
     // Verifica il counselor per questo strumento prima di avviare il percorso.
     const prepareInstrument = useCallback(async (questionnaire: QuestionnaireConfig | null, currentScores: Record<string, number> | null, resumeSid?: string) => {
         if (!questionnaire) {
-            setStep('base');
+            returnToStudentArea();
             return;
         }
         if (currentScores !== null && !isReusableProfile(questionnaire.id, currentScores)) {
@@ -394,7 +346,7 @@ export default function Home() {
             const preferences = await fetchAccountPreferences().catch(() => null);
             if (!preferences) { toast.error(t('setup.error')); return; }
             if (!preferences.notebook_ready || !preferences.counselor_ready) {
-                router.push(`${preferences.notebook_ready ? "/counselor" : "/inizia"}?next=${encodeURIComponent(practiceProfileHref.current ?? `/?start=${questionnaire.id}`)}`);
+                router.push(`${preferences.notebook_ready ? "/counselor" : "/inizia"}?next=${encodeURIComponent(practiceProfileHref.current ?? instrumentStartHref(questionnaire.id, studentEntry.current))}`);
                 return;
             }
             const counselors = await fetchCounselors(lang, lang, questionnaire.id);
@@ -407,7 +359,7 @@ export default function Home() {
             setSelectedCounselorId(counselor.id);
             if (isAgentOnly(questionnaire)) {
                 // Il docente sceglie prima per chi è la chat: studente di prova o sé stesso (#837).
-                if (!resumeSid && canUseTeacherAssistant(identity)) {
+                if (!resumeSid && !studentEntry.current && canUseTeacherAssistant(identity)) {
                     setStep('method-select');
                     return;
                 }
@@ -425,50 +377,83 @@ export default function Home() {
             const usable = method === 'upload' ? supportsProfileUpload(questionnaire.id) : method === 'manual';
             // In prova la scelta dello studente simulato e del suo repertorio
             // vive nella schermata del metodo: niente scorciatoia.
-            if (method && usable && !hasSaved && readStoredNotebookContext() !== 'practice') {
+            if (method && usable && !hasSaved && (studentEntry.current || readStoredNotebookContext() !== 'practice')) {
                 setScoreOrigin('new');
                 setStep(method === 'manual' ? 'manual-input' : 'upload-input');
                 return;
             }
             setStep('method-select');
         } finally { setPreparingInstrument(false); }
-    }, [identity, lang, router, savedResults, startAgentOnlyQuestionnaire, t]);
+    }, [identity, lang, returnToStudentArea, router, savedResults, startAgentOnlyQuestionnaire, t]);
 
     useEffect(() => {
-        if (entryClaimed.current || !identity?.authenticated) return;
+        if (!identity?.authenticated || entryQuery.current === query) return;
+        entryQuery.current = query;
+        const params = new URLSearchParams(query);
+        const resetTrail = () => { trailRef.current = null; movingRef.current = false; };
+        if (!hasHomeToolEntry(params)) {
+            if (params.get('view') === 'intro') {
+                resetTrail();
+                setSelectedInstrumentId(null);
+                // eslint-disable-next-line react-hooks/set-state-in-effect -- entry URL selects the explicit presentation
+                setStep('intro');
+                setSelectedQuestionnaire(null);
+                setScores(null);
+                setScoreOrigin('new');
+                setSessionId('');
+                setExperience(null);
+                setReady(true);
+            } else {
+                setSelectedInstrumentId(null);
+                router.replace(homeLandingHref(identity, params, window.location.hash));
+            }
+            return;
+        }
 
-        const params = new URLSearchParams(window.location.search);
+        const consumeEntry = () => {
+            entryQuery.current = '';
+            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
+        };
+        const enterStudentFlow = (value: boolean) => {
+            studentEntry.current = value;
+            setStudentFlow(value);
+        };
+        resetTrail();
+        setReady(false);
+        enterStudentFlow(params.get('from') === 'student');
+        practiceProfileEntry.current = null;
+        practiceProfileHref.current = null;
+        setPracticeEntryActive(false);
+        setFrozenSnapshot(null);
+        setPlanOrigin(null);
+        setFromPlan(params.get('from') === 'plan');
 
         // Ripresa di una sessione congelata: lo stato arriva dal server, non da localStorage.
         const frozenParam = params.get('frozen');
         if (frozenParam) {
-            entryClaimed.current = true;
-            // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot read of the entry URL, consumed by replaceState right after
-            setFromPlan(params.get('from') === 'plan');
-            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
+            consumeEntry();
             void (async () => {
                 try {
                     const snapshot = await getFrozenSession(frozenParam);
                     if (!snapshot) {
                         toast.error(t('toast.error'));
-                        setStep(homeStep());
-                        setReady(true);
+                        returnToStudentArea();
                         return;
                     }
                     const access = await fetchUserAccess();
                     if (!isToolAllowed(access, snapshot.questionnaire_type)) {
                         toast.error(t('session.disabledForClass'));
-                        setStep('base');
-                        setReady(true);
+                        returnToStudentArea();
                         return;
                     }
                     const counselor = resumeCounselor(access, snapshot.counselor_id ?? null, getSelectedCounselorId());
                     if (!counselor) {
                         toast.info(t('session.counselorChoose'));
-                        router.replace(`/counselor?next=${encodeURIComponent(`/?frozen=${frozenParam}`)}`);
+                        router.replace(`/counselor?next=${encodeURIComponent(`/?frozen=${encodeURIComponent(frozenParam)}${params.get('from') === 'student' ? '&from=student' : ''}`)}`);
                         return;
                     }
                     if (counselor.replaced) toast.info(t('session.counselorReplaced'));
+                    enterStudentFlow(params.get('from') === 'student' || snapshot.notebook_context === 'student');
                     const q = QUESTIONNAIRES[snapshot.questionnaire_type as QuestionnaireType]
                         ?? buildFallbackQuestionnaireConfig(snapshot.questionnaire_type);
                     setSelectedQuestionnaire(q);
@@ -489,18 +474,17 @@ export default function Home() {
                 } catch (err) {
                     if (err instanceof FrozenSessionAccessError && err.detail === 'tool_disabled_for_class') {
                         toast.error(t('session.disabledForClass'));
-                        setStep('base');
+                        returnToStudentArea();
                     } else if (err instanceof FrozenSessionAccessError && err.detail === 'qpcc_legacy_profile') {
                         toast.error(t('q.QPCC.legacyProfile'));
-                        setStep('base');
+                        returnToStudentArea();
                     } else if (err instanceof FrozenSessionAccessError && err.detail === 'tool_unavailable') {
                         toast.error(t('session.toolUnavailable'));
-                        setStep('base');
+                        returnToStudentArea();
                     } else {
                         toast.error(t('toast.error'));
-                        setStep(homeStep());
+                        returnToStudentArea();
                     }
-                    setReady(true);
                 }
             })();
             return;
@@ -509,15 +493,14 @@ export default function Home() {
         // Riprendi la sessione interrotta (pulsante header): torna dritto alla chat.
         if (params.get('resume')) {
             const r = getResume();
-            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
+            consumeEntry();
             if (r) {
-                entryClaimed.current = true;
+                enterStudentFlow(r.fromStudent === true);
                 void (async () => {
                     const access = await fetchUserAccess();
                     if (!isToolAllowed(access, r.instrument)) {
                         toast.error(t('session.disabledForClass'));
-                        setStep('base');
-                        setReady(true);
+                        returnToStudentArea();
                         return;
                     }
                     if (isStartableQuestionnaireId(r.instrument, null, access)) {
@@ -545,6 +528,7 @@ export default function Home() {
                         try {
                             const snapshot = await getFrozenSession(r.sessionId);
                             if (snapshot) {
+                                if (snapshot.notebook_context === 'student') enterStudentFlow(true);
                                 setFrozenSnapshot(snapshot);
                                 setScores(snapshot.scores || {});
                                 setExperience(freeExperience(snapshot.experience) ? 'free' : 'standard');
@@ -556,58 +540,33 @@ export default function Home() {
                         } catch (err) {
                             if (err instanceof FrozenSessionAccessError && err.detail === 'tool_disabled_for_class') {
                                 toast.error(t('session.disabledForClass'));
-                                setStep('base');
-                                setReady(true);
+                                returnToStudentArea();
                             } else if (err instanceof FrozenSessionAccessError && err.detail === 'tool_unavailable') {
                                 toast.error(t('session.toolUnavailable'));
-                                setStep('base');
-                                setReady(true);
+                                returnToStudentArea();
                             } else {
                                 toast.error(t('toast.error'));
-                                setReady(true);
+                                returnToStudentArea();
                             }
                         }
                     } else {
-                        setStep(homeStep());
-                        setReady(true);
+                        returnToStudentArea();
                     }
                 })();
                 return;
             }
         }
 
-        // `view=questionnaires` è il vecchio catalogo strumenti, confluito in
-        // «Attività e percorsi»: i link salvati portano lì.
-        // `view=home` arriva dal bivio della Bussola: chi sceglie gli strumenti
-        // deve trovare il catalogo di chi torna, non la presentazione, anche se
-        // è la prima volta e non ha ancora compilato nulla.
-        const view = params.get('view') || (!params.get('start') && !params.get('q') && !params.get('session_id')
-            ? ({ base: 'home', intro: 'intro' } as Record<string, string>)[window.history.state?.cbPageStep] : null);
-        if (view === 'questionnaires' || view === 'home' || view === 'intro') {
-            setSelectedQuestionnaire(null);
-            setScores(null);
-            setScoreOrigin('new');
-            setSessionId('');
-            setExperience(null);
-            setStep(view === 'intro' ? 'intro' : 'base');
-            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
-            claimEntry();
-            return;
-        }
-
         // Resume chat from a test administration: /?session_id=...&instrument=...
         const resumeSession = params.get('session_id');
         const resumeInstrument = params.get('instrument') as QuestionnaireType | null;
         if (resumeSession && resumeInstrument) {
-            entryClaimed.current = true;
-            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
+            consumeEntry();
             void (async () => {
                 const access = await fetchUserAccess();
                 if (!isToolAllowed(access, resumeInstrument)) {
                     toast.error(t('session.disabledForClass'));
-                    setStep('base');
-                    claimEntry();
-                    setReady(true);
+                    returnToStudentArea();
                     return;
                 }
                 if (isStartableQuestionnaireId(resumeInstrument, null, access)) {
@@ -623,34 +582,28 @@ export default function Home() {
                     setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
                     setExperience(null);
                     void prepareInstrument(questionnaire, profile?.scores ?? {}, resumeSession);
-                    claimEntry();
-                } else {
-                    setStep(homeStep());
-                    claimEntry();
                     setReady(true);
+                } else {
+                    returnToStudentArea();
                 }
             })();
             return;
         }
 
         const requestedId = params.get('start') || params.get('q');
-        if (!requestedId) return;
+        if (!requestedId) { returnToStudentArea(); return; }
 
-        entryClaimed.current = true;
         const startedFromPlan = params.get('from') === 'plan';
         const pathId = Number(params.get('path_id'));
         const stepId = Number(params.get('path_step_id'));
         if (startedFromPlan && Number.isSafeInteger(pathId) && pathId > 0 && Number.isSafeInteger(stepId) && stepId > 0) setPlanOrigin({ pathId, stepId });
         void (async () => {
-            setFromPlan(startedFromPlan);
             const access = await fetchUserAccess();
             if (!isToolAllowed(access, requestedId)) {
                 // Disabled tool: deep link falls back to the catalog with warning
                 toast.error(t('session.disabledForClass'));
-                window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
-                setStep('base');
-                claimEntry();
-                setReady(true);
+                consumeEntry();
+                returnToStudentArea();
                 return;
             }
 
@@ -670,10 +623,8 @@ export default function Home() {
                 questionnaire = buildFallbackQuestionnaireConfig(requestedId);
             }
             if (!questionnaire) {
-                window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
-                setStep('base');
-                claimEntry();
-                setReady(true);
+                consumeEntry();
+                returnToStudentArea();
                 return;
             }
 
@@ -682,7 +633,7 @@ export default function Home() {
             let practiceScores: Record<string, number> | null = null;
             const notebookParam = params.get('practice_notebook_id');
             const resultParam = params.get('practice_result_id');
-            if (notebookParam !== null || resultParam !== null) {
+            if (!studentEntry.current && (notebookParam !== null || resultParam !== null)) {
                 try {
                     const notebookId = Number(notebookParam);
                     const resultId = Number(resultParam);
@@ -701,9 +652,8 @@ export default function Home() {
                     storeNotebookContext('practice');
                 } catch {
                     toast.error(t('toast.error'));
-                    setStep('base');
-                    window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
-                    claimEntry();
+                    consumeEntry();
+                    returnToStudentArea();
                     return;
                 }
             }
@@ -715,19 +665,20 @@ export default function Home() {
             setSessionId('');
             setExperience(practiceScores ? 'standard' : null);
             void prepareInstrument(questionnaire, practiceScores);
-            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
-            claimEntry();
+            consumeEntry();
+            setReady(true);
         })();
-    }, [identity, prepareInstrument, claimEntry, t]);
+    }, [identity, lang, query, prepareInstrument, returnToStudentArea, router, t]);
 
     // Tutti gli ingressi riusano le preferenze dell’account.
     const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
+        studentEntry.current = false;
+        setStudentFlow(false);
         setPlanOrigin(null);
         setFromPlan(false);
         practiceProfileEntry.current = null;
         setPracticeEntryActive(false);
         practiceProfileHref.current = null;
-        setPausedChat(null);
         setSelectedQuestionnaire(questionnaire);
         setSelectedInstrumentId(questionnaire.id);
         setScores(null);
@@ -773,7 +724,7 @@ export default function Home() {
         if (starting) return;
         if (!getSelectedCounselorId()) {
             toast.info(t('counselor.selectFirst'));
-            router.push(`/counselor?next=${encodeURIComponent(practiceProfileHref.current ?? `/?start=${selectedQuestionnaire?.id || 'QSA'}`)}`);
+            router.push(`/counselor?next=${encodeURIComponent(practiceProfileHref.current ?? instrumentStartHref(selectedQuestionnaire?.id || 'QSA', studentEntry.current))}`);
             return;
         }
         setStarting(true);
@@ -782,7 +733,7 @@ export default function Home() {
         const qType = selectedQuestionnaire?.id || 'QSA';
         // Prova del docente: il server riverifica ruolo e proprietà a ogni turno;
         // qui decide solo dove salvare i punteggi nuovi.
-        const practiceNotebookId = canUseTeacherAssistant(identity) && (practiceProfileEntry.current !== null || readStoredNotebookContext() === 'practice')
+        const practiceNotebookId = !studentEntry.current && canUseTeacherAssistant(identity) && (practiceProfileEntry.current !== null || readStoredNotebookContext() === 'practice')
             ? practiceProfileEntry.current ?? readStoredPracticeNotebookId()
             : null;
         if (practiceNotebookId !== null || scoreOrigin === 'practice') {
@@ -885,7 +836,7 @@ export default function Home() {
         setExperience(exp);
         if (selectedQuestionnaire?.id !== 'IDEA') setExperiencePref(rememberExperience ? exp : null);
         if (selectedQuestionnaire) {
-            setResume({ instrument: selectedQuestionnaire.id, sessionId, experience: exp, counselorId: sessionCounselorId });
+            setResume({ instrument: selectedQuestionnaire.id, sessionId, experience: exp, counselorId: sessionCounselorId, fromStudent: studentEntry.current });
         }
     };
 
@@ -907,15 +858,23 @@ export default function Home() {
         setStep('completed');
     };
 
-    const analyzeAnother = () => {
-        setFromPlan(false);
-        setPlanOrigin(null);
+    const handleInteractionFrozen = (practice = false) => {
         setResume(null);
-        setScores(null);
-        setScoreOrigin('new');
-        setSelectedQuestionnaire(null);
-        setExperience(null);
-        setStep(homeStep());
+        if (planOrigin) {
+            router.push(`/profilo/piani-operativi/${planOrigin.pathId}/${planOrigin.stepId}?attempt=${encodeURIComponent(sessionId)}`);
+            return;
+        }
+        if (practice || (canUseTeacherAssistant(identity) && !studentEntry.current && !fromPlan)) {
+            router.push('/docente');
+            return;
+        }
+        if (selectedQuestionnaire) rememberPausedChat({ sessionId, questionnaireId: selectedQuestionnaire.id });
+        router.push('/profilo');
+    };
+
+    const analyzeAnother = () => {
+        setResume(null);
+        returnToArea();
     };
 
     // Indietro sullo schermo e Indietro del browser sono lo stesso gesto: con un
@@ -929,11 +888,12 @@ export default function Home() {
             return;
         }
         if (window.history.state?.cbPreviousPage && window.history.length > 1) { router.back(); return; }
-        if (step === 'method-select' || step === 'counselor-select') setStep('base');
+        if (step === 'method-select' || step === 'counselor-select') returnToArea();
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
         else if (step === 'dashboard') setStep('method-select');
         else if (step === 'chat-settings') setStep('dashboard');
-        else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'base' : 'dashboard');
+        else if (step === 'interaction' && isAgentOnly(selectedQuestionnaire)) returnToArea();
+        else if (step === 'interaction') setStep('dashboard');
         else if (step === 'completed') setStep('dashboard');
         else if (step === 'farewell') setStep('completed');
     };
@@ -948,28 +908,7 @@ export default function Home() {
         );
     }
 
-    if (!identity?.authenticated) {
-        return (
-            <div className="page-narrow">
-                <Card className="p-8 text-center space-y-6">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-ink">{t('home.auth.title')}</h1>
-                        <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-                            {t('home.auth.body')}
-                        </p>
-                    </div>
-                    <a
-                        href={loginHref('/')}
-                        className="inline-flex items-center gap-2 rounded-control min-h-control bg-brand px-6 py-2 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover"
-                    >
-                        <LogIn className="h-4 w-4" />
-                        {t('home.auth.cta')}
-                    </a>
-                </Card>
-                <FeedbackEntry className="mt-6" />
-            </div>
-        );
-    }
+    if (!identity?.authenticated) return <SignInCard returnPath={query ? `/?${query}` : '/'} />;
 
     if (!ready || preparingInstrument) {
         return (
@@ -1015,20 +954,10 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
-                    onAnimationComplete={() => {
-                        if (step !== 'base' || !toolsAnchor) return;
-                        const target = document.getElementById(toolsAnchor);
-                        if (!target) return;
-                        target.scrollIntoView({
-                            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-                            block: 'start',
-                        });
-                        setToolsAnchor(null);
-                    }}
                 >
                     {/* Step: Intro */}
                     {step === 'intro' && (
-                        <IntroScreen onStart={startFromIntro} onOpenTools={openTools} />
+                        <IntroScreen onStart={startFromIntro} />
                     )}
 
                     {/* Step: percorso — schermata iniziale di chi è già passato di qui */}
@@ -1039,8 +968,6 @@ export default function Home() {
                             onOpenIntro={() => setStep('intro')}
                             paths={studentPaths}
                             onRefreshPaths={loadStudentPaths}
-                            pausedChat={pausedChat}
-                            onDismissPausedChat={() => setPausedChat(null)}
                         />
                     )}
 
@@ -1066,6 +993,7 @@ export default function Home() {
                             onSelect={handleMethodSelect}
                             onBack={goBack}
                             questionnaire={selectedQuestionnaire}
+                            studentFlow={studentFlow}
                         />
                     )}
 
@@ -1178,12 +1106,8 @@ export default function Home() {
                                     initialResponseFormat={responseFormat}
                                     reasoningCapable={reasoningCapable}
                                     reasoningMandatory={reasoningMandatory}
-                                    onFrozen={() => {
-                                        setPausedChat({ sessionId, questionnaireId: selectedQuestionnaire.id });
-                                        setResume(null);
-                                        setFrozenSnapshot(null);
-                                        setStep('base');
-                                    }}
+                                    studentFlow={studentFlow}
+                                    onFrozen={handleInteractionFrozen}
                                 />
                                 </ChatViewport>
                             ) : (
@@ -1201,12 +1125,8 @@ export default function Home() {
                                     initialResponseFormat={responseFormat}
                                     reasoningCapable={reasoningCapable}
                                     reasoningMandatory={reasoningMandatory}
-                                    onFrozen={() => {
-                                        setPausedChat({ sessionId, questionnaireId: selectedQuestionnaire.id });
-                                        setResume(null);
-                                        setFrozenSnapshot(null);
-                                        setStep('base');
-                                    }}
+                                    studentFlow={studentFlow}
+                                    onFrozen={() => handleInteractionFrozen()}
                                 />
                                 </ChatViewport>
                             )}
@@ -1261,7 +1181,7 @@ export default function Home() {
                                     >
                                         {t('farewell.feedback')}
                                     </a>
-                                    <Button variant="secondary" size="lg" onClick={() => setStep(homeStep())} className="w-full">
+                                    <Button variant="secondary" size="lg" onClick={returnToArea} className="w-full">
                                         {t('farewell.home')}
                                     </Button>
                                 </div>

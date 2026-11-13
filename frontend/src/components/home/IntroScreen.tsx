@@ -20,13 +20,7 @@ const sections = [
     { id: 'resources', title: 'app.intro.compact.resources.title', paragraphs: ['resources.p1', 'resources.p2', 'resources.p3'] },
 ] as const;
 
-export function IntroScreen({
-    onStart,
-    onOpenTools,
-}: {
-    onStart: () => void;
-    onOpenTools?: (anchor?: string) => void;
-}) {
+export function IntroScreen({ onStart }: { onStart: () => void }) {
     const { t } = useI18n();
     const { access, loading } = useUserAccess();
 
@@ -54,16 +48,16 @@ export function IntroScreen({
                                 <h3 className="font-display min-w-0 break-words text-lg font-semibold text-ink">{t(activity.title)}</h3>
                             </div>
                             <p className="mt-4 grow text-sm leading-relaxed text-ink-muted">{t(`app.intro.entry.${activity.key}.body`)}</p>
-                            {activity.key === 'workspace' ? (
-                                <Link href="/profilo" className="mt-4 inline-flex min-h-control items-center self-start rounded-control font-semibold text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus">{t(activity.action)}</Link>
+                            {activity.key === 'compass' ? (
+                                <button type="button" onClick={onStart} className="mt-4 inline-flex min-h-control items-center self-start rounded-control text-left font-semibold text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus">{t(activity.action)}</button>
                             ) : (
-                                <button type="button" onClick={() => activity.key === 'compass' ? onStart() : onOpenTools?.(activity.anchor)} className="mt-4 inline-flex min-h-control items-center self-start rounded-control text-left font-semibold text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus">{t(activity.action)}</button>
+                                <Link href={activity.anchor ? `/profilo#${activity.anchor}` : '/profilo'} className="mt-4 inline-flex min-h-control items-center self-start rounded-control font-semibold text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus">{t(activity.action)}</Link>
                             )}
                         </article>
                     ))}
                 </div>
                 <div className="text-center">
-                    <button type="button" onClick={() => onOpenTools?.()} className="inline-flex min-h-control items-center rounded-control text-sm font-semibold text-link underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus">{t('app.intro.entry.all')}</button>
+                    <Link href="/profilo" className="inline-flex min-h-control items-center rounded-control text-sm font-semibold text-link underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus">{t('app.intro.entry.all')}</Link>
                 </div>
                 <FeedbackEntry />
             </section>

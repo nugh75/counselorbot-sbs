@@ -4,10 +4,29 @@
 
 import type { FrozenSessionSummary } from './frozen-session';
 
-// Chat guidata appena congelata: «Attività e percorsi» è dove si atterra dopo il fiocco.
+// Chat appena congelata: l’Area studente mostra l’avviso una volta dopo il fiocco.
 export interface PausedChat {
     sessionId: string;
     questionnaireId: string;
+}
+
+const PAUSED_CHAT_KEY = 'cb-paused-chat-notice';
+
+export function rememberPausedChat(chat: PausedChat): void {
+    try { sessionStorage.setItem(PAUSED_CHAT_KEY, JSON.stringify(chat)); }
+    catch { /* L’avviso è facoltativo: lo snapshot è già salvato sul server. */ }
+}
+
+export function takePausedChat(): PausedChat | null {
+    try {
+        const raw = sessionStorage.getItem(PAUSED_CHAT_KEY);
+        if (!raw) return null;
+        sessionStorage.removeItem(PAUSED_CHAT_KEY);
+        const chat = JSON.parse(raw) as Partial<PausedChat> | null;
+        return typeof chat?.sessionId === 'string' && typeof chat.questionnaireId === 'string'
+            ? { sessionId: chat.sessionId, questionnaireId: chat.questionnaireId }
+            : null;
+    } catch { return null; }
 }
 
 export function latestPausedByTool(frozen: FrozenSessionSummary[]): Map<string, FrozenSessionSummary> {
