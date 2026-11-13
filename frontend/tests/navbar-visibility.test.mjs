@@ -489,13 +489,13 @@ test('class dropdown at the top of /profilo updates the navbar without a reload'
     const { page, context, writes } = await fixture({ profile: 'S2', width: 1024 });
     try {
         await page.goto(`${origin}/profilo`);
-        await eventually(() => names(header(page)), expectedNavbar('S2', 1024).bar, 'class view');
+        await eventually(() => names(header(page)), expectedNavbar('S2', 1024, { area: LABELS.student }).bar, 'class view');
         assert.equal(await header(page).getByLabel(LABELS.view, { exact: true }).count(), 0, 'no selector in the navbar');
         const select = page.getByLabel(LABELS.view, { exact: true });
         assert.equal(await select.evaluate(el => el === document.querySelector('select')), true, 'first select on the page');
         assert.deepEqual(await select.locator('option').allTextContents(), PROFILES.S2.expect.view);
         await select.selectOption('all');
-        await eventually(() => names(header(page)), expectedNavbar('S2', 1024, { override: { bussola: true } }).bar, 'full view');
+        await eventually(() => names(header(page)), expectedNavbar('S2', 1024, { area: LABELS.student, override: { bussola: true } }).bar, 'full view');
         assert.deepEqual(writes, [{ path: '/api/user/access/view', body: { view: 'all' } }]);
     } finally { await context.close(); }
 });
