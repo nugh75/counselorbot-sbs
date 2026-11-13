@@ -1,7 +1,7 @@
 # Handoff: feature/pqbl-flat-874 (#874)
 
 ## Stato
-Fatto: verifiche verdi, PR in apertura.
+Fatto: PR #883 aperta; main unito (conflitto solo nel doc funzionalità, risolto tenendo entrambi), verifiche ripetute verdi.
 
 ## Fatto
 - `frontend/src/app/profilo/pqbl/page.tsx`: tutte le `Card` con `variant="flat"`; tolti i riquadri interni
@@ -16,7 +16,7 @@ Fatto: verifiche verdi, PR in apertura.
 - Nessun controllo visivo/browser (niente dev server, volume lento).
 
 ## Prossimi passi
-- PR verso main, milestone UI consistency.
+- Revisione e merge da parte dell'utente.
 
 ## Blocchi e rischi
 - Nessuno. `tsc` segnala solo PNG guida mancanti nel worktree, non legati a questa modifica.
