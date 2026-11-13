@@ -48,8 +48,8 @@ diff del test. Per decisione dell'utente l'etichetta resta «Area studente»
   guardia); elenco riprese 500 → «Riprova» in menu o popover, poi le righe.
 - **Riprese**: sessioni congelate filtrate dagli strumenti della classe, link
   `/?frozen=…`, cancellazione per riga.
-- **Vista classe**: cambio a «Tutti gli strumenti» con PUT e barra aggiornata
-  senza ricaricare.
+- **Vista classe**: cambio a «Senza classe» dal menu in cima a `/profilo` con PUT e barra aggiornata
+  senza ricaricare; la navbar non contiene il selettore.
 - **Tastiera**: skip link, brand, apertura del menu con Invio, Tab dentro il
   menu, Escape chiude e riporta il focus al trigger.
 - **Pannelli dell'header (P2)**: menu a tre punti, «Riprendi» e lingua sono
@@ -86,7 +86,7 @@ diff del test. Per decisione dell'utente l'etichetta resta «Area studente»
   sotto-pannello `#mobile-resume` chiuso, numero delle riprese, errore con
   Riprova, cancellazione per riga) → Account (nome, servizi, preferenze, sei
   lingue con il nome, «Esci» in fondo) o Preferenze con «Accedi» per l'anonimo.
-  Vista attiva in cima per chi ha classi. A 320×568, 568×320, 390×844,
+  Nessun selettore di classe (sta in `/profilo`, #851). A 320×568, 568×320, 390×844,
   844×390, 768×1024 e 390×480 con dodici riprese e nome lungo: pannello dentro
   il viewport e sotto la barra, scroll verticale, ogni controllo almeno 44 px,
   nessuno scroll orizzontale, «Esci» raggiungibile anche a righe aperte. Con

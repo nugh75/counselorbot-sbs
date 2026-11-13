@@ -372,14 +372,14 @@ test('teacher messages and class meetings follow the active view', async () => {
     });
     try {
         await f.page.goto(`${origin}/profilo/taccuino`);
-        const selector = f.page.locator('header select').first();
+        const selector = f.page.locator('select').first();
         const note = f.page.getByText('Messaggio della classe', { exact: false });
         await note.waitFor();
         await selector.selectOption('all');
         await note.waitFor({ state: 'detached' });
         await f.page.goto(`${origin}/profilo/timeline`);
         assert.equal(await f.page.getByText('Incontro della classe', { exact: true }).count(), 0);
-        await f.page.locator('header select').first().selectOption('classes');
+        await f.page.locator('select').first().selectOption('classes');
         await f.page.getByText('Incontro della classe', { exact: true }).first().waitFor();
         await f.page.goto(`${origin}/profilo/taccuino`);
         await note.waitFor();
@@ -392,13 +392,13 @@ test('an administrator enrolled in a class sees the plan after selecting the cla
     try {
         await f.page.goto(`${origin}/profilo`);
         const hero = f.page.locator('[data-testid="class-path-hero-card"]');
-        const selector = f.page.locator('header select').first();
+        const selector = f.page.locator('select').first();
         await selector.waitFor();
         assert.equal(await selector.inputValue(), 'all');
         assert.match(await selector.innerText(), /3B Liceo/);
         assert.equal(await hero.count(), 0);
         await selector.selectOption('classes');
-        await f.page.waitForFunction(() => document.querySelector('header select')?.value === 'classes');
+        await f.page.waitForFunction(() => document.querySelector('select')?.value === 'classes');
         await hero.waitFor();
         assert.match(await hero.innerText(), /Inizio anno/);
         await f.page.locator('#personal-catalog-section').waitFor({ state: 'visible' });
@@ -415,7 +415,7 @@ test('all tools hides class content and switching back restores it without reloa
         await f.page.route('**/_next/image?*', route => route.abort());
         await f.page.route('**/*?_rsc=*', route => route.abort());
         await f.page.goto(`${origin}/profilo`);
-        const selector = f.page.locator('header select').first();
+        const selector = f.page.locator('select').first();
         const hero = f.page.locator('[data-testid="class-path-hero-card"]');
         const resume = f.page.locator('section[aria-labelledby="personal-resume-title"]');
         await hero.waitFor();
@@ -427,12 +427,12 @@ test('all tools hides class content and switching back restores it without reloa
         for (const path of ['/profilo/assegnazioni', '/profilo/classi', '/profilo/classi/10/forum',
             '/profilo/piani-operativi', '/profilo/piani-operativi/1/102', '/profilo/piani-operativi/1/102/approfondimento']) {
             await f.page.goto(`${origin}${path}`, { waitUntil: 'commit' });
-            await f.page.getByText('Per vedere i contenuti della classe, scegli una vista di classe nel selettore Vista attiva.').waitFor();
+            await f.page.getByText('Per vedere i contenuti della classe, scegli una classe nel selettore Scegli la tua classe.').waitFor();
         }
         await f.page.goto(`${origin}/?view=home`, { waitUntil: 'domcontentloaded' });
         await f.page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).waitFor();
         assert.equal(await hero.count(), 0);
-        await f.page.locator('header select').first().selectOption('classes');
+        await f.page.locator('select').first().selectOption('classes');
         await hero.waitFor();
         await f.page.goto(`${origin}/profilo`);
         await resume.getByText('Compito della classe').waitFor();

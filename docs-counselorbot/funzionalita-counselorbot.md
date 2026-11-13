@@ -396,8 +396,7 @@ dell’account.
 Sotto 1024 px (telefono e tablet in verticale) la barra mostra il marchio e il
 pulsante **Menu** con l’icona a tre righe. Il pannello si apre sotto la barra, a
 tutta larghezza sul telefono, e raccoglie le stesse funzioni del desktop in
-gruppi con un titolo: in alto la **Vista attiva** per chi ha classi, poi
-**Area** (Presentazione, Area studente, Area docente e Area amministrazione secondo il ruolo),
+gruppi con un titolo: **Area** (Presentazione, Area studente, Area docente e Area amministrazione secondo il ruolo),
 **Supporto** (Bussola, Assistente, Guida), **Conversazione** (strumento scelto,
 counselor e **Riprendi un’attività**, che apre il proprio elenco con il numero
 delle attività, Riprova in caso di errore e la cancellazione di ogni riga) e
@@ -408,7 +407,8 @@ il loro elenco, così lingua ed Esci non arrivano mai dopo tutte le sessioni. Il
 pannello scorre se lo schermo è basso, non sposta la pagina di lato e si chiude
 con Esc, scegliendo una voce o tornando indietro; il focus torna al pulsante
 Menu.
-Con **Tutti gli strumenti** la vista studente mostra l'esperienza personale:
+Chi ha classi sceglie dal menu **Scegli la tua classe**, in cima all’Area studente
+(non più nella barra). Con **Senza classe** la vista studente mostra l'esperienza personale:
 piani, assegnazioni, messaggi e incontri delle classi sono nascosti, e la chat
 non eredita le impostazioni di classe. I contenuti e l'iscrizione restano
 conservati e ricompaiono quando si seleziona una vista di classe. La scelta
@@ -1467,7 +1467,7 @@ il salvataggio e riporta allo stesso passo nella pagina da cui si era partiti.
 Un errore nel recupero offre Riprova senza aprire una conversazione vuota.
 Anche il menu **Da riprendere** usa lo stato dei tentativi del piano: include le
 bozze sul server, esclude i completati e conta una sola volta la stessa sessione.
-Nella vista **Tutti gli strumenti** le attività di classe restano nascoste.
+Nella vista **Senza classe** le attività di classe restano nascoste.
 
 Le card dei piani operativi, la pagina degli obiettivi con i suoi popup, le
 assegnazioni dello studente e le schede di obiettivo ed evento proposte nella

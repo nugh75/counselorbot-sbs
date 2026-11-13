@@ -8,10 +8,9 @@ import { useI18n } from '@/lib/i18n-context';
 import type { UserAccess } from '@/lib/user-access';
 import { cn } from '@/lib/utils';
 
-// Student view switcher (#146): full view or a class view, stored server side.
-// Renders nothing for accounts without a class. `access` comes from
-// the Header: opening the menu does not read /api/user/access again.
-export function ClassViewSwitcher({ access, labelled = false, className }: { access: UserAccess | null; labelled?: boolean; className?: string }) {
+// Class dropdown at the top of /profilo (#146, #851): no class, all classes or
+// one class, stored server side. Renders nothing for accounts without a class.
+export function ClassViewSwitcher({ access, className }: { access: UserAccess | null; className?: string }) {
     const { lang } = useI18n();
     const [saving, setSaving] = useState(false);
     const [failed, setFailed] = useState(false);
@@ -37,11 +36,8 @@ export function ClassViewSwitcher({ access, labelled = false, className }: { acc
     };
 
     return (
-        <div className={cn(labelled ? 'flex flex-col gap-1' : 'flex min-w-0 items-center', className)}>
-            <label
-                htmlFor={id}
-                className={labelled ? 'text-2xs font-semibold text-ink-muted' : 'sr-only'}
-            >
+        <div className={cn('flex flex-col gap-1', className)}>
+            <label htmlFor={id} className="text-sm font-semibold text-ink">
                 {label}
             </label>
             <div className="relative flex min-w-0 items-center">
@@ -55,7 +51,7 @@ export function ClassViewSwitcher({ access, labelled = false, className }: { acc
                     aria-invalid={failed || undefined}
                     onChange={(event) => onChange(event.target.value)}
                     className={cn(
-                        'min-h-control w-full min-w-0 truncate rounded-full border border-line bg-surface-sunken py-1 pl-8 pr-8 text-sm text-ink-body hover:border-line-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-60 lg:min-h-0 lg:max-w-56',
+                        'min-h-control w-full min-w-0 truncate rounded-full border border-line bg-surface-sunken py-1 pl-8 pr-8 text-sm text-ink-body hover:border-line-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-60 sm:max-w-sm',
                         failed && 'border-danger',
                     )}
                 >
@@ -66,7 +62,7 @@ export function ClassViewSwitcher({ access, labelled = false, className }: { acc
                     ))}
                 </select>
             </div>
-            <span id={`${id}-hint`} className={labelled ? 'text-xs text-ink-muted' : 'sr-only'}>{hint}</span>
+            <span id={`${id}-hint`} className="text-xs text-ink-muted">{hint}</span>
             <span role="status" className={failed ? 'text-xs text-danger' : 'sr-only'}>
                 {failed ? classViewText(lang, 'error') : ''}
             </span>

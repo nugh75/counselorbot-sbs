@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { BookOpen, Bot, Compass, GraduationCap, House, LayoutGrid, Settings, User, type LucideIcon } from 'lucide-react';
-import { ClassViewSwitcher } from './ClassViewSwitcher';
 import { HeaderAccount, SignInLink } from './HeaderAccount';
 import { HeaderAreas } from './HeaderAreas';
 import { HeaderCounselor } from './HeaderCounselor';
@@ -104,9 +103,6 @@ export function Header() {
                     ) : workInline}
 
                     <div className="ml-auto flex min-w-0 items-center gap-1">
-                        {/* Vista attiva dello studente con classi (#146). */}
-                        {!nav.loading && nav.classView && <ClassViewSwitcher access={access} className="hidden lg:flex" />}
-
                         {/* Contesto della conversazione: strumento e counselor scelti,
                             Riprendi. Selezioni salvate, non la prova di una chat aperta. */}
                         <div role="group" aria-label={t('header.conversation')} className="header-group hidden shrink-0 items-center gap-1 lg:flex">
@@ -136,8 +132,6 @@ export function Header() {
                                         resumeEntries={resumeEntries}
                                         authenticated={nav.authenticated}
                                         account={nav.account}
-                                        access={access}
-                                        classView={nav.classView}
                                         servicesHref={servicesHref}
                                         servicesLabel={t('header.services')}
                                         logoutHref={logoutUrl}
