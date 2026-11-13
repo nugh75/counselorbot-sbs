@@ -1,10 +1,10 @@
 # Handoff — feature/student-catalog-list-864 (#864)
 
 ## Stato
-Implementazione fatta; verifiche statiche in corso. PR da aprire.
+Implementazione fatta, merge di origin/main (#877, #878) fatto, verifiche statiche verdi. PR aperta.
 
 ## Fatto
-- `EntryLink`: prop opzionali `illustration`, `status` (riga piccola con punto), `reload` (anchor nativa).
+- `EntryLink`: `illustration` unica con l'Area docente (#865, dimensionata dal chiamante), più `status` (riga piccola con punto) e `reload` (anchor nativa).
 - `InstrumentCatalog`: niente pillole né schede; Consigli e due sezioni
   (`base.category.assessment` / `guided`) come elenco piatto con `ToolIllustration`;
   stato «Compilato il…» / «In pausa dal…». Ancore `#tools-<categoria>` mantenute.
@@ -17,7 +17,8 @@ Implementazione fatta; verifiche statiche in corso. PR da aprire.
 
 ## Verifiche
 - node --test catalog-paused-chat / event-instrument-parity / legacy-routes: 8/8 ok.
-- tsc, eslint: vedi PR.
+- tsc pulito (esclusi i moduli .png senza next-env.d.ts nel worktree); eslint: 0 errori, 1 warning preesistente.
+- make guidance-check: ok.
 - Playwright NON eseguito (nessun dev server avviato: volume lento).
 
 ## Prossimi passi
