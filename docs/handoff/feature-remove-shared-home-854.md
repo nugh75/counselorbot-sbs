@@ -19,10 +19,21 @@ Agente: `s15-rimozione-854` · Branch: `feature/remove-shared-home-854` · Task:
 - Browser: `legacy-routes` 11/11, `account-onboarding` 44/45 (il solo «chat mode is remembered» è preesistente su `main`), test del catalogo e della vista di classe superati.
 - `make guidance-check`: superato.
 
-## Prossimi passi
-- Pushare la branch, aprire la PR con `Closes #854` e segnalare che è impilata su #858.
-- Dopo il merge di entrambe, un solo deploy sull'istanza portable.
+## Rilascio
+- PR #858 (`feat: send each role to its own area`, #853) mergiata il 13 novembre 2026
+  in `8c34f59d`; PR #859 (`refactor: remove the shared tools page`, #854) mergiata
+  subito dopo in `68979552`.
+- Deploy unico sull'istanza portable lo stesso giorno: `main` a `68979552`,
+  `docker compose --env-file .env -f docker-compose.portable.yml up -d --build`.
+  Backend rimasto healthy senza ricreazione (codice invariato); frontend,
+  trascrizione e Piper ricreati e healthy; PostgreSQL healthy.
+- Verifiche sul deploy: `/` mostra «Accesso richiesto» con «Accedi a CounselorBot»
+  e il questionario «Dicci com'è andata»; `/strumenti` risponde 307 verso
+  `/?view=home`; `/profilo` 200; `/runtime-config.js` 200 con gli URL pubblici;
+  nessun errore nei log del frontend; zero errori JavaScript nella pagina.
+- Nessun comando `sudo` richiesto né eseguito: la configurazione nginx della
+  Console non cambia.
 
-## Blocchi e rischi
-- #853 deve arrivare su `main` prima della PR.
-- Il deploy resta al proprietario dopo i merge; nessun comando sudo eseguito dall'agente.
+## Prossimi passi
+- Nessuno per #853 e #854. Restano da verificare a mano, con un account reale,
+  l'atterraggio per ruolo e la ripresa pQBL nell'Area studente.

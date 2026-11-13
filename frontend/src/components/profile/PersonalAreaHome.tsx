@@ -74,13 +74,13 @@ function PersonalResume({ access }: { access: FullUserAccess | null }) {
             const label = resumeLabel(row.questionnaire_type, row.label, tf);
             return <ResumeEntry key={`session-${row.session_id}`} target={{ kind: 'session', sessionId: row.session_id }} label={label} deletable={!row.path_id}>
                 <EntryLink idPrefix="resume" id={row.session_id} href={resumeHref(row)} reload
-                    illustration={<ToolIllustration id={row.questionnaire_type} />}
+                    illustration={<ToolIllustration id={row.questionnaire_type} className="h-16 w-16 shrink-0 object-contain md:h-18 md:w-18" />}
                     name={label} description={t('selector.suggested.paused')} status={pausedOn(row.updated_at)} />
             </ResumeEntry>;
         })}
         {local && <ResumeEntry target={{ kind: 'session', sessionId: local.sessionId }} label={`${t('header.resume')} · ${resumeLabel(local.instrument, null, tf)}`}>
             <EntryLink idPrefix="resume" id="local" href={LOCAL_RESUME_HREF} reload
-                illustration={<ToolIllustration id={local.instrument} />}
+                illustration={<ToolIllustration id={local.instrument} className="h-16 w-16 shrink-0 object-contain md:h-18 md:w-18" />}
                 name={resumeLabel(local.instrument, null, tf)} description={t('header.resume')} />
         </ResumeEntry>}
         {resume.pqbl && <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>

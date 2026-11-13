@@ -128,7 +128,7 @@ export function InstrumentCatalog({
                         return (
                             <EntryLink key={q.id} idPrefix="suggested" id={q.id}
                                 href={paused ? resumeHref(paused) : `/strumenti/${q.id}`} reload={Boolean(paused)}
-                                illustration={<ToolIllustration id={q.id} category={toolCategory(q.id)} />}
+                                illustration={<ToolIllustration id={q.id} category={toolCategory(q.id)} className="h-16 w-16 shrink-0 object-contain md:h-18 md:w-18" />}
                                 name={tf(`q.${q.id}.name`, q.name)}
                                 description={suggestion.source === 'paused' ? t('selector.suggested.paused') : suggestion.reason} />
                         );
@@ -170,7 +170,7 @@ export function InstrumentCatalog({
                                 : done ? t('base.instrument.doneOn', { date: formatDate(done) }) : undefined;
                             return (
                                 <EntryLink key={q.id} idPrefix="tool" id={q.id} href={`/strumenti/${q.id}`}
-                                    illustration={<ToolIllustration id={q.id} category={group.id} />}
+                                    illustration={<ToolIllustration id={q.id} category={group.id} className="h-16 w-16 shrink-0 object-contain md:h-18 md:w-18" />}
                                     name={tf(`q.${q.id}.name`, q.name)}
                                     description={tf(`q.${q.id}.description`, q.description)}
                                     status={status} />

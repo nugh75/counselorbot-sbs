@@ -337,6 +337,15 @@ questionario non è più nella barra di navigazione né nel pannello Menu.
 L’illustrazione del riquadro è decorativa: il titolo e la descrizione accanto ne
 portano il significato, anche per gli screen reader.
 
+**Sottopagine delle aree senza schede annidate (#867).** `Card` ha una variante
+piatta (`variant="flat"`): niente riquadro, ombra o sfondo, solo un filetto in alto e
+spazio verticale. La usano le sottopagine di impostazioni della classe, compilazioni,
+incontri, dispositivi e piani della classe dello studente, così non annidano più schede
+riquadrate; finestre di dialogo, campi dei moduli e avvisi mantengono il loro riquadro.
+Hanno ora l'intestazione illustrata dell'area: Dispositivi (nuova voce `dispositivi`
+dell'Area docenti, con le sue briciole di pane), Orientamento del docente, Cambiamenti
+e il forum di classe dello studente.
+
 **Illustrazioni degli strumenti (#863).** Ogni strumento ha un’illustrazione piatta
 in SVG (QSA, QSAr, QPCS, QPCC, ZTPI, QAP, Savickas, eventi e obiettivi di studio e
 professionali, obiettivo di docenza, idea), con colori chiari e scuri tramite le
@@ -1752,6 +1761,15 @@ ricercatori e amministratori.
 studente (`/profilo`) e dei gruppi dell’Area docenti (`/docente`) usano lo stesso componente
 (`EntrySection` e `EntryLink`): titolo con filetto, due colonne, illustrazione, nome,
 descrizione, freccia. Nessuna modifica visibile per l’utente.
+
+**Area docenti come elenco piatto (#865, novembre 2026).** In `/docente` Progettazione
+didattica, Le mie classi, Palestra, Prova gli strumenti e Risorse sono voci dello stesso
+elenco, senza riquadri colorati né schede: Progettazione didattica è una voce
+(Obiettivi per la classe), «Le mie classi» una sola voce verso `/docente/classi`,
+«Prova gli strumenti» una voce per strumento con la sua illustrazione. Ogni strumento
+si avvia sempre da `/?start=<id>` (scelta tra studente di prova e dati propri). I colori
+di ruolo restano solo sui badge. L’elenco delle classi attive non è più nella home:
+si trova in «Le mie classi».
 
 **Colori di ruolo (#834).** Tre tinte morbide distinguono le aree, solo su card e
 badge (pagina e header restano neutri, sia in tema chiaro sia scuro): petrol per lo

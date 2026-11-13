@@ -27,7 +27,7 @@ export function TeacherAreaHome({ teacher, institutes }: { teacher: boolean; ins
     const researchGroup = teacherAreaGroups.find(g => g.id === 'research');
 
     const renderGroup = (group: typeof teacherAreaGroups[number]) => {
-        const slugs = group.slugs.filter(slug => slug === 'istituti' ? institutes : teacher || slug !== 'orientamento');
+        const slugs = group.slugs.filter(slug => slug === 'classi' ? false : slug === 'istituti' ? institutes : teacher || slug !== 'orientamento');
         if (slugs.length === 0) return null;
         return (
             <EntrySection key={group.id} id={`teacher-group-${group.id}`} title={l(group.id)}>

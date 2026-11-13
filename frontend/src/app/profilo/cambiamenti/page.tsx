@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { User, ShieldAlert } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
 import { getIdentity, type Identity } from '@/lib/auth';
 import { canUsePersonalPage } from '@/lib/roles';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -77,7 +77,7 @@ export default function ProfileChangesPage() {
 
     return (
         <div className="page-wide px-4 py-8 space-y-6">
-            <PageHeader backHref="/profilo/taccuino" title={t('profileChanges.title')} />
+            <PersonalAreaHeader slug="cambiamenti" />
             <ProfileChangeReflection lang={lang} />
         </div>
     );

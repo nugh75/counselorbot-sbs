@@ -19,7 +19,7 @@ export function EntrySection({ id, title, subtitle, testId, children }: {
     );
 }
 
-// `illustration` replaces the image (e.g. a ToolIllustration); `status` is a small line
+// `illustration` replaces the image (e.g. a sized ToolIllustration); `status` is a small line
 // under the description; `reload` uses a plain anchor for pages that read state on mount.
 export function EntryLink({ idPrefix, id, href, image, illustration, name, description, badge, status, reload }: {
     idPrefix: string; id: string; href: string; image?: string; illustration?: ReactNode; name: string; description: string;
@@ -27,9 +27,7 @@ export function EntryLink({ idPrefix, id, href, image, illustration, name, descr
 }) {
     const className = 'group flex min-h-24 items-center gap-4 rounded-card px-2 py-4 transition-colors hover:bg-surface-sunken sm:gap-4';
     const content = <>
-        {illustration
-            ? <span className="h-16 w-16 shrink-0 md:h-18 md:w-18 [&>*]:h-full [&>*]:w-full [&>*]:object-contain">{illustration}</span>
-            : image && <Image src={image} alt="" width={72} height={72} sizes="(min-width: 768px) 72px, 64px" className="h-16 w-16 shrink-0 rounded-control object-contain md:h-18 md:w-18" />}
+        {illustration ?? (image && <Image src={image} alt="" width={72} height={72} sizes="(min-width: 768px) 72px, 64px" className="h-16 w-16 shrink-0 rounded-control object-contain md:h-18 md:w-18" />)}
         <span className="min-w-0 flex-1 break-words">
             <span id={`${idPrefix}-link-${id}`} className="flex items-center gap-2 font-semibold text-ink group-hover:text-link">
                 <span>{name}</span>
