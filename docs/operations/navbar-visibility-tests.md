@@ -48,6 +48,9 @@ diff del test. Per decisione dell'utente l'etichetta resta «Area studente»
   guardia); elenco riprese 500 → «Riprova» in menu o popover, poi le righe.
 - **Riprese**: sessioni congelate filtrate dagli strumenti della classe, link
   `/?frozen=…`, cancellazione per riga.
+- **Cataloghi per area (#848)**: il menu Area conserva Presentazione e le aree
+  consentite. Bussola, Assistente e Guida compongono il supporto. Il catalogo è
+  in `/profilo` per l’Area studente e in «Prova gli strumenti» per l’Area docente.
 - **Vista classe**: cambio a «Senza classe» dal menu in cima a `/profilo` con PUT e barra aggiornata
   senza ricaricare; la navbar non contiene il selettore.
 - **Tastiera**: skip link, brand, apertura del menu con Invio, Tab dentro il

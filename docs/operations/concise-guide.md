@@ -46,3 +46,7 @@ Prima del commit: test frontend, TypeScript, ESLint mirato, controllo i18n,
 `make guidance-refresh` e `make guidance-check`. Ricostruire l'immagine frontend;
 distribuzione dopo il merge. Nginx portable invariato: `sudo ./update_nginx.sh`
 non è necessario. Nessun ambiente di sviluppo con dati di produzione.
+
+Per rigenerare le immagini del catalogo nelle sei lingue, usa
+`GUIDE_SCREENS=student-instruments GUIDE_BASE_URL=http://127.0.0.1:3107 node --experimental-strip-types scripts/capture-guide.mjs`
+dalla cartella `frontend`, con la build in esecuzione sul loopback e le fixture sintetiche del comando.

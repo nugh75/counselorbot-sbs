@@ -43,13 +43,10 @@ try {
         let admin = false;
         let classSettingsCapture = process.env.GUIDE_SCREENS === 'class-settings';
         const classPathsCapture = process.env.GUIDE_SCREENS === 'class-paths';
-        // Without an active class plan the home shows the introduction, not the plan card.
         let introductionCapture = process.env.GUIDE_SCREENS === 'introduction';
         let authenticated = false;
         page.on('pageerror', error => errors.push(error.message));
-        // With an active class plan the home and Student area catalogs start collapsed:
-        // open them as a person who expanded them would, so their cards stay in the shots.
-        await page.addInitScript(lang => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', 'light'); localStorage.setItem('cb_home_catalog_open', 'true'); localStorage.setItem('cb_profile_catalog_open', 'true'); }, lang);
+        await page.addInitScript(lang => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', 'light'); }, lang);
         const group = { id: 91, name: groupName, code: 'DEMO-3B', school: '', school_level: 'secondaria', institution_id: null, description: instructions, methodologies: null, context_visible_to_students: false, owner_username: 'teacher.demo', is_active: true, members_count: 2, created_at: '2026-09-21T08:00:00Z' };
         const labels = key => Object.fromEntries(locales.map(locale => [locale, classSettingsText(locale, key)]));
         const tool = (key, category, enabled = true, admin_enabled = true, locked = false) => ({
@@ -275,7 +272,7 @@ try {
             await page.getByText('Clio', { exact: true }).first().waitFor();
             assert.equal(await page.getByText('Iride', { exact: true }).count(), 0);
             await capture('counselors');
-            await go('/?view=home');
+            await go('/profilo');
             await capture('tool-selection', page.locator('#tools-assessment'));
             teacher = true;
             await go('/docente/classi');
@@ -351,7 +348,17 @@ try {
         }
         if (process.env.GUIDE_SCREENS === 'introduction') {
             authenticated = true;
-            await go('/'); await capture('introduction');
+            await go('/?view=intro'); await capture('introduction');
+            await context.close();
+            continue;
+        }
+        if (process.env.GUIDE_SCREENS === 'student-instruments') {
+            authenticated = true;
+            await go('/profilo');
+            const catalog = page.locator('#tools-assessment');
+            await catalog.locator('article').first().waitFor();
+            for (const image of await catalog.locator('img').all()) await image.evaluate(element => element.decode());
+            await capture('tool-selection', catalog);
             await context.close();
             continue;
         }
@@ -397,7 +404,7 @@ try {
         await go('/'); await capture('access');
         authenticated = true;
         await go('/counselor'); await page.getByText('Clio', { exact: true }).first().waitFor(); await capture('counselors');
-        await go('/?view=home'); await capture('tool-selection', page.locator('#tools-assessment'));
+        await go('/profilo'); await capture('tool-selection', page.locator('#tools-assessment'));
         await go('/profilo/taccuino'); await capture('notebook');
         await go('/profilo/carte');
         await page.getByRole('button', { name: `${visualLabel(lang, 'cardDecks')}: ${title}`, exact: true }).click();
@@ -409,9 +416,9 @@ try {
         await page.getByRole('heading', { level: 1 }).first().waitFor();
         await capture('class-forum', page.locator('section').first());
         introductionCapture = true;
-        await go('/'); await capture('introduction');
+        await go('/?view=intro'); await capture('introduction');
         introductionCapture = false;
-        await go('/?view=home'); await capture('activities');
+        await go('/profilo'); await capture('activities');
         await go('/profilo/pqbl'); await capture('pdf-study');
         await go('/profilo/flashcard'); await capture('flashcards');
         await go('/profilo'); await page.getByRole('link', { name: personalAreaName(lang, 'obiettivi'), exact: true }).waitFor(); await capture('personal-area');

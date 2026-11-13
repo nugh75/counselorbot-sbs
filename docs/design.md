@@ -300,16 +300,13 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   conversazione. La chiusura riporta il focus al menu e conserva le bozze. I suggerimenti di prompt
   sono rimossi; lunghezza e congelamento sono sotto i tre punti accanto al campo
   di scrittura. Le risposte funzionali all’intervista Savickas restano disponibili.
-- **Selezione strumento**: la barra con nome selezionato e Continua resta
-  visibile sotto l’intestazione durante lo scorrimento.
-- **Home di ritorno**: «Attività e percorsi» apre con il box illustrato della Bussola,
-  seguito da questionari, percorsi e «Area personale e strumenti».
-  Le preferenze sono contestuali alle scelte di inserimento e modalità chat; «Riprendi» resta in fondo
-  alla pagina e presente solo con attività riprendibili o errori da recuperare.
-  «Studiare da un PDF» (pQBL) vive in `/profilo/pqbl`, accanto alle Flashcard
-  in «Studiare, esplorare e agire». `/pqbl` reindirizza alla nuova pagina;
-  ripresa e progresso locale restano disponibili. «Allenamento» non è una
-  categoria della home né del selettore strumenti.
+- **Catalogo degli strumenti**: nell’Area studente, sotto i piani operativi,
+  «Attività e percorsi» apre con la Bussola illustrata, le analisi dei questionari
+  e i percorsi guidati. Ogni scheda avvia direttamente lo strumento. «Da riprendere»
+  segue il catalogo, prima degli strumenti personali, con sessioni riprendibili
+  e azioni di recupero. «Studiare da un PDF» è in `/profilo/pqbl`, accanto alle
+  Flashcard. Il vecchio `/pqbl` reindirizza alla pagina attuale e la ripresa usa
+  i progressi salvati nel browser.
 - **Presentazione iniziale**: una frase sullo scopo dell’ambiente e l’attribuzione
   all’Università Roma Tre precedono «Da dove vuoi iniziare?». Quattro schede,
   su due colonne desktop e una mobile: Bussola, Analisi questionari, Percorsi
