@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PersonalAIConnections } from '@/components/profile/PersonalAIConnections';
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { personalAreaDescription, personalAreaName, personalAreaText } from '@/lib/i18n-personal-area';
@@ -15,6 +13,7 @@ import { useUserAccess } from '@/lib/use-user-access';
 import { isClassContentHidden, type UserAccess as FullUserAccess } from '@/lib/user-access';
 import { Button } from '@/components/ui/Button';
 import { EntryLink, EntrySection } from '@/components/ui/EntryList';
+import ToolIllustration from '@/components/ui/ToolIllustration';
 import { ClassPathHeroList } from '@/components/profile/ClassPathHeroList';
 import { parseStudentClassPaths, selectCurrentClassPath, type StudentClassPath } from '@/lib/class-paths';
 import { classPathText } from '@/lib/i18n-class-paths';
@@ -22,10 +21,8 @@ import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries } fro
 import { resumeLabel } from '@/lib/resume-label';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
-import { useRouter } from 'next/navigation';
 import { InstrumentCatalog } from '@/components/home/InstrumentCatalog';
 import { lastCompiledByTool, takePausedChat, type PausedChat } from '@/lib/catalog-status';
-import { instrumentStartHref } from '@/lib/home-entry';
 
 function PersonalResume({ access }: { access: FullUserAccess | null }) {
     const { lang, tf, t } = useI18n();
@@ -63,60 +60,41 @@ function PersonalResume({ access }: { access: FullUserAccess | null }) {
         ? resume.localResume : null;
     const hasRows = items.length > 0 || frozen.length > 0 || local || resume.pqbl;
     if (!loading && !failed && !hasRows && !resume.error && !resume.loading) return null;
-    const rowClass = 'flex min-h-control items-center gap-4 rounded-control py-2 text-sm text-link';
-    return <section aria-labelledby="personal-resume-title" className="rounded-card border border-brand-line bg-brand-soft px-4 py-4">
-        <h2 id="personal-resume-title" className="font-semibold text-ink">{l('resume')}</h2>
+    const pausedOn = (date?: string | null) => date
+        ? t('selector.badge.pausedOn', { date: new Date(date).toLocaleDateString(lang) }) : t('selector.badge.paused');
+    const itemImage = { goal: personalAreaImages.obiettivi, action: personalAreaImages.azioni, assignment: personalAreaImages.assegnazioni };
+    return <EntrySection id="personal-resume-title" title={l('resume')}>
         <ResumeLoadError entries={resume} />
-        {loading && <p role="status" className="min-h-control py-4 text-sm text-ink-muted">{l('loading')}</p>}
-        {failed && <div role="alert" className="flex flex-wrap items-center gap-x-4 text-sm text-ink-body">
+        {loading && <p role="status" className="min-h-control py-4 text-sm text-ink-muted md:col-span-2">{l('loading')}</p>}
+        {failed && <div role="alert" className="flex flex-wrap items-center gap-x-4 text-sm text-ink-body md:col-span-2">
             <p>{l('error')}{items.length > 0 && <> {l('stale')}</>}</p>
             <Button variant="ghost" disabled={loading} onClick={() => { setLoading(true); setAttempt(n => n + 1); }}>{l('retry')}</Button>
         </div>}
-        {hasRows && <ul className="mt-1 divide-y divide-brand-line">
-            {frozen.map(row => {
-                const label = resumeLabel(row.questionnaire_type, row.label, tf);
-                return <li key={`session-${row.session_id}`}>
-                    <ResumeEntry target={{ kind: 'session', sessionId: row.session_id }} label={label} deletable={!row.path_id}>
-                        <a href={resumeHref(row)} className={rowClass}>
-                            <span className="min-w-0 flex-1 break-words font-semibold">{label}</span>
-                            <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
-                        </a>
-                    </ResumeEntry>
-                </li>;
-            })}
-            {local && <li>
-                <ResumeEntry target={{ kind: 'session', sessionId: local.sessionId }} label={`${t('header.resume')} · ${resumeLabel(local.instrument, null, tf)}`}>
-                    <a href={LOCAL_RESUME_HREF} className={rowClass}>
-                        <span className="min-w-0 flex-1 break-words font-semibold">{t('header.resume')} · {resumeLabel(local.instrument, null, tf)}</span>
-                        <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
-                    </a>
-                </ResumeEntry>
-            </li>}
-            {resume.pqbl && <li>
-                <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
-                    <Link href={PQBL_RESUME_HREF} className={rowClass}>
-                        <span className="min-w-0 flex-1 break-words font-semibold">{t('header.resume')} · {t('pqbl.card.title')}</span>
-                        <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
-                    </Link>
-                </ResumeEntry>
-            </li>}
-            {items.map(item => <li key={item.id}>
-                <Link href={item.href} className={rowClass}>
-                    <span className="min-w-0 flex-1 break-words">
-                        <span className="text-ink-muted">{l(item.kind)} · </span><span className="font-semibold">{item.title}</span>
-                        {item.date && <time dateTime={item.date} className="ml-2 text-ink-muted">{new Date(`${item.date}T12:00:00`).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' })}</time>}
-                        {item.feedback && <span className="block text-ink-muted">{l('feedback')}</span>}
-                    </span>
-                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
-                </Link>
-            </li>)}
-        </ul>}
-    </section>;
+        {frozen.map(row => {
+            const label = resumeLabel(row.questionnaire_type, row.label, tf);
+            return <ResumeEntry key={`session-${row.session_id}`} target={{ kind: 'session', sessionId: row.session_id }} label={label} deletable={!row.path_id}>
+                <EntryLink idPrefix="resume" id={row.session_id} href={resumeHref(row)} reload
+                    illustration={<ToolIllustration id={row.questionnaire_type} />}
+                    name={label} description={t('selector.suggested.paused')} status={pausedOn(row.updated_at)} />
+            </ResumeEntry>;
+        })}
+        {local && <ResumeEntry target={{ kind: 'session', sessionId: local.sessionId }} label={`${t('header.resume')} · ${resumeLabel(local.instrument, null, tf)}`}>
+            <EntryLink idPrefix="resume" id="local" href={LOCAL_RESUME_HREF} reload
+                illustration={<ToolIllustration id={local.instrument} />}
+                name={resumeLabel(local.instrument, null, tf)} description={t('header.resume')} />
+        </ResumeEntry>}
+        {resume.pqbl && <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
+            <EntryLink idPrefix="resume" id="pqbl" href={PQBL_RESUME_HREF} image={personalAreaImages.pqbl}
+                name={t('pqbl.card.title')} description={t('header.resume')} />
+        </ResumeEntry>}
+        {items.map(item => <EntryLink key={item.id} idPrefix="resume" id={item.id} href={item.href} image={itemImage[item.kind]}
+            name={item.title} description={item.feedback ? `${l(item.kind)} · ${l('feedback')}` : l(item.kind)}
+            status={item.date ? new Date(`${item.date}T12:00:00`).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' }) : undefined} />)}
+    </EntrySection>;
 }
 
 export function PersonalAreaHome() {
     const { lang, t } = useI18n();
-    const router = useRouter();
     const [pausedChat, setPausedChat] = useState<PausedChat | null>(null);
     const [lastCompiledAt, setLastCompiledAt] = useState<Record<string, string>>({});
     const [unreadTotal, setUnreadTotal] = useState(0);
@@ -209,7 +187,6 @@ export function PersonalAreaHome() {
                 <InstrumentCatalog
                     id="profile-instrument-catalog"
                     lastCompiledAt={lastCompiledAt}
-                    onStartInstrument={q => router.push(instrumentStartHref(q.id, true))}
                     pausedChat={pausedChat}
                     onDismissPausedChat={() => setPausedChat(null)}
                 />

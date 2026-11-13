@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
 
-const detailLink = (page, tool) => page.locator(`#profile-instrument-catalog a[href="/strumenti/${tool}"]`);
+const detailLink = (page, tool) => page.locator(`#profile-instrument-catalog :is(#tools-assessment, #tools-guided) a[href="/strumenti/${tool}"]`);
 
 const origin = new URL(process.env.STUDENT_CATALOG_BASE_URL || 'http://127.0.0.1:3107').origin;
 let browser;
@@ -209,7 +209,7 @@ test('Unrestricted student sees full catalog and can access /strumenti/QSA', asy
         const disabledHeading = f.page.getByRole('heading', { name: 'Strumento non abilitato per la tua classe' });
         assert.equal(await disabledHeading.count(), 0);
 
-        const startBtn = f.page.getByRole('link', { name: /Avvia/i });
+        const startBtn = f.page.getByRole('link', { name: 'Analizza i risultati', exact: true });
         await startBtn.waitFor({ state: 'visible' });
 
         assert.deepEqual(f.errors, []);
@@ -224,8 +224,8 @@ test('Student area shows the class-filtered instrument catalog after the plans a
         await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
         const catalog = f.page.locator('#profile-instrument-catalog');
         await catalog.waitFor({ state: 'visible' });
-        await catalog.locator('article', { hasText: /Savickas/i }).first().waitFor({ state: 'visible' });
-        assert.equal(await catalog.locator('article', { hasText: /^QSA/ }).count(), 0);
+        await detailLink(f.page, 'SAVICKAS').waitFor({ state: 'visible' });
+        assert.equal(await detailLink(f.page, 'QSA').count(), 0);
         // The Student area already has its own resume card and is the personal area itself.
         assert.equal(await catalog.locator('[data-testid="home-resume"], [data-testid="personal-area-entry"], a[href="/profilo"]').count(), 0);
         const before = await f.page.evaluate(() => {
@@ -235,7 +235,8 @@ test('Student area shows the class-filtered instrument catalog after the plans a
         });
         assert.equal(before, true);
 
-        await catalog.locator('article', { hasText: /Savickas/i }).first().getByRole('button').first().click();
+        await detailLink(f.page, 'SAVICKAS').click();
+        await f.page.getByRole('link', { name: 'Avvia il percorso', exact: true }).click();
         await f.page.getByText('Il tuo taccuino è ancora aggiornato?', { exact: true }).waitFor();
         assert.deepEqual(f.errors, []);
     } finally {
@@ -248,7 +249,7 @@ for (const theme of ['light', 'dark']) {
         const f = await fixture({ width: 390, theme });
         try {
             await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
-            await f.page.locator('#profile-instrument-catalog article').first().waitFor({ state: 'visible' });
+            await f.page.locator('#profile-instrument-catalog a[href^="/strumenti/"]').first().waitFor({ state: 'visible' });
             const overflow = await f.page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
             assert.ok(overflow <= 0, `horizontal overflow ${overflow}px`);
             assert.deepEqual(f.errors, []);
