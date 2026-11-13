@@ -50,7 +50,7 @@ export function ClassCompilationsSection({ showHeading = true }: { showHeading?:
     const l = (key: Parameters<typeof classCompilationsText>[1]) => classCompilationsText(lang, key);
     const ready = !groups.loading && !groups.failed && !groups.forbidden;
     const group = ready ? groups.data?.find(row => String(row.id) === selected) : undefined;
-    return <Card as="section" className="min-w-0 p-4 sm:p-6" aria-labelledby={showHeading ? `${id}-title` : undefined} data-class-compilations>
+    return <Card as="section" variant="flat" className="min-w-0" aria-labelledby={showHeading ? `${id}-title` : undefined} data-class-compilations>
         {showHeading && <>
             <h2 id={`${id}-title`} className="text-lg font-semibold text-ink">{l('title')}</h2>
             <p className="mt-1 text-sm text-ink-muted">{l('description')}</p>

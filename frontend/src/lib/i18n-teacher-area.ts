@@ -480,6 +480,7 @@ const labels = {
     breadcrumbCompilazioni: ['Compilazioni degli studenti', 'Student submissions', 'Respuestas del alumnado', 'Soumissions des élèves', 'Schülerergebnisse', 'Elevsvar'],
     breadcrumbIncontri: ['Incontri e colloqui', 'Meetings and interviews', 'Encuentros y entrevistas', 'Entretiens et réunions', 'Treffen und Gespräche', 'Möten och samtal'],
     breadcrumbIstituti: ['Istituti scolastici', 'Educational institutes', 'Instituciones educativas', 'Établissements scolaires', 'Bildungsinstitute', 'Skolenheter'],
+    breadcrumbDispositivi: ['Dispositivi', 'Devices', 'Dispositivos', 'Appareils', 'Geräte', 'Enheter'],
     breadcrumbOrientamento: ['Orientamento', 'Orientation', 'Orientación', 'Orientation', 'Orientierung', 'Vägledning'],
     breadcrumbSomministrazioni: ['Piani di somministrazione', 'Administration plans', 'Planes de administración', 'Plans de passation', 'Durchführungspläne', 'Genomförandeplaner'],
     // Copertine di classe (Issue #286)
@@ -538,6 +539,7 @@ const names = {
     materiali: ['Letture, film e materiali', 'Readings, films and resources', 'Lecturas, películas y materiales', 'Lectures, films et ressources', 'Lektüren, Filme und Materialien', 'Läsningar, filmer och material'],
     risorse: ['Libreria e risorse didattiche', 'Library and didactic resources', 'Biblioteca y recursos didácticos', 'Bibliothèque et ressources pédagogiques', 'Bibliothek und didaktische Ressourcen', 'Bibliotek och didaktiska resurser'],
     orientamento: ['Orientamento dell’istituto', 'Institution guidance', 'Orientación de la institución', 'Orientation de l’établissement', 'Orientierung der Einrichtung', 'Institutionens vägledning'],
+    dispositivi: ['Dispositivi degli studenti', 'Student devices', 'Dispositivos de los estudiantes', 'Appareils des élèves', 'Geräte der Lernenden', 'Elevernas enheter'],
     somministrazioni: ['Piani di somministrazione', 'Administration plans', 'Planes de administración', 'Plans d’administration', 'Durchführungspläne', 'Administreringsplaner'],
 } satisfies Record<TeacherAreaSlug, Localized>;
 
@@ -638,6 +640,14 @@ const descriptions = {
         'Organisez les catégories des contacts et rendez-vous de votre établissement.',
         'Ordnen Sie die Kategorien der Kontakte und Termine Ihrer Einrichtung.',
         'Ordna kategorierna för din institutions kontakter och tider.',
+    ],
+    dispositivi: [
+        'Approva gli accessi in attesa, revoca i dispositivi e rigenera i codici personali.',
+        'Approve pending access, revoke devices and regenerate personal codes.',
+        'Aprueba los accesos pendientes, revoca dispositivos y regenera códigos personales.',
+        'Approuvez les accès en attente, révoquez les appareils et régénérez les codes personnels.',
+        'Gib wartende Zugänge frei, sperre Geräte und erstelle neue persönliche Codes.',
+        'Godkänn väntande åtkomst, återkalla enheter och skapa nya personliga koder.',
     ],
     somministrazioni: [
         'Prepara somministrazioni con codice AP, ricercatori e gruppi collegati.',

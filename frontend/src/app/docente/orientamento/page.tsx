@@ -1,15 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowLeft, MoreHorizontal, Plus } from 'lucide-react';
+import { MoreHorizontal, Plus } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { categoryText, type CategoryTextKey } from '@/lib/i18n-institution-categories';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import type { Institution } from '@/lib/referrals-api';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { TeacherAreaHeader } from '@/components/teacher/TeacherAreaHeader';
 
 type Category = { id: string; name: string; description: string; is_active: boolean; position: number; updated_by: string; updated_at: string };
 type Content = { id: number; kind: 'referral' | 'event'; title: string; starts_at: string | null; updated_at: string; category_ids: string[] };
@@ -20,17 +18,7 @@ type Action = 'create' | 'edit' | 'archive' | 'restore' | 'move_up' | 'move_down
 const control = 'min-h-control rounded-control border border-line-strong px-4 py-2 text-sm disabled:opacity-50';
 const input = `${control} w-full bg-surface`;
 
-function Heading() {
-    const { lang } = useI18n();
-    return <header className="space-y-6">
-        <Link href="/docente" className="inline-flex min-h-control items-center gap-2 rounded-control px-4 text-sm hover:bg-surface-raised"><ArrowLeft className="h-4 w-4" aria-hidden />{categoryText(lang, 'back')}</Link>
-        <PageHeader
-            title={categoryText(lang, 'title')}
-            subtitle={categoryText(lang, 'subtitle')}
-            icon={<Image src="/images/platform/bussola.png" width={64} height={64} alt="" className="h-16 w-16 shrink-0 object-contain" />}
-        />
-    </header>;
-}
+const Heading = () => <TeacherAreaHeader slug="orientamento" />;
 
 export default function InstitutionOrientationPage() {
     const { lang } = useI18n();

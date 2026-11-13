@@ -90,6 +90,11 @@ export function getTeacherBreadcrumbsForSlug(slug: TeacherAreaSlug, lang: Lang):
                 root,
                 { label: teacherAreaText(lang, 'breadcrumbIstituti'), current: true },
             ];
+        case 'dispositivi':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbDispositivi'), current: true },
+            ];
         case 'orientamento':
             return [
                 root,

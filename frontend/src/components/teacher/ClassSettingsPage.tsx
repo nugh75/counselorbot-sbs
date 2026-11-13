@@ -56,7 +56,7 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
     const isEnabled = (row: ClassCounselor) => row.admin_enabled && !disabled.includes(row.id);
     const options = [...new Set(counselors.flatMap(row => row.approach_categories))].sort();
     const rows = filterClassCounselors(counselors, category, query);
-    return <Card>
+    return <Card variant="flat">
         <section aria-labelledby="class-counselors-heading" className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <h2 id="class-counselors-heading" className="text-lg font-semibold text-ink">{l('counselors')}</h2>
@@ -272,7 +272,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
         {categories.map(category => {
             const rows = tools.filter(tool => tool.category === category);
             if (!rows.length) return null;
-            return <Card key={category}>
+            return <Card key={category} variant="flat">
                 <details open>
                     <summary className="min-h-[44px] cursor-pointer font-semibold text-ink">{l(category)}</summary>
                     <div className="mb-4 flex flex-wrap gap-2">
@@ -300,7 +300,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
         <p className="text-sm text-ink-muted">{l('always')}: {settings.tools.filter(tool => tool.always_on).map(label).join(' · ')}</p>
         {settings.counselors.length > 0 && <ClassCounselorsSection counselors={settings.counselors} disabled={disabledCounselors}
             defaultId={defaultCounselor} busy={busy} admin={admin} lockDisabled={busy || dirty} onLock={(kind, id, state) => void changeLock(kind, id, state)} onToggle={toggleCounselor} onToggleAll={toggleAllCounselors} onDefault={chooseDefault} />}
-        <Card>
+        <Card variant="flat">
             <h2 className="text-lg font-semibold text-ink">{l('personalAITitle')}</h2>
             <label className="flex min-h-[44px] items-center gap-4 text-sm text-ink-body">
                 <input type="checkbox" className="h-5 w-5 accent-brand" checked={personalAI} disabled={busy}
@@ -309,7 +309,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
             </label>
             <p className="text-sm text-ink-muted">{l('personalAIHelp')}</p>
         </Card>
-        <Card>
+        <Card variant="flat">
             <h2 className="text-lg font-semibold text-ink">{l('responseSettingsTitle')}</h2>
             <p className="text-sm text-ink-muted">{l('responseSettingsHelp')}</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -359,7 +359,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                 </label>
             </div>
         </Card>
-        <Card>
+        <Card variant="flat">
             <h2 className="text-lg font-semibold text-ink">{forumText(lang, 'options')}</h2>
             {(['students_can_open', 'premoderation'] as const).map(name => {
                 const title = forumText(lang, name === 'students_can_open' ? 'studentsCanOpen' : 'premoderationOption');
