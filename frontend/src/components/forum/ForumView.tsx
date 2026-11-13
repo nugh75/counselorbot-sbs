@@ -279,7 +279,7 @@ function ForumDiscussion({ groupId, groupActive, topicId, onBack, onForbidden, o
     </Callout>;
     const moderate = detail.can_moderate && groupActive;
     const targetHref = detail.topic.link ? forumTargetHref(detail.topic.link, detail.can_moderate ? groupId : undefined) : undefined;
-    return <Card className="space-y-4">
+    return <Card variant="flat" className="space-y-4">
         <Button variant="secondary" onClick={onBack}>{l('back')}</Button>
         {editing && detail.topic.title !== null && detail.topic.body !== null ? <TopicForm initial={{ title: detail.topic.title, body: detail.topic.body }}
             busy={acting} onCancel={() => setEditing(false)}
@@ -322,7 +322,7 @@ function ForumLogView({ groupId, onBack }: { groupId: number; onBack: () => void
     const [offset, setOffset] = useState(0);
     const resource = useTeacherResource(`/api/teacher/groups/${groupId}/forum/log?offset=${offset}`, parseForumLog);
     const log = resource.data;
-    return <Card className="space-y-4">
+    return <Card variant="flat" className="space-y-4">
         <Button variant="secondary" onClick={onBack}>{l('back')}</Button>
         <h3 className="text-lg font-bold text-slate-800">{l('log')}</h3>
         <p className="text-xs text-slate-500">{l('logPrivacy')}</p>
@@ -378,7 +378,7 @@ function ForumReview({ groupId, mode, active, onBack, onForbidden, onDraft }: {
     const queue = resource.data;
     const entries = queue ? [...queue.topics.map(topic => ({ ...topic, kind: 'topics', heading: topic.title })),
         ...queue.posts.map(post => ({ ...post, kind: 'posts', heading: post.topic_title }))] : [];
-    return <Card className="space-y-4">
+    return <Card variant="flat" className="space-y-4">
         <Button variant="secondary" disabled={busy} onClick={onBack}>{l('back')}</Button>
         <h3 className="text-lg font-bold text-slate-800">{l(mode === 'pending' ? 'pending' : 'mutedStudents')}</h3>
         {error && <Callout variant="danger">{l('actionError')}</Callout>}
@@ -456,14 +456,14 @@ export function ForumView({ groupId, student = false }: { groupId: number; stude
         {listing.forum_enabled === false && <Callout variant="warning">{l('disabled')}</Callout>}
         {listing.mute && <Callout variant="warning">{listing.mute.until ? l('mutedUntil').replace('{until}', new Date(listing.mute.until).toLocaleString(lang)) : l('muted')}</Callout>}
         {resource.failed && <Callout variant="danger">{l('loadError')} <Button variant="secondary" onClick={() => void resource.reload()}>{l('retry')}</Button></Callout>}
-        {view === 'new' && listing.can_open_topic && <Card><ForumComposer path={`/api/groups/${groupId}/forum/topics`} topic
+        {view === 'new' && listing.can_open_topic && <Card variant="flat"><ForumComposer path={`/api/groups/${groupId}/forum/topics`} topic
             linkGroupId={listing.can_moderate ? groupId : undefined} onDraft={onDraft}
             onForbidden={() => setForbidden(true)} onCancel={() => navigate('list')} onPublished={id => { setView(id); void resource.reload(); }} /></Card>}
         {view === 'log' && listing.can_moderate && <ForumLogView groupId={groupId} onBack={() => navigate('list')} />}
         {(view === 'pending' || view === 'mutes') && listing.can_moderate && <ForumReview key={view} groupId={groupId}
             mode={view} active={listing.group.is_active} onBack={() => navigate('list')} onForbidden={() => setForbidden(true)} onDraft={onDraft} />}
         {typeof view === 'number' && <ForumDiscussion key={view} groupId={groupId} groupActive={listing.group.is_active} topicId={view} onBack={() => navigate('list')} onDraft={onDraft} onForbidden={() => setForbidden(true)} />}
-        {view === 'list' && <Card>
+        {view === 'list' && <Card variant="flat">
             {!listing.topics.length && <p className="text-sm text-slate-600">{l('empty')}</p>}
             <ul className="divide-y divide-slate-200">{listing.topics.map(topic => <li key={topic.id}>
                 <button type="button" className="block min-h-[44px] w-full space-y-1 py-3 text-left" onClick={() => navigate(topic.id)}>
