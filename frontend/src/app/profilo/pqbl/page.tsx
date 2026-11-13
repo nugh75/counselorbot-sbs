@@ -483,7 +483,7 @@ export default function PqblPage() {
             {/* Setup: dimensione sessione + upload */}
             {phase === 'setup' && (
                 <div className="space-y-6">
-                    <Card>
+                    <Card variant="flat">
                         <p className="text-sm font-semibold text-ink-body mb-4">{t('pqbl.setup.sizeLabel')}</p>
                         <div className="grid grid-cols-3 gap-4">
                             {SESSION_SIZES.map((n) => (
@@ -552,7 +552,7 @@ export default function PqblPage() {
 
             {/* Generazione in corso */}
             {phase === 'generating' && (
-                <Card className="p-10 text-center space-y-4">
+                <Card variant="flat" className="text-center space-y-4">
                     <Loader2 className="w-10 h-10 mx-auto text-link animate-spin" />
                     <h2 className="text-xl font-semibold text-ink">{t('pqbl.generating.title')}</h2>
                     {documentInfo && documentInfo.chunks_total > 0 && (
@@ -588,16 +588,14 @@ export default function PqblPage() {
             {/* Onboarding (R4): le domande non sono un esame */}
             {phase === 'onboarding' && documentInfo && (
                 <div className="space-y-4">
-                    <Card className="space-y-4">
+                    <Card variant="flat" className="space-y-4">
                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-control bg-warning-soft flex items-center justify-center">
-                                <Lightbulb className="w-5 h-5 text-warning" />
-                            </div>
+                            <Lightbulb className="w-5 h-5 shrink-0 text-warning" aria-hidden />
                             <h2 className="text-xl font-semibold text-ink">{t('pqbl.onboarding.title')}</h2>
                         </div>
                         <p className="text-ink-muted leading-relaxed">{documentInfo.onboarding_text}</p>
                     </Card>
-                    <Card>
+                    <Card variant="flat">
                         <div className="flex items-center gap-2 mb-4">
                             <Target className="w-4 h-4 text-link" />
                             <h3 className="text-sm font-semibold text-ink-body">{t('pqbl.onboarding.skills')}</h3>
@@ -646,7 +644,7 @@ export default function PqblPage() {
                         />
                     </div>
 
-                    <Card className="space-y-4">
+                    <Card variant="flat" className="space-y-4">
                         <h2 className="text-lg font-semibold text-ink">{currentQuestion.question}</h2>
                         <div className="space-y-4">
                             {currentQuestion.options.map((option) => {
@@ -706,34 +704,32 @@ export default function PqblPage() {
             {/* Riepilogo sessione (R8) */}
             {phase === 'summary' && summary && (
                 <div className="space-y-4">
-                    <Card className="space-y-4">
+                    <Card variant="flat" className="space-y-4">
                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-control bg-success-soft flex items-center justify-center">
-                                <ListChecks className="w-5 h-5 text-success" />
-                            </div>
+                            <ListChecks className="w-5 h-5 shrink-0 text-success" aria-hidden />
                             <h2 className="text-xl font-semibold text-ink">{t('pqbl.summary.title')}</h2>
                         </div>
                         <div className="grid grid-cols-3 gap-4 text-center">
-                            <div className="rounded-control bg-surface-sunken p-4">
+                            <div>
                                 <div className="text-2xl font-semibold text-link">
                                     {summary.first_try_correct}/{summary.total_questions}
                                 </div>
                                 <div className="text-xs text-ink-muted mt-1">{t('pqbl.summary.firstTry')}</div>
                             </div>
-                            <div className="rounded-control bg-surface-sunken p-4">
+                            <div>
                                 <div className="text-2xl font-semibold text-ink-body">{summary.answered_questions}</div>
                                 <div className="text-xs text-ink-muted mt-1">{t('pqbl.summary.answered')}</div>
                             </div>
-                            <div className="rounded-control bg-surface-sunken p-4">
+                            <div>
                                 <div className="text-2xl font-semibold text-ink-body">{formatTime(summary.estimated_seconds)}</div>
                                 <div className="text-xs text-ink-muted mt-1">{t('pqbl.summary.time')}</div>
                             </div>
                         </div>
                         <div>
                             <h3 className="text-sm font-semibold text-ink-body mb-2">{t('pqbl.summary.bySkill')}</h3>
-                            <div className="space-y-2">
+                            <div className="divide-y divide-line">
                                 {summary.by_skill.map((row) => (
-                                    <div key={row.skill} className="flex items-center justify-between rounded-control border border-line bg-surface px-4 py-2 text-sm">
+                                    <div key={row.skill} className="flex items-center justify-between py-2 text-sm">
                                         <span className="text-ink-muted">{row.skill}</span>
                                         <span className="font-semibold text-ink-body">{row.first_try_correct}/{row.total}</span>
                                     </div>
@@ -742,7 +738,7 @@ export default function PqblPage() {
                         </div>
                     </Card>
 
-                    <Card className="space-y-4">
+                    <Card variant="flat" className="space-y-4">
                         <p className="text-sm text-ink-muted">{t('pqbl.summary.finalDesc')}</p>
                         <div className="grid grid-cols-2 gap-4">
                             <Button
@@ -767,12 +763,12 @@ export default function PqblPage() {
             {/* Test finale (R7): risposta unica per domanda, feedback alla fine */}
             {phase === 'final' && (
                 <div className="space-y-4">
-                    <Card>
+                    <Card variant="flat">
                         <h2 className="text-xl font-semibold text-ink">{t('pqbl.final.title')}</h2>
                         <p className="text-sm text-ink-muted mt-1">{t('pqbl.final.desc')}</p>
                     </Card>
                     {finalQuestions.map((q, idx) => (
-                        <Card key={q.id} className="space-y-4">
+                        <Card variant="flat" key={q.id} className="space-y-4">
                             <h3 className="font-semibold text-ink">
                                 {idx + 1}. {q.question}
                             </h3>
@@ -816,14 +812,14 @@ export default function PqblPage() {
             {/* Risultati test finale */}
             {phase === 'finalResults' && finalResult && (
                 <div className="space-y-4">
-                    <Card className="text-center space-y-2">
+                    <Card variant="flat" className="text-center space-y-2">
                         <h2 className="text-xl font-semibold text-ink">{t('pqbl.final.score')}</h2>
                         <div className="text-4xl font-semibold text-link">
                             {finalResult.score}/{finalResult.total}
                         </div>
                     </Card>
                     {finalResult.results.map((row, idx) => (
-                        <Card key={row.question_id} className="space-y-2">
+                        <Card variant="flat" key={row.question_id} className="space-y-2">
                             <h3 className="font-semibold text-ink">{idx + 1}. {row.question}</h3>
                             <div className="flex items-center gap-2 text-sm">
                                 {row.correct
