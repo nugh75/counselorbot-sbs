@@ -12,6 +12,7 @@ async function fixture({
     frozen = [],
     lang = 'it',
     width = 1280,
+    theme = 'light',
 } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
     const page = await context.newPage();
@@ -19,10 +20,10 @@ async function fixture({
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
 
-    await page.addInitScript(({ lang }) => {
+    await page.addInitScript(({ lang, theme }) => {
         localStorage.setItem('cb_lang', lang);
-        localStorage.setItem('cb_theme', 'light');
-    }, { lang });
+        localStorage.setItem('cb_theme', theme);
+    }, { lang, theme });
 
     await page.route('**/*', (route) => {
         const request = route.request();
@@ -214,3 +215,43 @@ test('Unrestricted student sees full catalog and can access /strumenti/QSA', asy
         await f.context.close();
     }
 });
+
+test('Student area shows the class-filtered instrument catalog after the plans and before the personal pages', async () => {
+    const f = await fixture();
+    try {
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
+        const catalog = f.page.locator('#profile-instrument-catalog');
+        await catalog.waitFor({ state: 'visible' });
+        await catalog.locator('article', { hasText: /Savickas/i }).first().waitFor({ state: 'visible' });
+        assert.equal(await catalog.locator('article', { hasText: /^QSA/ }).count(), 0);
+        // The Student area already has its own resume card and is the personal area itself.
+        assert.equal(await catalog.locator('[data-testid="home-resume"], [data-testid="personal-area-entry"], a[href="/profilo"]').count(), 0);
+        const before = await f.page.evaluate(() => {
+            const tools = document.querySelector('#profile-instrument-catalog');
+            const pages = document.querySelector('#personal-catalog-section');
+            return Boolean(tools && pages && (tools.compareDocumentPosition(pages) & Node.DOCUMENT_POSITION_FOLLOWING));
+        });
+        assert.equal(before, true);
+
+        await catalog.locator('article', { hasText: /Savickas/i }).first().getByRole('button').first().click();
+        await f.page.waitForURL((url) => url.pathname === '/' && url.searchParams.get('start') === 'SAVICKAS');
+        assert.deepEqual(f.errors, []);
+    } finally {
+        await f.context.close();
+    }
+});
+
+for (const theme of ['light', 'dark']) {
+    test(`Student area catalog fits 390px in ${theme} mode`, async () => {
+        const f = await fixture({ width: 390, theme });
+        try {
+            await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
+            await f.page.locator('#profile-instrument-catalog article').first().waitFor({ state: 'visible' });
+            const overflow = await f.page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+            assert.ok(overflow <= 0, `horizontal overflow ${overflow}px`);
+            assert.deepEqual(f.errors, []);
+        } finally {
+            await f.context.close();
+        }
+    });
+}

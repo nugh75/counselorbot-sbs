@@ -13,7 +13,6 @@ import type { Identity } from './auth';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant } from './roles.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { isToolAllowed, type UserAccess } from './user-access.ts';
 
 export type HeaderLinkKey = 'instruments' | 'orientation' | 'assistant' | 'guide' | 'presentation' | 'profile' | 'teacher-panel' | 'admin';
