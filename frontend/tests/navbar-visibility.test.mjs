@@ -148,7 +148,7 @@ test('desktop support navigation uses labelled icons with tooltips', async () =>
         try {
             await page.goto(`${origin}/guide`);
             const nav = header(page).getByRole('navigation', { name: locale === 'it' ? 'Navigazione principale' : 'Main navigation' });
-            for (const key of ['instruments', 'bussola', 'assistant', 'guide']) {
+            for (const key of ['bussola', 'assistant', 'guide']) {
                 const label = LOCALIZED[locale][key];
                 const link = nav.getByRole('link', { name: label, exact: true });
                 await link.waitFor();
@@ -226,7 +226,7 @@ test('the satisfaction questionnaire is on the home page, not in the navbar', as
     for (const [profile, width, screen] of [['A', 390, 'main'], ['S', 1440, '[data-testid="intro-screen"]']]) {
         const { page, context, errors } = await fixture({ profile, width });
         try {
-            await page.goto(`${origin}/`);
+            await page.goto(`${origin}${profile === 'A' ? '/' : '/?view=intro'}`);
             const feedback = page.locator(screen).getByRole('link', { name: /^Dicci com’è andata/ });
             await feedback.waitFor();
             assert.equal(await feedback.getAttribute('href'), '/questionario');
@@ -284,12 +284,12 @@ test('compact and desktop area menus mark the current page', async () => {
     }
 });
 
-test('Presentation in Area opens the introduction from the catalog and from another page', async () => {
+test('Presentation in Area opens the introduction from the Student area and a chat entry', async () => {
     for (const width of [390, 1440]) {
         const { page, context, errors } = await fixture({ profile: 'S', width, reducedMotion: 'reduce' });
         await context.route('**/_next/image**', route => route.abort());
         try {
-            for (const path of ['/?view=home', '/profilo']) {
+            for (const path of ['/?start=QSA', '/profilo']) {
                 await page.goto(`${origin}${path}`, { waitUntil: 'domcontentloaded' });
                 if (width < 1024) await trigger(page).click();
                 else await areaTrigger(page).click();
@@ -489,13 +489,13 @@ test('class dropdown at the top of /profilo updates the navbar without a reload'
     const { page, context, writes } = await fixture({ profile: 'S2', width: 1024 });
     try {
         await page.goto(`${origin}/profilo`);
-        await eventually(() => names(header(page)), expectedNavbar('S2', 1024).bar, 'class view');
+        await eventually(() => names(header(page)), expectedNavbar('S2', 1024, { area: LABELS.student }).bar, 'class view');
         assert.equal(await header(page).getByLabel(LABELS.view, { exact: true }).count(), 0, 'no selector in the navbar');
         const select = page.getByLabel(LABELS.view, { exact: true });
         assert.equal(await select.evaluate(el => el === document.querySelector('select')), true, 'first select on the page');
         assert.deepEqual(await select.locator('option').allTextContents(), PROFILES.S2.expect.view);
         await select.selectOption('all');
-        await eventually(() => names(header(page)), expectedNavbar('S2', 1024, { override: { bussola: true } }).bar, 'full view');
+        await eventually(() => names(header(page)), expectedNavbar('S2', 1024, { area: LABELS.student, override: { bussola: true } }).bar, 'full view');
         assert.deepEqual(writes, [{ path: '/api/user/access/view', body: { view: 'all' } }]);
     } finally { await context.close(); }
 });

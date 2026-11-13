@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Bot, Compass, GraduationCap, House, LayoutGrid, Settings, User, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, Compass, GraduationCap, House, Settings, User, type LucideIcon } from 'lucide-react';
 import { HeaderAccount, SignInLink } from './HeaderAccount';
 import { HeaderAreas } from './HeaderAreas';
 import { HeaderCounselor } from './HeaderCounselor';
@@ -20,7 +20,6 @@ import { useI18n } from '@/lib/i18n-context';
 import { useResumeEntries } from '@/lib/use-resume-entries';
 
 const LINK_ICONS: Record<HeaderLinkKey, LucideIcon> = {
-    instruments: LayoutGrid,
     orientation: Compass,
     assistant: Bot,
     guide: BookOpen,
@@ -36,8 +35,6 @@ export function Header() {
     const { t } = useI18n();
     const { access, loading: accessLoading } = useUserAccess();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
-    // Solo il percorso: nessuna voce punta a `/`, e la home toglie dall'URL le
-    // query della chat appena lette (vedi `CHAT_QUERY_KEYS`).
     const pathname = usePathname();
     // Le voci "Riprendi" vivono qui e servono due rendering: il pulsante della
     // barra da `lg` e il menu mobile. Un solo fetch, lo stesso elenco.
@@ -67,11 +64,6 @@ export function Header() {
                             className="console-topbar-icon console-topbar-icon--lg shrink-0"
                             aria-label={t(link.labelKey)}
                             aria-current={link.key === current ? 'page' : undefined}
-                            onClick={() => {
-                                if (link.key === 'instruments' && pathname === '/') {
-                                    window.dispatchEvent(new CustomEvent('cb-navigate-home'));
-                                }
-                            }}
                         >
                             <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                         </Link>
