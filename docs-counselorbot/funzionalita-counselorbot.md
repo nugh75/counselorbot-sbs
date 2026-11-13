@@ -1411,7 +1411,14 @@ filtri: categorie con lo stesso nome restano distinte tra istituti. Ogni contenu
 nasconde il filtro senza cancellare i contenuti o i collegamenti; ripristinarla
 rende nuovamente disponibili le associazioni. Queste funzioni sono state distribuite in produzione il 23 settembre 2026.
 
-L’Area studente (`/profilo`) apre con **Da riprendere**, solo quando ci sono
+L’Area studente (`/profilo`), dopo gli eventuali piani di classe, mostra la
+sezione **Attività e percorsi** con lo stesso catalogo strumenti della home
+(#850): Bussola, consigli, gruppi di strumenti con «Compila sul sito» e Dettagli,
+strumenti in arrivo, filtrati dalla classe attiva come nella home. Avviare uno
+strumento apre lo stesso flusso della home (`/?start=<id>`). Qui il catalogo non
+ripete l’elenco delle chat da riprendere né il rimando all’Area studente.
+
+Segue **Da riprendere**, solo quando ci sono
 lavori pertinenti: chat guidate e analisi dei questionari sospese, oltre a un
 massimo di tre attività collegate a obiettivi attivi, obiettivi
 senza attività aperte o assegnazioni. Le date disponibili precedono gli elementi
@@ -1710,6 +1717,13 @@ salvata. I dettagli di attivazione automatica e ripristino sono in
 `docs/operations/personal-api-settings.md`.
 
 ## Docenti, ricercatori e amministrazione
+
+**Prova gli strumenti nell’Area docenti (#852, novembre 2026).** Nella home `/docente`,
+dopo la Palestra, un blocco crema elenca gli strumenti del catalogo (questionari, percorsi
+guidati e **Obiettivi per la classe**). Ogni voce apre lo strumento con il collegamento
+`/?start=<codice>`, quindi il docente trova la schermata di scelta già descritta sopra:
+studente di prova (celestino) oppure i propri dati (crema). Il blocco è visibile a docenti,
+ricercatori e amministratori.
 
 **Colori di ruolo (#834).** Tre tinte morbide distinguono le aree, solo su card e
 badge (pagina e header restano neutri, sia in tema chiaro sia scuro): petrol per lo

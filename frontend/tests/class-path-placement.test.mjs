@@ -434,9 +434,9 @@ test('the no-class view hides class content and switching back restores it witho
         await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
         await f.page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).waitFor();
         assert.equal(await hero.count(), 0);
-        await f.page.locator('select').first().selectOption('classes');
-        await hero.waitFor();
         await f.page.goto(`${origin}/profilo`);
+        await selector.selectOption('classes');
+        await hero.waitFor();
         await resume.getByText('Compito della classe').waitFor();
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }

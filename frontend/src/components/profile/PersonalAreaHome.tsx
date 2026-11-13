@@ -22,6 +22,9 @@ import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries } fro
 import { resumeLabel } from '@/lib/resume-label';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
+import { useRouter } from 'next/navigation';
+import { InstrumentCatalog } from '@/components/home/InstrumentCatalog';
+import { lastCompiledByTool } from '@/lib/catalog-status';
 
 function PersonalResume({ access }: { access: FullUserAccess | null }) {
     const { lang, tf, t } = useI18n();
@@ -111,7 +114,9 @@ function PersonalResume({ access }: { access: FullUserAccess | null }) {
 }
 
 export function PersonalAreaHome() {
-    const { lang } = useI18n();
+    const { lang, t } = useI18n();
+    const router = useRouter();
+    const [lastCompiledAt, setLastCompiledAt] = useState<Record<string, string>>({});
     const [unreadTotal, setUnreadTotal] = useState(0);
     const [paths, setPaths] = useState<StudentClassPath[]>([]);
     const pathsVersion = useRef(0);
@@ -151,6 +156,16 @@ export function PersonalAreaHome() {
 
     useEffect(() => {
         let active = true;
+        void apiFetch('/api/user/questionnaire-results').then(async res => {
+            if (!res.ok) return;
+            const rows: unknown = await res.json();
+            if (active && Array.isArray(rows)) setLastCompiledAt(lastCompiledByTool(rows));
+        }).catch(() => {});
+        return () => { active = false; };
+    }, []);
+
+    useEffect(() => {
+        let active = true;
         void apiFetch('/api/user/forum/unread').then(async res => {
             if (!res.ok) return;
             const data: unknown = await res.json();
@@ -171,6 +186,16 @@ export function PersonalAreaHome() {
                     <ClassPathHeroList paths={paths} onReload={loadPaths} />
                 </section>
             )}
+
+            <section aria-labelledby="profile-instruments-title" className="space-y-4">
+                <h2 id="profile-instruments-title" className="border-b border-line pb-2 text-lg font-semibold text-ink">{t('base.instruments.title')}</h2>
+                <InstrumentCatalog
+                    id="profile-instrument-catalog"
+                    lastCompiledAt={lastCompiledAt}
+                    onStartInstrument={q => router.push(`/?start=${encodeURIComponent(q.id)}`)}
+                    inPersonalArea
+                />
+            </section>
 
             <PersonalResume access={access} />
 
