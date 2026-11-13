@@ -15,7 +15,7 @@ type TextKey = keyof typeof classSettingsTexts;
 // through ai4auth with that email (own password) and is enrolled on arrival.
 // Two blocks share one state: the add form sits with the real students, the
 // pending list is its own block below them (#838).
-export function useClassInvitations(groupId: number) {
+export function useClassInvitations(groupId: number, groupName: string, webLink: string) {
     const { lang } = useI18n();
     const l = (key: TextKey) => classSettingsText(lang, key);
     const [invitations, setInvitations] = useState<GroupInvitation[]>([]);
@@ -42,14 +42,20 @@ export function useClassInvitations(groupId: number) {
         return () => { active = false; };
     }, [base]);
 
-    const run = async (action: () => Promise<Response>, onOk?: () => void) => {
+    const mailto = (to: string) => invitationMailto(
+        to,
+        fillTemplate(l('invitationMailSubject'), { class: groupName }),
+        fillTemplate(l('invitationMailBody'), { email: to, link: webLink }),
+    );
+
+    const run = async (action: () => Promise<Response>, onOk?: (res: Response) => void | Promise<void>) => {
         setBusy(true);
         setError('');
         try {
             const res = await action();
             if (res.status === 409) setError(l('invitationDuplicate'));
             else if (!res.ok) setError(l('invitationError'));
-            else onOk?.();
+            else await onOk?.(res);
             await load();
         } catch {
             setError(l('invitationError'));
@@ -65,10 +71,16 @@ export function useClassInvitations(groupId: number) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: email.trim() }),
-        }), () => setEmail(''));
+        }), async res => {
+            setEmail('');
+            if (!webLink) return; // no web link: the teacher sends it from the pending list
+            const invitation: GroupInvitation = await res.json();
+            window.location.assign(mailto(invitation.email)); // #846: open the mail client right away
+            await apiFetch(`${base}/${invitation.id}/sent`, { method: 'POST' });
+        });
     };
 
-    return { invitations, email, setEmail, busy, error, base, add, run };
+    return { invitations, email, setEmail, busy, error, base, add, run, mailto };
 }
 
 type ClassInvitations = ReturnType<typeof useClassInvitations>;
@@ -106,15 +118,10 @@ export function ClassAddStudent({ groupId, state }: { groupId: number; state: Cl
     );
 }
 
-export function ClassPendingInvitations({ groupName, webLink, state }: { groupName: string; webLink: string; state: ClassInvitations }) {
+export function ClassPendingInvitations({ webLink, state }: { webLink: string; state: ClassInvitations }) {
     const { lang } = useI18n();
     const l = (key: TextKey) => classSettingsText(lang, key);
-    const { invitations, busy, base, run } = state;
-    const mailto = (to: string) => invitationMailto(
-        to,
-        fillTemplate(l('invitationMailSubject'), { class: groupName }),
-        fillTemplate(l('invitationMailBody'), { email: to, link: webLink }),
-    );
+    const { invitations, busy, base, run, mailto } = state;
     return (
         <Card as="section" aria-labelledby="class-pending-invitations-heading" className="space-y-3 border-role-teacher-line bg-role-teacher-soft [--ink-muted:var(--role-teacher-muted)]">
             <h2 id="class-pending-invitations-heading" className="flex items-center gap-2 text-lg font-semibold text-ink">

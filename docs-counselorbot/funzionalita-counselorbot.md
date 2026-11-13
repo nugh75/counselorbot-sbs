@@ -1148,10 +1148,11 @@ card e badge, in tema chiaro e scuro.
 
 **Aggiungere uno studente per email (#836, novembre 2026).** Nella scheda
 «Partecipanti e risultati» della classe (blocco studenti reali) il docente scrive l’email di uno studente
-e preme «Aggiungi». L’invito resta «in attesa» nel blocco «Inviti in attesa», dove
-il docente può inviarlo, inviarlo di nuovo o annullarlo. Counselorbot non spedisce
-email: «Invia» apre il programma di posta del docente con il link della classe
-già scritto. Lo studente apre il link, accede o si registra su ai4auth con quella
+e preme «Aggiungi» (#846): si apre subito il programma di posta del docente con
+l’invito pronto (destinatario, oggetto, link della classe) e l’invito risulta inviato. Se
+manca il link web, resta «in attesa» e si invia dal blocco «Inviti in attesa», dove
+il docente può anche inviarlo di nuovo o annullarlo. Counselorbot non spedisce
+email: è sempre il programma di posta del docente a inviare il messaggio. Lo studente apre il link, accede o si registra su ai4auth con quella
 email e sceglie da solo la password; il docente non imposta né vede mai una
 password. Quando lo studente apre il link con quell’email entra nella classe
 come «aggiunto dal docente» e l’invito sparisce dall’elenco. Il proprietario
