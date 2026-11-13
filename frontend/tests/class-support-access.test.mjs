@@ -37,7 +37,7 @@ for (const width of [390, 1440]) {
         try {
             await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
             if (width < 1024) await f.page.locator('header').getByRole('button', { name: 'Menu', exact: true }).click();
-            await f.page.locator('header a[href="/guide"]').first().waitFor();
+            await f.page.locator('header a[href="/guide"]:visible').waitFor();
             assert.equal(await f.page.locator('header a[href="/bussola"]').count(), 0);
             assert.equal(await f.page.locator('header a[href="/assistente"]').count(), 0);
             assert.ok(await f.page.locator('header a[href="/guide"]').count() > 0);
