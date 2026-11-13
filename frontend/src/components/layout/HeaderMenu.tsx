@@ -8,10 +8,8 @@ import { useI18n } from '@/lib/i18n-context';
 import { useDisclosure } from '@/lib/use-disclosure';
 import type { HeaderLink, HeaderLinkKey } from '@/lib/header-navigation';
 import type { ResumeEntries } from '@/lib/use-resume-entries';
-import type { UserAccess } from '@/lib/user-access';
 import { cn } from '@/lib/utils';
 import { AccountItems, SignInLink } from './HeaderAccount';
-import { ClassViewSwitcher } from './ClassViewSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
 import { HeaderInstrument } from './HeaderInstrument';
 import { ResumeList } from './HeaderResume';
@@ -25,15 +23,13 @@ const ROW = 'flex min-h-control w-full items-center gap-2 px-4 py-2 text-left te
 // navigazione (aree) → supporto → conversazione → account e preferenze; le
 // riprese stanno in un sotto-pannello chiuso, così lingua ed Esci non sono mai
 // dopo N sessioni. Le voci dell'account sono quelle del menu desktop.
-export function HeaderMenu({ links, current, pathname, resumeEntries, authenticated, account, access, classView, servicesHref, servicesLabel, logoutHref, icons }: {
+export function HeaderMenu({ links, current, pathname, resumeEntries, authenticated, account, servicesHref, servicesLabel, logoutHref, icons }: {
     links: HeaderLink[];
     current: HeaderLinkKey | null;
     pathname: string;
     resumeEntries: ResumeEntries;
     authenticated: boolean;
     account: { label: string; detail: string | null; title: string } | null;
-    access: UserAccess | null;
-    classView: boolean;
     servicesHref?: string;
     servicesLabel: string;
     logoutHref?: string;
@@ -91,7 +87,6 @@ export function HeaderMenu({ links, current, pathname, resumeEntries, authentica
                     id="mobile-menu"
                     className="header-panel absolute inset-x-0 top-full z-[60] max-h-[calc(100dvh-4rem)] divide-y divide-line overflow-y-auto overscroll-contain border-b border-line bg-surface shadow-pop sm:left-auto sm:right-4 sm:mt-2 sm:max-h-[calc(100dvh-4.5rem)] sm:w-96 sm:rounded-control sm:border"
                 >
-                    {classView && <ClassViewSwitcher access={access} labelled className="px-4 py-2" />}
                     <nav aria-label={t('header.menuNavigation')} className="divide-y divide-line">
                         {areas.length > 0 && <MenuGroup title={t('header.area')}>{areas.map(renderLink)}</MenuGroup>}
                         <MenuGroup title={t('header.support')}>{support.map(renderLink)}</MenuGroup>

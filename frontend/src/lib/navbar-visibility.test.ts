@@ -27,7 +27,7 @@ function navbarFlags({ identity, access }: Profile) {
         teacher: has('teacher-panel'),
         admin: has('admin'),
         services: nav.services,
-        view: (nav.classView ? classViewOptions(access) : []).map((option: { kind: string; name?: string }) =>
+        view: (identity.authenticated ? classViewOptions(access) : []).map((option: { kind: string; name?: string }) =>
             option.kind === 'class' ? classViewText('it', 'class', option.name) : classViewText('it', option.kind as 'all' | 'classes')),
     };
 }

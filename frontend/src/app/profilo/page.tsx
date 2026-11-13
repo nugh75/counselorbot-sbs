@@ -20,6 +20,8 @@ import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { ResultReadingCard } from '@/components/profile/ResultReadingCard';
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import { PersonalAreaHome } from '@/components/profile/PersonalAreaHome';
+import { ClassViewSwitcher } from '@/components/layout/ClassViewSwitcher';
+import { useUserAccess } from '@/lib/use-user-access';
 import { ActiveActionsCard } from '@/components/profile/ActiveActionsCard';
 import { personalAreaText, personalAreaName, personalAreaDescription } from '@/lib/i18n-personal-area';
 import { TavoloList } from '@/components/tavolo/TavoloList';
@@ -156,6 +158,7 @@ function personalSectionFromPath(pathname: string): PersonalSection | null {
 
 export default function ProfilePage() {
     const { t, tf, lang } = useI18n();
+    const { access } = useUserAccess();
     const pathname = usePathname();
     const [identity, setIdentity] = useState<Identity | null>(null);
     const [sessions, setSessions] = useState<QuestionnaireResult[]>([]);
@@ -437,6 +440,7 @@ export default function ProfilePage() {
 
     return (
         <div className="page-wide px-4 py-8 space-y-8">
+            {!activeArea && <ClassViewSwitcher access={access} />}
             {activeArea ? <PersonalAreaHeader slug={activeArea.slug} /> : <PageHeader
                 backHref="/"
                 title={personalAreaText(lang, 'title')}

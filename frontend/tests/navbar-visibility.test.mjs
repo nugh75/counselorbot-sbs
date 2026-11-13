@@ -310,12 +310,12 @@ test('one identity read; opening the menu reads no access again', async () => {
         await page.goto(`${origin}/guide`);
         await eventually(() => names(header(page)), expectedNavbar('S2', 390).bar, 'bar');
         await trigger(page).click();
-        await mobileMenu(page).getByLabel(LABELS.view, { exact: true }).waitFor();
+        await mobileMenu(page).waitFor();
         const accessReads = reads.filter(path => path === '/api/user/access').length;
         for (let i = 0; i < 2; i++) {
             await page.keyboard.press('Escape');
             await trigger(page).click();
-            await mobileMenu(page).getByLabel(LABELS.view, { exact: true }).waitFor();
+            await mobileMenu(page).waitFor();
         }
         await page.waitForTimeout(500);
         assert.equal(reads.filter(path => path === '/api/auth/me').length, 1, 'identity');
@@ -485,12 +485,14 @@ test('pQBL resume is hidden when the class turns pQBL off (N7)', async () => {
     } finally { await context.close(); }
 });
 
-test('class view switch updates the navbar without a reload', async () => {
+test('class dropdown at the top of /profilo updates the navbar without a reload', async () => {
     const { page, context, writes } = await fixture({ profile: 'S2', width: 1024 });
     try {
-        await page.goto(`${origin}/guide`);
+        await page.goto(`${origin}/profilo`);
         await eventually(() => names(header(page)), expectedNavbar('S2', 1024).bar, 'class view');
-        const select = header(page).getByLabel(LABELS.view, { exact: true });
+        assert.equal(await header(page).getByLabel(LABELS.view, { exact: true }).count(), 0, 'no selector in the navbar');
+        const select = page.getByLabel(LABELS.view, { exact: true });
+        assert.equal(await select.evaluate(el => el === document.querySelector('select')), true, 'first select on the page');
         assert.deepEqual(await select.locator('option').allTextContents(), PROFILES.S2.expect.view);
         await select.selectOption('all');
         await eventually(() => names(header(page)), expectedNavbar('S2', 1024, { override: { bussola: true } }).bar, 'full view');
