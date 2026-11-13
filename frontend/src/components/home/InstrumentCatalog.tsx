@@ -1,10 +1,6 @@
 'use client';
 
-// Catalogo strumenti condiviso fra «Attività e percorsi» (home) e Area studente
-// (/profilo): avviso chat in pausa, Bussola, consigli, gruppi con «Compila sul
-// sito» e dettagli, elenco da riprendere, strumenti in arrivo. Filtrato per
-// classe con useUserAccess. In /profilo l'elenco da riprendere e il rimando
-// all'Area studente restano quelli della pagina stessa.
+// Catalogo dell'Area studente, con gli strumenti consentiti nella vista attiva.
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -12,15 +8,11 @@ import Image from 'next/image';
 import { CompassEntry } from '@/components/home/CompassEntry';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { resumeLabel } from '@/lib/resume-label';
-import { PersonalAreaEntry } from '@/components/home/PersonalAreaEntry';
-import { ResumeEntry } from '@/components/layout/ResumeEntry';
-import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
-import { AlertTriangle, BookOpen, ExternalLink, RotateCcw, Snowflake, Sparkles, X } from 'lucide-react';
+import { AlertTriangle, BookOpen, ExternalLink, Snowflake, Sparkles, X } from 'lucide-react';
 import { QUESTIONNAIRE_LIST, QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
-import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
+import { resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
 import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { getDynamicToolCategories, resolveActiveStudentTools, TEACHER_AREA_INSTRUMENT_IDS } from '@/lib/tool-catalog';
 import { STRATEGIC_COMPETENCES_URLS } from '@/lib/questionnaire-sources';
@@ -38,8 +30,6 @@ interface Props {
     // Chat appena congelata col fiocco: l'avviso dice come tornarci.
     pausedChat?: PausedChat | null;
     onDismissPausedChat?: () => void;
-    // In /profilo: niente rimando all'Area studente né elenco da riprendere doppio.
-    inPersonalArea?: boolean;
 }
 
 export function InstrumentCatalog({
@@ -48,11 +38,10 @@ export function InstrumentCatalog({
     onStartInstrument,
     pausedChat = null,
     onDismissPausedChat,
-    inPersonalArea = false,
 }: Props) {
     const { t, tf, lang, setLang } = useI18n();
-    const resumeEntries = useResumeEntries();
-    const { frozen, localResume, pqbl: pqblResume, count: resumeCount } = resumeEntries;
+    const { frozen: sessions } = useResumeEntries();
+    const frozen = useMemo(() => sessions.filter(row => !row.practice_notebook_id), [sessions]);
     const { rows: instrumentCatalog, loading: catalogLoading, error: catalogError, retry: retryCatalog } = useInstrumentCatalog();
     const { access } = useUserAccess();
     const formatDate = (iso: string) => new Date(iso).toLocaleDateString(lang);
@@ -69,7 +58,6 @@ export function InstrumentCatalog({
         return getDynamicToolCategories(activeTools, instrumentCatalog);
     }, [activeTools, instrumentCatalog]);
 
-    // Elementi dell'ex catalogo strumenti, confluito qui.
     const pausedByTool = useMemo(() => latestPausedByTool(frozen), [frozen]);
     // Strumenti indicati dall'ultima Bussola: senza Bussola (o senza login) la
     // richiesta fallisce e i consigli usano solo le chat in pausa.
@@ -186,7 +174,6 @@ export function InstrumentCatalog({
                             {t(`base.category.${group.id}`)}
                         </a>
                     ))}
-                    {!inPersonalArea && <Link href="/profilo" className="inline-flex min-h-control items-center rounded-full border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-muted hover:border-brand-line hover:text-link">{t('app.intro.compact.workspace.title')}</Link>}
                 </nav>
                 {lang !== 'it' && catalogLoading && (
                     <p className="mt-4 text-sm text-ink-muted" role="status">{t('base.catalog.loading')}</p>
@@ -286,55 +273,6 @@ export function InstrumentCatalog({
                     })}
                 </div>
             </section>
-            <div className="space-y-6">
-            {!inPersonalArea && <PersonalAreaEntry />}
-            {!inPersonalArea && (resumeCount > 0 || resumeEntries.error) && (
-                <section data-testid="home-resume">
-                    <div className="flex items-center gap-4">
-                        <div className="relative h-14 w-14 shrink-0">
-                            <Image src="/images/cards/critical_puzzle.png" alt="" width={56} height={56} className="h-full w-full object-contain" />
-                        </div>
-                        <h2 className="text-lg font-semibold text-ink">{t('frozen.resumeTitle')}</h2>
-                    </div>
-                    <ResumeLoadError entries={resumeEntries} />
-                    <div className="mt-4 space-y-2">
-                        {frozen.map((row) => (
-                            <ResumeEntry key={row.session_id} deletable={!row.path_id} target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
-                                <a
-                                    href={resumeHref(row)}
-                                    className="flex min-h-control items-center gap-4 rounded-card border border-line bg-surface p-4 text-sm font-semibold text-ink shadow-card transition-colors hover:border-brand-line"
-                                >
-                                    <RotateCcw className="h-4 w-4 shrink-0 text-link" />
-                                    <span className="truncate">{resumeLabel(row.questionnaire_type, row.label, tf)}</span>
-                                </a>
-                            </ResumeEntry>
-                        ))}
-                        {localResume && (
-                            <ResumeEntry target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${resumeLabel(localResume.instrument, null, tf)}`}>
-                                <a
-                                    href={LOCAL_RESUME_HREF}
-                                    className="flex min-h-control items-center gap-4 rounded-card border border-line bg-surface p-4 text-sm font-semibold text-ink shadow-card transition-colors hover:border-brand-line"
-                                >
-                                    <RotateCcw className="h-4 w-4 shrink-0 text-link" />
-                                    <span className="truncate">{t('header.resume')} · {resumeLabel(localResume.instrument, null, tf)}</span>
-                                </a>
-                            </ResumeEntry>
-                        )}
-                        {pqblResume && (
-                            <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
-                                <a
-                                    href={PQBL_RESUME_HREF}
-                                    className="flex min-h-control items-center gap-4 rounded-card border border-line bg-surface p-4 text-sm font-semibold text-ink shadow-card transition-colors hover:border-brand-line"
-                                >
-                                    <RotateCcw className="h-4 w-4 shrink-0 text-link" />
-                                    <span className="truncate">{t('header.resume')} · {t('pqbl.card.title')}</span>
-                                </a>
-                            </ResumeEntry>
-                        )}
-                    </div>
-                </section>
-            )}
-
             {!isUnavailableQuestionnaireLang && upcoming.length > 0 && (
                 <section className="flex flex-col gap-4 rounded-card border border-dashed border-line bg-surface/60 px-6 py-4 lg:flex-row lg:items-center">
                     <div className="shrink-0 lg:w-52">
@@ -351,7 +289,6 @@ export function InstrumentCatalog({
                     </div>
                 </section>
             )}
-            </div>
             </div>
         </>
     );

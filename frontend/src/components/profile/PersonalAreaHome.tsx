@@ -193,7 +193,6 @@ export function PersonalAreaHome() {
                     id="profile-instrument-catalog"
                     lastCompiledAt={lastCompiledAt}
                     onStartInstrument={q => router.push(`/?start=${encodeURIComponent(q.id)}`)}
-                    inPersonalArea
                 />
             </section>
 

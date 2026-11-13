@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
 
+const detailLink = (page, tool) => page.locator(`#profile-instrument-catalog a[href="/strumenti/${tool}"]`);
+
 const origin = new URL(process.env.STUDENT_CATALOG_BASE_URL || 'http://127.0.0.1:3107').origin;
 let browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
@@ -67,18 +69,18 @@ test('Restricted student sees only class-enabled tools and no disabled cards', a
         access: { restricted: true, tool_keys: ['SAVICKAS'], counselor_ids: null, default_counselor_id: null, class_ids: [10] },
     });
     try {
-        await f.page.goto(`${origin}/?view=questionnaires`, { waitUntil: 'networkidle' });
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
 
         // SAVICKAS is allowed and visible
-        const savickasCard = f.page.getByRole('button', { name: /Savickas/i });
+        const savickasCard = detailLink(f.page, 'SAVICKAS');
         await savickasCard.waitFor({ state: 'visible' });
 
         // QSA is disabled and NOT rendered
-        const qsaCard = f.page.getByRole('button', { name: /QSA/i });
+        const qsaCard = detailLink(f.page, 'QSA');
         assert.equal(await qsaCard.count(), 0);
 
         // IDEA is disabled and NOT rendered
-        const ideaCard = f.page.getByRole('button', { name: /IDEA/i });
+        const ideaCard = detailLink(f.page, 'IDEA');
         assert.equal(await ideaCard.count(), 0);
 
         assert.deepEqual(f.errors, []);
@@ -92,7 +94,7 @@ test('Direct navigation to /strumenti/<disabled_id> shows not-enabled-for-class 
         access: { restricted: true, tool_keys: ['SAVICKAS'], counselor_ids: null, default_counselor_id: null, class_ids: [10] },
     });
     try {
-        await f.page.goto(`${origin}/strumenti/QSA`, { waitUntil: 'networkidle' });
+        await f.page.goto(`${origin}/strumenti/QSA`, { waitUntil: 'domcontentloaded' });
 
         const heading = f.page.getByRole('heading', { name: 'Strumento non abilitato per la tua classe' });
         await heading.waitFor({ state: 'visible' });
@@ -103,7 +105,7 @@ test('Direct navigation to /strumenti/<disabled_id> shows not-enabled-for-class 
         // Back button returns to questionnaire selection
         const backBtn = f.page.getByRole('button', { name: 'Indietro' });
         await backBtn.click();
-        await f.page.waitForURL(/view=questionnaires/);
+        await f.page.waitForURL(`${origin}/profilo`);
 
         assert.deepEqual(f.errors, []);
     } finally {
@@ -116,14 +118,14 @@ test('Deep link with disabled tool (?start=QSA) shows warning toast and falls ba
         access: { restricted: true, tool_keys: ['SAVICKAS'], counselor_ids: null, default_counselor_id: null, class_ids: [10] },
     });
     try {
-        await f.page.goto(`${origin}/?start=QSA`, { waitUntil: 'networkidle' });
+        await f.page.goto(`${origin}/?start=QSA`, { waitUntil: 'domcontentloaded' });
 
         // Warning toast is displayed
         const toast = f.page.getByRole('status').filter({ hasText: 'Questo strumento non è abilitato per la tua classe.' });
         await toast.waitFor({ state: 'visible' });
 
         // Chat interface is NOT loaded, falls back to catalog selector
-        const savickasCard = f.page.getByRole('button', { name: /Savickas/i });
+        const savickasCard = detailLink(f.page, 'SAVICKAS');
         await savickasCard.waitFor({ state: 'visible' });
 
         assert.deepEqual(f.errors, []);
@@ -137,12 +139,12 @@ test('Deep link with disabled tool via ?q=QSA also shows warning toast and falls
         access: { restricted: true, tool_keys: ['SAVICKAS'], counselor_ids: null, default_counselor_id: null, class_ids: [10] },
     });
     try {
-        await f.page.goto(`${origin}/?q=QSA`, { waitUntil: 'networkidle' });
+        await f.page.goto(`${origin}/?q=QSA`, { waitUntil: 'domcontentloaded' });
 
         const toast = f.page.getByRole('status').filter({ hasText: 'Questo strumento non è abilitato per la tua classe.' });
         await toast.waitFor({ state: 'visible' });
 
-        const savickasCard = f.page.getByRole('button', { name: /Savickas/i });
+        const savickasCard = detailLink(f.page, 'SAVICKAS');
         await savickasCard.waitFor({ state: 'visible' });
 
         assert.deepEqual(f.errors, []);
@@ -161,25 +163,25 @@ test('Frozen sessions of disabled tools are hidden from Resume and direct resume
     });
     try {
         // Open catalog view and verify Resume menu only lists Savickas (QSA hidden)
-        await f.page.goto(`${origin}/?view=questionnaires`, { waitUntil: 'networkidle' });
-        const resumeBtn = f.page.getByRole('button', { name: 'Riprendi' });
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
+        const resumeBtn = f.page.getByRole('button', { name: 'Riprendi un’attività', exact: true });
         await resumeBtn.waitFor({ state: 'visible' });
         await resumeBtn.click();
 
-        const menu = f.page.getByRole('menu');
+        const menu = f.page.locator('#resume-panel');
         await menu.waitFor({ state: 'visible' });
         assert.ok(await menu.getByText(/Savickas/i).isVisible());
         assert.equal(await menu.getByText(/QSA/i).count(), 0);
 
         // Direct resume attempt to disabled frozen session
-        await f.page.goto(`${origin}/?frozen=frozen-qsa`, { waitUntil: 'networkidle' });
+        await f.page.goto(`${origin}/?frozen=frozen-qsa`, { waitUntil: 'domcontentloaded' });
 
         // Expect warning toast
         const toast = f.page.getByRole('status').filter({ hasText: 'Questo strumento non è abilitato per la tua classe.' });
         await toast.waitFor({ state: 'visible' });
 
         // Stays on catalog view
-        const savickasCard = f.page.getByRole('button', { name: /Savickas/i });
+        const savickasCard = detailLink(f.page, 'SAVICKAS');
         await savickasCard.waitFor({ state: 'visible' });
 
         assert.deepEqual(f.errors, []);
@@ -193,17 +195,17 @@ test('Unrestricted student sees full catalog and can access /strumenti/QSA', asy
         access: { restricted: false, tool_keys: [], counselor_ids: null, default_counselor_id: null, class_ids: [] },
     });
     try {
-        await f.page.goto(`${origin}/?view=questionnaires`, { waitUntil: 'networkidle' });
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
 
         // Both QSA and SAVICKAS are visible
-        const qsaCard = f.page.getByRole('button', { name: /^QSA\s/ });
+        const qsaCard = detailLink(f.page, 'QSA');
         await qsaCard.waitFor({ state: 'visible' });
 
-        const savickasCard = f.page.getByRole('button', { name: /Savickas/i });
+        const savickasCard = detailLink(f.page, 'SAVICKAS');
         await savickasCard.waitFor({ state: 'visible' });
 
         // Directly opening /strumenti/QSA shows normal detail page
-        await f.page.goto(`${origin}/strumenti/QSA`, { waitUntil: 'networkidle' });
+        await f.page.goto(`${origin}/strumenti/QSA`, { waitUntil: 'domcontentloaded' });
         const disabledHeading = f.page.getByRole('heading', { name: 'Strumento non abilitato per la tua classe' });
         assert.equal(await disabledHeading.count(), 0);
 
@@ -234,7 +236,7 @@ test('Student area shows the class-filtered instrument catalog after the plans a
         assert.equal(before, true);
 
         await catalog.locator('article', { hasText: /Savickas/i }).first().getByRole('button').first().click();
-        await f.page.waitForURL((url) => url.pathname === '/' && url.searchParams.get('start') === 'SAVICKAS');
+        await f.page.getByText('Il tuo taccuino è ancora aggiornato?', { exact: true }).waitFor();
         assert.deepEqual(f.errors, []);
     } finally {
         await f.context.close();
