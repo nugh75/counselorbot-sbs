@@ -220,7 +220,7 @@ export default function BussolaPage() {
         try {
             await completeOrientation(session.session_id);
             skipOrientationThisVisit();
-            router.push(nextHref || '/?view=home');
+            router.push(nextHref || '/profilo');
         } catch {
             setError(t('orientation.error'));
             setCompleting(false);
@@ -259,14 +259,14 @@ export default function BussolaPage() {
     // rende `required` falso da se'.
     const skipToTools = () => {
         skipOrientationThisVisit();
-        router.push('/?view=home');
+        router.push('/profilo');
     };
 
     // L'altra strada del bivio: il catalogo degli strumenti, la stessa schermata
     // che accoglie chi torna. Il cancello tace per la visita, come nel salto.
     const goToTools = () => {
         skipOrientationThisVisit();
-        router.push('/?view=home');
+        router.push('/profilo');
     };
 
     return (

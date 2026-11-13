@@ -9,10 +9,10 @@ import { legacyRouteRedirects } from './legacy-routes.ts';
 
 const app = path.join(path.dirname(fileURLToPath(import.meta.url)), '../app');
 
-test('bare /strumenti redirects permanently to the home tools list', () => {
+test('bare /strumenti redirects temporarily to the role-aware landing', () => {
     assert.deepEqual(
         legacyRouteRedirects.filter(route => route.source.startsWith('/strumenti')),
-        [{ source: '/strumenti', destination: '/?view=home', permanent: true }],
+        [{ source: '/strumenti', destination: '/?view=home', permanent: false }],
     );
     // A page here would be shadowed by the redirect; instrument pages keep their URL.
     assert.ok(!existsSync(path.join(app, 'strumenti/page.tsx')));

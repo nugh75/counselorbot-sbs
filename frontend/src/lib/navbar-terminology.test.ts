@@ -79,6 +79,6 @@ test('the satisfaction questionnaire sits on the introduction, right after the c
     assert.ok(all >= 0 && feedback > all, 'feedback entry after «Vedi tutte le attività e i percorsi»');
     assert.equal(intro.slice(all, feedback).match(/<(Link|button|a)\b/g), null, 'no other control in between');
     // Anonymous people see the sign-in screen instead of the introduction.
-    const home = readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '../app/page.tsx'), 'utf8');
-    assert.ok(home.indexOf('<FeedbackEntry', home.indexOf("t('home.auth.cta')")) > 0, 'feedback entry on the sign-in screen');
+    const signIn = component('home/SignInCard.tsx');
+    assert.ok(signIn.indexOf('<FeedbackEntry') > 0, 'feedback entry on the sign-in screen');
 });

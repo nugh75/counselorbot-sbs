@@ -29,7 +29,7 @@ export default function AdministrationPage() {
                 <h1 className="text-2xl font-semibold text-ink">{t('detail.disabledForClass.title')}</h1>
                 <p className="text-ink-muted">{t('detail.disabledForClass.body')}</p>
                 <div className="flex items-center justify-center gap-4">
-                    <PreviousPageButton fallbackHref="/?view=home" />
+                    <PreviousPageButton fallbackHref="/profilo" />
                 </div>
             </Card>
         );

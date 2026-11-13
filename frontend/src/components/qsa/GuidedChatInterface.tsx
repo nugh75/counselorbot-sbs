@@ -101,7 +101,8 @@ interface GuidedChatInterfaceProps {
     sessionId: string;
     locale?: string;
     scoresContextOverride?: string;
-    onFrozen?: () => void;
+    onFrozen?: (practice: boolean) => void;
+    studentFlow?: boolean;
     onBack?: () => void;
     frozenSnapshot?: FrozenSessionDetail | null;
     planOrigin?: { pathId: number; stepId: number } | null;
@@ -343,7 +344,7 @@ export function buildScoresFormatter(
 // suo per non portarsela dietro negli altri strumenti.
 const IDEA_PANEL_BOUNDS = { min: 360, max: 720, initial: 480 };
 
-export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, planOrigin, registerAttemptSave, onSaveState, initialResponseLength, initialReasoningEffort, initialResponseFormat, reasoningCapable = true, reasoningMandatory = false, preview = false }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, planOrigin, registerAttemptSave, onSaveState, initialResponseLength, initialReasoningEffort, initialResponseFormat, reasoningCapable = true, reasoningMandatory = false, studentFlow = false, preview = false }: GuidedChatInterfaceProps) {
     const { access } = useUserAccess();
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
@@ -371,12 +372,13 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // Taccuino nel contesto: il docente lo sceglie dal popover Opzioni e la
     // scelta vive nel browser (stessa filosofia di docenzaGroupIds); il
     // server riverifica il ruolo a ogni turno. 'default' non viaggia mai.
-    const [notebookContext, setNotebookContext] = useState<NotebookContextChoice>(() => frozenSnapshot?.notebook_context ?? readStoredNotebookContext());
+    const [notebookContext, setNotebookContext] = useState<NotebookContextChoice>(() => studentFlow ? 'student' : frozenSnapshot?.notebook_context ?? readStoredNotebookContext());
     // Docenti, ricercatori e admin (plan managers): come il guard del taccuino docente.
-    const [isTeacherUser, setIsTeacherUser] = useState(false);
+    const [isStaff, setIsStaff] = useState(false);
+    const isTeacherUser = isStaff && !studentFlow;
     useEffect(() => {
         let active = true;
-        getIdentity().then((id) => { if (active) setIsTeacherUser(Boolean(id?.authenticated && canUseTeacherAssistant(id))); });
+        getIdentity().then((id) => { if (active) setIsStaff(Boolean(id?.authenticated && canUseTeacherAssistant(id))); });
         return () => { active = false; };
     }, []);
     const changeNotebookContext = (value: NotebookContextChoice) => {
@@ -385,12 +387,12 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     };
     // Taccuino studente di prova (solo con "practice"): id del docente, il
     // server ne verifica proprietà e ruolo a ogni turno.
-    const [practiceNotebookId, setPracticeNotebookId] = useState<number | null>(() => frozenSnapshot?.practice_notebook_id ?? readStoredPracticeNotebookId());
+    const [practiceNotebookId, setPracticeNotebookId] = useState<number | null>(() => studentFlow ? null : frozenSnapshot?.practice_notebook_id ?? readStoredPracticeNotebookId());
     const changePracticeNotebookId = useCallback((id: number | null) => {
         setPracticeNotebookId(id);
         storePracticeNotebookId(id);
     }, []);
-    const notebookPayload = notebookContextPayload(isTeacherUser, notebookContext, practiceNotebookId);
+    const notebookPayload = studentFlow ? {} : notebookContextPayload(isTeacherUser, notebookContext, practiceNotebookId);
     const notebookSignature = notebookContext === 'practice' ? `practice:${practiceNotebookId ?? ''}` : notebookContext;
     const desktop = useIsDesktop();
     // Se l'ultimo turno ha disegnato. Null prima del primo: una mappa che non
@@ -1581,7 +1583,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             pendingSnapshotRef.current = null;
             savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext: notebookSignature, groupIds: docenzaGroupIds, navigation: { ...navigation, input } });
             toast.success(t('frozen.frozen'));
-            onFrozen?.();
+            onFrozen?.(snapshot.notebook_context === 'practice' && Boolean(snapshot.practice_notebook_id));
         } catch {
             toast.error(t('toast.error'));
         }

@@ -27,5 +27,5 @@ export async function saveAccountPreferences(counselorId: number | null, complet
 
 export function safeAccountNext(value: string | null): string {
     return value && value.startsWith('/') && !value.startsWith('//') && !value.includes('\\')
-        && !value.startsWith('/inizia') && !value.startsWith('/counselor') ? value : '/';
+        && !value.startsWith('/inizia') && !value.startsWith('/counselor') ? value : '/profilo';
 }

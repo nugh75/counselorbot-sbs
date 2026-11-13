@@ -40,6 +40,7 @@ interface InputMethodSelectorProps {
     onSelect: (method: Method, resumeData?: { sessionId: string; scores: Record<string, number> }, remember?: boolean) => void;
     onBack?: () => void;
     questionnaire?: QuestionnaireConfig;
+    studentFlow?: boolean;
 }
 
 interface Option {
@@ -49,7 +50,7 @@ interface Option {
     badge?: string;
 }
 
-export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMethodSelectorProps) {
+export function InputMethodSelector({ onSelect, onBack, questionnaire, studentFlow = false }: InputMethodSelectorProps) {
     const { t } = useI18n();
     const hasProfileUpload = questionnaire ? supportsProfileUpload(questionnaire.id) : false;
     // Strumento senza punteggi: la schermata serve solo a scegliere per chi è la chat.
@@ -66,10 +67,10 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
     // restano visibili accanto.
     const [isTeacher, setIsTeacher] = useState(false);
     const [practiceNotebooks, setPracticeNotebooks] = useState<PracticeNotebook[]>([]);
-    const [practiceId, setPracticeId] = useState<number | null>(() => readStoredNotebookContext() === 'practice' ? readStoredPracticeNotebookId() : null);
+    const [practiceId, setPracticeId] = useState<number | null>(() => !studentFlow && readStoredNotebookContext() === 'practice' ? readStoredPracticeNotebookId() : null);
     const [practiceResults, setPracticeResults] = useState<PracticeResult[]>([]);
     const [chosenPracticeResultId, setChosenPracticeResultId] = useState<number | null>(null);
-    const practiceNotebook = practiceNotebooks.find((notebook) => notebook.id === practiceId) ?? null;
+    const practiceNotebook = studentFlow ? null : practiceNotebooks.find((notebook) => notebook.id === practiceId) ?? null;
     // Senza punteggi c'è sempre una scelta: lo studente di prova se è scelto, altrimenti il proprio account.
     const selected: Method | null = unscored && (selectedState === null || (selectedState === 'test-student' && !practiceNotebook))
         ? (practiceNotebook ? 'test-student' : 'own')
@@ -79,6 +80,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
     const [createError, setCreateError] = useState(false);
 
     useEffect(() => {
+        if (studentFlow) return;
         let active = true;
         getIdentity().then((identity) => {
             if (!active || !identity?.authenticated || !canUseTeacherAssistant(identity)) return;
@@ -86,7 +88,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
             practiceNotebookApi.list().then((rows) => { if (active) setPracticeNotebooks(rows); }).catch(() => {});
         }).catch(() => {});
         return () => { active = false; };
-    }, []);
+    }, [studentFlow]);
 
     useEffect(() => {
         let active = true;
@@ -353,7 +355,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
             {/* E' la schermata che chiede i punteggi: qui la domanda "e dove li
                 prendo?" arriva davvero, e finora non aveva risposta. */}
             {questionnaire && <QuestionnaireLink instrument={questionnaire.id} className="max-w-5xl" />}
-            {isTeacher && (practiceNotebooks.length > 0 || unscored) && (
+            {isTeacher && !studentFlow && (practiceNotebooks.length > 0 || unscored) && (
                 <div data-practice-student className={cn('max-w-5xl space-y-2 rounded-lg border p-3 text-sm text-slate-700',
                     practiceNotebook ? 'border-role-test-line bg-role-test-soft text-ink' : 'border-slate-200 bg-white')}>
                     <label className="flex flex-wrap items-center gap-2">

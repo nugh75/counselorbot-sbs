@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getIdentity } from '@/lib/auth';
+import { hasHomeToolEntry } from '@/lib/home-entry';
 import { fetchAccountPreferences, saveAccountPreferences } from '@/lib/account-preferences';
 import { setSelectedCounselorId } from '@/lib/counselor';
 import { useI18n } from '@/lib/i18n-context';
@@ -22,20 +23,20 @@ export function AccountSetupGate({ children }: { children: React.ReactNode }) {
                 const identity = await getIdentity();
                 if (!active) return;
                 setError(false);
-                if (!identity?.authenticated) { setLoadedPath(pathname); return; }
+                const params = new URLSearchParams(window.location.search);
+                const homeNavigation = pathname === '/' && !hasHomeToolEntry(params);
+                if (!identity?.authenticated || homeNavigation) { setLoadedPath(pathname); return; }
                 const prefs = await fetchAccountPreferences();
                 if (!active) return;
                 if (prefs.counselor_ready && prefs.notebook_ready && !prefs.setup_completed) {
                     await saveAccountPreferences(prefs.counselor_id, true);
                     if (!active) return;
                 }
-                const params = new URLSearchParams(window.location.search);
                 const resuming = pathname === '/' && Boolean(params.get('frozen') || params.get('resume') || params.get('session_id'));
                 // A resumed conversation restores its own counselor in the page.
                 if (!resuming) setSelectedCounselorId(prefs.counselor_ready ? prefs.counselor_id : null);
-                const exempt = ['/inizia', '/counselor', '/profilo', '/admin', '/docente', '/guide', '/login', '/logout', '/accesso-locale', '/unisciti', '/register', '/telegram-link', '/questionario'].some(p => pathname === p || pathname.startsWith(`${p}/`));
-                const intro = pathname === '/' && !params.get('view') && !params.get('start');
-                if (!exempt && !intro && !resuming && (!prefs.counselor_ready || !prefs.notebook_ready)) {
+                const exempt = ['/inizia', '/counselor', '/profilo', '/admin', '/docente', '/guide', '/login', '/logout', '/accesso-locale', '/unisciti', '/gruppo', '/register', '/telegram-link', '/questionario'].some(p => pathname === p || pathname.startsWith(`${p}/`));
+                if (!exempt && !resuming && (!prefs.counselor_ready || !prefs.notebook_ready)) {
                     router.replace(`${prefs.notebook_ready ? "/counselor" : "/inizia"}?next=${encodeURIComponent(pathname + window.location.search)}`);
                     return;
                 }

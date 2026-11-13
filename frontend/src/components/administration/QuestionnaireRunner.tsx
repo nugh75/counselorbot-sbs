@@ -33,7 +33,7 @@ import {
 } from '@/lib/institution-credentials';
 import { useClientValue } from '@/lib/use-client-value';
 
-const QUESTIONNAIRE_SELECTION_HREF = '/?view=home';
+const QUESTIONNAIRE_SELECTION_HREF = '/profilo';
 
 // Profilo calcolato lato server (POST /api/instruments/{code}/score).
 interface ScoreResult {

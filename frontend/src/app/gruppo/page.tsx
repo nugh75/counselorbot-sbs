@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { apiFetch } from '@/lib/auth';
+import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
+import { SignInCard } from '@/components/home/SignInCard';
 import { useI18n } from '@/lib/i18n-context';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { Users } from 'lucide-react';
@@ -64,12 +65,15 @@ function GroupJoinInner() {
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const searchParams = useSearchParams();
     const code = (searchParams.get('g') || searchParams.get('code') || '').trim();
+    const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
     const [group, setGroup] = useState<JoinedGroup | null>(null);
     const [failed, setFailed] = useState(false);
     const error = !code ? texts.missing : (failed ? texts.invalid : '');
 
+    useEffect(() => { void getIdentity().then(setIdentity); }, []);
+
     useEffect(() => {
-        if (!code) return;
+        if (!code || !identity?.authenticated) return;
         let cancelled = false;
         apiFetch('/api/groups/join', {
             method: 'POST',
@@ -83,7 +87,10 @@ function GroupJoinInner() {
             })
             .catch(() => { if (!cancelled) setFailed(true); });
         return () => { cancelled = true; };
-    }, [code]);
+    }, [code, identity]);
+
+    if (identity === undefined) return null;
+    if (code && !identity?.authenticated) return <SignInCard returnPath={`/gruppo?g=${encodeURIComponent(code)}`} />;
 
     return (
         <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-6 p-6 text-center">
@@ -100,7 +107,7 @@ function GroupJoinInner() {
                     <p className="max-w-sm text-xs text-slate-500">{learningText(lang, 'groupVisibility')}</p>
                     <div className="flex flex-col gap-2 sm:flex-row">
                         <Link
-                            href="/?view=home"
+                            href="/profilo#profile-instrument-catalog"
                             className="rounded-md bg-indigo-600 px-6 py-3 text-base font-semibold text-white hover:bg-indigo-700"
                         >
                             {texts.goTools}

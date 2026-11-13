@@ -17,10 +17,11 @@ import { fetchInstruments } from '@/lib/instruments-api';
 import { useUserAccess } from '@/lib/use-user-access';
 import { isToolAllowed } from '@/lib/user-access';
 import { useI18n } from '@/lib/i18n-context';
+import { instrumentStartHref } from '@/lib/home-entry';
 import { STRATEGIC_COMPETENCES_URLS, STRATEGIC_COMPETENCES_CODE, STRATEGIC_COMPETENCES_PASSWORD } from '@/lib/questionnaire-sources';
 
 const STATIC_AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA', 'IDEA'];
-const QUESTIONNAIRE_SELECTION_HREF = '/?view=home';
+const QUESTIONNAIRE_SELECTION_HREF = '/profilo';
 
 export default function InstrumentDetailsPage() {
     const { t, tf, lang } = useI18n();
@@ -103,7 +104,7 @@ export default function InstrumentDetailsPage() {
         <div className="page-narrow space-y-6">
             <div className="flex items-center gap-4">
                 <PreviousPageButton fallbackHref={QUESTIONNAIRE_SELECTION_HREF} />
-                <ForwardButton href={`/?start=${questionnaire.id}`} label={t('selector.start')} />
+                <ForwardButton href={instrumentStartHref(questionnaire.id, true)} label={t('selector.start')} />
             </div>
 
             <Card as="section" className="sm:p-8">
