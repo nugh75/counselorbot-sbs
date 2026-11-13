@@ -130,7 +130,7 @@ export function InstrumentCatalog({
                                 href={paused ? resumeHref(paused) : `/strumenti/${q.id}`} reload={Boolean(paused)}
                                 illustration={<ToolIllustration id={q.id} category={toolCategory(q.id)} />}
                                 name={tf(`q.${q.id}.name`, q.name)}
-                                description={paused ? t('selector.suggested.paused') : suggestion.reason} />
+                                description={suggestion.source === 'paused' ? t('selector.suggested.paused') : suggestion.reason} />
                         );
                     })}
                 </EntrySection>
