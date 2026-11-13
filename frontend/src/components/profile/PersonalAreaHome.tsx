@@ -18,8 +18,9 @@ import { Button } from '@/components/ui/Button';
 import { ClassPathHeroList } from '@/components/profile/ClassPathHeroList';
 import { parseStudentClassPaths, selectCurrentClassPath, type StudentClassPath } from '@/lib/class-paths';
 import { classPathText } from '@/lib/i18n-class-paths';
-import { LOCAL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
+import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
 import { resumeLabel } from '@/lib/resume-label';
+import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 
 function PersonalResume({ access }: { access: FullUserAccess | null }) {
@@ -56,7 +57,9 @@ function PersonalResume({ access }: { access: FullUserAccess | null }) {
     const frozen = resume.frozen.filter(row => !row.practice_notebook_id);
     const local = resume.localResume && !resume.frozen.some(row => row.session_id === resume.localResume?.sessionId)
         ? resume.localResume : null;
-    if (!loading && !failed && !items.length && !frozen.length && !local && !resume.error && !resume.loading) return null;
+    const hasRows = items.length > 0 || frozen.length > 0 || local || resume.pqbl;
+    if (!loading && !failed && !hasRows && !resume.error && !resume.loading) return null;
+    const rowClass = 'flex min-h-control items-center gap-4 rounded-control py-2 text-sm text-link';
     return <section aria-labelledby="personal-resume-title" className="rounded-card border border-brand-line bg-brand-soft px-4 py-4">
         <h2 id="personal-resume-title" className="font-semibold text-ink">{l('resume')}</h2>
         <ResumeLoadError entries={resume} />
@@ -65,21 +68,36 @@ function PersonalResume({ access }: { access: FullUserAccess | null }) {
             <p>{l('error')}{items.length > 0 && <> {l('stale')}</>}</p>
             <Button variant="ghost" disabled={loading} onClick={() => { setLoading(true); setAttempt(n => n + 1); }}>{l('retry')}</Button>
         </div>}
-        {(items.length > 0 || frozen.length > 0 || local) && <ul className="mt-1 divide-y divide-brand-line">
-            {frozen.map(row => <li key={`session-${row.session_id}`}>
-                <a href={resumeHref(row)} className="flex min-h-control items-center gap-4 rounded-control py-2 text-sm text-link">
-                    <span className="min-w-0 flex-1 break-words font-semibold">{resumeLabel(row.questionnaire_type, row.label, tf)}</span>
-                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
-                </a>
-            </li>)}
+        {hasRows && <ul className="mt-1 divide-y divide-brand-line">
+            {frozen.map(row => {
+                const label = resumeLabel(row.questionnaire_type, row.label, tf);
+                return <li key={`session-${row.session_id}`}>
+                    <ResumeEntry target={{ kind: 'session', sessionId: row.session_id }} label={label} deletable={!row.path_id}>
+                        <a href={resumeHref(row)} className={rowClass}>
+                            <span className="min-w-0 flex-1 break-words font-semibold">{label}</span>
+                            <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                        </a>
+                    </ResumeEntry>
+                </li>;
+            })}
             {local && <li>
-                <a href={LOCAL_RESUME_HREF} className="flex min-h-control items-center gap-4 rounded-control py-2 text-sm text-link">
-                    <span className="min-w-0 flex-1 break-words font-semibold">{t('header.resume')} · {resumeLabel(local.instrument, null, tf)}</span>
-                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
-                </a>
+                <ResumeEntry target={{ kind: 'session', sessionId: local.sessionId }} label={`${t('header.resume')} · ${resumeLabel(local.instrument, null, tf)}`}>
+                    <a href={LOCAL_RESUME_HREF} className={rowClass}>
+                        <span className="min-w-0 flex-1 break-words font-semibold">{t('header.resume')} · {resumeLabel(local.instrument, null, tf)}</span>
+                        <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                    </a>
+                </ResumeEntry>
+            </li>}
+            {resume.pqbl && <li>
+                <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
+                    <Link href={PQBL_RESUME_HREF} className={rowClass}>
+                        <span className="min-w-0 flex-1 break-words font-semibold">{t('header.resume')} · {t('pqbl.card.title')}</span>
+                        <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                    </Link>
+                </ResumeEntry>
             </li>}
             {items.map(item => <li key={item.id}>
-                <Link href={item.href} className="flex min-h-control items-center gap-4 rounded-control py-2 text-sm text-link">
+                <Link href={item.href} className={rowClass}>
                     <span className="min-w-0 flex-1 break-words">
                         <span className="text-ink-muted">{l(item.kind)} · </span><span className="font-semibold">{item.title}</span>
                         {item.date && <time dateTime={item.date} className="ml-2 text-ink-muted">{new Date(`${item.date}T12:00:00`).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' })}</time>}
