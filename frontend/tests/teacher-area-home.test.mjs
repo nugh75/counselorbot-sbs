@@ -44,16 +44,22 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
     await page.getByRole('heading', { level: 2, name: 'Progettazione didattica' }).waitFor();
     await page.locator('[data-testid="didactic-design-cta"]').waitFor();
-    // intestazioni di gruppo in ordine: Didattica, Le mie classi, Classe e assegnazioni, Palestra, Profilo docente, Cataloghi
+    // intestazioni di gruppo in ordine: Didattica, Le mie classi, Classe e assegnazioni, Palestra, Prova gli strumenti, Profilo docente, Cataloghi
     const h2 = await page.getByRole('heading', { level: 2 }).allTextContents();
-    assert.deepEqual(h2.slice(0, 6), [
+    assert.deepEqual(h2.slice(0, 7), [
         'Progettazione didattica',
         'Le mie classi',
         'Classe e assegnazioni',
         'Palestra di prova e simulazione',
+        'Prova gli strumenti',
         'Profilo professionale del docente',
         'Cataloghi',
     ]);
+    // Prova gli strumenti: ogni voce apre /?start=<id>, incluso OBIETTIVO_DOCENZA
+    const tryTools = page.locator('[data-testid="teacher-try-tools-section"]');
+    await tryTools.waitFor();
+    assert.equal(await page.locator('[data-testid="try-tool-QSA"]').getAttribute('href'), '/?start=QSA');
+    assert.equal(await page.locator('[data-testid="try-tool-OBIETTIVO_DOCENZA"]').getAttribute('href'), '/?start=OBIETTIVO_DOCENZA');
     // Sezione Le mie classi (zero-state con mock vuoto)
     await page.locator('[data-testid="teacher-my-classes-section"]').waitFor();
     const manageLink = page.locator('[data-testid="my-classes-manage-all-link"]');

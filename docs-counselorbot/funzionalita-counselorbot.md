@@ -1718,6 +1718,13 @@ salvata. I dettagli di attivazione automatica e ripristino sono in
 
 ## Docenti, ricercatori e amministrazione
 
+**Prova gli strumenti nell’Area docenti (#852, novembre 2026).** Nella home `/docente`,
+dopo la Palestra, un blocco crema elenca gli strumenti del catalogo (questionari, percorsi
+guidati e **Obiettivi per la classe**). Ogni voce apre lo strumento con il collegamento
+`/?start=<codice>`, quindi il docente trova la schermata di scelta già descritta sopra:
+studente di prova (celestino) oppure i propri dati (crema). Il blocco è visibile a docenti,
+ricercatori e amministratori.
+
 **Colori di ruolo (#834).** Tre tinte morbide distinguono le aree, solo su card e
 badge (pagina e header restano neutri, sia in tema chiaro sia scuro): petrol per lo
 studente (invariato), crema per l’Area docenti, celestino per gli studenti di prova.
