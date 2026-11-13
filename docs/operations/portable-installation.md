@@ -488,3 +488,24 @@ nessun processo dev resta attivo. Per fermare l'app conservando i dati,
 usare il comando `docker compose ... stop` completo riportato sopra.
 **`sudo ./update_nginx.sh` non è necessario**: la configurazione Console
 Docker è stata applicata e verificata.
+
+### Atterraggio per ruolo e rimozione pagina strumenti, 13 novembre 2026
+
+Deploy unico dopo il merge di #853 (PR #858, `8c34f59d`) e #854
+(PR #859, `68979552`), con `main` a `68979552`:
+
+```bash
+docker compose --env-file .env -f docker-compose.portable.yml up -d --build
+```
+
+- Immagini backend e frontend ricostruite; frontend, trascrizione e Piper
+  ricreati e **healthy**, PostgreSQL e backend restano healthy (il backend
+  non è stato ricreato perché il suo codice non è cambiato).
+- `/` mostra la pagina di accesso con «Accedi a CounselorBot» e il
+  questionario «Dicci com'è andata»; `/strumenti` risponde 307 verso
+  `/?view=home`; `/profilo` e `/runtime-config.js` rispondono 200.
+- Nessun errore nei log del frontend e zero errori JavaScript nella pagina;
+  il dominio pubblico continua a reindirizzare al login Console.
+- **Nessun comando `sudo` necessario**: registrazione Console, virtual host
+  e tunnel non cambiano. Resta da provare con un account reale l'atterraggio
+  per ruolo e la ripresa pQBL nell'Area studente.
