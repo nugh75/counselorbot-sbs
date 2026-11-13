@@ -335,7 +335,14 @@ gradimento** (`/questionario`), tradotto nelle sei lingue; chi non ha ancora
 effettuato l’accesso lo trova sotto il pulsante «Accedi a CounselorBot». Il
 questionario non è più nella barra di navigazione né nel pannello Menu.
 L’illustrazione del riquadro è decorativa: il titolo e la descrizione accanto ne
-portano il significato, anche per gli screen reader. Nell'Area studente
+portano il significato, anche per gli screen reader.
+
+**Illustrazioni degli strumenti (#863).** Ogni strumento ha un’illustrazione piatta
+in SVG (QSA, QSAr, QPCS, QPCC, ZTPI, QAP, Savickas, eventi e obiettivi di studio e
+professionali, obiettivo di docenza, idea), con colori chiari e scuri tramite le
+variabili `--i-*`. Gli strumenti dinamici o sconosciuti ricadono sull’immagine della
+categoria. Sono decorative (`aria-hidden`) e non cambiano ancora alcuna pagina: le
+usano le schede successive della mappa #861. Nell'Area studente
 viene prima la Bussola, poi le analisi dei questionari, i percorsi guidati e l'Area
 personale e strumenti. QSA, QSAr, ZTPI, QPCS, QPCC e QAP restano nelle analisi
 anche con categorie storiche errate; i percorsi standard restano tra i percorsi

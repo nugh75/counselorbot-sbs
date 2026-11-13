@@ -151,6 +151,8 @@
 }
 
 :root {
+  /* Tool illustration palette (#863) */
+  --i-out: #24343a; --i-paper: #ffffff; --i-teal: #2a9d96; --i-teal2: #1f5f63; --i-orange: #f2994a; --i-yellow: #f2c94c; --i-cream: #f6efe0; --i-sky: #bfe3f2;
   /* Raggio angoli globale: angoli tondi su tutta l'interfaccia (rounded-sm/md/lg/xl). */
   --radius: 0.75rem;
 
@@ -654,6 +656,8 @@ h1.text-3xl {
    ============================================================================ */
 .dark {
   color-scheme: dark;
+
+  --i-out: #1b262b; --i-paper: #f4f7f8; --i-cream: #e9e1cf;
 
   --console-bg: #0f172a;
   --console-surface: #1e293b;
