@@ -1,7 +1,7 @@
 # Handoff — feature/flashcards-flat-875 (#875)
 
 ## Stato
-Implementazione fatta; verifiche statiche in corso, poi commit, push e PR.
+Implementazione e verifiche fatte; branch pushato e PR aperta su main.
 
 ## Fatto
 - `FlashcardsPage.tsx`: mazzi ed editor carte in `Card` piatta; «Aggiungi carta», fine sessione ed elenco vuoto senza box; filetto sotto l'intestazione «I miei mazzi".
@@ -12,11 +12,13 @@ Implementazione fatta; verifiche statiche in corso, poi commit, push e PR.
 ## Verifiche
 - `node --test tests/flashcards-flat.test.mjs`: ok.
 - `make guidance-check`: ok.
+- eslint sui file toccati: 0 errori (solo warning preesistenti).
+- tsc: 0 errori oltre ai 252 import PNG (manca `next-env.d.ts` nel worktree, ambiente).
 - `tests/flashcards-autosave.test.mjs` (browser, Playwright + server): non eseguito.
 - Nessun controllo visivo/browser (nessun dev server avviato).
 
 ## Prossimi passi
-- tsc + eslint, commit, PR su main (milestone UI consistency).
+- Revisione e merge della PR da parte dell'utente.
 
 ## Blocchi e rischi
 - Possibile conflitto testuale su `funzionalita-counselorbot.md` con issue sorelle di #861.
