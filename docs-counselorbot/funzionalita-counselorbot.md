@@ -346,6 +346,12 @@ Hanno ora l'intestazione illustrata dell'area: Dispositivi (nuova voce `disposit
 dell'Area docenti, con le sue briciole di pane), Orientamento del docente, Cambiamenti
 e il forum di classe dello studente.
 
+**Elenchi docente piatti (#868).** `/docente/classi` (e le classi di un istituto) elenca
+ogni classe come voce dell'elenco condiviso (nome, stato, codice, partecipanti, scuola,
+proprietario) invece di un riquadro con ombra; la copia del codice e le scorciatoie alle
+schede restano nella pagina della classe. Gli istituti e le assegnazioni usano la `Card`
+piatta per ogni riga; moduli e finestre di dialogo non cambiano.
+
 **Somministrazioni piatte (#873).** `/docente/somministrazioni` (e la stessa scheda
 in `/admin`) segue l'aspetto piatto: intestazione e contatori senza riquadri, ogni
 somministrazione e il modulo di creazione/modifica separati da un filetto (`Card`
@@ -359,6 +365,14 @@ del catalogo sono righe separate da filetti (non più riquadri), i moduli di mod
 di assegnazione non hanno bordo né sfondo, e il catalogo usa la `Card` piatta. Menu di
 azione, campi e avvisi (come quello di errore) mantengono i loro riquadri; nessun cambio
 di comportamento.
+
+**Studiare da un PDF senza schede annidate (#874).** `/profilo/pqbl` usa solo la
+`Card` piatta: impostazione, generazione, introduzione, domande, riepilogo, test finale
+e risultati sono sezioni separate da un filetto. Nel riepilogo i tre numeri sono cifre
+semplici e i punteggi per competenza un elenco separato da filetti; le icone dei titoli
+non hanno più il riquadro colorato. Restano riquadrati l'area di caricamento del PDF, i
+pulsanti di risposta, i riscontri delle risposte e gli avvisi. Il progresso salvato nel
+browser e il flusso non cambiano.
 
 **Illustrazioni degli strumenti (#863).** Ogni strumento ha un’illustrazione piatta
 in SVG (QSA, QSAr, QPCS, QPCC, ZTPI, QAP, Savickas, eventi e obiettivi di studio e
