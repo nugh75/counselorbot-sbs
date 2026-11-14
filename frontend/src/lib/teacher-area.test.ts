@@ -90,10 +90,12 @@ test('my classes dashboard section labels are fully localized across all 6 langu
     }
 });
 
-test('resources group contains the unified library slug', () => {
-    const resourcesGroup = teacherAreaGroups.find(g => g.id === 'resources');
-    assert.ok(resourcesGroup, 'resources group exists');
-    assert.deepEqual([...resourcesGroup.slugs], ['risorse']);
+test('home groups follow the by-field regrouping without the risorse hub', () => {
+    const slugsOf = (id: string) => [...(teacherAreaGroups.find(g => g.id === id)?.slugs ?? [])];
+    assert.deepEqual(slugsOf('classroom'), ['classi', 'piani-operativi', 'assegnazioni', 'incontri', 'compilazioni', 'orientamento', 'istituti']);
+    assert.deepEqual(slugsOf('resources'), ['catalogo-obiettivi', 'strategie', 'materiali']);
+    assert.deepEqual(slugsOf('research'), ['somministrazioni']);
+    assert.ok(!(teacherAreaSlugs as readonly string[]).includes('risorse'));
 });
 
 test('resources library and hub labels are fully localized across all 6 languages', async () => {

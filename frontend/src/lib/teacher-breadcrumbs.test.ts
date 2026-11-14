@@ -32,29 +32,26 @@ test('every teacher area slug generates valid breadcrumbs starting with Area doc
     }
 });
 
-test('strategie and materiali produce 3-level breadcrumbs under Risorse didattiche', () => {
+test('strategie and materiali produce 2-level breadcrumbs directly under the area home', () => {
     for (const lang of languages) {
         const stratItems = getTeacherBreadcrumbsForSlug('strategie', lang);
-        assert.equal(stratItems.length, 3);
+        assert.equal(stratItems.length, 2);
         assert.equal(stratItems[0].href, '/docente');
-        assert.equal(stratItems[1].href, '/docente/risorse');
-        assert.equal(stratItems[2].current, true);
+        assert.equal(stratItems[1].current, true);
 
         const matItems = getTeacherBreadcrumbsForSlug('materiali', lang);
-        assert.equal(matItems.length, 3);
+        assert.equal(matItems.length, 2);
         assert.equal(matItems[0].href, '/docente');
-        assert.equal(matItems[1].href, '/docente/risorse');
-        assert.equal(matItems[2].current, true);
+        assert.equal(matItems[1].current, true);
     }
 });
 
-test('taccuini-prova produces 3-level breadcrumbs under Palestra di prova', () => {
+test('taccuini-prova produces 2-level breadcrumbs directly under the area home', () => {
     for (const lang of languages) {
         const items = getTeacherBreadcrumbsForSlug('taccuini-prova', lang);
-        assert.equal(items.length, 3);
+        assert.equal(items.length, 2);
         assert.equal(items[0].href, '/docente');
-        assert.equal(items[1].href, '/docente/palestra');
-        assert.equal(items[2].current, true);
+        assert.equal(items[1].current, true);
     }
 });
 

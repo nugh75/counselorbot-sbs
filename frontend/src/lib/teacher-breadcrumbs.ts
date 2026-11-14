@@ -17,7 +17,6 @@ export interface TeacherBreadcrumbItem {
  * Mappatura gerarchica delle breadcrumb per ciascuna sottopagina dell'Area Docente.
  * Schema generale:
  * - Radice: "Area docenti" (/docente)
- * - Hub genitore intermedio se applicabile (es. /docente/risorse per strategie e materiali)
  * - Pagina o sezione attiva finale contrassegnata come current.
  */
 export function getTeacherBreadcrumbsForSlug(slug: TeacherAreaSlug, lang: Lang): TeacherBreadcrumbItem[] {
@@ -30,19 +29,16 @@ export function getTeacherBreadcrumbsForSlug(slug: TeacherAreaSlug, lang: Lang):
         case 'strategie':
             return [
                 root,
-                { label: teacherAreaText(lang, 'breadcrumbRisorse'), href: '/docente/risorse' },
                 { label: teacherAreaText(lang, 'breadcrumbStrategie'), current: true },
             ];
         case 'materiali':
             return [
                 root,
-                { label: teacherAreaText(lang, 'breadcrumbRisorse'), href: '/docente/risorse' },
                 { label: teacherAreaText(lang, 'breadcrumbMateriali'), current: true },
             ];
         case 'taccuini-prova':
             return [
                 root,
-                { label: teacherAreaText(lang, 'breadcrumbPalestra'), href: '/docente/palestra' },
                 { label: teacherAreaText(lang, 'breadcrumbTaccuiniProva'), current: true },
             ];
         case 'catalogo-obiettivi':
@@ -64,11 +60,6 @@ export function getTeacherBreadcrumbsForSlug(slug: TeacherAreaSlug, lang: Lang):
             return [
                 root,
                 { label: teacherAreaText(lang, 'breadcrumbTaccuino'), current: true },
-            ];
-        case 'risorse':
-            return [
-                root,
-                { label: teacherAreaText(lang, 'breadcrumbRisorse'), current: true },
             ];
         case 'classi':
             return [

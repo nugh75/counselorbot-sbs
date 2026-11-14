@@ -1,17 +1,6 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { Suspense } from 'react';
-import { TeacherAreaPage } from '@/components/teacher/TeacherAreaPage';
-import { TeacherResourcesHub } from '@/components/teacher/TeacherResourcesHub';
-
+// #902: the hub duplicated Strategie and Materiali, which the home lists directly.
 export default function TeacherResourcesPage() {
-    return (
-        <TeacherAreaPage slug="risorse">
-            {() => (
-                <Suspense fallback={null}>
-                    <TeacherResourcesHub />
-                </Suspense>
-            )}
-        </TeacherAreaPage>
-    );
+    redirect('/docente/strategie');
 }
