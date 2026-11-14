@@ -75,14 +75,15 @@ test('groups: initial HTTP failure is an alert with retry, never empty or creata
     const f = await fixture();
     try {
         await f.go();
-        await f.page.getByRole('heading', { name: 'Gruppi e classi che gestisco' }).waitFor();
+        await f.page.getByRole('heading', { level: 1, name: 'Gruppi e classi', exact: true }).waitFor();
         // Fails on S1 baseline: HTTP 503 becomes the ordinary empty-state hint.
         assert.equal(await f.page.getByText('Non gestisci ancora gruppi o classi.', { exact: false }).count(), 0);
         await f.page.getByRole('alert').filter({ hasText: 'Impossibile caricare le classi' }).waitFor();
         assert.equal(await f.page.getByRole('button', { name: 'Nuovo gruppo o classe' }).isDisabled(), true);
         const before = f.state.gets; f.state.failure = false;
         await f.page.getByRole('button', { name: 'Riprova', exact: true }).click();
-        await f.page.getByRole('heading', { name: 'Classe Demo', exact: true }).waitFor();
+        // The recovered list shows each class as an entry link to its page.
+        await f.page.getByRole('link', { name: /Classe Demo/ }).waitFor();
         assert.equal(f.state.gets, before + 1);
         assert.deepEqual(f.state.mutations, []); assert.deepEqual(f.state.errors, []);
     } finally { await f.context.close(); }
@@ -272,7 +273,7 @@ for (const surface of ['groups', 'notebook', 'chat']) {
                 // S16: return through the page header, then open the existing Classi entry.
                 await f.page.locator('[data-teacher-area-header] a[href="/docente"]').click();
                 await f.page.locator('a[aria-labelledby="teacher-link-classi"]').click();
-                await f.page.getByRole('heading', { name: 'Gruppi e classi che gestisco' }).waitFor();
+                await f.page.getByRole('heading', { level: 1, name: 'Gruppi e classi', exact: true }).waitFor();
             } else await f.page.goto(`${origin}/guide`, { waitUntil: 'domcontentloaded' });
             f.allowReads();
             f.state.identity = { ...f.state.identity, username: 'teacher.other' };
@@ -297,7 +298,7 @@ for (const surface of ['groups', 'notebook', 'chat']) {
                 // S16: return through the page header, then open the existing Classi entry.
                 await f.page.locator('[data-teacher-area-header] a[href="/docente"]').click();
                 await f.page.locator('a[aria-labelledby="teacher-link-classi"]').click();
-                await f.page.getByRole('heading', { name: 'Gruppi e classi che gestisco' }).waitFor();
+                await f.page.getByRole('heading', { level: 1, name: 'Gruppi e classi', exact: true }).waitFor();
             } else await f.page.goto(`${origin}/guide`, { waitUntil: 'domcontentloaded' });
             f.allowReads(); f.state.identity = { ...f.state.identity, groups: ['studenti'] }; f.state.failure = 403;
             await f.go();
@@ -332,10 +333,10 @@ for (const [lang, retry] of [['it', 'Riprova'], ['en', 'Try again'], ['es', 'Rei
             const f = await fixture({ surface, lang });
             try {
                 // The chat path-choice button is localized too; select the
-                // existing primary action through its stable form container.
+                // start action, the button of the path-choice fieldset.
                 if (surface === 'chat') {
                     await f.page.goto(`${origin}/?resume=1`);
-                    await f.page.locator('main button.bg-indigo-600, main button.bg-teal-700').last().click();
+                    await f.page.locator('main fieldset:has(input[name="qsa-path"]) button').click();
                 } else await f.go();
                 const alert = f.page.getByRole('alert').filter({ has: f.page.getByRole('button', { name: retry, exact: true }) });
                 await alert.waitFor();
@@ -369,14 +370,14 @@ for (const surface of ['groups', 'notebook', 'chat']) {
     });
 }
 
-for (const [lang, message] of [['it', 'usa Riprova'], ['en', 'use Try again'], ['es', 'usa Reintentar'], ['fr', 'utilisez Réessayer'], ['de', 'wählen Sie Erneut versuchen'], ['sv', 'välj Försök igen']]) {
-    test(`teacher guide explains recovery and opens the class screenshot from keyboard in ${lang}`, async () => {
+for (const [lang, title] of [['it', 'Preparare un istituto e una classe'], ['en', 'Set up an institution and class'], ['es', 'Preparar un instituto y una clase'], ['fr', 'Préparer un établissement et une classe'], ['de', 'Einrichtung und Klasse vorbereiten'], ['sv', 'Förbereda en institution och klass']]) {
+    test(`teacher guide class task opens its screenshot from keyboard in ${lang}`, async () => {
         const f = await fixture({ lang });
         try {
-            await f.page.goto(`${origin}/guide?audience=teacher`, { waitUntil: 'networkidle' });
-            const section = f.page.locator('#guide-teacher-section-2');
-            await section.getByText(message, { exact: false }).waitFor();
-            const imageButton = section.locator('figure').first().getByRole('button');
+            // The guide is organised by task: the old teacher section 2 is the class-setup task.
+            await f.page.goto(`${origin}/guide#guide-teacher-section-2`, { waitUntil: 'networkidle' });
+            await f.page.getByRole('heading', { name: title, exact: true }).waitFor();
+            const imageButton = f.page.locator('main figure').first().getByRole('button');
             await imageButton.focus(); await f.page.keyboard.press('Enter');
             await f.page.getByRole('dialog').waitFor();
             await f.page.keyboard.press('Escape'); await f.page.getByRole('dialog').waitFor({ state: 'hidden' });
