@@ -100,7 +100,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
 
 // 2. Ogni sottopagina mostra la sua intestazione e il pannello atteso
 for (const [slug, h1, marker] of [
-    ['classi', 'Gruppi e classi', 'Gruppi e classi che gestisco'],
+    ['classi', 'Gruppi e classi', 'Non gestisci ancora gruppi o classi. Creane uno e condividi il link con i partecipanti.'],
     ['assegnazioni', 'Assegnazioni', 'Nuova assegnazione'],
     ['piani-operativi', 'Piani operativi', 'Non hai ancora classi: creane una in Gruppi e classi per preparare un piano operativo.'],
     ['incontri', 'Incontri', 'Non hai ancora classi o gruppi: creane uno in Gruppi e classi per organizzare un incontro.'],
