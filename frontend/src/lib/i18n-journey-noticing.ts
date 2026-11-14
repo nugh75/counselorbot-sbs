@@ -1,0 +1,46 @@
+// Whole-journey noticing (#890): labels for sources, authorship and batch progress.
+type Localized = readonly [string, string, string, string, string, string];
+const texts = {
+    intro: ['Il Noticing considera tutte le fonti disponibili del percorso: conversazioni, strumenti, taccuino, portfolio, azioni, schede, confronti, obiettivi, bilanci, incontri e contributi al forum.', 'Noticing considers all available journey sources: conversations, tools, notebook, portfolio, actions, cards, comparisons, goals, reviews, meetings and forum contributions.', 'El Noticing considera todas las fuentes disponibles del recorrido: conversaciones, herramientas, cuaderno, portafolio, acciones, fichas, comparaciones, objetivos, balances, encuentros y aportaciones al foro.', 'Le Noticing considère toutes les sources disponibles du parcours : conversations, outils, carnet, portfolio, actions, fiches, comparaisons, objectifs, bilans, rencontres et contributions au forum.', 'Noticing berücksichtigt alle verfügbaren Quellen des Lernwegs: Gespräche, Werkzeuge, Notizbuch, Portfolio, Aktionen, Karten, Vergleiche, Ziele, Rückblicke, Treffen und Forenbeiträge.', 'Noticing omfattar alla tillgängliga källor i lärvägen: samtal, verktyg, anteckningsbok, portfolio, åtgärder, kort, jämförelser, mål, utvärderingar, möten och foruminlägg.'],
+    evidenceNote: ['Proposte dell’IA da verificare sulle fonti. Le citazioni distinguono parole dello studente, osservazioni del docente, lavori salvati e dati registrati.', 'AI suggestions to check against sources. Quotes distinguish student words, teacher observations, saved work and recorded data.', 'Propuestas de IA para verificar con las fuentes. Las citas distinguen palabras del estudiante, observaciones docentes, trabajos guardados y datos registrados.', 'Propositions de l’IA à vérifier sur les sources. Les citations distinguent paroles de l’élève, observations enseignantes, travaux enregistrés et données.', 'KI-Vorschläge anhand der Quellen prüfen. Zitate unterscheiden Aussagen der Lernenden, Beobachtungen der Lehrkraft, gespeicherte Arbeiten und Aufzeichnungen.', 'AI-förslag att kontrollera mot källorna. Citaten skiljer elevens ord, lärarobservationer, sparade arbeten och registrerade uppgifter.'],
+    coverage: ['{n} studenti con fonti su {total} · {pending} blocchi da analizzare', '{n} of {total} students have sources · {pending} batches to analyse', '{n} de {total} estudiantes con fuentes · {pending} bloques por analizar', '{n} élèves sur {total} ont des sources · {pending} blocs à analyser', '{n} von {total} Lernenden mit Quellen · {pending} Abschnitte zu analysieren', '{n} av {total} elever har källor · {pending} block att analysera'],
+    progress: ['Blocchi analizzati: {done} di {total}', 'Batches analysed: {done} of {total}', 'Bloques analizados: {done} de {total}', 'Blocs analysés : {done} sur {total}', 'Analysierte Abschnitte: {done} von {total}', 'Analyserade block: {done} av {total}'],
+    sources: ['Fonti del percorso', 'Journey sources', 'Fuentes del recorrido', 'Sources du parcours', 'Quellen des Lernwegs', 'Lärvägens källor'],
+    filterScope: ['I filtri riguardano la sintesi della classe. Il quadro individuale considera l’intero percorso.', 'Filters apply to the class summary. The individual overview considers the whole journey.', 'Los filtros se aplican a la síntesis de la clase. El cuadro individual considera todo el recorrido.', 'Les filtres s’appliquent à la synthèse de la classe. Le tableau individuel considère tout le parcours.', 'Die Filter gelten für die Klassenübersicht. Die Einzelübersicht berücksichtigt den gesamten Lernweg.', 'Filtren gäller klassens sammanfattning. Den individuella översikten omfattar hela lärvägen.'],
+    conversationScope: ['Questo quadro riguarda la singola conversazione. Per l’intero percorso apri la scheda Noticing della classe.', 'This overview covers this conversation. For the whole journey, open the class Noticing tab.', 'Este cuadro corresponde a esta conversación. Para todo el recorrido, abre la pestaña Noticing de la clase.', 'Ce tableau concerne cette conversation. Pour tout le parcours, ouvrez l’onglet Noticing de la classe.', 'Diese Übersicht betrifft dieses Gespräch. Für den gesamten Lernweg öffnen Sie den Reiter Noticing der Klasse.', 'Den här översikten gäller detta samtal. Öppna klassens Noticing-flik för hela lärvägen.'],
+    sourceCount: ['{n} fonti · {done} di {total} blocchi analizzati', '{n} sources · {done} of {total} batches analysed', '{n} fuentes · {done} de {total} bloques analizados', '{n} sources · {done} blocs analysés sur {total}', '{n} Quellen · {done} von {total} Abschnitten analysiert', '{n} källor · {done} av {total} block analyserade'],
+    analyse: ['Analizza il percorso', 'Analyse journey', 'Analizar el recorrido', 'Analyser le parcours', 'Lernweg analysieren', 'Analysera lärvägen'],
+    sourceOpen: ['Apri la fonte', 'Open source', 'Abrir fuente', 'Ouvrir la source', 'Quelle öffnen', 'Öppna källan'],
+    sourceContext: ['Contesto: risposta precedente dell’IA (estratto)', 'Context: preceding AI reply (excerpt)', 'Contexto: respuesta anterior de la IA (extracto)', 'Contexte : réponse précédente de l’IA (extrait)', 'Kontext: vorherige KI-Antwort (Auszug)', 'Sammanhang: föregående AI-svar (utdrag)'],
+    empty: ['Nessuna fonte disponibile con questi filtri.', 'No sources available with these filters.', 'No hay fuentes disponibles con estos filtros.', 'Aucune source disponible avec ces filtres.', 'Keine Quellen mit diesen Filtern verfügbar.', 'Inga källor tillgängliga med dessa filter.'],
+    stale: ['Le fonti sono cambiate: aggiorna l’analisi.', 'Sources changed: update the analysis.', 'Las fuentes han cambiado: actualiza el análisis.', 'Les sources ont changé : actualisez l’analyse.', 'Quellen geändert: Analyse aktualisieren.', 'Källorna har ändrats: uppdatera analysen.'],
+    chat: ['Conversazioni', 'Conversations', 'Conversaciones', 'Conversations', 'Gespräche', 'Samtal'],
+    questionnaire: ['Questionari e strumenti', 'Questionnaires and tools', 'Cuestionarios y herramientas', 'Questionnaires et outils', 'Fragebögen und Werkzeuge', 'Enkäter och verktyg'],
+    notebook: ['Taccuino', 'Notebook', 'Cuaderno', 'Carnet', 'Notizbuch', 'Anteckningsbok'],
+    reading: ['Letture dei risultati', 'Result readings', 'Lecturas de resultados', 'Lectures des résultats', 'Ergebnisdeutungen', 'Resultattolkningar'],
+    portfolio: ['Portfolio', 'Portfolio', 'Portafolio', 'Portfolio', 'Portfolio', 'Portfolio'],
+    goal: ['Obiettivi', 'Goals', 'Objetivos', 'Objectifs', 'Ziele', 'Mål'],
+    review: ['Bilanci', 'Reviews', 'Balances', 'Bilans', 'Rückblicke', 'Utvärderingar'],
+    strategy: ['Metodo e strategie', 'Methods and strategies', 'Métodos y estrategias', 'Méthodes et stratégies', 'Methoden und Strategien', 'Metoder och strategier'],
+    action: ['Azioni e controlli', 'Actions and checks', 'Acciones y controles', 'Actions et contrôles', 'Aktionen und Kontrollen', 'Åtgärder och kontroller'],
+    card: ['Schede', 'Cards', 'Fichas', 'Fiches', 'Karten', 'Kort'],
+    flashcard: ['Flashcard', 'Flashcards', 'Tarjetas de estudio', 'Cartes de révision', 'Lernkarten', 'Instuderingskort'],
+    comparison: ['Confronti', 'Comparisons', 'Comparaciones', 'Comparaisons', 'Vergleiche', 'Jämförelser'],
+    timeline: ['Linea del tempo', 'Timeline', 'Línea del tiempo', 'Ligne du temps', 'Zeitleiste', 'Tidslinje'],
+    map: ['Mappe Idea', 'Idea maps', 'Mapas Idea', 'Cartes Idée', 'Idea-Karten', 'Idea-kartor'],
+    table: ['Tavoli', 'Working tables', 'Mesas', 'Tables', 'Arbeitstische', 'Arbetsbord'],
+    assignment: ['Attività consegnate', 'Submitted activities', 'Actividades entregadas', 'Activités remises', 'Abgegebene Aktivitäten', 'Inlämnade aktiviteter'],
+    meeting: ['Incontri', 'Meetings', 'Encuentros', 'Rencontres', 'Treffen', 'Möten'],
+    forum: ['Contributi al forum', 'Forum contributions', 'Aportaciones al foro', 'Contributions au forum', 'Forenbeiträge', 'Foruminlägg'],
+    teacher_note: ['Osservazioni del docente', 'Teacher observations', 'Observaciones docentes', 'Observations enseignantes', 'Beobachtungen der Lehrkraft', 'Lärarobservationer'],
+    practice: ['Attività pQBL', 'pQBL activities', 'Actividades pQBL', 'Activités pQBL', 'pQBL-Aktivitäten', 'pQBL-aktiviteter'],
+    student: ['Parole dello studente', 'Student’s words', 'Palabras del estudiante', 'Paroles de l’élève', 'Aussagen der Lernenden', 'Elevens ord'],
+    teacher: ['Osservazione del docente', 'Teacher observation', 'Observación docente', 'Observation enseignante', 'Beobachtung der Lehrkraft', 'Lärarobservation'],
+    record: ['Dato registrato', 'Recorded data', 'Dato registrado', 'Donnée enregistrée', 'Aufzeichnung', 'Registrerad uppgift'],
+    saved_work: ['Lavoro salvato', 'Saved work', 'Trabajo guardado', 'Travail enregistré', 'Gespeicherte Arbeit', 'Sparat arbete'],
+} as const satisfies Record<string, Localized>;
+export type JourneyTextKey = keyof typeof texts;
+export function journeyText(lang: string, key: JourneyTextKey, values: Record<string, string | number> = {}): string {
+    const i = ['it', 'en', 'es', 'fr', 'de', 'sv'].indexOf(lang);
+    return Object.entries(values).reduce<string>((s, [k, v]) => s.replaceAll(`{${k}}`, String(v)), texts[key][i < 0 ? 1 : i]);
+}

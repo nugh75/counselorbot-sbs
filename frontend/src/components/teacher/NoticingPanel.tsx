@@ -5,6 +5,7 @@ import { Sparkles } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { noticingText, type NoticingTextKey } from '@/lib/i18n-noticing';
+import { journeyText } from '@/lib/i18n-journey-noticing';
 import { parseNoticing, type Noticing } from '@/lib/teacher-noticing';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
@@ -47,6 +48,7 @@ export function NoticingPanel({ path, onQuote }: { path: string; onQuote: (messa
 
     return <section className="space-y-4 rounded-control border border-info-line bg-info-soft p-4" aria-label={l('title')}>
         <h3 className="font-semibold text-ink">{l('title')}</h3>
+        <p className="text-xs text-ink-muted">{journeyText(lang, 'conversationScope')}</p>
         <p className="text-xs text-ink-muted">{l('aiNote')}</p>
         {resource.loading && !data && <p role="status">{t('common.loading')}</p>}
         {resource.failed && !data && <Callout variant="danger"><p>{l('loadError')}</p></Callout>}
