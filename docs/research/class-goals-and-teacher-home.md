@@ -86,7 +86,7 @@ Data model for "note of whom it is for" (several classes and students):
 
 Privacy rules (student must not see teacher notes unless shared):
 - Targets and the free note stay teacher-only by construction (separate table/endpoint above).
-- When a catalog entry is later delivered to a class, `teacher_assignments.snapshot` copies the entry (`routes/assignments.py:_snapshot`); the snapshot must be built from `data` only, never from targets. Existing behaviour already does that because targets are not in `data`.
+- When a catalog entry is later delivered to a class, `teacher_assignments.snapshot` copies the entry (`routes/assignments.py:78` `_snapshot`); the snapshot must be built from `data` only, never from targets. Existing behaviour already does that because targets are not in `data`.
 - Per-student targets must be limited to real members of a class the teacher can see (same check as `_require_group_member`, `routes/groups.py:167`, and `visible_group_for_teacher`). Re-verify at save, as the chat does each turn.
 - If the teacher wants the student to read a note, the existing mechanism is `teacher_notes.visible_to_student` (`models.py:1387`), not the catalog note.
 
@@ -103,7 +103,7 @@ Backend (`backend/goals.py`, `backend/routes/goals.py`):
 - Routes: `POST /user/goals` accepts `parent_id` and creates the edge in the same transaction (`routes/goals.py:115-147`, edge at `:143-144`); `POST /user/goals/{id}/parents` rejects cycles with 422 (`:199-211`); `DELETE .../parents/{parent_id}` (`:214-224`); `GET /user/goals` returns each goal with `parent_ids` (`goals.py:259-282`); teacher read-only view `GET /teacher/groups/{id}/goals` (`:301-321`).
 
 Frontend:
-- Pure graph functions on `PersonalGoal[]`: `frontend/src/lib/goal-network.ts` (`buildForest`, `descendants`, `ancestors`, `wouldCycle` `:~34-38`, `effectiveShares`, `progress`, `visibleGoals`, `orderBranches` `:93-102`). They read only `id, parent_ids, status, priority, review_date, shared_group_id, title`.
+- Pure graph functions on `PersonalGoal[]`: `frontend/src/lib/goal-network.ts` (`buildForest`, `descendants`, `ancestors`, `wouldCycle` `:37`, `effectiveShares`, `progress`, `visibleGoals`, `orderBranches` `:93-102`). They read only `id, parent_ids, status, priority, review_date, shared_group_id, title`.
 - Type: `frontend/src/lib/goals.ts` (`PersonalGoal`, `parent_ids`); API client `goalApi` (`goals.ts:19-24`).
 - List: `GoalTree.tsx` (nested disclosure lists, repeated multi-parent goals collapsed, add-child button `:13-36`).
 - Map: `GoalMap.tsx` (React Flow `@xyflow/react` + Dagre top-to-bottom layout, read-only, hidden below `lg`, `:36-54`); view toggle persisted in `localStorage` `cb_goals_view` in `GoalsPanel.tsx:20-21,86`.
