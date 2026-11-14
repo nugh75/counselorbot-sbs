@@ -53,6 +53,8 @@ def _detail(row: models.FrozenSession) -> schemas.FrozenSessionDetail:
         notebook_context=data.get("notebook_context"),
         practice_notebook_id=data.get("practice_notebook_id"),
         group_ids=data.get("group_ids") or [],
+        target_students=data.get("target_students") or [],
+        target_practice_notebook_ids=data.get("target_practice_notebook_ids") or [],
         pdf_token=data.get("pdf_token"),
     )
 
@@ -89,6 +91,16 @@ async def freeze_session(
     validate_path(payload.questionnaire_type, payload.guided_path, payload.current_phase)
     username = current_user["username"]
     data = payload.model_dump(exclude={"session_id", "questionnaire_type"})
+    # Destinatari della chat docenza: riverificati a ogni salvataggio, cioe'
+    # dopo ogni turno; lo snapshot tiene solo quelli ancora accessibili.
+    if payload.questionnaire_type == "OBIETTIVO_DOCENZA":
+        from ..teacher_context import verified_goal_targets
+        data["target_students"], data["target_practice_notebook_ids"] = verified_goal_targets(
+            db, username, data["target_students"], data["target_practice_notebook_ids"],
+        )
+    else:
+        data.pop("target_students", None)
+        data.pop("target_practice_notebook_ids", None)
     rows = (
         db.query(models.FrozenSession)
         .filter(

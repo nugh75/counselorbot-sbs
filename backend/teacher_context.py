@@ -90,6 +90,40 @@ def visible_group_for_teacher(db: Session, username: str, group_id: int) -> mode
     return group if shared else None
 
 
+def verified_goal_targets(
+    db: Session, username: str, students: list[dict], practice_notebook_ids: list[int],
+) -> tuple[list[dict], list[int]]:
+    """Destinatari della chat docenza che il docente puo' ancora usare (#903).
+
+    Studente: membro reale (niente demo ne' proprietario) di una classe attiva
+    propria o condivisa. Studente di prova: taccuino attivo del docente. Il
+    resto esce in silenzio, come le classi revocate; doppioni scartati."""
+    from .practice_notebooks import owned_practice_notebook
+    from .test_accounts import real_membership
+
+    kept_students: list[dict] = []
+    for item in students:
+        target = {"group_id": int(item["group_id"]), "username": str(item["username"])}
+        if target in kept_students or visible_group_for_teacher(db, username, target["group_id"]) is None:
+            continue
+        member = (
+            db.query(models.GroupMembership.id)
+            .filter(
+                models.GroupMembership.group_id == target["group_id"],
+                models.GroupMembership.username == target["username"],
+                real_membership(),
+            )
+            .first()
+        )
+        if member:
+            kept_students.append(target)
+    kept_practice = [
+        notebook_id for notebook_id in practice_notebook_ids
+        if owned_practice_notebook(db, username, notebook_id) is not None
+    ]
+    return kept_students, kept_practice
+
+
 def teacher_groups_context(db: Session, username: str, group_ids: list[int] | None) -> str:
     """Blocco con le classi scelte dal docente per questa conversazione.
 
