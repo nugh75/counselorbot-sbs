@@ -641,6 +641,20 @@ class GoalCatalogEntry(Base):
     updated_at = Column(UTCDateTime, server_default=func.now(), onupdate=func.now())
 
 
+class GoalCatalogEdge(Base):
+    """Catalog hierarchy (#906): same shape as GoalEdge; each entry keeps its own visibility."""
+
+    __tablename__ = "goal_catalog_edges"
+    __table_args__ = (
+        UniqueConstraint("parent_id", "child_id", name="uq_goal_catalog_edge"),
+        CheckConstraint("parent_id <> child_id", name="ck_goal_catalog_edge_not_self"),
+    )
+    id = Column(Integer, primary_key=True)
+    parent_id = Column(Integer, ForeignKey("goal_catalog.id", ondelete="CASCADE"), nullable=False, index=True)
+    child_id = Column(Integer, ForeignKey("goal_catalog.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
+
+
 class TeacherAssignment(Base):
     """An explicit delivery of a catalog snapshot, separate from personal goals."""
     __tablename__ = "teacher_assignments"

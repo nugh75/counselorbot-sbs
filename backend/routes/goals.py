@@ -9,6 +9,8 @@ from ..db_compat import xact_lock
 from ..goals import (
     ALLOWED_ROLES,
     ActionCreate,
+    CatalogCreate,
+    CatalogParentWrite,
     CatalogWrite,
     GoalCreate,
     GoalWrite,
@@ -16,7 +18,9 @@ from ..goals import (
     ParentWrite,
     ReviewWrite,
     add_review_milestone,
+    catalog_descendant_ids,
     catalog_dict,
+    catalog_parent_map,
     catalog_visible,
     default_role,
     descendant_ids,
@@ -51,7 +55,38 @@ def teacher_catalog(db: Session = Depends(database.get_db), user=Depends(auth.ge
         groups = _visible_group_query(db, user).filter(models.StudentGroup.is_active.is_(True)).with_entities(models.StudentGroup.id)
         query = query.filter(or_(models.GoalCatalogEntry.author_username == user['username'],
             and_(models.GoalCatalogEntry.status == 'published', or_(models.GoalCatalogEntry.group_id.is_(None), models.GoalCatalogEntry.group_id.in_(groups)))))
-    return [catalog_dict(row) for row in query.order_by(models.GoalCatalogEntry.id.desc()).all()]
+    rows = query.order_by(models.GoalCatalogEntry.id.desc()).all()
+    parents = catalog_parent_map(db, [row.id for row in rows])
+    return [dict(catalog_dict(row), parent_ids=parents[row.id]) for row in rows]
+
+
+def teacher_entry(db, row):
+    """Author/admin view: edges join one author's entries, so every parent is visible here."""
+    parents = db.query(models.GoalCatalogEdge.parent_id).filter_by(child_id=row.id).order_by(models.GoalCatalogEdge.parent_id)
+    return dict(catalog_dict(row), parent_ids=[p for (p,) in parents])
+
+
+def editable_entry(db, user, entry_id, version):
+    query = db.query(models.GoalCatalogEntry).filter_by(id=entry_id)
+    if not user.get('is_admin'):
+        query = query.filter_by(author_username=user['username'])
+    row = query.with_for_update().populate_existing().first()
+    if row is None:
+        raise HTTPException(404, 'Catalog entry unavailable')
+    if row.version != version:
+        raise HTTPException(409, 'Catalog entry changed: reload')
+    return row
+
+
+def lock_catalog_network(db, author):
+    """Serialize structure changes per author so concurrent requests cannot close a cycle."""
+    xact_lock(db, 'goal-catalog-network', author)
+
+
+def same_author_parent(db, author, parent_id):
+    """A branch joins entries of one author only; visibility stays per entry (owner Q4)."""
+    if not db.query(models.GoalCatalogEntry.id).filter_by(id=parent_id, author_username=author).first():
+        raise HTTPException(404, 'Parent unavailable')
 
 
 def validate_catalog_scope(db, user, payload):
@@ -66,12 +101,18 @@ def validate_catalog_scope(db, user, payload):
 
 
 @router.post('/teacher/goal-catalog', status_code=201)
-def create_catalog(payload: CatalogWrite, db: Session = Depends(database.get_db), user=Depends(auth.get_current_plan_manager)):
+def create_catalog(payload: CatalogCreate, db: Session = Depends(database.get_db), user=Depends(auth.get_current_plan_manager)):
     validate_catalog_scope(db, user, payload)
+    if payload.parent_id is not None:
+        lock_catalog_network(db, user['username'])
+        same_author_parent(db, user['username'], payload.parent_id)
     row = models.GoalCatalogEntry(author_username=user['username'], group_id=payload.group_id,
                                   status=payload.status, data=payload.data.model_dump(), version=1)
-    db.add(row); db.commit(); db.refresh(row)
-    return catalog_dict(row)
+    db.add(row); db.flush()
+    if payload.parent_id is not None:
+        db.add(models.GoalCatalogEdge(parent_id=payload.parent_id, child_id=row.id))
+    db.commit(); db.refresh(row)
+    return teacher_entry(db, row)
 
 
 @router.put('/teacher/goal-catalog/{entry_id}')
@@ -91,7 +132,35 @@ def update_catalog(entry_id: int, payload: CatalogWrite, db: Session = Depends(d
     row.data = payload.data.model_dump(); row.group_id = payload.group_id
     row.status = payload.status; row.version += 1
     db.commit(); db.refresh(row)
-    return catalog_dict(row)
+    return teacher_entry(db, row)
+
+
+@router.post('/teacher/goal-catalog/{entry_id}/parents')
+def add_catalog_parent(entry_id: int, payload: CatalogParentWrite, db: Session = Depends(database.get_db),
+                       user=Depends(auth.get_current_plan_manager)):
+    row = editable_entry(db, user, entry_id, payload.version)
+    lock_catalog_network(db, row.author_username)
+    same_author_parent(db, row.author_username, payload.parent_id)
+    if payload.parent_id == entry_id or payload.parent_id in catalog_descendant_ids(db, [entry_id]):
+        raise HTTPException(422, 'Cycle')
+    if not db.query(models.GoalCatalogEdge).filter_by(parent_id=payload.parent_id, child_id=entry_id).first():
+        db.add(models.GoalCatalogEdge(parent_id=payload.parent_id, child_id=entry_id))
+        row.version += 1
+    db.commit(); db.refresh(row)
+    return teacher_entry(db, row)
+
+
+@router.delete('/teacher/goal-catalog/{entry_id}/parents/{parent_id}')
+def remove_catalog_parent(entry_id: int, parent_id: int, version: int = Query(ge=1), db: Session = Depends(database.get_db),
+                          user=Depends(auth.get_current_plan_manager)):
+    row = editable_entry(db, user, entry_id, version)
+    lock_catalog_network(db, row.author_username)
+    edge = db.query(models.GoalCatalogEdge).filter_by(parent_id=parent_id, child_id=entry_id).first()
+    if not edge:
+        raise HTTPException(404, 'Parent unavailable')
+    db.delete(edge); row.version += 1
+    db.commit(); db.refresh(row)
+    return teacher_entry(db, row)
 
 
 @router.get('/user/goals')

@@ -84,6 +84,58 @@ def test_catalog_version_snapshot_and_stale_adoption(setup):
     assert chosen['catalog_snapshot']['version'] == 1
 
 
+def test_catalog_hierarchy_parents_version_and_cycles(setup):
+    db, c, who, group_id = setup
+    teacher(who)
+    a = c.post('/teacher/goal-catalog', json=proposal()).json()
+    assert a['parent_ids'] == []
+    b = c.post('/teacher/goal-catalog', json=proposal(parent_id=a['id'])).json()
+    assert b['parent_ids'] == [a['id']]
+    d = c.post('/teacher/goal-catalog', json=proposal(parent_id=b['id'])).json()
+    other = c.post('/teacher/goal-catalog', json=proposal()).json()
+    url = f"/teacher/goal-catalog/{d['id']}/parents"
+    added = c.post(url, json=dict(parent_id=other['id'], version=1)).json()
+    assert added['parent_ids'] == sorted([b['id'], other['id']]) and added['version'] == 2
+    assert c.post(url, json=dict(parent_id=other['id'], version=1)).status_code == 409
+    assert c.post(url, json=dict(parent_id=other['id'], version=2)).json()['version'] == 2
+    removed = c.delete(f"{url}/{other['id']}?version=2").json()
+    assert removed['parent_ids'] == [b['id']] and removed['version'] == 3
+    assert c.delete(f"{url}/{other['id']}?version=3").status_code == 404
+    top = f"/teacher/goal-catalog/{a['id']}/parents"
+    assert c.post(top, json=dict(parent_id=a['id'], version=1)).status_code == 422
+    assert c.post(top, json=dict(parent_id=d['id'], version=1)).status_code == 422
+    listed = {r['id']: r['parent_ids'] for r in c.get('/teacher/goal-catalog').json()}
+    assert listed[a['id']] == [] and listed[d['id']] == [b['id']]
+    db.query(models.GoalCatalogEntry).filter_by(id=b['id']).delete(); db.commit()
+    assert {r['id']: r['parent_ids'] for r in c.get('/teacher/goal-catalog').json()}[d['id']] == []
+
+
+def test_catalog_hierarchy_is_author_only_and_keeps_visibility_per_entry(setup):
+    db, c, who, group_id = setup
+    teacher(who)
+    draft = c.post('/teacher/goal-catalog', json=proposal()).json()
+    child = c.post('/teacher/goal-catalog', json=proposal(group_id=group_id, status='published', parent_id=draft['id'])).json()
+    assert child['status'] == 'published' and child['parent_ids'] == [draft['id']]
+    who.update(username='teacher2')
+    foreign = c.post('/teacher/goal-catalog', json=proposal()).json()
+    assert c.post('/teacher/goal-catalog', json=proposal(parent_id=draft['id'])).status_code == 404
+    assert c.post(f"/teacher/goal-catalog/{child['id']}/parents", json=dict(parent_id=foreign['id'], version=1)).status_code == 404
+    assert c.delete(f"/teacher/goal-catalog/{child['id']}/parents/{draft['id']}?version=1").status_code == 404
+    teacher(who)
+    assert c.post(f"/teacher/goal-catalog/{child['id']}/parents", json=dict(parent_id=foreign['id'], version=1)).status_code == 404
+    teacher(who, admin=True)
+    common = c.post('/teacher/goal-catalog', json=proposal(status='published', parent_id=draft['id'])).json()
+    who.update(username='teacher2', is_admin=False)
+    seen = {r['id']: r['parent_ids'] for r in c.get('/teacher/goal-catalog').json()}
+    assert draft['id'] not in seen and seen[common['id']] == []
+    student(who, 'bob')
+    assert [r['id'] for r in c.get('/user/goal-catalog').json()] == [common['id']]
+    student(who)
+    rows = c.get('/user/goal-catalog').json()
+    assert sorted(r['id'] for r in rows) == sorted([child['id'], common['id']])
+    assert all('parent_ids' not in r for r in rows)
+
+
 def test_personal_ownership_and_revision(setup):
     db, c, who, group_id = setup
     row = goal(c)

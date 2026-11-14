@@ -37,6 +37,15 @@ class CatalogWrite(Strict):
     version: int = Field(default=0, ge=0)
 
 
+class CatalogCreate(CatalogWrite):
+    parent_id: int | None = Field(default=None, gt=0)
+
+
+class CatalogParentWrite(Strict):
+    parent_id: int = Field(gt=0)
+    version: int = Field(ge=1)
+
+
 class OriginWrite(Strict):
     kind: OriginKind
     target_id: str = Field(min_length=1, max_length=100)
@@ -182,6 +191,28 @@ def descendant_ids(db, ids):
     seen, frontier = set(), list(ids)
     while frontier:
         children = [c for (c,) in db.query(models.GoalEdge.child_id).filter(models.GoalEdge.parent_id.in_(frontier))]
+        frontier = [c for c in children if c not in seen]
+        seen.update(frontier)
+    return seen
+
+
+def catalog_parent_map(db, ids):
+    """Parents of the given catalog entries, limited to entries in `ids` (never reveal hidden ones)."""
+    ids = set(ids)
+    result = {i: [] for i in ids}
+    if ids:
+        for parent, child in db.query(models.GoalCatalogEdge.parent_id, models.GoalCatalogEdge.child_id).filter(
+                models.GoalCatalogEdge.child_id.in_(ids)).order_by(models.GoalCatalogEdge.parent_id):
+            if parent in ids:
+                result[child].append(parent)
+    return result
+
+
+def catalog_descendant_ids(db, ids):
+    """All catalog entries reachable downwards from `ids` (edges only join entries of one author)."""
+    seen, frontier = set(), list(ids)
+    while frontier:
+        children = [c for (c,) in db.query(models.GoalCatalogEdge.child_id).filter(models.GoalCatalogEdge.parent_id.in_(frontier))]
         frontier = [c for c in children if c not in seen]
         seen.update(frontier)
     return seen
