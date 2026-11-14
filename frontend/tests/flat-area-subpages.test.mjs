@@ -41,3 +41,13 @@ test('administrations panel is flat: plans and form use the flat Card, no nested
     assert.doesNotMatch(source, /<Card(?![^>]*variant="flat")[^>]*>/);
     assert.doesNotMatch(source, /rounded-lg|shadow-card|bg-brand-soft\/40|bg-surface-sunken p-4|rounded-control border border-line bg-surface p-4/);
 });
+
+test('goal catalog and teacher orientation pages are flat: no boxed rows or nested boxes, notices keep theirs', () => {
+    const catalog = read('components/goals/GoalCatalogEditor.tsx');
+    assert.match(catalog, /<Card as="section" variant="flat"/);
+    assert.doesNotMatch(catalog, /rounded-card/);
+    const orientation = read('app/docente/orientamento/page.tsx');
+    assert.doesNotMatch(orientation, /rounded-card border border-line(?! bg-surface p-2)/);
+    assert.doesNotMatch(orientation, /<form className="[^"]*rounded-card/);
+    assert.match(orientation, /role="alert" className="space-y-2 rounded-card border border-warning-line/);
+});

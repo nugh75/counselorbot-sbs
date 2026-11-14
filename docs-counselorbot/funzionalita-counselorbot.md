@@ -364,6 +364,29 @@ registro, coda di moderazione) e `/profilo/cambiamenti` usano la `Card` piatta: 
 separate da filetti, nessun riquadro dentro un riquadro (modifiche, riflessioni e assistente
 senza box). Compositore, campi, finestre e avvisi restano invariati; nessun cambio di comportamento.
 
+**Flashcard e strumenti visivi piatti (#875).** `/profilo/flashcard` mostra mazzi ed
+editor delle carte come `Card` piatte separate da filetti, senza riquadri con ombra;
+«Aggiungi carta», il riepilogo di fine sessione e l'elenco vuoto non sono più box.
+Negli strumenti visivi (azioni, carte, confronto) la guida «Come si usa», i moduli di
+creazione, le colonne e i mazzi sono divisi da filetti invece che da riquadri annidati.
+La carta in studio, le carte del tavolo, campi e finestre di dialogo mantengono la loro
+forma; nessun cambio di comportamento.
+
+**Orientamento del docente e Catalogo obiettivi piatti (#870).** `/docente/orientamento`
+e `/docente/catalogo-obiettivi` seguono l'aspetto piatto: categorie, contenuti e proposte
+del catalogo sono righe separate da filetti (non più riquadri), i moduli di modifica e
+di assegnazione non hanno bordo né sfondo, e il catalogo usa la `Card` piatta. Menu di
+azione, campi e avvisi (come quello di errore) mantengono i loro riquadri; nessun cambio
+di comportamento.
+
+**Studiare da un PDF senza schede annidate (#874).** `/profilo/pqbl` usa solo la
+`Card` piatta: impostazione, generazione, introduzione, domande, riepilogo, test finale
+e risultati sono sezioni separate da un filetto. Nel riepilogo i tre numeri sono cifre
+semplici e i punteggi per competenza un elenco separato da filetti; le icone dei titoli
+non hanno più il riquadro colorato. Restano riquadrati l'area di caricamento del PDF, i
+pulsanti di risposta, i riscontri delle risposte e gli avvisi. Il progresso salvato nel
+browser e il flusso non cambiano.
+
 **Illustrazioni degli strumenti (#863).** Ogni strumento ha un’illustrazione piatta
 in SVG (QSA, QSAr, QPCS, QPCC, ZTPI, QAP, Savickas, eventi e obiettivi di studio e
 professionali, obiettivo di docenza, idea), con colori chiari e scuri tramite le

@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { getIdentity } from '@/lib/auth';
 import { goalApi, type CatalogData, type CatalogEntry, type GoalGroup } from '@/lib/goals';
 import { goalText, type GoalTextKey } from '@/lib/i18n-goals';
@@ -38,7 +39,7 @@ export function GoalCatalogEditor({ initialData }: { initialData?: CatalogData }
         setEditing(duplicate ? null : row); setData(row ? { ...row.data } : emptyData(lang)); setGroupId(row?.group_id ?? null);
         setStatus(duplicate ? 'draft' : row?.status || 'draft'); setFormOpen(true); setSaved(false); setError(null);
     };
-    return <section className="space-y-6 rounded-card border border-line bg-surface p-4 sm:p-6" aria-label={l('catalog')}>
+    return <Card as="section" variant="flat" className="space-y-6" aria-label={l('catalog')}>
         <h2 className="text-xl font-semibold">{l('catalog')}</h2><p className="text-sm text-ink-muted">{l('teacherHelp')}</p>
         <GoalIssue error={error} lang={lang} retry={() => void load()} />{saved && <p role="status">{l('saved')}</p>}
         {loading ? <p role="status">{l('loading')}</p> : <>
@@ -49,7 +50,7 @@ export function GoalCatalogEditor({ initialData }: { initialData?: CatalogData }
                     const row = await goalApi<CatalogEntry>(`/teacher/goal-catalog${editing ? `/${editing.id}` : ''}`, editing ? 'PUT' : 'POST', { data, group_id: groupId, status, version: editing?.version || 0 });
                     setRows(previous => [row, ...previous.filter(item => item.id !== row.id)]); setFormOpen(false); setSaved(true);
                 } catch (e) { setError(e); } finally { setBusy(false); }
-            }}><fieldset disabled={busy} className="space-y-4 rounded-card bg-surface-sunken p-4">
+            }}><fieldset disabled={busy} className="space-y-4">
                 <Field label={l('title')}><input className={input} required maxLength={160} value={data.title} onChange={e => setData({ ...data, title: e.target.value })} /></Field>
                 <div className="grid gap-4 sm:grid-cols-2">{(['area', 'audience'] as const).map(key => <Field key={key} label={l(key)}><input className={input} maxLength={key === 'area' ? 80 : 160} value={data[key]} onChange={e => setData({ ...data, [key]: e.target.value })} /></Field>)}</div>
                 {(['description', 'criteria', 'suggestions'] as const).map(key => <Field key={key} label={l(key)}><textarea rows={3} className={input} maxLength={key === 'description' ? 2000 : key === 'criteria' ? 1500 : 3000} value={data[key]} onChange={e => setData({ ...data, [key]: e.target.value })} /></Field>)}
@@ -63,8 +64,8 @@ export function GoalCatalogEditor({ initialData }: { initialData?: CatalogData }
             <div className="divide-y divide-line">{rows.map(row => <article key={row.id} className="flex flex-wrap items-center justify-between gap-4 py-4"><div className="min-w-0 flex-1"><h3 className="break-words font-semibold">{row.data.title}</h3><p className="text-sm text-ink-muted">{l(row.status as GoalTextKey)} · {row.group_id ? groups.find(g => g.id === row.group_id)?.name || l('unavailable') : l('common')} · {l('version')} {row.version} · {row.author_username}</p></div><div className="flex flex-wrap gap-2">{(admin || row.author_username === username) && <Button type="button" variant="secondary" onClick={() => open(row)}>{l('edit')}</Button>}<Button type="button" variant="ghost" onClick={() => open(row, true)}>{l('duplicate')}</Button></div></article>)}</div>
             <section className="space-y-4 border-t border-line pt-6" aria-label={l('shared')}><h3 className="font-semibold">{l('shared')}</h3><Field label={l('selectGroup')}><select className={input} value={sharedGroup} onChange={e => setSharedGroup(e.target.value)}><option value="">—</option>{groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select></Field>
                 <GoalIssue error={sharedError} lang={lang} retry={() => setSharedAttempt(n => n + 1)} />{sharedLoading && <p role="status">{l('loading')}</p>}{sharedGroup && !sharedLoading && !sharedError && !shared.length && <p className="text-sm text-ink-muted">{l('noShared')}</p>}
-                {orderBranches(shared).map(({ row, depth }) => <article key={row.id} style={{ marginInlineStart: `${Math.min(depth, 3) * 1.5}rem` }} className="space-y-2 rounded-card bg-surface-sunken p-4"><p className="text-sm text-ink-muted">{row.username} · {l(row.status as GoalTextKey)}</p><h4 className="font-semibold">{row.title}</h4><p className="whitespace-pre-wrap text-sm">{row.criteria}</p><p className="whitespace-pre-wrap text-sm">{row.reflection}</p>{row.review_date && <p className="text-sm">{l('reviewDate')}: {row.review_date}</p>}</article>)}
+                {orderBranches(shared).map(({ row, depth }) => <article key={row.id} style={{ marginInlineStart: `${Math.min(depth, 3) * 1.5}rem` }} className="space-y-2 border-t border-line py-4"><p className="text-sm text-ink-muted">{row.username} · {l(row.status as GoalTextKey)}</p><h4 className="font-semibold">{row.title}</h4><p className="whitespace-pre-wrap text-sm">{row.criteria}</p><p className="whitespace-pre-wrap text-sm">{row.reflection}</p>{row.review_date && <p className="text-sm">{l('reviewDate')}: {row.review_date}</p>}</article>)}
             </section>
         </>}
-    </section>;
+    </Card>;
 }

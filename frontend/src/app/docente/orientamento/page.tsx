@@ -152,7 +152,7 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
             : <p className="font-semibold">{l('institution')}: {institution.name}</p>}
         <div className="flex flex-wrap items-center justify-between gap-4"><h2 ref={listRef} tabIndex={-1} className="text-lg font-semibold">{l('categories')}</h2><button type="button" disabled={blocked} className={`${control} inline-flex items-center gap-2`} onClick={() => openEditor()}><Plus className="h-4 w-4" aria-hidden />{l('new')}</button></div>
         {errorKey && <div role="alert" className="space-y-2 rounded-card border border-warning-line bg-warning-soft p-4 text-warning-ink"><p>{l(errorKey)}</p><button type="button" disabled={busy || loading} className={control} onClick={reload}>{l('retry')}</button></div>}
-        {draft && <form className="space-y-4 rounded-card border border-line bg-surface p-4" onSubmit={event => { event.preventDefault(); void change(draft.id ? 'edit' : 'create', draft.id); }}>
+        {draft && <form className="space-y-4 border-t border-line pt-6" onSubmit={event => { event.preventDefault(); void change(draft.id ? 'edit' : 'create', draft.id); }}>
             <h3 className="font-semibold">{l(draft.id ? 'edit' : 'new')}</h3>
             {unavailableDraft && <p role="alert">{l('unavailable')}</p>}
             <label className="block text-sm">{l('name')} *<input ref={nameRef} className={`${input} mt-1`} maxLength={120} required disabled={busy} value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} /></label>
@@ -161,8 +161,8 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
         </form>}
         {loading && <p role="status">{l('loading')}</p>}
         {!loading && snapshot && active.length === 0 && <p>{l('empty')}</p>}
-        <ul className="space-y-2" aria-label={l('categories')}>
-            {active.map((category, index) => <li key={category.id} data-category-id={category.id} className="flex items-start gap-4 rounded-card border border-line p-4">
+        <ul className="divide-y divide-line border-y border-line" aria-label={l('categories')}>
+            {active.map((category, index) => <li key={category.id} data-category-id={category.id} className="flex items-start gap-4 py-4">
                 <div className="min-w-0 flex-1"><h3 className="break-words font-semibold">{category.name}</h3>{category.description && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-ink-muted">{category.description}</p>}<p className="mt-2 break-words text-xs text-ink-muted">{l('changed')}: {category.updated_by} · {new Date(category.updated_at).toLocaleString(lang)}</p></div>
                 <div className="relative shrink-0"><button ref={node => { if (node) triggers.current.set(category.id, node); else triggers.current.delete(category.id); }} type="button" aria-label={`${l('actions')}: ${category.name}`} aria-expanded={menu === category.id} aria-controls={`category-actions-${category.id}`} disabled={blocked} className={control} onClick={() => setMenu(menu === category.id ? null : category.id)}><MoreHorizontal className="h-4 w-4" aria-hidden /></button>
                     {menu === category.id && <div ref={menuRef} id={`category-actions-${category.id}`} className="absolute right-0 top-full z-20 mt-1 w-48 max-w-[calc(100vw-3rem)] space-y-1 rounded-card border border-line bg-surface p-2 shadow-pop" onBlur={event => { if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget) && !triggers.current.get(category.id)?.contains(event.relatedTarget)) setMenu(null); }}>
@@ -174,11 +174,11 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
                 </div>
             </li>)}
         </ul>
-        {archived.length > 0 && <details><summary className="cursor-pointer py-4 text-sm">{l('archived')} ({archived.length})</summary><ul className="space-y-2">{archived.map(category => <li key={category.id} className="flex items-center justify-between gap-4 rounded-card border border-line p-4"><span className="min-w-0 break-words">{category.name}</span><button type="button" disabled={blocked || Boolean(draft || assignment)} className={`${control} shrink-0`} onClick={() => void change('restore', category.id)}>{l('restore')}</button></li>)}</ul></details>}
+        {archived.length > 0 && <details><summary className="cursor-pointer py-4 text-sm">{l('archived')} ({archived.length})</summary><ul className="divide-y divide-line">{archived.map(category => <li key={category.id} className="flex items-center justify-between gap-4 py-4"><span className="min-w-0 break-words">{category.name}</span><button type="button" disabled={blocked || Boolean(draft || assignment)} className={`${control} shrink-0`} onClick={() => void change('restore', category.id)}>{l('restore')}</button></li>)}</ul></details>}
         <section className="space-y-4 border-t border-line pt-6" aria-label={l('contents')}>
             <h2 className="text-lg font-semibold">{l('contents')}</h2>
             {active.length === 0 && <p className="text-sm">{l('createFirst')}</p>}
-            {assignment && <form className="space-y-4 rounded-card border border-line bg-surface p-4" onSubmit={event => { event.preventDefault(); void saveAssignment(); }}>
+            {assignment && <form className="space-y-4" onSubmit={event => { event.preventDefault(); void saveAssignment(); }}>
                 <fieldset ref={assignmentRef} tabIndex={-1} disabled={busy} className="space-y-2">
                     <legend className="mb-2 break-words font-semibold">{l('assign')}: {assignment.content.title}</legend>
                     {!currentContent && <p role="alert">{l('contentUnavailable')}</p>}
@@ -187,7 +187,7 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
                 </fieldset>
                 <div className="flex justify-end gap-2"><button type="button" disabled={busy} className={control} onClick={() => { if (mayDiscard()) { setAssignment(null); listRef.current?.focus(); } }}>{l('cancel')}</button><button type="submit" disabled={blocked || !currentContent || invalidSelections} className={`${control} border-brand bg-brand font-semibold text-ink-on-brand hover:bg-brand-hover`}>{l('save')}</button></div>
             </form>}
-            {(['referral', 'event'] as const).map(kind => <details key={kind} className="rounded-card border border-line px-4">
+            {(['referral', 'event'] as const).map(kind => <details key={kind} className="border-t border-line">
                 <summary className="cursor-pointer py-4 font-semibold">{l(kind === 'referral' ? 'contacts' : 'events')} ({contents.filter(item => item.kind === kind).length})</summary>
                 {contents.filter(item => item.kind === kind).length === 0 && <p className="pb-4 text-sm">{l('noContents')}</p>}
                 <ul>{contents.filter(item => item.kind === kind).map(content => {
