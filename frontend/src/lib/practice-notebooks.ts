@@ -80,6 +80,27 @@ export function practiceResultChatHref(result: PracticeResult): string {
     return `/?start=${encodeURIComponent(result.questionnaire_type)}&practice_notebook_id=${result.notebook_id}&practice_result_id=${result.id}`;
 }
 
+// Strumenti senza punteggi: nessun profilo da rileggere, la chat parte
+// direttamente sul taccuino di prova (#891).
+export function practiceNotebookChatHref(notebookId: number, toolId: string): string {
+    return `/?start=${encodeURIComponent(toolId)}&practice_notebook_id=${notebookId}`;
+}
+
+// Valida i parametri dell'ingresso in prova: `resultId` è null solo per gli
+// strumenti senza punteggi; i questionari a punteggi richiedono un profilo valido.
+export function parsePracticeEntry(
+    notebookParam: string | null,
+    resultParam: string | null,
+    unscored: boolean,
+): { notebookId: number; resultId: number | null } | null {
+    const notebookId = Number(notebookParam);
+    if (notebookParam === null || !Number.isSafeInteger(notebookId) || notebookId <= 0) return null;
+    if (resultParam === null) return unscored ? { notebookId, resultId: null } : null;
+    const resultId = Number(resultParam);
+    if (!Number.isSafeInteger(resultId) || resultId <= 0) return null;
+    return { notebookId, resultId };
+}
+
 // Chat guidate in prova di un taccuino, aperte o concluse (dai log dei turni).
 export interface PracticeChat {
     session_id: string;
