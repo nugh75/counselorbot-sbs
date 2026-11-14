@@ -1,3 +1,10 @@
+> Aggiornamento 24 ottobre 2026 (#890): la decisione 18 è modificata dalla richiesta
+> esplicita del proprietario di estendere il Noticing a tutto il percorso, forum
+> compreso. Il solo lettore `noticing_sources.py` considera i contributi pubblicati
+> dello studente nella classe autorizzata. Restano esclusi messaggi altrui,
+> pendenti/nascosti/eliminati, contesto generico delle chat, RAG ed esportazioni.
+> Contratto corrente: [Noticing su tutto](whole-journey-noticing.md).
+
 # Class-centred CounselorBot — plan (epic #87)
 
 Status: **approved decisions, ready for slicing** (2026-10-08). Child issues:
