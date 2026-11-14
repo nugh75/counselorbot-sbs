@@ -84,7 +84,7 @@ export function PlanActivityFlow({ pathId, stepId }: { pathId: number; stepId: n
     };
     const readOnly = attempt?.state === 'completed';
     return <div className="space-y-4" data-testid="plan-activity">
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-card border border-line bg-surface p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
             <div className="min-w-0">
                 <Button variant="ghost" onClick={() => void leave()} disabled={busy}>← {l('back')}</Button>
                 <GuideHelpLink task="resume" />

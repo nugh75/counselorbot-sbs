@@ -57,3 +57,18 @@ test('goal catalog and teacher orientation pages are flat: no boxed rows or nest
     assert.doesNotMatch(orientation, /<form className="[^"]*rounded-card/);
     assert.match(orientation, /role="alert" className="space-y-2 rounded-card border border-warning-line/);
 });
+
+test('student plans are flat: flat Card, step rows without boxes, FlowStepper colours and a status line (#918)', () => {
+    const hero = read('components/profile/ClassPathHeroCard.tsx');
+    assert.match(hero, /<Card\s+as="section"\s+variant="flat"/);
+    assert.doesNotMatch(hero, /<Card(?![^>]*variant="flat")[^>]*>/);
+    assert.doesNotMatch(hero, /rounded-card|shadow-card|bg-brand-soft|ring-brand-line|bg-surface-sunken p-2/);
+    assert.match(hero, /divide-y divide-line/);
+    assert.match(hero, /bg-ochre-600/);
+    assert.match(hero, /bg-indigo-600/);
+    assert.match(hero, /data-step-status/);
+    assert.match(hero, /id=\{`class-step-\$\{step\.id\}`\}/);
+    const flow = read('components/profile/PlanActivityFlow.tsx');
+    assert.doesNotMatch(flow, /rounded-card border border-line bg-surface p-4/);
+    assert.match(flow, /<Callout variant="danger">/);
+});
