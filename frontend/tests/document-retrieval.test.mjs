@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { documentRetrievalText } from '../src/lib/i18n-document-retrieval.js';
+import { documentRetrievalText } from '../src/lib/i18n-document-retrieval.ts';
 
 const origin = process.env.RETRIEVAL_BASE_URL || 'http://127.0.0.1:3135';
 let browser;
