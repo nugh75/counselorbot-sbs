@@ -359,6 +359,14 @@ piatta), le sezioni del modulo divise da filetti invece che da riquadri annidati
 codice, note e link/QR senza box colorati. Campi, badge di stato e avvisi restano
 invariati; nessun cambio di comportamento.
 
+**Flashcard e strumenti visivi piatti (#875).** `/profilo/flashcard` mostra mazzi ed
+editor delle carte come `Card` piatte separate da filetti, senza riquadri con ombra;
+«Aggiungi carta», il riepilogo di fine sessione e l'elenco vuoto non sono più box.
+Negli strumenti visivi (azioni, carte, confronto) la guida «Come si usa», i moduli di
+creazione, le colonne e i mazzi sono divisi da filetti invece che da riquadri annidati.
+La carta in studio, le carte del tavolo, campi e finestre di dialogo mantengono la loro
+forma; nessun cambio di comportamento.
+
 **Orientamento del docente e Catalogo obiettivi piatti (#870).** `/docente/orientamento`
 e `/docente/catalogo-obiettivi` seguono l'aspetto piatto: categorie, contenuti e proposte
 del catalogo sono righe separate da filetti (non più riquadri), i moduli di modifica e

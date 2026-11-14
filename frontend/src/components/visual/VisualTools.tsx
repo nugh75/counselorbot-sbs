@@ -5,6 +5,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ArrowRight, Clock, GitCommitHorizontal, Columns3, Download, Folder, FolderPlus, Image as ImageIcon, LayoutList, Layers, MessageSquare, Pencil, Plus, RotateCcw, Save, Sparkles, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -327,7 +328,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                         </div>
                     </div>}
                     {!loaded ? <p role="status" className="text-ink-muted">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
-                        {!(personal && tab === 'timeline') && <section aria-label={l('howTo')} className="rounded-card border border-brand-line bg-brand-soft p-4 text-sm leading-relaxed text-ink">
+                        {!(personal && tab === 'timeline') && <section aria-label={l('howTo')} className="border-b border-line pb-2 text-sm leading-relaxed text-ink">
                             <h3 className="font-semibold">{l(tab)}</h3>
                             <details key={tab} open={helpOpen[tab]} onToggle={event => {
                                 const expanded = event.currentTarget.open;
@@ -338,7 +339,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 <p className="mb-4 text-ink-muted">{l('working')}</p>
                                 <ol className="list-decimal space-y-2 pl-6">{[1, 2, 3].map(step => <li key={step}>{l(`${tab}Step${step}`)}</li>)}</ol>
                                 <p className="mt-4"><strong>{l('example')}: </strong>{l(`${tab}Example`)}</p>
-                                <div className="mt-4 space-y-2 border-t border-brand-line pt-4 text-ink-muted">
+                                <div className="mt-4 space-y-2 border-t border-line pt-4 text-ink-muted">
                                     <p>{l('saveHelp')}</p>
                                     <p>{l('exportHelp')}</p>
                                     {onDiscuss && <p>{l('discussHelp')}</p>}
@@ -355,8 +356,8 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             </details>
                         </section>}
                         {tab === 'board' && <>
-                            <details open={!work.actions.length || Boolean(draftTitle) || createOpen} onToggle={event => { if (!event.currentTarget.open) setCreateOpen(false); }} className="rounded-card border border-line bg-surface-sunken p-4"><summary className="min-h-control cursor-pointer py-4 text-link">{l('addAction')}</summary>
-                            <form className="space-y-4 rounded-card border border-line bg-surface-sunken p-4" onSubmit={event => { event.preventDefault(); if (!draftTitle.trim() || draftTitle.length > 160 || work.actions.length >= (personal ? Infinity : 30)) return;
+                            <details open={!work.actions.length || Boolean(draftTitle) || createOpen} onToggle={event => { if (!event.currentTarget.open) setCreateOpen(false); }} className="border-y border-line"><summary className="min-h-control cursor-pointer py-4 text-link">{l('addAction')}</summary>
+                            <form className="space-y-4 pb-4" onSubmit={event => { event.preventDefault(); if (!draftTitle.trim() || draftTitle.length > 160 || work.actions.length >= (personal ? Infinity : 30)) return;
                                 edit({ ...work, actions: [...work.actions, { id: crypto.randomUUID(), title: draftTitle.trim(), detail: draftDetail, stage: 'todo', reflection: '', source: draftSource }] }); setDraftTitle(''); setDraftDetail(''); setDraftSource(''); }}>
                                 {sourceSelector('action')}
                                 <label className="block text-sm">{l('titleField')}<input id={`${id}-new-action-title`} required maxLength={160} value={draftTitle} onChange={e => setDraftTitle(e.target.value)} className={`${inputClass} mt-1`} /></label>
@@ -365,7 +366,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 {work.actions.length >= (personal ? Infinity : 30) && <p role="status">{l('limit')}</p>}
                             </form></details>
                             {!work.actions.length && <p className="py-6 text-center text-ink-muted">{l('emptyBoard')}</p>}
-                            <div className="grid gap-4 lg:grid-cols-3">{stages.map(stage => <section key={stage} aria-label={l(stage)} className="min-w-0 rounded-card border border-line bg-surface-sunken p-4">
+                            <div className="grid gap-4 lg:grid-cols-3">{stages.map(stage => <section key={stage} aria-label={l(stage)} className="min-w-0 border-t border-line pt-4">
                                 <h3 className="mb-4 font-semibold text-ink-body">{l(stage)} <span className="font-mono text-sm text-ink-muted">{work.actions.filter(a => a.stage === stage).length}</span></h3>
                                 <div className="space-y-4">{work.actions.filter(a => a.stage === stage).map(action => {
                                     const diary = /^\/profilo\/assegnazioni#assignment-\d+$/.test(action.source || '') ? work.timeline?.events.find(event => event.action_ids.includes(action.id)) : undefined;
@@ -415,7 +416,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                     {decks.map(deck => {
                                         const deckCards = cardsInDeck(work, deck.id);
                                         const deckCols = deck.card_columns?.length ? deck.card_columns : cardColumnsOf(work, deck.id);
-                                        return <article key={deck.id} className="flex flex-col rounded-card border border-line bg-surface p-4 shadow-card transition-shadow hover:shadow-card">
+                                        return <Card as="article" variant="flat" key={deck.id} className="flex flex-col py-4">
                                             {renamingDeckId === deck.id ? <InlineRename value={deck.title} maxLength={100} ariaLabel={`${l('renameDeck')}: ${deck.title}`} onRename={name => { edit(renameCardDeck(work, deck.id, name, l('mainDeck'))); setRenamingDeckId(null); }} onCancel={() => setRenamingDeckId(null)} /> : <>
                                             <button type="button" className="min-h-control flex-1 text-left" aria-label={`${l('cardDecks')}: ${deck.title}`} onClick={() => { edit(setActiveCardDeck(work, deck.id)); setDeckListOpen(false); }}>
                                                 <h4 className="break-words font-semibold text-ink">{deck.title} <span className="font-mono text-sm text-ink-muted">{deckCards.length}</span></h4>
@@ -428,7 +429,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                                     ? <ConfirmInline question={`${l('deleteDeck')}: "${deck.title}"?`} onConfirm={() => { setConfirmDeckId(null); edit(removeCardDeck(work, deck.id, l('mainDeck'))); }} onCancel={() => setConfirmDeckId(null)} />
                                                     : <Tooltip content={`${l('deleteDeck')}: ${deck.title}`}><Button type="button" variant="ghost" className="h-control w-control p-0" aria-label={`${l('deleteDeck')}: ${deck.title}`} onClick={() => setConfirmDeckId(deck.id)}><Trash2 className="h-4 w-4 text-danger" aria-hidden="true" /></Button></Tooltip>)}
                                             </div>
-                                        </article>;
+                                        </Card>;
                                     })}
                                 </div>
                             </section>
@@ -448,8 +449,8 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             {(() => {
                                 const currentDeckCols = cardColumnsOf(work, activeDeckId);
                                 return <>
-                                <details open={!activeDeckCards.length || Boolean(draftCard)} className="rounded-card border border-line bg-surface-sunken p-4"><summary className="min-h-control cursor-pointer py-4 text-link">{l('addCard')}</summary>
-                                <form className="space-y-2 rounded-card border border-line bg-surface-sunken p-4" onSubmit={event => { event.preventDefault(); if (!draftCard.trim() || draftCard.length > 600 || work.cards.length >= 30) return;
+                                <details open={!activeDeckCards.length || Boolean(draftCard)} className="border-y border-line"><summary className="min-h-control cursor-pointer py-4 text-link">{l('addCard')}</summary>
+                                <form className="space-y-2 pb-4" onSubmit={event => { event.preventDefault(); if (!draftCard.trim() || draftCard.length > 600 || work.cards.length >= 30) return;
                                     edit({ ...work, cards: [...work.cards, { id: crypto.randomUUID(), text: draftCard.trim(), bucket: currentDeckCols[0].id, source: cardSource, image: draftCardImage || null, deck_id: activeDeckId }] }); setDraftCard(''); setCardSource(''); setDraftCardImage(''); }}>
                                     <label className="block text-sm">{l('cardText')}<textarea required maxLength={600} rows={3} value={draftCard} onChange={e => setDraftCard(e.target.value)} className={`${inputClass} mt-1`} /></label>
                                     <div className="block text-sm text-ink-body">
@@ -489,7 +490,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                     {(draftCard.length > 600 || work.cards.length >= 30) && <p role="status">{l('limit')}</p>}
                                 </form></details>
                                 {!activeDeckCards.length && <p className="py-6 text-center text-ink-muted">{l('emptyCards')}</p>}
-                                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, 240px), 1fr))` }}>{currentDeckCols.map(column => { const columnTitle = cardColumnLabel(work, column, l); const colCards = activeDeckCards.filter(c => c.bucket === column.id); return <section key={column.id} aria-label={columnTitle} onDragOver={event => { if (!dragCardId) return; event.preventDefault(); setDragOverCol(column.id); }} onDragLeave={event => { if (event.currentTarget.contains(event.relatedTarget as Node)) return; setDragOverCol(previous => previous === column.id ? null : previous); }} onDrop={event => { event.preventDefault(); const droppedId = dragCardId || event.dataTransfer.getData('text/plain'); if (droppedId) edit({ ...work, cards: work.cards.map(c => c.id === droppedId ? { ...c, bucket: column.id } : c) }); setDragCardId(null); setDragOverCol(null); }} className={`min-w-0 rounded-card border bg-surface-sunken p-4 transition-colors ${dragOverCol === column.id && dragCardId ? 'border-brand bg-brand-soft/70' : 'border-line'}`}>
+                                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, 240px), 1fr))` }}>{currentDeckCols.map(column => { const columnTitle = cardColumnLabel(work, column, l); const colCards = activeDeckCards.filter(c => c.bucket === column.id); return <section key={column.id} aria-label={columnTitle} onDragOver={event => { if (!dragCardId) return; event.preventDefault(); setDragOverCol(column.id); }} onDragLeave={event => { if (event.currentTarget.contains(event.relatedTarget as Node)) return; setDragOverCol(previous => previous === column.id ? null : previous); }} onDrop={event => { event.preventDefault(); const droppedId = dragCardId || event.dataTransfer.getData('text/plain'); if (droppedId) edit({ ...work, cards: work.cards.map(c => c.id === droppedId ? { ...c, bucket: column.id } : c) }); setDragCardId(null); setDragOverCol(null); }} className={`min-w-0 border-t pt-4 transition-colors ${dragOverCol === column.id && dragCardId ? 'border-brand bg-brand-soft/70' : 'border-line'}`}>
                                     <div className="mb-4 flex items-start justify-between gap-1">
                                         {renamingColumnId === column.id && <InlineRename value={column.label || ''} maxLength={100} ariaLabel={`${l('renameColumn')}: ${columnTitle}`} onRename={name => { edit(renameCardColumn(work, column.id, name, activeDeckId)); setRenamingColumnId(null); }} onCancel={() => setRenamingColumnId(null)} />}
                                         {!renamingColumnId && <h3 className="min-w-0 break-words font-semibold">{columnTitle} <span className="font-mono text-sm text-ink-muted">{colCards.length}</span></h3>}
@@ -577,20 +578,20 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                         })()}
                         {tab === 'comparison' && <>
                             <p className="text-xs font-semibold text-ink-muted">{l('stepOption')}</p>
-                            <details open={!work.comparison.options.length || Boolean(option)} className="rounded-card border border-line bg-surface-sunken p-4"><summary className="min-h-control cursor-pointer py-4 text-link">{l('addOption')}</summary>
-                            <form className="space-y-2 rounded-card border border-line bg-surface-sunken p-4" onSubmit={event => { event.preventDefault(); if (!option.trim() || option.length > 160 || work.comparison.options.length >= 3) return;
+                            <details open={!work.comparison.options.length || Boolean(option)} className="border-y border-line"><summary className="min-h-control cursor-pointer py-4 text-link">{l('addOption')}</summary>
+                            <form className="space-y-2 pb-4" onSubmit={event => { event.preventDefault(); if (!option.trim() || option.length > 160 || work.comparison.options.length >= 3) return;
                                 edit({ ...work, comparison: { ...work.comparison, options: [...work.comparison.options, { id: crypto.randomUUID(), title: option.trim(), source: optionSource }] } }); setOption(''); setOptionSource(''); }}>
                                 {sourceSelector('option')}
                                 <label className="block text-sm">{l('option')}<input required maxLength={160} value={option} onChange={e => setOption(e.target.value)} className={`${inputClass} mt-1`} /></label>
                                 <Tooltip content={l('addOption')}><Button aria-label={l('addOption')} type="submit" className={buttonClass} disabled={work.comparison.options.length >= 3 || option.length > 160}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                             </form></details>
-                            {work.comparison.options.length > 0 && <section aria-label={l('criteria')} className="space-y-2"><p className="text-xs font-semibold text-ink-muted">{l('stepCriteria')}</p><details open={!work.comparison.criteria.length} className="rounded-card border border-line p-4">
+                            {work.comparison.options.length > 0 && <section aria-label={l('criteria')} className="space-y-2"><p className="text-xs font-semibold text-ink-muted">{l('stepCriteria')}</p><details open={!work.comparison.criteria.length} className="border-y border-line">
                                 <summary className="min-h-control cursor-pointer py-4 font-semibold text-link">{l('criteria')}</summary>
                                 <div className="flex flex-wrap gap-2">{work.comparison.criteria.map(c => <div key={c.id} className="flex min-w-0 flex-wrap items-center gap-1 rounded-control border border-line p-1">
                                     <input aria-label={l('criterion')} data-workspace-field required maxLength={100} value={c.label} className={`${inputClass} max-w-48`} onChange={e => edit({ ...work, comparison: { ...work.comparison, criteria: work.comparison.criteria.map(k => k.id === c.id ? { ...k, label: e.target.value } : k) } })} />
                                     {removeButton(c.label, () => edit(removeCriterion(work, c.id)))}
                                 </div>)}</div>
-                                <form className="flex flex-wrap items-end gap-2" onSubmit={event => { event.preventDefault(); if (!criterion.trim() || work.comparison.criteria.length >= 6) return;
+                                <form className="flex flex-wrap items-end gap-2 pb-4" onSubmit={event => { event.preventDefault(); if (!criterion.trim() || work.comparison.criteria.length >= 6) return;
                                     edit({ ...work, comparison: { ...work.comparison, criteria: [...work.comparison.criteria, { id: crypto.randomUUID(), label: criterion.trim() }] } }); setCriterion(''); }}>
                                     <label className="min-w-0 flex-1 text-sm">{l('criterion')}<input required maxLength={100} value={criterion} className={`${inputClass} mt-1`} onChange={e => setCriterion(e.target.value)} /></label>
                                     <Tooltip content={l('addCriterion')}><Button aria-label={l('addCriterion')} type="submit" className={buttonClass} disabled={work.comparison.criteria.length >= 6}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
