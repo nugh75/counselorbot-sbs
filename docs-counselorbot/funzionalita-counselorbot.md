@@ -1112,22 +1112,55 @@ il server riprova una volta e registra nel log un'anteprima della risposta (#466
 lo stesso vale per il noticing della classe. Gli accessi sono gli stessi del dettaglio (classe visibile o piano
 di somministrazione); il quadro non entra nel PDF né nel link del consiglio di classe.
 
-**Noticing della classe (#464).** La scheda **Noticing** di `/docente/classi/{id}`
-(`?tab=noticing`) analizza le chat dei questionari di tutti gli studenti della classe,
-con filtro per strumento e periodo (sempre, ultimi 30 o 90 giorni). Il pulsante
-**Analizza la classe** genera prima il quadro di noticing di ogni compilazione che
-non lo ha o che è cambiata, mostrando l'avanzamento («Compilazioni analizzate: N di M»),
-poi chiede al modello di raggruppare in temi soltanto gli elementi già verificati sulle
-parole dello studente. La scheda mostra: alcuni **suggerimenti per il docente** brevi;
-un grafico a barre degli **studenti per tipo di elemento** (Da riprendere, Risorsa,
-Difficoltà, Da attenzionare) sul totale degli studenti con una chat; i **temi della
-classe**, ciascuno con il numero di studenti che lo sollevano, una barra, un
-suggerimento e, aprendo «Chi lo solleva», nome dello studente, strumento, elemento,
-frase citata e il pulsante **Apri la compilazione** che mostra il dettaglio completo.
-Conteggi e grafici sono calcolati dal server, non dal modello; temi con elementi non
-più validi li perdono a ogni lettura. L'analisi è salvata per classe, lingua e filtri:
-se compaiono chat nuove o cambiate la scheda lo segnala e propone **Aggiorna l'analisi**.
-Gli accessi sono quelli della classe visibile al docente.
+**Noticing del percorso e della classe (esteso il 24 ottobre 2026).**
+La scheda **Noticing** di `/docente/classi/{id}?tab=noticing` considera tutte le
+fonti disponibili dei partecipanti attuali, anche senza questionari: conversazioni
+registrate (guidate, Idea, Bussola e Assistente), strumenti/questionari e punteggi,
+Taccuino salvato e riflessioni, letture dei risultati, Portfolio, obiettivi e bilanci,
+metodo, azioni e controlli, schede e mazzi, flashcard, confronti, linea del tempo,
+mappe Idea e relative fonti salvate, Tavoli, restituzioni delle attività della classe,
+osservazioni dei docenti, incontri della classe con prenotazioni/presenze e propri
+contributi pubblicati nel forum della classe. Le fonti personali appartengono al solo
+studente selezionato; contenuti di classe, note, attività, incontri e forum sono
+limitati alla classe aperta. Nel forum non entrano contributi altrui, contenuti in
+attesa di approvazione, nascosti o eliminati. Le simulazioni del docente non sono
+fonti di studenti reali. Bozze autosalvate del Taccuino, vecchi snapshot degli
+strumenti, elementi eliminati e proposte del Tavolo ancora in attesa non sono
+presentati come lavoro attuale. Dei file allegati al Portfolio vengono considerate
+le descrizioni e i metadati: non si afferma di aver letto le immagini. Dei documenti
+Idea è analizzato il testo già estratto e conservato, con il suo eventuale limite.
+
+**Analizza la classe** esamina tutte le fonti in blocchi limitati, riusa i blocchi
+aggiornati e mostra l’avanzamento; ogni blocco nuovo richiede una chiamata al
+modello. Una lettura della pagina non chiama il modello. I testi lunghi sono divisi
+in parti, senza perdere in silenzio inizio o fine. Se un blocco fallisce la sintesi
+della classe non viene presentata come completa; al nuovo tentativo sono riutilizzati
+quelli conclusi. I filtri strumento e periodo restringono esplicitamente le fonti;
+per impostazione iniziale si considera tutto. Ogni studente mostra numero e tipi
+di fonti, quadro individuale e **Apri la fonte**. Il contesto precedente dell’IA aiuta a comprendere le risposte brevi e resta
+separato dalle parole citabili dello studente. Le citazioni sono verificate contro
+il contenuto effettivo, e distinguono parole dello studente, osservazioni del docente,
+lavori salvati eventualmente costruiti con l’IA e dati registrati. Prenotazione e
+presenza sono distinte; punteggi e uso di uno strumento non diventano diagnosi o
+prove automatiche di competenza. Dopo una modifica o rimozione, le vecchie citazioni
+non restano nel quadro corrente. I temi della classe raggruppano solo elementi
+individuali verificati; conteggi e grafici sono calcolati dal server.
+
+**Consiglio di orientamento — bozza del docente.** Dentro il quadro individuale,
+completato il Noticing dell’intero percorso senza filtri, **Genera la bozza** propone
+un testo narrativo basato sulle evidenze individuali. Il docente può modificarlo,
+**Salva la bozza**, **Valida il testo** oppure **Copia il testo** per costruire i
+documenti scolastici. La bozza è un materiale di lavoro e non sostituisce il documento
+ministeriale deliberato dal consiglio di classe. Sono conservate versioni, autore,
+data e validazione. Una modifica del testo riporta lo stato a bozza; una fonte cambiata
+rende il documento da aggiornare e impedisce una nuova validazione fino alla
+rigenerazione basata sul quadro aggiornato. Due schede non si sovrascrivono: una
+versione superata riceve un conflitto e il testo nell’editor rimane disponibile.
+Il cambio delle schede interne della classe conserva l’editor. Gli accessi vengono
+ricontrollati in ogni lettura, generazione, apertura fonte e salvataggio; la revoca
+della condivisione della classe o della partecipazione dello studente toglie l’accesso.
+Nessun invio a Unica/SIDI, né inclusione automatica nel link del consiglio di classe.
+
 La stessa scheda è usata da Compilazioni, Classi (matrice ed elenco) e Piani di
 somministrazione. Le etichette accessibili includono la data per distinguere
 compilazioni ripetute; nei riquadri stretti i nomi dei fattori si adattano allo
@@ -1250,7 +1283,7 @@ ancora creato un oggetto nella classe, mantiene l’ordine dei passi esistenti e
 piano operativo pubblicato, crea subito i nuovi passi, senza cambiare nulla se uno è bloccato;
 «Salva come modello» nell’editor di un piano operativo ne fa
 un nuovo modello privato, rifiutando obiettivi di una sola classe e discussioni non
-nate da un modello, perché il testo del forum non esce mai dal forum), `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
+nate da un modello, con pubblicazione esplicita e separata dal Noticing dei contributi personali), `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
 della classe» con l’elenco in sola lettura delle assegnazioni del gruppo e il
 link alla pagina dedicata con filtro già impostato),
 `/docente/incontri` (Incontri, con la propria immagine `incontri.png`, nel gruppo **Classe e
@@ -1447,10 +1480,11 @@ rendered. Links use `nofollow noopener noreferrer`. Publishing is explicit;
 failed sends and rate limits preserve the draft. The persistent limit is 10
 publications (discussions plus replies) per user per class in five minutes.
 Lists and replies are paginated; the topic list shows the reply count with a
-singular label for one reply. Forum content is excluded from all AI providers,
-including local models, research exports, administrator result/log/training
-exports, PDFs, session ledgers and RAG indexes. Architectural privacy tests
-protect that boundary. Student-created discussions, muting, pre-approval,
+singular label for one reply. Own published forum contributions may enter teacher-requested whole-journey
+Noticing (product decision 2026-10-24). Peers’ contributions, pending, hidden
+and deleted content stay out. Forum content remains excluded from research,
+result/log/training exports, PDFs, generic session context and RAG indexes.
+Architectural and HTTP tests protect this named exception and its scope. Student-created discussions, muting, pre-approval,
 and path/assignment links are separate later slices. Six-language
 interface controls are included; the guide sections and screenshots arrived with F6 (#107).
 Titles, messages and reasons reject invisible control characters (for example
@@ -1644,9 +1678,8 @@ mute, a disabled forum, read-only archives and the unread badges. The teacher
 section covers the Forum tab, pin/close/hide/restore, the Forum switch and
 options in Tools & counselors with administrator locks, “Pending (n)”, “Mute
 author” and “Muted students”, and the Moderation log. Both sections then explain
-discussion links to path steps and assignments, and state that no AI model,
-local ones included, reads the forum and that messages stay out of research
-exports, session records and PDFs. The teacher section links to the Classes page.
+discussion links to path steps and assignments, and explain that own published contributions may enter teacher-requested Noticing,
+while messages stay out of research exports, generic session context and PDFs. The teacher section links to the Classes page.
 
 **Class forum unread badge (F4, #105).** An in-app badge indicates unread forum
 activity across active classes. The backend (`GET /user/forum/unread`,
@@ -2648,9 +2681,12 @@ muted, or a hidden reply that no longer counts. When several apply the page show
 one notice, in that order, and a done step shows none. Progress exposes the
 completion kind `forum_reply` and its time, never message text, titles or names.
 
-Forum privacy (class-centred plan decision 18) is unchanged: forum content never
-reaches the AI, RAG, context, research exports or PDFs. `backend/forum_completion.py`
-is the only module outside the forum boundary that reads forum tables, and it may
+Forum privacy decision 18 was amended on 2026-10-24 for teacher-requested
+Noticing of the student’s own published contributions. Generic chat context,
+RAG, research exports and PDFs still do not consume forum content. `backend/forum_completion.py`
+is the metadata-only reader for operational-plan completion; the separate
+`noticing_sources.py` reader serves whole-journey Noticing. It reads only the
+student’s own published contributions. The completion reader, and it may
 name only identifier, author, status and timestamp columns, never a whole row.
 `backend/path_step_types.py` is its single consumer, and the privacy tests pin every
 module that can load it to the operational-plan routes and their administration seams.

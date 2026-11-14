@@ -14,7 +14,9 @@ import secrets
 import string
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from typing import Optional
+from typing import Literal, Optional
+
+from pydantic import BaseModel, Field
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
@@ -762,6 +764,60 @@ async def generate_class_noticing(group_id: int, lang: str = "it", instrument: O
     group = _require_visible_group(db, current_user, group_id)
     return class_noticing(db, group, lang, instrument=instrument, days=days, generate=True,
                           username=_username(current_user))
+
+
+class JourneyAdviceUpdate(BaseModel):
+    revision: int = Field(ge=0)
+    operation: Literal['generate', 'save', 'validate']
+    text: str = Field(default='', max_length=20000)
+
+
+def _noticing_student(db, identity, group_id, username):
+    group = _require_visible_group(db, identity, group_id)
+    _require_group_member(db, group, username)
+    return group
+
+
+@router.get("/admin/groups/{group_id}/students/{username}/noticing")
+def get_student_journey_noticing(group_id: int, username: str, lang: str = 'it',
+                                 days: Optional[int] = Query(None, ge=1, le=3650), instrument: Optional[str] = None,
+                                 current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..student_noticing import student_noticing
+    group = _noticing_student(db, current_user, group_id, username)
+    return student_noticing(db, group, username, lang, days=days, instrument=instrument)
+
+
+@router.post("/admin/groups/{group_id}/students/{username}/noticing")
+def generate_student_journey_noticing(group_id: int, username: str, chunk: str = Query(min_length=64, max_length=64),
+                                      lang: str = 'it', days: Optional[int] = Query(None, ge=1, le=3650),
+                                      instrument: Optional[str] = None,
+                                      current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..student_noticing import student_noticing
+    group = _noticing_student(db, current_user, group_id, username)
+    return student_noticing(db, group, username, lang, days=days, instrument=instrument,
+                            chunk=chunk, actor=_username(current_user))
+
+
+@router.get("/admin/groups/{group_id}/students/{username}/noticing-source")
+def get_student_noticing_source(group_id: int, username: str, source: str = Query(min_length=1, max_length=300),
+                                current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..student_noticing import source_detail
+    return source_detail(db, _noticing_student(db, current_user, group_id, username), username, source)
+
+
+@router.get("/admin/groups/{group_id}/students/{username}/orientation-advice")
+def get_student_orientation_advice(group_id: int, username: str, lang: str = 'it',
+                                   current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..orientation_advice import advice
+    return advice(db, _noticing_student(db, current_user, group_id, username), username, lang)
+
+
+@router.post("/admin/groups/{group_id}/students/{username}/orientation-advice")
+def save_student_orientation_advice(group_id: int, username: str, update: JourneyAdviceUpdate, lang: str = 'it',
+                                    current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..orientation_advice import update_advice
+    return update_advice(db, _noticing_student(db, current_user, group_id, username), username, lang,
+                         actor=_username(current_user), **update.model_dump())
 
 
 @router.get("/admin/groups/{group_id}/students/{username}/results/{result_id}/noticing")

@@ -337,6 +337,11 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
         } as const)[raw as 'students'] ?? 'overview';
     });
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+    const [noticingVisited, setNoticingVisited] = useState(tab === 'noticing');
+    const selectTab = (next: typeof tab) => {
+        if (next === 'noticing') setNoticingVisited(true);
+        setTab(next);
+    };
     const group = groups.data?.find(row => row.id === groupId);
     if (groups.forbidden || settings.forbidden) return <TeacherForbidden />;
     if (groups.loading || settings.loading) return <TeacherLoading />;
@@ -358,12 +363,12 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
         <div role="tablist" aria-label={group.name} className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
             {activeTabs.map((key, index) => <button key={key} ref={node => { tabRefs.current[index] = node; }}
                 id={`class-tab-${key}`} type="button" role="tab" aria-selected={tab === key} aria-controls={`class-panel-${key}`}
-                tabIndex={tab === key ? 0 : -1} onClick={() => setTab(key)}
+                tabIndex={tab === key ? 0 : -1} onClick={() => selectTab(key)}
                 onKeyDown={event => {
                     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
                     event.preventDefault();
                     const next = event.key === 'Home' ? 0 : event.key === 'End' ? activeTabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + activeTabs.length) % activeTabs.length;
-                    setTab(activeTabs[next]); tabRefs.current[next]?.focus();
+                    selectTab(activeTabs[next]); tabRefs.current[next]?.focus();
                 }} className={`min-h-[44px] rounded-md px-4 text-sm font-semibold ${tab === key ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}>{l(key)}</button>)}
         </div>
         <div id="class-panel-overview" role="tabpanel" aria-labelledby="class-tab-overview" hidden={tab !== 'overview'} tabIndex={0}>
@@ -372,7 +377,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
                     group={group}
                     settings={settings.data}
                     onReload={() => { void groups.reload(); void settings.reload(); }}
-                    onSelectTab={(newTab) => setTab(newTab)}
+                    onSelectTab={(newTab) => selectTab(newTab)}
                     admin={admin}
                     adminRoute={adminRoute}
                 />
@@ -382,7 +387,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
             {tab === 'students' && <PlanStudentsPanel base={`/api/admin/groups/${groupId}`} withNotes />}
         </div>
         <div id="class-panel-noticing" role="tabpanel" aria-labelledby="class-tab-noticing" hidden={tab !== 'noticing'} tabIndex={0}>
-            {tab === 'noticing' && <ClassNoticingTab groupId={groupId} />}
+            {noticingVisited && <ClassNoticingTab groupId={groupId} />}
         </div>
         <div id="class-panel-paths" role="tabpanel" aria-labelledby="class-tab-paths" hidden={tab !== 'paths'} tabIndex={0}>
             <ClassPathsTab groupId={groupId} classSettings={settings.data} institutionId={group.institution_id ?? null} />

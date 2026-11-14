@@ -537,3 +537,17 @@ Da SSH: `ssh -N -L 3161:127.0.0.1:3161 <utente>@<server>`, poi
 http://localhost:3161 (le API simulate esistono solo nei test, non nel browser libero).
 Stop frontend con Ctrl-C nel terminale dedicato; stop PG con
 `docker stop counselorbot-oc3-pg`. Nessun collegamento a produzione.
+
+
+## Noticing dell’intero percorso e consiglio di orientamento
+
+`scripts/dev-noticing-tests.sh` avvia il solo frontend con hot reload su
+`127.0.0.1:3170`, controllando prima che la porta sia libera. L’upstream è
+`127.0.0.1:9`, deliberatamente irraggiungibile: le prove browser usano risposte
+sintetiche e non dati di produzione. Non si avviano né si riavviano servizi di
+produzione. Per fermarlo: Ctrl-C nel terminale di avvio.
+
+Tunnel remoto: `ssh -N -L 3170:127.0.0.1:3170 <utente>@<server>`; aprire
+`http://localhost:3170`. Le chiamate API richiedono le fixture browser: questo
+runner non è un’istanza utilizzabile con dati reali. Contratto delle fonti e
+validazione: [Noticing su tutto](whole-journey-noticing.md).

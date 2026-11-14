@@ -77,6 +77,7 @@ def test_forum_import_graph_has_no_ai_rag_context_or_export_path():
         "backend.forum_schemas",
         "backend.auth",
         "backend.database",
+        "backend.db_compat",
         "backend.models",
         "backend.group_visibility",
         "backend.class_tools",
@@ -90,7 +91,9 @@ def test_forum_import_graph_has_no_ai_rag_context_or_export_path():
 
 def test_no_non_forum_consumer_can_read_forum_models_or_tables():
     violations = []
-    allowed = {"models.py", "forum_schemas.py", "routes/forum.py"}
+    # Product decision 2026-10-24: own published contributions may enter
+    # teacher-requested whole-journey noticing, through this one scoped reader.
+    allowed = {"models.py", "forum_schemas.py", "routes/forum.py", "noticing_sources.py"}
     for path in ROOT.rglob('*.py'):
         relative = path.relative_to(ROOT)
         if relative.parts[0] in {'tests', '.venv'} or str(relative) in allowed:
@@ -162,6 +165,8 @@ def test_forum_metadata_reader_is_isolated_from_ai_rag_context_and_exports():
         "backend.results_deep_dive",
         "backend.questionnaire_entry",
         "backend.routes.administration_plans",
+        "backend.class_council",
+        "backend.routes.class_council",
         # Path templates (#172) are class paths too; forum writes stay in routes/forum.py.
         "backend.path_templates",
         "backend.routes.path_templates",
