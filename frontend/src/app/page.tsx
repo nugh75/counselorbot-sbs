@@ -40,7 +40,7 @@ import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker
 import { canUseTeacherAssistant } from '@/lib/roles';
 import { isPracticeRun, readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId } from '@/lib/notebook-context';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
-import { practiceResultChatHref } from '@/lib/practice-notebooks';
+import { parsePracticeEntry, practiceNotebookChatHref, practiceResultChatHref } from '@/lib/practice-notebooks';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
 import { hasHomeToolEntry, homeLandingHref, instrumentStartHref } from '@/lib/home-entry';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, setActiveSessionCounselorId } from '@/lib/counselor';
@@ -324,7 +324,7 @@ function HomeFlow() {
             setSelectedCounselorId(counselor.id);
             if (isAgentOnly(questionnaire)) {
                 // Il docente sceglie prima per chi è la chat: studente di prova o sé stesso (#837).
-                if (!resumeSid && !studentEntry.current && canUseTeacherAssistant(identity)) {
+                if (!resumeSid && !studentEntry.current && canUseTeacherAssistant(identity) && practiceProfileEntry.current === null) {
                     setStep('method-select');
                     return;
                 }
@@ -600,21 +600,29 @@ function HomeFlow() {
             const resultParam = params.get('practice_result_id');
             if (!studentEntry.current && (notebookParam !== null || resultParam !== null)) {
                 try {
-                    const notebookId = Number(notebookParam);
-                    const resultId = Number(resultParam);
-                    if (!canUseTeacherAssistant(identity) || !Number.isSafeInteger(notebookId) || notebookId <= 0
-                        || !Number.isSafeInteger(resultId) || resultId <= 0) throw new Error('Invalid practice entry');
+                    const entry = parsePracticeEntry(notebookParam, resultParam, isAgentOnly(questionnaire));
+                    if (!entry || !canUseTeacherAssistant(identity)) throw new Error('Invalid practice entry');
+                    const { notebookId, resultId } = entry;
                     const notebooks = await practiceNotebookApi.list();
                     if (!notebooks.some(row => row.id === notebookId)) throw new Error('Unavailable practice notebook');
-                    const results = await practiceNotebookApi.results(notebookId, questionnaire.id);
-                    const result = results.find(row => row.id === resultId && row.notebook_id === notebookId && row.questionnaire_type === questionnaire.id);
-                    if (!result) throw new Error('Unavailable practice profile');
-                    practiceScores = result.scores;
-                    practiceProfileEntry.current = notebookId;
-                    setPracticeEntryActive(true);
-                    practiceProfileHref.current = practiceResultChatHref(result);
-                    storePracticeNotebookId(notebookId);
-                    storeNotebookContext('practice');
+                    if (resultId === null) {
+                        // Strumento senza punteggi: nessun profilo, la chat gira sul taccuino (#891).
+                        practiceProfileEntry.current = notebookId;
+                        setPracticeEntryActive(true);
+                        practiceProfileHref.current = practiceNotebookChatHref(notebookId, questionnaire.id);
+                        storePracticeNotebookId(notebookId);
+                        storeNotebookContext('practice');
+                    } else {
+                        const results = await practiceNotebookApi.results(notebookId, questionnaire.id);
+                        const result = results.find(row => row.id === resultId && row.notebook_id === notebookId && row.questionnaire_type === questionnaire.id);
+                        if (!result) throw new Error('Unavailable practice profile');
+                        practiceScores = result.scores;
+                        practiceProfileEntry.current = notebookId;
+                        setPracticeEntryActive(true);
+                        practiceProfileHref.current = practiceResultChatHref(result);
+                        storePracticeNotebookId(notebookId);
+                        storeNotebookContext('practice');
+                    }
                 } catch {
                     toast.error(t('toast.error'));
                     consumeEntry();

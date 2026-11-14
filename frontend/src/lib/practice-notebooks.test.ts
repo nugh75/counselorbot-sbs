@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { PRACTICE_NOTEBOOK_FIELDS, generatePracticeScores, parsePracticeNotebooks, parsePracticeResults, practiceNotebookBody, practiceResultChatHref } from './practice-notebooks.ts';
+import { PRACTICE_NOTEBOOK_FIELDS, generatePracticeScores, parsePracticeNotebooks, parsePracticeResults, practiceNotebookBody, practiceResultChatHref, practiceNotebookChatHref, parsePracticeEntry } from './practice-notebooks.ts';
 
 test('i campi coincidono con quelli che il server porta nel prompt', () => {
     assert.deepEqual(
@@ -58,4 +58,24 @@ test('il repertorio scarta righe malformate', () => {
 
 test('practice chat links identify the saved profile and notebook without scores', () => {
     assert.equal(practiceResultChatHref({ id: 91, notebook_id: 6, questionnaire_type: 'QAP', scores: { AD1: 9 }, session_id: 'original', source: 'manual' }), '/?start=QAP&practice_notebook_id=6&practice_result_id=91');
+});
+
+test('il link senza punteggi porta solo strumento e taccuino', () => {
+    assert.equal(practiceNotebookChatHref(7, 'SAVICKAS'), '/?start=SAVICKAS&practice_notebook_id=7');
+});
+
+test('ingresso in prova: senza punteggi basta il taccuino, con punteggi serve il profilo', () => {
+    assert.deepEqual(parsePracticeEntry('7', null, true), { notebookId: 7, resultId: null });
+    assert.deepEqual(parsePracticeEntry('7', '3', false), { notebookId: 7, resultId: 3 });
+    assert.equal(parsePracticeEntry('7', null, false), null);
+});
+
+test('ingresso in prova: parametri non validi vengono rifiutati', () => {
+    assert.equal(parsePracticeEntry(null, null, true), null);
+    assert.equal(parsePracticeEntry(null, '3', true), null);
+    assert.equal(parsePracticeEntry('0', null, true), null);
+    assert.equal(parsePracticeEntry('-2', null, true), null);
+    assert.equal(parsePracticeEntry('abc', null, true), null);
+    assert.equal(parsePracticeEntry('7', 'x', true), null);
+    assert.equal(parsePracticeEntry('7', '0', false), null);
 });
