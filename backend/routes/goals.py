@@ -31,6 +31,7 @@ from ..goals import (
     method_view,
     owned_goal,
     resources,
+    targeted_entries,
     validate_method,
     validate_origin,
     validate_share,
@@ -61,6 +62,25 @@ def teacher_catalog(db: Session = Depends(database.get_db), user=Depends(auth.ge
     # Targets name students: only the author (or an admin) reads them.
     targets = catalog_target_map(db, [row.id for row in rows if user.get('is_admin') or row.author_username == user['username']])
     return [dict(catalog_dict(row), parent_ids=parents[row.id], **targets.get(row.id, {})) for row in rows]
+
+
+@router.get('/teacher/goal-catalog/targeted')
+def targeted_catalog(group_id: int | None = Query(default=None, gt=0), username: str | None = Query(default=None, max_length=150),
+                     practice_notebook_id: int | None = Query(default=None, gt=0),
+                     db: Session = Depends(database.get_db), user=Depends(auth.get_current_plan_manager)):
+    """Read-only goals the teacher wrote for a class, one of its students or a test student (#905).
+    Only the author's entries (admin: all), as targets are author-only."""
+    if practice_notebook_id is not None:
+        if not db.query(models.TeacherPracticeNotebook.id).filter_by(id=practice_notebook_id, owner_username=user['username']).first():
+            raise HTTPException(404, 'Practice notebook unavailable')
+        target = dict(practice_notebook_id=practice_notebook_id)
+    elif group_id is not None:
+        _require_visible_group(db, user, group_id)
+        target = dict(group_id=group_id, username=username or None, practice_notebook_id=None)
+    else:
+        raise HTTPException(422, 'Choose a class, a student or a test student')
+    author = None if user.get('is_admin') else user['username']
+    return [catalog_dict(row) for row in targeted_entries(db, author, **target)]
 
 
 def teacher_entry(db, row):

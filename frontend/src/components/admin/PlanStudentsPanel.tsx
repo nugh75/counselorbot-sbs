@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { TargetedGoals } from '@/components/goals/TargetedGoals';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { Check, ChevronDown, ChevronRight, Grid3X3, List, RefreshCw, Send, StickyNote, Trash2 } from 'lucide-react';
@@ -219,7 +220,8 @@ const TEXTS = {
 
 // base: prefisso API della dashboard (piano: /api/admin/administration-plans/<id>,
 // classe: /api/admin/groups/<id>). withNotes: note+messaggi (solo classi).
-export function PlanStudentsPanel({ base, withNotes = false }: { base: string; withNotes?: boolean }) {
+// goalGroupId: class page only, shows the catalog goals written for each student (#905).
+export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { base: string; withNotes?: boolean; goalGroupId?: number }) {
     const { lang } = useI18n();
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const [students, setStudents] = useState<PlanStudent[] | null>(null);
@@ -541,6 +543,8 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                         ) : (
                                             <p className="text-xs text-ink-muted">{texts.noResultsYet}</p>
                                         )}
+
+                                        {goalGroupId !== undefined && <TargetedGoals target={{ groupId: goalGroupId, username: student.username }} />}
 
                                         {student.learner_profile && (
                                             <div className="rounded-control border border-line bg-surface-sunken p-2">

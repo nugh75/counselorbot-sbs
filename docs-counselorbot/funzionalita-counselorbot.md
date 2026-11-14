@@ -407,6 +407,19 @@ rifiuta un ciclo, compare il messaggio dedicato.
 snapshot, riverificati in quel momento. Le risposte per l'autore o un amministratore portano
 `targets` e una nota leggibile `target_note`; le altre risposte e `/user/goal-catalog` no.
 
+**Obiettivi destinati in classe, studente e studente di prova (#905).** Un blocco di sola lettura
+«Obiettivi scritti per …» mostra le proposte del catalogo (non archiviate) destinate a quella
+classe (scheda Panoramica della classe), a quello studente (scheda dello studente aperta in
+«Partecipanti e risultati») o a quello studente di prova (`/docente/taccuini-prova/[id]`), con
+titolo, stato e descrizione e il link al catalogo. Legge `GET /teacher/goal-catalog/targeted`
+(`group_id`, `group_id`+`username` o `practice_notebook_id`): solo le proposte dell'autore (un
+amministratore vede tutte), classe visibile al docente, studente di prova suo. Gli altri docenti
+della classe vedono un elenco vuoto, gli studenti nulla. Le chat di prova di uno studente di prova
+ricevono nel blocco `[PROFILE]` un riquadro `[TARGETED GOALS]` (in inglese, al massimo cinque
+obiettivi: titolo, descrizione, criteri) così il docente può simulare l'obiettivo. Corretto anche
+un difetto: nelle chat di prova il taccuino dello studente simulato non entrava nel prompt, perché
+l'avviso `[SIMULATION]` cita `[PROFILE]` e il controllo anti-duplicati lo scambiava per il blocco.
+
 **Studiare da un PDF senza schede annidate (#874).** `/profilo/pqbl` usa solo la
 `Card` piatta: impostazione, generazione, introduzione, domande, riepilogo, test finale
 e risultati sono sezioni separate da un filetto. Nel riepilogo i tre numeri sono cifre

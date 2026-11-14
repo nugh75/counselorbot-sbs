@@ -22,7 +22,7 @@ export function ClassStudentsTab({ groupId, groupName, groupCode }: { groupId: n
         <Card as="section" aria-labelledby="class-real-students-heading" className="space-y-4 border-brand-line bg-brand-soft/40">
             <h2 id="class-real-students-heading" className="text-lg font-semibold text-ink">{classSettingsText(lang, 'students')}</h2>
             {email && <ClassAddStudent groupId={groupId} state={invitations} />}
-            <PlanStudentsPanel base={`/api/admin/groups/${groupId}`} withNotes />
+            <PlanStudentsPanel base={`/api/admin/groups/${groupId}`} withNotes goalGroupId={groupId} />
         </Card>
         {email && <ClassPendingInvitations webLink={webLink} state={invitations} />}
         <ClassPracticeStudents groupId={groupId} />
