@@ -237,7 +237,8 @@ test('Student area shows the class-filtered instrument catalog after the plans a
 
         await detailLink(f.page, 'SAVICKAS').click();
         await f.page.getByRole('link', { name: 'Avvia il percorso', exact: true }).click();
-        await f.page.getByText('Il tuo taccuino è ancora aggiornato?', { exact: true }).waitFor();
+        // With a ready notebook the tool opens straight on the interaction-mode choice.
+        await f.page.getByRole('heading', { name: 'Scegli la modalità di interazione', exact: true }).waitFor();
         assert.deepEqual(f.errors, []);
     } finally {
         await f.context.close();
