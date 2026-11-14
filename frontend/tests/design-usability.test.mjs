@@ -69,7 +69,9 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1280, 720],
             const box = await composer.boundingBox();
             assert.ok(box.y >= 60 && box.y + box.height <= height, `composer fits: ${JSON.stringify(box)}`);
             const log = await page.locator('[role="log"]').evaluate(el => ({ visible: el.clientHeight, total: el.scrollHeight }));
-            assert.ok(log.visible >= height * 0.5 && log.total > log.visible, `messages scroll inside the chat: ${JSON.stringify(log)}`);
+            // The composer carries the «Domande e Approfondimenti» disclosure: below 600px of height
+            // the log keeps at least 45% of the viewport, elsewhere half of it.
+            assert.ok(log.visible >= height * (height < 600 ? 0.45 : 0.5) && log.total > log.visible, `messages scroll inside the chat: ${JSON.stringify(log)}`);
             const next = await page.getByRole('button', { name: 'Prossimo Step', exact: true }).boundingBox();
             assert.ok(next.y >= 60 && next.y + next.height <= height, 'step navigation remains visible');
             const size = await page.locator('.chat-message p').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize));
@@ -133,7 +135,8 @@ test('a guided tool starts from its tool page opened from the Student area', asy
         await page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
         await page.locator('#tools-guided a[href="/strumenti/SAVICKAS"]').click();
         await page.getByRole('link', { name: 'Avvia il percorso', exact: true }).click();
-        await page.getByText('Il tuo taccuino è ancora aggiornato?', { exact: true }).waitFor();
+        // With a ready notebook the tool opens straight on the interaction-mode choice.
+        await page.getByRole('heading', { name: 'Scegli la modalità di interazione', exact: true }).waitFor();
     } finally { await context.close(); }
 });
 
@@ -165,11 +168,9 @@ test('the navbar remains available during chat and after leaving it', async () =
         await page.locator('button[aria-controls="mobile-menu"]').click();
         const menu = page.locator('#mobile-menu');
         assert.ok(await menu.getByText('QSA', { exact: true }).isVisible());
-        const counselor = menu.getByRole('button', { name: /Counselor di prova con nome lungo/ });
-        // Opening the menu mounts its counselor control and loads its labels.
-        await counselor.waitFor({ state: 'visible' });
-        await counselor.click();
-        await menu.getByRole('button', { name: /Counselor di prova con nome lungo/ }).last().click();
+        // The menu links to the counselor choice and shows the current counselor's name.
+        const counselor = menu.getByRole('link', { name: 'Scegli il counselor', exact: true });
+        await counselor.getByText('Counselor di prova con nome lungo', { exact: true }).waitFor();
         await menu.getByRole('button', { name: 'Riduci il movimento', exact: true }).click();
         assert.equal(await page.locator('html').getAttribute('data-motion'), 'reduced');
     } finally { await context.close(); }
@@ -323,7 +324,8 @@ test('step icons advance, retry a failed analysis, and return without clearing t
         await page.goto(`${origin}/?frozen=design-fixture`, { waitUntil: 'networkidle' });
         const log = page.getByRole('log');
         const initialMessages = await log.locator('.chat-message').count();
-        assert.equal(await page.getByRole('button', { name: 'Ripeti Passaggio', exact: true }).count(), 0);
+        // Step navigation keeps «Ripeti Passaggio» available on every step but the conclusion.
+        assert.equal(await page.getByRole('button', { name: 'Ripeti Passaggio', exact: true }).count(), 1);
         await page.getByRole('button', { name: 'Prossimo Step', exact: true }).click();
         const retry = page.getByRole('button', { name: 'Ripeti Passaggio', exact: true });
         await retry.waitFor();
@@ -343,12 +345,21 @@ test('step icons advance, retry a failed analysis, and return without clearing t
 
 for (const width of [390, 1440]) {
     for (const admin of [false, true]) {
-        test(`Bussola is only in the navbar menu at ${width}px for ${admin ? 'admins' : 'students'}`, async () => {
+        test(`Bussola is reachable from the navbar at ${width}px for ${admin ? 'admins' : 'students'}`, async () => {
             const { page, context } = await fixture({ width, admin, touch: width < 1280 });
             try {
                 await page.goto(origin, { waitUntil: 'networkidle' });
-                assert.equal(await page.locator('main a[href="/bussola"]').count(), 0);
-                assert.equal(await page.locator('.console-header a[href="/bussola"]:visible').count(), 0);
+                // The Student area catalog offers the Compass entry; other areas do not.
+                assert.equal(await page.locator('main a[href="/bussola"]').count(), admin ? 0 : 1);
+                const headerLink = page.locator('.console-header a[href="/bussola"]:visible');
+                if (width >= 1024) {
+                    // Desktop navbar: Bussola is a visible support link, no menu panel.
+                    assert.equal(await headerLink.count(), 1);
+                    await headerLink.click();
+                    await page.waitForURL('**/bussola');
+                    return;
+                }
+                assert.equal(await headerLink.count(), 0);
                 await page.locator('button[aria-controls="mobile-menu"]').click();
                 const link = page.locator('#mobile-menu').getByRole('link', { name: 'Bussola', exact: true });
                 const box = await link.boundingBox();
