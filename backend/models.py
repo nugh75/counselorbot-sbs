@@ -2510,6 +2510,25 @@ class ClassPathActivityAttempt(Base):
     revision = Column(Integer, nullable=False, default=0)
 
 
+class TeacherNoticingArtifact(Base):
+    """Append-only teacher noticing caches (student and class), outside log exports.
+
+    create_all adds this table on existing installations as well as fresh ones.
+    Operational log retention and log exports never see these rows.
+    """
+    __tablename__ = 'teacher_noticing_artifacts'
+    __table_args__ = (Index('ix_teacher_noticing_scope', 'scope_key', 'kind', 'language', 'id'),)
+    id = Column(Integer, primary_key=True)
+    group_id = Column(Integer, ForeignKey('student_groups.id', ondelete='CASCADE'), nullable=False, index=True)
+    student_username = Column(String, nullable=True, index=True)
+    scope_key = Column(String, nullable=False)
+    kind = Column(String, nullable=False)
+    language = Column(String(2), nullable=False)
+    author_username = Column(String, nullable=True)
+    payload = Column(JSON, nullable=False)
+    created_at = Column(UTCDateTime, server_default=func.now(), nullable=False)
+
+
 class ClassPathDeepDiveSession(Base):
     """Server-issued guided session bound to one student, deep-dive step and result.
 

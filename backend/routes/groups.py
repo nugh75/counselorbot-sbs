@@ -1022,6 +1022,40 @@ async def generate_class_noticing(group_id: int, lang: str = "it", instrument: O
                           username=_username(current_user))
 
 
+def _noticing_student(db, identity, group_id: int, username: str) -> models.StudentGroup:
+    group = _require_visible_group(db, identity, group_id)
+    _require_institution_membership(db, identity, group)
+    _require_group_member(db, group, username)
+    return group
+
+
+@router.get("/admin/groups/{group_id}/students/{username}/noticing")
+def get_student_journey_noticing(group_id: int, username: str, lang: str = "it",
+                                 days: Optional[int] = Query(None, ge=1, le=3650), instrument: Optional[str] = None,
+                                 current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..student_noticing import student_noticing
+    group = _noticing_student(db, current_user, group_id, username)
+    return student_noticing(db, group, username, lang, days=days, instrument=instrument)
+
+
+@router.post("/admin/groups/{group_id}/students/{username}/noticing")
+def generate_student_journey_noticing(group_id: int, username: str, chunk: str = Query(min_length=64, max_length=64),
+                                      lang: str = "it", days: Optional[int] = Query(None, ge=1, le=3650),
+                                      instrument: Optional[str] = None,
+                                      current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..student_noticing import student_noticing
+    group = _noticing_student(db, current_user, group_id, username)
+    return student_noticing(db, group, username, lang, days=days, instrument=instrument,
+                            chunk=chunk, actor=_username(current_user))
+
+
+@router.get("/admin/groups/{group_id}/students/{username}/noticing-source")
+def get_student_noticing_source(group_id: int, username: str, source: str = Query(min_length=1, max_length=300),
+                                current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from ..student_noticing import source_detail
+    return source_detail(db, _noticing_student(db, current_user, group_id, username), username, source)
+
+
 @router.get("/admin/groups/{group_id}/students/{username}/results/{result_id}/noticing")
 async def get_group_student_noticing(group_id: int, username: str, result_id: int, lang: str = "it",
                                      current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):

@@ -1921,22 +1921,29 @@ il server riprova una volta e registra nel log un'anteprima della risposta (#466
 lo stesso vale per il noticing della classe. Gli accessi sono gli stessi del dettaglio (classe visibile o piano
 di somministrazione); il quadro non entra nel PDF né nel link del consiglio di classe.
 
-**Noticing della classe (#464).** La scheda **Noticing** di `/docente/classi/{id}`
-(`?tab=noticing`) analizza le chat dei questionari di tutti gli studenti della classe,
-con filtro per strumento e periodo (sempre, ultimi 30 o 90 giorni). Il pulsante
-**Analizza la classe** genera prima il quadro di noticing di ogni compilazione che
-non lo ha o che è cambiata, mostrando l'avanzamento («Compilazioni analizzate: N di M»),
-poi chiede al modello di raggruppare in temi soltanto gli elementi già verificati sulle
-parole dello studente. La scheda mostra: alcuni **suggerimenti per il docente** brevi;
-un grafico a barre degli **studenti per tipo di elemento** (Da riprendere, Risorsa,
-Difficoltà, Da attenzionare) sul totale degli studenti con una chat; i **temi della
-classe**, ciascuno con il numero di studenti che lo sollevano, una barra, un
-suggerimento e, aprendo «Chi lo solleva», nome dello studente, strumento, elemento,
-frase citata e il pulsante **Apri la compilazione** che mostra il dettaglio completo.
-Conteggi e grafici sono calcolati dal server, non dal modello; temi con elementi non
-più validi li perdono a ogni lettura. L'analisi è salvata per classe, lingua e filtri:
-se compaiono chat nuove o cambiate la scheda lo segnala e propone **Aggiorna l'analisi**.
-Gli accessi sono quelli della classe visibile al docente.
+**Noticing della classe e dell'intero percorso (#464, #890).** La scheda **Noticing** di
+`/docente/classi/{id}` (`?tab=noticing`) considera tutto il percorso disponibile di ogni
+studente della classe, anche senza questionari: conversazioni (messaggi dello studente, mai
+le parole dell'IA come citazioni), questionari e punteggi della classe, taccuino, letture dei
+risultati, portfolio (metadati dei file, mai il contenuto delle immagini), obiettivi e bilanci,
+metodo, azioni, schede, flashcard, confronti, linea del tempo, mappe Idea, Tavoli, attività
+consegnate con riscontro, incontri, osservazioni del docente, pQBL e i soli contributi
+pubblicati dello studente nel forum della classe (mai messaggi dei compagni, in attesa,
+nascosti o eliminati). I risultati collegati a un'altra classe restano fuori con le loro chat.
+Filtri per strumento e periodo (sempre, ultimi 30 o 90 giorni) restringono la sintesi della
+classe. **Analizza la classe** analizza a blocchi limitati il testo completo di ogni studente
+(«Blocchi analizzati: N di M»), poi raggruppa in temi soltanto gli elementi verificati: ogni
+citazione è ricontrollata sulla fonte attuale a ogni lettura. La scheda mostra suggerimenti
+per il docente, il grafico degli **studenti per tipo di elemento** sul totale degli studenti
+con fonti, i **temi della classe** con elemento, citazione, tipo e autore della fonte (parole
+dello studente, osservazione del docente, lavoro salvato, dato registrato) e **Apri la fonte**.
+Sotto, un riquadro per studente mostra le fonti per tipo, l'analisi individuale e
+**Analizza il percorso** per i blocchi mancanti. Aprire la scheda non chiama il modello; se le
+fonti cambiano la scheda segnala l'analisi da aggiornare. Le analisi sono conservate nella
+tabella `teacher_noticing_artifacts`, fuori dai log e dalle loro esportazioni. Il Consiglio
+orientativo resta nella sua scheda (#664) e non usa questo Noticing. Gli accessi sono quelli
+della classe visibile al docente, con lo studente iscritto. Contratto e regole di privacy:
+`docs/operations/whole-journey-noticing.md`.
 La stessa scheda è usata da Compilazioni, Classi (matrice ed elenco) e Piani di
 somministrazione. Le etichette accessibili includono la data per distinguere
 compilazioni ripetute; nei riquadri stretti i nomi dei fattori si adattano allo
@@ -2479,7 +2486,7 @@ short student task `forum` and teacher task `moderate`, in six languages, with
 one synthetic screenshot each. Old student section 16 and teacher section 8
 bookmarks still resolve. Students read, post and mark their plan intervention
 complete; teachers configure discussion permissions, approval and moderation.
-Both explain that no AI model reads or summarises the forum. The full rules
+Both explain that only the student's own published messages can enter the teacher-requested whole-journey Noticing (#890). The full rules
 for rate limits, unread badges, moderation and data exclusion remain documented
 in the forum sections of this reference.
 

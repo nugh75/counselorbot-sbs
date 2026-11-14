@@ -5,12 +5,14 @@ import { Lightbulb, Sparkles } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { noticingText, type NoticingTextKey } from '@/lib/i18n-noticing';
+import { journeyText } from '@/lib/i18n-journey-noticing';
 import { NOTICING_KINDS } from '@/lib/teacher-noticing';
-import { barPercent, classNoticingQuery, parseClassNoticing, pendingCompilations, type ClassCompilation, type ClassNoticing, type ClassTheme } from '@/lib/class-noticing';
+import { barPercent, classNoticingQuery, parseClassNoticing, type ClassNoticing, type ClassTheme } from '@/lib/class-noticing';
+import { parseStudentNoticing, SOURCE_KINDS, type SourceKind } from '@/lib/student-noticing';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
-import { StudentResultItem } from './StudentResultItem';
+import { SourceQuote, StudentJourneyNoticing } from './StudentJourneyNoticing';
 import { useTeacherResource } from './useTeacherResource';
 
 const PERIODS = [0, 30, 90];
@@ -24,10 +26,9 @@ function Bar({ label, count, total, color }: { label: string; count: number; tot
     </div>;
 }
 
-function ThemeCard({ theme, total, base, compilations }: { theme: ClassTheme; total: number; base: string; compilations: Map<number, ClassCompilation> }) {
+function ThemeCard({ theme, total, studentBase }: { theme: ClassTheme; total: number; studentBase: (username: string) => string }) {
     const { lang } = useI18n();
     const l = (key: NoticingTextKey) => noticingText(lang, key);
-    const [open, setOpen] = useState<number | null>(null);
     return <li className="space-y-4 rounded-lg border border-line bg-surface p-4">
         <p className="flex flex-wrap items-center gap-2">
             <span className={`rounded-full px-2 py-1 text-xs font-semibold ${KIND_BADGE[theme.kind]}`}>{l(theme.kind)}</span>
@@ -37,18 +38,11 @@ function ThemeCard({ theme, total, base, compilations }: { theme: ClassTheme; to
         {theme.suggestion && <p className="flex gap-2 text-sm text-ink-body"><Lightbulb className="mt-1 h-4 w-4 shrink-0 text-warning" aria-hidden />{theme.suggestion}</p>}
         <details className="text-sm">
             <summary className="min-h-[44px] cursor-pointer py-2 font-semibold text-link">{l('showStudents')} ({theme.students.length})</summary>
-            <ul className="space-y-4">{theme.students.map((student, index) => {
-                const compilation = compilations.get(student.result_id);
-                return <li key={index} className="space-y-1 border-t border-line pt-2">
-                    <p className="font-semibold text-ink">{student.username} <span className="font-normal text-ink-muted">· {student.questionnaire_type}</span></p>
-                    <p className="text-ink-body">{student.text}</p>
-                    <blockquote className="border-l-4 border-line-strong pl-4 italic text-ink-body">«{student.quote}»</blockquote>
-                    {compilation && <>
-                        <Button type="button" variant="ghost" className="min-h-[44px] px-2" aria-expanded={open === index} onClick={() => setOpen(open === index ? null : index)}>{l('openCompilation')}</Button>
-                        {open === index && <StudentResultItem base={base} username={compilation.username} result={compilation} />}
-                    </>}
-                </li>;
-            })}</ul>
+            <ul className="space-y-4">{theme.students.map((student, index) => <li key={index} className="space-y-1 border-t border-line pt-2">
+                <p className="font-semibold text-ink">{student.username}</p>
+                <p className="text-ink-body">{student.text}</p>
+                <SourceQuote source={student.source} base={studentBase(student.username)} />
+            </li>)}</ul>
         </details>
     </li>;
 }
@@ -64,72 +58,91 @@ export function ClassNoticingTab({ groupId }: { groupId: number }) {
     const [result, setResult] = useState<{ url: string; data: ClassNoticing } | null>(null);
     const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
     const [failed, setFailed] = useState(false);
+    const [opened, setOpened] = useState<Set<string>>(new Set());
+    const [refreshVersion, setRefreshVersion] = useState(0);
     const data = result?.url === url ? result.data : resource.data;
+    const studentBase = (username: string) => `${base}/students/${encodeURIComponent(username)}`;
+    const changed = () => { setResult(null); void resource.reload(); };
 
+    // Analyse every pending batch of every student (with the same filters), then group the class.
     const analyse = async () => {
         if (!data) return;
+        const total = data.students.reduce((n, student) => n + student.pending_chunks.length, 0);
+        let done = 0;
         setFailed(false);
-        const pending = pendingCompilations(data);
+        setProgress({ done, total });
         try {
-            for (const [index, row] of pending.entries()) {
-                setProgress({ done: index, total: pending.length });
-                await apiFetch(`${base}/students/${encodeURIComponent(row.username)}/results/${row.id}/noticing?lang=${lang}`, { method: 'POST' });
+            for (const student of data.students) {
+                for (const chunk of student.pending_chunks) {
+                    const response = await apiFetch(`${studentBase(student.username)}/noticing?${classNoticingQuery(lang, instrument, days)}&chunk=${chunk}`, { method: 'POST' });
+                    if (!response.ok) throw new Error('student noticing failed');
+                    parseStudentNoticing(await response.json());
+                    setProgress({ done: ++done, total });
+                }
             }
-            setProgress({ done: pending.length, total: pending.length });
             const response = await apiFetch(url, { method: 'POST' });
             if (!response.ok) throw new Error('class noticing failed');
             const next = parseClassNoticing(await response.json());
             setResult({ url, data: next });
+            setRefreshVersion(value => value + 1);
             if (next.status === 'unavailable') setFailed(true);
         } catch {
             setFailed(true);
+            changed();
         } finally {
             setProgress(null);
         }
     };
 
-    const compilations = new Map((data?.compilations ?? []).map(row => [row.id, row]));
-    const pending = data ? pendingCompilations(data).length : 0;
-    const total = data?.charts.students_with_chat ?? 0;
+    const pending = data?.students.reduce((n, student) => n + student.pending_chunks.length, 0) ?? 0;
+    const total = data?.charts.students_with_sources ?? 0;
     const showResults = data && (data.status === 'ready' || data.status === 'stale');
 
     return <div className="space-y-6">
         <Card className="space-y-4">
             <div className="space-y-2">
                 <h2 className="text-lg font-semibold text-ink">{l('classTitle')}</h2>
-                <p className="text-sm text-ink-muted">{l('classIntro')}</p>
-                <p className="text-xs text-ink-muted">{l('aiNote')}</p>
+                <p className="text-sm text-ink-muted">{journeyText(lang, 'intro')}</p>
+                <p className="text-xs text-ink-muted">{journeyText(lang, 'evidenceNote')}</p>
             </div>
             <div className="flex flex-wrap items-end gap-4">
                 <label className="space-y-1 text-sm font-semibold text-ink-body">
                     <span className="block">{l('instrument')}</span>
-                    <select value={instrument} onChange={event => setInstrument(event.target.value)} className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 text-sm">
+                    <select disabled={!!progress} value={instrument} onChange={event => setInstrument(event.target.value)} className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 text-sm">
                         <option value="">{l('allInstruments')}</option>
-                        {(data?.instruments ?? []).map(code => <option key={code} value={code}>{code}</option>)}
+                        {(data?.instruments ?? []).map(code => <option key={code} value={code}>{SOURCE_KINDS.includes(code as SourceKind) ? journeyText(lang, code as SourceKind) : code}</option>)}
                     </select>
                 </label>
                 <label className="space-y-1 text-sm font-semibold text-ink-body">
                     <span className="block">{l('period')}</span>
-                    <select value={days} onChange={event => setDays(Number(event.target.value))} className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 text-sm">
+                    <select disabled={!!progress} value={days} onChange={event => setDays(Number(event.target.value))} className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 text-sm">
                         {PERIODS.map(value => <option key={value} value={value}>{value ? l('lastDays', { n: value }) : l('allTime')}</option>)}
                     </select>
                 </label>
-                {data && data.compilations.length > 0 && <Button type="button" onClick={() => void analyse()} disabled={!!progress} aria-busy={!!progress}>
-                    <Sparkles className="h-4 w-4" aria-hidden />{l(data.status === 'ready' || data.status === 'stale' ? 'reanalyse' : 'analyse')}
+                {total > 0 && <Button type="button" onClick={() => void analyse()} disabled={!!progress} aria-busy={!!progress}>
+                    <Sparkles className="h-4 w-4" aria-hidden />{l(data?.status === 'ready' || data?.status === 'stale' ? 'reanalyse' : 'analyse')}
                 </Button>}
             </div>
+            <p className="text-xs text-ink-muted">{journeyText(lang, 'filterScope')}</p>
             {resource.loading && !data && <p role="status">{t('common.loading')}</p>}
             {resource.failed && !data && <Callout variant="danger"><p>{l('loadError')}</p><Button variant="secondary" onClick={() => void resource.reload()}>{t('setup.retry')}</Button></Callout>}
-            {progress && <p role="status" className="text-sm text-link">{progress.done < progress.total ? l('progress', progress) : l('grouping')}</p>}
+            {progress && <p role="status" className="text-sm text-link">{progress.done < progress.total ? journeyText(lang, 'progress', progress) : l('grouping')}</p>}
             {failed && <p role="alert" className="text-sm text-danger">{l('unavailable')}</p>}
             {data && <>
-                <p className="text-sm text-ink-muted">{l('coverage', { chat: data.charts.students_with_chat, students: data.charts.students, pending })}</p>
-                {data.status === 'empty' && <p>{l('classEmpty')}</p>}
+                <p className="text-sm text-ink-muted">{journeyText(lang, 'coverage', { n: total, total: data.charts.students, pending })}</p>
+                {data.status === 'empty' && <p>{journeyText(lang, 'empty')}</p>}
                 {data.status === 'missing' && <p>{l('classMissing')}</p>}
-                {data.status === 'stale' && <p role="status" className="text-warning-ink">{l('classStale')}</p>}
+                {data.status === 'stale' && <p role="status" className="text-warning-ink">{journeyText(lang, 'stale')}</p>}
                 {data.generated_at && <p className="text-xs text-ink-muted">{l('generatedAt')} <time dateTime={data.generated_at}>{new Date(data.generated_at).toLocaleString(lang)}</time></p>}
             </>}
         </Card>
+        <section className="space-y-2" aria-label={journeyText(lang, 'sources')}>
+            {(data?.students ?? []).map(student => <details key={student.username} className="rounded-lg border border-line bg-surface p-4"
+                onToggle={event => { if (event.currentTarget.open) setOpened(previous => new Set(previous).add(student.username)); }}>
+                <summary className="min-h-[44px] cursor-pointer break-words py-2 font-semibold text-link">{student.username} · {journeyText(lang, 'sources')}: {student.source_count}</summary>
+                {opened.has(student.username) && <StudentJourneyNoticing key={`${student.username}:${lang}`} base={studentBase(student.username)} onChanged={changed} refreshVersion={refreshVersion} />}
+            </details>)}
+        </section>
         {showResults && <>
             {data.suggestions.length > 0 && <Card className="space-y-4 border-warning-line bg-warning-soft">
                 <h3 className="font-semibold text-ink">{l('suggestions')}</h3>
@@ -142,7 +155,7 @@ export function ClassNoticingTab({ groupId }: { groupId: number }) {
             <section className="space-y-4">
                 <h3 className="font-semibold text-ink">{l('themes')}</h3>
                 {data.themes.length === 0 ? <p className="text-sm text-ink-muted">{l('noThemes')}</p>
-                    : <ul className="space-y-4">{data.themes.map((theme, index) => <ThemeCard key={index} theme={theme} total={total} base={base} compilations={compilations} />)}</ul>}
+                    : <ul className="space-y-4">{data.themes.map((theme, index) => <ThemeCard key={index} theme={theme} total={total} studentBase={studentBase} />)}</ul>}
             </section>
         </>}
     </div>;
