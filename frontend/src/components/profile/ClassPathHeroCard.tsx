@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { activityReturnHref, withActivityReturn, withActivityOptions } from '@/lib/path-activity';
 import { chatPreferenceLabel, isEssentialInstrument } from '@/lib/chat-preferences';
 import { pathActivityText } from '@/lib/i18n-path-activity';
-import { CheckCircle2, Lock, AlertCircle, ArrowRight, Play, ChevronRight } from 'lucide-react';
+import { Check, Lock, AlertCircle, ArrowRight, ChevronRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { pathPublicationText } from '@/lib/i18n-path-publication';
 import { apiFetch } from '@/lib/auth';
@@ -91,13 +91,15 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
 
     return (
         <Card
+            as="section"
+            variant="flat"
             data-testid="class-path-hero-card"
-            className="space-y-6 border-brand-line shadow-card"
+            className="space-y-6"
         >
             {/* Header: class, title and independent progress. */}
             <div className={`space-y-4 ${expanded ? 'border-b border-line/80 pb-4' : ''}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="inline-flex items-center rounded-full bg-brand-soft px-4 py-1 text-xs font-semibold text-link">
+                    <span className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-muted">
                         {`${l('yourClassPath')} · ${path.group_name}`}
                     </span>
                 </div>
@@ -146,7 +148,7 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
             </div>
 
             {/* Steps List */}
-            {expanded && <div id={stepsId} className="space-y-4">
+            {expanded && <div id={stepsId} className="divide-y divide-line">
                 {path.steps.map((step, index) => {
                     const stepNumber = index + 1;
                     const isCurrent = step.id === path.next_step_id;
@@ -173,21 +175,20 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
                         ? `${redoPath}${redoPath.includes('?') ? '&' : '?'}attempt=new${redoHash ? `#${redoHash}` : ''}` : step.start_href;
                     const resumeStepHref = draft && step.start_href ? `${step.start_href}${step.start_href.includes('?') ? '&' : '?'}attempt=${draft}` : step.start_href;
 
-                    const containerClasses = isCurrent
-                        ? 'border-brand-line bg-brand-soft/60 ring-1 ring-brand-line'
-                        : isDone
-                        ? 'border-line bg-surface hover:bg-surface-sunken/50'
-                        : isUnavailable
-                        ? 'border-line bg-surface-sunken/60 opacity-60'
-                        : isLocked
-                        ? 'border-dashed border-line bg-surface-sunken/60 opacity-60'
-                        : 'border-line bg-surface';
+                    // Flat row: state is told by the FlowStepper colours (ochre current,
+                    // indigo done, slate ahead) and a small status line, not a coloured box.
+                    const status = [
+                        isCurrent && {tone: 'current', text: isDone && inProgress ? pathActivityText(lang, 'newInProgress') : l(inProgress ? 'current' : 'next')},
+                        isDone && {tone: 'done', text: l('completed')},
+                        inProgress && !isCurrent && {tone: 'current', text: pathActivityText(lang, isDone ? 'newInProgress' : 'inProgress')},
+                        isUnavailable && {tone: 'muted', text: l('notAvailable')},
+                    ].filter((item): item is {tone: string; text: string} => Boolean(item));
 
                     return (
                         <div
                             key={step.id}
                             id={`class-step-${step.id}`}
-                            className={`rounded-card border p-4 transition-colors ${containerClasses}`}
+                            className={`py-4 first:pt-0 last:pb-0 ${isLocked || isUnavailable ? 'opacity-60' : ''}`}
                         >
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                 {/* Left side: indicator, titles */}
@@ -195,27 +196,21 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
                                     <div className="mt-1 flex shrink-0 items-center justify-center">
                                         {isCurrent ? (
                                             <span
-                                                className="flex h-7 w-7 items-center justify-center rounded-full bg-move text-xs font-semibold text-ink-on-brand"
+                                                className="flex h-5 w-5 items-center justify-center rounded-full bg-ochre-600 text-2xs font-bold text-white ring-4 ring-ochre-600/15"
                                                 aria-label={l(inProgress ? 'current' : 'next')}
                                             >
-                                                <Play className="h-3.5 w-3.5 fill-current" aria-hidden />
-                                            </span>
-                                        ) : isDone ? (
-                                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-success-soft text-success">
-                                                <CheckCircle2 className="h-4 w-4" aria-hidden />
-                                            </span>
-                                        ) : isLocked ? (
-                                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-raised text-ink-muted">
-                                                <Lock className="h-4 w-4" aria-hidden />
-                                            </span>
-                                        ) : isUnavailable ? (
-                                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-raised text-ink-muted">
-                                                <AlertCircle className="h-4 w-4" aria-hidden />
-                                            </span>
-                                        ) : (
-                                            <span className="flex h-7 w-7 items-center justify-center rounded-full border border-line-strong bg-surface text-xs font-semibold text-ink-muted">
                                                 {stepNumber}
                                             </span>
+                                        ) : isDone ? (
+                                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white">
+                                                <Check className="h-3 w-3" aria-hidden />
+                                            </span>
+                                        ) : isLocked ? (
+                                            <Lock className="h-4 w-4 text-slate-500" aria-hidden />
+                                        ) : isUnavailable ? (
+                                            <AlertCircle className="h-4 w-4 text-slate-500" aria-hidden />
+                                        ) : (
+                                            <span className="m-1 h-2.5 w-2.5 rounded-full border-2 border-slate-300" aria-hidden />
                                         )}
                                     </div>
 
@@ -225,34 +220,21 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
                                                 {`[${stepNumber}]`}
                                             </span>
                                             <h3
-                                                className={`text-base font-semibold ${
-                                                    isCurrent
-                                                        ? 'text-link'
-                                                        : 'text-ink'
-                                                }`}
+                                                className="text-base font-semibold text-ink"
                                             >
                                                 {titleDisplay}
                                             </h3>
-
-                                            {isCurrent && (
-                                                <span className="rounded-full bg-brand-soft px-2 py-1 text-xs font-semibold text-link">
-                                                    {isDone && inProgress ? pathActivityText(lang, 'newInProgress') : l(inProgress ? 'current' : 'next')}
-                                                </span>
-                                            )}
-                                            {isDone && (
-                                                <span className="rounded-full bg-success-soft px-2 py-1 text-xs font-semibold text-success-ink">
-                                                    {l('completed')}
-                                                </span>
-                                            )}
-                                            {inProgress && !isCurrent && <span className="rounded-full bg-brand-soft px-2 py-1 text-xs font-semibold text-link">
-                                                {pathActivityText(lang, isDone ? 'newInProgress' : 'inProgress')}
-                                            </span>}
-                                            {isUnavailable && (
-                                                <span className="rounded-full bg-line px-2 py-1 text-xs font-semibold text-ink-muted">
-                                                    {l('notAvailable')}
-                                                </span>
-                                            )}
                                         </div>
+                                        {status.length > 0 && (
+                                            <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" data-step-status>
+                                                {status.map(item => (
+                                                    <span key={item.text} className={`inline-flex items-center gap-2 ${item.tone === 'current' ? 'font-semibold text-ochre-700' : item.tone === 'done' ? 'font-medium text-indigo-700' : 'text-ink-muted'}`}>
+                                                        <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${item.tone === 'current' ? 'bg-ochre-600' : item.tone === 'done' ? 'bg-indigo-600' : 'bg-slate-300'}`} />
+                                                        {item.text}
+                                                    </span>
+                                                ))}
+                                            </p>
+                                        )}
                                         {isUnavailable && (
                                             <p className="mt-1 text-xs text-ink-muted">{pathPublicationText(lang, 'studentUnavailable')}</p>
                                         )}
@@ -358,7 +340,7 @@ export function ClassPathHeroCard({ path, pausedChats, drafts, onReload, collaps
                                         </Link>}
                                         {step.activity.attempts.length > 0 && <details className="basis-full text-sm sm:ml-auto">
                                             <summary className="cursor-pointer py-2 font-semibold text-link">{pathActivityText(lang, 'history')} ({step.activity.attempts.length})</summary>
-                                            <ul className="space-y-2">{step.activity.attempts.map(attempt => <li key={attempt.session_id} className="flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface-sunken p-2">
+                                            <ul className="divide-y divide-line">{step.activity.attempts.map(attempt => <li key={attempt.session_id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                                                 <span>{attempt.started_at ? new Date(attempt.started_at).toLocaleString(lang) : ''} · {pathActivityText(lang, attempt.state === 'completed' ? 'completed' : 'inProgress')}</span>
                                                 <Link className="inline-flex min-h-control items-center px-2 font-semibold text-link underline" href={withActivityReturn(attempt.href, returnTo)}>
                                                     {pathActivityText(lang, attempt.state === 'completed' ? 'review' : 'resume')}

@@ -373,6 +373,16 @@ creazione, le colonne e i mazzi sono divisi da filetti invece che da riquadri an
 La carta in studio, le carte del tavolo, campi e finestre di dialogo mantengono la loro
 forma; nessun cambio di comportamento.
 
+**Piani operativi dello studente piatti (#918).** I piani in cima a `/profilo` e in
+`/profilo/piani-operativi` sono `Card` piatte separate da filetti: classe come
+etichetta di testo, titolo, avanzamento, poi le tappe come righe divise da filetti invece
+che da riquadri colorati. Lo stato della tappa usa i colori del binario di percorso
+(ocra per quella attuale, indaco per le completate, grigio per le successive) e una
+piccola riga di stato («Prossimo passo», «In corso», «Completato», «Non disponibile»); lo
+storico dei tentativi è un elenco a filetti. Nella pagina dell'attività di una tappa
+(`/profilo/piani-operativi/[pathId]/[stepId]`) la barra con «Indietro» e «Salva ed esci»
+non è più un riquadro. Pulsanti, campi e avvisi restano invariati; nessun cambio di comportamento.
+
 **Orientamento del docente e Catalogo obiettivi piatti (#870).** `/docente/orientamento`
 e `/docente/catalogo-obiettivi` seguono l'aspetto piatto: categorie, contenuti e proposte
 del catalogo sono righe separate da filetti (non più riquadri), i moduli di modifica e
