@@ -1,7 +1,7 @@
 # Handoff — feature/practice-gym-restyle-892 (#892)
 
 ## Stato
-In corso: codice scritto, verifiche in esecuzione.
+Completo: PR #899 aperta verso main (milestone UI consistency), da rivedere e unire.
 
 ## Fatto
 - `/docente/taccuini-prova`: elenco piatto `EntrySection`/`EntryLink` (avatar, nome, badge «prova», stato profili/chat aperte), archiviati in sezione sotto, «Nuovo studente di prova».
@@ -13,11 +13,11 @@ In corso: codice scritto, verifiche in esecuzione.
 
 ## Verifiche
 - `node --test src/lib/practice-notebooks.test.ts`: 11/11 verdi.
-- tsc/eslint: in corso.
+- tsc pulito (solo errori PNG preesistenti: manca next-env.d.ts nel worktree); eslint pulito; make guidance-check ok.
 - Test browser `tests/teacher-practice-notebooks.test.mjs` aggiornati ma NON eseguiti (niente next dev sul volume lento).
 
 ## Prossimi passi
-Commit atomici, push, PR verso main (milestone UI consistency).
+Revisione e merge della PR #899; eseguire i test browser in CI o con un dev server.
 
 ## Blocchi e rischi
 - Test browser non eseguiti: da verificare in CI o con un dev server.
