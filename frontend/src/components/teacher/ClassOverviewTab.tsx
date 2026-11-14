@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { TargetedGoals } from '@/components/goals/TargetedGoals';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
@@ -467,6 +468,8 @@ export function ClassOverviewTab({
                     </button>
                 </div>
             </section>
+
+            <TargetedGoals target={{ groupId: group.id }} />
 
             {/* 2. Invito Studenti */}
             {isLocalAuth() ? <ClassPairingSection groupId={group.id} /> : <Card>
