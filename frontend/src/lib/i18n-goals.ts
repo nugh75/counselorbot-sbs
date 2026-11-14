@@ -98,6 +98,7 @@ const text = {
     cycle: ['Non puoi collegarlo qui: creerebbe un cerchio tra obiettivi.', 'You cannot attach it here: it would create a loop between goals.', 'No puedes vincularlo aquí: crearía un ciclo entre objetivos.', 'Impossible de le rattacher ici : cela créerait une boucle entre objectifs.', 'Hier nicht möglich: Es entstünde ein Kreis zwischen Zielen.', 'Går inte här: det skulle skapa en slinga mellan mål.'],
     level: ['livello {n}', 'level {n}', 'nivel {n}', 'niveau {n}', 'Ebene {n}', 'nivå {n}'],
     viewList: ['Elenco', 'List', 'Lista', 'Liste', 'Liste', 'Lista'],
+    viewTree: ['Albero', 'Tree', 'Árbol', 'Arbre', 'Baum', 'Träd'],
     viewMap: ['Mappa', 'Map', 'Mapa', 'Carte', 'Karte', 'Karta'],
     mapLabel: ['Mappa degli obiettivi. Lo stesso contenuto è nella vista Elenco.', 'Goal map. The same content is in the List view.', 'Mapa de objetivos. El mismo contenido está en la vista Lista.', 'Carte des objectifs. Le même contenu est dans la vue Liste.', 'Zielkarte. Derselbe Inhalt steht in der Listenansicht.', 'Målkarta. Samma innehåll finns i listvyn.'],
     close: ['Chiudi', 'Close', 'Cerrar', 'Fermer', 'Schließen', 'Stäng'],

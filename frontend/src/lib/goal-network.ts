@@ -1,6 +1,6 @@
 // Rete degli obiettivi: funzioni pure su PersonalGoal[] con parent_ids dal backend.
 // Il backend rifiuta i cicli; qui li si evita comunque per non bloccare la pagina.
-import type { PersonalGoal } from './goals';
+import type { PersonalGoal, TeacherCatalogEntry } from './goals';
 
 export type TreeNode = { key: string; goal: PersonalGoal; depth: number; repeat: boolean; otherParents: PersonalGoal[]; children: TreeNode[] };
 
@@ -99,4 +99,9 @@ export function orderBranches<T extends { id: number; parent_ids: number[] }>(ro
     };
     rows.filter(row => !row.parent_ids.some(p => ids.has(p))).forEach(row => visit(row, 0));
     return result;
+}
+
+/** Teacher catalog as the few goal fields the tree and map read. Visibility stays per entry (owner Q4), so no share is passed down. */
+export function catalogGoals(rows: TeacherCatalogEntry[]): PersonalGoal[] {
+    return rows.map(row => ({ id: row.id, title: row.data.title, status: row.status, priority: 2, review_date: null, shared_group_id: null, parent_ids: row.parent_ids }) as PersonalGoal);
 }

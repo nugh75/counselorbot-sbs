@@ -11,10 +11,11 @@ Completo: backend, frontend e docs committati; PR verso main.
 - Docs: funzionalità, CONTEXT.md, `docs/operations/docenza-group-context.md`.
 
 ## Verifiche
-- pytest `test_goal_catalog_targets.py` (nuovo, 3) + `test_docenza_goal_targets.py`, `test_goals.py`, `test_assignments.py`: tutti verdi (Postgres effimero, rimosso).
+- pytest `test_goal_catalog_targets.py` (nuovo, 3) + `test_docenza_goal_targets.py`, `test_goals.py`, `test_assignments.py`: 51 passed (Postgres effimero, rimosso), rilanciati dopo il merge di main.
 - i18n:check, eslint file toccati, tsc: ok. make guidance-check: ok.
 
 ## Decisioni
+- Merge di origin/main (#912 albero e mappa): conflitti in `GoalCatalogEditor.tsx`, `goals.ts`, funzionalità risolti tenendo entrambe le modifiche; nota «Scritto per» nella vista Elenco.
 - Destinatari letti dallo snapshot lato server, mai dal client.
 - Nota solo per l'autore (o admin): altri docenti della classe vedono la proposta pubblicata senza destinatari.
 - Prop `initialData` di `GoalCatalogEditor` ora inutilizzata: lasciata per non toccare il file in parallelo con #907.

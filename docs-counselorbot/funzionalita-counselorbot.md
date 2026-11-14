@@ -390,6 +390,17 @@ sotto un genitore in bozza. `GET /teacher/goal-catalog` restituisce `parent_ids`
 proposte che il docente vede; il catalogo per gli studenti non cambia. Albero e mappa nella
 pagina arrivano con #907.
 
+**Albero e mappa del Catalogo obiettivi (#907).** `/docente/catalogo-obiettivi` offre tre
+viste: Elenco (come prima), Albero e, su computer, Mappa; la scelta resta nel browser
+(`cb_catalog_view`). Albero e mappa riusano `GoalTree` e `GoalMap` degli obiettivi personali
+tramite l'adattatore `catalogGoals` (`frontend/src/lib/goal-network.ts`), senza conteggio
+dei sottobiettivi raggiunti e senza visibilità ereditata. Toccare una proposta apre il modulo:
+in modifica se è propria (o per l'amministratore), altrimenti come duplicato. Il «+» di una
+propria proposta crea una sottoproposta collegata. Nel modulo di modifica la sezione «Serve a»
+elenca i genitori con il pulsante per staccarli e un menu per aggiungerne uno tra le proposte
+dello stesso autore (escluse sé stessa, le discendenti e i genitori già presenti); se il server
+rifiuta un ciclo, compare il messaggio dedicato.
+
 **Destinatari nel Catalogo obiettivi (#904).** `POST /teacher/goal-catalog` accetta il
 `session_id` di una chat `OBIETTIVO_DOCENZA` del docente (404 se non è sua) e copia nella tabella
 `goal_catalog_targets` (creata all'avvio) le classi, gli studenti e gli studenti di prova dello
