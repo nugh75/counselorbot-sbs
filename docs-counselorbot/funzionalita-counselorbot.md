@@ -1115,6 +1115,13 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
   classi entrano solo con il taccuino docente (anche come Predefinito) e restano fuori con Studente,
   Prova o Nessuno, o se l'amministrazione spegne la componente profilo; descrizione e metodologie
   sono contesto, non istruzioni né prove di difficoltà, e le note sui singoli partecipanti non entrano.
+  Prima della chat il docente sceglie **per chi è l'obiettivo**: una o più classi, studenti delle sue
+  classi (scelti classe per classe) e suoi studenti di prova, anche insieme; serve almeno un destinatario.
+  Questa chat non offre più la scelta «studente di prova / i miei dati» né «Prova» tra i taccuini delle
+  Opzioni: parla sempre dal taccuino del docente. Studenti e studenti di prova restano legati alla
+  conversazione (snapshot della chat sospesa) e a ogni salvataggio, cioè dopo ogni turno, il server tiene
+  solo gli studenti ancora iscritti a una classe attiva propria o condivisa e gli studenti di prova attivi
+  del docente. Nel prompt entrano solo le classi, come prima; il salvataggio nel catalogo arriva dopo.
 - **Strumenti e percorsi personalizzati**: gli strumenti e le chat guidate create
   e attivate dall'amministrazione compaiono dinamicamente nel catalogo attività
   dello studente (nella sezione dei percorsi guidati o delle analisi questionari a
@@ -2601,7 +2608,7 @@ Portfolio; evita dati identificativi dei partecipanti nelle note sul tuo ruolo.
 
 Il default è il taccuino **docente** per OBIETTIVO_DOCENZA e quello **studente** per
 gli altri strumenti. Nelle Opzioni della chat il docente può scegliere Predefinito,
-Studente, Docente o Nessuno. La scelta riguarda il contesto del taccuino, non
+Studente, Docente o Nessuno (Prova solo fuori da OBIETTIVO_DOCENZA). La scelta riguarda il contesto del taccuino, non
 ogni dato dell’intera conversazione: la **Lettura** è regolata separatamente
 (disabilitata per DOCENZA); **Nessuno non significa anonimato**.
 Puoi procedere con il taccuino vuoto: nelle conversazioni didattiche possono
