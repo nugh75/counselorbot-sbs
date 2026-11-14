@@ -66,6 +66,7 @@ const text = {
     audience: ['Destinatari', 'Audience', 'Destinatarios', 'Public', 'Zielgruppe', 'Målgrupp'],
     language: ['Lingua del contenuto', 'Content language', 'Idioma del contenido', 'Langue du contenu', 'Inhaltssprache', 'Innehållets språk'],
     scope: ['Destinazione', 'Visibility', 'Destino', 'Destination', 'Sichtbarkeit', 'Synlighet'],
+    writtenFor: ['Scritto per', 'Written for', 'Escrito para', 'Écrit pour', 'Geschrieben für', 'Skrivet för'],
     common: ['Catalogo comune', 'Common catalog', 'Catálogo común', 'Catalogue commun', 'Gemeinsamer Katalog', 'Gemensam katalog'],
     draft: ['Bozza', 'Draft', 'Borrador', 'Brouillon', 'Entwurf', 'Utkast'],
     pending: ['In revisione', 'Under review', 'En revisión', 'En révision', 'In Prüfung', 'Under granskning'],
