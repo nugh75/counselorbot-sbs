@@ -21,9 +21,9 @@ export function EntrySection({ id, title, subtitle, testId, children }: {
 
 // `illustration` replaces the image (e.g. a sized ToolIllustration); `status` is a small line
 // under the description; `reload` uses a plain anchor for pages that read state on mount.
-export function EntryLink({ idPrefix, id, href, image, illustration, name, description, badge, status, reload }: {
+export function EntryLink({ idPrefix, id, href, image, illustration, name, description, badge, status, reload, testId, onOpen }: {
     idPrefix: string; id: string; href: string; image?: string; illustration?: ReactNode; name: string; description: string;
-    badge?: ReactNode; status?: ReactNode; reload?: boolean;
+    badge?: ReactNode; status?: ReactNode; reload?: boolean; testId?: string; onOpen?: () => void;
 }) {
     const className = 'group flex min-h-24 items-center gap-4 rounded-card px-2 py-4 transition-colors hover:bg-surface-sunken sm:gap-4';
     const content = <>
@@ -41,7 +41,8 @@ export function EntryLink({ idPrefix, id, href, image, illustration, name, descr
         <ArrowRight className="h-4 w-4 shrink-0 text-ink-muted" aria-hidden />
     </>;
     const labels = { 'aria-labelledby': `${idPrefix}-link-${id}`, 'aria-describedby': `${idPrefix}-description-${id}` };
+    if (onOpen) return <button type="button" onClick={onOpen} {...labels} className={`${className} w-full text-left`} data-testid={testId}>{content}</button>;
     return reload
-        ? <a href={href} {...labels} className={className}>{content}</a>
-        : <Link href={href} {...labels} className={className}>{content}</Link>;
+        ? <a href={href} {...labels} className={className} data-testid={testId}>{content}</a>
+        : <Link href={href} {...labels} className={className} data-testid={testId}>{content}</Link>;
 }
