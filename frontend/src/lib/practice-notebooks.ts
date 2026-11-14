@@ -38,6 +38,18 @@ export function practiceNotebookAnchor(id: number): string {
     return `practice-notebook-${id}`;
 }
 
+// Pagina di uno studente di prova (#892).
+export function practiceNotebookHref(id: number): string {
+    return `/docente/taccuini-prova/${id}`;
+}
+
+// Vecchi link all'ancora dell'elenco (#practice-notebook-<id>): l'id della pagina da aprire.
+export function practiceNotebookIdFromHash(hash: string): number | null {
+    const match = /^#?practice-notebook-(\d+)$/.exec(hash);
+    const id = match ? Number(match[1]) : NaN;
+    return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
 export function parsePracticeNotebooks(payload: unknown): PracticeNotebook[] {
     if (!Array.isArray(payload)) return [];
     return payload.filter((row): row is PracticeNotebook =>
@@ -84,6 +96,30 @@ export function practiceResultChatHref(result: PracticeResult): string {
 // direttamente sul taccuino di prova (#891).
 export function practiceNotebookChatHref(notebookId: number, toolId: string): string {
     return `/?start=${encodeURIComponent(toolId)}&practice_notebook_id=${notebookId}`;
+}
+
+// Voce «Avvia una chat» della pagina dello studente di prova: gli strumenti
+// senza punteggi partono subito; un questionario con un solo profilo parte da
+// quello, con più profili si sceglie nell'elenco, senza profili se ne crea uno.
+export type PracticeToolEntry =
+    | { kind: 'unscored'; href: string }
+    | { kind: 'profile'; href: string }
+    | { kind: 'choose'; href: string; count: number }
+    | { kind: 'new'; href: string };
+
+export const PRACTICE_PROFILES_ANCHOR = 'practice-profiles';
+
+export function practiceToolEntry(
+    notebookId: number,
+    tool: { id: string; agentOnly?: boolean },
+    results: readonly PracticeResult[],
+): PracticeToolEntry | null {
+    if (tool.agentOnly) return { kind: 'unscored', href: practiceNotebookChatHref(notebookId, tool.id) };
+    if (!(PRACTICE_RESULT_TYPES as readonly string[]).includes(tool.id)) return null;
+    const own = results.filter((row) => row.questionnaire_type === tool.id);
+    if (own.length === 1) return { kind: 'profile', href: practiceResultChatHref(own[0]) };
+    if (own.length > 1) return { kind: 'choose', href: `#${PRACTICE_PROFILES_ANCHOR}`, count: own.length };
+    return { kind: 'new', href: `${practiceNotebookHref(notebookId)}?profilo=${encodeURIComponent(tool.id)}#${PRACTICE_PROFILES_ANCHOR}` };
 }
 
 // Valida i parametri dell'ingresso in prova: `resultId` è null solo per gli

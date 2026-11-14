@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { PRACTICE_NOTEBOOK_FIELDS, generatePracticeScores, parsePracticeNotebooks, parsePracticeResults, practiceNotebookBody, practiceResultChatHref, practiceNotebookChatHref, parsePracticeEntry } from './practice-notebooks.ts';
+import { PRACTICE_NOTEBOOK_FIELDS, generatePracticeScores, parsePracticeNotebooks, parsePracticeResults, practiceNotebookBody, practiceResultChatHref, practiceNotebookChatHref, parsePracticeEntry, practiceNotebookHref, practiceNotebookIdFromHash, practiceToolEntry } from './practice-notebooks.ts';
 
 test('i campi coincidono con quelli che il server porta nel prompt', () => {
     assert.deepEqual(
@@ -78,4 +78,21 @@ test('ingresso in prova: parametri non validi vengono rifiutati', () => {
     assert.equal(parsePracticeEntry('abc', null, true), null);
     assert.equal(parsePracticeEntry('7', 'x', true), null);
     assert.equal(parsePracticeEntry('7', '0', false), null);
+});
+
+test('pagina dello studente di prova e vecchie ancore dell\'elenco', () => {
+    assert.equal(practiceNotebookHref(4), '/docente/taccuini-prova/4');
+    assert.equal(practiceNotebookIdFromHash('#practice-notebook-4'), 4);
+    assert.equal(practiceNotebookIdFromHash('#practice-notebook-0'), null);
+    assert.equal(practiceNotebookIdFromHash('#altro'), null);
+    assert.equal(practiceNotebookIdFromHash(''), null);
+});
+
+test('avvia una chat: senza punteggi subito, questionari dal profilo o da uno nuovo', () => {
+    const profile = (id: number, type: string) => ({ id, notebook_id: 4, questionnaire_type: type, scores: { C1: 5 }, session_id: 's', source: 'manual' as const });
+    assert.deepEqual(practiceToolEntry(4, { id: 'SAVICKAS', agentOnly: true }, []), { kind: 'unscored', href: '/?start=SAVICKAS&practice_notebook_id=4' });
+    assert.deepEqual(practiceToolEntry(4, { id: 'QSA' }, [profile(9, 'QSA'), profile(10, 'ZTPI')]), { kind: 'profile', href: '/?start=QSA&practice_notebook_id=4&practice_result_id=9' });
+    assert.deepEqual(practiceToolEntry(4, { id: 'QSA' }, [profile(9, 'QSA'), profile(11, 'QSA')]), { kind: 'choose', href: '#practice-profiles', count: 2 });
+    assert.deepEqual(practiceToolEntry(4, { id: 'QAP' }, []), { kind: 'new', href: '/docente/taccuini-prova/4?profilo=QAP#practice-profiles' });
+    assert.equal(practiceToolEntry(4, { id: 'COMPETENZE' }, []), null);
 });
