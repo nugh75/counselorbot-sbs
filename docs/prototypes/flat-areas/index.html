@@ -92,6 +92,13 @@ section.grp>.sub{margin:4px 0 0;font-size:13px;color:var(--ink-muted)}
 .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
 .callout{border-left:3px solid var(--brand-line);padding:4px 0 4px 12px;color:var(--ink-muted);font-size:14px;margin:0 0 24px}
 .hint{font-size:12px;color:var(--ink-muted);margin-top:6px}
+.row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 4px;border-bottom:1px solid var(--line)}
+.row .main{flex:1;min-width:220px}.row .main b{color:var(--ink);font-weight:600}.row .main small{display:block;color:var(--ink-muted);font-size:13px}
+.row .mono{font-family:ui-monospace,monospace;font-size:12px;color:var(--ink-muted)}
+.links{display:flex;gap:16px;font-size:14px}.links a{color:var(--link)}.links a.danger{color:var(--ink-muted)}
+dl.kv{display:grid;grid-template-columns:minmax(120px,200px) 1fr;gap:8px 16px;margin:12px 0 0;font-size:14px}dl.kv dt{color:var(--ink-muted)}dl.kv dd{margin:0;color:var(--ink-body)}
+.checks{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:12px;font-size:14px}
+.headline{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .legend{max-width:1080px;margin:0 auto;padding:0 16px 40px;font-size:13px;color:var(--ink-muted)}
 .legend ul{margin:6px 0 0 18px;padding:0}
 </style>
@@ -190,7 +197,7 @@ function docente(){
      P('incontri','Incontri','Pianifica e ritrova gli incontri con la classe.','incontri'),
      P('compilazioni','Compilazioni','Risultati dei questionari compilati dagli studenti.','compilazioni')])}
   ${group('Palestra',[
-     P('taccuini-prova','Studenti di prova','Crea studenti immaginari per provare gli strumenti.','chat-guidata',{badge:' <span class="badge b-test">prova</span>'}),
+     {...P('taccuini-prova','Studenti di prova','Crea studenti immaginari per provare gli strumenti.','chat-guidata',{badge:' <span class="badge b-test">prova</span>'}),href:'#palestra'},
      P('feedback','Proposte e feedback','Rivedi le conversazioni di prova e le proposte.','feedback-docente')])}
   ${group('Prova gli strumenti',Object.keys(TOOLS).filter(k=>k!=='OBIETTIVO_DOCENZA').map(k=>toolEntry(k,'docente')),'Avvia uno strumento come studente di prova o con i tuoi dati.')}
   ${group('Profilo',[P('taccuino','Taccuino del docente','Materie, esperienza e metodologie che usi in classe.','su-di-me',{badge:' <span class="badge b-teacher">docente</span>'})])}
@@ -221,9 +228,48 @@ function pagina(slug){
   return `<a class="back" href="javascript:history.back()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Indietro</a>
   <div class="pagehead"><div><h1>${slug}</h1><p>Pagina interna: stessa intestazione; il contenuto si allinea nel passo 4 del piano (ricerca sulle 44 sottopagine).</p></div></div>`;
 }
+
+const NB=[[1, 'Giulia, 3B', 'Liceo scientifico, ansia da verifica, ama la musica', '2 profili salvati · 1 chat aperta'], [2, 'Marco, tirocinante', 'Istituto tecnico, in alternanza in un’officina', '1 profilo salvato'], [3, 'Sara, primo anno', 'Università, indecisa sul corso', 'Nessun profilo']];
+const avatar=(n)=>`<svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="40" fill="var(--test-soft)" stroke="var(--test-line)" stroke-width="2"/><circle cx="48" cy="40" r="13" fill="var(--i-paper)" stroke="var(--i-out)" stroke-width="2.5"/><path d="M24 74c4-13 14-19 24-19s20 6 24 19" fill="var(--i-teal)" stroke="var(--i-out)" stroke-width="2.5"/></svg>`;
+const B=' <span class="badge b-test">prova</span>';
+function palestra(){
+  return `<a class="back" href="#docente"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Area docente</a>
+  <div class="pagehead"><div><h1>Studenti di prova</h1><p>Studenti immaginari con cui provare gli strumenti. Non entrano nei conteggi della classe.</p></div></div>
+  <div class="actions" style="margin-top:0"><a class="btn primary" href="#">Nuovo studente di prova</a></div>
+  ${group('I tuoi studenti di prova',NB.map(n=>({href:'#prova/'+n[0],ill:avatar(),title:n[1],desc:n[2],meta:n[3],badge:B})))}
+  ${group('Archiviati',[{href:'#prova/9',ill:avatar(),title:'Luca, classe 2A',desc:'Archiviato il 2 nov',badge:B}])}`;
+}
+function prova(id){
+  const n=NB.find(x=>x[0]==id)||NB[0];
+  const SC={QSA:'2 profili salvati: scegli quale usare',ZTPI:'1 profilo salvato'};
+  const startEntries=Object.keys(TOOLS).filter(k=>k!=='OBIETTIVO_DOCENZA').map(k=>{const t=TOOLS[k];const q=t[3]==='q';
+    return {href:'#',ill:ILL[k],title:t[0],desc:q?(SC[k]||'Nessun profilo: inserisci i punteggi e avvia'):'Avvia subito la chat come '+n[1].split(',')[0],meta:''};});
+  return `<a class="back" href="#palestra"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Studenti di prova</a>
+  <div class="pagehead"><span class="ill" style="width:72px;height:72px;display:block">${avatar()}</span><div><div class="headline"><h1>${n[1]}</h1>${B}</div><p>${n[2]}</p></div></div>
+  ${group('Avvia una chat',startEntries,'Tutti gli strumenti, anche quelli senza punteggi. La chat usa questo studente, non i tuoi dati.')}
+  <section class="grp"><h2>Chat aperte</h2>
+    <div class="row"><div class="main"><b>Intervista Savickas</b><small>Passo 3 di 7 · ultima risposta 12 nov</small></div><div class="links"><a href="#">Riprendi</a><a href="#">Trascrizione</a></div></div>
+  </section>
+  <section class="grp"><h2>Profili con punteggi</h2><p class="sub">Punteggi inventati per i questionari: ogni profilo avvia una chat con quei valori.</p>
+    <div class="row"><div class="main"><b>QSA</b><small>3 nov · inseriti a mano</small><span class="mono">C1 7 · C2 4 · C3 6 · C4 8 · A1 3 · A2 5</span></div><div class="links"><a href="#">Avvia chat</a><a href="#">Modifica</a><a class="danger" href="#">Elimina</a></div></div>
+    <div class="row"><div class="main"><b>QSA</b><small>8 nov · generati</small><span class="mono">C1 5 · C2 6 · C3 3 · C4 7 · A1 6 · A2 4</span></div><div class="links"><a href="#">Avvia chat</a><a href="#">Modifica</a><a class="danger" href="#">Elimina</a></div></div>
+    <div class="row"><div class="main"><b>ZTPI</b><small>10 nov · inseriti a mano</small><span class="mono">T1 3.2 · T2 2.8 · T3 3.9 · T4 2.1 · T5 4.0</span></div><div class="links"><a href="#">Avvia chat</a><a href="#">Modifica</a><a class="danger" href="#">Elimina</a></div></div>
+    <div class="links" style="margin-top:12px"><a href="#">+ Nuovo profilo con punteggi</a></div>
+  </section>
+  <section class="grp"><h2>Chi è</h2>
+    <dl class="kv"><dt>Scuola e classe</dt><dd>Liceo scientifico, 3B</dd><dt>Interessi</dt><dd>Musica, fotografia</dd><dt>Come studia</dt><dd>Ripassa all’ultimo, si blocca nelle verifiche</dd><dt>Obiettivo</dt><dd>Arrivare alla maturità con meno ansia</dd></dl>
+    <div class="links" style="margin-top:12px"><a href="#">Modifica</a></div>
+  </section>
+  <section class="grp"><h2>Classi collegate</h2>
+    <div class="checks"><label><input type="checkbox" checked> 3B Liceo Scientifico</label><label><input type="checkbox"> 4A Liceo Scientifico</label></div>
+  </section>
+  <div class="links"><a class="danger" href="#">Archivia questo studente di prova</a></div>`;
+}
 const LEG={
  studente:`<b>Cosa guardare</b><ul><li>Un solo stile per tutto: titolo di sezione con linea, voci su due colonne, illustrazione, titolo, descrizione, freccia.</li><li>Questionari e percorsi guidati sono voci come le altre (niente schede, niente filtri a pillola, Q3). Lo stato «Compilato il…» è una riga piccola.</li><li>«Scegli la tua classe» in cima; «Senza classe» al posto di «Tutti gli strumenti».</li></ul>`,
  docente:`<b>Cosa guardare</b><ul><li>Progettazione, classi e palestra non sono più riquadri colorati: sono voci dell’elenco.</li><li>«Le mie classi» è una sola voce (Q4).</li><li>«Prova gli strumenti» usa lo stesso elenco del catalogo studente. I colori di ruolo restano solo sui badge.</li></ul>`,
+ palestra:`<b>Palestra, elenco</b><ul><li>Ogni studente di prova è una voce dell’elenco, come le altre pagine: niente riquadri celesti grandi.</li><li>Il celeste resta solo sul badge «prova» e sull’avatar.</li></ul>`,
+ prova:`<b>Scheda dello studente di prova</b><ul><li>«Avvia una chat» elenca TUTTI gli strumenti: anche quelli senza punteggi partono subito con questo studente (oggi non è possibile dalla palestra).</li><li>Sezioni con titolo e linea, righe semplici, azioni come link: niente box dentro box.</li></ul>`,
  strumento:`<b>Pagina dello strumento</b><ul><li>Si apre dalla voce dell’elenco. Qui stanno i pulsanti, incluso «Compila sul sito» (Q2).</li><li>Dall’Area docente compaiono «studente di prova» e «i miei dati».</li></ul>`,
 };
 function render(){
@@ -232,9 +278,11 @@ function render(){
   if(key==='docente') app.innerHTML=docente();
   else if(key==='strumento') app.innerHTML=strumento(h[1],h[2]||'studente');
   else if(key==='pagina') app.innerHTML=pagina(h[1]);
+  else if(key==='palestra') app.innerHTML=palestra();
+  else if(key==='prova') app.innerHTML=prova(h[1]);
   else {key='studente'; app.innerHTML=studente();}
   document.getElementById('legend').innerHTML=LEG[key]||'';
-  const area=key==='strumento'?(h[2]||'studente'):key;
+  const area=key==='strumento'?(h[2]||'studente'):(key==='palestra'||key==='prova')?'docente':key;
   document.querySelectorAll('[data-nav]').forEach(a=>a.toggleAttribute('aria-current',a.dataset.nav===area));
   document.querySelectorAll('[data-nav]').forEach(a=>a.dataset.nav===area?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
   window.scrollTo(0,0);
