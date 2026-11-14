@@ -45,6 +45,7 @@ import {
     type TooltipContentProps,
 } from 'recharts';
 import { Card } from '@/components/ui/Card';
+import { EntryLink } from '@/components/ui/EntryList';
 
 interface QuestionnaireResult {
     id: number;
@@ -457,15 +458,8 @@ export default function ProfilePage() {
             <section className="space-y-4" aria-label={t('profile.about.title')}>
                 <LearnerProfileCard variant="edit" />
                 <TeacherNotesCard lang={lang} />
-                <Link
-                    href="/profilo/cambiamenti"
-                    className="block rounded-card border border-line bg-surface p-6 shadow-card hover:bg-surface-sunken transition-colors"
-                >
-                    <div>
-                        <h3 className="font-semibold text-ink">{t('profileChanges.title')}</h3>
-                        <p className="text-sm text-ink-muted">{t('profileChanges.cardBody')}</p>
-                    </div>
-                </Link>
+                <EntryLink idPrefix="profile" id="changes" href="/profilo/cambiamenti"
+                    name={t('profileChanges.title')} description={t('profileChanges.cardBody')} />
             </section>
             )}
 
