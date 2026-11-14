@@ -79,7 +79,8 @@ import { chatPreferenceLabel, essentialSteps, essentialReplyPhase, essentialAdva
 import { isGoalInstrument, type GoalDraft } from '@/lib/goal-draft';
 import { GoalDraftCard } from '@/components/qsa/GoalDraftCard';
 import { DocenzaClassBar, readStoredDocenzaGroupIds } from '@/components/qsa/DocenzaClassBar';
-import { initialDocenzaGroupIds } from '@/lib/docenza-groups';
+import { initialDocenzaGroupIds, initialDocenzaTargets } from '@/lib/docenza-groups';
+import { readStoredDocenzaTargets } from '@/components/qsa/DocenzaTargetPicker';
 
 // --- Types ---
 
@@ -142,6 +143,8 @@ type QuickReply = {
 
 const ZTPI_REQUIRED_STEP_IDS = ['ztpi-t1', 'ztpi-t2', 'ztpi-t3', 'ztpi-t4', 'ztpi-t5', 'ztpi-btp'];
 const SAVICKAS_REQUIRED_STEP_IDS = ['savickas-patto', 'savickas-q1', 'savickas-q2', 'savickas-q3', 'savickas-q4', 'savickas-q5', 'savickas-final'];
+// Chat docenza: nessuno studente di prova come taccuino (#903), i destinatari si scelgono prima.
+const DOCENZA_NOTEBOOK_OPTIONS: NotebookContextChoice[] = ['default', 'student', 'teacher', 'none'];
 const SUPPORTED_LOCALES = new Set<Lang>(['it', 'en', 'es', 'fr', 'de', 'sv']);
 
 function normalizeLocale(value?: string): Lang {
@@ -369,10 +372,12 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // preferenza del browser. Il server le riverifica sempre.
     const isDocenza = questionnaireType === 'OBIETTIVO_DOCENZA';
     const [docenzaGroupIds, setDocenzaGroupIds] = useState<number[]>(() => initialDocenzaGroupIds(frozenSnapshot, sessionId, readStoredDocenzaGroupIds));
+    // Studenti e studenti di prova scelti prima della chat (#903): fissi per la sessione, solo nello snapshot.
+    const [docenzaTargets, setDocenzaTargets] = useState(() => initialDocenzaTargets(frozenSnapshot, sessionId, readStoredDocenzaTargets));
     // Taccuino nel contesto: il docente lo sceglie dal popover Opzioni e la
     // scelta vive nel browser (stessa filosofia di docenzaGroupIds); il
     // server riverifica il ruolo a ogni turno. 'default' non viaggia mai.
-    const [notebookContext, setNotebookContext] = useState<NotebookContextChoice>(() => studentFlow ? 'student' : frozenSnapshot?.notebook_context ?? readStoredNotebookContext());
+    const [notebookContext, setNotebookContext] = useState<NotebookContextChoice>(() => studentFlow ? 'student' : frozenSnapshot?.notebook_context ?? (isDocenza && readStoredNotebookContext() === 'practice' ? 'default' : readStoredNotebookContext()));
     // Docenti, ricercatori e admin (plan managers): come il guard del taccuino docente.
     const [isStaff, setIsStaff] = useState(false);
     const isTeacherUser = isStaff && !studentFlow;
@@ -782,6 +787,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         setPracticeNotebookId(frozenSnapshot.practice_notebook_id);
                     }
                     setDocenzaGroupIds(frozenSnapshot.group_ids ?? []);
+                    setDocenzaTargets({ students: frozenSnapshot.target_students ?? [], practiceIds: frozenSnapshot.target_practice_notebook_ids ?? [] });
                     // Le fasi già aperte restano tali: altrimenti l'effetto di cambio
                     // fase rigenera l'intro della fase ripresa e lo studente si
                     // rilegge la presentazione sotto alla conversazione di prima.
@@ -1549,6 +1555,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         notebook_context: notebookContext !== 'default' ? notebookContext : undefined,
         practice_notebook_id: notebookContext === 'practice' && practiceNotebookId ? practiceNotebookId : undefined,
         group_ids: isDocenza ? docenzaGroupIds : undefined,
+        target_students: isDocenza ? docenzaTargets.students : undefined,
+        target_practice_notebook_ids: isDocenza ? docenzaTargets.practiceIds : undefined,
         label: `${questionnaireType} — ${getPhaseLabel(currentPhase)}`,
     });
 
@@ -1811,7 +1819,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     reasoning={reasoningCapable ? { value: reasoningEffort, onChange: setReasoningEffort, disabled: isLoading || !classAllowsReasoning, mandatory: reasoningMandatory } : undefined}>
                     {isTeacherUser && <ChatMenuSetting icon={<NotebookPen className="h-4 w-4 shrink-0" aria-hidden="true" />}
                         label={t('notebookContext.label')} value={t(`notebookContext.${notebookContext}`)} title={t('notebookContext.label')}>
-                        <NotebookContextSelector list value={notebookContext} onChange={changeNotebookContext} disabled={isLoading} />
+                        <NotebookContextSelector list value={notebookContext} onChange={changeNotebookContext} disabled={isLoading} options={isDocenza ? DOCENZA_NOTEBOOK_OPTIONS : undefined} />
                         {notebookContext === 'practice' && <PracticeNotebookPicker value={practiceNotebookId} onChange={changePracticeNotebookId} disabled={isLoading} />}
                     </ChatMenuSetting>}
                 </ChatResponseSettings>}

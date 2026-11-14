@@ -265,7 +265,7 @@ test('nella Bussola uno studente non vede la scelta e non la invia', async () =>
     await page.close();
 });
 
-// Chat guidata (percorso docenza ripreso): stessa scelta nel popover Opzioni.
+// Chat guidata ripresa: stessa scelta nel popover Opzioni (la docenza non la offre, #903).
 const stream = data => `data: ${JSON.stringify(data)}\n\n`;
 async function guidedChat(page) {
     page.setDefaultTimeout(20000);
@@ -275,7 +275,7 @@ async function guidedChat(page) {
         localStorage.setItem('cb_lang', 'it');
         localStorage.setItem('cb_theme', 'light');
         localStorage.setItem('counselorbot_selected_counselor', '1');
-        localStorage.setItem('counselorbot_resume', JSON.stringify({ instrument: 'OBIETTIVO_DOCENZA', experience: 'standard', sessionId: 'practice-chat', counselorId: 1 }));
+        localStorage.setItem('counselorbot_resume', JSON.stringify({ instrument: 'OBIETTIVO_STUDIO', experience: 'standard', sessionId: 'practice-chat', counselorId: 1 }));
     });
     await page.route('**/*', async route => {
         const request = route.request(); const url = new URL(request.url());
@@ -557,7 +557,7 @@ async function openUnscoredChat(page, message) {
 test('strumento senza punteggi: il docente crea uno studente di prova e la chat gira sul suo taccuino', async () => {
     const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
     const { errors, requests } = await prepare(page, { initStorage: { counselorbot_selected_counselor: '1' } });
-    await page.goto(`${origin}/?start=OBIETTIVO_DOCENZA`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${origin}/?start=SAVICKAS`, { waitUntil: 'domcontentloaded' });
     const student = page.locator('[data-practice-student]');
     await student.getByRole('combobox').selectOption('new');
     await student.getByRole('textbox', { name: 'Nome dello studente di prova' }).fill('Marta, quarta');
@@ -572,7 +572,7 @@ test('strumento senza punteggi: il docente crea uno studente di prova e la chat 
     await page.getByRole('button', { name: 'Continua', exact: true }).click();
     await openUnscoredChat(page, 'Provo come Marta');
     const turn = requests.filter(r => r.path === '/api/chat/stream').at(-1).body;
-    assert.equal(turn.questionnaire_type, 'OBIETTIVO_DOCENZA');
+    assert.equal(turn.questionnaire_type, 'SAVICKAS');
     assert.equal(turn.notebook_context, 'practice');
     assert.equal(turn.practice_notebook_id, 2);
     // Nulla sull'account del docente.

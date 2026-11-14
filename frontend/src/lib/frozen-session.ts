@@ -47,6 +47,9 @@ export interface FrozenSessionDetail extends FrozenSessionSummary {
     notebook_context?: 'student' | 'teacher' | 'practice' | 'none' | null;
     // Chat docenza: classi scelte per questa sessione (vuoto negli snapshot precedenti).
     group_ids?: number[];
+    // Chat docenza: studenti e studenti di prova scelti prima della chat (#903).
+    target_students?: { group_id: number; username: string }[];
+    target_practice_notebook_ids?: number[];
     reasoning_effort?: 'off' | 'standard' | 'deep' | null;
 }
 
@@ -69,6 +72,8 @@ export interface FrozenSessionSnapshot {
     notebook_context?: 'student' | 'teacher' | 'practice' | 'none';
     practice_notebook_id?: number;
     group_ids?: number[];
+    target_students?: { group_id: number; username: string }[];
+    target_practice_notebook_ids?: number[];
     reasoning_effort?: 'off' | 'standard' | 'deep';
     label: string;
 }
