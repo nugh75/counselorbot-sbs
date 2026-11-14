@@ -1179,6 +1179,10 @@ QSAr o agli altri questionari. I due percorsi sugli obiettivi hanno la propria v
 essenziale, in tre fasi brevi che si chiudono quando il risultato è pronto o quando
 la persona sceglie di proseguire.
 
+Se il percorso completo QSA non riesce a caricare gli step, mostra un errore con
+**Riprova**: ricarica il percorso della stessa sessione conservando fase e messaggi,
+senza saltare alle domande finali o sostituire i prompt configurati.
+
 Per chi ha ruolo docente, ricercatore o amministratore, la scelta compare in due
 testi: nella scheda **Impostazioni della conversazione** prima di avviare e nel
 menu Opzioni **dentro** la chat guidata; offre **Taccuino nel contesto**
