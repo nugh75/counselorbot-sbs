@@ -67,46 +67,20 @@ La Mappa disponibile si apre da Sezione oppure direttamente con
 `/admin?section=prompt-map&instrument=QSA`. La vista classica per strumento e
 Generale restano raggiungibili dallo stesso selettore.
 
-## Ripetere le prove senza produzione
+## Ripetere la prova senza produzione
 
-Installa le dipendenze frontend e avvia lo script isolato:
-
-```bash
-./scripts/dev-qsa-prompting-frontend.sh
-```
-
-Lo script esclude i file ambiente, usa un backend irraggiungibile e ascolta solo
-su `127.0.0.1:3158`. Le suite intercettano le API con dati sintetici; non serve DB.
-In un altro terminale:
+Avvia il frontend in dev con un backend irraggiungibile (nessun file ambiente di
+produzione, porta libera dedicata) e lancia la suite, che intercetta ogni API con
+dati sintetici e blocca le origini esterne:
 
 ```bash
 cd frontend
-QSA_PROMPTING_BASE_URL=http://127.0.0.1:3158 node --test tests/qsa-prompting-regression.test.mjs
-PROMPT_MAP_BASE_URL=http://127.0.0.1:3158 node --test tests/admin-prompt-map.test.mjs
-QPCC_BASE_URL=http://127.0.0.1:3158 node --test tests/qpcc-alignment.test.mjs
+QSA_PROMPTING_BASE_URL=http://127.0.0.1:<porta> node --test tests/qsa-prompting-regression.test.mjs
 ```
 
-La suite QSA verifica dieci step su mobile/desktop, avanzamento dalla fase
-ripresa, riapertura del pannello salvato chiuso e retry dopo HTTP503, errore di
-rete e JSON invalido. Le richieste verso origini esterne sono bloccate.
-La suite Prompting verifica anche espansioni, editor, livelli ereditati, step e
-varianti; ogni sua scrittura è simulata nel browser.
-
-Il build Docker dedicato esclude `.env*` tramite `frontend/.dockerignore`:
-
-```bash
-docker build -t s9-qsa-prompting-frontend:local \
-  --build-arg BACKEND_ORIGIN=http://127.0.0.1:9 \
-  --build-arg NEXT_PUBLIC_API_URL=/api \
-  --build-arg NEXT_PUBLIC_APP_URL=http://127.0.0.1:3159 frontend
-docker run -d --name s9-qsa-prompting-fixed -p 127.0.0.1:3159:3000 \
-  -e HOSTNAME=0.0.0.0 -e BACKEND_ORIGIN=http://127.0.0.1:9 \
-  -e NEXT_TELEMETRY_DISABLED=1 s9-qsa-prompting-frontend:local
-```
-
-Per le suite sostituisci la porta con 3159. Verifica prima che sia libera.
-Stop: Ctrl+C per lo script; `docker stop s9-qsa-prompting-fixed` per il container.
-Nessun volume operativo è collegato. Il backend non cambia e non richiede rebuild.
+La suite verifica dieci step su mobile/desktop, avanzamento dalla fase ripresa,
+riapertura del pannello salvato chiuso e retry dopo HTTP 503, errore di rete e
+JSON invalido. Nessun DB né volume operativo coinvolto.
 
 ## Passi conservativi per l'operatore
 
@@ -120,18 +94,7 @@ Opzioni → Percorso su mobile. Non cancellare preferenze o sessioni come tentat
 alla cieca. Un successivo intervento operativo va riferito al Timoniere prima di
 qualsiasi scrittura. Nessun deploy, merge, sudo o operazione di recovery è incluso.
 
-## Stato della verifica e della PR
+## Stato
 
-Il fix è implementato, con review indipendente senza blocker (stesso modello
-scelto esplicitamente dall'utente). Verificati: 429 test unitari, TypeScript,
-lint mirato, i18n e guidance-check. Sul codice corretto è osservato il successo
-anche del singolo retry HTTP503. I conteggi22/22 Prompting,8/8 QPCC e3/3 QSA
-sopra si riferiscono all'artefatto precedente, non al nuovo build.
-
-La suite finale6/6 e il risultato del build Docker dedicato restano da attestare:
-al cambio del profilo di esecuzione le sessioni tool sono state perse. La nuova
-sandbox nega il socket Docker, l'avvio di Chromium, la scrittura dell'indice Git
-del worktree e la rete GitHub. Nessun commit, push o PR è stato creato; il task
-Diario non è chiuso. Per riprendere servono le capacità di esecuzione già
-autorizzate, poi test finali, commit atomici e PR con check verdi. Nessun intervento
-in produzione o operazione di recovery è richiesto da questo handoff.
+Il fix del caricamento del percorso (Riprova al posto delle domande finali) è
+portato su main con la issue #889. La diversa UI Prompting resta non identificata.
