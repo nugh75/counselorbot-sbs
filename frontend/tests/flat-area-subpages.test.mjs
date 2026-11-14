@@ -46,6 +46,12 @@ test('goal catalog and teacher orientation pages are flat: no boxed rows or nest
     const catalog = read('components/goals/GoalCatalogEditor.tsx');
     assert.match(catalog, /<Card as="section" variant="flat"/);
     assert.doesNotMatch(catalog, /rounded-card/);
+    // Tree and map reuse the student components through the catalogGoals adapter; parents are edited in the form (#907).
+    assert.match(catalog, /<GoalTree goals=\{goals\}/);
+    assert.match(catalog, /<GoalMap goals=\{goals\}/);
+    assert.match(catalog, /catalogGoals\(rows\)/);
+    assert.match(catalog, /\/parents`, 'POST'/);
+    assert.match(catalog, /role="alert"[^>]*>\{l\('cycle'\)\}/);
     const orientation = read('app/docente/orientamento/page.tsx');
     assert.doesNotMatch(orientation, /rounded-card border border-line(?! bg-surface p-2)/);
     assert.doesNotMatch(orientation, /<form className="[^"]*rounded-card/);

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { buildForest, compareGoals, descendants, ancestors, wouldCycle, effectiveShares, progress, visibilityDelta, visibleGoals, orderBranches } from './goal-network.ts';
-import type { PersonalGoal } from './goals';
+import { buildForest, compareGoals, descendants, ancestors, wouldCycle, effectiveShares, progress, visibilityDelta, visibleGoals, orderBranches, catalogGoals } from './goal-network.ts';
+import type { PersonalGoal, TeacherCatalogEntry } from './goals';
 
 const g = (id: number, parent_ids: number[] = [], values: Partial<PersonalGoal> = {}) =>
     ({ id, title: `G${id}`, status: 'active', priority: 2, review_date: null, shared_group_id: null, parent_ids, links: [], ...values } as PersonalGoal);
@@ -51,4 +51,14 @@ test('ordering uses priority, review date, newest first', () => {
 test('shared branches are ordered depth-first once each', () => {
     const rows = [{ id: 10, parent_ids: [] }, { id: 12, parent_ids: [11] }, { id: 11, parent_ids: [10] }];
     assert.deepEqual(orderBranches(rows).map(r => [r.row.id, r.depth]), [[10, 0], [11, 1], [12, 2]]);
+});
+
+test('catalog entries become a goal network without inherited visibility', () => {
+    const entry = (id: number, parent_ids: number[], group_id: number | null = null) =>
+        ({ id, author_username: 't', group_id, status: 'published', version: 1, parent_ids, data: { title: `C${id}` } }) as TeacherCatalogEntry;
+    const goals = catalogGoals([entry(1, [], 7), entry(2, [1]), entry(3, [1, 2])]);
+    assert.deepEqual(goals.map(goal => [goal.id, goal.title, goal.status, goal.parent_ids]), [[1, 'C1', 'published', []], [2, 'C2', 'published', [1]], [3, 'C3', 'published', [1, 2]]]);
+    assert.equal(effectiveShares(goals, 3).size, 0);
+    assert.deepEqual(buildForest(goals, true).map(node => [node.goal.id, node.children.map(child => child.goal.id)]), [[1, [3, 2]]]);
+    assert.equal(wouldCycle(goals, 1, 3), true);
 });
