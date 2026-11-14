@@ -179,8 +179,8 @@ hex, niente `h-11` e niente classi di palette grezze) alle primitive `Button`,
 
 ### 2.8 Colori di ruolo (#834)
 
-Tre ruoli, tre tinte morbide, **solo su card e badge** (variante C di #831): pagina
-e header restano neutri. Token in `globals.css` (`:root` + blocco `.dark`), utility
+Tre ruoli, tre tinte morbide, **solo su badge, avatar e avvisi** (#861): pagina,
+header ed elenchi restano neutri, senza sfondi colorati (niente più card di ruolo). Token in `globals.css` (`:root` + blocco `.dark`), utility
 `bg-role-<ruolo>-soft`, `border-role-<ruolo>-line`, `text-role-<ruolo>-muted`.
 
 | Ruolo | Chiaro soft / line | Scuro soft / line | Note |
@@ -193,7 +193,7 @@ Il colore non è mai l'unico canale: `RoleBadge` (`components/ui/RoleBadge.tsx`)
 ha sempre icona (`GraduationCap`, `UserRound`, `FlaskConical`) + testo.
 
 **Testo secondario sulle tinte.** `ink-muted` (`slate-500`) sulle tinte chiare
-arriva a 4.3:1: sotto AA. Su una card di ruolo il muted è `slate-600` in chiaro e
+arriva a 4.3:1: sotto AA. Su una tinta di ruolo (badge, avviso) il muted è `slate-600` in chiaro e
 `slate-300` in scuro (`--role-<ruolo>-muted`); su un contenitore si imposta
 `[--ink-muted:var(--role-<ruolo>-muted)]` e i figli con `text-ink-muted` si
 adeguano.
@@ -238,9 +238,35 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
 
 - **Raggio**: `--radius: 0.75rem`. Card `rounded-card`, controlli
   `rounded-control` (§2.6); `glass-panel` cuoce ancora `rounded-xl`.
-- **Card**: la primitiva `Card` (token `surface`, `line`, `shadow-card`); l'utility
-  `glass-panel` (bianco, bordo `slate-200`, ombra minima) + `glass-panel-hover`
-  resta per i call-site non ancora migrati.
+- **Card**: la primitiva `Card` ha due varianti. `boxed` (default: token `surface`,
+  `line`, `shadow-card`) resta per messaggi di stato e form isolati; `flat`
+  (`variant="flat"`) non ha riquadro, sfondo né ombra: solo un filetto `border-t` in
+  alto e spazio verticale, ed è la forma delle sottopagine delle aree. Regola (#861,
+  #867): **niente riquadri dentro riquadri**; il raggruppamento lo fanno titoli con
+  filetto e spazio, non bordi annidati. L'utility `glass-panel` (bianco, bordo
+  `slate-200`, ombra minima) + `glass-panel-hover` resta per i call-site non ancora
+  migrati.
+- **Elenco a voci** (`components/ui/EntryList.tsx`): il pattern canonico per le
+  pagine d'area e le sottopagine indice, al posto delle griglie di card.
+  `EntrySection` è un titolo `text-lg font-semibold` con filetto sotto (`border-b
+  border-line`, con sottotitolo opzionale nel filetto) e due colonne da `md`, una su
+  mobile. `EntryLink` è una riga senza riquadro (`min-h-24`, `rounded-card`,
+  sfondo `surface-sunken` solo in hover) con: illustrazione a sinistra (64px su
+  mobile, 72px da `md`), titolo `font-semibold`, descrizione `ink-muted`, `badge`
+  opzionale accanto al titolo, riga di `status` opzionale sotto la descrizione
+  (pallino petrol + testo) e freccia `ArrowRight` a destra. L'illustrazione è
+  `image` (PNG esistente, proporzioni conservate) oppure `illustration` (es.
+  `ToolIllustration`). Nessun box dentro un box: la riga non ha bordo, il badge è
+  un'etichetta, non un contenitore. Navbar e pulsanti arrotondati restano invariati
+  per scelta del proprietario: il look piatto riguarda solo il contenuto delle pagine.
+- **Illustrazioni degli strumenti** (`components/ui/ToolIllustration.tsx`,
+  `lib/tool-illustrations.ts`): sono illustrazioni, non icone. SVG inline per id di
+  strumento (viewBox 96×96, tratto `--i-out`), con colori dalle variabili `--i-*`
+  di `globals.css` (`--i-out`, `--i-paper`, `--i-teal`, `--i-teal2`, `--i-orange`,
+  `--i-yellow`, `--i-cream`, `--i-sky`; in `.dark` `--i-out`, `--i-paper` e `--i-cream`
+  sono ridefiniti). Per strumenti dinamici o sconosciuti ricade sull'immagine della
+  categoria (`/images/intro/profiles.png` o `paths.png`). Sono decorative
+  (`aria-hidden`).
 - **Larghezza**: due soli token. `page-narrow` (max-w-4xl) per lettura e form;
   `page-wide` (max-w-6xl) per chat, dashboard, admin.
 - **Altezza chat**: `--chat-h` / `h-chat` / `min-h-chat`, con fallback `svh`/`dvh`
@@ -300,19 +326,27 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   conversazione. La chiusura riporta il focus al menu e conserva le bozze. I suggerimenti di prompt
   sono rimossi; lunghezza e congelamento sono sotto i tre punti accanto al campo
   di scrittura. Le risposte funzionali all’intervista Savickas restano disponibili.
-- **Catalogo degli strumenti**: nell’Area studente, sotto i piani operativi,
-  «Attività e percorsi» apre con la Bussola illustrata, le analisi dei questionari
-  e i percorsi guidati. Ogni scheda avvia direttamente lo strumento. «Da riprendere»
-  segue il catalogo, prima degli strumenti personali, con sessioni riprendibili
-  e azioni di recupero. «Studiare da un PDF» è in `/profilo/pqbl`, accanto alle
-  Flashcard. Il vecchio `/pqbl` reindirizza alla pagina attuale e la ripresa usa
-  i progressi salvati nel browser.
+- **Catalogo degli strumenti**: nell'Area personale (`/profilo`), dopo i piani
+  operativi della classe, «Attività e percorsi» (`InstrumentCatalog`) è un elenco a
+  voci in due sezioni, «Analisi questionari» e «Percorsi guidati», più «Consigliati
+  per te» quando ci sono suggerimenti; la Bussola ha il proprio ingresso. Ogni voce
+  ha la `ToolIllustration` dello strumento e **apre la pagina dello strumento**
+  `/strumenti/[id]`, non lo avvia. Lì stanno illustrazione, descrizione e le
+  azioni di avvio (il primario e «Compila sul sito», #864). Non esiste una pagina
+  condivisa dell'elenco degli strumenti: `/strumenti` ha solo la pagina per id.
+  «Da riprendere» segue il catalogo, prima delle sezioni personali, con sessioni
+  riprendibili e azioni di recupero. «Studiare da un PDF» è in `/profilo/pqbl`,
+  accanto alle Flashcard. Il vecchio `/pqbl` reindirizza alla pagina attuale e la
+  ripresa usa i progressi salvati nel browser. Gli strumenti «in arrivo» restano
+  per ora in un riquadro tratteggiato, ancora da allineare al look piatto.
 - **Presentazione iniziale**: una frase sullo scopo dell’ambiente e l’attribuzione
   all’Università Roma Tre precedono «Da dove vuoi iniziare?». Quattro schede,
   su due colonne desktop e una mobile: Bussola, Analisi questionari, Percorsi
   guidati, Area personale e strumenti. Le immagini decorative sono sopra il
   titolo su desktop e accanto su mobile. Ogni scheda ha un’azione esplicita;
-  il catalogo completo è un collegamento secondario sotto la griglia.
+  un collegamento secondario sotto la griglia porta all'Area personale (`/profilo`),
+  dove sta il catalogo: non c'è una pagina strumenti condivisa. Le quattro schede
+  sono ancora riquadri (`IntroScreen`): l'allineamento all'elenco a voci non è fatto.
   Non c’è un ordine obbligatorio. «Per saperne di più» raccoglie tre `details`
   chiusi: uso dei questionari, Area personale, risorse e accompagnamento.
   Seguono i collegamenti alla Guida e a «Dati e riservatezza»:
@@ -322,14 +356,24 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   la presentazione anche per chi ha già uno storico. I testi seguono la
   presentazione PEF del 21 settembre 2026, incluse le note del relatore.
   Prompt e provenienza delle immagini sono nel README della cartella.
-- **Ingresso Area personale**: `/profilo` mostra un riepilogo «Da riprendere» di
-  massimo tre lavori, quando presenti, seguito da cinque sezioni sempre aperte:
+- **Ingresso Area personale**: una sola area per ruolo (studente `/profilo`,
+  docente `/docente`), senza pagina strumenti condivisa (#848–#854). In cima a
+  `/profilo` c'è il menu a tendina «Scegli la tua classe» (`ClassViewSwitcher`,
+  «Senza classe», tutte le classi o una classe; assente per chi non ha classi),
+  poi i piani operativi della classe, poi il catalogo «Attività e percorsi»
+  (vedi sopra), poi un riepilogo «Da riprendere» di massimo tre lavori, quando
+  presenti, seguito da cinque sezioni sempre aperte:
   Il mio percorso, Conoscermi e riflettere, Studiare e ragionare, I miei lavori,
-  Persone e supporto. Ogni sezione ha righe illustrate con nome e descrizione;
-  due colonne da `md`, una su mobile. Si riutilizzano le immagini esistenti,
+  Persone e supporto. Ogni sezione è un elenco a voci (`EntrySection`/`EntryLink`, vedi sopra).
+  Si riutilizzano le immagini esistenti,
   con proporzioni conservate, a sinistra del testo. Portfolio ha la propria
   sezione; Cambiamenti è una voce autonoma. Il riepilogo gestisce localmente
   caricamento ed errore, senza bloccare gli accessi.
+- **Area docente**: `/docente` usa lo stesso elenco a voci (`TeacherAreaHome`),
+  con sezioni per gruppo, «Taccuino» con sottotitolo e la «Palestra di prova»
+  (`PracticeGymSection`): oggi una voce verso `/docente/taccuini-prova` con
+  `RoleBadge` docente. Previsto (#892, non ancora su main): elenco degli studenti di
+  prova e una pagina per ciascuno.
 - **Testata personale (pilota Orientamento)**: solo il collegamento «Area personale»
   a sinistra, diretto a `/profilo`; nessun pannello «Vai a…» a destra.
   Titolo con immagine esistente e descrizione sotto su mobile. Le pagine con
@@ -358,7 +402,9 @@ aggiunge alla primitiva.
 | Primitiva | Cosa fissa |
 | --- | --- |
 | `Button` | 6 varianti (primary/**accent**/secondary/ghost/danger/success) × 3 taglie, sui token; `md` e `lg` hanno `min-h-control` (44px reali), `sm` 30px |
-| `Card` | `bg-surface border-line rounded-card shadow-card p-6` |
+| `Card` | `boxed`: `bg-surface border-line rounded-card shadow-card p-6`; `flat`: solo `border-t border-line py-6`, senza riquadro (sottopagine d'area) |
+| `EntrySection`, `EntryLink` | l'elenco a voci (§4): titolo con filetto, due colonne da `md`, illustrazione 64–72px, titolo, descrizione, badge e stato opzionali, freccia |
+| `ToolIllustration` | illustrazione SVG dello strumento sulle variabili `--i-*` (non è un'icona) |
 | `ChatBubble`, `ChatPending` | la forma condivisa delle tre chat (guidata, Bussola, assistente) |
 | `SkipLink` | primo elemento focalizzabile della pagina, verso `#contenuto` |
 | `Callout` | i 4 ruoli semantici dai token di stato, con icona di default |
@@ -428,6 +474,9 @@ vede *prima* quelle pagine.
 ---
 
 ## 8. Audit — 2026-09-02
+
+> Gli audit di §8 e §9 sono precedenti al look piatto (#861): i riferimenti a card,
+> riquadri e colori di ruolo su card descrivono lo stato di allora.
 
 Due passaggi nello stesso giorno: il primo sui token, il secondo sull'uso.
 
