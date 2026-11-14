@@ -39,6 +39,8 @@ class CatalogWrite(Strict):
 
 class CatalogCreate(CatalogWrite):
     parent_id: int | None = Field(default=None, gt=0)
+    # OBIETTIVO_DOCENZA chat whose targets (classes, students, test students) are copied (#904).
+    session_id: str | None = Field(default=None, min_length=1, max_length=100)
 
 
 class CatalogParentWrite(Strict):
@@ -194,6 +196,28 @@ def descendant_ids(db, ids):
         frontier = [c for c in children if c not in seen]
         seen.update(frontier)
     return seen
+
+
+def catalog_target_map(db, ids):
+    """Teacher-only targets of the given entries, with a readable note; never for students."""
+    result = {i: {'targets': [], 'target_note': ''} for i in ids}
+    if not result:
+        return result
+    rows = (db.query(models.GoalCatalogTarget, models.StudentGroup.name, models.TeacherPracticeNotebook.title)
+            .outerjoin(models.StudentGroup, models.StudentGroup.id == models.GoalCatalogTarget.group_id)
+            .outerjoin(models.TeacherPracticeNotebook, models.TeacherPracticeNotebook.id == models.GoalCatalogTarget.practice_notebook_id)
+            .filter(models.GoalCatalogTarget.catalog_id.in_(result)).order_by(models.GoalCatalogTarget.id))
+    for target, group_name, notebook_title in rows:
+        if target.practice_notebook_id is not None:
+            item = {'kind': 'practice', 'practice_notebook_id': target.practice_notebook_id, 'label': notebook_title or ''}
+        elif target.username:
+            item = {'kind': 'student', 'group_id': target.group_id, 'username': target.username, 'label': f'{target.username} ({group_name})'}
+        else:
+            item = {'kind': 'class', 'group_id': target.group_id, 'label': group_name or ''}
+        result[target.catalog_id]['targets'].append(item)
+    for value in result.values():
+        value['target_note'] = ', '.join(item['label'] for item in value['targets'])
+    return result
 
 
 def catalog_parent_map(db, ids):

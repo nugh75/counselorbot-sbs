@@ -655,6 +655,23 @@ class GoalCatalogEdge(Base):
     created_at = Column(UTCDateTime, server_default=func.now())
 
 
+class GoalCatalogTarget(Base):
+    """Teacher-only note of whom a catalog entry was written for (#904).
+
+    One row per class (username and practice_notebook_id null), per student of a
+    class (group_id + username) or per test student (practice_notebook_id). Kept
+    out of goal_catalog.data so /user/goal-catalog and assignment snapshots never
+    carry it."""
+
+    __tablename__ = "goal_catalog_targets"
+    id = Column(Integer, primary_key=True)
+    catalog_id = Column(Integer, ForeignKey("goal_catalog.id", ondelete="CASCADE"), nullable=False, index=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), nullable=True, index=True)
+    username = Column(String, nullable=True)
+    practice_notebook_id = Column(Integer, ForeignKey("teacher_practice_notebooks.id", ondelete="CASCADE"), nullable=True)
+    created_at = Column(UTCDateTime, server_default=func.now())
+
+
 class TeacherAssignment(Base):
     """An explicit delivery of a catalog snapshot, separate from personal goals."""
     __tablename__ = "teacher_assignments"

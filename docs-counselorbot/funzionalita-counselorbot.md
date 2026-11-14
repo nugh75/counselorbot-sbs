@@ -401,6 +401,12 @@ elenca i genitori con il pulsante per staccarli e un menu per aggiungerne uno tr
 dello stesso autore (escluse sé stessa, le discendenti e i genitori già presenti); se il server
 rifiuta un ciclo, compare il messaggio dedicato.
 
+**Destinatari nel Catalogo obiettivi (#904).** `POST /teacher/goal-catalog` accetta il
+`session_id` di una chat `OBIETTIVO_DOCENZA` del docente (404 se non è sua) e copia nella tabella
+`goal_catalog_targets` (creata all'avvio) le classi, gli studenti e gli studenti di prova dello
+snapshot, riverificati in quel momento. Le risposte per l'autore o un amministratore portano
+`targets` e una nota leggibile `target_note`; le altre risposte e `/user/goal-catalog` no.
+
 **Studiare da un PDF senza schede annidate (#874).** `/profilo/pqbl` usa solo la
 `Card` piatta: impostazione, generazione, introduzione, domande, riepilogo, test finale
 e risultati sono sezioni separate da un filetto. Nel riepilogo i tre numeri sono cifre
@@ -1143,7 +1149,14 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
   Opzioni: parla sempre dal taccuino del docente. Studenti e studenti di prova restano legati alla
   conversazione (snapshot della chat sospesa) e a ogni salvataggio, cioè dopo ogni turno, il server tiene
   solo gli studenti ancora iscritti a una classe attiva propria o condivisa e gli studenti di prova attivi
-  del docente. Nel prompt entrano solo le classi, come prima; il salvataggio nel catalogo arriva dopo.
+  del docente. Nel prompt entrano solo le classi, come prima.
+  Alla fine «Salva» mette la bozza direttamente nel **Catalogo obiettivi** del docente (`/docente/catalogo-obiettivi`)
+  come proposta in bozza, non più tra gli obiettivi personali (#904): titolo, descrizione (motivazione), criteri e
+  suggerimenti (riflessione); niente data di revisione. I destinatari della chat (classi, studenti, studenti di prova),
+  riverificati al salvataggio, finiscono nella tabella riservata `goal_catalog_targets` e compaiono come nota
+  «Scritto per: …» sotto la bozza salvata e nell'elenco del catalogo. La nota la vede solo l'autore (o un
+  amministratore): gli altri docenti e il catalogo degli studenti (`/user/goal-catalog`) non la ricevono mai, e le
+  assegnazioni copiano solo il contenuto della proposta. Pubblicazione e assegnazione restano nel catalogo.
 - **Strumenti e percorsi personalizzati**: gli strumenti e le chat guidate create
   e attivate dall'amministrazione compaiono dinamicamente nel catalogo attività
   dello studente (nella sezione dei percorsi guidati o delle analisi questionari a

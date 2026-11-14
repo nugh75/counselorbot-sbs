@@ -21,6 +21,7 @@ from ..goals import (
     catalog_descendant_ids,
     catalog_dict,
     catalog_parent_map,
+    catalog_target_map,
     catalog_visible,
     default_role,
     descendant_ids,
@@ -57,13 +58,33 @@ def teacher_catalog(db: Session = Depends(database.get_db), user=Depends(auth.ge
             and_(models.GoalCatalogEntry.status == 'published', or_(models.GoalCatalogEntry.group_id.is_(None), models.GoalCatalogEntry.group_id.in_(groups)))))
     rows = query.order_by(models.GoalCatalogEntry.id.desc()).all()
     parents = catalog_parent_map(db, [row.id for row in rows])
-    return [dict(catalog_dict(row), parent_ids=parents[row.id]) for row in rows]
+    # Targets name students: only the author (or an admin) reads them.
+    targets = catalog_target_map(db, [row.id for row in rows if user.get('is_admin') or row.author_username == user['username']])
+    return [dict(catalog_dict(row), parent_ids=parents[row.id], **targets.get(row.id, {})) for row in rows]
 
 
 def teacher_entry(db, row):
     """Author/admin view: edges join one author's entries, so every parent is visible here."""
     parents = db.query(models.GoalCatalogEdge.parent_id).filter_by(child_id=row.id).order_by(models.GoalCatalogEdge.parent_id)
-    return dict(catalog_dict(row), parent_ids=[p for (p,) in parents])
+    return dict(catalog_dict(row), parent_ids=[p for (p,) in parents], **catalog_target_map(db, [row.id])[row.id])
+
+
+def session_targets(db, username, session_id):
+    """Targets of the teacher's OBIETTIVO_DOCENZA chat, re-verified now (#904): classes still
+    visible and active, real members of them, the teacher's active test students."""
+    from ..teacher_context import verified_goal_targets, visible_group_for_teacher
+    session = db.query(models.FrozenSession).filter_by(
+        username=username, session_id=session_id, questionnaire_type='OBIETTIVO_DOCENZA').first()
+    if session is None:
+        raise HTTPException(404, 'Session unavailable')
+    data = session.data or {}
+    groups = list(dict.fromkeys(int(g) for g in data.get('group_ids') or []))
+    groups = [g for g in groups if visible_group_for_teacher(db, username, g) is not None]
+    students, practice = verified_goal_targets(db, username, data.get('target_students') or [],
+                                               list(dict.fromkeys(data.get('target_practice_notebook_ids') or [])))
+    return ([models.GoalCatalogTarget(group_id=g) for g in groups]
+            + [models.GoalCatalogTarget(group_id=s['group_id'], username=s['username']) for s in students]
+            + [models.GoalCatalogTarget(practice_notebook_id=p) for p in practice])
 
 
 def editable_entry(db, user, entry_id, version):
@@ -103,12 +124,16 @@ def validate_catalog_scope(db, user, payload):
 @router.post('/teacher/goal-catalog', status_code=201)
 def create_catalog(payload: CatalogCreate, db: Session = Depends(database.get_db), user=Depends(auth.get_current_plan_manager)):
     validate_catalog_scope(db, user, payload)
+    targets = session_targets(db, user['username'], payload.session_id) if payload.session_id else []
     if payload.parent_id is not None:
         lock_catalog_network(db, user['username'])
         same_author_parent(db, user['username'], payload.parent_id)
     row = models.GoalCatalogEntry(author_username=user['username'], group_id=payload.group_id,
                                   status=payload.status, data=payload.data.model_dump(), version=1)
     db.add(row); db.flush()
+    for target in targets:
+        target.catalog_id = row.id
+    db.add_all(targets)
     if payload.parent_id is not None:
         db.add(models.GoalCatalogEdge(parent_id=payload.parent_id, child_id=row.id))
     db.commit(); db.refresh(row)
