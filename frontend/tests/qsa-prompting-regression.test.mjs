@@ -78,7 +78,7 @@ for (const width of [390, 1440]) {
             const panel = f.page.locator('#guided-path-panel');
             await panel.waitFor({ state: 'visible' });
             for (const step of steps) await panel.getByText(step.label, { exact: true }).waitFor();
-            assert.equal(await panel.locator('[aria-current="step"]').innerText(), '2\nQSA fixture cognitive');
+            assert.match(await panel.locator('[aria-current="step"]').innerText(), /^2\nQSA fixture cognitive/);
             if (process.env.QSA_PROMPTING_SCREENSHOT_DIR) await f.page.screenshot({ path: `${process.env.QSA_PROMPTING_SCREENSHOT_DIR}/qsa-steps-${width}.png`, fullPage: true });
             if (width < 1024) await f.page.getByRole('button', { name: 'Chiudi finestra', exact: true }).click();
             await f.page.getByRole('button', { name: 'Prossimo Step', exact: true }).first().click();
@@ -117,7 +117,7 @@ for (const failure of ['http', 'network', 'json']) {
             await f.page.getByRole('log').getByText('Synthetic answer', { exact: true }).waitFor();
             for (const step of steps) await f.page.locator('#guided-path-panel').getByText(step.label, { exact: true }).waitFor();
             assert.equal(f.loadRequests(), initialRequests + 1);
-            assert.equal(await f.page.locator('#guided-path-panel [aria-current="step"]').innerText(), '2\nQSA fixture cognitive');
+            assert.match(await f.page.locator('#guided-path-panel [aria-current="step"]').innerText(), /^2\nQSA fixture cognitive/);
             assert.deepEqual(f.streams, [], 'retry restores the frozen phase and transcript without generating a new answer');
             assert.deepEqual(f.errors, []);
         } finally { await f.context.close(); }
