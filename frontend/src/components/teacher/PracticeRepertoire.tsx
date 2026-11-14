@@ -12,16 +12,23 @@ import { useI18n } from '@/lib/i18n-context';
 import { practiceNotebookText } from '@/lib/i18n-practice-notebooks';
 import { QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
 import { ScoreInputForm } from '@/components/qsa/ScoreInputForm';
-import { PRACTICE_RESULT_TYPES, generatePracticeScores, practiceResultChatHref, type PracticeResult } from '@/lib/practice-notebooks';
+import { PRACTICE_PROFILES_ANCHOR, PRACTICE_RESULT_TYPES, generatePracticeScores, practiceResultChatHref, type PracticeResult } from '@/lib/practice-notebooks';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { learningText } from '@/lib/i18n-assignment-work';
 
 const secondary = 'min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-50';
+const linkAction = 'inline-flex min-h-control items-center text-sm font-semibold text-link underline underline-offset-2 disabled:opacity-50';
 
 type Draft = { id?: number; type: QuestionnaireType; scores?: Record<string, number>; generated: boolean; version: number };
 
-export function PracticeRepertoire({ notebookId }: { notebookId: number }) {
+// `onResults` passa i profili alla pagina («Avvia una chat»); `newProfileType`
+// apre il modulo di un nuovo profilo per quel questionario (?profilo=<tipo>).
+export function PracticeRepertoire({ notebookId, onResults, newProfileType }: {
+    notebookId: number;
+    onResults?: (results: PracticeResult[]) => void;
+    newProfileType?: string | null;
+}) {
     const { lang, t } = useI18n();
     const l = (key: Parameters<typeof practiceNotebookText>[1]) => practiceNotebookText(lang, key);
     const [results, setResults] = useState<PracticeResult[] | null>(null);
@@ -53,6 +60,12 @@ export function PracticeRepertoire({ notebookId }: { notebookId: number }) {
         }
     }, [notebookId]);
     useEffect(() => { void load(); }, [load]);
+    useEffect(() => { if (results) onResults?.(results); }, [results, onResults]);
+    useEffect(() => {
+        if (!newProfileType || !(PRACTICE_RESULT_TYPES as readonly string[]).includes(newProfileType)) return;
+        setDraft({ type: newProfileType as QuestionnaireType, generated: false, version: 0 });
+        setDirty(false); setSaved(false); setError('');
+    }, [newProfileType]);
 
     const act = async (action: () => Promise<unknown>) => {
         if (busy) return false;
@@ -94,8 +107,8 @@ export function PracticeRepertoire({ notebookId }: { notebookId: number }) {
         l(source === 'generated' ? 'sourceGenerated' : source === 'chat' ? 'sourceChat' : 'sourceManual');
 
     return (
-        <section data-practice-repertoire className="space-y-2 border-t border-line pt-4">
-            <h3 className="text-sm font-semibold text-ink-body">{l('repertoire')}</h3>
+        <section data-practice-repertoire aria-labelledby={PRACTICE_PROFILES_ANCHOR} className="space-y-2">
+            <h2 id={PRACTICE_PROFILES_ANCHOR} className="scroll-mt-24 border-b border-line pb-2 text-lg font-semibold text-ink">{l('repertoire')}</h2>
             <p className="text-xs text-ink-muted">{l('repertoireHint')}</p>
             {failed && <div role="alert" className="flex flex-wrap items-center gap-2 text-xs text-danger">
                 <p>{l('profilesError')}</p>
@@ -104,9 +117,9 @@ export function PracticeRepertoire({ notebookId }: { notebookId: number }) {
             {error && <p role="alert" className="text-xs text-danger">{error}</p>}
             {saved && <p role="status" className="text-xs text-success">{l('saved')}</p>}
             {results !== null && !results.length && <p className="text-xs text-ink-muted">{l('noProfiles')}</p>}
-            <ul className="space-y-2">
+            <ul>
                 {(results ?? []).map((result) => (
-                    <li key={result.id} data-practice-result={result.id} className="rounded-control border border-line p-2 text-sm">
+                    <li key={result.id} data-practice-result={result.id} className="border-b border-line py-2 text-sm">
                         <p className="font-semibold text-ink">
                             {instrumentName(result.questionnaire_type)}
                             <span className="ml-2 text-xs font-normal text-ink-muted">
@@ -116,10 +129,10 @@ export function PracticeRepertoire({ notebookId }: { notebookId: number }) {
                         <p className="mt-1 break-words font-mono text-xs text-ink-muted">
                             {Object.entries(result.scores).map(([code, value]) => `${code} ${value}`).join(' · ')}
                         </p>
-                        <div className="mt-2 flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-x-4">
                         {!draft && <>
-                            <Link href={practiceResultChatHref(result)} className="inline-flex min-h-control items-center rounded-control bg-move px-4 text-sm font-semibold text-ink-on-brand hover:bg-move-hover">{l('startChat')}</Link>
-                            <button type="button" disabled={busy} className={secondary} onClick={() => {
+                            <Link href={practiceResultChatHref(result)} className={linkAction}>{l('startChat')}</Link>
+                            <button type="button" disabled={busy} className={linkAction} onClick={() => {
                                 setDraft({ id: result.id, type: result.questionnaire_type as QuestionnaireType, scores: result.scores, generated: false, version: 0 });
                                 setDirty(false); setSaved(false); setError('');
                             }}>{l('edit')}</button>
@@ -128,7 +141,7 @@ export function PracticeRepertoire({ notebookId }: { notebookId: number }) {
                             ? <ConfirmInline question={l('confirmRemoveProfile')} busy={busy}
                                 onConfirm={() => { setConfirmRemove(null); void act(() => practiceNotebookApi.removeResult(notebookId, result.id)); }}
                                 onCancel={() => setConfirmRemove(null)} />
-                            : <button type="button" disabled={busy || draft !== null} className={secondary}
+                            : <button type="button" disabled={busy || draft !== null} className={`${linkAction} text-danger`}
                                 onClick={() => setConfirmRemove(result.id)}>
                                 {l('remove')}
                             </button>}
@@ -137,7 +150,7 @@ export function PracticeRepertoire({ notebookId }: { notebookId: number }) {
                 ))}
             </ul>
             {draft ? (
-                <div data-practice-result-editor className="space-y-4 rounded-control border border-brand-line p-4">
+                <div data-practice-result-editor className="space-y-4 pt-2">
                     <label className="block text-xs font-semibold text-ink-muted">
                         {l('instrument')}
                         <select value={draft.type} disabled={busy || draft.id !== undefined}

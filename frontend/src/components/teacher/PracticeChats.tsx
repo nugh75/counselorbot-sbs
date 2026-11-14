@@ -14,6 +14,7 @@ import type { PracticeChat, PracticeChatMessage } from '@/lib/practice-notebooks
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 
 const secondary = 'min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-50';
+const linkAction = 'inline-flex min-h-control items-center text-sm font-semibold text-link underline underline-offset-2 disabled:opacity-50';
 
 type Row = { sessionId: string; instrument: string; updatedAt?: string | null; turns?: number; logged: boolean; open: boolean };
 
@@ -72,31 +73,31 @@ export function PracticeChats({ notebookId, openChats, openChatsFailed }: {
     };
 
     return (
-        <section data-practice-chats className="space-y-2 border-t border-line pt-4">
-            <h3 className="text-sm font-semibold text-ink-body">{l('practiceChats')}</h3>
+        <section data-practice-chats aria-labelledby={`practice-chats-heading-${notebookId}`} className="space-y-2">
+            <h2 id={`practice-chats-heading-${notebookId}`} className="border-b border-line pb-2 text-lg font-semibold text-ink">{l('practiceChats')}</h2>
             <p className="text-xs text-ink-muted">{l('practiceChatsHint')}</p>
             {(failed || openChatsFailed) && <div role="alert" className="flex flex-wrap items-center gap-2 text-xs text-danger">
                 <p>{l('chatsError')}</p>
                 {failed && <button type="button" onClick={() => void load()} className={secondary}>{l('retry')}</button>}
             </div>}
             {chats !== null && openChats !== null && !rows.length && <p className="text-xs text-ink-muted">{l('noPracticeChats')}</p>}
-            <ul className="space-y-2">
+            <ul>
                 {rows.map((row) => (
-                    <li key={row.sessionId} data-practice-chat={row.sessionId} className="rounded-control border border-line p-2 text-sm">
-                        <div className="flex flex-wrap items-center gap-2">
+                    <li key={row.sessionId} data-practice-chat={row.sessionId} className="border-b border-line py-2 text-sm">
+                        <div className="flex flex-wrap items-center gap-x-4">
                             <span className="min-w-0 flex-1 text-ink">
                                 <span className="font-semibold">{instrumentName(row.instrument)}</span>
                                 <span className="ml-2 text-xs text-ink-muted">
                                     {[row.updatedAt ? new Date(row.updatedAt).toLocaleDateString(lang) : '', l(row.open ? 'chatOpen' : 'chatCompleted')].filter(Boolean).join(' · ')}
                                 </span>
                             </span>
-                            {row.logged && <button type="button" aria-expanded={shown === row.sessionId} onClick={() => void toggle(row.sessionId)} className={secondary}>
+                            {row.open && <Link href={`/?frozen=${encodeURIComponent(row.sessionId)}`} className={linkAction}>{l('openChat')}</Link>}
+                            {row.logged && <button type="button" aria-expanded={shown === row.sessionId} onClick={() => void toggle(row.sessionId)} className={linkAction}>
                                 {l(shown === row.sessionId ? 'hideTranscript' : 'readTranscript')}
                             </button>}
-                            {row.open && <Link href={`/?frozen=${encodeURIComponent(row.sessionId)}`} className={`${secondary} inline-flex items-center`}>{l('openChat')}</Link>}
                         </div>
                         {shown === row.sessionId && (
-                            <div data-practice-transcript className="mt-2 space-y-2 border-t border-line pt-2">
+                            <div data-practice-transcript className="mt-2 space-y-2">
                                 {transcript === null && !transcriptFailed && <p role="status" className="text-xs text-ink-muted">{t('common.loading')}</p>}
                                 {transcriptFailed && <p role="alert" className="text-xs text-danger">{l('transcriptError')}</p>}
                                 {transcript?.map((message, index) => (

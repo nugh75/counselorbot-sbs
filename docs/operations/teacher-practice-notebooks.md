@@ -15,27 +15,27 @@ simulato.
  ├─ Percorso guidato docenza
  └─ gruppi classe / cataloghi / ricerca (invariati)
 
-/docente/taccuini-prova (TeacherAreaPage slug="taccuini-prova")
- ┌────────────────────────────────────────────────────┐
- │ ← Area docenti                                     │
- │ [img] Taccuini di prova                            │
- │       Studenti immaginari per allenarti ...        │
- ├────────────────────────────────────────────────────┤
- │ Nota: niente dati reali; il modello sa che è una   │
- │ simulazione; si sceglie in Opzioni della chat.     │
- │ [+ Nuovo taccuino di prova]                        │
- │ ┌ «Giulia, 3ª liceo» ───────────────────────────┐  │
- │ │ Classe: 3ª liceo · Difficoltà: ansia verifiche│  │
- │ │ Classi per la simulazione [x] 3B   [ ] 4A   │  │
- │ │ Chat guidate di prova                         │  │
- │ │  QSA · in corso  [Trascrizione] [Riapri]      │  │
- │ │  QSA · conclusa  [Trascrizione]               │  │
- │ │ Profili nei questionari (repertorio)          │  │
- │ │  QSA · da una chat  [Avvia chat guidata]      │  │
- │ │ [Modifica] [Archivia]                         │  │
- │ └───────────────────────────────────────────────┘  │
- │ ▸ Archiviati (n)   [Ripristina] [Elimina]          │
- └────────────────────────────────────────────────────┘
+/docente/taccuini-prova (TeacherAreaPage slug="taccuini-prova", #892)
+ Nota: niente dati reali; il modello sa che è una simulazione.
+ [+ Nuovo studente di prova]            (editor inline in testa)
+ I tuoi studenti di prova ───────────────────────────────────
+  (avatar) Giulia, 3ª liceo [prova]  3ª liceo, ansia…   →
+           • 2 profili · 1 chat aperta
+ Archiviati (n) ─────────────────────────────────────────────
+  (avatar) Luca [prova]                                  →
+
+/docente/taccuini-prova/{id}  (sezioni con linea, niente riquadri)
+ (avatar) Giulia, 3ª liceo [prova]
+ Avvia una chat ── tutti gli strumenti (EntryLink + ToolIllustration):
+   senza punteggi → /?start=<id>&practice_notebook_id=<id>
+   questionario: 1 profilo → avvia; più profili → #practice-profiles;
+                 nessuno → ?profilo=<tipo> apre il modulo del nuovo profilo
+ Chat guidate di prova ── righe: Riapri la conversazione · Leggi la trascrizione
+ Profili nei questionari ── righe: Avvia chat guidata · Modifica · Elimina
+ Chi è ── riepilogo · Modifica (editor del taccuino)
+ Classi per la simulazione ── spunte salvate subito
+ Archivia questo studente di prova   (archiviato: Ripristina · Elimina)
+ #practice-notebook-{id} sull'elenco → redirect a /docente/taccuini-prova/{id}
  Editor inline: Nome* + campi del taccuino studente (lp.field.*), una colonna
                 [Salva] [Annulla]
  Le spunte restano visibili anche nell'editor. Per un nuovo profilo si

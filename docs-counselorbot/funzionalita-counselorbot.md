@@ -2539,6 +2539,21 @@ ripristinano ed eliminano (con conferma). Gli archiviati non compaiono nelle
 Opzioni della chat. Il docente che li ha creati gestisce taccuino, chat e
 risultati di prova. La pagina invita a usare solo dati inventati.
 
+Aspetto della Palestra (Issue #892): `/docente/taccuini-prova` è un elenco piatto,
+come le altre pagine delle aree. Ogni studente di prova è una voce con avatar, nome,
+badge «prova», una riga breve dai primi campi del taccuino e una riga di stato
+(«2 profili · 1 chat aperta»); il pulsante **Nuovo studente di prova** apre il modulo
+in testa e gli archiviati stanno in una sezione sotto. Ogni voce apre la pagina dello
+studente `/docente/taccuini-prova/{id}`, a sezioni con titolo e linea e senza riquadri:
+**Avvia una chat** elenca tutti gli strumenti (quelli senza punteggi partono subito
+con lo studente; un questionario con un profilo parte da quello, con più profili porta
+all’elenco dei profili, senza profili apre il modulo di un nuovo profilo), poi **Chat
+guidate di prova**, **Profili nei questionari** (azioni come link: Avvia chat guidata
+· Modifica · Elimina), **Chi è** (riepilogo e Modifica), **Classi per la simulazione**
+e in fondo **Archivia questo studente di prova**. Uno studente archiviato mostra
+Ripristina ed Elimina. Il celeste di ruolo resta solo sul badge e sull’avatar. I vecchi
+link `/docente/taccuini-prova#practice-notebook-{id}` aprono la pagina dello studente.
+
 I risultati di una chat guidata in prova si ritrovano nella scheda dello studente
 simulato (Issue #244): dalla home dell’Area docenti, «Entra nella Palestra di prova»
 o il collegamento «Chat e risultati degli studenti di prova» aprono
