@@ -139,33 +139,58 @@ test('il docente crea, modifica, archivia, ripristina ed elimina i taccuini di p
     page.on('dialog', dialog => dialog.accept());
     await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
     await page.getByRole('heading', { level: 1, name: 'Taccuini di prova' }).waitFor();
-    await page.getByRole('heading', { name: 'Giulia, 3ª liceo' }).waitFor();
+    const giulia = page.getByRole('link', { name: 'Giulia, 3ª liceo' });
+    assert.equal(await giulia.getAttribute('href'), '/docente/taccuini-prova/1');
     assert.ok(await page.getByText('Ansia da verifica').isVisible());
-    await page.locator('[data-practice-notebook="1"] [data-practice-chats]').getByText('Nessuna chat con questo studente.', { exact: false }).waitFor();
+    await giulia.getByText('Nessun profilo', { exact: true }).waitFor();
 
-    await page.getByRole('button', { name: 'Nuovo taccuino di prova' }).click();
+    await page.getByRole('button', { name: 'Nuovo studente di prova' }).click();
     await page.getByLabel('Nome dello studente immaginario').fill('  Marco, adulto in formazione ');
     await page.locator('#practice-notebook-strengths').fill('Curioso');
     await page.getByRole('button', { name: 'Salva', exact: true }).click();
-    await page.getByRole('heading', { name: 'Marco, adulto in formazione' }).waitFor();
+    await page.getByRole('link', { name: 'Marco, adulto in formazione' }).click();
     const created = requests.find(r => r.method === 'POST');
     assert.deepEqual(created.body, { title: 'Marco, adulto in formazione', data: { strengths: 'Curioso' }, group_ids: [] });
 
+    await page.waitForURL('**/docente/taccuini-prova/2');
     const marco = page.locator('[data-practice-notebook="2"]');
-    await marco.getByRole('button', { name: 'Modifica' }).click();
+    await marco.getByRole('heading', { name: 'Marco, adulto in formazione' }).waitFor();
+    await marco.locator('[data-practice-chats]').getByText('Nessuna chat con questo studente.', { exact: false }).waitFor();
+    await marco.locator('[aria-labelledby="practice-who-heading"]').getByRole('button', { name: 'Modifica' }).click();
     await page.getByLabel('Nome dello studente immaginario').fill('Marco B.');
     await page.getByRole('button', { name: 'Salva', exact: true }).click();
-    await page.getByRole('heading', { name: 'Marco B.' }).waitFor();
+    await marco.getByRole('heading', { name: 'Marco B.' }).waitFor();
 
-    await page.locator('[data-practice-notebook="2"]').getByRole('button', { name: 'Archivia' }).click();
-    await page.getByText('Archiviati (1)').click();
-    await page.locator('[data-practice-notebook-archived="2"]').getByRole('button', { name: 'Ripristina' }).click();
-    await page.locator('[data-practice-notebook="2"]').waitFor();
-    await page.locator('[data-practice-notebook="2"]').getByRole('button', { name: 'Archivia' }).click();
-    await page.getByText('Archiviati (1)').click();
-    await page.locator('[data-practice-notebook-archived="2"]').getByRole('button', { name: 'Elimina' }).click();
-    await page.locator('[data-practice-notebook-archived="2"]').waitFor({ state: 'detached' });
+    await marco.getByRole('button', { name: 'Archivia questo studente di prova' }).click();
+    await page.waitForURL('**/docente/taccuini-prova');
+    await page.getByRole('heading', { name: 'Archiviati (1)' }).waitFor();
+    await page.getByRole('link', { name: 'Marco B.' }).click();
+    await marco.getByRole('button', { name: 'Ripristina' }).click();
+    await marco.getByRole('button', { name: 'Archivia questo studente di prova' }).click();
+    await page.waitForURL('**/docente/taccuini-prova');
+    await page.getByRole('link', { name: 'Marco B.' }).click();
+    await marco.getByRole('button', { name: 'Elimina' }).click();
+    await marco.getByRole('group', { name: 'Eliminare definitivamente questo taccuino di prova?' }).getByRole('button').first().click();
+    await page.waitForURL('**/docente/taccuini-prova');
+    await page.getByRole('link', { name: 'Giulia, 3ª liceo' }).waitFor();
+    assert.equal(await page.getByRole('link', { name: 'Marco B.' }).count(), 0);
     assert.deepEqual(store.rows.map(row => row.id), [1]);
+    assert.deepEqual(errors, []);
+    await page.close();
+});
+
+test('la pagina dello studente elenca tutti gli strumenti e i vecchi link all\'ancora ci arrivano', async () => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
+    const { errors, store } = await prepare(page);
+    store.results.push({ id: 91, notebook_id: 1, questionnaire_type: 'QAP', scores: { AD1: 8 }, session_id: 'profile-91', source: 'manual' });
+    await page.goto(`${origin}/docente/taccuini-prova#practice-notebook-1`, { waitUntil: 'networkidle' });
+    await page.waitForURL('**/docente/taccuini-prova/1');
+    const start = page.getByTestId('practice-start-section');
+    await start.locator('a[href="/?start=SAVICKAS&practice_notebook_id=1"]').waitFor();
+    await start.locator('a[href="/?start=QAP&practice_notebook_id=1&practice_result_id=91"]').waitFor();
+    await start.locator('a[href="/docente/taccuini-prova/1?profilo=QSA#practice-profiles"]').click();
+    await page.locator('[data-practice-result-editor]').waitFor();
+    assert.equal(await page.locator('[data-practice-result-editor]').getByLabel('Strumento').inputValue(), 'QSA');
     assert.deepEqual(errors, []);
     await page.close();
 });
@@ -177,7 +202,7 @@ test('la home docente porta alla pagina e la pagina regge 390 px in inglese', as
     assert.equal(await page.getByRole('link', { name: 'Practice students’ chats and results' }).getAttribute('href'), '/docente/taccuini-prova');
     await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
     await page.getByRole('heading', { level: 1, name: 'Practice notebooks' }).waitFor();
-    await page.getByRole('button', { name: 'New practice notebook' }).waitFor();
+    await page.getByRole('button', { name: 'New test student' }).waitFor();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(errors, []);
     await page.close();
@@ -317,7 +342,7 @@ test('nella chat guidata il docente sceglie «Prova» e un taccuino: turno e sna
 test('le spunte della Palestra salvano subito il taccuino che si legge nella classe', async () => {
     const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
     const { errors, requests, store } = await prepare(page);
-    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    await page.goto(`${origin}/docente/taccuini-prova/1`, { waitUntil: 'networkidle' });
     const card = page.locator('[data-practice-notebook="1"]');
     const classes = card.getByRole('group', { name: 'Classi per la simulazione' });
     assert.ok(requests.some(r => r.path === '/api/admin/groups' && r.search === '?own=true'));
@@ -399,7 +424,7 @@ test('il repertorio: profilo generato e ritoccato, poi eliminato', async () => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
     const { errors, requests, store } = await prepare(page);
     page.on('dialog', dialog => dialog.accept());
-    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    await page.goto(`${origin}/docente/taccuini-prova/1`, { waitUntil: 'networkidle' });
     const repertoire = page.locator('[data-practice-notebook="1"] [data-practice-repertoire]');
     await repertoire.getByText('Nessun profilo ancora.').waitFor();
     await repertoire.getByRole('button', { name: 'Aggiungi profilo' }).click();
@@ -414,7 +439,7 @@ test('il repertorio: profilo generato e ritoccato, poi eliminato', async () => {
     await saveButtons.first().click();
     await repertoire.locator('[data-practice-result]').first().waitFor();
     await repertoire.getByRole('status').getByText('Salvato', { exact: true }).waitFor();
-    assert.equal(new URL(page.url()).pathname, '/docente/taccuini-prova');
+    assert.equal(new URL(page.url()).pathname, '/docente/taccuini-prova/1');
     await repertoire.getByRole('link', { name: 'Avvia chat guidata', exact: true }).waitFor();
     const generated = requests.filter(r => r.method === 'POST' && r.path.endsWith('/results')).at(-1).body;
     assert.equal(generated.questionnaire_type, 'ZTPI');
@@ -434,7 +459,7 @@ test('il repertorio: profilo generato e ritoccato, poi eliminato', async () => {
     assert.equal(store.results[0].scores.T1, 4);
     await page.reload({ waitUntil: 'networkidle' });
     await page.locator('[data-practice-result]').first().getByText('T1 4', { exact: false }).waitFor();
-    assert.equal(new URL(page.url()).pathname, '/docente/taccuini-prova');
+    assert.equal(new URL(page.url()).pathname, '/docente/taccuini-prova/1');
     assert.equal(await page.locator('#guided-composer, #score-form, [data-testid="chat-settings"]').count(), 0);
     // Il layout aggiorna le preferenze dell'account anche dopo la ricarica.
     assert.deepEqual(requests.filter(r => r.method !== 'GET'
@@ -588,7 +613,7 @@ test('dal profilo: nuova chat guidata, turni e ripresa usano il taccuino e i pun
         'counselorbot_selected_counselor': '1',
     } });
     store.results.push({ ...qapProfile });
-    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    await page.goto(`${origin}/docente/taccuini-prova/1`, { waitUntil: 'networkidle' });
     const profile = page.locator('[data-practice-result="91"]');
     await profile.getByRole('link', { name: 'Avvia chat guidata' }).click();
     await page.getByText('AD1', { exact: true }).first().waitFor();
@@ -616,7 +641,7 @@ test('dal profilo: nuova chat guidata, turni e ripresa usano il taccuino e i pun
     // Un'altra scelta del browser non deve sovrascrivere il contesto congelato.
     await page.evaluate(() => { localStorage.setItem('cb-notebook-context', 'teacher'); localStorage.setItem('cb-practice-notebook-id', '2'); });
     // La chat si ritrova sotto lo studente simulato, nell'area docente.
-    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    await page.goto(`${origin}/docente/taccuini-prova/1`, { waitUntil: 'networkidle' });
     const chats = page.locator('[data-practice-notebook="1"] [data-practice-chats]');
     await chats.getByRole('heading', { name: 'Chat guidate di prova' }).waitFor();
     const reopen = chats.locator(`[data-practice-chat="${turn.session_id}"]`).getByRole('link', { name: 'Riapri la conversazione' });
@@ -646,7 +671,7 @@ for (const [lang, save, cancel, saved, start] of [
         const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
         const { errors, store, requests } = await prepare(page, { lang });
         store.results.push({ ...qapProfile });
-        await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+        await page.goto(`${origin}/docente/taccuini-prova/1`, { waitUntil: 'networkidle' });
         const profile = page.locator('[data-practice-result="91"]');
         await profile.getByRole('link', { name: start, exact: true }).waitFor();
         await profile.getByRole('button').first().click();
@@ -676,7 +701,7 @@ for (const [lang, save, cancel, saved, start] of [
         await repertoire.getByRole('status').getByText(saved, { exact: true }).waitFor();
         await page.reload({ waitUntil: 'networkidle' });
         await page.locator('[data-practice-result="2"]').getByText('C1 5', { exact: false }).waitFor();
-        assert.equal(new URL(page.url()).pathname, '/docente/taccuini-prova');
+        assert.equal(new URL(page.url()).pathname, '/docente/taccuini-prova/1');
         assert.equal(await page.locator('#guided-composer, #score-form').count(), 0);
         assert.deepEqual(requests.filter(r => r.method !== 'GET'
             && !(r.method === 'PUT' && r.path === '/api/user/account-preferences')
@@ -722,7 +747,7 @@ test('errore di salvataggio: bozza conservata, retry esplicito e nessun doppio s
         store.results[0].scores = route.request().postDataJSON().scores;
         return route.fulfill({ json: store.results[0] });
     });
-    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    await page.goto(`${origin}/docente/taccuini-prova/1`, { waitUntil: 'networkidle' });
     await page.locator('[data-practice-result="91"]').getByRole('button', { name: 'Modifica' }).click();
     const editor = page.locator('[data-practice-result-editor]');
     await editor.locator('input').first().fill('7');
@@ -770,7 +795,7 @@ test('flusso di annullamento e conferma modifiche non salvate in profilo e taccu
         else dialog.dismiss();
     });
 
-    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    await page.goto(`${origin}/docente/taccuini-prova/1`, { waitUntil: 'networkidle' });
     const repertoire = page.locator('[data-practice-notebook="1"] [data-practice-repertoire]');
     await repertoire.getByRole('button', { name: 'Aggiungi profilo' }).click();
     const editor = page.locator('[data-practice-result-editor]');
