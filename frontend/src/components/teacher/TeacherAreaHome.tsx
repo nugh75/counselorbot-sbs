@@ -3,9 +3,6 @@
 import { PersonalAIConnections } from '@/components/profile/PersonalAIConnections';
 import { EntryLink, EntrySection } from '@/components/ui/EntryList';
 import { useI18n } from '@/lib/i18n-context';
-import { DidacticDesignSection } from './DidacticDesignSection';
-import { MyClassesSection } from './MyClassesSection';
-import { PracticeGymSection } from './PracticeGymSection';
 import { TryToolsSection } from './TryToolsSection';
 import { TeacherResourcesSection } from './TeacherResourcesSection';
 import { teacherAreaName, teacherAreaDescription, teacherAreaText } from '@/lib/i18n-teacher-area';
@@ -27,10 +24,10 @@ export function TeacherAreaHome({ teacher, institutes }: { teacher: boolean; ins
     const researchGroup = teacherAreaGroups.find(g => g.id === 'research');
 
     const renderGroup = (group: typeof teacherAreaGroups[number]) => {
-        const slugs = group.slugs.filter(slug => slug === 'classi' ? false : slug === 'istituti' ? institutes : teacher || slug !== 'orientamento');
+        const slugs = group.slugs.filter(slug => slug === 'istituti' ? institutes : teacher || slug !== 'orientamento');
         if (slugs.length === 0) return null;
         return (
-            <EntrySection key={group.id} id={`teacher-group-${group.id}`} title={l(group.id)}>
+            <EntrySection key={group.id} id={`teacher-group-${group.id}`} title={l(group.id)} testId={`teacher-${group.id}-section`}>
                 {slugs.map(slug => <TeacherAreaEntry key={slug} slug={slug} />)}
             </EntrySection>
         );
@@ -38,23 +35,14 @@ export function TeacherAreaHome({ teacher, institutes }: { teacher: boolean; ins
 
     return (
         <div className="space-y-8" data-teacher-area-home>
-            {/* 1. Didattica e Classi */}
-            <DidacticDesignSection />
-            <MyClassesSection />
             {classroomGroup && renderGroup(classroomGroup)}
-
-            {/* 2. Palestra di simulazione e prova */}
-            <PracticeGymSection />
+            <TeacherResourcesSection />
             <TryToolsSection />
+            {researchGroup && renderGroup(researchGroup)}
 
-            {/* 3. Profilo e Risorse */}
             <EntrySection id="teacher-profile-notebook-heading" title={l('teacherProfileHeading')} subtitle={l('teacherProfileSubtitle')} testId="teacher-profile-notebook-section">
                 <TeacherAreaEntry slug="taccuino" />
             </EntrySection>
-
-            <TeacherResourcesSection />
-            {researchGroup && renderGroup(researchGroup)}
-
             <PersonalAIConnections area="docente" />
         </div>
     );
