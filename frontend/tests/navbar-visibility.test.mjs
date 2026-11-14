@@ -853,8 +853,9 @@ test('a resume row is deleted from the sub-panel, the menu stays open', async ()
         const remove = mobileMenu(page).getByRole('button', { name: `${LABELS.deleteSession}: ${first.label}`, exact: true });
         await remove.waitFor();
         state.frozen = [second];
-        page.once('dialog', dialog => dialog.accept());
         await remove.click();
+        // Deleting asks for an inline Yes/No confirmation inside the panel.
+        await mobileMenu(page).getByRole('button', { name: 'Sì', exact: true }).click();
         await eventually(() => names(mobileMenu(page)), expectedNavbar('S', 390, { resume: { rows: [second.label] }, resumeOpen: true }).menu, 'after delete');
         assert.deepEqual(writes.map(write => write.path), [`/api/session/frozen/${first.session_id}`]);
         assert.equal(await resumeToggle(page).getAttribute('aria-expanded'), 'true');

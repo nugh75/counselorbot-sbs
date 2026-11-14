@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { institutionTeacherText } from '../src/lib/i18n-institution-teachers.js';
+import { institutionTeacherText } from '../src/lib/i18n-institution-teachers.ts';
 
 const origin = process.env.INSTITUTION_TEACHERS_BASE_URL || 'http://127.0.0.1:3108';
 const languages = ['it', 'en', 'es', 'fr', 'de', 'sv'];

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { teacherAreaName, teacherAreaText } from '../src/lib/i18n-teacher-area.js';
-import { personalAreaName } from '../src/lib/i18n-personal-area.js';
+import { teacherAreaName, teacherAreaText } from '../src/lib/i18n-teacher-area.ts';
+import { personalAreaName } from '../src/lib/i18n-personal-area.ts';
 
 // S16 route seam: anonymous localhost fixtures, no backend/SSO/database.
 const origin = new URL(process.env.TEACHER_PICKER_BASE_URL || 'http://127.0.0.1:3134').origin;
@@ -59,32 +59,23 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) for (const width of [32
         const entry = f.page.getByRole('link', { name: teacherAreaName(lang, 'taccuino'), exact: true });
         assert.equal(await entry.getAttribute('href'), routePath);
         const home = f.page.locator('[data-teacher-area-home]');
-        assert.deepEqual(await home.locator('a').evaluateAll(elements => elements.map(e => e.getAttribute('href'))), [
-            routePath, '/docente/taccuini-prova', '/?start=OBIETTIVO_DOCENZA', '/docente/istituti', '/docente/classi', '/docente/assegnazioni',
-            '/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali',
-            '/docente/orientamento', '/docente/somministrazioni',
-        ], 'notebook (then practice notebooks) precedes DOCENZA and every other home destination');
+        // The sectioned home opens on the classroom and closes on the profile with the notebook.
+        const hrefs = await home.locator('a').evaluateAll(elements => elements.map(e => e.getAttribute('href')));
+        assert.equal(hrefs[0], '/docente/classi');
+        assert.equal(hrefs.at(-1), routePath, 'the notebook closes the home destinations');
+        assert.equal(hrefs.filter(h => h === routePath).length, 1);
+        assert.equal(await home.locator('[data-testid="teacher-profile-notebook-section"] a').first().getAttribute('href'), routePath);
         assert.equal(await home.locator('[tabindex]').evaluateAll(elements => elements.filter(e => e.tabIndex > 0).length), 0);
         const notebookBox = await entry.boundingBox();
-        const pathBox = await home.locator('a[href="/?start=OBIETTIVO_DOCENZA"]').boundingBox();
-        assert.ok(notebookBox && pathBox && notebookBox.y + notebookBox.height <= pathBox.y, 'notebook is visually first');
+        const tryBox = await home.locator('[data-testid="teacher-try-tools-section"]').boundingBox();
+        assert.ok(notebookBox && tryBox && notebookBox.y >= tryBox.y + tryBox.height, 'notebook follows Provare');
         assert.equal(await f.page.locator('[data-teacher-notebook], textarea[id^="teacher-notebook-"]').count(), 0);
         assert.equal(f.state.reads.filter(r => r.path === '/api/user/teacher-notebook').length, 0, 'home entry fetches no notebook');
         assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-        // Traverse the unchanged global navigation, then inspect the first
-        // home control reached through the browser's natural Tab order.
-        for (let tab = 0; tab < 40; tab++) {
-            await f.page.keyboard.press('Tab');
-            if (await home.evaluate(e => e.contains(document.activeElement))) break;
-        }
-        assert.equal(await entry.evaluate(e => e === document.activeElement), true, 'first home control reached with Tab is notebook');
+        // Natural Tab order: the previous home control leads to the notebook entry.
+        await f.page.locator(`[data-teacher-area-home] a[href="${hrefs.at(-2)}"]`).focus();
         await f.page.keyboard.press('Tab');
-        assert.equal(await home.locator('a[href="/docente/taccuini-prova"]').evaluate(e => e === document.activeElement), true, 'next Tab reaches practice notebooks');
-        await f.page.keyboard.press('Tab');
-        assert.equal(await home.locator('a[href="/?start=OBIETTIVO_DOCENZA"]').evaluate(e => e === document.activeElement), true, 'then Tab reaches DOCENZA');
-        await f.page.keyboard.press('Shift+Tab');
-        await f.page.keyboard.press('Shift+Tab');
-        assert.equal(await entry.evaluate(e => e === document.activeElement), true);
+        assert.equal(await entry.evaluate(e => e === document.activeElement), true, 'Tab reaches the notebook after the previous destination');
         await f.page.keyboard.press('Enter'); await f.ready();
         assert.equal(new URL(f.page.url()).pathname, routePath);
         const title = f.page.getByRole('heading', { level: 1, name: teacherAreaName(lang, 'taccuino'), exact: true });
@@ -122,7 +113,10 @@ for (const [name, options, allowed] of [
             assert.equal(await f.page.locator('[data-teacher-notebook]').count(), allowed ? 1 : 0);
         }
         const reads = f.state.reads.filter(r => r.path === '/api/user/teacher-notebook');
-        assert.equal(reads.length, allowed ? (process.env.TEACHER_NOTEBOOK_COMPILED === '1' ? 2 : 4) : 0, 'one component; dev StrictMode replays the effect on each load');
+        // One component per load; dev StrictMode may replay the effect, so dev reads range over 2-4.
+        if (!allowed) assert.equal(reads.length, 0);
+        else if (process.env.TEACHER_NOTEBOOK_COMPILED === '1') assert.equal(reads.length, 2);
+        else assert.ok(reads.length >= 2 && reads.length <= 4, `dev reads: ${reads.length}`);
         if (options.preview && allowed) assert.ok(reads.every(r => r.preview === options.preview));
         assert.deepEqual(f.state.writes, []);
         // Baseline 88b1b17 has the same SSR/client RolePreviewBanner mismatch
@@ -155,7 +149,6 @@ for (const exit of ['header', 'navbar', 'reload']) test(`${exit}: cancel keeps d
     try {
         await f.go('/docente');
         await f.page.getByRole('link', { name: teacherAreaName('it', 'taccuino'), exact: true }).click(); await f.ready();
-        if (exit === 'navbar') await f.page.locator('header').first().getByRole('button', { name: 'Menu', exact: true }).click();
         await f.field.fill('Bozza privata'); await f.field.focus();
         await f.field.evaluate(e => { e.setSelectionRange(2, 7); window.s16DraftNode = e; });
         const leave = async () => {
@@ -165,13 +158,18 @@ for (const exit of ['header', 'navbar', 'reload']) test(`${exit}: cancel keeps d
                 await dialog;
                 if (f.state.accept) await f.page.waitForLoadState('networkidle');
             } else {
-                const link = exit === 'header' ? f.page.locator('[data-teacher-area-header] a') : f.page.locator('header').first().getByRole('link', { name: 'Area docente', exact: true });
+                // Desktop navbar: the «Area» selector (P4) opens the panel with the area links.
+                const areaButton = f.page.locator('header').first().locator('button[aria-controls="area-panel"]');
+                if (exit === 'navbar' && await areaButton.getAttribute('aria-expanded') !== 'true') await areaButton.click();
+                const link = exit === 'header' ? f.page.locator('[data-teacher-area-header] a') : f.page.locator('#area-panel').getByRole('link', { name: 'Area docente', exact: true });
                 await link.click();
             }
         };
         await leave();
         assert.equal(new URL(f.page.url()).pathname, routePath);
-        assert.deepEqual(await f.field.evaluate(e => [e === window.s16DraftNode, e.value, e === document.activeElement, e.selectionStart, e.selectionEnd]), [true, 'Bozza privata', true, 2, 7]);
+        // The «Area» panel closes and returns focus to its selector; other exits keep it on the draft.
+        assert.deepEqual(await f.field.evaluate(e => [e === window.s16DraftNode, e.value, e === document.activeElement, e.selectionStart, e.selectionEnd]), [true, 'Bozza privata', exit !== 'navbar', 2, 7]);
+        if (exit === 'navbar') assert.equal(await f.page.locator('header').first().locator('button[aria-controls="area-panel"]').evaluate(e => e === document.activeElement), true);
         assert.equal(f.state.dialogs.length, 1); assert.deepEqual(f.state.writes, []);
         f.state.accept = true; await leave();
         if (exit === 'reload') { await f.ready(); assert.equal(await f.field.inputValue(), 'Teacher-only demo'); }
@@ -229,16 +227,17 @@ for (const groups of [['studenti'], ['docenti', 'studenti']]) test(`${groups.joi
     } finally { await f.context.close(); }
 });
 
-for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) test(`${lang}: public guide links to the dedicated notebook and enlarges its anonymous screenshot`, async () => {
+for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) test(`${lang}: public guide opens the Teacher area task and enlarges its anonymous screenshot`, async () => {
     const f = await fixture({ lang, width: 320 });
     try {
-        await f.go('/guide?audience=teacher');
-        const section = f.page.locator('#guide-teacher-section-1');
-        assert.equal(await section.locator('a[href="/docente"]').count(), 1, 'generic Teacher area entry remains');
-        const link = section.getByRole('link', { name: teacherAreaName(lang, 'taccuino'), exact: true });
-        assert.equal(await link.getAttribute('href'), routePath);
-        assert.ok((await section.innerText()).includes(routePath));
-        const figure = section.locator('figure').filter({ has: f.page.getByRole('img', { name: teacherAreaName(lang, 'taccuino'), exact: true }) });
+        // The task-based guide maps the old teacher section 1 to the Teacher area task,
+        // which explains the notebook and opens the Teacher area.
+        await f.go('/guide#guide-teacher-section-1');
+        const section = f.page.locator('#guide-task-teacher-home');
+        await section.waitFor();
+        const link = section.locator('a[href="/docente"]');
+        assert.equal(await link.count(), 1, 'generic Teacher area entry remains');
+        const figure = section.locator('figure');
         // The screenshot is lazy: decode() waits until it is near the viewport.
         await figure.scrollIntoViewIfNeeded();
         await figure.locator('img').evaluate(e => e.decode());
@@ -248,7 +247,8 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) test(`${lang}: public g
         await f.page.keyboard.press('Escape'); assert.equal(await zoom.count(), 0);
         assert.equal(await enlarge.evaluate(e => e === document.activeElement), true);
         assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-        await link.click(); await f.ready();
+        await link.click(); await f.page.waitForURL(`${origin}/docente`);
+        await f.page.locator('[data-testid="teacher-classroom-section"]').waitFor();
         assert.deepEqual(f.state.writes, []); assert.deepEqual(f.state.errors, []);
     } finally { await f.context.close(); }
 });

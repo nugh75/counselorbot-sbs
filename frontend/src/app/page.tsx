@@ -247,6 +247,9 @@ function HomeFlow() {
     // I link consumati dalla chat tolgono la query con replaceState; il ref
     // conserva quel valore per distinguere il consumo da un nuovo ingresso.
     const entryQuery = useRef<string | null>(null);
+    // The query just consumed, ignored until the URL change reaches useSearchParams:
+    // a re-render in between would otherwise handle the same link twice (double toast).
+    const consumedQuery = useRef<string | null>(null);
 
     // Apre la chat con la modalità già scelta in passato; Idea fa eccezione,
     // perché mappa grafica e chat libera devono restare una scelta esplicita.
@@ -353,6 +356,8 @@ function HomeFlow() {
     }, [identity, lang, returnToStudentArea, router, savedResults, startAgentOnlyQuestionnaire, t]);
 
     useEffect(() => {
+        if (consumedQuery.current === query) return;
+        consumedQuery.current = null;
         if (!identity?.authenticated || entryQuery.current === query) return;
         entryQuery.current = query;
         const params = new URLSearchParams(query);
@@ -377,6 +382,7 @@ function HomeFlow() {
         }
 
         const consumeEntry = () => {
+            consumedQuery.current = query;
             entryQuery.current = '';
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
         };

@@ -199,7 +199,7 @@ test('la home docente porta alla pagina e la pagina regge 390 px in inglese', as
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const { errors } = await prepare(page, { lang: 'en' });
     await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
-    assert.equal(await page.getByRole('link', { name: 'Practice students’ chats and results' }).getAttribute('href'), '/docente/taccuini-prova');
+    assert.equal(await page.getByRole('link', { name: 'Practice gym: imaginary students' }).getAttribute('href'), '/docente/taccuini-prova');
     await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
     await page.getByRole('heading', { level: 1, name: 'Practice notebooks' }).waitFor();
     await page.getByRole('button', { name: 'New test student' }).waitFor();
@@ -469,6 +469,7 @@ test('il repertorio: profilo generato e ritoccato, poi eliminato', async () => {
     // La bozza personale della compilazione non viene toccata.
     assert.equal(await page.evaluate(() => Object.keys(localStorage).filter(k => k.includes('score')).length), 0);
     await repertoire.locator('[data-practice-result]').first().getByRole('button', { name: 'Elimina' }).click();
+    await repertoire.getByRole('group', { name: 'Eliminare questo profilo dal repertorio?' }).getByRole('button').first().click();
     await repertoire.getByText('Nessun profilo ancora.').waitFor();
     assert.equal(store.results.length, 0);
     assert.deepEqual(errors, []);

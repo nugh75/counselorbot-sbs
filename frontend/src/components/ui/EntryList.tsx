@@ -14,7 +14,7 @@ export function EntrySection({ id, title, subtitle, testId, children }: {
             {subtitle
                 ? <div className="border-b border-line pb-2">{heading}<p className="mt-1 text-xs text-ink-muted">{subtitle}</p></div>
                 : heading}
-            <nav aria-labelledby={id} className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">{children}</nav>
+            <nav aria-labelledby={id} className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 md:grid-cols-2">{children}</nav>
         </section>
     );
 }
@@ -29,7 +29,7 @@ export function EntryLink({ idPrefix, id, href, image, illustration, name, descr
     const content = <>
         {illustration ?? (image && <Image src={image} alt="" width={72} height={72} sizes="(min-width: 768px) 72px, 64px" className="h-16 w-16 shrink-0 rounded-control object-contain md:h-18 md:w-18" />)}
         <span className="min-w-0 flex-1 break-words">
-            <span id={`${idPrefix}-link-${id}`} className="flex items-center gap-2 font-semibold text-ink group-hover:text-link">
+            <span id={`${idPrefix}-link-${id}`} className="flex flex-wrap items-center gap-2 font-semibold text-ink group-hover:text-link">
                 <span>{name}</span>
                 {badge}
             </span>

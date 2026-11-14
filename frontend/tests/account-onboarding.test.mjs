@@ -123,6 +123,8 @@ async function firstUseAndReopen({ locale = 'it', width = 1440, ...options } = {
         // From 1024px accounts with more than one area open the «Area» selector (P4).
         else if (await page.locator('button[aria-controls="area-panel"]').count()) await page.locator('button[aria-controls="area-panel"]').click();
         await page.locator('header').getByRole('link', { name: copy.area, exact: true }).filter({ visible: true }).click();
+        // Let the area navigation commit before following its notebook link.
+        await page.waitForURL(`${origin}/profilo`);
         await page.locator('[data-personal-area-home]').getByRole('link', { name: copy.notebook, exact: true }).click();
         await page.waitForURL(`${origin}/profilo/taccuino`);
         await page.getByText('Studio sintetico primo uso', { exact: true }).waitFor();
@@ -182,7 +184,9 @@ for (const width of [390, 1440]) {
             await page.getByRole('heading', { name: 'Da dove vuoi cominciare?', exact: true }).waitFor();
             assert.deepEqual(prefs, ready());
             await page.getByRole('button', { name: 'Esplora attività e percorsi', exact: true }).click();
-            await page.getByRole('button', { name: 'Analizza i risultati', exact: true }).first().click();
+            // The catalog lists tool pages; the tool page offers the results analysis.
+            await page.locator('#tools-assessment a[href="/strumenti/QSA"]').click();
+            await page.getByRole('link', { name: 'Analizza i risultati', exact: true }).click();
             await page.getByText('Inserimento Manuale', { exact: true }).waitFor();
             assert.equal(await page.getByRole('button', { name: 'È ancora così', exact: true }).count(), 0);
             await page.goto(`${origin}/counselor`);
@@ -411,8 +415,9 @@ for (const width of [390, 1440]) {
             await page.getByRole('link', { name: 'Analizza i risultati', exact: true }).click();
             await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).waitFor();
             await page.getByRole('button', { name: 'Indietro', exact: true }).click();
-            await page.locator('#profile-instrument-catalog').waitFor();
-            await page.locator('#tools-assessment a[href="/strumenti/QSA"]').waitFor();
+            // Back returns to the tool page the analysis was opened from.
+            await page.waitForURL(`${origin}/strumenti/QSA`);
+            await page.getByRole('link', { name: 'Analizza i risultati', exact: true }).waitFor();
             assert.equal(prefs.counselor_id, 1);
             assert.equal(await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).count(), 0);
         } finally { await context.close(); }
