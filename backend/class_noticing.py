@@ -1,7 +1,7 @@
-"""Noticing di classe (#464): temi e suggerimenti dai quadri delle singole compilazioni.
+"""Noticing di classe (#464, #890): temi e suggerimenti dal Noticing dell'intero percorso.
 
-Il modello raggruppa soltanto elementi gia' verificati sulle parole dello
-studente (#247): non legge le chat e non puo' introdurre citazioni nuove.
+Il modello raggruppa soltanto elementi gia' verificati per ogni studente
+(`student_noticing`): non legge le fonti e non puo' introdurre citazioni nuove.
 Conteggi e grafici sono calcolati qui, non dal modello.
 """
 import hashlib
@@ -11,11 +11,13 @@ from datetime import UTC, datetime, timedelta, timezone
 
 from . import models
 from .ai_service import AIService
-from .teacher_noticing import KINDS, ask_json, noticing
+from .class_council import _members
+from .student_noticing import iso_time, student_noticing
+from .teacher_noticing import KINDS, ask_json
 from .test_accounts import real_membership
 
 CLASS_NOTICING_ACTION = "class_noticing"
-CLASS_NOTICING_PROMPT_VERSION = 1
+CLASS_NOTICING_PROMPT_VERSION = 2
 MAX_THEMES = 6
 MAX_SUGGESTIONS = 4
 
@@ -54,7 +56,7 @@ def _prompt(items: list[dict], lang_name: str) -> str:
     return f"""
 Write in {lang_name}.
 
-Noticing notes from the counseling chats of one class. Each note has an id, a kind and a sentence:
+Noticing notes from the whole student journeys of one class. Each note has an id, a kind and a sentence:
 {notes}
 
 1. Group the notes into at most {MAX_THEMES} themes shared across the class. A theme has a short
@@ -79,11 +81,10 @@ def _filters(instrument, days) -> dict:
 
 
 def _latest(db, group_id: int, lang: str, filters: dict):
-    rows = (db.query(models.Log)
-            .filter(models.Log.action == CLASS_NOTICING_ACTION, models.Log.session_id == _session_key(group_id))
-            .order_by(models.Log.id.desc()).all())
-    return next((row for row in rows if (row.details or {}).get("language") == lang
-                 and (row.details or {}).get("filters") == filters), None)
+    rows = (db.query(models.TeacherNoticingArtifact)
+            .filter_by(kind=CLASS_NOTICING_ACTION, scope_key=_session_key(group_id), language=lang)
+            .order_by(models.TeacherNoticingArtifact.id.desc()).all())
+    return next((row for row in rows if (row.payload or {}).get("filters") == filters), None)
 
 
 def _themes(raw: list, items_by_id: dict[str, dict]) -> list[dict]:
@@ -99,9 +100,8 @@ def _themes(raw: list, items_by_id: dict[str, dict]) -> list[dict]:
         students = []
         for note in notes:
             ref = note["evidence"][0]
-            students.append({"username": note["username"], "result_id": note["result_id"],
-                             "questionnaire_type": note["questionnaire_type"], "text": note["text"],
-                             "quote": ref["quote"], "message": ref["message"]})
+            students.append({"username": note["username"], "text": note["text"],
+                             "source": ref, "quote": ref["quote"]})
         themes.append({
             "title": title,
             "kind": Counter(note["kind"] for note in notes).most_common(1)[0][0],
@@ -118,49 +118,52 @@ def class_noticing(db, group, lang: str, *, instrument: str | None = None, days:
 
     lang = _pdf_language(lang)
     filters = _filters(instrument, days)
-    compilations, items = [], []
-    for result in class_results(db, group, instrument, days):
-        state = noticing(db, result, lang)
-        compilations.append({
-            "id": result.id, "username": result.username, "session_id": result.session_id,
-            "questionnaire_type": result.questionnaire_type, "scores": result.scores,
-            "submitted_at": result.submitted_at.isoformat() if result.submitted_at else None,
-            "status": state["status"],
-        })
-        for index, item in enumerate(state["items"]):
-            items.append({"id": f"{result.id}-{index}", "username": result.username, "result_id": result.id,
-                          "questionnaire_type": result.questionnaire_type, **item})
-    students_with_chat = {c["username"] for c in compilations if c["status"] != "empty"}
+    members = _members(db, group.id)
+    students, items = [], []
+    for member in members:
+        state = student_noticing(db, group, member, lang, instrument=instrument, days=days)
+        students.append(state)
+        items.extend({**item, "id": f"{member}:{item['id']}", "username": member} for item in state["items"])
     charts = {
         "kinds": {kind: len({i["username"] for i in items if i["kind"] == kind}) for kind in KINDS},
-        "students": len({c["username"] for c in compilations}),
-        "students_with_chat": len(students_with_chat),
+        "students": len(members),
+        "students_with_sources": sum(s["source_count"] > 0 for s in students),
     }
-    instruments = sorted({r.questionnaire_type for r in class_results(db, group, None, None)})
-    base = {"compilations": compilations, "instruments": instruments, "charts": charts, "themes": [], "suggestions": [], "generated_at": None}
-    if not items:
+    inventory = students if not instrument and not days else [student_noticing(db, group, m, lang) for m in members]
+    instruments = sorted({tool for state in inventory for tool in state["instruments"] if tool})
+    base = {"students": students, "instruments": instruments, "charts": charts, "themes": [], "suggestions": [], "generated_at": None}
+    if not charts["students_with_sources"]:
         return {**base, "status": "empty"}
-    fingerprint = _fingerprint(items, lang)
+    if generate and any(s["pending_chunks"] for s in students):
+        from fastapi import HTTPException
+        raise HTTPException(409, "noticing_analysis_incomplete")
+    fingerprint = _fingerprint(items, lang) + ":" + ":".join(s["fingerprint"] for s in students)
     items_by_id = {item["id"]: item for item in items}
     if generate:
-        data = ask_json(AIService(db, username=username), _prompt(items, _PDF_SUMMARY_LANG_NAME[lang]),
-                        _SYSTEM_PROMPT, f"Class noticing for group {group.id}", max_tokens=2500)
-        if data is None:
-            return {**base, "status": "unavailable"}
-        db.add(models.Log(session_id=_session_key(group.id), username=username, action=CLASS_NOTICING_ACTION,
-                          details={"language": lang, "filters": filters, "fingerprint": fingerprint,
-                                   "themes": data.get("themes") if isinstance(data.get("themes"), list) else [],
-                                   "suggestions": data.get("suggestions") if isinstance(data.get("suggestions"), list) else []}))
+        data = {"themes": [], "suggestions": []}
+        # Every verified note is grouped, in bounded batches, before the
+        # displayed themes are selected: long journeys are not clipped.
+        for offset in range(0, max(1, len(items)), 60):
+            part = ask_json(AIService(db, username=username), _prompt(items[offset:offset + 60], _PDF_SUMMARY_LANG_NAME[lang]),
+                            _SYSTEM_PROMPT, f"Class noticing for group {group.id}", max_tokens=2500)
+            if part is None or not isinstance(part.get("themes"), list) or not isinstance(part.get("suggestions"), list):
+                return {**base, "status": "unavailable"}
+            data["themes"].extend(part["themes"])
+            data["suggestions"].extend(part["suggestions"])
+        db.add(models.TeacherNoticingArtifact(
+            scope_key=_session_key(group.id), group_id=group.id, author_username=username,
+            kind=CLASS_NOTICING_ACTION, language=lang,
+            payload={"filters": filters, "fingerprint": fingerprint, **data}))
         db.commit()
     row = _latest(db, group.id, lang, filters)
     if row is None:
         return {**base, "status": "missing"}
-    details = row.details or {}
+    details = row.payload or {}
     return {
         **base,
         "status": "ready" if details.get("fingerprint") == fingerprint else "stale",
         # Ricalcolati a ogni lettura: gli elementi spariti non restano nei temi.
         "themes": _themes(details.get("themes"), items_by_id),
         "suggestions": [str(s).strip() for s in details.get("suggestions") or [] if str(s).strip()][:MAX_SUGGESTIONS],
-        "generated_at": row.timestamp.isoformat() if row.timestamp else None,
+        "generated_at": iso_time(row.created_at),
     }

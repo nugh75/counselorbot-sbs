@@ -99,7 +99,9 @@ def test_forum_import_graph_has_no_ai_rag_context_or_export_path():
 
 def test_no_non_forum_consumer_can_read_forum_models_or_tables():
     violations = []
-    allowed = {"models.py", "forum_schemas.py", "routes/forum.py"}
+    # Product decision 2026-10-24 (#890): the student's own published contributions
+    # may enter teacher-requested whole-journey noticing, through this one scoped reader.
+    allowed = {"models.py", "forum_schemas.py", "routes/forum.py", "noticing_sources.py"}
     for path in ROOT.rglob('*.py'):
         relative = path.relative_to(ROOT)
         if relative.parts[0] in {'tests', '.venv'} or str(relative) in allowed:
