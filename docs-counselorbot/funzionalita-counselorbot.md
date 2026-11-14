@@ -359,6 +359,13 @@ piatta), le sezioni del modulo divise da filetti invece che da riquadri annidati
 codice, note e link/QR senza box colorati. Campi, badge di stato e avvisi restano
 invariati; nessun cambio di comportamento.
 
+**Orientamento del docente e Catalogo obiettivi piatti (#870).** `/docente/orientamento`
+e `/docente/catalogo-obiettivi` seguono l'aspetto piatto: categorie, contenuti e proposte
+del catalogo sono righe separate da filetti (non più riquadri), i moduli di modifica e
+di assegnazione non hanno bordo né sfondo, e il catalogo usa la `Card` piatta. Menu di
+azione, campi e avvisi (come quello di errore) mantengono i loro riquadri; nessun cambio
+di comportamento.
+
 **Studiare da un PDF senza schede annidate (#874).** `/profilo/pqbl` usa solo la
 `Card` piatta: impostazione, generazione, introduzione, domande, riepilogo, test finale
 e risultati sono sezioni separate da un filetto. Nel riepilogo i tre numeri sono cifre
