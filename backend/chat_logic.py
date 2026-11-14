@@ -3356,7 +3356,8 @@ def build_context_envelope(
     # riduzioni dei livelli di contesto che accorciano [PROFILE].
     if simulation_block and not any("[SIMULATION]" in p for p in parts_system):
         parts_system.append("[SIMULATION]\n" + simulation_block)
-    if profile_block and not any("[PROFILE]" in p for p in parts_system):
+    # startswith: the [SIMULATION] notice names [PROFILE] in its text.
+    if profile_block and not any(p.startswith("[PROFILE]") for p in parts_system):
         parts_system.append("[PROFILE]\n" + profile_block)
     if class_context and not any("[CONTESTO CLASSE]" in p for p in parts_system):
         parts_system.append("[CONTESTO CLASSE]\n" + class_context)
