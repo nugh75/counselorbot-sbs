@@ -328,7 +328,8 @@ reindirizzamento permanente, così il ruolo viene risolto a ogni visita. La
 La presentazione offre quattro ingressi illustrati: **Bussola**, **Analisi
 questionari**, **Percorsi guidati**, **Area studente e strumenti**. La Bussola
 consiglia da quale strumento partire e non somministra questionari né produce
-punteggi.
+punteggi. Nell'Area studente la Bussola è una riga piatta come le altre voci del
+catalogo (senza riquadro), come il collegamento «Cambiamenti» in Il mio profilo.
 Subito sotto,
 un riquadro illustrato in evidenza, **Dicci com’è andata**, apre il **Questionario di
 gradimento** (`/questionario`), tradotto nelle sei lingue; chi non ha ancora
