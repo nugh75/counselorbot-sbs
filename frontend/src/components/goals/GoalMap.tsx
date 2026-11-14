@@ -26,7 +26,7 @@ const GoalNode = memo(function GoalNode({ data }: NodeProps<Node<GoalNodeData>>)
 const nodeTypes = { goal: GoalNode };
 
 /** Desktop-only reading view: structure changes stay in the dialog, never by dragging. */
-export function GoalMap({ goals, all, onOpen }: { goals: PersonalGoal[]; all: PersonalGoal[]; onOpen: (id: number) => void }) {
+export function GoalMap({ goals, all, onOpen, showProgress = true }: { goals: PersonalGoal[]; all: PersonalGoal[]; onOpen: (id: number) => void; showProgress?: boolean }) {
     const { lang } = useI18n(); const l = (key: GoalTextKey) => goalText(lang, key);
     const { nodes, edges } = useMemo(() => {
         const ids = new Set(goals.map(goal => goal.id));
@@ -40,12 +40,12 @@ export function GoalMap({ goals, all, onOpen }: { goals: PersonalGoal[]; all: Pe
         Dagre.layout(layout);
         const nodes: Node<GoalNodeData>[] = goals.map(goal => {
             const at = layout.node(String(goal.id)); const { done, total } = progress(all, goal.id);
-            const detail = [l(goal.status as GoalTextKey), goal.review_date, total ? `${done}/${total}` : ''].filter(Boolean).join(' · ');
+            const detail = [l(goal.status as GoalTextKey), goal.review_date, showProgress && total ? `${done}/${total}` : ''].filter(Boolean).join(' · ');
             return { id: String(goal.id), type: 'goal', position: { x: at.x - WIDTH / 2, y: at.y - HEIGHT / 2 }, data: { goal, detail, shared: effectiveShares(all, goal.id).size > 0, onOpen } };
         });
         return { nodes, edges };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- l depends only on lang
-    }, [goals, all, lang, onOpen]);
+    }, [goals, all, lang, onOpen, showProgress]);
     return <section aria-label={l('mapLabel')} className="hidden h-[70vh] overflow-hidden rounded-card border border-line bg-surface-sunken lg:block">
         <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.2 }}
             nodesDraggable={false} nodesConnectable={false} nodesFocusable={false} edgesFocusable={false} proOptions={{ hideAttribution: true }}>

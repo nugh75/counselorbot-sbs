@@ -7,10 +7,10 @@ import { goalFormat, goalText, type GoalTextKey } from '@/lib/i18n-goals';
 import type { GoalGroup, PersonalGoal } from '@/lib/goals';
 import { effectiveShares, progress, type TreeNode } from '@/lib/goal-network';
 
-type Props = { goals: PersonalGoal[]; forest: TreeNode[]; groups: GoalGroup[]; onOpen: (id: number) => void; onAddChild: (id: number) => void };
+type Props = { goals: PersonalGoal[]; forest: TreeNode[]; groups: GoalGroup[]; onOpen: (id: number) => void; onAddChild: (id: number) => void; canAddChild?: (id: number) => boolean; showProgress?: boolean };
 
 /** Nested disclosure lists: later occurrences of a multi-parent goal start collapsed. */
-export function GoalTree({ goals, forest, groups, onOpen, onAddChild }: Props) {
+export function GoalTree({ goals, forest, groups, onOpen, onAddChild, canAddChild = () => true, showProgress = true }: Props) {
     const { lang } = useI18n(); const l = (key: GoalTextKey) => goalText(lang, key);
     const [flipped, setFlipped] = useState<Set<string>>(new Set());
     const flip = (key: string) => setFlipped(previous => { const next = new Set(previous); if (!next.delete(key)) next.add(key); return next; });
@@ -24,9 +24,9 @@ export function GoalTree({ goals, forest, groups, onOpen, onAddChild }: Props) {
                     ? <button type="button" aria-expanded={open} aria-label={`${l(open ? 'collapse' : 'expand')} ${goal.title}`} onClick={() => flip(node.key)} className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control hover:bg-surface-raised">{open ? <ChevronDown className="h-5 w-5" aria-hidden /> : <ChevronRight className="h-5 w-5" aria-hidden />}</button>
                     : <span className="w-control shrink-0" aria-hidden />}
                 <button type="button" onClick={() => onOpen(goal.id)} className="min-h-control min-w-0 flex-1 break-words text-left font-semibold hover:underline">{goal.title}</button>
-                <span className="text-sm text-ink-muted">{l(goal.status as GoalTextKey)}{goal.review_date && ` · ${l('reviewDate')}: ${goal.review_date}`}{total > 0 && ` · ${done}/${total} ${l('subgoalsDone')}`}</span>
+                <span className="text-sm text-ink-muted">{l(goal.status as GoalTextKey)}{goal.review_date && ` · ${l('reviewDate')}: ${goal.review_date}`}{showProgress && total > 0 && ` · ${done}/${total} ${l('subgoalsDone')}`}</span>
                 {shares.length > 0 && <span className="inline-flex items-center gap-1 text-sm text-ink-muted"><Users className="h-4 w-4" aria-hidden /><span className="sr-only">{l('share')}:</span>{shares.join(', ')}</span>}
-                <Button type="button" variant="ghost" aria-label={`${l('addSubgoal')}: ${goal.title}`} onClick={() => onAddChild(goal.id)}><Plus className="h-5 w-5" aria-hidden /></Button>
+                {canAddChild(goal.id) && <Button type="button" variant="ghost" aria-label={`${l('addSubgoal')}: ${goal.title}`} onClick={() => onAddChild(goal.id)}><Plus className="h-5 w-5" aria-hidden /></Button>}
                 {node.otherParents.length > 0 && <p className="flex basis-full items-center gap-1 pl-13 text-xs text-ink-muted"><Link2 className="h-3 w-3 shrink-0" aria-hidden />{l('alsoUnder')}: {node.otherParents.map(parent => parent.title).join(', ')}</p>}
                 {node.depth >= 4 && <p className="flex basis-full items-center gap-1 pl-13 text-xs text-ink-muted"><CornerDownRight className="h-3 w-3 shrink-0" aria-hidden />{goalFormat(lang, 'level', { n: node.depth + 1 })}</p>}
             </div>
