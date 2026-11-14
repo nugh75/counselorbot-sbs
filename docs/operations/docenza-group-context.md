@@ -20,7 +20,8 @@ snapshot congelato è JSON e i vecchi snapshot restano leggibili.
 | Privacy | Descrizione e metodologie della classe sono dati contestuali, non istruzioni né prove di difficoltà o prestazioni. `TeacherNote` non entra mai. Lo studente riceve `[CONTESTO CLASSE]` solo dalle proprie classi attive con `context_visible_to_students`. | `teacher_context.py` |
 
 Fuori ambito qui: prompt, focus e progressione essenziale della chat Obiettivi
-(blocco successivo); salvataggio dei destinatari nel catalogo (#904).
+(blocco successivo). Il salvataggio dei destinatari nel catalogo (#904) copia lo snapshot in
+`goal_catalog_targets` al momento del salvataggio (`routes/goals.py`, `session_targets`).
 
 ## Verifica
 
