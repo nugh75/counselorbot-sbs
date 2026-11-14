@@ -267,7 +267,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             {reflections.length > 0 && (
                 <div className="space-y-2 border-t border-line pt-4">
                     {reflections.slice(0, 3).map((reflection) => (
-                        <div key={reflection.id} className="rounded-control bg-surface-sunken p-4 text-sm text-ink-muted">
+                        <div key={reflection.id} className="border-b border-line pb-3 text-sm text-ink-muted last:border-0">
                             <div className="text-[11px] font-semibold text-ink-muted">
                                 {new Date(reflection.created_at).toLocaleDateString(lang)}
                             </div>
@@ -280,7 +280,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
     );
 
     return (
-        <Card as="section" className="p-6 space-y-4">
+        <Card as="section" variant="flat" className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <h2 className="text-lg font-semibold text-ink">
@@ -301,7 +301,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             {loading ? (
                 <div className="text-sm text-ink-muted">{t('profileChanges.loading')}</div>
             ) : !current ? (
-                <div className="rounded-lg border border-dashed border-line bg-surface p-4 text-sm text-ink-muted">
+                <div className="text-sm text-ink-muted">
                     {t('profileChanges.profileEmpty')}
                 </div>
             ) : (
@@ -324,13 +324,13 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                     </label>
 
                     {!previous ? (
-                        <div className="rounded-lg border border-line bg-surface p-4 text-sm text-ink-muted">
+                        <div className="text-sm text-ink-muted">
                             {t('profileChanges.firstRevision')}
                         </div>
                     ) : changes.length ? (
-                        <div className="space-y-2">
+                        <div className="divide-y divide-line">
                             {changes.map((change) => (
-                                <div key={change.key} className="rounded-lg border border-line bg-surface p-4 text-sm">
+                                <div key={change.key} className="py-3 text-sm">
                                     <div className="font-semibold text-ink">{change.label}</div>
                                     <div className="mt-1 space-y-1 text-xs text-ink-muted">
                                         <div><span className="font-semibold text-ink-muted">{t('profileChanges.before')}:</span> {change.before || '-'}</div>
@@ -340,7 +340,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                             ))}
                         </div>
                     ) : (
-                        <div className="rounded-lg border border-line bg-surface p-4 text-sm text-ink-muted">
+                        <div className="text-sm text-ink-muted">
                             {t('profileChanges.noTextChanges')}
                         </div>
                     )}
@@ -350,7 +350,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             )}
 
             {assistantOpen && (
-                <div className="rounded-card border border-brand-line bg-surface p-4 space-y-4">
+                <div className="space-y-4 border-t border-line pt-4">
                     <div className="flex items-center gap-2 text-sm font-semibold text-ink">
                         {t('profileChanges.assistantTitle')}
                     </div>

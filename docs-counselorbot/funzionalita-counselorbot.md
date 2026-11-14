@@ -359,6 +359,11 @@ piatta), le sezioni del modulo divise da filetti invece che da riquadri annidati
 codice, note e link/QR senza box colorati. Campi, badge di stato e avvisi restano
 invariati; nessun cambio di comportamento.
 
+**Forum e Cambiamenti piatti (#876).** Il forum di classe (elenco argomenti, discussione,
+registro, coda di moderazione) e `/profilo/cambiamenti` usano la `Card` piatta: sezioni
+separate da filetti, nessun riquadro dentro un riquadro (modifiche, riflessioni e assistente
+senza box). Compositore, campi, finestre e avvisi restano invariati; nessun cambio di comportamento.
+
 **Flashcard e strumenti visivi piatti (#875).** `/profilo/flashcard` mostra mazzi ed
 editor delle carte come `Card` piatte separate da filetti, senza riquadri con ombra;
 «Aggiungi carta», il riepilogo di fine sessione e l'elenco vuoto non sono più box.
