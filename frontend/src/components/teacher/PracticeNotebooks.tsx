@@ -34,6 +34,7 @@ import {
 } from '@/lib/practice-notebooks';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { TargetedGoals } from '@/components/goals/TargetedGoals';
 import { PracticeChats } from './PracticeChats';
 import { PracticeNotebookSummary } from './PracticeNotebookSummary';
 import { PracticeRepertoire } from './PracticeRepertoire';
@@ -329,6 +330,7 @@ export function PracticeNotebooks({ notebookId, newProfileType }: { notebookId?:
                             onClick={() => openDraft({ id: notebook.id, title: notebook.title, values: { ...notebook.data }, groupIds: [] })}>{l('edit')}</button>
                     </>}
                 </section>
+                <TargetedGoals target={{ practiceNotebookId: notebook.id }} />
                 {!isArchived && <section>
                     {classSelection(notebook.group_ids, (groupId, linked) => void saveClass(notebook.id, groupId, linked), notebook.id)}
                 </section>}

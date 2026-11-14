@@ -3248,7 +3248,7 @@ def build_context_envelope(
 
     # --- [PROFILE] modello discente (auto-dichiarato) + PUNTEGGI (riferimento) ---
     username_for_context = identity.get("username", "") if identity else ""
-    from .goals import goals_context
+    from .goals import goals_context, practice_goals_context
     # Quale taccuino entra nel contesto: la scelta del docente (notebook_context
     # nella richiesta) vale solo se ha davvero il ruolo docente, riverificato
     # qui a ogni turno con lo stesso guard dell'API del taccuino (
@@ -3341,9 +3341,14 @@ def build_context_envelope(
     if is_practice_notebook:
         # Studente simulato: il suo taccuino al posto di quello reale, i
         # punteggi della sessione restano (sono quelli che il docente usa
-        # per la prova). Niente portfolio, obiettivi o classi del docente.
+        # per la prova). Niente portfolio, obiettivi o classi del docente; gli
+        # obiettivi del catalogo destinati a questo studente di prova si' (#905).
         profile_block = "\n\n".join(
-            s for s in (practice_notebook_context(practice_notebook) if include_profile else "", system_prompt_scores) if s
+            s for s in (
+                practice_notebook_context(practice_notebook) if include_profile else "",
+                practice_goals_context(db, practice_notebook) if include_profile else "",
+                system_prompt_scores,
+            ) if s
         )
     simulation_block = simulation_notice(language) if is_practice_notebook else ""
     if components is not None:
@@ -3356,7 +3361,8 @@ def build_context_envelope(
     # riduzioni dei livelli di contesto che accorciano [PROFILE].
     if simulation_block and not any("[SIMULATION]" in p for p in parts_system):
         parts_system.append("[SIMULATION]\n" + simulation_block)
-    if profile_block and not any("[PROFILE]" in p for p in parts_system):
+    # startswith: the [SIMULATION] notice names [PROFILE] in its text.
+    if profile_block and not any(p.startswith("[PROFILE]") for p in parts_system):
         parts_system.append("[PROFILE]\n" + profile_block)
     if class_context and not any("[CONTESTO CLASSE]" in p for p in parts_system):
         parts_system.append("[CONTESTO CLASSE]\n" + class_context)
