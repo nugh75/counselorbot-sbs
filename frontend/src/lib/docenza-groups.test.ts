@@ -54,3 +54,44 @@ test('the guided chat wires the session selection and the effective notebook', (
     assert.match(bar, /'\/api\/admin\/groups\?own=true'/);
     assert.match(bar, /docenzaClassesInContext\(notebookContext\)/);
 });
+
+// #903: destinatari scelti prima della chat docenza.
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { hasDocenzaTarget, initialDocenzaTargets, toggleDocenzaStudent } from './docenza-groups.ts';
+
+const storedTargets = () => ({ students: [{ group_id: 4, username: 'anna' }], practiceIds: [9] });
+
+test('a new docenza chat takes the targets just picked, a resumed one its own', () => {
+    assert.deepEqual(initialDocenzaTargets(null, 'new', storedTargets), storedTargets());
+    assert.deepEqual(initialDocenzaTargets({ session_id: 'a', target_students: [{ group_id: 7, username: 'bruno' }], target_practice_notebook_ids: [] }, 'a', storedTargets),
+        { students: [{ group_id: 7, username: 'bruno' }], practiceIds: [] });
+    // Snapshot precedente ai destinatari: nessuno, mai quelli del browser.
+    assert.deepEqual(initialDocenzaTargets({ session_id: 'a' }, 'a', storedTargets), { students: [], practiceIds: [] });
+    assert.deepEqual(initialDocenzaTargets({ session_id: 'b' }, 'a', storedTargets), storedTargets());
+});
+
+test('the goal needs at least one class, student or test student', () => {
+    const none = { students: [], practiceIds: [] };
+    assert.equal(hasDocenzaTarget([], none), false);
+    assert.equal(hasDocenzaTarget([3], none), true);
+    assert.equal(hasDocenzaTarget([], { ...none, practiceIds: [9] }), true);
+    assert.equal(hasDocenzaTarget([], { ...none, students: [{ group_id: 4, username: 'anna' }] }), true);
+});
+
+test('a student is toggled per class, the same name in another class stays apart', () => {
+    const one = toggleDocenzaStudent([], { group_id: 4, username: 'anna' });
+    const two = toggleDocenzaStudent(one, { group_id: 5, username: 'anna' });
+    assert.deepEqual(two, [{ group_id: 4, username: 'anna' }, { group_id: 5, username: 'anna' }]);
+    assert.deepEqual(toggleDocenzaStudent(two, { group_id: 4, username: 'anna' }), [{ group_id: 5, username: 'anna' }]);
+});
+
+test('docenza starts from the target picker, never offers a test student and saves the targets', () => {
+    const page = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
+    assert.match(page, /selectedQuestionnaire\?\.id === 'OBIETTIVO_DOCENZA' && \(\s*<DocenzaTargetPicker/);
+    assert.match(page, /selectedQuestionnaire\.id !== 'OBIETTIVO_DOCENZA' && \(\s*<InputMethodSelector/);
+    const chat = readFileSync(new URL('../components/qsa/GuidedChatInterface.tsx', import.meta.url), 'utf8');
+    assert.match(chat, /DOCENZA_NOTEBOOK_OPTIONS: NotebookContextChoice\[\] = \['default', 'student', 'teacher', 'none'\]/);
+    assert.match(chat, /options=\{isDocenza \? DOCENZA_NOTEBOOK_OPTIONS : undefined\}/);
+    assert.match(chat, /target_students: isDocenza \? docenzaTargets\.students : undefined/);
+    assert.match(chat, /target_practice_notebook_ids: isDocenza \? docenzaTargets\.practiceIds : undefined/);
+});

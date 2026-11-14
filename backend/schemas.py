@@ -882,6 +882,12 @@ def normalize_practice_group_ids(value: Any) -> List[int]:
     return ids
 
 
+class GoalTargetStudent(BaseModel):
+    """Uno studente di una classe del docente, destinatario di un obiettivo docenza."""
+    group_id: int = Field(gt=0)
+    username: str = Field(min_length=1, max_length=255)
+
+
 class PracticeNotebookCreate(BaseModel):
     title: str = Field(min_length=1, max_length=PRACTICE_NOTEBOOK_TITLE_MAX_CHARS)
     data: Dict[str, str] = Field(default_factory=dict)
@@ -1250,6 +1256,11 @@ class FrozenSessionCreate(BaseModel):
     # Chat docenza: classi scelte per questa sessione. Solo id, mai un
     # permesso: il server li riverifica a ogni turno.
     group_ids: List[int] = Field(default_factory=list)
+    # Chat docenza: per chi e' l'obiettivo, scelto prima della chat (#903).
+    # Studenti delle classi del docente e suoi studenti di prova; il salvataggio
+    # (dopo ogni turno) tiene solo quelli che il docente puo' ancora vedere.
+    target_students: List[GoalTargetStudent] = Field(default_factory=list, max_length=200)
+    target_practice_notebook_ids: List[int] = Field(default_factory=list)
     label: Optional[str] = Field(default=None, max_length=200)
     pdf_token: Optional[str] = None
 
@@ -1273,7 +1284,7 @@ class FrozenSessionCreate(BaseModel):
     def _known_notebook_context(cls, v):
         return v if v in ("student", "teacher", "practice", "none") else None
 
-    @validator("group_ids", pre=True)
+    @validator("group_ids", "target_practice_notebook_ids", pre=True)
     def _clean_group_ids(cls, v):
         return normalize_practice_group_ids(v)
 
@@ -1318,6 +1329,8 @@ class FrozenSessionDetail(FrozenSessionSummary):
     reasoning_effort: Optional[str] = None
     notebook_context: Optional[str] = None
     group_ids: List[int] = Field(default_factory=list)
+    target_students: List[GoalTargetStudent] = Field(default_factory=list)
+    target_practice_notebook_ids: List[int] = Field(default_factory=list)
     pdf_token: Optional[str] = None
 
 

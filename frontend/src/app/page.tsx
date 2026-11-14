@@ -18,6 +18,7 @@ import { fetchInstruments } from '@/lib/instruments-api';
 import { rememberPausedChat } from '@/lib/catalog-status';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { InputMethodSelector, type Method as InputMethod } from '@/components/qsa/InputMethodSelector';
+import { DocenzaTargetPicker } from '@/components/qsa/DocenzaTargetPicker';
 import { ScoreInputForm } from '@/components/qsa/ScoreInputForm';
 import { PDFUploader } from '@/components/qsa/PDFUploader';
 import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
@@ -920,7 +921,15 @@ function HomeFlow() {
                     )}
 
                     {/* Step: Input Method Selection */}
-                    {step === 'method-select' && selectedQuestionnaire && (
+                    {/* Obiettivi per la classe: per chi è l'obiettivo, mai studente di prova o dati propri (#903). */}
+                    {step === 'method-select' && selectedQuestionnaire?.id === 'OBIETTIVO_DOCENZA' && (
+                        <DocenzaTargetPicker onBack={goBack} onConfirm={() => {
+                            // La chat docenza parla dal taccuino del docente: una prova rimasta in memoria non vale qui.
+                            if (readStoredNotebookContext() === 'practice') storeNotebookContext('default');
+                            void startAgentOnlyQuestionnaire(selectedQuestionnaire);
+                        }} />
+                    )}
+                    {step === 'method-select' && selectedQuestionnaire && selectedQuestionnaire.id !== 'OBIETTIVO_DOCENZA' && (
                         <InputMethodSelector
                             onSelect={handleMethodSelect}
                             onBack={goBack}

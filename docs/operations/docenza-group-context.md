@@ -16,11 +16,11 @@ snapshot congelato è JSON e i vecchi snapshot restano leggibili.
 | Elenco | La barra legge `/admin/groups?own=true`: proprie o condivise anche per l'admin, le stesse che il builder accetta. Senza `own` l'elenco di gestione resta invariato. | `routes/groups.py`, `group_visibility.py`, `DocenzaClassBar.tsx` |
 | Taccuino | Le classi entrano solo con il taccuino docente, che è anche il default della docenza; restano fuori con `student`, `practice`, `none`. L'avviso della barra segue la stessa regola (default = classi incluse) e, per chi non è docente, il default effettivo. | `chat_logic.py`, `docenza-groups.ts` |
 | Componente profilo | Con il componente `profile` spento (configurazione per passo) non entrano né il taccuino docente né le classi; in prova esce il taccuino simulato, restano l'avviso `[SIMULATION]` e i punteggi della sessione, come nel ramo studente. | `chat_logic.py` |
+| Destinatari (#903) | Prima della chat (`DocenzaTargetPicker`, al posto della scelta studente di prova / dati propri) il docente sceglie classi, studenti delle sue classi e suoi studenti di prova; almeno uno. `target_students` (`{group_id, username}`) e `target_practice_notebook_ids` viaggiano solo nello snapshot, accanto a `group_ids`; a ogni salvataggio (dopo ogni turno) `verified_goal_targets` tiene membri reali di classi attive proprie/condivise e taccuini di prova attivi del docente. Altri strumenti: campi scartati. Nessun cambio al prompt. Nelle Opzioni della docenza manca «Prova». | `teacher_context.py`, `routes/frozen_sessions.py`, `DocenzaTargetPicker.tsx` |
 | Privacy | Descrizione e metodologie della classe sono dati contestuali, non istruzioni né prove di difficoltà o prestazioni. `TeacherNote` non entra mai. Lo studente riceve `[CONTESTO CLASSE]` solo dalle proprie classi attive con `context_visible_to_students`. | `teacher_context.py` |
 
 Fuori ambito qui: prompt, focus e progressione essenziale della chat Obiettivi
-(blocco successivo), selezione classi resa obbligatoria o spostata prima del
-primo turno.
+(blocco successivo); salvataggio dei destinatari nel catalogo (#904).
 
 ## Verifica
 
@@ -36,7 +36,7 @@ docker run --rm --network counselorbot-goal-context-s5 \
   -e DATABASE_URL=postgresql://postgres@postgres:5432/counselorbot_test \
   -e PYTHON_DOTENV_DISABLED=1 -e COUNSELOR_TRANSLATE_DISABLED=1 -e ADMIN_SYNC_DISABLED=1 \
   <immagine backend di test> \
-  python -m pytest -q --disable-warnings backend/tests/test_docenza_group_context.py
+  python -m pytest -q --disable-warnings backend/tests/test_docenza_group_context.py backend/tests/test_docenza_goal_targets.py
 ```
 
 Le suite che leggono la documentazione (`test_practice_notebooks.py`,
