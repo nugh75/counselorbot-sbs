@@ -379,6 +379,17 @@ di assegnazione non hanno bordo né sfondo, e il catalogo usa la `Card` piatta. 
 azione, campi e avvisi (come quello di errore) mantengono i loro riquadri; nessun cambio
 di comportamento.
 
+**Gerarchia del Catalogo obiettivi, lato server (#906).** Le proposte del catalogo possono
+avere genitori e figli come gli obiettivi personali: tabella `goal_catalog_edges` (creata
+all'avvio), `parent_id` alla creazione (`POST /teacher/goal-catalog`), aggiunta e rimozione
+di un genitore con `POST /teacher/goal-catalog/{id}/parents` e
+`DELETE /teacher/goal-catalog/{id}/parents/{parent_id}?version=N` (controllo della versione,
+cicli rifiutati con 422). Solo l'autore (o un amministratore) collega proposte dello stesso
+autore. Ogni proposta tiene la propria visibilità: un figlio pubblicato resta visibile anche
+sotto un genitore in bozza. `GET /teacher/goal-catalog` restituisce `parent_ids` limitati alle
+proposte che il docente vede; il catalogo per gli studenti non cambia. Albero e mappa nella
+pagina arrivano con #907.
+
 **Studiare da un PDF senza schede annidate (#874).** `/profilo/pqbl` usa solo la
 `Card` piatta: impostazione, generazione, introduzione, domande, riepilogo, test finale
 e risultati sono sezioni separate da un filetto. Nel riepilogo i tre numeri sono cifre
