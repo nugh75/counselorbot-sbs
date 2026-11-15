@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ComponentProps, ReactNode } from 'react';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Bottone con token di variante/taglia: un'unica sorgente per colori e padding,
@@ -36,18 +37,30 @@ export function buttonClasses(variant: Variant = 'primary', size: Size = 'md', c
     return cn(BASE, VARIANTS[variant], SIZES[size], className);
 }
 
+/** The only spinning mark in the app: a small spinner inside a busy button. */
+export const SPIN = 'animate-spin motion-reduce:animate-none';
+
+export function Spinner({ className }: { className?: string }) {
+    return <Loader2 aria-hidden="true" className={cn('h-4 w-4 shrink-0', SPIN, className)} />;
+}
+
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: Variant;
     size?: Size;
+    /** Shows the small spinner before the label and disables the button. */
+    busy?: boolean;
     children: ReactNode;
 }
 
-export function Button({ variant = 'primary', size = 'md', className, children, ...rest }: ButtonProps) {
+export function Button({ variant = 'primary', size = 'md', className, busy, disabled, children, ...rest }: ButtonProps) {
     return (
         <button
             className={buttonClasses(variant, size, className)}
+            disabled={disabled || busy}
+            aria-busy={busy || undefined}
             {...rest}
         >
+            {busy && <Spinner />}
             {children}
         </button>
     );

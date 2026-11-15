@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { TypingDots } from '@/components/ui/TypingDots';
 
 // Forma condivisa delle tre superfici di conversazione (chat guidata, Bussola,
 // assistente). Erano tre linguaggi visivi per la stessa interazione: bolla
@@ -8,8 +8,7 @@ import { cn } from '@/lib/utils';
 // angolo; attesa segnalata da un pallino pulsante in una e da uno spinner nelle
 // altre due. Nessuna era sbagliata: erano tre.
 // Vince il trattamento della chat guidata, che e' quella piu' usata e piu'
-// disegnata; l'attesa vince lo spinner, che sta dentro il vocabolario di
-// movimento dichiarato in design.md §4 (il pallino pulsante non c'era).
+// disegnata; l'attesa sono tre puntini (design.md §4, #935).
 
 const BASE = 'chat-message min-w-0 max-w-full break-words rounded-lg px-4 py-3 text-base leading-relaxed sm:px-5 sm:py-3.5';
 
@@ -35,7 +34,7 @@ export function ChatBubble({
 export function ChatPendingIndicator({ label }: { label: string }) {
     return (
         <span className="flex items-center gap-3">
-            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-indigo-600" aria-hidden="true" />
+            <TypingDots />
             <span className="text-xs font-medium text-slate-500">{label}</span>
         </span>
     );
