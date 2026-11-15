@@ -233,7 +233,7 @@ function ReaderPanel({ controller, target, onRead, onClose, opener, expanded, on
                 <div className="flex items-center justify-between gap-1 px-3 py-2">
                     <h2 className={`min-w-0 flex-1 font-display font-bold ${expanded ? 'text-xl' : 'text-base'}`}>
                         <button type="button" aria-label={t('voice.move')} title={t('voice.moveHelp')}
-                            className="flex min-h-control w-full touch-none select-none items-center gap-1 rounded-md text-left cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-indigo-500"
+                            className="flex min-h-control w-full touch-none select-none items-center gap-1 rounded-control text-left cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-indigo-500"
                             onPointerDown={event => {
                                 if (event.button !== 0 || !panel.current) return;
                                 const bounds = panel.current.getBoundingClientRect();
@@ -261,12 +261,12 @@ function ReaderPanel({ controller, target, onRead, onClose, opener, expanded, on
                 <div hidden={!expanded} className="max-h-[min(40dvh,calc(65dvh-14rem))] space-y-3 overflow-y-auto px-4 pb-4 sm:px-5 sm:pb-5 lg:max-h-[40dvh]">
                 <div className="grid grid-cols-1 gap-3">
                     <label className="min-w-0 text-sm font-semibold">{t('voice.engine')}
-                        <select aria-label={t('voice.engine')} value={engine} onChange={event => choose(`${event.target.value}:`)} className="mt-1 min-h-control w-full rounded-md border border-slate-300 bg-white px-2 text-sm">
+                        <select aria-label={t('voice.engine')} value={engine} onChange={event => choose(`${event.target.value}:`)} className="mt-1 min-h-control w-full rounded-control border border-slate-300 bg-white px-2 text-sm">
                             <option value="edge">{t('voice.edge')}</option><option value="piper">{t('voice.piper')}</option>
                         </select>
                     </label>
                     <label className="min-w-0 text-sm font-semibold">{t('voice.voice')}
-                        <select aria-label={t('voice.voice')} value={voice} onChange={event => choose(`${engine}:${event.target.value}`)} className="mt-1 min-h-control w-full rounded-md border border-slate-300 bg-white px-2 text-sm">
+                        <select aria-label={t('voice.voice')} value={voice} onChange={event => choose(`${engine}:${event.target.value}`)} className="mt-1 min-h-control w-full rounded-control border border-slate-300 bg-white px-2 text-sm">
                             <option value="">{t('voice.auto')}</option>
                             {voice && !available.some(v => v.id === voice) && <option value={voice}>{voice}</option>}
                             {available.map(v => <option key={v.id} value={v.id}>{v.name} · {v.locale}{(v.gender === 'male' || v.gender === 'female') && ` · ${t(`voice.${v.gender}`)}`}</option>)}

@@ -49,8 +49,8 @@ const markdownComponents: Components = {
     h4: (props) => <h4 className="mb-1 mt-2.5 text-sm font-semibold text-slate-900" {...omitMarkdownNode(props)} />,
     a: (props) => <a className="font-medium text-indigo-700 underline underline-offset-2 hover:text-indigo-800" {...omitMarkdownNode(props)} />,
     // Il codice in linea ha lo sfondo; dentro un blocco lo prende il blocco.
-    code: (props) => <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[0.9em]" {...omitMarkdownNode(props)} />,
-    pre: (props) => <pre className="my-2 max-w-full overflow-x-auto rounded-md bg-slate-100 p-3 text-xs [&_code]:bg-transparent [&_code]:p-0" {...omitMarkdownNode(props)} />,
+    code: (props) => <code className="rounded-control bg-slate-100 px-1 py-0.5 font-mono text-[0.9em]" {...omitMarkdownNode(props)} />,
+    pre: (props) => <pre className="my-2 max-w-full overflow-x-auto rounded-control bg-slate-100 p-3 text-xs [&_code]:bg-transparent [&_code]:p-0" {...omitMarkdownNode(props)} />,
     blockquote: (props) => <blockquote className="my-2 border-l-[3px] border-[var(--console-primary)] pl-3 italic text-slate-500" {...omitMarkdownNode(props)} />,
     hr: (props) => <hr className="my-3 border-slate-200" {...omitMarkdownNode(props)} />,
 };
@@ -64,7 +64,7 @@ export function ChatMarkdown({ content, locale, errorMessage }: { content: strin
         ) : segment.kind === 'provider-error' ? (
             <div
                 key={`error-${index}`}
-                className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"
+                className="flex items-start gap-2 rounded-card bg-amber-50 px-3 py-2 text-sm text-amber-900"
                 role="alert"
             >
                 <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />

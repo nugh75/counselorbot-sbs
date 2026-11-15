@@ -249,7 +249,7 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
         }
     }
 
-    const actionClass = 'flex min-h-control w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50';
+    const actionClass = 'flex min-h-control w-full items-center gap-2 rounded-control px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50';
     if (voiceMode) {
         const speaking = stage === 'reply' && (playback.status === 'playing' || playback.status === 'buffering');
         const waiting = stage === 'permission' || stage === 'transcribing' || stage === 'waiting';
@@ -259,7 +259,7 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
             : t(`audio.${stage}`);
         return <><div role="group" aria-label={t('audio.voice.title')} className="min-w-0 flex-1" data-voice-ignore
             onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); cancel(); onExitVoice?.(); } }}>
-            <button ref={talkButton} type="button" disabled={waiting || (disabled && stage !== 'recording')} className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            <button ref={talkButton} type="button" disabled={waiting || (disabled && stage !== 'recording')} className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-control bg-indigo-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
                 onClick={() => { if (stage === 'recording') { if (recorder.current?.state === 'recording') recorder.current.stop(); } else void startRecording(() => {}); }}>
                 {waiting ? <Spinner className="h-5 w-5 shrink-0" /> : stage === 'recording' ? <Square className="h-5 w-5 shrink-0" /> : <Mic className="h-5 w-5 shrink-0" />}
                 {waiting ? status : stage === 'recording' ? t('audio.voice.send') : speaking ? t('audio.voice.interrupt') : t('audio.voice.talk')}
@@ -277,7 +277,7 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
             {stage === 'reply' && playback.error && <p role="alert" className="text-sm text-red-700">{t(`voice.error.${playback.error}`)}</p>}
             {retry && <button type="button" className={actionClass} onClick={() => { if (recorded.current) void transcribe(recorded.current, () => {}, generation.current); }}>{t('audio.retry')}</button>}
             {overflow && <>
-                <textarea aria-label={t('audio.transcript')} value={overflow} onChange={event => setOverflow(event.target.value)} rows={3} className="w-full rounded-md border border-slate-300 bg-white p-2 text-sm" />
+                <textarea aria-label={t('audio.transcript')} value={overflow} onChange={event => setOverflow(event.target.value)} rows={3} className="w-full rounded-control border border-slate-300 bg-white p-2 text-sm" />
                 <button type="button" className={actionClass} onClick={() => void insert(overflow, () => {})}>{t('audio.voice.send')}</button>
             </>}
             <button type="button" className={actionClass} onClick={() => {
@@ -310,7 +310,7 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
             {error && <p role="alert" className="px-2 text-sm text-red-700">{t(`audio.error.${error}`)}</p>}
             {retry && <button type="button" className={actionClass} onClick={() => { if (recorded.current) void transcribe(recorded.current, close, generation.current); }}>{t('audio.retry')}</button>}
             {overflow && <>
-                <textarea aria-label={t('audio.transcript')} value={overflow} onChange={event => setOverflow(event.target.value)} rows={5} className="w-full rounded-md border border-slate-300 bg-white p-2 text-sm" />
+                <textarea aria-label={t('audio.transcript')} value={overflow} onChange={event => setOverflow(event.target.value)} rows={5} className="w-full rounded-control border border-slate-300 bg-white p-2 text-sm" />
                 <button type="button" className={actionClass} onClick={() => insert(overflow, close)}>{t('audio.insert')}</button>
             </>}
             <button type="button" className={actionClass} onClick={() => { cancel(); close(); }}><X className="h-4 w-4 shrink-0" />{t('audio.cancel')}</button>

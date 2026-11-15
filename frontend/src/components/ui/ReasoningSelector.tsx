@@ -31,7 +31,7 @@ export function ReasoningSelector({ value, onChange, disabled = false, mandatory
         <div
             role="radiogroup"
             aria-label={t('reasoning.label')}
-            className={list ? listRadioGroupClass : 'inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5'}
+            className={list ? listRadioGroupClass : 'inline-flex items-center rounded-control border border-slate-200 bg-white p-0.5'}
         >
             {OPTIONS.map(({ value: option, Icon }) => {
                 const optionLabel = t(`reasoning.${option}`);
@@ -55,7 +55,7 @@ export function ReasoningSelector({ value, onChange, disabled = false, mandatory
                             aria-disabled={optionDisabled}
                             disabled={optionDisabled}
                             onClick={() => onChange(option)}
-                            className={`flex h-7 w-7 items-center justify-center rounded transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                            className={`flex h-7 w-7 items-center justify-center rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                                 active
                                     ? 'bg-slate-700 text-white'
                                     : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'

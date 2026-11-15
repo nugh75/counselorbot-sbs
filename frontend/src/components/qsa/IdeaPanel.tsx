@@ -74,7 +74,7 @@ export function IdeaPanel({
     return (
         <div className="space-y-3">
             {show !== 'branches' && line && (
-                <p className="flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                <p className="flex items-start gap-2 rounded-card bg-slate-50 px-3 py-2 text-xs text-slate-700">
                     <Compass className="mt-0.5 h-3.5 w-3.5 shrink-0 text-link" aria-hidden="true" />
                     <span>
                         {t(line.key, { what: line.role ? t(ROLE_KEY[line.role]) : line.text ?? '' })}
@@ -83,7 +83,7 @@ export function IdeaPanel({
             )}
 
             {show !== 'branches' && drew === false && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                <div className="rounded-card border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                     <p className="mb-1.5">{t('idea.map.stale')}</p>
                     <button
                         type="button"
@@ -153,7 +153,7 @@ export function IdeaPanel({
             )}
 
             {show !== 'map' && (
-                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <section className="overflow-hidden rounded-card border border-slate-200 bg-white">
                     <h4 className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                         {t('idea.branches.title')}
                     </h4>

@@ -28,7 +28,7 @@ export function InstitutionTimelineDates({ locale, work, edit }: { locale: strin
         {failed ? <p role="alert">{l('loadError')} <Button type="button" variant="secondary" onClick={() => setAttempt(n => n + 1)}>{l('retry')}</Button></p> : !data ? <p role="status">{l('loading')}</p> : <div className="space-y-4">
             {!data.institution && <Link href="/profilo/taccuino" className="block text-link underline">{l('chooseInstitution')}</Link>}
             {!data.events.length && <p>{l('noInstitutionDates')}</p>}
-            {data.events.map(event => <article key={event.id} className="space-y-2 rounded-lg bg-surface p-4">
+            {data.events.map(event => <article key={event.id} className="space-y-2 rounded-card bg-surface p-4">
                 <h3>{event.title}</h3>
                 <p>{new Date(event.starts_at).toLocaleString(locale)}{event.location ? ` · ${event.location}` : ''}</p>
                 {event.registration_deadline && <p>{l('registrationDeadline')}: {new Date(event.registration_deadline).toLocaleString(locale)}</p>}

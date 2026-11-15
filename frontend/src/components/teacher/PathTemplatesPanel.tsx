@@ -77,7 +77,7 @@ export function PathTemplatesPanel({ groups, onApplied }: { groups: StudentGroup
     </Callout>;
 
     const row = (template: PathTemplate) => (
-        <li key={template.id} className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-line bg-surface p-4">
+        <li key={template.id} className="flex flex-wrap items-center justify-between gap-4 rounded-card border border-line bg-surface p-4">
             <div className="min-w-0">
                 <p className="break-words font-semibold text-ink">{template.title}</p>
                 <p className="text-xs text-ink-muted">
@@ -148,7 +148,7 @@ function ApplyTemplate({ template, groups, close, applied }: {
             setBusy(false);
         }
     };
-    return <fieldset className="space-y-4 rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+    return <fieldset className="space-y-4 rounded-card border border-brand-line bg-brand-soft/40 p-4">
         <legend className="px-1 font-semibold text-ink">{`${l('applyTitle')}: ${template.title}`}</legend>
         <p className="text-sm text-ink-muted">{l('applyHelp')}</p>
         <div className="grid gap-1 sm:grid-cols-2">
@@ -228,7 +228,7 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
         <ol className="space-y-4">
             {steps.length === 0 && <li className="text-sm text-ink-muted">{l('noSteps')}</li>}
             {steps.map((step, index) => <li key={step.id ?? step.client_key} data-testid="template-step"
-                className="space-y-2 rounded-lg border border-line bg-surface p-4">
+                className="space-y-2 rounded-card border border-line bg-surface p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-semibold text-ink">{`#${index + 1} · ${isChat(step) ? stepKindText(lang, 'chatStandalone') : l(TYPE_LABEL[step.step_type])}`}</p>
                     <div className="flex gap-1">
@@ -252,7 +252,7 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
 
         <div className="space-y-4 border-t border-line pt-4">
             {!adding ? <Button variant="secondary" onClick={() => setAdding(true)}>{stepKindText(lang, 'addStep')}</Button> : (
-                <div className="space-y-4 rounded-lg border border-line bg-surface-sunken p-4">
+                <div className="space-y-4 rounded-card border border-line bg-surface-sunken p-4">
                     <StepKindPicker lang={lang} value={kind} onChange={setKind} available={TEMPLATE_STEP_KINDS} />
                     {kind && <div className="flex flex-wrap gap-2">
                         {(kind === 'guided_chat' ? [['guided_results_chat', 'chatOnResults'], ['tool', 'chatStandalone']] as const

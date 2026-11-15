@@ -222,7 +222,7 @@ export function ClassImageModal({
                         size="md"
                         onClick={onClose}
                         disabled={saving}
-                        className="rounded-lg p-2 text-ink-muted hover:bg-surface-raised hover:text-ink-body"
+                        className="rounded-control p-2 text-ink-muted hover:bg-surface-raised hover:text-ink-body"
                         aria-label={l('classCoverClose')}
                     >
                         <X className="h-5 w-5" aria-hidden />
@@ -417,7 +417,7 @@ export function ClassImageModal({
                                     <span className="text-xs font-semibold text-ink-muted">
                                         {l('classCoverSelectedPreview')}
                                     </span>
-                                    <div className="relative aspect-[16/9] w-full max-h-48 overflow-hidden rounded-lg border border-line bg-surface-raised">
+                                    <div className="relative aspect-[16/9] w-full max-h-48 overflow-hidden rounded-card border border-line bg-surface-raised">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={previewUrl}

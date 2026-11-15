@@ -188,7 +188,7 @@ export function RecommendationsPanel({
                     <span className="ml-auto rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">{proposedCount}</span>
                 </div>
 
-                <div className="grid grid-cols-4 gap-1 rounded-lg bg-slate-100 p-1" role="tablist">
+                <div className="grid grid-cols-4 gap-1 rounded-card bg-slate-100 p-1" role="tablist">
                     <TabButton
                         ref={(node) => { tabRefs.current.reading = node; }}
                         active={visibleTab === 'reading'}
@@ -364,7 +364,7 @@ function RequestCard({ item, canAct, pending, failed, onRetry, onPatch, onRemove
         : item.closed_by === 'conversation' ? 'request.discussedInTalk' : 'request.discussed';
     const phase = typeof item.step_order === 'number' ? ` \u00b7 ${item.step_order}` : '';
     return (
-        <li className="rounded-lg border border-slate-200 bg-white p-3">
+        <li className="rounded-card border border-slate-200 bg-white p-3">
             <p className={`text-2xs font-semibold ${open ? 'text-indigo-700' : 'text-slate-500'}`}>
                 {rec(label)}{phase}{item.source === 'student' ? ` \u00b7 ${rec('request.byStudent')}` : ''}
             </p>
@@ -372,11 +372,11 @@ function RequestCard({ item, canAct, pending, failed, onRetry, onPatch, onRemove
             {canAct ? (
                 <div className="mt-2 flex flex-wrap gap-2">
                     <button type="button" disabled={pending} onClick={() => onPatch({ status: open ? 'closed' : 'proposed' })}
-                        className="min-h-9 rounded-md border border-slate-200 px-2.5 text-xs font-semibold text-indigo-700 disabled:opacity-60">
+                        className="min-h-9 rounded-control border border-slate-200 px-2.5 text-xs font-semibold text-indigo-700 disabled:opacity-60">
                         {rec(open ? 'request.close' : 'request.reopen')}
                     </button>
                     <button type="button" disabled={pending} onClick={onRemove}
-                        className="inline-flex min-h-9 items-center gap-1 rounded-md px-2.5 text-xs font-semibold text-slate-600 disabled:opacity-60">
+                        className="inline-flex min-h-9 items-center gap-1 rounded-control px-2.5 text-xs font-semibold text-slate-600 disabled:opacity-60">
                         <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />{rec('request.remove')}
                     </button>
                 </div>
@@ -405,9 +405,9 @@ function AddRequest({ pending, onAdd }: { pending: boolean; onAdd: (text: string
             <div className="flex gap-2">
                 <input id={inputId} value={value} maxLength={300} onChange={(event) => setValue(event.target.value)}
                     placeholder={rec('request.add.placeholder')}
-                    className="min-h-9 min-w-0 flex-1 rounded-md border border-slate-200 px-2 text-xs text-slate-700" />
+                    className="min-h-9 min-w-0 flex-1 rounded-control border border-slate-200 px-2 text-xs text-slate-700" />
                 <button type="submit" disabled={pending || !text}
-                    className="min-h-9 shrink-0 rounded-md border border-slate-200 px-2.5 text-xs font-semibold text-indigo-700 disabled:opacity-60">
+                    className="min-h-9 shrink-0 rounded-control border border-slate-200 px-2.5 text-xs font-semibold text-indigo-700 disabled:opacity-60">
                     {rec('request.add.submit')}
                 </button>
             </div>
@@ -442,7 +442,7 @@ function ReadingCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscus
     const details = [item.summary, item.synopsis].filter(Boolean) as string[];
 
     return (
-        <article className="rounded-lg border border-slate-200 bg-indigo-50 p-3">
+        <article className="rounded-card border border-slate-200 bg-indigo-50 p-3">
             <div className="text-2xs font-semibold uppercase tracking-wide text-indigo-700">
                 {item.kind_label || item.kind}
             </div>
@@ -462,7 +462,7 @@ function ReadingCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscus
                         onClick={() => setExpanded((open) => !open)}
                         aria-expanded={expanded}
                         aria-controls={detailsId}
-                        className="mt-2 inline-flex min-h-9 items-center gap-1 rounded-md text-xs font-semibold text-indigo-700 hover:text-indigo-600"
+                        className="mt-2 inline-flex min-h-9 items-center gap-1 rounded-control text-xs font-semibold text-indigo-700 hover:text-indigo-600"
                     >
                         <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', expanded && 'rotate-180')} />
                         {expanded ? rec('synopsis.hide') : rec('synopsis.show')}
@@ -508,7 +508,7 @@ function StrategyCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscu
     const name = item.name || item.slug;
 
     return (
-        <article className="rounded-lg border border-slate-200 bg-indigo-50 p-3">
+        <article className="rounded-card border border-slate-200 bg-indigo-50 p-3">
             <div className="flex items-start gap-2">
                 <Target className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
                 <h4 className="text-sm font-semibold leading-snug text-slate-800">{name}</h4>
@@ -562,14 +562,14 @@ function AdviceCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscuss
             : 'question.open';
     const phase = typeof item.step_order === 'number' ? ` \u00b7 ${item.step_order}` : '';
     return (
-        <article className="rounded-lg border border-slate-200 bg-white p-3">
+        <article className="rounded-card border border-slate-200 bg-white p-3">
             <p className={`text-2xs font-semibold ${question && !open ? 'text-slate-500' : 'text-indigo-700'}`}>
                 {question ? `${rec(questionLabel)}${phase}` : rec('advice.label')}
             </p>
             <p className="mt-1 text-xs leading-relaxed text-slate-700">{name}</p>
             {question && canAct ? (
                 <button type="button" disabled={pending} onClick={() => onPatch({ status: open ? 'closed' : 'proposed' })}
-                    className="mt-2 min-h-9 rounded-md border border-slate-200 px-2.5 text-xs font-semibold text-indigo-700 disabled:opacity-60">
+                    className="mt-2 min-h-9 rounded-control border border-slate-200 px-2.5 text-xs font-semibold text-indigo-700 disabled:opacity-60">
                     {rec(open ? 'question.close' : 'question.reopen')}
                 </button>
             ) : null}
@@ -630,7 +630,7 @@ function CardActions({
                     <button
                         type="button"
                         onClick={discuss}
-                        className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        className="inline-flex min-h-9 items-center gap-1.5 rounded-control border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                     >
                         <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
                         {discussLabel}
@@ -641,7 +641,7 @@ function CardActions({
                         type="button"
                         onClick={() => onPatch({ status: 'dismissed' })}
                         disabled={pending}
-                        className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-slate-500 hover:text-slate-700 disabled:opacity-60"
+                        className="inline-flex min-h-9 items-center gap-1.5 rounded-control px-2.5 text-xs font-medium text-slate-500 hover:text-slate-700 disabled:opacity-60"
                     >
                         <Archive className="h-3.5 w-3.5" aria-hidden="true" />
                         {dismissLabel}
@@ -671,7 +671,7 @@ function ToggleAction({ label, pressed, disabled, onClick }: { label: string; pr
             disabled={disabled}
             onClick={onClick}
             className={cn(
-                'inline-flex min-h-9 items-center rounded-md border px-2.5 text-xs font-semibold transition-colors disabled:opacity-60',
+                'inline-flex min-h-9 items-center rounded-control border px-2.5 text-xs font-semibold transition-colors disabled:opacity-60',
                 pressed
                     ? 'border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700'
                     : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
@@ -695,7 +695,7 @@ function HelpfulRow({ helpful, pending, onPatch }: { helpful: boolean | null; pe
                 aria-pressed={helpful === true}
                 disabled={pending}
                 onClick={() => onPatch({ helpful: helpful === true ? null : true })}
-                className={cn('tap-icon rounded text-slate-500 hover:text-emerald-600 disabled:opacity-60', helpful === true && 'text-emerald-600')}
+                className={cn('tap-icon rounded-control text-slate-500 hover:text-emerald-600 disabled:opacity-60', helpful === true && 'text-emerald-600')}
             >
                 <ThumbsUp className="h-3.5 w-3.5" />
             </button>
@@ -705,7 +705,7 @@ function HelpfulRow({ helpful, pending, onPatch }: { helpful: boolean | null; pe
                 aria-pressed={helpful === false}
                 disabled={pending}
                 onClick={() => onPatch({ helpful: helpful === false ? null : false })}
-                className={cn('tap-icon rounded text-slate-500 hover:text-red-600 disabled:opacity-60', helpful === false && 'text-red-600')}
+                className={cn('tap-icon rounded-control text-slate-500 hover:text-red-600 disabled:opacity-60', helpful === false && 'text-red-600')}
             >
                 <ThumbsDown className="h-3.5 w-3.5" />
             </button>
@@ -733,7 +733,7 @@ function ArchivedList({ items, open, onToggle, onRestore, canAct, pending, type 
     if (!items.length) return null;
 
     return (
-        <div className="rounded-lg border border-dashed border-slate-200 p-2">
+        <div className="rounded-card border border-dashed border-slate-200 p-2">
             <button
                 type="button"
                 onClick={onToggle}
@@ -753,7 +753,7 @@ function ArchivedList({ items, open, onToggle, onRestore, canAct, pending, type 
                                 type="button"
                                 onClick={() => onRestore(item.slug)}
                                 disabled={Boolean(pending[cardKey(type, item.slug)])}
-                                className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-md px-2 text-2xs font-semibold text-indigo-700 hover:text-indigo-600 disabled:opacity-60"
+                                className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-control px-2 text-2xs font-semibold text-indigo-700 hover:text-indigo-600 disabled:opacity-60"
                             >
                                 <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
                                 {rec('restore')}
@@ -813,7 +813,7 @@ function TabButton({ active, count, id, controls, label, icon, onClick, onKeyDow
                 onClick={onClick}
                 onKeyDown={onKeyDown}
                 className={cn(
-                    'flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-md px-1 py-1.5 text-xs font-medium transition-colors',
+                    'flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-control px-1 py-1.5 text-xs font-medium transition-colors',
                     active ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700',
                 )}
             >
@@ -863,7 +863,7 @@ function LinkedText({ label, text }: { label: string; text: string }) {
 }
 
 function EmptyState({ text }: { text: string }) {
-    return <p className="rounded-lg border border-dashed border-slate-200 p-3 text-xs text-slate-500">{text}</p>;
+    return <p className="rounded-card border border-dashed border-slate-200 p-3 text-xs text-slate-500">{text}</p>;
 }
 
 // Le lingue arrivano come codici ("it", "en"): al lettore si mostra il nome

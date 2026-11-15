@@ -154,12 +154,15 @@ evitano `primary`, `muted`, `accent`, `border`, `card`, già presi da shadcn.
 | `focus` | `--console-focus` | anello di focus |
 | `info`, `success`, `warning`, `danger` | da §2.4 | tinta dell'icona; più `-soft` (fondo), `-line` (bordo), `-ink` (testo sul fondo) |
 
-Forma: `rounded-control` (= `rounded-md`, bottoni e campi), `rounded-card`
-(= `rounded-xl`, card e popover); `shadow-card` / `shadow-pop` / `shadow-modal`
-(= `shadow-sm` / `shadow-lg` / `shadow-2xl`), le sole tre ombre; `h-control` /
-`min-h-control` = **44px in px**. `h-11` con la radice a 15px fa 41px: non è un
-target touch. `cn()` conosce questi nomi, quindi `rounded-lg` o `min-h-0` passati
-a una primitiva li sostituiscono.
+Forma: due soli raggi — `rounded-control` per bottoni e campi, `rounded-card`
+per card e popover, `rounded-full` per avatar e puntini (#932): `rounded`,
+`rounded-md`, `rounded-lg`, `rounded-xl` e `rounded-2xl` non si usano più
+(`rounded-md` valeva `rounded-control` e `rounded-xl` `rounded-card`, ma
+`rounded-lg` era un terzo raggio e `rounded` un quarto). `shadow-card` /
+`shadow-pop` / `shadow-modal` (= `shadow-sm` / `shadow-lg` / `shadow-2xl`), le
+sole tre ombre; `h-control` / `min-h-control` = **44px in px**. `h-11` con la
+radice a 15px fa 41px: non è un target touch. `cn()` conosce questi nomi, quindi
+`rounded-full` o `min-h-0` passati a una primitiva li sostituiscono.
 
 ### 2.7 Principi visivi
 

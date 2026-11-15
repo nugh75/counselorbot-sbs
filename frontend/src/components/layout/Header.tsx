@@ -89,8 +89,8 @@ export function Header() {
                     {nav.loading ? (
                         // Riserva lo spazio mentre l'identità arriva: niente layout shift.
                         <div className="hidden items-center gap-1 lg:flex" aria-hidden="true">
-                            <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-line" /></span>
-                            <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-line" /></span>
+                            <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded-control bg-line" /></span>
+                            <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded-control bg-line" /></span>
                         </div>
                     ) : workInline}
 

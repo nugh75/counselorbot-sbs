@@ -36,7 +36,7 @@ function HideForm({ busy, onHide, onCancel }: { busy: boolean; onHide: (reason: 
     return <form className="flex flex-wrap items-end gap-2" onSubmit={event => { event.preventDefault(); if (reason.trim()) onHide(reason.trim()); }}>
         <label className="block min-w-0 flex-1 text-sm font-semibold text-slate-700">{l('reason')}
             <input value={reason} maxLength={500} disabled={busy} onChange={event => setReason(event.target.value)}
-                className="mt-1 block min-h-control w-full rounded-md border border-slate-300 bg-white p-2 font-normal" />
+                className="mt-1 block min-h-control w-full rounded-control border border-slate-300 bg-white p-2 font-normal" />
         </label>
         <Button type="submit" variant="danger" disabled={busy || !reason.trim()}>{l('hideConfirm')}</Button>
         <Button type="button" variant="secondary" disabled={busy} onClick={onCancel}>{l('cancel')}</Button>
@@ -50,7 +50,7 @@ function EditForm({ initial, busy, onSave, onCancel }: { initial: string; busy: 
     return <form className="space-y-2" onSubmit={event => { event.preventDefault(); if (forumDraftValid(body)) onSave(body); }}>
         <label className="block text-sm font-semibold text-slate-700">{l('edit')}
             <textarea value={body} maxLength={4000} disabled={busy} rows={4} onChange={event => setBody(event.target.value)}
-                className="mt-1 block w-full rounded-md border border-slate-300 bg-white p-3 text-base font-normal" />
+                className="mt-1 block w-full rounded-control border border-slate-300 bg-white p-3 text-base font-normal" />
             <span className="font-mono text-xs text-slate-500">{body.length} / 4000</span>
         </label>
         <div className="flex flex-wrap gap-2">
@@ -75,12 +75,12 @@ export function TopicForm({ initial, busy, onSave, onCancel, onDraft, guard = tr
     return <form className="space-y-2" onSubmit={event => { event.preventDefault(); if (valid && changes) onSave(changes); }}>
         <label className="block text-sm font-semibold text-slate-700">{l('title')}
             <input value={title} maxLength={160} disabled={busy} onChange={event => setTitle(event.target.value)}
-                className="mt-1 block min-h-control w-full rounded-md border border-slate-300 bg-white p-2 font-normal" />
+                className="mt-1 block min-h-control w-full rounded-control border border-slate-300 bg-white p-2 font-normal" />
             <span className="font-mono text-xs text-slate-500">{title.length} / 160</span>
         </label>
         <label className="block text-sm font-semibold text-slate-700">{l('body')}
             <textarea value={body} maxLength={4000} disabled={busy} rows={6} onChange={event => setBody(event.target.value)}
-                className="mt-1 block w-full rounded-md border border-slate-300 bg-white p-3 text-base font-normal" />
+                className="mt-1 block w-full rounded-control border border-slate-300 bg-white p-3 text-base font-normal" />
             <span className="font-mono text-xs text-slate-500">{body.length} / 4000</span>
         </label>
         <div className="flex flex-wrap gap-2">
@@ -134,10 +134,10 @@ function MuteForm({ busy, onMute, onCancel }: { busy: boolean; onMute: (reason: 
     useDraftGuard(Boolean(reason || until), l('discard'), { blocked: busy });
     return <form className="space-y-2" onSubmit={event => { event.preventDefault(); if (reason.trim()) onMute(reason.trim(), until ? new Date(until).toISOString() : null); }}>
         <label className="block text-sm text-slate-700">{l('reason')}
-            <input className="block min-h-control w-full rounded-md border border-slate-300 p-2" required maxLength={500} disabled={busy} value={reason} onChange={event => setReason(event.target.value)} />
+            <input className="block min-h-control w-full rounded-control border border-slate-300 p-2" required maxLength={500} disabled={busy} value={reason} onChange={event => setReason(event.target.value)} />
         </label>
         <label className="block text-sm text-slate-700">{l('muteUntil')}
-            <input type="datetime-local" className="block min-h-control max-w-full rounded-md border border-slate-300 p-2" disabled={busy} value={until} onChange={event => setUntil(event.target.value)} />
+            <input type="datetime-local" className="block min-h-control max-w-full rounded-control border border-slate-300 p-2" disabled={busy} value={until} onChange={event => setUntil(event.target.value)} />
         </label>
         <Button type="submit" disabled={busy || !reason.trim()}>{l('muteConfirm')}</Button>{' '}
         <Button type="button" variant="secondary" disabled={busy} onClick={onCancel}>{l('cancel')}</Button>
@@ -155,7 +155,7 @@ function ForumLinkPicker({ groupId, value, busy, onChange }: { groupId: number; 
     return <div className="space-y-2">
         <label className="block text-sm font-semibold text-slate-700">{forumText(lang, 'linkOptional')}
             <select value={value} disabled={busy || resource.loading || !resource.data || resource.forbidden}
-                onChange={event => onChange(event.target.value)} className="mt-1 block min-h-control w-full rounded-md border border-slate-300 bg-white p-2">
+                onChange={event => onChange(event.target.value)} className="mt-1 block min-h-control w-full rounded-control border border-slate-300 bg-white p-2">
                 <option value="">{forumText(lang, 'noLink')}</option>
                 {resource.data?.targets.map(target => <option key={`${target.kind}:${target.id}`} value={`${target.kind}:${target.id}`}>
                     {targetLabel(target, lang)}
@@ -214,12 +214,12 @@ export function ForumComposer({ path, topic, linkGroupId, onPublished, onForbidd
     return <form className="space-y-3" onSubmit={event => { event.preventDefault(); void send(); }}>
         {topic && <label className="block text-sm font-semibold text-slate-700">{l('title')}
             <input value={title} maxLength={160} disabled={busy} onChange={event => setTitle(event.target.value)}
-                className="mt-1 block min-h-control w-full rounded-md border border-slate-300 bg-white p-2" />
+                className="mt-1 block min-h-control w-full rounded-control border border-slate-300 bg-white p-2" />
             <span className="font-mono text-xs text-slate-500">{title.length} / 160</span>
         </label>}
         <label className="block text-sm font-semibold text-slate-700">{l(topic ? 'body' : 'reply')}
             <textarea value={body} maxLength={4000} disabled={busy} rows={5} onChange={event => setBody(event.target.value)}
-                className="mt-1 block w-full rounded-md border border-slate-300 bg-white p-3 text-base font-normal" />
+                className="mt-1 block w-full rounded-control border border-slate-300 bg-white p-3 text-base font-normal" />
             <span className="font-mono text-xs text-slate-500">{body.length} / 4000</span>
         </label>
         {topic && linkGroupId !== undefined && <ForumLinkPicker groupId={linkGroupId} value={link} busy={busy} onChange={setLink} />}
@@ -398,7 +398,7 @@ function ForumReview({ groupId, mode, active, onBack, onForbidden, onDraft }: {
                     </div>}
                     {rejecting === `${entry.kind}-${entry.id}` && <form className="space-y-2" onSubmit={event => { event.preventDefault(); if (reason.trim()) void act(`/api/teacher/forum/${entry.kind}/${entry.id}/reject`, 'POST', { reason: reason.trim() }); }}>
                         <label className="block text-sm text-slate-700">{l('reason')}
-                            <input required maxLength={500} className="block min-h-control w-full rounded-md border border-slate-300 p-2" disabled={busy} value={reason} onChange={event => setReason(event.target.value)} />
+                            <input required maxLength={500} className="block min-h-control w-full rounded-control border border-slate-300 p-2" disabled={busy} value={reason} onChange={event => setReason(event.target.value)} />
                         </label>
                         <Button type="submit" variant="danger" disabled={busy || !reason.trim()}>{l('reject')}</Button>
                     </form>}

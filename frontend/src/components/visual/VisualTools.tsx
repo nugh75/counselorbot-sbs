@@ -371,7 +371,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 <h3 className="mb-4 font-semibold text-ink-body">{l(stage)} <span className="font-mono text-sm text-ink-muted">{work.actions.filter(a => a.stage === stage).length}</span></h3>
                                 <div className="space-y-4">{work.actions.filter(a => a.stage === stage).map(action => {
                                     const diary = /^\/profilo\/assegnazioni#assignment-\d+$/.test(action.source || '') ? work.timeline?.events.find(event => event.action_ids.includes(action.id)) : undefined;
-                                    return <article key={action.id} id={personal ? `action-${action.id}` : undefined} tabIndex={personal ? -1 : undefined} className="scroll-mt-24 rounded-lg border border-line bg-surface p-4">
+                                    return <article key={action.id} id={personal ? `action-${action.id}` : undefined} tabIndex={personal ? -1 : undefined} className="scroll-mt-24 rounded-card border border-line bg-surface p-4">
                                     {personal && editingActionId !== action.id ? <>
                                         <h4 className="break-words font-semibold text-ink">{action.kind === 'check' && <Clock className="mr-1 inline h-4 w-4 align-text-bottom" aria-hidden="true" />}{action.title}</h4>
                                         <p className="mt-1 text-xs text-ink-muted">{l(action.stage)}{action.kind && action.kind !== 'activity' ? ` · ${l(action.kind)}` : ''}</p>
@@ -461,7 +461,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                                 <button
                                                     type="button"
                                                     onClick={() => setPickingImageCardId('draft')}
-                                                    className="flex h-14 w-14 items-center justify-center rounded-lg border border-line bg-surface-sunken p-1 hover:border-brand hover:bg-brand-soft/30"
+                                                    className="flex h-14 w-14 items-center justify-center rounded-control border border-line bg-surface-sunken p-1 hover:border-brand hover:bg-brand-soft/30"
                                                     title={l('changeImage')}
                                                 >
                                                     <img src={tavoloImageUrl(draftCardImage)} alt="" className="max-h-full max-w-full object-contain" />
@@ -479,7 +479,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                             <button
                                                 type="button"
                                                 onClick={() => setPickingImageCardId('draft')}
-                                                className="inline-flex min-h-control items-center gap-2 rounded-lg border border-dashed border-line-strong bg-surface px-4 py-2 text-xs text-ink-muted hover:border-brand hover:text-link"
+                                                className="inline-flex min-h-control items-center gap-2 rounded-control border border-dashed border-line-strong bg-surface px-4 py-2 text-xs text-ink-muted hover:border-brand hover:text-link"
                                             >
                                                 <ImageIcon className="h-4 w-4 text-ink-muted" aria-hidden="true" />
                                                 + {l('addImage')}
@@ -559,7 +559,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                                     id={`${id}-card-${card.id}`}
                                                     aria-label={l('move')}
                                                     value={card.bucket}
-                                                    className="h-8 rounded border border-line bg-surface-sunken px-2 py-1 text-xs text-ink-body hover:bg-surface"
+                                                    className="h-8 rounded-control border border-line bg-surface-sunken px-2 py-1 text-xs text-ink-body hover:bg-surface"
                                                     onChange={e => { edit({ ...work, cards: work.cards.map(c => c.id === card.id ? { ...c, bucket: e.target.value } : c) }); focusMoved(`${id}-card-${card.id}`); }}
                                                 >
                                                     {currentDeckCols.map(b => <option key={b.id} value={b.id}>{cardColumnLabel(work, b, l)}</option>)}
@@ -635,7 +635,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="card-image-picker-title"
-                    className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-2xl bg-surface shadow-modal overflow-hidden"
+                    className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-card bg-surface shadow-modal overflow-hidden"
                 >
                     <div className="flex items-center justify-between border-b border-line px-6 py-4">
                         <h3 id="card-image-picker-title" className="text-base font-semibold text-ink">
@@ -664,7 +664,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                     }
                                     setPickingImageCardId(null);
                                 }}
-                                className="inline-flex min-h-control items-center gap-2 rounded-lg border border-line-strong bg-surface px-4 py-2 text-xs text-ink-body hover:bg-surface-sunken"
+                                className="inline-flex min-h-control items-center gap-2 rounded-control border border-line-strong bg-surface px-4 py-2 text-xs text-ink-body hover:bg-surface-sunken"
                             >
                                 <Trash2 className="h-3.5 w-3.5 text-danger" aria-hidden="true" />
                                 {l('removeImage')}

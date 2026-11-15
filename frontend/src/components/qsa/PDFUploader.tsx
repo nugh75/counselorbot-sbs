@@ -119,7 +119,7 @@ export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUplo
                 onDragLeave={handleDrag}
                 onDrop={handleDrop}
                 className={cn(
-                    "relative flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg transition-colors bg-white",
+                    "relative flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-card transition-colors bg-white",
                     isDragging ? "border-indigo-400 bg-indigo-50" : "border-slate-300 hover:border-indigo-300",
                     isUploading ? "pointer-events-none opacity-50" : ""
                 )}
@@ -133,7 +133,7 @@ export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUplo
                     </div>
                 ) : (
                     <>
-                        <div className="p-4 rounded-md bg-indigo-50 mb-4">
+                        <div className="p-4 rounded-control bg-indigo-50 mb-4">
                             <FileType className="w-8 h-8 text-indigo-600" />
                         </div>
                         <p className="text-lg font-medium text-slate-900 mb-1">{t('pdf.drop')}</p>
@@ -147,7 +147,7 @@ export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUplo
                         />
                         <button
                             onClick={triggerFileSelect}
-                            className="inline-flex min-h-11 items-center justify-center rounded-md bg-indigo-600 px-6 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+                            className="inline-flex min-h-11 items-center justify-center rounded-control bg-indigo-600 px-6 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
                         >
                             {t('pdf.select')}
                         </button>

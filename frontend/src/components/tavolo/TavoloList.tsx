@@ -152,7 +152,7 @@ export function TavoloList({ showCompose = true, onOpen }: TavoloListProps = {})
                                 {row.title || label('untitled')}
                             </span>
                             {row.origin_instrument && (
-                                <span className="shrink-0 rounded bg-surface-raised px-2 py-1 text-xs text-ink-muted">
+                                <span className="shrink-0 rounded-control bg-surface-raised px-2 py-1 text-xs text-ink-muted">
                                     {row.origin_instrument}
                                 </span>
                             )}
@@ -161,7 +161,7 @@ export function TavoloList({ showCompose = true, onOpen }: TavoloListProps = {})
                         {([['rename', Pencil, 'renameTable'], ['delete', Trash2, 'deleteTable']] as const).map(([action, Icon, key]) => (
                             <button key={action} type="button" disabled={busy} onClick={() => { if (action === 'rename') setRenamingId(row.id); else setConfirmDeleteId(row.id); }}
                                 aria-label={`${label(key)}: ${row.title || label('untitled')}`} title={label(key)}
-                                className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-lg border border-line text-ink-muted hover:bg-surface-sunken disabled:opacity-40">
+                                className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control border border-line text-ink-muted hover:bg-surface-sunken disabled:opacity-40">
                                 <Icon className="h-4 w-4" aria-hidden="true" />
                             </button>
                         ))}

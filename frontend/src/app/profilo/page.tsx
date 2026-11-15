@@ -454,7 +454,7 @@ export default function ProfilePage() {
                 <PersonalAreaHome />
             </>}
 
-            {activeSection && ['notebook', 'sessions'].includes(activeSection) && <p className="rounded-lg border border-line p-4 text-sm text-ink-muted">{learningText(lang, 'groupVisibility')}</p>}
+            {activeSection && ['notebook', 'sessions'].includes(activeSection) && <p className="rounded-card border border-line p-4 text-sm text-ink-muted">{learningText(lang, 'groupVisibility')}</p>}
             {activeSection === 'notebook' && (
             <section className="space-y-4" aria-label={t('profile.about.title')}>
                 <LearnerProfileCard variant="edit" />
@@ -548,7 +548,7 @@ export default function ProfilePage() {
                             aria-controls="submission-result-content"
                             disabled={!selectedSession}
                             onClick={() => setResultExpanded(expanded => !expanded)}
-                            className="flex min-h-control items-center gap-2 rounded-lg text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus disabled:cursor-default"
+                            className="flex min-h-control items-center gap-2 rounded-control text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus disabled:cursor-default"
                         >
                             <ChevronDown aria-hidden="true" className={`h-5 w-5 shrink-0 ${resultExpanded ? '' : '-rotate-90'}`} />
                             {t('profile.sessions.resultTitle')}
@@ -653,7 +653,7 @@ export default function ProfilePage() {
                                                         if (!p.active || !p.payload?.length) return null;
                                                         const d = p.payload[0].payload;
                                                         return (
-                                                            <div className="bg-surface border border-line shadow-card rounded-lg p-2 text-xs max-w-xs">
+                                                            <div className="bg-surface border border-line shadow-card rounded-card p-2 text-xs max-w-xs">
                                                                 <p className="font-semibold text-ink">{d.code} - {d.name}</p>
                                                                 <p className="text-link font-semibold mt-1">{t('profile.stanineScoreLabel')} {d.value} / 9</p>
                                                             </div>
@@ -753,7 +753,7 @@ export default function ProfilePage() {
                                                     {msg.role === 'student' ? t('profile.conversation.student') : 'CounselorBot'}
                                                 </span>
                                                 <div
-                                                    className={`max-w-[85%] rounded-lg px-4 py-2 text-sm leading-relaxed break-words ${
+                                                    className={`max-w-[85%] rounded-card px-4 py-2 text-sm leading-relaxed break-words ${
                                                         msg.role === 'student'
                                                             ? 'bg-brand text-ink-on-brand prose prose-sm prose-invert prose-p:my-0 prose-headings:my-1 prose-ul:my-1 prose-li:my-0'
                                                             : 'bg-surface-raised text-ink border border-line/60 prose prose-sm prose-p:my-0 prose-headings:my-1 prose-ul:my-1 prose-li:my-0'

@@ -51,7 +51,7 @@ export function TavoloCompose({ busy, aiAvailable = true, onCompose, onOpenExamp
     const chosen = presets.find((preset) => preset.id === genre);
 
     return (
-        <section className="space-y-2 rounded-lg border border-line bg-surface p-4">
+        <section className="space-y-2 rounded-card border border-line bg-surface p-4">
             <h2 className="text-sm text-ink">{label('compose')}</h2>
             <p className="text-xs text-ink-muted">{label('composeHint')}</p>
 
@@ -59,7 +59,7 @@ export function TavoloCompose({ busy, aiAvailable = true, onCompose, onOpenExamp
                 {([null, ...PRESET_IDS] as (TavoloPresetId | null)[]).map((id) => (
                     <button key={id ?? 'auto'} type="button" onClick={() => setGenre(id)}
                         aria-pressed={genre === id}
-                        className={`min-h-control rounded-lg border px-4 text-sm ${genre === id
+                        className={`min-h-control rounded-control border px-4 text-sm ${genre === id
                             ? 'border-brand bg-brand-soft text-link'
                             : 'border-line text-ink-body hover:bg-surface-sunken'}`}>
                         {id ? label(GENRE_LABEL[id]) : label('genreAuto')}
@@ -73,7 +73,7 @@ export function TavoloCompose({ busy, aiAvailable = true, onCompose, onOpenExamp
                 placeholder={label('composePlaceholder')}
                 rows={3}
                 aria-label={label('compose')}
-                className="w-full rounded-lg border border-line px-2 py-2 text-sm text-ink"
+                className="w-full rounded-control border border-line px-2 py-2 text-sm text-ink"
             />
 
             {chosen && chosen.prompts.length > 0 && (
@@ -81,7 +81,7 @@ export function TavoloCompose({ busy, aiAvailable = true, onCompose, onOpenExamp
                     <p className="text-xs text-ink-muted">{label('examples')}</p>
                     {chosen.prompts.map((example) => (
                         <button key={example} type="button" onClick={() => setPrompt(example)}
-                            className="block min-h-control w-full rounded-lg border border-line px-2 py-2 text-left text-xs text-ink-muted hover:bg-surface-sunken">
+                            className="block min-h-control w-full rounded-control border border-line px-2 py-2 text-left text-xs text-ink-muted hover:bg-surface-sunken">
                             {example}
                         </button>
                     ))}
@@ -91,7 +91,7 @@ export function TavoloCompose({ busy, aiAvailable = true, onCompose, onOpenExamp
             <div className="flex gap-2">
                 <button type="button" disabled={busy || !aiAvailable || !prompt.trim()}
                     onClick={() => void onCompose(genre, prompt)}
-                    className="inline-flex min-h-control flex-1 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-sm text-ink-on-brand hover:bg-brand-hover disabled:opacity-40">
+                    className="inline-flex min-h-control flex-1 items-center justify-center gap-2 rounded-control bg-brand px-4 text-sm text-ink-on-brand hover:bg-brand-hover disabled:opacity-40">
                     {busy ? <Spinner className="h-4 w-4" aria-hidden="true" />
                         : <Sparkles className="h-4 w-4" aria-hidden="true" />}
                     {label('composeGo')}
@@ -107,7 +107,7 @@ export function TavoloCompose({ busy, aiAvailable = true, onCompose, onOpenExamp
                     {chosen.examples.map((example) => (
                         <button key={example.id} type="button" disabled={busy}
                             onClick={() => void onOpenExample(chosen.id, example.id)}
-                            className="block min-h-control w-full rounded-lg border border-line px-2 py-2 text-left text-xs text-ink-body hover:bg-surface-sunken disabled:opacity-40">
+                            className="block min-h-control w-full rounded-control border border-line px-2 py-2 text-left text-xs text-ink-body hover:bg-surface-sunken disabled:opacity-40">
                             {example.title}
                         </button>
                     ))}

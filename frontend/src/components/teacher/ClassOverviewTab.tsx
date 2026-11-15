@@ -511,7 +511,7 @@ export function ClassOverviewTab({
                     </div>
 
                     {/* Form aggiunta collega */}
-                    <div className="space-y-2 rounded-lg border border-line bg-surface-sunken/60 p-4">
+                    <div className="space-y-2 rounded-card border border-line bg-surface-sunken/60 p-4">
                         <label htmlFor="overview-share-select" className="block text-xs font-semibold text-ink-body">
                             {l('addColleague')}
                         </label>
@@ -557,7 +557,7 @@ export function ClassOverviewTab({
                                 {l('noShares')}
                             </p>
                         ) : (
-                            <div className="divide-y divide-line rounded-lg border border-line bg-surface">
+                            <div className="divide-y divide-line rounded-card border border-line bg-surface">
                                 {shares.map(share => {
                                     const user = allUsers.find(u => u.username === share.shared_with_username);
                                     return (
@@ -610,7 +610,7 @@ export function ClassOverviewTab({
                     {/* Copertina 16:9 della classe */}
                     <div className="flex flex-col gap-4 rounded-card border border-line/90 bg-surface-sunken/70 p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="relative aspect-[16/9] h-16 sm:h-20 shrink-0 overflow-hidden rounded-lg border border-line bg-surface-raised shadow-card">
+                            <div className="relative aspect-[16/9] h-16 sm:h-20 shrink-0 overflow-hidden rounded-card border border-line bg-surface-raised shadow-card">
                                 <Image
                                     src={getClassCoverUrl(group)}
                                     alt={group.name}
@@ -888,7 +888,7 @@ export function ClassOverviewTab({
                                 </div>
 
                                 {deleteError && (
-                                    <div className="rounded-lg bg-danger-soft p-4 text-xs font-semibold text-danger">
+                                    <div className="rounded-card bg-danger-soft p-4 text-xs font-semibold text-danger">
                                         {deleteError}
                                     </div>
                                 )}

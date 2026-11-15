@@ -143,9 +143,9 @@ export function SessionReport({
             {loading ? (
                 <p role="status" className="text-sm text-slate-600">{copy.loading}</p>
             ) : summary?.status === 'unavailable' ? (
-                <p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{copy.unavailable}</p>
+                <p role="alert" className="rounded-card border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{copy.unavailable}</p>
             ) : summary?.summary ? (
-                <div className="prose prose-sm max-w-none rounded-lg border border-slate-200 bg-slate-50 p-4 max-h-72 overflow-y-auto">
+                <div className="prose prose-sm max-w-none rounded-card border border-slate-200 bg-slate-50 p-4 max-h-72 overflow-y-auto">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{summary.summary}</ReactMarkdown>
                 </div>
             ) : (

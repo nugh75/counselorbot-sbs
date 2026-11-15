@@ -156,7 +156,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
     const revisionId = state?.revision_id ?? null;
 
     return (
-        <section className="mb-3 w-full min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <section className="mb-3 w-full min-w-0 overflow-hidden rounded-card border border-slate-200 bg-white">
             <header className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2">
                 <h3 className="min-w-0 truncate text-sm font-semibold text-slate-800">
                     {t('idea.map.title')}
@@ -172,7 +172,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                         disabled={past}
                         aria-label={t('idea.map.edit')}
                         className={cn(
-                            'rounded-md p-1.5',
+                            'rounded-control p-1.5',
                             editing
                                 ? 'bg-brand text-ink-on-brand hover:bg-brand-hover'
                                 : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700',
@@ -183,7 +183,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                     <button
                         type="button"
                         onClick={() => void reload()}
-                        className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        className="rounded-control p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                         aria-label={t('idea.map.refresh')}
                     >
                         {isLoading
@@ -262,7 +262,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                                 onChange={(event) => setDraftLabel(event.target.value)}
                                 maxLength={80}
                                 autoFocus
-                                className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                                className="w-full rounded-control border border-slate-300 px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                             />
                             <div className="flex flex-wrap items-center gap-2">
                                 <label htmlFor="idea-node-role" className="text-xs font-medium text-slate-600">
@@ -272,7 +272,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                                     id="idea-node-role"
                                     value={draftRole}
                                     onChange={(event) => setDraftRole(event.target.value as IdeaRole)}
-                                    className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-800"
+                                    className="rounded-control border border-slate-300 px-2 py-1 text-xs text-slate-800"
                                 >
                                     {EDITABLE_ROLES.map((role) => (
                                         <option key={role} value={role}>{t(MISSING_KEY[role])}</option>
@@ -295,7 +295,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                                         type="button"
                                         onClick={() => void removeNode()}
                                         disabled={busy}
-                                        className="inline-flex items-center gap-1 rounded-md border border-danger-line px-2 py-1 text-xs text-danger-ink hover:bg-danger-soft disabled:opacity-50"
+                                        className="inline-flex items-center gap-1 rounded-control border border-danger-line px-2 py-1 text-xs text-danger-ink hover:bg-danger-soft disabled:opacity-50"
                                     >
                                         <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                                         {t('idea.map.deleteNode')}
@@ -304,7 +304,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                                 <button
                                     type="button"
                                     onClick={closeEditor}
-                                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-slate-500 hover:bg-slate-100"
+                                    className="inline-flex items-center gap-1 rounded-control px-2 py-1 text-xs text-slate-500 hover:bg-slate-100"
                                 >
                                     <X className="h-3.5 w-3.5" aria-hidden="true" />
                                     {t('idea.branches.cancel')}
@@ -318,7 +318,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                             <button
                                 type="button"
                                 onClick={() => { setAdding(true); setDraftLabel(''); setDraftRole('assumption'); }}
-                                className="ml-auto inline-flex items-center gap-1 rounded-md border border-dashed border-brand-line px-2 py-1 text-xs font-medium text-link hover:bg-brand-soft"
+                                className="ml-auto inline-flex items-center gap-1 rounded-control border border-dashed border-brand-line px-2 py-1 text-xs font-medium text-link hover:bg-brand-soft"
                             >
                                 <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                                 {t('idea.map.addNode')}

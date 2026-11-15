@@ -51,7 +51,7 @@ export function TavoloHelp({ id, counselorId, available, beforeAsk, onBusy, onCl
         }}>
             <input value={question} onChange={(event) => setQuestion(event.target.value)} maxLength={1200} disabled={busy}
                 aria-label={label('helpQuestion')} placeholder={label('helpQuestion')}
-                className="min-h-control min-w-0 flex-1 rounded-lg border border-line px-4 text-sm text-ink" />
+                className="min-h-control min-w-0 flex-1 rounded-control border border-line px-4 text-sm text-ink" />
             <Button disabled={busy || !available || !question.trim()}>
                 {busy ? '…' : label('send')}
             </Button>

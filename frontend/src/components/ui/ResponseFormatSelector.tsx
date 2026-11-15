@@ -22,7 +22,7 @@ export function ResponseFormatSelector({ value, onChange, disabled = false, comp
     list?: boolean;
 }) {
     const { lang } = useI18n();
-    if (compact || list) return <div role="radiogroup" aria-label={chatPreferenceLabel(lang, 'format')} className={list ? listRadioGroupClass : 'inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5'}>
+    if (compact || list) return <div role="radiogroup" aria-label={chatPreferenceLabel(lang, 'format')} className={list ? listRadioGroupClass : 'inline-flex items-center rounded-control border border-slate-200 bg-white p-0.5'}>
         {COMPACT_OPTIONS.map(({ value: option, Icon }) => {
             const label = `${chatPreferenceLabel(lang, 'format')}: ${chatPreferenceLabel(lang, option)}`;
             const active = option === value;
@@ -30,7 +30,7 @@ export function ResponseFormatSelector({ value, onChange, disabled = false, comp
                 <ListRadioMark active={active} /><Icon className="h-4 w-4 shrink-0" aria-hidden="true" />{chatPreferenceLabel(lang, option)}
             </button>;
             return <Tooltip key={option} content={label} side="top"><button type="button" role="radio" aria-checked={active} aria-label={label} disabled={disabled} onClick={() => onChange(option)}
-                className={`flex h-7 w-7 items-center justify-center rounded transition-colors disabled:opacity-50 ${active ? 'bg-slate-700 text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}>
+                className={`flex h-7 w-7 items-center justify-center rounded-control transition-colors disabled:opacity-50 ${active ? 'bg-slate-700 text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}>
                 <Icon className="h-3.5 w-3.5" aria-hidden="true" />
             </button></Tooltip>;
         })}
@@ -39,7 +39,7 @@ export function ResponseFormatSelector({ value, onChange, disabled = false, comp
         <span>{chatPreferenceLabel(lang, 'format')}</span>
         <select aria-label={chatPreferenceLabel(lang, 'format')} value={value} disabled={disabled}
             onChange={event => onChange(event.target.value as ResponseFormat)}
-            className="min-h-11 max-w-full rounded-md border border-slate-300 bg-white px-2 text-slate-800 disabled:opacity-50">
+            className="min-h-11 max-w-full rounded-control border border-slate-300 bg-white px-2 text-slate-800 disabled:opacity-50">
             {(['standard', 'bullets'] as const).map(option => <option key={option} value={option}>{chatPreferenceLabel(lang, option)}</option>)}
         </select>
     </label>;

@@ -297,7 +297,7 @@ export function TeacherNotebook({ showHeading = true }: { showHeading?: boolean 
     if (forbidden) return <TeacherForbidden />;
 
     return (
-        <div data-teacher-notebook className="rounded-lg border border-brand-line bg-surface p-4">
+        <div data-teacher-notebook className="rounded-card border border-brand-line bg-surface p-4">
             {showHeading && <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
                 <NotebookPen className="h-5 w-5 text-link" /> {texts.title}
             </h2>}

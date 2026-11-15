@@ -23,7 +23,7 @@ export function ResponseLengthSelector({ value, onChange, disabled = false, list
         <div
             role="radiogroup"
             aria-label={t('responseLength.label')}
-            className={list ? listRadioGroupClass : 'inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5'}
+            className={list ? listRadioGroupClass : 'inline-flex items-center rounded-control border border-slate-200 bg-white p-0.5'}
         >
             {OPTIONS.map((option, index) => {
                 const optionLabel = t(`responseLength.${option}`);
@@ -43,7 +43,7 @@ export function ResponseLengthSelector({ value, onChange, disabled = false, list
                             aria-label={tooltipLabel}
                             disabled={disabled}
                             onClick={() => onChange(option)}
-                            className={`flex h-7 w-7 flex-col items-center justify-center gap-0.5 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                            className={`flex h-7 w-7 flex-col items-center justify-center gap-0.5 rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                                 active
                                     ? 'bg-slate-700 text-white'
                                     : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'

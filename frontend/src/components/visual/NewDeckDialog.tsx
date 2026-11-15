@@ -94,7 +94,7 @@ export function NewDeckDialog({ open, locale, onCancel, onCreate }: Props) {
                                         role="radio"
                                         aria-checked={selected}
                                         onClick={() => setType(deckType)}
-                                        className={`flex flex-col items-start gap-1 rounded-lg border p-4 text-left transition-all ${
+                                        className={`flex flex-col items-start gap-1 rounded-control border p-4 text-left transition-all ${
                                             selected ? 'border-brand bg-brand-soft ring-2 ring-brand/20' : 'border-line bg-surface hover:bg-surface-sunken'
                                         }`}
                                     >

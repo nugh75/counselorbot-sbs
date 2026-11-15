@@ -39,7 +39,7 @@ export function ChatResponseSettings({ format, length, reasoning, locale, childr
             {reasoning && <ChatMenuSetting icon={<Brain className="h-4 w-4 shrink-0" aria-hidden="true" />}
                 label={t('reasoning.shortLabel')} value={t(`reasoning.${reasoning.value}`)} title={t('reasoning.label')}>
                 <ReasoningSelector list value={reasoning.value} onChange={reasoning.onChange} disabled={reasoning.disabled} mandatory={reasoning.mandatory} />
-                {reasoning.mandatory && <p className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-900">{t('reasoning.mandatory')}</p>}
+                {reasoning.mandatory && <p className="rounded-control border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-900">{t('reasoning.mandatory')}</p>}
             </ChatMenuSetting>}
             {children}
         </ChatMenuSection>

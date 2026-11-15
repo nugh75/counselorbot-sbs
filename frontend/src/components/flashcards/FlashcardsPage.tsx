@@ -198,13 +198,13 @@ export function FlashcardsPage() {
                         <div className="flex flex-wrap items-center gap-4">
                             {draftImage ? (
                                 <div className="flex items-center gap-4">
-                                    <button type="button" onClick={() => setPickingImageId('draft')} className="flex h-14 w-14 items-center justify-center rounded-lg border border-line bg-surface-sunken p-1 hover:border-brand" title={l('changeImage')} aria-label={l('changeImage')}>
+                                    <button type="button" onClick={() => setPickingImageId('draft')} className="flex h-14 w-14 items-center justify-center rounded-control border border-line bg-surface-sunken p-1 hover:border-brand" title={l('changeImage')} aria-label={l('changeImage')}>
                                         <img src={tavoloImageUrl(draftImage)} alt="" className="max-h-full max-w-full object-contain" />
                                     </button>
                                     <Button type="button" variant="ghost" className="h-control w-control p-0" aria-label={l('removeImage')} onClick={() => setDraftImage('')}><X className="h-4 w-4" aria-hidden="true" /></Button>
                                 </div>
                             ) : (
-                                <button type="button" onClick={() => setPickingImageId('draft')} className="flex min-h-control items-center gap-2 rounded-lg border border-dashed border-line bg-surface px-4 text-sm text-ink-muted hover:border-brand-line hover:text-link" aria-label={l('addImage')}><ImageIcon className="h-4 w-4 shrink-0" aria-hidden="true" />{l('addImage')}</button>
+                                <button type="button" onClick={() => setPickingImageId('draft')} className="flex min-h-control items-center gap-2 rounded-control border border-dashed border-line bg-surface px-4 text-sm text-ink-muted hover:border-brand-line hover:text-link" aria-label={l('addImage')}><ImageIcon className="h-4 w-4 shrink-0" aria-hidden="true" />{l('addImage')}</button>
                             )}
                             <Tooltip content={l('addCard')}><Button aria-label={l('addCard')} type="submit" className={buttonClass} disabled={!draftFront.trim() || !draftBack.trim() || currentDeck.cards.length >= 200}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         </div>
@@ -219,7 +219,7 @@ export function FlashcardsPage() {
                                 {card.status === 'known' ? <><Check className="h-3 w-3" aria-hidden="true" />{l('knownLabel')}</> : card.status === 'review' ? <><RotateCcw className="h-3 w-3" aria-hidden="true" />{l('reviewLabel')}</> : l('statusNone')}
                             </button>
                             <div className="flex items-center gap-1">
-                                <button type="button" onClick={() => setPickingImageId(card.id)} className="flex h-control w-control items-center justify-center rounded-lg border border-line bg-surface-sunken text-ink-muted hover:border-brand-line hover:text-link" aria-label={card.image ? l('changeImage') : l('addImage')} title={card.image ? l('changeImage') : l('addImage')}>
+                                <button type="button" onClick={() => setPickingImageId(card.id)} className="flex h-control w-control items-center justify-center rounded-control border border-line bg-surface-sunken text-ink-muted hover:border-brand-line hover:text-link" aria-label={card.image ? l('changeImage') : l('addImage')} title={card.image ? l('changeImage') : l('addImage')}>
                                     {card.image ? <img src={tavoloImageUrl(card.image)} alt="" className="h-6 w-6 object-contain" /> : <ImageIcon className="h-4 w-4" aria-hidden="true" />}
                                 </button>
                                 {removeButton(`card:${card.id}`, card.front, () => edit(current => removeCard(current, currentDeck.id, card.id)), 'deleteCard')}
@@ -252,7 +252,7 @@ export function FlashcardsPage() {
 
         {pickingImageId && createPortal(
             <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/50 p-4" onClick={() => setPickingImageId(null)}>
-                <div role="dialog" aria-modal="true" aria-labelledby={`${id}-pick-image`} className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-surface shadow-modal" onClick={e => e.stopPropagation()}>
+                <div role="dialog" aria-modal="true" aria-labelledby={`${id}-pick-image`} className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-card bg-surface shadow-modal" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center justify-between border-b border-line px-6 py-4">
                         <h2 id={`${id}-pick-image`} className="text-base font-semibold text-ink">{l('selectImage')}</h2>
                         <Button type="button" variant="ghost" className="h-control w-control p-0" aria-label={l('deckCancel')} onClick={() => setPickingImageId(null)}><X className="h-4 w-4" aria-hidden="true" /></Button>
@@ -311,7 +311,7 @@ function StudyView({ study, deck, card, onFlip, onAnswer, onExit, onRestart }: {
         <div className="h-2 overflow-hidden rounded-full bg-surface-raised" role="progressbar" aria-valuenow={study.index} aria-valuemin={0} aria-valuemax={total}>
             <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${Math.round((study.index / total) * 100)}%` }} />
         </div>
-        <button type="button" onClick={onFlip} aria-label={l('flipHint')} className="mx-auto flex min-h-[300px] w-full max-w-xl flex-col items-center justify-center gap-4 rounded-2xl border-2 border-brand-line bg-surface p-6 text-center shadow-card transition-colors hover:border-brand">
+        <button type="button" onClick={onFlip} aria-label={l('flipHint')} className="mx-auto flex min-h-[300px] w-full max-w-xl flex-col items-center justify-center gap-4 rounded-card border-2 border-brand-line bg-surface p-6 text-center shadow-card transition-colors hover:border-brand">
             {card.image && <img src={tavoloImageUrl(card.image)} alt="" className="max-h-40 w-auto object-contain" />}
             <p className={`text-balance text-xl ${study.flipped ? 'text-ink-body' : 'font-semibold text-ink'}`}>{study.flipped ? card.back : card.front}</p>
             {!study.flipped && <span className="text-xs text-ink-muted">{l('flipHint')}</span>}

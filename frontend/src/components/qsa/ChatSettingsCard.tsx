@@ -114,7 +114,7 @@ export function ChatSettingsCard({
                         <p className="text-xs font-semibold text-slate-500">{t('reasoning.label')}</p>
                         <ReasoningSelector value={reasoningEffort} onChange={onReasoningChange} mandatory={reasoningMandatory} />
                         {reasoningMandatory && (
-                            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                            <p className="rounded-control border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                                 {t('reasoning.mandatory')}
                             </p>
                         )}
@@ -124,7 +124,7 @@ export function ChatSettingsCard({
                     // l'assenza dipende dal counselor e non sembra un difetto.
                     <div className="space-y-1" aria-disabled="true" data-testid="reasoning-unavailable">
                         <p className="text-xs font-semibold text-slate-500">{t('reasoning.label')}</p>
-                        <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">{t('reasoning.unavailable')}</p>
+                        <p className="rounded-control border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">{t('reasoning.unavailable')}</p>
                     </div>
                 )}
 

@@ -36,7 +36,7 @@ function PreviewChatContent() {
         return (
             <div className="min-h-screen flex items-center justify-center p-4 bg-surface-sunken">
                 <Card className="max-w-md w-full p-8 text-center space-y-4">
-                    <div className="mx-auto w-12 h-12 bg-danger-soft rounded-lg flex items-center justify-center">
+                    <div className="mx-auto w-12 h-12 bg-danger-soft rounded-card flex items-center justify-center">
                         <ShieldAlert className="w-6 h-6 text-danger" />
                     </div>
                     <h2 className="text-xl font-semibold text-ink">{t('admin.forbidden.title')}</h2>

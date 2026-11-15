@@ -122,7 +122,7 @@ export function VisualPersonalTransfer({ sessionId, locale, work, saveWorkspace,
             {selected && <>
                 {direction === 'in' && target === 'actions' && <label className="block text-sm">{l('titleField')}<input aria-label={l('titleField')} className={inputClass} maxLength={160} value={title} onChange={event => setTitle(event.target.value)} /></label>}
                 <label className="block text-sm">{l('reviewTransfer')}<textarea aria-label={l('reviewTransfer')} rows={5} className={inputClass} value={draft} onChange={event => { setDraft(event.target.value); setStatus(''); }} /></label>
-                {direction === 'out' && <details open className="rounded-lg border border-line p-4">
+                {direction === 'out' && <details open className="rounded-card border border-line p-4">
                     <summary className="min-h-control cursor-pointer py-2 text-sm font-semibold">{l('resultPreview')}</summary>
                     <p className="whitespace-pre-wrap break-words text-sm text-ink-body">{preview}</p>
                 </details>}

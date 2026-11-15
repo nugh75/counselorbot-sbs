@@ -54,7 +54,7 @@ export function IdeaConclusion({ sessionId, locale, variant, onClose }: IdeaConc
             onClick={() => toggle(target)}
             aria-pressed={targets.includes(target)}
             className={cn(
-                'flex w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors',
+                'flex w-full items-start gap-3 rounded-control border px-3 py-2.5 text-left transition-colors',
                 targets.includes(target)
                     ? 'border-teal-400 bg-teal-50'
                     : 'border-slate-200 bg-white hover:border-slate-300',
@@ -73,12 +73,12 @@ export function IdeaConclusion({ sessionId, locale, variant, onClose }: IdeaConc
 
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4" role="dialog" aria-modal="true">
-            <div className="w-full max-w-lg space-y-4 rounded-xl bg-white p-5 shadow-card">
+            <div className="w-full max-w-lg space-y-4 rounded-card bg-white p-5 shadow-card">
                 <div className="flex items-start gap-3">
                     <h2 className="min-w-0 flex-1 text-lg font-bold text-slate-900">
                         {done ? t('idea.conclude.doneTitle') : t('idea.conclude.title')}
                     </h2>
-                    <button type="button" onClick={onClose} aria-label={t('idea.map.close')} className="rounded-md p-1 text-slate-500 hover:bg-slate-100">
+                    <button type="button" onClick={onClose} aria-label={t('idea.map.close')} className="rounded-control p-1 text-slate-500 hover:bg-slate-100">
                         <X className="h-4 w-4" />
                     </button>
                 </div>

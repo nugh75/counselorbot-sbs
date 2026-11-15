@@ -279,7 +279,7 @@ export function PersonalTimeline({ locale }: { locale: string }) {
             <Button type="button" variant="secondary" onClick={() => { setActiveEvent('new'); setCreateDirty(false); }} aria-expanded={activeEvent === 'new'}><Plus className="h-4 w-4" aria-hidden="true" />{l('addEvent')}</Button>
             <Link href="/profilo/azioni?new=1" className="inline-flex min-h-control items-center gap-2 rounded-control bg-surface-raised px-4 text-sm text-ink hover:bg-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"><Plus className="h-4 w-4" aria-hidden="true" />{l('addActivity')}</Link>
             <Link href="/profilo/obiettivi?new=1" className="inline-flex min-h-control items-center gap-2 rounded-control bg-surface-raised px-4 text-sm text-ink hover:bg-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"><Plus className="h-4 w-4" aria-hidden="true" />{l('addGoal')}</Link>
-            <details className="ml-auto rounded-lg border border-line bg-surface px-4">
+            <details className="ml-auto rounded-card border border-line bg-surface px-4">
                 <summary className="min-h-control cursor-pointer text-sm text-link" aria-label={l('filtersTitle')}>{l('filtersTitle')}</summary>
                 <div className="flex flex-wrap gap-4 py-2">
                     {KINDS.map(kind => <label key={kind} className="flex min-h-control items-center gap-2 text-sm">

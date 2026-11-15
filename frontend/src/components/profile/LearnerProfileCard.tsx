@@ -399,7 +399,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     const summaryUi = (
         <div className="space-y-4">
             {filledEntries.map((f) => (
-                <div key={f.key} className="rounded-lg border border-line bg-surface-sunken/60 p-4">
+                <div key={f.key} className="rounded-card border border-line bg-surface-sunken/60 p-4">
                     <div className="text-xs font-semibold text-ink-muted">{t(f.labelKey)}</div>
                     <p className="mt-1 text-sm leading-relaxed text-ink">{f.value}</p>
                 </div>

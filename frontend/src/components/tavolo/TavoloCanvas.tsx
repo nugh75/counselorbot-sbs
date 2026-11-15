@@ -341,7 +341,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                                 () => setPanelOpen((open) => !open)],
                         ] as const).map(([key, Icon, act]) => (
                             <button key={key} type="button" onClick={act} aria-label={label(key)} title={label(key)}
-                                className={`inline-flex h-control w-control items-center justify-center rounded-lg border border-line bg-surface text-ink-muted hover:bg-surface-sunken ${key === 'widen' || key === 'panel' ? 'ml-2' : ''}`}>
+                                className={`inline-flex h-control w-control items-center justify-center rounded-control border border-line bg-surface text-ink-muted hover:bg-surface-sunken ${key === 'widen' || key === 'panel' ? 'ml-2' : ''}`}>
                                 <Icon className="h-4 w-4" aria-hidden="true" />
                             </button>
                         ))}
@@ -357,13 +357,13 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                     </Button>
                     <button type="button" onClick={removeSelected} disabled={!selected}
                         aria-label={label('deleteNode')}
-                        className="inline-flex min-h-control w-control items-center justify-center rounded-lg border border-line text-ink-muted hover:bg-surface-sunken disabled:opacity-40">
+                        className="inline-flex min-h-control w-control items-center justify-center rounded-control border border-line text-ink-muted hover:bg-surface-sunken disabled:opacity-40">
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </button>
                 </div>
 
                 <button type="button" onClick={() => { setConnecting((open) => !open); setFromId(node?.id ?? graph.nodes.find((item) => item.state === 'live')?.id ?? ''); }}
-                    aria-expanded={connecting} className="min-h-control rounded-lg border border-line px-4 text-sm text-link">{label('connectPieces')}</button>
+                    aria-expanded={connecting} className="min-h-control rounded-control border border-line px-4 text-sm text-link">{label('connectPieces')}</button>
                 {connecting && <form className="space-y-2" onSubmit={(event) => {
                     event.preventDefault();
                     if (!fromId || !toId || fromId === toId) return;
@@ -374,20 +374,20 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                     {([['fromPiece', fromId, setFromId], ['toPiece', toId, setToId]] as const).map(([key, value, update]) => <label key={key} className="block text-xs text-ink-muted">
                         {label(key)}
                         <select aria-label={label(key)} value={value} onChange={(event) => update(event.target.value)} required
-                            className="mt-1 min-h-control w-full rounded-lg border border-line bg-surface px-2 text-sm text-ink">
+                            className="mt-1 min-h-control w-full rounded-control border border-line bg-surface px-2 text-sm text-ink">
                             <option value="">—</option>
                             {graph.nodes.filter((item) => item.state === 'live').map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
                         </select>
                     </label>)}
                     <label className="block text-xs text-ink-muted">{label('linkWords')}
                         <input value={words} onChange={(event) => setWords(event.target.value)} maxLength={40}
-                            className="mt-1 min-h-control w-full rounded-lg border border-line px-2 text-sm text-ink" />
+                            className="mt-1 min-h-control w-full rounded-control border border-line px-2 text-sm text-ink" />
                     </label>
                     <Button disabled={!fromId || !toId || fromId === toId} className="w-full">{label('connectPieces')}</Button>
                 </form>}
 
                 {(node || edge) && onSave && <button type="button" onClick={() => void onSave().then(() => setSelected(null)).catch(() => undefined)}
-                    className="min-h-control rounded-lg bg-brand px-4 text-sm text-ink-on-brand">{label('saveChanges')}</button>}
+                    className="min-h-control rounded-control bg-brand px-4 text-sm text-ink-on-brand">{label('saveChanges')}</button>}
 
                 {node && (
                     <div className="space-y-4">
@@ -397,7 +397,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                                 onKeyDown={(event) => { if (event.key === 'Enter' && onSave) { event.preventDefault(); void onSave().then(() => setSelected(null)).catch(() => undefined); } }}
                                 value={node.label}
                                 onChange={(event) => patchNode(node.id, { label: event.target.value.slice(0, 80) })}
-                                className="mt-1 w-full rounded-lg border border-line px-2 py-2 text-sm text-ink"
+                                className="mt-1 w-full rounded-control border border-line px-2 py-2 text-sm text-ink"
                             />
                         </label>
                         <fieldset>
@@ -405,7 +405,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                             <div className="mt-1 grid grid-cols-2 gap-1">
                                 {FORMS.map((form) => (
                                     <button key={form} type="button" onClick={() => patchNode(node.id, { form })}
-                                        className={`min-h-control rounded-lg border px-2 text-sm ${node.form === form
+                                        className={`min-h-control rounded-control border px-2 text-sm ${node.form === form
                                             ? 'border-brand bg-brand-soft text-link'
                                             : 'border-line text-ink-body hover:bg-surface-sunken'}`}>
                                         {label(form)}
@@ -421,7 +421,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                                         onClick={() => patchNode(node.id, { color: tint })}
                                         aria-pressed={(node.color ?? null) === tint}
                                         aria-label={label(tint ?? 'noColor')} title={label(tint ?? 'noColor')}
-                                        className={`h-control w-control rounded-lg border-2 ${SWATCH[tint ?? 'none']} ${(node.color ?? null) === tint
+                                        className={`h-control w-control rounded-control border-2 ${SWATCH[tint ?? 'none']} ${(node.color ?? null) === tint
                                             ? 'ring-2 ring-ink ring-offset-1'
                                             : ''}`} />
                                 ))}
@@ -431,12 +431,12 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                             <legend className="text-xs text-ink-muted">{label('icon')}</legend>
                             <input value={iconQuery} onChange={(event) => setIconQuery(event.target.value)}
                                 placeholder={label('iconSearch')} aria-label={label('iconSearch')}
-                                className="mt-1 w-full rounded-lg border border-line px-2 py-2 text-sm text-ink" />
+                                className="mt-1 w-full rounded-control border border-line px-2 py-2 text-sm text-ink" />
                             <div className="mt-1 grid max-h-48 grid-cols-6 gap-1 overflow-y-auto">
                                 <button type="button" onClick={() => patchNode(node.id, { icon: null, image: null })}
                                     aria-label={label('noIcon')} title={label('noIcon')}
                                     aria-pressed={!node.icon}
-                                    className={`flex h-control w-control items-center justify-center rounded-lg border text-xs ${!node.icon
+                                    className={`flex h-control w-control items-center justify-center rounded-control border text-xs ${!node.icon
                                         ? 'border-brand bg-brand-soft' : 'border-line hover:bg-surface-sunken'}`}>
                                     —
                                 </button>
@@ -444,7 +444,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                                     <button key={icon.id} type="button" onClick={() => patchNode(node.id, { icon: icon.id, image: null })}
                                         aria-label={icon.label} title={icon.label}
                                         aria-pressed={node.icon === icon.id}
-                                        className={`flex h-control w-control items-center justify-center rounded-lg border ${node.icon === icon.id
+                                        className={`flex h-control w-control items-center justify-center rounded-control border ${node.icon === icon.id
                                             ? 'border-brand bg-brand-soft' : 'border-line hover:bg-surface-sunken'}`}>
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img src={iconUrl(icon.id)} alt="" width={20} height={20} className="h-5 w-5" />
@@ -456,12 +456,12 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                             <legend className="text-xs text-ink-muted">{label('image')}</legend>
                             <input value={imageQuery} onChange={(event) => setImageQuery(event.target.value)}
                                 placeholder={label('imageSearch')} aria-label={label('imageSearch')}
-                                className="mt-1 w-full rounded-lg border border-line px-2 py-2 text-sm text-ink" />
+                                className="mt-1 w-full rounded-control border border-line px-2 py-2 text-sm text-ink" />
                             <div className="mt-1 grid max-h-48 grid-cols-6 gap-1 overflow-y-auto">
                                 <button type="button" onClick={() => patchNode(node.id, { image: null })}
                                     aria-label={label('noImage')} title={label('noImage')}
                                     aria-pressed={!node.image}
-                                    className={`flex h-control w-control items-center justify-center rounded-lg border text-xs ${!node.image
+                                    className={`flex h-control w-control items-center justify-center rounded-control border text-xs ${!node.image
                                         ? 'border-brand bg-brand-soft' : 'border-line hover:bg-surface-sunken'}`}>
                                     —
                                 </button>
@@ -470,18 +470,18 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                                         aria-label={image.name}
                                         title={image.usage ? `${image.name} — ${image.usage}` : image.name}
                                         aria-pressed={node.image === image.id}
-                                        className={`flex h-control w-control items-center justify-center rounded-lg border ${node.image === image.id
+                                        className={`flex h-control w-control items-center justify-center rounded-control border ${node.image === image.id
                                             ? 'border-brand bg-brand-soft' : 'border-line hover:bg-surface-sunken'}`}>
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img src={tavoloImageUrl(image.id)} alt="" loading="lazy"
-                                            className="h-8 w-8 rounded object-cover" />
+                                            className="h-8 w-8 rounded-control object-cover" />
                                     </button>
                                 ))}
                             </div>
                         </fieldset>
                         <button type="button" onClick={() => accent(node.id, !node.accent)}
                             aria-pressed={Boolean(node.accent)}
-                            className={`inline-flex min-h-control w-full items-center justify-center gap-2 rounded-lg border px-2 text-sm ${node.accent
+                            className={`inline-flex min-h-control w-full items-center justify-center gap-2 rounded-control border px-2 text-sm ${node.accent
                                 ? 'border-brand bg-brand text-ink-on-brand'
                                 : 'border-line text-ink-body hover:bg-surface-sunken'}`}>
                             <Star className="h-4 w-4" aria-hidden="true" />{label('accent')}
@@ -499,7 +499,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                                 onChange={(event) => patchEdge(edgeKey(edge), {
                                     label: event.target.value.slice(0, 40) || null,
                                 })}
-                                className="mt-1 w-full rounded-lg border border-line px-2 py-2 text-sm text-ink"
+                                className="mt-1 w-full rounded-control border border-line px-2 py-2 text-sm text-ink"
                             />
                         </label>
 
@@ -509,7 +509,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                                 {FAMILIES.map((family) => (
                                     <button key={family} type="button"
                                         onClick={() => patchEdge(edgeKey(edge), { rel: RELS_BY_FAMILY[family][0] })}
-                                        className={`min-h-control rounded-lg border px-2 text-sm ${familyOf(edge.rel) === family
+                                        className={`min-h-control rounded-control border px-2 text-sm ${familyOf(edge.rel) === family
                                             ? 'border-brand bg-brand-soft text-link'
                                             : 'border-line text-ink-body hover:bg-surface-sunken'}`}>
                                         {familyLabel(family, locale)}
@@ -522,7 +522,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                             <div className="mt-1 flex flex-col gap-1">
                                 {RELS_BY_FAMILY[familyOf(edge.rel)].map((rel) => (
                                     <button key={rel} type="button" onClick={() => patchEdge(edgeKey(edge), { rel })}
-                                        className={`min-h-control rounded-lg border px-2 text-left text-sm ${edge.rel === rel
+                                        className={`min-h-control rounded-control border px-2 text-left text-sm ${edge.rel === rel
                                             ? 'border-brand bg-brand-soft text-link'
                                             : 'border-line text-ink-body hover:bg-surface-sunken'}`}>
                                         {relLabel(rel, locale)}
@@ -536,7 +536,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                                 {[1, 2, 3].map((strength) => (
                                     <button key={strength} type="button"
                                         onClick={() => patchEdge(edgeKey(edge), { strength })}
-                                        className={`min-h-control rounded-lg border px-1 text-xs ${edge.strength === strength
+                                        className={`min-h-control rounded-control border px-1 text-xs ${edge.strength === strength
                                             ? 'border-brand bg-brand-soft text-link'
                                             : 'border-line text-ink-body hover:bg-surface-sunken'}`}>
                                         {label(`strength${strength}` as 'strength1')}
