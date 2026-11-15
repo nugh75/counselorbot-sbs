@@ -1976,6 +1976,16 @@ si avvia sempre da `/?start=<id>` (scelta tra studente di prova e dati propri). 
 di ruolo restano solo sui badge. L’elenco delle classi attive non è più nella home:
 si trova in «Le mie classi».
 
+**Schede della pagina di classe piatte (#957, novembre 2026).** In `/docente/classi/[id]`
+(e `/admin/classi/[id]`) le schede Panoramica, Orientamento, Osservazioni, Consiglio, Studenti
+e Registro seguono la scheda Piani: sezioni con filetto al posto dei riquadri, stati come
+etichette `StatusBadge`, campi `Field`/`Input`/`Select`/`Textarea`. In Studenti gli iscritti e
+gli inviti in attesa sono sezioni con filetto e badge di ruolo (studente, docente), senza
+sfondo tinto; il registro modifiche è un elenco a righe separate da filetti. Il modale della
+copertina e la conferma di eliminazione della classe usano il `Dialog` condiviso (Esc, sfondo
+e pulsante di chiusura, mai durante un salvataggio). Funzioni, testi e dati invariati; la
+fascia di copertina (#953) resta.
+
 **Filetti di sezione più netti e ritorni come testo (#952, novembre 2026).** Il filetto
 sotto i titoli di sezione delle pagine usa il token della linea forte (`border-line-strong`):
 in tema chiaro passa dal grigio più tenue a quello leggibile, in tema scuro al valore

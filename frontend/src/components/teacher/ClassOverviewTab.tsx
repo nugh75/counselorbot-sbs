@@ -1,10 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { TargetedGoals } from '@/components/goals/TargetedGoals';
 import { useRouter } from 'next/navigation';
 import {
-    AlertTriangle,
     Check,
     Copy,
     FileText,
@@ -33,6 +32,9 @@ import { EntryLink, EntrySection } from '@/components/ui/EntryList';
 import type { StudentGroup } from './class-group-types';
 import type { ClassSettings } from '@/lib/class-settings';
 import { Callout } from '@/components/ui/Callout';
+import { Dialog, DialogBody, DialogFooter } from '@/components/ui/Dialog';
+import { Field, Input, Select, Textarea } from '@/components/ui/Field';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 type TextKey = keyof typeof classSettingsTexts;
 
@@ -101,7 +103,6 @@ export function ClassOverviewTab({
     const [statusError, setStatusError] = useState('');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [deleteError, setDeleteError] = useState('');
-    const deleteDialogRef = useRef<HTMLDialogElement>(null);
 
     // Initial setup: bot info, institutions, shares, users
     useEffect(() => {
@@ -336,7 +337,6 @@ export function ClassOverviewTab({
                 }
                 return;
             }
-            deleteDialogRef.current?.close();
             setShowDeleteDialog(false);
             router.push(adminRoute ? ADMIN_CLASSES_HREF : '/docente/classi');
         } catch (err: unknown) {
@@ -345,13 +345,6 @@ export function ClassOverviewTab({
             setStatusBusy(false);
         }
     };
-
-    // Manage delete dialog modal state
-    useEffect(() => {
-        if (showDeleteDialog && deleteDialogRef.current && !deleteDialogRef.current.open) {
-            deleteDialogRef.current.showModal();
-        }
-    }, [showDeleteDialog]);
 
     // Available users to share with
     const availableUsers = allUsers
@@ -391,7 +384,7 @@ export function ClassOverviewTab({
             <TargetedGoals target={{ groupId: group.id }} />
 
             {/* 2. Invito Studenti */}
-            {isLocalAuth() ? <ClassPairingSection groupId={group.id} /> : <Card>
+            {isLocalAuth() ? <ClassPairingSection groupId={group.id} /> : <Card variant="flat">
                 <section aria-labelledby="class-invitation-heading" className="space-y-4">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-4">
                         <div>
@@ -404,8 +397,8 @@ export function ClassOverviewTab({
                     </div>
 
                     {/* Codice classe in evidenza */}
-                    <div className="rounded-card border border-brand-line bg-brand-soft/50 p-4">
-                        <span className="text-xs font-semibold text-ink">{l('classCode')}</span>
+                    <div>
+                        <span className="text-sm font-semibold text-ink-body">{l('classCode')}</span>
                         <div className="mt-1 flex flex-wrap items-center justify-between gap-4">
                             <span className="font-mono tracking-widest text-2xl font-semibold text-ink sm:text-3xl">
                                 {group.code}
@@ -426,15 +419,15 @@ export function ClassOverviewTab({
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         {showWebLink ? (
                             <div className="space-y-2">
-                                <label htmlFor="overview-weblink" className="text-xs font-semibold text-ink-body">
+                                <label htmlFor="overview-weblink" className="block text-sm font-semibold text-ink-body">
                                     {l('webLink')}
                                 </label>
                                 <div className="flex gap-2">
-                                    <input
+                                    <Input
                                         id="overview-weblink"
                                         readOnly
                                         value={webLink}
-                                        className="min-h-control flex-1 rounded-control border border-line-strong bg-surface-sunken px-4 font-mono text-xs text-ink-body focus:outline-hidden"
+                                        className="flex-1 bg-surface-sunken font-mono text-xs"
                                     />
                                     <Button
                                         type="button"
@@ -450,22 +443,22 @@ export function ClassOverviewTab({
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-ink-body">{l('webLink')}</label>
+                                <p className="text-sm font-semibold text-ink-body">{l('webLink')}</p>
                                 <p className="text-xs text-warning">{l('tunnelInactive')}</p>
                             </div>
                         )}
 
                         {botUsername && (
                             <div className="space-y-2">
-                                <label htmlFor="overview-telegramlink" className="text-xs font-semibold text-ink-body">
+                                <label htmlFor="overview-telegramlink" className="block text-sm font-semibold text-ink-body">
                                     {l('telegramLink')}
                                 </label>
                                 <div className="flex gap-2">
-                                    <input
+                                    <Input
                                         id="overview-telegramlink"
                                         readOnly
                                         value={telegramLink}
-                                        className="min-h-control flex-1 rounded-control border border-line-strong bg-surface-sunken px-4 font-mono text-xs text-ink-body focus:outline-hidden"
+                                        className="flex-1 bg-surface-sunken font-mono text-xs"
                                     />
                                     <Button
                                         type="button"
@@ -489,7 +482,7 @@ export function ClassOverviewTab({
             </Card>}
 
             {/* 3. Condivisione con Colleghi */}
-            <Card>
+            <Card variant="flat">
                 <section aria-labelledby="class-sharing-heading" className="space-y-4">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-4">
                         <div>
@@ -499,23 +492,23 @@ export function ClassOverviewTab({
                             </h2>
                             <p className="mt-1 text-xs text-ink-muted">{l('shareHint')}</p>
                         </div>
-                        <span className="rounded-full bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-muted">
-                            {l('owner')}: <span className="font-semibold text-ink">@{group.owner_username}</span>
-                        </span>
+                        <StatusBadge>
+                            {l('owner')}: <span className="text-ink">@{group.owner_username}</span>
+                        </StatusBadge>
                     </div>
 
                     {/* Form aggiunta collega */}
-                    <div className="space-y-2 rounded-card border border-line bg-surface-sunken/60 p-4">
-                        <label htmlFor="overview-share-select" className="block text-xs font-semibold text-ink-body">
+                    <div className="space-y-2">
+                        <label htmlFor="overview-share-select" className="block text-sm font-semibold text-ink-body">
                             {l('addColleague')}
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            <select
+                            <Select
                                 id="overview-share-select"
                                 value={selectedUserToAdd}
                                 onChange={e => setSelectedUserToAdd(e.target.value)}
                                 disabled={shareBusy}
-                                className="min-h-control min-w-[200px] flex-1 rounded-control border border-line-strong bg-surface px-4 text-sm text-ink"
+                                className="min-w-[200px] flex-1 basis-0"
                             >
                                 <option value="">{l('selectColleague')}</option>
                                 {availableUsers.map(user => (
@@ -523,7 +516,7 @@ export function ClassOverviewTab({
                                         {user.display_name} (@{user.username})
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                             <Button
                                 type="button"
                                 disabled={shareBusy || !selectedUserToAdd}
@@ -551,11 +544,11 @@ export function ClassOverviewTab({
                                 {l('noShares')}
                             </p>
                         ) : (
-                            <div className="divide-y divide-line rounded-card border border-line bg-surface">
+                            <div className="divide-y divide-line border-y border-line">
                                 {shares.map(share => {
                                     const user = allUsers.find(u => u.username === share.shared_with_username);
                                     return (
-                                        <div key={share.id} className="flex items-center justify-between p-4 text-sm">
+                                        <div key={share.id} className="flex items-center justify-between py-4 text-sm">
                                             <div>
                                                 <span className="font-semibold text-ink">
                                                     {user?.display_name || share.shared_with_username}
@@ -584,7 +577,7 @@ export function ClassOverviewTab({
             </Card>
 
             {/* 4. Anagrafica & Informazioni di Classe */}
-            <Card>
+            <Card variant="flat">
                 <section aria-labelledby="class-details-heading" className="space-y-4">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-4">
                         <div>
@@ -595,63 +588,55 @@ export function ClassOverviewTab({
                             <p className="mt-1 text-xs text-ink-muted">{l('classDetailsHint')}</p>
                         </div>
                         {isDirty && (
-                            <span className="rounded-full bg-warning-soft px-2 py-1 text-xs font-semibold text-warning-ink">
+                            <StatusBadge tone="warning">
                                 {l('dirty')}
-                            </span>
+                            </StatusBadge>
                         )}
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         {/* Nome classe */}
-                        <label className="flex flex-col gap-1 text-xs font-semibold text-ink-body">
-                            {l('className')} *
-                            <input
+                        <Field label={<>{l('className')} *</>}>
+                            <Input
                                 type="text"
                                 value={name}
                                 onChange={e => setName(e.target.value)}
                                 disabled={saveBusy}
                                 required
-                                className="min-h-control rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             />
-                        </label>
+                        </Field>
 
                         {/* Scuola */}
-                        <label className="flex flex-col gap-1 text-xs font-semibold text-ink-body">
-                            {l('school')}
-                            <input
+                        <Field label={l('school')}>
+                            <Input
                                 type="text"
                                 value={school}
                                 onChange={e => setSchool(e.target.value)}
                                 disabled={saveBusy}
                                 placeholder={l('schoolPlaceholder')}
-                                className="min-h-control rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             />
-                        </label>
+                        </Field>
 
                         {/* Grado / Livello scolastico */}
-                        <label className="flex flex-col gap-1 text-xs font-semibold text-ink-body">
-                            {l('schoolLevel')}
-                            <select
+                        <Field label={l('schoolLevel')}>
+                            <Select
                                 value={schoolLevel}
                                 onChange={e => setSchoolLevel(e.target.value)}
                                 disabled={saveBusy}
-                                className="min-h-control rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             >
                                 <option value="">{l('levelNone')}</option>
                                 <option value="secondaria">{l('levelSecondaria')}</option>
                                 <option value="universita">{l('levelUniversita')}</option>
                                 <option value="adulti">{l('levelAdulti')}</option>
-                            </select>
-                        </label>
+                            </Select>
+                        </Field>
 
                         {/* Istituto */}
-                        <label className="flex flex-col gap-1 text-xs font-semibold text-ink-body">
-                            {l('partnerInstitution')}
-                            <select
+                        <Field label={l('partnerInstitution')}>
+                            <Select
                                 value={institutionId}
                                 onChange={e => setInstitutionId(e.target.value)}
                                 disabled={saveBusy}
-                                className="min-h-control rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             >
                                 <option value="">{l('institutionNone')}</option>
                                 {group.institution_id && !institutions.some(row => row.id === group.institution_id) && (
@@ -662,34 +647,30 @@ export function ClassOverviewTab({
                                         {inst.name}
                                     </option>
                                 ))}
-                            </select>
-                        </label>
+                            </Select>
+                        </Field>
 
                         {/* Descrizione classe */}
-                        <label className="flex flex-col gap-1 text-xs font-semibold text-ink-body sm:col-span-2">
-                            {l('description')}
-                            <textarea
+                        <Field label={l('description')} className="sm:col-span-2">
+                            <Textarea
                                 rows={3}
                                 value={description}
                                 onChange={e => setDescription(e.target.value)}
                                 disabled={saveBusy}
                                 placeholder={l('descriptionPlaceholder')}
-                                className="rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             />
-                        </label>
+                        </Field>
 
                         {/* Metodologie */}
-                        <label className="flex flex-col gap-1 text-xs font-semibold text-ink-body sm:col-span-2">
-                            {l('methodologies')}
-                            <textarea
+                        <Field label={l('methodologies')} className="sm:col-span-2">
+                            <Textarea
                                 rows={3}
                                 value={methodologies}
                                 onChange={e => setMethodologies(e.target.value)}
                                 disabled={saveBusy}
                                 placeholder={l('methodologiesPlaceholder')}
-                                className="rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             />
-                        </label>
+                        </Field>
 
                         {/* Visibilità contesto per studenti */}
                         <label className="flex min-h-control items-center gap-4 text-xs text-ink-body sm:col-span-2">
@@ -745,7 +726,7 @@ export function ClassOverviewTab({
             </Card>
 
             {/* 5. Stato della Classe & Azioni */}
-            <Card>
+            <Card variant="flat">
                 <section aria-labelledby="class-status-heading" className="space-y-4">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-4">
                         <div>
@@ -757,20 +738,9 @@ export function ClassOverviewTab({
                                 {group.is_active ? l('classStatusActiveHelp') : l('classStatusInactiveHelp')}
                             </p>
                         </div>
-                        <span
-                            className={`inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs font-semibold ${
-                                group.is_active
-                                    ? 'border border-success-line bg-success-soft text-success'
-                                    : 'border border-line bg-surface-raised text-ink-muted'
-                            }`}
-                        >
-                            <span
-                                className={`h-2 w-2 rounded-full ${
-                                    group.is_active ? 'bg-success' : 'bg-line-strong'
-                                }`}
-                            />
+                        <StatusBadge tone={group.is_active ? 'success' : 'neutral'} dot>
                             {group.is_active ? l('classStatusActive') : l('classStatusInactive')}
-                        </span>
+                        </StatusBadge>
                     </div>
 
                     {statusError && (
@@ -829,52 +799,32 @@ export function ClassOverviewTab({
 
                     {/* Dialog modale di conferma cancellazione */}
                     {showDeleteDialog && (
-                        <dialog
-                            ref={deleteDialogRef}
-                            className="fixed inset-0 z-50 m-auto max-w-md rounded-card border border-line bg-surface p-6 shadow-modal backdrop:bg-slate-900/40"
-                            onCancel={() => setShowDeleteDialog(false)}
-                        >
-                            <div className="space-y-4">
-                                <div className="flex items-start gap-4">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-danger-soft text-danger">
-                                        <AlertTriangle className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-ink">
-                                            {l('deleteClassConfirmTitle')}
-                                        </h3>
-                                        <p className="mt-1 text-sm text-ink-muted">
-                                            {l('deleteClassConfirmMessage')}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {deleteError && (
-                                    <div className="rounded-card bg-danger-soft p-4 text-xs font-semibold text-danger">
-                                        {deleteError}
-                                    </div>
-                                )}
-
-                                <div className="flex justify-end gap-2 pt-2">
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        disabled={statusBusy}
-                                        onClick={() => setShowDeleteDialog(false)}
-                                    >
-                                        {l('cancel')}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="danger"
-                                        disabled={statusBusy}
-                                        onClick={() => void handleDeleteClass()}
-                                    >
-                                        {statusBusy ? l('saving') : l('deleteClassConfirmAction')}
-                                    </Button>
-                                </div>
-                            </div>
-                        </dialog>
+                        <Dialog title={l('deleteClassConfirmTitle')} closeLabel={l('cancel')} onClose={() => setShowDeleteDialog(false)}>
+                            <DialogBody className="space-y-4">
+                                <p className="text-sm text-ink-muted">
+                                    {l('deleteClassConfirmMessage')}
+                                </p>
+                                {deleteError && <Callout variant="danger">{deleteError}</Callout>}
+                            </DialogBody>
+                            <DialogFooter className="justify-end">
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    disabled={statusBusy}
+                                    onClick={() => setShowDeleteDialog(false)}
+                                >
+                                    {l('cancel')}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="danger"
+                                    disabled={statusBusy}
+                                    onClick={() => void handleDeleteClass()}
+                                >
+                                    {statusBusy ? l('saving') : l('deleteClassConfirmAction')}
+                                </Button>
+                            </DialogFooter>
+                        </Dialog>
                     )}
                 </section>
             </Card>
