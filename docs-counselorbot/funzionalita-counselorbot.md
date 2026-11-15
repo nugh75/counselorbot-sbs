@@ -314,6 +314,12 @@ e le primitive `Button`, `Card` e `Callout` (audit UI 2026-10-30, zona 1):
 spaziature su griglia di 8, due soli pesi, niente maiuscolo né sfocature, campi e
 comandi alti almeno 44px. Testi, passi e comportamento non cambiano.
 
+Il questionario di `/somministrazione` è piatto: ogni domanda è un gruppo con filetto
+in alto e testo visibile come legenda, la scala è una riga di opzioni dove solo la
+selezionata ha lo sfondo, l'avanzamento è una barra con filetto sotto, e campi,
+etichette di stato e link usano `Field`, `StatusBadge` e `ButtonLink`. Risposte,
+bozza e comportamento non cambiano.
+
 ## Presentazione, attività e navigazione
 
 Dopo l'accesso la radice `/` porta all'area del proprio ruolo: docenti, ricercatori
@@ -395,6 +401,15 @@ comuni: etichetta sopra il campo con il suggerimento collegato, stessa altezza e
 per tutti i campi, pulsanti «Riprova», «Salva», «Annulla», «Genera» e «Aggiungi» con
 l'aspetto standard, finestre a tutto schermo sul telefono con un velo che si adatta al
 tema scuro. Esc e il tasto chiudi funzionano come prima; nessun cambio di comportamento.
+
+**Pulizia dei token visivi piatti (#922).** Le ombre fuori dai tre token (bordi di
+finestre, popover, menu e messaggi) usano `shadow-card`, `shadow-pop` o `shadow-modal`;
+le bolle di chat non hanno più ombra. Le altezze tattili di 44 px si scrivono con i token
+`h-control`, `min-h-control` e `min-w-control` invece che con `[44px]` al call-site. I
+testi sotto `text-xs` (`text-[11px]`, `text-[10px]`, `text-[9px]`) diventano `text-xs`;
+`text-2xs` resta per codici e contatori. I simboli testuali usati come icone (frecce e
+triangoli) sono sostituiti da `ArrowLeft`, `ArrowRight` e `ChevronDown` di `lucide-react`.
+Nessun cambio di comportamento.
 
 **Orientamento del docente e Catalogo obiettivi piatti (#870).** `/docente/orientamento`
 e `/docente/catalogo-obiettivi` seguono l'aspetto piatto: categorie, contenuti e proposte

@@ -261,7 +261,7 @@ export function FlashcardsPage() {
                             <button key={entry.id} type="button" className="rounded-card border border-line bg-surface p-2 text-left transition-colors hover:border-brand hover:bg-brand-soft/40" onClick={() => applyImage(entry.id)}>
                                 <img src={tavoloImageUrl(entry.id)} alt="" className="mx-auto h-20 w-full object-contain" />
                                 <span className="mt-1 block text-xs font-semibold text-ink">{entry.name}</span>
-                                <span className="block text-[11px] leading-snug text-ink-muted">{entry.usage}</span>
+                                <span className="block text-xs leading-snug text-ink-muted">{entry.usage}</span>
                             </button>
                         ))}
                     </div>

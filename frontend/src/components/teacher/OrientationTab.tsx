@@ -176,14 +176,14 @@ export function OrientationTab({ groupId }: { groupId: number }) {
             <Card className="h-max space-y-4">
                 <input value={query} onChange={event => setQuery(event.target.value)}
                     placeholder={l('search')} aria-label={l('search')}
-                    className="min-h-[44px] w-full rounded-control border border-line-strong bg-surface px-4 text-sm" />
+                    className="min-h-control w-full rounded-control border border-line-strong bg-surface px-4 text-sm" />
                 {students.data.length === 0 && <p className="text-sm text-ink-muted">{l('noStudents')}</p>}
                 {list.length === 0 && students.data.length > 0 && <p className="text-sm text-ink-muted">{l('search')}</p>}
                 {list.length > 0 && <ul className="divide-y divide-line">
                     {list.map(row => <li key={row.username}>
                         <button type="button" disabled={busy || draftBusy} onClick={() => void openStudent(row)}
                             aria-pressed={username === row.username}
-                            className={`min-h-[44px] w-full space-y-1 rounded-control px-2 py-2 text-left text-sm ${username === row.username ? 'bg-brand-soft' : 'hover:bg-surface-sunken'}`}>
+                            className={`min-h-control w-full space-y-1 rounded-control px-2 py-2 text-left text-sm ${username === row.username ? 'bg-brand-soft' : 'hover:bg-surface-sunken'}`}>
                             <span className="block font-semibold text-ink">{row.display_name}</span>
                             <span className="flex flex-wrap items-center gap-2">
                                 {chip(row.status)}

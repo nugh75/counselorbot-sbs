@@ -221,14 +221,14 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
             {/* The kind is chosen once: group meetings have a date, individual ones slots. */}
             {editing === 'new' && !kindFilter && <fieldset className="flex flex-wrap gap-4 text-sm">
                 <legend className="mb-1">{m('kind')}</legend>
-                {(['group', 'individual'] as const).map(kind => <label key={kind} className="flex min-h-[44px] items-center gap-2">
+                {(['group', 'individual'] as const).map(kind => <label key={kind} className="flex min-h-control items-center gap-2">
                     <input type="radio" name={`meeting-kind-${groupId}`} checked={draft.kind === kind} onChange={() => changeDraft({ ...draft, kind })}
                         className="h-4 w-4 accent-brand" />{m(kind)}</label>)}
             </fieldset>}
             <fieldset className="space-y-1 text-sm">
                 <legend className="mb-1">{m('host')}</legend>
                 <div className="flex flex-wrap gap-4">
-                    {(['teacher', 'referent', 'expert'] as const).map(host => <label key={host} className="flex min-h-[44px] items-center gap-2">
+                    {(['teacher', 'referent', 'expert'] as const).map(host => <label key={host} className="flex min-h-control items-center gap-2">
                         <input type="radio" name={`meeting-host-${groupId}`} checked={draft.hostKind === host} onChange={() => changeDraft({ ...draft, hostKind: host })}
                             className="h-4 w-4 accent-brand" />{m(host)}</label>)}
                 </div>
@@ -254,7 +254,7 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
             </div>}
             <fieldset className="flex flex-wrap gap-4 text-sm">
                 <legend className="mb-1">{m('mode')}</legend>
-                {(['in_person', 'online'] as const).map(mode => <label key={mode} className="flex min-h-[44px] items-center gap-2">
+                {(['in_person', 'online'] as const).map(mode => <label key={mode} className="flex min-h-control items-center gap-2">
                     <input type="radio" name={`meeting-mode-${groupId}`} checked={draft.mode === mode} onChange={() => changeDraft({ ...draft, mode })}
                         className="h-4 w-4 accent-brand" />{m(mode)}</label>)}
             </fieldset>
@@ -266,7 +266,7 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
             {otherGroups.length > 0 && <fieldset className="space-y-1 text-sm">
                 <legend className="mb-1">{m('alsoFor')}</legend>
                 <div className="grid gap-x-4 sm:grid-cols-2">
-                    {otherGroups.map(other => <label key={other.id} className="flex min-h-[44px] items-center gap-2">
+                    {otherGroups.map(other => <label key={other.id} className="flex min-h-control items-center gap-2">
                         <input type="checkbox" className="h-4 w-4 accent-brand" checked={draft.groupIds.includes(other.id)}
                             onChange={event => changeDraft({ ...draft, groupIds: event.target.checked ? [...draft.groupIds, other.id]
                                 : draft.groupIds.filter(id => id !== other.id) })} />{other.name}</label>)}
@@ -274,11 +274,11 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
             </fieldset>}
             <fieldset className="flex flex-wrap gap-4 text-sm">
                 <legend className="mb-1">{m('attendanceBy')}</legend>
-                {(['student', 'teacher', 'both'] as const).map(mode => <label key={mode} className="flex min-h-[44px] items-center gap-2">
+                {(['student', 'teacher', 'both'] as const).map(mode => <label key={mode} className="flex min-h-control items-center gap-2">
                     <input type="radio" name={`meeting-attendance-${groupId}`} checked={draft.attendanceMode === mode}
                         onChange={() => changeDraft({ ...draft, attendanceMode: mode })} className="h-4 w-4 accent-brand" />{m(`attendance_${mode}`)}</label>)}
             </fieldset>
-            <label className="flex min-h-[44px] items-center gap-2 text-sm">
+            <label className="flex min-h-control items-center gap-2 text-sm">
                 <input type="checkbox" checked={draft.showOnTimeline} onChange={event => changeDraft({ ...draft, showOnTimeline: event.target.checked })}
                     className="h-4 w-4 accent-brand" />{m('showOnTimeline')}</label>
             <label className="block text-sm">{m('description')}
@@ -361,7 +361,7 @@ function AttendanceRegister({ lang, meeting, onChanged }: { lang: string; meetin
         {rows && !rows.length && <p className="text-xs text-ink-muted">{m('registerEmpty')}</p>}
         {rows && rows.length > 0 && <ul className="grid gap-x-4 sm:grid-cols-2">
             {rows.map(row => <li key={row.username}>
-                <label className="flex min-h-[44px] items-center gap-2 text-sm">
+                <label className="flex min-h-control items-center gap-2 text-sm">
                     <input type="checkbox" className="h-4 w-4 accent-brand" checked={row.attended} disabled={busy !== null}
                         onChange={() => void toggle(row)} />
                     <span className="min-w-0 break-words">{row.name}</span>

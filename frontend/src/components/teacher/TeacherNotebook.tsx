@@ -336,12 +336,12 @@ export function TeacherNotebook({ showHeading = true }: { showHeading?: boolean 
                                     </p>
                                     {notebookToolLinks.filter(link => link.field === key).map(link => link.label === 'classes' ? (
                                         <button key={link.href} type="button" aria-haspopup="dialog" onClick={() => setClassPickerOpen(true)}
-                                            className="mr-4 inline-flex min-h-[44px] items-center text-left text-xs font-semibold text-link underline underline-offset-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2">
+                                            className="mr-4 inline-flex min-h-control items-center text-left text-xs font-semibold text-link underline underline-offset-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2">
                                             {notebookLinkText(lang, link.label)}
                                         </button>
                                     ) : (
                                         <Link key={link.href} href={link.href}
-                                            className="mr-4 inline-flex min-h-[44px] items-center text-xs font-semibold text-link underline underline-offset-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2">
+                                            className="mr-4 inline-flex min-h-control items-center text-xs font-semibold text-link underline underline-offset-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2">
                                             {notebookLinkText(lang, link.label)}
                                         </Link>
                                     ))}

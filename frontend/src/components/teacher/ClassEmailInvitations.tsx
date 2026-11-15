@@ -107,7 +107,7 @@ export function ClassAddStudent({ groupId, state }: { groupId: number; state: Cl
                     value={email}
                     onChange={event => setEmail(event.target.value)}
                     placeholder={l('studentEmail')}
-                    className="min-h-[44px] flex-1 rounded-control border border-line-strong bg-surface px-4 text-sm text-ink-body"
+                    className="min-h-control flex-1 rounded-control border border-line-strong bg-surface px-4 text-sm text-ink-body"
                 />
                 <Button type="submit" variant="secondary" disabled={busy} className="shrink-0">
                     {l('addStudent')}

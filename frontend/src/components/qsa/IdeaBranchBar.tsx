@@ -115,7 +115,7 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                 >
                     <X className="h-4 w-4" aria-hidden="true" />
                 </button>
-                {failed && <p className="w-full text-[11px] text-rose-700">{t('idea.branches.error')}</p>}
+                {failed && <p className="w-full text-xs text-rose-700">{t('idea.branches.error')}</p>}
             </div>
         );
     }
@@ -123,7 +123,7 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
     return (
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-slate-50/70 px-3 py-2">
             <GitBranch className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden="true" />
-            <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+            <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
                 {t('idea.branches.current')}
             </span>
             <select

@@ -113,7 +113,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
 
     return (
         <section className="border-t border-slate-200 px-3 py-3">
-            <h4 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
                 {t('idea.sources.title')}
             </h4>
@@ -179,7 +179,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                 </button>
             </form>
 
-            {failed && <p className="mt-2 text-[11px] text-rose-700">{t('idea.sources.error')}</p>}
+            {failed && <p className="mt-2 text-xs text-rose-700">{t('idea.sources.error')}</p>}
 
             {results !== null && (
                 <div className="mt-3 space-y-2">
@@ -191,13 +191,13 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                             <div className="flex items-start gap-2">
                                 <div className="min-w-0 flex-1">
                                     <p className="break-words text-xs font-medium text-slate-800">{item.title}</p>
-                                    <p className="mt-0.5 text-[11px] text-slate-500">
+                                    <p className="mt-0.5 text-xs text-slate-500">
                                         {[item.authors, item.year, item.journal, item.source]
                                             .filter(Boolean).join(' · ')}
                                         {item.oa_status ? ` · ${item.oa_status}` : ''}
                                     </p>
                                     {item.abstract && (
-                                        <p className="mt-1 line-clamp-3 text-[11px] leading-relaxed text-slate-600">
+                                        <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-slate-600">
                                             {item.abstract}
                                         </p>
                                     )}
@@ -206,7 +206,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                                     type="button"
                                     onClick={() => void keepOne(item)}
                                     disabled={keptUrls.has(item.url) || keeping === item.url}
-                                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-teal-300 px-2 py-1 text-[11px] font-medium text-teal-800 hover:bg-teal-50 disabled:opacity-40"
+                                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-teal-300 px-2 py-1 text-xs font-medium text-teal-800 hover:bg-teal-50 disabled:opacity-40"
                                 >
                                     {keeping === item.url
                                         ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
@@ -219,7 +219,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                 </div>
             )}
 
-            <h5 className="mt-4 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <h5 className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {t('idea.sources.kept')}
             </h5>
             {kept.length === 0 ? (
@@ -230,7 +230,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                         <li key={row.id} className="flex items-start gap-2 rounded-md bg-slate-50 p-2">
                             <div className="min-w-0 flex-1">
                                 <p className="break-words text-xs text-slate-800">{row.title}</p>
-                                <p className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                                <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                                     <a
                                         href={row.url}
                                         target="_blank"
@@ -265,7 +265,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                     ))}
                 </ul>
             )}
-            <p className="mt-2 text-[11px] text-slate-400">{t('idea.sources.hint')}</p>
+            <p className="mt-2 text-xs text-slate-400">{t('idea.sources.hint')}</p>
         </section>
     );
 }

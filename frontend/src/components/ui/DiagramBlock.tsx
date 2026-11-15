@@ -65,7 +65,7 @@ function KindSample({ kind }: { kind: DiagramEdgeKind }) {
     );
 }
 
-const controlClass = 'inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-lg p-0 text-sm font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-40';
+const controlClass = 'inline-flex h-control w-[44px] shrink-0 items-center justify-center rounded-lg p-0 text-sm font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-40';
 
 function subscribeMotion(callback: () => void) {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -306,7 +306,7 @@ function DiagramView({ spec, locale, renderedSvg, imageUrl, onPickNode }: Diagra
                             {format === 'svg' ? <FileCode className="h-5 w-5" aria-hidden="true" /> : <FileImage className="h-5 w-5" aria-hidden="true" />}
                         </button></Tooltip>)}
                     </div>
-                    <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
+                    <label className="flex min-h-control items-center gap-3 text-sm text-slate-700">
                         <input type="checkbox" checked={motion} disabled={reduced} onChange={event => setAnimate(event.target.checked)} />{labels('motion')}
                     </label>
                     {reduced && <p className="text-xs text-slate-600">{labels('reduced')}</p>}
@@ -359,7 +359,7 @@ function DiagramView({ spec, locale, renderedSvg, imageUrl, onPickNode }: Diagra
         {isFullscreen && createPortal(<div className={`fixed inset-0 z-[80] flex bg-slate-950/75 p-2 backdrop-blur-sm sm:p-4 ${motion ? 'dg-dialog-motion' : ''} ${closing ? 'dg-dialog-closing' : ''}`}
             onMouseDown={event => { if (event.currentTarget === event.target) closeFullscreen(); }}>
             <section ref={dialog} role="dialog" aria-modal="true" aria-label={spec.title}
-                className="mx-auto flex h-full w-full max-w-[96rem] flex-col overflow-auto rounded-xl border border-slate-200 bg-white shadow-2xl">
+                className="mx-auto flex h-full w-full max-w-[96rem] flex-col overflow-auto rounded-xl border border-slate-200 bg-white shadow-pop">
                 <header className="px-4 pt-4 text-base font-semibold text-slate-800">{spec.title}</header>
                 {controls(true)}
                 {body(true)}

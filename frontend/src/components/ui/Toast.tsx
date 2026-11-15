@@ -65,7 +65,7 @@ export function Toaster() {
                     <div
                         key={item.id}
                         role="status"
-                        className={cn('flex items-start gap-2 rounded-xl border p-3 text-sm shadow-lg animate-fade-in-up', s.box)}
+                        className={cn('flex items-start gap-2 rounded-card border p-3 text-sm shadow-pop animate-fade-in-up', s.box)}
                     >
                         <Icon className="mt-0.5 h-4 w-4 shrink-0" />
                         <span className="min-w-0 flex-1">{item.message}</span>

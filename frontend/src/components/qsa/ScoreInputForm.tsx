@@ -82,11 +82,11 @@ function InputRow({
                     <span className="font-mono text-indigo-600 font-bold text-sm">{factor.code}</span>
                     <span className="font-medium text-slate-700 text-sm">{tf(factorTranslationKey(questionnaireId, factor.code, 'name'), factor.name)}</span>
                 </div>
-                <div className="text-[11px] leading-tight text-slate-500 ml-8 flex items-center gap-1">
+                <div className="text-xs leading-tight text-slate-500 ml-8 flex items-center gap-1">
                     {tf(factorTranslationKey(questionnaireId, factor.code, 'desc'), factor.description)}
                 </div>
                 {hasError && (
-                    <p id={errorId} className="ml-8 mt-1 text-[11px] font-medium text-red-700">
+                    <p id={errorId} className="ml-8 mt-1 text-xs font-medium text-red-700">
                         {t('score.error.required')}
                     </p>
                 )}
@@ -196,12 +196,12 @@ export function ScoreInputForm({
         <div className="flex flex-wrap items-center gap-3">
             {submitAction === 'save' ? (
                 <>
-                    <Button type="submit" form={formId} disabled={submitDisabled} className="min-h-[44px]">
+                    <Button type="submit" form={formId} disabled={submitDisabled} className="min-h-control">
                         <Save className="h-4 w-4 shrink-0" aria-hidden="true" />
                         {submitLabel || t('common.save')}
                     </Button>
                     {onBack && (
-                        <Button type="button" variant="secondary" disabled={submitDisabled} onClick={onBack} className="min-h-[44px]">
+                        <Button type="button" variant="secondary" disabled={submitDisabled} onClick={onBack} className="min-h-control">
                             {cancelLabel || t('common.cancel')}
                         </Button>
                     )}

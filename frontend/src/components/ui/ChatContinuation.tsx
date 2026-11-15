@@ -86,7 +86,7 @@ export function ChatContinuation({ locale, pending, continueResponse }: {
     return (
         <div className="flex flex-wrap items-center gap-2 px-3 py-2">
             <span role="status" className="text-sm text-slate-600">{chatLayoutLabel(locale, 'interrupted')}</span>
-            <Button type="button" variant="secondary" className="min-h-[44px]" onClick={continueResponse}>
+            <Button type="button" variant="secondary" className="min-h-control" onClick={continueResponse}>
                 {chatLayoutLabel(locale, 'continue')}
             </Button>
         </div>

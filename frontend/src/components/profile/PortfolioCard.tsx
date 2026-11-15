@@ -468,12 +468,12 @@ export function PortfolioCard() {
                                         onCancel={() => setConfirmingDelete(null)}
                                     />
                                 )}
-                                <div className="flex flex-wrap items-center gap-2 text-[11px] text-ink-muted">
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted">
                                     {item.category && <span className="rounded-full bg-brand-soft px-2 py-1 font-semibold text-link">{item.category}</span>}
                                     {item.item_date && <span>{new Date(item.item_date).toLocaleDateString(lang)}</span>}
                                 </div>
                                 {(evidenceOf[String(item.id)] ?? []).length > 0 && (
-                                    <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                                    <div className="flex flex-wrap items-center gap-2 text-xs">
                                         {(evidenceOf[String(item.id)] ?? []).map((title, index) => (
                                             <span key={index} className="rounded-full bg-success-soft px-2 py-1 font-semibold text-success-ink">
                                                 {t('portfolio.evidenceOf', { title })}

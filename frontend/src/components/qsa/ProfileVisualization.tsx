@@ -336,7 +336,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                                 : <p className="text-xs text-slate-500">{t('profile.summary.balanced')}</p>}
                         </div>
                     </div>
-                    <p className="text-[11px] text-slate-500 text-center pt-0.5">{t('profile.summary.note')}</p>
+                    <p className="text-xs text-slate-500 text-center pt-0.5">{t('profile.summary.note')}</p>
                 </div>
             )}
 

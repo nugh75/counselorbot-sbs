@@ -6,7 +6,7 @@ import { useUserAccess } from '@/lib/use-user-access';
 
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 
-import { ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, ThumbsUp, ThumbsDown, Snowflake, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, BookOpen, Mic, NotebookPen } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, ThumbsUp, ThumbsDown, Snowflake, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, BookOpen, Mic, NotebookPen, ArrowRight } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
@@ -1730,8 +1730,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         ? phases[phases.indexOf(currentPhase) + 1]
         : undefined;
     const targetPhaseLabel = targetPhase ? getPhaseLabel(targetPhase) : null;
-    const stepButtonClass = 'h-[44px] w-[44px] shrink-0 p-0';
-    const messageActionClass = 'chat-action-item flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
+    const stepButtonClass = 'h-control w-[44px] shrink-0 p-0';
+    const messageActionClass = 'chat-action-item flex min-h-control w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
     const renderStepNavigation = () => (
         <div className="flex shrink-0 items-center gap-1">
             {!activeExploration && (essentialSummary || goalFinal) && <Button type="button" variant="secondary" disabled={isLoading} onClick={handleComplete}>{chatPreferenceLabel(activeLocale, "finish")}</Button>}
@@ -1770,7 +1770,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             <span className="min-w-0">{chatLayoutLabel(activeLocale, 'step')} {currentStepIndex}/{totalSteps}</span>
             <span className="ml-2 hidden font-semibold text-slate-800 lg:inline">{getPhaseLabel(currentPhase)}</span>
             {targetPhaseLabel && <>
-                <span className="mx-1 text-slate-400" aria-hidden="true">→</span>
+                <ArrowRight className="mx-1 h-4 w-4 text-slate-400" aria-hidden="true" />
                 <span className="hidden font-medium text-slate-500 lg:inline">{targetPhaseLabel}</span>
             </>}
         </div>
@@ -1874,8 +1874,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                     <button type="button" data-path-phase={phaseId} aria-current={isActive ? 'step' : undefined}
                                         disabled={isLoading || !canNavigate(phaseId)}
                                         onClick={() => { selectPhase(phaseId); closePanel(); }}
-                                        className={cn('flex min-h-[44px] w-full items-center gap-2 rounded-lg p-2 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-indigo-600 disabled:opacity-50', isActive ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50')}>
-                                        <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px]', isActive || visited ? 'border-slate-600 bg-slate-600 text-white' : 'border-slate-300 bg-white')}>
+                                        className={cn('flex min-h-control w-full items-center gap-2 rounded-lg p-2 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-indigo-600 disabled:opacity-50', isActive ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50')}>
+                                        <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs', isActive || visited ? 'border-slate-600 bg-slate-600 text-white' : 'border-slate-300 bg-white')}>
                                             {isDone ? <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> : phaseIndex + 1}
                                         </span>
                                         <span className="min-w-0 flex-1">{getPhaseLabel(phaseId)}</span>
@@ -1885,7 +1885,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                         <button type="button" key={branch.id} disabled={isLoading || !!activeExploration}
                                             aria-label={`${navCopy.resume}: ${branch.title}`} aria-current={activeExploration?.id === branch.id ? 'true' : undefined}
                                             onClick={() => { openExploration(branch.id); closePanel(); }}
-                                            className="ml-4 flex min-h-[44px] w-[calc(100%-1rem)] items-center gap-2 rounded-lg px-2 text-left text-xs text-indigo-700 hover:bg-indigo-50 disabled:opacity-50">
+                                            className="ml-4 flex min-h-control w-[calc(100%-1rem)] items-center gap-2 rounded-lg px-2 text-left text-xs text-indigo-700 hover:bg-indigo-50 disabled:opacity-50">
                                             <GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" /><span className="break-words">{branch.title}</span>
                                         </button>
                                     ))}
@@ -1934,7 +1934,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 </section>}
                 {showExplorationForm && <section aria-label={navCopy.open} className="space-y-2 border-b border-slate-200 bg-slate-50 p-3">
                     <label htmlFor="guided-exploration-title" className="block text-sm font-medium text-slate-700">{navCopy.title}</label>
-                    <input id="guided-exploration-title" value={explorationTitle} maxLength={200} autoFocus onChange={event => setExplorationTitle(event.target.value)} className="min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm" />
+                    <input id="guided-exploration-title" value={explorationTitle} maxLength={200} autoFocus onChange={event => setExplorationTitle(event.target.value)} className="min-h-control w-full rounded-md border border-slate-300 bg-white px-3 text-sm" />
                     <div className="flex flex-wrap gap-2">
                         <Button type="button" disabled={!explorationTitle.trim() || isLoading} onClick={() => openExploration()}>{navCopy.start}</Button>
                         <Button type="button" variant="secondary" onClick={() => setShowExplorationForm(false)}>{navCopy.cancel}</Button>
@@ -2017,7 +2017,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                                             </span>
                                                         </button>
                                                         {!hiddenReasoning.has(idx) && (
-                                                            <div className="mt-1 text-[11px] leading-snug text-slate-500 italic whitespace-pre-wrap max-h-40 overflow-y-auto">
+                                                            <div className="mt-1 text-xs leading-snug text-slate-500 italic whitespace-pre-wrap max-h-40 overflow-y-auto">
                                                                 {msg.reasoning}
                                                             </div>
                                                         )}
@@ -2187,7 +2187,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                             onClick={() => ideaReferenceInputRef.current?.click()}
                                             disabled={isLoading || isIdeaReferenceUploading || !sessionId}
                                             aria-label={t(ideaReference ? 'idea.reference.replace' : 'idea.reference.add')}
-                                            className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="inline-flex h-control w-[44px] shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {isIdeaReferenceUploading
                                                 ? <Loader2 className="h-5 w-5 animate-spin" />

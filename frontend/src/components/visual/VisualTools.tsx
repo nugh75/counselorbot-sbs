@@ -705,7 +705,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                         <span className="mt-2 line-clamp-1 text-xs font-semibold text-ink">
                                             {img.name}
                                         </span>
-                                        <span className="line-clamp-2 text-[11px] leading-tight text-ink-muted">
+                                        <span className="line-clamp-2 text-xs leading-tight text-ink-muted">
                                             {img.usage}
                                         </span>
                                     </button>

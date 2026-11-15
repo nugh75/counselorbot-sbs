@@ -37,7 +37,7 @@ function ThemeCard({ theme, total, studentBase }: { theme: ClassTheme; total: nu
         <Bar label={l('students')} count={theme.student_count} total={total} color={KIND_BAR[theme.kind]} />
         {theme.suggestion && <p className="flex gap-2 text-sm text-ink-body"><Lightbulb className="mt-1 h-4 w-4 shrink-0 text-warning" aria-hidden />{theme.suggestion}</p>}
         <details className="text-sm">
-            <summary className="min-h-[44px] cursor-pointer py-2 font-semibold text-link">{l('showStudents')} ({theme.students.length})</summary>
+            <summary className="min-h-control cursor-pointer py-2 font-semibold text-link">{l('showStudents')} ({theme.students.length})</summary>
             <ul className="space-y-4">{theme.students.map((student, index) => <li key={index} className="space-y-1 border-t border-line pt-2">
                 <p className="font-semibold text-ink">{student.username}</p>
                 <p className="text-ink-body">{student.text}</p>
@@ -108,14 +108,14 @@ export function ClassNoticingTab({ groupId }: { groupId: number }) {
             <div className="flex flex-wrap items-end gap-4">
                 <label className="space-y-1 text-sm font-semibold text-ink-body">
                     <span className="block">{l('instrument')}</span>
-                    <select disabled={!!progress} value={instrument} onChange={event => setInstrument(event.target.value)} className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 text-sm">
+                    <select disabled={!!progress} value={instrument} onChange={event => setInstrument(event.target.value)} className="min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm">
                         <option value="">{l('allInstruments')}</option>
                         {(data?.instruments ?? []).map(code => <option key={code} value={code}>{SOURCE_KINDS.includes(code as SourceKind) ? journeyText(lang, code as SourceKind) : code}</option>)}
                     </select>
                 </label>
                 <label className="space-y-1 text-sm font-semibold text-ink-body">
                     <span className="block">{l('period')}</span>
-                    <select disabled={!!progress} value={days} onChange={event => setDays(Number(event.target.value))} className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 text-sm">
+                    <select disabled={!!progress} value={days} onChange={event => setDays(Number(event.target.value))} className="min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm">
                         {PERIODS.map(value => <option key={value} value={value}>{value ? l('lastDays', { n: value }) : l('allTime')}</option>)}
                     </select>
                 </label>
@@ -139,7 +139,7 @@ export function ClassNoticingTab({ groupId }: { groupId: number }) {
         <section className="space-y-2" aria-label={journeyText(lang, 'sources')}>
             {(data?.students ?? []).map(student => <details key={student.username} className="rounded-lg border border-line bg-surface p-4"
                 onToggle={event => { if (event.currentTarget.open) setOpened(previous => new Set(previous).add(student.username)); }}>
-                <summary className="min-h-[44px] cursor-pointer break-words py-2 font-semibold text-link">{student.username} · {journeyText(lang, 'sources')}: {student.source_count}</summary>
+                <summary className="min-h-control cursor-pointer break-words py-2 font-semibold text-link">{student.username} · {journeyText(lang, 'sources')}: {student.source_count}</summary>
                 {opened.has(student.username) && <StudentJourneyNoticing key={`${student.username}:${lang}`} base={studentBase(student.username)} onChanged={changed} refreshVersion={refreshVersion} />}
             </details>)}
         </section>

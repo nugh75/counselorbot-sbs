@@ -707,13 +707,13 @@ export default function ProfilePage() {
                                                                 </span>
                                                             </div>
                                                             {factorDef?.description && (
-                                                                <p className="text-[11px] text-ink-muted leading-normal mt-1">{tf(factorTranslationKey(selectedSession.questionnaire_type, code, 'desc'), factorDef.description)}</p>
+                                                                <p className="text-xs text-ink-muted leading-normal mt-1">{tf(factorTranslationKey(selectedSession.questionnaire_type, code, 'desc'), factorDef.description)}</p>
                                                             )}
                                                         </div>
                                                         <div className="flex items-center gap-2 mt-2 pt-2 border-t border-line">
                                                             <span className="text-sm font-semibold text-link">{val}</span>
                                                             <span className="text-2xs text-ink-muted">{t('profile.stanineLabel')}</span>
-                                                            {inverted && <span className="text-[9px] text-ink-muted italic">{t('profile.invertedShort')}</span>}
+                                                            {inverted && <span className="text-xs text-ink-muted italic">{t('profile.invertedShort')}</span>}
                                                         </div>
                                                     </div>
                                                 );
