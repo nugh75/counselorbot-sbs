@@ -178,7 +178,8 @@ Decisione del proprietario, dettagliata nella §9 dell'audit
 
 `frontend/src/lib/ui-primitives-tokens.test.ts` fa rispettare 2 e 4 (più niente
 hex, niente `h-11` e niente classi di palette grezze) alle primitive `Button`,
-`Card`, `PageHeader`, `Callout`; le pagine si allineano zona per zona.
+`Card`, `PageHeader`, `Callout` e alle primitive della chat (#961); le pagine si
+allineano zona per zona.
 
 ### 2.8 Colori di ruolo (#834)
 

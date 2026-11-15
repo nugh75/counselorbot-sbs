@@ -6,18 +6,28 @@ import { test } from 'node:test';
 // docs/design.md §2.6): token semantici, due pesi, niente maiuscolo, niente
 // gradienti, niente hex. Questa guardia copre solo loro, non le pagine.
 const primitives = ['Button', 'Card', 'PageHeader', 'Callout', 'Field', 'StatusBadge', 'Dialog', 'BackButton'];
+// #961: le primitive della chat entrano nello stesso modello: token semantici,
+// due pesi, niente maiuscolo, niente palette grezza (audit visivo 2, PR E1).
+const chat = [
+    'ChatBubble', 'ChatShell', 'ChatMarkdown', 'ChatOptionsMenu', 'ChatActionsPopover',
+    'AudioInput', 'ResponseFormatSelector', 'ResponseLengthSelector', 'ReasoningSelector',
+    'InlineRename', 'PencilButton', 'ConfirmInline', 'FlowStepper', 'AudioLanguageOption',
+    'AudioSendOption', 'ChatContinuation',
+];
 const read = (name: string) => readFileSync(new URL(`../components/ui/${name}.tsx`, import.meta.url), 'utf-8');
 
 const forbidden: [string, RegExp][] = [
     ['uppercase', /\buppercase\b/],
     ['gradient', /\bbg-(?:gradient|linear|radial|conic)-|\b(?:from|via|to)-(?:white|black|[a-z]+-\d{2,3})\b/],
-    ['hex literal', /#[0-9a-fA-F]{3,8}\b/],
+    // Un hex ha almeno una lettera, oppure 6/8 cifre: così i riferimenti alle
+    // issue nei commenti (`#935`) non passano per un colore.
+    ['hex literal', /#(?:(?=[0-9a-fA-F]*[a-fA-F])[0-9a-fA-F]{3,8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/],
     ['third font weight', /\bfont-(?:thin|extralight|light|medium|bold|extrabold|black)\b/],
     ['41px height (h-11 at 15px root)', /\b(?:min-)?h-11\b/],
     ['raw neutral or brand colour', /\b(?:text|bg|border)-(?:slate|indigo|ochre|amber|sky)-\d{2,3}\b/],
 ];
 
-for (const name of primitives) {
+for (const name of [...primitives, ...chat]) {
     test(`${name} follows the visual principles`, () => {
         const source = read(name);
         for (const [label, pattern] of forbidden) {
@@ -112,4 +122,45 @@ test('only rounded-control and rounded-card outside the admin area', () => {
         .filter(name => !name.startsWith('components/admin/') && name !== 'components/ui/DiagramBlock.tsx')
         .filter(name => stale.test(readFileSync(new URL(name, root), 'utf-8')));
     assert.deepEqual(legacy, []);
+});
+
+// #961: la tabella di sostituzione dell'audit visivo 2 applicata alle primitive
+// della chat. Ogni tinta grezza ha lasciato il posto al token corrispondente.
+test('chat primitives use the substitution table', () => {
+    const expected: [string, RegExp][] = [
+        ['ChatBubble', /bg-brand text-ink-on-brand/],
+        ['ChatBubble', /bg-surface border border-line text-ink-body/],
+        ['ChatShell', /border-line-strong bg-surface/],
+        ['ChatShell', /bg-brand hover:bg-brand-hover/],
+        ['ChatShell', /bg-brand-hover hover:bg-brand/],
+        ['ChatMarkdown', /text-link/],
+        ['ChatMarkdown', /bg-surface-raised/],
+        ['ChatOptionsMenu', /bg-surface-raised font-semibold text-ink/],
+        ['ChatActionsPopover', /border border-line bg-surface text-ink-body/],
+        ['FlowStepper', /bg-move text-ink-on-brand/],
+        ['FlowStepper', /text-move-hover/],
+        ['PencilButton', /bg-surface-sunken hover:text-link/],
+    ];
+    for (const [name, pattern] of expected) assert.match(read(name), pattern, name);
+});
+
+test('chat primitives have no hand-written field, pill or focus override', () => {
+    for (const name of chat) {
+        const source = read(name);
+        assert.doesNotMatch(source, /outline-none/, `${name}.tsx: outline override`);
+        // Campi nativi: nessun bordo o fondo scritto a mano con la palette grezza.
+        // Restano due eccezioni volute, entrambe sui token: il composer cresce con
+        // AutoGrowTextarea e InlineRename tiene il ref del proprio input.
+        for (const line of source.split('\n').filter(item => /<(?:input|select|textarea)\b/.test(item))) {
+            assert.doesNotMatch(line, /bg-(?:white|slate)-|border-(?:slate|indigo)-/, `${name}.tsx: ${line.trim()}`);
+        }
+        for (const line of source.split('\n').filter(item => item.includes('rounded-full'))) {
+            assert.doesNotMatch(line, /\bpx-/, `${name}.tsx: pill written by hand`);
+        }
+    }
+    assert.match(read('ResponseFormatSelector'), /<Select\b/);
+    assert.match(read('AudioLanguageOption'), /<Select\b/);
+    assert.match(read('AudioInput'), /<Textarea\b/);
+    assert.match(read('InlineRename'), /<Button\b/);
+    assert.match(read('ConfirmInline'), /<Button\b/);
 });
