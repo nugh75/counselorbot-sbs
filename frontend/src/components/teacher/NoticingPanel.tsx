@@ -42,7 +42,7 @@ export function NoticingPanel({ path, onQuote }: { path: string; onQuote: (messa
     };
 
     const action = data && data.status !== 'empty' && <Button type="button" variant="secondary" onClick={() => void generate()} disabled={busy} aria-busy={busy}
-        className="min-h-[44px] max-w-full whitespace-normal">
+        className="min-h-control max-w-full whitespace-normal">
         <Sparkles className="h-4 w-4 shrink-0" aria-hidden />{l(busy ? 'generating' : data.status === 'missing' ? 'generate' : 'regenerate')}
     </Button>;
 
@@ -68,7 +68,7 @@ export function NoticingPanel({ path, onQuote }: { path: string; onQuote: (messa
                         <p className="text-xs font-semibold text-ink-muted">{l('studentWords')}</p>
                         {item.evidence.map((ref, i) => <blockquote key={i} className="flex flex-wrap items-start justify-between gap-2 border-l-4 border-line-strong pl-4 text-sm italic text-ink-body">
                             <span className="min-w-0 flex-1 break-words">«{ref.quote}»</span>
-                            <button type="button" onClick={() => onQuote(ref.message)} className="min-h-[44px] shrink-0 px-1 text-xs font-semibold not-italic text-link underline">
+                            <button type="button" onClick={() => onQuote(ref.message)} className="min-h-control shrink-0 px-1 text-xs font-semibold not-italic text-link underline">
                                 {l('goToMessage')} {ref.message + 1}
                             </button>
                         </blockquote>)}

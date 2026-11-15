@@ -20,7 +20,7 @@ export function ActivityToolsPicker({ lang, options, value, onChange, note }: {
         <legend className="text-sm font-semibold">{activityToolText(lang, 'tools')}</legend>
         <p className="text-xs text-ink-muted">{activityToolText(lang, 'toolsHelp')}</p>
         {note ? <p className="text-sm text-ink-muted">{note}</p> : <div className="grid gap-1 sm:grid-cols-2">
-            {options.map(key => <label key={key} className="flex min-h-[44px] items-center gap-2 text-sm">
+            {options.map(key => <label key={key} className="flex min-h-control items-center gap-2 text-sm">
                 <input type="checkbox" className="h-4 w-4 accent-brand" checked={value.includes(key)}
                     onChange={event => onChange(event.target.checked ? [...value, key] : value.filter(item => item !== key))} />
                 {activityToolName(key, lang)}
@@ -42,7 +42,7 @@ export function ActivityToolsList({ lang, tools, interactive = true }: { lang: s
                     : interactive && <>
                         <Button variant="secondary" type="button" onClick={() => setOpen(tool.key)}>{activityToolText(lang, 'openHere')}</Button>
                         <a href={activityToolHref(tool.key)} target="_blank" rel="noopener"
-                            className="inline-flex min-h-[44px] items-center gap-1 text-xs font-semibold text-link hover:underline">
+                            className="inline-flex min-h-control items-center gap-1 text-xs font-semibold text-link hover:underline">
                             <ExternalLink className="h-3.5 w-3.5" aria-hidden />{activityToolText(lang, 'openFullPage')}
                         </a>
                     </>}
@@ -69,7 +69,7 @@ function ToolPopup({ lang, toolKey, close }: { lang: string; toolKey: string; cl
                 <h2 id={heading} className="min-w-0 truncate font-semibold">{name}</h2>
                 <div className="flex items-center gap-2">
                     <a href={activityToolHref(toolKey)} target="_blank" rel="noopener"
-                        className="hidden min-h-[44px] items-center gap-1 text-xs font-semibold text-link hover:underline sm:inline-flex">
+                        className="hidden min-h-control items-center gap-1 text-xs font-semibold text-link hover:underline sm:inline-flex">
                         <ExternalLink className="h-3.5 w-3.5" aria-hidden />{activityToolText(lang, 'openFullPage')}
                     </a>
                     <Button variant="secondary" type="button" autoFocus onClick={() => dialog.current?.close()}

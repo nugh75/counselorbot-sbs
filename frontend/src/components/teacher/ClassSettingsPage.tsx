@@ -65,13 +65,13 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
             <p className="text-sm text-ink-muted">{l('counselorDefaultHint')}</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <label className="flex min-w-0 flex-col gap-1 text-sm text-ink-body">{l('counselorCategory')}
-                    <select className="min-h-[44px] rounded-control border border-line-strong bg-surface px-2" value={category} onChange={event => setCategory(event.target.value)}>
+                    <select className="min-h-control rounded-control border border-line-strong bg-surface px-2" value={category} onChange={event => setCategory(event.target.value)}>
                         <option value="">{l('counselorAllCategories')}</option>
                         {options.map(option => <option key={option} value={option}>{formatCategoryLabel(option, lang)}</option>)}
                     </select>
                 </label>
                 <label className="flex min-w-0 flex-col gap-1 text-sm text-ink-body">{l('counselorSearch')}
-                    <input type="search" className="min-h-[44px] rounded-control border border-line-strong px-2" value={query} onChange={event => setQuery(event.target.value)} />
+                    <input type="search" className="min-h-control rounded-control border border-line-strong px-2" value={query} onChange={event => setQuery(event.target.value)} />
                 </label>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -79,12 +79,12 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
                 <Button variant="secondary" disabled={busy || !rows.some(row => row.admin_enabled && !row.locked)} onClick={() => onToggleAll(rows, false)}>{l('disableAll')}</Button>
             </div>
             <div role="radiogroup" aria-label={l('counselorDefault')} className="space-y-1">
-                <label className="flex min-h-[44px] items-center gap-4 rounded-control p-2 text-sm text-ink-body">
+                <label className="flex min-h-control items-center gap-4 rounded-control p-2 text-sm text-ink-body">
                     <input type="radio" name="class-default-counselor" className="h-5 w-5 accent-brand" checked={defaultId === null}
                         disabled={busy} onChange={() => onDefault(null)} />{l('counselorNoDefault')}
                 </label>
                 {rows.map(row => <div key={row.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-control p-2">
-                    <label className="flex min-h-[44px] min-w-0 flex-[1_1_14rem] items-center gap-4 text-sm text-ink-body">
+                    <label className="flex min-h-control min-w-0 flex-[1_1_14rem] items-center gap-4 text-sm text-ink-body">
                         <input type="checkbox" className="h-5 w-5 shrink-0 accent-brand" aria-label={row.name}
                             checked={isEnabled(row)} disabled={busy || !row.admin_enabled || row.locked} title={row.locked ? l('locked') : undefined}
                             aria-describedby={!row.admin_enabled ? `counselor-disabled-${row.id}` : undefined}
@@ -99,7 +99,7 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
                     <Button type="button" variant="secondary" aria-label={`${l('counselorDetails')}: ${row.name}`} onClick={() => setDetails(row)}>{l('counselorDetails')}</Button>
                     <ClassSettingLock item={row} label={row.name} admin={admin} disabled={lockDisabled}
                         onChange={state => onLock('counselor', String(row.id), state)} />
-                    <label className="flex min-h-[44px] items-center gap-2 text-sm text-ink-muted">
+                    <label className="flex min-h-control items-center gap-2 text-sm text-ink-muted">
                         <input type="radio" name="class-default-counselor" className="h-5 w-5 accent-brand"
                             aria-label={`${l('counselorDefault')}: ${row.name}`} checked={defaultId === row.id}
                             disabled={busy || !isEnabled(row)} onChange={() => onDefault(row.id)} />{l('counselorDefault')}
@@ -267,21 +267,21 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
         <Callout>{l('staged')}</Callout>
         {admin && <Callout>{l('adminHint')}</Callout>}
         {admin && <label className="flex flex-col gap-1 text-sm text-ink-body">{l('reason')}
-            <input maxLength={500} value={reason} disabled={busy} onChange={event => setReason(event.target.value)} className="min-h-[44px] rounded-control border border-line-strong px-4" />
+            <input maxLength={500} value={reason} disabled={busy} onChange={event => setReason(event.target.value)} className="min-h-control rounded-control border border-line-strong px-4" />
         </label>}
         {categories.map(category => {
             const rows = tools.filter(tool => tool.category === category);
             if (!rows.length) return null;
             return <Card key={category} variant="flat">
                 <details open>
-                    <summary className="min-h-[44px] cursor-pointer font-semibold text-ink">{l(category)}</summary>
+                    <summary className="min-h-control cursor-pointer font-semibold text-ink">{l(category)}</summary>
                     <div className="mb-4 flex flex-wrap gap-2">
                         <Button variant="secondary" disabled={busy || !rows.some(tool => tool.admin_enabled && !tool.locked)} onClick={() => change(rows, true)}>{l('enableAll')}</Button>
                         <Button variant="secondary" disabled={busy || !rows.some(tool => tool.admin_enabled && !tool.locked)} onClick={() => change(rows, false)}>{l('disableAll')}</Button>
                     </div>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                         {rows.map(tool => <div key={tool.key} className="min-w-0 space-y-1 rounded-control p-2 text-sm text-ink-body">
-                            <label className="flex min-h-[44px] min-w-0 items-start gap-4">
+                            <label className="flex min-h-control min-w-0 items-start gap-4">
                             <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-brand" aria-label={label(tool)}
                                 checked={isEnabled(tool)} disabled={busy || !tool.admin_enabled || tool.locked} title={tool.locked ? l('locked') : undefined}
                                 aria-describedby={!tool.admin_enabled ? `tool-disabled-${tool.key}` : undefined}
@@ -302,7 +302,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
             defaultId={defaultCounselor} busy={busy} admin={admin} lockDisabled={busy || dirty} onLock={(kind, id, state) => void changeLock(kind, id, state)} onToggle={toggleCounselor} onToggleAll={toggleAllCounselors} onDefault={chooseDefault} />}
         <Card variant="flat">
             <h2 className="text-lg font-semibold text-ink">{l('personalAITitle')}</h2>
-            <label className="flex min-h-[44px] items-center gap-4 text-sm text-ink-body">
+            <label className="flex min-h-control items-center gap-4 text-sm text-ink-body">
                 <input type="checkbox" className="h-5 w-5 accent-brand" checked={personalAI} disabled={busy}
                     onChange={event => { if (!pending.current) { setPersonalAI(event.target.checked); setNotice(null); } }} />
                 {l('personalAIToggle')}
@@ -314,7 +314,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
             <p className="text-sm text-ink-muted">{l('responseSettingsHelp')}</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <label className="flex min-w-0 flex-col gap-1 text-sm text-ink-body">{l('responseFormatLabel')}
-                    <select className="min-h-[44px] rounded-control border border-line-strong bg-surface px-2" value={responseFormat ?? ''} disabled={busy}
+                    <select className="min-h-control rounded-control border border-line-strong bg-surface px-2" value={responseFormat ?? ''} disabled={busy}
                         onChange={event => { if (!pending.current) { setResponseFormat((event.target.value || null) as ResponseFormat | null); setNotice(null); } }}>
                         <option value="">{l('studentDefault')}</option>
                         <option value="standard">{l('formatProse')}</option>
@@ -323,7 +323,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                     </select>
                 </label>
                 <label className="flex min-w-0 flex-col gap-1 text-sm text-ink-body">{l('responseLengthLabel')}
-                    <select className="min-h-[44px] rounded-control border border-line-strong bg-surface px-2" value={responseLength ?? ''} disabled={busy}
+                    <select className="min-h-control rounded-control border border-line-strong bg-surface px-2" value={responseLength ?? ''} disabled={busy}
                         onChange={event => { if (!pending.current) { setResponseLength((event.target.value || null) as "short" | "medium" | "long" | null); setNotice(null); } }}>
                         <option value="">{l('studentDefault')}</option>
                         <option value="short">{l('lengthShort')}</option>
@@ -332,7 +332,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                     </select>
                 </label>
                 <label className="flex min-w-0 flex-col gap-1 text-sm text-ink-body">{l('reasoningLabel')}
-                    <select className="min-h-[44px] rounded-control border border-line-strong bg-surface px-2" value={responseReasoning ?? ''} disabled={busy}
+                    <select className="min-h-control rounded-control border border-line-strong bg-surface px-2" value={responseReasoning ?? ''} disabled={busy}
                         onChange={event => { if (!pending.current) { setResponseReasoning((event.target.value || null) as "off" | "standard" | "deep" | null); setNotice(null); } }}>
                         <option value="">{l('studentDefault')}</option>
                         <option value="off">{l('reasoningOff')}</option>
@@ -342,17 +342,17 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                 </label>
             </div>
             <div className="space-y-2">
-                <label className="flex min-h-[44px] items-center gap-4 text-sm text-ink-body">
+                <label className="flex min-h-control items-center gap-4 text-sm text-ink-body">
                     <input type="checkbox" className="h-5 w-5 accent-brand" checked={allowFmt} disabled={busy}
                         onChange={event => { if (!pending.current) { setAllowFmt(event.target.checked); setNotice(null); } }} />
 {l('studentCanModifyFormat')}
                 </label>
-                <label className="flex min-h-[44px] items-center gap-4 text-sm text-ink-body">
+                <label className="flex min-h-control items-center gap-4 text-sm text-ink-body">
                     <input type="checkbox" className="h-5 w-5 accent-brand" checked={allowLen} disabled={busy}
                         onChange={event => { if (!pending.current) { setAllowLen(event.target.checked); setNotice(null); } }} />
 {l('studentCanModifyLength')}
                 </label>
-                <label className="flex min-h-[44px] items-center gap-4 text-sm text-ink-body">
+                <label className="flex min-h-control items-center gap-4 text-sm text-ink-body">
                     <input type="checkbox" className="h-5 w-5 accent-brand" checked={allowRsn} disabled={busy}
                         onChange={event => { if (!pending.current) { setAllowRsn(event.target.checked); setNotice(null); } }} />
 {l('studentCanModifyReasoning')}
@@ -365,7 +365,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                 const title = forumText(lang, name === 'students_can_open' ? 'studentsCanOpen' : 'premoderationOption');
                 const metadata = forum[`${name}_lock`];
                 return <div key={name} className="mb-4 space-y-1">
-                    <label className="flex min-h-[44px] items-center gap-4 text-sm text-ink-body">
+                    <label className="flex min-h-control items-center gap-4 text-sm text-ink-body">
                         <input type="checkbox" className="h-5 w-5 accent-brand" checked={forum[name]} disabled={busy || forum[`${name}_locked`]}
                             onChange={event => { if (!pending.current) { setForum(previous => ({ ...previous, [name]: event.target.checked })); setNotice(null); } }} />
                         {title}
@@ -429,7 +429,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
             extra={<ClassQuickSwitcher currentGroupId={groupId} groups={groups.data} currentTab={tab} basePath={adminRoute ? '/admin/classi' : '/docente/classi'} />}
         />
         <header className="flex flex-wrap items-center justify-between gap-4">
-            <Link href={adminRoute ? ADMIN_CLASSES_HREF : "/docente/classi"} className="inline-flex min-h-[44px] items-center gap-2 text-sm text-link hover:text-link font-semibold"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
+            <Link href={adminRoute ? ADMIN_CLASSES_HREF : "/docente/classi"} className="inline-flex min-h-control items-center gap-2 text-sm text-link hover:text-link font-semibold"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
             <div><h1 className="break-words text-2xl font-semibold text-ink">{group.name}</h1><p className="text-sm text-ink-muted">{group.members_count} {l('members')}{group.school && ` · ${group.school}`}</p></div>
         </header>
         <div role="tablist" aria-label={group.name} className="flex flex-wrap gap-2 border-b border-line pb-2">
@@ -441,7 +441,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
                     event.preventDefault();
                     const next = event.key === 'Home' ? 0 : event.key === 'End' ? activeTabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + activeTabs.length) % activeTabs.length;
                     setTab(activeTabs[next]); tabRefs.current[next]?.focus();
-                }} className={`min-h-[44px] rounded-control px-4 text-sm font-semibold ${tab === key ? 'bg-brand-soft text-link' : 'text-ink-muted hover:bg-surface-raised'}`}>{l(key)}</button>)}
+                }} className={`min-h-control rounded-control px-4 text-sm font-semibold ${tab === key ? 'bg-brand-soft text-link' : 'text-ink-muted hover:bg-surface-raised'}`}>{l(key)}</button>)}
         </div>
         <div id="class-panel-overview" role="tabpanel" aria-labelledby="class-tab-overview" hidden={tab !== 'overview'} tabIndex={0}>
             {tab === 'overview' && (

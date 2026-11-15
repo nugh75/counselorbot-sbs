@@ -122,7 +122,7 @@ function Link({ id, source, target, data, markerStart, markerEnd, selected }: Ed
                         onClick={data.onSelect}
                         // La pastiglia opaca sotto il testo e' la stessa cura dei diagrammi
                         // Graphviz: senza, la linea taglia la parola.
-                        className={`cursor-pointer rounded bg-surface px-2 py-1 text-[11px] leading-tight text-ink-muted shadow-card border ${
+                        className={`cursor-pointer rounded bg-surface px-2 py-1 text-xs leading-tight text-ink-muted shadow-card border ${
                             selected ? 'border-brand ring-1 ring-brand' : 'border-line hover:border-brand-line'
                         }`}
                     >

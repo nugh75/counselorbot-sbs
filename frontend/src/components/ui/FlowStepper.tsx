@@ -40,7 +40,7 @@ export function FlowStepper({ steps, current }: FlowStepperProps) {
                                 pallino: una riga per dire "4", senza dire di che cosa. Il
                                 nome della tappa corrente resta sempre visibile, le altre
                                 compaiono da sm in su. */}
-                            <span className={cn('text-[11px] uppercase tracking-[0.08em]', active ? 'inline' : 'hidden sm:inline')}>{label}</span>
+                            <span className={cn('text-xs uppercase tracking-[0.08em]', active ? 'inline' : 'hidden sm:inline')}>{label}</span>
                         </span>
                         {i < steps.length - 1 && (
                             <span className={cn('h-px w-4 sm:w-8 transition-colors', done ? 'bg-indigo-400' : 'bg-slate-200')} />

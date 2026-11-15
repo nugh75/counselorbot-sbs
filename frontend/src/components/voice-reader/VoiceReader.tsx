@@ -233,7 +233,7 @@ function ReaderPanel({ controller, target, onRead, onClose, opener, expanded, on
                 <div className="flex items-center justify-between gap-1 px-3 py-2">
                     <h2 className={`min-w-0 flex-1 font-display font-bold ${expanded ? 'text-xl' : 'text-base'}`}>
                         <button type="button" aria-label={t('voice.move')} title={t('voice.moveHelp')}
-                            className="flex min-h-[44px] w-full touch-none select-none items-center gap-1 rounded-md text-left cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-indigo-500"
+                            className="flex min-h-control w-full touch-none select-none items-center gap-1 rounded-md text-left cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-indigo-500"
                             onPointerDown={event => {
                                 if (event.button !== 0 || !panel.current) return;
                                 const bounds = panel.current.getBoundingClientRect();
@@ -254,19 +254,19 @@ function ReaderPanel({ controller, target, onRead, onClose, opener, expanded, on
                             <GripVertical className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" /><span className="truncate">{t('voice.title')}</span>
                         </button>
                     </h2>
-                    {!expanded && <Button type="button" variant="secondary" disabled={!target} onClick={togglePlayback} aria-label={playbackLabel} className="min-h-[44px] min-w-[44px] px-2">{active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</Button>}
-                    <Button type="button" variant="ghost" onClick={onToggle} aria-label={t(expanded ? 'voice.minimize' : 'voice.expand')} aria-expanded={expanded} className="min-h-[44px] min-w-[44px] px-2">{expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</Button>
-                    <Button type="button" variant="ghost" onClick={onClose} aria-label={t('voice.close')} className="min-h-[44px] min-w-[44px] px-2"><X className="h-5 w-5" /></Button>
+                    {!expanded && <Button type="button" variant="secondary" disabled={!target} onClick={togglePlayback} aria-label={playbackLabel} className="min-h-control min-w-control px-2">{active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</Button>}
+                    <Button type="button" variant="ghost" onClick={onToggle} aria-label={t(expanded ? 'voice.minimize' : 'voice.expand')} aria-expanded={expanded} className="min-h-control min-w-control px-2">{expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</Button>
+                    <Button type="button" variant="ghost" onClick={onClose} aria-label={t('voice.close')} className="min-h-control min-w-control px-2"><X className="h-5 w-5" /></Button>
                 </div>
                 <div hidden={!expanded} className="max-h-[min(40dvh,calc(65dvh-14rem))] space-y-3 overflow-y-auto px-4 pb-4 sm:px-5 sm:pb-5 lg:max-h-[40dvh]">
                 <div className="grid grid-cols-1 gap-3">
                     <label className="min-w-0 text-sm font-semibold">{t('voice.engine')}
-                        <select aria-label={t('voice.engine')} value={engine} onChange={event => choose(`${event.target.value}:`)} className="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-2 text-sm">
+                        <select aria-label={t('voice.engine')} value={engine} onChange={event => choose(`${event.target.value}:`)} className="mt-1 min-h-control w-full rounded-md border border-slate-300 bg-white px-2 text-sm">
                             <option value="edge">{t('voice.edge')}</option><option value="piper">{t('voice.piper')}</option>
                         </select>
                     </label>
                     <label className="min-w-0 text-sm font-semibold">{t('voice.voice')}
-                        <select aria-label={t('voice.voice')} value={voice} onChange={event => choose(`${engine}:${event.target.value}`)} className="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-2 text-sm">
+                        <select aria-label={t('voice.voice')} value={voice} onChange={event => choose(`${engine}:${event.target.value}`)} className="mt-1 min-h-control w-full rounded-md border border-slate-300 bg-white px-2 text-sm">
                             <option value="">{t('voice.auto')}</option>
                             {voice && !available.some(v => v.id === voice) && <option value={voice}>{voice}</option>}
                             {available.map(v => <option key={v.id} value={v.id}>{v.name} · {v.locale}{(v.gender === 'male' || v.gender === 'female') && ` · ${t(`voice.${v.gender}`)}`}</option>)}
@@ -286,10 +286,10 @@ function ReaderPanel({ controller, target, onRead, onClose, opener, expanded, on
             <div className={`shrink-0 space-y-2 px-4 sm:px-5 ${expanded ? 'border-b border-slate-200 py-3' : 'py-1'}`}>
                 <div hidden={!expanded}>
                 <div className="flex flex-wrap items-center gap-1">
-                    <Button variant="ghost" onClick={controller.previous} disabled={currentPosition <= 0} aria-label={t('voice.previous')} className="min-h-[44px] min-w-[44px] px-2"><SkipBack className="h-5 w-5" /></Button>
+                    <Button variant="ghost" onClick={controller.previous} disabled={currentPosition <= 0} aria-label={t('voice.previous')} className="min-h-control min-w-control px-2"><SkipBack className="h-5 w-5" /></Button>
                     <Button variant="secondary" disabled={!target} onClick={togglePlayback}>{active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}{playbackLabel}</Button>
-                    <Button variant="ghost" onClick={controller.next} disabled={currentPosition < 0 || currentPosition >= state.segments.length - 1} aria-label={t('voice.next')} className="min-h-[44px] min-w-[44px] px-2"><SkipForward className="h-5 w-5" /></Button>
-                    <Button variant="ghost" onClick={controller.stop} disabled={state.status === 'idle'} aria-label={t('voice.stop')} className="min-h-[44px] min-w-[44px] px-2"><Square className="h-4 w-4" /></Button>
+                    <Button variant="ghost" onClick={controller.next} disabled={currentPosition < 0 || currentPosition >= state.segments.length - 1} aria-label={t('voice.next')} className="min-h-control min-w-control px-2"><SkipForward className="h-5 w-5" /></Button>
+                    <Button variant="ghost" onClick={controller.stop} disabled={state.status === 'idle'} aria-label={t('voice.stop')} className="min-h-control min-w-control px-2"><Square className="h-4 w-4" /></Button>
                 </div>
                 </div>
                 <p role="status" className={`${expanded ? 'text-sm' : 'truncate text-xs'} text-slate-600`}>{t(`voice.${state.status === 'error' ? 'error.request' : state.status}`)}{currentPosition >= 0 && ` · ${t('voice.progress', { current: currentPosition + 1, total: state.segments.length })}`}</p>

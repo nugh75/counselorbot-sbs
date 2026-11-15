@@ -31,8 +31,8 @@ export function SourceQuote({ source, base }: { source: SourceEvidence; base: st
     return <div className="space-y-2 border-l-4 border-line-strong pl-4 text-sm">
         <p className="text-xs text-ink-muted">{journeyText(lang, source.kind)} · {journeyText(lang, source.author)}{source.date && ` · ${new Date(source.date).toLocaleDateString(lang)}`}</p>
         <blockquote className="break-words italic text-ink-body">«{source.quote}»</blockquote>
-        <Button type="button" variant="ghost" className="min-h-[44px] px-2" onClick={() => void open()} disabled={busy}>{journeyText(lang, 'sourceOpen')}</Button>
-        {context && <details><summary className="min-h-[44px] cursor-pointer py-2 text-ink-muted">{journeyText(lang, 'sourceContext')}</summary><p className="whitespace-pre-wrap break-words text-ink-muted">{context}</p></details>}
+        <Button type="button" variant="ghost" className="min-h-control px-2" onClick={() => void open()} disabled={busy}>{journeyText(lang, 'sourceOpen')}</Button>
+        {context && <details><summary className="min-h-control cursor-pointer py-2 text-ink-muted">{journeyText(lang, 'sourceContext')}</summary><p className="whitespace-pre-wrap break-words text-ink-muted">{context}</p></details>}
         {text !== null && <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-control bg-surface-raised p-4 font-sans text-ink-body">{text}</pre>}
         {failed && <p role="alert" className="text-danger">{noticingText(lang, 'loadError')}</p>}
     </div>;
@@ -71,7 +71,7 @@ export function StudentJourneyNoticing({ base, onChanged, refreshVersion }: { ba
         {resource.failed && !data && <Button variant="secondary" onClick={() => void resource.reload()}>{t('setup.retry')}</Button>}
         {data && <>
             <p className="text-sm text-ink-muted">{journeyText(lang, 'sourceCount', { n: data.source_count, done: data.total_chunks - data.pending_chunks.length, total: data.total_chunks })}</p>
-            <details><summary className="min-h-[44px] cursor-pointer py-2 font-semibold text-link">{journeyText(lang, 'sources')}</summary>
+            <details><summary className="min-h-control cursor-pointer py-2 font-semibold text-link">{journeyText(lang, 'sources')}</summary>
                 <ul className="grid gap-1 text-sm text-ink-muted sm:grid-cols-2">{SOURCE_KINDS.filter(kind => data.source_counts[kind] > 0).map(kind => <li key={kind}>{journeyText(lang, kind)}: {data.source_counts[kind]}</li>)}</ul>
             </details>
             {data.pending_chunks.length > 0 && <Button type="button" disabled={busy} aria-busy={busy} onClick={() => void analyse()}>{journeyText(lang, 'analyse')}</Button>}

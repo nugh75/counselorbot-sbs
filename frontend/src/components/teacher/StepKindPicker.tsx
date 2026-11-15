@@ -15,7 +15,7 @@ export function StepKindPicker({ lang, value, onChange, available = STEP_KINDS }
         <div className="grid gap-2 sm:grid-cols-2">
             {STEP_KINDS.map(kind => {
                 const enabled = available.includes(kind);
-                return <label key={kind} className={`flex min-h-[44px] items-center gap-2 rounded-control border px-4 py-2 text-sm ${
+                return <label key={kind} className={`flex min-h-control items-center gap-2 rounded-control border px-4 py-2 text-sm ${
                     value === kind ? 'border-brand bg-brand-soft font-semibold text-ink' : 'border-line text-ink-body'
                 } ${enabled ? 'cursor-pointer' : 'opacity-60'}`}>
                     <input type="radio" name={name} value={kind} checked={value === kind} disabled={!enabled}

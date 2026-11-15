@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, RefreshCw, Save, Server, Award, XCircle, Sparkles } from 'lucide-react';
+import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, RefreshCw, Save, Server, Award, XCircle, Sparkles, ChevronDown } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
@@ -950,7 +950,7 @@ export function ConfigForm() {
                                 {systemAIText(lang, 'notConfigured')}
                             </span>
                         )}
-                        <span className="text-xs text-ink-muted group-open:rotate-180 transition-transform">▼</span>
+                        <ChevronDown className="h-4 w-4 text-ink-muted group-open:rotate-180 transition-transform" aria-hidden="true" />
                     </div>
                 </summary>
 

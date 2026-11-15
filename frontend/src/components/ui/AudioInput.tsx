@@ -248,7 +248,7 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
         }
     }
 
-    const actionClass = 'flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50';
+    const actionClass = 'flex min-h-control w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50';
     if (voiceMode) {
         const speaking = stage === 'reply' && (playback.status === 'playing' || playback.status === 'buffering');
         const waiting = stage === 'permission' || stage === 'transcribing' || stage === 'waiting';

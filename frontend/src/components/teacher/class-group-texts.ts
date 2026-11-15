@@ -53,7 +53,7 @@ export const classGroupTexts = {
         inactiveBadge: 'Inattiva',
         copyCode: 'Copia codice',
         codeCopied: 'Copiato!',
-        openClass: 'Apri classe →',
+        openClass: 'Apri classe',
         ownerLabel: 'Docente:',
     },
     en: {
@@ -109,7 +109,7 @@ export const classGroupTexts = {
         inactiveBadge: 'Inactive',
         copyCode: 'Copy code',
         codeCopied: 'Copied!',
-        openClass: 'Open class →',
+        openClass: 'Open class',
         ownerLabel: 'Teacher:',
     },
     es: {
@@ -142,7 +142,7 @@ export const classGroupTexts = {
         inactiveBadge: 'Inactiva',
         copyCode: 'Copiar código',
         codeCopied: '¡Copiado!',
-        openClass: 'Abrir clase →',
+        openClass: 'Abrir clase',
         ownerLabel: 'Docente:',
     },
     fr: {
@@ -175,7 +175,7 @@ export const classGroupTexts = {
         inactiveBadge: 'Inactive',
         copyCode: 'Copier le code',
         codeCopied: 'Copié !',
-        openClass: 'Ouvrir la classe →',
+        openClass: 'Ouvrir la classe',
         ownerLabel: 'Enseignant :',
     },
     de: {
@@ -208,7 +208,7 @@ export const classGroupTexts = {
         inactiveBadge: 'Inaktiv',
         copyCode: 'Code kopieren',
         codeCopied: 'Kopiert!',
-        openClass: 'Klasse öffnen →',
+        openClass: 'Klasse öffnen',
         ownerLabel: 'Lehrkraft:',
     },
     sv: {
@@ -241,7 +241,7 @@ export const classGroupTexts = {
         inactiveBadge: 'Inaktiv',
         copyCode: 'Kopiera kod',
         codeCopied: 'Kopierad!',
-        openClass: 'Öppna klass →',
+        openClass: 'Öppna klass',
         ownerLabel: 'Lärare:',
     },
 };

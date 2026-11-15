@@ -234,7 +234,7 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
                         {students.map(student => (
                             <li key={student.username}>
                                 <details className="rounded-lg border border-line bg-surface">
-                                    <summary className="flex min-h-[44px] cursor-pointer items-center justify-between gap-4 px-4 text-sm">
+                                    <summary className="flex min-h-control cursor-pointer items-center justify-between gap-4 px-4 text-sm">
                                         <span className="font-semibold text-ink">{student.display_name}</span>
                                         <span className="font-mono text-ink-body">{`${student.done}/${student.total}`}</span>
                                     </summary>

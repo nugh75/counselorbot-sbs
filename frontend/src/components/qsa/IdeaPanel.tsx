@@ -121,7 +121,7 @@ export function IdeaPanel({
                                 : `${move?.turns_used ?? 0} / ${budget} ${t('idea.pace.turns')}`}
                         </span>
                         {budget > 0 && (move?.turns_used ?? 0) >= budget * 0.75 && (
-                            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-800">
+                            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
                                 {t('idea.pace.nearingEnd')}
                             </span>
                         )}
@@ -154,7 +154,7 @@ export function IdeaPanel({
 
             {show !== 'map' && (
                 <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                    <h4 className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    <h4 className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                         {t('idea.branches.title')}
                     </h4>
                     <IdeaBranchTree

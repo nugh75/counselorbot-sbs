@@ -515,7 +515,7 @@ export function ClassOverviewTab({
                                         id="overview-weblink"
                                         readOnly
                                         value={webLink}
-                                        className="min-h-[44px] flex-1 rounded-control border border-line-strong bg-surface-sunken px-4 font-mono text-xs text-ink-body focus:outline-hidden"
+                                        className="min-h-control flex-1 rounded-control border border-line-strong bg-surface-sunken px-4 font-mono text-xs text-ink-body focus:outline-hidden"
                                     />
                                     <Button
                                         type="button"
@@ -546,7 +546,7 @@ export function ClassOverviewTab({
                                         id="overview-telegramlink"
                                         readOnly
                                         value={telegramLink}
-                                        className="min-h-[44px] flex-1 rounded-control border border-line-strong bg-surface-sunken px-4 font-mono text-xs text-ink-body focus:outline-hidden"
+                                        className="min-h-control flex-1 rounded-control border border-line-strong bg-surface-sunken px-4 font-mono text-xs text-ink-body focus:outline-hidden"
                                     />
                                     <Button
                                         type="button"
@@ -596,7 +596,7 @@ export function ClassOverviewTab({
                                 value={selectedUserToAdd}
                                 onChange={e => setSelectedUserToAdd(e.target.value)}
                                 disabled={shareBusy}
-                                className="min-h-[44px] min-w-[200px] flex-1 rounded-control border border-line-strong bg-surface px-4 text-sm text-ink"
+                                className="min-h-control min-w-[200px] flex-1 rounded-control border border-line-strong bg-surface px-4 text-sm text-ink"
                             >
                                 <option value="">{l('selectColleague')}</option>
                                 {availableUsers.map(user => (
@@ -707,7 +707,7 @@ export function ClassOverviewTab({
                             type="button"
                             variant="secondary"
                             onClick={() => setShowCoverModal(true)}
-                            className="inline-flex min-h-[44px] shrink-0 items-center gap-2 self-start sm:self-auto"
+                            className="inline-flex min-h-control shrink-0 items-center gap-2 self-start sm:self-auto"
                         >
                             <Pencil className="h-4 w-4" aria-hidden />
                             <span>{teacherAreaText(lang, 'classCoverChange')}</span>
@@ -724,7 +724,7 @@ export function ClassOverviewTab({
                                 onChange={e => setName(e.target.value)}
                                 disabled={saveBusy}
                                 required
-                                className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
+                                className="min-h-control rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             />
                         </label>
 
@@ -737,7 +737,7 @@ export function ClassOverviewTab({
                                 onChange={e => setSchool(e.target.value)}
                                 disabled={saveBusy}
                                 placeholder={l('schoolPlaceholder')}
-                                className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
+                                className="min-h-control rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             />
                         </label>
 
@@ -748,7 +748,7 @@ export function ClassOverviewTab({
                                 value={schoolLevel}
                                 onChange={e => setSchoolLevel(e.target.value)}
                                 disabled={saveBusy}
-                                className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
+                                className="min-h-control rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             >
                                 <option value="">{l('levelNone')}</option>
                                 <option value="secondaria">{l('levelSecondaria')}</option>
@@ -764,7 +764,7 @@ export function ClassOverviewTab({
                                 value={institutionId}
                                 onChange={e => setInstitutionId(e.target.value)}
                                 disabled={saveBusy}
-                                className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
+                                className="min-h-control rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink"
                             >
                                 <option value="">{l('institutionNone')}</option>
                                 {group.institution_id && !institutions.some(row => row.id === group.institution_id) && (
@@ -805,7 +805,7 @@ export function ClassOverviewTab({
                         </label>
 
                         {/* Visibilità contesto per studenti */}
-                        <label className="flex min-h-[44px] items-center gap-4 text-xs text-ink-body sm:col-span-2">
+                        <label className="flex min-h-control items-center gap-4 text-xs text-ink-body sm:col-span-2">
                             <input
                                 type="checkbox"
                                 checked={visible}

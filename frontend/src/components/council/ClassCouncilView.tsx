@@ -109,7 +109,7 @@ export function ClassCouncilView({ token }: { token: string }) {
             <label className="block space-y-1 text-sm font-medium text-slate-700">
                 <span>{l('password')}</span>
                 <input type="password" autoComplete="off" value={password} onChange={event => setPassword(event.target.value)}
-                    className="min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-base" />
+                    className="min-h-control w-full rounded-md border border-slate-300 px-3 text-base" />
             </label>
             {error && <p role="alert" className="text-sm text-red-600">{l(error)}</p>}
             <Button type="submit" disabled={busy || !password} className="w-full">{l(busy ? 'opening' : 'open')}</Button>
@@ -133,7 +133,7 @@ export function ClassCouncilView({ token }: { token: string }) {
             <label className="block max-w-sm space-y-1 text-sm font-medium text-slate-700">
                 <span>{l('searchStudent')}</span>
                 <input type="search" value={query} onChange={event => setQuery(event.target.value)}
-                    className="min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-base" />
+                    className="min-h-control w-full rounded-md border border-slate-300 px-3 text-base" />
             </label>
         </div>
         <h2 className="text-lg font-semibold text-slate-800">{l('students')} ({students.length})</h2>
@@ -145,7 +145,7 @@ export function ClassCouncilView({ token }: { token: string }) {
             const plansTotal = student.plans.reduce((sum, plan) => sum + plan.total, 0);
             return <Card key={student.username} className="space-y-4 break-inside-avoid">
                 <button type="button" aria-expanded={expanded} aria-controls={panel} onClick={() => setOpen(expanded ? null : student.username)}
-                    className="flex min-h-[44px] w-full items-center justify-between gap-3 text-left">
+                    className="flex min-h-control w-full items-center justify-between gap-3 text-left">
                     <span>
                         <span className="block font-semibold text-slate-800">{student.display_name}</span>
                         <span className="block text-sm text-slate-500">

@@ -54,7 +54,7 @@ export function TeacherResourcesHub({ defaultTab }: { defaultTab?: ResourcesTab 
                         aria-selected={activeTab === 'strategie'}
                         data-testid="tab-strategie"
                         onClick={() => handleTabChange('strategie')}
-                        className={`inline-flex min-h-[44px] items-center gap-2 px-4 py-2 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                        className={`inline-flex min-h-control items-center gap-2 px-4 py-2 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
                             activeTab === 'strategie'
                                 ? 'border-b-2 border-brand text-link'
                                 : 'text-ink-muted hover:text-ink'
@@ -72,7 +72,7 @@ export function TeacherResourcesHub({ defaultTab }: { defaultTab?: ResourcesTab 
                         aria-selected={activeTab === 'materiali'}
                         data-testid="tab-materiali"
                         onClick={() => handleTabChange('materiali')}
-                        className={`inline-flex min-h-[44px] items-center gap-2 px-4 py-2 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                        className={`inline-flex min-h-control items-center gap-2 px-4 py-2 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
                             activeTab === 'materiali'
                                 ? 'border-b-2 border-brand text-link'
                                 : 'text-ink-muted hover:text-ink'

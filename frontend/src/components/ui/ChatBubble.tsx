@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 // disegnata; l'attesa vince lo spinner, che sta dentro il vocabolario di
 // movimento dichiarato in design.md §4 (il pallino pulsante non c'era).
 
-const BASE = 'chat-message min-w-0 max-w-full break-words rounded-lg px-4 py-3 text-base leading-relaxed shadow-sm sm:px-5 sm:py-3.5';
+const BASE = 'chat-message min-w-0 max-w-full break-words rounded-lg px-4 py-3 text-base leading-relaxed sm:px-5 sm:py-3.5';
 
 const ROLE: Record<'user' | 'assistant', string> = {
     user: 'bg-indigo-600 text-white rounded-tr-sm',
@@ -45,7 +45,7 @@ export function ChatPendingIndicator({ label }: { label: string }) {
 export function ChatPending({ label }: { label: string }) {
     return (
         <div className="flex justify-start">
-            <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
                 <ChatPendingIndicator label={label} />
             </div>
         </div>

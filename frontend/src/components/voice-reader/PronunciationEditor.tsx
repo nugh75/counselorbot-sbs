@@ -18,12 +18,12 @@ export function PronunciationEditor({ language, onChange, onPreview }: { languag
     const [search, setSearch] = useState('');
     const termInput = useRef<HTMLInputElement>(null);
     const update = (next: PronunciationSettings) => { onChange(); savePronunciations(language, next); };
-    const inputClass = 'mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-2 text-base font-normal';
+    const inputClass = 'mt-1 min-h-control w-full rounded-md border border-slate-300 bg-white px-2 text-base font-normal';
     return <details className="rounded-md border border-slate-200 bg-white">
-        <summary className="min-h-[44px] cursor-pointer px-3 py-3 text-sm font-semibold">{t('voice.pronunciation')} ({settings.rules.length})</summary>
+        <summary className="min-h-control cursor-pointer px-3 py-3 text-sm font-semibold">{t('voice.pronunciation')} ({settings.rules.length})</summary>
         <div className="max-h-[40dvh] space-y-3 overflow-y-auto border-t border-slate-200 p-3">
             <p className="text-xs text-slate-600">{t('voice.pronunciationHelp')}</p>
-            <label className="flex min-h-[44px] items-center gap-2 text-sm"><input type="checkbox" checked={settings.enabled} onChange={event => update({ ...settings, enabled: event.target.checked })} />{t('voice.pronunciationEnabled')}</label>
+            <label className="flex min-h-control items-center gap-2 text-sm"><input type="checkbox" checked={settings.enabled} onChange={event => update({ ...settings, enabled: event.target.checked })} />{t('voice.pronunciationEnabled')}</label>
             <form className="space-y-2" onSubmit={event => {
                 event.preventDefault();
                 const cleanTerm = term.trim(), cleanSpoken = spoken.trim();
@@ -44,8 +44,8 @@ export function PronunciationEditor({ language, onChange, onPreview }: { languag
             <div className="divide-y divide-slate-200">
                 {settings.rules.filter(rule => `${rule.term} ${rule.spoken}`.toLocaleLowerCase().includes(search.toLocaleLowerCase())).map(rule => <div key={rule.term} className="flex items-center gap-1 py-1">
                     <div className="min-w-0 flex-1 break-words text-sm"><span className="font-semibold">{rule.term}</span><span className="mx-1" aria-hidden="true">→</span>{rule.spoken}</div>
-                    <Button type="button" variant="ghost" className="min-h-[44px] min-w-[44px] px-2" aria-label={t('voice.editRule', { term: rule.term })} onClick={() => { setTerm(rule.term); setSpoken(rule.spoken); setEditing(rule.term); termInput.current?.focus(); }}><Pencil className="h-4 w-4" /></Button>
-                    <Button type="button" variant="ghost" className="min-h-[44px] min-w-[44px] px-2" aria-label={t('voice.deleteRule', { term: rule.term })} onClick={() => update({ ...settings, rules: settings.rules.filter(r => r.term !== rule.term) })}><Trash2 className="h-4 w-4" /></Button>
+                    <Button type="button" variant="ghost" className="min-h-control min-w-control px-2" aria-label={t('voice.editRule', { term: rule.term })} onClick={() => { setTerm(rule.term); setSpoken(rule.spoken); setEditing(rule.term); termInput.current?.focus(); }}><Pencil className="h-4 w-4" /></Button>
+                    <Button type="button" variant="ghost" className="min-h-control min-w-control px-2" aria-label={t('voice.deleteRule', { term: rule.term })} onClick={() => update({ ...settings, rules: settings.rules.filter(r => r.term !== rule.term) })}><Trash2 className="h-4 w-4" /></Button>
                 </div>)}
             </div>
             <label className="block text-sm font-semibold">{t('voice.previewText')}<textarea value={preview} maxLength={2000} onChange={event => setPreview(event.target.value)} className={`${inputClass} min-h-20 py-2`} /></label>

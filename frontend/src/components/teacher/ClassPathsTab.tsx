@@ -540,7 +540,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                 <button
                     type="button"
                     onClick={onBack}
-                    className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-link hover:text-ink"
+                    className="inline-flex min-h-control items-center gap-2 text-sm font-semibold text-link hover:text-ink"
                 >
                     <ArrowLeft className="h-4 w-4" aria-hidden />
                     {l('backToList')}
@@ -766,7 +766,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             {step.step_type === 'questionnaire_administration' && step.administration_plan_id && (
                                                 // Classroom and research views edit the same administration row.
                                                 <Link href={`/docente/somministrazioni#plan-${step.administration_plan_id}`}
-                                                    className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-xs font-semibold text-link">
+                                                    className="mt-1 inline-flex min-h-control items-center gap-1 text-xs font-semibold text-link">
                                                     <ExternalLink className="h-3.5 w-3.5" aria-hidden />{pub('openResearchView')}
                                                 </Link>
                                             )}
@@ -791,14 +791,14 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                     <div className="space-y-2 md:w-52">
                                         {isMeeting ? (
                                             <div>
-                                                <p className="text-[11px] font-semibold text-ink-muted">{l('meetingDate')}</p>
+                                                <p className="text-xs font-semibold text-ink-muted">{l('meetingDate')}</p>
                                                 <p className="text-xs text-ink-body">{meetingDate || '—'}</p>
                                             </div>
                                         ) : (
                                             <>
                                                 {isQuestionnaire && (
                                                     <div>
-                                                        <p className="text-[11px] font-semibold text-ink-muted">{l('plannedDayFromPlan')}</p>
+                                                        <p className="text-xs font-semibold text-ink-muted">{l('plannedDayFromPlan')}</p>
                                                         <p className="text-xs text-ink-body">{plannedDay || l('plannedDayNotSet')}</p>
                                                         {plannedLocation && <p className="text-xs text-ink-muted">{plannedLocation}</p>}
                                                     </div>
@@ -808,7 +808,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                     {presentation.showDueDate && presentation.dueDate && <p className="text-xs text-ink-body">{`${l('dueHeader')}: ${new Date(`${presentation.dueDate}T12:00:00`).toLocaleDateString(lang, { dateStyle: 'medium' })}`}</p>}
                                                 </>}
                                                 {open && isChat && (
-                                                    <label className="block text-[11px] font-semibold text-ink-muted">
+                                                    <label className="block text-xs font-semibold text-ink-muted">
                                                         {l('plannedDayOptional')}
                                                         <input
                                                             type="date"
@@ -887,7 +887,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             </div>}
                             <StepKindPicker lang={lang} value={kind} onChange={setKind} />
                             {kind === 'questionnaire' && <div className="space-y-4">
-                            <Link href="/docente/somministrazioni" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-link hover:underline">
+                            <Link href="/docente/somministrazioni" className="inline-flex min-h-control items-center gap-1 text-sm font-semibold text-link hover:underline">
                                 <ExternalLink className="h-4 w-4" aria-hidden />{a('research')}</Link>
                             {institutionId == null && <Callout variant="warning">{pub('noInstitute')}{' '}
                                 <Link href="/docente/istituti" className="font-semibold text-link underline">{pub('goToInstitutes')}</Link></Callout>}
