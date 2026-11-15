@@ -13,8 +13,8 @@ import { TypingDots } from '@/components/ui/TypingDots';
 const BASE = 'chat-message min-w-0 max-w-full break-words rounded-card px-4 py-3 text-base leading-relaxed sm:px-5 sm:py-3.5';
 
 const ROLE: Record<'user' | 'assistant', string> = {
-    user: 'bg-indigo-600 text-white rounded-tr-sm',
-    assistant: 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm',
+    user: 'bg-brand text-ink-on-brand rounded-tr-sm',
+    assistant: 'bg-surface border border-line text-ink-body rounded-tl-sm',
 };
 
 export function ChatBubble({
@@ -35,7 +35,7 @@ export function ChatPendingIndicator({ label }: { label: string }) {
     return (
         <span className="flex items-center gap-3">
             <TypingDots />
-            <span className="text-xs font-medium text-slate-500">{label}</span>
+            <span className="text-xs text-ink-muted">{label}</span>
         </span>
     );
 }
@@ -44,7 +44,7 @@ export function ChatPendingIndicator({ label }: { label: string }) {
 export function ChatPending({ label }: { label: string }) {
     return (
         <div className="flex justify-start">
-            <div className="rounded-card border border-slate-200 bg-white px-4 py-3">
+            <div className="rounded-card border border-line bg-surface px-4 py-3">
                 <ChatPendingIndicator label={label} />
             </div>
         </div>

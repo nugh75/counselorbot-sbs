@@ -23,36 +23,36 @@ const markdownComponents: Components = {
     table: (props) => (
         <div className="my-2 min-w-0 max-w-full overflow-x-auto" tabIndex={0}>
         <table
-            className="w-full min-w-[760px] border-separate border-spacing-0 text-sm text-slate-800"
+            className="w-full min-w-[760px] border-separate border-spacing-0 text-sm text-ink-body"
             {...omitMarkdownNode(props)}
         />
         </div>
     ),
-    thead: (props) => <thead className="bg-slate-50" {...omitMarkdownNode(props)} />,
-    tbody: (props) => <tbody className="[&_tr:nth-child(even)]:bg-slate-50/40" {...omitMarkdownNode(props)} />,
-    tr: (props) => <tr className="border-b border-slate-100" {...omitMarkdownNode(props)} />,
+    thead: (props) => <thead className="bg-surface-sunken" {...omitMarkdownNode(props)} />,
+    tbody: (props) => <tbody className="[&_tr:nth-child(even)]:bg-surface-sunken/40" {...omitMarkdownNode(props)} />,
+    tr: (props) => <tr className="border-b border-line" {...omitMarkdownNode(props)} />,
     th: (props) => (
         <th
-            className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 border-b border-slate-200"
+            className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-ink-muted border-b border-line"
             {...omitMarkdownNode(props)}
         />
     ),
-    td: (props) => <td className="px-3 py-2 align-top leading-relaxed border-b border-slate-100" {...omitMarkdownNode(props)} />,
+    td: (props) => <td className="px-3 py-2 align-top leading-relaxed border-b border-line" {...omitMarkdownNode(props)} />,
     p: (props) => <p className="my-1.5 text-sm leading-relaxed" {...omitMarkdownNode(props)} />,
     ul: (props) => <ul className="my-2 pl-5 list-disc space-y-1" {...omitMarkdownNode(props)} />,
     ol: (props) => <ol className="my-2 pl-5 list-decimal space-y-1" {...omitMarkdownNode(props)} />,
     li: (props) => <li className="leading-relaxed" {...omitMarkdownNode(props)} />,
-    strong: (props) => <strong className="font-semibold text-slate-900" {...omitMarkdownNode(props)} />,
-    h1: (props) => <h1 className="mb-1.5 mt-3 text-lg font-semibold text-slate-900" {...omitMarkdownNode(props)} />,
-    h2: (props) => <h2 className="mb-1.5 mt-3 text-base font-semibold text-slate-900" {...omitMarkdownNode(props)} />,
-    h3: (props) => <h3 className="mb-1 mt-2.5 text-sm font-semibold text-slate-900" {...omitMarkdownNode(props)} />,
-    h4: (props) => <h4 className="mb-1 mt-2.5 text-sm font-semibold text-slate-900" {...omitMarkdownNode(props)} />,
-    a: (props) => <a className="font-medium text-indigo-700 underline underline-offset-2 hover:text-indigo-800" {...omitMarkdownNode(props)} />,
+    strong: (props) => <strong className="font-semibold text-ink" {...omitMarkdownNode(props)} />,
+    h1: (props) => <h1 className="mb-1.5 mt-3 text-lg font-semibold text-ink" {...omitMarkdownNode(props)} />,
+    h2: (props) => <h2 className="mb-1.5 mt-3 text-base font-semibold text-ink" {...omitMarkdownNode(props)} />,
+    h3: (props) => <h3 className="mb-1 mt-2.5 text-sm font-semibold text-ink" {...omitMarkdownNode(props)} />,
+    h4: (props) => <h4 className="mb-1 mt-2.5 text-sm font-semibold text-ink" {...omitMarkdownNode(props)} />,
+    a: (props) => <a className="font-semibold text-link underline underline-offset-2 hover:text-ink" {...omitMarkdownNode(props)} />,
     // Il codice in linea ha lo sfondo; dentro un blocco lo prende il blocco.
-    code: (props) => <code className="rounded-control bg-slate-100 px-1 py-0.5 font-mono text-[0.9em]" {...omitMarkdownNode(props)} />,
-    pre: (props) => <pre className="my-2 max-w-full overflow-x-auto rounded-control bg-slate-100 p-3 text-xs [&_code]:bg-transparent [&_code]:p-0" {...omitMarkdownNode(props)} />,
-    blockquote: (props) => <blockquote className="my-2 border-l-[3px] border-[var(--console-primary)] pl-3 italic text-slate-500" {...omitMarkdownNode(props)} />,
-    hr: (props) => <hr className="my-3 border-slate-200" {...omitMarkdownNode(props)} />,
+    code: (props) => <code className="rounded-control bg-surface-raised px-1 py-0.5 font-mono text-[0.9em]" {...omitMarkdownNode(props)} />,
+    pre: (props) => <pre className="my-2 max-w-full overflow-x-auto rounded-control bg-surface-raised p-3 text-xs [&_code]:bg-transparent [&_code]:p-0" {...omitMarkdownNode(props)} />,
+    blockquote: (props) => <blockquote className="my-2 border-l-[3px] border-[var(--console-primary)] pl-3 italic text-ink-muted" {...omitMarkdownNode(props)} />,
+    hr: (props) => <hr className="my-3 border-line" {...omitMarkdownNode(props)} />,
 };
 
 // Diagrammi, errori del provider e testo arrivano nello stesso messaggio:
@@ -64,7 +64,7 @@ export function ChatMarkdown({ content, locale, errorMessage }: { content: strin
         ) : segment.kind === 'provider-error' ? (
             <div
                 key={`error-${index}`}
-                className="flex items-start gap-2 rounded-card bg-amber-50 px-3 py-2 text-sm text-amber-900"
+                className="flex items-start gap-2 rounded-card bg-warning-soft px-3 py-2 text-sm text-warning-ink"
                 role="alert"
             >
                 <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
