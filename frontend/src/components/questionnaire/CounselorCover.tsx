@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useId, useState } from 'react';
+import React, { useState } from 'react';
 import { Play } from 'lucide-react';
 import type { PublicCounselor } from '@/lib/counselor';
 import { useI18n } from '@/lib/i18n-context';
@@ -30,28 +30,81 @@ function getDeterministicHash(str: string): number {
 
 /**
  * Fallback vettoriale procedurale SVG generato quando l'asset statico manca
- * o fallisce il caricamento. Riproduce l'atmosfera della categoria di approccio
- * primaria del counselor con palette armonica e pattern geometrici eleganti.
+ * o fallisce il caricamento. Disegno piatto con la stessa grammatica di
+ * `ui/ToolIllustration` (tratto `--i-out`, campiture `--i-*`, che hanno il
+ * valore scuro): un motivo per la categoria di approccio primaria, il
+ * monogramma e l'etichetta della categoria.
  */
+const CATEGORY_MOTIFS: Record<string, (rot: number) => React.ReactNode> = {
+    // Archi maieutici: sfera, orbita e astro.
+    filosofo: (rot) => <>
+        <circle cx="240" cy="90" r="56" fill="var(--i-paper)" />
+        <ellipse cx="240" cy="90" rx="70" ry="22" transform={`rotate(${-20 + rot} 240 90)`} />
+        <circle cx="240" cy="90" r="30" fill="var(--i-sky)" />
+        <circle cx="240" cy="90" r="10" fill="var(--i-yellow)" />
+    </>,
+    // Onde di ascolto e cerchi sull'acqua.
+    psicologo: () => <>
+        <circle cx="236" cy="72" r="40" fill="var(--i-paper)" />
+        <circle cx="236" cy="72" r="24" fill="var(--i-sky)" />
+        <circle cx="236" cy="72" r="8" fill="var(--i-yellow)" />
+        <path d="M150 180c40-50 90-30 170-60v60z" fill="var(--i-teal)" />
+        <path d="M190 180c30-30 70-20 130-34" stroke="var(--i-paper)" />
+    </>,
+    // Gradini e freccia di slancio.
+    tutor: () => <>
+        <rect x="170" y="120" width="40" height="40" rx="2" fill="var(--i-paper)" />
+        <rect x="210" y="90" width="40" height="70" rx="2" fill="var(--i-sky)" />
+        <rect x="250" y="60" width="40" height="100" rx="2" fill="var(--i-teal)" />
+        <path d="M176 104l80-74" strokeWidth="4" />
+        <path d="M232 28h26v26" fill="var(--i-orange)" />
+    </>,
+    // Lavagna con righe e bersaglio.
+    docente: () => <>
+        <rect x="160" y="30" width="110" height="80" rx="2" fill="var(--i-teal2)" />
+        <path d="M178 54h50M178 74h70" stroke="var(--i-paper)" />
+        <path d="M196 110l-12 44M234 110l12 44" />
+        <circle cx="282" cy="120" r="24" fill="var(--i-paper)" />
+        <circle cx="282" cy="120" r="12" fill="var(--i-yellow)" />
+        <circle cx="282" cy="120" r="4" fill="var(--i-orange)" />
+    </>,
+    // Rete di nodi e dati.
+    ricercatore: () => <>
+        <path d="M180 110l45-50 50 25M225 60l30 70M180 110l75 20M275 85l20-40" />
+        <circle cx="180" cy="110" r="10" fill="var(--i-teal)" />
+        <circle cx="225" cy="60" r="12" fill="var(--i-yellow)" />
+        <circle cx="275" cy="85" r="10" fill="var(--i-sky)" />
+        <circle cx="255" cy="130" r="9" fill="var(--i-paper)" />
+        <circle cx="295" cy="45" r="8" fill="var(--i-orange)" />
+    </>,
+    // Bussola: ago nord-est in ocra, coda in petrol.
+    orientatore: (rot) => <>
+        <circle cx="240" cy="90" r="56" fill="var(--i-paper)" />
+        <path d="M240 38v8M240 134v8M188 90h8M284 90h8" />
+        <g transform={`rotate(${35 + rot} 240 90)`}>
+            <path d="M240 46l9 44h-18z" fill="var(--i-orange)" />
+            <path d="M240 134l9-44h-18z" fill="var(--i-teal2)" />
+        </g>
+        <circle cx="240" cy="90" r="5" fill="var(--i-paper)" />
+    </>,
+};
+
 function ProceduralCoverFallback({
     counselor,
-    uniqueId,
     lang,
 }: {
     counselor: PublicCounselor;
-    uniqueId: string;
     lang: string;
 }) {
     const slug = counselor.slug || counselor.name || String(counselor.id);
-    const hash = getDeterministicHash(slug);
-    const subtleRot = (hash % 20) - 10;
+    const subtleRot = (getDeterministicHash(slug) % 20) - 10;
 
     // Categoria primaria tra quelle note o prima specificata
-    const knownCategories = ['filosofo', 'psicologo', 'tutor', 'docente', 'ricercatore', 'orientatore'];
     const matchedCategory = counselor.approach_categories?.find((cat) =>
-        knownCategories.includes(cat.toLowerCase().trim())
+        Object.hasOwn(CATEGORY_MOTIFS, cat.toLowerCase().trim())
     )?.toLowerCase().trim();
     const primaryCategory = matchedCategory || counselor.approach_categories?.[0]?.toLowerCase().trim() || 'orientatore';
+    const motif = CATEGORY_MOTIFS[primaryCategory] ?? CATEGORY_MOTIFS.orientatore;
 
     // Iniziali del nome per il monogramma (max 2 lettere)
     const initials = counselor.name
@@ -61,290 +114,31 @@ function ProceduralCoverFallback({
         .map((p) => p[0]?.toUpperCase() || '')
         .join('');
 
-    // Configurazioni stilistiche in base alla categoria
-    switch (primaryCategory) {
-        case 'filosofo': {
-            const gradId = `grad-filo-${uniqueId}`;
-            return (
-                <svg
-                    viewBox="0 0 320 180"
-                    width="100%"
-                    height="100%"
-                    preserveAspectRatio="xMidYMid slice"
-                    className="h-full w-full select-none"
-                    aria-hidden="true"
-                >
-                    <defs>
-                        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#0f172a" />
-                            <stop offset="60%" stopColor="#1e1b4b" />
-                            <stop offset="100%" stopColor="#0d9488" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="320" height="180" fill={`url(#${gradId})`} />
-                    {/* Meridiani e archi maieutici */}
-                    <circle cx="240" cy="90" r="70" fill="none" stroke="#14b8a6" strokeWidth="1" strokeOpacity="0.35" />
-                    <circle cx="240" cy="90" r="50" fill="none" stroke="#f59e0b" strokeWidth="1.2" strokeOpacity="0.4" strokeDasharray="3 3" />
-                    <circle cx="240" cy="90" r="30" fill="none" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.25" />
-                    <ellipse cx="240" cy="90" rx="70" ry="24" fill="none" stroke="#14b8a6" strokeWidth="1" strokeOpacity="0.3" transform={`rotate(${-25 + subtleRot} 240 90)`} />
-                    <ellipse cx="240" cy="90" rx="70" ry="24" fill="none" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.25" transform={`rotate(${25 + subtleRot} 240 90)`} />
-                    {/* Astro dorato */}
-                    <circle cx="240" cy="90" r="7" fill="#f59e0b" />
-                    <circle cx="240" cy="90" r="14" fill="#fbbf24" fillOpacity="0.25" />
-
-                    {/* Monogramma ed etichetta */}
-                    <g transform="translate(36, 90)">
-                        <circle cx="0" cy="0" r="26" fill="#0f172a" fillOpacity="0.75" stroke="#14b8a6" strokeWidth="1.5" strokeOpacity="0.6" />
-                        <text x="0" y="7" textAnchor="middle" fill="#ffffff" fontSize="20" fontFamily="sans-serif" fontWeight="700">
-                            {initials}
-                        </text>
-                    </g>
-                    <g transform="translate(20, 150)">
-                        <rect x="0" y="0" width="105" height="18" rx="9" fill="#0f172a" fillOpacity="0.75" stroke="#14b8a6" strokeWidth="1" strokeOpacity="0.4" />
-                        <text x="52" y="12" textAnchor="middle" fill="#5eead4" fontSize="9.5" fontFamily="sans-serif" fontWeight="600" letterSpacing="0.5">
-                            {formatCategoryLabel('filosofo', lang).toUpperCase()}
-                        </text>
-                    </g>
-                </svg>
-            );
-        }
-
-        case 'psicologo': {
-            const gradId = `grad-psi-${uniqueId}`;
-            return (
-                <svg
-                    viewBox="0 0 320 180"
-                    width="100%"
-                    height="100%"
-                    preserveAspectRatio="xMidYMid slice"
-                    className="h-full w-full select-none"
-                    aria-hidden="true"
-                >
-                    <defs>
-                        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#042f2e" />
-                            <stop offset="50%" stopColor="#115e59" />
-                            <stop offset="100%" stopColor="#134e4a" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="320" height="180" fill={`url(#${gradId})`} />
-                    {/* Onde armoniche di calma e ascolto */}
-                    <path d="M120 180 C 170 120, 220 140, 320 110 L 320 180 Z" fill="#0f766e" fillOpacity="0.35" />
-                    <path d="M140 180 C 190 100, 250 120, 320 80 L 320 180 Z" fill="#14b8a6" fillOpacity="0.25" />
-                    <path d="M160 180 C 210 80, 270 100, 320 60 L 320 180 Z" fill="#2dd4bf" fillOpacity="0.15" />
-                    {/* Cerchi concentrici sull'acqua */}
-                    <circle cx="235" cy="75" r="42" fill="none" stroke="#99f6e4" strokeWidth="1" strokeOpacity="0.4" />
-                    <circle cx="235" cy="75" r="26" fill="none" stroke="#fef08a" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="4 2" />
-                    <circle cx="235" cy="75" r="8" fill="#fef08a" fillOpacity="0.8" />
-
-                    {/* Monogramma ed etichetta */}
-                    <g transform="translate(36, 90)">
-                        <circle cx="0" cy="0" r="26" fill="#042f2e" fillOpacity="0.75" stroke="#2dd4bf" strokeWidth="1.5" strokeOpacity="0.6" />
-                        <text x="0" y="7" textAnchor="middle" fill="#ffffff" fontSize="20" fontFamily="sans-serif" fontWeight="700">
-                            {initials}
-                        </text>
-                    </g>
-                    <g transform="translate(20, 150)">
-                        <rect x="0" y="0" width="105" height="18" rx="9" fill="#042f2e" fillOpacity="0.75" stroke="#2dd4bf" strokeWidth="1" strokeOpacity="0.4" />
-                        <text x="52" y="12" textAnchor="middle" fill="#99f6e4" fontSize="9.5" fontFamily="sans-serif" fontWeight="600" letterSpacing="0.5">
-                            {formatCategoryLabel('psicologo', lang).toUpperCase()}
-                        </text>
-                    </g>
-                </svg>
-            );
-        }
-
-        case 'tutor': {
-            const gradId = `grad-tutor-${uniqueId}`;
-            return (
-                <svg
-                    viewBox="0 0 320 180"
-                    width="100%"
-                    height="100%"
-                    preserveAspectRatio="xMidYMid slice"
-                    className="h-full w-full select-none"
-                    aria-hidden="true"
-                >
-                    <defs>
-                        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#0f172a" />
-                            <stop offset="55%" stopColor="#1e293b" />
-                            <stop offset="100%" stopColor="#334155" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="320" height="180" fill={`url(#${gradId})`} />
-                    {/* Vettori e frecce dinamiche di progresso e concretezza */}
-                    <path d="M150 180 L 250 40 L 265 40 L 165 180 Z" fill="#f97316" fillOpacity="0.25" />
-                    <path d="M180 180 L 275 50 L 290 50 L 195 180 Z" fill="#fbbf24" fillOpacity="0.3" />
-                    <path d="M220 180 L 305 60 L 315 60 L 230 180 Z" fill="#38bdf8" fillOpacity="0.2" />
-                    {/* Freccia di slancio */}
-                    <polyline points="230,85 275,45 275,75" fill="none" stroke="#f97316" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    <line x1="190" y1="125" x2="275" y2="45" stroke="#f97316" strokeWidth="3" strokeLinecap="round" />
-
-                    {/* Monogramma ed etichetta */}
-                    <g transform="translate(36, 90)">
-                        <circle cx="0" cy="0" r="26" fill="#0f172a" fillOpacity="0.75" stroke="#f97316" strokeWidth="1.5" strokeOpacity="0.7" />
-                        <text x="0" y="7" textAnchor="middle" fill="#ffffff" fontSize="20" fontFamily="sans-serif" fontWeight="700">
-                            {initials}
-                        </text>
-                    </g>
-                    <g transform="translate(20, 150)">
-                        <rect x="0" y="0" width="85" height="18" rx="9" fill="#0f172a" fillOpacity="0.75" stroke="#f97316" strokeWidth="1" strokeOpacity="0.5" />
-                        <text x="42" y="12" textAnchor="middle" fill="#fdba74" fontSize="9.5" fontFamily="sans-serif" fontWeight="600" letterSpacing="0.5">
-                            {formatCategoryLabel('tutor', lang).toUpperCase()}
-                        </text>
-                    </g>
-                </svg>
-            );
-        }
-
-        case 'docente': {
-            const gradId = `grad-doc-${uniqueId}`;
-            return (
-                <svg
-                    viewBox="0 0 320 180"
-                    width="100%"
-                    height="100%"
-                    preserveAspectRatio="xMidYMid slice"
-                    className="h-full w-full select-none"
-                    aria-hidden="true"
-                >
-                    <defs>
-                        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#1e1b4b" />
-                            <stop offset="60%" stopColor="#312e81" />
-                            <stop offset="100%" stopColor="#4338ca" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="320" height="180" fill={`url(#${gradId})`} />
-                    {/* Griglia modulare e rigore strutturato */}
-                    <g stroke="#818cf8" strokeWidth="1" strokeOpacity="0.25">
-                        <line x1="160" y1="30" x2="300" y2="30" />
-                        <line x1="160" y1="65" x2="300" y2="65" />
-                        <line x1="160" y1="100" x2="300" y2="100" />
-                        <line x1="160" y1="135" x2="300" y2="135" />
-                        <line x1="180" y1="20" x2="180" y2="150" strokeDasharray="3 3" />
-                        <line x1="230" y1="20" x2="230" y2="150" strokeDasharray="3 3" />
-                        <line x1="280" y1="20" x2="280" y2="150" strokeDasharray="3 3" />
-                    </g>
-                    {/* Blocchi isometrici */}
-                    <rect x="200" y="45" width="40" height="35" rx="3" fill="#6366f1" fillOpacity="0.45" stroke="#a5b4fc" strokeWidth="1" />
-                    <rect x="235" y="70" width="45" height="35" rx="3" fill="#06b6d4" fillOpacity="0.4" stroke="#67e8f9" strokeWidth="1" />
-
-                    {/* Monogramma ed etichetta */}
-                    <g transform="translate(36, 90)">
-                        <circle cx="0" cy="0" r="26" fill="#1e1b4b" fillOpacity="0.8" stroke="#818cf8" strokeWidth="1.5" strokeOpacity="0.7" />
-                        <text x="0" y="7" textAnchor="middle" fill="#ffffff" fontSize="20" fontFamily="sans-serif" fontWeight="700">
-                            {initials}
-                        </text>
-                    </g>
-                    <g transform="translate(20, 150)">
-                        <rect x="0" y="0" width="95" height="18" rx="9" fill="#1e1b4b" fillOpacity="0.8" stroke="#818cf8" strokeWidth="1" strokeOpacity="0.5" />
-                        <text x="47" y="12" textAnchor="middle" fill="#c7d2fe" fontSize="9.5" fontFamily="sans-serif" fontWeight="600" letterSpacing="0.5">
-                            {formatCategoryLabel('docente', lang).toUpperCase()}
-                        </text>
-                    </g>
-                </svg>
-            );
-        }
-
-        case 'ricercatore': {
-            const gradId = `grad-ric-${uniqueId}`;
-            return (
-                <svg
-                    viewBox="0 0 320 180"
-                    width="100%"
-                    height="100%"
-                    preserveAspectRatio="xMidYMid slice"
-                    className="h-full w-full select-none"
-                    aria-hidden="true"
-                >
-                    <defs>
-                        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#090d16" />
-                            <stop offset="60%" stopColor="#1e1b4b" />
-                            <stop offset="100%" stopColor="#312e81" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="320" height="180" fill={`url(#${gradId})`} />
-                    {/* Costellazione e rete di nodi e dati */}
-                    <g stroke="#a5b4fc" strokeWidth="1" strokeOpacity="0.4">
-                        <line x1="180" y1="110" x2="225" y2="60" />
-                        <line x1="225" y1="60" x2="275" y2="85" />
-                        <line x1="225" y1="60" x2="255" y2="130" />
-                        <line x1="180" y1="110" x2="255" y2="130" />
-                        <line x1="275" y1="85" x2="295" y2="45" />
-                    </g>
-                    <circle cx="180" cy="110" r="5" fill="#6366f1" />
-                    <circle cx="225" cy="60" r="6" fill="#fbbf24" />
-                    <circle cx="275" cy="85" r="5" fill="#38bdf8" />
-                    <circle cx="255" cy="130" r="4.5" fill="#818cf8" />
-                    <circle cx="295" cy="45" r="4" fill="#f59e0b" />
-
-                    {/* Monogramma ed etichetta */}
-                    <g transform="translate(36, 90)">
-                        <circle cx="0" cy="0" r="26" fill="#090d16" fillOpacity="0.85" stroke="#a5b4fc" strokeWidth="1.5" strokeOpacity="0.7" />
-                        <text x="0" y="7" textAnchor="middle" fill="#ffffff" fontSize="20" fontFamily="sans-serif" fontWeight="700">
-                            {initials}
-                        </text>
-                    </g>
-                    <g transform="translate(20, 150)">
-                        <rect x="0" y="0" width="115" height="18" rx="9" fill="#090d16" fillOpacity="0.85" stroke="#a5b4fc" strokeWidth="1" strokeOpacity="0.5" />
-                        <text x="57" y="12" textAnchor="middle" fill="#e0e7ff" fontSize="9.5" fontFamily="sans-serif" fontWeight="600" letterSpacing="0.5">
-                            {formatCategoryLabel('ricercatore', lang).toUpperCase()}
-                        </text>
-                    </g>
-                </svg>
-            );
-        }
-
-        case 'orientatore':
-        default: {
-            const gradId = `grad-ori-${uniqueId}`;
-            return (
-                <svg
-                    viewBox="0 0 320 180"
-                    width="100%"
-                    height="100%"
-                    preserveAspectRatio="xMidYMid slice"
-                    className="h-full w-full select-none"
-                    aria-hidden="true"
-                >
-                    <defs>
-                        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#042f2e" />
-                            <stop offset="50%" stopColor="#0f766e" />
-                            <stop offset="100%" stopColor="#115e59" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="320" height="180" fill={`url(#${gradId})`} />
-                    {/* Rosa dei venti / Stella polare di orientamento */}
-                    <circle cx="240" cy="90" r="56" fill="none" stroke="#2dd4bf" strokeWidth="1" strokeOpacity="0.3" />
-                    <circle cx="240" cy="90" r="38" fill="none" stroke="#fbbf24" strokeWidth="1" strokeOpacity="0.35" strokeDasharray="4 3" />
-                    {/* Aghi della bussola */}
-                    <polygon points="240,42 245,85 240,90 235,85" fill="#f59e0b" />
-                    <polygon points="240,138 245,95 240,90 235,95" fill="#f8fafc" fillOpacity="0.75" />
-                    <polygon points="192,90 235,95 240,90 235,85" fill="#f8fafc" fillOpacity="0.75" />
-                    <polygon points="288,90 245,95 240,90 245,85" fill="#f8fafc" fillOpacity="0.75" />
-                    <circle cx="240" cy="90" r="4.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
-
-                    {/* Monogramma ed etichetta */}
-                    <g transform="translate(36, 90)">
-                        <circle cx="0" cy="0" r="26" fill="#042f2e" fillOpacity="0.8" stroke="#2dd4bf" strokeWidth="1.5" strokeOpacity="0.7" />
-                        <text x="0" y="7" textAnchor="middle" fill="#ffffff" fontSize="20" fontFamily="sans-serif" fontWeight="700">
-                            {initials}
-                        </text>
-                    </g>
-                    <g transform="translate(20, 150)">
-                        <rect x="0" y="0" width="115" height="18" rx="9" fill="#042f2e" fillOpacity="0.8" stroke="#2dd4bf" strokeWidth="1" strokeOpacity="0.5" />
-                        <text x="57" y="12" textAnchor="middle" fill="#99f6e4" fontSize="9.5" fontFamily="sans-serif" fontWeight="600" letterSpacing="0.5">
-                            {formatCategoryLabel('orientatore', lang).toUpperCase()}
-                        </text>
-                    </g>
-                </svg>
-            );
-        }
-    }
+    return (
+        <svg
+            viewBox="0 0 320 180"
+            width="100%"
+            height="100%"
+            preserveAspectRatio="xMidYMid slice"
+            className="h-full w-full select-none"
+            aria-hidden="true"
+            fill="none"
+            stroke="var(--i-out)"
+            strokeWidth={2.5}
+            strokeLinejoin="miter"
+            strokeLinecap="butt"
+        >
+            <rect width="320" height="180" fill="var(--i-cream)" stroke="none" />
+            {motif(subtleRot)}
+            <circle cx="64" cy="82" r="32" fill="var(--i-paper)" />
+            <text x="64" y="90" textAnchor="middle" fill="var(--i-out)" stroke="none" fontSize="22" fontFamily="sans-serif" fontWeight="600">
+                {initials}
+            </text>
+            <text x="64" y="148" textAnchor="middle" fill="var(--i-out)" stroke="none" fontSize="13" fontFamily="sans-serif">
+                {formatCategoryLabel(primaryCategory, lang)}
+            </text>
+        </svg>
+    );
 }
 
 /**
@@ -363,7 +157,6 @@ export function CounselorCover({
     const { t, lang } = useI18n();
     const [hasError, setHasError] = useState(false);
     const [prevSrc, setPrevSrc] = useState(src);
-    const uniqueId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
 
     // Reset dello stato di errore se src cambia
     if (prevSrc !== src) {
@@ -392,7 +185,7 @@ export function CounselorCover({
                     onError={() => setHasError(true)}
                 />
             ) : (
-                <ProceduralCoverFallback counselor={counselor} uniqueId={uniqueId} lang={lang} />
+                <ProceduralCoverFallback counselor={counselor} lang={lang} />
             )}
 
             {/* Badge Play discreto per predisposizione video YouTube */}
