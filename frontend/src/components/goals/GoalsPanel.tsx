@@ -83,8 +83,8 @@ export function GoalsPanel() {
             <div className="ml-auto hidden gap-2 lg:flex">{viewButton('list', <List className="h-4 w-4" aria-hidden />, 'viewList')}{viewButton('map', <Network className="h-4 w-4" aria-hidden />, 'viewMap')}</div>
         </div>
         <GoalIssue error={error} lang={lang} retry={() => void load()} />
-        {loading ? <p role="status">{l('loading')}</p> : <>
-            {!goals.length && !error && <p className="py-4">{l('empty')}</p>}
+        {loading ? <p role="status" className="text-sm text-ink-muted">{l('loading')}</p> : <>
+            {!goals.length && !error && <p className="py-4 text-sm text-ink-muted">{l('empty')}</p>}
             <div className={view === 'map' ? 'lg:hidden' : ''}><GoalTree goals={goals} forest={forest} groups={groups} onOpen={openGoal} onAddChild={id => open({ kind: 'create', parentId: id })} /></div>
             {view === 'map' && goals.length > 0 && <GoalMap goals={shown} all={goals} onOpen={openGoal} />}
             {!accessLoading && isToolAllowed(access, 'bussola') && <Link className="block py-4 text-sm text-link underline" href="/bussola">{l('unsure')}</Link>}

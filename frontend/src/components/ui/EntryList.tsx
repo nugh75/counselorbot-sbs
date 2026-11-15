@@ -25,7 +25,7 @@ export function EntryLink({ idPrefix, id, href, image, illustration, name, descr
     idPrefix: string; id: string; href: string; image?: string; illustration?: ReactNode; name: string; description: string;
     badge?: ReactNode; status?: ReactNode; reload?: boolean; testId?: string; onOpen?: () => void;
 }) {
-    const className = 'group flex min-h-24 items-center gap-4 rounded-card px-2 py-4 transition-colors hover:bg-surface-sunken sm:gap-4';
+    const className = 'group flex min-h-24 items-center gap-4 border-b border-transparent px-2 py-4 transition-colors hover:border-line sm:gap-4';
     const content = <>
         {illustration ?? (image && <Image src={image} alt="" width={72} height={72} sizes="(min-width: 768px) 72px, 64px" className="h-16 w-16 shrink-0 rounded-control object-contain md:h-18 md:w-18" />)}
         <span className="min-w-0 flex-1 break-words">
