@@ -13,13 +13,10 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Field, Input, Textarea } from '@/components/ui/Field';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
-
-const STATUS_CHIP = {
-    draft: 'bg-warning-soft text-warning-ink',
-    final: 'bg-success-soft text-success-ink',
-} as const;
 
 function date(lang: string, value: string | null) {
     return value ? new Date(value).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
@@ -159,11 +156,11 @@ export function OrientationTab({ groupId }: { groupId: number }) {
             || row.username.toLowerCase().includes(needle);
     });
     const chip = (value: RecommendationSummary['status']) => value
-        ? <span className={`rounded-full px-2 py-1 text-xs font-semibold ${STATUS_CHIP[value]}`}>{l(value === 'final' ? 'statusFinal' : 'statusDraft')}</span>
-        : <span className="rounded-full bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-muted">{l('noDocument')}</span>;
+        ? <StatusBadge tone={value === 'final' ? 'success' : 'warning'}>{l(value === 'final' ? 'statusFinal' : 'statusDraft')}</StatusBadge>
+        : <StatusBadge>{l('noDocument')}</StatusBadge>;
 
     return <div className="space-y-6">
-        <Card className="space-y-2">
+        <Card variant="flat" className="space-y-2">
             <h2 className="text-lg font-semibold text-ink">{l('title')}</h2>
             <p className="text-sm text-ink-muted">{l('intro')}</p>
             <p className="text-sm text-ink-muted">{l('privacy')}</p>
@@ -173,10 +170,9 @@ export function OrientationTab({ groupId }: { groupId: number }) {
             <Button variant="secondary" onClick={() => void students.reload()}>{l('reload')}</Button></Callout>}
         {students.forbidden && <Callout variant="danger"><p>{l('loadError')}</p></Callout>}
         {students.data && <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
-            <Card className="h-max space-y-4">
-                <input value={query} onChange={event => setQuery(event.target.value)}
-                    placeholder={l('search')} aria-label={l('search')}
-                    className="min-h-control w-full rounded-control border border-line-strong bg-surface px-4 text-sm" />
+            <Card variant="flat" className="h-max space-y-4">
+                <Input value={query} onChange={event => setQuery(event.target.value)}
+                    placeholder={l('search')} aria-label={l('search')} />
                 {students.data.length === 0 && <p className="text-sm text-ink-muted">{l('noStudents')}</p>}
                 {list.length === 0 && students.data.length > 0 && <p className="text-sm text-ink-muted">{l('search')}</p>}
                 {list.length > 0 && <ul className="divide-y divide-line">
@@ -187,13 +183,13 @@ export function OrientationTab({ groupId }: { groupId: number }) {
                             <span className="block font-semibold text-ink">{row.display_name}</span>
                             <span className="flex flex-wrap items-center gap-2">
                                 {chip(row.status)}
-                                {row.ai_draft_used && <span className="rounded-full bg-brand-soft px-2 py-1 text-xs font-semibold text-link">{l('aiDrag')}</span>}
+                                {row.ai_draft_used && <StatusBadge tone="info">{l('aiDrag')}</StatusBadge>}
                             </span>
                         </button>
                     </li>)}
                 </ul>}
             </Card>
-            <Card className="space-y-4">
+            <Card variant="flat" className="space-y-4">
                 {!username && <p className="text-sm text-ink-muted">{l('selectHint')}</p>}
                 {username && docLoading && <TeacherLoading />}
                 {username && docFailed && <Callout variant="danger"><p>{l('detailLoadError')}</p>
@@ -216,28 +212,25 @@ export function OrientationTab({ groupId }: { groupId: number }) {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                             {chip(status)}
-                            {draftUsed && <span className="rounded-full bg-brand-soft px-2 py-1 text-xs font-semibold text-link">{l('aiDrag')}</span>}
+                            {draftUsed && <StatusBadge tone="info">{l('aiDrag')}</StatusBadge>}
                         </div>
                     </div>
                     {!doc?.is_member && <p className="text-sm text-ink-muted">{l('historical')}</p>}
                     <Button variant="secondary" disabled={draftBusy || busy || !doc?.is_member} onClick={() => void generate()}>
                         {l(draftBusy ? 'generating' : 'generate')}
                     </Button>
-                    {draft && <div role="status" className="space-y-2 rounded-card border border-brand-line bg-brand-soft p-4">
-                        <p className="text-sm font-semibold text-link">{l('draftTitle')}</p>
+                    {draft && <div role="status"><Callout variant="info" icon={null} title={l('draftTitle')}>
                         <p className="whitespace-pre-wrap rounded-control bg-surface p-4 text-sm text-ink-body">{draft}</p>
-                        <p className="text-xs text-link">{l('draftReady')}</p>
-                        <div className="flex flex-wrap gap-2">
+                        <p className="mt-2 text-xs">{l('draftReady')}</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
                             <Button disabled={busy} onClick={() => { setContent(draft); setDraftUsed(true); setDraft(''); }}>{l('useIt')}</Button>
                             <Button variant="secondary" disabled={busy} onClick={() => setDraft('')}>{l('discard')}</Button>
                         </div>
-                    </div>}
-                    <label className="block space-y-1">
-                        <span className="text-xs font-semibold text-ink-muted">{l('content')}</span>
-                        <textarea value={content} disabled={busy || !doc?.is_member} onChange={event => setContent(event.target.value)}
-                            rows={14} placeholder={l('contentPlaceholder')}
-                            className="w-full rounded-control border border-line-strong bg-surface p-4 text-sm leading-6" />
-                    </label>
+                    </Callout></div>}
+                    <Field label={l('content')}>
+                        <Textarea value={content} disabled={busy || !doc?.is_member} onChange={event => setContent(event.target.value)}
+                            rows={14} placeholder={l('contentPlaceholder')} className="p-4 leading-6" />
+                    </Field>
                     {notice && <p role="alert" className={`text-sm ${(notice === 'saved') ? 'text-success' : 'text-danger'}`}>
                         {notice === 'saved' && l('saved')}
                         {notice === 'saveError' && l('saveError')}
@@ -261,7 +254,7 @@ export function OrientationTab({ groupId }: { groupId: number }) {
                                     onClick={() => setConfirmFinalize(true)}>
                                     {l('finalize')}</Button>}
                         <Button variant="secondary" disabled={!doc?.content.trim()} onClick={() => void download()}>{l('download')}</Button>
-                        <span className="rounded-full bg-surface-raised px-2 py-1 text-xs text-ink-muted">{l('internalBadge')}</span>
+                        <StatusBadge>{l('internalBadge')}</StatusBadge>
                     </div>
                 </div>}
             </Card>

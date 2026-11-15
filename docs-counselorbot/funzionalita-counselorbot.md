@@ -358,6 +358,15 @@ Hanno ora l'intestazione illustrata dell'area: Dispositivi (nuova voce `disposit
 dell'Area docenti, con le sue briciole di pane), Orientamento del docente, Cambiamenti
 e il forum di classe dello studente.
 
+**Sottopagine dello studente piatte (#956).** Compilazioni, taccuino, portfolio,
+orientamento, analisi combinata, classi, Telegram, tavolo, cambiamenti e API personali
+dell'Area studente (e «Da riprendere» nella home) seguono l'aspetto piatto: `Card`
+piatta, righe con filetto al posto dei riquadri annidati, etichette di stato come
+`StatusBadge`, campi con i componenti condivisi, avvisi con `Callout`. Il riquadro
+tratteggiato «in arrivo» del catalogo è una sezione con voci disabilitate; l'ingrandimento
+delle immagini del portfolio è una finestra di dialogo standard. Nessun cambio di
+comportamento.
+
 **Elenchi docente piatti (#868).** `/docente/classi` (e le classi di un istituto) elenca
 ogni classe come voce dell'elenco condiviso (nome, stato, codice, partecipanti, scuola,
 proprietario) invece di un riquadro con ombra; la copia del codice e le scorciatoie alle
@@ -2011,6 +2020,16 @@ elenco, senza riquadri colorati né schede: Progettazione didattica è una voce
 si avvia sempre da `/?start=<id>` (scelta tra studente di prova e dati propri). I colori
 di ruolo restano solo sui badge. L’elenco delle classi attive non è più nella home:
 si trova in «Le mie classi».
+
+**Schede della pagina di classe piatte (#957, novembre 2026).** In `/docente/classi/[id]`
+(e `/admin/classi/[id]`) le schede Panoramica, Orientamento, Osservazioni, Consiglio, Studenti
+e Registro seguono la scheda Piani: sezioni con filetto al posto dei riquadri, stati come
+etichette `StatusBadge`, campi `Field`/`Input`/`Select`/`Textarea`. In Studenti gli iscritti e
+gli inviti in attesa sono sezioni con filetto e badge di ruolo (studente, docente), senza
+sfondo tinto; il registro modifiche è un elenco a righe separate da filetti. Il modale della
+copertina e la conferma di eliminazione della classe usano il `Dialog` condiviso (Esc, sfondo
+e pulsante di chiusura, mai durante un salvataggio). Funzioni, testi e dati invariati; la
+fascia di copertina (#953) resta.
 
 **Filetti di sezione più netti e ritorni come testo (#952, novembre 2026).** Il filetto
 sotto i titoli di sezione delle pagine usa il token della linea forte (`border-line-strong`):

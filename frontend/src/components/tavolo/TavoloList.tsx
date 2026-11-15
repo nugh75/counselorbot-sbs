@@ -14,6 +14,7 @@ import { TavoloCompose } from '@/components/tavolo/TavoloCompose';
 import { TavoloCounselor } from '@/components/tavolo/TavoloCounselor';
 import { InlineRename } from '@/components/ui/InlineRename';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button, Spinner } from '@/components/ui/Button';
 import {
     createTavolo,
@@ -144,17 +145,15 @@ export function TavoloList({ showCompose = true, onOpen }: TavoloListProps = {})
 
             <ul className="space-y-2">
                 {rows?.map((row) => (
-                    <li key={row.id} className="flex flex-wrap items-center gap-1">
+                    <li key={row.id} className="flex flex-wrap items-center gap-1 border-b border-line">
                         <Link href={tableHref(row.id)} onClick={(event) => { if (onOpen) { event.preventDefault(); onOpen(row.id, counselorId); } }}
-                            className="flex min-h-14 min-w-0 flex-1 items-center gap-4 rounded-card border border-line bg-surface px-4 py-2 hover:bg-surface-sunken">
+                            className="flex min-h-14 min-w-0 flex-1 items-center gap-4 px-2 py-2 hover:bg-surface-sunken">
                             <Table2 className="h-4 w-4 shrink-0 text-link" aria-hidden="true" />
                             <span className="min-w-0 flex-1 truncate text-sm text-ink">
                                 {row.title || label('untitled')}
                             </span>
                             {row.origin_instrument && (
-                                <span className="shrink-0 rounded-control bg-surface-raised px-2 py-1 text-xs text-ink-muted">
-                                    {row.origin_instrument}
-                                </span>
+                                <StatusBadge>{row.origin_instrument}</StatusBadge>
                             )}
                             <span className="shrink-0 text-xs text-link">{label('openOne')}</span>
                         </Link>

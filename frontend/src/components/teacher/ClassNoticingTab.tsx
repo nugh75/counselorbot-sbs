@@ -12,12 +12,14 @@ import { parseStudentNoticing, SOURCE_KINDS, type SourceKind } from '@/lib/stude
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
+import { Field, Select } from '@/components/ui/Field';
+import { StatusBadge, type StatusTone } from '@/components/ui/StatusBadge';
 import { SourceQuote, StudentJourneyNoticing } from './StudentJourneyNoticing';
 import { useTeacherResource } from './useTeacherResource';
 
 const PERIODS = [0, 30, 90];
 const KIND_BAR = { revisit: 'bg-info', resource: 'bg-success', difficulty: 'bg-warning', attention: 'bg-danger' } as const;
-const KIND_BADGE = { revisit: 'bg-info-soft text-info-ink', resource: 'bg-success-soft text-success-ink', difficulty: 'bg-warning-soft text-warning-ink', attention: 'bg-danger-soft text-danger-ink' } as const;
+const KIND_TONE: Record<ClassTheme['kind'], StatusTone> = { revisit: 'info', resource: 'success', difficulty: 'warning', attention: 'danger' };
 
 function Bar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
     return <div className="space-y-1">
@@ -29,9 +31,9 @@ function Bar({ label, count, total, color }: { label: string; count: number; tot
 function ThemeCard({ theme, total, studentBase }: { theme: ClassTheme; total: number; studentBase: (username: string) => string }) {
     const { lang } = useI18n();
     const l = (key: NoticingTextKey) => noticingText(lang, key);
-    return <li className="space-y-4 rounded-card border border-line bg-surface p-4">
+    return <li className="space-y-4 py-4">
         <p className="flex flex-wrap items-center gap-2">
-            <span className={`rounded-full px-2 py-1 text-xs font-semibold ${KIND_BADGE[theme.kind]}`}>{l(theme.kind)}</span>
+            <StatusBadge tone={KIND_TONE[theme.kind]}>{l(theme.kind)}</StatusBadge>
             <span className="font-semibold text-ink">{theme.title}</span>
         </p>
         <Bar label={l('students')} count={theme.student_count} total={total} color={KIND_BAR[theme.kind]} />
@@ -99,26 +101,24 @@ export function ClassNoticingTab({ groupId }: { groupId: number }) {
     const showResults = data && (data.status === 'ready' || data.status === 'stale');
 
     return <div className="space-y-6">
-        <Card className="space-y-4">
+        <Card variant="flat" className="space-y-4">
             <div className="space-y-2">
                 <h2 className="text-lg font-semibold text-ink">{l('classTitle')}</h2>
                 <p className="text-sm text-ink-muted">{journeyText(lang, 'intro')}</p>
                 <p className="text-xs text-ink-muted">{journeyText(lang, 'evidenceNote')}</p>
             </div>
             <div className="flex flex-wrap items-end gap-4">
-                <label className="space-y-1 text-sm font-semibold text-ink-body">
-                    <span className="block">{l('instrument')}</span>
-                    <select disabled={!!progress} value={instrument} onChange={event => setInstrument(event.target.value)} className="min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm">
+                <Field label={l('instrument')}>
+                    <Select disabled={!!progress} value={instrument} onChange={event => setInstrument(event.target.value)} className="w-auto">
                         <option value="">{l('allInstruments')}</option>
                         {(data?.instruments ?? []).map(code => <option key={code} value={code}>{SOURCE_KINDS.includes(code as SourceKind) ? journeyText(lang, code as SourceKind) : code}</option>)}
-                    </select>
-                </label>
-                <label className="space-y-1 text-sm font-semibold text-ink-body">
-                    <span className="block">{l('period')}</span>
-                    <select disabled={!!progress} value={days} onChange={event => setDays(Number(event.target.value))} className="min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm">
+                    </Select>
+                </Field>
+                <Field label={l('period')}>
+                    <Select disabled={!!progress} value={days} onChange={event => setDays(Number(event.target.value))} className="w-auto">
                         {PERIODS.map(value => <option key={value} value={value}>{value ? l('lastDays', { n: value }) : l('allTime')}</option>)}
-                    </select>
-                </label>
+                    </Select>
+                </Field>
                 {total > 0 && <Button type="button" onClick={() => void analyse()} disabled={!!progress} aria-busy={!!progress}>
                     <Sparkles className="h-4 w-4" aria-hidden />{l(data?.status === 'ready' || data?.status === 'stale' ? 'reanalyse' : 'analyse')}
                 </Button>}
@@ -147,14 +147,14 @@ export function ClassNoticingTab({ groupId }: { groupId: number }) {
             {data.suggestions.length > 0 && <Callout variant="warning" icon={null} title={l('suggestions')}>
                 <ol className="list-inside list-decimal space-y-1">{data.suggestions.map((text, index) => <li key={index}>{text}</li>)}</ol>
             </Callout>}
-            <Card className="space-y-4">
+            <Card variant="flat" className="space-y-4">
                 <h3 className="font-semibold text-ink">{l('kindsChart')}</h3>
                 {NOTICING_KINDS.map(kind => <Bar key={kind} label={l(kind)} count={data.charts.kinds[kind] ?? 0} total={total} color={KIND_BAR[kind]} />)}
             </Card>
             <section className="space-y-4">
                 <h3 className="font-semibold text-ink">{l('themes')}</h3>
                 {data.themes.length === 0 ? <p className="text-sm text-ink-muted">{l('noThemes')}</p>
-                    : <ul className="space-y-4">{data.themes.map((theme, index) => <ThemeCard key={index} theme={theme} total={total} studentBase={studentBase} />)}</ul>}
+                    : <ul className="divide-y divide-line border-y border-line">{data.themes.map((theme, index) => <ThemeCard key={index} theme={theme} total={total} studentBase={studentBase} />)}</ul>}
             </section>
         </>}
     </div>;

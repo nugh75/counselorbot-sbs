@@ -40,14 +40,14 @@ export function TeacherNotesCard({ lang }: { lang: string }) {
     if (isClassContentHidden(access) || notes.length === 0) return null;
 
     return (
-        <Card as="section" className="space-y-4 p-6" aria-labelledby="teacher-notes-section">
+        <Card as="section" variant="flat" className="space-y-4" aria-labelledby="teacher-notes-section">
             <div className="flex items-center gap-2">
                 <GraduationCap className="h-4 w-4 text-ink-muted" aria-hidden />
                 <h2 id="teacher-notes-section" className="text-lg font-semibold text-ink">{texts.title}</h2>
             </div>
-            <ul className="space-y-2">
+            <ul className="divide-y divide-line">
                 {notes.map((note) => (
-                    <li key={note.id} className="rounded-control border border-line bg-surface p-4 text-sm text-ink-body">
+                    <li key={note.id} className="py-3 text-sm text-ink-body">
                         {note.kind === 'message' ? `[${texts.message}] ` : ''}{note.text}
                         <div className="mt-1 text-xs text-ink-muted">
                             {note.author_username}
