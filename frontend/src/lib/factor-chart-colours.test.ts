@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { QUESTIONNAIRES, tailwindColorFromTheme } from './questionnaires.ts';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { getZTPIAlignmentColorClass } from './ztpi-model.ts';
 
 // Profile factor charts (#933): petrol/slate scale plus ochre, no rainbow.
