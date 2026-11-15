@@ -68,13 +68,13 @@ export function ChatComposerInput({ className, ...rest }: ComponentProps<typeof 
                 }
             }}
             {...rest}
-            className={cn('min-w-0 flex-1 rounded-control border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50', className)}
+            className={cn('min-w-0 flex-1 rounded-control border border-line-strong bg-surface px-4 py-3 text-sm text-ink transition-all placeholder:text-ink-muted focus:border-brand disabled:opacity-50', className)}
         />
     );
 }
 
-// La radice del sito è 15px: h-11 da solo darebbe 41px, sotto l'area minima.
-const BUTTON = 'inline-flex h-11 min-h-control w-11 min-w-control shrink-0 items-center justify-center rounded-control text-white transition-colors';
+// La radice del sito è 15px: la vecchia altezza in rem dava 41px, sotto l'area minima toccabile.
+const BUTTON = 'inline-flex h-control w-control shrink-0 items-center justify-center rounded-control text-ink-on-brand transition-colors';
 
 // Mentre la risposta arriva il primario ferma, non invia, se la superficie sa
 // interrompere la richiesta (onStop); altrimenti resta l'invio disabilitato.
@@ -87,13 +87,13 @@ export function ChatSendButton({ loading = false, disabled, onStop, sendLabel, s
 }) {
     if (loading && onStop) {
         return (
-            <button type="button" onClick={onStop} aria-label={stopLabel} title={stopLabel} className={cn(BUTTON, 'bg-slate-700 hover:bg-slate-800')}>
+            <button type="button" onClick={onStop} aria-label={stopLabel} title={stopLabel} className={cn(BUTTON, 'bg-brand-hover hover:bg-brand')}>
                 <Square className="h-5 w-5 fill-current" />
             </button>
         );
     }
     return (
-        <button type="submit" disabled={disabled || loading} aria-label={sendLabel} className={cn(BUTTON, 'bg-indigo-600 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50')}>
+        <button type="submit" disabled={disabled || loading} aria-label={sendLabel} className={cn(BUTTON, 'bg-brand hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50')}>
             <Send className="h-5 w-5" />
         </button>
     );
@@ -110,8 +110,8 @@ export function ChatSuggestions({ label, items, composerId, onInsert }: {
 }) {
     if (items.length === 0) return null;
     return (
-        <details className="mb-2 text-xs text-slate-600">
-            <summary className="min-h-9 cursor-pointer py-2">{label}</summary>
+        <details className="mb-2 text-xs text-ink-body">
+            <summary className="min-h-control cursor-pointer py-2">{label}</summary>
             <div className="flex flex-wrap gap-1.5 pb-2">
                 {items.map((text) => (
                     <button key={text} type="button"
@@ -120,7 +120,7 @@ export function ChatSuggestions({ label, items, composerId, onInsert }: {
                             onInsert(previous => previous.trim() ? `${previous}\n\n${draft}` : draft);
                             window.requestAnimationFrame(() => document.getElementById(composerId)?.focus());
                         }}
-                        className="min-h-9 max-w-full whitespace-normal break-words rounded-control border border-slate-200 bg-white px-2.5 py-1 text-left hover:bg-indigo-50">
+                        className="min-h-control max-w-full whitespace-normal break-words rounded-control border border-line bg-surface px-2.5 py-1 text-left hover:bg-brand-soft">
                         {text}
                     </button>
                 ))}

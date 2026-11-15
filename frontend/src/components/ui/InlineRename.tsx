@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
+import { Button } from './Button';
 
 // F23 (audit Area personale, lotto 4): rinomina in linea al posto del prompt
 // nativo del browser, con focus e selezione automatici, invio per confermare
@@ -43,9 +44,9 @@ export function InlineRename({ value: initial, maxLength, ariaLabel, onRename, o
                 if (event.key === 'Enter') { event.preventDefault(); confirm(); }
                 if (event.key === 'Escape') { event.preventDefault(); onCancel(); }
             }}
-            className="min-h-11 min-w-0 flex-1 rounded-control border border-indigo-300 bg-white px-2 text-sm font-semibold text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-slate-900 dark:text-slate-100"
+            className="min-h-control min-w-0 flex-1 rounded-control border border-line-strong bg-surface px-2 text-sm font-semibold text-ink"
         />
-        <button type="button" onClick={confirm} className="min-h-11 rounded-control bg-indigo-600 px-3 text-xs font-bold text-white hover:bg-indigo-700">{t('common.save')}</button>
-        <button type="button" onClick={onCancel} className="min-h-11 rounded-control border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300">{t('common.cancel')}</button>
+        <Button type="button" size="md" className="px-3 text-xs" onClick={confirm}>{t('common.save')}</Button>
+        <Button type="button" variant="secondary" size="md" className="px-3 text-xs" onClick={onCancel}>{t('common.cancel')}</Button>
     </span>;
 }

@@ -17,7 +17,7 @@ interface PencilButtonProps {
 }
 
 const BASE =
-    'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:hover:bg-slate-50 disabled:hover:text-slate-300';
+    'inline-flex h-control w-control shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink-body transition-colors hover:bg-surface-sunken hover:text-link disabled:cursor-not-allowed disabled:border-line disabled:bg-surface-sunken disabled:text-ink-muted disabled:hover:bg-surface-sunken disabled:hover:text-ink-muted';
 
 export function PencilButton({ href, onClick, label, className, disabled }: PencilButtonProps) {
     const cls = cn(BASE, className);

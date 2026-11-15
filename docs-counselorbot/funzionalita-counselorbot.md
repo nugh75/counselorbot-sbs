@@ -393,6 +393,14 @@ creazione, le colonne e i mazzi sono divisi da filetti invece che da riquadri an
 La carta in studio, le carte del tavolo, campi e finestre di dialogo mantengono la loro
 forma; nessun cambio di comportamento.
 
+**Strumenti visivi e flashcard senza riquadri (#958).** `/profilo/azioni`, `/carte`,
+`/confronto`, `/timeline` e `/profilo/flashcard` non hanno più il pannello con ombra né
+gli articoli riquadrati: azioni, opzioni di confronto e tappe della linea del tempo sono
+righe divise da filetti. Campi di testo, elenchi e aree di testo usano i componenti
+standard (`Input`, `Select`, `Textarea`), lo stato delle carte è un'etichetta
+`StatusBadge`, e la scelta dell'immagine e il nuovo mazzo sono finestre `Dialog`. Le
+carte restano oggetti con bordo; nessun cambio di comportamento.
+
 **Piani operativi del docente piatti (#950).** La pagina `/docente/piani-operativi`
 (elenco dei piani, editor, modelli e avanzamento) non ha più riquadri né card dentro
 card: sezioni piatte con filetto, righe dell'elenco separate da filetti, campi con i
@@ -788,6 +796,17 @@ corrente; il tocco apre un sottolivello con le scelte in elenco: «‹» o Esc
 tornano al menu principale con il fuoco sulla voce appena usata, un secondo
 Esc lo chiude. Le condizioni di
 abilitazione delle voci non cambiano.
+
+**Primitive della chat sui token (#961).** Bolle, guscio della conversazione,
+testo delle risposte, opzioni della conversazione, dettatura, selettori di
+formato, lunghezza e analisi, rinomina in linea, matita di modifica, conferma in
+linea, stepper del percorso e opzioni audio leggono i token semantici (`ink`,
+`ink-body`, `ink-muted`, `surface`, `surface-sunken`, `surface-raised`, `line`,
+`line-strong`, `brand`, `brand-soft`, `link`, `move`) invece della palette
+`slate`/`indigo`/`ochre`/`amber`: stessa forma nei due temi senza `dark:`,
+etichette senza maiuscolo, due soli pesi e comandi alti almeno 44 px. I campi
+della chat e dell'audio usano le primitive `Select`/`Textarea`, i pulsanti
+della rinomina e della conferma usano `Button`.
 Anche il testo delle risposte è reso allo stesso modo nelle tre chat (#654):
 stesso aspetto per titoli, elenchi, grassetto, collegamenti, codice e citazioni;
 le tabelle scorrono di lato dentro la loro cornice (raggiungibile anche da

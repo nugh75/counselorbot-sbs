@@ -21,12 +21,12 @@ export function useAudioAutoSend() {
 export function AudioSendOption({ compact = false }: { compact?: boolean }) {
     const { t } = useI18n();
     const enabled = useAudioAutoSend();
-    return <label className="flex min-h-control cursor-pointer items-start gap-2 rounded-control px-2 py-2 text-sm text-slate-600 hover:bg-slate-50">
-        <input type="checkbox" checked={enabled} className="mt-1 shrink-0 accent-indigo-600" onChange={eventObject => {
+    return <label className="flex min-h-control cursor-pointer items-start gap-2 rounded-control px-2 py-2 text-sm text-ink-body hover:bg-surface-sunken">
+        <input type="checkbox" checked={enabled} className="mt-1 shrink-0 accent-brand" onChange={eventObject => {
             sessionValue = eventObject.target.checked;
             try { localStorage.setItem(key, String(sessionValue)); } catch { /* Retain this visit's choice. */ }
             window.dispatchEvent(new Event(event));
         }} />
-        <span>{t(compact ? 'audio.autoSendShort' : 'audio.autoSend')}{!compact && <span className="mt-1 block text-xs text-slate-500">{t('audio.autoSendHelp')}</span>}</span>
+        <span>{t(compact ? 'audio.autoSendShort' : 'audio.autoSend')}{!compact && <span className="mt-1 block text-xs text-ink-muted">{t('audio.autoSendHelp')}</span>}</span>
     </label>;
 }

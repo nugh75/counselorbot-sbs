@@ -2,6 +2,7 @@
 
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
+import { Button } from './Button';
 
 // Conferma in linea al posto di `window.confirm`. La finestra nativa non segue
 // il tema scuro, non traduce le sue etichette e su mobile arriva da un altro
@@ -21,24 +22,28 @@ export function ConfirmInline({ question, onConfirm, onCancel, busy, className }
         <div
             role="group"
             aria-label={question}
-            className={cn('inline-flex items-center gap-1.5 rounded-card border border-red-200 bg-red-50 p-1.5', className)}
+            className={cn('inline-flex items-center gap-1.5 rounded-card border border-danger-line bg-danger-soft p-1.5', className)}
         >
-            <span className="px-1 text-xs font-semibold text-red-800">{question}</span>
-            <button
+            <span className="px-1 text-xs font-semibold text-danger-ink">{question}</span>
+            <Button
                 type="button"
+                variant="danger"
+                size="md"
+                className="px-2.5 text-xs"
                 onClick={onConfirm}
                 disabled={busy}
-                className="rounded-control bg-red-600 px-2.5 py-1 text-xs font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
             >
                 {t('profile.yes')}
-            </button>
-            <button
+            </Button>
+            <Button
                 type="button"
+                variant="secondary"
+                size="md"
+                className="px-2.5 text-xs"
                 onClick={onCancel}
-                className="rounded-control border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
             >
                 {t('profile.no')}
-            </button>
+            </Button>
         </div>
     );
 }
