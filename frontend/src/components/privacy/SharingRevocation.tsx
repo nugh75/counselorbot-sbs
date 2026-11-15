@@ -198,7 +198,7 @@ export function SharingRevocation({ choices, groups, purpose, document, canEdit,
                     </div>
                 )}
                 {!canGrant && groups.length > 0 && (
-                    <p className="mt-2 text-xs font-medium text-warning-ink">
+                    <p className="mt-2 text-xs font-semibold text-warning-ink">
                         {!purpose?.active || purpose?.legal_basis === 'undefined'
                             ? t('privacy.sharing.inactive')
                             : t('privacy.sharing.documentMissing')}
@@ -207,7 +207,7 @@ export function SharingRevocation({ choices, groups, purpose, document, canEdit,
                 {feedback && (
                     <p
                         role={feedback.kind === 'error' ? 'alert' : 'status'}
-                        className={`mt-3 text-sm font-medium ${feedback.kind === 'error' ? 'text-danger-ink' : 'text-success-ink'}`}
+                        className={`mt-3 text-sm font-semibold ${feedback.kind === 'error' ? 'text-danger-ink' : 'text-success-ink'}`}
                     >
                         {t(feedback.key)}
                     </p>

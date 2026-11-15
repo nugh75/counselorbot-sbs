@@ -8,7 +8,9 @@ import { categoryText, type CategoryTextKey } from '@/lib/i18n-institution-categ
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import type { Institution } from '@/lib/referrals-api';
 import { TeacherAreaHeader } from '@/components/teacher/TeacherAreaHeader';
+import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
+import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 
 type Category = { id: string; name: string; description: string; is_active: boolean; position: number; updated_by: string; updated_at: string };
 type Content = { id: number; kind: 'referral' | 'event'; title: string; starts_at: string | null; updated_at: string; category_ids: string[] };
@@ -16,8 +18,8 @@ type AssignmentDraft = { content: Content; selected: string[]; original: string[
 type Snapshot = { revision: number; categories: Category[]; contents?: Content[] };
 type Draft = { id?: string; name: string; description: string; originalName: string; originalDescription: string };
 type Action = 'create' | 'edit' | 'archive' | 'restore' | 'move_up' | 'move_down';
-const control = 'min-h-control rounded-control border border-line-strong px-4 py-2 text-sm disabled:opacity-50';
-const input = `${control} w-full bg-surface`;
+// Le voci del menu delle azioni: bersaglio da 44px, senza bordo, a filo del pannello.
+const menuItem = 'w-full justify-start disabled:opacity-50';
 
 const Heading = () => <TeacherAreaHeader slug="orientamento" />;
 
@@ -39,7 +41,7 @@ export default function InstitutionOrientationPage() {
     }, [attempt]);
     if (institutions?.length && selected !== null) return <CategoryEditor key={selected} institutions={institutions} institutionId={selected} onSelect={setSelected} />;
     return <div className="page-wide space-y-6 px-4 py-8"><Heading />
-        {errorKey ? <div role="alert" className="space-y-4"><p>{categoryText(lang, errorKey)}</p><button className={control} onClick={() => { setErrorKey(null); setAttempt(value => value + 1); }}>{categoryText(lang, 'retry')}</button></div>
+        {errorKey ? <div role="alert" className="space-y-4"><p>{categoryText(lang, errorKey)}</p><Button variant="secondary" onClick={() => { setErrorKey(null); setAttempt(value => value + 1); }}>{categoryText(lang, 'retry')}</Button></div>
             : <p role="status">{categoryText(lang, institutions ? 'noInstitutions' : 'loading')}</p>}
     </div>;
 }
@@ -57,9 +59,10 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
     const [attempt, setAttempt] = useState(0);
     const [menu, setMenu] = useState<string | null>(null);
     const menuRef = useRef<HTMLDivElement>(null);
-    const nameRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLHeadingElement>(null);
-    const triggers = useRef(new Map<string, HTMLButtonElement>());
+    const triggers = useRef(new Map<string, HTMLDivElement>());
+    const nameId = 'orientation-category-name';
+    const focusName = () => document.getElementById(nameId)?.focus();
     const dirty = Boolean(draft && (draft.name !== draft.originalName || draft.description !== draft.originalDescription)) || Boolean(assignment && [...assignment.selected].sort().join() !== [...assignment.original].sort().join());
     useDraftGuard(dirty || busy, l('leave'));
     const base = `/api/teacher/institutions/${institutionId}`;
@@ -81,7 +84,7 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
     }, [contentsPath, attempt]);
     const assignmentKey = assignment ? `${assignment.content.kind}-${assignment.content.id}` : '';
     useEffect(() => { if (assignmentKey) assignmentRef.current?.focus(); }, [assignmentKey]);
-    useEffect(() => { if (draftId) nameRef.current?.focus(); }, [draftId]);
+    useEffect(() => { if (draftId) focusName(); }, [draftId]);
     useEffect(() => {
         if (!menu) return;
         menuRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
@@ -89,7 +92,7 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
             if (event.target instanceof Node && !menuRef.current?.contains(event.target) && !triggers.current.get(menu)?.contains(event.target)) setMenu(null);
         };
         const escape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') { setMenu(null); triggers.current.get(menu)?.focus(); }
+            if (event.key === 'Escape') { setMenu(null); triggers.current.get(menu)?.querySelector<HTMLElement>('button')?.focus(); }
         };
         document.addEventListener('pointerdown', outside); document.addEventListener('keydown', escape);
         return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape); };
@@ -100,7 +103,7 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
         if (busy || !mayDiscard()) return;
         setMenu(null); setAssignment(null);
         setDraft({ id: category?.id, name: category?.name ?? '', description: category?.description ?? '', originalName: category?.name ?? '', originalDescription: category?.description ?? '' });
-        nameRef.current?.focus();
+        focusName();
     };
     const unavailableDraft = Boolean(draft?.id && snapshot && !snapshot.categories.some(item => item.id === draft.id && item.is_active));
     const blocked = busy || loading || !snapshot || ['conflict', 'denied', 'loadError', 'assignmentConflict', 'contentUnavailable'].includes(errorKey ?? '');
@@ -149,33 +152,33 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
     const reload = () => { if (!busy) { setLoading(true); setMenu(null); setAttempt(value => value + 1); } };
     return <div className="page-wide space-y-6 px-4 py-8" data-institution-categories>
         <Heading />
-        {institutions.length > 1 ? <label className="block max-w-lg text-sm">{l('institution')}<select className={`${input} mt-1`} value={institutionId} disabled={busy} onChange={event => { if (mayDiscard()) onSelect(Number(event.target.value)); }}>{institutions.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
+        {institutions.length > 1 ? <Field className="max-w-lg" label={l('institution')}><Select value={institutionId} disabled={busy} onChange={event => { if (mayDiscard()) onSelect(Number(event.target.value)); }}>{institutions.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</Select></Field>
             : <p className="font-semibold">{l('institution')}: {institution.name}</p>}
-        <div className="flex flex-wrap items-center justify-between gap-4"><h2 ref={listRef} tabIndex={-1} className="text-lg font-semibold">{l('categories')}</h2><button type="button" disabled={blocked} className={`${control} inline-flex items-center gap-2`} onClick={() => openEditor()}><Plus className="h-4 w-4" aria-hidden />{l('new')}</button></div>
-        {errorKey && <Callout variant="warning"><p>{l(errorKey)}</p><button type="button" disabled={busy || loading} className={control} onClick={reload}>{l('retry')}</button></Callout>}
+        <div className="flex flex-wrap items-center justify-between gap-4"><h2 ref={listRef} tabIndex={-1} className="text-lg font-semibold">{l('categories')}</h2><Button type="button" variant="secondary" disabled={blocked} onClick={() => openEditor()}><Plus className="h-4 w-4" aria-hidden />{l('new')}</Button></div>
+        {errorKey && <Callout variant="warning"><p>{l(errorKey)}</p><Button type="button" variant="secondary" disabled={busy || loading} onClick={reload}>{l('retry')}</Button></Callout>}
         {draft && <form className="space-y-4 border-t border-line pt-6" onSubmit={event => { event.preventDefault(); void change(draft.id ? 'edit' : 'create', draft.id); }}>
             <h3 className="font-semibold">{l(draft.id ? 'edit' : 'new')}</h3>
             {unavailableDraft && <p role="alert">{l('unavailable')}</p>}
-            <label className="block text-sm">{l('name')} *<input ref={nameRef} className={`${input} mt-1`} maxLength={120} required disabled={busy} value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} /></label>
-            <label className="block text-sm">{l('description')}<textarea className={`${input} mt-1`} rows={3} maxLength={2000} disabled={busy} value={draft.description} onChange={event => setDraft({ ...draft, description: event.target.value })} /></label>
-            <div className="flex justify-end gap-2"><button type="button" disabled={busy} className={control} onClick={() => { if (mayDiscard()) { setDraft(null); listRef.current?.focus(); } }}>{l('cancel')}</button><button type="submit" disabled={blocked || unavailableDraft || !draft.name.trim()} className={`${control} border-brand bg-brand font-semibold text-ink-on-brand hover:bg-brand-hover`}>{l('save')}</button></div>
+            <Field label={`${l('name')} *`}><Input id={nameId} maxLength={120} required disabled={busy} value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} /></Field>
+            <Field label={l('description')}><Textarea rows={3} maxLength={2000} disabled={busy} value={draft.description} onChange={event => setDraft({ ...draft, description: event.target.value })} /></Field>
+            <div className="flex justify-end gap-2"><Button type="button" variant="secondary" disabled={busy} onClick={() => { if (mayDiscard()) { setDraft(null); listRef.current?.focus(); } }}>{l('cancel')}</Button><Button type="submit" disabled={blocked || unavailableDraft || !draft.name.trim()}>{l('save')}</Button></div>
         </form>}
         {loading && <p role="status">{l('loading')}</p>}
         {!loading && snapshot && active.length === 0 && <p>{l('empty')}</p>}
         <ul className="divide-y divide-line border-y border-line" aria-label={l('categories')}>
             {active.map((category, index) => <li key={category.id} data-category-id={category.id} className="flex items-start gap-4 py-4">
                 <div className="min-w-0 flex-1"><h3 className="break-words font-semibold">{category.name}</h3>{category.description && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-ink-muted">{category.description}</p>}<p className="mt-2 break-words text-xs text-ink-muted">{l('changed')}: {category.updated_by} · {new Date(category.updated_at).toLocaleString(lang)}</p></div>
-                <div className="relative shrink-0"><button ref={node => { if (node) triggers.current.set(category.id, node); else triggers.current.delete(category.id); }} type="button" aria-label={`${l('actions')}: ${category.name}`} aria-expanded={menu === category.id} aria-controls={`category-actions-${category.id}`} disabled={blocked} className={control} onClick={() => setMenu(menu === category.id ? null : category.id)}><MoreHorizontal className="h-4 w-4" aria-hidden /></button>
+                <div className="relative shrink-0" ref={node => { if (node) triggers.current.set(category.id, node); else triggers.current.delete(category.id); }}><Button type="button" variant="secondary" aria-label={`${l('actions')}: ${category.name}`} aria-expanded={menu === category.id} aria-controls={`category-actions-${category.id}`} disabled={blocked} onClick={() => setMenu(menu === category.id ? null : category.id)}><MoreHorizontal className="h-4 w-4" aria-hidden /></Button>
                     {menu === category.id && <div ref={menuRef} id={`category-actions-${category.id}`} className="absolute right-0 top-full z-20 mt-1 w-48 max-w-[calc(100vw-3rem)] space-y-1 rounded-card border border-line bg-surface p-2 shadow-pop" onBlur={event => { if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget) && !triggers.current.get(category.id)?.contains(event.relatedTarget)) setMenu(null); }}>
-                        <button type="button" className={`${control} w-full text-left`} onClick={() => openEditor(category)}>{l('edit')}</button>
-                        <button type="button" disabled={index === 0 || Boolean(draft || assignment)} className={`${control} w-full text-left`} onClick={() => void change('move_up', category.id)}>{l('up')}</button>
-                        <button type="button" disabled={index === active.length - 1 || Boolean(draft || assignment)} className={`${control} w-full text-left`} onClick={() => void change('move_down', category.id)}>{l('down')}</button>
-                        <button type="button" disabled={Boolean(draft || assignment)} className={`${control} w-full text-left`} onClick={() => void change('archive', category.id)}>{l('archive')}</button>
+                        <Button type="button" variant="ghost" className={menuItem} onClick={() => openEditor(category)}>{l('edit')}</Button>
+                        <Button type="button" variant="ghost" className={menuItem} disabled={index === 0 || Boolean(draft || assignment)} onClick={() => void change('move_up', category.id)}>{l('up')}</Button>
+                        <Button type="button" variant="ghost" className={menuItem} disabled={index === active.length - 1 || Boolean(draft || assignment)} onClick={() => void change('move_down', category.id)}>{l('down')}</Button>
+                        <Button type="button" variant="ghost" className={menuItem} disabled={Boolean(draft || assignment)} onClick={() => void change('archive', category.id)}>{l('archive')}</Button>
                     </div>}
                 </div>
             </li>)}
         </ul>
-        {archived.length > 0 && <details><summary className="cursor-pointer py-4 text-sm">{l('archived')} ({archived.length})</summary><ul className="divide-y divide-line">{archived.map(category => <li key={category.id} className="flex items-center justify-between gap-4 py-4"><span className="min-w-0 break-words">{category.name}</span><button type="button" disabled={blocked || Boolean(draft || assignment)} className={`${control} shrink-0`} onClick={() => void change('restore', category.id)}>{l('restore')}</button></li>)}</ul></details>}
+        {archived.length > 0 && <details><summary className="cursor-pointer py-4 text-sm">{l('archived')} ({archived.length})</summary><ul className="divide-y divide-line">{archived.map(category => <li key={category.id} className="flex items-center justify-between gap-4 py-4"><span className="min-w-0 break-words">{category.name}</span><Button type="button" variant="secondary" className="shrink-0" disabled={blocked || Boolean(draft || assignment)} onClick={() => void change('restore', category.id)}>{l('restore')}</Button></li>)}</ul></details>}
         <section className="space-y-4 border-t border-line pt-6" aria-label={l('contents')}>
             <h2 className="text-lg font-semibold">{l('contents')}</h2>
             {active.length === 0 && <p className="text-sm">{l('createFirst')}</p>}
@@ -186,7 +189,7 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
                     {invalidSelections && <p role="alert">{l('assignmentConflict')}</p>}
                     {snapshot?.categories.filter(category => category.is_active || assignment.selected.includes(category.id)).map(category => <label key={category.id} className="flex min-h-control items-center gap-4 text-sm"><input type="checkbox" checked={assignment.selected.includes(category.id)} onChange={event => setAssignment({ ...assignment, selected: event.target.checked ? [...assignment.selected, category.id] : assignment.selected.filter(id => id !== category.id) })} /><span className="min-w-0 break-words">{category.name}{!category.is_active && ` (${l('archivedTag')})`}</span></label>)}
                 </fieldset>
-                <div className="flex justify-end gap-2"><button type="button" disabled={busy} className={control} onClick={() => { if (mayDiscard()) { setAssignment(null); listRef.current?.focus(); } }}>{l('cancel')}</button><button type="submit" disabled={blocked || !currentContent || invalidSelections} className={`${control} border-brand bg-brand font-semibold text-ink-on-brand hover:bg-brand-hover`}>{l('save')}</button></div>
+                <div className="flex justify-end gap-2"><Button type="button" variant="secondary" disabled={busy} onClick={() => { if (mayDiscard()) { setAssignment(null); listRef.current?.focus(); } }}>{l('cancel')}</Button><Button type="submit" disabled={blocked || !currentContent || invalidSelections}>{l('save')}</Button></div>
             </form>}
             {(['referral', 'event'] as const).map(kind => <details key={kind} className="border-t border-line">
                 <summary className="cursor-pointer py-4 font-semibold">{l(kind === 'referral' ? 'contacts' : 'events')} ({contents.filter(item => item.kind === kind).length})</summary>
@@ -195,8 +198,8 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
                     const key = `content-${kind}-${content.id}`;
                     return <li key={key} className="flex items-start gap-4 border-t border-line py-4">
                         <div className="min-w-0 flex-1"><h3 className="break-words font-semibold">{content.title}</h3>{content.starts_at && <p className="text-sm text-ink-muted">{new Date(content.starts_at).toLocaleDateString(lang)}</p>}<p className="mt-1 break-words text-sm text-ink-muted">{active.filter(category => content.category_ids.includes(category.id)).map(category => category.name).join(' · ') || l('uncategorized')}</p></div>
-                        {active.length > 0 && <div className="relative shrink-0"><button ref={node => { if (node) triggers.current.set(key, node); else triggers.current.delete(key); }} type="button" disabled={blocked} aria-label={`${l('actions')}: ${content.title}`} aria-expanded={menu === key} aria-controls={`actions-${key}`} className={control} onClick={() => setMenu(menu === key ? null : key)}><MoreHorizontal className="h-4 w-4" aria-hidden /></button>
-                            {menu === key && <div ref={menuRef} id={`actions-${key}`} className="absolute right-0 top-full z-20 mt-1 w-48 rounded-card border border-line bg-surface p-2 shadow-pop" onBlur={event => { if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget) && !triggers.current.get(key)?.contains(event.relatedTarget)) setMenu(null); }}><button type="button" className={`${control} w-full text-left`} onClick={() => openAssignment(content)}>{l('assign')}</button></div>}
+                        {active.length > 0 && <div className="relative shrink-0" ref={node => { if (node) triggers.current.set(key, node); else triggers.current.delete(key); }}><Button type="button" variant="secondary" disabled={blocked} aria-label={`${l('actions')}: ${content.title}`} aria-expanded={menu === key} aria-controls={`actions-${key}`} onClick={() => setMenu(menu === key ? null : key)}><MoreHorizontal className="h-4 w-4" aria-hidden /></Button>
+                            {menu === key && <div ref={menuRef} id={`actions-${key}`} className="absolute right-0 top-full z-20 mt-1 w-48 rounded-card border border-line bg-surface p-2 shadow-pop" onBlur={event => { if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget) && !triggers.current.get(key)?.contains(event.relatedTarget)) setMenu(null); }}><Button type="button" variant="ghost" className={menuItem} onClick={() => openAssignment(content)}>{l('assign')}</Button></div>}
                         </div>}
                     </li>;
                 })}</ul>
