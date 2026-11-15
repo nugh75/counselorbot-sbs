@@ -150,3 +150,10 @@ Main backend route groups:
 - `/site-chat/*`
 - `/pqbl/*`
 - `/admin/*`
+
+## Author and license
+
+Ideazione, progettazione e sviluppo software: **Daniele Dragoni**.
+Copyright © 2026 Daniele Dragoni.
+
+Licensed under the GNU Affero General Public License v3.0 (AGPL-3.0): see [`LICENSE`](LICENSE). Authorship and copyright notice: [`NOTICE.md`](NOTICE.md).
