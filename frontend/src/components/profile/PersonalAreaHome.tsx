@@ -183,7 +183,7 @@ export function PersonalAreaHome() {
             )}
 
             <section aria-labelledby="profile-instruments-title" className="space-y-4">
-                <h2 id="profile-instruments-title" className="border-b border-line pb-2 text-lg font-semibold text-ink">{t('base.instruments.title')}</h2>
+                <h2 id="profile-instruments-title" className="border-b border-line-strong pb-2 text-lg font-semibold text-ink">{t('base.instruments.title')}</h2>
                 <InstrumentCatalog
                     id="profile-instrument-catalog"
                     lastCompiledAt={lastCompiledAt}

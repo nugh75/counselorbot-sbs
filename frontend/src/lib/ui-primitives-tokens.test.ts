@@ -5,7 +5,7 @@ import { test } from 'node:test';
 // Le primitive sono il modello della migrazione grafica (audit UI §9,
 // docs/design.md §2.6): token semantici, due pesi, niente maiuscolo, niente
 // gradienti, niente hex. Questa guardia copre solo loro, non le pagine.
-const primitives = ['Button', 'Card', 'PageHeader', 'Callout', 'Field', 'StatusBadge', 'Dialog'];
+const primitives = ['Button', 'Card', 'PageHeader', 'Callout', 'Field', 'StatusBadge', 'Dialog', 'BackButton'];
 const read = (name: string) => readFileSync(new URL(`../components/ui/${name}.tsx`, import.meta.url), 'utf-8');
 
 const forbidden: [string, RegExp][] = [
@@ -58,6 +58,23 @@ test('StatusBadge has five tones from the soft/ink tokens and no pill', () => {
     assert.match(source, /neutral: \{ box:/);
     assert.match(source, /'inline-flex[^']*rounded-control[^']*text-xs/);
     assert.doesNotMatch(source, /rounded-full[^']*px-/);
+});
+
+test('BackButton reads as a text link, like the first breadcrumb item', () => {
+    const source = read('BackButton');
+    for (const token of ['text-ink-muted', 'hover:text-link', 'h-control w-control', 'min-h-control']) {
+        assert.ok(source.includes(token), `BackButton.tsx: ${token}`);
+    }
+    // Niente bordo, fondo, pillola o cerchio: solo testo e freccia.
+    assert.doesNotMatch(source, /bg-white|rounded-(?:full|control)|border(?:-line)?[ ']/);
+    assert.doesNotMatch(source, /outline-none/);
+    assert.match(source, /aria-label/);
+});
+
+test('section headings use the strong rule token, not the faint line', () => {
+    const source = read('EntryList');
+    assert.equal((source.match(/border-b border-line-strong pb-2/g) ?? []).length, 2, 'heading and subtitle wrapper');
+    assert.doesNotMatch(source, /border-b border-line pb-/);
 });
 
 test('Dialog opens as a modal, closes through onClose and gives focus back', () => {

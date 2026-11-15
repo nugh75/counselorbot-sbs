@@ -5,10 +5,12 @@ import { ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Affordance "indietro" unica per tutta l'app. Due varianti dichiarate, non tre
-// scritte a mano: `icon` è il cerchio del percorso guidato, dove il FlowStepper
-// dice già dove sei; `labelled` è la pillola con testo delle pagine autonome
-// (area personale, cambiamenti, admin), che senza etichetta non direbbero verso
-// dove si torna. Misura 44px in entrambe, come ForwardButton.
+// scritte a mano: `icon` è la sola freccia del percorso guidato, dove il
+// FlowStepper dice già dove sei; `labelled` aggiunge il testo delle pagine
+// autonome (area personale, cambiamenti, admin), che senza etichetta non
+// direbbero verso dove si torna. Entrambe sono un link di testo, senza bordo,
+// sfondo né pillola/cerchio: stessa lettura della prima voce del breadcrumb
+// dell'Area docenti. Misura 44px in entrambe, come ForwardButton.
 interface BackButtonProps {
     href?: string;
     onClick?: () => void;
@@ -19,10 +21,10 @@ interface BackButtonProps {
 }
 
 const ICON =
-    'inline-flex h-control w-[44px] shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:hover:bg-slate-100 disabled:hover:text-slate-400';
+    'inline-flex h-control w-control shrink-0 items-center justify-center text-ink-muted transition-colors hover:text-link disabled:cursor-not-allowed disabled:text-ink-muted disabled:opacity-50 disabled:hover:text-ink-muted';
 
 const LABELLED =
-    'inline-flex min-h-control shrink-0 items-center gap-2 rounded-control border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:hover:bg-slate-100 disabled:hover:text-slate-400';
+    'inline-flex min-h-control shrink-0 items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-link disabled:cursor-not-allowed disabled:text-ink-muted disabled:opacity-50 disabled:hover:text-ink-muted';
 
 export function BackButton({ href, onClick, label, className, variant = 'icon', disabled }: BackButtonProps) {
     const cls = cn(variant === 'labelled' ? LABELLED : ICON, className);

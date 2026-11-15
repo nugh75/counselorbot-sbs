@@ -109,7 +109,7 @@ export function PracticeRepertoire({ notebookId, onResults, newProfileType }: {
 
     return (
         <section data-practice-repertoire aria-labelledby={PRACTICE_PROFILES_ANCHOR} className="space-y-2">
-            <h2 id={PRACTICE_PROFILES_ANCHOR} className="scroll-mt-24 border-b border-line pb-2 text-lg font-semibold text-ink">{l('repertoire')}</h2>
+            <h2 id={PRACTICE_PROFILES_ANCHOR} className="scroll-mt-24 border-b border-line-strong pb-2 text-lg font-semibold text-ink">{l('repertoire')}</h2>
             <p className="text-sm text-ink-muted">{l('repertoireHint')}</p>
             {failed && <div role="alert" className="flex flex-wrap items-center gap-2 text-sm text-danger">
                 <p>{l('profilesError')}</p>
