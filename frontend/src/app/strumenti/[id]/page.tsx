@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
 import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
+import { ButtonLink } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import ToolIllustration from '@/components/ui/ToolIllustration';
 import {
@@ -119,9 +120,9 @@ export default function InstrumentDetailsPage() {
             <div className="flex flex-wrap items-center gap-4">
                 <ForwardButton href={instrumentStartHref(questionnaire.id, true)} label={t(questionnaire.agentOnly ? 'base.instrument.startPath' : 'base.instrument.analyze')} />
                 {assessmentUrl && !questionnaire.agentOnly && (
-                    <a href={assessmentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-control items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink-body transition-colors hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2">
+                    <ButtonLink href={assessmentUrl} target="_blank" rel="noopener noreferrer" variant="secondary">
                         {t('selector.openStrategic')}<ExternalLink className="h-4 w-4" />
-                    </a>
+                    </ButtonLink>
                 )}
             </div>
 
@@ -147,51 +148,56 @@ export default function InstrumentDetailsPage() {
             </div>
 
             {inAppAvailable && (
-                <section className="rounded-card border border-warning-line bg-warning-soft p-6 flex flex-col md:flex-row md:items-center gap-4">
-                    <div className="flex-1">
-                        <h2 className="font-semibold text-warning-ink">
-                            {t('detail.assessment.inapp.title')}
-                        </h2>
-                        <p className="text-sm text-warning-ink mt-1 leading-relaxed">
-                            {t('detail.assessment.inapp.body')}
-                        </p>
+                <Callout variant="warning">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                        <div className="flex-1">
+                            <h2 className="font-semibold">
+                                {t('detail.assessment.inapp.title')}
+                            </h2>
+                            <p className="mt-1 leading-relaxed">
+                                {t('detail.assessment.inapp.body')}
+                            </p>
+                        </div>
+                        <ButtonLink
+                            href={`/somministrazione/${id}`}
+                            variant="accent"
+                            className="shrink-0"
+                        >
+                            {t('detail.assessment.inapp.link')}
+                        </ButtonLink>
                     </div>
-                    <Link
-                        href={`/somministrazione/${id}`}
-                        className="inline-flex shrink-0 items-center justify-center min-h-control rounded-control bg-move px-4 py-2 text-sm font-semibold text-ink-on-brand hover:bg-move-hover transition-colors"
-                    >
-                        {t('detail.assessment.inapp.link')}
-                    </Link>
-                </section>
+                </Callout>
             )}
 
             {assessmentUrl && (
-                <section className="rounded-card border border-info-line bg-info-soft p-6 flex flex-col md:flex-row md:items-center gap-4">
-                    <div className="flex-1">
-                        <h2 className="font-semibold text-ink">{t('detail.assessment.title')}</h2>
-                        <p className="text-sm text-ink-body mt-1 leading-relaxed">{t('detail.assessment.body')}</p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
-                        <div className="rounded-control border border-info-line bg-surface px-4 py-2 text-sm text-ink-body">
-                            {t('detail.assessment.codeLabel')}: <strong className="text-lg text-ink">{STRATEGIC_COMPETENCES_CODE}</strong>
+                <Callout variant="info">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                        <div className="flex-1">
+                            <h2 className="font-semibold">{t('detail.assessment.title')}</h2>
+                            <p className="mt-1 leading-relaxed">{t('detail.assessment.body')}</p>
                         </div>
-                        <div className="rounded-control border border-info-line bg-surface px-4 py-2 text-sm text-ink-body">
-                            {t('detail.assessment.passwordLabel')}: <strong className="text-lg text-ink">{STRATEGIC_COMPETENCES_PASSWORD}</strong>
+                        <div className="flex flex-col gap-2 sm:flex-row md:flex-col shrink-0">
+                            <p>
+                                {t('detail.assessment.codeLabel')}: <strong className="font-mono text-lg">{STRATEGIC_COMPETENCES_CODE}</strong>
+                            </p>
+                            <p>
+                                {t('detail.assessment.passwordLabel')}: <strong className="font-mono text-lg">{STRATEGIC_COMPETENCES_PASSWORD}</strong>
+                            </p>
+                            <ButtonLink
+                                href={assessmentUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                variant="secondary"
+                            >
+                                {t('detail.assessment.link')}
+                                <ExternalLink className="w-4 h-4" />
+                            </ButtonLink>
                         </div>
-                        <a
-                            href={assessmentUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center gap-2 min-h-control rounded-control border border-info-line bg-surface px-4 py-2 text-sm font-semibold text-info-ink hover:bg-brand-soft transition-colors"
-                        >
-                            {t('detail.assessment.link')}
-                            <ExternalLink className="w-4 h-4" />
-                        </a>
                     </div>
-                </section>
+                </Callout>
             )}
 
-            <section className="rounded-card bg-brand-soft border border-brand-line p-6">
+            <section className="border-t border-line pt-6">
                 <p className="text-sm text-ink">{t('detail.ready')}</p>
             </section>
         </div>

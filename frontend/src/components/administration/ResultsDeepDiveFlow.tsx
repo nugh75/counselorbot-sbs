@@ -20,6 +20,7 @@ import { PlanChatCompleted } from "@/components/administration/PlanChatCompleted
 import { SessionReport } from "@/components/qsa/SessionReport";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Field, Select } from "@/components/ui/Field";
 import { Callout } from "@/components/ui/Callout";
 import type { RegisterActivitySave } from '@/lib/path-activity';
 
@@ -142,7 +143,7 @@ export function ResultsDeepDiveFlow({ pathId, stepId, registerSave, onExit, onCo
   };
   const previous = options?.attempts.filter(item => item.session_id !== session?.session_id) ?? [];
   const history = previous.length > 0 && <details><summary className="cursor-pointer font-semibold">{r('attempts')}</summary>
-    <div className="space-y-4">{previous.map(item => <div key={item.session_id} className="rounded-card border border-line p-4">
+    <div className="space-y-4">{previous.map(item => <div key={item.session_id} className="border-t border-line pt-4">
       <p>{new Date(item.started_at).toLocaleString(lang)} · {item.result.questionnaire_type}</p>
       {item.completed ? <SessionReport sessionId={item.session_id} questionnaireType={item.result.questionnaire_type} />
         : item.resumable ? <Link href={`/?frozen=${encodeURIComponent(item.session_id)}&from=plan`}>{r('resumeChat')}</Link>
@@ -176,21 +177,22 @@ export function ResultsDeepDiveFlow({ pathId, stepId, registerSave, onExit, onCo
     </Link>}
     {failure && failure !== 'incomplete' && failure !== 'legacy' && <Callout variant="danger">{l('error')}{' '}
       <Button variant="secondary" onClick={() => setReload(value => value + 1)}>{l('retry')}</Button></Callout>}
-    {!loading && options && !failure && <Card className="space-y-4 p-4">
+    {!loading && options && !failure && <Card variant="flat" className="space-y-4">
       <p>{r('intro')}</p>
       {!options.ready ? <>
         <Callout variant="warning">{r(options.personal ? 'missingPersonal' : 'missingPlan')}</Callout>
         <Link className="inline-flex min-h-control items-center font-semibold text-link underline" href={options.source_href}>
           {r(options.personal ? 'addResult' : 'completeSource')}</Link>
       </> : <>
-        {options.personal && <label className="block text-sm">{r('chooseResult')}
-          <select className="mt-1 block min-h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm" value={resultId}
+        {options.personal && <Field label={r('chooseResult')}>
+          <Select value={resultId}
             onChange={event => setResultId(event.target.value)} disabled={busy}>
             <option value="">{r('chooseResult')}</option>
             {options.results.map(result => <option key={result.id} value={result.id}>
               {[new Date(result.submitted_at).toLocaleString(lang), result.locale.toUpperCase(), `#${result.id}`].filter(Boolean).join(' · ')}
             </option>)}
-          </select></label>}
+          </Select>
+        </Field>}
         {failure !== 'legacy' && <Button disabled={busy || (options.personal && !resultId)} onClick={() => void start()}>{l('deepDiveStart')}</Button>}
       </>}
     </Card>}

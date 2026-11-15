@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { apiFetch, getIdentity } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n-context";
 import { administrationStepText } from "@/lib/i18n-administration-steps";
@@ -24,9 +23,10 @@ import { notifyFrozenSessionsChanged } from '@/lib/frozen-session';
 import type { PathAttempt, RegisterActivitySave } from '@/lib/path-activity';
 import { ScoreInputForm } from "@/components/qsa/ScoreInputForm";
 import { InAppAdministrationRunner } from "@/components/administration/InAppAdministrationRunner";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Callout } from "@/components/ui/Callout";
+import { Field, Input } from "@/components/ui/Field";
 
 export function AdministrationStepFlow({
   pathId,
@@ -335,21 +335,18 @@ export function AdministrationStepFlow({
   const verificationFields = () => (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block text-sm">
-          {l("code")}
-          <input
+        <Field label={l("code")}>
+          <Input
             value={institutionCode}
             autoComplete="off"
             onChange={(event) => {
               setInstitutionCode(event.target.value);
               if (verifyError) setVerifyError(null);
             }}
-            className="mt-1 w-full min-h-control rounded-control border border-line-strong px-4 py-2 text-sm"
           />
-        </label>
-        <label className="block text-sm">
-          {l("password")}
-          <input
+        </Field>
+        <Field label={l("password")}>
+          <Input
             type="password"
             autoComplete="off"
             value={password}
@@ -357,9 +354,8 @@ export function AdministrationStepFlow({
               setPassword(event.target.value);
               if (verifyError) setVerifyError(null);
             }}
-            className="mt-1 w-full min-h-control rounded-control border border-line-strong px-4 py-2 text-sm"
           />
-        </label>
+        </Field>
       </div>
       <Button
         disabled={busy || !institutionCode.trim() || !password}
@@ -376,11 +372,11 @@ export function AdministrationStepFlow({
     </div>
   );
   const completedResult = ack?.result || activityAttempt.result;
-  if (completedResult) return <Card className="space-y-4 p-4">
-    <h2 className="text-xl font-semibold">{pathActivityText(lang, 'saved')}</h2>
+  if (completedResult) return <Card variant="flat" className="space-y-4">
+    <h2 className="text-lg font-semibold">{pathActivityText(lang, 'saved')}</h2>
     <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">{Object.entries(completedResult.scores || {}).map(([code, value]) =>
       <div key={code}><dt className="text-sm text-ink-muted">{questionnaire?.factors.find(factor => factor.code === code)?.name || code}</dt><dd className="font-semibold">{value}</dd></div>)}</dl>
-    {nextHref && <Link className="inline-flex min-h-control items-center rounded-control bg-brand px-4 font-semibold text-ink-on-brand" href={nextHref}>{pathActivityText(lang, 'next')}</Link>}
+    {nextHref && <ButtonLink href={nextHref} variant="primary">{pathActivityText(lang, 'next')}</ButtonLink>}
   </Card>;
   return (
     <div className="space-y-4">
@@ -404,7 +400,7 @@ export function AdministrationStepFlow({
         <p>{l("loading")}</p>
       ) : launch.delivery_mode === "in_app" ? (
         <>
-          <Card className="space-y-4 p-4">
+          <Card variant="flat" className="space-y-4">
             <p className="text-sm text-ink-muted">
               {questionnaire.name} · {launch.locale.toUpperCase()} ·{" "}
               {launch.institution.name}
@@ -433,7 +429,7 @@ export function AdministrationStepFlow({
             />
           )}
           {saved && (
-            <Card className="space-y-4 p-4">
+            <Card variant="flat" className="space-y-4">
               <p role="status">{l("resultSaved")}</p>
               <Button
                 disabled={busy || !grant}
@@ -448,7 +444,7 @@ export function AdministrationStepFlow({
         </>
       ) : (
         <>
-          <Card className="space-y-4 p-4">
+          <Card variant="flat" className="space-y-4">
             <div className="space-y-1">
               <p className="text-sm text-ink-muted">
                 {questionnaire.name} · {launch.institution.name}
@@ -457,7 +453,7 @@ export function AdministrationStepFlow({
             </div>
             <p>{l("loginHint")}</p>
             <dl className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-control border border-line bg-surface-sunken p-4">
+              <div>
                 <dt className="text-xs font-semibold text-ink-muted">
                   {l("code")}
                 </dt>
@@ -465,7 +461,7 @@ export function AdministrationStepFlow({
                   {launch.institution.institution_code}
                 </dd>
               </div>
-              <div className="rounded-control border border-line bg-surface-sunken p-4">
+              <div>
                 <dt className="text-xs font-semibold text-ink-muted">
                   {l("password")}
                 </dt>
@@ -480,7 +476,6 @@ export function AdministrationStepFlow({
                       <Button
                         type="button"
                         variant="secondary"
-                        size="sm"
                         aria-pressed={showPassword}
                         onClick={() => setShowPassword((value) => !value)}
                       >
@@ -493,17 +488,19 @@ export function AdministrationStepFlow({
                 </dd>
               </div>
             </dl>
-            <a
-              href={launch.external_href ?? undefined}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-control items-center justify-center rounded-control border border-brand-line bg-surface px-4 text-sm font-semibold text-link hover:bg-brand-soft"
-            >
-              {l("external")}
-            </a>
+            {launch.external_href && (
+              <ButtonLink
+                href={launch.external_href}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="secondary"
+              >
+                {l("external")}
+              </ButtonLink>
+            )}
             <p className="text-sm text-ink-muted">{l("rule")}</p>
           </Card>
-          <Card className="space-y-4 p-4">
+          <Card variant="flat" className="space-y-4">
             <h2 className="font-semibold">{l("scoresTitle")}</h2>
             {grant ? (
               <p role="status" className="text-sm text-success-ink">

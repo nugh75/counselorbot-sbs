@@ -264,7 +264,7 @@ export function CounselorSelector({
             <p className="text-sm leading-relaxed text-ink-muted">{counselorHelp(lang).tools}</p>
 
             {/* Ricerca per stile o approccio cercato */}
-            <Card className="space-y-4 bg-surface-sunken p-4">
+            <Card variant="flat" className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <label htmlFor="counselor-search-input" className="text-sm font-semibold text-ink flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-link" />
@@ -400,7 +400,7 @@ export function CounselorSelector({
                         <button
                             type="button"
                             onClick={clearCategories}
-                            className={`min-h-control rounded-full px-4 py-1 text-xs transition-colors ${
+                            className={`min-h-control rounded-control px-4 py-1 text-xs transition-colors ${
                                 selectedCategories.length === 0
                                     ? 'bg-brand text-ink-on-brand font-semibold'
                                     : 'border border-line bg-surface text-ink-body hover:border-brand-line hover:bg-surface-sunken'
@@ -424,7 +424,7 @@ export function CounselorSelector({
                                     type="button"
                                     onClick={() => toggleCategory(cat)}
                                     aria-pressed={active}
-                                    className={`min-h-control rounded-full px-4 py-1 text-xs transition-colors ${
+                                    className={`min-h-control rounded-control px-4 py-1 text-xs transition-colors ${
                                         active
                                             ? 'bg-brand text-ink-on-brand font-semibold'
                                             : 'border border-line bg-surface text-ink-body hover:border-brand-line hover:bg-surface-sunken'

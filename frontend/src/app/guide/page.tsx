@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, Search, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Search, X } from 'lucide-react';
 import { getIdentity, type Identity } from '@/lib/auth';
 import { canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
@@ -11,7 +11,10 @@ import { guideTaskCopy } from '@/lib/i18n-guide-tasks';
 import { guideUIText, type GuideUIKey } from '@/lib/i18n-guide-ui';
 import { GUIDE_GROUPS, GUIDE_TASKS, guideTaskHref, legacyGuideTask, searchGuideTasks, visibleGuideTasks, type GuideAudience, type GuideGroup } from '@/lib/guide-tasks';
 import { GuideFigure } from '@/components/guide/GuideFigure';
+import { ButtonLink } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { EntrySection } from '@/components/ui/EntryList';
+import { Input } from '@/components/ui/Field';
 
 const subscribeHash = (callback: () => void) => {
     window.addEventListener('hashchange', callback);
@@ -93,17 +96,17 @@ function GuideContent() {
         </header>
         <div role="search" className="relative max-w-2xl">
             <label htmlFor="guide-search" className="mb-2 block text-sm font-semibold text-ink">{l('search')}</label>
-            <Search className="pointer-events-none absolute bottom-4 left-4 h-5 w-5 text-ink-muted" aria-hidden="true" />
-            <input id="guide-search" type="search" value={query} onChange={event => changeQuery(event.target.value)}
+            <Search className="pointer-events-none absolute bottom-3 left-4 h-5 w-5 text-ink-muted" aria-hidden="true" />
+            <Input id="guide-search" type="search" value={query} onChange={event => changeQuery(event.target.value)}
                 placeholder={l('searchHint')} aria-controls="guide-content" autoComplete="off"
-                className="min-h-[48px] w-full rounded-control border border-line-strong bg-surface py-2 pr-12 pl-10 text-base text-ink" />
+                className="pl-10 pr-12 text-base" />
             {query && <button aria-label={l('clear')} onClick={() => changeQuery('')}
-                className="absolute right-0 bottom-0 flex h-[48px] w-control items-center justify-center text-ink-muted"><X className="h-5 w-5" aria-hidden="true" /></button>}
+                className="absolute right-0 bottom-0 flex h-control w-control items-center justify-center text-ink-muted"><X className="h-5 w-5" aria-hidden="true" /></button>}
         </div>
         <div id="guide-content">
             {task && copy ? <div ref={articleRegion} className="mx-auto max-w-4xl scroll-mt-24 space-y-4">
                 <Link href={homeHref} scroll={false} className="inline-flex min-h-control items-center gap-2 text-sm font-semibold text-link"><ArrowLeft className="h-4 w-4" aria-hidden="true" />{l('back')}</Link>
-                <article id={`guide-task-${task.id}`} className="rounded-card border border-line bg-surface shadow-card space-y-6 p-4 sm:p-6" aria-labelledby="guide-task-title">
+                <article id={`guide-task-${task.id}`} className="space-y-6" aria-labelledby="guide-task-title">
                     <div><p className="mb-1 text-xs font-semibold text-link">{groupLabel(task.group)}</p>
                         <h2 id="guide-task-title" ref={articleTitle} tabIndex={-1} className="scroll-mt-24 text-xl font-semibold text-ink">{copy.title}</h2>
                         <p className="mt-2 text-sm leading-relaxed text-ink-muted">{copy.intro}</p></div>
@@ -111,14 +114,14 @@ function GuideContent() {
                     <ol className="space-y-4" data-testid="guide-steps">{copy.steps.map((step, index) => <li key={index} className="flex gap-4 text-sm leading-relaxed text-ink">
                         <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft font-mono font-semibold text-link">{index + 1}</span><span className="pt-1">{step}</span>
                     </li>)}</ol>
-                    <Link href={task.feature && audience !== 'student' ? task.href.replace('/profilo/', '/docente/') : task.href}
-                        className="inline-flex min-h-control items-center gap-2 rounded-control bg-brand px-4 py-2 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover">{l('open')}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+                    <ButtonLink href={task.feature && audience !== 'student' ? task.href.replace('/profilo/', '/docente/') : task.href}
+                        variant="primary">{l('open')}<ArrowRight className="h-4 w-4" aria-hidden="true" /></ButtonLink>
                     {task.important ? <aside className="rounded-control border border-line bg-surface-sunken p-4 text-sm leading-relaxed text-ink-body">
                         <p className="mb-1 font-semibold">{l('important')}</p>{copy.note}</aside>
                         : <details className="rounded-control border border-line p-4 text-sm text-ink-body"><summary className="cursor-pointer py-1 font-semibold">{l('note')}</summary><p className="pt-2 leading-relaxed">{copy.note}</p></details>}
                     </div><GuideFigure key={task.id} task={task} title={copy.title} /></div>
                 </article>
-                {related.length > 0 && <nav aria-label={l('related')} className="rounded-card border border-line bg-surface shadow-card p-4">
+                {related.length > 0 && <nav aria-label={l('related')} className="border-t border-line pt-4">
                     <h2 className="text-sm font-semibold text-ink">{l('related')}</h2>
                     {related.map(item => <div key={item.id}>{actionLink(item)}</div>)}
                 </nav>}
@@ -127,13 +130,12 @@ function GuideContent() {
                     <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold text-ink">{query ? l('results') : groupLabel(group!)}</h2>
                         <Link href={homeHref} scroll={false} className="inline-flex min-h-control items-center text-sm text-link underline">{l('back')}</Link></div>
                     <p role="status" aria-live="polite" className="text-sm text-ink-muted">{result.length ? `${l('results')}: ${result.length}` : l('empty')}</p>
-                    <ul className="divide-y divide-line rounded-card border border-line bg-surface px-4">{result.map(item => <li key={item.id}>{actionLink(item)}</li>)}</ul>
-                </section> : <nav aria-label={l('all')} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {GUIDE_GROUPS.map(value => ({value, items: tasks.filter(item => item.group === value)})).filter(({items}) => items.length).map(({value, items}) => <section key={value} className="rounded-card border border-line bg-surface shadow-card flex flex-col p-4">
-                        <h2 className="mb-2 flex items-center gap-2 text-base font-semibold text-ink"><BookOpen className="h-4 w-4 text-link" aria-hidden="true" />{groupLabel(value)}</h2>
+                    <ul className="divide-y divide-line border-t border-line-strong">{result.map(item => <li key={item.id}>{actionLink(item)}</li>)}</ul>
+                </section> : <nav aria-label={l('all')} className="space-y-6">
+                    {GUIDE_GROUPS.map(value => ({value, items: tasks.filter(item => item.group === value)})).filter(({items}) => items.length).map(({value, items}) => <EntrySection key={value} id={`guide-group-${value}`} title={groupLabel(value)}>
                         {items.slice(0, 2).map(item => <div key={item.id}>{actionLink(item)}</div>)}
-                        {items.length > 2 && <Link href={`${homeHref}&group=${value}`} scroll={false} className="mt-auto inline-flex min-h-control items-center pt-2 text-sm text-ink-muted underline">{l('all')} ({items.length})</Link>}
-                    </section>)}
+                        {items.length > 2 && <Link href={`${homeHref}&group=${value}`} scroll={false} className="inline-flex min-h-control items-center pt-2 text-sm text-ink-muted underline md:col-span-2">{l('all')} ({items.length})</Link>}
+                    </EntrySection>)}
                 </nav>}
         </div>
     </div>;

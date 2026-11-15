@@ -244,7 +244,9 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
 - **Card**: la primitiva `Card` ha due varianti. `boxed` (default: token `surface`,
   `line`, `shadow-card`) resta per messaggi di stato e form isolati; `flat`
   (`variant="flat"`) non ha riquadro, sfondo né ombra: solo un filetto `border-t` in
-  alto e spazio verticale, ed è la forma delle sottopagine delle aree. Regola (#861,
+  alto e spazio verticale, ed è la forma delle sottopagine delle aree e delle pagine
+  isolate (Bussola, Assistente, questionario di gradimento, Guide, scheda strumento,
+  somministrazione, abbinamento; #959). Regola (#861,
   #867): **niente riquadri dentro riquadri**; il raggruppamento lo fanno titoli con
   filetto e spazio, non bordi annidati. L'utility `glass-panel` è stata ritirata
   (#926): i pannelli del percorso guidato e della chat sono `Card variant="flat"`.

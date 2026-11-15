@@ -417,6 +417,42 @@ forma dell'admin restano invariati. Nella pagina dei piani operativi i bottoni
 secondari passano alla taglia normale e le pagine privacy e consiglio di classe
 usano un solo peso di testo. Comportamento, API, testi e `data-testid` non cambiano.
 
+**Pagine isolate piatte: Bussola, Assistente, gradimento, Guide, strumenti e somministrazione (#959).**
+Le pagine fuori dalle aree seguono l'aspetto piatto delle aree. In `/bussola` le
+sezioni (intestazione, bivio iniziale, ripresa, conclusione, suggerimenti) sono `Card`
+piatte e resta un solo riquadro, il pannello della conversazione. In `/assistente` il
+trascritto è l'unico riquadro: scrittura e anteprima del documento non hanno più ombra
+né bordo, e «Accedi» usa il pulsante-link condiviso. `/questionario` (gradimento) elenca
+passi e domande come `Card` piatte con titoli `text-lg`, i campi sono `Field` con
+`Input`, `Select` e `Textarea`, e la conferma finale è un `Callout` di successo. In
+`/guide` i gruppi di argomenti diventano sezioni con filetto e righe, la scheda e
+«Argomenti correlati» non sono più riquadri con ombra, la ricerca è il campo condiviso e
+«Apri» è il pulsante-link.
+
+Nella scheda di uno strumento (`/strumenti/[id]`) i due avvisi colorati diventano
+`Callout` con la loro azione, codice e password del sito esterno sono valori in
+`font-mono` senza riquadri e la nota finale è una sezione con filetto. In
+`/somministrazione` la griglia di riquadri diventa un elenco a voci con l'illustrazione
+dello strumento e il numero di item; lo strumento non disponibile resta visibile come
+riga con `StatusBadge` e le lingue certificabili, invece di sparire. Nel questionario
+di somministrazione le tre teste (esito, introduzione, dati della somministrazione)
+sono `Card` piatte, mentre domande e barra di avanzamento restano invariate.
+
+Nei passi dei piani operativi le cinque sezioni di `/profilo/piani-operativi/[pathId]/[stepId]`
+sono `Card` piatte, con i campi di codice e password `Field`/`Input`, le credenziali
+dell'istituto come valori in chiaro senza riquadri e il link al sito esterno come
+pulsante-link; nel colloquio sui risultati lo storico dei tentativi è un elenco a
+filetti e la scelta dei risultati un `Select` con etichetta. In `/counselor` i filtri per
+approccio sono bottoni con il raggio dei controlli invece delle pillole e il riquadro
+della ricerca è piatto.
+
+In `/unisciti` e `/telegram-link` i campi usano `Field`/`Input` e il titolo è
+l'intestazione di pagina condivisa; il link profondo al bot è un pulsante-link e il
+codice manuale è testo in `font-mono` senza riquadro. I moduli isolati di `/unisciti`
+(abbinamento, recupero, codice personale) restano riquadri, come i messaggi di stato
+delle schede strumento. Comportamento, API, testi, chiavi di traduzione e `data-testid`
+non cambiano.
+
 **Piani operativi dello studente piatti (#918).** I piani in cima a `/profilo` e in
 `/profilo/piani-operativi` sono `Card` piatte separate da filetti: classe come
 etichetta di testo, titolo, avanzamento, poi le tappe come righe divise da filetti invece
