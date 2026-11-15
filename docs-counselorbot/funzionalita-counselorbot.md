@@ -358,6 +358,15 @@ Hanno ora l'intestazione illustrata dell'area: Dispositivi (nuova voce `disposit
 dell'Area docenti, con le sue briciole di pane), Orientamento del docente, Cambiamenti
 e il forum di classe dello studente.
 
+**Sottopagine dello studente piatte (#956).** Compilazioni, taccuino, portfolio,
+orientamento, analisi combinata, classi, Telegram, tavolo, cambiamenti e API personali
+dell'Area studente (e «Da riprendere» nella home) seguono l'aspetto piatto: `Card`
+piatta, righe con filetto al posto dei riquadri annidati, etichette di stato come
+`StatusBadge`, campi con i componenti condivisi, avvisi con `Callout`. Il riquadro
+tratteggiato «in arrivo» del catalogo è una sezione con voci disabilitate; l'ingrandimento
+delle immagini del portfolio è una finestra di dialogo standard. Nessun cambio di
+comportamento.
+
 **Elenchi docente piatti (#868).** `/docente/classi` (e le classi di un istituto) elenca
 ogni classe come voce dell'elenco condiviso (nome, stato, codice, partecipanti, scuola,
 proprietario) invece di un riquadro con ombra; la copia del codice e le scorciatoie alle
