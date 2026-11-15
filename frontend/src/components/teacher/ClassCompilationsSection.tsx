@@ -63,7 +63,7 @@ export function ClassCompilationsSection({ showHeading = true }: { showHeading?:
                             : <>
                                 <label htmlFor={`${id}-class`} className="block text-sm font-semibold text-ink-body">{l('classLabel')}</label>
                                 <select id={`${id}-class`} value={group ? selected : ''} onChange={event => setSelected(event.target.value)}
-                                    className="min-h-[44px] w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:max-w-md">
+                                    className="min-h-control w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:max-w-md">
                                     <option value="">{l('choose')}</option>
                                     {groups.data?.map(row => <option key={row.id} value={row.id}>{row.name}{row.school ? ` · ${row.school}` : ''}</option>)}
                                 </select>
@@ -71,7 +71,7 @@ export function ClassCompilationsSection({ showHeading = true }: { showHeading?:
                                 {group && <div className="space-y-4">
                                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2">
                                         <span className="text-xs font-semibold text-ink-body">{group.name}{group.school ? ` · ${group.school}` : ''}</span>
-                                        <Link href={`/docente/classi/${group.id}?tab=students`} className="inline-flex min-h-[44px] items-center gap-2 text-xs font-semibold text-link underline-offset-4 hover:underline">
+                                        <Link href={`/docente/classi/${group.id}?tab=students`} className="inline-flex min-h-control items-center gap-2 text-xs font-semibold text-link underline-offset-4 hover:underline">
                                             {l('viewAllInClass')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                                         </Link>
                                     </div>

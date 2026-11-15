@@ -40,7 +40,7 @@ test('branch commands sit next to the composer', () => {
     const formStart = source.indexOf('<form onSubmit={handleSend}');
     const composer = source.slice(formStart, source.indexOf('</form>', formStart));
     assert.match(composer, /<IdeaBranchBar/);
-    assert.match(composer, /<AutoGrowTextarea/);
+    assert.match(composer, /<ChatComposerInput/);
 });
 
 test('the map is inline so its nodes can be clicked', () => {

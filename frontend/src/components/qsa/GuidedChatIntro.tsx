@@ -32,7 +32,7 @@ export function GuidedChatIntro({ locale, questionnaireType, stepNavigation = tr
     const text = (key: Parameters<typeof guidedIntroText>[1]) => guidedIntroText(locale, key);
     const guideButton = (
         <button ref={trigger} type="button" onClick={() => setGuideOpen(true)} aria-haspopup="dialog"
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-3 text-xs font-semibold text-teal-900 underline-offset-2 hover:bg-teal-100 hover:underline">
+            className="inline-flex min-h-control items-center gap-1.5 rounded-md px-3 text-xs font-semibold text-teal-900 underline-offset-2 hover:bg-teal-100 hover:underline">
             <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />{text('openGuide')}
         </button>
     );
@@ -59,7 +59,7 @@ export function GuidedChatIntro({ locale, questionnaireType, stepNavigation = tr
             <p className="mt-1 text-xs leading-relaxed text-teal-900/80">{text('close')}</p>
             <div className="mt-2 flex flex-wrap gap-2">
                 {guideButton}
-                <button type="button" onClick={dismiss} className="min-h-[44px] rounded-md px-3 text-xs font-semibold text-teal-900 hover:bg-teal-100">{text('dismiss')}</button>
+                <button type="button" onClick={dismiss} className="min-h-control rounded-md px-3 text-xs font-semibold text-teal-900 hover:bg-teal-100">{text('dismiss')}</button>
             </div>
             {dialog}
         </section>

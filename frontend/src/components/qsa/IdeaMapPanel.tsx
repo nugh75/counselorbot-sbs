@@ -211,7 +211,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
             )}
 
             {stages.length > 1 && (
-                <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 px-3 py-2 text-[11px] text-slate-600">
+                <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 px-3 py-2 text-xs text-slate-600">
                     <History className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden="true" />
                     <label htmlFor="idea-stage" className="font-medium">{t('idea.map.history')}</label>
                     <input
@@ -252,7 +252,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                 <div className="border-t border-slate-200 px-3 py-2">
                     {selected || adding ? (
                         <div className="space-y-2">
-                            <label htmlFor="idea-node-label" className="block text-[11px] font-medium text-slate-600">
+                            <label htmlFor="idea-node-label" className="block text-xs font-medium text-slate-600">
                                 {t('idea.map.nodeLabel')}
                             </label>
                             <input
@@ -264,7 +264,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                                 className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
                             />
                             <div className="flex flex-wrap items-center gap-2">
-                                <label htmlFor="idea-node-role" className="text-[11px] font-medium text-slate-600">
+                                <label htmlFor="idea-node-role" className="text-xs font-medium text-slate-600">
                                     {t('idea.map.nodeRole')}
                                 </label>
                                 <select
@@ -308,11 +308,11 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                                     {t('idea.branches.cancel')}
                                 </button>
                             </div>
-                            {failed && <p className="text-[11px] text-rose-700">{t('idea.map.editError')}</p>}
+                            {failed && <p className="text-xs text-rose-700">{t('idea.map.editError')}</p>}
                         </div>
                     ) : (
                         <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-[11px] text-slate-500">{t('idea.map.editHint')}</p>
+                            <p className="text-xs text-slate-500">{t('idea.map.editHint')}</p>
                             <button
                                 type="button"
                                 onClick={() => { setAdding(true); setDraftLabel(''); setDraftRole('assumption'); }}

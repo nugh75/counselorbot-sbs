@@ -30,7 +30,7 @@ export function AudioLanguageOption({ compact = false }: { compact?: boolean }) 
     const selected = useAudioLanguage();
     return <label className={`${compact ? 'flex items-center gap-2' : 'block'} rounded-md px-2 py-2 text-sm text-slate-600`}>
         <span className={`${compact ? 'min-w-0 flex-1' : 'font-medium text-slate-700'}`}>{t(compact ? 'audio.languageShort' : 'audio.language')}</span>
-        <select value={selected} aria-label={t('audio.language')} className={`${compact ? 'min-h-[36px] max-w-36' : 'mt-1 min-h-[44px] w-full'} rounded-md border border-slate-300 bg-white px-2 py-2 text-sm`}
+        <select value={selected} aria-label={t('audio.language')} className={`${compact ? 'min-h-[36px] max-w-36' : 'mt-1 min-h-control w-full'} rounded-md border border-slate-300 bg-white px-2 py-2 text-sm`}
             onChange={eventObject => {
                 sessionValue = eventObject.target.value as SpeechLanguage;
                 try { localStorage.setItem(key, sessionValue); } catch { /* Retain this visit's choice. */ }

@@ -16,6 +16,7 @@ import { PlanActivityReview } from '@/components/administration/PlanActivityRevi
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { GuideHelpLink } from '@/components/guide/GuideHelpLink';
+import { ArrowLeft } from 'lucide-react';
 
 export function PlanActivityFlow({ pathId, stepId }: { pathId: number; stepId: number }) {
     const { lang } = useI18n();
@@ -86,7 +87,7 @@ export function PlanActivityFlow({ pathId, stepId }: { pathId: number; stepId: n
     return <div className="space-y-4" data-testid="plan-activity">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
             <div className="min-w-0">
-                <Button variant="ghost" onClick={() => void leave()} disabled={busy}>← {l('back')}</Button>
+                <Button variant="ghost" onClick={() => void leave()} disabled={busy}><ArrowLeft className="h-4 w-4" aria-hidden="true" /> {l('back')}</Button>
                 <GuideHelpLink task="resume" />
                 {activity && <p className="px-4 text-sm text-ink-muted">{activity.path_title} · {activity.position}. {activity.title}</p>}
                 {saveState && !readOnly && <p role="status" className="px-4 text-xs text-ink-muted">{l(saveState === 'error' ? 'saveFailed' : saveState === 'saved' ? 'savedActivity' : 'saving')}</p>}

@@ -72,7 +72,7 @@ export function IdeaConclusion({ sessionId, locale, variant, onClose }: IdeaConc
 
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4" role="dialog" aria-modal="true">
-            <div className="w-full max-w-lg space-y-4 rounded-xl bg-white p-5 shadow-xl">
+            <div className="w-full max-w-lg space-y-4 rounded-xl bg-white p-5 shadow-card">
                 <div className="flex items-start gap-3">
                     <h2 className="min-w-0 flex-1 text-lg font-bold text-slate-900">
                         {done ? t('idea.conclude.doneTitle') : t('idea.conclude.title')}

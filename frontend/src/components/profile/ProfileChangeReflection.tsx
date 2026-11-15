@@ -268,7 +268,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                 <div className="space-y-2 border-t border-line pt-4">
                     {reflections.slice(0, 3).map((reflection) => (
                         <div key={reflection.id} className="border-b border-line pb-3 text-sm text-ink-muted last:border-0">
-                            <div className="text-[11px] font-semibold text-ink-muted">
+                            <div className="text-xs font-semibold text-ink-muted">
                                 {new Date(reflection.created_at).toLocaleDateString(lang)}
                             </div>
                             {reflection.note}

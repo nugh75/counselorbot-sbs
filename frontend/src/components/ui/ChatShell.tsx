@@ -44,7 +44,7 @@ export function ChatRow({ role, className, children, ...rest }: Omit<HTMLAttribu
 // Azioni sotto la risposta (diagramma, ascolto, feedback): stessa riga, stessa
 // misura e stesso nome accessibile in tutte le chat. Va a capo invece di
 // allargare la pagina su mobile.
-export const chatActionButtonClass = 'h-[44px] w-[44px] shrink-0 p-0';
+export const chatActionButtonClass = 'h-control w-[44px] shrink-0 p-0';
 
 export function ChatMessageActions({ label, className, children }: { label: string; className?: string; children: ReactNode }) {
     return (
@@ -74,7 +74,7 @@ export function ChatComposerInput({ className, ...rest }: ComponentProps<typeof 
 }
 
 // La radice del sito è 15px: h-11 da solo darebbe 41px, sotto l'area minima.
-const BUTTON = 'inline-flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-md text-white transition-colors';
+const BUTTON = 'inline-flex h-11 min-h-control w-11 min-w-control shrink-0 items-center justify-center rounded-md text-white transition-colors';
 
 // Mentre la risposta arriva il primario ferma, non invia, se la superficie sa
 // interrompere la richiesta (onStop); altrimenti resta l'invio disabilitato.

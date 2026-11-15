@@ -259,8 +259,8 @@ export function FreeChatInterface({
         }
     };
 
-    const stepButtonClass = 'h-[44px] w-[44px] shrink-0 p-0';
-    const messageActionClass = 'chat-action-item flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
+    const stepButtonClass = 'h-control w-[44px] shrink-0 p-0';
+    const messageActionClass = 'chat-action-item flex min-h-control w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
     const lastMessage = messages[messages.length - 1];
     const awaitingAssistantBubble = lastMessage?.role === 'assistant' && !lastMessage.content.trim();
     const liveAnnouncement = isLoading ? t('guided.processing') : lastMessage?.role === 'assistant' ? lastMessage.content : '';

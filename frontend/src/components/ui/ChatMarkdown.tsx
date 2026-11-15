@@ -33,7 +33,7 @@ const markdownComponents: Components = {
     tr: (props) => <tr className="border-b border-slate-100" {...omitMarkdownNode(props)} />,
     th: (props) => (
         <th
-            className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600 border-b border-slate-200"
+            className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 border-b border-slate-200"
             {...omitMarkdownNode(props)}
         />
     ),

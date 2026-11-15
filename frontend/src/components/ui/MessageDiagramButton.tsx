@@ -169,7 +169,7 @@ export function MessageDiagramButton({
             </div>}
             {diagrams.length > 0 && (
                 <div className="min-w-0 w-full basis-full">
-                    {diagrams.map((diagram, index) => <div key={index} id={messageDiagramId(sourceKey, index)} className="scroll-mt-4 rounded-xl transition-shadow">
+                    {diagrams.map((diagram, index) => <div key={index} id={messageDiagramId(sourceKey, index)} className="scroll-mt-4 rounded-xl">
                         <DiagramBlock spec={diagram.spec} locale={locale} />
                     </div>)}
                     <p className="text-2xs text-ink-muted" role="status">{diagramRequestLabel('saved', locale)}</p>

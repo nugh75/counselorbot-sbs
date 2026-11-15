@@ -76,7 +76,7 @@ export function ClassCouncilTab({ groupId }: { groupId: number }) {
                 <label className="space-y-1 text-sm font-semibold text-ink-body">
                     <span className="block">{l('duration')}</span>
                     <select value={days} onChange={event => setDays(Number(event.target.value))}
-                        className="min-h-[44px] rounded-control border border-line-strong bg-surface px-4 text-sm">
+                        className="min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm">
                         {DURATIONS.map(value => <option key={value} value={value}>{value} {l('days')}</option>)}
                     </select>
                 </label>

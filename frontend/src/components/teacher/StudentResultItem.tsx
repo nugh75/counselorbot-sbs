@@ -96,7 +96,7 @@ function StudentResultDetails({ path, username, result }: { path: string; userna
     const hasReading = reading && (reading.strengths.length || reading.growth_areas.length || reading.note.trim());
 
     return <div className="min-w-0 space-y-6 rounded-lg border border-line bg-surface p-4 sm:p-4" data-student-result-detail>
-        <Button type="button" variant="secondary" onClick={() => void download()} disabled={downloading} aria-busy={downloading} className="min-h-[44px] max-w-full whitespace-normal">
+        <Button type="button" variant="secondary" onClick={() => void download()} disabled={downloading} aria-busy={downloading} className="min-h-control max-w-full whitespace-normal">
             <Download className="h-4 w-4 shrink-0" aria-hidden />{t('completed.downloadPdf')}
         </Button>
         {pdfError && <Callout variant="danger">{l('pdfError')}</Callout>}
@@ -153,7 +153,7 @@ function ResultItem({ base, username, result }: Props) {
         {result.scores && <p className="break-words font-mono text-xs text-ink-muted">
             {Object.entries(result.scores).sort(([a], [b]) => a.localeCompare(b)).map(([code, value]) => `${code}=${value}`).join(' ')}
         </p>}
-        <Button type="button" variant="ghost" className="min-h-[44px] max-w-full whitespace-normal px-2 text-left" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+        <Button type="button" variant="ghost" className="min-h-control max-w-full whitespace-normal px-2 text-left" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
             <FileText className="h-4 w-4 shrink-0" aria-hidden />{l('detail')}
             <span className="sr-only">{username} · {result.questionnaire_type}{result.submitted_at ? ` · ${new Date(result.submitted_at).toLocaleString(lang)}` : ''}</span>
         </Button>

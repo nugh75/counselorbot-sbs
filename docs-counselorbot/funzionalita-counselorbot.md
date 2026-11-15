@@ -402,6 +402,15 @@ per tutti i campi, pulsanti «Riprova», «Salva», «Annulla», «Genera» e «
 l'aspetto standard, finestre a tutto schermo sul telefono con un velo che si adatta al
 tema scuro. Esc e il tasto chiudi funzionano come prima; nessun cambio di comportamento.
 
+**Pulizia dei token visivi piatti (#922).** Le ombre fuori dai tre token (bordi di
+finestre, popover, menu e messaggi) usano `shadow-card`, `shadow-pop` o `shadow-modal`;
+le bolle di chat non hanno più ombra. Le altezze tattili di 44 px si scrivono con i token
+`h-control`, `min-h-control` e `min-w-control` invece che con `[44px]` al call-site. I
+testi sotto `text-xs` (`text-[11px]`, `text-[10px]`, `text-[9px]`) diventano `text-xs`;
+`text-2xs` resta per codici e contatori. I simboli testuali usati come icone (frecce e
+triangoli) sono sostituiti da `ArrowLeft`, `ArrowRight` e `ChevronDown` di `lucide-react`.
+Nessun cambio di comportamento.
+
 **Orientamento del docente e Catalogo obiettivi piatti (#870).** `/docente/orientamento`
 e `/docente/catalogo-obiettivi` seguono l'aspetto piatto: categorie, contenuti e proposte
 del catalogo sono righe separate da filetti (non più riquadri), i moduli di modifica e
