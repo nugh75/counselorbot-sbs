@@ -147,6 +147,7 @@ evitano `primary`, `muted`, `accent`, `border`, `card`, già presi da shadcn.
 | `ink-on-brand` | bianco | testo su petrol e ocra |
 | `surface` / `surface-sunken` / `surface-raised` | bianco / `slate-50` / `slate-100` | card; fondi incassati; chip e hover |
 | `line` / `line-strong` | `slate-200` / `slate-300` | bordo standard; bordo dei campi |
+| `line-section` | `slate-400` / `#64748b` (scuro) | filetto sotto i titoli di sezione |
 | `brand` / `brand-hover` | `indigo-600` / `indigo-700` | CTA primarie |
 | `brand-soft` / `brand-line` | `indigo-50` / `indigo-200` | selezionato; bordo accentato |
 | `link` | `indigo-700` | link e testo accentato |
@@ -259,8 +260,8 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   (#926): i pannelli del percorso guidato e della chat sono `Card variant="flat"`.
 - **Elenco a voci** (`components/ui/EntryList.tsx`): il pattern canonico per le
   pagine d'area e le sottopagine indice, al posto delle griglie di card.
-  `EntrySection` è un titolo `text-lg font-semibold` con filetto sotto (`border-b
-  border-line-strong`, con sottotitolo opzionale nel filetto) e due colonne da `md`, una su
+  `EntrySection` è un titolo `text-xl font-semibold` con filetto sotto da 2 px (`border-b-2
+  border-line-section`; sezioni distanziate di 48 px, `space-y-12`; con sottotitolo opzionale nel filetto) e due colonne da `md`, una su
   mobile. `EntryLink` è una riga senza riquadro (`min-h-24`, `rounded-card`,
   sfondo `surface-sunken` solo in hover) con: illustrazione a sinistra (64px su
   mobile, 72px da `md`), titolo `font-semibold`, descrizione `ink-muted`, `badge`
