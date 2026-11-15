@@ -2,17 +2,18 @@
 
 import { PersonalAIConnections } from '@/components/profile/PersonalAIConnections';
 import { EntryLink, EntrySection } from '@/components/ui/EntryList';
+import ToolIllustration from '@/components/ui/ToolIllustration';
 import { useI18n } from '@/lib/i18n-context';
 import { TryToolsSection } from './TryToolsSection';
 import { TeacherResourcesSection } from './TeacherResourcesSection';
 import { teacherAreaName, teacherAreaDescription, teacherAreaText } from '@/lib/i18n-teacher-area';
-import { teacherAreaGroups, teacherAreaImages, type TeacherAreaSlug } from '@/lib/teacher-area';
+import { teacherAreaGroups, teacherAreaIllustrations, type TeacherAreaSlug } from '@/lib/teacher-area';
 
 // Panoramica illustrata dell'Area docenti: stessa grammatica di PersonalAreaHome
-// (gruppi per scopo, immagine + nome + descrizione, due colonne su desktop).
+// (gruppi per scopo, illustrazione + nome + descrizione, due colonne su desktop).
 function TeacherAreaEntry({ slug }: { slug: TeacherAreaSlug }) {
     const { lang } = useI18n();
-    return <EntryLink idPrefix="teacher" id={slug} href={`/docente/${slug}`} image={teacherAreaImages[slug]}
+    return <EntryLink idPrefix="teacher" id={slug} href={`/docente/${slug}`} illustration={<ToolIllustration id={teacherAreaIllustrations[slug]} className="h-16 w-16 shrink-0 object-contain md:h-18 md:w-18" />}
         name={teacherAreaName(lang, slug)} description={teacherAreaDescription(lang, slug)} />;
 }
 

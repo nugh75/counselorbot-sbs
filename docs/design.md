@@ -254,17 +254,17 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   mobile, 72px da `md`), titolo `font-semibold`, descrizione `ink-muted`, `badge`
   opzionale accanto al titolo, riga di `status` opzionale sotto la descrizione
   (pallino petrol + testo) e freccia `ArrowRight` a destra. L'illustrazione è
-  `image` (PNG esistente, proporzioni conservate) oppure `illustration` (es.
-  `ToolIllustration`). Nessun box dentro un box: la riga non ha bordo, il badge è
+  `illustration`, di norma una `ToolIllustration` (anche per le voci d'area, #934). Nessun box dentro un box: la riga non ha bordo, il badge è
   un'etichetta, non un contenitore. Navbar e pulsanti arrotondati restano invariati
   per scelta del proprietario: il look piatto riguarda solo il contenuto delle pagine.
 - **Illustrazioni degli strumenti** (`components/ui/ToolIllustration.tsx`,
   `lib/tool-illustrations.ts`): sono illustrazioni, non icone. SVG inline per id di
-  strumento (viewBox 96×96, tratto `--i-out`), con colori dalle variabili `--i-*`
+  strumento o voce d'area (`area-*`, mappate in `personalAreaIllustrations` e
+  `teacherAreaIllustrations`; viewBox 96×96, tratto `--i-out`), con colori dalle variabili `--i-*`
   di `globals.css` (`--i-out`, `--i-paper`, `--i-teal`, `--i-teal2`, `--i-orange`,
   `--i-yellow`, `--i-cream`, `--i-sky`; in `.dark` `--i-out`, `--i-paper` e `--i-cream`
-  sono ridefiniti). Per strumenti dinamici o sconosciuti ricade sull'immagine della
-  categoria (`/images/intro/profiles.png` o `paths.png`). Sono decorative
+  sono ridefiniti). Per strumenti dinamici o sconosciuti ricade su un SVG della
+  categoria (questionario o percorso), mai su un PNG. Sono decorative
   (`aria-hidden`).
 - **Larghezza**: due soli token. `page-narrow` (max-w-4xl) per lettura e form;
   `page-wide` (max-w-6xl) per chat, dashboard, admin.

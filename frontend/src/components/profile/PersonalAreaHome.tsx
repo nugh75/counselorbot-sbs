@@ -6,7 +6,7 @@ import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { personalAreaDescription, personalAreaName, personalAreaText } from '@/lib/i18n-personal-area';
 import { forumText } from '@/lib/i18n-forum';
-import { personalAreaGroups, personalAreaImages, personalResumeItems, type ResumeAssignment } from '@/lib/personal-area';
+import { personalAreaGroups, personalAreaIllustrations, personalResumeItems, type ResumeAssignment } from '@/lib/personal-area';
 import type { PersonalGoal } from '@/lib/goals';
 import { enabledResumeItems, personalSlugEnabled } from '@/lib/personal-tool-access';
 import { useUserAccess } from '@/lib/use-user-access';
@@ -62,7 +62,7 @@ function PersonalResume({ access }: { access: FullUserAccess | null }) {
     if (!loading && !failed && !hasRows && !resume.error && !resume.loading) return null;
     const pausedOn = (date?: string | null) => date
         ? t('selector.badge.pausedOn', { date: new Date(date).toLocaleDateString(lang) }) : t('selector.badge.paused');
-    const itemImage = { goal: personalAreaImages.obiettivi, action: personalAreaImages.azioni, assignment: personalAreaImages.assegnazioni };
+    const itemIllustration = { goal: personalAreaIllustrations.obiettivi, action: personalAreaIllustrations.azioni, assignment: personalAreaIllustrations.assegnazioni };
     return <EntrySection id="personal-resume-title" title={l('resume')}>
         <ResumeLoadError entries={resume} />
         {loading && <p role="status" className="min-h-control py-4 text-sm text-ink-muted md:col-span-2">{l('loading')}</p>}
@@ -84,10 +84,10 @@ function PersonalResume({ access }: { access: FullUserAccess | null }) {
                 name={resumeLabel(local.instrument, null, tf)} description={t('header.resume')} />
         </ResumeEntry>}
         {resume.pqbl && <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
-            <EntryLink idPrefix="resume" id="pqbl" href={PQBL_RESUME_HREF} image={personalAreaImages.pqbl}
+            <EntryLink idPrefix="resume" id="pqbl" href={PQBL_RESUME_HREF} illustration={<ToolIllustration id={personalAreaIllustrations.pqbl} className="h-16 w-16 shrink-0 object-contain md:h-18 md:w-18" />}
                 name={t('pqbl.card.title')} description={t('header.resume')} />
         </ResumeEntry>}
-        {items.map(item => <EntryLink key={item.id} idPrefix="resume" id={item.id} href={item.href} image={itemImage[item.kind]}
+        {items.map(item => <EntryLink key={item.id} idPrefix="resume" id={item.id} href={item.href} illustration={<ToolIllustration id={itemIllustration[item.kind]} className="h-16 w-16 shrink-0 object-contain md:h-18 md:w-18" />}
             name={item.title} description={item.feedback ? `${l(item.kind)} · ${l('feedback')}` : l(item.kind)}
             status={item.date ? new Date(`${item.date}T12:00:00`).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' }) : undefined} />)}
     </EntrySection>;
@@ -199,7 +199,7 @@ export function PersonalAreaHome() {
                 className="space-y-6"
             >
                 {groups.map(group => <EntrySection key={group.id} id={`personal-group-${group.id}`} title={personalAreaText(lang, group.id)}>
-                    {group.slugs.map(slug => <EntryLink key={slug} idPrefix="personal" id={slug} href={`/profilo/${slug}`} image={personalAreaImages[slug]}
+                    {group.slugs.map(slug => <EntryLink key={slug} idPrefix="personal" id={slug} href={`/profilo/${slug}`} illustration={<ToolIllustration id={personalAreaIllustrations[slug]} className="h-16 w-16 shrink-0 object-contain md:h-18 md:w-18" />}
                         name={personalAreaName(lang, slug)} description={personalAreaDescription(lang, slug)}
                         badge={slug === 'classi' && !isClassContentHidden(access) && unreadTotal > 0 ? (
                             <span

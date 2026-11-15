@@ -480,8 +480,11 @@ browser e il flusso non cambiano.
 **Illustrazioni degli strumenti (#863).** Ogni strumento ha un’illustrazione piatta
 in SVG (QSA, QSAr, QPCS, QPCC, ZTPI, QAP, Savickas, eventi e obiettivi di studio e
 professionali, obiettivo di docenza, idea), con colori chiari e scuri tramite le
-variabili `--i-*`. Gli strumenti dinamici o sconosciuti ricadono sull’immagine della
-categoria. Sono decorative (`aria-hidden`) e non cambiano ancora alcuna pagina: le
+variabili `--i-*`. Gli strumenti dinamici o sconosciuti ricadono su un’illustrazione SVG
+della categoria (questionario o percorso). Dal #934 anche ogni voce dell’Area personale
+e dell’Area docenti (elenco e intestazione della pagina) ha un’illustrazione SVG nello
+stesso stile: classi, obiettivi, piani, taccuino, libreria, studenti di prova, ecc.
+Nessuna voce d’area usa più immagini PNG. Sono decorative (`aria-hidden`) e non cambiano ancora alcuna pagina: le
 usano le schede successive della mappa #861. Nell'Area studente
 viene prima la Bussola, poi le analisi dei questionari, i percorsi guidati e l'Area
 personale e strumenti. QSA, QSAr, ZTPI, QPCS, QPCC e QAP restano nelle analisi
@@ -1626,7 +1629,7 @@ lavoro preciso, conserva i dati precedenti in caso di errore e offre Riprova.
 
 Seguono cinque gruppi sempre aperti: **Conoscermi e riflettere**, **Il mio percorso**,
 **Studiare e ragionare**, **I miei lavori**, **Persone e supporto**. Le 17 destinazioni
-hanno immagini già presenti, nome e descrizione, su due colonne desktop e una mobile.
+hanno un’illustrazione SVG (#934), nome e descrizione, su due colonne desktop e una mobile.
 Analisi combinata dei profili è uno strumento autonomo in Conoscermi e riflettere,
 accanto a Taccuino, Cambiamenti e Risultati e conversazioni; Portfolio resta nel gruppo
 I miei lavori. Anche senza questionari o obiettivi si può aprire ciascuno strumento.

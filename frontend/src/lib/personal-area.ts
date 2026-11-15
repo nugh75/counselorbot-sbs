@@ -1,4 +1,5 @@
 import type { PersonalGoal } from './goals';
+import type { AreaIllustrationId } from './tool-illustrations';
 
 export const personalAreaGroups = [
     { id: 'reflection', slugs: ['piani-operativi', 'taccuino', 'cambiamenti', 'compilazioni', 'analisi-combinata'] },
@@ -8,27 +9,27 @@ export const personalAreaGroups = [
     { id: 'support', slugs: ['assegnazioni', 'classi', 'orientamento', 'telegram'] },
 ] as const;
 
-export const personalAreaImages = {
-    'piani-operativi': '/images/platform/chat-guidata.png',
-    'analisi-combinata': '/images/intro/profiles.png',
-    obiettivi: '/images/cards/focus_goal.png',
-    azioni: '/images/platform/bacheca-azioni.png',
-    timeline: '/images/platform/linea-del-tempo.png',
-    taccuino: '/images/platform/su-di-me.png',
-    cambiamenti: '/images/cards/self_reflection.png',
-    compilazioni: '/images/platform/compilazioni.png',
-    pqbl: '/images/intro/practice.png',
-    flashcard: '/images/cards/feedback_loop.png',
-    carte: '/images/platform/carte-ordinare.png',
-    confronto: '/images/platform/confronto.png',
-    tavolo: '/images/platform/tavolo.png',
-    portfolio: '/images/platform/portfolio.png',
-    assegnazioni: '/images/platform/assegnazioni.png',
-    classi: '/images/platform/classi.png',
-    orientamento: '/images/platform/bussola.png',
-    telegram: '/images/platform/telegram.png',
-} as const;
-export type PersonalAreaSlug = keyof typeof personalAreaImages;
+export const personalAreaIllustrations = {
+    'piani-operativi': 'area-plan',
+    'analisi-combinata': 'area-combined',
+    obiettivi: 'area-goal',
+    azioni: 'area-actions',
+    timeline: 'area-timeline',
+    taccuino: 'area-notebook',
+    cambiamenti: 'area-changes',
+    compilazioni: 'area-responses',
+    pqbl: 'area-quiz',
+    flashcard: 'area-flashcards',
+    carte: 'area-sort-cards',
+    confronto: 'area-compare',
+    tavolo: 'area-table',
+    portfolio: 'area-portfolio',
+    assegnazioni: 'area-assignments',
+    classi: 'area-classes',
+    orientamento: 'area-compass',
+    telegram: 'area-chat',
+} as const satisfies Record<string, AreaIllustrationId>;
+export type PersonalAreaSlug = keyof typeof personalAreaIllustrations;
 export type ResumeAssignment = {
     id: number; snapshot: { title: string }; due_date: string | null;
     progress?: { planned: boolean; shared: boolean; feedback_available: boolean };
