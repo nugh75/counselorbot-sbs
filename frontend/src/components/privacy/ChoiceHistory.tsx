@@ -69,11 +69,11 @@ export function ChoiceHistory({ history, groups, documents }: {
                                     </div>
                                     <dl className="mt-2 grid gap-1 text-xs text-ink-muted sm:grid-cols-2">
                                         <div className="flex min-w-0 gap-1">
-                                            <dt className="font-medium">{t('privacy.history.target')}:</dt>
+                                            <dt className="font-semibold">{t('privacy.history.target')}:</dt>
                                             <dd className="min-w-0 break-words">{target || t('privacy.history.selfTarget')}</dd>
                                         </div>
                                         <div className="flex min-w-0 gap-1">
-                                            <dt className="font-medium">{t('privacy.history.document')}:</dt>
+                                            <dt className="font-semibold">{t('privacy.history.document')}:</dt>
                                             <dd className="min-w-0 break-words">
                                                 {documentLabel || t('privacy.common.notAvailable')}
                                                 {knownDocument?.locale ? ` (${knownDocument.locale})` : entry.document_locale ? ` (${entry.document_locale})` : ''}

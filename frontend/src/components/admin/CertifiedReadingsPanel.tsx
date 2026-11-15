@@ -6,6 +6,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { ContentLanguageStatus } from './ContentLanguageStatus';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Button } from '@/components/ui/Button';
+import { Input, Select, Textarea } from '@/components/ui/Field';
 import { Callout } from '@/components/ui/Callout';
 
 type Lang = 'it' | 'en' | 'es' | 'fr' | 'de' | 'sv';
@@ -285,8 +286,6 @@ export function CertifiedReadingsPanel() {
         return <span className="text-xs text-warning">{t('admin.readings.manualCheck')}</span>;
     };
 
-    const inputCls = 'h-9 w-full rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-focus';
-    const areaCls = 'min-h-[70px] w-full rounded-control border border-line bg-surface px-2 py-1 text-sm text-ink-body outline-none focus:border-focus';
     const chip = (active: boolean) =>
         `min-h-control rounded-control border px-2 py-1 text-xs font-semibold ${active ? 'border-brand-line bg-brand-soft text-link' : 'border-line bg-surface text-ink-muted'}`;
 
@@ -294,45 +293,45 @@ export function CertifiedReadingsPanel() {
         <div className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.slug')}
-                    <input className={inputCls} value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="dweck-mindset" />
+                    <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="dweck-mindset" />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.kind')}
-                    <select className={inputCls} value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}>
+                    <Select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}>
                         {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
-                    </select>
+                    </Select>
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.status')}
-                    <select className={inputCls} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                    <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                         <option value="draft">{t('admin.readings.draft')}</option>
                         <option value="certified">{t('admin.readings.certified')}</option>
-                    </select>
+                    </Select>
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.order')}
-                    <input className={inputCls} type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
+                    <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
                 </label>
             </div>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <label className="flex flex-col text-xs font-semibold text-ink-muted lg:col-span-2">{t('admin.readings.title.field')}
-                    <input className={inputCls} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                    <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted lg:col-span-2">{t('admin.readings.originalTitle')}
-                    <input className={inputCls} value={form.original_title} onChange={(e) => setForm({ ...form, original_title: e.target.value })} />
+                    <Input value={form.original_title} onChange={(e) => setForm({ ...form, original_title: e.target.value })} />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted lg:col-span-2">{t('admin.readings.creators')}
-                    <input className={inputCls} value={form.creators} onChange={(e) => setForm({ ...form, creators: e.target.value })} placeholder="Carol S. Dweck" />
+                    <Input value={form.creators} onChange={(e) => setForm({ ...form, creators: e.target.value })} placeholder="Carol S. Dweck" />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.year')}
-                    <input className={inputCls} type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} />
+                    <Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.publisher')}
-                    <input className={inputCls} value={form.publisher} onChange={(e) => setForm({ ...form, publisher: e.target.value })} />
+                    <Input value={form.publisher} onChange={(e) => setForm({ ...form, publisher: e.target.value })} />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.isbn')}
-                    <input className={inputCls} value={form.isbn} onChange={(e) => setForm({ ...form, isbn: e.target.value })} />
+                    <Input value={form.isbn} onChange={(e) => setForm({ ...form, isbn: e.target.value })} />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.doi')}
-                    <input className={inputCls} value={form.doi} onChange={(e) => setForm({ ...form, doi: e.target.value })} placeholder="10.1177/..." />
+                    <Input value={form.doi} onChange={(e) => setForm({ ...form, doi: e.target.value })} placeholder="10.1177/..." />
                 </label>
             </div>
 
@@ -351,7 +350,7 @@ export function CertifiedReadingsPanel() {
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.factors')}
-                    <input className={inputCls} value={form.factor_codes} onChange={(e) => setForm({ ...form, factor_codes: e.target.value })} placeholder="A1, S1" />
+                    <Input value={form.factor_codes} onChange={(e) => setForm({ ...form, factor_codes: e.target.value })} placeholder="A1, S1" />
                 </label>
                 <div className="text-xs font-semibold text-ink-muted">{t('admin.readings.instruments')}
                     <div className="mt-1 flex flex-wrap gap-1">
@@ -394,11 +393,11 @@ export function CertifiedReadingsPanel() {
             )}
             <div className="mt-2 space-y-4">
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.summary')}
-                    <textarea className={areaCls} value={form.summary_i18n[lang] ?? ''}
+                    <Textarea value={form.summary_i18n[lang] ?? ''}
                         onChange={(e) => setForm({ ...form, summary_i18n: { ...form.summary_i18n, [lang]: e.target.value } })} />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.why')}
-                    <textarea className={areaCls} value={form.why_i18n[lang] ?? ''}
+                    <Textarea value={form.why_i18n[lang] ?? ''}
                         onChange={(e) => setForm({ ...form, why_i18n: { ...form.why_i18n, [lang]: e.target.value } })} />
                 </label>
             </div>
@@ -415,15 +414,15 @@ export function CertifiedReadingsPanel() {
                     )}
                 </div>
                 <p className="mt-1 text-2xs text-ink-muted">{t('admin.readings.synopsisHint')}</p>
-                <textarea className={`${areaCls} mt-2`} value={form.synopsis_i18n[lang] ?? ''}
+                <Textarea className="mt-2" value={form.synopsis_i18n[lang] ?? ''}
                     onChange={(e) => setForm({ ...form, synopsis_i18n: { ...form.synopsis_i18n, [lang]: e.target.value } })} />
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.synopsisSource')}
-                        <input className={inputCls} value={form.synopsis_source.source ?? ''}
+                        <Input value={form.synopsis_source.source ?? ''}
                             onChange={(e) => setForm({ ...form, synopsis_source: { ...form.synopsis_source, source: e.target.value } })} />
                     </label>
                     <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.synopsisUrl')}
-                        <input className={inputCls} value={form.synopsis_source.url ?? ''}
+                        <Input value={form.synopsis_source.url ?? ''}
                             onChange={(e) => setForm({ ...form, synopsis_source: { ...form.synopsis_source, url: e.target.value } })} />
                     </label>
                 </div>
@@ -444,20 +443,20 @@ export function CertifiedReadingsPanel() {
                 <p className="mt-1 text-2xs text-warning-ink">{t('admin.readings.sensitiveHint')}</p>
                 {form.is_sensitive && (
                     <label className="mt-2 flex flex-col text-xs font-semibold text-warning-ink">{t('admin.readings.warning')}
-                        <textarea className={areaCls} value={form.content_warning} onChange={(e) => setForm({ ...form, content_warning: e.target.value })} />
+                        <Textarea value={form.content_warning} onChange={(e) => setForm({ ...form, content_warning: e.target.value })} />
                     </label>
                 )}
             </div>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.whereToFind')}
-                    <textarea className={areaCls} value={form.where_to_find} onChange={(e) => setForm({ ...form, where_to_find: e.target.value })} />
+                    <Textarea value={form.where_to_find} onChange={(e) => setForm({ ...form, where_to_find: e.target.value })} />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.source')}
-                    <textarea className={areaCls} value={form.source_reference} onChange={(e) => setForm({ ...form, source_reference: e.target.value })} />
+                    <Textarea value={form.source_reference} onChange={(e) => setForm({ ...form, source_reference: e.target.value })} />
                 </label>
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.certifiedBy')}
-                    <input className={inputCls} value={form.certified_by} onChange={(e) => setForm({ ...form, certified_by: e.target.value })} />
+                    <Input value={form.certified_by} onChange={(e) => setForm({ ...form, certified_by: e.target.value })} />
                 </label>
                 <label className="flex items-center gap-2 self-end text-xs font-semibold text-ink-muted">
                     <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />

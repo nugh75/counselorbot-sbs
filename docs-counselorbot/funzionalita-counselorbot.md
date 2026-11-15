@@ -400,6 +400,23 @@ componenti condivisi (`Field`, `Input`, `Select`, `Textarea`), stato del piano c
 `StatusBadge` e riquadro di modifica dello stato di uno studente come `Callout`.
 Comportamento, API e testi non cambiano.
 
+**Primitive condivise nelle pagine minori del docente (#960).** Le pagine
+`/docente/dispositivi`, `/docente/istituti`, `/docente/assegnazioni`,
+`/docente/materiali`, `/docente/strategie`, `/docente/somministrazioni` e
+`/docente/orientamento`, più il forum di classe e il tavolo, usano i componenti
+condivisi al posto delle classi scritte a mano: i campi sono `Input`, `Select` e
+`Textarea` con l'etichetta di `Field`, le pillole di stato sono `StatusBadge`, gli
+avvisi sono `Callout` e la finestra «Nuova assegnazione» è il `Dialog` condiviso
+(stessa apertura e chiusura, il focus torna al comando che l'ha aperta). I comandi
+primari del tavolo passano a `Button`; le tinte dei pezzi del tavolo restano perché
+distinguono oggetti pari-grado. Nel forum di classe i colori grezzi (`slate`,
+`indigo`) diventano i token semantici dell'app. Nei pannelli di amministrazione
+riusati dalle pagine del docente (letture certificate, strategie, somministrazioni,
+studenti dei piani) cambiano solo campi, pillole, ombre e `outline-none`: raggi e
+forma dell'admin restano invariati. Nella pagina dei piani operativi i bottoni
+secondari passano alla taglia normale e le pagine privacy e consiglio di classe
+usano un solo peso di testo. Comportamento, API, testi e `data-testid` non cambiano.
+
 **Piani operativi dello studente piatti (#918).** I piani in cima a `/profilo` e in
 `/profilo/piani-operativi` sono `Card` piatte separate da filetti: classe come
 etichetta di testo, titolo, avanzamento, poi le tappe come righe divise da filetti invece
@@ -1967,6 +1984,16 @@ elenco, senza riquadri colorati né schede: Progettazione didattica è una voce
 si avvia sempre da `/?start=<id>` (scelta tra studente di prova e dati propri). I colori
 di ruolo restano solo sui badge. L’elenco delle classi attive non è più nella home:
 si trova in «Le mie classi».
+
+**Schede della pagina di classe piatte (#957, novembre 2026).** In `/docente/classi/[id]`
+(e `/admin/classi/[id]`) le schede Panoramica, Orientamento, Osservazioni, Consiglio, Studenti
+e Registro seguono la scheda Piani: sezioni con filetto al posto dei riquadri, stati come
+etichette `StatusBadge`, campi `Field`/`Input`/`Select`/`Textarea`. In Studenti gli iscritti e
+gli inviti in attesa sono sezioni con filetto e badge di ruolo (studente, docente), senza
+sfondo tinto; il registro modifiche è un elenco a righe separate da filetti. Il modale della
+copertina e la conferma di eliminazione della classe usano il `Dialog` condiviso (Esc, sfondo
+e pulsante di chiusura, mai durante un salvataggio). Funzioni, testi e dati invariati; la
+fascia di copertina (#953) resta.
 
 **Filetti di sezione più netti e ritorni come testo (#952, novembre 2026).** Il filetto
 sotto i titoli di sezione delle pagine usa il token della linea forte (`border-line-strong`):

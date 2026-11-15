@@ -16,7 +16,7 @@ import {
     type TavoloPresetId,
 } from '@/lib/tavolo';
 import { tavoloLabel } from '@/lib/i18n-tavolo';
-import { Spinner } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 
 const GENRE_LABEL: Record<TavoloPresetId, Parameters<typeof tavoloLabel>[0]> = {
     workflow: 'genreWorkflow',
@@ -89,13 +89,12 @@ export function TavoloCompose({ busy, aiAvailable = true, onCompose, onOpenExamp
             )}
 
             <div className="flex gap-2">
-                <button type="button" disabled={busy || !aiAvailable || !prompt.trim()}
-                    onClick={() => void onCompose(genre, prompt)}
-                    className="inline-flex min-h-control flex-1 items-center justify-center gap-2 rounded-control bg-brand px-4 text-sm text-ink-on-brand hover:bg-brand-hover disabled:opacity-40">
+                <Button type="button" disabled={busy || !aiAvailable || !prompt.trim()}
+                    onClick={() => void onCompose(genre, prompt)} className="flex-1">
                     {busy ? <Spinner className="h-4 w-4" aria-hidden="true" />
                         : <Sparkles className="h-4 w-4" aria-hidden="true" />}
                     {label('composeGo')}
-                </button>
+                </Button>
             </div>
 
             {chosen && onOpenExample && chosen.examples.length > 0 && (

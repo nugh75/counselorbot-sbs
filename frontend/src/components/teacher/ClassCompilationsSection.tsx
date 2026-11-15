@@ -9,6 +9,7 @@ import { teacherAreaText } from '@/lib/i18n-teacher-area';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
+import { Select } from '@/components/ui/Field';
 import { parseClassGroups } from './class-group-types';
 import { useTeacherResource } from './useTeacherResource';
 import { StudentResultItem, type StudentResult } from './StudentResultItem';
@@ -62,11 +63,10 @@ export function ClassCompilationsSection({ showHeading = true }: { showHeading?:
                         : groups.data?.length === 0 ? <p role="status" className="text-sm text-ink-muted">{l('noClasses')}</p>
                             : <>
                                 <label htmlFor={`${id}-class`} className="block text-sm font-semibold text-ink-body">{l('classLabel')}</label>
-                                <select id={`${id}-class`} value={group ? selected : ''} onChange={event => setSelected(event.target.value)}
-                                    className="min-h-control w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:max-w-md">
+                                <Select id={`${id}-class`} value={group ? selected : ''} onChange={event => setSelected(event.target.value)} className="sm:max-w-md">
                                     <option value="">{l('choose')}</option>
                                     {groups.data?.map(row => <option key={row.id} value={row.id}>{row.name}{row.school ? ` · ${row.school}` : ''}</option>)}
-                                </select>
+                                </Select>
                                 {/* A new class mounts fresh state and aborts all old list/transcript reads. */}
                                 {group && <div className="space-y-4">
                                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line-strong pb-2">
