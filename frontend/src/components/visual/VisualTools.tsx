@@ -6,6 +6,8 @@ import { createPortal } from 'react-dom';
 import { ArrowLeft, ArrowRight, Clock, GitCommitHorizontal, Columns3, Download, Folder, FolderPlus, Image as ImageIcon, LayoutList, Layers, MessageSquare, Pencil, Plus, RotateCcw, Save, Sparkles, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Dialog, DialogBody } from '@/components/ui/Dialog';
+import { Input, Select, Textarea } from '@/components/ui/Field';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -39,7 +41,6 @@ type Props = {
     onWorkTabChange?: (tab: WorkTab) => void;
     openCreate?: boolean;
 };
-const inputClass = 'w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-[15px] text-ink';
 const buttonClass = 'h-control w-control shrink-0 p-0';
 const stages: ActionStage[] = ['todo', 'doing', 'done'];
 const workTabs: WorkTab[] = ['board', 'comparison', 'cards', 'timeline'];
@@ -268,12 +269,12 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
         onDiscuss?.(text);
     };
     const sourceSelector = (kind: 'action' | 'option') => sources.length > 0 && <label className="block text-sm text-ink-muted">{l('fromCatalog')}
-        <select className={`${inputClass} mt-1 min-h-control`} value="" onChange={event => {
+        <Select className="mt-1" value="" onChange={event => {
             const item = sources.find(source => source.key === event.target.value);
             if (!item) return;
             if (kind === 'action') { setDraftTitle(item.title); setDraftDetail(item.detail); setDraftSource(item.title); }
             else { setOption(item.title); setOptionSource(item.title); }
-        }}><option value="">{l('chooseSource')}</option>{sources.map(item => <option key={item.key} value={item.key}>{item.title}</option>)}</select>
+        }}><option value="">{l('chooseSource')}</option>{sources.map(item => <option key={item.key} value={item.key}>{item.title}</option>)}</Select>
     </label>;
     const removeButton = (label: string, remove: () => void) => <Tooltip content={`${l('remove')}: ${label}`}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('remove')}: ${label}`} onClick={remove}><Trash2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>;
     return <>
@@ -293,7 +294,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
             </Button>
         </Tooltip>}
         {open && createPortal(<div className={embedded ? 'page-narrow flex flex-col p-4 pt-0' : 'fixed inset-0 z-[85] flex bg-surface'}>
-            <section ref={dialog} role="dialog" aria-modal={embedded ? undefined : true} aria-labelledby={`${id}-title`} className={embedded ? 'flex w-full min-w-0 flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card' : 'flex h-full w-full min-w-0 flex-col overflow-hidden bg-surface'}>
+            <section ref={dialog} role="dialog" aria-modal={embedded ? undefined : true} aria-labelledby={`${id}-title`} className={embedded ? 'flex w-full min-w-0 flex-col overflow-hidden bg-surface' : 'flex h-full w-full min-w-0 flex-col overflow-hidden bg-surface'}>
                 <header className="shrink-0 border-b border-line p-4 sm:p-4">
                     <div className="flex items-start gap-4">
                         {pageBackHref && <PreviousPageButton
@@ -361,8 +362,8 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             <form className="space-y-4 pb-4" onSubmit={event => { event.preventDefault(); if (!draftTitle.trim() || draftTitle.length > 160 || work.actions.length >= (personal ? Infinity : 30)) return;
                                 edit({ ...work, actions: [...work.actions, { id: crypto.randomUUID(), title: draftTitle.trim(), detail: draftDetail, stage: 'todo', reflection: '', source: draftSource }] }); setDraftTitle(''); setDraftDetail(''); setDraftSource(''); }}>
                                 {sourceSelector('action')}
-                                <label className="block text-sm">{l('titleField')}<input id={`${id}-new-action-title`} required maxLength={160} value={draftTitle} onChange={e => setDraftTitle(e.target.value)} className={`${inputClass} mt-1`} /></label>
-                                <label className="block text-sm">{l('detail')}<textarea maxLength={1000} rows={2} value={draftDetail} onChange={e => setDraftDetail(e.target.value)} className={`${inputClass} mt-1`} /></label>
+                                <label className="block text-sm">{l('titleField')}<Input id={`${id}-new-action-title`} required maxLength={160} value={draftTitle} onChange={e => setDraftTitle(e.target.value)} className="mt-1" /></label>
+                                <label className="block text-sm">{l('detail')}<Textarea maxLength={1000} rows={2} value={draftDetail} onChange={e => setDraftDetail(e.target.value)} className="mt-1" /></label>
                                 <Tooltip content={l('addAction')}><Button aria-label={l('addAction')} type="submit" className={buttonClass} disabled={work.actions.length >= (personal ? Infinity : 30) || draftTitle.length > 160}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                 {work.actions.length >= (personal ? Infinity : 30) && <p role="status">{l('limit')}</p>}
                             </form></details>
@@ -371,7 +372,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 <h3 className="mb-4 font-semibold text-ink-body">{l(stage)} <span className="font-mono text-sm text-ink-muted">{work.actions.filter(a => a.stage === stage).length}</span></h3>
                                 <div className="space-y-4">{work.actions.filter(a => a.stage === stage).map(action => {
                                     const diary = /^\/profilo\/assegnazioni#assignment-\d+$/.test(action.source || '') ? work.timeline?.events.find(event => event.action_ids.includes(action.id)) : undefined;
-                                    return <article key={action.id} id={personal ? `action-${action.id}` : undefined} tabIndex={personal ? -1 : undefined} className="scroll-mt-24 rounded-card border border-line bg-surface p-4">
+                                    return <article key={action.id} id={personal ? `action-${action.id}` : undefined} tabIndex={personal ? -1 : undefined} className="scroll-mt-24 border-t border-line pt-4">
                                     {personal && editingActionId !== action.id ? <>
                                         <h4 className="break-words font-semibold text-ink">{action.kind === 'check' && <Clock className="mr-1 inline h-4 w-4 align-text-bottom" aria-hidden="true" />}{action.title}</h4>
                                         <p className="mt-1 text-xs text-ink-muted">{l(action.stage)}{action.kind && action.kind !== 'activity' ? ` · ${l(action.kind)}` : ''}</p>
@@ -380,18 +381,18 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                             {removeButton(action.title, () => setConfirmActionId(action.id))}
                                         </div>
                                     </> : <>
-                                    <label className="block text-sm">{action.kind === 'check' && <Clock className="mr-1 inline h-4 w-4 align-text-bottom" aria-hidden="true" />}{l('titleField')}<input data-workspace-field required maxLength={160} value={action.title} className={`${inputClass} mt-1 font-semibold`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, title: e.target.value } : a) })} /></label>
+                                    <label className="block text-sm">{action.kind === 'check' && <Clock className="mr-1 inline h-4 w-4 align-text-bottom" aria-hidden="true" />}{l('titleField')}<Input data-workspace-field required maxLength={160} value={action.title} className="mt-1 font-semibold" onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, title: e.target.value } : a) })} /></label>
                                     {personal && <ActionDateSummary action={action} locale={locale} />}
-                                    <label className="mt-4 block text-sm">{l('move')}<select id={`${id}-action-${action.id}`} aria-label={`${l('move')}: ${action.title}`} value={action.stage} className={`${inputClass} mt-1 min-h-control`} onChange={e => { edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, stage: e.target.value as ActionStage } : a) }); focusMoved(`${id}-action-${action.id}`); }}>{stages.map(s => <option key={s} value={s} disabled={s === 'done' && action.kind === 'check' && !action.progress}>{l(s)}</option>)}</select></label>{action.kind === 'check' && !action.progress && <p role="status" className="mt-1 text-xs text-ink-muted">{l('checkNeedsProgress')}</p>}
+                                    <label className="mt-4 block text-sm">{l('move')}<Select id={`${id}-action-${action.id}`} aria-label={`${l('move')}: ${action.title}`} value={action.stage} className="mt-1" onChange={e => { edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, stage: e.target.value as ActionStage } : a) }); focusMoved(`${id}-action-${action.id}`); }}>{stages.map(s => <option key={s} value={s} disabled={s === 'done' && action.kind === 'check' && !action.progress}>{l(s)}</option>)}</Select></label>{action.kind === 'check' && !action.progress && <p role="status" className="mt-1 text-xs text-ink-muted">{l('checkNeedsProgress')}</p>}
                                     <details open={personal && editingActionId === action.id ? true : undefined} className="mt-2"><summary className="min-h-control cursor-pointer py-4 text-sm text-link">{l('detail')} · {action.kind === 'check' ? l('observe') : l('reflection')}</summary>
                                         {action.kind === 'check' ? <>
-                                            <label className="block text-sm">{l('progress')}<select className={`${inputClass} mt-1`} value={action.progress || ''} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, progress: (e.target.value || null) as 'on_track' | 'slow' | 'stuck' | null } : a) })}><option value="">—</option>{(['on_track', 'slow', 'stuck'] as const).map(progress => <option key={progress} value={progress}>{l(progress)}</option>)}</select></label>
-                                            <label className="mt-2 block text-sm">{l('observe')}<textarea value={action.reflection} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, reflection: e.target.value } : a) })} /></label>
-                                            <label className="mt-2 block text-sm">{l('adjust')}<textarea value={action.adjustment || ''} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, adjustment: e.target.value } : a) })} /></label>
-                                        </> : <label className="block text-sm">{l('actionKind')}<select className={`${inputClass} mt-1`} value={action.kind || 'activity'} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, kind: e.target.value as 'activity' | 'book' | 'article' | 'film' } : a) })}>{['activity', 'book', 'article', 'film'].map(kind => <option key={kind} value={kind}>{l(kind)}</option>)}</select></label>}
+                                            <label className="block text-sm">{l('progress')}<Select className="mt-1" value={action.progress || ''} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, progress: (e.target.value || null) as 'on_track' | 'slow' | 'stuck' | null } : a) })}><option value="">—</option>{(['on_track', 'slow', 'stuck'] as const).map(progress => <option key={progress} value={progress}>{l(progress)}</option>)}</Select></label>
+                                            <label className="mt-2 block text-sm">{l('observe')}<Textarea value={action.reflection} maxLength={1000} rows={3} className="mt-1" onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, reflection: e.target.value } : a) })} /></label>
+                                            <label className="mt-2 block text-sm">{l('adjust')}<Textarea value={action.adjustment || ''} maxLength={1000} rows={3} className="mt-1" onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, adjustment: e.target.value } : a) })} /></label>
+                                        </> : <label className="block text-sm">{l('actionKind')}<Select className="mt-1" value={action.kind || 'activity'} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, kind: e.target.value as 'activity' | 'book' | 'article' | 'film' } : a) })}>{['activity', 'book', 'article', 'film'].map(kind => <option key={kind} value={kind}>{l(kind)}</option>)}</Select></label>}
                                         {personal && <ActionDateFields value={action} locale={locale} onChange={dates => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, ...dates } : a) })} />}
-                                        <label className="block text-sm">{l('detail')}<textarea value={action.detail} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, detail: e.target.value } : a) })} /></label>
-                                        {diary ? <p className="mt-2 py-2 text-sm text-ink-muted">{action.kind === 'check' ? l('observe') : l('reflection')} · {l('timeline')}</p> : action.kind === 'check' ? null : <label className="mt-2 block text-sm">{l('reflection')}<textarea value={action.reflection} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, reflection: e.target.value } : a) })} /></label>}
+                                        <label className="block text-sm">{l('detail')}<Textarea value={action.detail} maxLength={1000} rows={3} className="mt-1" onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, detail: e.target.value } : a) })} /></label>
+                                        {diary ? <p className="mt-2 py-2 text-sm text-ink-muted">{action.kind === 'check' ? l('observe') : l('reflection')} · {l('timeline')}</p> : action.kind === 'check' ? null : <label className="mt-2 block text-sm">{l('reflection')}<Textarea value={action.reflection} maxLength={1000} rows={3} className="mt-1" onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, reflection: e.target.value } : a) })} /></label>}
                                         <p className="mt-2 break-words text-xs text-ink-muted">{l('source')}: <AssignmentSource source={action.source || l('personal')} lang={locale} linked={personal} /></p>
                                     </details>
                                     {personal && <div className="mt-2 flex flex-wrap items-center gap-2"><Button type="button" variant="secondary" className="min-h-control gap-2 px-4" onClick={() => setEditingActionId(null)}>{l('close')}</Button></div>}
@@ -453,7 +454,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 <details open={!activeDeckCards.length || Boolean(draftCard)} className="border-y border-line"><summary className="min-h-control cursor-pointer py-4 text-link">{l('addCard')}</summary>
                                 <form className="space-y-2 pb-4" onSubmit={event => { event.preventDefault(); if (!draftCard.trim() || draftCard.length > 600 || work.cards.length >= 30) return;
                                     edit({ ...work, cards: [...work.cards, { id: crypto.randomUUID(), text: draftCard.trim(), bucket: currentDeckCols[0].id, source: cardSource, image: draftCardImage || null, deck_id: activeDeckId }] }); setDraftCard(''); setCardSource(''); setDraftCardImage(''); }}>
-                                    <label className="block text-sm">{l('cardText')}<textarea required maxLength={600} rows={3} value={draftCard} onChange={e => setDraftCard(e.target.value)} className={`${inputClass} mt-1`} /></label>
+                                    <label className="block text-sm">{l('cardText')}<Textarea required maxLength={600} rows={3} value={draftCard} onChange={e => setDraftCard(e.target.value)} className="mt-1" /></label>
                                     <div className="block text-sm text-ink-body">
                                         <span className="mb-1 block">{l('cardImage') || 'Illustrazione (opzionale)'}</span>
                                         {draftCardImage ? (
@@ -508,7 +509,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                         setDragCardId(card.id);
                                     }}
                                     onDragEnd={() => { setDragCardId(null); setDragOverCol(null); }}
-                                    className={`group/card flex flex-col overflow-hidden rounded-card border border-brand-line/90 bg-surface shadow-card transition-shadow hover:shadow-card ${dragCardId === card.id ? 'opacity-50 ring-2 ring-brand' : ''}`}>
+                                    className={`group/card flex flex-col overflow-hidden rounded-card border border-brand-line/90 bg-surface ${dragCardId === card.id ? 'opacity-50 ring-2 ring-brand' : ''}`}>
                                     {card.image ? (
                                         <div
                                             role="button"
@@ -524,7 +525,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                                 alt=""
                                                 className="max-h-full max-w-full object-contain transition-transform group-hover/card:scale-105"
                                             />
-                                            <div className="absolute right-2 top-2 rounded-full bg-surface/90 p-2 text-ink-muted shadow-card opacity-0 transition-opacity group-hover/card:opacity-100 hover:bg-surface hover:text-link">
+                                            <div className="absolute right-2 top-2 rounded-full bg-surface/90 p-2 text-ink-muted opacity-0 transition-opacity group-hover/card:opacity-100 hover:bg-surface hover:text-link">
                                                 <ImageIcon className="h-4 w-4" aria-hidden="true" />
                                             </div>
                                         </div>
@@ -541,7 +542,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                     )}
 
                                     <div className="flex flex-1 flex-col p-4">
-                                        <textarea
+                                        <Textarea
                                             aria-label={l('cardText')}
                                             data-workspace-field
                                             required
@@ -549,21 +550,21 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                             rows={3}
                                             value={card.text}
                                             placeholder="..."
-                                            className="w-full resize-y rounded-control border border-line bg-surface px-2 py-2 text-[14px] leading-relaxed text-ink placeholder:text-ink-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-focus"
+                                            className="resize-y leading-relaxed"
                                             onChange={e => edit({ ...work, cards: work.cards.map(c => c.id === card.id ? { ...c, text: e.target.value } : c) })}
                                         />
 
                                         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2 text-xs">
                                             <div className="flex flex-1 flex-wrap items-center gap-2">
-                                                <select
+                                                <Select
                                                     id={`${id}-card-${card.id}`}
                                                     aria-label={l('move')}
                                                     value={card.bucket}
-                                                    className="h-8 rounded-control border border-line bg-surface-sunken px-2 py-1 text-xs text-ink-body hover:bg-surface"
+                                                    
                                                     onChange={e => { edit({ ...work, cards: work.cards.map(c => c.id === card.id ? { ...c, bucket: e.target.value } : c) }); focusMoved(`${id}-card-${card.id}`); }}
                                                 >
                                                     {currentDeckCols.map(b => <option key={b.id} value={b.id}>{cardColumnLabel(work, b, l)}</option>)}
-                                                </select>
+                                                </Select>
                                             </div>
                                             <div className="flex shrink-0 items-center">
                                                 {removeButton(card.text, () => edit({ ...work, cards: work.cards.filter(c => c.id !== card.id) }))}
@@ -583,26 +584,26 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             <form className="space-y-2 pb-4" onSubmit={event => { event.preventDefault(); if (!option.trim() || option.length > 160 || work.comparison.options.length >= 3) return;
                                 edit({ ...work, comparison: { ...work.comparison, options: [...work.comparison.options, { id: crypto.randomUUID(), title: option.trim(), source: optionSource }] } }); setOption(''); setOptionSource(''); }}>
                                 {sourceSelector('option')}
-                                <label className="block text-sm">{l('option')}<input required maxLength={160} value={option} onChange={e => setOption(e.target.value)} className={`${inputClass} mt-1`} /></label>
+                                <label className="block text-sm">{l('option')}<Input required maxLength={160} value={option} onChange={e => setOption(e.target.value)} className="mt-1" /></label>
                                 <Tooltip content={l('addOption')}><Button aria-label={l('addOption')} type="submit" className={buttonClass} disabled={work.comparison.options.length >= 3 || option.length > 160}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                             </form></details>
                             {work.comparison.options.length > 0 && <section aria-label={l('criteria')} className="space-y-2"><p className="text-xs font-semibold text-ink-muted">{l('stepCriteria')}</p><details open={!work.comparison.criteria.length} className="border-y border-line">
                                 <summary className="min-h-control cursor-pointer py-4 font-semibold text-link">{l('criteria')}</summary>
                                 <div className="flex flex-wrap gap-2">{work.comparison.criteria.map(c => <div key={c.id} className="flex min-w-0 flex-wrap items-center gap-1 rounded-control border border-line p-1">
-                                    <input aria-label={l('criterion')} data-workspace-field required maxLength={100} value={c.label} className={`${inputClass} max-w-48`} onChange={e => edit({ ...work, comparison: { ...work.comparison, criteria: work.comparison.criteria.map(k => k.id === c.id ? { ...k, label: e.target.value } : k) } })} />
+                                    <Input aria-label={l('criterion')} data-workspace-field required maxLength={100} value={c.label} className="max-w-48" onChange={e => edit({ ...work, comparison: { ...work.comparison, criteria: work.comparison.criteria.map(k => k.id === c.id ? { ...k, label: e.target.value } : k) } })} />
                                     {removeButton(c.label, () => edit(removeCriterion(work, c.id)))}
                                 </div>)}</div>
                                 <form className="flex flex-wrap items-end gap-2 pb-4" onSubmit={event => { event.preventDefault(); if (!criterion.trim() || work.comparison.criteria.length >= 6) return;
                                     edit({ ...work, comparison: { ...work.comparison, criteria: [...work.comparison.criteria, { id: crypto.randomUUID(), label: criterion.trim() }] } }); setCriterion(''); }}>
-                                    <label className="min-w-0 flex-1 text-sm">{l('criterion')}<input required maxLength={100} value={criterion} className={`${inputClass} mt-1`} onChange={e => setCriterion(e.target.value)} /></label>
+                                    <label className="min-w-0 flex-1 text-sm">{l('criterion')}<Input required maxLength={100} value={criterion} className="mt-1" onChange={e => setCriterion(e.target.value)} /></label>
                                     <Tooltip content={l('addCriterion')}><Button aria-label={l('addCriterion')} type="submit" className={buttonClass} disabled={work.comparison.criteria.length >= 6}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                 </form></details>
                             </section>}
                             {!work.comparison.options.length && <p className="py-6 text-center text-ink-muted">{l('emptyComparison')}</p>}
                             {work.comparison.options.length > 0 && <p className="text-xs font-semibold text-ink-muted">{l('stepCompare')}</p>}
-                            <div className={`grid gap-4 ${work.comparison.options.length === 2 ? 'md:grid-cols-2' : work.comparison.options.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-1'}`}>{work.comparison.options.map(o => <article key={o.id} className={`min-w-0 rounded-card border p-4 ${work.comparison.chosen === o.id ? 'border-brand bg-brand-soft' : 'border-line bg-surface'}`}>
-                                <label className="block text-sm">{l('option')}<input data-workspace-field required maxLength={160} value={o.title} className={`${inputClass} mt-1 font-semibold`} onChange={e => edit({ ...work, comparison: { ...work.comparison, options: work.comparison.options.map(item => item.id === o.id ? { ...item, title: e.target.value } : item) } })} /></label>
-                                {work.comparison.criteria.map(c => <label key={c.id} className="mt-4 block text-sm">{c.label}<textarea maxLength={500} rows={3} value={work.comparison.cells.find(cell => cell.option_id === o.id && cell.criterion_id === c.id)?.note || ''} className={`${inputClass} mt-1`} onChange={e => edit(setCell(work, o.id, c.id, e.target.value))} /></label>)}
+                            <div className={`grid gap-4 ${work.comparison.options.length === 2 ? 'md:grid-cols-2' : work.comparison.options.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-1'}`}>{work.comparison.options.map(o => <article key={o.id} className={`min-w-0 border-t-2 pt-4 ${work.comparison.chosen === o.id ? 'border-brand' : 'border-line'}`}>
+                                <label className="block text-sm">{l('option')}<Input data-workspace-field required maxLength={160} value={o.title} className="mt-1 font-semibold" onChange={e => edit({ ...work, comparison: { ...work.comparison, options: work.comparison.options.map(item => item.id === o.id ? { ...item, title: e.target.value } : item) } })} /></label>
+                                {work.comparison.criteria.map(c => <label key={c.id} className="mt-4 block text-sm">{c.label}<Textarea maxLength={500} rows={3} value={work.comparison.cells.find(cell => cell.option_id === o.id && cell.criterion_id === c.id)?.note || ''} className="mt-1" onChange={e => edit(setCell(work, o.id, c.id, e.target.value))} /></label>)}
                                 <label className="mt-2 flex min-h-control cursor-pointer items-center gap-2 text-sm"><input type="radio" name={`${id}-choice`} checked={work.comparison.chosen === o.id} onChange={() => edit({ ...work, comparison: { ...work.comparison, chosen: o.id } })} />{l('choice')}</label>
                                 <p className="break-words text-xs text-ink-muted">{l('source')}: {o.source || l('personal')}</p>
                                 {removeButton(o.title, () => edit(removeOption(work, o.id)))}
@@ -610,7 +611,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             {work.comparison.options.length > 0 && <>
                             <p className="text-xs font-semibold text-ink-muted">{l('stepChoice')}</p>
                             <label className="flex min-h-control cursor-pointer items-center gap-2 text-sm"><input type="radio" name={`${id}-choice`} checked={!work.comparison.chosen} onChange={() => edit({ ...work, comparison: { ...work.comparison, chosen: null } })} />{l('noChoice')}</label>
-                            <label className="block text-sm">{l('reason')}<textarea maxLength={1000} rows={3} value={work.comparison.reason} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, comparison: { ...work.comparison, reason: e.target.value } })} /></label>
+                            <label className="block text-sm">{l('reason')}<Textarea maxLength={1000} rows={3} value={work.comparison.reason} className="mt-1" onChange={e => edit({ ...work, comparison: { ...work.comparison, reason: e.target.value } })} /></label>
                             </>}
                         </>}
                     </fieldset>}
@@ -629,33 +630,12 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
         </div>, document.body)}
 
         {/* Modal picker for card illustrations */}
-        {pickingImageCardId && createPortal(
-            <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/50 p-4">
-                <div
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="card-image-picker-title"
-                    className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-card bg-surface shadow-modal overflow-hidden"
-                >
-                    <div className="flex items-center justify-between border-b border-line px-6 py-4">
-                        <h3 id="card-image-picker-title" className="text-base font-semibold text-ink">
-                            {l('selectImage')}
-                        </h3>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            className="h-9 w-9 p-0 text-ink-muted hover:text-ink"
-                            onClick={() => setPickingImageCardId(null)}
-                            aria-label={l('close')}
-                        >
-                            <X className="h-5 w-5" aria-hidden="true" />
-                        </Button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-6">
+        {pickingImageCardId && <Dialog title={l('selectImage')} closeLabel={l('close')} onClose={() => setPickingImageCardId(null)}>
+            <DialogBody>
                         <div className="mb-4">
-                            <button
+                            <Button
                                 type="button"
+                                variant="secondary"
                                 onClick={() => {
                                     if (pickingImageCardId === 'draft') {
                                         setDraftCardImage('');
@@ -664,11 +644,10 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                     }
                                     setPickingImageCardId(null);
                                 }}
-                                className="inline-flex min-h-control items-center gap-2 rounded-control border border-line-strong bg-surface px-4 py-2 text-xs text-ink-body hover:bg-surface-sunken"
                             >
                                 <Trash2 className="h-3.5 w-3.5 text-danger" aria-hidden="true" />
                                 {l('removeImage')}
-                            </button>
+                            </Button>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
@@ -690,7 +669,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                             }
                                             setPickingImageCardId(null);
                                         }}
-                                        className={`group flex flex-col items-center rounded-card border p-2 text-left transition-all hover:shadow-card ${
+                                        className={`group flex flex-col items-center rounded-card border p-2 text-left transition-all ${
                                             isSelected
                                                 ? 'border-brand bg-brand-soft/50 ring-2 ring-brand/30'
                                                 : 'border-line bg-surface-sunken/40 hover:border-brand-line hover:bg-surface'
@@ -713,10 +692,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 );
                             })}
                         </div>
-                    </div>
-                </div>
-            </div>,
-            document.body
-        )}
+            </DialogBody>
+        </Dialog>}
     </>;
 }

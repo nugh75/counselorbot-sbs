@@ -27,7 +27,7 @@ export function TimelineCalendar({ items, locale, onOpen }: { items: TimelineIte
     const label = (item: TimelineItem) => item.dateMode === 'period'
         ? `${item.start ? display(item.start) : l('openStart')} → ${item.end ? display(item.end) : l('openEnd')}`
         : display(item.start!);
-    return <section aria-label={l('calendarView')} className="min-w-0 space-y-4 rounded-card border border-line p-4 sm:p-6">
+    return <section aria-label={l('calendarView')} className="min-w-0 space-y-4 border-t border-line pt-4">
         <h3 className="font-semibold">{l('calendarView')}</h3>
         <div className="hidden md:block">
             <div className="relative ml-[35%] h-7 border-b border-line-strong text-xs text-ink-muted">{[...new Set([low, high])].map(value => <span key={value} className="absolute -translate-x-1/2 whitespace-nowrap" style={{ left: `${(value - left) / (right - left) * 100}%` }}>{display(new Date(value).toISOString().slice(0, 10))}</span>)}</div>
