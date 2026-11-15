@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { teacherAreaName, teacherAreaDescription } from '../src/lib/i18n-teacher-area.ts';
-import { teacherAreaImages } from '../src/lib/teacher-area.ts';
+import { teacherAreaIllustrations } from '../src/lib/teacher-area.ts';
 
 const read = path => readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8');
 
@@ -27,8 +27,8 @@ test('pages without an area header now mount it', () => {
     assert.match(read('app/profilo/classi/[id]/forum/page.tsx'), /PersonalAreaHeader slug="classi"/);
 });
 
-test('dispositivi slug has name, description and image in every language', () => {
-    assert.ok(teacherAreaImages.dispositivi);
+test('dispositivi slug has name, description and illustration in every language', () => {
+    assert.ok(teacherAreaIllustrations.dispositivi);
     for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
         assert.ok(teacherAreaName(lang, 'dispositivi'));
         assert.ok(teacherAreaDescription(lang, 'dispositivi'));

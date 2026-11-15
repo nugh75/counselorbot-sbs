@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import Image from 'next/image';
+import ToolIllustration from '@/components/ui/ToolIllustration';
 import Link from 'next/link';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { personalAreaDescription, personalAreaName, personalAreaText } from '@/lib/i18n-personal-area';
-import { personalAreaImages, type PersonalAreaSlug } from '@/lib/personal-area';
+import { personalAreaIllustrations, type PersonalAreaSlug } from '@/lib/personal-area';
 import { personalSlugEnabled, personalToolAccessText } from '@/lib/personal-tool-access';
 import { usePersonalToolAccess } from '@/lib/use-personal-tool-access';
 import { Callout } from '@/components/ui/Callout';
@@ -32,7 +32,7 @@ export function PersonalAreaHeader({ slug }: { slug: PersonalAreaSlug }) {
                 headingRef={heading}
                 title={personalAreaName(lang, slug)}
                 subtitle={personalAreaDescription(lang, slug)}
-                icon={<Image src={personalAreaImages[slug]} alt="" width={72} height={72} className="h-16 w-16 shrink-0 object-contain sm:h-18 sm:w-18" />}
+                icon={<ToolIllustration id={personalAreaIllustrations[slug]} className="h-16 w-16 shrink-0 object-contain sm:h-18 sm:w-18" />}
             />
             {!personalSlugEnabled(access, slug) && <Callout title={personalToolAccessText(lang, 'disabledTitle')}>
                 {personalToolAccessText(lang, 'disabledBody')}

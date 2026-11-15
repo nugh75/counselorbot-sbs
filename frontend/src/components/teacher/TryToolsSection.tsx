@@ -6,7 +6,7 @@ import ToolIllustration from '@/components/ui/ToolIllustration';
 import { useI18n } from '@/lib/i18n-context';
 import { RoleBadge } from '@/components/ui/RoleBadge';
 import { teacherAreaText } from '@/lib/i18n-teacher-area';
-import { teacherAreaImages } from '@/lib/teacher-area';
+import { teacherAreaIllustrations } from '@/lib/teacher-area';
 import { resolveActiveStudentTools } from '@/lib/tool-catalog';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
 
@@ -21,7 +21,7 @@ export function TryToolsSection() {
 
     return (
         <EntrySection id="teacher-try-tools-heading" title={l('tryToolsTitle')} subtitle={l('tryToolsDescription')} testId="teacher-try-tools-section">
-            <EntryLink idPrefix="teacher-gym" id="taccuini-prova" href="/docente/taccuini-prova" image={teacherAreaImages['taccuini-prova']}
+            <EntryLink idPrefix="teacher-gym" id="taccuini-prova" href="/docente/taccuini-prova" illustration={<ToolIllustration id={teacherAreaIllustrations['taccuini-prova']} className="h-16 w-16 shrink-0 object-contain md:h-18 md:w-18" />}
                 name={l('practiceGymPrimaryTitle')} description={l('practiceGymPrimaryDescription')}
                 badge={<RoleBadge role="teacher">{l('practiceGymBadge')}</RoleBadge>} />
             {tools.map(q => (

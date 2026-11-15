@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { personalAreaGroups, personalAreaImages } from '../src/lib/personal-area.ts';
+import { personalAreaGroups } from '../src/lib/personal-area.ts';
 import { personalAreaName, personalAreaText, personalAreaDescription } from '../src/lib/i18n-personal-area.ts';
 import { personalToolAccessText } from '../src/lib/personal-tool-access.ts';
 
@@ -51,8 +51,8 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
                     const link = nav.getByRole('link', { name: personalAreaName(lang, slug), exact: true });
                     assert.equal(await link.getAttribute('href'), `/profilo/${slug}`);
                     assert.ok((await link.innerText()).includes(personalAreaDescription(lang, slug)));
-                    assert.equal(await link.locator('img').getAttribute('alt'), '');
-                    assert.ok((await link.locator('img').getAttribute('src')).includes(encodeURIComponent(personalAreaImages[slug])));
+                    assert.equal(await link.locator('img').count(), 0);
+                    assert.equal(await link.locator('svg[aria-hidden="true"][viewBox="0 0 96 96"]').count(), 1);
                 }
             }
             for (const img of await home.locator('img').all()) { await img.scrollIntoViewIfNeeded(); await img.evaluate(el => el.decode()); }

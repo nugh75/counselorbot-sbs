@@ -1,5 +1,7 @@
 // Struttura dell'Area docenti, speculare a personal-area.ts: slugs raggruppati
-// per scopo, immagini d'ingresso e testi in i18n-teacher-area.ts.
+// per scopo, illustrazioni d'ingresso e testi in i18n-teacher-area.ts.
+import type { AreaIllustrationId } from './tool-illustrations';
+
 export const teacherAreaSlugs = ['istituti', 'classi', 'compilazioni', 'piani-operativi', 'incontri', 'assegnazioni', 'catalogo-obiettivi', 'strategie', 'materiali', 'orientamento', 'somministrazioni', 'dispositivi', 'taccuino', 'taccuini-prova'] as const;
 export type TeacherAreaSlug = (typeof teacherAreaSlugs)[number];
 
@@ -9,19 +11,19 @@ export const teacherAreaGroups = [
     { id: 'research', slugs: ['somministrazioni'] },
 ] as const;
 
-export const teacherAreaImages: Record<TeacherAreaSlug, string> = {
-    taccuino: '/images/platform/su-di-me.png',
-    'taccuini-prova': '/images/platform/chat-guidata.png',
-    istituti: '/images/platform/classi.png',
-    classi: '/images/platform/classi.png',
-    compilazioni: '/images/platform/compilazioni.png',
-    'piani-operativi': '/images/platform/percorsi-classe.png',
-    incontri: '/images/platform/incontri.png',
-    assegnazioni: '/images/platform/assegnazioni.png',
-    'catalogo-obiettivi': '/images/cards/focus_goal.png',
-    strategie: '/images/cards/mind_mapping.png',
-    materiali: '/images/cards/library_hall.png',
-    orientamento: '/images/platform/bussola.png',
-    somministrazioni: '/images/platform/eventi.png',
-    dispositivi: '/images/platform/classi.png',
+export const teacherAreaIllustrations: Record<TeacherAreaSlug, AreaIllustrationId> = {
+    taccuino: 'area-notebook',
+    'taccuini-prova': 'area-test-students',
+    istituti: 'area-school',
+    classi: 'area-classes',
+    compilazioni: 'area-responses',
+    'piani-operativi': 'area-plan',
+    incontri: 'area-meetings',
+    assegnazioni: 'area-assignments',
+    'catalogo-obiettivi': 'area-goal',
+    strategie: 'area-strategy',
+    materiali: 'area-library',
+    orientamento: 'area-compass',
+    somministrazioni: 'area-research',
+    dispositivi: 'area-devices',
 };

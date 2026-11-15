@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import Image from 'next/image';
+import ToolIllustration from '@/components/ui/ToolIllustration';
 import { useI18n } from '@/lib/i18n-context';
 import { teacherAreaName, teacherAreaDescription } from '@/lib/i18n-teacher-area';
-import { teacherAreaImages, type TeacherAreaSlug } from '@/lib/teacher-area';
+import { teacherAreaIllustrations, type TeacherAreaSlug } from '@/lib/teacher-area';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { TeacherBreadcrumbs } from './TeacherBreadcrumbs';
 import { getTeacherBreadcrumbsForSlug, type TeacherBreadcrumbItem } from '@/lib/teacher-breadcrumbs';
@@ -31,7 +31,7 @@ export function TeacherAreaHeader({ slug, customBreadcrumbs, extra }: TeacherAre
                 headingRef={heading}
                 title={teacherAreaName(lang, slug)}
                 subtitle={teacherAreaDescription(lang, slug)}
-                icon={<Image src={teacherAreaImages[slug]} alt="" width={72} height={72} className="h-16 w-16 shrink-0 object-contain sm:h-18 sm:w-18" />}
+                icon={<ToolIllustration id={teacherAreaIllustrations[slug]} className="h-16 w-16 shrink-0 object-contain sm:h-18 sm:w-18" />}
             />
         </header>
     );
