@@ -7,11 +7,11 @@ import { ArrowRight } from 'lucide-react';
 export function EntrySection({ id, title, subtitle, testId, children }: {
     id: string; title: string; subtitle?: string; testId?: string; children: ReactNode;
 }) {
-    const heading = <h2 id={id} className={`${subtitle ? '' : 'border-b border-line-strong pb-2 '}text-lg font-semibold text-ink`}>{title}</h2>;
+    const heading = <h2 id={id} className={`${subtitle ? '' : 'border-b-2 border-line-section pb-2 '}text-xl font-semibold text-ink`}>{title}</h2>;
     return (
         <section aria-labelledby={id} data-testid={testId}>
             {subtitle
-                ? <div className="border-b border-line-strong pb-2">{heading}<p className="mt-1 text-xs text-ink-muted">{subtitle}</p></div>
+                ? <div className="border-b-2 border-line-section pb-2">{heading}<p className="mt-1 text-xs text-ink-muted">{subtitle}</p></div>
                 : heading}
             <nav aria-labelledby={id} className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 md:grid-cols-2">{children}</nav>
         </section>

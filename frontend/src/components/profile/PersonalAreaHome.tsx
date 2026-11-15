@@ -172,7 +172,7 @@ export function PersonalAreaHome() {
     }, []);
 
     return (
-        <div className="space-y-6" data-personal-area-home>
+        <div className="space-y-12" data-personal-area-home>
             {!isClassContentHidden(access) && currentPath && (
                 <section aria-labelledby="profile-class-path-title">
                     <h2 id="profile-class-path-title" className="sr-only">
@@ -183,7 +183,7 @@ export function PersonalAreaHome() {
             )}
 
             <section aria-labelledby="profile-instruments-title" className="space-y-4">
-                <h2 id="profile-instruments-title" className="border-b border-line-strong pb-2 text-lg font-semibold text-ink">{t('base.instruments.title')}</h2>
+                <h2 id="profile-instruments-title" className="border-b-2 border-line-section pb-2 text-xl font-semibold text-ink">{t('base.instruments.title')}</h2>
                 <InstrumentCatalog
                     id="profile-instrument-catalog"
                     lastCompiledAt={lastCompiledAt}
@@ -196,7 +196,7 @@ export function PersonalAreaHome() {
 
             <div
                 id="personal-catalog-section"
-                className="space-y-6"
+                className="space-y-12"
             >
                 {groups.map(group => <EntrySection key={group.id} id={`personal-group-${group.id}`} title={personalAreaText(lang, group.id)}>
                     {group.slugs.map(slug => <EntryLink key={slug} idPrefix="personal" id={slug} href={`/profilo/${slug}`} illustration={<ToolIllustration id={personalAreaIllustrations[slug]} className="h-16 w-16 shrink-0 object-contain md:h-18 md:w-18" />}
