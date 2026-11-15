@@ -1,7 +1,7 @@
 # Handoff feature/flat-guided-path-926
 
 ## Stato
-Implementazione di #926 completa; commit e PR in corso.
+Implementazione di #926 completa; PR #941 aperta, check non desktop verdi (documentation, eslint).
 
 ## Fatto
 - CounselorSelector: elenco a righe con filetto, una riga di metadati «·» al posto delle 9 pillole, niente ombre, avvisi in Callout, proposta sotto filetto (non box nel box).
