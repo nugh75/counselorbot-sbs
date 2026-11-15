@@ -1,18 +1,26 @@
 # CounselorBot
 
-Ideazione, progettazione e sviluppo software: **Daniele Dragoni**.
+### Authorship, Copyright and Licensing
 
-Copyright © 2026 Daniele Dragoni.
+**CounselorBot** was independently conceived, designed, and developed by **Daniele Dragoni**, also known as **Nugh75**.
 
-Tutti i diritti riservati, salvo quelli espressamente concessi mediante la licenza applicabile.
+**Daniele Dragoni is the original author of CounselorBot.**
 
-L'utilizzo, la modifica e la distribuzione del software sono soggetti alle condizioni della relativa licenza. L'eventuale concessione di una licenza non comporta il trasferimento della paternità dell'opera.
+Copyright © 2026 Daniele Dragoni (Nugh75).
 
-## Licenze
+All rights reserved, except for those expressly granted under the applicable software license.
 
-CounselorBot è distribuito con doppia licenza:
+The use, reproduction, modification, and distribution of CounselorBot are subject to the terms and conditions of the applicable license.
 
-1. **GNU Affero General Public License v3.0 (AGPL-3.0)**, testo integrale nel file [`LICENSE`](LICENSE). Chi usa, modifica o offre il software come servizio in rete deve rispettarne tutte le condizioni, compresa la pubblicazione del codice sorgente delle modifiche.
-2. **Licenza commerciale separata**, per gli usi non compatibili con l'AGPL-3.0 (per esempio prodotti o servizi che non pubblicano il codice sorgente). Si concede su accordo scritto con il titolare: contattare l'autore tramite [github.com/nugh75](https://github.com/nugh75).
+The granting of a software license does not constitute a transfer of authorship or copyright ownership.
 
-I contributi esterni sono accettati solo se il contributore concede al titolare i diritti necessari a distribuirli con entrambe le licenze.
+The copyright holder reserves the right to offer CounselorBot under separate commercial licensing terms.
+
+### Licenses
+
+CounselorBot is dual-licensed:
+
+1. **GNU Affero General Public License v3.0 (AGPL-3.0)**, full text in [`LICENSE`](LICENSE). Anyone who uses, modifies, or offers the software as a network service must comply with all its terms, including publishing the source code of their modifications.
+2. **A separate commercial license**, for uses not compatible with the AGPL-3.0 (for example products or services that do not publish their source code), granted by written agreement with the copyright holder: contact the author via [github.com/nugh75](https://github.com/nugh75).
+
+External contributions are accepted only if the contributor grants the copyright holder the rights needed to distribute them under both licenses.
