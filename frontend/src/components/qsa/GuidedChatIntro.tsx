@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { BookOpen, ChevronLeft, ChevronRight, Compass, ExternalLink, X } from 'lucide-react';
+import { Callout } from '@/components/ui/Callout';
 import { guidedIntroText, guideSectionFor } from '@/lib/i18n-guided-intro';
 import { guideTaskCopy } from '@/lib/i18n-guide-tasks';
 import { legacyGuideTask, guideTaskHref } from '@/lib/guide-tasks';
@@ -32,7 +33,7 @@ export function GuidedChatIntro({ locale, questionnaireType, stepNavigation = tr
     const text = (key: Parameters<typeof guidedIntroText>[1]) => guidedIntroText(locale, key);
     const guideButton = (
         <button ref={trigger} type="button" onClick={() => setGuideOpen(true)} aria-haspopup="dialog"
-            className="inline-flex min-h-control items-center gap-1.5 rounded-md px-3 text-xs font-semibold text-teal-900 underline-offset-2 hover:bg-teal-100 hover:underline">
+            className="inline-flex min-h-control items-center gap-1.5 rounded-md px-3 text-xs font-semibold text-link underline-offset-2 hover:bg-brand-soft hover:underline">
             <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />{text('openGuide')}
         </button>
     );
@@ -41,26 +42,28 @@ export function GuidedChatIntro({ locale, questionnaireType, stepNavigation = tr
     if (hidden) return <div className="mx-auto flex w-full max-w-2xl justify-center">{guideButton}{dialog}</div>;
 
     return (
-        <section aria-labelledby="guided-intro-title" data-testid="guided-intro" className="mx-auto w-full max-w-2xl rounded-lg border border-teal-200 bg-teal-50/60 px-4 py-3 text-left">
-            <h4 id="guided-intro-title" className="flex items-center gap-2 text-sm font-semibold text-teal-900">
-                <Compass className="h-4 w-4 shrink-0" aria-hidden="true" />{text('title')}
-            </h4>
-            <p className="mt-1.5 text-xs leading-relaxed text-teal-900/80">{text('purpose')}</p>
-            <p className="mt-1 text-xs leading-relaxed text-teal-900/80">{text('duration')}</p>
-            <p className="mt-1 text-xs leading-relaxed text-teal-900/80">{text('todo')}</p>
-            {stepNavigation && <>
-                <p className="mt-1 hidden text-xs leading-relaxed text-teal-900/80 lg:block">
-                    <ChevronLeft className="inline h-3.5 w-3.5" aria-hidden="true" /><ChevronRight className="inline h-3.5 w-3.5" aria-hidden="true" /> {text('buttonsDesktop')}
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-teal-900/80 lg:hidden">
-                    <ChevronLeft className="inline h-3.5 w-3.5" aria-hidden="true" /><ChevronRight className="inline h-3.5 w-3.5" aria-hidden="true" /> {text('buttonsMobile')}
-                </p>
-            </>}
-            <p className="mt-1 text-xs leading-relaxed text-teal-900/80">{text('close')}</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-                {guideButton}
-                <button type="button" onClick={dismiss} className="min-h-control rounded-md px-3 text-xs font-semibold text-teal-900 hover:bg-teal-100">{text('dismiss')}</button>
-            </div>
+        <section aria-labelledby="guided-intro-title" data-testid="guided-intro" className="mx-auto w-full max-w-2xl text-left">
+            <Callout variant="info" icon={Compass}>
+                <div className="space-y-1 text-xs leading-relaxed text-ink-body">
+                    <h4 id="guided-intro-title" className="text-sm font-semibold text-ink">{text('title')}</h4>
+                    <p>{text('purpose')}</p>
+                    <p>{text('duration')}</p>
+                    <p>{text('todo')}</p>
+                    {stepNavigation && <>
+                        <p className="hidden lg:block">
+                            <ChevronLeft className="inline h-3.5 w-3.5" aria-hidden="true" /><ChevronRight className="inline h-3.5 w-3.5" aria-hidden="true" /> {text('buttonsDesktop')}
+                        </p>
+                        <p className="lg:hidden">
+                            <ChevronLeft className="inline h-3.5 w-3.5" aria-hidden="true" /><ChevronRight className="inline h-3.5 w-3.5" aria-hidden="true" /> {text('buttonsMobile')}
+                        </p>
+                    </>}
+                    <p>{text('close')}</p>
+                    <div className="flex flex-wrap gap-2">
+                        {guideButton}
+                        <button type="button" onClick={dismiss} className="min-h-control rounded-md px-3 text-xs font-semibold text-link hover:bg-brand-soft">{text('dismiss')}</button>
+                    </div>
+                </div>
+            </Callout>
             {dialog}
         </section>
     );

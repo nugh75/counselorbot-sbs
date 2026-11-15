@@ -172,10 +172,10 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
         <div className="space-y-1 p-2">
             {adding ? (
                 <form
-                    className="mb-2 rounded-lg border border-teal-200 bg-teal-50/60 p-2"
+                    className="mb-2 rounded-lg border border-brand-line bg-brand-soft p-2"
                     onSubmit={(event) => { event.preventDefault(); void addBranch(); }}
                 >
-                    <label htmlFor="idea-new-branch" className="mb-1 block text-xs font-medium text-teal-900">
+                    <label htmlFor="idea-new-branch" className="mb-1 block text-xs font-medium text-link">
                         {t(starting ? 'idea.branches.startName' : 'idea.branches.name')}
                     </label>
                     <div className="flex gap-1">
@@ -185,12 +185,12 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                             onChange={(event) => setBranchLabel(event.target.value)}
                             maxLength={80}
                             autoFocus
-                            className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                            className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                         />
                         <button
                             type="submit"
                             disabled={!branchLabel.trim() || moving !== null}
-                            className="rounded-md bg-teal-700 p-1.5 text-white hover:bg-teal-800 disabled:opacity-50"
+                            className="rounded-md bg-brand p-1.5 text-ink-on-brand hover:bg-brand-hover disabled:opacity-50"
                             aria-label={t(starting ? 'idea.branches.start' : 'idea.branches.create')}
                         >
                             {moving === 'new'
@@ -207,14 +207,14 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                         </button>
                     </div>
                     {createFailed && (
-                        <p className="mt-1 text-xs text-rose-700">{t('idea.branches.error')}</p>
+                        <p className="mt-1 text-xs text-danger-ink">{t('idea.branches.error')}</p>
                     )}
                 </form>
             ) : (
                 <button
                     type="button"
                     onClick={() => setAdding(true)}
-                    className="mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-teal-300 px-2 py-2 text-xs font-medium text-teal-800 hover:bg-teal-50"
+                    className="mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-brand-line px-2 py-2 text-xs font-medium text-link hover:bg-brand-soft"
                 >
                     <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                     {t(starting ? 'idea.branches.start' : 'idea.branches.create')}
@@ -239,7 +239,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                                 className={cn(
                                     'flex min-w-0 flex-1 items-start gap-2 rounded-lg py-2 pr-2 text-left text-xs transition-colors',
                                     row.is_focus
-                                        ? 'bg-teal-50 text-teal-900 ring-1 ring-teal-300'
+                                        ? 'bg-brand-soft text-link ring-1 ring-brand-line'
                                         : 'text-slate-600 hover:bg-slate-50 disabled:opacity-60',
                                 )}
                             >
@@ -247,9 +247,9 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                                     {moving === row.id
                                         ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                                         : row.closed
-                                            ? <CheckCircle2 className="h-3.5 w-3.5 text-teal-600" aria-hidden="true" />
+                                            ? <CheckCircle2 className="h-3.5 w-3.5 text-brand" aria-hidden="true" />
                                             : row.is_focus
-                                                ? <Target className="h-3.5 w-3.5 text-teal-600" aria-hidden="true" />
+                                                ? <Target className="h-3.5 w-3.5 text-brand" aria-hidden="true" />
                                                 : <span className="ml-1 block h-1.5 w-1.5 rounded-full bg-slate-300" />}
                                 </span>
                                 <span className="min-w-0 flex-1">
@@ -272,7 +272,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                                         </span>
                                     )}
                                     {row.closed && row.conclusion && (
-                                        <span className="mt-0.5 block text-xs text-teal-700">{row.conclusion}</span>
+                                        <span className="mt-0.5 block text-xs text-link">{row.conclusion}</span>
                                     )}
                                     {row.closed && (
                                         <span
@@ -339,7 +339,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                                         type="button"
                                         onClick={() => setDeleting(row.id)}
                                         disabled={moving !== null}
-                                        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                                        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-danger-ink hover:bg-danger-soft disabled:opacity-50"
                                     >
                                         <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                                         {t('idea.branches.delete')}
@@ -349,15 +349,15 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                         )}
                         {deleting === row.id && (
                             <div
-                                className="mb-1 rounded-lg border border-rose-200 bg-rose-50/60 p-2"
+                                className="mb-1 rounded-lg border border-danger-line bg-danger-soft p-2"
                                 style={{ marginLeft: `${0.5 + row.depth * 1.1}rem` }}
                             >
-                                <p className="mb-1 text-xs text-rose-900">{t('idea.branches.deleteAsk')}</p>
+                                <p className="mb-1 text-xs text-danger-ink">{t('idea.branches.deleteAsk')}</p>
                                 <button
                                     type="button"
                                     onClick={() => void removeBranch(row, false)}
                                     disabled={moving !== null}
-                                    className="mb-1 block w-full rounded-md border border-rose-200 bg-white px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-rose-50 disabled:opacity-50"
+                                    className="mb-1 block w-full rounded-md border border-danger-line bg-white px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-danger-soft disabled:opacity-50"
                                 >
                                     {t('idea.branches.deleteOnly')}
                                 </button>
@@ -365,7 +365,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                                     type="button"
                                     onClick={() => void removeBranch(row, true)}
                                     disabled={moving !== null}
-                                    className="mb-1 block w-full rounded-md border border-rose-200 bg-white px-2 py-1.5 text-left text-xs text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                                    className="mb-1 block w-full rounded-md border border-danger-line bg-white px-2 py-1.5 text-left text-xs text-danger-ink hover:bg-danger-soft disabled:opacity-50"
                                 >
                                     {t('idea.branches.deleteAll')}
                                 </button>
@@ -379,7 +379,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                             </div>
                         )}
                         {commandFailed === row.id && (
-                            <p className="mb-1 ml-6 text-xs text-rose-700">{t('idea.branches.commandError')}</p>
+                            <p className="mb-1 ml-6 text-xs text-danger-ink">{t('idea.branches.commandError')}</p>
                         )}
                     </div>
                 );

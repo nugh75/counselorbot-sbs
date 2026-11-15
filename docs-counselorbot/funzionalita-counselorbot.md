@@ -411,6 +411,16 @@ testi sotto `text-xs` (`text-[11px]`, `text-[10px]`, `text-[9px]`) diventano `te
 triangoli) sono sostituiti da `ArrowLeft`, `ArrowRight` e `ChevronDown` di `lucide-react`.
 Nessun cambio di comportamento.
 
+**Riquadri IDEA e introduzione della chat sui colori del brand (#927).** Il percorso IDEA
+(barra dei rami, albero dei rami, mappa, fonti e pannello laterale) e il riquadro
+introduttivo della chat guidata non usano più la seconda tinta teal: sfondi, bordi, testi,
+barre di avanzamento e caselle passano ai token del brand (petrol), le parti di
+eliminazione al rosso di stato `danger`, così restano leggibili anche in tema scuro (il
+teal non aveva valori per il tema scuro). Il riquadro introduttivo è il `Callout`
+condiviso, con la stessa icona, gli stessi testi e gli stessi pulsanti («Apri la guida»,
+«Ho capito»); i comandi principali di ricerca e salvataggio usano `Button`. Nessun cambio
+di comportamento.
+
 **Orientamento del docente e Catalogo obiettivi piatti (#870).** `/docente/orientamento`
 e `/docente/catalogo-obiettivi` seguono l'aspetto piatto: categorie, contenuti e proposte
 del catalogo sono righe separate da filetti (non più riquadri), i moduli di modifica e
