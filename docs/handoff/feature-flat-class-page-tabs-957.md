@@ -1,7 +1,7 @@
 # Handoff: feature/flat-class-page-tabs-957 (issue #957)
 
 ## Stato
-Implementazione completa; PR in apertura verso main.
+Completo. PR #966 aperta verso main (documentation, eslint verdi; build desktop non bloccanti).
 
 ## Fatto
 - Schede Panoramica, Orientamento, Osservazioni, Consiglio, Studenti, Registro piatte:
