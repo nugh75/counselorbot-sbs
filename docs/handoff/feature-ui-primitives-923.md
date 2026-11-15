@@ -1,7 +1,7 @@
 # Handoff: feature/ui-primitives-923 (#923)
 
 ## Stato
-Implementazione completata; verifiche mirate in corso, poi commit, push e PR verso main.
+Implementazione completata e verificata; tre commit, PR aperta verso main (non mergiata).
 
 ## Fatto
 - Nuove primitive in `frontend/src/components/ui/`: `Field` + `Input`/`Select`/`Textarea`, `StatusBadge`, `Dialog` (+ `DialogBody`, `DialogFooter`); `buttonClasses` e `ButtonLink` in `Button.tsx`.
@@ -12,7 +12,9 @@ Implementazione completata; verifiche mirate in corso, poi commit, push e PR ver
 
 ## Verifiche
 - `node --test --experimental-strip-types` su `ui-primitives-tokens`, `field-wiring`, `practice-notebooks`: 27/27; `tests/targeted-goals.test.mjs`: 3/3.
-- tsc ed eslint sui file toccati: vedi PR.
+- `tsc --noEmit`: nessun errore nei file toccati (solo gli errori PNG noti: `next-env.d.ts` assente nel worktree).
+- eslint sui file toccati: 0 errori; 2 avvisi preesistenti (direttive disable inutilizzate in `GoalDialog.tsx`, righe non toccate).
+- `make guidance-check`: ok.
 - Nessun controllo visivo (niente dev server per vincolo del volume lento / 8 GB).
 
 ## Decisioni
