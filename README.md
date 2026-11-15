@@ -150,3 +150,21 @@ Main backend route groups:
 - `/site-chat/*`
 - `/pqbl/*`
 - `/admin/*`
+
+## Author and license
+
+**CounselorBot** was independently conceived, designed, and developed by **Daniele Dragoni**, also known as **Nugh75**.
+
+**Daniele Dragoni is the original author of CounselorBot.**
+
+Copyright © 2026 Daniele Dragoni (Nugh75).
+
+All rights reserved, except for those expressly granted under the applicable software license.
+
+The use, reproduction, modification, and distribution of CounselorBot are subject to the terms and conditions of the applicable license.
+
+The granting of a software license does not constitute a transfer of authorship or copyright ownership.
+
+The copyright holder reserves the right to offer CounselorBot under separate commercial licensing terms.
+
+Dual-licensed: AGPL-3.0 (see [`LICENSE`](LICENSE)) or a separate commercial license by written agreement. Details: [`NOTICE.md`](NOTICE.md).
