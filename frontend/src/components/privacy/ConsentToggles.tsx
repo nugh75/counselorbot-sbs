@@ -140,7 +140,7 @@ export function ConsentToggles({ purposes, documents, choices, canEdit, choicesL
                     {t('privacy.purposes.title')}
                 </h2>
                 <p className="max-w-3xl text-sm text-ink-body">{t('privacy.purposes.intro')}</p>
-                <p className="text-xs font-medium text-ink-muted">{t('privacy.purposes.onlyExplicit')}</p>
+                <p className="text-xs font-semibold text-ink-muted">{t('privacy.purposes.onlyExplicit')}</p>
             </div>
 
             <ul>
@@ -181,7 +181,7 @@ export function ConsentToggles({ purposes, documents, choices, canEdit, choicesL
                                                 <span className="mt-1 block text-sm text-ink-body">{description.text}</span>
                                             )}
                                             {description.pending && (
-                                                <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-warning-ink">
+                                                <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-warning-ink">
                                                     <ShieldQuestion className="h-3.5 w-3.5" aria-hidden />
                                                     {t('privacy.purposes.descriptionPending')}
                                                 </span>
@@ -194,19 +194,19 @@ export function ConsentToggles({ purposes, documents, choices, canEdit, choicesL
 
                             <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
                                 <div className="flex gap-1">
-                                    <dt className="font-medium">{t('privacy.purposes.legalBasis')}:</dt>
+                                    <dt className="font-semibold">{t('privacy.purposes.legalBasis')}:</dt>
                                     <dd>{t(legalBasisLabelKey(purpose.legal_basis))}</dd>
                                 </div>
                                 <div className="flex gap-1">
-                                    <dt className="font-medium">{t('privacy.purposes.requiresConsent')}:</dt>
+                                    <dt className="font-semibold">{t('privacy.purposes.requiresConsent')}:</dt>
                                     <dd>{purpose.requires_consent ? t('privacy.purposes.requiresConsent') : t('privacy.purposes.noConsentRequired')}</dd>
                                 </div>
                             </dl>
 
                             {!purpose.active || purpose.legal_basis === 'undefined' ? (
-                                <p className="mt-2 text-xs font-medium text-warning-ink">{t('privacy.purposes.inactive')} · {t('privacy.purposes.undefined')}</p>
+                                <p className="mt-2 text-xs font-semibold text-warning-ink">{t('privacy.purposes.inactive')} · {t('privacy.purposes.undefined')}</p>
                             ) : !document ? (
-                                <p className="mt-2 text-xs font-medium text-warning-ink">{t('privacy.purposes.documentMissing')}</p>
+                                <p className="mt-2 text-xs font-semibold text-warning-ink">{t('privacy.purposes.documentMissing')}</p>
                             ) : null}
 
                             <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -217,7 +217,7 @@ export function ConsentToggles({ purposes, documents, choices, canEdit, choicesL
                                 {message && (
                                     <p
                                         role={message.kind === 'error' ? 'alert' : 'status'}
-                                        className={message.kind === 'error' ? 'text-sm font-medium text-danger-ink' : 'text-sm font-medium text-success-ink'}
+                                        className={message.kind === 'error' ? 'text-sm font-semibold text-danger-ink' : 'text-sm font-semibold text-success-ink'}
                                     >
                                         {t(message.key)}
                                     </p>

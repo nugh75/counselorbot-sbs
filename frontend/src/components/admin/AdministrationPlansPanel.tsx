@@ -13,6 +13,8 @@ import { Button, SPIN } from '@/components/ui/Button';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
+import { Field, Input, Select, Textarea } from '@/components/ui/Field';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 type LocaleCode = 'it' | 'en' | 'es' | 'sv';
 
@@ -516,73 +518,58 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
         win.document.close();
     };
 
-    const inputCls = 'mt-1 h-9 w-full rounded-control border border-line-strong bg-surface px-4 text-sm text-ink focus:border-brand';
-
     const renderForm = () => (
         <Card as="section" variant="flat">
             <div className="space-y-4">
                 {replacingPlan && <Callout variant="warning">{t('admin.ap.replaceHint', {title: replacingPlan.title})}</Callout>}
-                <label className="block text-xs font-semibold text-ink-muted">
-                    {t('admin.ap.form.title')}
-                    <input
-                        className={inputCls}
-                        value={form.title}
-                        onChange={(event) => setForm({ ...form, title: event.target.value })}
-                    />
-                </label>
+                <Field label={t('admin.ap.form.title')}>
+                    <Input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
+                </Field>
 
                 <section className="border-t border-line pt-4">
                     <h3 className="text-xs font-semibold text-ink-muted">{t('admin.ap.section.details')}</h3>
                     <div className="mt-4 grid gap-4 md:grid-cols-3">
-                        <label className="text-xs font-semibold text-ink-muted">
-                            {t('admin.ap.instrument')}
-                            <select className={inputCls} value={form.instrument_code} onChange={(event) => setForm({ ...form, instrument_code: event.target.value })}>
+                        <Field label={t('admin.ap.instrument')}>
+                            <Select value={form.instrument_code} onChange={(event) => setForm({ ...form, instrument_code: event.target.value })}>
                                 {INSTRUMENTS.map((instrument) => <option key={instrument} value={instrument}>{instrument}</option>)}
-                            </select>
-                        </label>
-                        <label className="text-xs font-semibold text-ink-muted">
-                            {t('admin.ap.class')}
-                            <select className={inputCls} disabled={Boolean(replacingPlan?.group_id)} value={form.group_id} onChange={(event) => setForm({ ...form, group_id: event.target.value })}>
+                            </Select>
+                        </Field>
+                        <Field label={t('admin.ap.class')}>
+                            <Select disabled={Boolean(replacingPlan?.group_id)} value={form.group_id} onChange={(event) => setForm({ ...form, group_id: event.target.value })}>
                                 <option value="">{t('admin.ap.noClass')}</option>
                                 {groups.map((group) => <option key={group.id} value={String(group.id)}>{group.name} ({group.code})</option>)}
-                            </select>
-                        </label>
-                        <label className="text-xs font-semibold text-ink-muted">
-                            {t('admin.ap.language')}
-                            <select className={inputCls} value={form.locale} onChange={(event) => setForm({ ...form, locale: event.target.value as LocaleCode })}>
+                            </Select>
+                        </Field>
+                        <Field label={t('admin.ap.language')}>
+                            <Select value={form.locale} onChange={(event) => setForm({ ...form, locale: event.target.value as LocaleCode })}>
                                 {LOCALES.map((locale) => <option key={locale.value} value={locale.value}>{locale.label}</option>)}
-                            </select>
-                        </label>
-                        <label className="text-xs font-semibold text-ink-muted">
-                            {t('admin.readings.audience')}
-                            <select className={inputCls} value={form.school_level}
-                                onChange={(event) => setForm({ ...form, school_level: event.target.value })}>
+                            </Select>
+                        </Field>
+                        <Field label={t('admin.readings.audience')}>
+                            <Select value={form.school_level} onChange={(event) => setForm({ ...form, school_level: event.target.value })}>
                                 <option value="">—</option>
                                 <option value="secondaria">{t('admin.readings.levelSecondaria')}</option>
                                 <option value="universita">{t('admin.readings.levelUniversita')}</option>
                                 <option value="adulti">{t('admin.readings.levelAdulti')}</option>
-                            </select>
-                        </label>
-                        <label className="text-xs font-semibold text-ink-muted">
-                            {t('admin.ap.status')}
-                            <select className={inputCls} value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>
+                            </Select>
+                        </Field>
+                        <Field label={t('admin.ap.status')}>
+                            <Select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>
                                 {STATUSES.filter(status => !replacingPlan || status === 'planned' || status === 'active').map((status) => <option key={status} value={status}>{t(`admin.ap.status.${status}`)}</option>)}
-                            </select>
-                        </label>
+                            </Select>
+                        </Field>
                     </div>
                 </section>
 
                 <section className="border-t border-line pt-4">
                     <h3 className="text-xs font-semibold text-ink-muted">{t('admin.ap.section.schedule')}</h3>
                     <div className="mt-4 grid gap-4 md:grid-cols-2">
-                        <label className="text-xs font-semibold text-ink-muted">
-                            {t('admin.ap.date')}
-                            <input className={inputCls} type="datetime-local" value={form.scheduled_at} onChange={(event) => setForm({ ...form, scheduled_at: event.target.value })} />
-                        </label>
-                        <label className="text-xs font-semibold text-ink-muted">
-                            {t('admin.ap.location')}
-                            <input className={inputCls} value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} />
-                        </label>
+                        <Field label={t('admin.ap.date')}>
+                            <Input type="datetime-local" value={form.scheduled_at} onChange={(event) => setForm({ ...form, scheduled_at: event.target.value })} />
+                        </Field>
+                        <Field label={t('admin.ap.location')}>
+                            <Input value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} />
+                        </Field>
                     </div>
                 </section>
 
@@ -596,9 +583,8 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                             {editingPlan.legacy_institution_code && <p>{c('legacyCode')}: <span className="font-mono">{editingPlan.legacy_institution_code}</span></p>}
                         </Callout>
                     )}
-                    <label className="mt-4 block text-xs font-semibold text-ink-muted">
-                        {c('planInstitute')}
-                        <select className={inputCls} value={form.institution_id} disabled={Boolean(replacingPlan?.group_id) || (institutes === null && !institutesFailed)}
+                    <Field className="mt-4" label={c('planInstitute')}>
+                        <Select value={form.institution_id} disabled={Boolean(replacingPlan?.group_id) || (institutes === null && !institutesFailed)}
                             onChange={(event) => setForm({ ...form, institution_id: event.target.value })}>
                             <option value="">{c('noInstitute')}</option>
                             {editingPlan?.institution_id && !institutes?.some((row) => row.id === editingPlan.institution_id) && (
@@ -609,8 +595,8 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                                     {row.name}{row.institution_code ? ` (${row.institution_code})` : ''}{row.credentials_configured ? '' : ` — ${c('credentialsMissing')}`}
                                 </option>
                             ))}
-                        </select>
-                    </label>
+                        </Select>
+                    </Field>
                     {institutesFailed && <p role="alert" className="mt-2 text-xs text-danger">{c('institutesLoadError')}</p>}
                     {editingPlan?.institution_link_state === 'needs_reconciliation' && (
                         <label className="mt-2 flex items-start gap-2 text-sm text-ink-body">
@@ -645,28 +631,26 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                                 {activeContacts.length === 0 && <p className="text-sm text-ink-muted">{t('admin.ap.noContacts')}</p>}
                             </div>
                         </section>
-                        <label className="block text-xs font-semibold text-ink-muted">
-                            {t('admin.ap.externalResearchers')}
-                            <textarea
-                                className="mt-1 min-h-[160px] w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink focus:border-brand"
+                        <Field label={t('admin.ap.externalResearchers')}>
+                            <Textarea
+                                className="min-h-[160px]"
                                 value={form.external_researchers}
                                 onChange={(event) => setForm({ ...form, external_researchers: event.target.value })}
                                 placeholder={t('admin.ap.externalResearchersPlaceholder')}
                             />
-                        </label>
+                        </Field>
                     </div>
                 </section>
 
                 <section className="border-t border-line pt-4">
                     <h3 className="text-xs font-semibold text-ink-muted">{t('admin.ap.section.notes')}</h3>
-                    <label className="mt-4 block text-xs font-semibold text-ink-muted">
-                        {t('admin.ap.notes')}
-                        <textarea
-                            className="mt-1 min-h-[80px] w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink focus:border-brand"
+                    <Field className="mt-4" label={t('admin.ap.notes')}>
+                        <Textarea
+                            className="min-h-[80px]"
                             value={form.notes}
                             onChange={(event) => setForm({ ...form, notes: event.target.value })}
                         />
-                    </label>
+                    </Field>
                 </section>
             </div>
 
@@ -741,12 +725,12 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
             {!loading && plans.length > 0 && (
                 <div className="relative">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
-                    <input
+                    <Input
                         type="search"
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder={t('admin.ap.searchPlaceholder')}
-                        className="h-control w-full rounded-control border border-line-strong bg-surface pl-8 pr-4 text-sm text-ink focus:border-brand"
+                        className="pl-8"
                     />
                 </div>
             )}
@@ -777,12 +761,12 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <h3 className="text-base font-semibold text-ink">{plan.title}</h3>
-                                        <span className="rounded-full bg-brand-soft px-2 py-1 text-xs font-semibold text-link">
+                                        <StatusBadge tone="info">
                                             {plan.instrument_code} · {plan.locale.toUpperCase()}
-                                        </span>
-                                        <span className="rounded-full bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-muted">
+                                        </StatusBadge>
+                                        <StatusBadge>
                                             {t(`admin.ap.status.${plan.status}`)}
-                                        </span>
+                                        </StatusBadge>
                                     </div>
                                     <p className="mt-1 text-xs text-ink-muted">{t('admin.ap.createdOn')} {formatDateTime(plan.created_at)}</p>
                                     <p className="mt-1 text-xs text-ink-muted">
@@ -791,7 +775,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                                             : c('noInstitute')}
                                     </p>
                                     {plan.institution_link_state === 'needs_reconciliation' && (
-                                        <span className="mt-1 inline-flex rounded-full bg-warning-soft px-2 py-1 text-xs font-semibold text-warning-ink">{c('needsReconciliation')}</span>
+                                        <StatusBadge tone="warning" className="mt-1">{c('needsReconciliation')}</StatusBadge>
                                     )}
                                 </div>
                                 <div className="flex flex-wrap gap-1">
@@ -872,7 +856,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                                     <div className="min-w-0 flex-1">
                                         <p className="text-xs font-semibold text-ink-muted">{t('admin.ap.linkLabel')} · {t('admin.rc.qrLabel')}</p>
                                         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                                            <input readOnly value={collectionUrl(plan)} className="w-full rounded-control border border-line-strong bg-surface px-4 py-2 font-mono text-xs text-ink-body" />
+                                            <Input readOnly value={collectionUrl(plan)} className="font-mono text-xs text-ink-body" />
                                             <Button variant="secondary"
                                                 type="button"
                                                 onClick={() => void copy(`link-${plan.id}`, collectionUrl(plan))}

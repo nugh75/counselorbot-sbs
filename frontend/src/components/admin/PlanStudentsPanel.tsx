@@ -10,6 +10,8 @@ import { StudentResultItem, type StudentResult } from '@/components/teacher/Stud
 import { buildClassResultsMatrix, formatCompactScores, type PlanStudent } from '@/lib/class-results-matrix';
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
 import { Button } from '@/components/ui/Button';
+import { Textarea } from '@/components/ui/Field';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 interface TeacherNote {
     id: number;
@@ -321,9 +323,7 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
                 <div className="flex items-center gap-2">
                     <h3 className="text-base font-semibold text-ink">{texts.students}</h3>
-                    <span className="rounded-full bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-body">
-                        {students.length}
-                    </span>
+                    <StatusBadge>{students.length}</StatusBadge>
                 </div>
                 <div role="group" aria-label={texts.viewModeLabel} className="inline-flex rounded-lg border border-line bg-surface-raised p-1">
                     <button
@@ -331,7 +331,7 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
                         aria-pressed={viewMode === 'matrix'}
                         onClick={() => setViewMode('matrix')}
                         className={`inline-flex min-h-control items-center gap-2 rounded-control px-4 text-xs font-semibold transition-colors ${
-                            viewMode === 'matrix' ? 'bg-surface text-link shadow-card' : 'text-ink-muted hover:text-ink'
+                            viewMode === 'matrix' ? 'bg-surface text-link' : 'text-ink-muted hover:text-ink'
                         }`}
                     >
                         <Grid3X3 className="h-3.5 w-3.5" aria-hidden />
@@ -342,7 +342,7 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
                         aria-pressed={viewMode === 'list'}
                         onClick={() => setViewMode('list')}
                         className={`inline-flex min-h-control items-center gap-2 rounded-control px-4 text-xs font-semibold transition-colors ${
-                            viewMode === 'list' ? 'bg-surface text-link shadow-card' : 'text-ink-muted hover:text-ink'
+                            viewMode === 'list' ? 'bg-surface text-link' : 'text-ink-muted hover:text-ink'
                         }`}
                     >
                         <List className="h-3.5 w-3.5" aria-hidden />
@@ -366,7 +366,7 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        <div className="overflow-x-auto rounded-lg border border-line bg-surface shadow-card">
+                        <div className="overflow-x-auto rounded-lg border border-line bg-surface">
                             <table className="w-full border-collapse text-left text-sm" aria-label={texts.matrixView}>
                                 <thead>
                                     <tr className="border-b border-line bg-surface-sunken/75">
@@ -421,7 +421,7 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
                                                             aria-pressed={isSelected}
                                                             aria-label={`${row.username} — ${inst}: ${cell.latest.submitted_at ? new Date(cell.latest.submitted_at).toLocaleDateString(lang) : ''}`}
                                                             onClick={() => setSelectedCell(isSelected ? null : { username: row.username, result: cell.latest! })}
-                                                            className={`flex min-h-control w-full min-w-[7rem] flex-col items-center justify-center rounded-control border p-1 text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+                                                            className={`flex min-h-control w-full min-w-[7rem] flex-col items-center justify-center rounded-control border p-1 text-xs transition-colors ${
                                                                 isSelected
                                                                     ? 'border-brand bg-brand-soft text-link ring-2 ring-brand'
                                                                     : 'border-success-line bg-success-soft/60 text-success-ink hover:border-success hover:bg-success-soft'
@@ -583,12 +583,11 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
                                                 ))}
                                             </ul>
                                             <div className="mt-2 space-y-1">
-                                                <textarea
+                                                <Textarea
                                                     value={noteText}
                                                     onChange={(event) => setNoteText(event.target.value)}
                                                     placeholder={texts.notePlaceholder}
                                                     rows={2}
-                                                    className="w-full rounded-control border border-line-strong px-2 py-1 text-sm"
                                                 />
                                                 <div className="flex items-center justify-between">
                                                     <label className="flex items-center gap-1 text-xs text-ink-muted">
@@ -617,12 +616,12 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
                                             <p className="flex items-center gap-1 text-xs font-semibold text-ink-muted">
                                                 <Send className="h-3.5 w-3.5" /> {texts.message}
                                             </p>
-                                            <textarea
+                                            <Textarea
                                                 value={messageText}
                                                 onChange={(event) => setMessageText(event.target.value)}
                                                 placeholder={texts.messagePlaceholder}
                                                 rows={2}
-                                                className="mt-1 w-full rounded-control border border-line-strong px-2 py-1 text-sm"
+                                                className="mt-1"
                                             />
                                             <div className="mt-1 flex items-center justify-between">
                                                 <span className="text-xs text-ink-muted">{feedback}</span>

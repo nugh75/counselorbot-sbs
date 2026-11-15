@@ -17,6 +17,7 @@ import { TavoloCanvas } from '@/components/tavolo/TavoloCanvas';
 import { TavoloCompose } from '@/components/tavolo/TavoloCompose';
 import { TavoloCounselor } from '@/components/tavolo/TavoloCounselor';
 import { TavoloHelp } from '@/components/tavolo/TavoloHelp';
+import { Button } from '@/components/ui/Button';
 import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { BackButton } from '@/components/ui/BackButton';
 import {
@@ -334,10 +335,9 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
                     className="inline-flex min-h-control items-center gap-2 rounded-control border border-line px-4 text-sm text-ink-body disabled:opacity-40">
                     <MessageCircle className="h-4 w-4" aria-hidden="true" />{label('help')}
                 </button>
-                <button type="button" disabled={busy} onClick={() => void save()}
-                    className="inline-flex min-h-control items-center gap-2 rounded-control bg-brand px-4 text-sm text-ink-on-brand hover:bg-brand-hover disabled:opacity-40">
+                <Button type="button" disabled={busy} onClick={() => void save()}>
                     <Save className="h-4 w-4" aria-hidden="true" />{label('save')}
-                </button>
+                </Button>
             </header>
 
             <div className="shrink-0 border-b border-line bg-surface px-4 py-2">
@@ -355,10 +355,9 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
                         aria-expanded={reviewOpen} className="inline-flex min-h-control items-center gap-2 rounded-control border border-line-strong px-4">
                         <Eye className="h-4 w-4" aria-hidden="true" />{label(reviewOpen ? 'hideProposals' : 'viewProposals')}
                     </button>
-                    <button type="button" disabled={busy} onClick={() => void settle(waiting, 'accept')}
-                        className="inline-flex min-h-control items-center gap-2 rounded-control bg-brand px-4 text-sm text-ink-on-brand hover:bg-brand-hover disabled:opacity-40">
+                    <Button type="button" disabled={busy} onClick={() => void settle(waiting, 'accept')}>
                         <Check className="h-4 w-4" aria-hidden="true" />{label('acceptAll')}
-                    </button>
+                    </Button>
                     <button type="button" disabled={busy} onClick={() => void settle(waiting, 'reject')}
                         className="inline-flex min-h-control items-center gap-2 rounded-control border border-line-strong px-4 text-sm text-ink-body hover:bg-surface disabled:opacity-40">
                         <X className="h-4 w-4" aria-hidden="true" />{label('rejectAll')}

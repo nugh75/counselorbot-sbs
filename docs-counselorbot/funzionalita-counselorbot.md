@@ -391,6 +391,23 @@ componenti condivisi (`Field`, `Input`, `Select`, `Textarea`), stato del piano c
 `StatusBadge` e riquadro di modifica dello stato di uno studente come `Callout`.
 Comportamento, API e testi non cambiano.
 
+**Primitive condivise nelle pagine minori del docente (#960).** Le pagine
+`/docente/dispositivi`, `/docente/istituti`, `/docente/assegnazioni`,
+`/docente/materiali`, `/docente/strategie`, `/docente/somministrazioni` e
+`/docente/orientamento`, più il forum di classe e il tavolo, usano i componenti
+condivisi al posto delle classi scritte a mano: i campi sono `Input`, `Select` e
+`Textarea` con l'etichetta di `Field`, le pillole di stato sono `StatusBadge`, gli
+avvisi sono `Callout` e la finestra «Nuova assegnazione» è il `Dialog` condiviso
+(stessa apertura e chiusura, il focus torna al comando che l'ha aperta). I comandi
+primari del tavolo passano a `Button`; le tinte dei pezzi del tavolo restano perché
+distinguono oggetti pari-grado. Nel forum di classe i colori grezzi (`slate`,
+`indigo`) diventano i token semantici dell'app. Nei pannelli di amministrazione
+riusati dalle pagine del docente (letture certificate, strategie, somministrazioni,
+studenti dei piani) cambiano solo campi, pillole, ombre e `outline-none`: raggi e
+forma dell'admin restano invariati. Nella pagina dei piani operativi i bottoni
+secondari passano alla taglia normale e le pagine privacy e consiglio di classe
+usano un solo peso di testo. Comportamento, API, testi e `data-testid` non cambiano.
+
 **Piani operativi dello studente piatti (#918).** I piani in cima a `/profilo` e in
 `/profilo/piani-operativi` sono `Card` piatte separate da filetti: classe come
 etichetta di testo, titolo, avanzamento, poi le tappe come righe divise da filetti invece
