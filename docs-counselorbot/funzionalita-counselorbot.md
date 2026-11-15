@@ -330,6 +330,11 @@ questionari**, **Percorsi guidati**, **Area studente e strumenti**. La Bussola
 consiglia da quale strumento partire e non somministra questionari né produce
 punteggi. Nell'Area studente la Bussola è una riga piatta come le altre voci del
 catalogo (senza riquadro), come il collegamento «Cambiamenti» in Il mio profilo.
+Le righe d'ingresso mostrano al passaggio una linea sotto la riga; l'albero degli
+obiettivi è un elenco di righe con rientro, senza riquadri; la scheda «Panoramica»
+della classe offre i quattro accessi rapidi come righe piatte. Un indirizzo
+inesistente mostra una pagina «Pagina non trovata» e un errore imprevisto una
+pagina con «Riprova», entrambe con il ritorno alla propria area.
 Subito sotto,
 un riquadro illustrato in evidenza, **Dicci com’è andata**, apre il **Questionario di
 gradimento** (`/questionario`), tradotto nelle sei lingue; chi non ha ancora
