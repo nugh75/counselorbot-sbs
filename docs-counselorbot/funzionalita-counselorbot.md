@@ -384,6 +384,13 @@ creazione, le colonne e i mazzi sono divisi da filetti invece che da riquadri an
 La carta in studio, le carte del tavolo, campi e finestre di dialogo mantengono la loro
 forma; nessun cambio di comportamento.
 
+**Piani operativi del docente piatti (#950).** La pagina `/docente/piani-operativi`
+(elenco dei piani, editor, modelli e avanzamento) non ha più riquadri né card dentro
+card: sezioni piatte con filetto, righe dell'elenco separate da filetti, campi con i
+componenti condivisi (`Field`, `Input`, `Select`, `Textarea`), stato del piano con
+`StatusBadge` e riquadro di modifica dello stato di uno studente come `Callout`.
+Comportamento, API e testi non cambiano.
+
 **Piani operativi dello studente piatti (#918).** I piani in cima a `/profilo` e in
 `/profilo/piani-operativi` sono `Card` piatte separate da filetti: classe come
 etichetta di testo, titolo, avanzamento, poi le tappe come righe divise da filetti invece
