@@ -121,7 +121,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factorPrefix: ['C', 'A'],
         factors: QSA_FACTOR_DEFINITIONS,
         invertedFactors: ['C3', 'C6', 'A1', 'A4', 'A5', 'A7'],
-        color: 'bg-blue-500',
+        color: 'bg-chart-1',
         icon: 'chart',
     },
     QSAr: {
@@ -132,7 +132,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factorPrefix: ['C', 'A'],
         factors: QSAR_FACTOR_DEFINITIONS,
         invertedFactors: ['C4r', 'A1r'],
-        color: 'bg-sky-500',
+        color: 'bg-chart-1',
         icon: 'clipboard',
     },
     QPCS: {
@@ -143,7 +143,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factorPrefix: ['S'],
         factors: QPCS_FACTOR_DEFINITIONS,
         invertedFactors: [],
-        color: 'bg-purple-500',
+        color: 'bg-chart-2',
         icon: 'target',
     },
     QPCC: {
@@ -154,7 +154,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factorPrefix: ['A', 'V', 'C', 'M'],
         factors: QPCC_FACTOR_DEFINITIONS,
         invertedFactors: ['A1', 'A2', 'A3'],
-        color: 'bg-indigo-500',
+        color: 'bg-chart-1',
         icon: 'lightbulb',
     },
     ZTPI: {
@@ -165,7 +165,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factorPrefix: ['T'],
         factors: ZTPI_FACTOR_DEFINITIONS,
         invertedFactors: ['T1', 'T4'],
-        color: 'bg-amber-500',
+        color: 'bg-chart-accent',
         icon: 'clock',
     },
     SAVICKAS: {
@@ -176,7 +176,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factorPrefix: [],
         factors: [],
         invertedFactors: [],
-        color: 'bg-emerald-500',
+        color: 'bg-chart-3',
         icon: 'compass',
         agentOnly: true,
     },
@@ -188,7 +188,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factorPrefix: [],
         factors: [],
         invertedFactors: [],
-        color: 'bg-cyan-500',
+        color: 'bg-chart-2',
         icon: 'clipboard',
         agentOnly: true,
     },
@@ -200,7 +200,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factorPrefix: [],
         factors: [],
         invertedFactors: [],
-        color: 'bg-cyan-600',
+        color: 'bg-chart-2',
         icon: 'briefcase',
         agentOnly: true,
     },
@@ -212,7 +212,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factorPrefix: [],
         factors: [],
         invertedFactors: [],
-        color: 'bg-indigo-500',
+        color: 'bg-chart-1',
         icon: 'target',
         agentOnly: true,
     },
@@ -224,7 +224,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factorPrefix: [],
         factors: [],
         invertedFactors: [],
-        color: 'bg-indigo-600',
+        color: 'bg-chart-1',
         icon: 'target',
         agentOnly: true,
     },
@@ -236,7 +236,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factorPrefix: [],
         factors: [],
         invertedFactors: [],
-        color: 'bg-teal-500',
+        color: 'bg-chart-2',
         icon: 'lightbulb',
         agentOnly: true,
     },
@@ -248,7 +248,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factorPrefix: ['AD'],
         factors: QAP_FACTOR_DEFINITIONS,
         invertedFactors: [],
-        color: 'bg-green-500',
+        color: 'bg-chart-3',
         icon: 'briefcase',
     },
 };
@@ -266,21 +266,21 @@ const ALLOWED_ICONS = new Set<QuestionnaireIcon>([
 ]);
 
 export function tailwindColorFromTheme(colorTheme?: string): string {
-    if (!colorTheme) return 'bg-indigo-500';
+    if (!colorTheme) return 'bg-chart-1';
     if (colorTheme.startsWith('bg-')) return colorTheme;
     const map: Record<string, string> = {
-        blue: 'bg-blue-500',
-        sky: 'bg-sky-500',
-        teal: 'bg-teal-500',
-        cyan: 'bg-cyan-500',
-        indigo: 'bg-indigo-500',
-        purple: 'bg-purple-500',
-        amber: 'bg-amber-500',
-        emerald: 'bg-emerald-500',
-        green: 'bg-green-500',
-        rose: 'bg-rose-500',
+        blue: 'bg-chart-1',
+        indigo: 'bg-chart-1',
+        sky: 'bg-chart-2',
+        teal: 'bg-chart-2',
+        cyan: 'bg-chart-2',
+        purple: 'bg-chart-3',
+        emerald: 'bg-chart-3',
+        green: 'bg-chart-3',
+        rose: 'bg-chart-4',
+        amber: 'bg-chart-accent',
     };
-    return map[colorTheme] ?? `bg-${colorTheme}-500`;
+    return map[colorTheme] ?? 'bg-chart-1';
 }
 
 export function sanitizeQuestionnaireIcon(icon?: string): QuestionnaireIcon {
@@ -318,7 +318,7 @@ export function buildFallbackQuestionnaireConfig(id: string): QuestionnaireConfi
         factorPrefix: [],
         factors: [],
         invertedFactors: [],
-        color: 'bg-indigo-500',
+        color: 'bg-chart-1',
         icon: 'compass',
         agentOnly: true,
     };

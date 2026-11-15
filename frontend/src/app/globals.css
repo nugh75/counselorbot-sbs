@@ -147,6 +147,13 @@
   --color-danger-ink: var(--danger-ink);
   /* Velo dietro i dialoghi modali (`backdrop:bg-backdrop`, components/ui/Dialog). */
   --color-backdrop: var(--backdrop);
+  /* Grafici del profilo: scala petrolio -> slate, ocra per il valore evidenziato. */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-accent: var(--chart-accent);
 
   --radius-control: calc(var(--radius) - 2px);
   --radius-card: calc(var(--radius) + 4px);
@@ -254,6 +261,12 @@
   --danger-line: var(--color-red-200);
   --danger-ink: var(--color-red-800);
   --backdrop: rgb(15 23 42 / 0.5);
+  --chart-1: var(--color-indigo-600);
+  --chart-2: #3b7f83;
+  --chart-3: var(--color-slate-500);
+  --chart-4: var(--color-slate-400);
+  --chart-5: var(--color-slate-300);
+  --chart-accent: var(--color-ochre-500);
 
   /* ZONE DI MISURA (ProfileVisualization). Non sono stati dell'interfaccia ma
      esiti, quindi hanno scala propria — vedi design.md §2.4. Stanno qui, e non
@@ -698,6 +711,12 @@ h1.text-3xl {
   --role-test-soft: #0e3149;
   --role-test-line: #2a6288;
   --role-test-muted: #cbd5e1;
+  --chart-1: #67c1c4;
+  --chart-2: #4a9ea2;
+  --chart-3: #94a3b8;
+  --chart-4: #64748b;
+  --chart-5: #475569;
+  --chart-accent: var(--color-ochre-300);
   --info: #8fcfd1;
   --info-soft: #103f42;
   --info-line: #1f7376;
