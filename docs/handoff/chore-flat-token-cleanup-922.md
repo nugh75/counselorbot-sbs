@@ -1,7 +1,7 @@
 # Handoff: chore/flat-token-cleanup-922 (#922)
 
 ## Stato
-Implementazione completata; PR aperta contro main (milestone Flat visual consistency, Nov 2026).
+Implementazione completata; PR #938 aperta contro main (milestone Flat visual consistency, Nov 2026). `origin/main` (#936, #937) mergiato nel branch per risolvere il conflitto: unica sovrapposizione nel paragrafo di `funzionalita-counselorbot.md` (tenute entrambe le voci, #923 e #922).
 
 ## Fatto
 - **Ombre (B2)**: `Toast` `rounded-card` + `shadow-pop`; bolle `ChatBubble` senza ombra; `ChatActionsPopover` `shadow-pop`; `DiagramBlock` (visore a schermo intero) `shadow-pop`; `ChatWorkspace` dialogo e sezione `shadow-card`; `IdeaConclusion` e `IdeaBranchTree` `shadow-card`. `MessageDiagramButton:172` non aveva un'ombra vera, solo `transition-shadow` (inutile senza ombra): rimossa. Restano solo i tre token.
@@ -12,11 +12,12 @@ Implementazione completata; PR aperta contro main (milestone Flat visual consist
 - Doc: `docs-counselorbot/funzionalita-counselorbot.md`, `CONTEXT.md`.
 
 ## Verifiche
-- `tsc --noEmit -p frontend/tsconfig.json`: 0 errori dai file toccati; 252 errori pre-esistenti `public/guide/{sv,...}/*.png` mancanti (immagini guida non versionate nel worktree), identici su main.
+- `tsc --noEmit -p frontend/tsconfig.json` (post-merge): 0 errori dai file toccati; 252 errori pre-esistenti `public/guide/{sv,...}/*.png` mancanti (immagini guida non versionate nel worktree) + 1 errore di main `src/lib/field-wiring.test.ts` (`TS5097`, import `.ts` senza `allowImportingTsExtensions`, da #923).
 - `eslint` sui file toccati: 0 errori, 22 warning pre-esistenti (unused/img/window.location), nessuno sulle righe modificate.
 - `node --test --experimental-strip-types` (Node 22.23.3; il PATH di default ha Node 20 senza strip-types):
   - `idea-layout`, `idea-branching`, `groups-directory`, `operational-plan-naming`, `teacher-subpages-flat`, `ui-primitives-tokens`: 39/39.
   - `tests/flashcards-flat`, `flat-area-subpages`, `compass-entry-flat`, `forum-changes-flat`, `resources-flat`: 16/16.
+  - Ripetuti dopo il merge di `origin/main`: 63/63.
 - Accettazione grep vuota: `grep -rn "min-h-\[44px\]\|text-\[11px\]\|text-\[10px\]\|text-\[9px\]" frontend/src --include=*.tsx | grep -v components/admin`.
 - Nessun controllo visivo/browser (Mac 8 GB, volume esterno lento): nessuna modifica a markup, id, testid o nomi dei link.
 
