@@ -14,6 +14,7 @@ Completo. PR #972 aperta (https://github.com/nugh75/counselorbot-sbs/pull/972), 
 
 ## Verifiche
 - node --test mirati (16 file lib + guardia): 155 pass, 0 fail.
+- Merge origin/main (#971) risolto in funzionalita (tenute entrambe le sezioni); ritest 156 pass, eslint e tsc ok.
 - tsc: nessun errore nuovo (solo `.png` preesistenti); eslint file toccati: pulito; i18n:check e guidance-check verdi.
 - Nessun dev server/Docker: verifica visiva e test browser (account-onboarding, personal-pqbl) non eseguiti.
 
