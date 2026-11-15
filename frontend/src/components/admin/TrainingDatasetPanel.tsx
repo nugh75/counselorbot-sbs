@@ -7,6 +7,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Callout } from '@/components/ui/Callout';
 
 interface TrainingSummary {
     total: number;
@@ -180,9 +181,9 @@ export function TrainingDatasetPanel() {
 
     return (
         <div className="space-y-4">
-            <section className="rounded-control border border-info-line bg-info-soft px-4 py-4 text-sm leading-relaxed text-info-ink">
+            <Callout variant="info" icon={null}>
                 {t('admin.training.notice')}
-            </section>
+            </Callout>
 
             <section className="rounded-lg border border-line bg-surface p-4">
                 <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink-body">

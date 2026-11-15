@@ -154,8 +154,8 @@ export function ApprovedStrategiesPanel() {
         }
     };
 
-    const inputCls = 'h-9 w-full rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-focus';
-    const areaCls = 'min-h-[90px] w-full rounded-control border border-line bg-surface px-2 py-1 text-sm text-ink-body outline-none focus:border-focus';
+    const inputCls = 'h-9 w-full rounded-control border border-line bg-surface px-2 text-sm text-ink-body focus:border-focus';
+    const areaCls = 'min-h-[90px] w-full rounded-control border border-line bg-surface px-2 py-1 text-sm text-ink-body focus:border-focus';
 
     const renderForm = () => (
         <div className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">

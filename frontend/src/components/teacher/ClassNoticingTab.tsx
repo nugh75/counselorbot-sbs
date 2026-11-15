@@ -144,10 +144,9 @@ export function ClassNoticingTab({ groupId }: { groupId: number }) {
             </details>)}
         </section>
         {showResults && <>
-            {data.suggestions.length > 0 && <Card className="space-y-4 border-warning-line bg-warning-soft">
-                <h3 className="font-semibold text-ink">{l('suggestions')}</h3>
-                <ol className="list-inside list-decimal space-y-1 text-sm text-ink">{data.suggestions.map((text, index) => <li key={index}>{text}</li>)}</ol>
-            </Card>}
+            {data.suggestions.length > 0 && <Callout variant="warning" icon={null} title={l('suggestions')}>
+                <ol className="list-inside list-decimal space-y-1">{data.suggestions.map((text, index) => <li key={index}>{text}</li>)}</ol>
+            </Callout>}
             <Card className="space-y-4">
                 <h3 className="font-semibold text-ink">{l('kindsChart')}</h3>
                 {NOTICING_KINDS.map(kind => <Bar key={kind} label={l(kind)} count={data.charts.kinds[kind] ?? 0} total={total} color={KIND_BAR[kind]} />)}

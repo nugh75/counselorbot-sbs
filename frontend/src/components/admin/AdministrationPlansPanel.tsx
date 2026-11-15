@@ -12,6 +12,7 @@ import { PlanStudentsPanel } from './PlanStudentsPanel';
 import { Button } from '@/components/ui/Button';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Card } from '@/components/ui/Card';
+import { Callout } from '@/components/ui/Callout';
 
 type LocaleCode = 'it' | 'en' | 'es' | 'sv';
 
@@ -515,12 +516,12 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
         win.document.close();
     };
 
-    const inputCls = 'mt-1 h-9 w-full rounded-control border border-line-strong bg-surface px-4 text-sm text-ink outline-none focus:border-brand';
+    const inputCls = 'mt-1 h-9 w-full rounded-control border border-line-strong bg-surface px-4 text-sm text-ink focus:border-brand';
 
     const renderForm = () => (
         <Card as="section" variant="flat">
             <div className="space-y-4">
-                {replacingPlan && <p role="status" className="rounded-control border border-warning-line bg-warning-soft p-4 text-sm text-warning-ink">{t('admin.ap.replaceHint', {title: replacingPlan.title})}</p>}
+                {replacingPlan && <Callout variant="warning">{t('admin.ap.replaceHint', {title: replacingPlan.title})}</Callout>}
                 <label className="block text-xs font-semibold text-ink-muted">
                     {t('admin.ap.form.title')}
                     <input
@@ -589,11 +590,11 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                     <h3 className="text-xs font-semibold text-ink-muted">{c('planInstitute')}</h3>
                     <p className="text-xs text-ink-muted mt-2">{c('planInstituteHelp')}</p>
                     {editingPlan?.institution_link_state === 'needs_reconciliation' && (
-                        <div role="status" className="mt-4 rounded-control border border-warning-line bg-warning-soft p-2 text-xs text-warning-ink">
+                        <Callout variant="warning">
                             <p className="font-semibold">{c('needsReconciliation')}</p>
                             {editingPlan.reconciliation_reason && <p>{c(`reason_${editingPlan.reconciliation_reason}` as CredentialTextKey)}</p>}
                             {editingPlan.legacy_institution_code && <p>{c('legacyCode')}: <span className="font-mono">{editingPlan.legacy_institution_code}</span></p>}
-                        </div>
+                        </Callout>
                     )}
                     <label className="mt-4 block text-xs font-semibold text-ink-muted">
                         {c('planInstitute')}
@@ -647,7 +648,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                         <label className="block text-xs font-semibold text-ink-muted">
                             {t('admin.ap.externalResearchers')}
                             <textarea
-                                className="mt-1 min-h-[160px] w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink outline-none focus:border-brand"
+                                className="mt-1 min-h-[160px] w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink focus:border-brand"
                                 value={form.external_researchers}
                                 onChange={(event) => setForm({ ...form, external_researchers: event.target.value })}
                                 placeholder={t('admin.ap.externalResearchersPlaceholder')}
@@ -661,7 +662,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                     <label className="mt-4 block text-xs font-semibold text-ink-muted">
                         {t('admin.ap.notes')}
                         <textarea
-                            className="mt-1 min-h-[80px] w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink outline-none focus:border-brand"
+                            className="mt-1 min-h-[80px] w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink focus:border-brand"
                             value={form.notes}
                             onChange={(event) => setForm({ ...form, notes: event.target.value })}
                         />
@@ -734,8 +735,8 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
             </section>
 
             {editingId === 'new' && renderForm()}
-            {replacementCode && <p role="status" className="rounded-control border border-success-line bg-success-soft px-4 py-2 text-sm text-success-ink">{t('admin.ap.replaced', {code: replacementCode})}</p>}
-            {message && <p role="alert" className="rounded-control border border-danger-line bg-danger-soft px-4 py-2 text-sm text-danger">{message}</p>}
+            {replacementCode && <Callout variant="success">{t('admin.ap.replaced', {code: replacementCode})}</Callout>}
+            {message && <Callout variant="danger">{message}</Callout>}
 
             {!loading && plans.length > 0 && (
                 <div className="relative">
@@ -745,7 +746,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder={t('admin.ap.searchPlaceholder')}
-                        className="h-control w-full rounded-control border border-line-strong bg-surface pl-8 pr-4 text-sm text-ink outline-none focus:border-brand"
+                        className="h-control w-full rounded-control border border-line-strong bg-surface pl-8 pr-4 text-sm text-ink focus:border-brand"
                     />
                 </div>
             )}

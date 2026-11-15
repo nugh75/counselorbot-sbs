@@ -13,6 +13,7 @@ import { flashcardLabel } from '@/lib/i18n-flashcards';
 import { BUILTIN_CARD_IMAGES, tavoloImageUrl } from '@/lib/tavolo-images';
 import { InlineRename } from '@/components/ui/InlineRename';
 import { addCard, addDeck, deckProgress, emptyFlashcards, removeCard, removeDeck, renameDeck, resetDeckProgress, setCardStatus, shuffleCards, updateCard, type Flashcard, type FlashcardDeck, type FlashcardStatus, type FlashcardWorkspace, type SavedFlashcards } from '@/lib/flashcards';
+import { Callout } from '@/components/ui/Callout';
 
 const inputClass = 'w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-[15px] text-ink';
 const buttonClass = 'h-control w-control shrink-0 p-0';
@@ -140,10 +141,10 @@ export function FlashcardsPage() {
 
     return <main className="page-narrow space-y-4 p-4">
         <PersonalAreaHeader slug="flashcard" />
-        {issue && <div role="alert" className="rounded-lg border border-danger-line bg-danger-soft p-4 text-sm text-danger-ink">
+        {issue && <Callout variant="danger">
             <p>{l(issue)}</p>
             {issue === 'conflict' && <Button type="button" variant="secondary" className="mt-2 min-h-control px-4" onClick={() => void load()}><RotateCcw className="mr-1 inline h-4 w-4" aria-hidden="true" />{l('reload')}</Button>}
-        </div>}
+        </Callout>}
 
         {view === 'list' && <section aria-label={l('myDecks')} className="space-y-4">
             <div className="flex items-center justify-between gap-4 border-b border-line pb-2">

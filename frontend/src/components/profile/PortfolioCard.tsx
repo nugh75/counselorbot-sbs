@@ -12,6 +12,7 @@ import { goalApi, GoalError, type PersonalGoal } from '@/lib/goals';
 import { goalText } from '@/lib/i18n-goals';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 
 // In anteprima le <img> (non passano da fetch) devono puntare all'account di
 // prova: il backend accetta l'impersonazione anche via query param view_as.
@@ -416,10 +417,10 @@ export function PortfolioCard() {
             {loading ? (
                 <div className="text-sm text-ink-muted">{t('portfolio.loading')}</div>
             ) : loadError ? (
-                <div role="alert" className="rounded-card border border-danger-line bg-danger-soft p-4 text-sm text-danger-ink">
+                <Callout variant="danger">
                     <p>{t('portfolio.loadError')}</p>
                     <button type="button" onClick={() => void load()} className="mt-2 min-h-control rounded-control border border-danger-line bg-surface px-4 text-sm font-semibold text-danger-ink hover:bg-danger-soft">{t('lp.retry')}</button>
-                </div>
+                </Callout>
             ) : items.length === 0 ? (
                 <div className="rounded-card border border-dashed border-line-strong bg-surface-sunken p-6 text-center text-sm text-ink-muted">
                     {q || categoryFilter ? t('portfolio.emptyFound') : t('portfolio.emptyYet')}

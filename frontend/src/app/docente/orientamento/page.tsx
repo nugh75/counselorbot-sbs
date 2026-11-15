@@ -8,6 +8,7 @@ import { categoryText, type CategoryTextKey } from '@/lib/i18n-institution-categ
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import type { Institution } from '@/lib/referrals-api';
 import { TeacherAreaHeader } from '@/components/teacher/TeacherAreaHeader';
+import { Callout } from '@/components/ui/Callout';
 
 type Category = { id: string; name: string; description: string; is_active: boolean; position: number; updated_by: string; updated_at: string };
 type Content = { id: number; kind: 'referral' | 'event'; title: string; starts_at: string | null; updated_at: string; category_ids: string[] };
@@ -151,7 +152,7 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
         {institutions.length > 1 ? <label className="block max-w-lg text-sm">{l('institution')}<select className={`${input} mt-1`} value={institutionId} disabled={busy} onChange={event => { if (mayDiscard()) onSelect(Number(event.target.value)); }}>{institutions.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
             : <p className="font-semibold">{l('institution')}: {institution.name}</p>}
         <div className="flex flex-wrap items-center justify-between gap-4"><h2 ref={listRef} tabIndex={-1} className="text-lg font-semibold">{l('categories')}</h2><button type="button" disabled={blocked} className={`${control} inline-flex items-center gap-2`} onClick={() => openEditor()}><Plus className="h-4 w-4" aria-hidden />{l('new')}</button></div>
-        {errorKey && <div role="alert" className="space-y-2 rounded-card border border-warning-line bg-warning-soft p-4 text-warning-ink"><p>{l(errorKey)}</p><button type="button" disabled={busy || loading} className={control} onClick={reload}>{l('retry')}</button></div>}
+        {errorKey && <Callout variant="warning"><p>{l(errorKey)}</p><button type="button" disabled={busy || loading} className={control} onClick={reload}>{l('retry')}</button></Callout>}
         {draft && <form className="space-y-4 border-t border-line pt-6" onSubmit={event => { event.preventDefault(); void change(draft.id ? 'edit' : 'create', draft.id); }}>
             <h3 className="font-semibold">{l(draft.id ? 'edit' : 'new')}</h3>
             {unavailableDraft && <p role="alert">{l('unavailable')}</p>}

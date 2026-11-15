@@ -447,12 +447,12 @@ export default function PqblPage() {
             <PersonalAreaHeader slug="pqbl" />
 
             {restoredProgress && (
-                <div className="flex flex-wrap items-center gap-4 rounded-card border border-info-line bg-info-soft px-4 py-4 text-sm text-info-ink" role="status">
+                <Callout variant="info">
                     <span>{t('pqbl.resume.restored')}</span>
                     <button type="button" onClick={restart} className="min-h-control font-semibold underline underline-offset-2">
                         {t('pqbl.resume.restart')}
                     </button>
-                </div>
+                </Callout>
             )}
 
             {restoredProgress && lang !== restoredLanguage && (

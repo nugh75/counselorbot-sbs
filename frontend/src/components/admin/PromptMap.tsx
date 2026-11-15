@@ -292,9 +292,9 @@ function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
             className="w-full rounded border border-line-strong bg-surface px-2 py-2 text-sm" /> : <textarea id={fieldId} aria-label={entry.key} value={draft}
             onChange={event => { setDraft(event.target.value); setConfirming(false); }} rows={Math.min(18, Math.max(6, draft.split('\n').length + 1))}
             className="w-full rounded border border-line-strong bg-surface p-2 font-mono text-xs leading-relaxed text-ink outline-none focus:ring-2 focus:ring-focus" />}
-        {confirming && <p role="alert" className="rounded border border-warning-line bg-warning-soft px-4 py-2 text-xs text-warning-ink">
+        {confirming && <Callout variant="warning">
             {t('admin.promptMap.sharedWarning', { users: sharedUsers(entry, name, t) })}
-        </p>}
+        </Callout>}
         {error && <p role="alert" className="text-xs text-danger-ink">{error}</p>}
         <div className="flex flex-wrap justify-end gap-2">
             <Button variant="secondary" type="button" onClick={onCancel} className="text-xs">

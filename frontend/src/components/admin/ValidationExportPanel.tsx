@@ -5,6 +5,7 @@ import { Database, Download, Filter, RefreshCw } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { publicOrigin } from '@/lib/runtime-config';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 
 interface Instrument {
     code: string;
@@ -120,9 +121,9 @@ export function ValidationExportPanel() {
 
     return (
         <div className="space-y-4">
-            <section className="rounded-control border border-warning-line bg-warning-soft px-4 py-4 text-sm leading-relaxed text-warning-ink">
+            <Callout variant="warning" icon={null}>
                 {t('admin.validation.intro')}
-            </section>
+            </Callout>
 
             <section className="rounded-lg border border-line bg-surface p-4">
                 <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink-body">

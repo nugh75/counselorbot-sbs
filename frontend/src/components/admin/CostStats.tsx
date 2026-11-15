@@ -202,15 +202,15 @@ export function CostStats() {
                 <div className="flex flex-wrap items-end gap-4">
                     <label className="flex flex-col text-xs font-semibold text-ink-muted">
                         {t('admin.costs.from')}
-                        <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="mt-1 h-control rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
+                        <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="mt-1 h-control rounded-control border border-line bg-surface px-2 text-sm text-ink-body focus:border-brand" />
                     </label>
                     <label className="flex flex-col text-xs font-semibold text-ink-muted">
                         {t('admin.costs.to')}
-                        <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="mt-1 h-control rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
+                        <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="mt-1 h-control rounded-control border border-line bg-surface px-2 text-sm text-ink-body focus:border-brand" />
                     </label>
                     <label className="flex flex-col text-xs font-semibold text-ink-muted">
                         {t('admin.costs.eurRate')}
-                        <input type="number" min={0} step="0.01" value={eurRate} onChange={(e) => setEurRate(e.target.value)} className="mt-1 h-control w-24 rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
+                        <input type="number" min={0} step="0.01" value={eurRate} onChange={(e) => setEurRate(e.target.value)} className="mt-1 h-control w-24 rounded-control border border-line bg-surface px-2 text-sm text-ink-body focus:border-brand" />
                     </label>
                     <Button variant="secondary" type="button" onClick={() => void fetchStats()}>
                         <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -325,7 +325,7 @@ export function CostStats() {
                             <label className="flex flex-col text-xs font-semibold text-ink-muted">
                                 {t('admin.costs.budget.monthly')}
                                 <div className="mt-1 flex gap-1">
-                                    <input type="number" min={0} step="1" value={budgetInput} onChange={(e) => setBudgetInput(e.target.value)} className="h-control w-28 rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
+                                    <input type="number" min={0} step="1" value={budgetInput} onChange={(e) => setBudgetInput(e.target.value)} className="h-control w-28 rounded-control border border-line bg-surface px-2 text-sm text-ink-body focus:border-brand" />
                                     <Button type="button" disabled={savingBudget} onClick={() => void saveBudget()}>{t('admin.costs.budget.set')}</Button>
                                 </div>
                             </label>
@@ -382,11 +382,11 @@ export function CostStats() {
                             <div className="flex flex-wrap items-end gap-4">
                                 <label className="flex flex-col text-xs font-semibold text-ink-muted">
                                     {t('admin.costs.estUsers')}
-                                    <input type="number" min={0} value={estUsers} onChange={(e) => setEstUsers(e.target.value)} className="mt-1 h-control w-24 rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
+                                    <input type="number" min={0} value={estUsers} onChange={(e) => setEstUsers(e.target.value)} className="mt-1 h-control w-24 rounded-control border border-line bg-surface px-2 text-sm text-ink-body focus:border-brand" />
                                 </label>
                                 <label className="flex flex-col text-xs font-semibold text-ink-muted">
                                     {t('admin.costs.intPerUser')}
-                                    <input type="number" min={0} value={intPerUser} onChange={(e) => setIntPerUser(e.target.value)} className="mt-1 h-control w-24 rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
+                                    <input type="number" min={0} value={intPerUser} onChange={(e) => setIntPerUser(e.target.value)} className="mt-1 h-control w-24 rounded-control border border-line bg-surface px-2 text-sm text-ink-body focus:border-brand" />
                                 </label>
                             </div>
                             <div className="mt-4 grid grid-cols-2 gap-4">

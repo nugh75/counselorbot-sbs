@@ -37,6 +37,7 @@ import { Card } from '@/components/ui/Card';
 import { EntryLink, EntrySection } from '@/components/ui/EntryList';
 import type { StudentGroup } from './class-group-types';
 import type { ClassSettings } from '@/lib/class-settings';
+import { Callout } from '@/components/ui/Callout';
 
 type TextKey = keyof typeof classSettingsTexts;
 
@@ -834,7 +835,7 @@ export function ClassOverviewTab({
                     </div>
 
                     {/* Danger Zone: Cancellazione */}
-                    <div className="mt-4 rounded-card border border-danger-line bg-danger-soft/50 p-4">
+                    <Callout variant="danger" icon={null}>
                         <div className="flex flex-wrap items-center justify-between gap-4">
                             <div className="space-y-1">
                                 <h3 className="flex items-center gap-2 text-sm font-semibold text-danger-ink">
@@ -862,7 +863,7 @@ export function ClassOverviewTab({
                                 {l('deleteClass')}
                             </Button>
                         </div>
-                    </div>
+                    </Callout>
 
                     {/* Dialog modale di conferma cancellazione */}
                     {showDeleteDialog && (

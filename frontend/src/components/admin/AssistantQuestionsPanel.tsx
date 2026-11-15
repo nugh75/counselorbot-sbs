@@ -189,7 +189,7 @@ export function AssistantQuestionsPanel() {
         }
     };
 
-    const inputCls = 'mt-1 h-9 w-full rounded-control border border-line-strong bg-surface px-4 text-sm text-ink outline-none focus:border-brand';
+    const inputCls = 'mt-1 h-9 w-full rounded-control border border-line-strong bg-surface px-4 text-sm text-ink focus:border-brand';
 
     const topicLabel = (topic: string) => t(`admin.aq.topic.${topic}`) || topic;
 
@@ -221,7 +221,7 @@ export function AssistantQuestionsPanel() {
             <label className="mt-4 block text-xs font-semibold text-ink-muted">
                 {t('admin.aq.form.text')}
                 <textarea
-                    className="mt-1 min-h-[80px] w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink outline-none focus:border-brand"
+                    className="mt-1 min-h-[80px] w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink focus:border-brand"
                     value={form.text}
                     onChange={(e) => setForm({ ...form, text: e.target.value })}
                     placeholder={t('admin.aq.form.textPlaceholder')}

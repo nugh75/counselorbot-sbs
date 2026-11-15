@@ -17,6 +17,7 @@ import { latestPausedByTool, suggestTools, type PausedChat } from '@/lib/catalog
 import { fetchOrientationSession, fetchOrientationStatus, type OrientationRecommendation } from '@/lib/orientation-api';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
 import { useUserAccess } from '@/lib/use-user-access';
+import { Callout } from '@/components/ui/Callout';
 
 interface Props {
     id: string;
@@ -151,12 +152,12 @@ export function InstrumentCatalog({
                 <p className="text-sm text-ink-muted" role="status">{t('base.catalog.loading')}</p>
             )}
             {lang !== 'it' && catalogError && (
-                <div className="flex flex-wrap items-center gap-4 rounded-card border border-warning-line bg-warning-soft p-4 text-sm text-warning-ink" role="alert">
+                <Callout variant="danger">
                     <span>{t('base.catalog.error')}</span>
                     <button type="button" onClick={retryCatalog} className="inline-flex min-h-control items-center font-semibold text-warning-ink underline underline-offset-2">
                         {t('base.catalog.retry')}
                     </button>
-                </div>
+                </Callout>
             )}
             {dynamicCategories.filter((group) => group.questionnaireIds.length > 0).map((group) => (
                 // The wrapper keeps the #tools-<category> anchors used by the intro screen.

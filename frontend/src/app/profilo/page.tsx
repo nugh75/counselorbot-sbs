@@ -46,6 +46,7 @@ import {
 } from 'recharts';
 import { Card } from '@/components/ui/Card';
 import { EntryLink } from '@/components/ui/EntryList';
+import { Callout } from '@/components/ui/Callout';
 
 interface QuestionnaireResult {
     id: number;
@@ -481,10 +482,10 @@ export default function ProfilePage() {
                     </span>
                 </div>
                 {sessionsError ? (
-                    <div role="alert" className="rounded-card border border-danger-line bg-danger-soft p-4 text-sm text-danger-ink">
+                    <Callout variant="danger">
                         <p>{t('profile.sessions.loadError')}</p>
                         <button type="button" onClick={() => void loadData()} className="mt-2 min-h-control rounded-control border border-danger-line bg-surface px-4 text-sm font-semibold text-danger-ink hover:bg-danger-soft">{t('lp.retry')}</button>
-                    </div>
+                    </Callout>
                 ) : sessions.length === 0 ? (
                     <div className="text-center py-10 px-4 border border-dashed border-line rounded-card bg-surface space-y-4">
                         <p className="text-sm text-ink-muted max-w-xs mx-auto">{t('profile.noSessions')}</p>
@@ -509,7 +510,7 @@ export default function ProfilePage() {
                                         if (!selectedSession || matchesSearch(selectedSession, next) || leaveReadingDraft()) setSessionSearch(next);
                                     }}
                                     placeholder={t('profile.sessions.searchPlaceholder')}
-                                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                                    className="min-w-0 flex-1 bg-transparent text-sm"
                                 />
                             </div>
                         </label>

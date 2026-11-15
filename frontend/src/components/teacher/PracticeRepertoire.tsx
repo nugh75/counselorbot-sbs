@@ -110,14 +110,14 @@ export function PracticeRepertoire({ notebookId, onResults, newProfileType }: {
     return (
         <section data-practice-repertoire aria-labelledby={PRACTICE_PROFILES_ANCHOR} className="space-y-2">
             <h2 id={PRACTICE_PROFILES_ANCHOR} className="scroll-mt-24 border-b border-line pb-2 text-lg font-semibold text-ink">{l('repertoire')}</h2>
-            <p className="text-xs text-ink-muted">{l('repertoireHint')}</p>
-            {failed && <div role="alert" className="flex flex-wrap items-center gap-2 text-xs text-danger">
+            <p className="text-sm text-ink-muted">{l('repertoireHint')}</p>
+            {failed && <div role="alert" className="flex flex-wrap items-center gap-2 text-sm text-danger">
                 <p>{l('profilesError')}</p>
                 <Button type="button" variant="secondary" onClick={() => void load()}>{l('retry')}</Button>
             </div>}
-            {error && <p role="alert" className="text-xs text-danger">{error}</p>}
-            {saved && <p role="status" className="text-xs text-success">{l('saved')}</p>}
-            {results !== null && !results.length && <p className="text-xs text-ink-muted">{l('noProfiles')}</p>}
+            {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+            {saved && <p role="status" className="text-sm text-success">{l('saved')}</p>}
+            {results !== null && !results.length && <p className="text-sm text-ink-muted">{l('noProfiles')}</p>}
             <ul>
                 {(results ?? []).map((result) => (
                     <li key={result.id} data-practice-result={result.id} className="border-b border-line py-2 text-sm">
@@ -168,9 +168,9 @@ export function PracticeRepertoire({ notebookId, onResults, newProfileType }: {
                     </Field>
                     <div>
                         <Button type="button" variant="secondary" disabled={busy} onClick={generate}>{l('generate')}</Button>
-                        <p className="mt-1 text-xs text-ink-muted">{l('generateHint')}</p>
+                        <p className="mt-1 text-sm text-ink-muted">{l('generateHint')}</p>
                     </div>
-                    <p className="text-xs text-ink-muted">{l('explicitSave')}</p>
+                    <p className="text-sm text-ink-muted">{l('explicitSave')}</p>
                     <fieldset disabled={busy} className="min-w-0">
                     <ScoreInputForm key={`${draft.type}-${draft.version}`} questionnaire={QUESTIONNAIRES[draft.type]}
                         initialScores={draft.scores} persistDraft={false} formId={`practice-score-form-${notebookId}`}
