@@ -46,7 +46,7 @@ import { useTeacherResource } from './useTeacherResource';
 type Draft = { id: number | 'new'; title: string; values: PracticeNotebookData; groupIds: number[] };
 
 const linkAction = 'inline-flex min-h-control items-center text-sm font-semibold text-link underline underline-offset-2 disabled:opacity-50';
-const sectionTitle = 'border-b border-line pb-2 text-lg font-semibold text-ink';
+const sectionTitle = 'border-b border-line-strong pb-2 text-lg font-semibold text-ink';
 
 // Avatar dello studente di prova: il celeste di ruolo resta solo qui e sul badge.
 function PracticeAvatar() {

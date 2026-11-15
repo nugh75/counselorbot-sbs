@@ -147,7 +147,7 @@ export function FlashcardsPage() {
         </Callout>}
 
         {view === 'list' && <section aria-label={l('myDecks')} className="space-y-4">
-            <div className="flex items-center justify-between gap-4 border-b border-line pb-2">
+            <div className="flex items-center justify-between gap-4 border-b border-line-strong pb-2">
                 <h2 className="flex items-center gap-2 font-semibold text-ink"><GraduationCap className="h-4 w-4 text-link" aria-hidden="true" />{l('myDecks')}</h2>
                 <Tooltip content={l('newDeck')}><Button type="button" variant="secondary" className="min-h-control gap-2 px-4" aria-label={l('newDeck')} disabled={work.decks.length >= 20} onClick={() => { setDeckName(''); setDialogOpen(true); }}><FolderPlus className="h-4 w-4" aria-hidden="true" />{l('newDeck')}</Button></Tooltip>
             </div>

@@ -69,7 +69,7 @@ export function ClassCompilationsSection({ showHeading = true }: { showHeading?:
                                 </select>
                                 {/* A new class mounts fresh state and aborts all old list/transcript reads. */}
                                 {group && <div className="space-y-4">
-                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line-strong pb-2">
                                         <span className="text-xs font-semibold text-ink-body">{group.name}{group.school ? ` · ${group.school}` : ''}</span>
                                         <Link href={`/docente/classi/${group.id}?tab=students`} className="inline-flex min-h-control items-center gap-2 text-xs font-semibold text-link underline-offset-4 hover:underline">
                                             {l('viewAllInClass')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />

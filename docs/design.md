@@ -251,7 +251,7 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
 - **Elenco a voci** (`components/ui/EntryList.tsx`): il pattern canonico per le
   pagine d'area e le sottopagine indice, al posto delle griglie di card.
   `EntrySection` è un titolo `text-lg font-semibold` con filetto sotto (`border-b
-  border-line`, con sottotitolo opzionale nel filetto) e due colonne da `md`, una su
+  border-line-strong`, con sottotitolo opzionale nel filetto) e due colonne da `md`, una su
   mobile. `EntryLink` è una riga senza riquadro (`min-h-24`, `rounded-card`,
   sfondo `surface-sunken` solo in hover) con: illustrazione a sinistra (64px su
   mobile, 72px da `md`), titolo `font-semibold`, descrizione `ink-muted`, `badge`
@@ -419,7 +419,7 @@ aggiunge alla primitiva.
 | `StatusBadge` | etichetta di stato `neutral/info/success/warning/danger` sui token `-soft`/`-ink`, `rounded-control`, testo piccolo, punto facoltativo; non è una pillola e non è in maiuscolo |
 | `Dialog`, `DialogBody`, `DialogFooter` | modale sul `<dialog>` nativo: a tutto schermo su mobile, `sm:rounded-card` da `sm`, testata e piede con filetto, velo `backdrop:bg-backdrop` (token con valore scuro), `shadow-modal`; Esc, velo e chiudi chiamano `onClose`, il focus torna a chi l'ha aperto |
 | `PageHeader` | titolo `text-2xl font-semibold text-ink` + sottotitolo `ink-muted` + back-nav |
-| `BackButton` | due varianti dichiarate: `icon` (cerchio, percorso guidato) e `labelled` (pillola con testo, pagine autonome) |
+| `BackButton` | due varianti dichiarate, entrambe link di testo senza bordo, fondo, pillola o cerchio: `icon` (sola freccia, percorso guidato) e `labelled` (freccia + testo, pagine autonome), come la prima voce del breadcrumb dell'Area docenti; 44px, token `ink-muted`/`link`, disabilitato a opacità 50% |
 | `ForwardButton` | il primario del percorso: petrol pieno, etichetta visibile, 44px |
 | `FlowStepper` | il passo attivo è ocra, i fatti sono petrol, i futuri slate |
 | `Toast`, `Tooltip`, `Skeleton`, `StickyActions` | stati transitori |

@@ -49,7 +49,7 @@ export function ClassPracticeStudents({ groupId }: { groupId: number }) {
 
     return (
         <section aria-labelledby="class-practice-students-heading" className="space-y-3">
-            <div className="flex flex-wrap items-center gap-2 border-b border-line pb-2">
+            <div className="flex flex-wrap items-center gap-2 border-b border-line-strong pb-2">
                 <h2 id="class-practice-students-heading" className="text-lg font-semibold text-ink">{l('classPracticeStudents')}</h2>
                 <RoleBadge role="test">{l('testStudentBadge')}</RoleBadge>
             </div>
