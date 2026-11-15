@@ -2,7 +2,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowDown, ArrowUp, Clock, Plus, X, Info } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonClasses } from '@/components/ui/Button';
+import { Dialog, DialogBody, DialogFooter } from '@/components/ui/Dialog';
+import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { useI18n } from '@/lib/i18n-context';
 import { goalFormat, goalText, type GoalTextKey } from '@/lib/i18n-goals';
 import { blankGoal, goalApi, goalFields, GoalError, type CatalogEntry, type GoalFields, type GoalGroup, type GoalOrigin, type GoalResource, type PersonalGoal } from '@/lib/goals';
@@ -11,7 +13,7 @@ import { useDraftGuard } from '@/lib/use-draft-guard';
 import { GoalForm } from './GoalForm';
 import { GoalReviewStep } from './GoalReviewStep';
 import { MethodPicker } from './MethodPicker';
-import { Field, GoalIssue, input, resourceLabel } from './GoalUI';
+import { GoalIssue, resourceLabel } from './GoalUI';
 
 export type DialogTarget = ({ kind: 'edit'; id: number } | { kind: 'create'; parentId?: number; source?: CatalogEntry; origin?: GoalOrigin }) & { prefill?: { motivation?: string; title?: string; action?: string } };
 type Shared = { goals: PersonalGoal[]; groups: GoalGroup[]; onSaved: (row: PersonalGoal) => void; onCreated: (row: PersonalGoal) => void; onDeleted: () => void; onReload: () => void };
@@ -20,32 +22,18 @@ type Props = Shared & { target: DialogTarget; saved: boolean; onTarget: (target:
 /** Modal on desktop, full-screen sheet on mobile. Unsaved work is confirmed before any exit. */
 export function GoalDialog({ target, saved, onTarget, onClose, ...shared }: Props) {
     const { lang } = useI18n(); const l = (key: GoalTextKey) => goalText(lang, key);
-    const dialog = useRef<HTMLDialogElement>(null); const dirty = useRef(false);
+    const dirty = useRef(false);
     const leave = (action: () => void) => { if (!dirty.current || window.confirm(l('discard'))) { dirty.current = false; action(); } };
     const onDirty = useCallback((value: boolean) => { dirty.current = value; }, []);
-    useEffect(() => {
-        const node = dialog.current; const opener = document.activeElement as HTMLElement | null;
-        if (node && !node.open) node.showModal();
-        return () => opener?.focus?.();
-    }, []);
     const goal = target.kind === 'edit' ? shared.goals.find(row => row.id === target.id) : undefined;
     const title = goal?.title ?? (target.kind === 'create' && target.source ? l('adopt') : l('custom'));
     const bodyKey = target.kind === 'edit' ? `${target.id}-${goal?.revision}` : `new-${target.parentId ?? ''}-${target.source?.id ?? ''}-${target.origin ? `${target.origin.kind}:${target.origin.target_id}` : ''}${target.prefill ? '-p' : ''}`;
-    return <dialog ref={dialog} aria-labelledby="goal-dialog-title"
-        onCancel={event => { event.preventDefault(); leave(onClose); }}
-        onClick={event => { if (event.target === dialog.current) leave(onClose); }}
-        className="m-0 h-dvh max-h-none w-full max-w-none bg-surface p-0 text-ink backdrop:bg-slate-900/50 sm:m-auto sm:h-auto sm:max-h-[90vh] sm:max-w-3xl sm:rounded-card">
-        <div className="flex h-full max-h-[inherit] flex-col">
-            <div className="flex items-start justify-between gap-4 border-b border-line p-4 sm:px-6">
-                <h2 id="goal-dialog-title" className="min-w-0 break-words text-xl font-semibold">{title}</h2>
-                <Button type="button" variant="ghost" aria-label={l('close')} onClick={() => leave(onClose)}><X className="h-5 w-5" aria-hidden /></Button>
-            </div>
-            {target.kind === 'edit' && !goal ? <p className="p-6">{l('unavailable')}</p>
-                : <GoalDialogBody key={bodyKey} target={target} goal={goal} saved={saved} onDirty={onDirty}
-                    onNavigate={next => leave(() => onTarget(next))} onTarget={onTarget} onRequestClose={() => leave(onClose)} {...shared}
-                    onCreated={row => { dirty.current = false; shared.onCreated(row); }} />}
-        </div>
-    </dialog>;
+    return <Dialog title={title} closeLabel={l('close')} onClose={() => leave(onClose)}>
+        {target.kind === 'edit' && !goal ? <p className="p-6">{l('unavailable')}</p>
+            : <GoalDialogBody key={bodyKey} target={target} goal={goal} saved={saved} onDirty={onDirty}
+                onNavigate={next => leave(() => onTarget(next))} onTarget={onTarget} onRequestClose={() => leave(onClose)} {...shared}
+                onCreated={row => { dirty.current = false; shared.onCreated(row); }} />}
+    </Dialog>;
 }
 
 type BodyProps = Shared & { target: DialogTarget; goal?: PersonalGoal; saved: boolean; onDirty: (dirty: boolean) => void; onNavigate: (target: DialogTarget) => void; onRequestClose: () => void; onTarget: (target: DialogTarget) => void };
@@ -181,14 +169,14 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
     </li>;
 
     return <>
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-4 sm:px-6">
+        <DialogBody>
             {saved && <p role="status" className="text-link">{l('saved')}</p>}
             <GoalIssue error={error} lang={lang} retry={onReload} />
             {goal?.origin && <p className="text-sm text-ink-body">{l('bornFrom')}: {goal.origin.available && goal.origin.href ? <Link className="text-link underline" href={goal.origin.href}>{resourceLabel(lang, goal.origin.kind)} · {goal.origin.title}</Link> : <span>{resourceLabel(lang, goal.origin.kind)} · {goal.origin.title}</span>}</p>}
             {parents.length > 0 && <section className="space-y-2"><h3 className="font-semibold">{l('servesTo')}</h3>
                 <ul className="space-y-1">{parents.map(row => goalRow(row, <ArrowUp className="h-4 w-4 shrink-0" aria-hidden />, goal && <Button type="button" variant="ghost" disabled={busy || dirty} aria-label={`${l('detach')} ${row.title}`} onClick={() => detach(row.id)}><X className="h-4 w-4" aria-hidden /></Button>))}</ul>
             </section>}
-            {goal && candidates.length > 0 && <div className="flex flex-wrap items-end gap-2"><div className="min-w-0 flex-1"><Field label={l('addParent')}><select className={input} disabled={busy || fieldsDirty || actionDraft || checkDraft || Boolean(selection) || Boolean(evidenceChoice)} value={parentChoice} onChange={e => setParentChoice(e.target.value)}><option value="">—</option>{candidates.map(row => <option key={row.id} value={row.id}>{row.title.slice(0, 120)}</option>)}</select></Field></div><Button type="button" variant="secondary" disabled={!parentChoice || busy || fieldsDirty || actionDraft || checkDraft || Boolean(selection) || Boolean(evidenceChoice)} onClick={attach}>{l('attach')}</Button></div>}
+            {goal && candidates.length > 0 && <div className="flex flex-wrap items-end gap-2"><div className="min-w-0 flex-1"><Field label={l('addParent')}><Select disabled={busy || fieldsDirty || actionDraft || checkDraft || Boolean(selection) || Boolean(evidenceChoice)} value={parentChoice} onChange={e => setParentChoice(e.target.value)}><option value="">—</option>{candidates.map(row => <option key={row.id} value={row.id}>{row.title.slice(0, 120)}</option>)}</Select></Field></div><Button type="button" variant="secondary" disabled={!parentChoice || busy || fieldsDirty || actionDraft || checkDraft || Boolean(selection) || Boolean(evidenceChoice)} onClick={attach}>{l('attach')}</Button></div>}
             {!goal && parentId && <p className="text-sm text-ink-muted">{l('howPrompt')}</p>}
             {goal?.catalog_snapshot.data && <details className="rounded-control bg-surface-sunken p-4 text-sm"><summary className="cursor-pointer py-1 font-semibold">{l('source')} · {l('version')} {goal.catalog_snapshot.version}</summary><p className="mt-2">{goal.catalog_snapshot.data.description}</p><p className="mt-2 whitespace-pre-wrap"><strong>{l('suggestions')}: </strong>{goal.catalog_snapshot.data.suggestions}</p></details>}
             <form id="goal-dialog-form" onSubmit={e => { e.preventDefault(); submit(); }}><fieldset disabled={busy || (Boolean(goal) && otherDraft)} className="space-y-4">
@@ -212,9 +200,9 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
                 <details ref={actionDetails} className="rounded-control border border-line p-4"><summary className="cursor-pointer py-2 font-semibold">{l('createAction')}</summary>
                     <form className="mt-4" onSubmit={e => { e.preventDefault(); actionRequest.current ||= crypto.randomUUID(); void run(() => goalApi<PersonalGoal>(`${base}/actions`, 'POST', { ...action, date: action.date || null, revision: goal.revision, request_id: actionRequest.current })); }}><fieldset disabled={busy || fieldsDirty || checkDraft || Boolean(selection) || Boolean(evidenceChoice) || Boolean(parentChoice)} className="space-y-4">
                         <p className="text-sm text-ink-muted">{l('actionHelp')}</p>
-                        <Field label={l('actionTitle')}><input className={input} required maxLength={160} value={action.title} onChange={e => setAction({ ...action, title: e.target.value })} /></Field>
-                        <Field label={l('detail')}><textarea className={input} maxLength={1000} value={action.detail} onChange={e => setAction({ ...action, detail: e.target.value })} /></Field>
-                        <Field label={l('date')}><input className={input} type="date" value={action.date} onChange={e => setAction({ ...action, date: e.target.value })} /></Field>
+                        <Field label={l('actionTitle')}><Input required maxLength={160} value={action.title} onChange={e => setAction({ ...action, title: e.target.value })} /></Field>
+                        <Field label={l('detail')}><Textarea maxLength={1000} value={action.detail} onChange={e => setAction({ ...action, detail: e.target.value })} /></Field>
+                        <Field label={l('date')}><Input type="date" value={action.date} onChange={e => setAction({ ...action, date: e.target.value })} /></Field>
                         <Button type="submit">{l('createAction')}</Button>
                     </fieldset></form>
                 </details>
@@ -223,9 +211,9 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
                 <ul className="space-y-2">{goal.checks.map(checkRow)}</ul>
                 <details className="rounded-control border border-line p-4"><summary className="cursor-pointer py-2 font-semibold"><Plus className="mr-1 inline h-4 w-4 align-text-bottom" aria-hidden />{l('addCheck')}</summary>
                     <form className="mt-4" onSubmit={e => { e.preventDefault(); checkRequest.current ||= crypto.randomUUID(); void run(() => goalApi<PersonalGoal>(`${base}/actions`, 'POST', { ...check, kind: 'check', revision: goal.revision, request_id: checkRequest.current })); }}><fieldset disabled={busy || fieldsDirty || actionDraft || Boolean(selection) || Boolean(evidenceChoice) || Boolean(parentChoice)} className="space-y-4">
-                        <Field label={l('actionTitle')}><input className={input} required maxLength={160} value={check.title} onChange={e => setCheck({ ...check, title: e.target.value })} /></Field>
-                        <Field label={l('detail')}><textarea className={input} maxLength={1000} value={check.detail} onChange={e => setCheck({ ...check, detail: e.target.value })} /></Field>
-                        <Field label={l('date')}><input className={input} type="date" required value={check.date} onChange={e => setCheck({ ...check, date: e.target.value })} /></Field>
+                        <Field label={l('actionTitle')}><Input required maxLength={160} value={check.title} onChange={e => setCheck({ ...check, title: e.target.value })} /></Field>
+                        <Field label={l('detail')}><Textarea maxLength={1000} value={check.detail} onChange={e => setCheck({ ...check, detail: e.target.value })} /></Field>
+                        <Field label={l('date')}><Input type="date" required value={check.date} onChange={e => setCheck({ ...check, date: e.target.value })} /></Field>
                         <Button type="submit"><Plus className="h-4 w-4" aria-hidden />{l('addCheck')}</Button>
                     </fieldset></form>
                 </details>
@@ -235,7 +223,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
                     {evidence.map(linkRow)}
                     <GoalIssue error={resourcesError} lang={lang} retry={loadResources} />
                     <form onSubmit={e => { e.preventDefault(); const resource = evidenceAvailable.find(r => `${r.kind}:${r.target_id}` === evidenceChoice); if (resource) void run(() => goalApi<PersonalGoal>(`${base}/links`, 'POST', { kind: 'portfolio', target_id: resource.target_id, role: 'evidence', revision: goal.revision })); }}>
-                        <fieldset disabled={busy || fieldsDirty || actionDraft || checkDraft || Boolean(selection) || Boolean(parentChoice)} className="flex flex-wrap items-end gap-2"><div className="min-w-0 flex-1"><Field label={l('pickResource')}><select required className={input} value={evidenceChoice} onChange={e => setEvidenceChoice(e.target.value)}><option value="">—</option>{evidenceAvailable.map(r => <option key={`${r.kind}:${r.target_id}`} value={`${r.kind}:${r.target_id}`}>{resourceLabel(lang, r.kind)} · {r.title.slice(0, 120)}</option>)}</select></Field></div><Button type="submit" disabled={!evidenceChoice}>{l('link')}</Button></fieldset>
+                        <fieldset disabled={busy || fieldsDirty || actionDraft || checkDraft || Boolean(selection) || Boolean(parentChoice)} className="flex flex-wrap items-end gap-2"><div className="min-w-0 flex-1"><Field label={l('pickResource')}><Select required value={evidenceChoice} onChange={e => setEvidenceChoice(e.target.value)}><option value="">—</option>{evidenceAvailable.map(r => <option key={`${r.kind}:${r.target_id}`} value={`${r.kind}:${r.target_id}`}>{resourceLabel(lang, r.kind)} · {r.title.slice(0, 120)}</option>)}</Select></Field></div><Button type="submit" disabled={!evidenceChoice}>{l('link')}</Button></fieldset>
                     </form>
                 </div>
             </details>}
@@ -244,7 +232,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
                     {related.map(linkRow)}
                     <GoalIssue error={resourcesError} lang={lang} retry={loadResources} />
                     <form onSubmit={e => { e.preventDefault(); const resource = relatedAvailable.find(r => `${r.kind}:${r.target_id}` === selection); if (resource) void run(() => goalApi<PersonalGoal>(`${base}/links`, 'POST', { kind: resource.kind, target_id: resource.target_id, role: 'related', revision: goal.revision })); }}>
-                        <fieldset disabled={busy || fieldsDirty || actionDraft || checkDraft || Boolean(evidenceChoice) || Boolean(parentChoice)} className="flex flex-wrap items-end gap-2"><div className="min-w-0 flex-1"><Field label={l('pickResource')}><select required className={input} value={selection} onChange={e => setSelection(e.target.value)}><option value="">—</option>{relatedAvailable.map(r => <option key={`${r.kind}:${r.target_id}`} value={`${r.kind}:${r.target_id}`}>{resourceLabel(lang, r.kind)} · {r.title.slice(0, 120)}</option>)}</select></Field></div><Button type="submit" disabled={!selection}>{l('link')}</Button></fieldset>
+                        <fieldset disabled={busy || fieldsDirty || actionDraft || checkDraft || Boolean(evidenceChoice) || Boolean(parentChoice)} className="flex flex-wrap items-end gap-2"><div className="min-w-0 flex-1"><Field label={l('pickResource')}><Select required value={selection} onChange={e => setSelection(e.target.value)}><option value="">—</option>{relatedAvailable.map(r => <option key={`${r.kind}:${r.target_id}`} value={`${r.kind}:${r.target_id}`}>{resourceLabel(lang, r.kind)} · {r.title.slice(0, 120)}</option>)}</Select></Field></div><Button type="submit" disabled={!selection}>{l('link')}</Button></fieldset>
                     </form>
                 </div>
             </details>}
@@ -255,10 +243,10 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
                 </details>}
                 <div><Button type="button" variant="secondary" disabled={busy || fieldsDirty || otherDraft} onClick={() => setMode('review')}>{l('doReview')}</Button></div>
             </section>}
-        </div>
-        <div className="flex flex-wrap items-center gap-2 border-t border-line bg-surface p-4 sm:px-6">
+        </DialogBody>
+        <DialogFooter>
             {goal && <Button type="button" variant="ghost" disabled={busy || dirty} onClick={() => void remove()}>{l('delete')}</Button>}
-            <div className="ml-auto flex gap-2">{goal && <a className="inline-flex min-h-control items-center rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body" href={`/api/user/goals/${goal.id}/pdf?lang=${lang}`} download>{l('downloadPath')}</a>}<Button type="button" variant="secondary" onClick={onRequestClose}>{l('cancel')}</Button><Button type="submit" form="goal-dialog-form" disabled={busy || (goal ? !fieldsDirty || otherDraft : !form.title.trim())}>{l('save')}</Button></div>
-        </div>
+            <div className="ml-auto flex gap-2">{goal && <a className={buttonClasses('secondary')} href={`/api/user/goals/${goal.id}/pdf?lang=${lang}`} download>{l('downloadPath')}</a>}<Button type="button" variant="secondary" onClick={onRequestClose}>{l('cancel')}</Button><Button type="submit" form="goal-dialog-form" disabled={busy || (goal ? !fieldsDirty || otherDraft : !form.title.trim())}>{l('save')}</Button></div>
+        </DialogFooter>
     </>;
 }

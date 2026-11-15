@@ -10,6 +10,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Field, Input, Textarea } from '@/components/ui/Field';
 import { RoleBadge } from '@/components/ui/RoleBadge';
 import { EntryLink, EntrySection } from '@/components/ui/EntryList';
 import ToolIllustration from '@/components/ui/ToolIllustration';
@@ -43,8 +45,6 @@ import { useTeacherResource } from './useTeacherResource';
 
 type Draft = { id: number | 'new'; title: string; values: PracticeNotebookData; groupIds: number[] };
 
-const primary = 'min-h-control rounded-control bg-brand px-4 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover disabled:opacity-50';
-const secondary = 'min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-50';
 const linkAction = 'inline-flex min-h-control items-center text-sm font-semibold text-link underline underline-offset-2 disabled:opacity-50';
 const sectionTitle = 'border-b border-line pb-2 text-lg font-semibold text-ink';
 
@@ -219,7 +219,7 @@ export function PracticeNotebooks({ notebookId, newProfileType }: { notebookId?:
             {classGroups.loading && <p role="status" className="text-xs text-ink-muted">{t('common.loading')}</p>}
             {(classGroups.failed || classGroups.forbidden) && <div role="alert" className="text-xs text-danger">
                 <p>{l('classesError')}</p>
-                <button type="button" onClick={() => void classGroups.reload()} className={secondary}>{l('retry')}</button>
+                <Button type="button" variant="secondary" onClick={() => void classGroups.reload()}>{l('retry')}</Button>
             </div>}
             {groups && !groups.length && <p className="text-xs text-ink-muted">{l('noClasses')}</p>}
             {groups?.map(group => (
@@ -239,30 +239,25 @@ export function PracticeNotebooks({ notebookId, newProfileType }: { notebookId?:
 
     const editor = (current: Draft) => (
         <form data-practice-notebook-editor className="space-y-4" onSubmit={(event) => { event.preventDefault(); void save(); }}>
-            <div>
-                <label htmlFor="practice-notebook-title" className="block text-xs font-semibold text-ink-muted">{l('name')}</label>
-                <input id="practice-notebook-title" required value={current.title} maxLength={PRACTICE_TITLE_MAX_CHARS} aria-describedby="practice-notebook-title-hint"
-                    onChange={(event) => edit({ title: event.target.value })}
-                    className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm" />
-                <p id="practice-notebook-title-hint" className="mt-1 text-xs text-ink-muted">{l('nameHint')}</p>
-            </div>
+            <Field label={l('name')} help={l('nameHint')}>
+                <Input id="practice-notebook-title" required value={current.title} maxLength={PRACTICE_TITLE_MAX_CHARS}
+                    onChange={(event) => edit({ title: event.target.value })} />
+            </Field>
             {current.id === 'new' && classSelection(current.groupIds, (groupId, linked) => edit({
                 groupIds: linked ? [...current.groupIds, groupId] : current.groupIds.filter(id => id !== groupId),
             }))}
             <div className="grid gap-4">
                 {PRACTICE_NOTEBOOK_FIELDS.map((field) => (
-                    <div key={field.key}>
-                        <label htmlFor={`practice-notebook-${field.key}`} className="block text-xs font-semibold text-ink-muted">{t(field.labelKey)}</label>
-                        <textarea id={`practice-notebook-${field.key}`} rows={'multiline' in field ? 3 : 1} maxLength={PRACTICE_FIELD_MAX_CHARS}
+                    <Field key={field.key} label={t(field.labelKey)}>
+                        <Textarea id={`practice-notebook-${field.key}`} rows={'multiline' in field ? 3 : 1} maxLength={PRACTICE_FIELD_MAX_CHARS}
                             value={current.values[field.key] ?? ''}
-                            onChange={(event) => edit({ values: { ...current.values, [field.key]: event.target.value } })}
-                            className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm" />
-                    </div>
+                            onChange={(event) => edit({ values: { ...current.values, [field.key]: event.target.value } })} />
+                    </Field>
                 ))}
             </div>
             <div className="flex flex-wrap items-center gap-4">
-                <button type="submit" disabled={busy || !current.title.trim()} className={primary}>{l('save')}</button>
-                <button type="button" disabled={busy} onClick={closeDraft} className={secondary}>{l('cancel')}</button>
+                <Button type="submit" disabled={busy || !current.title.trim()}>{l('save')}</Button>
+                <Button type="button" variant="secondary" disabled={busy} onClick={closeDraft}>{l('cancel')}</Button>
             </div>
         </form>
     );
@@ -287,7 +282,7 @@ export function PracticeNotebooks({ notebookId, newProfileType }: { notebookId?:
         {notebooks === null && !loadFailed && <p role="status" className="text-sm text-ink-muted">{t('common.loading')}</p>}
         {loadFailed && <div role="alert" className="flex flex-wrap items-center gap-4 text-sm text-danger">
             <p>{l('loadError')}</p>
-            <button type="button" onClick={() => void load()} className={secondary}>{l('retry')}</button>
+            <Button type="button" variant="secondary" onClick={() => void load()}>{l('retry')}</Button>
         </div>}
     </>;
 
@@ -356,10 +351,9 @@ export function PracticeNotebooks({ notebookId, newProfileType }: { notebookId?:
             <div className="space-y-4">
                 <p className="max-w-3xl text-sm text-ink-muted">{l('note')}</p>
                 {draft?.id === 'new' ? editor(draft) : (
-                    <button type="button" disabled={busy || notebooks === null} onClick={() => openDraft({ id: 'new', title: '', values: {}, groupIds: [] })}
-                        className={`${primary} inline-flex items-center gap-2`}>
+                    <Button type="button" disabled={busy || notebooks === null} onClick={() => openDraft({ id: 'new', title: '', values: {}, groupIds: [] })}>
                         <Plus className="h-4 w-4" aria-hidden="true" />{l('create')}
-                    </button>
+                    </Button>
                 )}
                 {error && <p role="alert" className="text-sm text-danger">{error}</p>}
                 {loading}
