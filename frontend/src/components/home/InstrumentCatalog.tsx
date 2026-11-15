@@ -4,10 +4,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { CompassEntry } from '@/components/home/CompassEntry';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonClasses } from '@/components/ui/Button';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { EntryLink, EntrySection } from '@/components/ui/EntryList';
 import ToolIllustration from '@/components/ui/ToolIllustration';
-import { AlertTriangle, Snowflake, X } from 'lucide-react';
+import { Snowflake, X } from 'lucide-react';
 import { QUESTIONNAIRE_LIST, QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
@@ -90,32 +91,23 @@ export function InstrumentCatalog({
     return (
         <>
             {pausedChat && (
-                <section className="flex items-start gap-4 rounded-card border border-brand-line bg-brand-soft p-4" role="status">
-                    <Snowflake className="mt-1 h-5 w-5 shrink-0 text-link" aria-hidden="true" />
-                    <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-link">
-                            {t('selector.paused.title', { tool: tf(`q.${pausedChat.questionnaireId}.name`, pausedChat.questionnaireId) })}
-                        </p>
-                        <p className="mt-1 text-sm text-ink-muted">{t('selector.paused.body')}</p>
-                    </div>
-                    {/* Riprendere ricarica la pagina: la home legge lo snapshot al mount. */}
-                    <a
-                        href={resumeHref(frozen.find(row => row.session_id === pausedChat.sessionId) ?? { session_id: pausedChat.sessionId })}
-                        className="inline-flex min-h-control shrink-0 items-center rounded-control bg-brand px-4 py-2 text-sm font-semibold text-ink-on-brand transition-colors hover:bg-brand-hover"
-                    >
-                        {t('selector.paused.resume')}
-                    </a>
-                    {onDismissPausedChat && (
-                        <button
-                            type="button"
-                            onClick={onDismissPausedChat}
-                            aria-label={t('selector.paused.dismiss')}
-                            className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control text-link transition-colors hover:bg-brand-soft"
+                <Callout variant="info" icon={Snowflake} title={t('selector.paused.title', { tool: tf(`q.${pausedChat.questionnaireId}.name`, pausedChat.questionnaireId) })}>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <p className="min-w-0 flex-1">{t('selector.paused.body')}</p>
+                        {/* Riprendere ricarica la pagina: la home legge lo snapshot al mount. */}
+                        <a
+                            href={resumeHref(frozen.find(row => row.session_id === pausedChat.sessionId) ?? { session_id: pausedChat.sessionId })}
+                            className={buttonClasses('primary', 'md', 'shrink-0')}
                         >
-                            <X className="h-4 w-4" />
-                        </button>
-                    )}
-                </section>
+                            {t('selector.paused.resume')}
+                        </a>
+                        {onDismissPausedChat && (
+                            <Button type="button" variant="ghost" onClick={onDismissPausedChat} aria-label={t('selector.paused.dismiss')}>
+                                <X className="h-4 w-4" aria-hidden="true" />
+                            </Button>
+                        )}
+                    </div>
+                </Callout>
             )}
 
             <div id={id} className="flex flex-col gap-6">
@@ -137,16 +129,12 @@ export function InstrumentCatalog({
                 </EntrySection>
             )}
             {isUnavailableQuestionnaireLang && (
-                <section className="flex flex-col gap-4 rounded-card border border-warning-line bg-warning-soft p-6 sm:flex-row sm:items-center">
-                    <AlertTriangle className="h-6 w-6 shrink-0 text-warning" />
-                    <div className="flex-1">
-                        <h2 className="font-semibold text-warning-ink">{t('selector.unavailable.title')}</h2>
-                        <p className="mt-1 text-sm leading-relaxed text-warning-ink">{t('selector.unavailable.body')}</p>
-                    </div>
-                    <Button variant="secondary" onClick={() => setLang('en')} className="shrink-0">
+                <Callout variant="warning" title={t('selector.unavailable.title')}>
+                    <p>{t('selector.unavailable.body')}</p>
+                    <Button variant="secondary" onClick={() => setLang('en')} className="mt-2">
                         {t('selector.unavailable.switchEnglish')}
                     </Button>
-                </section>
+                </Callout>
             )}
             {lang !== 'it' && catalogLoading && (
                 <p className="text-sm text-ink-muted" role="status">{t('base.catalog.loading')}</p>
@@ -154,9 +142,9 @@ export function InstrumentCatalog({
             {lang !== 'it' && catalogError && (
                 <Callout variant="danger">
                     <span>{t('base.catalog.error')}</span>
-                    <button type="button" onClick={retryCatalog} className="inline-flex min-h-control items-center font-semibold text-warning-ink underline underline-offset-2">
+                    <Button type="button" variant="ghost" onClick={retryCatalog}>
                         {t('base.catalog.retry')}
-                    </button>
+                    </Button>
                 </Callout>
             )}
             {dynamicCategories.filter((group) => group.questionnaireIds.length > 0).map((group) => (
@@ -181,20 +169,14 @@ export function InstrumentCatalog({
                 </div>
             ))}
             {!isUnavailableQuestionnaireLang && upcoming.length > 0 && (
-                <section className="flex flex-col gap-4 rounded-card border border-dashed border-line bg-surface/60 px-6 py-4 lg:flex-row lg:items-center">
-                    <div className="shrink-0 lg:w-52">
-                        <h2 className="text-sm font-semibold text-ink-body">{t('selector.upcoming.title')}</h2>
-                        <p className="mt-1 text-xs text-ink-muted">{t('selector.upcoming.subtitle')}</p>
-                    </div>
-                    <div className="grid flex-1 gap-2 sm:grid-cols-3">
-                        {upcoming.map((q) => (
-                            <div key={q.id} className="flex items-center justify-between gap-2 rounded-control border border-line bg-surface px-4 py-2">
-                                <span className="text-sm font-semibold text-ink-muted">{q.name}</span>
-                                <span className="rounded-full bg-surface-raised px-2 py-1 text-2xs font-semibold text-ink-muted">{t('selector.soon')}</span>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                <EntrySection id="home-upcoming-title" title={t('selector.upcoming.title')} subtitle={t('selector.upcoming.subtitle')}>
+                    {upcoming.map((q) => (
+                        <div key={q.id} aria-disabled="true" className="flex min-h-control items-center justify-between gap-2 px-2 py-2">
+                            <span className="text-sm font-semibold text-ink-muted">{q.name}</span>
+                            <StatusBadge>{t('selector.soon')}</StatusBadge>
+                        </div>
+                    ))}
+                </EntrySection>
             )}
             </div>
         </>

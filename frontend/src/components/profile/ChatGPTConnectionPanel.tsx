@@ -139,7 +139,7 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
         : device === 'linux' ? pythonLink : null;
     const others = [windowsLink, macosLink, pythonLink].filter(item => item && item !== primary);
 
-    return <Card as="section" className="space-y-4" data-testid="chatgpt-wizard"
+    return <Card as="section" variant="flat" className="space-y-4" data-testid="chatgpt-wizard"
         data-state={failed ? 'error' : link ? 'waiting' : status.connected && !status.needs_reconnect ? 'connected' : 'not_connected'}>
         <h2 className="text-xl font-semibold text-ink">{t('chatgpt.title')}</h2>
         <p className="text-sm text-ink-muted">{t('chatgpt.intro')}</p>
@@ -162,7 +162,7 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
             : <Button type="button" disabled={busy} onClick={() => void startLink()}>{t(status.connected || status.needs_reconnect ? 'chatgpt.reconnect' : 'chatgpt.connect')}</Button>)}
 
         {/* State 2: waiting for the sign-in, in three numbered steps. */}
-        {link && <div className="space-y-4 rounded-card border border-line p-4" data-testid="chatgpt-link">
+        {link && <div className="space-y-4 border-t border-line pt-4" data-testid="chatgpt-link">
             <ol className="space-y-4">
                 <li className="space-y-2">
                     <p className="text-sm font-semibold">{`1. ${t('chatgpt.stepDownload')}`}</p>
