@@ -3,12 +3,13 @@
 import { factorTranslationKey, isReusableProfile } from '@/lib/questionnaires';
 
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useI18n } from '@/lib/i18n-context';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
+import { Field, Input, Select } from '@/components/ui/Field';
+import { StatusBadge, type StatusTone } from '@/components/ui/StatusBadge';
 import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
 import { canUsePersonalPage, canUseTeacherAssistant } from '@/lib/roles';
@@ -34,7 +35,7 @@ import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import { ClassContentGate } from '@/components/profile/ClassContentGate';
 import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
-    Trash2, Download, MessageSquare, ShieldAlert, Search, ChevronDown,
+    Trash2, Download, MessageSquare, ShieldAlert, ChevronDown,
     NotebookPen, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2, GraduationCap, BookOpen,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -381,8 +382,6 @@ export default function ProfilePage() {
         });
     }, [selectedSession, tf]);
 
-    const typeBadge = 'bg-surface-raised text-ink-body border-line';
-
     if (loading) {
         return (
             <div className="page-wide px-4 py-8 space-y-8">
@@ -467,7 +466,7 @@ export default function ProfilePage() {
             {activeSection === 'sessions' && (
             <>
             <ActiveActionsCard />
-            <Card as="section" className="p-6 space-y-4">
+            <Card as="section" variant="flat" className="space-y-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <h2 className="text-lg font-semibold text-ink">
@@ -484,39 +483,28 @@ export default function ProfilePage() {
                 {sessionsError ? (
                     <Callout variant="danger">
                         <p>{t('profile.sessions.loadError')}</p>
-                        <button type="button" onClick={() => void loadData()} className="mt-2 min-h-control rounded-control border border-danger-line bg-surface px-4 text-sm font-semibold text-danger-ink hover:bg-danger-soft">{t('lp.retry')}</button>
+                        <Button type="button" variant="secondary" className="mt-2" onClick={() => void loadData()}>{t('lp.retry')}</Button>
                     </Callout>
                 ) : sessions.length === 0 ? (
-                    <div className="text-center py-10 px-4 border border-dashed border-line rounded-card bg-surface space-y-4">
-                        <p className="text-sm text-ink-muted max-w-xs mx-auto">{t('profile.noSessions')}</p>
-                        <Link
-                            href="/"
-                            className="inline-flex min-h-control items-center gap-2 rounded-control bg-brand px-4 py-2 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover transition-colors"
-                        >
-                            {t('selector.start')}
-                        </Link>
+                    <div className="space-y-4">
+                        <p className="text-sm text-ink-muted">{t('profile.noSessions')}</p>
+                        <ButtonLink href="/" variant="primary">{t('selector.start')}</ButtonLink>
                     </div>
                 ) : (
                     <div className="grid gap-4 lg:grid-cols-[minmax(260px,0.45fr)_minmax(0,1fr)]">
-                        <label className="block">
-                            <span className="text-xs font-semibold text-ink-muted">{t('profile.sessions.search')}</span>
-                            <div className="mt-1 flex min-h-control items-center gap-2 rounded-control border border-line-strong bg-surface px-4 py-2 focus-within:ring-2 focus-within:ring-focus">
-                                <Search className="h-4 w-4 text-ink-muted" />
-                                <input
-                                    value={sessionSearch}
-                                    disabled={readingDraft.busy}
-                                    onChange={(event) => {
-                                        const next = event.target.value;
-                                        if (!selectedSession || matchesSearch(selectedSession, next) || leaveReadingDraft()) setSessionSearch(next);
-                                    }}
-                                    placeholder={t('profile.sessions.searchPlaceholder')}
-                                    className="min-w-0 flex-1 bg-transparent text-sm"
-                                />
-                            </div>
-                        </label>
-                        <label className="block">
-                            <span className="text-xs font-semibold text-ink-muted">{t('profile.sessions.active')}</span>
-                            <select
+                        <Field label={t('profile.sessions.search')}>
+                            <Input
+                                value={sessionSearch}
+                                disabled={readingDraft.busy}
+                                onChange={(event) => {
+                                    const next = event.target.value;
+                                    if (!selectedSession || matchesSearch(selectedSession, next) || leaveReadingDraft()) setSessionSearch(next);
+                                }}
+                                placeholder={t('profile.sessions.searchPlaceholder')}
+                            />
+                        </Field>
+                        <Field label={t('profile.sessions.active')}>
+                            <Select
                                 value={selectedSession?.session_id || ''}
                                 disabled={readingDraft.busy}
                                 onChange={(event) => {
@@ -525,7 +513,6 @@ export default function ProfilePage() {
                                     setSelectedSession(next);
                                     setShowDeleteConfirm(null);
                                 }}
-                                className="mt-1 w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-focus"
                             >
                                 {filteredSessions.length === 0 && <option value="">{t('profile.sessions.noneFiltered')}</option>}
                                 {filteredSessions.map((session) => (
@@ -533,8 +520,8 @@ export default function ProfilePage() {
                                         {formatSessionOption(session)}
                                     </option>
                                 ))}
-                            </select>
-                        </label>
+                            </Select>
+                        </Field>
                     </div>
                 )}
             </Card>
@@ -560,24 +547,19 @@ export default function ProfilePage() {
                         // non aiuta a riconoscere quale compilazione si sta
                         // guardando. La data sì. L'id resta nel `title`, dove
                         // serve al supporto e non allo studente.
-                        <span
-                            title={selectedSession.session_id}
-                            className={`px-4 py-1 border text-xs font-semibold rounded-full ${typeBadge}`}
-                        >
-                            {selectedSession.questionnaire_type} · {new Date(selectedSession.submitted_at).toLocaleDateString(lang)}
-                        </span>
+                        <StatusBadge className="px-4 py-1" tone="neutral">
+                            <span title={selectedSession.session_id}>{selectedSession.questionnaire_type} · {new Date(selectedSession.submitted_at).toLocaleDateString(lang)}</span>
+                        </StatusBadge>
                     )}
                 </div>
                 {selectedSession ? (
                     <>
-                        <Card id="submission-result-content" hidden={!resultExpanded} className="p-6 space-y-6">
+                        <Card id="submission-result-content" variant="flat" hidden={!resultExpanded} className="space-y-6">
                             {/* Session Detail Header */}
                                 <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-4">
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <span className={`px-4 py-1 border text-xs font-semibold rounded-full ${typeBadge}`}>
-                                                {selectedSession.questionnaire_type}
-                                            </span>
+                                            <StatusBadge>{selectedSession.questionnaire_type}</StatusBadge>
                                             <span className="text-xs text-ink-muted">
                                                 {t('profile.submittedOn', { date: new Date(selectedSession.submitted_at).toLocaleString(lang) })}
                                             </span>
@@ -591,14 +573,14 @@ export default function ProfilePage() {
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button
+                                        <Button
+                                            variant="secondary"
                                             onClick={() => handleDownloadPdf(selectedSession.session_id, selectedSession.questionnaire_type)}
-                                            className="inline-flex min-h-control items-center gap-2 px-4 py-2 border border-line hover:bg-surface-sunken rounded-control text-xs font-semibold text-ink-muted transition-colors"
                                             title={t('completed.downloadPdf')}
                                         >
                                             <Download className="w-3.5 h-3.5" />
                                             PDF
-                                        </button>
+                                        </Button>
 
                                         {showDeleteConfirm === selectedSession.session_id ? (
                                             <ConfirmInline
@@ -609,19 +591,21 @@ export default function ProfilePage() {
                                                 onCancel={() => setShowDeleteConfirm(null)}
                                             />
                                         ) : (
-                                            <button
+                                            <Button
+                                                variant="ghost"
                                                 onClick={() => setShowDeleteConfirm(selectedSession.session_id)}
-                                                className="inline-flex h-control w-control items-center justify-center border border-danger-line hover:bg-danger-soft text-danger hover:text-danger-ink rounded-control transition-colors"
+                                                className="w-control px-0 text-danger hover:bg-danger-soft hover:text-danger-ink"
+                                                aria-label={t('profile.deleteTooltip')}
                                                 title={t('profile.deleteTooltip')}
                                             >
                                                 <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            </Button>
                                         )}
                                     </div>
                                 </div>
 
                                 {/* The final guided response is the synthesis for every instrument. */}
-                                <div className="space-y-4 bg-surface p-4 border border-line rounded-card">
+                                <div className="space-y-4 border-t border-line pt-4">
                                     <h3 className="text-sm font-semibold text-ink-body">{t('profile.sessionSummary.title')}</h3>
                                     {summaryLoading ? (
                                         <div className="py-4 text-center text-xs text-ink-muted">
@@ -640,7 +624,7 @@ export default function ProfilePage() {
 
                                 {/* Render Scores Visual Chart if quantitative */}
                                 {chartData.length > 0 && (
-                                    <div className="space-y-4 bg-surface p-4 border border-line rounded-card">
+                                    <div className="space-y-4 border-t border-line pt-4">
                                         <h3 className="text-sm font-semibold text-ink-body">{t('profile.factorBreakdown')}</h3>
 
                                         <div className="h-64">
@@ -688,24 +672,22 @@ export default function ProfilePage() {
                                                 const isStrength = !(selectedSession.questionnaire_type === 'QPCC' && code === 'M2') && (inverted ? val <= 3 : val >= 7);
                                                 const isGrowth = !(selectedSession.questionnaire_type === 'QPCC' && code === 'M2') && (inverted ? val >= 7 : val <= 3);
 
-                                                let badgeColor = 'bg-warning-soft text-warning-ink border-warning-line';
+                                                let tone: StatusTone = 'warning';
                                                 let evaluation = selectedSession.questionnaire_type === 'QPCC' && code === 'M2' ? t('factor.QPCC.M2.name') : t('profile.normal');
                                                 if (isStrength) {
-                                                    badgeColor = 'bg-success-soft text-success-ink border-success-line';
+                                                    tone = 'success';
                                                     evaluation = t('profile.strength');
                                                 } else if (isGrowth) {
-                                                    badgeColor = 'bg-danger-soft text-danger-ink border-danger-line';
+                                                    tone = 'danger';
                                                     evaluation = t('profile.growth');
                                                 }
 
                                                 return (
-                                                    <div key={code} className="border border-line rounded-card p-4 bg-surface space-y-2 flex flex-col justify-between">
+                                                    <div key={code} className="border-t border-line pt-3 space-y-2 flex flex-col justify-between">
                                                         <div>
                                                             <div className="flex justify-between items-start gap-2">
                                                                 <span className="font-semibold text-xs text-ink">{code} - {tf(factorTranslationKey(selectedSession.questionnaire_type, code, 'name'), factorDef?.name || code)}</span>
-                                                                <span className={`px-2 py-1 border text-2xs font-semibold rounded-full shrink-0 ${badgeColor}`}>
-                                                                    {evaluation}
-                                                                </span>
+                                                                <StatusBadge tone={tone} className="shrink-0">{evaluation}</StatusBadge>
                                                             </div>
                                                             {factorDef?.description && (
                                                                 <p className="text-xs text-ink-muted leading-normal mt-1">{tf(factorTranslationKey(selectedSession.questionnaire_type, code, 'desc'), factorDef.description)}</p>
@@ -724,7 +706,7 @@ export default function ProfilePage() {
                                 ) : null}
 
                             {/* Render Chat Conversation */}
-                            <div className="space-y-4 bg-surface p-4 border border-line rounded-card">
+                            <div className="space-y-4 border-t border-line pt-4">
                                 <h3 className="text-sm font-semibold text-ink-body flex items-center gap-2">
                                     <MessageSquare className="w-4 h-4 text-link" />
                                     {t('profile.conversation.title')}
@@ -771,9 +753,7 @@ export default function ProfilePage() {
                         <ResultReadingCard key={selectedSession.session_id} sessionId={selectedSession.session_id} questionnaireType={selectedSession.questionnaire_type} scores={selectedSession.scores} onDraftStateChange={onReadingDraftChange} />
                     </>
                 ) : (
-                    <Card className="p-12 text-center space-y-4 text-ink-muted">
-                        <p>{t('profile.selectSession')}</p>
-                    </Card>
+                    <p className="text-sm text-ink-muted">{t('profile.selectSession')}</p>
                 )}
             </section>
 

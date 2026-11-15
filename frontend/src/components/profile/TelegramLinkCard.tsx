@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/auth';
 import { Send } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonClasses } from '@/components/ui/Button';
 
 interface LinkStatus {
     linked: boolean;
@@ -230,8 +230,8 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
     const linked = !statusError && status?.linked;
 
     return (
-        <Card as="section"
-            className="space-y-4 p-6"
+        <Card as="section" variant="flat"
+            className="space-y-4"
             aria-labelledby={showHeading ? 'telegram-link-section' : undefined}
             aria-label={showHeading ? undefined : texts.title}
         >
@@ -253,46 +253,41 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
             {statusError && (
                 <p role="alert" className="text-sm text-danger-ink">
                     {statusError && !status ? texts.statusError : ''}
-                    <button type="button" onClick={() => void loadStatus()} className="mt-2 block min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken">{texts.retry}</button>
+                    <Button type="button" variant="secondary" className="mt-2" onClick={() => void loadStatus()}>{texts.retry}</Button>
                 </p>
             )}
             {linked && (
                 <div className="flex flex-wrap gap-2">
-                    <button
-                        type="button"
-                        onClick={() => void unlink()}
-                        disabled={busy}
-                        className="min-h-control rounded-control border border-line-strong px-4 py-2 text-sm font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-50"
-                    >
+                    <Button type="button" variant="secondary" onClick={() => void unlink()} disabled={busy}>
                         {texts.unlink}
-                    </button>
+                    </Button>
                 </div>
             )}
             {!linked && (
-                <ol className="space-y-2 text-sm text-ink-body">
-                    <li className="rounded-control border border-line bg-surface p-4">
+                <ol className="divide-y divide-line text-sm text-ink-body">
+                    <li className="py-4">
                         <span className="font-semibold">{texts.step1}.</span>{' '}
                         {botUsername && (
                             <a
                                 href={pending && !expired ? deepLink : `https://t.me/${botUsername}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="ml-1 inline-flex min-h-control items-center rounded-control bg-brand px-4 py-2 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover"
+                                className={buttonClasses('primary', 'md', 'ml-1')}
                             >
                                 {texts.openBot}
                             </a>
                         )}
                     </li>
-                    <li className="rounded-control border border-line bg-surface p-4"><span className="font-semibold">{texts.step2}.</span></li>
-                    <li className="rounded-control border border-line bg-surface p-4">
+                    <li className="py-4"><span className="font-semibold">{texts.step2}.</span></li>
+                    <li className="py-4">
                         <span className="font-semibold">{texts.step3}.</span>{' '}
-                        <button type="button" onClick={() => void loadStatus()} disabled={busy} className="ml-1 min-h-control rounded-control border border-brand-line px-4 py-2 text-sm font-semibold text-link hover:bg-brand-soft disabled:opacity-50">{texts.verify}</button>
+                        <Button type="button" variant="secondary" className="ml-1" onClick={() => void loadStatus()} disabled={busy}>{texts.verify}</Button>
                     </li>
                     <li className="text-xs text-ink-muted">{texts.verifyHint}</li>
                 </ol>
             )}
             {pending && !expired && (
-                <div className="space-y-2 rounded-control border border-line-strong bg-surface p-4 text-sm text-ink" aria-live="polite">
+                <div className="space-y-2 border-t border-line-strong pt-4 text-sm text-ink" aria-live="polite">
                     <p>{texts.codeHint}</p>
                     <p className="font-mono text-lg font-semibold">/link {pending.code}</p>
                     <p>{texts.codeValid.replace('{minutes}', String(minutesLeft))}</p>

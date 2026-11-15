@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { User, ShieldAlert } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
 import { getIdentity, type Identity } from '@/lib/auth';
 import { canUsePersonalPage } from '@/lib/roles';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
+import { Card } from '@/components/ui/Card';
 import { ProfileChangeReflection } from '@/components/profile/ProfileChangeReflection';
 
 export default function ProfileChangesPage() {
@@ -41,37 +43,25 @@ export default function ProfileChangesPage() {
 
     if (!identity) {
         return (
-            <div className="max-w-md mx-auto my-12 p-8 bg-surface border border-line rounded-card text-center space-y-6 shadow-card">
-                <div className="mx-auto w-12 h-12 bg-brand-soft rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-link" />
-                </div>
+            <Card variant="flat" className="mx-auto my-12 max-w-md space-y-6 text-center">
                 <h1 className="text-2xl font-semibold text-ink">{t('profile.loginRequired')}</h1>
-                <p className="text-ink-muted text-sm">{t('profile.loginRequiredDesc')}</p>
-                <button
-                    onClick={() => window.location.href = '/'}
-                    className="w-full min-h-control py-2 bg-brand hover:bg-brand-hover text-ink-on-brand rounded-control font-semibold transition-colors"
-                >
+                <Callout variant="info" className="text-left">{t('profile.loginRequiredDesc')}</Callout>
+                <Button className="w-full" onClick={() => window.location.href = '/'}>
                     {t('profile.backToHomeToLogin')}
-                </button>
-            </div>
+                </Button>
+            </Card>
         );
     }
 
     if (!canUsePersonalPage(identity)) {
         return (
-            <div className="max-w-md mx-auto my-12 p-8 bg-surface border border-line rounded-card text-center space-y-6 shadow-card">
-                <div className="mx-auto w-12 h-12 bg-warning-soft rounded-full flex items-center justify-center">
-                    <ShieldAlert className="w-6 h-6 text-warning" />
-                </div>
+            <Card variant="flat" className="mx-auto my-12 max-w-md space-y-6 text-center">
                 <h1 className="text-2xl font-semibold text-ink">{t('profile.restrictedTitle')}</h1>
-                <p className="text-ink-muted text-sm">{t('profile.restrictedDesc')}</p>
-                <button
-                    onClick={() => window.location.href = '/'}
-                    className="w-full min-h-control py-2 bg-brand hover:bg-brand-hover text-ink-on-brand rounded-control font-semibold transition-colors"
-                >
+                <Callout variant="warning" className="text-left">{t('profile.restrictedDesc')}</Callout>
+                <Button className="w-full" onClick={() => window.location.href = '/'}>
                     {t('profile.backToHomeToLogin')}
-                </button>
-            </div>
+                </Button>
+            </Card>
         );
     }
 

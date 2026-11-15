@@ -15,6 +15,8 @@ import { BackButton } from '@/components/ui/BackButton';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Callout } from '@/components/ui/Callout';
+import { Input, Select } from '@/components/ui/Field';
 import { INSTITUTION_NOT_LISTED, fetchInstitutions, type Institution } from '@/lib/referrals-api';
 import { goalApi, type GoalGroup, type PersonalGoal } from '@/lib/goals';
 import { GoalDialog, type DialogTarget } from '@/components/goals/GoalDialog';
@@ -289,10 +291,9 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     };
 
     if (hidden || dismissed || loading) return null;
-    if (loadFailed) return <Card role="alert" className="space-y-4 p-6">
+    if (loadFailed) return <Card role="alert" variant="flat" className="space-y-4">
         <p className="text-sm text-danger-ink">{t('lp.loadError')}</p>
-        <button type="button" onClick={() => { setLoadFailed(false); setLoading(true); setLoadAttempt(n => n + 1); }}
-            className="min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken">{t('lp.retry')}</button>
+        <Button variant="secondary" onClick={() => { setLoadFailed(false); setLoading(true); setLoadAttempt(n => n + 1); }}>{t('lp.retry')}</Button>
     </Card>;
     if (suggestionOnly && (suggestion?.status !== 'ready' || (suggestionHandled && !editing))) return null;
     // Revisione a inizio sessione: se non c'è ancora un profilo si propone
@@ -325,12 +326,12 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                     <label key={f.key} className="block">
                         <span className="text-xs font-semibold text-ink-muted">{t(f.labelKey)}</span>
                         {f.type === 'select' ? (
-                            <select
+                            <Select
                                 value={form[f.key] || ''}
                                 onChange={(e) => {
                                     changeForm({ ...form, [f.key]: e.target.value });
                                 }}
-                                className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
+                                className="mt-1"
                             >
                                 <option value="">{t('lp.institution.choose')}</option>
                                 {institutions.map((institution) => (
@@ -342,16 +343,16 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                                     che l'anagrafica esiste per evitare: chi non si trova
                                     in elenco lo dichiara, e vede le sole righe nazionali. */}
                                 <option value={INSTITUTION_NOT_LISTED}>{t('lp.institution.notListed')}</option>
-                            </select>
+                            </Select>
                         ) : f.type === 'number' ? (
-                            <input
+                            <Input
                                 type="number"
                                 value={form[f.key] || ''}
                                 maxLength={600}
                                 onChange={(e) => {
                                     changeForm({ ...form, [f.key]: e.target.value });
                                 }}
-                                className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
+                                className="mt-1"
                             />
                         ) : (
                             <AutoGrowTextarea
@@ -361,7 +362,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                                 onChange={(e) => {
                                     changeForm({ ...form, [f.key]: e.target.value });
                                 }}
-                                className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
+                                className="mt-1 w-full rounded-control border border-line-strong bg-surface px-3 py-2 text-sm text-ink"
                             />
                         )}
                     </label>
@@ -397,9 +398,9 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     );
 
     const summaryUi = (
-        <div className="space-y-4">
+        <div>
             {filledEntries.map((f) => (
-                <div key={f.key} className="rounded-card border border-line bg-surface-sunken/60 p-4">
+                <div key={f.key} className="border-b border-line py-3">
                     <div className="text-xs font-semibold text-ink-muted">{t(f.labelKey)}</div>
                     <p className="mt-1 text-sm leading-relaxed text-ink">{f.value}</p>
                 </div>
@@ -460,7 +461,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                     </span>
                 </div>
             )}
-            <Card className="p-6 space-y-4">
+            <Card variant="flat" className="space-y-4">
             {variant !== 'edit' && !suggestionOnly && (
                 <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-ink">{title}</h3>
@@ -473,32 +474,26 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
             )}
 
             {suggestion?.status === 'ready' && !suggestionHandled && (
-                <section className="rounded-card border border-ochre-200 bg-ochre-50 p-4" aria-label={t('lp.suggestion.title')}>
-                    <div className="flex items-start gap-4">
-                        <div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-move" />
-                        <div className="min-w-0 flex-1">
-                            <h4 className="font-display text-base font-semibold text-ink">{t('lp.suggestion.title')}</h4>
-                            <p className="mt-1 text-sm leading-relaxed text-ink-muted">{t('lp.suggestion.intro')}</p>
-                            <dl className="mt-4 space-y-2">
-                                {(['main_difficulty', 'notes'] as const).map((key) => {
-                                    const value = suggestion.data[key]?.trim();
-                                    const labelKey = key === 'main_difficulty' ? 'lp.field.difficulty'
-                                        : 'lp.field.notes';
-                                    return value ? (
-                                        <div key={key}>
-                                            <dt className="text-xs font-semibold text-ink-muted">{t(labelKey)}</dt>
-                                            <dd className="mt-1 text-sm text-ink">{value}</dd>
-                                        </div>
-                                    ) : null;
-                                })}
-                            </dl>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                <Button size="md" onClick={useSuggestion}>{t('lp.suggestion.use')}</Button>
-                                <Button size="md" variant="ghost" onClick={() => setSuggestionHandled(true)}>{t('lp.skip')}</Button>
-                            </div>
-                        </div>
+                <Callout variant="info" icon={null} title={t('lp.suggestion.title')}>
+                    <p className="text-ink-muted">{t('lp.suggestion.intro')}</p>
+                    <dl className="mt-4 space-y-2">
+                        {(['main_difficulty', 'notes'] as const).map((key) => {
+                            const value = suggestion.data[key]?.trim();
+                            const labelKey = key === 'main_difficulty' ? 'lp.field.difficulty'
+                                : 'lp.field.notes';
+                            return value ? (
+                                <div key={key}>
+                                    <dt className="text-xs font-semibold text-ink-muted">{t(labelKey)}</dt>
+                                    <dd className="mt-1 text-sm text-ink">{value}</dd>
+                                </div>
+                            ) : null;
+                        })}
+                    </dl>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        <Button size="md" onClick={useSuggestion}>{t('lp.suggestion.use')}</Button>
+                        <Button size="md" variant="ghost" onClick={() => setSuggestionHandled(true)}>{t('lp.skip')}</Button>
                     </div>
-                </section>
+                </Callout>
             )}
 
             {suggestionOnly && !editing ? null : variant === 'review' && !isIntake && !editing ? (
