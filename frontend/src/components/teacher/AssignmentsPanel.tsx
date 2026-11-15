@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Select } from '@/components/ui/Field';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { AssignmentWork, AssignmentSubmissions } from './AssignmentWork';
 import { NewAssignmentButton } from './AssignmentButton';
 import { useTeacherResource } from './useTeacherResource';
@@ -36,10 +38,9 @@ export interface Assignment {
 // resta dentro il dettaglio aperto, non in sequenza per ogni assegnazione.
 //
 // Restyling ("strumento misurato", docs/design.md): Card per ogni scheda,
-// eyebrow con tipo · gruppo · data, finalità e stato come chip distinte (la
-// parola resta il canale, non il colore), conferma di revoca in linea
+// eyebrow con tipo · gruppo · data, finalità e stato come StatusBadge distinte
+// (la parola resta il canale, non il colore), conferma di revoca in linea
 // (ConfirmInline, nessun window.confirm), Callout per avviso e indicazioni.
-const chip = 'inline-flex items-center rounded-full border px-2 py-1 text-xs font-semibold';
 export function AssignmentsPanel({ teacher = false, showHeading = true }: { teacher?: boolean; showHeading?: boolean }) {
     const { lang } = useI18n(); const l = (key: Parameters<typeof assignmentText>[1]) => assignmentText(lang, key);
     const w = (key: Parameters<typeof learningText>[1]) => learningText(lang, key);
@@ -116,26 +117,26 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
             <div className="flex flex-wrap gap-2 text-sm" role="group" aria-label={`${w('filterGroup')}, ${w('filterKind')}, ${w('intent')}, ${w('filterStatus')}`}>
                 {/* F30 fix: la select gruppo serve anche al docente — arrivo con
                     ?group= preimpostato dalla scheda classe senza modo di togliere il filtro. */}
-                <select disabled={draft.busy} aria-label={w('filterGroup')} value={groupFilter} onChange={e => { if (leaveDraft()) setGroupFilter(e.target.value); }} className="min-h-control max-w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm">
+                <Select disabled={draft.busy} aria-label={w('filterGroup')} value={groupFilter} onChange={e => { if (leaveDraft()) setGroupFilter(e.target.value); }} className="w-auto max-w-full">
                     <option value="">{w('filterAllGroups')}</option>
                     {groups.map(name => <option key={name} value={name}>{name}</option>)}
-                </select>
-                <select disabled={draft.busy} aria-label={w('filterKind')} value={kindFilter} onChange={e => { if (leaveDraft()) setKindFilter(e.target.value); }} className="min-h-control rounded-control border border-line-strong bg-surface px-4 py-2 text-sm">
+                </Select>
+                <Select disabled={draft.busy} aria-label={w('filterKind')} className="w-auto" value={kindFilter} onChange={e => { if (leaveDraft()) setKindFilter(e.target.value); }}>
                     <option value="">{w('filterAllKinds')}</option>
                     {(['goal', 'strategy', 'reading'] as const).map(kind => <option key={kind} value={kind}>{l(kind)}</option>)}
-                </select>
-                <select disabled={draft.busy} aria-label={w('intent')} value={intentFilter} onChange={e => { if (leaveDraft()) setIntentFilter(e.target.value); }} className="min-h-control rounded-control border border-line-strong bg-surface px-4 py-2 text-sm">
+                </Select>
+                <Select disabled={draft.busy} aria-label={w('intent')} className="w-auto" value={intentFilter} onChange={e => { if (leaveDraft()) setIntentFilter(e.target.value); }}>
                     <option value="">{w('filterAllIntents')}</option>
                     <option value="proposal">{w('proposal')}</option>
                     <option value="requested">{w('requested')}</option>
-                </select>
-                {!teacher && <select disabled={draft.busy} aria-label={w('filterStatus')} value={statusFilter} onChange={e => { if (leaveDraft()) setStatusFilter(e.target.value); }} className="min-h-control rounded-control border border-line-strong bg-surface px-4 py-2 text-sm">
+                </Select>
+                {!teacher && <Select disabled={draft.busy} aria-label={w('filterStatus')} className="w-auto" value={statusFilter} onChange={e => { if (leaveDraft()) setStatusFilter(e.target.value); }}>
                     <option value="">{w('filterAllStates')}</option>
                     <option value="new">{w('new')}</option>
                     <option value="planned">{w('planned')}</option>
                     <option value="shared">{w('statusShared')}</option>
                     <option value="feedback">{w('statusFeedback')}</option>
-                </select>}
+                </Select>}
             </div>
         )}
         {!loading && !failed && !visible.length && <p className="text-sm text-ink-muted">{rows.length > 0 && (groupFilter || kindFilter || intentFilter || statusFilter) ? w('filterEmpty') : l(teacher ? 'emptySent' : 'emptyReceived')}</p>}
@@ -149,10 +150,10 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
                     <h3 className="font-semibold text-ink">{row.snapshot.title}</h3>
                     <div className="flex flex-wrap items-center gap-2">
-                        <span className={`${chip} border-line bg-surface-raised text-ink-body`}>{w(row.intent || 'proposal')}</span>
-                        {row.due_date && <span className={`${chip} border-line bg-surface text-ink-body`}><time dateTime={row.due_date}>{new Date(row.due_date).toLocaleDateString(lang)}</time></span>}
-                        {!teacher && row.progress?.shared && row.progress.feedback_available && <span className={`${chip} border-success-line bg-success-soft text-success`}>{w('statusFeedback')}</span>}
-                        {row.revoked_at && <span className={`${chip} border-line bg-surface-raised text-ink-muted line-through`}>{l('revoked')}</span>}
+                        <StatusBadge>{w(row.intent || 'proposal')}</StatusBadge>
+                        {row.due_date && <StatusBadge><time dateTime={row.due_date}>{new Date(row.due_date).toLocaleDateString(lang)}</time></StatusBadge>}
+                        {!teacher && row.progress?.shared && row.progress.feedback_available && <StatusBadge tone="success" dot>{w('statusFeedback')}</StatusBadge>}
+                        {row.revoked_at && <StatusBadge className="line-through">{l('revoked')}</StatusBadge>}
                     </div>
                 </div>
                 {open && <>

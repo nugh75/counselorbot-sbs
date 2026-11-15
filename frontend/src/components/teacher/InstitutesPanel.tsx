@@ -12,6 +12,7 @@ import { useDraftGuard } from '@/lib/use-draft-guard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
+import { Field, Input, Select } from '@/components/ui/Field';
 import { GroupsPanel } from '@/components/admin/GroupsPanel';
 import { credentialText } from '@/lib/i18n-institution-credentials';
 import { InstituteCredentialsEditor } from './InstituteCredentialsEditor';
@@ -19,8 +20,6 @@ import { InstitutePasswordReveal } from './InstitutePasswordReveal';
 import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
 import { parseClassGroups } from './class-group-types';
-
-const input = 'w-full min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm';
 
 function InstituteEditor({ initial, onSaved, onCancel }: { initial: TeacherInstitute | null; onSaved: () => void; onCancel: () => void }) {
     const { lang } = useI18n();
@@ -57,11 +56,11 @@ function InstituteEditor({ initial, onSaved, onCancel }: { initial: TeacherInsti
         finally { if (!controller.signal.aborted) { setBusy(false); pending.current = null; } }
     };
     if (forbidden) return <TeacherForbidden />;
-    return <Card><form onSubmit={event => void save(event)} className="space-y-4">
+    return <Card variant="flat"><form onSubmit={event => void save(event)} className="space-y-4">
         <fieldset disabled={busy} className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-1 text-sm">{l('name')}<input className={input} required maxLength={200} value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} /></label>
-            <label className="space-y-1 text-sm">{l('kind')}<select className={input} value={draft.kind} onChange={event => setDraft({ ...draft, kind: event.target.value as 'school' | 'university' })}><option value="school">{l('school')}</option><option value="university">{l('university')}</option></select></label>
-            {(['website_url', 'orientation_page_url'] as const).map((key, index) => <label key={key} className="space-y-1 text-sm">{l(index === 0 ? 'website' : 'orientation')}<input type="url" className={input} value={draft[key]} onChange={event => setDraft({ ...draft, [key]: event.target.value })} /></label>)}
+            <Field label={l('name')}><Input required maxLength={200} value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} /></Field>
+            <Field label={l('kind')}><Select value={draft.kind} onChange={event => setDraft({ ...draft, kind: event.target.value as 'school' | 'university' })}><option value="school">{l('school')}</option><option value="university">{l('university')}</option></Select></Field>
+            {(['website_url', 'orientation_page_url'] as const).map((key, index) => <Field key={key} label={l(index === 0 ? 'website' : 'orientation')}><Input type="url" value={draft[key]} onChange={event => setDraft({ ...draft, [key]: event.target.value })} /></Field>)}
         </fieldset>
         {notice && <Callout variant="danger"><p>{l(notice)}</p></Callout>}
         <div className="flex gap-2"><Button type="submit" disabled={busy || !draft.name.trim()}>{l('save')}</Button><Button type="button" variant="secondary" disabled={busy} onClick={() => { if (!dirty || window.confirm(l('discard'))) onCancel(); }}>{l('cancel')}</Button></div>
@@ -106,9 +105,9 @@ export function InstitutesPanel() {
         {editor !== undefined && <InstituteEditor key={editor?.id ?? 'new'} initial={editor} onSaved={() => { setEditor(undefined); reload(); }} onCancel={() => { setEditor(undefined); reload(); }} />}
         <Card variant="flat"><section aria-labelledby="institute-directory" className="space-y-4">
             <h2 id="institute-directory" className="font-semibold">{l('directory')}</h2><p className="text-sm text-ink-muted">{l('joinHint')}</p>
-            <label className="block text-sm">{l('search')}<input type="search" className={input} value={query} disabled={joining} onChange={event => { setQuery(event.target.value); setOffset(0); setSelected(''); }} /></label>
+            <Field label={l('search')}><Input type="search" value={query} disabled={joining} onChange={event => { setQuery(event.target.value); setOffset(0); setSelected(''); }} /></Field>
             {directory.failed ? <Callout variant="danger"><p>{l('loadError')}</p><Button onClick={() => void directory.reload()}>{l('reload')}</Button></Callout> : <>
-                <label className="block text-sm">{l('directory')}<select aria-label={l('directory')} className={input} value={selected} disabled={directory.loading || joining} onChange={event => setSelected(event.target.value)}><option value="">{l('select')}</option>{directory.data?.map(row => <option key={row.id} value={row.id} disabled={!row.can_join}>{row.name}{row.joined ? ` — ${l('joined')}` : !row.can_join ? ` — ${l('full')}` : ''}</option>)}</select></label>
+                <Field label={l('directory')}><Select aria-label={l('directory')} value={selected} disabled={directory.loading || joining} onChange={event => setSelected(event.target.value)}><option value="">{l('select')}</option>{directory.data?.map(row => <option key={row.id} value={row.id} disabled={!row.can_join}>{row.name}{row.joined ? ` — ${l('joined')}` : !row.can_join ? ` — ${l('full')}` : ''}</option>)}</Select></Field>
                 <Button disabled={!choice?.can_join || directory.loading || joining} onClick={() => void join()}>{l('join')}</Button>
                 {directory.data?.length === 100 && <Button variant="secondary" onClick={() => { setOffset(offset + 100); setSelected(''); }}>{l('more')}</Button>}
             </>}
@@ -161,7 +160,7 @@ export function InstituteClasses({ institutionId }: { institutionId: number }) {
         <nav aria-label={l('classes')} className="flex flex-wrap gap-2 text-sm"><Link href="/docente/istituti" className="text-link">{l('title')}</Link><ChevronRight className="h-4 w-4 self-center text-ink-muted" aria-hidden /><span>{school.data.name}</span><ChevronRight className="h-4 w-4 self-center text-ink-muted" aria-hidden /><span>{l('classes')}</span></nav>
         <h2 className="break-words text-xl font-semibold">{school.data.name}</h2>
         {groups.failed && <Callout variant="danger"><p>{l('loadError')}</p><Button onClick={() => void groups.reload()}>{l('reload')}</Button></Callout>}
-        {groups.data?.some(row => row.institution_id === null) && <Card><div className="flex flex-wrap items-end gap-4"><label className="min-w-0 flex-1 text-sm">{l('unlinked')}<select aria-label={l('unlinked')} className={input} value={selected} disabled={busy || groups.loading} onChange={event => setSelected(event.target.value)}><option value="">{l('select')}</option>{groups.data.filter(row => row.institution_id === null).map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label><Button disabled={!selected || busy || groups.loading} onClick={() => void attach()}>{l('attach')}</Button></div>{error && <p role="alert">{l('error')}</p>}</Card>}
+        {groups.data?.some(row => row.institution_id === null) && <Card variant="flat"><div className="flex flex-wrap items-end gap-4"><Field className="min-w-0 flex-1" label={l('unlinked')}><Select aria-label={l('unlinked')} value={selected} disabled={busy || groups.loading} onChange={event => setSelected(event.target.value)}><option value="">{l('select')}</option>{groups.data.filter(row => row.institution_id === null).map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</Select></Field><Button disabled={!selected || busy || groups.loading} onClick={() => void attach()}>{l('attach')}</Button></div>{error && <p role="alert">{l('error')}</p>}</Card>}
         <GroupsPanel key={version} institutionId={institutionId} />
     </div>;
 }

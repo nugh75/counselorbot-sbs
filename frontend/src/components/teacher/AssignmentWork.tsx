@@ -3,13 +3,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Callout } from '@/components/ui/Callout';
+import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { useI18n } from '@/lib/i18n-context';
 import { assignmentText } from '@/lib/i18n-assignments';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { goalApi as request, GoalError, type PersonalGoal } from '@/lib/goals';
 
-const input = 'mt-1 w-full min-w-0 rounded-control border border-line-strong bg-surface p-2 text-sm';
 type Submission = { text: string; portfolio?: { title: string; description: string } };
 type Work = {
     revision: number; workspace_revision: number; planned: boolean;
@@ -110,8 +111,8 @@ function WorkEditor({ assignmentId, authorName, onDraftStateChange }: { assignme
         {work && <fieldset disabled={busy} className="min-w-0 space-y-6">
             {!work.planned ? <form className="space-y-4" onSubmit={event => { event.preventDefault(); void mutate('plan', 'POST', { date: date || null }); }}>
                 {/* F28 (lotto 5A): il passaggio dichiara ciò che crea e ciò che non invia. */}
-                <p className="rounded-control bg-brand-soft p-4 text-sm text-ink">{l('planHelp')}</p>
-                <label className="block text-sm font-semibold">{l('planDate')}<input type="date" className={input} value={date} onChange={e => setDate(e.target.value)} /></label>
+                <Callout variant="info">{l('planHelp')}</Callout>
+                <Field label={l('planDate')}><Input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
                 <Button type="submit">{l('plan')}</Button>
             </form> : <>
                 {work.action && <p className="text-sm font-semibold text-link">{work.action.title} · {visualLabel(lang, work.action.stage)}</p>}
@@ -127,21 +128,21 @@ function WorkEditor({ assignmentId, authorName, onDraftStateChange }: { assignme
                     const next = await mutate('goal', 'POST', { revision: work.revision, goal_id: selectedGoal.id, goal_revision: selectedGoal.revision });
                     if (next) { setGoals(rows => rows.map(row => row.id === selectedGoal.id ? { ...row, revision: row.revision + 1 } : row)); setGoalId(''); }
                 }}>
-                    <label className="block text-sm font-semibold">{l('goal')}<select className={input} value={goalId} onChange={e => setGoalId(e.target.value)}><option value="">{l('none')}</option>{goals.map(goal => <option key={goal.id} value={goal.id}>{goal.title}</option>)}</select></label>
+                    <Field label={l('goal')}><Select value={goalId} onChange={e => setGoalId(e.target.value)}><option value="">{l('none')}</option>{goals.map(goal => <option key={goal.id} value={goal.id}>{goal.title}</option>)}</Select></Field>
                     <Button type="submit" variant="secondary" disabled={!selectedGoal}>{l('linkGoal')}</Button>
                 </form>}
                 {work.action && <form className="space-y-2" onSubmit={event => { event.preventDefault(); void mutate('reflection', 'PUT', { revision: work.revision, workspace_revision: reflectionRevision, reflection }); }}>
-                    <label className="block text-sm font-semibold">{l('reflection')}<textarea className={input} rows={3} maxLength={1000} value={reflection} onChange={e => { setReflection(e.target.value); setSaved(false); }} /></label>
+                    <Field label={l('reflection')}><Textarea rows={3} maxLength={1000} value={reflection} onChange={e => { setReflection(e.target.value); setSaved(false); }} /></Field>
                     <Button type="submit" variant="secondary" disabled={reflection === (work.event?.reflection ?? work.action.reflection)}>{l('saveReflection')}</Button>
                 </form>}
-                {work.submission && <section className="space-y-4 rounded-card border border-brand-line bg-brand-soft p-4" aria-label={l('shared')}>
+                {work.submission && <section className="space-y-4 border-t border-line pt-4" aria-label={l('shared')}>
                     <h4 className="font-semibold">{l('shared')}</h4><SharedText value={work.submission} />
-                    {work.feedback && <div className="space-y-2 border-t border-brand-line pt-4"><h5 className="font-semibold">{l('feedback')}</h5><p className="whitespace-pre-wrap text-sm">{work.feedback}</p></div>}
+                    {work.feedback && <div className="space-y-2 border-t border-line pt-4"><h5 className="font-semibold">{l('feedback')}</h5><p className="whitespace-pre-wrap text-sm">{work.feedback}</p></div>}
                     {confirmWithdraw
                         ? <ConfirmInline question={l('confirmWithdraw')} busy={busy} onConfirm={() => { setConfirmWithdraw(false); void mutate(`submission?revision=${work.revision}`, 'DELETE'); }} onCancel={() => setConfirmWithdraw(false)} />
                         : <Button type="button" variant="secondary" onClick={() => setConfirmWithdraw(true)}>{l('withdraw')}</Button>}
                 </section>}
-                {!!work.history?.length && <details className="rounded-card border border-line p-4">
+                {!!work.history?.length && <details className="border-t border-line pt-4">
                     <summary className="cursor-pointer py-2 font-semibold">{l('history')}</summary>
                     {work.history.map(item => <div key={item.id} className="space-y-2 border-t border-line py-4">
                         {item.submitted_at && <p className="text-xs text-ink-muted">{new Date(item.submitted_at).toLocaleString(lang)}</p>}
@@ -149,7 +150,7 @@ function WorkEditor({ assignmentId, authorName, onDraftStateChange }: { assignme
                         {item.feedback && <p className="whitespace-pre-wrap text-sm">{item.feedback}</p>}
                     </div>)}
                 </details>}
-                <details ref={shareSection} className="rounded-card border border-line p-4">
+                <details ref={shareSection} className="border-t border-line pt-4">
                     <summary className="cursor-pointer py-2 font-semibold">{l('submission')}</summary>
                     <form className="mt-4 space-y-4" onSubmit={event => {
                         event.preventDefault(); void mutate('submission', 'POST', { revision: work.revision, text: shareText,
@@ -157,8 +158,8 @@ function WorkEditor({ assignmentId, authorName, onDraftStateChange }: { assignme
                     }}>
                         <p className="text-sm text-ink-muted">{l('shareHelp')}</p>
                         {reflection && <Button type="button" variant="secondary" onClick={() => setShareText(reflection)}>{l('useReflection')}</Button>}
-                        <label className="block text-sm font-semibold">{l('shareText')}<textarea className={input} rows={4} maxLength={3000} value={shareText} onChange={e => { setShareText(e.target.value); setSaved(false); }} /></label>
-                        <label className="block text-sm font-semibold">{l('portfolio')}<select className={input} value={portfolioId} onChange={e => setPortfolioId(e.target.value)}><option value="">{l('none')}</option>{portfolio.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
+                        <Field label={l('shareText')}><Textarea rows={4} maxLength={3000} value={shareText} onChange={e => { setShareText(e.target.value); setSaved(false); }} /></Field>
+                        <Field label={l('portfolio')}><Select value={portfolioId} onChange={e => setPortfolioId(e.target.value)}><option value="">{l('none')}</option>{portfolio.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</Select></Field>
                         <section className="space-y-2 rounded-control bg-surface-sunken p-4" aria-label={l('preview')}><h5 className="text-sm font-semibold">{l('preview')}</h5>
                             {/* F29 (lotto 5A): destinatario esplicito e copia che non si aggiorna. */}
                             {authorName && <p className="text-xs text-ink-muted"><strong>{assignmentText(lang, 'recipient')}:</strong> {authorName}</p>}
@@ -184,10 +185,10 @@ export function AssignmentWork({ assignmentId, authorName, onDraftStateChange }:
 function FeedbackEditor({ row, onSave }: { row: SharedWork; onSave: (text: string) => Promise<void> }) {
     const { lang } = useI18n(); const [text, setText] = useState(row.feedback);
     useDraftGuard(text !== row.feedback, lang);
-    return <article className="space-y-4 rounded-card border border-line p-4">
+    return <article className="space-y-4 border-t border-line pt-4">
         <h4 className="font-semibold">{row.username}</h4>{row.submission && <SharedText value={row.submission} />}
         <form className="space-y-2" onSubmit={event => { event.preventDefault(); void onSave(text); }}>
-            <label className="block text-sm font-semibold">{learningText(lang, 'feedback')}<textarea className={input} rows={3} maxLength={3000} required value={text} onChange={e => setText(e.target.value)} /></label>
+            <Field label={learningText(lang, 'feedback')}><Textarea rows={3} maxLength={3000} required value={text} onChange={e => setText(e.target.value)} /></Field>
             <Button type="submit" disabled={!text.trim()}>{learningText(lang, 'sendFeedback')}</Button>
         </form>
     </article>;

@@ -5,6 +5,8 @@ import { Check, Copy, KeyRound, RefreshCw, ShieldOff, UserCheck } from 'lucide-r
 import { Button, Spinner } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Field';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { localPairingText, type LocalPairingTextKey } from '@/lib/i18n-local-pairing';
@@ -104,12 +106,12 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
                         <p>{l('regeneratedHint')}</p>
                         <div className="flex flex-col gap-2 sm:flex-row">
                             <label htmlFor={`regenerated-${regenerated.username}`} className="sr-only">{l('personalCodeLabel')}</label>
-                            <input
+                            <Input
                                 id={`regenerated-${regenerated.username}`}
                                 readOnly
                                 value={formatPersonalCode(regenerated.code)}
                                 onFocus={event => event.target.select()}
-                                className="min-h-control min-w-0 flex-1 rounded-control border border-warning-line bg-surface px-4 text-center font-mono tracking-widest text-lg font-semibold text-ink"
+                                className="flex-1 text-center font-mono text-lg font-semibold tracking-widest"
                             />
                             <Button type="button" variant="secondary" onClick={() => void copyRegenerated()}>
                                 {copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
@@ -145,9 +147,9 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
                                         <div className="min-w-0 space-y-1">
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <h3 className="font-semibold text-ink">{device.pseudonym}</h3>
-                                                <span className={`rounded-full px-2 py-1 text-xs font-semibold ${device.status === 'active' ? 'bg-success-soft text-success' : 'bg-warning-soft text-warning-ink'}`}>
+                                                <StatusBadge tone={device.status === 'active' ? 'success' : 'warning'}>
                                                     {l(device.status === 'active' ? 'activeStatus' : 'pendingStatus')}
-                                                </span>
+                                                </StatusBadge>
                                             </div>
                                             <p className="text-sm text-ink-muted">{device.device_label || l('unnamedDevice')}</p>
                                             <p className="text-xs text-ink-muted">
@@ -173,13 +175,16 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
                                         </div>
                                     </div>
                                     {revokeId === device.id && (
-                                        <div role="group" aria-label={l('revokeConfirm')} className="flex flex-wrap items-center gap-2 rounded-card border border-danger-line bg-danger-soft p-4">
-                                            <p className="w-full text-sm text-danger-ink">{l('revokeConfirm')}</p>
-                                            <Button type="button" variant="danger" size="md" disabled={busy !== null} onClick={() => void revoke(device)}>
-                                                {busy === `revoke:${device.id}` ? <Spinner className="h-4 w-4" aria-hidden /> : null}
-                                                {l(busy === `revoke:${device.id}` ? 'actionBusy' : 'revoke')}
-                                            </Button>
-                                            <Button type="button" variant="secondary" size="md" disabled={busy !== null} onClick={() => setRevokeId(null)}>{l('cancel')}</Button>
+                                        <div role="group" aria-label={l('revokeConfirm')}>
+                                            <Callout variant="danger" icon={null} title={l('revokeConfirm')}>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <Button type="button" variant="danger" size="md" disabled={busy !== null} onClick={() => void revoke(device)}>
+                                                        {busy === `revoke:${device.id}` ? <Spinner className="h-4 w-4" aria-hidden /> : null}
+                                                        {l(busy === `revoke:${device.id}` ? 'actionBusy' : 'revoke')}
+                                                    </Button>
+                                                    <Button type="button" variant="secondary" size="md" disabled={busy !== null} onClick={() => setRevokeId(null)}>{l('cancel')}</Button>
+                                                </div>
+                                            </Callout>
                                         </div>
                                     )}
                                 </li>
