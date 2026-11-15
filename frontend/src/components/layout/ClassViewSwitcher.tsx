@@ -1,8 +1,10 @@
 'use client';
 
+import Image from 'next/image';
 import { useId, useState } from 'react';
 import { Layers } from 'lucide-react';
-import { classViewOptions, currentClassView, parseClassView, saveClassView } from '@/lib/class-view';
+import { classViewOptions, currentClassView, parseClassView, saveClassView, selectedClass } from '@/lib/class-view';
+import { getClassCoverUrl } from '@/lib/class-cover-presets';
 import { classViewText } from '@/lib/i18n-class-view';
 import { useI18n } from '@/lib/i18n-context';
 import type { UserAccess } from '@/lib/user-access';
@@ -17,6 +19,7 @@ export function ClassViewSwitcher({ access, className }: { access: UserAccess | 
     const id = useId();
     const options = classViewOptions(access);
     if (options.length === 0) return null;
+    const selected = selectedClass(access);
 
     const label = classViewText(lang, 'label');
     const hint = classViewText(lang, 'hint');
@@ -62,6 +65,14 @@ export function ClassViewSwitcher({ access, className }: { access: UserAccess | 
                     ))}
                 </select>
             </div>
+            {selected && (
+                <div className="mt-2 min-w-0">
+                    <div className="relative h-24 w-full overflow-hidden rounded-card bg-surface-sunken sm:h-32">
+                        <Image src={getClassCoverUrl(selected)} alt="" fill unoptimized className="object-cover" />
+                    </div>
+                    <p className="mt-1 break-words text-sm font-semibold text-ink">{selected.name}</p>
+                </div>
+            )}
             <span id={`${id}-hint`} className="text-xs text-ink-muted">{hint}</span>
             <span role="status" className={failed ? 'text-xs text-danger' : 'sr-only'}>
                 {failed ? classViewText(lang, 'error') : ''}

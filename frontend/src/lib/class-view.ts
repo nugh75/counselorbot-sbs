@@ -34,6 +34,15 @@ export function currentClassView(access: UserAccess | null | undefined): string 
     return 'classes';
 }
 
+// The single class whose view is selected, or null for "no class" and "all my classes".
+export function selectedClass(access: UserAccess | null | undefined) {
+    const classes = access?.classes ?? [];
+    const value = currentClassView(access);
+    if (value === 'all') return null;
+    if (value === 'classes') return classes.length === 1 ? classes[0] : null;
+    return classes.find((item) => String(item.id) === value) ?? null;
+}
+
 export function parseClassView(value: string): ClassView {
     return value === 'all' || value === 'classes' ? value : Number(value);
 }

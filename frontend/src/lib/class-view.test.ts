@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { classViewOptions, currentClassView, parseClassView, saveClassView } from './class-view.ts';
+import { classViewOptions, currentClassView, parseClassView, saveClassView, selectedClass } from './class-view.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { clearUserAccessCache, getCachedUserAccess, type UserAccess } from './user-access.ts';
 
@@ -100,4 +100,13 @@ test('saveClassView reports a refused choice', async () => {
     } finally {
         (globalThis as { fetch: typeof originalFetch }).fetch = originalFetch;
     }
+});
+
+test('selectedClass: the class of the selected view, nothing for no class or all classes', () => {
+    assert.equal(selectedClass(null), null);
+    assert.equal(selectedClass({ ...base, view: 'all' }), null);
+    assert.equal(selectedClass(base)?.id, 10);
+    const two = { ...base, classes: [{ id: 10, name: '3B' }, { id: 11, name: '4A', image_url: '/c.png' }] };
+    assert.equal(selectedClass({ ...two, view: 'classes' }), null);
+    assert.equal(selectedClass({ ...two, view: 11 })?.image_url, '/c.png');
 });
