@@ -27,6 +27,8 @@ import { useI18n } from '@/lib/i18n-context';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Field, Input, Select, Textarea } from '@/components/ui/Field';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Callout } from '@/components/ui/Callout';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { ClassPathProgressPanel } from './ClassPathProgress';
@@ -546,22 +548,13 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     {l('backToList')}
                 </button>
                 <div className="flex flex-wrap items-center gap-2">
-                    <span
-                        className={`rounded-full px-2 py-1 text-xs font-semibold ${
-                            currentPath.status === 'published'
-                                ? 'bg-success-soft text-success-ink'
-                                : currentPath.status === 'archived'
-                                ? 'bg-line text-ink-body'
-                                : 'bg-warning-soft text-warning-ink'
-                        }`}
-                    >
+                    <StatusBadge tone={currentPath.status === 'published' ? 'success' : currentPath.status === 'archived' ? 'neutral' : 'warning'}>
                         {currentPath.status === 'published'
                             ? l('publishedBadge')
                             : currentPath.status === 'archived'
                             ? l('archivedBadge')
                             : l('draftBadge')}
-
-                    </span>
+                    </StatusBadge>
                     <Button variant="secondary" disabled={busy || dirty} onClick={() => void handleSaveAsTemplate()}>
                         {pathTemplateText(lang, 'saveAsTemplate')}
                     </Button>
@@ -613,12 +606,9 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             )}
 
             {editingPlan ? (
-                <Card className="space-y-4">
-                    <div>
-                        <label htmlFor="path-title" className="block text-sm font-semibold text-ink">
-                            {l('titleLabel')}
-                        </label>
-                        <input
+                <Card variant="flat" className="space-y-4">
+                    <Field label={l('titleLabel')}>
+                        <Input
                             id="path-title"
                             type="text"
                             value={title}
@@ -627,15 +617,11 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 if (notice === 'saved' || notice === 'published') setNotice(null);
                             }}
                             placeholder={l('titlePlaceholder')}
-                            className="mt-1 block w-full rounded-control border border-line-strong px-4 py-2 text-sm text-ink focus:border-brand focus:outline-none"
                         />
-                    </div>
+                    </Field>
 
-                    <div>
-                        <label htmlFor="path-description" className="block text-sm font-semibold text-ink">
-                            {l('descriptionLabel')}
-                        </label>
-                        <textarea
+                    <Field label={l('descriptionLabel')}>
+                        <Textarea
                             id="path-description"
                             rows={2}
                             value={description}
@@ -644,9 +630,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 if (notice === 'saved' || notice === 'published') setNotice(null);
                             }}
                             placeholder={l('descriptionPlaceholder')}
-                            className="mt-1 block w-full rounded-control border border-line-strong px-4 py-2 text-sm text-ink focus:border-brand focus:outline-none"
                         />
-                    </div>
+                    </Field>
 
                     <p className="text-sm text-ink-muted">{t('piano.builder.independentSteps')}</p>
                     {currentPath.steps.length > 0 && (
@@ -654,7 +639,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     )}
                 </Card>
             ) : (
-                <Card className="flex flex-wrap items-start justify-between gap-4" data-testid="path-summary">
+                <Card variant="flat" className="flex flex-wrap items-start justify-between gap-4" data-testid="path-summary">
                     <div className="min-w-0 flex-1 space-y-1">
                         <h2 className="break-words text-lg font-semibold text-ink">{title}</h2>
                         {description && <p className="whitespace-pre-wrap text-sm text-ink-muted">{description}</p>}
@@ -664,7 +649,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                 </Card>
             )}
 
-            <Card className="space-y-4">
+            <Card variant="flat" className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-4">
                     <h3 className="text-base font-semibold text-ink">
                         {`${l('stepsHeading')} (${steps.length})`}
@@ -730,7 +715,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 <div
                                     key={step.id ? `step-${step.id}` : `new-step-${step.client_key}`}
                                     data-testid="path-step-card"
-                                    className="flex flex-col gap-4 rounded-card border border-line bg-surface p-4 md:flex-row md:items-start"
+                                    className="flex flex-col gap-4 border-b border-line py-4 md:flex-row md:items-start"
                                 >
                                     <div className="flex items-center gap-4 md:w-48">
                                         <span className="font-mono text-sm font-semibold text-ink-muted">{`#${step.position}`}</span>
@@ -808,9 +793,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                     {presentation.showDueDate && presentation.dueDate && <p className="text-xs text-ink-body">{`${l('dueHeader')}: ${new Date(`${presentation.dueDate}T12:00:00`).toLocaleDateString(lang, { dateStyle: 'medium' })}`}</p>}
                                                 </>}
                                                 {open && isChat && (
-                                                    <label className="block text-xs font-semibold text-ink-muted">
-                                                        {l('plannedDayOptional')}
-                                                        <input
+                                                    <Field label={l('plannedDayOptional')}>
+                                                        <Input
                                                             type="date"
                                                             value={step.scheduled_date || ''}
                                                             onChange={e => {
@@ -820,9 +804,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                                 if (notice === 'saved' || notice === 'published') setNotice(null);
                                                             }}
                                                             aria-label={`${name} ${l('plannedDay')}`}
-                                                            className="mt-1 block w-full rounded-control border border-line-strong px-2 py-1 text-xs text-ink focus:border-brand focus:outline-none"
                                                         />
-                                                    </label>
+                                                    </Field>
                                                 )}
                                             </>
                                         )}
@@ -880,7 +863,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     {!adding ? (
                         <Button variant="secondary" disabled={busy} onClick={() => setAdding(true)}>{k('addStep')}</Button>
                     ) : (
-                        <div className="space-y-4 rounded-card border border-line bg-surface-sunken p-4">
+                        <div className="space-y-4 border-t border-line pt-4">
                             {replacing !== null && steps[replacing] && <div role="status" className="space-y-1">
                                 <p className="text-sm font-semibold text-ink">{`${l('replacingStep')} #${steps[replacing].position}`}</p>
                                 <p className="text-xs text-ink-muted">{l('replaceHelp')}</p>
@@ -895,21 +878,21 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             {replacementError && <Callout variant="danger">{t('admin.ap.error.cleanReplacement')}</Callout>}
                             {administrationError && <Callout variant="danger">{a('error')} <Button variant="secondary" onClick={()=>void loadAdministrations()}>{a('retry')}</Button></Callout>}
                             <div className="flex flex-wrap items-end gap-2">
-                                <label className="block w-full text-sm sm:w-auto">{a('existing')}<select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
+                                <Field label={a('existing')} className="w-full sm:w-auto"><Select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="sm:w-auto">
                                     <option value="">{a('choose')}</option>
                                     {administrations.filter(offered).map(row=><option key={row.id} value={row.id}>{row.code} · {row.title} · {row.locale.toUpperCase()}</option>)}
-                                </select></label>
+                                </Select></Field>
                                 <Button variant="secondary" disabled={busy || !selectedAdministration} onClick={() => {addAdministrationStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
                             </div>
                             <h4 className="text-sm font-semibold">{a('createNew')}</h4>
                             <div className="flex flex-wrap items-end gap-2">
-                                <label className="block w-full text-sm sm:w-auto">{a('title')}<input value={administrationTitle} onChange={event=>setAdministrationTitle(event.target.value)} className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto" /></label>
-                                <label className="block w-full text-sm sm:w-auto">{a('instrument')}<select value={administrationInstrument} onChange={event=>{setAdministrationInstrument(event.target.value);setAdministrationLocale('it');}} className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
+                                <Field label={a('title')} className="w-full sm:w-auto"><Input value={administrationTitle} onChange={event=>setAdministrationTitle(event.target.value)} className="sm:w-auto" /></Field>
+                                <Field label={a('instrument')} className="w-full sm:w-auto"><Select value={administrationInstrument} onChange={event=>{setAdministrationInstrument(event.target.value);setAdministrationLocale('it');}} className="sm:w-auto">
                                     {['QSA','QSAr','ZTPI','QPCS','QPCC','QAP'].map(code=><option key={code}>{code}</option>)}
-                                </select></label>
-                                <label className="block w-full text-sm sm:w-auto">{a('locale')}<select value={administrationLocale} onChange={event=>setAdministrationLocale(event.target.value)} className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
+                                </Select></Field>
+                                <Field label={a('locale')} className="w-full sm:w-auto"><Select value={administrationLocale} onChange={event=>setAdministrationLocale(event.target.value)} className="sm:w-auto">
                                     {localeOptions(administrationInstrument).map(locale=><option key={locale} value={locale}>{locale.toUpperCase()}</option>)}
-                                </select></label>
+                                </Select></Field>
                                 <Button disabled={busy || !administrationTitle.trim()} onClick={()=>void createAdministration()}>{a('create')}</Button>
                             </div>
                             <details className="text-sm text-ink-muted">
@@ -920,29 +903,29 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             </div>}
                             {kind === 'guided_chat' && <div className="space-y-4">
                                 <h4 className="text-sm font-semibold">{r('sourcePlan')}</h4>
-                                <label className="block text-sm">{a('deepDiveFrom')}<select value={selectedResultsKey}
+                                <Field label={a('deepDiveFrom')} className=""><Select value={selectedResultsKey}
                                     onChange={event => {setSelectedResultsKey(event.target.value);if (event.target.value) {setSelectedAnalysisKey('');setSelectedChatKey('');}}}
-                                    className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
+                                    className="sm:w-auto">
                                     <option value="">{r('chooseSourceStep')}</option>
                                     {analysisSources.map(source => <option key={pathStepKey(source)} value={pathStepKey(source)}>
                                         {`#${source.position} · ${source.title || source.target_summary?.title || source.pending_config?.instrument_code || source.target_summary?.instrument_code || ''}`}
                                     </option>)}
-                                </select></label>
+                                </Select></Field>
                                 <p className="text-sm text-ink-muted">{r('planResultsHelp')}</p>
                                 <h4 className="text-sm font-semibold">{r('personalResults')}</h4>
-                                <label className="block text-sm">{r('analyzeQuestionnaire')}<select value={selectedAnalysisKey}
+                                <Field label={r('analyzeQuestionnaire')} className=""><Select value={selectedAnalysisKey}
                                     onChange={event => {setSelectedAnalysisKey(event.target.value);if (event.target.value) {setSelectedChatKey('');setSelectedResultsKey('');}}}
-                                    className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
+                                    className="sm:w-auto">
                                     <option value="">{r('chooseQuestionnaire')}</option>
                                     {enabledTools.filter(tool => ADMINISTRATION_QUESTIONNAIRES.includes(tool.key)).map(tool => <option key={tool.key} value={tool.key}>{`${r('analyzeQuestionnaire')} · ${tool.key}`}</option>)}
-                                </select></label>
+                                </Select></Field>
                                 <p className="text-sm text-ink-muted">{r('personalResultsHelp')}</p>
                                 <h4 className="text-sm font-semibold">{k('chatStandalone')}</h4>
                                 {chatKeys.length === 0 ? <p className="text-sm text-ink-muted">{k('noChats')}</p> : (
-                                    <label className="block w-full text-sm sm:w-auto"><span className="sr-only">{k('chatStandalone')}</span><select value={selectedChatKey} onChange={event=>{setSelectedChatKey(event.target.value);if (event.target.value) {setSelectedAnalysisKey('');setSelectedResultsKey('');}}} className="w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
+                                    <Field label={<span className="sr-only">{k('chatStandalone')}</span>} className="w-full sm:w-auto"><Select value={selectedChatKey} onChange={event=>{setSelectedChatKey(event.target.value);if (event.target.value) {setSelectedAnalysisKey('');setSelectedResultsKey('');}}} className="sm:w-auto">
                                         <option value="">{k('chooseGuidedPath')}</option>
                                         {chatKeys.map(key => <option key={key} value={key}>{toolLabel(key, classSettings.tools, lang)}</option>)}
-                                    </select></label>
+                                    </Select></Field>
                                 )}
                                 <Button variant="secondary" disabled={busy || !chatReady} onClick={() => {addChat();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
                             </div>}
@@ -950,10 +933,10 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             {assignmentLoadError && <Callout variant="danger">{p('loadError')} <Button variant="secondary" onClick={()=>void loadPathAssignments()}>{p('retry')}</Button></Callout>}
                             {!assignmentLoadError && !pathAssignments.length && <p className="text-sm text-ink-muted">{p('empty')}</p>}
                             <div className="flex flex-wrap gap-2">
-                                <label className="block w-full text-sm sm:w-auto">{p('choose')}<select value={selectedAssignment} onChange={event=>setSelectedAssignment(event.target.value)} className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
+                                <Field label={p('choose')} className="w-full sm:w-auto"><Select value={selectedAssignment} onChange={event=>setSelectedAssignment(event.target.value)} className="sm:w-auto">
                                     <option value="">{p('choose')}</option>
                                     {selectablePathAssignments(pathAssignments, steps).map(row=><option key={row.id} value={row.id}>{row.attachments.length ? `${row.title} · ${row.attachments.map(item=>item.title).join(', ')}` : row.title}</option>)}
-                                </select></label>
+                                </Select></Field>
                                 <Button variant="secondary" disabled={busy || !selectedAssignment} onClick={() => {addAssignmentStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
                                 <Button variant="secondary" disabled={busy} onClick={()=>setCreatingAssignment(true)}>{p('create')}</Button>
                             </div>
@@ -966,11 +949,11 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             </div>}
                             {kind === 'tool' && <div className="space-y-4">
                                 <div className="flex flex-wrap items-center gap-4">
-                                    <select
+                                    <Select
                                         value={selectedToolKey}
                                         onChange={e => setSelectedToolKey(e.target.value)}
                                         aria-label={l('chooseTool')}
-                                        className="rounded-control border border-line-strong bg-surface px-4 py-2 text-sm text-ink focus:border-brand focus:outline-none"
+                                        className="sm:w-auto"
                                     >
                                         <option value="">{l('chooseTool')}</option>
                                         {personalTools.map(t => (
@@ -978,7 +961,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                 {toolLabel(t.key, classSettings.tools, lang)}
                                             </option>
                                         ))}
-                                    </select>
+                                    </Select>
                                     <Button variant="secondary" disabled={busy || !selectedToolKey} onClick={() => {handleAddStep(selectedToolKey);closeAdd();}}>
                                         <Plus className="h-4 w-4" aria-hidden />
                                         {l('addStep')}
@@ -993,10 +976,10 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             {forumLoadError && <Callout variant="danger">{f('loadError')} <Button variant="secondary" onClick={()=>void loadForumTopics()}>{f('retry')}</Button></Callout>}
                             {!forumLoadError && !forumTopics.length && <p className="text-sm text-ink-muted">{f('empty')}</p>}
                             <div className="flex flex-wrap gap-2">
-                                <label className="block w-full text-sm sm:w-auto">{f('choose')}<select value={selectedTopic} onChange={event=>setSelectedTopic(event.target.value)} className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto">
+                                <Field label={f('choose')} className="w-full sm:w-auto"><Select value={selectedTopic} onChange={event=>setSelectedTopic(event.target.value)} className="sm:w-auto">
                                     <option value="">{f('choose')}</option>
                                     {selectablePathForumTopics(forumTopics, steps).map(row=><option key={row.id} value={row.id}>{row.locked ? `${row.title} · ${f('locked')}` : row.title}</option>)}
-                                </select></label>
+                                </Select></Field>
                                 <Button variant="secondary" disabled={busy || !selectedTopic} onClick={() => {addForumStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
                                 <Button variant="secondary" disabled={busy} onClick={() => setDiscussionEditor({topicId: null})}>{t('piano.builder.createDiscussion')}</Button>
                                 <Button variant="secondary" disabled={busy || !selectedTopic} onClick={() => setDiscussionEditor({topicId: Number(selectedTopic)})}>{t('piano.builder.editDiscussion')}</Button>
@@ -1042,7 +1025,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             </PathResourceDialog>}
 
             <StickyActions>
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-card border border-line bg-surface p-4">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line bg-surface py-4">
                     <div className="min-w-0 flex-1 text-sm">
                         {notice === 'saved' && (
                             <p role="status" className="text-success font-semibold">
@@ -1199,13 +1182,13 @@ export function ClassPathsTab({ groupId, classSettings, institutionId = null }: 
             </div>
 
             {activePaths.length === 0 && archivedPaths.length === 0 ? (
-                <Card>
+                <Card variant="flat">
                     <p className="py-8 text-center text-sm text-ink-muted">{l('emptyPaths')}</p>
                 </Card>
             ) : (
                 <div className="space-y-4">
                     {activePaths.map(p => (
-                        <Card key={p.id} className="flex flex-wrap items-center justify-between gap-4">
+                        <div key={p.id} className="flex flex-wrap items-center justify-between gap-4 border-b border-line py-4">
                             <div className="flex items-center gap-4">
                                 {p.status === 'published' ? (
                                     <CheckCircle2 className="h-5 w-5 text-success shrink-0" aria-hidden />
@@ -1222,7 +1205,7 @@ export function ClassPathsTab({ groupId, classSettings, institutionId = null }: 
                             <Button variant="secondary" className="ml-8 sm:ml-0" onClick={() => setSelectedPathId(p.id)}>
                                 {l('open')}
                             </Button>
-                        </Card>
+                        </div>
                     ))}
 
                     {archivedPaths.length > 0 && (
@@ -1239,7 +1222,7 @@ export function ClassPathsTab({ groupId, classSettings, institutionId = null }: 
                             {archivedOpen && (
                                 <div className="mt-4 space-y-2 pl-4 border-l-2 border-line">
                                     {archivedPaths.map(p => (
-                                        <Card key={p.id} className="flex flex-wrap items-center justify-between gap-4 bg-surface-sunken">
+                                        <div key={p.id} className="flex flex-wrap items-center justify-between gap-4 border-b border-line py-4">
                                             <div>
                                                 <h3 className="text-sm font-semibold text-ink-body">{p.title}</h3>
                                                 <p className="text-xs text-ink-muted">
@@ -1250,7 +1233,7 @@ export function ClassPathsTab({ groupId, classSettings, institutionId = null }: 
                                             <Button variant="secondary" onClick={() => setSelectedPathId(p.id)}>
                                                 {l('open')}
                                             </Button>
-                                        </Card>
+                                        </div>
                                     ))}
                                 </div>
                             )}

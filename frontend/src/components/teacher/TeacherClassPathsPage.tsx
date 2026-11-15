@@ -7,6 +7,7 @@ import { teacherAreaText } from '@/lib/i18n-teacher-area';
 import { useI18n } from '@/lib/i18n-context';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
+import { Field, Select } from '@/components/ui/Field';
 import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { ClassPathsTab } from './ClassPathsTab';
 import { PathTemplatesPanel } from './PathTemplatesPanel';
@@ -34,12 +35,12 @@ export function TeacherClassPathsPage() {
     const group = active.find(row => row.id === chosen) ?? active[0];
     return <div className="space-y-6">
         <PathTemplatesPanel groups={active} onApplied={groupId => { setChosen(groupId); setApplied(count => count + 1); }} />
-        <label className="block max-w-md text-sm font-semibold text-ink-body">{teacherAreaText(lang, 'pathsChooseClass')}
-            <select className="mt-1 w-full min-w-0 rounded-control border border-line-strong bg-surface p-2 text-sm" value={group.id}
+        <Field label={teacherAreaText(lang, 'pathsChooseClass')} className="max-w-md">
+            <Select value={group.id}
                 onChange={event => setChosen(Number(event.target.value))}>
                 {active.map(row => <option key={row.id} value={row.id}>{row.institution_name ? `${row.name} · ${row.institution_name}` : row.name}</option>)}
-            </select>
-        </label>
+            </Select>
+        </Field>
         <ClassPaths key={`${group.id}-${applied}`} groupId={group.id} institutionId={group.institution_id ?? null} />
     </div>;
 }

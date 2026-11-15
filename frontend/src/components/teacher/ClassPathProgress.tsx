@@ -20,6 +20,7 @@ import { unavailableActionText } from '@/lib/i18n-path-publication';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
+import { Field, Input } from '@/components/ui/Field';
 import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
 import { resolveStepPresentation } from '@/lib/class-path-presentation';
@@ -152,7 +153,7 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
     };
 
     return (
-        <Card as="section" className="space-y-4">
+        <Card as="section" variant="flat" className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
                 <h3 className="text-base font-semibold text-ink">{l('progressTitle')}</h3>
                 <div role="group" aria-label={l('filterLabel')} className="flex flex-wrap gap-1">
@@ -162,7 +163,7 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
                             type="button"
                             aria-pressed={filter === option.value}
                             onClick={() => setFilter(option.value)}
-                            className={`min-h-control rounded-full border px-4 text-xs font-semibold ${
+                            className={`min-h-control rounded-control border px-4 text-xs font-semibold ${
                                 filter === option.value
                                     ? 'border-brand bg-brand-hover text-ink-on-brand'
                                     : 'border-line-strong bg-surface text-ink-body hover:bg-surface-sunken'
@@ -233,7 +234,7 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
                     <ul className="space-y-2 md:hidden">
                         {students.map(student => (
                             <li key={student.username}>
-                                <details className="rounded-card border border-line bg-surface">
+                                <details className="border-b border-line">
                                     <summary className="flex min-h-control cursor-pointer items-center justify-between gap-4 px-4 text-sm">
                                         <span className="font-semibold text-ink">{student.display_name}</span>
                                         <span className="font-mono text-ink-body">{`${student.done}/${student.total}`}</span>
@@ -263,7 +264,7 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
             <p className="text-xs text-ink-muted">{l('precedenceHint')}</p>
 
             {selectedStudent && selectedStep && selectedCell ? (
-                <div className="space-y-4 rounded-card border border-brand-line bg-brand-soft/40 p-4" aria-live="polite">
+                <div aria-live="polite"><Callout icon={null}><div className="space-y-4">
                     <div>
                         <p className="text-sm font-semibold text-ink">
                             {`${selectedStudent.display_name} · ${stepName(selectedStep, selectedIndex)}`}
@@ -285,19 +286,15 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
                         )}
                     </div>
                     {selectedCell.state !== 'unavailable' && (
-                        <div>
-                            <label htmlFor="progress-reason" className="block text-xs font-semibold text-ink-body">
-                                {l('reasonLabel')}
-                            </label>
-                            <input
+                        <Field label={l('reasonLabel')}>
+                            <Input
                                 id="progress-reason"
                                 type="text"
                                 maxLength={500}
                                 value={reason}
                                 onChange={e => setReason(e.target.value)}
-                                className="mt-1 block w-full rounded-control border border-line-strong px-2 py-2 text-sm text-ink focus:border-brand focus:outline-none"
                             />
-                        </div>
+                        </Field>
                     )}
                     <div className="flex flex-wrap gap-2">
                         <Button
@@ -324,7 +321,7 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
                     </div>
                     {notice === 'saved' && <p role="status" className="text-sm font-semibold text-success">{l('overrideSaved')}</p>}
                     {notice === 'error' && <p role="alert" className="text-sm font-semibold text-danger">{l('overrideError')}</p>}
-                </div>
+                </div></Callout></div>
             ) : (
                 progress.students.length > 0 && <p className="text-xs text-ink-muted">{l('selectCellHint')}</p>
             )}

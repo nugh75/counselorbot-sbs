@@ -72,3 +72,15 @@ test('student plans are flat: flat Card, step rows without boxes, FlowStepper co
     assert.doesNotMatch(flow, /rounded-card border border-line bg-surface p-4/);
     assert.match(flow, /<Callout variant="danger">/);
 });
+
+test('teacher operational plans page is flat and uses the shared form primitives (#950)', () => {
+    for (const file of ['ClassPathsTab', 'PathTemplatesPanel', 'ClassPathProgress', 'TeacherClassPathsPage']) {
+        const source = read(`components/teacher/${file}.tsx`);
+        assert.doesNotMatch(source, /<Card(?![^>]*variant="flat")[^>]*>/, file);
+        assert.doesNotMatch(source, /rounded-card border/, file);
+        assert.doesNotMatch(source, /border border-line-strong/, file);
+        assert.doesNotMatch(source, /<(select|textarea)[\s>]/, file);
+    }
+    assert.match(read('components/teacher/ClassPathsTab.tsx'), /<StatusBadge tone=/);
+    assert.match(read('components/teacher/ClassPathProgress.tsx'), /<Callout icon=\{null\}>/);
+});
