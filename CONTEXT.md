@@ -743,7 +743,7 @@ frontend/
     strumenti/[id]/         Instrument detail pages
     api/chat/stream/        SSE bypass filesystem route
   src/app/globals.css       Design tokens, utilities, dark-mode remap (see docs/design.md)
-  src/components/ui/        Shared primitives (Button, Card, Callout, PageHeader, CompassMark)
+  src/components/ui/        Shared primitives (Button/ButtonLink/buttonClasses, Card, Callout, PageHeader, Field/Input/Select/Textarea, StatusBadge, Dialog, CompassMark)
   src/components/admin/     Admin UI components (ConfigForm, etc.)
   src/lib/
     auth.ts                 Identity from /auth/me

@@ -383,6 +383,14 @@ storico dei tentativi è un elenco a filetti. Nella pagina dell'attività di una
 (`/profilo/piani-operativi/[pathId]/[stepId]`) la barra con «Indietro» e «Salva ed esci»
 non è più un riquadro. Pulsanti, campi e avvisi restano invariati; nessun cambio di comportamento.
 
+**Campi, pulsanti e finestre condivisi (#923).** La palestra di prova del docente
+(`/docente/taccuini-prova`: taccuini, chat in prova, repertorio di profili) e gli obiettivi
+personali (finestra dell'obiettivo e catalogo) usano campi, pulsanti e finestre di dialogo
+comuni: etichetta sopra il campo con il suggerimento collegato, stessa altezza e bordo
+per tutti i campi, pulsanti «Riprova», «Salva», «Annulla», «Genera» e «Aggiungi» con
+l'aspetto standard, finestre a tutto schermo sul telefono con un velo che si adatta al
+tema scuro. Esc e il tasto chiudi funzionano come prima; nessun cambio di comportamento.
+
 **Orientamento del docente e Catalogo obiettivi piatti (#870).** `/docente/orientamento`
 e `/docente/catalogo-obiettivi` seguono l'aspetto piatto: categorie, contenuti e proposte
 del catalogo sono righe separate da filetti (non più riquadri), i moduli di modifica e

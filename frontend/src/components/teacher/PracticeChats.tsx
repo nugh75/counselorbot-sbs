@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n-context';
 import { practiceNotebookText } from '@/lib/i18n-practice-notebooks';
 import { QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
@@ -13,7 +14,6 @@ import type { FrozenSessionSummary } from '@/lib/frozen-session';
 import type { PracticeChat, PracticeChatMessage } from '@/lib/practice-notebooks';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 
-const secondary = 'min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-50';
 const linkAction = 'inline-flex min-h-control items-center text-sm font-semibold text-link underline underline-offset-2 disabled:opacity-50';
 
 type Row = { sessionId: string; instrument: string; updatedAt?: string | null; turns?: number; logged: boolean; open: boolean };
@@ -78,7 +78,7 @@ export function PracticeChats({ notebookId, openChats, openChatsFailed }: {
             <p className="text-xs text-ink-muted">{l('practiceChatsHint')}</p>
             {(failed || openChatsFailed) && <div role="alert" className="flex flex-wrap items-center gap-2 text-xs text-danger">
                 <p>{l('chatsError')}</p>
-                {failed && <button type="button" onClick={() => void load()} className={secondary}>{l('retry')}</button>}
+                {failed && <Button type="button" variant="secondary" onClick={() => void load()}>{l('retry')}</Button>}
             </div>}
             {chats !== null && openChats !== null && !rows.length && <p className="text-xs text-ink-muted">{l('noPracticeChats')}</p>}
             <ul>

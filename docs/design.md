@@ -408,6 +408,10 @@ aggiunge alla primitiva.
 | `ChatBubble`, `ChatPending` | la forma condivisa delle tre chat (guidata, Bussola, assistente) |
 | `SkipLink` | primo elemento focalizzabile della pagina, verso `#contenuto` |
 | `Callout` | i 4 ruoli semantici dai token di stato, con icona di default |
+| `buttonClasses`, `ButtonLink` | l'aspetto di `Button` come stringa di classi (`buttonClasses(variant, size)`) e come `Link` di Next: un link che sembra un pulsante non riscrive le classi a mano |
+| `Field`, `Input`, `Select`, `Textarea` | etichetta + controllo + aiuto ed errore facoltativi, collegati da `id` e `aria-describedby`; controllo `rounded-control border-line-strong bg-surface min-h-control px-3 text-sm`, anello di focus globale (mai `outline-none`), stati disabilitato e non valido (`aria-invalid`) |
+| `StatusBadge` | etichetta di stato `neutral/info/success/warning/danger` sui token `-soft`/`-ink`, `rounded-control`, testo piccolo, punto facoltativo; non è una pillola e non è in maiuscolo |
+| `Dialog`, `DialogBody`, `DialogFooter` | modale sul `<dialog>` nativo: a tutto schermo su mobile, `sm:rounded-card` da `sm`, testata e piede con filetto, velo `backdrop:bg-backdrop` (token con valore scuro), `shadow-modal`; Esc, velo e chiudi chiamano `onClose`, il focus torna a chi l'ha aperto |
 | `PageHeader` | titolo `text-2xl font-semibold text-ink` + sottotitolo `ink-muted` + back-nav |
 | `BackButton` | due varianti dichiarate: `icon` (cerchio, percorso guidato) e `labelled` (pillola con testo, pagine autonome) |
 | `ForwardButton` | il primario del percorso: petrol pieno, etichetta visibile, 44px |
