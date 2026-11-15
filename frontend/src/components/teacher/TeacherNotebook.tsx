@@ -306,7 +306,7 @@ export function TeacherNotebook({ showHeading = true }: { showHeading?: boolean 
             <div className="mt-4 space-y-6">
                 {FIELD_GROUPS.map(group => (
                     <fieldset key={group.title} className="min-w-0">
-                        <legend className="w-full border-b border-line pb-2">
+                        <legend className="w-full border-b border-line-strong pb-2">
                             <GroupHeading className="text-sm font-semibold text-ink">{texts[group.title]}</GroupHeading>
                         </legend>
                         <div className="mt-4 grid gap-4">

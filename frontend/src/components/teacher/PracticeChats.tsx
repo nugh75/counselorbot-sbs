@@ -74,7 +74,7 @@ export function PracticeChats({ notebookId, openChats, openChatsFailed }: {
 
     return (
         <section data-practice-chats aria-labelledby={`practice-chats-heading-${notebookId}`} className="space-y-2">
-            <h2 id={`practice-chats-heading-${notebookId}`} className="border-b border-line pb-2 text-lg font-semibold text-ink">{l('practiceChats')}</h2>
+            <h2 id={`practice-chats-heading-${notebookId}`} className="border-b border-line-strong pb-2 text-lg font-semibold text-ink">{l('practiceChats')}</h2>
             <p className="text-sm text-ink-muted">{l('practiceChatsHint')}</p>
             {(failed || openChatsFailed) && <div role="alert" className="flex flex-wrap items-center gap-2 text-sm text-danger">
                 <p>{l('chatsError')}</p>

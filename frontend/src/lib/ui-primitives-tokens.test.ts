@@ -60,6 +60,12 @@ test('StatusBadge has five tones from the soft/ink tokens and no pill', () => {
     assert.doesNotMatch(source, /rounded-full[^']*px-/);
 });
 
+test('section headings use the strong rule token, not the faint line', () => {
+    const source = read('EntryList');
+    assert.equal((source.match(/border-b border-line-strong pb-2/g) ?? []).length, 2, 'heading and subtitle wrapper');
+    assert.doesNotMatch(source, /border-b border-line pb-/);
+});
+
 test('Dialog opens as a modal, closes through onClose and gives focus back', () => {
     const source = read('Dialog');
     assert.match(source, /node\.showModal\(\)/);
