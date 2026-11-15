@@ -314,6 +314,12 @@ e le primitive `Button`, `Card` e `Callout` (audit UI 2026-10-30, zona 1):
 spaziature su griglia di 8, due soli pesi, niente maiuscolo né sfocature, campi e
 comandi alti almeno 44px. Testi, passi e comportamento non cambiano.
 
+Il questionario di `/somministrazione` è piatto: ogni domanda è un gruppo con filetto
+in alto e testo visibile come legenda, la scala è una riga di opzioni dove solo la
+selezionata ha lo sfondo, l'avanzamento è una barra con filetto sotto, e campi,
+etichette di stato e link usano `Field`, `StatusBadge` e `ButtonLink`. Risposte,
+bozza e comportamento non cambiano.
+
 ## Presentazione, attività e navigazione
 
 Dopo l'accesso la radice `/` porta all'area del proprio ruolo: docenti, ricercatori
