@@ -330,6 +330,11 @@ questionari**, **Percorsi guidati**, **Area studente e strumenti**. La Bussola
 consiglia da quale strumento partire e non somministra questionari né produce
 punteggi. Nell'Area studente la Bussola è una riga piatta come le altre voci del
 catalogo (senza riquadro), come il collegamento «Cambiamenti» in Il mio profilo.
+Le righe d'ingresso mostrano al passaggio una linea sotto la riga; l'albero degli
+obiettivi è un elenco di righe con rientro, senza riquadri; la scheda «Panoramica»
+della classe offre i quattro accessi rapidi come righe piatte. Un indirizzo
+inesistente mostra una pagina «Pagina non trovata» e un errore imprevisto una
+pagina con «Riprova», entrambe con il ritorno alla propria area.
 Subito sotto,
 un riquadro illustrato in evidenza, **Dicci com’è andata**, apre il **Questionario di
 gradimento** (`/questionario`), tradotto nelle sei lingue; chi non ha ancora
@@ -382,6 +387,14 @@ piccola riga di stato («Prossimo passo», «In corso», «Completato», «Non d
 storico dei tentativi è un elenco a filetti. Nella pagina dell'attività di una tappa
 (`/profilo/piani-operativi/[pathId]/[stepId]`) la barra con «Indietro» e «Salva ed esci»
 non è più un riquadro. Pulsanti, campi e avvisi restano invariati; nessun cambio di comportamento.
+
+**Campi, pulsanti e finestre condivisi (#923).** La palestra di prova del docente
+(`/docente/taccuini-prova`: taccuini, chat in prova, repertorio di profili) e gli obiettivi
+personali (finestra dell'obiettivo e catalogo) usano campi, pulsanti e finestre di dialogo
+comuni: etichetta sopra il campo con il suggerimento collegato, stessa altezza e bordo
+per tutti i campi, pulsanti «Riprova», «Salva», «Annulla», «Genera» e «Aggiungi» con
+l'aspetto standard, finestre a tutto schermo sul telefono con un velo che si adatta al
+tema scuro. Esc e il tasto chiudi funzionano come prima; nessun cambio di comportamento.
 
 **Pulizia dei token visivi piatti (#922).** Le ombre fuori dai tre token (bordi di
 finestre, popover, menu e messaggi) usano `shadow-card`, `shadow-pop` o `shadow-modal`;

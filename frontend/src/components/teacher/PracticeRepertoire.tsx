@@ -6,7 +6,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Field, Select } from '@/components/ui/Field';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n-context';
 import { practiceNotebookText } from '@/lib/i18n-practice-notebooks';
@@ -17,7 +19,6 @@ import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { learningText } from '@/lib/i18n-assignment-work';
 
-const secondary = 'min-h-control rounded-control border border-line-strong bg-surface px-4 text-sm font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-50';
 const linkAction = 'inline-flex min-h-control items-center text-sm font-semibold text-link underline underline-offset-2 disabled:opacity-50';
 
 type Draft = { id?: number; type: QuestionnaireType; scores?: Record<string, number>; generated: boolean; version: number };
@@ -112,7 +113,7 @@ export function PracticeRepertoire({ notebookId, onResults, newProfileType }: {
             <p className="text-xs text-ink-muted">{l('repertoireHint')}</p>
             {failed && <div role="alert" className="flex flex-wrap items-center gap-2 text-xs text-danger">
                 <p>{l('profilesError')}</p>
-                <button type="button" onClick={() => void load()} className={secondary}>{l('retry')}</button>
+                <Button type="button" variant="secondary" onClick={() => void load()}>{l('retry')}</Button>
             </div>}
             {error && <p role="alert" className="text-xs text-danger">{error}</p>}
             {saved && <p role="status" className="text-xs text-success">{l('saved')}</p>}
@@ -151,9 +152,8 @@ export function PracticeRepertoire({ notebookId, onResults, newProfileType }: {
             </ul>
             {draft ? (
                 <div data-practice-result-editor className="space-y-4 pt-2">
-                    <label className="block text-xs font-semibold text-ink-muted">
-                        {l('instrument')}
-                        <select value={draft.type} disabled={busy || draft.id !== undefined}
+                    <Field label={l('instrument')}>
+                        <Select value={draft.type} disabled={busy || draft.id !== undefined}
                             onChange={(event) => {
                                 const nextType = event.target.value as QuestionnaireType;
                                 if (dirty && !window.confirm(learningText(lang, 'leaveDraft'))) {
@@ -162,13 +162,12 @@ export function PracticeRepertoire({ notebookId, onResults, newProfileType }: {
                                 }
                                 setDraft({ type: nextType, generated: false, version: draft.version + 1 });
                                 setDirty(false);
-                            }}
-                            className="mt-1 block min-h-control w-full rounded-control border border-line-strong bg-surface px-2 text-sm">
+                            }}>
                             {PRACTICE_RESULT_TYPES.map((id) => <option key={id} value={id}>{instrumentName(id)}</option>)}
-                        </select>
-                    </label>
+                        </Select>
+                    </Field>
                     <div>
-                        <button type="button" disabled={busy} onClick={generate} className={secondary}>{l('generate')}</button>
+                        <Button type="button" variant="secondary" disabled={busy} onClick={generate}>{l('generate')}</Button>
                         <p className="mt-1 text-xs text-ink-muted">{l('generateHint')}</p>
                     </div>
                     <p className="text-xs text-ink-muted">{l('explicitSave')}</p>
@@ -180,10 +179,9 @@ export function PracticeRepertoire({ notebookId, onResults, newProfileType }: {
                     </fieldset>
                 </div>
             ) : (
-                <button type="button" disabled={busy || results === null} onClick={() => { setDraft({ type: 'QSA', generated: false, version: 0 }); setSaved(false); setError(''); }}
-                    className={`${secondary} inline-flex items-center gap-2`}>
+                <Button type="button" variant="secondary" disabled={busy || results === null} onClick={() => { setDraft({ type: 'QSA', generated: false, version: 0 }); setSaved(false); setError(''); }}>
                     <Plus className="h-4 w-4" aria-hidden="true" />{l('addProfile')}
-                </button>
+                </Button>
             )}
         </section>
     );

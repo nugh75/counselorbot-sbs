@@ -16,7 +16,7 @@ const GoalNode = memo(function GoalNode({ data }: NodeProps<Node<GoalNodeData>>)
     const { lang } = useI18n();
     return <div style={{ width: WIDTH }}>
         <Handle type="target" position={Position.Top} isConnectable={false} />
-        <button type="button" onClick={() => data.onOpen(data.goal.id)} className="block w-full rounded-control border border-line-strong bg-surface p-2 text-left shadow-card hover:border-brand focus-visible:outline-2 focus-visible:outline-focus">
+        <button type="button" onClick={() => data.onOpen(data.goal.id)} className="block w-full rounded-control border border-line-strong bg-surface p-2 text-left hover:border-brand focus-visible:outline-2 focus-visible:outline-focus">
             <span className="line-clamp-2 break-words text-sm font-semibold">{data.goal.title}</span>
             <span className="flex items-center gap-1 text-xs text-ink-muted">{data.detail}{data.shared && <> · <Users className="h-3 w-3" aria-hidden /><span className="sr-only">{goalText(lang, 'sharedMark')}</span></>}</span>
         </button>
