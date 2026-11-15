@@ -95,13 +95,13 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                     }}
                     maxLength={80}
                     autoFocus
-                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                    className="min-w-0 flex-1 rounded-control border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                 />
                 <button
                     type="button"
                     onClick={() => void addBranch()}
                     disabled={!label.trim() || busy}
-                    className="rounded-md bg-brand p-1.5 text-ink-on-brand hover:bg-brand-hover disabled:opacity-50"
+                    className="rounded-control bg-brand p-1.5 text-ink-on-brand hover:bg-brand-hover disabled:opacity-50"
                     aria-label={t('idea.branches.create')}
                 >
                     {busy
@@ -111,7 +111,7 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                 <button
                     type="button"
                     onClick={() => { setAdding(false); setLabel(''); setFailed(false); }}
-                    className="rounded-md border border-slate-200 bg-white p-1.5 text-slate-500 hover:bg-slate-50"
+                    className="rounded-control border border-slate-200 bg-white p-1.5 text-slate-500 hover:bg-slate-50"
                     aria-label={t('idea.branches.cancel')}
                 >
                     <X className="h-4 w-4" aria-hidden="true" />
@@ -132,7 +132,7 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                 onChange={(event) => void goTo(event.target.value)}
                 disabled={busy}
                 aria-label={t('idea.branches.switch')}
-                className="min-w-0 max-w-[18rem] flex-1 truncate rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand disabled:opacity-60"
+                className="min-w-0 max-w-[18rem] flex-1 truncate rounded-control border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand disabled:opacity-60"
             >
                 {rows.map((row) => (
                     <option key={row.id} value={row.id}>
@@ -145,7 +145,7 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                 type="button"
                 onClick={() => setAdding(true)}
                 disabled={busy}
-                className="inline-flex items-center gap-1 rounded-md border border-dashed border-brand-line px-2 py-1 text-xs font-medium text-link hover:bg-brand-soft disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-control border border-dashed border-brand-line px-2 py-1 text-xs font-medium text-link hover:bg-brand-soft disabled:opacity-50"
             >
                 <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                 {t('idea.branches.create')}

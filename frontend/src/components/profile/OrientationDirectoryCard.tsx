@@ -57,7 +57,7 @@ function InstitutionContents({ group }: { group: InstitutionDirectory }) {
     const category = group.categories.some(item => item.id === selected) ? selected : '';
     const institution = group.institution;
     return <section aria-label={institution.name} className="space-y-4">
-        <div className="rounded-lg border border-line bg-surface p-4">
+        <div className="rounded-card border border-line bg-surface p-4">
             <p className="text-xs font-semibold text-ink-muted">{t('referrals.institution.label')}</p>
             <div className="mt-1 flex flex-wrap items-baseline gap-4"><h2 className="text-base font-semibold">{institution.name}</h2>
                 {institution.orientation_page_url && <a href={institution.orientation_page_url} target="_blank" rel="noreferrer" className="text-sm text-link underline">{t('referrals.institution.page')}</a>}
@@ -81,7 +81,7 @@ function DirectoryContents({ referrals, events }: { referrals: DirectoryReferral
                 {events.length === 0 ? (
                     <p className="text-sm text-ink-muted">{t('referrals.events.empty')}</p>
                 ) : events.map((event) => (
-                    <article key={event.id} className="min-w-0 break-words rounded-lg border border-line bg-surface p-4">
+                    <article key={event.id} className="min-w-0 break-words rounded-card border border-line bg-surface p-4">
                         <p className="text-sm font-semibold text-ink">{event.title}</p>
                         <p className="text-xs text-ink-muted">{formatDate(event.starts_at, lang)}</p>
                         {event.summary && <p className="mt-1 text-sm text-ink-muted">{event.summary}</p>}
@@ -117,7 +117,7 @@ function DirectoryContents({ referrals, events }: { referrals: DirectoryReferral
                 {referrals.length === 0 ? (
                     <p className="text-sm text-ink-muted">{t('referrals.people.empty')}</p>
                 ) : referrals.map((referral) => (
-                    <article key={referral.id} className="min-w-0 break-words rounded-lg border border-line bg-surface p-4">
+                    <article key={referral.id} className="min-w-0 break-words rounded-card border border-line bg-surface p-4">
                         <p className="text-sm font-semibold text-ink">
                             {referral.role}{referral.person ? ` — ${referral.person}` : ''}
                         </p>

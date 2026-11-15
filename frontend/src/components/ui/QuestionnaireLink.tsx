@@ -34,10 +34,10 @@ export function QuestionnaireLink({ instrument, className }: { instrument: strin
         return null;
     }
 
-    const action = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-indigo-700';
+    const action = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-indigo-700';
 
     return (
-        <div className={cn('rounded-lg border border-slate-200 bg-slate-50/60 p-3 space-y-2', className)}>
+        <div className={cn('rounded-card border border-slate-200 bg-slate-50/60 p-3 space-y-2', className)}>
             <p className="text-sm text-slate-600">{t('questionnaire.source.hint')}</p>
 
             {source.kind === 'external' ? (

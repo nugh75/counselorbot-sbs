@@ -42,7 +42,7 @@ export function TeacherBreadcrumbs({ items, extra, className = '' }: TeacherBrea
                                 <Link
                                     href={item.href}
                                     data-testid={isFirst ? 'breadcrumb-root-link' : `breadcrumb-link-${index}`}
-                                    className="inline-flex min-h-control items-center gap-2 rounded-lg px-2 text-ink-muted transition-colors hover:bg-surface-raised hover:text-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                                    className="inline-flex min-h-control items-center gap-2 rounded-control px-2 text-ink-muted transition-colors hover:bg-surface-raised hover:text-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                                 >
                                     {isFirst && <ArrowLeft className="h-4 w-4 shrink-0 text-ink-muted" aria-hidden="true" />}
                                     <span>{item.label}</span>

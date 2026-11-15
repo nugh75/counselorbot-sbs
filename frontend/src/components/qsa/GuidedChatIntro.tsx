@@ -33,7 +33,7 @@ export function GuidedChatIntro({ locale, questionnaireType, stepNavigation = tr
     const text = (key: Parameters<typeof guidedIntroText>[1]) => guidedIntroText(locale, key);
     const guideButton = (
         <button ref={trigger} type="button" onClick={() => setGuideOpen(true)} aria-haspopup="dialog"
-            className="inline-flex min-h-control items-center gap-1.5 rounded-md px-3 text-xs font-semibold text-link underline-offset-2 hover:bg-brand-soft hover:underline">
+            className="inline-flex min-h-control items-center gap-1.5 rounded-control px-3 text-xs font-semibold text-link underline-offset-2 hover:bg-brand-soft hover:underline">
             <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />{text('openGuide')}
         </button>
     );
@@ -60,7 +60,7 @@ export function GuidedChatIntro({ locale, questionnaireType, stepNavigation = tr
                     <p>{text('close')}</p>
                     <div className="flex flex-wrap gap-2">
                         {guideButton}
-                        <button type="button" onClick={dismiss} className="min-h-control rounded-md px-3 text-xs font-semibold text-link hover:bg-brand-soft">{text('dismiss')}</button>
+                        <button type="button" onClick={dismiss} className="min-h-control rounded-control px-3 text-xs font-semibold text-link hover:bg-brand-soft">{text('dismiss')}</button>
                     </div>
                 </div>
             </Callout>
@@ -83,12 +83,12 @@ function GuideSectionDialog({ section, locale, onClose }: { section: number; loc
     return (
         <dialog ref={ref} aria-labelledby="guided-guide-title" data-testid="guided-guide"
             onCancel={e => { e.preventDefault(); close(); }} onClick={e => { if (e.target === ref.current) close(); }}
-            className="m-0 h-dvh max-h-none w-full max-w-none bg-white p-0 text-slate-900 backdrop:bg-slate-900/50 sm:m-auto sm:h-auto sm:max-h-[90vh] sm:max-w-xl sm:rounded-xl">
+            className="m-0 h-dvh max-h-none w-full max-w-none bg-white p-0 text-slate-900 backdrop:bg-slate-900/50 sm:m-auto sm:h-auto sm:max-h-[90vh] sm:max-w-xl sm:rounded-card">
             <div className="flex h-full max-h-[inherit] flex-col">
                 <div className="flex items-start justify-between gap-3 border-b border-slate-200 p-4 sm:px-6">
                     <h2 id="guided-guide-title" className="text-lg font-bold">{copy.title}</h2>
                     <button type="button" onClick={close} aria-label={text('closeGuide')}
-                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100">
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control text-slate-600 hover:bg-slate-100">
                         <X className="h-5 w-5" aria-hidden="true" />
                     </button>
                 </div>

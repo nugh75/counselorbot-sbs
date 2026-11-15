@@ -23,7 +23,7 @@ export function RevisitRequestsBar({ items, locale, disabled, onRevisit }: {
                     <li key={item.slug} className="flex items-start justify-between gap-2">
                         <span className="min-w-0 break-words text-sm text-slate-800">{item.name}</span>
                         <button type="button" disabled={disabled} onClick={() => onRevisit(item)}
-                            className="shrink-0 rounded-md bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50">
+                            className="shrink-0 rounded-control bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50">
                             {recommendationText('request.revisit.action', locale)}
                         </button>
                     </li>

@@ -357,7 +357,7 @@ export function PortfolioCard() {
                         ) : (
                             <div className="flex flex-wrap gap-4">
                                 {form.images.map((img) => (
-                                    <div key={img.id} className="relative h-24 w-24 overflow-hidden rounded-lg border border-line">
+                                    <div key={img.id} className="relative h-24 w-24 overflow-hidden rounded-card border border-line">
                                         <button
                                             type="button"
                                             onClick={(event) => openImage(event.currentTarget, {
@@ -387,7 +387,7 @@ export function PortfolioCard() {
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={uploading}
-                                    className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-line-strong text-ink-muted hover:bg-surface-sunken disabled:opacity-50"
+                                    className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-control border border-dashed border-line-strong text-ink-muted hover:bg-surface-sunken disabled:opacity-50"
                                 >
                                     {uploading ? <Spinner className="h-5 w-5" /> : <ImagePlus className="h-5 w-5" />}
                                     <span className="text-2xs font-semibold">{t('portfolio.addImage')}</span>
@@ -454,10 +454,10 @@ export function PortfolioCard() {
                                 <div className="flex items-start justify-between gap-2">
                                     <h3 className="text-sm font-semibold text-ink">{item.title}</h3>
                                     <div className="flex shrink-0 gap-1">
-                                        <button type="button" onClick={() => setForm(toForm(item))} className="tap-icon rounded text-ink-muted hover:bg-surface-sunken hover:text-link" aria-label={t('portfolio.edit')}>
+                                        <button type="button" onClick={() => setForm(toForm(item))} className="tap-icon rounded-control text-ink-muted hover:bg-surface-sunken hover:text-link" aria-label={t('portfolio.edit')}>
                                             <Pencil className="h-3.5 w-3.5" />
                                         </button>
-                                        <button type="button" onClick={() => setConfirmingDelete(item.id)} className="tap-icon rounded text-ink-muted hover:bg-danger-soft hover:text-danger" aria-label={t('portfolio.delete')}>
+                                        <button type="button" onClick={() => setConfirmingDelete(item.id)} className="tap-icon rounded-control text-ink-muted hover:bg-danger-soft hover:text-danger" aria-label={t('portfolio.delete')}>
                                             <Trash2 className="h-3.5 w-3.5" />
                                         </button>
                                     </div>
@@ -533,7 +533,7 @@ export function PortfolioCard() {
                         ref={lightboxCloseRef}
                         type="button"
                         onClick={() => setLightbox(null)}
-                        className="absolute right-4 top-4 z-10 inline-flex h-control w-control items-center justify-center rounded-lg bg-surface/90 text-ink-body shadow-card hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 sm:right-6 sm:top-6"
+                        className="absolute right-4 top-4 z-10 inline-flex h-control w-control items-center justify-center rounded-control bg-surface/90 text-ink-body shadow-card hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 sm:right-6 sm:top-6"
                         aria-label={t('common.close')}
                         autoFocus
                     >

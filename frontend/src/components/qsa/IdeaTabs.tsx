@@ -53,7 +53,7 @@ export function IdeaTabs({ chat, map, branches, sources }: IdeaTabsProps) {
                         aria-controls={`idea-tab-${key}`}
                         onClick={() => setActive(key)}
                         className={cn(
-                            'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-medium transition-colors',
+                            'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-control px-2 text-xs font-medium transition-colors',
                             active === key
                                 ? 'bg-teal-700 text-white'
                                 : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50',

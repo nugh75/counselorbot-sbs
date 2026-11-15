@@ -18,8 +18,8 @@ export function PronunciationEditor({ language, onChange, onPreview }: { languag
     const [search, setSearch] = useState('');
     const termInput = useRef<HTMLInputElement>(null);
     const update = (next: PronunciationSettings) => { onChange(); savePronunciations(language, next); };
-    const inputClass = 'mt-1 min-h-control w-full rounded-md border border-slate-300 bg-white px-2 text-base font-normal';
-    return <details className="rounded-md border border-slate-200 bg-white">
+    const inputClass = 'mt-1 min-h-control w-full rounded-control border border-slate-300 bg-white px-2 text-base font-normal';
+    return <details className="rounded-control border border-slate-200 bg-white">
         <summary className="min-h-control cursor-pointer px-3 py-3 text-sm font-semibold">{t('voice.pronunciation')} ({settings.rules.length})</summary>
         <div className="max-h-[40dvh] space-y-3 overflow-y-auto border-t border-slate-200 p-3">
             <p className="text-xs text-slate-600">{t('voice.pronunciationHelp')}</p>

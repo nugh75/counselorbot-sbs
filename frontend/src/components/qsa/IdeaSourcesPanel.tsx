@@ -123,7 +123,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                 className="mt-2 flex flex-wrap items-center gap-2"
                 onSubmit={(event) => { event.preventDefault(); void run(); }}
             >
-                <div className="inline-flex overflow-hidden rounded-md border border-slate-300">
+                <div className="inline-flex overflow-hidden rounded-control border border-slate-300">
                     {(['works', 'encyclopedia'] as IdeaSourceGroup[]).map((value) => (
                         <button
                             key={value}
@@ -145,7 +145,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                     maxLength={200}
                     aria-label={t('idea.sources.query')}
                     placeholder={t('idea.sources.query')}
-                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                    className="min-w-0 flex-1 rounded-control border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                 />
                 {group === 'works' && (
                     <>
@@ -155,7 +155,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                             inputMode="numeric"
                             aria-label={t('idea.sources.yearFrom')}
                             placeholder={t('idea.sources.yearFrom')}
-                            className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                            className="w-20 rounded-control border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                         />
                         <label className="inline-flex items-center gap-1.5 text-xs text-slate-600">
                             <input
@@ -189,7 +189,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                         <p className="text-xs text-slate-500">{t('idea.sources.none')}</p>
                     )}
                     {results.map((item) => (
-                        <article key={item.url} className="rounded-md border border-slate-200 bg-white p-2.5">
+                        <article key={item.url} className="rounded-control border border-slate-200 bg-white p-2.5">
                             <div className="flex items-start gap-2">
                                 <div className="min-w-0 flex-1">
                                     <p className="break-words text-xs font-medium text-slate-800">{item.title}</p>
@@ -208,7 +208,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                                     type="button"
                                     onClick={() => void keepOne(item)}
                                     disabled={keptUrls.has(item.url) || keeping === item.url}
-                                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-brand-line px-2 py-1 text-xs font-medium text-link hover:bg-brand-soft disabled:opacity-40"
+                                    className="inline-flex shrink-0 items-center gap-1 rounded-control border border-brand-line px-2 py-1 text-xs font-medium text-link hover:bg-brand-soft disabled:opacity-40"
                                 >
                                     {keeping === item.url
                                         ? <Spinner className="h-3 w-3" aria-hidden="true" />
@@ -229,7 +229,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
             ) : (
                 <ul className="mt-1 space-y-1.5">
                     {kept.map((row) => (
-                        <li key={row.id} className="flex items-start gap-2 rounded-md bg-slate-50 p-2">
+                        <li key={row.id} className="flex items-start gap-2 rounded-control bg-slate-50 p-2">
                             <div className="min-w-0 flex-1">
                                 <p className="break-words text-xs text-slate-800">{row.title}</p>
                                 <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
@@ -259,7 +259,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                                 type="button"
                                 onClick={() => void drop(row.id)}
                                 aria-label={t('idea.sources.remove')}
-                                className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-white hover:text-danger-ink"
+                                className="shrink-0 rounded-control p-1 text-slate-400 hover:bg-white hover:text-danger-ink"
                             >
                                 <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                             </button>

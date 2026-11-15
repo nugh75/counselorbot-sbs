@@ -51,7 +51,7 @@ export function TavoloCounselor({ initialId, busy, onChange }: {
                 {label('counselor')}
                 <select aria-label={label('counselor')} value={id ?? ''} disabled={busy || !loaded}
                     onChange={(event) => setPicked(Number(event.target.value) || undefined)}
-                    className="min-h-control max-w-full rounded-lg border border-line bg-surface px-2 text-sm text-ink">
+                    className="min-h-control max-w-full rounded-control border border-line bg-surface px-2 text-sm text-ink">
                     <option value="" disabled>{label('chooseCounselor')}</option>
                     {counselors.map((item) => <option key={item.id} value={item.id}>
                         {item.name} · {t(item.model_origin === 'local' ? 'counselor.origin.local' : 'counselor.origin.external')}

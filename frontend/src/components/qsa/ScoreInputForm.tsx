@@ -76,7 +76,7 @@ function InputRow({
         // Label esplicita: prima il codice e il nome stavano in un div fratello,
         // invisibile all'associazione, e i venticinque campi si annunciavano tutti
         // come "campo di testo, vuoto". Avvolgere evita di generare id.
-        <label className="flex items-center justify-between gap-3 p-2 rounded-md bg-white border border-slate-200 hover:border-indigo-200 transition-colors">
+        <label className="flex items-center justify-between gap-3 p-2 rounded-control bg-white border border-slate-200 hover:border-indigo-200 transition-colors">
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                     <span className="font-mono text-indigo-600 font-bold text-sm">{factor.code}</span>
@@ -101,7 +101,7 @@ function InputRow({
                 onKeyDown={handleKeyDown}
                 onInput={handleInput}
                 className={cn(
-                    "w-14 h-11 bg-white border rounded-md text-center font-bold text-base text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all",
+                    "w-14 h-11 bg-white border rounded-control text-center font-bold text-base text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all",
                     hasError ? "border-red-600" : "border-slate-300"
                 )}
             />
@@ -220,7 +220,7 @@ export function ScoreInputForm({
             <GuideHelpLink task="questionnaires" />
             {actionsPosition === 'both' && actionButtons}
             {missingCount > 0 && (
-                <p role="alert" className="max-w-4xl mx-auto rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+                <p role="alert" className="max-w-4xl mx-auto rounded-control border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
                     {t('score.error.summary', { count: missingCount })}
                 </p>
             )}

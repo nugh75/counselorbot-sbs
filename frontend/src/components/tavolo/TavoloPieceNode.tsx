@@ -121,7 +121,7 @@ function Piece({ data, selected }: NodeProps & { data: PieceData }) {
                         defaultValue={data.label}
                         maxLength={80}
                         aria-label={data.label}
-                        className="nodrag nowheel w-full rounded border border-brand-line bg-surface px-1 py-1 text-sm text-ink"
+                        className="nodrag nowheel w-full rounded-control border border-brand-line bg-surface px-1 py-1 text-sm text-ink"
                         onKeyDown={(event) => {
                             if (event.key === 'Enter') {
                                 event.preventDefault();
@@ -140,12 +140,12 @@ function Piece({ data, selected }: NodeProps & { data: PieceData }) {
                         {data.image && !isImage && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={tavoloImageUrl(data.image)} alt="" aria-hidden="true"
-                                className={`h-8 w-8 shrink-0 rounded object-cover ${data.accent && data.state !== 'pending' ? 'bg-surface p-1' : ''}`} />
+                                className={`h-8 w-8 shrink-0 rounded-control object-cover ${data.accent && data.state !== 'pending' ? 'bg-surface p-1' : ''}`} />
                         )}
                         {!data.image && data.icon && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={iconUrl(data.icon)} alt="" width={20} height={20} aria-hidden="true"
-                                className={`h-5 w-5 shrink-0 ${data.accent && data.state !== 'pending' ? 'rounded bg-surface p-1' : ''}`} />
+                                className={`h-5 w-5 shrink-0 ${data.accent && data.state !== 'pending' ? 'rounded-control bg-surface p-1' : ''}`} />
                         )}
                         <span className="break-words">{data.label}</span>
                     </span>

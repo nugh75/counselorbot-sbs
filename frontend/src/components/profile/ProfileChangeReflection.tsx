@@ -355,10 +355,10 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                     <div className="flex items-center gap-2 text-sm font-semibold text-ink">
                         {t('profileChanges.assistantTitle')}
                     </div>
-                    <div className="max-h-80 overflow-y-auto space-y-4 rounded-lg bg-surface-sunken p-4">
+                    <div className="max-h-80 overflow-y-auto space-y-4 rounded-card bg-surface-sunken p-4">
                         {messages.map((message, index) => (
                             <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[85%] rounded-lg px-4 py-2 text-sm ${message.role === 'user' ? 'bg-brand text-ink-on-brand' : 'bg-surface border border-line text-ink'}`}>
+                                <div className={`max-w-[85%] rounded-card px-4 py-2 text-sm ${message.role === 'user' ? 'bg-brand text-ink-on-brand' : 'bg-surface border border-line text-ink'}`}>
                                     {!message.content && message.role === 'assistant' ? (
                                         <TypingDots />
                                     ) : (

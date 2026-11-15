@@ -397,7 +397,7 @@ export default function QuestionarioPage() {
                                             type="checkbox"
                                             checked={checked}
                                             onChange={() => handleToolToggle(tool)}
-                                            className="w-4 h-4 text-link border-line-strong rounded focus:ring-focus"
+                                            className="w-4 h-4 text-link border-line-strong rounded-control focus:ring-focus"
                                         />
                                         <span className="text-sm">{tf(`survey.tool.${tool}`, tool)}</span>
                                     </label>
@@ -468,7 +468,7 @@ export default function QuestionarioPage() {
                                 type="checkbox"
                                 checked={consent}
                                 onChange={(e) => setConsent(e.target.checked)}
-                                className="mt-1 w-5 h-5 text-link border-line-strong rounded focus:ring-focus"
+                                className="mt-1 w-5 h-5 text-link border-line-strong rounded-control focus:ring-focus"
                             />
                             <span className="text-sm text-ink-muted">
                                 {t('survey.consent')}

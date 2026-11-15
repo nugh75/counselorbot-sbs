@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import type { StepPresentation } from '@/lib/class-path-presentation';
 
 const link = 'text-xs font-semibold text-link hover:underline';
-const field = 'mt-1 block w-full rounded border border-line-strong px-2 py-2 text-xs text-ink focus:border-brand focus:outline-none';
+const field = 'mt-1 block w-full rounded-control border border-line-strong px-2 py-2 text-xs text-ink focus:border-brand focus:outline-none';
 
 function formatDate(lang: string, iso: string) {
     // Noon avoids the previous day in negative timezones: the value is a calendar day.
@@ -79,7 +79,7 @@ export function StepPresentationFields({ presentation, step, update, showDate = 
                 <input id={dateId} type="date" value={step.due_date ?? ''}
                     onChange={event => update({due_date: event.target.value || null})}
                     aria-label={l('dueDateLabel')}
-                    className="rounded border border-line-strong px-2 py-1 text-xs text-ink focus:border-brand focus:outline-none" />
+                    className="rounded-control border border-line-strong px-2 py-1 text-xs text-ink focus:border-brand focus:outline-none" />
                 <Button type="button" variant="ghost" size="sm" className={link} onClick={() => {
                     update({due_date: null});
                     setDateOpen(false);

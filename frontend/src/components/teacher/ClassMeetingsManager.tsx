@@ -299,7 +299,7 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
             {meetings.map(row => <li key={row.id} className="space-y-1 rounded-control border border-line bg-surface p-2 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="min-w-0 flex-1 basis-full break-words font-semibold text-ink sm:basis-auto">
-                        {row.title}{row.status === 'cancelled' && <span className="ml-2 rounded bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-muted">{m('cancelled')}</span>}
+                        {row.title}{row.status === 'cancelled' && <span className="ml-2 rounded-control bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-muted">{m('cancelled')}</span>}
                     </p>
                     {row.status === 'scheduled' && <div className="flex flex-wrap gap-1">
                         {row.attendance_mode !== 'student' && <Button variant="secondary" size="md" aria-expanded={registerOf === row.id}
@@ -387,7 +387,7 @@ function SlotsEditor({ lang, meeting, busy, send, onDraftChange }: {
         <p className="text-xs font-semibold text-ink-body">{m('slots')}</p>
         {!slots.length && <p className="text-xs text-ink-muted">{m('noSlots')}</p>}
         <ul className="space-y-1">
-            {slots.map(slot => <li key={slot.id} className="flex flex-wrap items-center gap-2 rounded border border-line p-2">
+            {slots.map(slot => <li key={slot.id} className="flex flex-wrap items-center gap-2 rounded-control border border-line p-2">
                 <span className="min-w-0 flex-1 basis-full sm:basis-auto">
                     <time dateTime={slot.starts_at}>{meetingWhen(slot, lang)}</time>{' · '}
                     {slot.booking ? <strong>{slot.booking.name}</strong> : <span className="text-ink-muted">{m('free')}</span>}

@@ -68,13 +68,13 @@ export function ChatComposerInput({ className, ...rest }: ComponentProps<typeof 
                 }
             }}
             {...rest}
-            className={cn('min-w-0 flex-1 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50', className)}
+            className={cn('min-w-0 flex-1 rounded-control border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50', className)}
         />
     );
 }
 
 // La radice del sito è 15px: h-11 da solo darebbe 41px, sotto l'area minima.
-const BUTTON = 'inline-flex h-11 min-h-control w-11 min-w-control shrink-0 items-center justify-center rounded-md text-white transition-colors';
+const BUTTON = 'inline-flex h-11 min-h-control w-11 min-w-control shrink-0 items-center justify-center rounded-control text-white transition-colors';
 
 // Mentre la risposta arriva il primario ferma, non invia, se la superficie sa
 // interrompere la richiesta (onStop); altrimenti resta l'invio disabilitato.
@@ -120,7 +120,7 @@ export function ChatSuggestions({ label, items, composerId, onInsert }: {
                             onInsert(previous => previous.trim() ? `${previous}\n\n${draft}` : draft);
                             window.requestAnimationFrame(() => document.getElementById(composerId)?.focus());
                         }}
-                        className="min-h-9 max-w-full whitespace-normal break-words rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-left hover:bg-indigo-50">
+                        className="min-h-9 max-w-full whitespace-normal break-words rounded-control border border-slate-200 bg-white px-2.5 py-1 text-left hover:bg-indigo-50">
                         {text}
                     </button>
                 ))}

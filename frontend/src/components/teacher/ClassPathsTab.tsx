@@ -730,7 +730,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 <div
                                     key={step.id ? `step-${step.id}` : `new-step-${step.client_key}`}
                                     data-testid="path-step-card"
-                                    className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-4 md:flex-row md:items-start"
+                                    className="flex flex-col gap-4 rounded-card border border-line bg-surface p-4 md:flex-row md:items-start"
                                 >
                                     <div className="flex items-center gap-4 md:w-48">
                                         <span className="font-mono text-sm font-semibold text-ink-muted">{`#${step.position}`}</span>
@@ -738,14 +738,14 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                         <div className="min-w-0 flex-1">
                                             <p className="break-words text-sm font-semibold text-ink">{name}</p>
                                             {!step.auto_detect && (
-                                                <span className="mt-1 inline-flex items-center gap-1 rounded bg-warning-soft px-2 py-1 text-xs font-semibold text-warning-ink">
+                                                <span className="mt-1 inline-flex items-center gap-1 rounded-control bg-warning-soft px-2 py-1 text-xs font-semibold text-warning-ink">
                                                     <Flag className="h-3 w-3" aria-hidden />
                                                     {l('selfMarkBadge')}
                                                 </span>
                                             )}
                                             {action && (
                                                 <>
-                                                    <span className="mt-1 inline-block rounded bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-body">
+                                                    <span className="mt-1 inline-block rounded-control bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-body">
                                                         {l('notAvailable')}
                                                     </span>
                                                     <p className="mt-1 text-xs text-ink-muted">{unavailableActionText(lang, action)}</p>
@@ -820,7 +820,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                                 if (notice === 'saved' || notice === 'published') setNotice(null);
                                                             }}
                                                             aria-label={`${name} ${l('plannedDay')}`}
-                                                            className="mt-1 block w-full rounded border border-line-strong px-2 py-1 text-xs text-ink focus:border-brand focus:outline-none"
+                                                            className="mt-1 block w-full rounded-control border border-line-strong px-2 py-1 text-xs text-ink focus:border-brand focus:outline-none"
                                                         />
                                                     </label>
                                                 )}
@@ -880,7 +880,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     {!adding ? (
                         <Button variant="secondary" disabled={busy} onClick={() => setAdding(true)}>{k('addStep')}</Button>
                     ) : (
-                        <div className="space-y-4 rounded-lg border border-line bg-surface-sunken p-4">
+                        <div className="space-y-4 rounded-card border border-line bg-surface-sunken p-4">
                             {replacing !== null && steps[replacing] && <div role="status" className="space-y-1">
                                 <p className="text-sm font-semibold text-ink">{`${l('replacingStep')} #${steps[replacing].position}`}</p>
                                 <p className="text-xs text-ink-muted">{l('replaceHelp')}</p>

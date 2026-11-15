@@ -260,7 +260,7 @@ export function FreeChatInterface({
     };
 
     const stepButtonClass = 'h-control w-[44px] shrink-0 p-0';
-    const messageActionClass = 'chat-action-item flex min-h-control w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
+    const messageActionClass = 'chat-action-item flex min-h-control w-full items-center gap-2 rounded-control px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
     const lastMessage = messages[messages.length - 1];
     const awaitingAssistantBubble = lastMessage?.role === 'assistant' && !lastMessage.content.trim();
     const liveAnnouncement = isLoading ? t('guided.processing') : lastMessage?.role === 'assistant' ? lastMessage.content : '';
@@ -309,7 +309,7 @@ export function FreeChatInterface({
                             {sessionId && <Tooltip content={t('frozen.freeze')}>
                                 <button type="button" onClick={() => void handleFreeze()} disabled={isLoading}
                                     aria-label={t('frozen.freeze')}
-                                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50">
+                                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control border border-slate-200 bg-white text-slate-500 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50">
                                     <Snowflake className="h-3.5 w-3.5" aria-hidden="true" />
                                 </button>
                             </Tooltip>}
@@ -357,7 +357,7 @@ export function FreeChatInterface({
                                 <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'} className="px-3 py-2 sm:px-3 sm:py-2 lg:px-5 lg:py-3.5">
                                     {msg.role === 'assistant' ? (
                                         msg.content.trim() ? (
-                                            <div className="min-w-0 max-w-full overflow-hidden bg-white lg:rounded-lg lg:border lg:border-slate-200/80"
+                                            <div className="min-w-0 max-w-full overflow-hidden bg-white lg:rounded-card lg:border lg:border-slate-200/80"
                                                 data-voice-source={`free-${sessionId}-${idx}`} data-voice-language={activeLocale} data-voice-counselor={counselorId ?? undefined}>
                                                 <ChatMarkdown content={msg.content} locale={activeLocale} errorMessage={t('guided.stepConnError')} />
                                             </div>

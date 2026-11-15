@@ -90,7 +90,7 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
                             aria-describedby={!row.admin_enabled ? `counselor-disabled-${row.id}` : undefined}
                             onChange={event => onToggle(row.id, event.target.checked)} />
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        {row.avatar_url && <img src={row.avatar_url} alt="" className="h-8 w-14 shrink-0 rounded object-cover" />}
+                        {row.avatar_url && <img src={row.avatar_url} alt="" className="h-8 w-14 shrink-0 rounded-control object-cover" />}
                         <span className="min-w-0 break-words"><span className="font-semibold">{row.name}</span>
                             {row.approach_categories.length > 0 && <span className="ml-2 text-xs text-ink-muted">{row.approach_categories.map(item => formatCategoryLabel(item, lang)).join(' · ')}</span>}
                             {!row.admin_enabled && <span id={`counselor-disabled-${row.id}`} className="mt-1 flex items-center gap-1 text-xs text-ink-muted"><Lock className="h-4 w-4 shrink-0" aria-hidden />{l('platformDisabled')}</span>}

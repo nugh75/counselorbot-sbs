@@ -10,7 +10,7 @@ import { TypingDots } from '@/components/ui/TypingDots';
 // Vince il trattamento della chat guidata, che e' quella piu' usata e piu'
 // disegnata; l'attesa sono tre puntini (design.md §4, #935).
 
-const BASE = 'chat-message min-w-0 max-w-full break-words rounded-lg px-4 py-3 text-base leading-relaxed sm:px-5 sm:py-3.5';
+const BASE = 'chat-message min-w-0 max-w-full break-words rounded-card px-4 py-3 text-base leading-relaxed sm:px-5 sm:py-3.5';
 
 const ROLE: Record<'user' | 'assistant', string> = {
     user: 'bg-indigo-600 text-white rounded-tr-sm',
@@ -44,7 +44,7 @@ export function ChatPendingIndicator({ label }: { label: string }) {
 export function ChatPending({ label }: { label: string }) {
     return (
         <div className="flex justify-start">
-            <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+            <div className="rounded-card border border-slate-200 bg-white px-4 py-3">
                 <ChatPendingIndicator label={label} />
             </div>
         </div>

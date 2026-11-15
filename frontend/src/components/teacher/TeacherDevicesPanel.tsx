@@ -173,7 +173,7 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
                                         </div>
                                     </div>
                                     {revokeId === device.id && (
-                                        <div role="group" aria-label={l('revokeConfirm')} className="flex flex-wrap items-center gap-2 rounded-lg border border-danger-line bg-danger-soft p-4">
+                                        <div role="group" aria-label={l('revokeConfirm')} className="flex flex-wrap items-center gap-2 rounded-card border border-danger-line bg-danger-soft p-4">
                                             <p className="w-full text-sm text-danger-ink">{l('revokeConfirm')}</p>
                                             <Button type="button" variant="danger" size="md" disabled={busy !== null} onClick={() => void revoke(device)}>
                                                 {busy === `revoke:${device.id}` ? <Spinner className="h-4 w-4" aria-hidden /> : null}

@@ -71,7 +71,7 @@ export function CounselorDetailsDialog({ counselor, onClose }: { counselor: Clas
             <div className="flex items-start justify-between gap-4 border-b border-line p-4 sm:px-6">
                 <div className="flex min-w-0 items-center gap-4">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {counselor.avatar_url && <img src={counselor.avatar_url} alt="" className="h-10 w-16 shrink-0 rounded object-cover" />}
+                    {counselor.avatar_url && <img src={counselor.avatar_url} alt="" className="h-10 w-16 shrink-0 rounded-control object-cover" />}
                     <div className="min-w-0">
                         <h2 id="counselor-details-title" className="break-words text-xl font-semibold">{counselor.name}</h2>
                         {counselor.approach_categories.length > 0 && <p className="text-xs text-ink-muted">{counselor.approach_categories.map(item => formatCategoryLabel(item, lang)).join(' · ')}</p>}
@@ -85,7 +85,7 @@ export function CounselorDetailsDialog({ counselor, onClose }: { counselor: Clas
                     <div><dt className="font-semibold text-ink">{l('counselorInstitutionModel')}</dt><dd className="break-words text-ink-muted" data-testid="counselor-institution-model">{model}</dd></div>
                     {sources?.available && <div><dt className="font-semibold text-ink">{l('counselorAnswersForYou')}</dt><dd className="break-words text-ink-muted" data-testid="counselor-answers">{answers}</dd></div>}
                 </dl>
-                {sources?.available && <fieldset disabled={busy} className="space-y-4 rounded-lg border border-line p-4">
+                {sources?.available && <fieldset disabled={busy} className="space-y-4 rounded-card border border-line p-4">
                     <legend className="px-1 text-sm font-semibold text-ink">{l('counselorYourSource')}</legend>
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
                         <div className="min-w-0 flex-1">

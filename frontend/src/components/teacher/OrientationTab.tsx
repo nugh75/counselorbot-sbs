@@ -223,7 +223,7 @@ export function OrientationTab({ groupId }: { groupId: number }) {
                     <Button variant="secondary" disabled={draftBusy || busy || !doc?.is_member} onClick={() => void generate()}>
                         {l(draftBusy ? 'generating' : 'generate')}
                     </Button>
-                    {draft && <div role="status" className="space-y-2 rounded-lg border border-brand-line bg-brand-soft p-4">
+                    {draft && <div role="status" className="space-y-2 rounded-card border border-brand-line bg-brand-soft p-4">
                         <p className="text-sm font-semibold text-link">{l('draftTitle')}</p>
                         <p className="whitespace-pre-wrap rounded-control bg-surface p-4 text-sm text-ink-body">{draft}</p>
                         <p className="text-xs text-link">{l('draftReady')}</p>

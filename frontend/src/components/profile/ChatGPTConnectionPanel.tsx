@@ -162,7 +162,7 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
             : <Button type="button" disabled={busy} onClick={() => void startLink()}>{t(status.connected || status.needs_reconnect ? 'chatgpt.reconnect' : 'chatgpt.connect')}</Button>)}
 
         {/* State 2: waiting for the sign-in, in three numbered steps. */}
-        {link && <div className="space-y-4 rounded-lg border border-line p-4" data-testid="chatgpt-link">
+        {link && <div className="space-y-4 rounded-card border border-line p-4" data-testid="chatgpt-link">
             <ol className="space-y-4">
                 <li className="space-y-2">
                     <p className="text-sm font-semibold">{`1. ${t('chatgpt.stepDownload')}`}</p>
@@ -174,7 +174,7 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
                 </li>
                 <li className="space-y-2">
                     <p className="text-sm font-semibold">{`2. ${t('chatgpt.stepCode')}`}</p>
-                    <code data-testid="chatgpt-pairing-code" className="block select-all break-all rounded bg-surface-sunken p-4 text-sm">{link.pairing_code}</code>
+                    <code data-testid="chatgpt-pairing-code" className="block select-all break-all rounded-control bg-surface-sunken p-4 text-sm">{link.pairing_code}</code>
                     <div className="flex flex-wrap items-center gap-4">
                         <Button type="button" variant="secondary" onClick={() => void copy(link.pairing_code, 'code')}>{t(copied === 'code' ? 'chatgpt.copied' : 'chatgpt.copy')}</Button>
                         {/* Not announced every second: the timer is visual, the expiry is announced as an error. */}
@@ -193,10 +193,10 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
                 <p className="text-sm">{t('chatgpt.instructions')}</p>
                 <a className="inline-flex min-h-control items-center text-sm font-semibold text-link underline" href="/api/chatgpt/helper" download="chatgpt-connect.py">{t('chatgpt.download')}</a>
                 <p className="text-sm font-semibold">{t('chatgpt.command')}</p>
-                <code className="block break-all rounded bg-surface-sunken p-4 text-sm">{command}</code>
+                <code className="block break-all rounded-control bg-surface-sunken p-4 text-sm">{command}</code>
                 <Button type="button" variant="secondary" onClick={() => void copy(command, 'command')}>{t(copied === 'command' ? 'chatgpt.copied' : 'chatgpt.copy')}</Button>
                 <p className="text-sm">{t('chatgpt.sshInstructions')}</p>
-                <code data-testid="chatgpt-ssh-command" className="block break-all rounded bg-surface-sunken p-4 text-sm">{sshCommand}</code>
+                <code data-testid="chatgpt-ssh-command" className="block break-all rounded-control bg-surface-sunken p-4 text-sm">{sshCommand}</code>
                 <Button type="button" variant="secondary" onClick={() => void copy(sshCommand, 'ssh')}>{t(copied === 'ssh' ? 'chatgpt.copied' : 'chatgpt.copy')}</Button>
             </details>
             <Button type="button" variant="secondary" disabled={busy} onClick={() => void act(async () => { await chatgptRequest('/link', 'DELETE'); setLink(undefined); await load(); })}>{t('chatgpt.cancel')}</Button>

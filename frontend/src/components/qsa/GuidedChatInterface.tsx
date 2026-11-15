@@ -1656,7 +1656,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         <Card variant="flat"><fieldset className="space-y-3">
             <legend className="px-1 font-semibold text-slate-800">{chatPreferenceLabel(activeLocale, questionnaireType === 'QSA' ? 'choose' : 'choosePath')}</legend>
             {/* Solo gli strumenti con versione essenziale mostrano la scelta; il QSA mantiene la domanda sul profilo. */}
-            {(['complete', 'essential'] as const).map(path => <label key={path} className="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 p-3">
+            {(['complete', 'essential'] as const).map(path => <label key={path} className="flex cursor-pointer items-start gap-3 rounded-control border border-slate-200 p-3">
                 <input type="radio" name="qsa-path" value={path} checked={guidedPath === path} onChange={() => setGuidedPath(path)} className="mt-1" />
                 <span><span className="block font-medium">{chatPreferenceLabel(activeLocale, path)}</span>
                     <span className="text-sm text-slate-600">{chatPreferenceLabel(activeLocale, path === 'essential' ? (questionnaireType === 'QSA' ? 'essentialHelp' : 'essentialHelpGoal') : 'completeHelp')}</span></span>
@@ -1736,7 +1736,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         : undefined;
     const targetPhaseLabel = targetPhase ? getPhaseLabel(targetPhase) : null;
     const stepButtonClass = 'h-control w-[44px] shrink-0 p-0';
-    const messageActionClass = 'chat-action-item flex min-h-control w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
+    const messageActionClass = 'chat-action-item flex min-h-control w-full items-center gap-2 rounded-control px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
     const renderStepNavigation = () => (
         <div className="flex shrink-0 items-center gap-1">
             {!activeExploration && (essentialSummary || goalFinal) && <Button type="button" variant="secondary" disabled={isLoading} onClick={handleComplete}>{chatPreferenceLabel(activeLocale, "finish")}</Button>}
@@ -1757,7 +1757,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             </Tooltip>
         </div>
     );
-    const stepNavigation = !isIdea && hasStepNavigation ? <nav aria-label={chatLayoutLabel(activeLocale, 'navigation')} className="flex shrink-0 items-center justify-between gap-2 bg-slate-50 px-2 py-1 lg:rounded-lg lg:border lg:border-slate-200 lg:px-3">
+    const stepNavigation = !isIdea && hasStepNavigation ? <nav aria-label={chatLayoutLabel(activeLocale, 'navigation')} className="flex shrink-0 items-center justify-between gap-2 bg-slate-50 px-2 py-1 lg:rounded-card lg:border lg:border-slate-200 lg:px-3">
         <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-slate-600">
             {/* Il congelamento sta nella barra di avanzamento, a sinistra del
                 contatore di passo: un gesto deliberato, fuori dal menu. */}
@@ -1767,7 +1767,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     onClick={() => void handleFreeze()}
                     disabled={isLoading || !sessionId}
                     aria-label={t('frozen.freeze')}
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control border border-slate-200 bg-white text-slate-500 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     <Snowflake className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
@@ -1879,7 +1879,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                     <button type="button" data-path-phase={phaseId} aria-current={isActive ? 'step' : undefined}
                                         disabled={isLoading || !canNavigate(phaseId)}
                                         onClick={() => { selectPhase(phaseId); closePanel(); }}
-                                        className={cn('flex min-h-control w-full items-center gap-2 rounded-lg p-2 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-indigo-600 disabled:opacity-50', isActive ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50')}>
+                                        className={cn('flex min-h-control w-full items-center gap-2 rounded-control p-2 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-indigo-600 disabled:opacity-50', isActive ? 'bg-slate-100 font-semibold text-slate-800' : 'text-slate-600 hover:bg-slate-50')}>
                                         <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs', isActive || visited ? 'border-slate-600 bg-slate-600 text-white' : 'border-slate-300 bg-white')}>
                                             {isDone ? <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> : phaseIndex + 1}
                                         </span>
@@ -1890,7 +1890,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                         <button type="button" key={branch.id} disabled={isLoading || !!activeExploration}
                                             aria-label={`${navCopy.resume}: ${branch.title}`} aria-current={activeExploration?.id === branch.id ? 'true' : undefined}
                                             onClick={() => { openExploration(branch.id); closePanel(); }}
-                                            className="ml-4 flex min-h-control w-[calc(100%-1rem)] items-center gap-2 rounded-lg px-2 text-left text-xs text-indigo-700 hover:bg-indigo-50 disabled:opacity-50">
+                                            className="ml-4 flex min-h-control w-[calc(100%-1rem)] items-center gap-2 rounded-control px-2 text-left text-xs text-indigo-700 hover:bg-indigo-50 disabled:opacity-50">
                                             <GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" /><span className="break-words">{branch.title}</span>
                                         </button>
                                     ))}
@@ -1939,7 +1939,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 </section>}
                 {showExplorationForm && <section aria-label={navCopy.open} className="space-y-2 border-b border-slate-200 bg-slate-50 p-3">
                     <label htmlFor="guided-exploration-title" className="block text-sm font-medium text-slate-700">{navCopy.title}</label>
-                    <input id="guided-exploration-title" value={explorationTitle} maxLength={200} autoFocus onChange={event => setExplorationTitle(event.target.value)} className="min-h-control w-full rounded-md border border-slate-300 bg-white px-3 text-sm" />
+                    <input id="guided-exploration-title" value={explorationTitle} maxLength={200} autoFocus onChange={event => setExplorationTitle(event.target.value)} className="min-h-control w-full rounded-control border border-slate-300 bg-white px-3 text-sm" />
                     <div className="flex flex-wrap gap-2">
                         <Button type="button" disabled={!explorationTitle.trim() || isLoading} onClick={() => openExploration()}>{navCopy.start}</Button>
                         <Button type="button" variant="secondary" onClick={() => setShowExplorationForm(false)}>{navCopy.cancel}</Button>
@@ -1957,7 +1957,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     {isIdea && !activeExploration && (
                         <div className="space-y-3">
                             {messages.length <= 1 && (
-                                <fieldset className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                                <fieldset className="rounded-card border border-slate-200 bg-slate-50 px-3 py-2">
                                     <legend className="px-1 text-xs font-medium text-slate-600">
                                         {t('idea.variant.question')}
                                     </legend>
@@ -2008,7 +2008,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                         {msg.role === 'assistant' ? (
                                             <div className="min-w-0 max-w-full space-y-2">
                                                 {msg.reasoning && effortForPhase(msg.phaseId || currentPhase) !== 'off' && (
-                                                    <div className="rounded-md bg-slate-50 border border-slate-200 px-3 py-2">
+                                                    <div className="rounded-control bg-slate-50 border border-slate-200 px-3 py-2">
                                                         <button
                                                             type="button"
                                                             onClick={() => toggleReasoning(idx)}
@@ -2029,7 +2029,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                                     </div>
                                                 )}
                                                 {msg.content.trim() ? (
-                                                    <div className="min-w-0 max-w-full overflow-hidden bg-white lg:rounded-lg lg:border lg:border-slate-200/80"
+                                                    <div className="min-w-0 max-w-full overflow-hidden bg-white lg:rounded-card lg:border lg:border-slate-200/80"
                                                         data-voice-source={`guided-${sessionId}-${idx}`} data-voice-language={activeLocale} data-voice-counselor={counselorId ?? undefined}>
                                                         <ChatMarkdown
                                                             content={msg.content}
@@ -2108,7 +2108,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         {renderConversationOptions(openPanel)}
                         <button
                             onClick={handleComplete}
-                            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors"
+                            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-control transition-colors"
                         >
                             {t('guided.backHome')}
                         </button>
@@ -2156,7 +2156,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             <DocenzaClassBar selected={docenzaGroupIds} onChange={setDocenzaGroupIds} notebookContext={isTeacherUser ? notebookContext : 'default'} />
                         )}
                         {isIdea && ideaReference && (
-                            <div className="mb-2 flex min-w-0 items-center gap-2 rounded-md border border-teal-100 bg-teal-50 px-2.5 py-2 text-xs text-teal-900">
+                            <div className="mb-2 flex min-w-0 items-center gap-2 rounded-control border border-teal-100 bg-teal-50 px-2.5 py-2 text-xs text-teal-900">
                                 <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
                                 <span className="min-w-0 flex-1 truncate" title={ideaReference.filename}>
                                     {ideaReference.filename}
@@ -2167,7 +2167,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                     onClick={() => void handleIdeaReferenceDelete()}
                                     disabled={isIdeaReferenceUploading || isLoading}
                                     aria-label={t('idea.reference.remove')}
-                                    className="rounded p-1 text-teal-700 transition hover:bg-teal-100 disabled:opacity-50"
+                                    className="rounded-control p-1 text-teal-700 transition hover:bg-teal-100 disabled:opacity-50"
                                 >
                                     <X className="h-3.5 w-3.5" />
                                 </button>
@@ -2192,7 +2192,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                             onClick={() => ideaReferenceInputRef.current?.click()}
                                             disabled={isLoading || isIdeaReferenceUploading || !sessionId}
                                             aria-label={t(ideaReference ? 'idea.reference.replace' : 'idea.reference.add')}
-                                            className="inline-flex h-control w-[44px] shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="inline-flex h-control w-[44px] shrink-0 items-center justify-center rounded-control text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {isIdeaReferenceUploading
                                                 ? <Spinner className="h-5 w-5" />

@@ -35,7 +35,7 @@ export function IdeaBranchIntro({ sessionId, version, locale, focus, empty }: Id
     const parent = branch.parent ? rows.find((row) => row.id === branch.parent) : undefined;
 
     return (
-        <div className="mx-auto w-full max-w-2xl rounded-lg border border-brand-line bg-brand-soft px-4 py-3 text-left">
+        <div className="mx-auto w-full max-w-2xl rounded-card border border-brand-line bg-brand-soft px-4 py-3 text-left">
             <p className="flex items-center gap-2 text-sm font-semibold text-link">
                 <GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" />
                 <span className="min-w-0 break-words">{branch.label}</span>

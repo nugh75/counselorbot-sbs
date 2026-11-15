@@ -172,13 +172,13 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
             <div className="relative col-span-2 row-start-2 min-w-0 sm:flex-1">
                 {isNeutral ? (
                     <div className="space-y-1">
-                        <div className="flex h-6 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-2xs text-slate-600">1–9</div>
+                        <div className="flex h-6 items-center justify-center rounded-control border border-slate-200 bg-slate-100 text-2xs text-slate-600">1–9</div>
                         {/* La scala grigia non e' un errore: M2 si legge nel contesto,
                             senza fascia di forza o di crescita. */}
                         <p className="text-2xs leading-tight text-slate-500">{t('profile.QPCC.neutralNote')}</p>
                     </div>
                 ) : isZTPI ? (
-                    <div className="flex h-6 rounded-md overflow-hidden border border-slate-200">
+                    <div className="flex h-6 rounded-control overflow-hidden border border-slate-200">
                         {ztpiSegments.map((segment, idx) => (
                             <ZoneBand
                                 key={`${segment.start}-${segment.end}`}
@@ -190,7 +190,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
                         ))}
                     </div>
                 ) : (
-                    <div className="flex h-6 rounded-md overflow-hidden border border-slate-200">
+                    <div className="flex h-6 rounded-control overflow-hidden border border-slate-200">
                         {/* L'esito si ribalta sui fattori invertiti: 1-3 e' una forza. */}
                         <ZoneBand outcome={isInverted ? 'strength' : 'growth'} label="1-3" width="33.333%" divider={false} />
                         <ZoneBand outcome="adequate" label="4-6" width="33.333%" divider />
@@ -311,7 +311,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
 
             {/* Sintesi: il messaggio in 3 secondi prima del dettaglio barre. */}
             {hasSummary && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 space-y-3 animate-fade-in-up">
+                <div className="rounded-card border border-slate-200 bg-slate-50/60 p-3 space-y-3 animate-fade-in-up">
                     <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3">
                         <div className="min-w-0 space-y-1.5">
                             <div className="flex items-center gap-1.5 text-xs font-semibold text-success-ink">

@@ -233,7 +233,7 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
                     <ul className="space-y-2 md:hidden">
                         {students.map(student => (
                             <li key={student.username}>
-                                <details className="rounded-lg border border-line bg-surface">
+                                <details className="rounded-card border border-line bg-surface">
                                     <summary className="flex min-h-control cursor-pointer items-center justify-between gap-4 px-4 text-sm">
                                         <span className="font-semibold text-ink">{student.display_name}</span>
                                         <span className="font-mono text-ink-body">{`${student.done}/${student.total}`}</span>
@@ -263,7 +263,7 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
             <p className="text-xs text-ink-muted">{l('precedenceHint')}</p>
 
             {selectedStudent && selectedStep && selectedCell ? (
-                <div className="space-y-4 rounded-lg border border-brand-line bg-brand-soft/40 p-4" aria-live="polite">
+                <div className="space-y-4 rounded-card border border-brand-line bg-brand-soft/40 p-4" aria-live="polite">
                     <div>
                         <p className="text-sm font-semibold text-ink">
                             {`${selectedStudent.display_name} · ${stepName(selectedStep, selectedIndex)}`}
@@ -295,7 +295,7 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
                                 maxLength={500}
                                 value={reason}
                                 onChange={e => setReason(e.target.value)}
-                                className="mt-1 block w-full rounded border border-line-strong px-2 py-2 text-sm text-ink focus:border-brand focus:outline-none"
+                                className="mt-1 block w-full rounded-control border border-line-strong px-2 py-2 text-sm text-ink focus:border-brand focus:outline-none"
                             />
                         </div>
                     )}

@@ -29,7 +29,7 @@ function Bar({ label, count, total, color }: { label: string; count: number; tot
 function ThemeCard({ theme, total, studentBase }: { theme: ClassTheme; total: number; studentBase: (username: string) => string }) {
     const { lang } = useI18n();
     const l = (key: NoticingTextKey) => noticingText(lang, key);
-    return <li className="space-y-4 rounded-lg border border-line bg-surface p-4">
+    return <li className="space-y-4 rounded-card border border-line bg-surface p-4">
         <p className="flex flex-wrap items-center gap-2">
             <span className={`rounded-full px-2 py-1 text-xs font-semibold ${KIND_BADGE[theme.kind]}`}>{l(theme.kind)}</span>
             <span className="font-semibold text-ink">{theme.title}</span>
@@ -137,7 +137,7 @@ export function ClassNoticingTab({ groupId }: { groupId: number }) {
             </>}
         </Card>
         <section className="space-y-2" aria-label={journeyText(lang, 'sources')}>
-            {(data?.students ?? []).map(student => <details key={student.username} className="rounded-lg border border-line bg-surface p-4"
+            {(data?.students ?? []).map(student => <details key={student.username} className="rounded-card border border-line bg-surface p-4"
                 onToggle={event => { if (event.currentTarget.open) setOpened(previous => new Set(previous).add(student.username)); }}>
                 <summary className="min-h-control cursor-pointer break-words py-2 font-semibold text-link">{student.username} · {journeyText(lang, 'sources')}: {student.source_count}</summary>
                 {opened.has(student.username) && <StudentJourneyNoticing key={`${student.username}:${lang}`} base={studentBase(student.username)} onChanged={changed} refreshVersion={refreshVersion} />}

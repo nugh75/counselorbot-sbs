@@ -296,11 +296,11 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
             <main className="mx-auto max-w-2xl space-y-4 p-4">
                 {back}
                 <h1 className="text-lg font-semibold text-ink">{view.title || label('untitled')}</h1>
-                <p className="rounded-lg bg-surface-sunken p-4 text-sm text-ink-muted">{label('desktopOnly')}</p>
+                <p className="rounded-card bg-surface-sunken p-4 text-sm text-ink-muted">{label('desktopOnly')}</p>
                 {view.has_capture && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={`/api/tavolo/${encodeURIComponent(id)}/capture.png`} alt={view.title || label('title')}
-                        className="w-full rounded-lg border border-line" />
+                        className="w-full rounded-card border border-line" />
                 )}
                 <p className="text-sm leading-relaxed text-ink-body">
                     {view.rendition || content.nodes.map((node) => node.label).join(' · ')}
@@ -315,10 +315,10 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
                 {back}
                 <h1 className="min-w-0 truncate text-sm font-semibold text-ink">
                     {view.title || label('untitled')}
-                    {!view.saved && <span className="ml-2 rounded bg-ochre-50 px-2 py-1 text-xs font-normal text-move">{label('draft')}</span>}
+                    {!view.saved && <span className="ml-2 rounded-control bg-ochre-50 px-2 py-1 text-xs font-normal text-move">{label('draft')}</span>}
                 </h1>
                 <button type="button" disabled={busy} onClick={() => void rename()} aria-label={label('renameTable')} title={label('renameTable')}
-                    className="inline-flex h-control w-control items-center justify-center rounded-lg border border-line text-ink-muted">
+                    className="inline-flex h-control w-control items-center justify-center rounded-control border border-line text-ink-muted">
                     <Pencil className="h-4 w-4" aria-hidden="true" />
                 </button>
                 <Link href="/tavolo" onClick={(event) => { event.preventDefault(); void flush().then(() => onReturn ? onReturn() : router.push('/tavolo')).catch(() => undefined); }} className="mr-auto shrink-0 text-xs text-link hover:underline">
@@ -326,16 +326,16 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
                 </Link>
                 {INTENTS.map((intent) => (
                     <button key={intent} type="button" disabled={busy || !aiAvailable} onClick={() => void ask(intent)}
-                        className="inline-flex min-h-control items-center gap-2 rounded-lg border border-line px-4 text-sm text-ink-body hover:bg-surface-sunken disabled:opacity-40">
+                        className="inline-flex min-h-control items-center gap-2 rounded-control border border-line px-4 text-sm text-ink-body hover:bg-surface-sunken disabled:opacity-40">
                         <Sparkles className="h-4 w-4" aria-hidden="true" />{label(INTENT_LABEL[intent])}
                     </button>
                 ))}
                 <button type="button" disabled={busy || !aiAvailable} onClick={() => setHelpOpen((open) => !open)} aria-expanded={helpOpen}
-                    className="inline-flex min-h-control items-center gap-2 rounded-lg border border-line px-4 text-sm text-ink-body disabled:opacity-40">
+                    className="inline-flex min-h-control items-center gap-2 rounded-control border border-line px-4 text-sm text-ink-body disabled:opacity-40">
                     <MessageCircle className="h-4 w-4" aria-hidden="true" />{label('help')}
                 </button>
                 <button type="button" disabled={busy} onClick={() => void save()}
-                    className="inline-flex min-h-control items-center gap-2 rounded-lg bg-brand px-4 text-sm text-ink-on-brand hover:bg-brand-hover disabled:opacity-40">
+                    className="inline-flex min-h-control items-center gap-2 rounded-control bg-brand px-4 text-sm text-ink-on-brand hover:bg-brand-hover disabled:opacity-40">
                     <Save className="h-4 w-4" aria-hidden="true" />{label('save')}
                 </button>
             </header>
@@ -352,15 +352,15 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
                 <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ochre-200 bg-ochre-50 px-4 py-2 text-sm text-ink-body">
                     <span className="mr-auto">{label('proposals')} · {waiting.length}</span>
                     <button type="button" onClick={() => { setReviewOpen((open) => !open); setFocusIds(graph.nodes.filter((node) => node.state === 'pending').map((node) => node.id)); }}
-                        aria-expanded={reviewOpen} className="inline-flex min-h-control items-center gap-2 rounded-lg border border-line-strong px-4">
+                        aria-expanded={reviewOpen} className="inline-flex min-h-control items-center gap-2 rounded-control border border-line-strong px-4">
                         <Eye className="h-4 w-4" aria-hidden="true" />{label(reviewOpen ? 'hideProposals' : 'viewProposals')}
                     </button>
                     <button type="button" disabled={busy} onClick={() => void settle(waiting, 'accept')}
-                        className="inline-flex min-h-control items-center gap-2 rounded-lg bg-brand px-4 text-sm text-ink-on-brand hover:bg-brand-hover disabled:opacity-40">
+                        className="inline-flex min-h-control items-center gap-2 rounded-control bg-brand px-4 text-sm text-ink-on-brand hover:bg-brand-hover disabled:opacity-40">
                         <Check className="h-4 w-4" aria-hidden="true" />{label('acceptAll')}
                     </button>
                     <button type="button" disabled={busy} onClick={() => void settle(waiting, 'reject')}
-                        className="inline-flex min-h-control items-center gap-2 rounded-lg border border-line-strong px-4 text-sm text-ink-body hover:bg-surface disabled:opacity-40">
+                        className="inline-flex min-h-control items-center gap-2 rounded-control border border-line-strong px-4 text-sm text-ink-body hover:bg-surface disabled:opacity-40">
                         <X className="h-4 w-4" aria-hidden="true" />{label('rejectAll')}
                     </button>
                 </div>

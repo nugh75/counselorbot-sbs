@@ -66,7 +66,7 @@ export function StudentJourneyNoticing({ base, onChanged, refreshVersion }: { ba
         } catch { if (!abort.signal.aborted) setFailed(true); }
         finally { if (!abort.signal.aborted) setBusy(false); }
     };
-    return <div className="space-y-4 rounded-lg border border-line bg-surface p-4">
+    return <div className="space-y-4 rounded-card border border-line bg-surface p-4">
         {resource.loading && !data && <p role="status">{t('common.loading')}</p>}
         {resource.failed && !data && <Button variant="secondary" onClick={() => void resource.reload()}>{t('setup.retry')}</Button>}
         {data && <>

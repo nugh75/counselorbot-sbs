@@ -76,14 +76,14 @@ export function ChatActionsPopover({ label, children, icon, disabled, onOpenChan
     return <div className="shrink-0">
             <Tooltip content={label}>
                 <button ref={trigger} id={`${id}-trigger`} type="button" popoverTarget={id} aria-label={label} aria-expanded={open} aria-controls={id} disabled={disabled}
-                    className="inline-flex h-control w-[44px] items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 disabled:opacity-50">
+                    className="inline-flex h-control w-[44px] items-center justify-center rounded-control text-slate-500 hover:bg-slate-100 disabled:opacity-50">
                     {icon ?? <MoreVertical className="h-5 w-5" aria-hidden="true" />}
                 </button>
             </Tooltip>
             <div ref={attachPanel} id={id} popover="auto" role="group" aria-label={label}
                 onToggle={event => { const next = event.newState === 'open'; setOpen(next); if (!next) setSub(null); onOpenChange?.(next); }}
                 onKeyDown={event => { if (event.key === 'Escape' && sub) { event.preventDefault(); event.stopPropagation(); back(); } }}
-                className="chat-options fixed m-0 overflow-visible rounded-lg border border-slate-200 bg-white text-slate-700 shadow-pop"
+                className="chat-options fixed m-0 overflow-visible rounded-card border border-slate-200 bg-white text-slate-700 shadow-pop"
                 style={{ inset: 'auto', visibility: open ? 'visible' : 'hidden' }}>
                 <TooltipPortalContainer.Provider value={tooltipContainer}>
                     <ChatMenuLevel.Provider value={{ active: sub, open: setSub, back, container: subContainer }}>

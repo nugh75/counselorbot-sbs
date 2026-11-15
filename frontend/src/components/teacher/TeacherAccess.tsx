@@ -14,8 +14,8 @@ export function TeacherForbidden() {
     const l = (key: Parameters<typeof teacherAreaText>[1]) => teacherAreaText(lang, key);
     return (
         <div className="flex min-h-[60vh] items-center justify-center p-4">
-            <div className="w-full max-w-md space-y-4 rounded-lg border border-line bg-surface p-8 text-center shadow-card">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-danger-soft">
+            <div className="w-full max-w-md space-y-4 rounded-card border border-line bg-surface p-8 text-center shadow-card">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-card bg-danger-soft">
                     <ShieldAlert className="h-6 w-6 text-danger" />
                 </div>
                 <p className="text-sm text-ink-muted">{l('forbidden')}</p>
