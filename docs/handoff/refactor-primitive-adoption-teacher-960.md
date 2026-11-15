@@ -3,7 +3,9 @@
 Aggiornato: 2026-11-16
 
 ## Stato
-In corso — codice e test pronti, manca commit/PR finale. Nessun dev server, nessun Docker.
+PR aperta: https://github.com/nugh75/counselorbot-sbs/pull/965 (7 commit, base `main`,
+nessun merge da `origin/main` perché era già allineato). Nessun dev server, nessun Docker.
+Task del Diario chiuso (fatto).
 
 ## Fatto
 - Docente: `TeacherDevicesPanel` (StatusBadge, Input), `InstitutesPanel` (Card flat,
@@ -33,8 +35,8 @@ In corso — codice e test pronti, manca commit/PR finale. Nessun dev server, ne
 - Nessun controllo visivo: niente dev server né browser.
 
 ## Prossimi passi
-- Commit atomici, push, PR verso `main` (milestone "Flat visual consistency (Nov 2026)").
-- `make guidance-check` prima della PR.
+- Attesa merge da app del proprietario; i build desktop restano pending ma non sono
+  gating, eslint e documentation sono verdi.
 
 ## Blocchi e rischi
 - `AdministrationPlansPanel` tiene `uppercase` e hex solo nel foglio HTML stampabile
