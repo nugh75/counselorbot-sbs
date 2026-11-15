@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 // Le primitive sono il modello della migrazione grafica (audit UI §9,
@@ -83,4 +83,16 @@ test('the pilot zone (practice gym, goals) uses the primitives, not hand-written
     }
     assert.match(read('../goals/GoalDialog'), /<Dialog title=\{title\}/);
     assert.match(read('../goals/GoalCatalogDialog'), /<Dialog title=\{l\('catalog'\)\}/);
+});
+
+// Due soli raggi (#932): il controllo e il contenitore. `rounded-full` resta per
+// avatar e puntini; l'admin e DiagramBlock non sono ancora migrati.
+test('only rounded-control and rounded-card outside the admin area', () => {
+    const root = new URL('../', import.meta.url);
+    const stale = /(?<![\w-])rounded(?:-(?:md|lg|xl|2xl))?(?![\w-])/;
+    const legacy = [...readdirSync(root, { recursive: true, encoding: 'utf-8' })]
+        .filter(name => name.endsWith('.tsx'))
+        .filter(name => !name.startsWith('components/admin/') && name !== 'components/ui/DiagramBlock.tsx')
+        .filter(name => stale.test(readFileSync(new URL(name, root), 'utf-8')));
+    assert.deepEqual(legacy, []);
 });

@@ -55,7 +55,7 @@ test('goal catalog and teacher orientation pages are flat: no boxed rows or nest
     const orientation = read('app/docente/orientamento/page.tsx');
     assert.doesNotMatch(orientation, /rounded-card border border-line(?! bg-surface p-2)/);
     assert.doesNotMatch(orientation, /<form className="[^"]*rounded-card/);
-    assert.match(orientation, /role="alert" className="space-y-2 rounded-card border border-warning-line/);
+    assert.match(orientation, /<Callout variant="warning">/);
 });
 
 test('student plans are flat: flat Card, step rows without boxes, FlowStepper colours and a status line (#918)', () => {
