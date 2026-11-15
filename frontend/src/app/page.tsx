@@ -863,7 +863,7 @@ function HomeFlow() {
     if (identity === undefined) {
         return (
             <div className="page-narrow">
-                <Card className="p-8 text-center text-sm text-ink-muted">
+                <Card variant="flat" className="text-center text-sm text-ink-muted">
                     {t('home.auth.loading')}
                 </Card>
             </div>
@@ -875,7 +875,7 @@ function HomeFlow() {
     if (!ready || preparingInstrument) {
         return (
             <div className="page-narrow">
-                <Card className="p-8 text-center text-sm text-ink-muted">
+                <Card variant="flat" className="text-center text-sm text-ink-muted">
                     {t('home.auth.loading')}
                 </Card>
             </div>
@@ -1005,7 +1005,7 @@ function HomeFlow() {
                                     scheda Impostazioni, quindi mantengono la scelta compatta.
                                     La logica è la stessa chooseExperience del flusso standard. */
                                 <div className="max-w-md mx-auto">
-                                    <Card className="p-6 text-center space-y-4">
+                                    <Card variant="flat" className="text-center space-y-4">
                                         <div>
                                             <h3 className="text-base font-semibold text-ink">{t('experience.choose.title')}</h3>
                                             <p className="text-sm text-ink-muted mt-1">{t('experience.choose.sub')}</p>
@@ -1083,7 +1083,7 @@ function HomeFlow() {
                     {/* Step: Completed */}
                     {step === 'completed' && (
                         <div className="max-w-xl mx-auto">
-                            <Card className="p-8 text-center space-y-6">
+                            <Card variant="flat" className="text-center space-y-6">
                                 <div>
                                     <h2 className="text-2xl font-semibold text-ink">{t('completed.title')}</h2>
                                     <p className="text-ink-muted mt-2">
@@ -1111,7 +1111,7 @@ function HomeFlow() {
                     {/* Step: Farewell — commiato, feedback opzionale e ritorno all'inizio del percorso. */}
                     {step === 'farewell' && (
                         <div className="max-w-xl mx-auto">
-                            <Card className="p-8 text-center space-y-6">
+                            <Card variant="flat" className="text-center space-y-6">
                                 <div>
                                     <h2 className="text-2xl font-semibold text-ink">{t('farewell.title')}</h2>
                                     <p className="text-ink-muted mt-4">
