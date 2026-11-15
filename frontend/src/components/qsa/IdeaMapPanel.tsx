@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Check, History, Loader2, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
+import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 import { useDarkMode } from '@/lib/use-dark-mode';
@@ -173,7 +174,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                         className={cn(
                             'rounded-md p-1.5',
                             editing
-                                ? 'bg-teal-700 text-white hover:bg-teal-800'
+                                ? 'bg-brand text-ink-on-brand hover:bg-brand-hover'
                                 : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700',
                         )}
                     >
@@ -229,7 +230,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                             closeEditor();
                             setStage(index === stages.length - 1 ? null : stages[index].revision_id);
                         }}
-                        className="h-1.5 w-32 cursor-pointer accent-teal-700"
+                        className="h-1.5 w-32 cursor-pointer accent-brand"
                     />
                     <span>
                         {(stage === null
@@ -261,7 +262,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                                 onChange={(event) => setDraftLabel(event.target.value)}
                                 maxLength={80}
                                 autoFocus
-                                className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                             />
                             <div className="flex flex-wrap items-center gap-2">
                                 <label htmlFor="idea-node-role" className="text-xs font-medium text-slate-600">
@@ -277,23 +278,24 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                                         <option key={role} value={role}>{t(MISSING_KEY[role])}</option>
                                     ))}
                                 </select>
-                                <button
+                                <Button
                                     type="button"
+                                    size="sm"
                                     onClick={() => void saveNode()}
                                     disabled={!draftLabel.trim() || busy}
-                                    className="inline-flex items-center gap-1 rounded-md bg-teal-700 px-2 py-1 text-xs font-medium text-white hover:bg-teal-800 disabled:opacity-50"
+                                    className="gap-1 px-2"
                                 >
                                     {busy
                                         ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                                         : <Check className="h-3.5 w-3.5" aria-hidden="true" />}
                                     {t('idea.map.save')}
-                                </button>
+                                </Button>
                                 {selected && (
                                     <button
                                         type="button"
                                         onClick={() => void removeNode()}
                                         disabled={busy}
-                                        className="inline-flex items-center gap-1 rounded-md border border-rose-200 px-2 py-1 text-xs text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                                        className="inline-flex items-center gap-1 rounded-md border border-danger-line px-2 py-1 text-xs text-danger-ink hover:bg-danger-soft disabled:opacity-50"
                                     >
                                         <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                                         {t('idea.map.deleteNode')}
@@ -308,7 +310,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                                     {t('idea.branches.cancel')}
                                 </button>
                             </div>
-                            {failed && <p className="text-xs text-rose-700">{t('idea.map.editError')}</p>}
+                            {failed && <p className="text-xs text-danger-ink">{t('idea.map.editError')}</p>}
                         </div>
                     ) : (
                         <div className="flex flex-wrap items-center gap-2">
@@ -316,7 +318,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                             <button
                                 type="button"
                                 onClick={() => { setAdding(true); setDraftLabel(''); setDraftRole('assumption'); }}
-                                className="ml-auto inline-flex items-center gap-1 rounded-md border border-dashed border-teal-300 px-2 py-1 text-xs font-medium text-teal-800 hover:bg-teal-50"
+                                className="ml-auto inline-flex items-center gap-1 rounded-md border border-dashed border-brand-line px-2 py-1 text-xs font-medium text-link hover:bg-brand-soft"
                             >
                                 <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                                 {t('idea.map.addNode')}
@@ -344,7 +346,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                 </div>
             )}
             {state?.complete && (
-                <p className="border-t border-slate-200 px-3 py-2 text-xs text-teal-700">
+                <p className="border-t border-slate-200 px-3 py-2 text-xs text-link">
                     {t('idea.map.readyToClose')}
                 </p>
             )}
