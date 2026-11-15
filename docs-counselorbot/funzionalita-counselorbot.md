@@ -1959,6 +1959,17 @@ si avvia sempre da `/?start=<id>` (scelta tra studente di prova e dati propri). 
 di ruolo restano solo sui badge. L’elenco delle classi attive non è più nella home:
 si trova in «Le mie classi».
 
+**Filetti di sezione più netti e ritorni come testo (#952, novembre 2026).** Il filetto
+sotto i titoli di sezione delle pagine usa il token della linea forte (`border-line-strong`):
+in tema chiaro passa dal grigio più tenue a quello leggibile, in tema scuro al valore
+scuro già previsto dai token, senza cambiare spaziature né testi. Restano invariati i
+filetti delle righe degli elenchi, delle tabelle e dei form. I ritorni in cima alle pagine
+non sono più un pulsante: sono un link di testo con la sola freccia nel percorso guidato
+e freccia più etichetta nelle pagine autonome, con la stessa lettura della prima voce del
+breadcrumb dell’Area docenti; lo stato disabilitato è solo attenuato (opacità 50%), senza
+bordo, fondo, pillola o cerchio. Destinazioni, etichette e comportamento non cambiano;
+navbar e pulsanti arrotondati restano come sono.
+
 **Colori di ruolo (#834).** Tre tinte morbide distinguono le aree, solo su card e
 badge (pagina e header restano neutri, sia in tema chiaro sia scuro): petrol per lo
 studente (invariato), crema per l’Area docenti, celestino per gli studenti di prova.
