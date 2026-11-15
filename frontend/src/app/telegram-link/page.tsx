@@ -4,6 +4,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
+import { ButtonLink } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
 import Image from 'next/image';
 
 // Local copy is complete for every supported interface language.
@@ -98,23 +100,20 @@ function TelegramLinkInner() {
                 sizes="96px"
                 className="h-24 w-24 object-contain"
             />
-            <h1 className="text-2xl font-semibold text-ink">{texts.title}</h1>
+            <PageHeader title={texts.title} />
             {error && <p className="text-sm text-danger">{texts.error}</p>}
             {!error && !code && <p className="text-sm text-ink-muted">{texts.loading}</p>}
             {code && (
                 <>
                     <p className="text-sm text-ink-muted">{texts.ready}</p>
                     {deepLink && (
-                        <a
-                            href={deepLink}
-                            className="inline-flex min-h-control items-center rounded-control bg-brand px-6 py-2 text-base font-semibold text-ink-on-brand hover:bg-brand-hover"
-                        >
+                        <ButtonLink href={deepLink} variant="primary" size="lg">
                             {texts.back}
-                        </a>
+                        </ButtonLink>
                     )}
-                    <div className="rounded-control border border-line-strong bg-surface p-4 text-sm text-ink">
+                    <div className="space-y-1 text-sm text-ink">
                         <p>{texts.manual}</p>
-                        <p className="mt-1 font-mono text-lg font-semibold">/link {code}</p>
+                        <p className="font-mono text-lg font-semibold">/link {code}</p>
                     </div>
                     <p className="text-xs text-ink-muted">{texts.expires}</p>
                 </>

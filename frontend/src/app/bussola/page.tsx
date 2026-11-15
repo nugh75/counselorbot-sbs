@@ -272,21 +272,19 @@ export default function BussolaPage() {
 
     return (
         <div className="page-wide space-y-8">
-            <Card as="section" className="sm:p-8">
-                <div className="max-w-3xl space-y-2">
-                    <p className="text-xs font-semibold text-move">{t('orientation.eyebrow')}</p>
-                    <PageHeader
-                        title={t('orientation.title')}
-                        subtitle={t('orientation.subtitle')}
-                        icon={<Image src="/images/platform/bussola.png" alt="" width={48} height={48} priority className="h-12 w-12 shrink-0 object-contain" />}
-                    />
-                </div>
-            </Card>
+            <header className="max-w-3xl space-y-2">
+                <p className="text-xs font-semibold text-move">{t('orientation.eyebrow')}</p>
+                <PageHeader
+                    title={t('orientation.title')}
+                    subtitle={t('orientation.subtitle')}
+                    icon={<Image src="/images/platform/bussola.png" alt="" width={48} height={48} priority className="h-12 w-12 shrink-0 object-contain" />}
+                />
+            </header>
 
             {loading ? (
                 <SkeletonEntryList rows={3} className="py-6" />
             ) : atFork ? (
-                <Card as="section" className="border-brand-line sm:p-8">
+                <Card as="section" variant="flat" className="border-brand-line">
                     <div className="max-w-2xl">
                         <h2 className="text-xl font-semibold text-ink">{t('orientation.fork.title')}</h2>
                         <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t('orientation.fork.body')}</p>
@@ -298,7 +296,7 @@ export default function BussolaPage() {
                     </div>
                 </Card>
             ) : !session ? (
-                <Card as="section" className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <Card as="section" variant="flat" className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4"><Compass className="h-6 w-6 text-link" /><p className="text-sm leading-relaxed text-ink-muted">{t('orientation.subtitle')}</p></div>
                     <div className="flex flex-wrap gap-2">
                         {latestSessionId && <Button type="button" variant="secondary" onClick={() => void openSession(latestSessionId)}>{t('orientation.landing.latest')}</Button>}
@@ -411,7 +409,7 @@ export default function BussolaPage() {
                         </div>
                     )}
                     {session.status === 'completed' && (
-                        <Card as="section" className="space-y-4 border-success-line">
+                        <Card as="section" variant="flat" className="space-y-4 border-success-line">
                             <div className="flex gap-4"><Sparkles className="h-6 w-6 shrink-0 text-success" /><div><h2 className="text-xl font-semibold text-ink">{t('orientation.completed.title')}</h2><p className="mt-1 text-sm leading-relaxed text-ink-muted">{t('orientation.completed.body')}</p></div></div>
                             {/* Concludere la Bussola non e' un vicolo cieco: la home con il
                                 catalogo c'e' sempre. `?next=` lo mette solo il cancello quando
@@ -447,7 +445,7 @@ function RecommendationSection({ session, onPick }: { session: OrientationSessio
             <p className="mt-1 text-sm leading-relaxed text-ink-muted">{t('orientation.recommendations.subtitle')}</p>
             <div className="mt-4 grid gap-4 lg:grid-cols-3">
                 {recommendations.map((item, index) => (
-                    <Card as="article" key={item.id} className={`flex flex-col ${index === 0 ? 'border-brand-line' : ''}`}>
+                    <Card as="article" variant="flat" key={item.id} className={`flex flex-col ${index === 0 ? 'border-brand-line' : ''}`}>
                         <div className="flex items-center justify-between gap-4"><span className="text-xs font-semibold text-move">{String(index + 1).padStart(2, '0')}</span>{index === 0 && <Compass className="h-5 w-5 text-link" />}</div>
                         <h3 className="mt-2 text-lg font-semibold text-ink">{toolName(item.id, t)}</h3>
                         <p className="mt-1 text-sm leading-relaxed text-ink-muted">{toolDescription(item.id, t)}</p>

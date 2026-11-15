@@ -485,7 +485,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
 
         return (
             <div className="max-w-5xl mx-auto space-y-6">
-                <Card as="section" className="sm:p-8 space-y-4">
+                <Card as="section" variant="flat" className="space-y-4">
                     <div className="flex items-center gap-4">
                         <CheckCircle2 className="w-10 h-10 shrink-0 text-success" />
                         <div>
@@ -534,7 +534,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
         <div className="max-w-5xl mx-auto space-y-6">
             <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('admin.run.back')} />
 
-            <Card as="section" className="space-y-4">
+            <Card as="section" variant="flat" className="space-y-4">
                 <StatusBadge tone="warning">{t('admin.run.testBadge')}</StatusBadge>
                 <h1 className="text-2xl font-semibold text-ink">
                     {rules.instrument.name} ({rules.instrument.code})
@@ -544,7 +544,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                 <p className="border-t border-line pt-4 text-sm text-ink-body">{t('admin.run.privacyNote')}</p>
             </Card>
 
-            <Card as="section" className="space-y-4">
+            <Card as="section" variant="flat" className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
                         <h2 className="text-lg font-semibold text-ink">

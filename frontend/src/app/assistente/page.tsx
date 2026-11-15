@@ -23,7 +23,7 @@ import { ChatComposerInput, ChatMessageActions, ChatRow, ChatSendButton, ChatSug
 import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
 import { addMessageDiagrams } from '@/lib/diagram-request';
 import { Tooltip } from '@/components/ui/Tooltip';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ChatMarkdown } from '@/components/ui/ChatMarkdown';
@@ -412,10 +412,10 @@ export default function AssistentePage() {
                         <h1 className="text-2xl font-semibold text-ink">{t('assistant.authTitle')}</h1>
                         <p className="mt-2 text-sm text-ink-muted">{t('assistant.authBody')}</p>
                     </div>
-                    <a href={loginHref('/assistente')} className="inline-flex min-h-control items-center gap-2 rounded-control bg-brand px-6 py-2 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover">
+                    <ButtonLink href={loginHref('/assistente')} variant="primary" size="lg">
                         <LogIn className="h-4 w-4" />
                         {t('assistant.authLogin')}
-                    </a>
+                    </ButtonLink>
                 </Card>
             </div>
         );
@@ -568,7 +568,7 @@ export default function AssistentePage() {
                         />
                     </div>
                     <ChatGPTUsageBadge />
-                    <ChatTranscript ref={scrollRef} announcement={liveAnnouncement} aria-label={t('assistant.title')} className="min-h-0 flex-1 overflow-y-auto rounded-card border border-line bg-surface p-4 shadow-card space-y-4">
+                    <ChatTranscript ref={scrollRef} announcement={liveAnnouncement} aria-label={t('assistant.title')} className="min-h-0 flex-1 overflow-y-auto rounded-card border border-line bg-surface p-4 space-y-4">
                         {messages.length === 0 && (
                             <div className="flex items-start gap-4 text-ink-muted">
                                 <p className="text-sm leading-relaxed pt-1">{welcomeText}</p>
@@ -647,7 +647,7 @@ export default function AssistentePage() {
                         ~40px dal fondo finestra e -mb-12 sul wrapper annulla il
                         padding-bottom del main, senza lasciare banda morta. */}
                     <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:-mb-12 max-lg:bg-background max-lg:px-4 max-lg:pb-4 max-lg:pt-1">
-                        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer rounded-card border border-line bg-surface p-4 shadow-card">
+                        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="assistente-composer space-y-2 p-4">
                             {!loading && !voiceMode && <ChatSuggestions label={t('orientation.suggested.label')} items={topicQuestions} composerId="assistente-composer" onInsert={setInput} />}
                             <div className="flex items-end gap-2">
                                 <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <div className="divide-y divide-line">
@@ -688,7 +688,7 @@ export default function AssistentePage() {
 
                 {/* Pannello anteprima documento */}
                 {preview && (
-                    <aside className="flex min-h-[22rem] rounded-card border border-line bg-surface shadow-card max-h-[min(70svh,34rem)] w-full flex-col lg:h-full lg:max-h-none lg:min-h-0 lg:w-[460px] lg:shrink-0">
+                    <aside className="flex min-h-[22rem] rounded-card border border-line bg-surface max-h-[min(70svh,34rem)] w-full flex-col lg:h-full lg:max-h-none lg:min-h-0 lg:w-[460px] lg:shrink-0">
                         <div className="flex items-center gap-2 px-4 py-2 border-b border-line">
                             <FileText className="w-4 h-4 text-link shrink-0" />
                             <span className="text-sm font-semibold text-ink truncate flex-1" title={preview.title}>

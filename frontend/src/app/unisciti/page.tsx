@@ -6,6 +6,7 @@ import { Check, Copy, KeyRound, LogIn, ShieldCheck, UserRoundCheck } from 'lucid
 import { Button, Spinner } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
+import { Field, Input } from '@/components/ui/Field';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
@@ -163,12 +164,12 @@ export default function JoinPage() {
                             </div>
                             <div className="flex flex-col gap-2 sm:flex-row">
                                 <label htmlFor="paired-personal-code" className="sr-only">{l('personalCodeLabel')}</label>
-                                <input
+                                <Input
                                     id="paired-personal-code"
                                     readOnly
                                     value={formatPersonalCode(result.personalCode)}
                                     onFocus={event => event.target.select()}
-                                    className="min-h-control min-w-0 flex-1 rounded-control border border-brand-line bg-brand-soft px-4 text-center font-mono text-xl font-semibold text-link"
+                                    className="min-w-0 flex-1 border-brand-line bg-brand-soft text-center font-mono text-xl font-semibold text-link"
                                 />
                                 <Button type="button" variant="secondary" onClick={() => void copyCode()}>
                                     {copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
@@ -215,9 +216,8 @@ export default function JoinPage() {
                         <h2 id="pair-heading" className="text-lg font-semibold text-ink">{l('pairTitle')}</h2>
                         <p className="mt-1 text-sm text-ink-muted">{l('pairHint')}</p>
                     </div>
-                    <label htmlFor="class-pairing-key" className="block text-sm font-semibold text-ink-body">
-                        {l('classKeyLabel')}
-                        <input
+                    <Field label={l('classKeyLabel')}>
+                        <Input
                             id="class-pairing-key"
                             required
                             maxLength={128}
@@ -227,13 +227,12 @@ export default function JoinPage() {
                             autoComplete="off"
                             spellCheck={false}
                             aria-describedby={keyFromLink ? 'class-key-origin' : undefined}
-                            className="mt-1 min-h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 font-mono text-sm text-ink"
+                            className="font-mono"
                         />
-                    </label>
+                    </Field>
                     {keyFromLink && <p id="class-key-origin" className="text-xs text-ink-muted">{l('keyFromLink')}</p>}
-                    <label htmlFor="pair-pseudonym" className="block text-sm font-semibold text-ink-body">
-                        {l('pseudonymLabel')}
-                        <input
+                    <Field label={l('pseudonymLabel')}>
+                        <Input
                             id="pair-pseudonym"
                             required
                             maxLength={40}
@@ -241,21 +240,20 @@ export default function JoinPage() {
                             onChange={event => setPseudonym(event.target.value)}
                             placeholder={l('pseudonymPlaceholder')}
                             autoComplete="off"
-                            className="mt-1 min-h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-base text-ink"
+                            className="text-base"
                         />
-                    </label>
-                    <label htmlFor="pair-device-label" className="block text-sm font-semibold text-ink-body">
-                        {l('deviceLabel')}
-                        <input
+                    </Field>
+                    <Field label={l('deviceLabel')}>
+                        <Input
                             id="pair-device-label"
                             maxLength={80}
                             value={deviceLabel}
                             onChange={event => setDeviceLabel(event.target.value)}
                             placeholder={l('devicePlaceholder')}
                             autoComplete="off"
-                            className="mt-1 min-h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-base text-ink"
+                            className="text-base"
                         />
-                    </label>
+                    </Field>
                     <Button type="submit" variant="accent" disabled={busy !== null || !classKey.trim() || !pseudonym.trim()}>
                         {busy === 'pair' ? <Spinner className="h-4 w-4" aria-hidden /> : <LogIn className="h-4 w-4" aria-hidden />}
                         {l(busy === 'pair' ? 'pairBusy' : 'pairSubmit')}
@@ -269,9 +267,8 @@ export default function JoinPage() {
                         <h2 id="recover-heading" className="text-lg font-semibold text-ink">{l('recoverTitle')}</h2>
                         <p className="mt-1 text-sm text-ink-muted">{l('recoverHint')}</p>
                     </div>
-                    <label htmlFor="recovery-personal-code" className="block text-sm font-semibold text-ink-body">
-                        {l('personalCodeLabel')}
-                        <input
+                    <Field label={l('personalCodeLabel')}>
+                        <Input
                             id="recovery-personal-code"
                             required
                             maxLength={64}
@@ -281,9 +278,9 @@ export default function JoinPage() {
                             autoComplete="off"
                             autoCapitalize="characters"
                             spellCheck={false}
-                            className="mt-1 min-h-control w-full rounded-control border border-line-strong bg-surface px-4 py-2 font-mono text-lg text-ink"
+                            className="font-mono text-lg"
                         />
-                    </label>
+                    </Field>
                     <Button type="submit" variant="secondary" disabled={busy !== null || !personalCode.trim()}>
                         {busy === 'recover' && <Spinner className="h-4 w-4" aria-hidden />}
                         {l(busy === 'recover' ? 'recoverBusy' : 'recoverSubmit')}

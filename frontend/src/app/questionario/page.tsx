@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -10,7 +10,9 @@ import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
+import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { AGE_BANDS } from '@/lib/age-bands';
 import { surveyCountries } from '@/lib/survey-countries';
 
@@ -264,15 +266,11 @@ export default function QuestionarioPage() {
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="rounded-card border border-line bg-surface p-8 text-center space-y-6 shadow-card"
+                    className="space-y-6"
                 >
-                    <div className="w-20 h-20 mx-auto rounded-full bg-success-soft flex items-center justify-center">
-                        <CheckCircle className="w-10 h-10 text-success" />
-                    </div>
-                    <h2 className="text-2xl font-semibold text-ink">{t('survey.thanks.title')}</h2>
-                    <p className="text-ink-muted">
+                    <Callout variant="success" title={t('survey.thanks.title')}>
                         {t('survey.thanks.body')}
-                    </p>
+                    </Callout>
                     <BackButton
                         variant="labelled"
                         href="/"
@@ -306,8 +304,8 @@ export default function QuestionarioPage() {
 
                     {/* Passo 1 — Dati di base */}
                     {wizardStep === 0 && (
-                    <Card className="space-y-6">
-                        <h2 className="text-xl font-semibold text-ink">{t('survey.basic.title')}</h2>
+                    <Card variant="flat" className="space-y-6">
+                        <h2 className="text-lg font-semibold text-ink">{t('survey.basic.title')}</h2>
                         <p className="text-sm text-ink-muted">{t('survey.basic.sub')}</p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -357,17 +355,14 @@ export default function QuestionarioPage() {
                                     options={PROVENIENZA_MAP[formData.paese] || PROVENIENZA_MAP.Altro}
                                     onChange={(v) => handleDemographicChange('provenienza', v)}
                                 />
-                                <div>
-                                    <label className="block text-sm font-semibold text-ink-body mb-1">
-                                        {t('survey.field.area')}
-                                    </label>
-                                    <input
+                                <Field label={t('survey.field.area')}>
+                                    <Input
                                         type="text"
                                         value={formData.area_studio}
                                         readOnly
-                                        className="w-full min-h-control px-4 py-2 bg-surface-raised border border-line rounded-control text-ink-muted"
+                                        className="bg-surface-raised text-ink-muted"
                                     />
-                                </div>
+                                </Field>
                                 </>
                             )}
                         </div>
@@ -376,9 +371,9 @@ export default function QuestionarioPage() {
 
                     {/* Passo 2 — Strumenti */}
                     {wizardStep === 1 && (
-                    <Card className="space-y-4">
+                    <Card variant="flat" className="space-y-4">
                         <div>
-                            <h2 className="text-xl font-semibold text-ink">{t('survey.tools.title')}</h2>
+                            <h2 className="text-lg font-semibold text-ink">{t('survey.tools.title')}</h2>
                             <p className="text-sm text-ink-muted mt-1">{t('survey.tools.sub')}</p>
                         </div>
 
@@ -423,8 +418,8 @@ export default function QuestionarioPage() {
 
                     {/* Passo 3 — Valutazione quantitativa */}
                     {wizardStep === 2 && (
-                    <Card className="space-y-6">
-                        <h2 className="text-xl font-semibold text-ink">{t('survey.quant.title')}</h2>
+                    <Card variant="flat" className="space-y-6">
+                        <h2 className="text-lg font-semibold text-ink">{t('survey.quant.title')}</h2>
                         <p className="text-sm text-ink-muted">
                             {t('survey.quant.sub')}
                         </p>
@@ -445,24 +440,25 @@ export default function QuestionarioPage() {
                     {/* Passo 4 — Feedback aperto + consenso */}
                     {wizardStep === 3 && (
                     <>
-                    <Card className="space-y-4">
+                    <Card variant="flat" className="space-y-4">
                         <div>
-                            <h2 className="text-xl font-semibold text-ink">{t('survey.open.title')}</h2>
+                            <h2 className="text-lg font-semibold text-ink">{t('survey.open.title')}</h2>
                             <p className="text-sm text-ink-muted mt-1">{t('survey.open.sub')}</p>
                         </div>
-                        <textarea
+                        <Textarea
                             value={formData.feedback_aperto}
                             onChange={(e) => setFormData({ ...formData, feedback_aperto: e.target.value })}
                             placeholder={t('survey.open.placeholder')}
                             rows={5}
                             maxLength={2000}
-                            className="w-full px-4 py-2 bg-surface border border-line-strong rounded-control text-ink focus:ring-2 focus:ring-focus focus:border-brand resize-y"
+                            className="resize-y"
+                            aria-label={t('survey.open.title')}
                         />
                         <p className="text-xs text-ink-muted">{t('survey.open.note')}</p>
                     </Card>
 
                     {/* Consenso */}
-                    <Card className="space-y-4">
+                    <Card variant="flat" className="space-y-4">
                         <label className="flex items-start gap-4 cursor-pointer">
                             <input
                                 type="checkbox"
@@ -530,19 +526,17 @@ function SelectField({
     optionLabel?: (value: string) => string;
 }) {
     return (
-        <div>
-            <label className="block text-sm font-semibold text-ink-body mb-1">{label}</label>
-            <select
+        <Field label={label}>
+            <Select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full min-h-control px-4 py-2 bg-surface border border-line-strong rounded-control text-ink focus:ring-2 focus:ring-focus focus:border-brand"
             >
                 <option value="">{placeholder}</option>
                 {options.map((opt) => (
                     <option key={opt} value={opt}>{optionLabel ? optionLabel(opt) : opt}</option>
                 ))}
-            </select>
-        </div>
+            </Select>
+        </Field>
     );
 }
 
