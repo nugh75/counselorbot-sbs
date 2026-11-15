@@ -5,6 +5,7 @@
 import { BarChart3 } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { Card } from '@/components/ui/Card';
 import { ZTPIFactorCode, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
 import { factorTranslationKey, getQuestionnaire } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
@@ -99,7 +100,7 @@ export function ProfileScoresPanel({ questionnaireType, groups, hidden }: {
     const invertedSet = useMemo(() => new Set(questionnaire?.invertedFactors || []), [questionnaire]);
     if (!groups.some(group => group.entries.length > 0)) return null;
     return (
-        <div hidden={hidden} className="glass-panel overflow-hidden">
+        <Card variant="flat" hidden={hidden} className="overflow-hidden py-0">
             <div id="guided-scores-panel" className="space-y-3 p-4">
                 <div className="hidden items-center gap-2 text-sm font-semibold text-slate-700 lg:flex">
                     <BarChart3 className="w-4 h-4" />
@@ -125,6 +126,6 @@ export function ProfileScoresPanel({ questionnaireType, groups, hidden }: {
                     </div>
                 ))}
             </div>
-        </div>
+        </Card>
     );
 }

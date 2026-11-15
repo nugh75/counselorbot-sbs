@@ -382,15 +382,6 @@
 /* Long-form messages keep the reading size through Markdown's small styles. */
 .chat-message :is(p, li, .prose) { font-size: inherit; line-height: inherit; }
 
-/* Card: radius unico (rounded-xl) cotto nell'utility -> nessun rounded-* ai call-site. */
-@utility glass-panel {
-  @apply bg-white border border-slate-200 rounded-xl shadow-sm transition-colors duration-150;
-}
-
-@utility glass-panel-hover {
-  @apply hover:border-indigo-200 hover:shadow-sm;
-}
-
 /* Scala tipografica -1: base 15px. Tutto il testo text-* (rem) si rimpicciolisce
    in proporzione → interfaccia più densa. */
 html {
@@ -769,8 +760,6 @@ h1.text-3xl {
 .dark .bg-sky-50 { background-color: #082f49; }
 .dark .bg-yellow-50 { background-color: #3a2e06; }
 
-/* Card: glass-panel cuoce bg-white/border via @apply (non come classe) → override esplicito. */
-.dark .glass-panel { background-color: #1e293b; border-color: #334155; }
 
 /* Testo accentato: schiarito per restare leggibile sugli sfondi scuri. */
 .dark .text-indigo-900,

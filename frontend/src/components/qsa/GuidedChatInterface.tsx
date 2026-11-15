@@ -57,6 +57,8 @@ import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { EventMilestoneCard } from '@/components/qsa/EventMilestoneCard';
 import { isEventInstrument, type EventBookletDraft } from '@/lib/event-booklet';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
+import { Card } from '@/components/ui/Card';
 import {
     deleteIdeaReference,
     fetchIdeaNextStep,
@@ -1649,7 +1651,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
     if (!pathStarted) return <div className="mx-auto w-full max-w-md space-y-4 p-4">
         {onBack && <button type="button" onClick={onBack} className="min-h-11 text-sm text-slate-600">{t('nav.back')}</button>}
-        <fieldset className="glass-panel space-y-3 p-5">
+        <Card variant="flat"><fieldset className="space-y-3">
             <legend className="px-1 font-semibold text-slate-800">{chatPreferenceLabel(activeLocale, questionnaireType === 'QSA' ? 'choose' : 'choosePath')}</legend>
             {/* Solo gli strumenti con versione essenziale mostrano la scelta; il QSA mantiene la domanda sul profilo. */}
             {(['complete', 'essential'] as const).map(path => <label key={path} className="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 p-3">
@@ -1660,7 +1662,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             {/* Il formato è scelto nella pagina Impostazioni del flusso: qui
                 resta solo il bivio del percorso, per non chiederlo due volte. */}
             <Button onClick={() => { setInitialLoading(true); setPathStarted(true); }} className="w-full">{chatPreferenceLabel(activeLocale, 'start')}</Button>
-        </fieldset>
+        </fieldset></Card>
     </div>;
 
     // Loading state
@@ -1677,10 +1679,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
     if (pathLoadFailed) return <div className="mx-auto w-full max-w-md space-y-4 p-4">
         {onBack && <button type="button" onClick={onBack} className="min-h-11 text-sm text-slate-600">{t('nav.back')}</button>}
-        <div role="alert" className="glass-panel space-y-3 p-5">
-            <p className="text-sm text-slate-700">{chatLayoutLabel(activeLocale, 'pathLoadError')}</p>
-            <Button onClick={() => setPathLoadAttempt(attempt => attempt + 1)}>{chatLayoutLabel(activeLocale, 'retry')}</Button>
-        </div>
+        <Callout variant="danger">
+            <p>{chatLayoutLabel(activeLocale, 'pathLoadError')}</p>
+            <Button className="mt-2" onClick={() => setPathLoadAttempt(attempt => attempt + 1)}>{chatLayoutLabel(activeLocale, 'retry')}</Button>
+        </Callout>
     </div>;
 
     const currentStepIndex = phases.indexOf(currentPhase) + 1;
@@ -1855,7 +1857,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 )}
                 {/* Phase Progress — per Idea non esiste una sequenza da mostrare:
                     il passo successivo dipende da cosa manca alla mappa. */}
-                <div hidden={isIdea || (mobilePanel !== null && mobilePanel !== 'path')} className="glass-panel overflow-hidden">
+                <Card variant="flat" hidden={isIdea || (mobilePanel !== null && mobilePanel !== 'path')} className="overflow-hidden py-0">
                     <div id="guided-path-panel" className="space-y-3 p-4">
                         <div className="hidden items-center justify-between lg:flex">
                             <h3 className="text-sm font-semibold text-slate-700">{t('guided.path')}</h3>
@@ -1895,7 +1897,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     </div>
 
                     </div>
-                </div>
+                </Card>
 
                 <div hidden={mobilePanel !== null && mobilePanel !== 'resources'}><RecommendationsPanel
                     expanded={mobilePanel === 'resources'}
