@@ -325,7 +325,7 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
                     <h3 className="text-base font-semibold text-ink">{texts.students}</h3>
                     <StatusBadge>{students.length}</StatusBadge>
                 </div>
-                <div role="group" aria-label={texts.viewModeLabel} className="inline-flex rounded-lg border border-line bg-surface-raised p-1">
+                <div role="group" aria-label={texts.viewModeLabel} className="inline-flex rounded-card border border-line bg-surface-raised p-1">
                     <button
                         type="button"
                         aria-pressed={viewMode === 'matrix'}
@@ -353,7 +353,7 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
 
             {viewMode === 'matrix' ? (
                 matrix.instruments.length === 0 ? (
-                    <div className="rounded-lg border border-line bg-surface p-4 text-center">
+                    <div className="rounded-card border border-line bg-surface p-4 text-center">
                         <p className="text-sm text-ink-muted">{texts.noResultsYet}</p>
                         <Button variant="secondary"
                             type="button"
@@ -366,7 +366,7 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+                        <div className="overflow-x-auto rounded-card border border-line bg-surface">
                             <table className="w-full border-collapse text-left text-sm" aria-label={texts.matrixView}>
                                 <thead>
                                     <tr className="border-b border-line bg-surface-sunken/75">
@@ -398,7 +398,7 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
                                                 <div className="flex items-center gap-2">
                                                     <span>{row.username}</span>
                                                     {row.telegram_linked && (
-                                                        <span title={texts.telegram} className="inline-flex items-center rounded bg-info-soft px-1 py-1 text-2xs font-semibold text-info-ink">
+                                                        <span title={texts.telegram} className="inline-flex items-center rounded-control bg-info-soft px-1 py-1 text-2xs font-semibold text-info-ink">
                                                             {'TG'}
                                                         </span>
                                                     )}
@@ -431,7 +431,7 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
                                                                 <Check className="h-3.5 w-3.5 shrink-0 text-success" aria-hidden />
                                                                 <span>{cell.latest.submitted_at ? new Date(cell.latest.submitted_at).toLocaleDateString(lang) : ''}</span>
                                                                 {cell.results.length > 1 && (
-                                                                    <span className="rounded bg-success-line px-1 text-2xs font-semibold text-success-ink" title={`${cell.results.length} ${texts.tests}`}>
+                                                                    <span className="rounded-control bg-success-line px-1 text-2xs font-semibold text-success-ink" title={`${cell.results.length} ${texts.tests}`}>
                                                                         {`×${cell.results.length}`}
                                                                     </span>
                                                                 )}
@@ -502,7 +502,7 @@ export function PlanStudentsPanel({ base, withNotes = false, goalGroupId }: { ba
                                         </button>
                                     </div>
                                 </div>
-                                <div className="rounded-lg border border-line bg-surface p-4">
+                                <div className="rounded-card border border-line bg-surface p-4">
                                     <StudentResultItem base={base} username={selectedCell.username} result={selectedCell.result} />
                                 </div>
                             </div>

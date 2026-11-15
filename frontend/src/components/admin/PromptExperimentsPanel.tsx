@@ -189,7 +189,7 @@ function StateBadge({ value, map, kind }: { value: string; map: Record<string, s
             interrupted: 'bg-warning-soft text-warning-ink',
         };
     return (
-        <span className={cn('inline-flex items-center rounded px-2 py-1 text-2xs font-semibold', TONES[value] ?? 'bg-surface-raised text-ink-muted')}>
+        <span className={cn('inline-flex items-center rounded-control px-2 py-1 text-2xs font-semibold', TONES[value] ?? 'bg-surface-raised text-ink-muted')}>
             {map[value] ?? value}
         </span>
     );
@@ -552,7 +552,7 @@ export function PromptExperimentsPanel() {
             ...f, tested: f.tested.includes(id) ? f.tested.filter((t) => t !== id) : [...f.tested, id],
         }));
         return (
-            <div className="space-y-4 rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+            <div className="space-y-4 rounded-card border border-brand-line bg-brand-soft/40 p-4">
                 <h3 className="text-sm font-semibold text-ink">{C.formTitle}</h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <L label={C.experimentTitle} className="lg:col-span-2">
@@ -650,7 +650,7 @@ export function PromptExperimentsPanel() {
 
     function renderList() {
         return (
-            <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+            <div className="overflow-x-auto rounded-card border border-line bg-surface">
                 <table className="w-full text-left text-sm">
                     <thead className="border-b border-line text-xs text-ink-muted">
                         <tr>
@@ -690,7 +690,7 @@ export function PromptExperimentsPanel() {
     function renderCases(exp: Experiment) {
         if (exp.cases.length === 0) {
             return (
-                <div className="space-y-2 rounded-lg border border-line bg-surface p-4">
+                <div className="space-y-2 rounded-card border border-line bg-surface p-4">
                     <h4 className="text-sm font-semibold text-ink">{C.casesTitle}</h4>
                     <Callout variant="info">{C.needPrepare}</Callout>
                 </div>
@@ -699,7 +699,7 @@ export function PromptExperimentsPanel() {
         const draft = casesDraft ?? exp.cases;
         const frozen = exp.runs.some((r) => r.kind === 'evaluate' || r.state === 'queued' || r.state === 'running') || Boolean(exp.decision);
         return (
-            <div className="space-y-4 rounded-lg border border-line bg-surface p-4">
+            <div className="space-y-4 rounded-card border border-line bg-surface p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                         <h4 className="text-sm font-semibold text-ink">{C.casesTitle} ({draft.length})</h4>
@@ -749,7 +749,7 @@ export function PromptExperimentsPanel() {
                                     <div className="mt-2 space-y-2">
                                         {c.history.map((h, i) => (
                                             <div key={i} className="rounded-control bg-surface-sunken p-2">
-                                                <span className={cn('rounded px-2 py-1 text-2xs font-semibold', h.role === 'user' ? 'bg-info-soft text-info-ink' : 'bg-brand-soft text-link')}>
+                                                <span className={cn('rounded-control px-2 py-1 text-2xs font-semibold', h.role === 'user' ? 'bg-info-soft text-info-ink' : 'bg-brand-soft text-link')}>
                                                     {h.role === 'user' ? C.historyUser : C.historyAssistant}
                                                 </span>
                                                 <p className="mt-1 whitespace-pre-wrap break-words text-xs text-ink-body">{h.content}</p>
@@ -808,7 +808,7 @@ export function PromptExperimentsPanel() {
 
     function renderCandidates(exp: Experiment) {
         return (
-            <div className="space-y-4 rounded-lg border border-line bg-surface p-4">
+            <div className="space-y-4 rounded-card border border-line bg-surface p-4">
                 <div>
                     <h4 className="text-sm font-semibold text-ink">{C.candidatesTitle} ({exp.candidates.length})</h4>
                     <p className="text-2xs text-ink-muted">{C.candidatesHint}</p>
@@ -831,7 +831,7 @@ export function PromptExperimentsPanel() {
         const s = exp.summary!;
         const selected = exp.candidates.find((c) => c.id === s.selected_candidate_id);
         return (
-            <div className="space-y-4 rounded-lg border border-line bg-surface p-4">
+            <div className="space-y-4 rounded-card border border-line bg-surface p-4">
                 <h4 className="text-sm font-semibold text-ink">{C.summaryTitle}</h4>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted">
                     <StateBadge value={s.eligibility} map={C.eligibility} kind="state" />
@@ -897,7 +897,7 @@ export function PromptExperimentsPanel() {
             return a.repetition - b.repetition;
         });
         return (
-            <div className="space-y-4 rounded-lg border border-line bg-surface p-4">
+            <div className="space-y-4 rounded-card border border-line bg-surface p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <h4 className="text-sm font-semibold text-ink">{C.resultsTitle} ({exp.results.length})</h4>
                     <L label={C.runsTitle}><select className={inputCls} value={resultRunId} onChange={(e) => setResultRunId(e.target.value)}>
@@ -931,7 +931,7 @@ export function PromptExperimentsPanel() {
                                         {sortResults(rs).map((r) => (
                                             <div key={r.id} className="space-y-1 rounded-control bg-surface-sunken p-2">
                                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-2xs text-ink-muted">
-                                                    <span className={cn('rounded px-2 py-1 font-semibold', r.variant_id === 'baseline' ? 'bg-line text-ink-body' : 'bg-brand-soft text-link')}>{variantLabel(exp, r.variant_id)}</span>
+                                                    <span className={cn('rounded-control px-2 py-1 font-semibold', r.variant_id === 'baseline' ? 'bg-line text-ink-body' : 'bg-brand-soft text-link')}>{variantLabel(exp, r.variant_id)}</span>
                                                     <span>{presetLabel(r.preset_id)}</span>
                                                     {r.repetition > 0 && <span>#{r.repetition}</span>}
                                                     {r.duration_s != null && <span>{new Intl.NumberFormat(lang, { style: 'unit', unit: 'second', unitDisplay: 'narrow', maximumFractionDigits: 1 }).format(r.duration_s)}</span>}
@@ -957,7 +957,7 @@ export function PromptExperimentsPanel() {
 
     function renderRuns(exp: Experiment) {
         return (
-            <div className="space-y-4 rounded-lg border border-line bg-surface p-4">
+            <div className="space-y-4 rounded-card border border-line bg-surface p-4">
                 <h4 className="text-sm font-semibold text-ink">{C.runsTitle} ({exp.runs.length})</h4>
                 {exp.runs.length === 0 ? (
                     <p className="text-sm text-ink-muted">{C.runsEmpty}</p>
@@ -983,13 +983,13 @@ export function PromptExperimentsPanel() {
                                             <td className="px-2 py-2">
                                                 <span className="flex flex-wrap items-center gap-2">
                                                     <StateBadge value={run.state} map={C.runStates} kind="run" />
-                                                    {run.cancel_requested && <span className="rounded bg-warning-soft px-2 py-1 text-2xs font-semibold text-warning-ink">{C.cancelRequested}</span>}
+                                                    {run.cancel_requested && <span className="rounded-control bg-warning-soft px-2 py-1 text-2xs font-semibold text-warning-ink">{C.cancelRequested}</span>}
                                                 </span>
                                             </td>
                                             <td className="px-2 py-2">
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-mono text-xs text-ink-body">{run.calls}/{exp.payload.max_calls}</span>
-                                                    <div className="h-1.5 w-16 overflow-hidden rounded bg-surface-raised">
+                                                    <div className="h-1.5 w-16 overflow-hidden rounded-control bg-surface-raised">
                                                         <div className="h-full bg-brand" style={{ width: `${pct}%` }} />
                                                     </div>
                                                 </div>
@@ -1010,7 +1010,7 @@ export function PromptExperimentsPanel() {
 
     function renderDecision(exp: Experiment, acceptDisabled: boolean, acceptHint: string) {
         return (
-            <div className="space-y-4 rounded-lg border border-line bg-surface p-4">
+            <div className="space-y-4 rounded-card border border-line bg-surface p-4">
                 <h4 className="text-sm font-semibold text-ink">{C.decisionTitle}</h4>
                 {exp.decision ? (
                     <>
@@ -1056,7 +1056,7 @@ export function PromptExperimentsPanel() {
     function renderDetail() {
         if (!detail) {
             return (
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     {detailError ? <Callout variant="danger" title={C.error}>{detailError}</Callout> : <p className="text-sm text-ink-muted">{C.loading}</p>}
                 </div>
             );
@@ -1079,7 +1079,7 @@ export function PromptExperimentsPanel() {
                     : !exp.manifest_hash ? C.needHash : '';
         return (
             <div className="min-w-0 space-y-4">
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="min-w-0">
                             <BackButton variant="labelled" onClick={back} label={C.back} />
@@ -1129,7 +1129,7 @@ export function PromptExperimentsPanel() {
                             <div className="text-2xs font-semibold text-ink-muted">{C.tested}</div>
                             <div className="mt-1 flex flex-wrap gap-1">
                                 {testedPresets.map((p) => (
-                                    <span key={p.id} className="rounded bg-brand-soft px-2 py-1 font-mono text-2xs text-link">{p.name}</span>
+                                    <span key={p.id} className="rounded-control bg-brand-soft px-2 py-1 font-mono text-2xs text-link">{p.name}</span>
                                 ))}
                                 {testedPresets.length === 0 && <span className="text-sm text-ink-muted">—</span>}
                             </div>
@@ -1147,7 +1147,7 @@ export function PromptExperimentsPanel() {
                     </Callout>
                 )}
 
-                <details className="rounded-lg border border-line bg-surface p-4 text-xs text-ink-muted">
+                <details className="rounded-card border border-line bg-surface p-4 text-xs text-ink-muted">
                     <summary className="cursor-pointer">{contextCopy.technical}</summary>
                     <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify({ manifest_hash: exp.manifest_hash, limits: exp.snapshot?.limits, model_digests: exp.snapshot?.model_digests }, null, 2)}</pre>
                 </details>
@@ -1163,7 +1163,7 @@ export function PromptExperimentsPanel() {
 
     return (
         <div className="min-w-0 space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-4 rounded-lg border border-line bg-surface p-4">
+            <div className="flex flex-wrap items-end justify-between gap-4 rounded-card border border-line bg-surface p-4">
                 <div>
                     <h2 className="text-lg font-semibold text-ink">{C.title}</h2>
                     <p className="mt-2 max-w-3xl text-sm text-ink-body">{contextCopy.workflow}</p>

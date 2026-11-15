@@ -226,7 +226,7 @@ export function CertifiedStrategiesPanel() {
         });
 
     const renderForm = () => (
-        <div className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+        <div className="rounded-card border border-brand-line bg-brand-soft/40 p-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.certified.slug')}
                     <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="focus-c6" />
@@ -327,7 +327,7 @@ export function CertifiedStrategiesPanel() {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-4 rounded-lg border border-line bg-surface p-4">
+            <div className="flex flex-wrap items-end justify-between gap-4 rounded-card border border-line bg-surface p-4">
                 <div>
                     <h2 className="text-lg font-semibold text-ink">{t('admin.certified.title')}</h2>
                     <p className="text-sm text-ink-muted">{t('admin.certified.subtitle')}</p>
@@ -341,7 +341,7 @@ export function CertifiedStrategiesPanel() {
 
             {editingId === 'new' && renderForm()}
 
-            <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+            <div className="overflow-x-auto rounded-card border border-line bg-surface">
                 <table className="w-full text-left text-sm">
                     <thead className="border-b border-line text-xs text-ink-muted">
                         <tr>
@@ -370,17 +370,17 @@ export function CertifiedStrategiesPanel() {
                                         {(s.factor_codes || []).join(s.match_mode === 'all' ? ' + ' : ', ') || '-'}
                                     </td>
                                     <td className="px-4 py-2">
-                                        <span className={`rounded px-2 py-1 text-xs font-semibold ${s.status === 'certified' ? 'bg-success-soft text-success' : 'bg-surface-raised text-ink-muted'}`}>
+                                        <span className={`rounded-control px-2 py-1 text-xs font-semibold ${s.status === 'certified' ? 'bg-success-soft text-success' : 'bg-surface-raised text-ink-muted'}`}>
                                             {s.status === 'certified' ? t('admin.certified.certified') : t('admin.certified.draft')}
                                         </span>
                                     </td>
                                     <td className="px-4 py-2">{s.is_active ? <Check className="h-4 w-4 text-success" /> : <X className="h-4 w-4 text-ink-muted" />}</td>
                                     <td className="px-4 py-2">
                                         <div className="flex justify-end gap-1">
-                                            <button type="button" onClick={() => startEdit(s)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-ink-muted hover:bg-surface-raised hover:text-ink"><Pencil className="h-4 w-4" /></button>
+                                            <button type="button" onClick={() => startEdit(s)} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-ink-muted hover:bg-surface-raised hover:text-ink"><Pencil className="h-4 w-4" /></button>
                                             {confirmDelete === s.id
                                                 ? <ConfirmInline question={t('admin.certified.confirmDelete')} onConfirm={() => { setConfirmDelete(null); void remove(s.id); }} onCancel={() => setConfirmDelete(null)} />
-                                                : <button type="button" onClick={() => setConfirmDelete(s.id)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-danger hover:bg-danger-soft"><Trash2 className="h-4 w-4" /></button>}
+                                                : <button type="button" onClick={() => setConfirmDelete(s.id)} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-danger hover:bg-danger-soft"><Trash2 className="h-4 w-4" /></button>}
                                         </div>
                                     </td>
                                 </tr>

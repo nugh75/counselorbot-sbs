@@ -183,7 +183,7 @@ export function AssistantAdminPanel({ onOpenTab }: Props) {
                 )}
                 <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {statCards.map((card) => (
-                        <div key={card.label} className="rounded-lg border border-line bg-surface p-4">
+                        <div key={card.label} className="rounded-card border border-line bg-surface p-4">
                             <p className="text-xs font-semibold text-ink-muted">{card.label}</p>
                             <p className="mt-2 text-2xl font-semibold text-ink">{card.value}</p>
                         </div>
@@ -192,7 +192,7 @@ export function AssistantAdminPanel({ onOpenTab }: Props) {
             </section>
 
             <section className="grid gap-4 xl:grid-cols-2">
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     <div className="flex items-center justify-between gap-4">
                         <h3 className="flex items-center gap-2 font-semibold text-ink">
                             <Settings className="h-4 w-4 text-brand" />
@@ -222,7 +222,7 @@ export function AssistantAdminPanel({ onOpenTab }: Props) {
                     </dl>
                 </div>
 
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     <div className="flex items-center justify-between gap-4">
                         <h3 className="flex items-center gap-2 font-semibold text-ink">
                             <FolderOpen className="h-4 w-4 text-brand" />
@@ -282,7 +282,7 @@ export function AssistantAdminPanel({ onOpenTab }: Props) {
             </section>
 
             <section className="grid gap-4 xl:grid-cols-3">
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     <h3 className="flex items-center gap-2 font-semibold text-ink">
                         <MessageCircleQuestion className="h-4 w-4 text-brand" />
                         {t('admin.assistant.questions.title')}
@@ -298,7 +298,7 @@ export function AssistantAdminPanel({ onOpenTab }: Props) {
                         {t('admin.assistant.questions.open')}
                     </button>
                 </div>
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     <h3 className="flex items-center gap-2 font-semibold text-ink">
                         <Users className="h-4 w-4 text-brand" />
                         {t('admin.assistant.counselors.title')}
@@ -312,7 +312,7 @@ export function AssistantAdminPanel({ onOpenTab }: Props) {
                         {t('admin.assistant.counselors.open')}
                     </button>
                 </div>
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     <h3 className="flex items-center gap-2 font-semibold text-ink">
                         <Gauge className="h-4 w-4 text-brand" />
                         {t('admin.assistant.monitoring.title')}

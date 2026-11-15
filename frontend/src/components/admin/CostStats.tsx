@@ -194,7 +194,7 @@ export function CostStats() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-wrap items-end justify-between gap-4 rounded-lg border border-line bg-surface p-4">
+            <div className="flex flex-wrap items-end justify-between gap-4 rounded-card border border-line bg-surface p-4">
                 <div>
                     <h2 className="text-lg font-semibold text-ink">{t('admin.costs.title')}</h2>
                     <p className="text-sm text-ink-muted">{t('admin.costs.subtitle')}</p>
@@ -220,7 +220,7 @@ export function CostStats() {
             </div>
 
             {!data || (data.total_turns === 0) ? (
-                <div className="rounded-lg border border-dashed border-line-strong bg-surface p-10 text-center text-sm text-ink-muted">
+                <div className="rounded-card border border-dashed border-line-strong bg-surface p-10 text-center text-sm text-ink-muted">
                     {t('admin.costs.noData')}
                 </div>
             ) : (
@@ -228,7 +228,7 @@ export function CostStats() {
                     {/* KPI cards */}
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {kpis.map((kpi) => (
-                            <div key={kpi.label} className="rounded-lg border border-line bg-surface p-4">
+                            <div key={kpi.label} className="rounded-card border border-line bg-surface p-4">
                                 <div className="flex items-center gap-2 text-xs font-semibold text-ink-muted">
                                     <kpi.icon className="h-4 w-4" />
                                     {kpi.label}
@@ -245,7 +245,7 @@ export function CostStats() {
                             { key: 'week', label: t('admin.costs.thisWeek'), rr: data.periods.week },
                             { key: 'year', label: t('admin.costs.thisYear'), rr: data.periods.year },
                         ] as const).map(({ key, label, rr }) => (
-                            <div key={key} className="rounded-lg border border-line bg-surface p-4">
+                            <div key={key} className="rounded-card border border-line bg-surface p-4">
                                 <div className="flex items-center gap-2 text-xs font-semibold text-ink-muted">
                                     <CalendarDays className="h-4 w-4" />
                                     {label} <span className="font-mono text-ink-muted">{rr.period}</span>
@@ -261,7 +261,7 @@ export function CostStats() {
                     </div>
 
                     {/* Costi per periodo: giorno / settimana / mese / anno */}
-                    <div className="rounded-lg border border-line bg-surface p-4">
+                    <div className="rounded-card border border-line bg-surface p-4">
                         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                             <h3 className="text-sm font-semibold text-ink-body">{t('admin.costs.byPeriod')}</h3>
                             <div className="inline-flex rounded-control border border-line p-1">
@@ -270,7 +270,7 @@ export function CostStats() {
                                         key={g}
                                         type="button"
                                         onClick={() => setGranularity(g)}
-                                        className={`min-h-control rounded px-4 py-1 text-xs font-semibold ${granularity === g ? 'bg-info text-ink-on-brand' : 'text-ink-muted hover:bg-surface-sunken'}`}
+                                        className={`min-h-control rounded-control px-4 py-1 text-xs font-semibold ${granularity === g ? 'bg-info text-ink-on-brand' : 'text-ink-muted hover:bg-surface-sunken'}`}
                                     >
                                         {t(`admin.costs.gran.${g}`)}
                                     </button>
@@ -294,8 +294,8 @@ export function CostStats() {
                                             <td className="px-4 py-2 text-right text-ink-muted">{fmtInt(row.turns)}</td>
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="h-3 w-32 overflow-hidden rounded bg-surface-raised">
-                                                        <div className="h-full rounded bg-info" style={{ width: maxPeriodCost > 0 ? `${Math.max(2, (row.cost / maxPeriodCost) * 100)}%` : '0%' }} />
+                                                    <div className="h-3 w-32 overflow-hidden rounded-control bg-surface-raised">
+                                                        <div className="h-full rounded-control bg-info" style={{ width: maxPeriodCost > 0 ? `${Math.max(2, (row.cost / maxPeriodCost) * 100)}%` : '0%' }} />
                                                     </div>
                                                     <span className="font-semibold text-ink-body">{fmtCost(row.cost)}</span>
                                                 </div>
@@ -312,11 +312,11 @@ export function CostStats() {
                     </div>
 
                     {/* Budget mensile: a superamento si passa al ripiego configurato */}
-                    <div className={`rounded-lg border p-4 ${data.budget_exceeded ? 'border-danger-line bg-danger-soft/50' : 'border-line bg-surface'}`}>
+                    <div className={`rounded-card border p-4 ${data.budget_exceeded ? 'border-danger-line bg-danger-soft/50' : 'border-line bg-surface'}`}>
                         <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink-body">
                             <Wallet className="h-4 w-4" />{t('admin.costs.budget.title')}
                             {data.monthly_budget_usd > 0 && (
-                                <span className={`ml-2 rounded px-2 py-1 text-2xs font-semibold ${data.budget_exceeded ? 'bg-danger-line text-danger-ink' : 'bg-success-soft text-success'}`}>
+                                <span className={`ml-2 rounded-control px-2 py-1 text-2xs font-semibold ${data.budget_exceeded ? 'bg-danger-line text-danger-ink' : 'bg-success-soft text-success'}`}>
                                     {data.budget_exceeded ? t('admin.costs.budget.exceeded') : t('admin.costs.budget.ok')}
                                 </span>
                             )}
@@ -344,8 +344,8 @@ export function CostStats() {
                         </div>
                         {data.monthly_budget_usd > 0 && (
                             <div className="mt-4">
-                                <div className="h-3 w-full overflow-hidden rounded bg-surface-raised">
-                                    <div className={`h-full rounded ${data.budget_exceeded ? 'bg-danger' : 'bg-success'}`} style={{ width: `${Math.min(100, data.budget_used_pct)}%` }} />
+                                <div className="h-3 w-full overflow-hidden rounded-control bg-surface-raised">
+                                    <div className={`h-full rounded-control ${data.budget_exceeded ? 'bg-danger' : 'bg-success'}`} style={{ width: `${Math.min(100, data.budget_used_pct)}%` }} />
                                 </div>
                                 <p className="mt-2 flex items-center gap-1 text-xs text-ink-muted">
                                     {data.budget_used_pct.toFixed(1)}%
@@ -365,7 +365,7 @@ export function CostStats() {
 
                     {/* Benchmark vs Production + proiezione articolata */}
                     <div className="grid gap-4 lg:grid-cols-2">
-                        <div className="rounded-lg border border-line bg-surface p-4">
+                        <div className="rounded-card border border-line bg-surface p-4">
                             <h3 className="mb-4 text-sm font-semibold text-ink-body">{t('admin.costs.split')}</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 {(['production', 'benchmark'] as const).map((key) => (
@@ -377,7 +377,7 @@ export function CostStats() {
                                 ))}
                             </div>
                         </div>
-                        <div className="rounded-lg border border-line bg-surface p-4">
+                        <div className="rounded-card border border-line bg-surface p-4">
                             <h3 className="mb-4 text-sm font-semibold text-ink-body">{t('admin.costs.projection')}</h3>
                             <div className="flex flex-wrap items-end gap-4">
                                 <label className="flex flex-col text-xs font-semibold text-ink-muted">
@@ -407,7 +407,7 @@ export function CostStats() {
 
 
                     {/* By model / provider */}
-                    <div className="rounded-lg border border-line bg-surface p-4">
+                    <div className="rounded-card border border-line bg-surface p-4">
                         <h3 className="mb-4 text-sm font-semibold text-ink-body">{t('admin.costs.byModel')}</h3>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
@@ -440,7 +440,7 @@ export function CostStats() {
                     </div>
 
                     {/* By user */}
-                    <div className="rounded-lg border border-line bg-surface p-4">
+                    <div className="rounded-card border border-line bg-surface p-4">
                         <h3 className="mb-4 text-sm font-semibold text-ink-body">{t('admin.costs.byUser')}</h3>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
@@ -469,14 +469,14 @@ export function CostStats() {
                     </div>
 
                     {/* Daily trend */}
-                    <div className="rounded-lg border border-line bg-surface p-4">
+                    <div className="rounded-card border border-line bg-surface p-4">
                         <h3 className="mb-4 text-sm font-semibold text-ink-body">{t('admin.costs.byDay')}</h3>
                         <div className="space-y-1">
                             {data.by_day.map((row) => (
                                 <div key={row.date} className="flex items-center gap-4 text-xs">
                                     <span className="w-24 shrink-0 text-ink-muted">{row.date}</span>
-                                    <div className="h-4 flex-1 overflow-hidden rounded bg-surface-raised">
-                                        <div className="h-full rounded bg-info" style={{ width: maxDayCost > 0 ? `${Math.max(2, (row.cost / maxDayCost) * 100)}%` : '0%' }} />
+                                    <div className="h-4 flex-1 overflow-hidden rounded-control bg-surface-raised">
+                                        <div className="h-full rounded-control bg-info" style={{ width: maxDayCost > 0 ? `${Math.max(2, (row.cost / maxDayCost) * 100)}%` : '0%' }} />
                                     </div>
                                     <span className="w-24 shrink-0 text-right font-semibold text-ink-body">{fmtCost(row.cost)}</span>
                                     <span className="w-16 shrink-0 text-right text-ink-muted">{fmtInt(row.turns)}</span>

@@ -80,7 +80,7 @@ function HighlightedEditor({ value, onChange, ranges, describedBy, label, onCare
     return <div className="relative h-80 overflow-hidden rounded-control border border-line bg-surface focus-within:ring-2 focus-within:ring-brand">
         <div ref={backdrop} aria-hidden="true" className={cn(EDITOR_TEXT, 'absolute inset-0 overflow-hidden text-transparent')}>
             {segments.map((segment, index) => segment.numbers.length
-                ? <mark key={index} className="rounded-sm bg-danger-soft text-transparent underline decoration-danger decoration-wavy decoration-2 underline-offset-4">{segment.text}</mark>
+                ? <mark key={index} className="rounded-control bg-danger-soft text-transparent underline decoration-danger decoration-wavy decoration-2 underline-offset-4">{segment.text}</mark>
                 : <span key={index}>{segment.text}</span>)}
             {'\n'}
         </div>

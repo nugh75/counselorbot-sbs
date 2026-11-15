@@ -152,13 +152,13 @@ function ConfigTab() {
                 const localizedDesc = t(descI18nKey);
                 const description = localizedDesc === descI18nKey ? item.description : localizedDesc;
                 return (
-                    <div key={item.key} className="rounded-lg border border-line bg-surface p-4">
+                    <div key={item.key} className="rounded-card border border-line bg-surface p-4">
                         <div className="flex items-start justify-between gap-4">
                             <div>
                                 <p className="font-semibold text-ink text-sm">
                                     {item.key}
                                     {item.key.includes('__') && (
-                                        <span className="ml-2 rounded bg-brand-soft px-2 py-1 text-2xs font-semibold text-brand">
+                                        <span className="ml-2 rounded-control bg-brand-soft px-2 py-1 text-2xs font-semibold text-brand">
                                             {t('admin.config.editingLang')}: {lang.toUpperCase()}
                                         </span>
                                     )}
@@ -241,7 +241,7 @@ function DocumentsTab() {
             {docs.length === 0 && <p className="text-sm text-ink-muted">{t('admin.pqbl.docs.empty')}</p>}
 
             {docs.map(doc => (
-                <div key={doc.document_id} className="rounded-lg border border-line bg-surface">
+                <div key={doc.document_id} className="rounded-card border border-line bg-surface">
                     <div className="flex items-center gap-4 p-4">
                         <button onClick={() => setExpanded(e => (e === doc.document_id ? null : doc.document_id))} className="min-h-control text-ink-muted hover:text-ink-muted">
                             {expanded === doc.document_id ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -447,7 +447,7 @@ function AnalyticsTab() {
                 {data.by_skill.length === 0 ? (
                     <p className="text-sm text-ink-muted">{t('admin.pqbl.analytics.noAttempts')}</p>
                 ) : (
-                    <div className="overflow-x-auto rounded-lg border border-line">
+                    <div className="overflow-x-auto rounded-card border border-line">
                         <table className="w-full text-sm">
                             <thead className="bg-surface-sunken text-ink-muted text-xs">
                                 <tr>
@@ -477,7 +477,7 @@ function AnalyticsTab() {
 
 function StatCard({ label, value, highlight }: { label: string; value: number | string; highlight?: boolean }) {
     return (
-        <div className={cn('rounded-lg border p-4', highlight ? 'border-brand-line bg-brand-soft' : 'border-line bg-surface')}>
+        <div className={cn('rounded-card border p-4', highlight ? 'border-brand-line bg-brand-soft' : 'border-line bg-surface')}>
             <p className="text-xs text-ink-muted">{label}</p>
             <p className={cn('text-xl font-semibold mt-1', highlight ? 'text-link' : 'text-ink')}>{value}</p>
         </div>

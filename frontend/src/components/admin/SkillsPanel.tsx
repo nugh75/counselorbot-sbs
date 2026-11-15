@@ -107,7 +107,7 @@ export function SkillsPanel() {
                         return <tr key={skill.id} className="border-b align-top">
                             <td className="py-2 pr-4">
                                 <span className="font-semibold">{skill.name}</span>
-                                {skill.builtin && <span className="ml-2 inline-flex items-center gap-1 rounded bg-surface-raised px-2 py-1 text-2xs text-ink-muted"
+                                {skill.builtin && <span className="ml-2 inline-flex items-center gap-1 rounded-control bg-surface-raised px-2 py-1 text-2xs text-ink-muted"
                                     title={t('admin.skills.builtinHint')}>
                                     <Lock aria-hidden className="h-3 w-3" />{t('admin.skills.builtin')}
                                 </span>}

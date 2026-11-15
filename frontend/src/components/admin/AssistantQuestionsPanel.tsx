@@ -194,7 +194,7 @@ export function AssistantQuestionsPanel() {
     const topicLabel = (topic: string) => t(`admin.aq.topic.${topic}`) || topic;
 
     const renderForm = () => (
-        <section className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+        <section className="rounded-card border border-brand-line bg-brand-soft/40 p-4">
             <div className="grid gap-4 md:grid-cols-3">
                 <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.aq.form.topic')}
@@ -251,7 +251,7 @@ export function AssistantQuestionsPanel() {
 
     return (
         <div className="space-y-4">
-            <section className="rounded-lg border border-line bg-surface p-4">
+            <section className="rounded-card border border-line bg-surface p-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <h2 className="text-lg font-semibold text-ink">{t('admin.aq.title')}</h2>
@@ -285,7 +285,7 @@ export function AssistantQuestionsPanel() {
                 </div>
             </section>
 
-            <section className="rounded-lg border border-line bg-surface p-4">
+            <section className="rounded-card border border-line bg-surface p-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                     <label className="text-xs font-semibold text-ink-muted">
                         {t('admin.aq.filter.topic')}
@@ -309,12 +309,12 @@ export function AssistantQuestionsPanel() {
 
             <div className="space-y-2">
                 {loading && (
-                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted">
+                    <section className="rounded-card border border-line bg-surface p-8 text-center text-ink-muted">
                         {t('admin.aq.loading')}
                     </section>
                 )}
                 {!loading && filtered.length === 0 && editingId !== 'new' && (
-                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted">
+                    <section className="rounded-card border border-line bg-surface p-8 text-center text-ink-muted">
                         {t('admin.aq.empty')}
                     </section>
                 )}
@@ -322,7 +322,7 @@ export function AssistantQuestionsPanel() {
                     editingId === q.id ? (
                         <div key={q.id}>{renderForm()}</div>
                     ) : (
-                        <section key={q.id} className="flex items-start justify-between gap-4 rounded-lg border border-line bg-surface p-4 shadow-card">
+                        <section key={q.id} className="flex items-start justify-between gap-4 rounded-card border border-line bg-surface p-4 shadow-card">
                             <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">
                                     <span className="rounded-full bg-brand-soft px-2 py-1 text-xs font-semibold text-link">{topicLabel(q.topic)}</span>

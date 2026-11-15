@@ -137,7 +137,7 @@ export function BenchmarkPanel() {
 
     return (
         <div className="space-y-4">
-            <div className="rounded-lg border border-line bg-surface p-4">
+            <div className="rounded-card border border-line bg-surface p-4">
                 <h2 className="text-lg font-semibold text-ink">{t('admin.bench.title')}</h2>
                 <p className="text-sm text-ink-muted">{t('admin.bench.subtitle')}</p>
 
@@ -173,10 +173,10 @@ export function BenchmarkPanel() {
             </div>
 
             {current && (
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     <div className="mb-4 flex items-center justify-between">
                         <span className="font-mono text-xs text-ink-muted">{current.run_id}</span>
-                        <span className={`rounded px-2 py-1 text-xs font-semibold ${current.status === 'done' ? 'bg-success-soft text-success' : current.status === 'error' ? 'bg-danger-soft text-danger' : 'bg-warning-soft text-warning'}`}>{current.status}</span>
+                        <span className={`rounded-control px-2 py-1 text-xs font-semibold ${current.status === 'done' ? 'bg-success-soft text-success' : current.status === 'error' ? 'bg-danger-soft text-danger' : 'bg-warning-soft text-warning'}`}>{current.status}</span>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
@@ -215,7 +215,7 @@ export function BenchmarkPanel() {
                 </div>
             )}
 
-            <div className="rounded-lg border border-line bg-surface p-4">
+            <div className="rounded-card border border-line bg-surface p-4">
                 <h3 className="mb-2 text-sm font-semibold text-ink-body">{t('admin.bench.history')}</h3>
                 {runs.length === 0 ? (
                     <div className="text-sm text-ink-muted">{t('admin.bench.noRuns')}</div>
@@ -225,7 +225,7 @@ export function BenchmarkPanel() {
                             <button key={r.id} type="button" onClick={() => void loadRun(r.run_id)} className="min-h-control flex w-full items-center justify-between py-2 text-left text-sm hover:bg-surface-sunken">
                                 <span className="font-mono text-xs text-ink-muted">{r.run_id}</span>
                                 <span className="text-xs text-ink-muted">{(r.summary || []).length} {t('admin.bench.models')}</span>
-                                <span className={`rounded px-2 py-1 text-xs font-semibold ${r.status === 'done' ? 'bg-success-soft text-success' : r.status === 'error' ? 'bg-danger-soft text-danger' : 'bg-warning-soft text-warning'}`}>{r.status}</span>
+                                <span className={`rounded-control px-2 py-1 text-xs font-semibold ${r.status === 'done' ? 'bg-success-soft text-success' : r.status === 'error' ? 'bg-danger-soft text-danger' : 'bg-warning-soft text-warning'}`}>{r.status}</span>
                             </button>
                         ))}
                     </div>
@@ -234,10 +234,10 @@ export function BenchmarkPanel() {
 
             {detail && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setDetail(null)}>
-                    <div className="max-h-[80vh] w-full max-w-3xl overflow-auto rounded-lg bg-surface p-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="max-h-[80vh] w-full max-w-3xl overflow-auto rounded-card bg-surface p-4" onClick={(e) => e.stopPropagation()}>
                         <div className="mb-4 flex items-center justify-between">
                             <h3 className="font-semibold text-ink">{t('admin.bench.detail')}</h3>
-                            <button type="button" onClick={() => setDetail(null)} className="inline-flex items-center justify-center min-h-control min-w-control rounded p-1 text-ink-muted hover:bg-surface-raised"><X className="h-5 w-5" /></button>
+                            <button type="button" onClick={() => setDetail(null)} className="inline-flex items-center justify-center min-h-control min-w-control rounded-control p-1 text-ink-muted hover:bg-surface-raised"><X className="h-5 w-5" /></button>
                         </div>
                         <div className="space-y-4">
                             {detail.steps.map((s, i) => (

@@ -250,7 +250,7 @@ export function CounselorsPanel() {
         };
 
         return (
-            <div className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+            <div className="rounded-card border border-brand-line bg-brand-soft/40 p-4">
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.counselors.slug')}
                         <input className={inputCls} value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="marco" />
@@ -306,7 +306,7 @@ export function CounselorsPanel() {
             <div className="mt-4">
                 <div className="mb-1 flex items-center gap-2">
                     <span className="text-xs font-semibold text-ink-muted">{t('admin.counselors.description')}</span>
-                    <button type="button" disabled={saving} onClick={() => void translate()} title={t('admin.counselors.translateHint') || 'Traduci via Ollama'} className="min-h-control inline-flex items-center gap-1 rounded border border-line bg-surface px-2 py-1 text-2xs font-semibold text-ink-muted hover:bg-surface-sunken disabled:opacity-50">
+                    <button type="button" disabled={saving} onClick={() => void translate()} title={t('admin.counselors.translateHint') || 'Traduci via Ollama'} className="min-h-control inline-flex items-center gap-1 rounded-control border border-line bg-surface px-2 py-1 text-2xs font-semibold text-ink-muted hover:bg-surface-sunken disabled:opacity-50">
                         <Languages className="h-3 w-3" /> {t('admin.counselors.translate') || 'Traduci'}
                     </button>
                 </div>
@@ -411,7 +411,7 @@ export function CounselorsPanel() {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-4 rounded-lg border border-line bg-surface p-4">
+            <div className="flex flex-wrap items-end justify-between gap-4 rounded-card border border-line bg-surface p-4">
                 <div>
                     <h2 className="text-lg font-semibold text-ink">{t('admin.counselors.title')}</h2>
                     <p className="text-sm text-ink-muted">{t('admin.counselors.subtitle')}</p>
@@ -425,7 +425,7 @@ export function CounselorsPanel() {
 
             {editingId === 'new' && renderForm()}
 
-            <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+            <div className="overflow-x-auto rounded-card border border-line bg-surface">
                 <table className="w-full text-left text-sm">
                     <thead className="border-b border-line text-xs text-ink-muted">
                         <tr>
@@ -455,10 +455,10 @@ export function CounselorsPanel() {
                                     <td className="px-4 py-2">{c.is_active ? <Check className="h-4 w-4 text-success" /> : <X className="h-4 w-4 text-ink-muted" />}</td>
                                     <td className="px-4 py-2">
                                         <div className="flex justify-end gap-1">
-                                            <button type="button" onClick={() => startEdit(c)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-ink-muted hover:bg-surface-raised hover:text-ink"><Pencil className="h-4 w-4" /></button>
+                                            <button type="button" onClick={() => startEdit(c)} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-ink-muted hover:bg-surface-raised hover:text-ink"><Pencil className="h-4 w-4" /></button>
                                             {confirmDelete === c.id
                                                 ? <ConfirmInline question={t('admin.counselors.confirmDelete')} onConfirm={() => { setConfirmDelete(null); void remove(c.id); }} onCancel={() => setConfirmDelete(null)} />
-                                                : <button type="button" onClick={() => setConfirmDelete(c.id)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-danger hover:bg-danger-soft"><Trash2 className="h-4 w-4" /></button>}
+                                                : <button type="button" onClick={() => setConfirmDelete(c.id)} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-danger hover:bg-danger-soft"><Trash2 className="h-4 w-4" /></button>}
                                         </div>
                                     </td>
                                 </tr>

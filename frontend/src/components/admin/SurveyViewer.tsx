@@ -197,7 +197,7 @@ export function SurveyViewer() {
                 <div className="space-y-8 animate-fade-in-up">
                     {/* Key Metrics Cards */}
                     <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-surface p-4 rounded-lg border border-line shadow-card flex items-center gap-4">
+                        <div className="bg-surface p-4 rounded-card border border-line shadow-card flex items-center gap-4">
                             <div className="p-4 bg-brand-soft text-brand rounded-control">
                                 <Users className="w-6 h-6" />
                             </div>
@@ -206,8 +206,8 @@ export function SurveyViewer() {
                                 <h4 className="text-2xl font-semibold text-ink">{stats.keyMetrics.total}</h4>
                             </div>
                         </div>
-                        <div className="bg-surface p-4 rounded-lg border border-line shadow-card flex items-center gap-4">
-                            <div className="p-4 bg-success-soft text-success rounded-lg">
+                        <div className="bg-surface p-4 rounded-card border border-line shadow-card flex items-center gap-4">
+                            <div className="p-4 bg-success-soft text-success rounded-card">
                                 <TrendingUp className="w-6 h-6" />
                             </div>
                             <div>
@@ -215,7 +215,7 @@ export function SurveyViewer() {
                                 <h4 className="text-2xl font-semibold text-ink">{stats.keyMetrics.overallAvg}/5</h4>
                             </div>
                         </div>
-                        <div className="bg-surface p-4 rounded-lg border border-line shadow-card flex items-center gap-4">
+                        <div className="bg-surface p-4 rounded-card border border-line shadow-card flex items-center gap-4">
                             <div className="p-4 bg-brand-soft text-brand rounded-control">
                                 <Activity className="w-6 h-6" />
                             </div>
@@ -234,7 +234,7 @@ export function SurveyViewer() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {stats.metrics.map((metric) => (
-                                <div key={metric.id} className="bg-surface rounded-lg border border-line shadow-card overflow-hidden flex flex-col">
+                                <div key={metric.id} className="bg-surface rounded-card border border-line shadow-card overflow-hidden flex flex-col">
                                     <div className="px-4 py-4 border-b border-line bg-surface-sunken flex justify-between items-center">
                                         <h5 className="font-semibold text-ink-body">{metric.name}</h5>
                                         <div className="flex items-baseline gap-1">
@@ -278,13 +278,13 @@ export function SurveyViewer() {
                 <h3 className="text-lg font-semibold text-ink">{t('admin.surveys.detailTitle')}</h3>
                 <button
                     onClick={fetchSurveys}
-                    className="inline-flex items-center justify-center min-h-control min-w-control p-2 hover:bg-surface-raised rounded-lg text-ink-muted hover:text-ink transition-colors"
+                    className="inline-flex items-center justify-center min-h-control min-w-control p-2 hover:bg-surface-raised rounded-control text-ink-muted hover:text-ink transition-colors"
                 >
                     <RefreshCw className={`w-4 h-4 ${loading ? SPIN : ''}`} />
                 </button>
             </div>
 
-            <div className="bg-surface rounded-lg border border-line overflow-hidden shadow-card">
+            <div className="bg-surface rounded-card border border-line overflow-hidden shadow-card">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="bg-surface-sunken text-ink-muted border-b border-line">

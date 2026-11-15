@@ -220,7 +220,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={titleId}
-                className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-surface shadow-modal sm:rounded-2xl"
+                className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-surface shadow-modal sm:rounded-card"
             >
                 {/* Header */}
                 <header className="flex items-start justify-between gap-4 border-b border-line bg-surface-sunken px-4 py-4">
@@ -238,7 +238,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                         onClick={onClose}
                         disabled={submitting}
                         aria-label={t('admin.instrumentWizard.close')}
-                        className="inline-flex min-h-control min-w-control items-center justify-center rounded-lg p-2 text-ink-muted hover:bg-line hover:text-ink-body disabled:opacity-50"
+                        className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-ink-muted hover:bg-line hover:text-ink-body disabled:opacity-50"
                     >
                         <X className="h-5 w-5" aria-hidden="true" />
                     </button>
@@ -374,7 +374,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                             </div>
 
                             {/* Accordion Traduzioni multilingua */}
-                            <div className="rounded-lg border border-line bg-surface-sunken/60 p-4">
+                            <div className="rounded-card border border-line bg-surface-sunken/60 p-4">
                                 <button
                                     type="button"
                                     onClick={() => setShowTranslations(!showTranslations)}
@@ -399,7 +399,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                                             onChange={(e) =>
                                                                 setForm({ ...form, [`name_${l}`]: e.target.value })
                                                             }
-                                                            className="mt-1 w-full rounded border border-line-strong bg-surface px-2 py-1 text-xs"
+                                                            className="mt-1 w-full rounded-control border border-line-strong bg-surface px-2 py-1 text-xs"
                                                         />
                                                     </label>
                                                 </div>
@@ -416,7 +416,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                                             onChange={(e) =>
                                                                 setForm({ ...form, [`description_${l}`]: e.target.value })
                                                             }
-                                                            className="mt-1 w-full rounded border border-line-strong bg-surface px-2 py-1 text-xs leading-normal"
+                                                            className="mt-1 w-full rounded-control border border-line-strong bg-surface px-2 py-1 text-xs leading-normal"
                                                         />
                                                     </label>
                                                 </div>
@@ -433,7 +433,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                 </legend>
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <label
-                                        className={`flex cursor-pointer items-start gap-4 rounded-lg border p-4 transition-colors ${
+                                        className={`flex cursor-pointer items-start gap-4 rounded-control border p-4 transition-colors ${
                                             form.tool_category === 'guided'
                                                 ? 'border-brand bg-brand-soft/50 ring-1 ring-focus'
                                                 : 'border-line bg-surface hover:bg-surface-sunken'
@@ -457,7 +457,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                         </div>
                                     </label>
                                     <label
-                                        className={`flex cursor-pointer items-start gap-4 rounded-lg border p-4 transition-colors ${
+                                        className={`flex cursor-pointer items-start gap-4 rounded-control border p-4 transition-colors ${
                                             form.tool_category === 'assessment'
                                                 ? 'border-brand bg-brand-soft/50 ring-1 ring-focus'
                                                 : 'border-line bg-surface hover:bg-surface-sunken'
@@ -542,7 +542,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                                 onClick={() => setForm({ ...form, icon: id })}
                                                 aria-label={id}
                                                 aria-pressed={form.icon === id}
-                                                className={`flex min-h-control min-w-control items-center justify-center rounded-lg border transition-colors ${
+                                                className={`flex min-h-control min-w-control items-center justify-center rounded-control border transition-colors ${
                                                     form.icon === id
                                                         ? 'border-brand bg-brand-soft text-link ring-2 ring-focus'
                                                         : 'border-line bg-surface text-ink-muted hover:bg-surface-sunken'
@@ -579,12 +579,12 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                             </div>
 
                             {/* Salva come Bozza checkbox */}
-                            <label className="flex items-center gap-2 rounded-lg border border-line bg-surface-sunken p-4 text-xs text-ink-body cursor-pointer">
+                            <label className="flex items-center gap-2 rounded-control border border-line bg-surface-sunken p-4 text-xs text-ink-body cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={!form.is_active}
                                     onChange={(e) => setForm({ ...form, is_active: !e.target.checked })}
-                                    className="h-4 w-4 rounded border-line-strong text-brand focus:ring-focus"
+                                    className="h-4 w-4 rounded-control border-line-strong text-brand focus:ring-focus"
                                 />
                                 <span>{t('admin.instrumentWizard.statusDraft')}</span>
                             </label>
@@ -620,7 +620,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                     return (
                                         <label
                                             key={key}
-                                            className={`flex cursor-pointer items-start gap-4 rounded-lg border p-4 transition-colors ${
+                                            className={`flex cursor-pointer items-start gap-4 rounded-control border p-4 transition-colors ${
                                                 isSelected
                                                     ? 'border-brand bg-brand-soft/60 ring-1 ring-focus'
                                                     : 'border-line bg-surface hover:bg-surface-sunken'
@@ -648,7 +648,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                             </div>
 
                             {/* Anteprima dei passaggi */}
-                            <div className="rounded-lg border border-line bg-surface-sunken p-4">
+                            <div className="rounded-card border border-line bg-surface-sunken p-4">
                                 <p className="mb-2 text-xs font-semibold text-ink-muted">
                                     {t('admin.instrumentWizard.stepPreview')}
                                 </p>
@@ -670,7 +670,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                                     <span className="text-xs font-semibold text-ink">
                                                         {step.label_i18n?.[lang] || step.label}
                                                     </span>
-                                                    <span className="rounded bg-surface-raised px-2 py-1 font-mono text-2xs text-ink-muted">
+                                                    <span className="rounded-control bg-surface-raised px-2 py-1 font-mono text-2xs text-ink-muted">
                                                         {step.id}
                                                     </span>
                                                 </div>
@@ -707,7 +707,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                                     selected_counselor_ids: counselors.map((c) => c.id),
                                                 })
                                             }
-                                            className="min-h-control rounded border border-line bg-surface px-2 py-1 text-2xs font-semibold text-ink-muted hover:bg-surface-sunken"
+                                            className="min-h-control rounded-control border border-line bg-surface px-2 py-1 text-2xs font-semibold text-ink-muted hover:bg-surface-sunken"
                                         >
                                             {t('admin.instrumentWizard.selectAll')}
                                         </button>
@@ -719,7 +719,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                                     selected_counselor_ids: [],
                                                 })
                                             }
-                                            className="min-h-control rounded border border-line bg-surface px-2 py-1 text-2xs font-semibold text-ink-muted hover:bg-surface-sunken"
+                                            className="min-h-control rounded-control border border-line bg-surface px-2 py-1 text-2xs font-semibold text-ink-muted hover:bg-surface-sunken"
                                         >
                                             {t('admin.instrumentWizard.deselectAll')}
                                         </button>
@@ -736,7 +736,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                         {t('admin.instrumentWizard.noCounselors')}
                                     </p>
                                 ) : (
-                                    <div className="mt-2 grid max-h-48 gap-2 overflow-y-auto rounded-lg border border-line bg-surface-sunken p-2 sm:grid-cols-2">
+                                    <div className="mt-2 grid max-h-48 gap-2 overflow-y-auto rounded-card border border-line bg-surface-sunken p-2 sm:grid-cols-2">
                                         {counselors.map((c) => {
                                             const checked = form.selected_counselor_ids.includes(c.id);
                                             return (
@@ -770,7 +770,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                                                 });
                                                             }
                                                         }}
-                                                        className="h-3.5 w-3.5 rounded border-line-strong text-brand focus:ring-focus"
+                                                        className="h-3.5 w-3.5 rounded-control border-line-strong text-brand focus:ring-focus"
                                                     />
                                                     <div className="min-w-0 flex-1">
                                                         <p className="font-semibold text-ink truncate">
@@ -788,7 +788,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                             </div>
 
                             {/* Card Riepilogo */}
-                            <div className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+                            <div className="rounded-card border border-brand-line bg-brand-soft/40 p-4">
                                 <h4 className="text-xs font-semibold text-link">
                                     {t('admin.instrumentWizard.summaryTitle')}
                                 </h4>

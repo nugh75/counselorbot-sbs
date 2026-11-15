@@ -140,7 +140,7 @@ export function AdminChatSandbox({
             {/* Top Toolbar */}
             <header className="flex flex-wrap items-center justify-between gap-4 border-b border-line bg-surface px-4 py-4 shadow-card">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-link">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-card bg-brand-soft text-link">
                         <FlaskConical className="h-4 w-4" aria-hidden="true" />
                     </div>
                     <div>
@@ -148,7 +148,7 @@ export function AdminChatSandbox({
                             <h2 id="sandbox-heading" className="text-sm font-semibold text-ink">
                                 {t('admin.sandbox.title')}
                             </h2>
-                            <span className="font-mono text-xs font-semibold rounded bg-surface-raised px-2 py-1 text-ink-body border border-line">
+                            <span className="font-mono text-xs font-semibold rounded-control bg-surface-raised px-2 py-1 text-ink-body border border-line">
                                 {instrumentCode}
                             </span>
                             <span
@@ -221,7 +221,7 @@ export function AdminChatSandbox({
                             aria-label={isModal ? t('admin.sandbox.close') : t('admin.sandbox.backToAdmin')}
                             className={
                                 isModal
-                                    ? 'min-h-control min-w-control rounded-lg p-2 text-ink-muted hover:bg-surface-raised hover:text-ink-body'
+                                    ? 'min-h-control min-w-control rounded-control p-2 text-ink-muted hover:bg-surface-raised hover:text-ink-body'
                                     : 'inline-flex min-h-control items-center gap-1 rounded-control border border-line-strong bg-surface px-2 py-2 text-xs font-semibold text-ink-body hover:bg-surface-sunken shadow-card'
                             }
                         >

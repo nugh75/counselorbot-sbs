@@ -48,7 +48,7 @@ export function AdminChatSandboxModal({
                 role="dialog"
                 aria-modal="true"
                 aria-label={t('admin.sandbox.title')}
-                className="flex h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-surface shadow-modal border border-line-strong"
+                className="flex h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-card bg-surface shadow-modal border border-line-strong"
             >
                 <AdminChatSandbox
                     instrumentCode={instrumentCode}

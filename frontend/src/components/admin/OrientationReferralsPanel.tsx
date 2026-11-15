@@ -115,7 +115,7 @@ export function OrientationReferralsPanel() {
                 <div className="flex gap-1 rounded-control bg-surface-raised p-1">
                     {((['people', 'events', 'institutions'] as const).map((id) => (
                         <button key={id} type="button" onClick={() => setTab(id)}
-                                className={`min-h-control rounded px-4 py-1 text-sm ${tab === id ? 'bg-surface shadow-card' : 'text-ink-muted'}`}>
+                                className={`min-h-control rounded-control px-4 py-1 text-sm ${tab === id ? 'bg-surface shadow-card' : 'text-ink-muted'}`}>
                             {t({
                                 people: 'admin.referrals.people',
                                 events: 'admin.referrals.events',
@@ -198,7 +198,7 @@ function InstitutionList({ institutions, onSave, onDeactivate }: {
     return (
         <div className="space-y-4">
             {editing && (
-                <div className="space-y-4 rounded-lg border border-line bg-surface p-4">
+                <div className="space-y-4 rounded-card border border-line bg-surface p-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                         <label className="text-xs text-ink-muted">
                             slug
@@ -262,7 +262,7 @@ function InstitutionList({ institutions, onSave, onDeactivate }: {
 
             <div className="space-y-1">
                 {institutions.map((row) => (
-                    <div key={row.id} className="flex flex-wrap items-center gap-4 rounded-lg border border-line bg-surface px-4 py-2">
+                    <div key={row.id} className="flex flex-wrap items-center gap-4 rounded-card border border-line bg-surface px-4 py-2">
                         <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-semibold text-ink">{row.name}</p>
                             <p className="truncate text-xs text-ink-muted">
@@ -426,7 +426,7 @@ function ReferralList({ rows, institutions, needs, institutionName, onSave, onDe
             </Button>
 
             {rows.map((row) => (
-                <article key={row.id} className="rounded-lg border border-line bg-surface p-4">
+                <article key={row.id} className="rounded-card border border-line bg-surface p-4">
                     <div className="flex flex-wrap items-center gap-2">
                         {row.status === 'certified' && <BadgeCheck className="h-4 w-4 text-success" />}
                         <span className="text-sm font-semibold text-ink">
@@ -448,7 +448,7 @@ function ReferralList({ rows, institutions, needs, institutionName, onSave, onDe
             ))}
 
             {editing !== null && (
-                <form className="space-y-4 rounded-lg border border-brand-line bg-brand-soft/40 p-4"
+                <form className="space-y-4 rounded-card border border-brand-line bg-brand-soft/40 p-4"
                       onSubmit={async (e) => {
                           e.preventDefault();
                           const id = editing === 'new' ? null : editing;
@@ -524,7 +524,7 @@ function EventList({ rows, institutions, needs, institutionName, onSave, onDelet
             </Button>
 
             {rows.map((row) => (
-                <article key={row.id} className="rounded-lg border border-line bg-surface p-4">
+                <article key={row.id} className="rounded-card border border-line bg-surface p-4">
                     <div className="flex flex-wrap items-center gap-2">
                         {row.status === 'certified' && <BadgeCheck className="h-4 w-4 text-success" />}
                         <span className="text-sm font-semibold text-ink">
@@ -542,7 +542,7 @@ function EventList({ rows, institutions, needs, institutionName, onSave, onDelet
             ))}
 
             {editing !== null && (
-                <form className="space-y-4 rounded-lg border border-brand-line bg-brand-soft/40 p-4"
+                <form className="space-y-4 rounded-card border border-brand-line bg-brand-soft/40 p-4"
                       onSubmit={async (e) => {
                           e.preventDefault();
                           const id = editing === 'new' ? null : editing;

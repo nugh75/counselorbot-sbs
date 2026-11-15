@@ -243,7 +243,7 @@ export function UsersSummaryPanel() {
 
     return (
         <div className="space-y-4">
-            <section className="rounded-lg border border-line bg-surface p-4">
+            <section className="rounded-card border border-line bg-surface p-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
@@ -319,7 +319,7 @@ export function UsersSummaryPanel() {
 
                     {loading && <p className="text-sm text-ink-muted">{texts.loading}</p>}
                     {!loading && data && staffUsers.length > 0 && (
-                        <section className="rounded-lg border border-line bg-surface p-4">
+                        <section className="rounded-card border border-line bg-surface p-4">
                             <h3 className="mb-4 text-xs font-semibold text-brand">{texts.docentiRicercatori} ({staffUsers.length})</h3>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm">
@@ -354,7 +354,7 @@ export function UsersSummaryPanel() {
                     )}
 
                     {studentUsers.length > 0 && (
-                        <section className="rounded-lg border border-line bg-surface p-4">
+                        <section className="rounded-card border border-line bg-surface p-4">
                             <h3 className="mb-4 text-xs font-semibold text-success">{texts.studenti} ({studentUsers.length})</h3>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm">
@@ -383,7 +383,7 @@ export function UsersSummaryPanel() {
                     )}
 
                     {otherUsers.length > 0 && (
-                        <section className="rounded-lg border border-line bg-surface p-4">
+                        <section className="rounded-card border border-line bg-surface p-4">
                             <h3 className="mb-4 text-xs font-semibold text-ink-muted">{texts.altri} ({otherUsers.length})</h3>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm">
@@ -432,7 +432,7 @@ export function UsersSummaryPanel() {
                     {data && !loading && (
                         <div className="space-y-4">
                             {filteredGroups.map((group) => (
-                                <section key={group.id} className={`rounded-lg border border-line bg-surface p-4 ${group.is_active ? '' : 'opacity-60'}`}>
+                                <section key={group.id} className={`rounded-card border border-line bg-surface p-4 ${group.is_active ? '' : 'opacity-60'}`}>
                                     <div className="flex flex-wrap items-start justify-between gap-2">
                                         <div>
                                             <h3 className="font-semibold text-ink">{group.name}</h3>
@@ -477,7 +477,7 @@ export function UsersSummaryPanel() {
                     {data && !loading && (
                         <div className="space-y-4">
                             {schoolBuckets.map(([school, schoolGroups]) => (
-                                <section key={school || '—'} className="rounded-lg border border-line bg-surface p-4">
+                                <section key={school || '—'} className="rounded-card border border-line bg-surface p-4">
                                     <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink">
                                         <Building2 className="h-4 w-4 text-ink-muted" />
                                         {school || texts.noSchool}
