@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { fieldWiring } from './field-wiring.ts';
 
 test('a bare field describes nothing and is not invalid', () => {
