@@ -19,6 +19,7 @@ import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, w
 import { validTimelineDates } from '@/lib/timeline-dates';
 import { BUILTIN_CARD_IMAGES, tavoloImageUrl } from '@/lib/tavolo-images';
 import { ActionDateFields, ActionDateSummary } from './ActionDates';
+import { Callout } from '@/components/ui/Callout';
 
 export type WorkTab = 'board' | 'comparison' | 'cards' | 'timeline';
 type Tab = WorkTab;
@@ -320,13 +321,13 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                     </details>}
                 </header>
                 <div tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-4" id={`${id}-panel`} role={fixedTab ? 'region' : 'tabpanel'} aria-labelledby={fixedTab ? `${id}-title` : `${id}-${tab}`}>
-                    {issue && <div role="alert" className="mb-4 rounded-lg border border-danger-line bg-danger-soft p-4 text-sm text-danger-ink">
+                    {issue && <Callout variant="danger" className="mb-4">
                         <p>{l(issue)}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
                             {['loadError', 'saveError', 'exportError', 'conflict'].includes(issue) && <Tooltip content={l(issue === 'conflict' ? 'reload' : 'retry')}><Button aria-label={l(issue === 'conflict' ? 'reload' : 'retry')} type="button" variant="secondary" className={buttonClass} disabled={busy} onClick={() => { if (issue === 'loadError') void load(); else if (issue === 'exportError') void exportPdf(); else if (issue === 'saveError') void save(); else if (window.confirm(l('reloadConfirm'))) void load(); }}><RotateCcw className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
                             {loaded && <Tooltip content={l('copyDownload')}><Button aria-label={l('copyDownload')} type="button" variant="secondary" className={buttonClass} onClick={() => download(new Blob([workspaceText(work, l)], { type: 'text/plain;charset=utf-8' }), 'counselorbot_visual_draft.txt')}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
                         </div>
-                    </div>}
+                    </Callout>}
                     {!loaded ? <p role="status" className="text-ink-muted">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
                         {!(personal && tab === 'timeline') && <section aria-label={l('howTo')} className="border-b border-line pb-2 text-sm leading-relaxed text-ink">
                             <h3 className="font-semibold">{l(tab)}</h3>

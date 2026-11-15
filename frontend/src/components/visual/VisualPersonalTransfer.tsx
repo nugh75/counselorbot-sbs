@@ -8,6 +8,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { annotationEntries, importAnnotation, notebookFields, readingLabel, visualEntries, type ImportTarget, type PersonalContext } from '@/lib/visual-personal';
 import type { SavedWorkspace, VisualWorkspace } from '@/lib/visual-tools';
+import { Callout } from '@/components/ui/Callout';
 
 const inputClass = 'mt-1 w-full min-w-0 rounded-control border border-line-strong bg-surface px-4 py-2 text-base text-ink';
 
@@ -96,9 +97,9 @@ export function VisualPersonalTransfer({ sessionId, locale, work, saveWorkspace,
             <BackButton variant="labelled" onClick={onClose} label={l('backTools')} disabled={busy} />
         </div>
         <details className="text-sm text-ink-muted"><summary className="min-h-control cursor-pointer py-4 text-link">{l('howTo')}</summary><p>{l('personalHelp')}</p></details>
-        {issue && <div role="alert" className="rounded-lg border border-danger-line bg-danger-soft p-4 text-sm text-danger-ink">
+        {issue && <Callout variant="danger">
             {l(issue)}{['personalLoadError', 'personalConflict'].includes(issue) && <Button type="button" variant="secondary" className="ml-2 min-h-control" onClick={() => void load()} disabled={busy}>{l('reloadPersonal')}</Button>}
-        </div>}
+        </Callout>}
         {status && <p role="status" className="text-sm text-link">{l(status)}</p>}
         {!data ? <p role="status">{l(busy ? 'loading' : 'personalLoadError')}</p> : <fieldset disabled={busy} className="space-y-4">
             <label className="block text-sm">{l('transferDirection')}<select aria-label={l('transferDirection')} className={inputClass} value={direction} onChange={event => { setDirection(event.target.value as 'in' | 'out'); setSelection(''); setDraft(''); setIssue(''); setStatus(''); }}>

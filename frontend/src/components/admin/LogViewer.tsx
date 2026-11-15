@@ -147,7 +147,7 @@ function MultiSelectFilter({
             <Button variant="secondary"
                 type="button"
                 onClick={() => setOpen((value) => !value)}
-                className="w-full justify-between outline-none focus:border-brand"
+                className="w-full justify-between focus:border-brand"
             >
                 <span className={`truncate ${selected.length === 0 ? 'text-ink-muted' : ''}`}>{summary}</span>
                 <ChevronDown className={`h-4 w-4 shrink-0 text-ink-muted transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -158,7 +158,7 @@ function MultiSelectFilter({
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder={searchPlaceholder}
-                        className="mb-2 h-control w-full rounded border border-line px-2 text-sm outline-none focus:border-brand"
+                        className="mb-2 h-control w-full rounded border border-line px-2 text-sm focus:border-brand"
                         autoFocus
                     />
                     <div className="max-h-56 overflow-auto">
@@ -855,7 +855,7 @@ export function LogViewer() {
                             value={filters.q}
                             onChange={(event) => setFilter('q', event.target.value)}
                             placeholder={t('admin.logs.search')}
-                            className="h-control w-full rounded-control border border-line bg-surface pl-8 pr-4 text-sm text-ink-body outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft"
+                            className="h-control w-full rounded-control border border-line bg-surface pl-8 pr-4 text-sm text-ink-body focus:border-brand focus:ring-2 focus:ring-brand-soft"
                         />
                     </label>
                     <MultiSelectFilter
@@ -909,8 +909,8 @@ export function LogViewer() {
                         emptyLabel={t('admin.logs.multiSelectEmpty')}
                     />
                     <div className="grid grid-cols-2 gap-2">
-                        <input type="date" value={filters.from_date} onChange={(event) => setFilter('from_date', event.target.value)} className="h-control min-w-0 rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
-                        <input type="date" value={filters.to_date} onChange={(event) => setFilter('to_date', event.target.value)} className="h-control min-w-0 rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand" />
+                        <input type="date" value={filters.from_date} onChange={(event) => setFilter('from_date', event.target.value)} className="h-control min-w-0 rounded-control border border-line bg-surface px-2 text-sm text-ink-body focus:border-brand" />
+                        <input type="date" value={filters.to_date} onChange={(event) => setFilter('to_date', event.target.value)} className="h-control min-w-0 rounded-control border border-line bg-surface px-2 text-sm text-ink-body focus:border-brand" />
                     </div>
                     <Button variant="secondary"
                         type="button"
@@ -970,7 +970,7 @@ export function LogViewer() {
                             clearLabel={t('admin.logs.multiSelectClear')}
                             emptyLabel={t('admin.logs.multiSelectEmpty')}
                         />
-                        <select value={filters.feedback} onChange={(event) => setFilter('feedback', event.target.value)} className="h-control rounded-control border border-line bg-surface px-4 text-sm text-ink-body outline-none focus:border-brand">
+                        <select value={filters.feedback} onChange={(event) => setFilter('feedback', event.target.value)} className="h-control rounded-control border border-line bg-surface px-4 text-sm text-ink-body focus:border-brand">
                             <option value="">{t('admin.logs.feedbackAll')}</option>
                             <option value="helpful">{t('admin.logs.feedbackHelpful')}</option>
                             <option value="not_helpful">{t('admin.logs.feedbackNotHelpful')}</option>
@@ -983,7 +983,7 @@ export function LogViewer() {
                             value={filters.cost_min}
                             onChange={(event) => setFilter('cost_min', event.target.value)}
                             placeholder={t('admin.logs.costMin')}
-                            className="h-control rounded-control border border-line bg-surface px-4 text-sm text-ink-body outline-none focus:border-brand"
+                            className="h-control rounded-control border border-line bg-surface px-4 text-sm text-ink-body focus:border-brand"
                         />
                         <input
                             type="number"
@@ -992,7 +992,7 @@ export function LogViewer() {
                             value={filters.cost_max}
                             onChange={(event) => setFilter('cost_max', event.target.value)}
                             placeholder={t('admin.logs.costMax')}
-                            className="h-control rounded-control border border-line bg-surface px-4 text-sm text-ink-body outline-none focus:border-brand"
+                            className="h-control rounded-control border border-line bg-surface px-4 text-sm text-ink-body focus:border-brand"
                         />
                         <label className="inline-flex h-10 items-center gap-2 rounded-control border border-line bg-surface px-4 text-sm text-ink-muted">
                             <input
@@ -1046,7 +1046,7 @@ export function LogViewer() {
                             <select
                                 value={sort}
                                 onChange={(event) => { setSort(event.target.value as 'desc' | 'asc'); setPage(0); }}
-                                className="h-control rounded-control border border-line bg-surface px-2 text-sm text-ink-body outline-none focus:border-brand"
+                                className="h-control rounded-control border border-line bg-surface px-2 text-sm text-ink-body focus:border-brand"
                             >
                                 <option value="desc">{t('admin.logs.sortDesc')}</option>
                                 <option value="asc">{t('admin.logs.sortAsc')}</option>

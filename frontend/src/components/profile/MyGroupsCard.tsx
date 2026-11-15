@@ -9,6 +9,7 @@ import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Users, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 
 interface MyGroup {
     membership_id: number;
@@ -206,16 +207,16 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
             {loading && groups.length === 0 ? (
                 <p className="flex items-center gap-2 py-4 text-sm text-ink-muted" role="status"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{texts.loading}</p>
             ) : loadError && groups.length === 0 ? (
-                <div role="alert" className="rounded-control border border-danger-line bg-danger-soft p-4 text-sm text-danger-ink">
+                <Callout variant="danger">
                     <p>{texts.loadError}</p>
                     <button type="button" onClick={() => void load()} className="mt-2 min-h-control rounded-control border border-danger-line bg-surface px-4 text-sm font-semibold text-danger-ink hover:bg-danger-soft">{texts.retry}</button>
-                </div>
+                </Callout>
             ) : (
                 <>
                     {loadError && groups.length > 0 && (
-                        <p role="alert" className="rounded-control border border-warning-line bg-warning-soft p-2 text-xs text-warning-ink">
+                        <Callout variant="warning">
                             {texts.loadError} <button type="button" onClick={() => void load()} className="min-h-control font-semibold text-warning-ink underline">{texts.retry}</button>
-                        </p>
+                        </Callout>
                     )}
                     <ul className="space-y-2">
                         {groups.map((group) => (
@@ -288,9 +289,9 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
             </div>
             {joinError && <p role="alert" className="text-sm text-danger">{joinError === 'invalid' ? texts.joinError : texts.joinNetworkError}</p>}
             {joinResult && (
-                <p role="status" className="rounded-control border border-success-line bg-success-soft p-4 text-sm font-semibold text-success-ink">
+                <Callout variant="success">
                     {joinResult.already ? texts.joinedAlready : texts.joinedOk}: {joinResult.name}
-                </p>
+                </Callout>
             )}
         </Card>
     );

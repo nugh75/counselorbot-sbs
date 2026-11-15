@@ -477,19 +477,9 @@ export function ClassImageModal({
                     {/* 3. Scheda CREA CON IA */}
                     {activeTab === 'ai' && (
                         <div className="space-y-4">
-                            <div className="rounded-card border border-warning-line bg-warning-soft p-4 text-xs leading-relaxed text-ink-body">
-                                <div className="flex items-start gap-2">
-                                    <Sparkles className="mt-1 h-4 w-4 shrink-0 text-warning" aria-hidden />
-                                    <div>
-                                        <strong className="font-semibold text-ink">
-                                            {l('classCoverAIHeading')}
-                                        </strong>
-                                        <p className="mt-1">
-                                            {l('classCoverAIGuide')}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                            <Callout variant="warning" icon={Sparkles} title={l('classCoverAIHeading')}>
+                                {l('classCoverAIGuide')}
+                            </Callout>
 
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">

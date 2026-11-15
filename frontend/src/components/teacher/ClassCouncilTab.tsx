@@ -83,12 +83,12 @@ export function ClassCouncilTab({ groupId }: { groupId: number }) {
                 <Button disabled={busy} onClick={() => void create()}>{l(busy ? 'creating' : 'create')}</Button>
             </div>
             {error && <p role="alert" className="text-sm text-danger">{l(error)}</p>}
-            {created?.password && councilLink && <div role="status" className="space-y-4 rounded-lg border border-success-line bg-success-soft p-4">
+            {created?.password && councilLink && <Callout variant="success" icon={null}>
                 <p className="font-semibold text-success-ink">{l('newLink')}</p>
                 <p className="text-sm text-success-ink">{l('passwordOnce')}</p>
                 <CopyField label={l('link')} value={councilLink} lang={lang} />
                 <CopyField label={l('password')} value={created.password} lang={lang} />
-            </div>}
+            </Callout>}
         </Card>
         <Card className="space-y-4">
             <h3 className="font-semibold text-ink">{l('links')}</h3>

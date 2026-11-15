@@ -319,19 +319,9 @@ export function CounselorCoverModal({
                     {/* 1. Scheda CREA CON IA */}
                     {activeTab === 'ai' && (
                         <div className="space-y-4">
-                            <div className="rounded-card border border-warning-line bg-warning-soft p-4 text-xs leading-relaxed text-ink-body">
-                                <div className="flex items-start gap-2">
-                                    <Sparkles className="mt-1 h-4 w-4 shrink-0 text-warning" aria-hidden />
-                                    <div>
-                                        <strong className="font-semibold text-ink">
-                                            {t('admin.counselorCover.aiHeading')}
-                                        </strong>
-                                        <p className="mt-1">
-                                            {t('admin.counselorCover.aiGuide')}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                            <Callout variant="warning" icon={Sparkles} title={t('admin.counselorCover.aiHeading')}>
+                                {t('admin.counselorCover.aiGuide')}
+                            </Callout>
 
                             {/* Selettore Metafora */}
                             <div className="space-y-2">
@@ -347,7 +337,7 @@ export function CounselorCoverModal({
                                                 setSelectedMetaphor(e.target.value);
                                                 setCustomMetaphor('');
                                             }}
-                                            className="h-10 w-full rounded-card border border-line-strong bg-surface px-4 text-xs font-semibold text-ink outline-none focus:border-brand"
+                                            className="h-10 w-full rounded-card border border-line-strong bg-surface px-4 text-xs font-semibold text-ink focus:border-brand"
                                         >
                                             {COUNSELOR_METAPHOR_PRESETS.map((preset) => (
                                                 <option key={preset.id} value={preset.label}>
@@ -361,7 +351,7 @@ export function CounselorCoverModal({
                                         value={customMetaphor}
                                         onChange={(e) => setCustomMetaphor(e.target.value)}
                                         placeholder={t('admin.counselorCover.metaphorPlaceholder')}
-                                        className="h-10 w-full rounded-card border border-line-strong bg-surface px-4 text-xs text-ink outline-none focus:border-brand"
+                                        className="h-10 w-full rounded-card border border-line-strong bg-surface px-4 text-xs text-ink focus:border-brand"
                                     />
                                 </div>
                             </div>
@@ -538,7 +528,7 @@ export function CounselorCoverModal({
                                         value={manualUrl}
                                         onChange={(e) => setManualUrl(e.target.value)}
                                         placeholder={t('admin.counselorCover.urlPlaceholder')}
-                                        className="h-10 w-full rounded-card border border-line-strong bg-surface px-4 text-xs text-ink outline-none focus:border-brand"
+                                        className="h-10 w-full rounded-card border border-line-strong bg-surface px-4 text-xs text-ink focus:border-brand"
                                     />
                                     <Button
                                         type="button"

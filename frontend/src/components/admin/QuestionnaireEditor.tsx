@@ -7,6 +7,7 @@ import { CreateInstrumentDialog } from '@/components/admin/CreateInstrumentDialo
 import { AdminChatSandboxModal } from '@/components/admin/AdminChatSandboxModal';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 // Le sei lingue dell'app. Non piu' le quattro che avevano una colonna dedicata:
@@ -284,9 +285,9 @@ export function QuestionnaireEditor() {
     return (
         <div className="space-y-4">
             {/* Disclaimer metodologico */}
-            <div className="rounded-control border border-warning-line bg-warning-soft px-4 py-4 text-sm text-warning-ink">
+            <Callout variant="warning" icon={null}>
                 {t('admin.q.disclaimer')}
-            </div>
+            </Callout>
 
             <div className="flex flex-wrap items-center gap-4">
                 <select

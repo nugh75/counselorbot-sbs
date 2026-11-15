@@ -11,6 +11,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { parseAdminTavoloImages, type AdminTavoloImage as AdminImage } from '@/lib/tavolo-images';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 
 interface UploadResult {
     created: number;
@@ -130,9 +131,9 @@ export function TavoloImagesPanel() {
                     <div className="mt-4 space-y-2 text-sm">
                         <p className="text-success">{t('admin.tavoloImages.created').replace('{n}', String(result.created))}</p>
                         {result.unlisted.length > 0 && (
-                            <p className="rounded-control border border-warning-line bg-warning-soft p-4 text-warning-ink">
+                            <Callout variant="warning">
                                 {t('admin.tavoloImages.unlisted').replace('{names}', result.unlisted.join(', '))}
-                            </p>
+                            </Callout>
                         )}
                     </div>
                 )}

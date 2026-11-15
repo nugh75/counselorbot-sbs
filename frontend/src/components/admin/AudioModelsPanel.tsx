@@ -5,6 +5,7 @@ import { Mic, Save } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { isOnlineTranscription, modelForEngine, transcriptionAvailable, validTranscriptionModel, type TranscriptionModel, type TranscriptionProviders } from '@/lib/transcription-models';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 
 interface ModelStatus {
     active: string;
@@ -108,7 +109,7 @@ export function AudioModelsPanel() {
             </div>
 
             {status && !status.reachable && !online && (
-                <p role="alert" className="rounded-control border border-warning-line bg-warning-soft p-4 text-sm text-warning-ink">{t('admin.audio.unreachable')}</p>
+                <Callout variant="warning">{t('admin.audio.unreachable')}</Callout>
             )}
 
             <fieldset className="rounded-control border border-line bg-surface p-4">
@@ -141,7 +142,7 @@ export function AudioModelsPanel() {
                 </div>
             </fieldset>
 
-            {online && <p role="alert" className="rounded-control border border-warning-line bg-warning-soft p-4 text-sm text-warning-ink">{t('admin.audio.externalWarning')}</p>}
+            {online && <Callout variant="warning">{t('admin.audio.externalWarning')}</Callout>}
 
             <fieldset className="rounded-control border border-line bg-surface p-4">
                 <legend className="px-1 text-sm font-semibold text-ink">{t('admin.audio.model')}</legend>

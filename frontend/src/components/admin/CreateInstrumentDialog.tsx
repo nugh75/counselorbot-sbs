@@ -32,6 +32,7 @@ import {
     type StepTemplateKey,
 } from '@/lib/instrument-wizard';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 
 const ICONS = [
     { id: 'compass', icon: Compass, labelKey: 'compass' },
@@ -323,7 +324,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                                 setCodeError('');
                                             }}
                                             placeholder={t('admin.instrumentWizard.codePlaceholder')}
-                                            className={`mt-1 w-full rounded-control border font-mono text-xs px-4 py-2 outline-none focus:ring-2 ${
+                                            className={`mt-1 w-full rounded-control border font-mono text-xs px-4 py-2 focus:ring-2 ${
                                                 codeError
                                                     ? 'border-danger-line ring-danger-line'
                                                     : 'border-line-strong focus:border-brand focus:ring-brand-line'
@@ -353,7 +354,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                                 setNameError('');
                                             }}
                                             placeholder={t('admin.instrumentWizard.namePlaceholder')}
-                                            className={`mt-1 w-full rounded-control border text-xs px-4 py-2 outline-none focus:ring-2 ${
+                                            className={`mt-1 w-full rounded-control border text-xs px-4 py-2 focus:ring-2 ${
                                                 nameError
                                                     ? 'border-danger-line ring-danger-line'
                                                     : 'border-line-strong focus:border-brand focus:ring-brand-line'
@@ -380,7 +381,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                         value={form.description_it}
                                         onChange={(e) => setForm({ ...form, description_it: e.target.value })}
                                         placeholder={t('admin.instrumentWizard.descPlaceholder')}
-                                        className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-xs leading-relaxed outline-none focus:border-brand focus:ring-2 focus:ring-brand-line"
+                                        className="mt-1 w-full rounded-control border border-line-strong px-4 py-2 text-xs leading-relaxed focus:border-brand focus:ring-2 focus:ring-brand-line"
                                     />
                                 </label>
                                 <p className="mt-1 text-2xs text-ink-muted">
@@ -511,7 +512,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                                     target_audience: e.target.value as 'student' | 'teacher' | 'both',
                                                 })
                                             }
-                                            className="mt-1 w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-xs font-semibold text-ink outline-none focus:border-brand"
+                                            className="mt-1 w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-xs font-semibold text-ink focus:border-brand"
                                         >
                                             <option value="student">{t('admin.instrumentWizard.audienceStudent')}</option>
                                             <option value="teacher">{t('admin.instrumentWizard.audienceTeacher')}</option>
@@ -530,7 +531,7 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                                     interview_mode: e.target.value as 'interactive' | 'direct',
                                                 })
                                             }
-                                            className="mt-1 w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-xs font-semibold text-ink outline-none focus:border-brand"
+                                            className="mt-1 w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-xs font-semibold text-ink focus:border-brand"
                                         >
                                             <option value="interactive">
                                                 {t('admin.instrumentWizard.interviewModeInteractive')}
@@ -846,9 +847,9 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                             </div>
 
                             {submitError && (
-                                <p role="alert" className="rounded-control border border-danger-line bg-danger-soft p-2 text-xs text-danger-ink font-semibold">
+                                <Callout variant="danger">
                                     {submitError}
-                                </p>
+                                </Callout>
                             )}
                         </div>
                     )}

@@ -6,7 +6,7 @@
 // - reindicizzazione manuale e stato dell'indice per collezione.
 
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
-import { AlertTriangle, Database, Download, Eye, FolderPlus, GitBranch, Loader2, RefreshCw, Trash2, Upload, X } from 'lucide-react';
+import { Database, Download, Eye, FolderPlus, GitBranch, Loader2, RefreshCw, Trash2, Upload, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Button } from '@/components/ui/Button';
@@ -407,10 +407,9 @@ export function RagDocsPanel() {
                 <Callout variant="danger">{error}</Callout>
             )}
             {notice && (
-                <div className="flex items-start gap-2 rounded-control border border-warning-line bg-warning-soft p-4 text-sm text-warning-ink">
-                    <AlertTriangle className="h-4 w-4 shrink-0 mt-1" />
+                <Callout variant="warning">
                     {notice}
-                </div>
+                </Callout>
             )}
 
             {currentCollection && (
