@@ -2,12 +2,12 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 import { getRealIdentity } from '@/lib/auth';
 import { canUseResearchConsole } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
 import { AdminChatSandbox } from '@/components/admin/AdminChatSandbox';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
 function PreviewChatContent() {
@@ -27,7 +27,7 @@ function PreviewChatContent() {
     if (authState === 'loading') {
         return (
             <div className="min-h-screen flex items-center justify-center text-ink-muted">
-                <Loader2 className="w-6 h-6 animate-spin text-brand" />
+                <Spinner className="w-6 h-6 text-brand" />
             </div>
         );
     }
@@ -72,7 +72,7 @@ export default function PreviewChatPage() {
         <Suspense
             fallback={
                 <div className="min-h-screen flex items-center justify-center text-ink-muted">
-                    <Loader2 className="w-6 h-6 animate-spin text-brand" />
+                    <Spinner className="w-6 h-6 text-brand" />
                 </div>
             }
         >

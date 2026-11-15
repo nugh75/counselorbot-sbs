@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Check, History, Loader2, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import { Check, History, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 import { useDarkMode } from '@/lib/use-dark-mode';
@@ -187,7 +187,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                         aria-label={t('idea.map.refresh')}
                     >
                         {isLoading
-                            ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                            ? <Spinner className="h-4 w-4" aria-hidden="true" />
                             : <RefreshCw className="h-4 w-4" aria-hidden="true" />}
                     </button>
                 </div>
@@ -286,7 +286,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                                     className="gap-1 px-2"
                                 >
                                     {busy
-                                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                                        ? <Spinner className="h-3.5 w-3.5" aria-hidden="true" />
                                         : <Check className="h-3.5 w-3.5" aria-hidden="true" />}
                                     {t('idea.map.save')}
                                 </Button>

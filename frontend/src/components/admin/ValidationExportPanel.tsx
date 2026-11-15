@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Database, Download, Filter, RefreshCw } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { publicOrigin } from '@/lib/runtime-config';
-import { Button } from '@/components/ui/Button';
+import { Button, SPIN } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 
 interface Instrument {
@@ -183,7 +183,7 @@ export function ValidationExportPanel() {
                         type="button"
                         onClick={load}
                     >
-                        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`h-4 w-4 ${loading ? SPIN : ''}`} />
                         {t('common.refresh')}
                     </Button>
                     <a

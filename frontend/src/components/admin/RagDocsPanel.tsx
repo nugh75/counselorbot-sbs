@@ -6,10 +6,10 @@
 // - reindicizzazione manuale e stato dell'indice per collezione.
 
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
-import { Database, Download, Eye, FolderPlus, GitBranch, Loader2, RefreshCw, Trash2, Upload, X } from 'lucide-react';
+import { Database, Download, Eye, FolderPlus, GitBranch, RefreshCw, Trash2, Upload, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner, SPIN } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 
 interface RagCollection {
@@ -367,7 +367,7 @@ export function RagDocsPanel() {
                                 type="button"
                                 disabled={creating || !newId.trim()}
                                 onClick={handleCreate}>
-                                {creating && <Loader2 className="h-4 w-4 animate-spin" />}
+                                {creating && <Spinner className="h-4 w-4" />}
                                 {t('admin.rag.create')}
                             </Button>
                             <button
@@ -445,7 +445,7 @@ export function RagDocsPanel() {
                         </div>
                         <div className="flex flex-wrap gap-2">
                             <label className={`inline-flex cursor-pointer items-center gap-2 rounded-control bg-brand px-4 py-2 text-sm font-semibold text-ink-on-brand hover:bg-brand-hover ${uploading ? 'pointer-events-none opacity-60' : ''}`}>
-                                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                                {uploading ? <Spinner className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
                                 {uploading ? t('admin.rag.uploading') : t('admin.rag.upload')}
                                 <input
                                     ref={fileRef}
@@ -473,7 +473,7 @@ export function RagDocsPanel() {
                                 type="button"
                                 disabled={reindexing}
                                 onClick={handleReindex}>
-                                <RefreshCw className={`h-4 w-4 ${reindexing ? 'animate-spin' : ''}`} />
+                                <RefreshCw className={`h-4 w-4 ${reindexing ? SPIN : ''}`} />
                                 {reindexing ? t('admin.rag.reindexing') : t('admin.rag.reindex')}
                             </Button>
                             {!currentCollection.builtin && (
@@ -528,7 +528,7 @@ export function RagDocsPanel() {
                                                                     : 'bg-surface-raised text-ink-muted hover:bg-line'
                                                             }`}
                                                         >
-                                                            {scopingSource === doc.source && <Loader2 className="h-3 w-3 animate-spin" />}
+                                                            {scopingSource === doc.source && <Spinner className="h-3 w-3" />}
                                                             {doc.scope_included ? t('admin.rag.scope.in') : t('admin.rag.scope.out')}
                                                         </button>
                                                         {doc.scope_forced && (
@@ -625,7 +625,7 @@ export function RagDocsPanel() {
                                                                     <iframe title={preview.title} src={preview.url} className="h-full w-full" />
                                                                 ) : preview.loading ? (
                                                                     <div className="flex h-full items-center justify-center text-sm text-ink-muted">
-                                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                                        <Spinner className="mr-2 h-4 w-4" />
                                                                         {t('admin.rag.previewLoading')}
                                                                     </div>
                                                                 ) : preview.error ? (

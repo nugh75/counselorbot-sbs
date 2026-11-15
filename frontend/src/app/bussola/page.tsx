@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowDown, ArrowRight, Check, Compass, GitBranch, Loader2, Mic, NotebookPen, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowRight, Check, Compass, GitBranch, Mic, NotebookPen, Sparkles } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
@@ -13,7 +13,7 @@ import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
 import { ChatMenuSection, ChatMenuSetting } from '@/components/ui/ChatOptionsMenu';
 import { GuideHelpLink } from '@/components/guide/GuideHelpLink';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -47,6 +47,7 @@ import { useUserAccess } from '@/lib/use-user-access';
 import { isToolAllowed } from '@/lib/user-access';
 import { notebookContextPayload, readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId, type NotebookContextChoice } from '@/lib/notebook-context';
 import { useClientValue } from '@/lib/use-client-value';
+import { SkeletonEntryList } from '@/components/ui/Skeleton';
 
 function safeNextHref(): string | null {
     if (typeof window === 'undefined') return null;
@@ -283,7 +284,7 @@ export default function BussolaPage() {
             </Card>
 
             {loading ? (
-                <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-link" /></div>
+                <SkeletonEntryList rows={3} className="py-6" />
             ) : atFork ? (
                 <Card as="section" className="border-brand-line sm:p-8">
                     <div className="max-w-2xl">
@@ -405,7 +406,7 @@ export default function BussolaPage() {
                     {session.status === 'in_progress' && session.recommendations.length > 0 && canWrite && (
                         <div className="flex justify-start">
                             <Button type="button" size="lg" onClick={() => void finish()} disabled={completing}>
-                                {completing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{t('orientation.complete')}
+                                {completing ? <Spinner className="h-4 w-4" /> : <Check className="h-4 w-4" />}{t('orientation.complete')}
                             </Button>
                         </div>
                     )}

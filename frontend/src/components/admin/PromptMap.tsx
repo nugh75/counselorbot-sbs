@@ -19,7 +19,7 @@ import {
     type PromptMap as PromptMapData, type PromptMapBadge, type PromptMapCounselor, type PromptMapEntry, type PromptMapInstrument,
     type PromptMapLevel, type PromptMapRef, type PromptMapSkill, type PromptMapStep, type PromptMapStrategyOptions, type PromptMapUser,
 } from '@/lib/prompt-map';
-import { Button } from '@/components/ui/Button';
+import { Button, SPIN } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 
 // Vista "Mappa dei prompt": i testi delle chat guidate di uno strumento dal
@@ -1146,7 +1146,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                     <Button variant="secondary" type="button" onClick={() => instrument && void load(instrument)} disabled={loading}
                         aria-label={t('admin.promptMap.reload')} title={t('admin.promptMap.reload')}
                         className="w-control px-0">
-                        <RefreshCw aria-hidden className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+                        <RefreshCw aria-hidden className={`h-3.5 w-3.5 ${loading ? SPIN : ''}`} />
                     </Button>
                     <button type="button" onClick={() => setTestingChat(true)} disabled={!instrument}
                         className="min-h-control inline-flex items-center gap-1 rounded border border-brand-line bg-brand-soft px-2 py-2 text-xs font-semibold text-link hover:bg-brand-soft disabled:opacity-60">

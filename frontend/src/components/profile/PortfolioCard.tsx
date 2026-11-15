@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, FolderOpen, ImagePlus, Loader2, Maximize2, Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react';
+import { ArrowRight, FolderOpen, ImagePlus, Maximize2, Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
@@ -11,7 +11,7 @@ import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { goalApi, GoalError, type PersonalGoal } from '@/lib/goals';
 import { goalText } from '@/lib/i18n-goals';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 
 // In anteprima le <img> (non passano da fetch) devono puntare all'account di
@@ -389,7 +389,7 @@ export function PortfolioCard() {
                                     disabled={uploading}
                                     className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-line-strong text-ink-muted hover:bg-surface-sunken disabled:opacity-50"
                                 >
-                                    {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+                                    {uploading ? <Spinner className="h-5 w-5" /> : <ImagePlus className="h-5 w-5" />}
                                     <span className="text-2xs font-semibold">{t('portfolio.addImage')}</span>
                                 </button>
                                 <input
@@ -407,7 +407,7 @@ export function PortfolioCard() {
                         type="button"
                         onClick={() => void saveItem()}
                         disabled={saving || !form.title.trim()}>
-                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        {saving ? <Spinner className="h-4 w-4" /> : <Save className="h-4 w-4" />}
                         {t('portfolio.save')}
                     </Button>
                 </div>

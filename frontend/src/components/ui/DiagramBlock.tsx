@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpen, ChevronLeft, ChevronRight, FileCode, FileImage, FileText, GitBranch, Loader2, Maximize2, Network, Pause, Play, RotateCcw, Route, Scan, ScanLine, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, FileCode, FileImage, FileText, GitBranch, Maximize2, Network, Pause, Play, RotateCcw, Route, Scan, ScanLine, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { completeDiagramEdges, diagramEdgeKinds, type DiagramEdgeKind, type DiagramSpec } from '@/lib/diagram-content';
 import { diagramFullscreenLabel, diagramRequestLabel, diagramStepLabel, diagramZoomLabel, diagramUiLabel, edgeKindLabel } from '@/lib/i18n-diagram';
 import { sanitizeSvgMarkup } from '@/lib/diagram-svg';
@@ -11,6 +11,7 @@ import { apiFetch } from '@/lib/auth';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 interface DiagramBlockProps {
     spec: DiagramSpec;
@@ -328,8 +329,7 @@ function DiagramView({ spec, locale, renderedSvg, imageUrl, onPickNode }: Diagra
             motion={motion} label={spec.title} />
             : failed ? <div className="space-y-2 p-4"><p role="status">{diagramRequestLabel(engineMissing ? 'engineMissing' : 'renderFailed', locale)}</p>
                 {!engineMissing && <Tooltip content={diagramRequestLabel('retry', locale)}><button aria-label={diagramRequestLabel('retry', locale)} type="button" className={controlClass} onClick={() => setRetry(value => value + 1)}><RotateCcw className="h-5 w-5" aria-hidden="true" /></button></Tooltip>}</div>
-                : <div className="flex min-h-40 items-center justify-center gap-2 p-4 text-sm text-indigo-700" role="status">
-                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />{labels('loading')}</div>}
+                : <div className="min-h-40 p-4" role="status" aria-label={labels('loading')}><Skeleton className="h-32 w-full" /></div>}
         {(activeNode || showText || failed) && <div className={`space-y-3 border-t border-slate-200 p-3 ${full ? 'max-h-[35dvh] shrink-0 overflow-auto' : ''}`}>
             {activeNode ? <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-sm text-slate-800" role="status" aria-live="polite">
                 <span className="text-xs font-medium text-indigo-700">{labels(activeNode.form || 'concept')}</span>

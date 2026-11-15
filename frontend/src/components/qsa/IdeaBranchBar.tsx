@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Check, GitBranch, Loader2, Plus, X } from 'lucide-react';
+import { Check, GitBranch, Plus, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import {
     createIdeaBranch,
@@ -9,6 +9,7 @@ import {
     moveIdeaFocus,
     type IdeaBranch,
 } from '@/lib/idea-map';
+import { Spinner } from '@/components/ui/Button';
 
 interface IdeaBranchBarProps {
     sessionId: string;
@@ -104,7 +105,7 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                     aria-label={t('idea.branches.create')}
                 >
                     {busy
-                        ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        ? <Spinner className="h-4 w-4" aria-hidden="true" />
                         : <Check className="h-4 w-4" aria-hidden="true" />}
                 </button>
                 <button
@@ -139,7 +140,7 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                     </option>
                 ))}
             </select>
-            {busy && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" aria-hidden="true" />}
+            {busy && <Spinner className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />}
             <button
                 type="button"
                 onClick={() => setAdding(true)}

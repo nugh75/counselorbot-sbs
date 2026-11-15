@@ -6,10 +6,11 @@ import { apiFetch } from '@/lib/auth';
 import { forumText } from '@/lib/i18n-forum';
 import { learningText, } from '@/lib/i18n-assignment-work';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
-import { Users, Loader2 } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
+import { SkeletonEntryList } from '@/components/ui/Skeleton';
 
 interface MyGroup {
     membership_id: number;
@@ -205,7 +206,7 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
             )}
             <p className="text-sm text-ink-muted">{learningText(lang, 'groupVisibility')}</p>
             {loading && groups.length === 0 ? (
-                <p className="flex items-center gap-2 py-4 text-sm text-ink-muted" role="status"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{texts.loading}</p>
+                <SkeletonEntryList rows={2} label={texts.loading} />
             ) : loadError && groups.length === 0 ? (
                 <Callout variant="danger">
                     <p>{texts.loadError}</p>

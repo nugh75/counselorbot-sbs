@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, Cpu, Cloud, Search, Sparkles, X, Filter, Loader2 } from 'lucide-react';
+import { Check, Cpu, Cloud, Search, Sparkles, X, Filter } from 'lucide-react';
 import {
     fetchCounselorCategories,
     fetchCounselors,
@@ -17,7 +17,7 @@ import { counselorHelp } from '@/lib/i18n-counselor-help';
 import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { CounselorCover } from './CounselorCover';
@@ -294,7 +294,7 @@ export function CounselorSelector({
                         />
                         {searching && (
                             <div className="absolute right-4 top-2 text-xs text-ink-muted">
-                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                <Spinner className="h-4 w-4" aria-hidden />
                             </div>
                         )}
                     </div>

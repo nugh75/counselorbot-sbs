@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { GitBranch, Loader2, RotateCcw, Send } from 'lucide-react';
+import { GitBranch, RotateCcw, Send } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { getSelectedCounselorId } from '@/lib/counselor';
@@ -10,6 +10,7 @@ import { buildDiagramFromMessageRequest, messageDiagramId, messageDiagramKey } f
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/auth';
 import { diagramRequestLabel } from '@/lib/i18n-diagram';
+import { Spinner } from '@/components/ui/Button';
 
 export interface SavedMessageDiagram { source_text: string; source_key: string; instruction: string; spec: DiagramSpec }
 
@@ -159,7 +160,7 @@ export function MessageDiagramButton({
                         aria-label={correcting ? diagramRequestLabel('correctSend', locale) : submitLabel}
                         className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control text-ink-muted transition-colors hover:bg-surface-sunken hover:text-link disabled:opacity-50"
                     >
-                        {state === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        {state === 'loading' ? <Spinner className="h-4 w-4" /> : <Send className="h-4 w-4" />}
                     </button></Tooltip>
                 </form>
             )}

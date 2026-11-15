@@ -738,8 +738,8 @@ cancellarlo. Nell’Assistente l’elenco mostra le domande dell’argomento sce
 e prende il posto del vecchio pulsante «?», che ne proponeva una alla volta.
 La Bussola non ha «Ferma la risposta» perché riceve la risposta intera, non
 in streaming.
-Attesa e azioni sono uguali nelle tre chat (#658): «sto pensando» è lo stesso
-spinner con testo, sia in coda alla conversazione sia dentro la risposta che
+Attesa e azioni sono uguali nelle tre chat (#658): «sto pensando» sono gli stessi
+tre puntini con testo, sia in coda alla conversazione sia dentro la risposta che
 deve ancora arrivare. Sotto ogni risposta finita, fuori dalla bolla, c’è la riga
 «Azioni del messaggio» con pulsanti da 44 px che vanno a capo su telefono:
 **Diagramma** (in Bussola e Assistente il disegno resta finché la pagina è
@@ -3788,3 +3788,12 @@ salva in `backups/` della cartella dati (ultime 7 copie, file
 Il messaggio del pannello parla ora di «backup di sicurezza del database».
 Rimosso il vecchio modulo di backup SQLite, non più usato. Nessuna modifica alla
 Guida interfaccia. Procedura: `docs/operations/desktop-postgres-backups.md`.
+
+### Indicatori di caricamento (#935)
+
+Le pagine e gli elenchi che si aprono mostrano sagome della forma del contenuto
+(righe con riquadro da 40 px e due linee, oppure barre di testo) invece di una
+rotella al centro; la pagina non «salta» all'arrivo dei dati. Lo spinner piccolo
+resta solo dentro i pulsanti occupati e le chat mostrano tre puntini mentre il
+counselor risponde. Con «riduci movimento» attivo le animazioni si fermano.
+Nessuna modifica ai dati né alla Guida interfaccia.

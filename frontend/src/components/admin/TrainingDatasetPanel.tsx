@@ -5,7 +5,7 @@ import { BrainCircuit, Check, Download, Filter, Plus, RefreshCw, Save, Trash2, X
 import { LANGUAGES } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/Button';
+import { Button, SPIN } from '@/components/ui/Button';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Callout } from '@/components/ui/Callout';
 
@@ -252,7 +252,7 @@ export function TrainingDatasetPanel() {
                         type="button"
                         onClick={load}
                     >
-                        <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
+                        <RefreshCw className={cn('h-4 w-4', loading && SPIN)} />
                         {t('admin.training.refresh')}
                     </Button>
                     <Button

@@ -24,7 +24,7 @@ import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useI18n } from '@/lib/i18n-context';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner, SPIN } from '@/components/ui/Button';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { ChatBubble } from '@/components/ui/ChatBubble';
 import { stripControlMarkers } from '@/lib/control-markers';
@@ -841,7 +841,7 @@ export function LogViewer() {
                         type="button"
                         onClick={() => view === 'logs' ? void fetchLogs() : view === 'stats' ? void fetchStats() : void fetchHygiene()}
                     >
-                        <RefreshCw className={`h-4 w-4 ${loading || statsLoading || hygieneLoading ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`h-4 w-4 ${loading || statsLoading || hygieneLoading ? SPIN : ''}`} />
                         {t('admin.logs.refresh')}
                     </Button>
                 </div>
@@ -1117,14 +1117,14 @@ export function LogViewer() {
                             );
                         })}
                         {logs.length === 0 && !loading && <li className="px-4 py-10 text-center text-ink-muted">{t('admin.logs.empty')}</li>}
-                        {loading && <li role="status" className="flex items-center justify-center gap-2 px-4 py-10 text-ink-muted"><RefreshCw className="h-5 w-5 animate-spin" />{t('common.loading')}</li>}
+                        {loading && <li role="status" className="flex items-center justify-center gap-2 px-4 py-10 text-ink-muted"><Spinner className="h-5 w-5" />{t('common.loading')}</li>}
                     </ul>
                 </div>
             )}
 
             {view === 'stats' && (
                 <div className="space-y-4">
-                    {statsLoading && <div className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted"><RefreshCw className="mx-auto h-5 w-5 animate-spin" /></div>}
+                    {statsLoading && <div className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted"><Spinner className="mx-auto h-5 w-5" /></div>}
                     {stats && !statsLoading && (
                         <>
                             <div className="grid gap-4 md:grid-cols-4">
@@ -1184,7 +1184,7 @@ export function LogViewer() {
                                 </Button>
                             )}
                         </div>
-                        {hygieneLoading && <RefreshCw className="mt-6 h-5 w-5 animate-spin text-ink-muted" />}
+                        {hygieneLoading && <Spinner className="mt-6 h-5 w-5 text-ink-muted" />}
                         {retention && (
                             <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
                                 <div><dt className="text-ink-muted">{t('admin.logs.retentionDays')}</dt><dd className="mt-1 font-semibold text-ink">{retention.retention_enabled ? retention.retention_days : t('admin.logs.disabled')}</dd></div>
@@ -1246,7 +1246,7 @@ export function LogViewer() {
                             </div>
                         </div>
                         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain bg-surface-sunken p-4 sm:p-4" aria-busy={sessionLoading}>
-                            {sessionLoading && <div role="status" className="flex items-center justify-center gap-2 text-ink-muted"><RefreshCw className="h-5 w-5 animate-spin" />{t('common.loading')}</div>}
+                            {sessionLoading && <div role="status" className="flex items-center justify-center gap-2 text-ink-muted"><Spinner className="h-5 w-5" />{t('common.loading')}</div>}
                             {!sessionLoading && sessionLogs.map((log) => {
                                 const details = asObject(log.details);
                                 const userText = firstText(details, ['user_input', 'effective_user_input', 'question']);

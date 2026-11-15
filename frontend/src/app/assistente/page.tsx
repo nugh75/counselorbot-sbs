@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { LucideIcon } from 'lucide-react';
-import { GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen, Mic, GitBranch } from 'lucide-react';
+import { GraduationCap, BookOpen, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen, Mic, GitBranch } from 'lucide-react';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { getIdentity, getViewAsAccount, loginHref, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
@@ -35,6 +35,7 @@ import { ChatMenuSection } from '@/components/ui/ChatOptionsMenu';
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { diagramContentForSpeech } from '@/lib/diagram-content';
+import { SkeletonText } from '@/components/ui/Skeleton';
 
 // Anteprima dei documenti: tabelle con bordi + scroll orizzontale. Le risposte
 // in chat usano ChatMarkdown.
@@ -713,9 +714,7 @@ export default function AssistentePage() {
 
                         <div className="flex-1 min-h-0 overflow-hidden">
                             {preview.loading && (
-                                <div className="h-full flex items-center justify-center text-ink-muted">
-                                    <Loader2 className="w-6 h-6 animate-spin" />
-                                </div>
+                                <div className="h-full p-4" role="status" aria-busy="true"><SkeletonText lines={6} /></div>
                             )}
                             {preview.error && (
                                 <div className="p-4 text-sm text-danger">{preview.error}</div>

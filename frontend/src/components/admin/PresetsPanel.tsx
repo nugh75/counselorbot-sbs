@@ -7,7 +7,7 @@ import { ModelSearchSelect } from '@/components/admin/ModelSearchSelect';
 import { Callout } from '@/components/ui/Callout';
 import { validModelId } from '@/lib/model-search';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
-import { Button } from '@/components/ui/Button';
+import { Button, SPIN } from '@/components/ui/Button';
 
 const PROVIDERS = [
     'openai', 'anthropic', 'gemini', 'mistral', 'openrouter', 'omniroute',
@@ -227,7 +227,7 @@ export function PresetsPanel() {
                             )}
                         </div>
                         <Button variant="secondary" type="button" aria-label={t('admin.presets.reloadModels')} title={t('admin.presets.reloadModels')} onClick={() => void fetchModels(form.provider, true)} className="w-control px-0 shrink-0">
-                            <RefreshCw className={`h-4 w-4 ${modelsLoading ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`h-4 w-4 ${modelsLoading ? SPIN : ''}`} />
                         </Button>
                         <Button variant="secondary" type="button" aria-label={manualModel ? t('admin.presets.useList') : t('admin.presets.useManual')} title={manualModel ? t('admin.presets.useList') : t('admin.presets.useManual')} onClick={() => setManualModel((v) => !v)} className="w-control px-0 shrink-0">
                             {manualModel ? <List className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}

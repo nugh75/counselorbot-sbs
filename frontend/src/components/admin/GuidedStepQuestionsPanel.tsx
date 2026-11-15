@@ -5,7 +5,7 @@ import { Check, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import type { AdminGuidedStepQuestion } from '@/lib/guided-step-questions';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
-import { Button } from '@/components/ui/Button';
+import { Button, SPIN } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 
 const STEPS_BY_QUESTIONNAIRE: Record<string, string[]> = {
@@ -320,7 +320,7 @@ export function GuidedStepQuestionsPanel() {
                         <Button variant="secondary"
                             type="button"
                             onClick={() => void refresh()}>
-                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`h-4 w-4 ${loading ? SPIN : ''}`} />
                             {t('admin.gsq.refresh')}
                         </Button>
                         {editingId === null && (

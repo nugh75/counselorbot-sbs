@@ -1,22 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-    ChevronLeft,
-    ExternalLink,
-    FlaskConical,
-    Info,
-    Loader2,
-    RotateCcw,
-    TriangleAlert,
-    X,
-} from 'lucide-react';
+import { ChevronLeft, ExternalLink, FlaskConical, Info, RotateCcw, TriangleAlert, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
 import { ChatViewport } from '@/components/qsa/ChatViewport';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 
 export interface AdminChatSandboxProps {
     instrumentCode: string;
@@ -289,7 +280,7 @@ export function AdminChatSandbox({
             <div className="flex-1 min-h-0 flex flex-col relative overflow-hidden">
                 {hasSteps === null ? (
                     <div className="flex-1 flex items-center justify-center gap-2 text-ink-muted text-xs">
-                        <Loader2 className="h-4 w-4 animate-spin text-brand" />
+                        <Spinner className="h-4 w-4 text-brand" />
                         <span>{t('admin.sandbox.loading')}</span>
                     </div>
                 ) : hasSteps === false ? (

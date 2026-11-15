@@ -1,14 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Copy, KeyRound, Loader2, RefreshCw, ShieldOff, UserCheck } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Check, Copy, KeyRound, RefreshCw, ShieldOff, UserCheck } from 'lucide-react';
+import { Button, Spinner } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { localPairingText, type LocalPairingTextKey } from '@/lib/i18n-local-pairing';
 import { formatPersonalCode, type LocalDeviceClass, type LocalStudentDevice } from '@/lib/local-pairing';
+import { SkeletonEntryList } from '@/components/ui/Skeleton';
 
 type RegeneratedCode = { username: string; pseudonym: string; code: string };
 
@@ -92,7 +93,7 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
         <section aria-label={l('devicesTitle')} className="space-y-4">
             <div className="flex justify-end">
                 <Button type="button" variant="secondary" onClick={() => void load()} disabled={loading || busy !== null}>
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
+                    {loading ? <Spinner className="h-4 w-4" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
                     {l('refresh')}
                 </Button>
             </div>
@@ -125,9 +126,7 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
                 </Callout>
             )}
             {loading && classes.length === 0 && (
-                <p role="status" className="flex items-center gap-2 text-sm text-ink-muted">
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />{l('loading')}
-                </p>
+                <SkeletonEntryList rows={2} label={l('loading')} />
             )}
             {!loading && !loadError && classes.length === 0 && (
                 <Card variant="flat"><p className="text-sm text-ink-muted">{l(groupId === undefined ? 'noDevices' : 'noClassDevices')}</p></Card>
@@ -160,12 +159,12 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
                                         <div className="flex flex-wrap gap-2">
                                             {device.status === 'pending' && (
                                                 <Button type="button" variant="success" size="md" disabled={busy !== null} onClick={() => void approve(device)}>
-                                                    {busy === `approve:${device.id}` ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <UserCheck className="h-4 w-4" aria-hidden />}
+                                                    {busy === `approve:${device.id}` ? <Spinner className="h-4 w-4" aria-hidden /> : <UserCheck className="h-4 w-4" aria-hidden />}
                                                     {l('approve')}
                                                 </Button>
                                             )}
                                             <Button type="button" variant="secondary" size="md" disabled={busy !== null} onClick={() => void regenerate(device)}>
-                                                {busy === `regenerate:${device.id}` ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <KeyRound className="h-4 w-4" aria-hidden />}
+                                                {busy === `regenerate:${device.id}` ? <Spinner className="h-4 w-4" aria-hidden /> : <KeyRound className="h-4 w-4" aria-hidden />}
                                                 {l('regenerate')}
                                             </Button>
                                             <Button type="button" variant="danger" size="md" disabled={busy !== null} onClick={() => setRevokeId(device.id)}>
@@ -177,7 +176,7 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
                                         <div role="group" aria-label={l('revokeConfirm')} className="flex flex-wrap items-center gap-2 rounded-lg border border-danger-line bg-danger-soft p-4">
                                             <p className="w-full text-sm text-danger-ink">{l('revokeConfirm')}</p>
                                             <Button type="button" variant="danger" size="md" disabled={busy !== null} onClick={() => void revoke(device)}>
-                                                {busy === `revoke:${device.id}` ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                                                {busy === `revoke:${device.id}` ? <Spinner className="h-4 w-4" aria-hidden /> : null}
                                                 {l(busy === `revoke:${device.id}` ? 'actionBusy' : 'revoke')}
                                             </Button>
                                             <Button type="button" variant="secondary" size="md" disabled={busy !== null} onClick={() => setRevokeId(null)}>{l('cancel')}</Button>

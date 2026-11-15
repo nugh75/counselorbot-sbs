@@ -10,6 +10,7 @@ import { QUESTIONNAIRES, QuestionnaireType, FactorDefinition } from '@/lib/quest
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList, ErrorBar
 } from 'recharts';
+import { Spinner, SPIN } from '@/components/ui/Button';
 
 interface QuestionnaireResult {
     id: number;
@@ -306,7 +307,7 @@ export function QuestionnaireResultsViewer() {
                         onClick={() => fetchResults(filterType || undefined)}
                         className="inline-flex min-h-control min-w-control items-center justify-center p-2 hover:bg-surface-raised rounded-lg text-ink-muted hover:text-ink-body transition-colors"
                     >
-                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`w-4 h-4 ${loading ? SPIN : ''}`} />
                     </button>
                 </div>
             </div>
@@ -520,7 +521,7 @@ export function QuestionnaireResultsViewer() {
                             {loading && (
                                 <tr>
                                     <td colSpan={4} className="px-6 py-8 text-center text-ink-muted">
-                                        <RefreshCw className="w-5 h-5 animate-spin mx-auto" />
+                                        <Spinner className="w-5 h-5 mx-auto" />
                                     </td>
                                 </tr>
                             )}

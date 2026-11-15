@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toPng } from 'html-to-image';
-import { Check, Eye, Loader2, MessageCircle, Pencil, Save, Sparkles, X } from 'lucide-react';
+import { Check, Eye, MessageCircle, Pencil, Save, Sparkles, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { TavoloCanvas } from '@/components/tavolo/TavoloCanvas';
 import { TavoloCompose } from '@/components/tavolo/TavoloCompose';
@@ -40,6 +40,7 @@ import {
     type TavoloView,
 } from '@/lib/tavolo';
 import { relLabel, tavoloLabel } from '@/lib/i18n-tavolo';
+import { SkeletonEntryList } from '@/components/ui/Skeleton';
 
 const INTENT_LABEL: Record<TavoloIntent, Parameters<typeof tavoloLabel>[0]> = {
     'what-is-missing': 'intentWhatIsMissing',
@@ -281,9 +282,7 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
         : <PreviousPageButton fallbackHref="/profilo/tavolo" beforeBack={flush} />;
 
     if (status === 'loading') {
-        return <p className="flex min-h-dvh items-center justify-center gap-2 text-sm text-ink-muted" role="status">
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />{label('loading')}
-        </p>;
+        return <SkeletonEntryList rows={4} label={label('loading')} className="mx-auto w-full max-w-3xl p-4" />;
     }
     if (status === 'missing' || !view || !graph) {
         return <div className="space-y-4 p-4">{back}<p className="text-sm text-ink-muted">{label('notFound')}</p></div>;

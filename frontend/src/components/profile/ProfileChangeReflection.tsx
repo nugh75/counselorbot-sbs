@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Bot, Loader2, RefreshCw, Save, Send } from 'lucide-react';
+import { Bot, RefreshCw, Save, Send } from 'lucide-react';
 import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
 import { useResponseFormat } from '@/lib/use-response-format';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
@@ -11,7 +11,8 @@ import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { toast } from '@/components/ui/Toast';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
+import { TypingDots } from '@/components/ui/TypingDots';
 
 interface LearnerProfileData {
     context?: string;
@@ -359,7 +360,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                             <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[85%] rounded-lg px-4 py-2 text-sm ${message.role === 'user' ? 'bg-brand text-ink-on-brand' : 'bg-surface border border-line text-ink'}`}>
                                     {!message.content && message.role === 'assistant' ? (
-                                        <Loader2 className="h-4 w-4 animate-spin text-ink-muted" />
+                                        <TypingDots />
                                     ) : (
                                         <div className="prose prose-sm max-w-none prose-p:my-1">
                                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
@@ -383,7 +384,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                             type="button"
                             onClick={() => void sendToAssistant()}
                             disabled={chatLoading || !chatInput.trim()}>
-                            {chatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                            {chatLoading ? <Spinner className="h-4 w-4" /> : <Send className="h-4 w-4" />}
                         </Button>
                     </div>
                 </div>

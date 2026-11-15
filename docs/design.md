@@ -384,7 +384,11 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
 - **Movimento**: le variabili `--animate-*` vanno in `@theme`, non in `:root`
   — Tailwind v4 genera le utility `animate-*` solo da lì, e tenute in `:root`
   esistono le variabili ma non le classi. Solo `fade-in-up` all'ingresso e la barra indeterminata di
-  attesa. `prefers-reduced-motion` azzera tutto — vale anche per l'ago della
+  attesa per i lavori lunghi (come il PDF). Il caricamento ha tre sole forme (#935):
+  sagoma `Skeleton` (`SkeletonEntryList`, `SkeletonText`) per pagine ed elenchi,
+  spinner piccolo (`Spinner`, prop `busy` di `Button`) solo dentro un pulsante
+  occupato, tre puntini (`TypingDots`) mentre il counselor risponde; `animate-spin`
+  compare solo in `Button.tsx`. `prefers-reduced-motion` azzera tutto — vale anche per l'ago della
   bussola, che controlla `useReducedMotion`. Per framer-motion la media query
   CSS non basta: `layout.tsx` avvolge l'albero in `MotionConfig
   reducedMotion="user"`.

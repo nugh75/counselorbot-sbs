@@ -2,21 +2,10 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import {
-    X,
-    Sparkles,
-    Upload,
-    Link as LinkIcon,
-    Check,
-    Copy,
-    ExternalLink,
-    Loader2,
-    ImagePlus,
-    Compass,
-} from 'lucide-react';
+import { X, Sparkles, Upload, Link as LinkIcon, Check, Copy, ExternalLink, ImagePlus, Compass } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
-import { Button } from '@/components/ui/Button';
+import { Button, Spinner } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { CounselorCover } from '@/components/questionnaire/CounselorCover';
 import type { PublicCounselor } from '@/lib/counselor';
@@ -497,7 +486,7 @@ export function CounselorCoverModal({
                                             >
                                                 {saving ? (
                                                     <>
-                                                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                                        <Spinner className="h-4 w-4" aria-hidden />
                                                         <span>{t('admin.counselorCover.uploadSaving')}</span>
                                                     </>
                                                 ) : (

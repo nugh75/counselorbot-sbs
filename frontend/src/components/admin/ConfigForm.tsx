@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, RefreshCw, Save, Server, Award, XCircle, Sparkles, ChevronDown } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { Button } from '@/components/ui/Button';
+import { Button, SPIN } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { PersonalAPIPolicy } from '@/components/admin/PersonalAPIPolicy';
 import { ChatGPTSettingsPanel } from '@/components/admin/ChatGPTSettingsPanel';
@@ -875,7 +875,7 @@ export function ConfigForm() {
                                             onClick={() => handleVerifyAPIKey(status.provider)}
                                             disabled={verification === 'checking'}
                                         >
-                                            <RefreshCw className={`w-4 h-4 ${verification === 'checking' ? 'animate-spin' : ''}`} />
+                                            <RefreshCw className={`w-4 h-4 ${verification === 'checking' ? SPIN : ''}`} />
                                             {t('admin.config.apiKeyVerify')}
                                         </Button>
                                     </div>
@@ -1003,7 +1003,7 @@ export function ConfigForm() {
                                         className="min-h-control flex items-center gap-1 text-xs text-brand hover:text-link disabled:opacity-50"
                                         title={t('admin.config.reloadTitle')}
                                     >
-                                        <RefreshCw className={`w-3 h-3 ${modelsLoading ? 'animate-spin' : ''}`} />
+                                        <RefreshCw className={`w-3 h-3 ${modelsLoading ? SPIN : ''}`} />
                                         {modelsLoading
                                             ? t('admin.config.modelsLoading')
                                             : liveModels.length > 0
@@ -1183,7 +1183,7 @@ export function ConfigForm() {
                             disabled={systemAITesting}
                             className="flex items-center gap-2"
                         >
-                            <RefreshCw className={`w-4 h-4 ${systemAITesting ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`w-4 h-4 ${systemAITesting ? SPIN : ''}`} />
                             {systemAITesting ? systemAIText(lang, 'testingButton') : systemAIText(lang, 'testButton')}
                         </Button>
                     </div>

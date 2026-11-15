@@ -9,7 +9,7 @@ import { replacePlan, changePlanArchive, parsePlanInstitutionOptions, planIdFrom
 import Link from 'next/link';
 import { credentialText, type CredentialTextKey } from '@/lib/i18n-institution-credentials';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
-import { Button } from '@/components/ui/Button';
+import { Button, SPIN } from '@/components/ui/Button';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
@@ -704,7 +704,7 @@ export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classH
                             type="button"
                             onClick={() => void refresh()}
                         >
-                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`h-4 w-4 ${loading ? SPIN : ''}`} />
                             {t('admin.ap.refresh')}
                         </Button>
                         {editingId === null && (
