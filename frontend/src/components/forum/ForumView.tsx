@@ -116,13 +116,13 @@ function ForumMessage({ post, moderator = false, active = false, busy = false, o
         {mode === 'mute' && groupId && post.author_username && <MuteForm busy={busy} onCancel={() => setMode('view')}
             onMute={(reason, until) => void run(`/api/teacher/groups/${groupId}/forum/mutes`, 'POST', { username: post.author_username, reason, until })} />}
         {mode === 'view' && moderator && active && groupId && post.author_username && !post.own && !post.deleted &&
-            <Button size="sm" variant="secondary" disabled={busy} onClick={() => setMode('mute')}>{l('muteAuthor')}</Button>}
+            <Button size="md" variant="secondary" disabled={busy} onClick={() => setMode('mute')}>{l('muteAuthor')}</Button>}
         {mode === 'view' && (actions.edit || actions.delete || actions.hide || actions.restore) && <div className="flex flex-wrap gap-2">
-            {actions.edit && writable && <Button size="sm" variant="secondary" disabled={busy} onClick={() => setMode('edit')}>{l('edit')}</Button>}
-            {actions.delete && <Button size="sm" variant="secondary" disabled={busy}
+            {actions.edit && writable && <Button size="md" variant="secondary" disabled={busy} onClick={() => setMode('edit')}>{l('edit')}</Button>}
+            {actions.delete && <Button size="md" variant="secondary" disabled={busy}
                 onClick={() => { if (window.confirm(l('deleteConfirm'))) void run(`/api/forum/posts/${post.id}`, 'DELETE'); }}>{l('delete')}</Button>}
-            {actions.hide && <Button size="sm" variant="secondary" disabled={busy} onClick={() => setMode('hide')}>{l('hide')}</Button>}
-            {actions.restore && <Button size="sm" variant="secondary" disabled={busy}
+            {actions.hide && <Button size="md" variant="secondary" disabled={busy} onClick={() => setMode('hide')}>{l('hide')}</Button>}
+            {actions.restore && <Button size="md" variant="secondary" disabled={busy}
                 onClick={() => void run(`/api/teacher/forum/posts/${post.id}/restore`, 'POST')}>{l('restore')}</Button>}
         </div>}
     </article>;
@@ -239,10 +239,10 @@ function TopicModeration({ topic, busy, onAction }: { topic: ForumTopic; busy: b
     if (hiding) return <HideForm busy={busy} onCancel={() => setHiding(false)}
         onHide={reason => void onAction(`${base}/hide`, 'POST', { reason }).then(done => { if (done) setHiding(false); })} />;
     return <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant="secondary" disabled={busy} onClick={() => void onAction(`${base}/${topic.pinned ? 'unpin' : 'pin'}`, 'POST')}>{l(topic.pinned ? 'unpin' : 'pin')}</Button>
-        <Button size="sm" variant="secondary" disabled={busy} onClick={() => void onAction(`${base}/${topic.locked ? 'unlock' : 'lock'}`, 'POST')}>{l(topic.locked ? 'unlock' : 'lock')}</Button>
-        {topic.hidden ? <Button size="sm" variant="secondary" disabled={busy} onClick={() => void onAction(`${base}/restore`, 'POST')}>{l('restore')}</Button>
-            : <Button size="sm" variant="secondary" disabled={busy} onClick={() => setHiding(true)}>{l('hide')}</Button>}
+        <Button size="md" variant="secondary" disabled={busy} onClick={() => void onAction(`${base}/${topic.pinned ? 'unpin' : 'pin'}`, 'POST')}>{l(topic.pinned ? 'unpin' : 'pin')}</Button>
+        <Button size="md" variant="secondary" disabled={busy} onClick={() => void onAction(`${base}/${topic.locked ? 'unlock' : 'lock'}`, 'POST')}>{l(topic.locked ? 'unlock' : 'lock')}</Button>
+        {topic.hidden ? <Button size="md" variant="secondary" disabled={busy} onClick={() => void onAction(`${base}/restore`, 'POST')}>{l('restore')}</Button>
+            : <Button size="md" variant="secondary" disabled={busy} onClick={() => setHiding(true)}>{l('hide')}</Button>}
     </div>;
 }
 
@@ -288,7 +288,7 @@ function ForumDiscussion({ groupId, groupActive, topicId, onBack, onForbidden, o
                 <h3 className="min-w-0 break-words text-lg font-bold text-slate-800">{detail.topic.title || l('hidden')}{detail.topic.pinned && ` · ${l('pinned')}`}</h3>
                 {forumTopicEditable(detail.topic, { moderator: detail.can_moderate, active: groupActive })
                     && detail.topic.body !== null && detail.forum_enabled !== false && !detail.mute &&
-                    <Button size="sm" variant="secondary" disabled={acting} onClick={() => setEditing(true)}>{l('editTopic')}</Button>}
+                    <Button size="md" variant="secondary" disabled={acting} onClick={() => setEditing(true)}>{l('editTopic')}</Button>}
             </div>}
         {detail.topic.link && <p className="break-words text-sm text-slate-600">{l('linkedResource')}: {' '}
             {targetHref ? <Link href={targetHref} className="text-indigo-700 underline">

@@ -302,10 +302,10 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                         {row.title}{row.status === 'cancelled' && <span className="ml-2 rounded bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-muted">{m('cancelled')}</span>}
                     </p>
                     {row.status === 'scheduled' && <div className="flex flex-wrap gap-1">
-                        {row.attendance_mode !== 'student' && <Button variant="secondary" size="sm" aria-expanded={registerOf === row.id}
+                        {row.attendance_mode !== 'student' && <Button variant="secondary" size="md" aria-expanded={registerOf === row.id}
                             onClick={() => setRegisterOf(registerOf === row.id ? null : row.id)}>{m(registerOf === row.id ? 'hideRegister' : 'register')}</Button>}
-                        <Button variant="secondary" size="sm" disabled={busy} onClick={() => open(row)}>{m('edit')}</Button>
-                        <Button variant="secondary" size="sm" disabled={busy} onClick={() => setConfirmCancel(row.id)}>{m('cancelMeeting')}</Button>
+                        <Button variant="secondary" size="md" disabled={busy} onClick={() => open(row)}>{m('edit')}</Button>
+                        <Button variant="secondary" size="md" disabled={busy} onClick={() => setConfirmCancel(row.id)}>{m('cancelMeeting')}</Button>
                     </div>}
                 </div>
                 <p className="text-ink-muted">{[row.kind === 'individual' ? m('individual') : meetingWhen(row, lang), m(row.mode), row.place ?? row.link,
@@ -398,9 +398,9 @@ function SlotsEditor({ lang, meeting, busy, send, onDraftChange }: {
                         <option value="">{m('moveTo')}</option>
                         {free(slot).map(other => <option key={other.id} value={other.id}>{meetingWhen(other, lang)}</option>)}
                     </select></label>}
-                {slot.booking && <Button variant="ghost" size="sm" disabled={busy}
+                {slot.booking && <Button variant="ghost" size="md" disabled={busy}
                     onClick={() => void send(`/api/teacher/bookings/${slot.booking!.id}/cancel`, 'POST')}>{m('cancelBooking')}</Button>}
-                <Button variant="ghost" size="sm" disabled={busy}
+                <Button variant="ghost" size="md" disabled={busy}
                     onClick={() => void send(`/api/teacher/slots/${slot.id}/cancel`, 'POST', { revision: slot.revision ?? 1 })}>{m('cancelSlot')}</Button>
             </li>)}
         </ul>
@@ -409,7 +409,7 @@ function SlotsEditor({ lang, meeting, busy, send, onDraftChange }: {
                 <input type="datetime-local" disabled={busy} className={input} value={startsAt} onChange={event => { setStartsAt(event.target.value); onDraftChange?.(meeting.id, Boolean(event.target.value)); }} /></label>
             <label className="block w-28 text-xs">{m('duration')}
                 <input type="number" disabled={busy} min={5} max={600} className={input} value={duration} onChange={event => setDuration(event.target.value)} /></label>
-            <Button variant="secondary" size="sm" disabled={busy || !fromLocalInput(startsAt)} onClick={() => {
+            <Button variant="secondary" size="md" disabled={busy || !fromLocalInput(startsAt)} onClick={() => {
                 const start = fromLocalInput(startsAt);
                 if (start) void send(`/api/teacher/meetings/${meeting.id}/slots`, 'POST', { starts_at: start, duration_minutes: duration ? Number(duration) : null })
                     .then(done => { if (done) { setStartsAt(''); onDraftChange?.(meeting.id, false); } });

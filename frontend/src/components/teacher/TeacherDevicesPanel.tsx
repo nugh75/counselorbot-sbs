@@ -121,7 +121,7 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
             {actionError && <Callout variant="danger">{l('actionError')}</Callout>}
             {loadError && (
                 <Callout variant="danger" title={l('loadError')}>
-                    <Button type="button" variant="secondary" size="sm" onClick={() => void load()}>{l('refresh')}</Button>
+                    <Button type="button" variant="secondary" size="md" onClick={() => void load()}>{l('refresh')}</Button>
                 </Callout>
             )}
             {loading && classes.length === 0 && (
@@ -159,16 +159,16 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
                                         </div>
                                         <div className="flex flex-wrap gap-2">
                                             {device.status === 'pending' && (
-                                                <Button type="button" variant="success" size="sm" disabled={busy !== null} onClick={() => void approve(device)}>
+                                                <Button type="button" variant="success" size="md" disabled={busy !== null} onClick={() => void approve(device)}>
                                                     {busy === `approve:${device.id}` ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <UserCheck className="h-4 w-4" aria-hidden />}
                                                     {l('approve')}
                                                 </Button>
                                             )}
-                                            <Button type="button" variant="secondary" size="sm" disabled={busy !== null} onClick={() => void regenerate(device)}>
+                                            <Button type="button" variant="secondary" size="md" disabled={busy !== null} onClick={() => void regenerate(device)}>
                                                 {busy === `regenerate:${device.id}` ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <KeyRound className="h-4 w-4" aria-hidden />}
                                                 {l('regenerate')}
                                             </Button>
-                                            <Button type="button" variant="danger" size="sm" disabled={busy !== null} onClick={() => setRevokeId(device.id)}>
+                                            <Button type="button" variant="danger" size="md" disabled={busy !== null} onClick={() => setRevokeId(device.id)}>
                                                 <ShieldOff className="h-4 w-4" aria-hidden />{l('revoke')}
                                             </Button>
                                         </div>
@@ -176,11 +176,11 @@ export function TeacherDevicesPanel({ groupId }: { groupId?: number }) {
                                     {revokeId === device.id && (
                                         <div role="group" aria-label={l('revokeConfirm')} className="flex flex-wrap items-center gap-2 rounded-lg border border-danger-line bg-danger-soft p-4">
                                             <p className="w-full text-sm text-danger-ink">{l('revokeConfirm')}</p>
-                                            <Button type="button" variant="danger" size="sm" disabled={busy !== null} onClick={() => void revoke(device)}>
+                                            <Button type="button" variant="danger" size="md" disabled={busy !== null} onClick={() => void revoke(device)}>
                                                 {busy === `revoke:${device.id}` ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
                                                 {l(busy === `revoke:${device.id}` ? 'actionBusy' : 'revoke')}
                                             </Button>
-                                            <Button type="button" variant="secondary" size="sm" disabled={busy !== null} onClick={() => setRevokeId(null)}>{l('cancel')}</Button>
+                                            <Button type="button" variant="secondary" size="md" disabled={busy !== null} onClick={() => setRevokeId(null)}>{l('cancel')}</Button>
                                         </div>
                                     )}
                                 </li>

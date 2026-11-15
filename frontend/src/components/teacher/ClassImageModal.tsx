@@ -231,7 +231,7 @@ export function ClassImageModal({
                     <Button
                         type="button"
                         variant="ghost"
-                        size="sm"
+                        size="md"
                         onClick={onClose}
                         disabled={saving}
                         className="rounded-lg p-2 text-ink-muted hover:bg-surface-raised hover:text-ink-body"
@@ -268,7 +268,7 @@ export function ClassImageModal({
                             <Button
                                 type="button"
                                 variant="secondary"
-                                size="sm"
+                                size="md"
                                 disabled={saving}
                                 onClick={() => void handleResetDefault()}
                                 className="inline-flex min-h-[36px] items-center gap-2 self-start text-xs font-semibold text-ink-muted sm:self-auto"
@@ -499,7 +499,7 @@ export function ClassImageModal({
                                     <Button
                                         type="button"
                                         variant="secondary"
-                                        size="sm"
+                                        size="md"
                                         onClick={() => void handleCopyPrompt()}
                                         className="inline-flex min-h-[32px] items-center gap-2 text-xs font-semibold"
                                     >
