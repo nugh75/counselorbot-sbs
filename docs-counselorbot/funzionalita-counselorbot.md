@@ -421,6 +421,17 @@ condiviso, con la stessa icona, gli stessi testi e gli stessi pulsanti («Apri l
 «Ho capito»); i comandi principali di ricerca e salvataggio usano `Button`. Nessun cambio
 di comportamento.
 
+**Avvisi, titoli e campi nelle aree (#931).** Gli avvisi scritti a mano (errori di
+caricamento con «Riprova», conferme, suggerimenti del Noticing, la zona di cancellazione
+della classe, il link e la password del Consiglio) passano al `Callout` condiviso in
+Profilo, Portfolio, Flashcard, strumenti visivi, Percorso pQBL, Catalogo, Orientamento del
+docente, schede della classe e pannelli admin; restano fuori solo gli avvisi che portano
+azioni o campi (conferma di revoca dispositivo, schede di accesso agli strumenti, banner di
+anteprima del ruolo). I campi admin e la ricerca del Profilo non tolgono più il contorno di
+focus (resta l'anello globale). I titoli del forum sono `text-lg font-semibold`, quello
+dei taccuini di prova `text-lg`; descrizioni e aiuti di taccuini, chat e repertorio di
+prova sono `text-sm`. Nessun cambio di comportamento.
+
 **Orientamento del docente e Catalogo obiettivi piatti (#870).** `/docente/orientamento`
 e `/docente/catalogo-obiettivi` seguono l'aspetto piatto: categorie, contenuti e proposte
 del catalogo sono righe separate da filetti (non più riquadri), i moduli di modifica e
