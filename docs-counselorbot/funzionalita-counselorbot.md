@@ -393,6 +393,14 @@ creazione, le colonne e i mazzi sono divisi da filetti invece che da riquadri an
 La carta in studio, le carte del tavolo, campi e finestre di dialogo mantengono la loro
 forma; nessun cambio di comportamento.
 
+**Strumenti visivi e flashcard senza riquadri (#958).** `/profilo/azioni`, `/carte`,
+`/confronto`, `/timeline` e `/profilo/flashcard` non hanno più il pannello con ombra né
+gli articoli riquadrati: azioni, opzioni di confronto e tappe della linea del tempo sono
+righe divise da filetti. Campi di testo, elenchi e aree di testo usano i componenti
+standard (`Input`, `Select`, `Textarea`), lo stato delle carte è un'etichetta
+`StatusBadge`, e la scelta dell'immagine e il nuovo mazzo sono finestre `Dialog`. Le
+carte restano oggetti con bordo; nessun cambio di comportamento.
+
 **Piani operativi del docente piatti (#950).** La pagina `/docente/piani-operativi`
 (elenco dei piani, editor, modelli e avanzamento) non ha più riquadri né card dentro
 card: sezioni piatte con filetto, righe dell'elenco separate da filetti, campi con i
