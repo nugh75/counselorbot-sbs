@@ -9,7 +9,7 @@ Issue #958 implementata, PR da aprire (base main).
 
 ## Verifiche
 - `tsc --noEmit`: solo errori preesistenti sui PNG di `public/guide` (assenti nel worktree).
-- node --test flat-visual-tools: verde. eslint sui file toccati: vedi PR.
+- node --test flat-visual-tools: verde. eslint: 0 errori. flashcards-flat, flat-notices-headings: verdi. visual-tools.test.mjs (browser) non eseguito.
 - Nessun controllo visivo (niente dev server, per istruzione).
 
 ## Prossimi passi
