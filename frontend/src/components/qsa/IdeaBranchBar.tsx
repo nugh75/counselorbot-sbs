@@ -77,8 +77,8 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
             // browser ignorerebbe il form interno mandando il submit a quello
             // esterno (reload della pagina, sessione persa). Invio e tasto
             // chiamano addBranch direttamente.
-            <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-teal-50/60 px-3 py-2">
-                <label htmlFor="idea-bar-branch" className="text-xs font-medium text-teal-900">
+            <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-brand-soft px-3 py-2">
+                <label htmlFor="idea-bar-branch" className="text-xs font-medium text-link">
                     {t('idea.branches.name')}
                 </label>
                 <input
@@ -94,13 +94,13 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                     }}
                     maxLength={80}
                     autoFocus
-                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                 />
                 <button
                     type="button"
                     onClick={() => void addBranch()}
                     disabled={!label.trim() || busy}
-                    className="rounded-md bg-teal-700 p-1.5 text-white hover:bg-teal-800 disabled:opacity-50"
+                    className="rounded-md bg-brand p-1.5 text-ink-on-brand hover:bg-brand-hover disabled:opacity-50"
                     aria-label={t('idea.branches.create')}
                 >
                     {busy
@@ -115,7 +115,7 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                 >
                     <X className="h-4 w-4" aria-hidden="true" />
                 </button>
-                {failed && <p className="w-full text-xs text-rose-700">{t('idea.branches.error')}</p>}
+                {failed && <p className="w-full text-xs text-danger-ink">{t('idea.branches.error')}</p>}
             </div>
         );
     }
@@ -131,7 +131,7 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                 onChange={(event) => void goTo(event.target.value)}
                 disabled={busy}
                 aria-label={t('idea.branches.switch')}
-                className="min-w-0 max-w-[18rem] flex-1 truncate rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 disabled:opacity-60"
+                className="min-w-0 max-w-[18rem] flex-1 truncate rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand disabled:opacity-60"
             >
                 {rows.map((row) => (
                     <option key={row.id} value={row.id}>
@@ -144,7 +144,7 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                 type="button"
                 onClick={() => setAdding(true)}
                 disabled={busy}
-                className="inline-flex items-center gap-1 rounded-md border border-dashed border-teal-300 px-2 py-1 text-xs font-medium text-teal-800 hover:bg-teal-50 disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-md border border-dashed border-brand-line px-2 py-1 text-xs font-medium text-link hover:bg-brand-soft disabled:opacity-50"
             >
                 <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                 {t('idea.branches.create')}

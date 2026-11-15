@@ -75,7 +75,7 @@ export function IdeaPanel({
         <div className="space-y-3">
             {show !== 'branches' && line && (
                 <p className="flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                    <Compass className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700" aria-hidden="true" />
+                    <Compass className="mt-0.5 h-3.5 w-3.5 shrink-0 text-link" aria-hidden="true" />
                     <span>
                         {t(line.key, { what: line.role ? t(ROLE_KEY[line.role]) : line.text ?? '' })}
                     </span>
@@ -112,7 +112,7 @@ export function IdeaPanel({
                             step={1}
                             value={Math.max(0, IDEA_PACE_STOPS.indexOf(budget as never))}
                             onChange={(event) => onBudgetChange(IDEA_PACE_STOPS[Number(event.target.value)])}
-                            className="h-1.5 w-28 cursor-pointer accent-teal-700"
+                            className="h-1.5 w-28 cursor-pointer accent-brand"
                             aria-valuetext={budget === 0 ? t('idea.pace.unlimited') : `${budget}`}
                         />
                         <span className="text-xs text-slate-500">
@@ -131,7 +131,7 @@ export function IdeaPanel({
                             className={cn(
                                 'ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
                                 finished
-                                    ? 'bg-teal-700 text-white hover:bg-teal-800'
+                                    ? 'bg-brand text-ink-on-brand hover:bg-brand-hover'
                                     : 'border border-slate-200 text-slate-600 hover:border-slate-300',
                             )}
                         >

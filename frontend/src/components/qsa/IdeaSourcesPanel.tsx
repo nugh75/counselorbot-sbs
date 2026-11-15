@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BookOpen, ExternalLink, FileText, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchIdeaBranches } from '@/lib/idea-map';
 import {
@@ -131,7 +132,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                             aria-pressed={group === value}
                             className={cn(
                                 'px-2.5 py-1 text-xs font-medium transition-colors',
-                                group === value ? 'bg-teal-700 text-white' : 'bg-white text-slate-600 hover:bg-slate-50',
+                                group === value ? 'bg-brand text-ink-on-brand' : 'bg-white text-slate-600 hover:bg-slate-50',
                             )}
                         >
                             {t(`idea.sources.group.${value === 'works' ? 'works' : 'encyclopedia'}`)}
@@ -144,7 +145,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                     maxLength={200}
                     aria-label={t('idea.sources.query')}
                     placeholder={t('idea.sources.query')}
-                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                 />
                 {group === 'works' && (
                     <>
@@ -154,32 +155,33 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                             inputMode="numeric"
                             aria-label={t('idea.sources.yearFrom')}
                             placeholder={t('idea.sources.yearFrom')}
-                            className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                            className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                         />
                         <label className="inline-flex items-center gap-1.5 text-xs text-slate-600">
                             <input
                                 type="checkbox"
                                 checked={oaOnly}
                                 onChange={(event) => setOaOnly(event.target.checked)}
-                                className="h-3.5 w-3.5 accent-teal-700"
+                                className="h-3.5 w-3.5 accent-brand"
                             />
                             {t('idea.sources.oaOnly')}
                         </label>
                     </>
                 )}
-                <button
+                <Button
                     type="submit"
+                    size="sm"
                     disabled={busy || query.trim().length < 3}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-teal-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-teal-800 disabled:opacity-50"
+                    className="gap-1.5"
                 >
                     {busy
                         ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                         : <Search className="h-3.5 w-3.5" aria-hidden="true" />}
                     {t('idea.sources.search')}
-                </button>
+                </Button>
             </form>
 
-            {failed && <p className="mt-2 text-xs text-rose-700">{t('idea.sources.error')}</p>}
+            {failed && <p className="mt-2 text-xs text-danger-ink">{t('idea.sources.error')}</p>}
 
             {results !== null && (
                 <div className="mt-3 space-y-2">
@@ -206,7 +208,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                                     type="button"
                                     onClick={() => void keepOne(item)}
                                     disabled={keptUrls.has(item.url) || keeping === item.url}
-                                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-teal-300 px-2 py-1 text-xs font-medium text-teal-800 hover:bg-teal-50 disabled:opacity-40"
+                                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-brand-line px-2 py-1 text-xs font-medium text-link hover:bg-brand-soft disabled:opacity-40"
                                 >
                                     {keeping === item.url
                                         ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
@@ -235,7 +237,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                                         href={row.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1 text-teal-800 hover:underline"
+                                        className="inline-flex items-center gap-1 text-link hover:underline"
                                     >
                                         <ExternalLink className="h-3 w-3" aria-hidden="true" />
                                         {row.source}
@@ -245,7 +247,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                                             href={ideaSourcePdfUrl(sessionId, row.id)}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1 text-teal-800 hover:underline"
+                                            className="inline-flex items-center gap-1 text-link hover:underline"
                                         >
                                             <FileText className="h-3 w-3" aria-hidden="true" />
                                             {t('idea.sources.pdf')}
@@ -257,7 +259,7 @@ export function IdeaSourcesPanel({ sessionId, version, locale, focus }: IdeaSour
                                 type="button"
                                 onClick={() => void drop(row.id)}
                                 aria-label={t('idea.sources.remove')}
-                                className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-white hover:text-rose-700"
+                                className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-white hover:text-danger-ink"
                             >
                                 <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                             </button>

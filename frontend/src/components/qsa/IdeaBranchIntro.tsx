@@ -35,23 +35,23 @@ export function IdeaBranchIntro({ sessionId, version, locale, focus, empty }: Id
     const parent = branch.parent ? rows.find((row) => row.id === branch.parent) : undefined;
 
     return (
-        <div className="mx-auto w-full max-w-2xl rounded-lg border border-teal-200 bg-teal-50/60 px-4 py-3 text-left">
-            <p className="flex items-center gap-2 text-sm font-semibold text-teal-900">
+        <div className="mx-auto w-full max-w-2xl rounded-lg border border-brand-line bg-brand-soft px-4 py-3 text-left">
+            <p className="flex items-center gap-2 text-sm font-semibold text-link">
                 <GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" />
                 <span className="min-w-0 break-words">{branch.label}</span>
             </p>
-            <p className="mt-1.5 text-xs leading-relaxed text-teal-900/80">
+            <p className="mt-1.5 text-xs leading-relaxed text-link/80">
                 {t(branch.origin === 'manual' ? 'idea.branches.intro.bornManual' : 'idea.branches.intro.bornTalk')}
                 {' '}
                 {parent
                     ? `${t('idea.branches.intro.linked')} «${parent.label}».`
                     : t('idea.branches.intro.linkedRoot')}
             </p>
-            <p className="mt-1 text-xs leading-relaxed text-teal-900/80">
+            <p className="mt-1 text-xs leading-relaxed text-link/80">
                 {t('idea.branches.intro.doing')} {branch.task_label ?? branch.label}.
             </p>
             {empty && (
-                <p className="mt-1 text-xs leading-relaxed text-teal-800/70">
+                <p className="mt-1 text-xs leading-relaxed text-link/70">
                     {t('idea.branches.intro.empty')}
                 </p>
             )}

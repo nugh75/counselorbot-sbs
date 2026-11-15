@@ -237,15 +237,14 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
 ## 4. Forma, spazio, movimento
 
 - **Raggio**: `--radius: 0.75rem`. Card `rounded-card`, controlli
-  `rounded-control` (§2.6); `glass-panel` cuoce ancora `rounded-xl`.
+  `rounded-control` (§2.6).
 - **Card**: la primitiva `Card` ha due varianti. `boxed` (default: token `surface`,
   `line`, `shadow-card`) resta per messaggi di stato e form isolati; `flat`
   (`variant="flat"`) non ha riquadro, sfondo né ombra: solo un filetto `border-t` in
   alto e spazio verticale, ed è la forma delle sottopagine delle aree. Regola (#861,
   #867): **niente riquadri dentro riquadri**; il raggruppamento lo fanno titoli con
-  filetto e spazio, non bordi annidati. L'utility `glass-panel` (bianco, bordo
-  `slate-200`, ombra minima) + `glass-panel-hover` resta per i call-site non ancora
-  migrati.
+  filetto e spazio, non bordi annidati. L'utility `glass-panel` è stata ritirata
+  (#926): i pannelli del percorso guidato e della chat sono `Card variant="flat"`.
 - **Elenco a voci** (`components/ui/EntryList.tsx`): il pattern canonico per le
   pagine d'area e le sottopagine indice, al posto delle griglie di card.
   `EntrySection` è un titolo `text-lg font-semibold` con filetto sotto (`border-b

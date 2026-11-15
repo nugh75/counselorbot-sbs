@@ -411,6 +411,16 @@ testi sotto `text-xs` (`text-[11px]`, `text-[10px]`, `text-[9px]`) diventano `te
 triangoli) sono sostituiti da `ArrowLeft`, `ArrowRight` e `ChevronDown` di `lucide-react`.
 Nessun cambio di comportamento.
 
+**Riquadri IDEA e introduzione della chat sui colori del brand (#927).** Il percorso IDEA
+(barra dei rami, albero dei rami, mappa, fonti e pannello laterale) e il riquadro
+introduttivo della chat guidata non usano più la seconda tinta teal: sfondi, bordi, testi,
+barre di avanzamento e caselle passano ai token del brand (petrol), le parti di
+eliminazione al rosso di stato `danger`, così restano leggibili anche in tema scuro (il
+teal non aveva valori per il tema scuro). Il riquadro introduttivo è il `Callout`
+condiviso, con la stessa icona, gli stessi testi e gli stessi pulsanti («Apri la guida»,
+«Ho capito»); i comandi principali di ricerca e salvataggio usano `Button`. Nessun cambio
+di comportamento.
+
 **Orientamento del docente e Catalogo obiettivi piatti (#870).** `/docente/orientamento`
 e `/docente/catalogo-obiettivi` seguono l'aspetto piatto: categorie, contenuti e proposte
 del catalogo sono righe separate da filetti (non più riquadri), i moduli di modifica e
@@ -614,7 +624,11 @@ al Taccuino personale. I nomi dell’area, del Taccuino e del Menu sono ripresi
 dalle stesse traduzioni degli accessi; in svedese l’area si chiama «Elevområde».
 Non aggiungono finestre né cambiano compilazione,
 salvataggi, conferma o compatibilità del counselor.
-Metodo di inserimento dei risultati
+Le scelte del metodo di inserimento dei risultati sono righe piatte con filetto, come
+le voci delle aree (#926); la scelta ha un fondo tenue e la spunta, i menu dei
+salvataggi compaiono dentro la riga. Le impostazioni della conversazione e i pannelli
+laterali della chat guidata (percorso, punteggi, raccomandazioni) sono sezioni piatte
+con un filetto in alto, senza riquadro. Metodo di inserimento dei risultati
 e modalità di conversazione si ricordano solo selezionando l’apposita casella nella
 rispettiva schermata; le preferenze già memorizzate restano valide. Idea chiede la
 modalità ogni volta e non cambia la preferenza degli altri strumenti.
@@ -624,13 +638,13 @@ modalità ogni volta e non cambia la preferenza degli altri strumenti.
 Ogni counselor dispone di un’identità visiva e pedagogica riconoscibile:
 - **Frase distintiva (tagline)**: breve sintesi multilingua dello stile di accompagnamento (es. chiarire sfumature con domande, spazio empatico di ascolto, azioni pratiche dirette, metodo strutturato).
 - **Categorie di approccio**: appartenenza multipla a categorie base (`filosofo`, `psicologo`, `docente`, `orientatore`, `tutor`) e tratti specifici (`maieutico`, `empatico`, `pragmatico`, `analitico`, `motivazionale`, `metodico`).
-- **Copertina e illustrazione YouTube-style (16:9)**: riferimento visivo dedicato alla persona virtuale (`avatar_url`), con illustrazioni vettoriali SVG panoramiche in formato 16:9 (`viewBox="0 0 320 180"`) per ciascuno dei 26 counselor della piattaforma (Marco, Sara, Luca, Elena, Davide, Giulia, Nadia, Nora, Giulio, Iride, Clio, Bruno, Minerva, Bianca, Erik, Carmen, Otto, Teo, Sonia, Rocco, Aidan, Camille, Luz, Vera, Omar, Gemini) disegnate con la palette di sistema (teal, ardesia, indaco con accenti caldi ambra/arancio/oro) che illustrano il mondo, la metafora o il mestiere di ciascun counselor come primo elemento in cima alla card.
+- **Copertina e illustrazione YouTube-style (16:9)**: riferimento visivo dedicato alla persona virtuale (`avatar_url`), con illustrazioni vettoriali SVG panoramiche in formato 16:9 (`viewBox="0 0 320 180"`) per ciascuno dei 26 counselor della piattaforma (Marco, Sara, Luca, Elena, Davide, Giulia, Nadia, Nora, Giulio, Iride, Clio, Bruno, Minerva, Bianca, Erik, Carmen, Otto, Teo, Sonia, Rocco, Aidan, Camille, Luz, Vera, Omar, Gemini) che illustrano il mondo, la metafora o il mestiere di ciascun counselor, a sinistra di ogni riga dell'elenco.
 - **Ricerca e raccomandazione per approccio**: ricerca libera in linguaggio naturale (es. «Vorrei qualcuno che mi faccia riflettere con domande...») che consiglia il counselor più adatto spiegando la motivazione, con filtri per lingua, audience e strumento.
 
 Nell'interfaccia utente del selettore counselor (`CounselorSelector`):
-- In cima a ciascuna card, come primo elemento assoluto (in stile video card / YouTube), compare il blocco copertina `CounselorCover` con proporzioni 16:9 (`aspect-[16/9]`, `rounded-lg`, `overflow-hidden`), con eventuale spunta di selezione (Check) in overlay in alto a destra. In caso di asset mancante o errore di caricamento, il componente attiva un fallback vettoriale procedurale SVG deterministico basato su hash, con monogramma tipografico, forme e palette armoniche della categoria (`filosofo`, `psicologo`, `tutor`, `docente`, `ricercatore`, `orientatore`). Se è presente un video di presentazione, la copertina mostra un badge discreto con icona Play.
-- Sotto la copertina compaiono: la testata con nome del counselor, badge del modello AI impiegato (locale/cloud con icona), eventuale stato di disponibilità; la frase distintiva localizzata (tagline); i chip delle categorie di approccio; il paragrafo descrittivo del counselor e l'elenco degli strumenti supportati (`questionnaire_types`).
-- Sopra l'elenco è presente una barra di ricerca per approccio («Che tipo di counselor vorresti?») con pulsante di ricerca e scheda di proposta che evidenzia il counselor consigliato con la sua copertina orizzontale 16:9 compatta, la motivazione e un pulsante per selezionarlo direttamente con un click.
+- I counselor sono un elenco a righe con filetto, senza card (#926): a sinistra la copertina `CounselorCover` 16:9 (sopra il testo su mobile), con la spunta di selezione in overlay; la riga scelta ha un fondo petrol tenue. In caso di asset mancante o errore di caricamento, il componente disegna un fallback SVG piatto e deterministico con la grammatica delle illustrazioni degli strumenti (tratto e campiture dalle variabili `--i-*`, che hanno il valore scuro; niente gradienti né hex): un motivo per categoria (`filosofo`, `psicologo`, `tutor`, `docente`, `ricercatore`, `orientatore`), il monogramma e il nome della categoria. Se è presente un video di presentazione, la copertina mostra un badge discreto con icona Play.
+- Accanto alla copertina compaiono: il nome del counselor; una sola riga di metadati in testo piccolo, separati da «·» (eventuale stato di disponibilità, origine locale/cloud, categorie di approccio, strumenti supportati, modello AI); la frase distintiva localizzata (tagline) e il paragrafo descrittivo.
+- Sopra l'elenco è presente una barra di ricerca per approccio («Che tipo di counselor vorresti?») con pulsante di ricerca e, sotto un filetto, la proposta del counselor consigliato con la sua copertina 16:9 compatta, la motivazione, le categorie corrispondenti in una riga di testo e un pulsante per selezionarlo direttamente con un click. «Nessuna corrispondenza» e l'avviso sul counselor non adatto allo strumento sono avvisi `Callout`.
 - Sopra le schede è disponibile un filtro rapido a chip per categorie di approccio («Tutti», chip con selezione multipla e pulsante «Azzera filtri»); il selettore mostra solo i counselor che contengono tutti i tag selezionati (logica AND), preservando la priorità dell'eventuale counselor raccomandato se rispetta tutti i filtri attivi.
 - Nella barra delle raccomandazioni (letture e film, strategie, consigli e domande, diagrammi) la scheda selezionata mostra il proprio titolo sotto l'icona; le altre restano compatte con icona e conteggio e il nome accessibile non cambia. Sotto la riga delle schede, l'elenco delle carte si apre con un sottotitolo che nomina la sezione scelta (es. «Strategie»).
 - La scheda **Diagrammi** della barra laterale della chat guidata elenca, in ordine di disegno, i diagrammi chiesti nella conversazione (titolo del diagramma; il conteggio sta sulla linguetta). Cliccandone uno la chat scorre al messaggio che lo contiene, lo evidenzia e lo apre ingrandito nel visualizzatore della card; l'elenco viene dai diagrammi già salvati con la sessione, quindi resta dopo una ricarica e non richiama il modello.

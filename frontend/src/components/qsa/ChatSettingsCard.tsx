@@ -6,6 +6,7 @@
 // sparisce mai: se il counselor scelto non lo supporta la riga resta con la
 // spiegazione, invece di farsi mancare senza spiegazioni.
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
@@ -61,7 +62,8 @@ export function ChatSettingsCard({
         <div className="mx-auto w-full max-w-md space-y-4">
             <ChatGPTUsageBadge />
             {onBack && <button type="button" onClick={onBack} className="min-h-11 text-sm text-slate-600">{t('nav.back')}</button>}
-            <fieldset className="glass-panel space-y-4 p-5" data-testid="chat-settings">
+            <Card variant="flat">
+            <fieldset className="space-y-4" data-testid="chat-settings">
                 <legend className="px-1 font-semibold text-slate-800">{t('chatSettings.title')}</legend>
 
                 {showModeChoice && (
@@ -134,6 +136,7 @@ export function ChatSettingsCard({
 
                 <Button onClick={onStart} disabled={starting || (showModeChoice && !experience)} className="w-full">{t('chatSettings.start')}</Button>
             </fieldset>
+            </Card>
         </div>
     );
 }
