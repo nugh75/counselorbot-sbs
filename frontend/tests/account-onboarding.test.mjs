@@ -352,14 +352,14 @@ for (const width of [390, 1440]) {
         const { page, context, errors } = await fixture({ width, noHistory: true, prefs: { counselor_id: null, counselor_ready: false, notebook_ready: false, setup_completed: false } });
         try {
             await page.goto(`${origin}/?view=intro`);
-            const start = page.getByRole('button', { name: 'Apri Bussola', exact: true });
+            const start = page.getByRole('button', { name: 'Bussola', exact: true });
             await start.waitFor();
             assert.equal(await start.count(), 1);
             const tools = page.getByRole('link', { name: 'Vedi tutte le attività e i percorsi', exact: true });
             await tools.waitFor();
             assert.equal(await tools.count(), 1);
             const intro = page.getByTestId('intro-screen');
-            assert.deepEqual(await intro.locator('article h3').allTextContents(), ['Bussola', 'Analisi questionari', 'Percorsi guidati', 'Area studente e strumenti']);
+            assert.deepEqual(await intro.locator('[id^="intro-link-"]').allTextContents(), ['Bussola', 'Analisi questionari', 'Percorsi guidati', 'Area studente e strumenti']);
             const images = intro.locator('img');
             assert.equal(await images.count(), 5);
             // Satisfaction questionnaire (moved from the navbar): the control right after the catalogue link.
@@ -368,12 +368,12 @@ for (const width of [390, 1440]) {
             assert.equal(await tools.evaluate(el => el.parentElement.nextElementSibling?.getAttribute('href')), '/questionario');
             await feedback.scrollIntoViewIfNeeded(); // below the fold on phones: lazy image
             await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="intro-screen"] img')].every(img => img.complete && img.naturalWidth > 0));
-            assert.equal(await intro.getByRole('link', { name: 'Apri Area studente', exact: true }).getAttribute('href'), '/profilo');
+            assert.equal(await intro.getByRole('link', { name: 'Area studente e strumenti', exact: true }).getAttribute('href'), '/profilo');
             assert.equal(await intro.locator('details[open]').count(), 0);
             assert.equal(await intro.locator('details').count(), 3);
             assert.equal(await intro.locator('details[data-section=start]').count(), 0);
             assert.equal(await intro.getByRole('link', { name: 'Guida all’uso', exact: true }).getAttribute('href'), '/guide');
-            const cards = await intro.locator('article').evaluateAll(items => items.map(item => {
+            const cards = await intro.locator('[data-testid="intro-activities"] nav > *').evaluateAll(items => items.map(item => {
                 const { x, y } = item.getBoundingClientRect();
                 return { x, y };
             }));
@@ -443,10 +443,10 @@ for (const [locale, width, dark, title] of [['de', 320, true, 'Fragebogenanalyse
             await page.goto(`${origin}/?view=intro`);
             const intro = page.getByTestId('intro-screen');
             await intro.getByRole('heading', { name: title, exact: true }).waitFor();
-            assert.equal(await intro.locator('article').count(), 4);
+            assert.equal(await intro.locator('[data-testid="intro-activities"] nav > *').count(), 4);
             assert.equal(await intro.locator('details[open]').count(), 0);
             assert.equal((await intro.innerText()).includes('app.intro.'), false);
-            assert.ok(await intro.evaluate(el => [...el.querySelectorAll('article, a[href="/questionario"]')].every(card => card.getBoundingClientRect().right <= el.getBoundingClientRect().right + 1)), 'long translated titles stay within the page');
+            assert.ok(await intro.evaluate(el => [...el.querySelectorAll('[data-testid="intro-activities"] nav > *, a[href="/questionario"]')].every(card => card.getBoundingClientRect().right <= el.getBoundingClientRect().right + 1)), 'long translated titles stay within the page');
             await intro.locator('a[href="/questionario"]').scrollIntoViewIfNeeded(); // lazy image below the fold
             await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="intro-screen"] img')].every(img => img.complete && img.naturalWidth > 0));
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));

@@ -3919,3 +3919,15 @@ pagine e i pannelli dell'amministrazione seguono gli stessi due raggi: restano
 solo `rounded-full` e due varianti direzionali `rounded-t-xl`/`rounded-t-2xl`
 nei dialoghi scritti a mano (`PromptMap`, `CreateInstrumentDialog`). Nessuna
 modifica ai dati né alla Guida interfaccia.
+
+### Chat e percorso guidato sul look piatto (#962)
+
+La presentazione iniziale elenca Bussola, Analisi questionari, Percorsi guidati e
+Area personale come voci piatte con immagine, titolo e descrizione, come le home
+delle aree: l'intera voce è il comando, senza riquadri né il link «Apri…» separato.
+Nell'inserimento dei punteggi ogni fattore è una riga con filetto e i gruppi hanno
+un solo colore con il loro nome, senza l'arcobaleno viola/ciano/verde. Nelle chat
+(guidata, libera, IDEA) le etichette di sistema non sono più pillole in maiuscolo,
+i pulsanti di scelta e le risposte rapide arrivano a 44 px e i colori passano dai
+token del tema, così il tema scuro non dipende più dal remap. Nessuna modifica a
+dati, flussi o Guida interfaccia.

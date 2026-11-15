@@ -13,7 +13,7 @@ import {
     type IdeaKeepTarget,
     type IdeaVariant,
 } from '@/lib/idea-map';
-import { Spinner } from '@/components/ui/Button';
+import { Button, buttonClasses } from '@/components/ui/Button';
 
 interface IdeaConclusionProps {
     sessionId: string;
@@ -54,44 +54,44 @@ export function IdeaConclusion({ sessionId, locale, variant, onClose }: IdeaConc
             onClick={() => toggle(target)}
             aria-pressed={targets.includes(target)}
             className={cn(
-                'flex w-full items-start gap-3 rounded-control border px-3 py-2.5 text-left transition-colors',
+                'flex min-h-control w-full items-start gap-3 rounded-control border px-3 py-2.5 text-left transition-colors',
                 targets.includes(target)
-                    ? 'border-teal-400 bg-teal-50'
-                    : 'border-slate-200 bg-white hover:border-slate-300',
+                    ? 'border-brand bg-brand-soft'
+                    : 'border-line bg-surface hover:border-line-strong',
             )}
         >
-            <span className="mt-0.5 shrink-0 text-slate-500">{icon}</span>
+            <span className="mt-0.5 shrink-0 text-ink-muted">{icon}</span>
             <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium text-slate-800">{label}</span>
-                <span className="block text-xs text-slate-500">{hint}</span>
+                <span className="block text-sm font-semibold text-ink">{label}</span>
+                <span className="block text-xs text-ink-muted">{hint}</span>
             </span>
-            {targets.includes(target) && <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />}
+            {targets.includes(target) && <Check className="mt-0.5 h-4 w-4 shrink-0 text-link" />}
         </button>
     );
 
     if (typeof document === 'undefined') return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4" role="dialog" aria-modal="true">
-            <div className="w-full max-w-lg space-y-4 rounded-card bg-white p-5 shadow-card">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-backdrop p-4" role="dialog" aria-modal="true">
+            <div className="w-full max-w-lg space-y-4 rounded-card bg-surface p-5 shadow-modal">
                 <div className="flex items-start gap-3">
-                    <h2 className="min-w-0 flex-1 text-lg font-bold text-slate-900">
+                    <h2 className="min-w-0 flex-1 text-lg font-semibold text-ink">
                         {done ? t('idea.conclude.doneTitle') : t('idea.conclude.title')}
                     </h2>
-                    <button type="button" onClick={onClose} aria-label={t('idea.map.close')} className="rounded-control p-1 text-slate-500 hover:bg-slate-100">
+                    <button type="button" onClick={onClose} aria-label={t('idea.map.close')} className="inline-flex h-control w-control shrink-0 items-center justify-center rounded-control text-ink-muted hover:bg-surface-raised">
                         <X className="h-4 w-4" />
                     </button>
                 </div>
 
                 {done ? (
                     <div className="space-y-3">
-                        <p className="text-sm text-slate-600">{done.description}</p>
-                        <ul className="space-y-1 text-sm text-slate-700">
+                        <p className="text-sm text-ink-muted">{done.description}</p>
+                        <ul className="space-y-1 text-sm text-ink-body">
                             {Object.entries(done.kept).map(([target, outcome]) => (
                                 <li key={target} className="flex items-center gap-2">
                                     {outcome.failed || outcome.skipped
-                                        ? <X className="h-4 w-4 shrink-0 text-amber-600" />
-                                        : <Check className="h-4 w-4 shrink-0 text-teal-600" />}
+                                        ? <X className="h-4 w-4 shrink-0 text-warning" />
+                                        : <Check className="h-4 w-4 shrink-0 text-link" />}
                                     <span>
                                         {t(target === 'notebook' ? 'idea.keep.notebook' : 'idea.keep.portfolio')}
                                         {(outcome.failed || outcome.skipped) && ` — ${outcome.skipped ?? t('toast.error')}`}
@@ -99,25 +99,22 @@ export function IdeaConclusion({ sessionId, locale, variant, onClose }: IdeaConc
                                 </li>
                             ))}
                             {Object.keys(done.kept).length === 0 && (
-                                <li className="text-slate-500">{t('idea.conclude.keptNothing')}</li>
+                                <li className="text-ink-muted">{t('idea.conclude.keptNothing')}</li>
                             )}
                         </ul>
                         <div className="flex flex-wrap gap-2 pt-1">
-                            <a
-                                href={ideaMapPdfUrl(sessionId, locale)}
-                                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:border-slate-300"
-                            >
-                                <FileText className="h-3.5 w-3.5" />
+                            <a href={ideaMapPdfUrl(sessionId, locale)} className={buttonClasses('secondary')}>
+                                <FileText className="h-4 w-4" />
                                 {t('idea.keep.pdf')}
                             </a>
-                            <button type="button" onClick={onClose} className="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-medium text-white">
+                            <Button type="button" onClick={onClose}>
                                 {t('idea.conclude.close')}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        <p className="text-sm text-slate-600">{t('idea.conclude.body')}</p>
+                        <p className="text-sm text-ink-muted">{t('idea.conclude.body')}</p>
                         <div className="space-y-2">
                             {variant !== 'research' && option(
                                 'notebook',
@@ -133,20 +130,11 @@ export function IdeaConclusion({ sessionId, locale, variant, onClose }: IdeaConc
                             )}
                         </div>
                         <div className="flex flex-wrap items-center gap-2 pt-1">
-                            <button
-                                type="button"
-                                onClick={() => void save()}
-                                disabled={saving}
-                                className="inline-flex items-center gap-2 rounded-full bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-                            >
-                                {saving && <Spinner className="h-4 w-4" />}
+                            <Button type="button" onClick={() => void save()} busy={saving}>
                                 {targets.length > 0 ? t('idea.conclude.save') : t('idea.conclude.keepNothing')}
-                            </button>
-                            <a
-                                href={ideaMapPdfUrl(sessionId, locale)}
-                                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-2 text-xs text-slate-600 hover:border-slate-300"
-                            >
-                                <FileText className="h-3.5 w-3.5" />
+                            </Button>
+                            <a href={ideaMapPdfUrl(sessionId, locale)} className={buttonClasses('secondary')}>
+                                <FileText className="h-4 w-4" />
                                 {t('idea.keep.pdf')}
                             </a>
                         </div>

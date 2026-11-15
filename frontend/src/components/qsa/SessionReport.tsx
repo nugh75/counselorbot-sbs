@@ -7,6 +7,7 @@ import { Download, Home } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 
 const labels = {
     it: {
@@ -138,18 +139,18 @@ export function SessionReport({
 
     return (
         <section className="space-y-4 text-left" aria-label={copy.title}>
-            <h3 className="text-lg font-semibold text-slate-800">{copy.title}</h3>
+            <h3 className="text-lg font-semibold text-ink">{copy.title}</h3>
 
             {loading ? (
-                <p role="status" className="text-sm text-slate-600">{copy.loading}</p>
+                <p role="status" className="text-sm text-ink-muted">{copy.loading}</p>
             ) : summary?.status === 'unavailable' ? (
-                <p role="alert" className="rounded-card border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{copy.unavailable}</p>
+                <div role="alert"><Callout variant="warning">{copy.unavailable}</Callout></div>
             ) : summary?.summary ? (
-                <div className="prose prose-sm max-w-none rounded-card border border-slate-200 bg-slate-50 p-4 max-h-72 overflow-y-auto">
+                <div className="prose prose-sm max-w-none rounded-card border border-line bg-surface-sunken p-4 max-h-72 overflow-y-auto">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{summary.summary}</ReactMarkdown>
                 </div>
             ) : (
-                <p className="text-sm text-slate-600">{copy.empty}</p>
+                <p className="text-sm text-ink-muted">{copy.empty}</p>
             )}
 
             <div className="space-y-3 pt-2">
@@ -178,11 +179,11 @@ export function SessionReport({
             </div>
 
             {downloaded && (
-                <p role="status" className="text-sm font-medium text-teal-700 text-center">{copy.downloadSuccess}</p>
+                <p role="status" className="text-sm font-semibold text-link text-center">{copy.downloadSuccess}</p>
             )}
 
             {error && (
-                <p role="alert" className="text-sm text-red-800 text-center">{copy.error}</p>
+                <Callout variant="danger">{copy.error}</Callout>
             )}
         </section>
     );
