@@ -50,11 +50,11 @@ export function StepPresentationFields({ presentation, step, update, showDate = 
                 className={field} />
             <div id={`${titleId}-help`} className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
                 <span>{l('studentSees')} <strong className="font-semibold text-ink-body">{presentation.title}</strong></span>
-                {step.step_type !== 'forum' && <Button type="button" variant="ghost" size="sm" className={link} onClick={() => { update({title: null}); setEditingTitle(false); }}>{l('useDefaultTitle')}</Button>}
+                {step.step_type !== 'forum' && <Button type="button" variant="ghost" size="md" className={link} onClick={() => { update({title: null}); setEditingTitle(false); }}>{l('useDefaultTitle')}</Button>}
             </div>
         </div> : <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
             <span><span className="font-semibold text-ink-body">{l('stepTitleLabel')}:</span> {presentation.derivedTitle}</span>
-            <Button type="button" variant="ghost" size="sm" className={link} onClick={() => setEditingTitle(true)}>{l('personalizeTitle')}</Button>
+            <Button type="button" variant="ghost" size="md" className={link} onClick={() => setEditingTitle(true)}>{l('personalizeTitle')}</Button>
         </div>}
         {step.step_type === 'forum' && <p className="text-xs text-ink-muted">{l('forumTitleRequired')}</p>}
 
@@ -68,9 +68,9 @@ export function StepPresentationFields({ presentation, step, update, showDate = 
                 <span className="min-w-0 flex-1">{l('noteHelp')}</span>
                 <span>{`${noteLength}/1000`}</span>
             </div>
-            {step.instructions ? <Button type="button" variant="ghost" size="sm" className={link} onClick={() => { update({instructions: null}); setNoteOpen(false); }}>{l('removeNote')}</Button> : null}
+            {step.instructions ? <Button type="button" variant="ghost" size="md" className={link} onClick={() => { update({instructions: null}); setNoteOpen(false); }}>{l('removeNote')}</Button> : null}
         </div> : <div>
-            <Button type="button" variant="ghost" size="sm" className={link} onClick={() => setNoteOpen(true)}>{l('addNote')}</Button>
+            <Button type="button" variant="ghost" size="md" className={link} onClick={() => setNoteOpen(true)}>{l('addNote')}</Button>
         </div>}
 
         {showDate && <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
@@ -80,14 +80,14 @@ export function StepPresentationFields({ presentation, step, update, showDate = 
                     onChange={event => update({due_date: event.target.value || null})}
                     aria-label={l('dueDateLabel')}
                     className="rounded-control border border-line-strong px-2 py-1 text-xs text-ink focus:border-brand focus:outline-none" />
-                <Button type="button" variant="ghost" size="sm" className={link} onClick={() => {
+                <Button type="button" variant="ghost" size="md" className={link} onClick={() => {
                     update({due_date: null});
                     setDateOpen(false);
                 }}>{presentation.dueDateSource ? l('useObjectDate') : l('removeDate')}</Button>
                 {presentation.dueDate && <span className="text-ink-muted">{`${presentation.dueDate} · ${source}`}</span>}
             </> : <>
                 <span>{presentation.dueDate ? `${formatDate(lang, presentation.dueDate)} · ${source}` : l('noDate')}</span>
-                {step.step_type !== 'meeting' && <Button type="button" variant="ghost" size="sm" className={link} onClick={() => setDateOpen(true)}>
+                {step.step_type !== 'meeting' && <Button type="button" variant="ghost" size="md" className={link} onClick={() => setDateOpen(true)}>
                     {presentation.dueDateSource ? l('differentDate') : l('addDate')}
                 </Button>}
             </>}

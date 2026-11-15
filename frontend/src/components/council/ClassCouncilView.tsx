@@ -47,7 +47,7 @@ function StudentSheet({ student, lang }: { student: CouncilStudent; lang: string
                         <div key={code}><dt className="inline font-semibold text-ink-body">{code}</dt> <dd className="inline text-ink-muted">{String(value)}</dd></div>)}
                 </dl>}
                 {result.summary && <details className="mt-2 text-sm">
-                    <summary className="cursor-pointer font-medium text-link">{l('summary')}</summary>
+                    <summary className="cursor-pointer font-semibold text-link">{l('summary')}</summary>
                     <p className="mt-2 whitespace-pre-line text-ink-body">{result.summary}</p>
                 </details>}
             </div>)}</div>
@@ -65,8 +65,8 @@ function StudentSheet({ student, lang }: { student: CouncilStudent; lang: string
         <Section title={l('goals')} empty={l('nothing')} count={student.goals.length}>
             <div className="divide-y divide-line">{student.goals.map((goal, index) => <div key={index} className="py-3 text-sm first:pt-0 last:pb-0">
                 <p className="font-semibold text-ink">{goal.title}</p>
-                {goal.criteria && <p className="mt-1 text-ink-body"><span className="font-medium">{l('criteria')}:</span> {goal.criteria}</p>}
-                {goal.reflection && <p className="mt-1 text-ink-body"><span className="font-medium">{l('reflection')}:</span> {goal.reflection}</p>}
+                {goal.criteria && <p className="mt-1 text-ink-body"><span className="font-semibold">{l('criteria')}:</span> {goal.criteria}</p>}
+                {goal.reflection && <p className="mt-1 text-ink-body"><span className="font-semibold">{l('reflection')}:</span> {goal.reflection}</p>}
             </div>)}</div>
         </Section>
     </div>;

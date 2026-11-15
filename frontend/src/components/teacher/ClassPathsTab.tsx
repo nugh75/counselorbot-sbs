@@ -739,12 +739,12 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             {pending && <p className="mt-1 text-xs text-ink-muted">{pathTemplateText(lang, 'pendingHelp')}</p>}
                                             {isLegacyQuestionnaireTool(step) && <p className="mt-1 text-xs text-ink-muted">{k('legacyQuestionnaire')}</p>}
                                             {step.step_type === 'meeting' && step.meeting_id && (
-                                                <Button variant="ghost" size="sm" disabled={busy} onClick={() => setMeetingEditor({id: step.meeting_id!, adding: false})}>
+                                                <Button variant="ghost" size="md" disabled={busy} onClick={() => setMeetingEditor({id: step.meeting_id!, adding: false})}>
                                                     {t('piano.builder.editMeeting')}
                                                 </Button>
                                             )}
                                             {step.step_type === 'forum' && step.topic_id && (
-                                                <Button variant="ghost" size="sm" disabled={busy} onClick={() => setDiscussionEditor({topicId: step.topic_id!})}>
+                                                <Button variant="ghost" size="md" disabled={busy} onClick={() => setDiscussionEditor({topicId: step.topic_id!})}>
                                                     {t('piano.builder.editDiscussion')}
                                                 </Button>
                                             )}
@@ -812,12 +812,12 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                     </div>
 
                                     <div className="flex flex-wrap items-center justify-end gap-1 md:w-40">
-                                        {!open && <Button variant="secondary" size="sm" disabled={busy}
+                                        {!open && <Button variant="secondary" size="md" disabled={busy}
                                             onClick={() => setOpenSteps(current => [...current, step])}
                                             aria-label={`${l('editStep')} #${step.position}`}>{l('editStep')}</Button>}
-                                        {open && step.id !== undefined && <Button variant="secondary" size="sm"
+                                        {open && step.id !== undefined && <Button variant="secondary" size="md"
                                             onClick={() => setOpenSteps(current => current.filter(row => row !== step))}>{l('doneEditing')}</Button>}
-                                        <Button variant="secondary" size="sm" disabled={busy || replacing === index}
+                                        <Button variant="secondary" size="md" disabled={busy || replacing === index}
                                             onClick={() => startReplace(index)}
                                             aria-label={`${l('replaceStep')} #${step.position}`}>{l('replaceStep')}</Button>
                                         {open && <>
