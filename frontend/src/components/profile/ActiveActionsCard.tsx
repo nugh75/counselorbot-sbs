@@ -53,7 +53,7 @@ export function ActiveActionsCard() {
 
     if (!enabled) return null;
     if (failed) return <section aria-labelledby="active-actions-title" className="space-y-2">
-        <h2 id="active-actions-title" className="border-b border-line-strong pb-2 text-lg font-semibold text-ink">{l('title')}</h2>
+        <h2 id="active-actions-title" className="border-b-2 border-line-section pb-2 text-xl font-semibold text-ink">{l('title')}</h2>
         <div role="alert" className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-body">
             <p>{l('error')}</p>
             <Button variant="ghost" onClick={() => { setFailed(false); setLoaded(false); setAttempt(n => n + 1); }}>{l('retry')}</Button>

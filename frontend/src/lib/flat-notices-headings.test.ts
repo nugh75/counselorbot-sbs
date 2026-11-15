@@ -35,9 +35,9 @@ test('audited admin and profile fields keep the global focus ring', () => {
     assert.doesNotMatch(read('app/profilo/page.tsx'), /bg-transparent text-sm outline-none/);
 });
 
-test('headings use text-lg semibold and the practice help is text-sm', () => {
+test('section headings use text-xl semibold with the 2px section rule and the practice help is text-sm', () => {
     assert.doesNotMatch(read('components/forum/ForumView.tsx'), /font-bold/);
-    assert.doesNotMatch(read('components/teacher/PracticeNotebooks.tsx'), /<h2[^>]*text-xl/);
+    assert.match(read('components/teacher/PracticeNotebooks.tsx'), /sectionTitle = 'border-b-2 border-line-section pb-2 text-xl font-semibold/);
     for (const file of ['PracticeNotebooks', 'PracticeChats', 'PracticeRepertoire']) {
         assert.doesNotMatch(read(`components/teacher/${file}.tsx`), /<p className="text-xs text-ink-muted">/, file);
     }

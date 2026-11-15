@@ -110,6 +110,7 @@
   --color-surface-raised: var(--surface-raised);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
+  --color-line-section: var(--line-section);
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
   --color-brand-soft: var(--brand-soft);
@@ -223,6 +224,7 @@
   --surface-raised: var(--color-slate-100);
   --line: var(--color-slate-200);
   --line-strong: var(--color-slate-300);
+  --line-section: var(--color-slate-400);
   --brand: var(--color-indigo-600);
   --brand-hover: var(--color-indigo-700);
   --brand-soft: var(--color-indigo-50);
@@ -701,6 +703,7 @@ h1.text-3xl {
   --surface-raised: #334155;
   --line: #334155;
   --line-strong: #475569;
+  --line-section: #64748b;
   --brand-soft: #103f42;
   --brand-line: #1f7376;
   --link: #8fcfd1;

@@ -334,7 +334,7 @@ reindirizzamento permanente, così il ruolo viene risolto a ogni visita. La
 La presentazione offre quattro ingressi illustrati: **Bussola**, **Analisi
 questionari**, **Percorsi guidati**, **Area studente e strumenti**. La Bussola
 consiglia da quale strumento partire e non somministra questionari né produce
-punteggi. Nell'Area studente la Bussola è una riga piatta come le altre voci del
+punteggi. Nella home dell'Area studente l'intestazione viene prima del selettore di classe, e le sezioni sono separate da un filetto di 2 px ben visibile e da più spazio. Nell'Area studente la Bussola è una riga piatta come le altre voci del
 catalogo (senza riquadro), come il collegamento «Cambiamenti» in Il mio profilo.
 Le righe d'ingresso mostrano al passaggio una linea sotto la riga; l'albero degli
 obiettivi è un elenco di righe con rientro, senza riquadri; la scheda «Panoramica»

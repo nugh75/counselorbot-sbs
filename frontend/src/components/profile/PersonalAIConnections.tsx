@@ -16,7 +16,7 @@ export function PersonalAIConnections({ area }: { area: 'profilo' | 'docente' })
     ];
     const headingId = `${area}-ai-connections-title`;
     return <section aria-labelledby={headingId} data-testid="personal-ai-connections">
-        <h2 id={headingId} className="border-b border-line-strong pb-2 text-lg font-semibold text-ink">{personalAPIText(lang, 'sectionTitle')}</h2>
+        <h2 id={headingId} className="border-b-2 border-line-section pb-2 text-xl font-semibold text-ink">{personalAPIText(lang, 'sectionTitle')}</h2>
         <nav aria-labelledby={headingId} className="mt-2 grid gap-2 md:grid-cols-2">
             {entries.filter(entry => entry.visible).map(({ path, title, description, icon: Icon }) =>
                 <Link key={path} href={`/${area}/${path}`} className="flex min-h-24 items-center gap-4 rounded-card px-4 py-4 hover:bg-surface-sunken">

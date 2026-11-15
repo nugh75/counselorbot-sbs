@@ -83,8 +83,10 @@ test('BackButton reads as a text link, like the first breadcrumb item', () => {
 
 test('section headings use the strong rule token, not the faint line', () => {
     const source = read('EntryList');
-    assert.equal((source.match(/border-b border-line-strong pb-2/g) ?? []).length, 2, 'heading and subtitle wrapper');
+    assert.equal((source.match(/border-b-2 border-line-section pb-2/g) ?? []).length, 2, 'heading and subtitle wrapper');
     assert.doesNotMatch(source, /border-b border-line pb-/);
+    assert.match(source, /text-xl font-semibold/);
+    assert.match(readFileSync(new URL('../app/globals.css', import.meta.url), 'utf-8'), /--line-section:/);
 });
 
 test('Dialog opens as a modal, closes through onClose and gives focus back', () => {

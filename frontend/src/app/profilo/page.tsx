@@ -440,12 +440,12 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="page-wide px-4 py-8 space-y-8">
-            {!activeArea && <ClassViewSwitcher access={access} />}
+        <div className="page-wide px-4 py-8 space-y-12">
             {activeArea ? <PersonalAreaHeader slug={activeArea.slug} /> : <PageHeader
                 title={personalAreaText(lang, 'title')}
                 subtitle={personalAreaText(lang, 'intro')}
             />}
+            {!activeArea && <ClassViewSwitcher access={access} />}
 
             {!activeArea && <>
                 <ActiveActionsCard />
