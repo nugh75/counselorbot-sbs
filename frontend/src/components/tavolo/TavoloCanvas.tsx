@@ -386,8 +386,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                     <Button disabled={!fromId || !toId || fromId === toId} className="w-full">{label('connectPieces')}</Button>
                 </form>}
 
-                {(node || edge) && onSave && <button type="button" onClick={() => void onSave().then(() => setSelected(null)).catch(() => undefined)}
-                    className="min-h-control rounded-control bg-brand px-4 text-sm text-ink-on-brand">{label('saveChanges')}</button>}
+                {(node || edge) && onSave && <Button type="button" onClick={() => void onSave().then(() => setSelected(null)).catch(() => undefined)}>{label('saveChanges')}</Button>}
 
                 {node && (
                     <div className="space-y-4">
