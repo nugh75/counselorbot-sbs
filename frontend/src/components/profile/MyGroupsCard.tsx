@@ -9,6 +9,8 @@ import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Users } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Field';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Callout } from '@/components/ui/Callout';
 import { SkeletonEntryList } from '@/components/ui/Skeleton';
 
@@ -188,8 +190,8 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
     };
 
     return (
-        <Card as="section"
-            className="space-y-4 p-6"
+        <Card as="section" variant="flat"
+            className="space-y-4"
             aria-labelledby={showHeading ? 'my-groups-section' : undefined}
             aria-label={showHeading ? undefined : texts.title}
         >
@@ -210,7 +212,7 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
             ) : loadError && groups.length === 0 ? (
                 <Callout variant="danger">
                     <p>{texts.loadError}</p>
-                    <button type="button" onClick={() => void load()} className="mt-2 min-h-control rounded-control border border-danger-line bg-surface px-4 text-sm font-semibold text-danger-ink hover:bg-danger-soft">{texts.retry}</button>
+                    <Button variant="secondary" className="mt-2" onClick={() => void load()}>{texts.retry}</Button>
                 </Callout>
             ) : (
                 <>
@@ -219,9 +221,9 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                             {texts.loadError} <button type="button" onClick={() => void load()} className="min-h-control font-semibold text-warning-ink underline">{texts.retry}</button>
                         </Callout>
                     )}
-                    <ul className="space-y-2">
+                    <ul className="divide-y divide-line">
                         {groups.map((group) => (
-                            <li key={group.membership_id} className="rounded-control border border-line bg-surface p-4 text-sm text-ink-body">
+                            <li key={group.membership_id} className="py-4 text-sm text-ink-body">
                                 <div className="flex items-center gap-2">
                                     <span className="flex-1">
                                         <span className="font-semibold">{group.name}</span>
@@ -243,13 +245,10 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                                 <Link href={`/profilo/classi/${group.group_id}/forum`} className="mt-1 mr-4 inline-flex min-h-control items-center gap-2 text-sm text-link underline underline-offset-2">
                                     <span>{forumText(lang, 'forum')} — {group.name}</span>
                                     {Boolean(unreadByGroup[group.group_id] && unreadByGroup[group.group_id] > 0) && (
-                                        <span
-                                            className="inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full bg-move px-2 text-xs font-semibold text-ink-on-brand no-underline"
-                                            aria-label={forumText(lang, 'unreadBadge').replace('{count}', String(unreadByGroup[group.group_id]))}
-                                        >
+                                        <StatusBadge tone="warning" className="no-underline">
                                             {unreadByGroup[group.group_id]}
                                             <span className="sr-only"> {forumText(lang, 'unreadBadge').replace('{count}', String(unreadByGroup[group.group_id]))}</span>
-                                        </span>
+                                        </StatusBadge>
                                     )}
                                 </Link>
                                 {/* F30 (lotto 5A): dalla classe alle assegnazioni che la riguardano, con il filtro già impostato. */}
@@ -274,12 +273,12 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                 </>
             )}
             <div className="flex gap-2">
-                <input
+                <Input
                     value={joinCode}
                     onChange={(event) => setJoinCode(event.target.value)}
                     placeholder={texts.joinPlaceholder}
                     aria-label={texts.joinPlaceholder}
-                    className="min-w-0 w-full rounded-control border border-line-strong px-4 py-2 font-mono text-sm"
+                    className="font-mono"
                 />
                 <Button
                     type="button"

@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/auth';
 import { classMeetingText, type ClassMeetingTextKey } from '@/lib/i18n-class-meetings';
 import { meetingHost, meetingWhen, parseMeetings, type ClassMeeting } from '@/lib/class-meetings';
 import { Button } from '@/components/ui/Button';
+import { Field, Select } from '@/components/ui/Field';
 import { Callout } from '@/components/ui/Callout';
 import { isClassContentHidden } from '@/lib/user-access';
 import { useUserAccess } from '@/lib/use-user-access';
@@ -75,12 +76,11 @@ export function MeetingDetails({ lang, meeting, attended, onChanged, showTitle =
             {mine && <p className="text-xs"><span className="font-semibold">{m('yourSlot')}: </span>
                 <time dateTime={mine.starts_at}>{meetingWhen(mine, lang)}</time></p>}
             {freeSlots.length > 0 ? <div className="flex flex-wrap items-end gap-2">
-                <label className="block text-xs"><span className="sr-only">{mine ? m('changeSlot') : m('book')}</span>
-                    <select className="mt-1 block w-full rounded-control border border-line-strong bg-surface px-4 py-2 text-sm sm:w-auto" value={choice}
-                        disabled={busy} onChange={event => setChoice(event.target.value)}>
+                <Field label={<span className="sr-only">{mine ? m('changeSlot') : m('book')}</span>} className="sm:w-auto">
+                    <Select value={choice} disabled={busy} onChange={event => setChoice(event.target.value)}>
                         <option value="">{m('chooseSlot')}</option>
                         {freeSlots.map(slot => <option key={slot.id} value={slot.id}>{meetingWhen(slot, lang)}</option>)}
-                    </select></label>
+                    </Select></Field>
                 <Button variant="secondary" size="md" disabled={busy || !choice}
                     onClick={() => void call(`/api/user/meetings/${meeting.id}/booking`, 'POST', { slot_id: Number(choice) })}>
                     {mine ? m('changeSlot') : m('book')}</Button>
@@ -128,11 +128,11 @@ export function StudentMeetings({ lang }: { lang: string }) {
     const { meetings, failed, load } = useStudentMeetings();
     // Students without classes see nothing here; their timeline is unchanged.
     if (!failed && (!meetings || meetings.length === 0)) return null;
-    return <Card as="section" aria-label={m('timelineTitle')} className="space-y-4 p-4">
+    return <Card as="section" variant="flat" aria-label={m('timelineTitle')} className="space-y-4">
         <h2 className="font-semibold text-ink">{m('timelineTitle')}</h2>
         {failed && <Callout variant="danger">{m('loadError')} <Button variant="secondary" size="md" onClick={() => void load()}>{m('retry')}</Button></Callout>}
-        <ul className="space-y-4">
-            {(meetings ?? []).map(row => <li key={row.id} className="rounded-control border border-line bg-surface p-4">
+        <ul className="divide-y divide-line">
+            {(meetings ?? []).map(row => <li key={row.id} className="py-4">
                 <MeetingDetails lang={lang} meeting={row} attended={Boolean(row.attended)} onChanged={load} showTitle />
             </li>)}
         </ul>

@@ -11,6 +11,7 @@ import { Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Card } from '@/components/ui/Card';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button, Spinner } from '@/components/ui/Button';
 
 interface AvailabilityInstrument {
@@ -61,7 +62,7 @@ export function CrossSynthesisCard({ showHeading = true }: { showHeading?: boole
     };
 
     return (
-        <Card as="section" className="p-6 space-y-4">
+        <Card as="section" variant="flat" className="space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
                 {showHeading && <div>
                     <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
@@ -72,18 +73,13 @@ export function CrossSynthesisCard({ showHeading = true }: { showHeading?: boole
                 </div>}
                 <div className="flex flex-wrap gap-2">
                     {(availability.instruments ?? []).map((inst) => (
-                        <span
-                            key={inst.questionnaire_type}
-                            className="px-2 py-1 border border-line bg-surface-sunken text-ink-muted text-xs font-semibold rounded-full"
-                        >
-                            {inst.questionnaire_type}
-                        </span>
+                        <StatusBadge key={inst.questionnaire_type}>{inst.questionnaire_type}</StatusBadge>
                     ))}
                 </div>
             </div>
 
             {!availability.available ? (
-                <p className="text-sm text-ink-muted border border-dashed border-line rounded-card bg-surface px-4 py-6 text-center">
+                <p className="text-sm text-ink-muted">
                     {t('combined.needTwo')}
                 </p>
             ) : (
@@ -107,7 +103,7 @@ export function CrossSynthesisCard({ showHeading = true }: { showHeading?: boole
                         <p className="text-sm text-danger">{t('combined.error')}</p>
                     )}
                     {content && (
-                        <div className="bg-surface p-4 border border-line rounded-card prose prose-sm max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-1 prose-li:my-1 text-ink">
+                        <div className="border-t border-line pt-4 prose prose-sm max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-1 prose-li:my-1 text-ink">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
                         </div>
                     )}
