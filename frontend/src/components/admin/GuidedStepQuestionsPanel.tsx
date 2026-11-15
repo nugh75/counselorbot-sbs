@@ -225,7 +225,7 @@ export function GuidedStepQuestionsPanel() {
     const inputCls = 'mt-1 h-9 w-full rounded-control border border-line-strong bg-surface px-4 text-sm text-ink outline-none focus:border-brand';
 
     const renderForm = () => (
-        <section className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+        <section className="rounded-card border border-brand-line bg-brand-soft/40 p-4">
             <div className="grid gap-4 md:grid-cols-4">
                 <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.gsq.form.questionnaire')}
@@ -310,7 +310,7 @@ export function GuidedStepQuestionsPanel() {
 
     return (
         <div className="space-y-4">
-            <section className="rounded-lg border border-line bg-surface p-4">
+            <section className="rounded-card border border-line bg-surface p-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <h2 className="text-lg font-semibold text-ink">{t('admin.gsq.title')}</h2>
@@ -344,7 +344,7 @@ export function GuidedStepQuestionsPanel() {
                 </div>
             </section>
 
-            <section className="rounded-lg border border-line bg-surface p-4">
+            <section className="rounded-card border border-line bg-surface p-4">
                 <div className="grid gap-4 sm:grid-cols-3">
                     <label className="text-xs font-semibold text-ink-muted">
                         {t('admin.gsq.filter.questionnaire')}
@@ -394,12 +394,12 @@ export function GuidedStepQuestionsPanel() {
 
             <div className="space-y-2">
                 {loading && (
-                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted">
+                    <section className="rounded-card border border-line bg-surface p-8 text-center text-ink-muted">
                         {t('admin.gsq.loading')}
                     </section>
                 )}
                 {!loading && filtered.length === 0 && editingId !== 'new' && (
-                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted">
+                    <section className="rounded-card border border-line bg-surface p-8 text-center text-ink-muted">
                         {t('admin.gsq.empty')}
                     </section>
                 )}
@@ -409,7 +409,7 @@ export function GuidedStepQuestionsPanel() {
                     ) : (
                         <section
                             key={q.id}
-                            className="flex items-start justify-between gap-4 rounded-lg border border-line bg-surface p-4 shadow-card"
+                            className="flex items-start justify-between gap-4 rounded-card border border-line bg-surface p-4 shadow-card"
                         >
                             <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">

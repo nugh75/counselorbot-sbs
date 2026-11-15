@@ -407,15 +407,15 @@ export function QuestionnaireEditor() {
                                     <tr key={f.id} className="border-b border-line align-top">
                                         <td className="py-2 pr-2">
                                             <input value={f.code} onChange={(e) => patchFactor(f.id, { code: e.target.value })}
-                                                className="w-20 rounded border border-line-strong px-2 py-1" />
+                                                className="w-20 rounded-control border border-line-strong px-2 py-1" />
                                         </td>
                                         <td className="py-2 pr-2">
                                             <input value={f.dimension ?? ''} onChange={(e) => patchFactor(f.id, { dimension: e.target.value })}
-                                                className="w-28 rounded border border-line-strong px-2 py-1" />
+                                                className="w-28 rounded-control border border-line-strong px-2 py-1" />
                                         </td>
                                         <td className="py-2 pr-2">
                                             <select value={f.orientation} onChange={(e) => patchFactor(f.id, { orientation: e.target.value })}
-                                                className="rounded border border-line-strong px-2 py-1">
+                                                className="rounded-control border border-line-strong px-2 py-1">
                                                 {ORIENTATIONS.map((o) => <option key={o} value={o}>{o}</option>)}
                                             </select>
                                         </td>
@@ -430,7 +430,7 @@ export function QuestionnaireEditor() {
                                                     onChange={(e) => patchFactor(f.id, {
                                                         label_i18n: mergedI18n(f.label_i18n, l, e.target.value),
                                                     })}
-                                                    className="w-full rounded border border-line-strong px-2 py-1" />
+                                                    className="w-full rounded-control border border-line-strong px-2 py-1" />
                                             ))}
                                         </td>
                                         <td className="py-2 whitespace-nowrap">
@@ -457,7 +457,7 @@ export function QuestionnaireEditor() {
                         <span className="text-ink-muted">{t('admin.q.editLocale')}:</span>
                         {LOCALES.map((l) => (
                             <button key={l} onClick={() => setLocale(l)}
-                                className={`min-h-control rounded px-2 py-1 ${locale === l ? 'bg-brand text-ink-on-brand' : 'bg-surface-raised text-ink-muted'}`}>
+                                className={`min-h-control rounded-control px-2 py-1 ${locale === l ? 'bg-brand text-ink-on-brand' : 'bg-surface-raised text-ink-muted'}`}>
                                 {l}
                             </button>
                         ))}
@@ -489,11 +489,11 @@ export function QuestionnaireEditor() {
                                         <td className="py-2 pr-2">
                                             <input type="number" value={it.item_number}
                                                 onChange={(e) => patchItem(it.id, { item_number: Number(e.target.value) })}
-                                                className="w-14 rounded border border-line-strong px-2 py-1" />
+                                                className="w-14 rounded-control border border-line-strong px-2 py-1" />
                                         </td>
                                         <td className="py-2 pr-2">
                                             <select value={it.factor_code ?? ''} onChange={(e) => patchItem(it.id, { factor_code: e.target.value || null })}
-                                                className="rounded border border-line-strong px-2 py-1">
+                                                className="rounded-control border border-line-strong px-2 py-1">
                                                 <option value="">—</option>
                                                 {factors.map((f) => <option key={f.id} value={f.code}>{f.code}</option>)}
                                             </select>
@@ -513,7 +513,7 @@ export function QuestionnaireEditor() {
                                                     text_i18n: mergedI18n(it.text_i18n, locale, e.target.value),
                                                 })}
                                                 rows={2}
-                                                className="w-full min-w-[20rem] rounded border border-line-strong px-2 py-1" />
+                                                className="w-full min-w-[20rem] rounded-control border border-line-strong px-2 py-1" />
                                         </td>
                                         <td className="py-2 whitespace-nowrap">
                                             <button onClick={() => saveItem(it)} className="min-h-control text-brand hover:text-link mr-2"><Save className="w-4 h-4" /></button>
@@ -539,7 +539,7 @@ export function QuestionnaireEditor() {
                         <span className="text-ink-muted">{t('admin.q.viewLocale')}:</span>
                         {LOCALES.map((l) => (
                             <button key={l} onClick={() => setLocale(l)}
-                                className={`min-h-control rounded px-2 py-1 ${locale === l ? 'bg-brand text-ink-on-brand' : 'bg-surface-raised text-ink-muted'}`}>
+                                className={`min-h-control rounded-control px-2 py-1 ${locale === l ? 'bg-brand text-ink-on-brand' : 'bg-surface-raised text-ink-muted'}`}>
                                 {l}
                             </button>
                         ))}
@@ -551,7 +551,7 @@ export function QuestionnaireEditor() {
                     </div>
                     <div className="grid gap-4 md:grid-cols-2">
                         {rules.factors.map((f) => (
-                            <div key={f.code} className="rounded-lg border border-line p-4">
+                            <div key={f.code} className="rounded-card border border-line p-4">
                                 <div className="flex items-center justify-between">
                                     <span className="font-semibold text-link">{f.code} — {f.label}</span>
                                     <span className="text-xs text-ink-muted">{f.orientation}{f.is_interpretation_inverted ? ' · inv' : ''}</span>
@@ -628,7 +628,7 @@ function LanguageStatusBar({
         <div className="rounded-control border border-line bg-surface-sunken px-4 py-2 text-sm space-y-2">
             <div className="flex flex-wrap items-center gap-2">
                 <span className="text-ink-muted">{t('admin.q.versionStatus')} ({locale}):</span>
-                <span className="rounded bg-surface px-2 py-1 font-semibold text-ink border border-line">
+                <span className="rounded-control bg-surface px-2 py-1 font-semibold text-ink border border-line">
                     {version?.status ?? '—'}
                 </span>
                 {version?.source && (

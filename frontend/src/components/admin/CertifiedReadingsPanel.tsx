@@ -290,7 +290,7 @@ export function CertifiedReadingsPanel() {
         `min-h-control rounded-control border px-2 py-1 text-xs font-semibold ${active ? 'border-brand-line bg-brand-soft text-link' : 'border-line bg-surface text-ink-muted'}`;
 
     const renderForm = () => (
-        <div className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+        <div className="rounded-card border border-brand-line bg-brand-soft/40 p-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.readings.slug')}
                     <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="dweck-mindset" />
@@ -495,19 +495,19 @@ export function CertifiedReadingsPanel() {
             {loading ? (
                 <p className="text-sm text-ink-muted">…</p>
             ) : readings.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-line p-6 text-center text-sm text-ink-muted">{t('admin.readings.empty')}</p>
+                <p className="rounded-card border border-dashed border-line p-6 text-center text-sm text-ink-muted">{t('admin.readings.empty')}</p>
             ) : (
                 <ul className="space-y-2">
                     {readings.map((row) => (
-                        <li key={row.id} className="rounded-lg border border-line bg-surface p-4">
+                        <li key={row.id} className="rounded-card border border-line bg-surface p-4">
                             {editingId === row.id ? renderForm() : (
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="min-w-0">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <span className="rounded bg-surface-raised px-2 py-1 text-2xs font-semibold text-ink-muted">{row.kind}</span>
+                                            <span className="rounded-control bg-surface-raised px-2 py-1 text-2xs font-semibold text-ink-muted">{row.kind}</span>
                                             <span className="font-semibold text-ink">{row.title}</span>
                                             {row.year && <span className="text-xs text-ink-muted">{row.year}</span>}
-                                            <span className={`rounded px-2 py-1 text-2xs font-semibold ${row.status === 'certified' ? 'bg-success-soft text-success' : 'bg-surface-raised text-ink-muted'}`}>
+                                            <span className={`rounded-control px-2 py-1 text-2xs font-semibold ${row.status === 'certified' ? 'bg-success-soft text-success' : 'bg-surface-raised text-ink-muted'}`}>
                                                 {row.status === 'certified' ? t('admin.readings.certified') : t('admin.readings.draft')}
                                             </span>
                                             {row.is_sensitive && <AlertTriangle className="h-4 w-4 text-warning" aria-label={t('admin.readings.sensitive')} />}
@@ -515,7 +515,7 @@ export function CertifiedReadingsPanel() {
                                         <div className="mt-1 text-xs text-ink-muted">{(row.creators ?? []).join(', ')}</div>
                                         <div className="mt-1 flex flex-wrap gap-1">
                                             {(row.themes ?? []).map((code) => (
-                                                <span key={code} className="rounded bg-brand-soft px-2 py-1 text-2xs text-link">
+                                                <span key={code} className="rounded-control bg-brand-soft px-2 py-1 text-2xs text-link">
                                                     {themes.find((th) => th.code === code)?.label ?? code}
                                                 </span>
                                             ))}

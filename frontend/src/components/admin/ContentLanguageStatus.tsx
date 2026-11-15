@@ -73,7 +73,7 @@ export function ContentLanguageStatus({
         <div className="mt-2 rounded-control border border-line bg-surface px-4 py-2 text-sm space-y-2">
             <div className="flex flex-wrap items-center gap-2">
                 <span className="text-ink-muted">{t('admin.q.versionStatus')} ({locale}):</span>
-                <span className="rounded border border-line px-2 py-1 font-semibold text-ink">
+                <span className="rounded-control border border-line px-2 py-1 font-semibold text-ink">
                     {version?.status ?? '—'}
                 </span>
                 {version?.source && <span className="text-xs text-ink-muted">{t('admin.q.versionSource')}: {version.source}</span>}
@@ -83,7 +83,7 @@ export function ContentLanguageStatus({
                 <div className="flex flex-wrap gap-2">
                     {ladder.filter((status) => status !== version.status).map((status) => (
                         <button key={status} type="button" onClick={() => void changeStatus(status)}
-                            className="min-h-control inline-flex items-center gap-1 rounded border border-line-strong px-2 py-1 text-xs text-ink-body hover:bg-surface-sunken">
+                            className="min-h-control inline-flex items-center gap-1 rounded-control border border-line-strong px-2 py-1 text-xs text-ink-body hover:bg-surface-sunken">
                             <ArrowRight className="h-3 w-3" aria-hidden />{status}
                         </button>
                     ))}

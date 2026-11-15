@@ -22,7 +22,7 @@ export function PromptExperimentContext({ targetKey, steps, baseline, frozen, la
     const C = promptLabContextCopy[lang];
     const ordered = [...steps].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
     const target = ordered.find((s) => s.id === targetKey);
-    return <section aria-label={C.location} className="space-y-4 rounded-lg border border-line bg-surface p-4 text-sm text-ink-body">
+    return <section aria-label={C.location} className="space-y-4 rounded-card border border-line bg-surface p-4 text-sm text-ink-body">
         <h4 className="font-semibold text-ink">{C.location}</h4>
         <p className="font-semibold text-link">{C.path} → {target ? targetLabel(target, lang) : targetKey}</p>
         <p>{C.scope}</p>

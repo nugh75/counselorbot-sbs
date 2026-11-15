@@ -748,7 +748,7 @@ export function ConfigForm() {
             {activeSection === 'general' && (
             <div className="space-y-8">
             {/* 1. Funzioni */}
-            <div className="space-y-4 rounded-lg border border-line p-4">
+            <div className="space-y-4 rounded-card border border-line p-4">
                 <h3 className="text-sm font-semibold text-ink-body">{t('admin.features.title')}</h3>
                 <div className="space-y-2">
                     <label htmlFor="feature_tavolo" className="block text-sm font-semibold text-ink-body">{t('admin.features.tavolo')}</label>
@@ -956,7 +956,7 @@ export function ConfigForm() {
 
                 <div className="space-y-6 pt-2">
                     {/* Spiegazione ordine di scelta 1-2-3 */}
-                    <div className="rounded-lg bg-surface-sunken border border-line p-4 text-xs text-ink-body leading-relaxed space-y-1">
+                    <div className="rounded-card bg-surface-sunken border border-line p-4 text-xs text-ink-body leading-relaxed space-y-1">
                         <p className="font-semibold text-ink">
                             {systemAIText(lang, 'orderHelp')}
                         </p>
@@ -1020,7 +1020,7 @@ export function ConfigForm() {
                                         type="button"
                                         aria-pressed={!customModelMode}
                                         onClick={() => toggleCustomModelMode(false)}
-                                        className={`min-h-control flex-1 rounded px-2 py-2 font-semibold transition-colors ${!customModelMode ? 'bg-surface text-ink shadow-card' : 'text-ink-muted hover:text-ink'}`}
+                                        className={`min-h-control flex-1 rounded-control px-2 py-2 font-semibold transition-colors ${!customModelMode ? 'bg-surface text-ink shadow-card' : 'text-ink-muted hover:text-ink'}`}
                                     >
                                         {t('admin.config.useDropdownList')}
                                     </button>
@@ -1028,7 +1028,7 @@ export function ConfigForm() {
                                         type="button"
                                         aria-pressed={customModelMode}
                                         onClick={() => toggleCustomModelMode(true)}
-                                        className={`min-h-control flex-1 rounded px-2 py-2 font-semibold transition-colors ${customModelMode ? 'bg-surface text-ink shadow-card' : 'text-ink-muted hover:text-ink'}`}
+                                        className={`min-h-control flex-1 rounded-control px-2 py-2 font-semibold transition-colors ${customModelMode ? 'bg-surface text-ink shadow-card' : 'text-ink-muted hover:text-ink'}`}
                                     >
                                         {t('admin.config.customModelToggle')}
                                     </button>
@@ -1109,7 +1109,7 @@ export function ConfigForm() {
                             )}
                         </div>
 
-                        <div className="md:col-span-2 flex items-center gap-4 p-4 bg-surface-sunken border border-line rounded-lg">
+                        <div className="md:col-span-2 flex items-center gap-4 p-4 bg-surface-sunken border border-line rounded-card">
                             <input
                                 id="disable_thinking"
                                 type="checkbox"
@@ -1130,7 +1130,7 @@ export function ConfigForm() {
 
                     {/* Suggerimento: quali modelli sono adatti per CounselorBot e perché. */}
                     {providerRecommendations.length > 0 && (
-                        <div className="rounded-lg border border-line bg-surface-sunken p-4 space-y-4">
+                        <div className="rounded-card border border-line bg-surface-sunken p-4 space-y-4">
                             <p className="flex items-center gap-2 text-sm font-semibold text-ink">
                                 <Sparkles className="w-4 h-4 text-brand shrink-0" />
                                 {t('admin.config.recommendedModels')}
@@ -1146,7 +1146,7 @@ export function ConfigForm() {
                                                 disabled={activeKeyMissing}
                                                 onClick={() => handleModelChange(recommendation.id)}
                                                 className={cn(
-                                                    'h-full w-full rounded-lg border p-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+                                                    'h-full w-full rounded-control border p-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60',
                                                     selected
                                                         ? 'border-brand-line bg-brand-soft'
                                                         : 'border-line bg-surface hover:border-brand-line hover:bg-brand-soft/40',
@@ -1214,7 +1214,7 @@ export function ConfigForm() {
                                                         <span className="font-semibold text-ink shrink-0">
                                                             {roleText}:
                                                         </span>
-                                                        <code className="px-2 py-1 rounded bg-surface-raised text-ink-body font-mono text-2xs truncate">
+                                                        <code className="px-2 py-1 rounded-control bg-surface-raised text-ink-body font-mono text-2xs truncate">
                                                             {result.provider} / {result.model}
                                                         </code>
                                                     </div>
@@ -1243,7 +1243,7 @@ export function ConfigForm() {
                     )}
 
                     {/* Dettaglio avanzato per JSON di routing e timeout */}
-                    <details className="rounded-lg border border-line bg-surface-sunken/70 p-4 space-y-4">
+                    <details className="rounded-card border border-line bg-surface-sunken/70 p-4 space-y-4">
                         <summary className="cursor-pointer text-sm font-semibold text-ink-body select-none">
                             {systemAIText(lang, 'advancedTitle')}
                         </summary>
@@ -1272,7 +1272,7 @@ export function ConfigForm() {
                             </div>
                         ))}
                         <p className="text-xs text-ink-muted">{t('admin.routing.example')}</p>
-                        <code className="block overflow-x-auto text-xs text-ink-body font-mono p-2 bg-surface rounded border border-line">
+                        <code className="block overflow-x-auto text-xs text-ink-body font-mono p-2 bg-surface rounded-control border border-line">
                             {'[{"provider":"openrouter","model":"openrouter/free"},{"provider":"omniroute","model":"auto/best-chat"}]'}
                         </code>
                         <ModelContextSettings />
@@ -1381,7 +1381,7 @@ export function ConfigForm() {
                                 </div>
                                 {def.hint && <p className="text-xs text-warning">{def.hint}</p>}
                                 <textarea
-                                    className="w-full bg-surface-sunken border border-line-strong rounded-lg p-4 text-sm min-h-[160px] ring-warning outline-none font-mono text-ink focus:ring-2"
+                                    className="w-full bg-surface-sunken border border-line-strong rounded-control p-4 text-sm min-h-[160px] ring-warning outline-none font-mono text-ink focus:ring-2"
                                     value={currentVal}
                                     onChange={(e) => setConfigDraft(def.key, e.target.value, def.label)}
                                     placeholder={t('admin.config.directive.placeholder')}

@@ -200,7 +200,7 @@ export function CounselorCoverModal({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="counselor-cover-modal-title"
-                className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-modal"
+                className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-card border border-line bg-surface shadow-modal"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-line px-4 py-4">
@@ -218,7 +218,7 @@ export function CounselorCoverModal({
                         size="sm"
                         onClick={onClose}
                         disabled={saving}
-                        className="rounded-lg p-2 text-ink-muted hover:bg-surface-raised hover:text-ink-body"
+                        className="rounded-control p-2 text-ink-muted hover:bg-surface-raised hover:text-ink-body"
                         aria-label={t('admin.counselorCover.close')}
                     >
                         <X className="h-5 w-5" aria-hidden />
@@ -387,7 +387,7 @@ export function CounselorCoverModal({
                                     href="https://chatgpt.com"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-body shadow-card transition hover:border-line-strong hover:bg-surface-sunken hover:text-ink"
+                                    className="inline-flex min-h-[40px] items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-body shadow-card transition hover:border-line-strong hover:bg-surface-sunken hover:text-ink"
                                 >
                                     <span>{t('admin.counselorCover.openChatGPT')}</span>
                                     <ExternalLink className="h-3.5 w-3.5 text-ink-muted" aria-hidden />
@@ -396,7 +396,7 @@ export function CounselorCoverModal({
                                     href="https://gemini.google.com"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-body shadow-card transition hover:border-line-strong hover:bg-surface-sunken hover:text-ink"
+                                    className="inline-flex min-h-[40px] items-center gap-2 rounded-control border border-line bg-surface px-4 py-2 text-xs font-semibold text-ink-body shadow-card transition hover:border-line-strong hover:bg-surface-sunken hover:text-ink"
                                 >
                                     <span>{t('admin.counselorCover.openGemini')}</span>
                                     <ExternalLink className="h-3.5 w-3.5 text-ink-muted" aria-hidden />
@@ -438,7 +438,7 @@ export function CounselorCoverModal({
                                         setPreviewUrl(URL.createObjectURL(file));
                                     }
                                 }}
-                                className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-line-strong bg-surface-sunken/70 p-6 text-center transition hover:border-brand hover:bg-brand-soft/30"
+                                className="flex cursor-pointer flex-col items-center justify-center rounded-card border-2 border-dashed border-line-strong bg-surface-sunken/70 p-6 text-center transition hover:border-brand hover:bg-brand-soft/30"
                             >
                                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-link">
                                     <ImagePlus className="h-6 w-6" aria-hidden />
@@ -456,7 +456,7 @@ export function CounselorCoverModal({
                                     <span className="text-xs font-semibold text-ink-muted">
                                         {t('admin.counselorCover.selectedPreview')}
                                     </span>
-                                    <div className="relative aspect-[16/9] w-full max-h-48 overflow-hidden rounded-lg border border-line bg-surface-raised">
+                                    <div className="relative aspect-[16/9] w-full max-h-48 overflow-hidden rounded-card border border-line bg-surface-raised">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={previewUrl}

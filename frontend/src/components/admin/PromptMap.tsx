@@ -66,7 +66,7 @@ export const writeInstrumentParam = (instrument: string | null) => {
 
 function Badge({ kind }: { kind: PromptMapBadge }) {
     const { t } = useI18n();
-    return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded border px-2 py-1 text-2xs font-semibold tracking-wide ${BADGE_STYLE[kind]}`}>
+    return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-control border px-2 py-1 text-2xs font-semibold tracking-wide ${BADGE_STYLE[kind]}`}>
         {(kind.startsWith('model-') || kind === 'student') && <ArrowRight aria-hidden className="h-2.5 w-2.5" />}
         {t(`admin.promptMap.badge.${kind}`)}
     </span>;
@@ -74,7 +74,7 @@ function Badge({ kind }: { kind: PromptMapBadge }) {
 
 function LevelTag({ level, name }: { level: PromptMapLevel; name: string }) {
     const { t } = useI18n();
-    return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded border px-2 py-1 text-2xs font-semibold ${LEVEL_STYLE[level]}`}>
+    return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-control border px-2 py-1 text-2xs font-semibold ${LEVEL_STYLE[level]}`}>
         {LEVEL_NUMBER[level]} {level === 'instrument' ? name : t(`admin.promptMap.levelShort.${level}`)}
     </span>;
 }
@@ -189,13 +189,13 @@ function StrategyOptionsEditor({ instrument, options, onChange }: {
         const current = allowed ?? (choices ?? []).map(choice => choice.id);
         onChange({ allowed_strategies: current.includes(id) ? current.filter(item => item !== id) : [...current, id] });
     };
-    return <fieldset data-strategy-options className="space-y-2 rounded border border-line p-2">
+    return <fieldset data-strategy-options className="space-y-2 rounded-control border border-line p-2">
         <legend className="px-1 text-xs font-semibold text-ink-muted">{t('admin.promptMap.strategies.title')}</legend>
         <label className="flex flex-wrap items-center gap-2 text-xs text-ink-body">
             {t('admin.promptMap.strategies.limit')}
             <select value={options.certified_strategy_limit} disabled={!options.certified_strategy_limit_editable}
                 onChange={event => onChange({ certified_strategy_limit: Number(event.target.value) })}
-                className="rounded border border-line-strong bg-surface px-2 py-1 text-xs disabled:bg-surface-raised">
+                className="rounded-control border border-line-strong bg-surface px-2 py-1 text-xs disabled:bg-surface-raised">
                 <option value={0}>{t('admin.promptMap.strategies.limitNone')}</option>
                 <option value={1}>1</option>
             </select>
@@ -267,7 +267,7 @@ function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
         {multilingual && <label className="flex items-center gap-2 text-xs font-semibold text-ink-muted">
             {t('admin.promptMap.language')}
             <select value={language} onChange={event => { setLanguage(event.target.value); setDraft(entryText(entry, event.target.value)); setConfirming(false); }}
-                className="rounded border border-line-strong bg-surface px-2 py-1 text-xs">
+                className="rounded-control border border-line-strong bg-surface px-2 py-1 text-xs">
                 {PROMPT_MAP_LANGUAGES.map(code => <option key={code} value={code}>{code.toUpperCase()}</option>)}
             </select>
         </label>}
@@ -282,16 +282,16 @@ function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
                     onChange={patch => { setStrategyOptions({ ...strategyOptions, ...patch }); setConfirming(false); }} />
             </div>}
         </fieldset> : isColor ? <select aria-label={t('admin.promptMap.field.color_theme')} value={draft} onChange={event => setDraft(event.target.value)}
-            className="rounded border border-line-strong bg-surface px-2 py-2 text-sm">
+            className="rounded-control border border-line-strong bg-surface px-2 py-2 text-sm">
             {COLOR_THEMES.map(color => <option key={color} value={color}>{t(`admin.color.${color}`)}</option>)}
         </select> : isMode ? <select aria-label={t('admin.promptMap.field.system_prompt_mode')} value={draft} onChange={event => setDraft(event.target.value)}
-            className="rounded border border-line-strong bg-surface px-2 py-2 text-sm">
+            className="rounded-control border border-line-strong bg-surface px-2 py-2 text-sm">
             {(modes.includes(draft) ? modes : [draft, ...modes]).map(item => <option key={item} value={item}>{item}</option>)}
         </select> : entry.kind === 'guided_step' && entry.field === 'label' ? <input id={fieldId} aria-label={t('admin.promptMap.field.label')} value={draft}
             onChange={event => { setDraft(event.target.value); setConfirming(false); }}
-            className="w-full rounded border border-line-strong bg-surface px-2 py-2 text-sm" /> : <textarea id={fieldId} aria-label={entry.key} value={draft}
+            className="w-full rounded-control border border-line-strong bg-surface px-2 py-2 text-sm" /> : <textarea id={fieldId} aria-label={entry.key} value={draft}
             onChange={event => { setDraft(event.target.value); setConfirming(false); }} rows={Math.min(18, Math.max(6, draft.split('\n').length + 1))}
-            className="w-full rounded border border-line-strong bg-surface p-2 font-mono text-xs leading-relaxed text-ink outline-none focus:ring-2 focus:ring-focus" />}
+            className="w-full rounded-control border border-line-strong bg-surface p-2 font-mono text-xs leading-relaxed text-ink outline-none focus:ring-2 focus:ring-focus" />}
         {confirming && <Callout variant="warning">
             {t('admin.promptMap.sharedWarning', { users: sharedUsers(entry, name, t) })}
         </Callout>}
@@ -301,7 +301,7 @@ function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
                 {t('admin.promptMap.cancel')}
             </Button>
             <button type="button" onClick={save} disabled={saving}
-                className={`min-h-control rounded px-4 py-2 text-xs font-semibold text-ink-on-brand disabled:opacity-60 ${confirming ? 'bg-warning hover:bg-warning' : 'bg-brand hover:bg-brand-hover'}`}>
+                className={`min-h-control rounded-control px-4 py-2 text-xs font-semibold text-ink-on-brand disabled:opacity-60 ${confirming ? 'bg-warning hover:bg-warning' : 'bg-brand hover:bg-brand-hover'}`}>
                 {saving ? t('admin.promptMap.saving') : confirming ? t('admin.promptMap.saveForAll') : t('admin.promptMap.save')}
             </button>
         </div>
@@ -319,7 +319,7 @@ function VariantButtons({ variants, selected, disabled, onSelect }: {
     return <div role="group" aria-label={t('admin.context.variants')} className="mt-2 flex flex-wrap gap-2">
         {['totale', ...Object.keys(variants)].map(level => <button key={level} type="button" disabled={disabled}
             aria-pressed={selected === level} onClick={() => onSelect(level)}
-            className={`min-h-control rounded border px-2 py-1 text-xs font-semibold disabled:opacity-60 ${selected === level ? 'border-brand bg-brand text-ink-on-brand' : 'border-line-strong bg-surface text-ink-body hover:bg-surface-sunken'}`}>
+            className={`min-h-control rounded-control border px-2 py-1 text-xs font-semibold disabled:opacity-60 ${selected === level ? 'border-brand bg-brand text-ink-on-brand' : 'border-line-strong bg-surface text-ink-body hover:bg-surface-sunken'}`}>
             {variants[level]?.context_label || t('admin.context.total')}
         </button>)}
     </div>;
@@ -346,7 +346,7 @@ function EntryCard({ entry: baseEntry, highlighted, onSaved, onEditPersona, onEd
     const flags = entry.role === 'components' ? booleanFlags(entry.effective) : {};
 
     return <article id={entryAnchor(baseEntry.key)} data-entry-key={baseEntry.key}
-        className={`scroll-mt-24 rounded-lg border bg-surface p-4 shadow-card transition-shadow sm:p-4 ${highlighted ? 'border-brand ring-2 ring-brand-line' : 'border-line'}`}>
+        className={`scroll-mt-24 rounded-card border bg-surface p-4 shadow-card transition-shadow sm:p-4 ${highlighted ? 'border-brand ring-2 ring-brand-line' : 'border-line'}`}>
         <header className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
                 <h5 className="text-sm font-semibold text-ink">{entryTitle(baseEntry, t, tf)}</h5>
@@ -360,7 +360,7 @@ function EntryCard({ entry: baseEntry, highlighted, onSaved, onEditPersona, onEd
             <div className="flex flex-wrap items-center gap-1">
                 {(entry.kind === 'config' || entry.kind === 'guided_step') && entry.role !== 'components' && <span data-token-estimate className="text-xs text-ink-muted">{t('admin.context.tokens', { count: estimateTokens(text) })}</span>}
                 <Badge kind={badgeFor(entry)} />
-                {entry.read_only && <span className="rounded border border-line px-2 py-1 text-2xs font-semibold text-ink-muted">{t('admin.promptMap.badge.readOnly')}</span>}
+                {entry.read_only && <span className="rounded-control border border-line px-2 py-1 text-2xs font-semibold text-ink-muted">{t('admin.promptMap.badge.readOnly')}</span>}
             </div>
         </header>
 
@@ -372,7 +372,7 @@ function EntryCard({ entry: baseEntry, highlighted, onSaved, onEditPersona, onEd
 
         {entry.kind === 'counselor_persona' && <ul className="mt-4 space-y-2">
             {counselors.length === 0 && <li className="text-xs text-ink-muted">{t('admin.promptMap.noPersona')}</li>}
-            {counselors.map(counselor => <li key={counselor.id} className="flex items-start gap-4 rounded border border-line bg-surface-sunken px-4 py-2">
+            {counselors.map(counselor => <li key={counselor.id} className="flex items-start gap-4 rounded-control border border-line bg-surface-sunken px-4 py-2">
                 <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold text-ink-body">{counselor.name}</p>
                     <p data-token-estimate className="text-xs text-ink-muted">{t('admin.context.tokens', { count: estimateTokens(counselor.persona) })}</p>
@@ -398,7 +398,7 @@ function EntryCard({ entry: baseEntry, highlighted, onSaved, onEditPersona, onEd
         </div>}
 
         {entry.role === 'components' && !editing && <p className="mt-2 flex flex-wrap gap-1">
-            {Object.entries(flags).map(([flag, on]) => <span key={flag} className={`rounded px-2 py-1 text-2xs ${on ? 'bg-success-soft text-success' : 'bg-surface-raised text-ink-muted line-through'}`}>
+            {Object.entries(flags).map(([flag, on]) => <span key={flag} className={`rounded-control px-2 py-1 text-2xs ${on ? 'bg-success-soft text-success' : 'bg-surface-raised text-ink-muted line-through'}`}>
                 {componentLabels?.[flag] || flag}
             </span>)}
         </p>}
@@ -438,7 +438,7 @@ function RefRow({ map, refItem, onGo, onOverride }: {
     const name = useInstrumentName();
     const target = findEntry(map, refItem.key);
     const text = target ? entryText(target, 'it') : '';
-    return <li className="rounded border border-dashed border-line bg-surface-sunken/70 px-4 py-2 text-ink-muted">
+    return <li className="rounded-control border border-dashed border-line bg-surface-sunken/70 px-4 py-2 text-ink-muted">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
             <span className="font-semibold text-ink-muted">{target ? entryTitle(target, t, tf) : t(`admin.promptMap.role.${refItem.role}`)}</span>
             <code className="break-all font-mono text-2xs">{refItem.key}</code>
@@ -464,18 +464,18 @@ function StepSkills({ skills, engineOn }: { skills: PromptMapSkill[]; engineOn: 
     return <div data-step-skills className="mt-4">
         <p className="mb-1 text-2xs font-semibold text-ink-muted">{t('admin.promptMap.skills.title')}</p>
         <p className="mb-2 text-2xs text-ink-muted">{t('admin.promptMap.skills.hint')}</p>
-        {!engineOn && <p className="mb-2 flex items-center gap-1 rounded bg-warning-soft px-2 py-1 text-xs text-warning-ink">
+        {!engineOn && <p className="mb-2 flex items-center gap-1 rounded-control bg-warning-soft px-2 py-1 text-xs text-warning-ink">
             <AlertTriangle aria-hidden className="h-3.5 w-3.5" />{t('admin.promptMap.skills.engineOff')}
         </p>}
         {skills.length === 0 ? <p className="text-xs text-ink-muted">{t('admin.promptMap.skills.none')}</p> : <ul className="space-y-2">
             {skills.map(skill => {
                 const off = skill.blocked.length > 0 || !engineOn;
-                return <li key={skill.id} className={`rounded border px-4 py-2 text-xs ${off ? 'border-dashed border-line bg-surface-sunken/70 text-ink-muted' : 'border-violet-200 bg-violet-50/60 text-ink-body'}`}>
+                return <li key={skill.id} className={`rounded-control border px-4 py-2 text-xs ${off ? 'border-dashed border-line bg-surface-sunken/70 text-ink-muted' : 'border-violet-200 bg-violet-50/60 text-ink-body'}`}>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="font-semibold">{skill.name}</span>
                         <code className="font-mono text-2xs">{skill.slug}</code>
-                        <span className="rounded bg-surface px-2 py-1 text-2xs ring-1 ring-line">{t(`admin.promptMap.skills.routing.${skill.routing}`)}</span>
-                        <span className="rounded bg-surface px-2 py-1 text-2xs ring-1 ring-line">{t(`admin.promptMap.skills.slot.${skill.slot}`)}</span>
+                        <span className="rounded-control bg-surface px-2 py-1 text-2xs ring-1 ring-line">{t(`admin.promptMap.skills.routing.${skill.routing}`)}</span>
+                        <span className="rounded-control bg-surface px-2 py-1 text-2xs ring-1 ring-line">{t(`admin.promptMap.skills.slot.${skill.slot}`)}</span>
                         <span className="text-2xs">{t(skill.binding === 'step' ? 'admin.promptMap.skills.bindingStep' : 'admin.promptMap.skills.bindingAll')}</span>
                         <a href={`/admin?tab=skills&skill=${skill.id}`} className="inline-flex items-center gap-1 font-semibold text-brand hover:underline">
                             <Pencil aria-hidden className="h-3 w-3" />{t('admin.promptMap.skills.edit')}
@@ -516,7 +516,7 @@ function DialogShell({ title, hint, onClose, children, footer }: {
                     <h4 id={titleId} className="break-words text-sm font-semibold text-ink">{title}</h4>
                     {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
                 </div>
-                <button type="button" onClick={onClose} aria-label={t('admin.promptMap.close')} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-ink-muted hover:bg-surface-raised"><X className="h-4 w-4" /></button>
+                <button type="button" onClick={onClose} aria-label={t('admin.promptMap.close')} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-ink-muted hover:bg-surface-raised"><X className="h-4 w-4" /></button>
             </header>
             <div className="space-y-4 overflow-y-auto px-4 py-4">{children}</div>
             {footer && <footer className="flex flex-wrap justify-end gap-2 border-t border-line px-4 py-4">{footer}</footer>}
@@ -560,7 +560,7 @@ function PersonaDialog({ counselor, onClose, onSaved }: { counselor: PromptMapCo
         {variant && <p className="text-xs text-ink-muted">{variant.context_label} · {t('admin.context.variantHelp')}</p>}
         <label className="block text-xs font-semibold text-ink-muted">{t('admin.counselors.persona')}
             <textarea autoFocus value={draft} onChange={event => setDraft(event.target.value)} rows={12}
-                className="mt-1 w-full rounded border border-line-strong p-2 text-sm text-ink outline-none focus:ring-2 focus:ring-focus" />
+                className="mt-1 w-full rounded-control border border-line-strong p-2 text-sm text-ink outline-none focus:ring-2 focus:ring-focus" />
         </label>
         <p data-token-estimate className="text-xs text-ink-muted">{t('admin.context.tokens', { count: estimateTokens(draft) })}</p>
         {error && <p role="alert" className="text-xs text-danger-ink">{error}</p>}
@@ -571,7 +571,7 @@ function PersonaDialog({ counselor, onClose, onSaved }: { counselor: PromptMapCo
 const QUESTIONS_API = '/api/admin/guided-step-questions';
 const STEPS_API = '/api/admin/guided-steps';
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
-const ICON_BUTTON = 'inline-flex min-h-control min-w-control items-center justify-center rounded border border-line-strong bg-surface px-2 text-xs font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-40';
+const ICON_BUTTON = 'inline-flex min-h-control min-w-control items-center justify-center rounded-control border border-line-strong bg-surface px-2 text-xs font-semibold text-ink-body hover:bg-surface-sunken disabled:opacity-40';
 
 /** Domande suggerite di uno step, per lingua, con le API di guided_step_questions (stessa tabella della scheda dedicata). */
 function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; stepName: string; onClose: (changed: boolean) => void }) {
@@ -651,10 +651,10 @@ function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; 
         {!items && !error && <p className="text-xs text-ink-muted">{t('admin.promptMap.loading')}</p>}
         {items && <ol aria-label={t('admin.promptMap.role.suggested_questions')} className="space-y-2">
             {list.length === 0 && <li className="text-xs text-ink-muted">{t('admin.promptMap.questions.empty')}</li>}
-            {list.map((row, index) => <li key={row.id} data-question-id={row.id} className="rounded border border-line bg-surface-sunken px-4 py-2">
+            {list.map((row, index) => <li key={row.id} data-question-id={row.id} className="rounded-control border border-line bg-surface-sunken px-4 py-2">
                 {editingId === row.id ? <div className="space-y-2">
                     <textarea autoFocus aria-label={t('admin.promptMap.edit')} value={editText} onChange={event => setEditText(event.target.value)} rows={3}
-                        className="w-full rounded border border-line-strong bg-surface p-2 text-sm text-ink outline-none focus:ring-2 focus:ring-focus" />
+                        className="w-full rounded-control border border-line-strong bg-surface p-2 text-sm text-ink outline-none focus:ring-2 focus:ring-focus" />
                     <p data-token-estimate className="text-xs text-ink-muted">{t('admin.context.tokens', { count: estimateTokens(editText) })}</p>
                     <div className="flex flex-wrap justify-end gap-2">
                         <Button variant="secondary" type="button" onClick={() => setEditingId(null)} className="text-xs">{t('admin.promptMap.cancel')}</Button>
@@ -665,7 +665,7 @@ function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; 
                     <p className="min-w-0 flex-1 basis-48 whitespace-pre-wrap break-words text-sm text-ink-body">
                         <span className="mr-1 font-mono text-2xs text-ink-muted">{index + 1}.</span>{row.text}
                         <span data-token-estimate className="ml-2 text-xs text-ink-muted">{t('admin.context.tokens', { count: estimateTokens(row.text) })}</span>
-                        {!row.is_active && <span className="ml-2 rounded border border-line-strong px-1 text-2xs font-semibold text-ink-muted">{t('admin.promptMap.questions.inactive')}</span>}
+                        {!row.is_active && <span className="ml-2 rounded-control border border-line-strong px-1 text-2xs font-semibold text-ink-muted">{t('admin.promptMap.questions.inactive')}</span>}
                     </p>
                     <div className="flex shrink-0 flex-wrap gap-1">
                         <button type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} aria-label={t('admin.promptMap.questions.moveUp')} title={t('admin.promptMap.questions.moveUp')} className={ICON_BUTTON}><ChevronUp aria-hidden className="h-4 w-4" /></button>
@@ -673,16 +673,16 @@ function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; 
                         <button type="button" disabled={busy} onClick={() => { setEditingId(row.id); setEditText(row.text); setDeletingId(null); }} aria-label={t('admin.promptMap.edit')} title={t('admin.promptMap.edit')} className={ICON_BUTTON}><Pencil aria-hidden className="h-3.5 w-3.5" /></button>
                         {deletingId === row.id
                             ? <button type="button" disabled={busy} onClick={() => run([{ url: `${QUESTIONS_API}/${row.id}`, method: 'DELETE' }])}
-                                className="min-h-control rounded bg-danger px-2 py-1 text-xs font-semibold text-ink-on-brand disabled:opacity-60">{t('admin.promptMap.questions.confirmDelete')}</button>
+                                className="min-h-control rounded-control bg-danger px-2 py-1 text-xs font-semibold text-ink-on-brand disabled:opacity-60">{t('admin.promptMap.questions.confirmDelete')}</button>
                             : <button type="button" disabled={busy} onClick={() => setDeletingId(row.id)} aria-label={t('admin.promptMap.questions.delete')} title={t('admin.promptMap.questions.delete')} className={`min-h-control ${ICON_BUTTON} text-danger-ink`}><Trash2 aria-hidden className="h-3.5 w-3.5" /></button>}
                     </div>
                 </div>}
             </li>)}
         </ol>}
-        {items && <div className="space-y-2 rounded border border-dashed border-line-strong p-4">
+        {items && <div className="space-y-2 rounded-control border border-dashed border-line-strong p-4">
             <label className="block text-xs font-semibold text-ink-muted">{t('admin.promptMap.questions.new', { lang: language.toUpperCase() })}
                 <textarea value={draft} onChange={event => setDraft(event.target.value)} rows={2}
-                    className="mt-1 w-full rounded border border-line-strong bg-surface p-2 text-sm font-normal text-ink outline-none focus:ring-2 focus:ring-focus" />
+                    className="mt-1 w-full rounded-control border border-line-strong bg-surface p-2 text-sm font-normal text-ink outline-none focus:ring-2 focus:ring-focus" />
             </label>
             <p data-token-estimate className="text-xs text-ink-muted">{t('admin.context.tokens', { count: estimateTokens(draft) })}</p>
             <div className="flex justify-end">
@@ -712,7 +712,7 @@ function Collapsible({ anchor, open, onToggle, heading, count, hint, actions, he
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <Heading className={actions ? 'min-w-0 basis-full sm:basis-auto sm:flex-1' : 'min-w-0 flex-1'}>
                 <button type="button" aria-expanded={open} aria-controls={open ? regionId : undefined} onClick={onToggle}
-                    className="min-h-control flex w-full min-w-0 items-center gap-2 rounded py-1 text-left hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+                    className="min-h-control flex w-full min-w-0 items-center gap-2 rounded-control py-1 text-left hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
                     <ChevronRight aria-hidden className={`h-4 w-4 shrink-0 text-ink-muted transition-transform duration-150 motion-reduce:transition-none ${open ? 'rotate-90' : ''}`} />
                     <span className="min-w-0 flex-1">{heading}</span>
                     {count && <span className="shrink-0 whitespace-nowrap text-xs font-normal normal-case tracking-normal text-ink-muted">{count}</span>}
@@ -781,14 +781,14 @@ function StepPreview({ map, step, componentLabels }: { map: PromptMapData; step:
     const prompt = step.entries.find(entry => entry.kind === 'guided_step' && entry.field === 'prompt');
     return <div>
         <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}
-            className="min-h-control rounded border border-brand-line bg-surface px-4 py-2 text-sm font-semibold text-link hover:bg-brand-soft">
+            className="min-h-control rounded-control border border-brand-line bg-surface px-4 py-2 text-sm font-semibold text-link hover:bg-brand-soft">
             {t('admin.promptMap.preview')}
         </button>
         {open && <div className="mt-4 space-y-2">
             <p className="flex flex-wrap items-center gap-2 text-2xs text-ink-muted">
                 <span className="font-semibold">{t('admin.promptMap.previewLegend')}:</span>
                 {LEVELS.map(level => <LevelTag key={level} level={level} name={name(map.instrument)} />)}
-                <span className="rounded border border-line bg-surface-sunken px-2 py-1">{t('admin.promptMap.previewOther')}</span>
+                <span className="rounded-control border border-line bg-surface-sunken px-2 py-1">{t('admin.promptMap.previewOther')}</span>
             </p>
             {/* Valori salvati: nessun override, l'anteprima legge il DB come la chat. */}
             <PromptRequestPreview configs={[]} results={results} componentLabels={componentLabels} followUpMode={step.follow_up_mode}
@@ -851,8 +851,8 @@ function AddStepForm({ map, onCreated, onCancel }: { map: PromptMapData; onCreat
         }
     };
 
-    const field = 'mt-1 w-full rounded border border-line-strong bg-surface px-2 py-2 text-sm font-normal text-ink';
-    return <form aria-label={t('admin.promptMap.step.newTitle')} className="space-y-4 rounded-lg border border-dashed border-violet-300 bg-surface p-4"
+    const field = 'mt-1 w-full rounded-control border border-line-strong bg-surface px-2 py-2 text-sm font-normal text-ink';
+    return <form aria-label={t('admin.promptMap.step.newTitle')} className="space-y-4 rounded-card border border-dashed border-violet-300 bg-surface p-4"
         onSubmit={event => { event.preventDefault(); void create(); }}>
         <p className="text-sm font-semibold text-ink">{t('admin.promptMap.step.newTitle')}</p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -928,16 +928,16 @@ function DeleteStepDialog({ step, stepName, onClose, onDeleted }: { step: Prompt
         footer={<>
             <Button variant="secondary" type="button" disabled={busy} onClick={onClose} className="text-xs">{t('admin.promptMap.cancel')}</Button>
             <button type="button" onClick={remove} disabled={busy || !usage || typed !== step.id}
-                className="min-h-control rounded bg-danger px-4 py-2 text-xs font-semibold text-ink-on-brand disabled:opacity-50">{busy ? t('admin.promptMap.saving') : t('admin.promptMap.step.deleteConfirm')}</button>
+                className="min-h-control rounded-control bg-danger px-4 py-2 text-xs font-semibold text-ink-on-brand disabled:opacity-50">{busy ? t('admin.promptMap.saving') : t('admin.promptMap.step.deleteConfirm')}</button>
         </>}>
         {!usage && !error && <p className="text-xs text-ink-muted">{t('admin.promptMap.loading')}</p>}
-        {usage && <div data-step-usage className={`rounded border px-4 py-2 text-sm ${usage.sessions ? 'border-warning-line bg-warning-soft text-warning-ink' : 'border-line bg-surface-sunken text-ink-body'}`}>
+        {usage && <div data-step-usage className={`rounded-control border px-4 py-2 text-sm ${usage.sessions ? 'border-warning-line bg-warning-soft text-warning-ink' : 'border-line bg-surface-sunken text-ink-body'}`}>
             <p className="text-xs font-semibold">{t('admin.promptMap.step.deleteUsage')}</p>
             <ul className="mt-1 list-disc space-y-1 pl-4">
                 <li>{t('admin.promptMap.step.deleteSessions', { count: usage.sessions, messages: usage.messages })}</li>
                 {usage.suggested_questions > 0 && <li>{t('admin.promptMap.step.deleteQuestions', { count: usage.suggested_questions })}</li>}
             </ul>
-            {usage.session_details?.length > 0 && <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded border border-line bg-surface p-2 text-xs text-ink-body">
+            {usage.session_details?.length > 0 && <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-control border border-line bg-surface p-2 text-xs text-ink-body">
                 {usage.session_details.map(session => <li key={session.session_id} className="flex flex-wrap justify-between gap-x-4">
                     <code data-session-id className="break-all font-mono">{session.session_id}</code>
                     <span>{t('admin.promptMap.step.sessionMessages', { count: session.messages })}</span>
@@ -947,7 +947,7 @@ function DeleteStepDialog({ step, stepName, onClose, onDeleted }: { step: Prompt
         <p className="text-xs text-ink-muted">{t('admin.promptMap.step.deleteKeeps')}</p>
         <label className="block text-xs font-semibold text-ink-muted">{t('admin.promptMap.step.deleteConfirmLabel', { id: step.id })}
             <input autoFocus value={typed} onChange={event => setTyped(event.target.value)} autoComplete="off" spellCheck={false}
-                className="mt-1 w-full rounded border border-line-strong bg-surface px-2 py-2 font-mono text-sm font-normal text-ink" />
+                className="mt-1 w-full rounded-control border border-line-strong bg-surface px-2 py-2 font-mono text-sm font-normal text-ink" />
         </label>
         {error && <p role="alert" className="text-xs text-danger-ink">{error}</p>}
     </DialogShell>;
@@ -1127,7 +1127,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
     </>;
 
     return <section aria-labelledby="prompt-map-title" className="space-y-4">
-        <div className="rounded-lg border border-line bg-surface px-4 py-4">
+        <div className="rounded-card border border-line bg-surface px-4 py-4">
             <div className="flex flex-wrap items-end justify-between gap-4">
                 <div className="min-w-0">
                     <h3 id="prompt-map-title" className="flex items-center gap-2 text-sm font-semibold text-ink">
@@ -1139,7 +1139,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                     <label className="flex min-w-0 flex-1 flex-col text-xs font-semibold text-ink-muted sm:flex-none">
                         {t('admin.promptMap.instrument')}
                         <select value={instrument} onChange={event => { setInstrument(event.target.value); setOverrideFor(''); }}
-                            className="mt-1 w-full rounded border border-line-strong bg-surface px-2 py-2 text-sm font-semibold text-ink sm:w-72">
+                            className="mt-1 w-full rounded-control border border-line-strong bg-surface px-2 py-2 text-sm font-semibold text-ink sm:w-72">
                             {instruments.map(item => <option key={item.id} value={item.id}>{name(item.id)}</option>)}
                         </select>
                     </label>
@@ -1149,7 +1149,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                         <RefreshCw aria-hidden className={`h-3.5 w-3.5 ${loading ? SPIN : ''}`} />
                     </Button>
                     <button type="button" onClick={() => setTestingChat(true)} disabled={!instrument}
-                        className="min-h-control inline-flex items-center gap-1 rounded border border-brand-line bg-brand-soft px-2 py-2 text-xs font-semibold text-link hover:bg-brand-soft disabled:opacity-60">
+                        className="min-h-control inline-flex items-center gap-1 rounded-control border border-brand-line bg-brand-soft px-2 py-2 text-xs font-semibold text-link hover:bg-brand-soft disabled:opacity-60">
                         <Play aria-hidden className="h-3.5 w-3.5" />{t('admin.promptMap.testChat')}
                     </button>
                     <Button type="button" onClick={() => setCreatingInstrument(true)}
@@ -1175,20 +1175,20 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
 
         {map && counts && <div className="space-y-4">
             <Collapsible anchor={levelAnchor('common')} open={isOpen(levelSection('common'))} onToggle={() => toggle(levelSection('common'))}
-                className={`rounded-lg border border-line bg-surface px-4 py-2 sm:px-4 ${LEVEL_BLOCK.common}`}
+                className={`rounded-card border border-line bg-surface px-4 py-2 sm:px-4 ${LEVEL_BLOCK.common}`}
                 heading={<LevelTitle level="common" title={t('admin.promptMap.level.common')} />} hint={t('admin.promptMap.level.commonHint')}
                 count={t('admin.promptMap.entryCount', { count: counts.common })}>
                 <div className="space-y-4 pb-2">{map.levels.common.map(entry => card(entry))}</div>
             </Collapsible>
 
             <Collapsible anchor={levelAnchor('group')} open={isOpen(levelSection('group'))} onToggle={() => toggle(levelSection('group'))}
-                className={`rounded-lg border border-line bg-surface px-4 py-2 sm:px-4 ${LEVEL_BLOCK.group}`}
+                className={`rounded-card border border-line bg-surface px-4 py-2 sm:px-4 ${LEVEL_BLOCK.group}`}
                 heading={<LevelTitle level="group" title={t('admin.promptMap.level.group')} />} hint={t('admin.promptMap.level.groupHint')}
                 count={t('admin.promptMap.entryCount', { count: counts.group })}>
                 {map.levels.groups.length === 0 && <p className="pb-2 text-xs text-ink-muted">{t('admin.promptMap.emptyGroups')}</p>}
                 <div className="space-y-4 pb-2">
                     {map.levels.groups.map(group => <div key={group.instruments.join('|')} data-group={group.instruments.join('|')}
-                        className="rounded-lg border border-warning-line bg-warning-soft/40 p-4">
+                        className="rounded-card border border-warning-line bg-warning-soft/40 p-4">
                         <p className="text-2xs font-semibold text-warning-ink">{t('admin.promptMap.groupTitle', { count: group.instruments.length })}</p>
                         <ul aria-label={t('admin.promptMap.groupInstruments')} className="mt-2 flex flex-wrap gap-2">
                             {group.instruments.map(id => <li key={id} title={name(id)} aria-current={id === map.instrument ? 'true' : undefined}
@@ -1203,7 +1203,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
             </Collapsible>
 
             <Collapsible anchor={levelAnchor('instrument')} open={isOpen(levelSection('instrument'))} onToggle={() => toggle(levelSection('instrument'))}
-                className={`rounded-lg border border-line bg-surface px-4 py-2 sm:px-4 ${LEVEL_BLOCK.instrument}`}
+                className={`rounded-card border border-line bg-surface px-4 py-2 sm:px-4 ${LEVEL_BLOCK.instrument}`}
                 heading={<LevelTitle level="instrument" title={t('admin.promptMap.level.instrument', { name: instrumentName })} />} hint={t('admin.promptMap.level.instrumentHint')}
                 count={t('admin.promptMap.entryCount', { count: counts.instrument })}>
                 {map.levels.instrument.length === 0 && <p className="pb-2 text-xs text-ink-muted">{t('admin.promptMap.emptyLevel')}</p>}
@@ -1211,14 +1211,14 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
             </Collapsible>
 
             <Collapsible anchor={levelAnchor('step')} open={isOpen(levelSection('step'))} onToggle={() => toggle(levelSection('step'))}
-                className={`rounded-lg border border-line bg-surface px-4 py-2 sm:px-4 ${LEVEL_BLOCK.step}`}
+                className={`rounded-card border border-line bg-surface px-4 py-2 sm:px-4 ${LEVEL_BLOCK.step}`}
                 heading={<LevelTitle level="step" title={t('admin.promptMap.level.step')} />} hint={t('admin.promptMap.level.stepHint')}
                 count={t('admin.promptMap.stepCount', { count: counts.step })}>
                 <div className="space-y-2 pb-2">
                     {map.levels.steps.map(step => {
                         const section = stepSection(map.instrument, step.id);
                         return <Collapsible key={step.id} anchor={stepAnchor(step.id)} headingLevel={5} open={isOpen(section)} onToggle={() => toggle(section)}
-                            className="rounded-lg border border-violet-200 bg-violet-50/30 px-4 py-2 sm:px-4"
+                            className="rounded-card border border-violet-200 bg-violet-50/30 px-4 py-2 sm:px-4"
                             count={t('admin.promptMap.stepEntryCount', { count: step.entries.length, inherited: step.refs.length })}
                             actions={step.fixed ? undefined : <div className="ml-auto flex shrink-0 gap-1">
                                 {(() => {
@@ -1240,7 +1240,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                                 <span className="text-sm font-semibold text-ink">{stepTitle(step, lang, t)}</span>
                                 <code className="font-mono text-2xs font-normal text-ink-muted">{step.id}</code>
                                 {step.system_prompt_mode && <span className="text-2xs font-normal text-ink-muted">{t('admin.promptMap.mode', { mode: step.system_prompt_mode })}</span>}
-                                {step.fixed && <span className="rounded border border-line-strong px-2 py-1 text-2xs font-semibold text-ink-muted">{t('admin.promptMap.fixedPhase')}</span>}
+                                {step.fixed && <span className="rounded-control border border-line-strong px-2 py-1 text-2xs font-semibold text-ink-muted">{t('admin.promptMap.fixedPhase')}</span>}
                             </span>}>
                             <div className="pb-2">{stepBody(step)}</div>
                         </Collapsible>;
@@ -1248,7 +1248,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                     {structureError && <p role="alert" className="text-xs text-danger-ink">{structureError}</p>}
                     {adding ? <AddStepForm map={map} onCreated={stepCreated} onCancel={() => setAdding(false)} />
                         : <button type="button" onClick={() => setAdding(true)}
-                            className="min-h-control inline-flex items-center gap-1 rounded border border-dashed border-violet-300 bg-surface px-4 py-2 text-xs font-semibold text-violet-800 hover:bg-violet-50">
+                            className="min-h-control inline-flex items-center gap-1 rounded-control border border-dashed border-violet-300 bg-surface px-4 py-2 text-xs font-semibold text-violet-800 hover:bg-violet-50">
                             <Plus aria-hidden className="h-3.5 w-3.5" />{t('admin.promptMap.step.add')}
                         </button>}
                 </div>

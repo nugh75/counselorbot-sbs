@@ -158,7 +158,11 @@ Forma: due soli raggi — `rounded-control` per bottoni e campi, `rounded-card`
 per card e popover, `rounded-full` per avatar e puntini (#932): `rounded`,
 `rounded-md`, `rounded-lg`, `rounded-xl` e `rounded-2xl` non si usano più
 (`rounded-md` valeva `rounded-control` e `rounded-xl` `rounded-card`, ma
-`rounded-lg` era un terzo raggio e `rounded` un quarto). `shadow-card` /
+`rounded-lg` era un terzo raggio e `rounded` un quarto). Dall'audit di novembre
+anche le pagine e i pannelli dell'amministrazione seguono i due raggi (#963):
+restano solo `rounded-full` e le varianti direzionali `rounded-t-xl`/
+`rounded-t-2xl` dei due dialoghi scritti a mano (`PromptMap`,
+`CreateInstrumentDialog`). `shadow-card` /
 `shadow-pop` / `shadow-modal` (= `shadow-sm` / `shadow-lg` / `shadow-2xl`), le
 sole tre ombre; `h-control` / `min-h-control` = **44px in px**. `h-11` con la
 radice a 15px fa 41px: non è un target touch. `cn()` conosce questi nomi, quindi

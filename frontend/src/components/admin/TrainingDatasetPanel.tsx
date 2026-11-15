@@ -185,7 +185,7 @@ export function TrainingDatasetPanel() {
                 {t('admin.training.notice')}
             </Callout>
 
-            <section className="rounded-lg border border-line bg-surface p-4">
+            <section className="rounded-card border border-line bg-surface p-4">
                 <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink-body">
                     <Filter className="h-4 w-4 text-brand" />
                     {t('admin.training.filters')}
@@ -275,26 +275,26 @@ export function TrainingDatasetPanel() {
             </section>
 
             <section className="grid gap-4 md:grid-cols-4">
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     <p className="text-xs font-semibold text-ink-muted">{t('admin.training.total')}</p>
                     <p className="mt-2 text-3xl font-semibold text-ink">{summary?.total ?? 0}</p>
                 </div>
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     <p className="text-xs font-semibold text-ink-muted">{t('admin.training.pending')}</p>
                     <p className="mt-2 text-3xl font-semibold text-warning">{summary?.by_status.pending ?? 0}</p>
                 </div>
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     <p className="text-xs font-semibold text-ink-muted">{t('admin.training.exportable')}</p>
                     <p className="mt-2 text-3xl font-semibold text-success">{approvedCount}</p>
                 </div>
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     <p className="text-xs font-semibold text-ink-muted">{t('admin.training.rejected')}</p>
                     <p className="mt-2 text-3xl font-semibold text-danger">{summary?.by_status.rejected ?? 0}</p>
                 </div>
             </section>
 
             <section className="grid gap-4 lg:grid-cols-[minmax(280px,380px)_1fr]">
-                <div className="rounded-lg border border-line bg-surface">
+                <div className="rounded-card border border-line bg-surface">
                     <div className="border-b border-line px-4 py-4">
                         <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
                             <BrainCircuit className="h-4 w-4 text-brand" />
@@ -314,7 +314,7 @@ export function TrainingDatasetPanel() {
                             >
                                 <div className="mb-2 flex items-center justify-between gap-2">
                                     <span className="font-mono text-xs text-ink-muted">#{item.id}</span>
-                                    <span className={cn('rounded px-2 py-1 text-xs font-semibold', statusClass(item.status))}>
+                                    <span className={cn('rounded-control px-2 py-1 text-xs font-semibold', statusClass(item.status))}>
                                         {t(`admin.training.status.${item.status}`)}
                                     </span>
                                 </div>
@@ -330,7 +330,7 @@ export function TrainingDatasetPanel() {
                     </div>
                 </div>
 
-                <div className="rounded-lg border border-line bg-surface">
+                <div className="rounded-card border border-line bg-surface">
                     {selected ? (
                         <div>
                             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line px-4 py-4">

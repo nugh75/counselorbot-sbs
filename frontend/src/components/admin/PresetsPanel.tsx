@@ -205,7 +205,7 @@ export function PresetsPanel() {
     const reasoningEnabled = capability?.supports_reasoning ?? true;
 
     const renderForm = () => (
-        <div className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+        <div className="rounded-card border border-brand-line bg-brand-soft/40 p-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">{t('admin.presets.name')}
                     <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -288,7 +288,7 @@ export function PresetsPanel() {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-4 rounded-lg border border-line bg-surface p-4">
+            <div className="flex flex-wrap items-end justify-between gap-4 rounded-card border border-line bg-surface p-4">
                 <div>
                     <h2 className="text-lg font-semibold text-ink">{t('admin.presets.title')}</h2>
                     <p className="text-sm text-ink-muted">{t('admin.presets.subtitle')}</p>
@@ -302,7 +302,7 @@ export function PresetsPanel() {
 
             {editingId === 'new' && renderForm()}
 
-            <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+            <div className="overflow-x-auto rounded-card border border-line bg-surface">
                 <table className="w-full text-left text-sm">
                     <thead className="border-b border-line text-xs text-ink-muted">
                         <tr>
@@ -327,21 +327,21 @@ export function PresetsPanel() {
                                     <td className="px-4 py-2">
                                         <span className="text-ink-muted">{p.provider}</span>
                                         {!p.provider_configured && (
-                                            <span className="ml-2 rounded bg-warning-soft px-2 py-1 text-2xs font-semibold text-warning">{t('admin.presets.notConfigured')}</span>
+                                            <span className="ml-2 rounded-control bg-warning-soft px-2 py-1 text-2xs font-semibold text-warning">{t('admin.presets.notConfigured')}</span>
                                         )}
                                     </td>
                                     <td className="px-4 py-2 font-mono text-xs text-ink-body">
                                         <span>{p.model}</span>
-                                        {p.reasoning_mandatory && <span className="ml-2 rounded bg-warning-soft px-2 py-1 text-2xs font-semibold text-warning-ink" title={t('admin.presets.mandatoryReasoning')}>{t('admin.presets.mandatoryShort')}</span>}
-                                        {p.reasoning_effort && <span className="ml-2 rounded bg-info-soft px-2 py-1 text-2xs font-semibold text-info-ink">{t('admin.presets.reasoningEffort')}: {p.reasoning_effort}</span>}
+                                        {p.reasoning_mandatory && <span className="ml-2 rounded-control bg-warning-soft px-2 py-1 text-2xs font-semibold text-warning-ink" title={t('admin.presets.mandatoryReasoning')}>{t('admin.presets.mandatoryShort')}</span>}
+                                        {p.reasoning_effort && <span className="ml-2 rounded-control bg-info-soft px-2 py-1 text-2xs font-semibold text-info-ink">{t('admin.presets.reasoningEffort')}: {p.reasoning_effort}</span>}
                                     </td>
                                     <td className="px-4 py-2">{p.is_active ? <Check className="h-4 w-4 text-success" /> : <X className="h-4 w-4 text-ink-muted" />}</td>
                                     <td className="px-4 py-2">
                                         <div className="flex justify-end gap-1">
-                                            <button type="button" aria-label={`${t('admin.presets.edit')} ${p.name}`} onClick={() => startEdit(p)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-ink-muted hover:bg-surface-raised hover:text-ink"><Pencil className="h-4 w-4" /></button>
+                                            <button type="button" aria-label={`${t('admin.presets.edit')} ${p.name}`} onClick={() => startEdit(p)} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-ink-muted hover:bg-surface-raised hover:text-ink"><Pencil className="h-4 w-4" /></button>
                                             {confirmDelete === p.id
                                                 ? <ConfirmInline question={t('admin.presets.confirmDelete')} onConfirm={() => { setConfirmDelete(null); void remove(p.id); }} onCancel={() => setConfirmDelete(null)} />
-                                                : <button type="button" aria-label={`${t('admin.presets.delete')} ${p.name}`} onClick={() => setConfirmDelete(p.id)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-danger hover:bg-danger-soft"><Trash2 className="h-4 w-4" /></button>}
+                                                : <button type="button" aria-label={`${t('admin.presets.delete')} ${p.name}`} onClick={() => setConfirmDelete(p.id)} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-danger hover:bg-danger-soft"><Trash2 className="h-4 w-4" /></button>}
                                         </div>
                                     </td>
                                 </tr>
