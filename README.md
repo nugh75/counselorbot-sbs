@@ -156,4 +156,4 @@ Main backend route groups:
 Ideazione, progettazione e sviluppo software: **Daniele Dragoni**.
 Copyright © 2026 Daniele Dragoni.
 
-Licensed under the GNU Affero General Public License v3.0 (AGPL-3.0): see [`LICENSE`](LICENSE). Authorship and copyright notice: [`NOTICE.md`](NOTICE.md).
+Dual-licensed: GNU Affero General Public License v3.0 (AGPL-3.0, see [`LICENSE`](LICENSE)), or a separate commercial license for uses not compatible with the AGPL, by written agreement with the copyright holder. Details, authorship and copyright notice: [`NOTICE.md`](NOTICE.md).
