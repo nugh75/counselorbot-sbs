@@ -179,7 +179,9 @@ Decisione del proprietario, dettagliata nella §9 dell'audit
 `frontend/src/lib/ui-primitives-tokens.test.ts` fa rispettare 2 e 4 (più niente
 hex, niente `h-11` e niente classi di palette grezze) alle primitive `Button`,
 `Card`, `PageHeader`, `Callout` e alle primitive della chat (#961); le pagine si
-allineano zona per zona.
+allineano zona per zona. `lib/flat-chat-stack.test.ts` fa lo stesso per lo stack
+delle chat e il percorso guidato (#962): token, niente pillole, `Card` boxed o
+campi a mano.
 
 ### 2.8 Colori di ruolo (#834)
 
@@ -345,13 +347,13 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   ripresa usa i progressi salvati nel browser. Gli strumenti «in arrivo» restano
   per ora in un riquadro tratteggiato, ancora da allineare al look piatto.
 - **Presentazione iniziale**: una frase sullo scopo dell’ambiente e l’attribuzione
-  all’Università Roma Tre precedono «Da dove vuoi iniziare?». Quattro schede,
-  su due colonne desktop e una mobile: Bussola, Analisi questionari, Percorsi
-  guidati, Area personale e strumenti. Le immagini decorative sono sopra il
-  titolo su desktop e accanto su mobile. Ogni scheda ha un’azione esplicita;
-  un collegamento secondario sotto la griglia porta all'Area personale (`/profilo`),
-  dove sta il catalogo: non c'è una pagina strumenti condivisa. Le quattro schede
-  sono ancora riquadri (`IntroScreen`): l'allineamento all'elenco a voci non è fatto.
+  all’Università Roma Tre precedono «Da dove vuoi iniziare?». Quattro voci
+  (`EntrySection`/`EntryLink`, come le home delle aree; #962), su due colonne
+  desktop e una mobile: Bussola, Analisi questionari, Percorsi guidati, Area
+  personale e strumenti. Le immagini decorative esistenti stanno a sinistra del
+  titolo; ogni voce è essa stessa il comando (la Bussola avvia, le altre aprono
+  `/profilo`). Un collegamento secondario sotto l'elenco porta all'Area personale
+  (`/profilo`), dove sta il catalogo: non c'è una pagina strumenti condivisa.
   Non c’è un ordine obbligatorio. «Per saperne di più» raccoglie tre `details`
   chiusi: uso dei questionari, Area personale, risorse e accompagnamento.
   Seguono i collegamenti alla Guida e a «Dati e riservatezza»:
