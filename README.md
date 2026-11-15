@@ -157,7 +157,7 @@ Main backend route groups:
 
 **Daniele Dragoni is the original author of CounselorBot.**
 
-Copyright © 2026 Daniele Dragoni (Nugh75).
+Copyright © 2023 Daniele Dragoni (Nugh75).
 
 All rights reserved, except for those expressly granted under the applicable software license.
 
