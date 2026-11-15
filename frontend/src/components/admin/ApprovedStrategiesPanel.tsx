@@ -158,7 +158,7 @@ export function ApprovedStrategiesPanel() {
     const areaCls = 'min-h-[90px] w-full rounded-control border border-line bg-surface px-2 py-1 text-sm text-ink-body focus:border-focus';
 
     const renderForm = () => (
-        <div className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+        <div className="rounded-card border border-brand-line bg-brand-soft/40 p-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <label className="flex flex-col text-xs font-semibold text-ink-muted">
                     {t('admin.approvedStrategies.field.id')}
@@ -216,7 +216,7 @@ export function ApprovedStrategiesPanel() {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-4 rounded-lg border border-line bg-surface p-4">
+            <div className="flex flex-wrap items-end justify-between gap-4 rounded-card border border-line bg-surface p-4">
                 <div>
                     <h2 className="text-lg font-semibold text-ink">{t('admin.approvedStrategies.title')}</h2>
                     <p className="text-sm text-ink-muted">
@@ -238,7 +238,7 @@ export function ApprovedStrategiesPanel() {
             {error && <Callout variant="danger">{error}</Callout>}
             {editingId === 'new' && renderForm()}
 
-            <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+            <div className="overflow-x-auto rounded-card border border-line bg-surface">
                 <table className="w-full text-left text-sm">
                     <thead className="border-b border-line text-xs text-ink-muted">
                         <tr>
@@ -265,17 +265,17 @@ export function ApprovedStrategiesPanel() {
                                     </td>
                                     <td className="px-4 py-2 text-xs text-ink-muted">{(strategy.questionnaires || []).join(', ') || '-'}</td>
                                     <td className="px-4 py-2">
-                                        <span className={`rounded px-2 py-1 text-xs font-semibold ${strategy.status === 'approved' ? 'bg-success-soft text-success' : 'bg-surface-raised text-ink-muted'}`}>
+                                        <span className={`rounded-control px-2 py-1 text-xs font-semibold ${strategy.status === 'approved' ? 'bg-success-soft text-success' : 'bg-surface-raised text-ink-muted'}`}>
                                             {strategy.status === 'approved' ? t('admin.approvedStrategies.status.approved') : t('admin.approvedStrategies.status.draft')}
                                         </span>
                                     </td>
                                     <td className="max-w-xs truncate px-4 py-2 text-xs text-ink-muted">{strategy.keywords || '-'}</td>
                                     <td className="px-4 py-2">
                                         <div className="flex justify-end gap-1">
-                                            <button type="button" onClick={() => startEdit(strategy)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-ink-muted hover:bg-surface-raised hover:text-ink" aria-label={t('admin.approvedStrategies.editAria', { id: strategy.id })}><Pencil className="h-4 w-4" /></button>
+                                            <button type="button" onClick={() => startEdit(strategy)} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-ink-muted hover:bg-surface-raised hover:text-ink" aria-label={t('admin.approvedStrategies.editAria', { id: strategy.id })}><Pencil className="h-4 w-4" /></button>
                                             {confirmDelete === strategy.id
                                                 ? <ConfirmInline question={t('admin.approvedStrategies.confirmDelete', { id: strategy.id })} onConfirm={() => { setConfirmDelete(null); void remove(strategy.id); }} onCancel={() => setConfirmDelete(null)} />
-                                                : <button type="button" onClick={() => setConfirmDelete(strategy.id)} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 text-danger hover:bg-danger-soft" aria-label={t('admin.approvedStrategies.deleteAria', { id: strategy.id })}><Trash2 className="h-4 w-4" /></button>}
+                                                : <button type="button" onClick={() => setConfirmDelete(strategy.id)} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 text-danger hover:bg-danger-soft" aria-label={t('admin.approvedStrategies.deleteAria', { id: strategy.id })}><Trash2 className="h-4 w-4" /></button>}
                                         </div>
                                     </td>
                                 </tr>

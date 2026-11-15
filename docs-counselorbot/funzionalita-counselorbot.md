@@ -3914,5 +3914,8 @@ selettori, aree di testo e linguette, `rounded-card` per riquadri, sezioni,
 elenchi, immagini e finestre; `rounded-full` resta per avatar e puntini. Le
 classi generiche `rounded`, `rounded-md`, `rounded-lg`, `rounded-xl` e
 `rounded-2xl` non compaiono più fuori dall'area amministratore, così la forma di
-un controllo non dipende più dal file. Nessuna modifica ai dati né alla Guida
-interfaccia.
+un controllo non dipende più dal file. Dall'audit di novembre (#963) anche le
+pagine e i pannelli dell'amministrazione seguono gli stessi due raggi: restano
+solo `rounded-full` e due varianti direzionali `rounded-t-xl`/`rounded-t-2xl`
+nei dialoghi scritti a mano (`PromptMap`, `CreateInstrumentDialog`). Nessuna
+modifica ai dati né alla Guida interfaccia.

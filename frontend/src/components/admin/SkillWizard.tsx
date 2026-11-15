@@ -50,7 +50,7 @@ const WIZARD_STEPS = ['what', 'when', 'content', 'position', 'test', 'publish'] 
 const ROUTING_ORDER = ['primary', 'always', 'support', 'optional'];
 const SLOT_ORDER = ['directive_tail', 'knowledge', 'section'];
 const LANGUAGES = ['it', 'en', 'es', 'fr', 'de', 'sv'];
-const FIELD = 'mt-1 w-full rounded border px-2 py-1 text-sm';
+const FIELD = 'mt-1 w-full rounded-control border px-2 py-1 text-sm';
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
 async function detail(res: Response, fallback: string): Promise<string> {
@@ -241,7 +241,7 @@ export function SkillWizard({ skill, catalog, onClose }: {
 
     return <div role="dialog" aria-modal="true" aria-labelledby="skill-wizard-title"
         className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4">
-        <div className="w-full max-w-3xl rounded-lg bg-surface shadow-modal">
+        <div className="w-full max-w-3xl rounded-card bg-surface shadow-modal">
             <div className="flex items-start justify-between gap-4 border-b px-4 py-4">
                 <div>
                     <h3 id="skill-wizard-title" className="text-base font-semibold">
@@ -249,7 +249,7 @@ export function SkillWizard({ skill, catalog, onClose }: {
                     </h3>
                     <p className="mt-1 text-xs text-ink-muted">{t('admin.skills.wizard.intro')}</p>
                 </div>
-                <button type="button" onClick={() => onClose(false)} aria-label={t('admin.skills.close')} className="inline-flex min-h-control min-w-control items-center justify-center rounded p-2 hover:bg-surface-raised">
+                <button type="button" onClick={() => onClose(false)} aria-label={t('admin.skills.close')} className="inline-flex min-h-control min-w-control items-center justify-center rounded-control p-2 hover:bg-surface-raised">
                     <X className="h-4 w-4" />
                 </button>
             </div>
@@ -308,7 +308,7 @@ export function SkillWizard({ skill, catalog, onClose }: {
                             {catalog.instruments.map(({ code, engine_enabled: engineOn }) => {
                                 const choice = bindings[code] ?? { mode: 'off', steps: [] };
                                 const steps = stepsOf(code);
-                                return <div key={code} className="rounded border px-4 py-2">
+                                return <div key={code} className="rounded-control border px-4 py-2">
                                     <div className="flex flex-wrap items-center gap-4">
                                         <span className="w-44 font-mono text-xs">{code}</span>
                                         {(['off', 'all', 'steps'] as const).map(mode => <label key={mode} className="flex items-center gap-1 text-xs">
@@ -425,10 +425,10 @@ export function SkillWizard({ skill, catalog, onClose }: {
                         <Play className="h-4 w-4" />{t('admin.skills.test.run')}
                     </button>
                     {preview && outcome && <div className="space-y-2">
-                        {!preview.engine_enabled && <p className="rounded bg-warning-soft px-4 py-2 text-xs text-warning-ink">
+                        {!preview.engine_enabled && <p className="rounded-control bg-warning-soft px-4 py-2 text-xs text-warning-ink">
                             {t('admin.skills.test.engineOff', { instrument: testInstrument })}
                         </p>}
-                        <p className={`rounded px-4 py-2 text-sm ${outcome.entered && outcome.delivered ? 'bg-success-soft text-success-ink' : 'bg-warning-soft text-warning-ink'}`}>
+                        <p className={`rounded-control px-4 py-2 text-sm ${outcome.entered && outcome.delivered ? 'bg-success-soft text-success-ink' : 'bg-warning-soft text-warning-ink'}`}>
                             {outcome.entered
                                 ? t(outcome.delivered ? 'admin.skills.test.delivered' : 'admin.skills.test.notDelivered')
                                 : outcome.reason
@@ -440,9 +440,9 @@ export function SkillWizard({ skill, catalog, onClose }: {
                             <summary className="cursor-pointer text-xs font-semibold text-ink-muted">{t('admin.skills.test.details')}</summary>
                             {Object.entries(preview.blocks).map(([blockSlot, texts]) => <div key={blockSlot} className="mt-2">
                                 <p className="text-2xs font-semibold text-ink-muted">{t(`admin.skills.slot.${blockSlot}`)}</p>
-                                {texts.map((text, index) => <pre key={index} className="mt-1 whitespace-pre-wrap rounded bg-surface-sunken p-2 text-xs">{text}</pre>)}
+                                {texts.map((text, index) => <pre key={index} className="mt-1 whitespace-pre-wrap rounded-control bg-surface-sunken p-2 text-xs">{text}</pre>)}
                             </div>)}
-                            <pre className="mt-2 overflow-x-auto rounded bg-surface-sunken p-2 text-2xs">{JSON.stringify(preview.trace, null, 2)}</pre>
+                            <pre className="mt-2 overflow-x-auto rounded-control bg-surface-sunken p-2 text-2xs">{JSON.stringify(preview.trace, null, 2)}</pre>
                         </details>
                     </div>}
                 </>}
@@ -476,7 +476,7 @@ export function SkillWizard({ skill, catalog, onClose }: {
                     {!boundInstruments.length && <p className="text-xs text-warning-ink">{t('admin.skills.publish.unbound')}</p>}
                 </>}
 
-                {error && <p role="alert" className="rounded bg-danger-soft px-4 py-2 text-sm text-danger-ink">{error}</p>}
+                {error && <p role="alert" className="rounded-control bg-danger-soft px-4 py-2 text-sm text-danger-ink">{error}</p>}
             </div>
 
             <div className="flex items-center justify-between gap-2 border-t px-4 py-4">

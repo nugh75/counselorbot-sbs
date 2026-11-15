@@ -125,7 +125,7 @@ export function ValidationExportPanel() {
                 {t('admin.validation.intro')}
             </Callout>
 
-            <section className="rounded-lg border border-line bg-surface p-4">
+            <section className="rounded-card border border-line bg-surface p-4">
                 <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink-body">
                     <Filter className="h-4 w-4 text-brand" />
                     {t('admin.validation.choices')}
@@ -214,14 +214,14 @@ export function ValidationExportPanel() {
             </section>
 
             <section className="grid gap-4 md:grid-cols-4">
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     <div className="flex items-center gap-2 text-xs font-semibold text-ink-muted">
                         <Database className="h-4 w-4" />
                         {t('admin.validation.responses')}
                     </div>
                     <p className="mt-2 text-3xl font-semibold text-ink">{summary?.total ?? 0}</p>
                 </div>
-                <div className="rounded-lg border border-line bg-surface p-4 md:col-span-2">
+                <div className="rounded-card border border-line bg-surface p-4 md:col-span-2">
                     <p className="text-xs font-semibold text-ink-muted">{t('admin.validation.versions')}</p>
                     <p className="mt-2 text-sm text-ink-body">
                         {summary && Object.keys(summary.by_version).length
@@ -229,7 +229,7 @@ export function ValidationExportPanel() {
                             : t('admin.validation.noVersions')}
                     </p>
                 </div>
-                <div className="rounded-lg border border-line bg-surface p-4">
+                <div className="rounded-card border border-line bg-surface p-4">
                     <p className="text-xs font-semibold text-ink-muted">{t('admin.validation.latestResponse')}</p>
                     <p className="mt-2 text-sm font-semibold text-ink-body">
                         {summary?.latest_submitted_at ? new Date(summary.latest_submitted_at).toLocaleString(lang) : '-'}
@@ -237,7 +237,7 @@ export function ValidationExportPanel() {
                 </div>
             </section>
 
-            <section className="rounded-lg border border-line bg-surface">
+            <section className="rounded-card border border-line bg-surface">
                 <div className="border-b border-line px-4 py-4">
                     <h2 className="text-sm font-semibold text-ink">{t('admin.validation.latestRaw')}</h2>
                 </div>

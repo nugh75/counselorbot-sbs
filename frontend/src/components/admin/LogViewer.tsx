@@ -158,7 +158,7 @@ function MultiSelectFilter({
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder={searchPlaceholder}
-                        className="mb-2 h-control w-full rounded border border-line px-2 text-sm focus:border-brand"
+                        className="mb-2 h-control w-full rounded-control border border-line px-2 text-sm focus:border-brand"
                         autoFocus
                     />
                     <div className="max-h-56 overflow-auto">
@@ -166,12 +166,12 @@ function MultiSelectFilter({
                             <div className="px-2 py-4 text-center text-xs text-ink-muted">{emptyLabel}</div>
                         )}
                         {filtered.map((value) => (
-                            <label key={value} className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm text-ink-body hover:bg-surface-sunken">
+                            <label key={value} className="flex cursor-pointer items-center gap-2 rounded-control px-2 py-2 text-sm text-ink-body hover:bg-surface-sunken">
                                 <input
                                     type="checkbox"
                                     checked={selected.includes(value)}
                                     onChange={() => toggle(value)}
-                                    className="h-4 w-4 rounded border-line-strong text-info focus:ring-focus"
+                                    className="h-4 w-4 rounded-control border-line-strong text-info focus:ring-focus"
                                 />
                                 <span className="truncate" title={value}>{value}</span>
                             </label>
@@ -181,7 +181,7 @@ function MultiSelectFilter({
                         <button
                             type="button"
                             onClick={() => onChange([])}
-                            className="min-h-control mt-2 w-full rounded border border-line px-2 py-1 text-xs font-semibold text-ink-muted hover:bg-surface-sunken"
+                            className="min-h-control mt-2 w-full rounded-control border border-line px-2 py-1 text-xs font-semibold text-ink-muted hover:bg-surface-sunken"
                         >
                             {clearLabel}
                         </button>
@@ -784,7 +784,7 @@ export function LogViewer() {
         const rows = Object.entries(data || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
         const max = Math.max(1, ...rows.map(([, count]) => count));
         return (
-            <div className="rounded-lg border border-line bg-surface p-4">
+            <div className="rounded-card border border-line bg-surface p-4">
                 <h4 className="text-sm font-semibold text-ink">{title}</h4>
                 <div className="mt-4 space-y-2">
                     {rows.map(([key, count]) => (
@@ -847,7 +847,7 @@ export function LogViewer() {
                 </div>
             </div>
 
-            <div className="rounded-lg border border-line bg-surface p-4">
+            <div className="rounded-card border border-line bg-surface p-4">
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                     <label className="relative block">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
@@ -1020,7 +1020,7 @@ export function LogViewer() {
                             type="checkbox"
                             checked={autoRefresh}
                             onChange={(event) => setAutoRefresh(event.target.checked)}
-                            className="h-4 w-4 rounded border-line-strong text-info focus:ring-focus"
+                            className="h-4 w-4 rounded-control border-line-strong text-info focus:ring-focus"
                         />
                         {t('admin.logs.autoRefresh')}
                     </label>
@@ -1038,7 +1038,7 @@ export function LogViewer() {
             </div>
 
             {view === 'logs' && (
-                <div className="rounded-lg border border-line bg-surface shadow-card">
+                <div className="rounded-card border border-line bg-surface shadow-card">
                     <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line px-4 py-4 text-sm text-ink-muted">
                         <span>{t('admin.logs.totalCount').replace('{n}', String(total))}</span>
                         <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -1102,7 +1102,7 @@ export function LogViewer() {
                                             </div>
                                         </div>
                                         {expanded && (
-                                            <div id={`log-detail-${log.id}`} className="min-w-0 rounded-lg border border-line bg-surface-sunken p-4 sm:p-4">
+                                            <div id={`log-detail-${log.id}`} className="min-w-0 rounded-card border border-line bg-surface-sunken p-4 sm:p-4">
                                                 <div className="mb-4 inline-flex rounded-control border border-line p-1">
                                                     <Button type="button" variant={detailView === 'human' ? 'primary' : 'ghost'} onClick={() => setDetailView('human')}>{t('admin.logs.viewHuman')}</Button>
                                                     <Button type="button" variant={detailView === 'json' ? 'primary' : 'ghost'} onClick={() => setDetailView('json')}>{t('admin.logs.viewJson')}</Button>
@@ -1124,23 +1124,23 @@ export function LogViewer() {
 
             {view === 'stats' && (
                 <div className="space-y-4">
-                    {statsLoading && <div className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted"><Spinner className="mx-auto h-5 w-5" /></div>}
+                    {statsLoading && <div className="rounded-card border border-line bg-surface p-8 text-center text-ink-muted"><Spinner className="mx-auto h-5 w-5" /></div>}
                     {stats && !statsLoading && (
                         <>
                             <div className="grid gap-4 md:grid-cols-4">
-                                <div className="rounded-lg border border-line bg-surface p-4">
+                                <div className="rounded-card border border-line bg-surface p-4">
                                     <div className="text-xs text-ink-muted">{t('admin.logs.statsTurns')}</div>
                                     <div className="mt-2 text-2xl font-semibold text-ink">{stats.total}</div>
                                 </div>
-                                <div className="rounded-lg border border-line bg-surface p-4">
+                                <div className="rounded-card border border-line bg-surface p-4">
                                     <div className="text-xs text-ink-muted">{t('admin.logs.statsSessions')}</div>
                                     <div className="mt-2 text-2xl font-semibold text-ink">{stats.distinct_sessions}</div>
                                 </div>
-                                <div className="rounded-lg border border-line bg-surface p-4">
+                                <div className="rounded-card border border-line bg-surface p-4">
                                     <div className="text-xs text-ink-muted">{t('admin.logs.statsRated')}</div>
                                     <div className="mt-2 text-2xl font-semibold text-ink">{stats.feedback.rated}</div>
                                 </div>
-                                <div className="rounded-lg border border-line bg-surface p-4">
+                                <div className="rounded-card border border-line bg-surface p-4">
                                     <div className="text-xs text-ink-muted">{t('admin.logs.statsPositive')}</div>
                                     <div className="mt-2 text-2xl font-semibold text-ink">{stats.positive_feedback_pct}%</div>
                                 </div>
@@ -1150,7 +1150,7 @@ export function LogViewer() {
                                 {renderBreakdown(t('admin.logs.byProvider'), stats.by_provider)}
                                 {renderBreakdown(t('admin.logs.byQuestionnaire'), stats.by_questionnaire_type)}
                             </div>
-                            <div className="rounded-lg border border-line bg-surface p-4">
+                            <div className="rounded-card border border-line bg-surface p-4">
                                 <h4 className="text-sm font-semibold text-ink">{t('admin.logs.turnsByDay')}</h4>
                                 <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                                     {stats.turns_by_day.slice(-12).map((item) => (
@@ -1168,7 +1168,7 @@ export function LogViewer() {
 
             {view === 'hygiene' && (
                 <div className="grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-lg border border-line bg-surface p-4">
+                    <div className="rounded-card border border-line bg-surface p-4">
                         <div className="flex items-center justify-between gap-4">
                             <h4 className="text-sm font-semibold text-ink">{t('admin.logs.retention')}</h4>
                             {confirming === 'retention' ? (
@@ -1206,7 +1206,7 @@ export function LogViewer() {
                         {hygieneMessage && <p className="mt-4 text-sm text-success">{hygieneMessage}</p>}
                     </div>
 
-                    <div className="rounded-lg border border-line bg-surface p-4">
+                    <div className="rounded-card border border-line bg-surface p-4">
                         <h4 className="text-sm font-semibold text-ink">{t('admin.logs.piiReport')}</h4>
                         {piiReport && (
                             <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
@@ -1232,7 +1232,7 @@ export function LogViewer() {
                         aria-modal="true"
                         aria-labelledby="log-conversation-title"
                         aria-describedby="log-conversation-id"
-                        className="flex max-h-[calc(100dvh-1rem)] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-surface shadow-modal sm:max-h-[90dvh]"
+                        className="flex max-h-[calc(100dvh-1rem)] w-full max-w-4xl flex-col overflow-hidden rounded-card bg-surface shadow-modal sm:max-h-[90dvh]"
                     >
                         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-4 py-4">
                             <div className="min-w-0">

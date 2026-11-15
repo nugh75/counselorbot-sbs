@@ -244,7 +244,7 @@ export function QuestionnaireResultsViewer() {
             {/* Stats */}
             {results.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-surface p-4 rounded-lg border border-line shadow-card flex items-center gap-4">
+                    <div className="bg-surface p-4 rounded-card border border-line shadow-card flex items-center gap-4">
                         <div className="p-4 bg-brand-soft text-brand rounded-control">
                             <FileText className="w-6 h-6" />
                         </div>
@@ -254,7 +254,7 @@ export function QuestionnaireResultsViewer() {
                         </div>
                     </div>
                     {QUESTIONNAIRE_TYPES.map(type => (
-                        <div key={type} className="bg-surface p-4 rounded-lg border border-line shadow-card flex items-center gap-4">
+                        <div key={type} className="bg-surface p-4 rounded-card border border-line shadow-card flex items-center gap-4">
                             <div className={`p-4 rounded-control ${getTypeColor(type)}`}>
                                 <span className="text-xs font-semibold">{type}</span>
                             </div>
@@ -298,14 +298,14 @@ export function QuestionnaireResultsViewer() {
                 <div className="ml-auto flex items-center gap-1">
                     <button
                         onClick={handleExportCsv}
-                        className="inline-flex min-h-control min-w-control items-center justify-center p-2 hover:bg-surface-raised rounded-lg text-ink-muted hover:text-ink-body transition-colors"
+                        className="inline-flex min-h-control min-w-control items-center justify-center p-2 hover:bg-surface-raised rounded-control text-ink-muted hover:text-ink-body transition-colors"
                         title={t('admin.results.csv')}
                     >
                         <Download className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => fetchResults(filterType || undefined)}
-                        className="inline-flex min-h-control min-w-control items-center justify-center p-2 hover:bg-surface-raised rounded-lg text-ink-muted hover:text-ink-body transition-colors"
+                        className="inline-flex min-h-control min-w-control items-center justify-center p-2 hover:bg-surface-raised rounded-control text-ink-muted hover:text-ink-body transition-colors"
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? SPIN : ''}`} />
                     </button>
@@ -326,9 +326,9 @@ export function QuestionnaireResultsViewer() {
                 }));
 
                 return (
-                    <div key={type} className="bg-surface rounded-lg border border-line overflow-hidden shadow-card">
+                    <div key={type} className="bg-surface rounded-card border border-line overflow-hidden shadow-card">
                         <div className="px-4 py-4 border-b border-line bg-surface-sunken flex items-center gap-2">
-                            <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${getTypeColor(type)}`}>
+                            <span className={`inline-flex px-2 py-1 rounded-control text-xs font-semibold ${getTypeColor(type)}`}>
                                 {type}
                             </span>
                             <h3 className="text-sm font-semibold text-ink-body">{t('admin.results.stats')}</h3>
@@ -343,7 +343,7 @@ export function QuestionnaireResultsViewer() {
                                         if (!p.active || !p.payload?.length) return null;
                                         const d = p.payload[0].payload;
                                         return (
-                                            <div className="bg-surface border border-line shadow-pop rounded-lg p-4 text-xs">
+                                            <div className="bg-surface border border-line shadow-pop rounded-card p-4 text-xs">
                                                 <p className="font-semibold text-ink-body mb-1">{d.factorName as string}</p>
                                                 <div className="space-y-1 text-ink-muted">
                                                     <p>{t('admin.results.mean')}: {(d.mean as number).toFixed(2)}</p>
@@ -412,7 +412,7 @@ export function QuestionnaireResultsViewer() {
             })}
 
             {/* Table */}
-            <div className="bg-surface rounded-lg border border-line overflow-hidden shadow-card">
+            <div className="bg-surface rounded-card border border-line overflow-hidden shadow-card">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="bg-surface-sunken text-ink-muted border-b border-line">
@@ -436,7 +436,7 @@ export function QuestionnaireResultsViewer() {
                                                 {format(new Date(result.submitted_at), 'dd/MM/yyyy HH:mm')}
                                             </td>
                                             <td className="px-4 py-4">
-                                                <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${getTypeColor(result.questionnaire_type)}`}>
+                                                <span className={`inline-flex px-2 py-1 rounded-control text-xs font-semibold ${getTypeColor(result.questionnaire_type)}`}>
                                                     {result.questionnaire_type}
                                                 </span>
                                             </td>
@@ -489,7 +489,7 @@ export function QuestionnaireResultsViewer() {
                                                                     else badgeClass = 'border-warning-line bg-warning-soft';
 
                                                                     return (
-                                                                        <div key={code} className={`p-2 rounded border ${badgeClass}`}>
+                                                                        <div key={code} className={`p-2 rounded-control border ${badgeClass}`}>
                                                                             <div className="font-semibold text-ink-body">{name}</div>
                                                                             {desc && <div className="text-ink-muted mt-1">{desc}</div>}
                                                                             <div className="flex items-center gap-2 mt-1">

@@ -340,7 +340,7 @@ export function RagDocsPanel() {
                 </div>
 
                 {showCreate && (
-                    <div className="mt-4 rounded-lg border border-line bg-surface-sunken p-4 space-y-4">
+                    <div className="mt-4 rounded-card border border-line bg-surface-sunken p-4 space-y-4">
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
                                 <label className="block text-xs font-semibold text-ink-muted mb-1">{t('admin.rag.field.id')}</label>
@@ -595,7 +595,7 @@ export function RagDocsPanel() {
                                             {preview?.source === doc.source && (
                                                 <tr className="border-b border-line bg-surface-sunken">
                                                     <td colSpan={6} className="p-0">
-                                                        <div className="m-4 rounded-lg border border-line bg-surface">
+                                                        <div className="m-4 rounded-card border border-line bg-surface">
                                                             <div className="flex items-center gap-2 border-b border-line px-4 py-4">
                                                                 <Eye className="h-4 w-4 shrink-0 text-brand" />
                                                                 <div className="min-w-0 flex-1">

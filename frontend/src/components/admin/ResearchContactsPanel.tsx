@@ -368,7 +368,7 @@ export function ResearchContactsPanel() {
     const inputCls = 'mt-1 h-9 w-full rounded-control border border-line-strong bg-surface px-4 text-sm text-ink outline-none focus:border-brand';
 
     const renderForm = () => (
-        <section className="rounded-lg border border-brand-line bg-brand-soft/40 p-4">
+        <section className="rounded-card border border-brand-line bg-brand-soft/40 p-4">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 <label className="text-xs font-semibold text-ink-muted">
                     {t('admin.rc.form.name')}
@@ -426,7 +426,7 @@ export function ResearchContactsPanel() {
 
     return (
         <div className="space-y-4">
-            <section className="rounded-lg border border-line bg-surface p-4">
+            <section className="rounded-card border border-line bg-surface p-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <h2 className="text-lg font-semibold text-ink">{t('admin.rc.title')}</h2>
@@ -469,7 +469,7 @@ export function ResearchContactsPanel() {
                 </div>
             </section>
 
-            <section className="rounded-lg border border-line bg-surface p-4">
+            <section className="rounded-card border border-line bg-surface p-4">
                 <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink-body">
                     <Link2 className="h-4 w-4 text-brand" />
                     {t('admin.rc.quickLink.title')}
@@ -511,17 +511,17 @@ export function ResearchContactsPanel() {
 
             <div className="grid gap-4 xl:grid-cols-2">
                 {loading && (
-                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
+                    <section className="rounded-card border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
                         {t('admin.rc.loading')}
                     </section>
                 )}
                 {!loading && contacts.length === 0 && editingId !== 'new' && (
-                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
+                    <section className="rounded-card border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
                         {t('admin.rc.empty')}
                     </section>
                 )}
                 {!loading && contacts.length > 0 && filtered.length === 0 && (
-                    <section className="rounded-lg border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
+                    <section className="rounded-card border border-line bg-surface p-8 text-center text-ink-muted xl:col-span-2">
                         {t('admin.rc.noResults')}
                     </section>
                 )}
@@ -529,7 +529,7 @@ export function ResearchContactsPanel() {
                     editingId === contact.id ? (
                         <div key={contact.id} className="xl:col-span-2">{renderForm()}</div>
                     ) : (
-                        <section key={contact.id} className="rounded-lg border border-line bg-surface p-4 shadow-card">
+                        <section key={contact.id} className="rounded-card border border-line bg-surface p-4 shadow-card">
                             <div className="flex flex-wrap items-start justify-between gap-4">
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">

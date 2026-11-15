@@ -63,11 +63,11 @@ export function ModelContextSettings() {
         <p className="text-sm text-ink-muted">{t('admin.context.help')}</p>
         <fieldset disabled={!!saving} className="space-y-4">
             <legend className="text-sm font-semibold">{t('admin.context.levels')}</legend>
-            {Object.entries(levels).map(([id, level]) => <details key={id} className="rounded border border-line p-4">
+            {Object.entries(levels).map(([id, level]) => <details key={id} className="rounded-control border border-line p-4">
                 <summary className="cursor-pointer text-sm">{level.label} · {id}</summary>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <label className="text-xs">{t('admin.context.name')}<input aria-label={`${t('admin.context.name')} ${id}`} value={level.label} onChange={event => updateLevel(id, 'label', event.target.value)} className="mt-1 w-full rounded border p-2" /></label>
-                    {LIMITS.map(key => <label key={key} className="text-xs">{t(`admin.context.${key}`)}<input type="number" min="0" aria-label={`${t(`admin.context.${key}`)} ${id}`} value={level[key] as number ?? ''} onChange={event => updateLevel(id, key, event.target.value === '' ? null : Number(event.target.value))} className="mt-1 w-full rounded border p-2" /></label>)}
+                    <label className="text-xs">{t('admin.context.name')}<input aria-label={`${t('admin.context.name')} ${id}`} value={level.label} onChange={event => updateLevel(id, 'label', event.target.value)} className="mt-1 w-full rounded-control border p-2" /></label>
+                    {LIMITS.map(key => <label key={key} className="text-xs">{t(`admin.context.${key}`)}<input type="number" min="0" aria-label={`${t(`admin.context.${key}`)} ${id}`} value={level[key] as number ?? ''} onChange={event => updateLevel(id, key, event.target.value === '' ? null : Number(event.target.value))} className="mt-1 w-full rounded-control border p-2" /></label>)}
                     {(['meta', 'short_prompt'] as const).map(key => <label key={key} className="flex items-center gap-2 text-xs"><input type="checkbox" checked={level[key]} onChange={event => updateLevel(id, key, event.target.checked)} />{t(`admin.context.${key}`)}</label>)}
                 </div>
             </details>)}
@@ -82,16 +82,16 @@ export function ModelContextSettings() {
         </fieldset>
         <fieldset disabled={!!saving} className="space-y-4">
             <legend className="text-sm font-semibold">{t('admin.context.assignments')}</legend>
-            {assignments.map((row, index) => <div key={index} className="grid gap-2 rounded border border-line p-4 sm:grid-cols-2">
-                <label className="text-xs">{t('admin.context.target')}<input value={row.target} aria-label={`${t('admin.context.target')} ${index + 1}`} onChange={event => updateAssignment(index, { target: event.target.value })} className="mt-1 w-full rounded border p-2" /></label>
+            {assignments.map((row, index) => <div key={index} className="grid gap-2 rounded-control border border-line p-4 sm:grid-cols-2">
+                <label className="text-xs">{t('admin.context.target')}<input value={row.target} aria-label={`${t('admin.context.target')} ${index + 1}`} onChange={event => updateAssignment(index, { target: event.target.value })} className="mt-1 w-full rounded-control border p-2" /></label>
                 <label className="text-xs">{t('admin.context.level')}<select value={row.profile.level || ''} aria-label={`${t('admin.context.level')} ${index + 1}`} onChange={event => {
                     const profile = { ...row.profile }; if (event.target.value) profile.level = event.target.value; else delete profile.level;
                     updateAssignment(index, { profile });
-                }} className="mt-1 w-full rounded border p-2"><option value="">{t('admin.context.unassigned')}</option>{Object.entries(savedLevels).map(([id, level]) => <option key={id} value={id}>{level.label}</option>)}</select></label>
+                }} className="mt-1 w-full rounded-control border p-2"><option value="">{t('admin.context.unassigned')}</option>{Object.entries(savedLevels).map(([id, level]) => <option key={id} value={id}>{level.label}</option>)}</select></label>
                 {(['context_tokens', 'input_tokens'] as const).map(key => <label key={key} className="text-xs">{t(`admin.context.${key}`)}<input type="number" min="1024" value={row.profile[key] ?? ''} aria-label={`${t(`admin.context.${key}`)} ${index + 1}`} onChange={event => {
                     const profile = { ...row.profile }; if (event.target.value === '') delete profile[key]; else profile[key] = Number(event.target.value);
                     updateAssignment(index, { profile });
-                }} className="mt-1 w-full rounded border p-2" /></label>)}
+                }} className="mt-1 w-full rounded-control border p-2" /></label>)}
                 <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={row.profile.compact || false} onChange={event => updateAssignment(index, { profile: { ...row.profile, compact: event.target.checked } })} />{t('admin.context.compact')}</label>
                 <Button variant="secondary" onClick={() => { setAssignments(assignments.filter((_, i) => i !== index)); setStatus(''); }}>{t('admin.context.removeAssignment')}</Button>
             </div>)}

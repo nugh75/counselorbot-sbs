@@ -140,7 +140,7 @@ export function PromptFactoryAlignment({ disabled, stepLabels, onApplied, onBusy
             </Button>
             {disabled && <p className="text-sm text-ink-muted" role="status">{t('admin.promptAlignment.drafts')}</p>}
             {open && <section id={panelId} aria-label={t('admin.promptAlignment.title')}
-                aria-busy={!!busy} className="space-y-4 rounded-lg border border-line bg-surface p-4">
+                aria-busy={!!busy} className="space-y-4 rounded-card border border-line bg-surface p-4">
                 <h4 className="font-semibold text-ink">{t('admin.promptAlignment.title')}</h4>
                 <p className="text-sm text-ink-muted">{t('admin.promptAlignment.help')}</p>
                 {busy && <p role="status" className="text-sm text-ink-muted">{t(`admin.promptAlignment.${busy === 'preview' ? 'loading' : 'applying'}`)}</p>}
@@ -149,7 +149,7 @@ export function PromptFactoryAlignment({ disabled, stepLabels, onApplied, onBusy
                 {plan && <>
                     <p className="text-sm font-semibold text-ink">{t('admin.promptAlignment.changed', { count: plan.changes.length })}</p>
                     {!plan.changes.length && <p role="status" className="text-sm text-ink-muted">{t('admin.promptAlignment.empty')}</p>}
-                    {plan.changes.map(item => <details key={`${item.scope}/${item.key}`} className="rounded-lg border border-line p-4">
+                    {plan.changes.map(item => <details key={`${item.scope}/${item.key}`} className="rounded-card border border-line p-4">
                         <summary className="cursor-pointer break-words text-sm font-semibold text-ink">
                             {itemLabel(item)}
                             {itemLabel(item) !== item.key && <code className="ml-2 font-mono text-xs font-normal text-ink-muted">{item.key}</code>}
