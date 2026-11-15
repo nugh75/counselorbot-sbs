@@ -12,14 +12,7 @@ import { useI18n } from '@/lib/i18n-context';
 
 // --- Sidebar section labels per prefix ---
 
-const PREFIX_SIDEBAR: Record<string, string> = {
-    C: 'text-blue-600',
-    A: 'text-purple-600',
-    T: 'text-amber-600',
-    S: 'text-purple-600',
-    K: 'text-indigo-600',
-    AD: 'text-green-600',
-};
+const SIDEBAR_PREFIXES = new Set(['C', 'A', 'T', 'S', 'K', 'AD']);
 
 // --- Color helpers for sidebar compact bars ---
 
@@ -67,7 +60,7 @@ function CompactScoreBar({
                 <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${width}%` }} />
                 </div>
-                <span className="w-4 text-2xs font-bold text-slate-600">{score}</span>
+                <span className="w-4 text-2xs font-semibold text-slate-600">{score}</span>
             </div>
         </div>
     );
@@ -81,8 +74,7 @@ export function useScoreGroups(questionnaireType: string, scores: Record<string,
         if (!questionnaire) return [];
         return questionnaire.factorPrefix.map(prefix => ({
             prefix,
-            label: questionnaire.id === 'QPCC' ? t(`dimension.QPCC.${prefix}`) : PREFIX_SIDEBAR[prefix] ? t(`sidebar.${prefix}`) : prefix,
-            colorClass: PREFIX_SIDEBAR[prefix] || 'text-slate-600',
+            label: questionnaire.id === 'QPCC' ? t(`dimension.QPCC.${prefix}`) : SIDEBAR_PREFIXES.has(prefix) ? t(`sidebar.${prefix}`) : prefix,
             entries: Object.entries(scores)
                 .filter(([k]) => k.startsWith(prefix))
                 .sort(([a], [b]) => a.localeCompare(b)),
@@ -109,7 +101,7 @@ export function ProfileScoresPanel({ questionnaireType, groups, hidden }: {
 
                 {groups.map((group, idx) => (
                     <div key={group.prefix} className={cn("space-y-1.5", idx > 0 && "pt-2 border-t border-slate-100")}>
-                        <div className={cn("text-2xs font-medium uppercase", group.colorClass)}>{group.label}</div>
+                        <div className="text-2xs font-medium text-ink">{group.label}</div>
                         {group.entries.map(([code, score]) => (
                             <CompactScoreBar
                                 key={code}

@@ -112,9 +112,9 @@ export function classifyZTPIScore(code: ZTPIFactorCode, score: number): ZTPIAlig
 
 export function getZTPIAlignmentColorClass(code: ZTPIFactorCode, score: number): string {
     const alignment = classifyZTPIScore(code, score);
-    if (alignment === 'ideal') return 'bg-green-500';
-    if (alignment === 'near') return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (alignment === 'ideal') return 'bg-success';
+    if (alignment === 'near') return 'bg-warning';
+    return 'bg-danger';
 }
 
 export function getZTPIAlignmentColorHex(code: ZTPIFactorCode, score: number): string {

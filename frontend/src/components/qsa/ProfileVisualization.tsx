@@ -20,15 +20,8 @@ interface ProfileVisualizationProps {
     questionnaire: QuestionnaireConfig;
 }
 
-// Color per prefix (label tradotta via i18n: profile.section.<X>)
-const PREFIX_SECTION_COLOR: Record<string, string> = {
-    C: 'text-indigo-700',
-    A: 'text-indigo-700',
-    T: 'text-indigo-700',
-    S: 'text-purple-700',
-    K: 'text-cyan-700',
-    AD: 'text-green-700',
-};
+// Sezioni del profilo (label tradotta via i18n: profile.section.<X>)
+const SECTION_PREFIXES = new Set(['C', 'A', 'T', 'S', 'K', 'AD']);
 
 type Translator = (key: string, vars?: Record<string, string | number>) => string;
 
@@ -168,7 +161,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2 py-2 sm:flex sm:items-center sm:gap-3 sm:py-1">
             <div className="col-start-1 row-start-1 min-w-0 sm:w-44 sm:flex-shrink-0">
                 <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-slate-700">{code}</span>
+                    <span className="font-mono font-semibold text-slate-700">{code}</span>
                     {isInverted && <ArrowLeftRight className="h-3 w-3 text-slate-500" aria-label={t('profile.invertedScale')} role="img" />}
                 </div>
                 <div className="text-xs text-slate-500 leading-tight break-words" title={factorName}>
@@ -206,7 +199,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
                 )}
 
                 <div
-                    className={cn("absolute top-0 h-6 w-1 rounded-full shadow-md transition-all", isNeutral && "bg-slate-500")}
+                    className={cn("absolute top-0 h-6 w-1 rounded-full transition-all", isNeutral && "bg-slate-500")}
                     style={{
                         left: `calc(${markerPosition}% - 2px)`,
                         backgroundColor: isNeutral ? undefined : interpretation.color,
@@ -217,7 +210,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
 
             <div className="col-start-2 row-start-1 w-24 flex-shrink-0 text-right">
                 <span
-                    className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold", isNeutral && "bg-slate-50 text-slate-700")}
+                    className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold", isNeutral && "bg-slate-50 text-slate-700")}
                     style={{
                         backgroundColor: isNeutral ? undefined : interpretation.tone.chip,
                         color: isNeutral ? undefined : interpretation.tone.text,
@@ -253,7 +246,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
     }));
 
     // Vista per area: stessi dati, una sola colonna alla volta; 'all' li mostra tutti.
-    const areaLabel = (prefix: string) => questionnaire.id === 'QPCC' ? t(`dimension.QPCC.${prefix}`) : PREFIX_SECTION_COLOR[prefix] ? t(`profile.section.${prefix}`) : `${prefix}`;
+    const areaLabel = (prefix: string) => questionnaire.id === 'QPCC' ? t(`dimension.QPCC.${prefix}`) : SECTION_PREFIXES.has(prefix) ? t(`profile.section.${prefix}`) : `${prefix}`;
     const activeView = columns.some(c => c.prefix === view) ? view : 'all';
     const visibleColumns = activeView === 'all' ? columns : columns.filter(c => c.prefix === activeView);
     const gridCols = visibleColumns.length === 1 ? '' : 'md:grid-cols-2';
@@ -299,14 +292,14 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                     className={cn(
                         'inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs',
                         tone === 'strength'
-                            ? 'border-green-200 bg-green-50 text-green-800'
-                            : 'border-amber-200 bg-amber-50 text-amber-800',
+                            ? 'border-success-line bg-success-soft text-success-ink'
+                            : 'border-warning-line bg-warning-soft text-warning-ink',
                     )}
                     title={it.name}
                 >
-                    <span className="shrink-0 font-mono font-bold">{it.code}</span>
+                    <span className="shrink-0 font-mono font-semibold">{it.code}</span>
                     <span className="min-w-0 max-w-[8.5rem] truncate font-medium">{it.name}</span>
-                    <span className="shrink-0 rounded-full bg-white/70 px-1.5 font-bold">{it.score}</span>
+                    <span className="shrink-0 rounded-full bg-white/70 px-1.5 font-semibold">{it.score}</span>
                 </span>
             ))}
         </div>
@@ -321,7 +314,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                 <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 space-y-3 animate-fade-in-up">
                     <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3">
                         <div className="min-w-0 space-y-1.5">
-                            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-green-700">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-success-ink">
                                 {t('profile.summary.strengths')}
                             </div>
                             {topStrengths.length > 0
@@ -329,7 +322,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                                 : <p className="text-xs text-slate-500">{t(questionnaire.id === 'QPCC' ? 'profile.QPCC.noStrengths' : 'profile.summary.balanced')}</p>}
                         </div>
                         <div className="min-w-0 space-y-1.5">
-                            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-warning-ink">
                                 {t('profile.summary.growth')}
                             </div>
                             {topGrowth.length > 0
@@ -364,11 +357,10 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
 
             <div className={cn("grid gap-x-8 gap-y-2", gridCols)}>
                 {visibleColumns.map(({ prefix, entries }) => {
-                    const sectionColor = PREFIX_SECTION_COLOR[prefix] || 'text-slate-700';
                     const sectionLabel = areaLabel(prefix);
                     return (
                         <div key={prefix} className="space-y-0.5">
-                            <h4 className={cn("text-sm font-semibold mb-1 pb-1 border-b border-slate-200", sectionColor)}>
+                            <h4 className={cn("text-sm font-semibold mb-1 pb-1 border-b border-line text-ink")}>
                                 {sectionLabel}
                             </h4>
                             {entries.map(([code, score]) => {

@@ -135,7 +135,7 @@ test('resolveActiveStudentTools includes dynamic active tools and excludes inact
     assert.equal(guidedTool.description, 'Descrizione percorso');
     assert.equal(guidedTool.agentOnly, true);
     assert.equal(guidedTool.icon, 'lightbulb');
-    assert.equal(guidedTool.color, 'bg-amber-500');
+    assert.equal(guidedTool.color, 'bg-chart-accent');
 
     // Dynamic categorization
     const categories = getDynamicToolCategories(activeTools, catalog);
