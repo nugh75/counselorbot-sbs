@@ -3797,3 +3797,13 @@ rotella al centro; la pagina non «salta» all'arrivo dei dati. Lo spinner picco
 resta solo dentro i pulsanti occupati e le chat mostrano tre puntini mentre il
 counselor risponde. Con «riduci movimento» attivo le animazioni si fermano.
 Nessuna modifica ai dati né alla Guida interfaccia.
+
+### Due soli raggi (#932)
+
+Tutta l'interfaccia usa due raggi: `rounded-control` per pulsanti, campi,
+selettori, aree di testo e linguette, `rounded-card` per riquadri, sezioni,
+elenchi, immagini e finestre; `rounded-full` resta per avatar e puntini. Le
+classi generiche `rounded`, `rounded-md`, `rounded-lg`, `rounded-xl` e
+`rounded-2xl` non compaiono più fuori dall'area amministratore, così la forma di
+un controllo non dipende più dal file. Nessuna modifica ai dati né alla Guida
+interfaccia.
